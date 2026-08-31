@@ -1,69 +1,79 @@
 <script lang="ts">
   import ResourcePanelSwitcher from "@21n/components/resource/ResourcePanelSwitcher.svelte";
   import {
-    resolveGoalContextMenu,
-    type IActiveGoalStore
+    resolveObjectiveContextMenu,
+    type IActiveObjectiveStore
   } from "@21n/components/goals/goal.store";
   import { derived } from "svelte/store";
   import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
-  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
   import {
     type IResourcePageWithPanels,
     ResourceAccessPoint,
     ResourceActionType
-  } from "../flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import type { ResourcePanelType } from "../resource/resourcePanel.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import type { ISelectValue } from "@21n/types/select.type";
 
   let {
-    goal,
+    objective,
     panels,
     isConstrainedWidth = false,
     isThreeColumned = false
   }: {
-    goal: IActiveGoalStore;
+    objective: IActiveObjectiveStore;
     panels: IToggleItem[];
     isConstrainedWidth?: boolean;
     isThreeColumned?: boolean;
   } = $props();
 
-  const adaptedStore = derived(goal, ($goal): IResourcePageWithPanels => ({
-    id: $goal.id,
-    panel: $goal.panel,
-    defaultPanel: $goal.defaultPanel ?? $goal.panel,
-    isInFocusMode: $goal.isInFocusMode,
-    isInEditMode: $goal.isInEditMode,
-    switchPanel: (panel?: string) => {
-      if (!panel) return;
-      uiState.setState(UIState.objectivePanelSelection, panel, {
-        scope: UIStateScope.DEVICE,
-        subVariables: [
-          isConstrainedWidth.toString(),
-          isThreeColumned.toString()
-        ]
-      });
-      goal.switchPanel(panel);
-    },
-    closeEditMode: () => goal.toggleEditMode(false)
-  }));
+  const adaptedStore = derived(
+    objective,
+    ($objective): IResourcePageWithPanels => ({
+      id: $objective.id,
+      panel: $objective.panel,
+      defaultPanel: $objective.defaultPanel ?? $objective.panel,
+      isInFocusMode: $objective.isInFocusMode,
+      isInEditMode: $objective.isInEditMode,
+      switchPanel: (panel?: string) => {
+        if (!panel) return;
+        uiState.setState(UIState.objectivePanelSelection, panel, {
+          scope: UIStateScope.DEVICE,
+          subVariables: [
+            isConstrainedWidth.toString(),
+            isThreeColumned.toString()
+          ]
+        });
+        objective.switchPanel(panel);
+      },
+      closeEditMode: () => objective.toggleEditMode(false)
+    })
+  );
 
   function onContextMenuAction(detail: ISelectValue) {
-    // TODO - custom actions
+    if (detail === ResourceActionType.STAR) {
+      objective.update((state) => ({
+        ...state,
+        isStarred: !state.isStarred
+      }));
+    } else if (detail === ResourceActionType.EDIT) {
+      objective.toggleEditMode(!$objective.isInEditMode);
+    }
   }
 
-  function resolveGoalThumb() {
-    return $goal as unknown as IGoalThumb;
+  function resolveObjectiveThumb() {
+    return $objective as unknown as IObjectiveThumb;
   }
 </script>
 
 <ResourcePanelSwitcher
   resourceStore={adaptedStore}
   {panels}
-  accessMode={$goal.accessMode}
+  accessMode={$objective.accessMode}
   {isConstrainedWidth}
   contextMenuResolver={() =>
-    resolveGoalContextMenu(resolveGoalThumb(), ResourceAccessPoint.SELF)}
+    resolveObjectiveContextMenu(resolveObjectiveThumb(), ResourceAccessPoint.SELF)}
   onAction={onContextMenuAction}
 />

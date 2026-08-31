@@ -8,7 +8,7 @@
   import { Size } from "@21n/types/size.enum";
   import { TextStyle } from "@21n/types/text.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
 
   let {
     isLibraryNavContext = false,

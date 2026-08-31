@@ -1,9 +1,9 @@
-import { ActiveResourceStore } from "@21n/components/flux/resourceStores/resource.store";
-import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { ActiveResourceStore } from "@21n/data/datafn/resource.store";
 import type { IRecordId } from "@21n/types/data.type";
-import { linker } from "@21n/products/memotron/linking/link.store";
-import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
-import { collectionStore } from "@21n/components/collection/collection.store";
+import {
+  determineResourceType,
+  isSameResource
+} from "@21n/data/datafn/resource.utils";
 import type {
   ICollectible,
   ICollectionExpanded,
@@ -11,11 +11,16 @@ import type {
 } from "@21n/components/collection/collection.type";
 import { logger } from "@21n/components/debug/logger.client";
 import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-import { resolveAvatar } from "@21n/components/collection/collection.utils";
+import {
+  resolveAvatar,
+  resolveCollectionTypes
+} from "@21n/components/collection/collection.utils";
+import { Resource } from "@21n/data/datafn/resource.enum";
+import { datafn } from "@21n/stores/datafn.store";
 import type {
-  IResource,
-  IResourceCaptureV2
-} from "@21n/components/flux/resourceStores/resource.type";
+  IActiveResource,
+  IResource
+} from "@21n/data/datafn/resource.type";
 
 function resolveResourceKey(item: unknown): string | undefined {
   if (!item) return undefined;
@@ -41,18 +46,44 @@ function resolveResourceKey(item: unknown): string | undefined {
 
 export class CollectibleStore<
   T extends IResource & ICollectible,
-  S extends ResourceStore<T, IResourceCaptureV2<T>>,
-  V extends IResource & ICollectible
-> extends ActiveResourceStore<T, S, V> {
+  V extends IActiveResource & ICollectible
+> extends ActiveResourceStore<T, V> {
   async linkCollection(id: IRecordId, src?: IRecordId) {
     const resource = this.get();
-    const result = await linker.link(src ?? resource.id, id);
-    if (result) {
-      const collections = [...(resource.collections ?? []), id];
-      this.modify({
-        collections
-      } as Partial<T>);
+    const previousCollections = resource.collections ?? [];
+    const collections = [...previousCollections, id];
+    this.update((prev) => ({ ...prev, collections }) as V);
+    const sourceId = src ?? resource.id;
+    const resourceType = determineResourceType(sourceId);
+    if (resourceType === Resource.unknown) return undefined;
+    let result;
+    try {
+      result = await datafn.table(resourceType).mutate({
+        operation: "relate",
+        id: sourceId.toString(),
+        relations: {
+          collections: [
+            {
+              $ref: id.toString(),
+              fromResource: resourceType.toString()
+            }
+          ]
+        }
+      });
+    } catch (error) {
+      this.update(
+        (prev) => ({ ...prev, collections: previousCollections }) as V
+      );
       await this.refreshTypes();
+      throw error;
+    }
+    try {
+      await this.refreshTypes();
+    } catch (error) {
+      logger.error({
+        at: "CollectibleStore.linkCollection.refreshTypes",
+        error
+      });
     }
     return result;
   }
@@ -65,22 +96,32 @@ export class CollectibleStore<
       (item) => resolveResourceKey(item) !== collectionId
     );
     this.update((prev) => ({ ...prev, collections }) as V);
-    await this.refreshTypes();
     try {
-      await linker.unlink(src ?? resource.id, id);
-      await this.resourceStore.modify(
-        this.id,
-        {
-          collections
-        } as Partial<T>,
-        {
-          isPreventBackPropagation: true
-        }
-      );
+      const sourceId = src ?? resource.id;
+      const resourceType = determineResourceType(sourceId);
+      if (resourceType !== Resource.unknown) {
+        await datafn.table(resourceType).mutate({
+          operation: "unrelate",
+          id: sourceId.toString(),
+          relations: {
+            collections: [id]
+          }
+        });
+      }
     } catch (error) {
-      this.update((prev) => ({ ...prev, collections: previousCollections }) as V);
+      this.update(
+        (prev) => ({ ...prev, collections: previousCollections }) as V
+      );
       await this.refreshTypes();
       throw error;
+    }
+    try {
+      await this.refreshTypes();
+    } catch (error) {
+      logger.error({
+        at: "CollectibleStore.unlinkCollection.refreshTypes",
+        error
+      });
     }
   }
 
@@ -91,7 +132,7 @@ export class CollectibleStore<
       this.update((n) => ({ ...n, types: [] }));
       return;
     }
-    const types = await collectionStore.resolveTypes(collections);
+    const types = await resolveCollectionTypes(collections);
     // const avatar = await this.refreshAvatar(self.id, {
     //   types
     // });
@@ -117,29 +158,47 @@ export class CollectibleStore<
     });
     let types = params?.types;
     if (!types && params.collections) {
-      types = await collectionStore.resolveTypes(params.collections);
+      types = await resolveCollectionTypes(params.collections);
     }
     if (!types || !isValidArrayWithData(types)) return;
     const avatar = resolveAvatar(types);
-    this.resourceStore.modifyAsSystem(id, {
-      avatar
-    } as unknown as Partial<T>);
+    const resourceType = determineResourceType(id);
+    if (resourceType !== Resource.unknown) {
+      await datafn.table(resourceType).mutate({
+        operation: "merge",
+        id: id.toString(),
+        record: { avatar },
+        system: true
+      });
+    }
     return avatar;
   }
 
   updateProperty = async (property: ICollectionItemPropertyValue) => {
-    let properties = this.get().properties ?? [];
-    properties = properties.filter((x) => !isSameResource(x, property));
-    this.update((prev) => ({ ...prev, properties: [...properties, property] }));
-    return this.resourceStore.modify(
-      this.id,
-      {
-        properties: [...properties, property]
-      } as Partial<T>,
-      {
-        isDebounced: true,
-        debounceKey: "property" + property.id.toString()
-      }
-    );
+    const resource = this.get();
+    let propertyValues = this.get().propertyValues ?? [];
+    propertyValues = propertyValues.filter((x) => !isSameResource(x, property));
+    this.update((prev) => ({
+      ...prev,
+      propertyValues: [...propertyValues, property]
+    }));
+    const resourceType = determineResourceType(resource.id);
+    if (resourceType === Resource.unknown) return undefined;
+    return datafn.table(resourceType).mutate({
+      operation: "relate",
+      id: resource.id.toString(),
+      relations: {
+        propertyValues: [
+          {
+            $ref: property.id.toString(),
+            fromResource: resourceType.toString(),
+            collectionId: property.collectionId,
+            value: property.value
+          }
+        ]
+      },
+      debounceKey: "property" + property.id.toString(),
+      debounceMs: 1500
+    });
   };
 }

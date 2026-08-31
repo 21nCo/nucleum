@@ -20,7 +20,8 @@
   import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
   import { markdownSettings } from "@21n/components/markdown/markdown.settings";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
-  let previewId: string | undefined = $markdownSettings.callout[0]?.id;
+  let callouts = $state([...$markdownSettings.callout]);
+  let previewId: string | undefined = callouts[0]?.id;
   let error: string | undefined = undefined;
   const columns: TableColumn[] = [
     {
@@ -78,9 +79,8 @@
   ];
 
   function addCallout() {
-    console.log("addCallout");
-    $markdownSettings.callout = [
-      ...$markdownSettings.callout,
+    callouts = [
+      ...callouts,
       {
         id: generateSimpleRandomId(),
         avatar: {
@@ -94,13 +94,12 @@
     ];
   }
   async function onSave() {
-    console.log("onSave", $markdownSettings.callout);
     error = undefined;
-    if ($markdownSettings.callout.some((x) => !x.label)) {
+    if (callouts.some((x) => !x.label)) {
       error = "Please enter a label for each callout";
       return;
     }
-    return markdownSettings.save();
+    return markdownSettings.modify({ callout: callouts });
   }
 </script>
 
@@ -108,15 +107,15 @@
   <ModalContentPadded class="w-full flex flex-1 overflow-y-auto">
     <Table2
       {columns}
-      bind:data={$markdownSettings.callout}
+      bind:data={callouts}
       actions={[{ action: TableCellDefaultAction.REMOVE, index: 0 }]}
       addAction="Add"
       onAdd={addCallout}
     />
   </ModalContentPadded>
   <!-- Callout Preview -->
-  {#if previewId}
-    {@const preview = $markdownSettings.callout.find(
+{#if previewId}
+    {@const preview = callouts.find(
       (item) => item.id === previewId
     )}
     <CustomColorPropagator

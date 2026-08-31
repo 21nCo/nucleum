@@ -35,7 +35,9 @@
   };
 
   function emitDebouncedChange() {
-    onDebouncedChange?.(hue);
+    if (typeof onDebouncedChange === "function") {
+      onDebouncedChange(hue);
+    }
   }
 
   const debouncedChangePropagation = debouncer(emitDebouncedChange, 1000);

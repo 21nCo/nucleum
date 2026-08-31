@@ -4,22 +4,29 @@ import {
   type ICollectionViewCapture,
   type ICollectionCapture
 } from "@21n/components/collection/collection.type";
-import { collectionStore } from "@21n/components/collection/collection.store";
-import { linker } from "@21n/products/memotron/linking/link.store";
 import JSZip from "jszip";
 import { sanitizeAndResolve } from "@21n/products/memotron/node/url.utils";
-import { nodeStore } from "@21n/products/memotron/node/node.store";
 import { NodeType } from "@21n/products/memotron/node/node.type";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { generateResourceId } from "@21n/shared-utils/surreal.utils";
+import { Resource } from "@21n/data/datafn/resource.enum";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
 import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 import { GlobalEvent } from "@21n/types/event.enum";
 import { logger } from "@21n/components/debug/logger.client";
-import { viewStore } from "@21n/components/collection/view.store";
 import { performApiCall } from "@21n/utils/network.utils";
 import { UserDataMode } from "@21n/types/account.type";
 import account from "@21n/stores/account.store";
 import { parse } from "@21n/shared-utils/json.utils";
+import { datafn } from "@21n/stores/datafn.store";
+import type { IRecordId } from "@21n/types/data.type";
+
+function isYoutubeUrl(url: string) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return hostname === "youtube.com" || hostname.endsWith(".youtube.com");
+  } catch {
+    return false;
+  }
+}
 
 export class PocketImporter {
   private processedUrls: Map<string, string> = new Map();
@@ -304,7 +311,7 @@ export class PocketImporter {
                 responseNode.description ?? responseNode.ogDescription;
               const title = responseNode.title ?? responseNode.ogTitle;
               node.body.description = desc ?? node.body.description;
-              if (!node.url.includes("www.youtube.com")) {
+              if (!isYoutubeUrl(node.url)) {
                 node.label = title ?? node.label;
               }
               node.metadata = {
@@ -327,11 +334,43 @@ export class PocketImporter {
     } catch (error) {
       console.error("Error getting multiple webpage metadata:", error);
     }
-    const createdNodes = await nodeStore.create(nodes as any);
-    return createdNodes;
+    const records = nodes.map(({ collections, ...record }) =>
+      Object.fromEntries(
+        Object.entries(record).filter(([, value]) => value !== undefined)
+      )
+    );
+    await datafn.node.mutate(
+      records.map((record) => ({
+        operation: "insert",
+        id: record.id,
+        record
+      })) as any
+    );
+    const relationMutations = nodes.flatMap((node) => {
+      const mutations: any[] = [];
+      if (node.collections?.length) {
+        mutations.push({
+          operation: "relate",
+          id: node.id,
+          relations: {
+            collections: node.collections.map((collectionId: string) => ({
+              $ref: collectionId,
+              fromResource: Resource.node
+            }))
+          }
+        });
+      }
+      return mutations;
+    });
+    if (relationMutations.length > 0) {
+      await datafn.node.mutate(relationMutations);
+    }
+    return records;
   }
   private async createCollections(collections: any[]) {
-    let collectionsToCreate: ICollectionCapture[] = [];
+    let collectionsToCreate: Array<
+      ICollectionCapture & { id: IRecordId; views: IRecordId[] }
+    > = [];
     let views: ICollectionViewCapture[] = [];
     for (const collection of collections) {
       const viewId = generateResourceId(Resource.view);
@@ -348,18 +387,55 @@ export class PocketImporter {
         importId: this.importId
       });
     }
-    const createdCollections =
-      await collectionStore.create(collectionsToCreate);
-    await viewStore.create(views);
-    return createdCollections;
+    await datafn.view.mutate(
+      views.map((record) => ({
+        operation: "insert",
+        id: record.id,
+        record: {
+          layout: CollectionLayout.BOARD,
+          tabBy: "none",
+          groupBy: "none",
+          subGroupBy: "none",
+          ...record
+        }
+      }))
+    );
+    await datafn.collection.mutate(
+      collectionsToCreate.map(({ views: _views, ...record }) => ({
+        operation: "insert",
+        id: record.id,
+        record
+      }))
+    );
+    await datafn.collection.mutate(
+      collectionsToCreate.map((record) => ({
+        operation: "relate",
+        id: record.id,
+        relations: {
+          views: record.views.map((viewId) => ({ $ref: viewId }))
+        }
+      })) as any
+    );
+    return collectionsToCreate;
   }
 
   private async addLinks() {
     for (const [collectionId, nodeIds] of this.collectionItemsMap) {
       console.log({ collectionId, nodeIds });
-      await linker.bulkLink(nodeIds, collectionId, Resource.collection, {
-        importId: this.importId
-      });
+      await datafn.node.mutate(
+        nodeIds.map((id) => ({
+          operation: "relate",
+          id,
+          relations: {
+            collections: [
+              {
+                $ref: collectionId,
+                fromResource: Resource.node
+              }
+            ]
+          }
+        })) as any
+      );
     }
   }
 

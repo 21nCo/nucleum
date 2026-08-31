@@ -1,9 +1,9 @@
 <script lang="ts">
   import { resizeListener } from "@21n/actions/resize.action";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
-  import LogThumbnailGoalsInfo from "@21n/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
+  import LogThumbnailObjectivesInfo from "@21n/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { formatSeconds, formatTime } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
@@ -65,6 +65,6 @@
     {/if}
   </div>
   {#if !isConstrainedHeight}
-    <LogThumbnailGoalsInfo session={item} />
+    <LogThumbnailObjectivesInfo session={item} />
   {/if}
 </button>

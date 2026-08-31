@@ -70,6 +70,15 @@
   function propagateChange() {
     onChange?.(config);
   }
+  function onOptionChange(
+    e: CustomEvent<Partial<IPropertyConfigOption> & { id: string }>
+  ) {
+    config.options = (config.options ?? []).map((option) =>
+      option.id === e.detail.id ? { ...option, ...e.detail } : option
+    );
+    config = config;
+    propagateChange();
+  }
   function onReorderOptions(e: DragDropEvent) {
     const { listId, toGroupId, fromId, toId } = e;
     if (!listId || listId !== "options") return;
@@ -137,7 +146,8 @@
     const newOption: IPropertyConfigOption = {
       label: label,
       id: generateSimpleRandomId(),
-      groupId
+      groupId,
+      color: Math.random() * 360
     };
     config.options = [newOption, ...config.options];
     propagateChange();
@@ -157,7 +167,8 @@
     const newOption: IPropertyConfigOption = {
       label: "",
       id: generateSimpleRandomId(),
-      groupId
+      groupId,
+      color: Math.random() * 360
     };
     if (atIndex !== undefined) {
       config.options?.splice(atIndex + 1, 0, newOption);
@@ -253,6 +264,7 @@
             onRemove={onremove}
             onAdd={handleAddOptionFromGroup}
             onGroup={onGroupAction}
+            onOptionChange={onOptionChange}
             onChange={() => {
               propagateChange();
             }}
@@ -270,6 +282,7 @@
       onDefault={ondefault}
       onRemove={onremove}
       onAdd={handleAddOptionFromGroup}
+      onOptionChange={onOptionChange}
       onChange={() => {
         propagateChange();
       }}

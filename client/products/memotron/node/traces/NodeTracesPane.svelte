@@ -14,8 +14,8 @@
   import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
   import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import Resources from "@21n/components/record/Records.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { convertDateStringToArray } from "@21n/utils/utils";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";

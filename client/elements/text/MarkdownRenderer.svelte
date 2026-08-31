@@ -1,6 +1,6 @@
 <script lang="ts">
   import MarkdownIt from "markdown-it";
-  import { sanitizeUrl } from "@21n/shared-utils/url.utils";
+  import { sanitizeMarkdownUrl } from "./markdown.utils";
 
   let {
     text = ""
@@ -15,61 +15,53 @@
 
   const fallbackLinkOpenRenderer =
     markdown.renderer.rules.link_open ??
-    ((tokens: any, idx: number, options: any, _: any, self: any) =>
-      self.renderToken(tokens, idx, options));
+    ((tokens: any, index: number, options: any, _: any, self: any) =>
+      self.renderToken(tokens, index, options));
   const fallbackLinkCloseRenderer =
     markdown.renderer.rules.link_close ??
-    ((tokens: any, idx: number, options: any, _: any, self: any) =>
-      self.renderToken(tokens, idx, options));
+    ((tokens: any, index: number, options: any, _: any, self: any) =>
+      self.renderToken(tokens, index, options));
 
-  markdown.validateLink = (url: string) => Boolean(sanitizeUrl(url));
-  markdown.normalizeLink = (url: string) => sanitizeUrl(url) ?? url;
+  markdown.validateLink = (url: string) => Boolean(sanitizeMarkdownUrl(url));
+  markdown.normalizeLink = (url: string) => sanitizeMarkdownUrl(url) ?? url;
   markdown.renderer.rules.link_open = (
     tokens: any,
-    idx: number,
+    index: number,
     options: any,
     env: any,
     self: any
   ) => {
-    const hrefIndex = tokens[idx].attrIndex("href");
+    const hrefIndex = tokens[index].attrIndex("href");
     const href =
-      hrefIndex >= 0 ? (tokens[idx].attrs?.[hrefIndex]?.[1] ?? "") : "";
-    const sanitizedHref = href ? sanitizeUrl(href) : "";
-
+      hrefIndex >= 0 ? (tokens[index].attrs?.[hrefIndex]?.[1] ?? "") : "";
+    const sanitizedHref = href ? sanitizeMarkdownUrl(href) : undefined;
     if (!sanitizedHref) {
-      tokens[idx].tag = "span";
-      if (hrefIndex >= 0) {
-        tokens[idx].attrs?.splice(hrefIndex, 1);
-      }
+      tokens[index].tag = "span";
+      if (hrefIndex >= 0) tokens[index].attrs?.splice(hrefIndex, 1);
     } else {
-      tokens[idx].attrSet("href", sanitizedHref);
-      tokens[idx].attrSet("class", "text-aps1 hover:underline");
+      tokens[index].attrSet("href", sanitizedHref);
+      tokens[index].attrSet("class", "text-aps1 hover:underline");
       const isExternal = sanitizedHref.startsWith("http");
-      tokens[idx].attrSet("target", isExternal ? "_blank" : "_self");
+      tokens[index].attrSet("target", isExternal ? "_blank" : "_self");
       if (isExternal) {
-        tokens[idx].attrSet("rel", "noopener noreferrer");
+        tokens[index].attrSet("rel", "noopener noreferrer");
       }
     }
-
-    return fallbackLinkOpenRenderer(tokens, idx, options, env, self);
+    return fallbackLinkOpenRenderer(tokens, index, options, env, self);
   };
   markdown.renderer.rules.link_close = (
     tokens: any,
-    idx: number,
+    index: number,
     options: any,
     env: any,
     self: any
   ) => {
-    if (tokens[idx - 1]?.tag === "span") {
-      tokens[idx].tag = "span";
-    }
-
-    return fallbackLinkCloseRenderer(tokens, idx, options, env, self);
+    if (tokens[index - 1]?.tag === "span") tokens[index].tag = "span";
+    return fallbackLinkCloseRenderer(tokens, index, options, env, self);
   };
 
-  const renderedText = $derived(markdown.render(text ?? ""));
+  const renderedText = $derived(markdown.render(text));
 
-  /** Prevents rendered links from triggering parent click handlers. */
   function stopLinkPropagation(node: HTMLElement) {
     const handleClick = (event: MouseEvent) => {
       const target = event.target;
@@ -77,9 +69,7 @@
         event.stopPropagation();
       }
     };
-
     node.addEventListener("click", handleClick);
-
     return {
       destroy() {
         node.removeEventListener("click", handleClick);
@@ -113,6 +103,6 @@
     padding-left: 1.25rem;
   }
   :global(.markdown-renderer li::before) {
-    content: "• ";
+    content: "\2022 ";
   }
 </style>

@@ -8,7 +8,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import view from "@21n/stores/view.store";
   import ControlBar from "@21n/products/pointron/focus/elements/controls/ControlBar.svelte";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import FocusPlayerTimeText from "@21n/products/pointron/focus/player/FocusPlayerTimeText.svelte";
   import InlineLoadingAnimation from "@21n/elements/feedback/animations/InlineLoadingAnimation.svelte";
   import { SessionState } from "@21n/types/pointron/sessionState.enum";
@@ -23,28 +23,60 @@
   import IntervalBar from "@21n/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
   import { fullScreen, player } from "@21n/components/modal/modal.store";
   import { logger } from "@21n/components/debug/logger.client";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
-  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import { determineResourceType } from "@21n/data/datafn/resource.utils";
+  import { resolveObjectiveColor } from "@21n/components/goals/goal.utils";
   import { hoverable } from "@21n/actions/hover.action";
   import { tooltip } from "@21n/actions/popover.action";
-  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
-  import { wait } from "@21n/utils/time.utils";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { focusPlayerPipRequestEvent } from "@21n/products/pointron/focus/player/focusPlayer.events";
   let playerContainerRef: any;
   let playerRef: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
     document.getElementById("playercontainer");
-  let isPipShown = false;
-  let hoverState = {
+  let isPipShown = $state(false);
+  let hoverState = $state({
     caretHovering: false,
     pipHovering: false
-  };
-  let isRenderPip: boolean = false;
-  let curentFocusItemExpanded: ITaskThumb | IGoalThumb | undefined = undefined;
+  });
+  let isRenderPip = $state(false);
+  let wasSessionRunningForPip = false;
+  let pendingNotStartedPipClose: ReturnType<typeof setTimeout> | undefined;
+  let pendingPipOffClose: ReturnType<typeof setTimeout> | undefined;
+  let isPipOpening = false;
   const isBreakReminderMode = $derived(
     $activeSession.timeRemainingToTakeBreak != undefined &&
-    $activeSession.timeRemainingToTakeBreak < 0
+      $activeSession.timeRemainingToTakeBreak < 0
   );
+  const currentFocusItemRecordStore = $derived.by(() => {
+    const focusItem = $currentFocusItem;
+    if (!focusItem?.id) return undefined;
+    const resource = determineResourceType(focusItem.id);
+    return toSvelteStore<
+      Array<(ITaskThumb | IObjectiveThumb) & { id: IRecordId }>
+    >(
+      datafn.table(resource).signal({
+        filters: { id: focusItem.id },
+        select: resource === "task" ? ["*", "objective.*"] : ["*", "parent.*"],
+        limit: 1,
+        metadata: {
+          includeTrashed: true,
+          includeArchived: true
+        }
+      }),
+      { initialData: [] }
+    );
+  });
+  const curentFocusItemExpanded = $derived.by(() => {
+    if (!currentFocusItemRecordStore) return undefined;
+    return $currentFocusItemRecordStore!.data[0] as
+      | ITaskThumb
+      | IObjectiveThumb
+      | undefined;
+  });
 
   function enableFullScreenPlayer() {
     if (isPipShown) return;
@@ -56,16 +88,31 @@
   }
 
   function resolveCurrentFocusItemGoal(
-    item: ITaskThumb | IGoalThumb | undefined
-  ): IGoalThumb | undefined {
+    item: ITaskThumb | IObjectiveThumb | undefined
+  ): IObjectiveThumb | undefined {
     if (!item) return undefined;
-    if ("goal" in item) {
-      return item.goal as IGoalThumb | undefined;
+    if ("objective" in item || "objectiveId" in item) {
+      return item.objective as IObjectiveThumb | undefined;
     }
-    return item as IGoalThumb;
+    return item as IObjectiveThumb;
+  }
+
+  function clearPendingNotStartedPipClose() {
+    if (!pendingNotStartedPipClose) return;
+    clearTimeout(pendingNotStartedPipClose);
+    pendingNotStartedPipClose = undefined;
+  }
+
+  function clearPendingPipOffClose() {
+    if (!pendingPipOffClose) return;
+    clearTimeout(pendingPipOffClose);
+    pendingPipOffClose = undefined;
   }
 
   function closePip() {
+    clearPendingNotStartedPipClose();
+    clearPendingPipOffClose();
+    isPipOpening = false;
     if (playerRef && $activeSession.isSessionRunning)
       playerContainer?.append(playerRef);
     isPipShown = false;
@@ -87,25 +134,85 @@
   }
   let pipWindowRef: any = null;
   let pipWindowPageHideHandler: ((event: any) => void) | null = null;
-  async function showPip(event: any) {
+  function syncPipState(isOn: boolean) {
+    if ($player.isPipOn !== isOn) {
+      player.togglePip(PointronAction.FOCUS_PLAYER);
+    }
+  }
+
+  function resetPipStateAfterFailedOpen() {
+    isPipShown = false;
+    isRenderPip = false;
+    syncPipState(false);
+  }
+
+  function resolvePipErrorName(error: unknown) {
+    if (error instanceof DOMException) return error.name;
+    if (typeof error === "object" && error && "name" in error) {
+      return String((error as { name?: unknown }).name ?? "");
+    }
+    return "";
+  }
+
+  function isExpectedPipOpenFailure(error: unknown) {
+    return [
+      "AbortError",
+      "InvalidStateError",
+      "NotAllowedError",
+      "NotSupportedError",
+      "SecurityError"
+    ].includes(resolvePipErrorName(error));
+  }
+
+  function resolvePipWindowDimension(
+    dimension: number | undefined,
+    fallback: number
+  ) {
+    const normalizedDimension = Math.round(dimension ?? fallback);
+    if (!Number.isFinite(normalizedDimension) || normalizedDimension < 1) {
+      return fallback;
+    }
+    return normalizedDimension;
+  }
+
+  function resolvePipWindowOptions() {
+    const containerWidth = playerContainerRef?.clientWidth;
+    const containerHeight = playerContainerRef?.clientHeight;
+    const playerWidth = playerRef?.clientWidth;
+    const playerHeight = playerRef?.clientHeight;
+    const width =
+      typeof containerWidth === "number" && containerWidth > 20
+        ? containerWidth - 20
+        : playerWidth;
+    const height =
+      typeof containerHeight === "number" && containerHeight > 0
+        ? containerHeight + 80
+        : typeof playerHeight === "number" && playerHeight > 0
+          ? playerHeight + 80
+          : undefined;
+    return {
+      width: resolvePipWindowDimension(width, 420),
+      height: resolvePipWindowDimension(height, 160)
+    };
+  }
+
+  async function showPip(event: Event | null) {
     event?.stopPropagation();
-    if (!playerRef) return;
+    if (!playerRef || isPipOpening) return;
     try {
       if (
-        "documentPictureInPicture" in window &&
+        !("documentPictureInPicture" in window) ||
         !window.documentPictureInPicture
-      )
-        return;
-      if (
-        "documentPictureInPicture" in window &&
-        !(window.documentPictureInPicture as any).window
       ) {
+        resetPipStateAfterFailedOpen();
+        return;
+      }
+      if (!(window.documentPictureInPicture as any).window) {
+        clearPendingNotStartedPipClose();
+        isPipOpening = true;
         const pipWindow = await (
           window.documentPictureInPicture as any
-        ).requestWindow({
-          width: playerContainerRef.clientWidth - 20,
-          height: playerContainerRef.clientHeight + 80
-        });
+        ).requestWindow(resolvePipWindowOptions());
         pipWindowPageHideHandler = (_event: any) => {
           closePip();
         };
@@ -135,56 +242,102 @@
         pipWindow.document.body.style.height = "100vh";
         pipWindow.document.body.style.width = "100vw";
         isPipShown = true;
-      } else {
+        isRenderPip = true;
+        syncPipState(true);
+      } else if (event) {
         closePip();
       }
     } catch (e) {
-      logger.error({ at: "pipHandler", e });
+      const isExpectedFailure = isExpectedPipOpenFailure(e);
+      resetPipStateAfterFailedOpen();
+      if (!isExpectedFailure) {
+        logger.error({ at: "pipHandler", e });
+      }
+    } finally {
+      isPipOpening = false;
     }
   }
+  function handleExternalPipRequest(event: Event) {
+    const sourceEvent = (event as CustomEvent<{ sourceEvent?: Event }>).detail
+      ?.sourceEvent;
+    void showPip(sourceEvent ?? event);
+  }
+
+  function scheduleNotStartedPipClose() {
+    clearPendingNotStartedPipClose();
+    pendingNotStartedPipClose = setTimeout(() => {
+      pendingNotStartedPipClose = undefined;
+      if (
+        $activeSession.state === SessionState.NOT_STARTED &&
+        !$activeSession.isSessionRunning
+      ) {
+        closePip();
+      }
+    }, 300);
+  }
+
+  function schedulePipOffClose() {
+    clearPendingPipOffClose();
+    pendingPipOffClose = setTimeout(() => {
+      pendingPipOffClose = undefined;
+      if ($player.isPipOn || !isPipShown) return;
+      if ($activeSession.isSessionRunning) {
+        syncPipState(true);
+        return;
+      }
+      closePip();
+    }, 300);
+  }
+
+  function handleSessionPipStateUpdate(
+    state: SessionState,
+    isSessionRunning: boolean
+  ) {
+    if (state === SessionState.FINISHED) {
+      clearPendingNotStartedPipClose();
+      wasSessionRunningForPip = isSessionRunning;
+      closePip();
+      return;
+    }
+    if (state === SessionState.NOT_STARTED && wasSessionRunningForPip) {
+      scheduleNotStartedPipClose();
+    } else if (state !== SessionState.NOT_STARTED || isSessionRunning) {
+      clearPendingNotStartedPipClose();
+    }
+    wasSessionRunningForPip = isSessionRunning;
+  }
+
   onMount(() => {
     playerRef = document.getElementById("focusplayer");
     playerContainer = document.getElementById("playercontainer");
+    window.addEventListener(
+      focusPlayerPipRequestEvent,
+      handleExternalPipRequest
+    );
     const sessionSub = activeSession.subscribe(async (x) => {
-      if (
-        x.state === SessionState.FINISHED ||
-        x.state === SessionState.NOT_STARTED
-      ) {
-        closePip();
-      }
-    });
-    const currentFocusItemSub = currentFocusItem.subscribe(async (x) => {
-      if (
-        (x &&
-          curentFocusItemExpanded &&
-          !isSameResource(curentFocusItemExpanded, x)) ||
-        !x ||
-        (x && !curentFocusItemExpanded)
-      ) {
-        if (x) {
-          curentFocusItemExpanded =
-            await activeSession.resolveCurrentFocusItemData({
-              item: x,
-              isReturnGoalIfTask: true
-            });
-        } else {
-          curentFocusItemExpanded = undefined;
-        }
-      }
+      handleSessionPipStateUpdate(x.state, x.isSessionRunning);
     });
     const sub = player.subscribe(async (x) => {
       if (x.isPipOn && !isPipShown) {
+        clearPendingPipOffClose();
         isRenderPip = true;
-        await wait(100);
-        showPip(null);
+        await tick();
+        if ($player.isPipOn && !isPipShown) {
+          void showPip(null);
+        }
       } else if (!x.isPipOn && isPipShown) {
-        closePip();
+        schedulePipOffClose();
       }
     });
     return () => {
+      window.removeEventListener(
+        focusPlayerPipRequestEvent,
+        handleExternalPipRequest
+      );
       sub();
       sessionSub();
-      currentFocusItemSub();
+      clearPendingNotStartedPipClose();
+      clearPendingPipOffClose();
     };
   });
 </script>
@@ -211,6 +364,7 @@
 >
   <div
     id="focusplayer"
+    data-testid="focus-player"
     class={cn("flex h-full w-full", $appearance.colorScheme.tailwindSelector, {
       "text-base text-fgs1": isPipShown,
       "bg-bgs1": isPipShown && !isBreakReminderMode,
@@ -230,7 +384,9 @@
       >
         <CustomColorPropagator
           type="button"
-          color={resolveGoalColor(resolveCurrentFocusItemGoal(curentFocusItemExpanded))}
+          color={resolveObjectiveColor(
+            resolveCurrentFocusItemGoal(curentFocusItemExpanded)
+          )}
           class={cn(
             "flex gap-2 h-full justify-between items-center px-4 py-2",
             isPipShown && {
@@ -276,10 +432,7 @@
                 {#if !$context.isEmbed}
                   <button
                     class="flex items-center justify-center"
-                    onclick={(event) => {
-                      event.stopPropagation();
-                      player.togglePip(PointronAction.FOCUS_PLAYER);
-                    }}
+                    onclick={showPip}
                     use:hoverable={{
                       onHover: (v) => {
                         hoverState.pipHovering = v;

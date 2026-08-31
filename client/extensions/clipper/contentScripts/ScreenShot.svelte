@@ -14,7 +14,7 @@
   import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { relayToBackgroundScript } from "@21n/utils/extension.utils";
-  import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
+  import type { OmitForCapture } from "@21n/data/datafn/resource.type";
   let {
     onSaved = undefined,
     onClose = undefined

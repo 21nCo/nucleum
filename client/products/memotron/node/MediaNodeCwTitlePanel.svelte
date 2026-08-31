@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { cn } from "@21n/utils/ui.utils";
   import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import NodeTitle from "@21n/products/memotron/node/title/NodeTitle.svelte";
   import ResourceStatusBanner from "@21n/components/record/RecordStatusBanner.svelte";
   import CollectionsLane from "@21n/products/memotron/node/floatingBar/CollectionsLane.svelte";
-  import { isShowStatusBanner } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isShowStatusBanner } from "@21n/data/datafn/resource.utils";
   let { node }: { node: IActiveNodeStore } = $props();
 </script>
 

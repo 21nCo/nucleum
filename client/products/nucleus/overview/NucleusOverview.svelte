@@ -44,7 +44,7 @@
 </script>
 
 <div class="w-full h-full flex flex-col">
-  <div class="h-12 min-h-12 border-b border-brs3">
+  <div class="h-12 min-h-12 border-b border-brs3 pl-3">
     <BoxSwitcher options={items} bind:selected={selectedPanel} />
   </div>
   {#if selectedPanel === OverviewPanel.DASHBOARD}

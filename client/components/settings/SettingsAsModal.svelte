@@ -7,7 +7,6 @@
   import SettingThumbnail from "@21n/components/settings/SettingThumbnail.svelte";
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import type { IAction } from "@21n/types/action.type";
-  import { onMount } from "svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { appStore } from "@21n/stores/app.store";
   import ProfileCpSection from "@21n/components/settings/account/ProfileCPSection.svelte";
@@ -25,25 +24,25 @@
     $page.url.searchParams.get(AppSearchParam.RETURN_TO)
   );
   const config = resolveProductConfig().settings;
-  onMount(() => {
-    const pageSub = page.subscribe((x) => {
-      const settingSearchParam = x?.url?.searchParams?.get("setting");
-      if (settingSearchParam) {
-        selected = settingSearchParam;
-        runAction(selected);
-      }
-    });
-    return () => {
-      pageSub();
-    };
+  const settingSearchParam = $derived(
+    $page.url.searchParams.get(AppSearchParam.SETTING)
+  );
+  $effect(() => {
+    if (settingSearchParam) runAction(settingSearchParam);
   });
   async function runAction(slug: string) {
-    if (!slug) return;
-    const result = await appStore.runAction(slug, {
-      isReturnIfComponent: true
-    });
-    if (!result) return;
-    pageAction = result;
+    if (!slug) {
+      pageAction = null;
+      return;
+    }
+    selected = slug;
+    const action = appStore.resolveAction(slug);
+    if (action?.component) {
+      pageAction = action;
+      return;
+    }
+    pageAction = null;
+    appStore.runAction(slug);
   }
 </script>
 
@@ -102,6 +101,9 @@
                       isActive={selected === item}
                       width="w-40"
                       onclick={() => {
+                        selected = item;
+                        const action = appStore.resolveAction(item);
+                        if (action?.component) pageAction = action;
                         appStore.toggleSearchParam({
                           [AppSearchParam.SETTING]: item
                         });

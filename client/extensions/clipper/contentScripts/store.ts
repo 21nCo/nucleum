@@ -1,32 +1,31 @@
 import { logger } from "@21n/components/debug/logger.client";
+import type { DfqlRelations } from "@datafn/core";
 import {
   ErrorMessage,
   ResourceErrorCode
 } from "@21n/components/error/error.type";
 import { ResourceError } from "@21n/components/error/errors";
-import { FluxMethod } from "@21n/components/flux/flux.type";
-import { generateResourceId } from "@21n/components/flux/flux.utils";
-import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
-import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { DatafnExtensionMethod } from "@21n/extensions/extension.store";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { extensionDatafn } from "@21n/extensions/extension.store";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import type {
   CaptureOmittedFields,
   OmitFields,
   OmitForCapture,
   OmitForCaptureWithId
-} from "@21n/components/flux/resourceStores/resource.type";
+} from "@21n/data/datafn/resource.type";
 import {
   determineResourceType,
   isSameResource,
   resourceInList
-} from "@21n/components/flux/resourceStores/resource.utils";
+} from "@21n/data/datafn/resource.utils";
 import { Persistence } from "@21n/persistence/persistence";
 import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
 import {
-  linker,
-  linkTagStore
-} from "@21n/products/memotron/linking/link.store";
-import { nodeStore } from "@21n/products/memotron/node/node.store";
+  LinkType,
+  type ILinkTag
+} from "@21n/products/memotron/linking/link.type";
 import {
   type IClip,
   type IClipCapture,
@@ -53,13 +52,11 @@ import {
 } from "@21n/products/memotron/node/url.utils";
 import { ObservableStore } from "@21n/stores/client.store";
 import { appEvents } from "@21n/stores/notification.store";
-import {
-  type IRecordId,
-  PersistenceActionType
-} from "@21n/types/data.type";
+import type { IRecordId } from "@21n/types/data.type";
 import { Placement } from "@21n/types/direction.enum";
 import { ExtensionEvent } from "@21n/types/extension.type";
 import { AlertType } from "@21n/types/notification.type";
+import { get, writable } from "svelte/store";
 
 import {
   relayToBackgroundScript,
@@ -90,6 +87,291 @@ import {
   SyncStatus
 } from "@21n/extensions/clipper/contentScripts/types";
 
+async function queryOutgoingLinkIdsBySource(sourceIds: IRecordId[]) {
+  if (sourceIds.length === 0) return new Map<string, IRecordId[]>();
+  const records = await extensionDatafn({
+    method: DatafnExtensionMethod.SELECT_MANY,
+    args: {
+      resource: Resource.node,
+      params: {
+        filters: {
+          id: { $in: sourceIds }
+        },
+        select: ["id", "links.#"]
+      }
+    }
+  });
+  return new Map(
+    (records ?? []).map((record: any) => [
+      record.id.toString(),
+      (record.links ?? [])
+        .map((row: any) => row.to ?? row.out ?? row.id)
+        .filter(Boolean)
+    ])
+  );
+}
+
+function isCollectionItemResource(resource: Resource) {
+  return resource === Resource.node || resource === Resource.objective;
+}
+
+function isLinkableResource(resource: Resource) {
+  return (
+    resource === Resource.node ||
+    resource === Resource.objective ||
+    resource === Resource.task ||
+    resource === Resource.event
+  );
+}
+
+async function relateRecord(
+  from: IRecordId,
+  to: IRecordId,
+  params?: {
+    linkType?: LinkType;
+    tags?: IRecordId[];
+    location?: string;
+  }
+) {
+  const fromResource = determineResourceType(from);
+  const toResource = determineResourceType(to);
+  if (toResource === Resource.collection) {
+    if (!isCollectionItemResource(fromResource)) return undefined;
+    return extensionDatafn({
+      method: DatafnExtensionMethod.MUTATION,
+      args: {
+        resource: fromResource,
+        params: {
+          operation: "relate",
+          id: from.toString(),
+          relations: {
+            collections: [
+              {
+                $ref: to.toString(),
+                fromResource: fromResource.toString()
+              }
+            ]
+          }
+        } as any
+      }
+    });
+  }
+  if (!isLinkableResource(fromResource) || !isLinkableResource(toResource)) {
+    return undefined;
+  }
+  return extensionDatafn({
+    method: DatafnExtensionMethod.MUTATION,
+    args: {
+      resource: fromResource,
+      params: {
+        operation: "relate",
+        id: from.toString(),
+        relations: {
+          links: [
+            {
+              $ref: to.toString(),
+              fromResource: fromResource.toString(),
+              toResource: toResource.toString(),
+              linkType: params?.linkType ?? LinkType.DIRECT,
+              tags: params?.tags,
+              location: params?.location
+            }
+          ]
+        }
+      } as any
+    }
+  });
+}
+
+async function unrelateRecord(from: IRecordId, to: IRecordId) {
+  const fromResource = determineResourceType(from);
+  const toResource = determineResourceType(to);
+  if (toResource === Resource.collection) {
+    if (!isCollectionItemResource(fromResource)) return undefined;
+    return extensionDatafn({
+      method: DatafnExtensionMethod.MUTATION,
+      args: {
+        resource: fromResource,
+        params: {
+          operation: "unrelate",
+          id: from.toString(),
+          relations: {
+            collections: [to.toString()]
+          }
+        } as any
+      }
+    });
+  }
+  if (!isLinkableResource(fromResource)) return undefined;
+  return extensionDatafn({
+    method: DatafnExtensionMethod.MUTATION,
+    args: {
+      resource: fromResource,
+      params: {
+        operation: "unrelate",
+        id: from.toString(),
+        relations: {
+          links: [to.toString()]
+        }
+      } as any
+    }
+  });
+}
+
+async function insertNodeRecords(
+  input: OmitForCaptureWithId<INode> | OmitForCaptureWithId<INode>[]
+) {
+  function resolveMarkdownParentFields(mdParent: unknown) {
+    if (!Array.isArray(mdParent)) return {};
+    const parents = mdParent.filter(
+      (parent): parent is IRecordId => typeof parent === "string"
+    );
+    const parent = parents[parents.length - 1];
+    if (!parent) return {};
+    return {
+      parent,
+      parentPath: parents.join("-")
+    };
+  }
+  const nodes = (Array.isArray(input) ? input : [input]).map((node) => ({
+    metaType: "",
+    contentType: NodeType.UNKNOWN,
+    ...node,
+    id: node.id ?? generateResourceId(Resource.node)
+  }));
+  await extensionDatafn({
+    method: DatafnExtensionMethod.MUTATION,
+    args: {
+      resource: Resource.node,
+      params: nodes.map((node) => {
+        const { children, collections, links, propertyValues, ...record } =
+          node as OmitForCaptureWithId<INode> & {
+            children?: IRecordId[];
+            collections?: IRecordId[];
+            links?: IRecordId[];
+            propertyValues?: INodePropertyValue[];
+          };
+        if (typeof record.parent !== "string") {
+          delete record.parent;
+        }
+        return {
+          operation: "insert",
+          id: record.id,
+          record: {
+            ...record,
+            ...resolveMarkdownParentFields(record.mdParent)
+          }
+        };
+      }) as any
+    }
+  });
+  const relationMutations = nodes
+    .map((node) => {
+      const relations: DfqlRelations = {};
+      const collections =
+        (node as { collections?: IRecordId[] }).collections ?? [];
+      const links = (node as { links?: IRecordId[] }).links ?? [];
+      const propertyValues =
+        (node as { propertyValues?: INodePropertyValue[] }).propertyValues ??
+        [];
+      if (collections.length > 0) {
+        relations.collections = collections.map((id) => ({
+          $ref: id.toString(),
+          fromResource: Resource.node
+        }));
+      }
+      if (links.length > 0) {
+        relations.links = links
+          .filter((id) => isLinkableResource(determineResourceType(id)))
+          .map((id) => ({
+            $ref: id.toString(),
+            fromResource: Resource.node,
+            toResource: determineResourceType(id).toString(),
+            linkType: LinkType.DIRECT
+          }));
+      }
+      if (propertyValues.length > 0) {
+        relations.propertyValues = propertyValues.map((property) => ({
+          $ref: property.id.toString(),
+          fromResource: Resource.node,
+          collectionId: property.collectionId,
+          value: property.value
+        }));
+      }
+      if (Object.keys(relations).length === 0) return undefined;
+      return {
+        operation: "relate",
+        id: node.id,
+        relations
+      };
+    })
+    .filter(Boolean);
+  if (relationMutations.length > 0) {
+    await extensionDatafn({
+      method: DatafnExtensionMethod.MUTATION,
+      args: {
+        resource: Resource.node,
+        params: relationMutations as any
+      }
+    });
+  }
+  return nodes.map((node) => ({
+    ...node,
+    updatedAt: "updatedAt" in node ? node.updatedAt : new Date()
+  }));
+}
+
+function mergeNodeRecord(id: IRecordId, record: Partial<INode>) {
+  return extensionDatafn({
+    method: DatafnExtensionMethod.MUTATION,
+    args: {
+      resource: Resource.node,
+      params: {
+        operation: "merge",
+        id,
+        record
+      } as any
+    }
+  });
+}
+
+function trashNodeRecord(id: IRecordId) {
+  return extensionDatafn({
+    method: DatafnExtensionMethod.MUTATION,
+    args: {
+      resource: Resource.node,
+      params: {
+        operation: "trash",
+        id
+      } as any
+    }
+  });
+}
+
+function updateNodePropertyValues(
+  id: IRecordId,
+  propertyValues: INodePropertyValue[]
+) {
+  return extensionDatafn({
+    method: DatafnExtensionMethod.MUTATION,
+    args: {
+      resource: Resource.node,
+      params: {
+        operation: "relate",
+        id,
+        relations: {
+          propertyValues: propertyValues.map((property) => ({
+            $ref: property.id.toString(),
+            fromResource: Resource.node,
+            collectionId: property.collectionId,
+            value: property.value
+          }))
+        }
+      } as any
+    }
+  });
+}
+
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
   constructor() {
@@ -112,7 +394,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       n.links = page?.links ?? [];
       n.notes = page?.notes ?? "";
       n.title = page?.label ?? window.document.title;
-      n.properties = page?.properties ?? [];
+      n.propertyValues = page?.propertyValues ?? [];
       n.collections = page?.collections ?? [];
       return n;
     });
@@ -130,15 +412,15 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
    * TODO - save url as top level field - to enable querying via dexie, fetching links
    */
   async refresh() {
-    const result = await extensionFlux({
-      method: FluxMethod.SELECT_MANY,
+    const result = await extensionDatafn({
+      method: DatafnExtensionMethod.SELECT_MANY,
       args: {
         resource: Resource.node,
         params: {
           search: {
-            properties: ["url"],
+            fields: ["url"],
             query: this.get().url
-          }
+          } as any
         }
       }
     });
@@ -155,38 +437,37 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       this.loader({ page: { url: this.get().url, clips: [] } });
       return;
     }
-    const clips = await extensionFlux({
-      method: FluxMethod.SELECT_MANY,
+    const clips = await extensionDatafn({
+      method: DatafnExtensionMethod.SELECT_MANY,
       args: {
         resource: Resource.node,
         params: {
           filters: {
-            parent: page.id
+            parent: page.id.toString()
           }
         }
       }
     });
-    const linksResult = await extensionFlux({
-      method: FluxMethod.SELECT_MANY,
-      args: {
-        resource: Resource.link,
-        params: {
-          filters: {
-            in: [page.id, ...(clips?.map((c) => c.id) ?? [])]
-          }
-        }
-      }
-    });
+    const linkIdsBySource = await queryOutgoingLinkIdsBySource([
+      page.id,
+      ...(clips?.map((c) => c.id) ?? [])
+    ]);
     let rootLinks: IRecordId[] = [];
-    if (linksResult && Array.isArray(linksResult)) {
-      rootLinks = linksResult.filter((l) => l.in === page.id).map((l) => l.out);
+    if (linkIdsBySource.size > 0) {
+      rootLinks = linkIdsBySource.get(page.id.toString()) ?? [];
       if (clips && Array.isArray(clips)) {
         clips.forEach((c) => {
-          c.links = linksResult.filter((l) => l.in === c.id).map((l) => l.out);
+          c.links = linkIdsBySource.get(c.id.toString()) ?? [];
         });
       }
     }
-    logger.debug({ at: "refresh", page, clips, links: rootLinks, linksResult });
+    logger.debug({
+      at: "refresh",
+      page,
+      clips,
+      links: rootLinks,
+      linkIdsBySource
+    });
     this.loader({ page: { ...page, clips: clips ?? [], links: rootLinks } });
   }
 
@@ -238,7 +519,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       ...data,
       creationContext: params?.creationContext
     };
-    const response = await nodeStore.create([node]);
+    const response = await insertNodeRecords([node]);
     if (!response) return;
     logger.log({ at: "savePage", response });
     this.update((n) => {
@@ -343,7 +624,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       contentType: data.contentType,
       label: undefined
     };
-    const response = await nodeStore.create([clip]);
+    const response = await insertNodeRecords([clip]);
     if (!response || !Array.isArray(response)) return;
     logger.debug({ at: "saveClip", response });
     const clipNode = response[0] as IWebScreenshotClip;
@@ -473,7 +754,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       metadata: {},
       contentType: NodeType.TWITTER_PROFILE
     };
-    const response = await nodeStore.create([
+    const response = await insertNodeRecords([
       { ...tweetNode, label: undefined },
       {
         ...twitterProfileNode,
@@ -532,7 +813,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       data.username as string
     );
     logger.log({ at: "saveTwitterProfile", data, twitterProfileId });
-    const response = await nodeStore.create([
+    const response = await insertNodeRecords([
       { ...data, id: twitterProfileId }
     ]);
     if (!response || !Array.isArray(response)) return;
@@ -547,6 +828,42 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       type: AlertType.SUCCESS
     });
     return node;
+  }
+
+  private async saveLinkTag(label: string, group: string) {
+    const existing = (await extensionDatafn({
+      method: DatafnExtensionMethod.SELECT_MANY,
+      args: {
+        resource: Resource.linkTag,
+        params: {
+          select: ["id", "label", "group"]
+        }
+      }
+    })) as ILinkTag[] | { data?: ILinkTag[] } | undefined;
+    const tags = Array.isArray(existing) ? existing : (existing?.data ?? []);
+    const match = tags.find(
+      (tag) =>
+        tag.label?.toLowerCase() === label.toLowerCase() &&
+        (tag.group ?? "").toLowerCase() === group.toLowerCase()
+    );
+    if (match) return match;
+    const record = {
+      id: generateResourceId(Resource.linkTag),
+      label,
+      group: group.toLowerCase()
+    };
+    await extensionDatafn({
+      method: DatafnExtensionMethod.MUTATION,
+      args: {
+        resource: Resource.linkTag,
+        params: {
+          operation: "insert",
+          id: record.id,
+          record
+        }
+      }
+    });
+    return record;
   }
 
   private async saveSocialPost(params: {
@@ -577,34 +894,28 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     let mainPost = params.main
       ? { ...this.socialIdMapper(params.main.data), parent: mainParent?.id }
       : null;
+    const pendingRelations: {
+      from: IRecordId;
+      to: IRecordId;
+      content: { tags: IRecordId[] };
+    }[] = [];
     if (mainPost && posts.length > 0) {
-      const threadRelationId = await linkTagStore.save("thread", "social");
+      const threadRelation = await this.saveLinkTag("thread", "social");
       const content = {
-        tags:
-          !Array.isArray(threadRelationId) && threadRelationId?.id
-            ? [threadRelationId?.id]
-            : []
+        tags: threadRelation?.id ? [threadRelation.id] : []
       };
       for (const post of posts) {
-        await linker.link(post.id, mainPost.id, {
-          content
-        });
+        pendingRelations.push({ from: post.id, to: mainPost.id, content });
       }
     }
     if (posts.length > 0 && subs.length > 0) {
-      const subRelationId = await linkTagStore.save("sub", "social");
+      const subRelation = await this.saveLinkTag("sub", "social");
       const content = {
-        tags:
-          !Array.isArray(subRelationId) && subRelationId?.id
-            ? [subRelationId?.id]
-            : []
+        tags: subRelation?.id ? [subRelation.id] : []
       };
       for (const [index, post] of posts.entries()) {
         const sub = subs[index];
-        if (sub)
-          await linker.link(post.id, sub.id, {
-            content
-          });
+        if (sub) pendingRelations.push({ from: post.id, to: sub.id, content });
       }
     }
     if (mainPost) {
@@ -620,13 +931,16 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
     logger.debug({ at: "saveSocialPost", mainPost });
     const main = mainPost ? [mainPost, mainParent] : [];
-    const response = await nodeStore.create([
+    const response = await insertNodeRecords([
       ...main,
       ...posts,
       ...profiles,
       ...subs
     ]);
     if (!response || !Array.isArray(response)) return;
+    for (const relation of pendingRelations) {
+      await relateRecord(relation.from, relation.to, relation.content);
+    }
     this.update((n) => {
       n.clips = [
         ...(n.clips ?? []),
@@ -675,7 +989,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       }
     };
     logger.debug({ at: "saveSocialProfile", profile, profileId });
-    const response = await nodeStore.create([{ ...data, id: profileId }]);
+    const response = await insertNodeRecords([{ ...data, id: profileId }]);
     if (!response || !Array.isArray(response)) return;
     const node = response[0] as INode;
     this.update((n) => {
@@ -726,7 +1040,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       if (isAlreadyLinked)
         return { message: "Already linked", type: AlertType.ERROR };
       if (!webpage.id) return;
-      const response = await linker.link(webpage.id, to);
+      const response = await relateRecord(webpage.id, to);
       if (!response)
         return { message: "Linking failed", type: AlertType.ERROR };
       const resourceType = determineResourceType(to);
@@ -736,9 +1050,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           n.links = [...(n.links ?? []), to];
           n.collections = collections;
           return n;
-        });
-        await nodeStore.modify(webpage.id, {
-          collections
         });
         relayToSidePanel({
           event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
@@ -768,7 +1079,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   async removeLinkForPage(to: string) {
     const webpage = this.get();
     if (!webpage.id) return;
-    const response = await linker.unlink(webpage.id, to);
+    const response = await unrelateRecord(webpage.id, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
     const resourceType = determineResourceType(to);
@@ -814,7 +1125,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         "Already linked",
         ResourceErrorCode.ALREADY_EXISTS
       );
-    const response = await linker.link(from, to);
+    const response = await relateRecord(from, to);
     if (!response || response.error)
       throw new ResourceError(
         response?.error ?? "Linking failed",
@@ -833,9 +1144,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
           return c;
         });
         return n;
-      });
-      await nodeStore.modify(clip.id, {
-        collections
       });
     } else {
       this.update((n) => {
@@ -871,7 +1179,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       isFromSidePanel?: boolean;
     }
   ) {
-    const response = await linker.unlink(from, to);
+    const response = await unrelateRecord(from, to);
     if (!response)
       return { message: "Unlinking failed", type: AlertType.ERROR };
     const resourceType = determineResourceType(to);
@@ -924,7 +1232,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       isFromSidePanel?: boolean;
     }
   ) {
-    const response = await nodeStore.trash(id);
+    const response = await trashNodeRecord(id);
     if (!response)
       return { message: "Clip removal failed", type: AlertType.ERROR };
     this.update((n) => {
@@ -943,7 +1251,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   async updateTextClipColor(id: IRecordId, highlighterId: string) {
-    const updateResult = await nodeStore.modify(id, {
+    const updateResult = await mergeNodeRecord(id, {
       body: { highlighterId }
     });
     if (!updateResult) return;
@@ -978,7 +1286,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   private async _persistNotes(id: IRecordId, notes: string) {
-    return nodeStore.modify(id, { notes });
+    return mergeNodeRecord(id, { notes });
   }
 
   set(newValue: IWebpageStore) {
@@ -1059,7 +1367,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       isFromSidePanel?: boolean;
     }
   ) {
-    const response = await nodeStore.modify(id, { label });
+    const response = await mergeNodeRecord(id, { label });
     if (!response) return;
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
@@ -1084,7 +1392,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   ) {
     const clip = this.get().clips?.find(resourceInList(id));
     if (!clip) return;
-    const response = await nodeStore.modify(id, {
+    const response = await mergeNodeRecord(id, {
       body: { ...clip.body, ...body }
     });
     if (!response) return;
@@ -1105,14 +1413,14 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   async updatePageProperty(property: INodePropertyValue) {
     const webpage = this.get();
     if (!webpage.id) return;
-    const properties = webpage.properties?.filter(
+    const propertyValues = webpage.propertyValues?.filter(
       (x) => !isSameResource(x, property)
     );
-    const newProperties = [...(properties ?? []), property];
-    const response = await this.updateProperties(webpage.id, newProperties);
+    const newPropertyValues = [...(propertyValues ?? []), property];
+    const response = await this.updateProperties(webpage.id, newPropertyValues);
     if (!response || response.error) return;
     this.update((n) => {
-      n.properties = [...newProperties];
+      n.propertyValues = [...newPropertyValues];
       return n;
     });
     return response;
@@ -1135,16 +1443,16 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     if (!webpage?.clips) return;
     const clip = webpage.clips?.find(resourceInList(id));
     if (!clip) return;
-    const properties = clip.properties?.filter(
+    const propertyValues = clip.propertyValues?.filter(
       (x) => !isSameResource(x, property)
     );
-    const newProperties = [...(properties ?? []), property];
-    const response = await this.updateProperties(id, newProperties);
+    const newPropertyValues = [...(propertyValues ?? []), property];
+    const response = await this.updateProperties(id, newPropertyValues);
     if (!response || response.error) return;
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
         if (isSameResource(c, id)) {
-          c.properties = [...newProperties];
+          c.propertyValues = [...newPropertyValues];
         }
         return c;
       });
@@ -1155,9 +1463,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   private updateProperties(id: IRecordId, properties: INodePropertyValue[]) {
-    return nodeStore.modify(id, {
-      properties: [...properties]
-    });
+    return updateNodePropertyValues(id, [...properties]);
   }
 
   openInModal(id: string, params?: { isResumeVideoOnClose?: boolean }) {
@@ -1281,24 +1587,33 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
 
 export const feedbackPane = new FeedbackPaneStore();
 
-class ClipperToolbarState extends KeyValueStore<{
-  /**
-   * Whether the toolbar is open or collapsed
-   */
+type ClipperToolbarStateValue = {
   isOpen: boolean;
-  /**
-   * Whether the toolbar is hidden
-   */
   isHidden?: boolean;
   position: Placement.Right | Placement.Left | Placement.Bottom;
-}> {
-  constructor() {
-    super(Resource.clipperToolbarState, {
-      isOpen: true,
-      position: Placement.Right
-    });
-  }
+};
 
+const toolbarStateStore = writable<ClipperToolbarStateValue>({
+  isOpen: true,
+  position: Placement.Right
+});
+
+export const toolbarState = {
+  subscribe: toolbarStateStore.subscribe,
+  get() {
+    return get(toolbarStateStore);
+  },
+  update: toolbarStateStore.update,
+  modify(patch: Partial<ClipperToolbarStateValue>) {
+    toolbarStateStore.update((state) => ({ ...state, ...patch }));
+    return extensionDatafn({
+      method: DatafnExtensionMethod.KV_MERGE,
+      args: {
+        resource: Resource.clipperToolbarState,
+        data: patch
+      }
+    });
+  },
   toggle(isOpen?: boolean) {
     if (isOpen === undefined) {
       isOpen = !this.get().isOpen;
@@ -1309,7 +1624,7 @@ class ClipperToolbarState extends KeyValueStore<{
         webpage.refresh();
       }, 100);
     }
-  }
+  },
 
   toggleVisibility(isHidden?: boolean) {
     if (isHidden === undefined) {
@@ -1319,33 +1634,30 @@ class ClipperToolbarState extends KeyValueStore<{
     setTimeout(() => {
       webpage.refresh();
     }, 100);
-  }
+  },
 
   changePosition(
     position: Placement.Right | Placement.Left | Placement.Bottom
   ) {
     this.modify({ position });
-  }
+  },
 
   async refresh() {
-    const result = await extensionFlux({
-      method: FluxMethod.SELECT,
+    const result = await extensionDatafn({
+      method: DatafnExtensionMethod.SELECT,
       args: {
         resourceId: `kv:${Resource.clipperToolbarState}`
       }
     });
     if (result?.id) {
-      this.update((n) => {
-        n.isOpen = result.isOpen;
-        n.position = result.position;
-        return n;
-      });
+      toolbarStateStore.update((state) => ({
+        ...state,
+        isOpen: result.isOpen,
+        position: result.position
+      }));
     }
   }
-}
-export const toolbarState = ClipperToolbarState.resolve(
-  Resource.clipperToolbarState
-);
+};
 
 class SyncStore extends ObservableStore<ISyncStore> {
   constructor() {
@@ -1378,42 +1690,32 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
     logger.log({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
-    // items = items.slice(0, 800);
     const limitCount = 300;
-    let response;
     this.update((n) => {
       n.progress = 0;
       return n;
     });
     if (items.length > limitCount) {
-      // response = await Promise.all(resolveChunks());
       const chunks = resolveChunks();
       logger.log({ at: "syncStore save", chunks });
       for (const chunk of chunks) {
-        response = await chunk();
+        await chunk();
         this.update((n) => {
           n.progress = (chunks.indexOf(chunk) / chunks.length) * 100;
           return n;
         });
       }
     } else {
-      response = await nodeStore.create(items);
+      await insertNodeRecords(items);
     }
     this.update((n) => {
       n.progress = 100;
       return n;
     });
-    // function resolveChunks() {
-    //   const promises = [];
-    //   for (let i = 0; i < items.length; i += limitCount) {
-    //     promises.push(nodeStore.create(items.slice(i, i + limitCount)));
-    //   }
-    //   return promises;
-    // }
     function resolveChunks(): (() => Promise<any>)[] {
       const chunks: (() => Promise<any>)[] = [];
       for (let i = 0; i < items.length; i += limitCount) {
-        chunks.push(() => nodeStore.create(items.slice(i, i + limitCount)));
+        chunks.push(() => insertNodeRecords(items.slice(i, i + limitCount)));
       }
       return chunks;
     }
@@ -1437,8 +1739,8 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async refreshSyncState() {
     try {
       const id = this.get().id;
-      const result = await extensionFlux({
-        method: FluxMethod.SELECT,
+      const result = await extensionDatafn({
+        method: DatafnExtensionMethod.SELECT,
         args: {
           resourceId: "kv:clipperSync"
         }
@@ -1463,33 +1765,14 @@ class SyncStore extends ObservableStore<ISyncStore> {
     try {
       const id = this.get().id;
       if (!id) return;
-      //TODO - test merge mutation
-      // const query = `UPDATE kv:clipperSync SET ${id}={
-      //   status: "${status}",
-      //   updatedAt: time::now()
-      // };`;
-      // const result = await extensionFlux({
-      //   method: FluxMethod.MUTATION,
-      //   args: {
-      //     resource: Resource.clipperSync,
-      //     params: {
-      //       action: PersistenceActionType.CUSTOM,
-      //       query
-      //     }
-      //   }
-      // });
-      const resultWithMerge = await extensionFlux({
-        method: FluxMethod.MUTATION,
+      await extensionDatafn({
+        method: DatafnExtensionMethod.KV_MERGE,
         args: {
-          resource: Resource.kv,
-          params: {
-            action: PersistenceActionType.MERGE,
-            record: {
-              id: "kv:clipperSync",
-              [id]: {
-                status,
-                updatedAt: new Date().toISOString()
-              }
+          resource: Resource.clipperSync,
+          data: {
+            [id]: {
+              status,
+              updatedAt: new Date().toISOString()
             }
           }
         }

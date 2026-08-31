@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import WebClipPreview from "@21n/products/memotron/node/content/web/WebClipPreview.svelte";
   import type { ITextClip } from "@21n/products/memotron/node/node.type";
   let {

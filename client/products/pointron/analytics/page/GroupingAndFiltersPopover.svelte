@@ -4,10 +4,10 @@
   import { TextStyle } from "@21n/types/text.enum";
 
   let {
-    isGroupByTopLevelGoals = $bindable(false),
+    isGroupByTopLevelObjectives = $bindable(false),
     onGroupByChange
   }: {
-    isGroupByTopLevelGoals?: boolean;
+    isGroupByTopLevelObjectives?: boolean;
     onGroupByChange: (e: CustomEvent) => void;
   } = $props();
 </script>
@@ -17,10 +17,10 @@
   <div class="flex flex-col gap-2">
     <SwitchInput
       label={{
-        label: "Group by top level goals"
+        label: "Group by top level objectives"
       }}
       isExpanded={true}
-      bind:checked={isGroupByTopLevelGoals}
+      bind:checked={isGroupByTopLevelObjectives}
       onChange={onGroupByChange}
     />
   </div>

@@ -26,7 +26,6 @@ import BookACall from "@21n/components/cx/BookACall.svelte";
 import MdShortcuts from "@21n/components/markdown/shortcuts/MdShortcuts.svelte";
 import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
 import SignalDBViewer from "@21n/components/debug/SignalDBViewer.svelte";
-import PrivacyPolicy from "@21n/components/settings/PrivacyPolicy.svelte";
 import CalendarSettings from "@21n/components/calendar/settings/CalendarSettings.svelte";
 import { Embed } from "@21n/types/context.type";
 import {
@@ -40,10 +39,9 @@ import {
   resourceAction
 } from "@21n/data/datafn/resource.utils";
 import { Resource } from "@21n/data/datafn/resource.enum";
-import { Resource as LegacyResource } from "@21n/components/flux/resourceStores/resource.enum";
-import { resourceCacheComponentKey } from "@21n/components/flux/resourceStores/resource.utils";
 import CreateCollection from "@21n/components/collection/CreateCollection.svelte";
-import CollectionCache from "@21n/components/collection/CollectionCache.svelte";
+import CreateEvent from "@21n/components/events/CreateEvent.svelte";
+import Event from "@21n/components/events/Event.svelte";
 import PropertiesEditor from "@21n/components/collection/properties/PropertiesEditor.svelte";
 import CreateCombination from "@21n/components/combination/CreateCombination.svelte";
 import { ResourceError } from "@21n/components/error/errors";
@@ -54,7 +52,7 @@ import { logger } from "@21n/components/debug/logger.client";
 import { toasts } from "@21n/stores/notification.store";
 import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
 import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItemDummy.svelte";
-import { SearchStore } from "@21n/components/record/record.store";
+import { queryLinkingSearchResults } from "@21n/products/memotron/linking/link-search";
 import { recentsStore } from "@21n/components/record/recent.store";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
@@ -88,16 +86,22 @@ import Navigator from "@21n/layout/navigator/Navigator.svelte";
 import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
 import Today from "@21n/components/calendar/Today.svelte";
 import { activeResourceFilter } from "@21n/utils/utils";
-import {
-  datafn,
-  updateNucleumDatafnConnectivity
-} from "@21n/stores/datafn.store";
+import DatafnSharePanel from "@21n/components/share/DatafnSharePanel.svelte";
+import { datafn } from "@21n/stores/datafn.store";
 import { appMenuActionLabelsByAction } from "@21n/products/product-nav.config";
-import {
-  addDatafnRecordToCollection,
-  relateDatafnRecords
-} from "@21n/stores/datafn-linking.store";
-import { get } from "svelte/store";
+
+function isCollectionItemResource(resource: Resource) {
+  return resource === Resource.node || resource === Resource.objective;
+}
+
+function isLinkableResource(resource: Resource) {
+  return (
+    resource === Resource.node ||
+    resource === Resource.objective ||
+    resource === Resource.task ||
+    resource === Resource.event
+  );
+}
 
 export const globalActions: IAction[] = [
   {
@@ -358,7 +362,6 @@ export const globalActions: IAction[] = [
     icon: "lock",
     type: ActionType.LINK,
     // contentType: ContentType.SPACE_DOC,
-    component: PrivacyPolicy,
     modalParams: {
       title: "Privacy policy",
       layout: {
@@ -590,6 +593,20 @@ export const globalActions: IAction[] = [
     }
   },
   {
+    action: resourceAction(Resource.event, ResourceActionType.CREATE),
+    component: CreateEvent,
+    label: "Create a new event",
+    type: ActionType.MODAL,
+    modalParams: {
+      title: "Create event",
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Vertical,
+        ignoreSafeArea: true
+      }
+    }
+  },
+  {
     action: resourceAction(Resource.property, ResourceActionType.EDIT),
     component: PropertiesEditor,
     type: ActionType.MODAL,
@@ -603,7 +620,7 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: "combination_create",
+    action: resourceAction(Resource.space, ResourceActionType.CREATE),
     component: CreateCombination,
     label: "Create a new space",
     type: ActionType.MODAL,
@@ -617,6 +634,33 @@ export const globalActions: IAction[] = [
       }
     }
   },
+  ...[
+    Resource.collection,
+    Resource.node,
+    Resource.objective,
+    Resource.task,
+    Resource.session,
+    Resource.event,
+    Resource.file,
+    Resource.space
+  ].map((resource) => ({
+    action: resourceAction(resource, ResourceActionType.SHARE),
+    component: DatafnSharePanel,
+    label: "Share",
+    icon: "share",
+    type: ActionType.MODAL,
+    componentParams: {
+      resource
+    },
+    modalParams: {
+      title: "Share",
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Vertical,
+        ignoreSafeArea: true
+      }
+    }
+  })),
   {
     action: Resource.collection,
     type: ActionType.MODAL,
@@ -633,6 +677,20 @@ export const globalActions: IAction[] = [
     }
   },
   {
+    action: Resource.event,
+    type: ActionType.MODAL,
+    component: Event,
+    modalParams: {
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Vertical,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
+      }
+    }
+  },
+  {
     action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
     component: ResourceBrowser,
     label: "Collections",
@@ -640,6 +698,17 @@ export const globalActions: IAction[] = [
     type: ActionType.PAGE,
     componentParams: {
       resource: Resource.collection
+    },
+    loadingComponent: NodeLoadingPulse
+  },
+  {
+    action: resourceAction(Resource.event, ResourceActionType.BROWSE),
+    component: ResourceBrowser,
+    label: "Events",
+    icon: "calendar-blank",
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.event
     },
     loadingComponent: NodeLoadingPulse
   },
@@ -664,12 +733,10 @@ export const globalActions: IAction[] = [
       searchResultComponent: LinkSearchResultItem,
       searchCallback: async (query: string, componentParams?: any) => {
         const resource = componentParams?.resource ?? Resource.node;
-        const searchResource =
-          resource === LegacyResource.goal ? Resource.objective : resource;
         if (isValidString(query)) {
           const result = await datafn.search({
             query,
-            resources: [searchResource],
+            resources: [resource],
             limit: 50,
             limitPerResource: 50,
             source: "local",
@@ -689,15 +756,24 @@ export const globalActions: IAction[] = [
             toasts.error();
             return;
           }
-          const result = await addDatafnRecordToCollection({
-            sourceId: item.id,
-            collectionId: componentParams.id,
-            context: componentParams.id.toString()
-          });
-          if (result === 0) {
-            toasts.error("Already added to collection");
+          const resource = determineResourceType(item.id);
+          if (!isCollectionItemResource(resource)) {
+            toasts.error();
             return;
           }
+          const result = await datafn.table(resource).mutate({
+            operation: "relate",
+            id: item.id.toString(),
+            relations: {
+              collections: [
+                {
+                  $ref: componentParams.id.toString(),
+                  fromResource: resource.toString()
+                }
+              ]
+            },
+            context: componentParams.id.toString()
+          } as any);
           logger.log({
             at: "addNodeToCollection",
             id: item.id,
@@ -705,6 +781,10 @@ export const globalActions: IAction[] = [
             componentParams,
             result
           });
+          if (!result) {
+            toasts.error();
+            return;
+          }
           toasts.success(`**${item.label}** added to collection`);
         } catch (e) {
           logger.error({ at: "addNodeToCollection", error: e });
@@ -764,9 +844,6 @@ export const globalActions: IAction[] = [
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
             await context.toggleOfflineMode(true);
-            await updateNucleumDatafnConnectivity(
-              get(context).isInOfflineMode ?? false
-            );
             modalEvent.hide(Action.INACTIVE_PLAN);
           }
         }
@@ -825,7 +902,7 @@ export const globalActions: IAction[] = [
         const collectionResource = componentParams?.items?.[0]
           ? [determineResourceType(componentParams.items[0])]
           : [];
-        return await new SearchStore().searchForLinking(search, {
+        return await queryLinkingSearchResults(search, {
           resource: componentParams?.resource,
           collectionResource:
             componentParams?.collectionResource ?? collectionResource
@@ -850,7 +927,7 @@ export const globalActions: IAction[] = [
           const items =
             componentParams?.multiSelectStore?.get() ?? componentParams?.items;
           const context = componentParams?.multiSelectStore?.context;
-          if (!items?.length) {
+          if (!items) {
             toasts.error(undefined, {
               closeProgressId: "bulklink"
             });
@@ -863,11 +940,47 @@ export const globalActions: IAction[] = [
               ? "Adding to collection"
               : "Linking to node"
           );
-          const result = await relateDatafnRecords({
-            sourceIds: items,
-            targetId: item.id,
-            context: context?.accessPoint
-          });
+          const result = await Promise.all(
+            items.map((sourceId) => {
+              const sourceResource = determineResourceType(sourceId);
+              if (resourceType === Resource.collection) {
+                if (!isCollectionItemResource(sourceResource)) return undefined;
+                return datafn.table(sourceResource).mutate({
+                  operation: "relate",
+                  id: sourceId.toString(),
+                  relations: {
+                    collections: [
+                      {
+                        $ref: item.id.toString(),
+                        fromResource: sourceResource.toString()
+                      }
+                    ]
+                  },
+                  context: context?.accessPoint
+                } as any);
+              }
+              if (
+                !isLinkableResource(sourceResource) ||
+                !isLinkableResource(resourceType)
+              ) {
+                return undefined;
+              }
+              return datafn.table(sourceResource).mutate({
+                operation: "relate",
+                id: sourceId.toString(),
+                relations: {
+                  links: [
+                    {
+                      $ref: item.id.toString(),
+                      fromResource: sourceResource.toString(),
+                      toResource: resourceType.toString()
+                    }
+                  ]
+                },
+                context: context?.accessPoint
+              } as any);
+            })
+          );
           logger.log({
             at: "bulkLink",
             id: item.id,
@@ -876,11 +989,17 @@ export const globalActions: IAction[] = [
             items,
             result
           });
+          if (!result) {
+            toasts.error(undefined, {
+              closeProgressId: "bulklink"
+            });
+            return;
+          }
           componentParams?.multiSelectStore?.reset();
           if (resourceType === Resource.collection) {
             toasts.success(
-              `**${result}** ${
-                result > 1 ? "items" : "item"
+              `**${items.length}** ${
+                items.length > 1 ? "items" : "item"
               } added to collection ${item.label ? `**${item.label}**` : ""}`,
               {
                 closeProgressId: "bulklink"
@@ -888,8 +1007,8 @@ export const globalActions: IAction[] = [
             );
           } else {
             toasts.success(
-              `**${result}** ${
-                result > 1 ? "items" : "item"
+              `**${items.length}** ${
+                items.length > 1 ? "items" : "item"
               } linked to node ${item.label ? `**${item.label}**` : ""}`,
               {
                 closeProgressId: "bulklink"
@@ -998,11 +1117,6 @@ export const globalActions: IAction[] = [
         isShowCantileverClose: true
       }
     }
-  },
-  {
-    action: resourceCacheComponentKey(LegacyResource.collection),
-    type: ActionType.CACHE,
-    component: CollectionCache
   },
   {
     action: Action.DATA_SETTINGS,

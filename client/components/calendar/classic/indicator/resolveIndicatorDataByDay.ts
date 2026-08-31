@@ -1,9 +1,6 @@
 import type { ICalendarIndicatorData } from "@21n/components/calendar/calendar.type";
-import {
-  MetaResource,
-  Resource
-} from "@21n/components/flux/resourceStores/resource.enum";
-import { tzStore } from "@21n/components/settings/timezone/tz.store";
+import { MetaResource, Resource } from "@21n/data/datafn/resource.enum";
+import { datafn } from "@21n/stores/datafn.store";
 import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
 import { generateSummary } from "@21n/products/pointron/focus/session.utils";
 import type {
@@ -27,14 +24,14 @@ type DayBucketResolver = (
 ) => ResolvedCalendarTileIndicatorDay;
 
 export function resolveIndicatorDayKey(date: Date): number {
-  return tzStore.resolveTimePeriodFilterForDay(date).$gte;
+  return resolveDayBucketKey(date);
 }
 
 function createDayBucketResolver(
   dayMap: Map<number, ResolvedCalendarTileIndicatorDay>
 ): DayBucketResolver {
   return (input: Date | string | number) => {
-    const key = tzStore.resolveTimePeriodFilterForDay(new Date(input)).$gte;
+    const key = resolveDayBucketKey(input);
     const existing = dayMap.get(key);
     if (existing) return existing;
     const next: ResolvedCalendarTileIndicatorDay = {
@@ -47,6 +44,21 @@ function createDayBucketResolver(
     dayMap.set(key, next);
     return next;
   };
+}
+
+function resolveDayBucketKey(input: Date | string | number): number {
+  const key = datafn.temporal.resolveBucketSync({
+    value: input,
+    scale: "day",
+    output: "unix-ms"
+  });
+  if (typeof key === "number") return key;
+  if (key instanceof Date) return key.getTime();
+  if (typeof key === "string") {
+    const parsed = Date.parse(key);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return new Date(input).setHours(0, 0, 0, 0);
 }
 
 function bucketTasks(data: any[], resolveBucket: DayBucketResolver) {

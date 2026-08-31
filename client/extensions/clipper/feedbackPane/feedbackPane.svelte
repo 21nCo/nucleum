@@ -3,7 +3,10 @@
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
   import LinkBoxOnClipper from "@21n/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
   import { onMount } from "svelte";
-  import { feedbackPane, webpage } from "@21n/extensions/clipper/contentScripts/store";
+  import {
+    feedbackPane,
+    webpage
+  } from "@21n/extensions/clipper/contentScripts/store";
   import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import { AlertType } from "@21n/types/notification.type";
@@ -19,14 +22,14 @@
   import {
     determineResourceType,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import NodeThumbnailTweetPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
   import { Placement } from "@21n/types/direction.enum";
   import type { IWebpageStore } from "@21n/extensions/clipper/contentScripts/types";
   import { logger } from "@21n/components/debug/logger.client";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { ResourceError } from "@21n/components/error/errors";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import NodeThumbnailSocialPostPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
   let {
     pageContentType = undefined
@@ -72,8 +75,8 @@
     page: IWebpageStore,
     clip: IRecordId | undefined
   ) {
-    if (!clip) return page.properties;
-    const clipProperties = $feedbackPane.focusedClip?.properties;
+    if (!clip) return page.propertyValues;
+    const clipProperties = $feedbackPane.focusedClip?.propertyValues;
     return clipProperties;
   }
 
@@ -301,7 +304,7 @@
         </span>
       </div>
       <LinkBoxOnClipper
-        onLink={onLink}
+        {onLink}
         bind:this={linkBoxRef}
         onFocus={() => {
           $feedbackPane.isUserInitiated = true;
@@ -314,8 +317,8 @@
         isExpandable={true}
         onPropertyChange={onPropertyUpdate}
         onClick={onLinkClick}
-        onUnlink={onUnlink}
-        onExpansion={onExpansion}
+        {onUnlink}
+        {onExpansion}
         isWrapItems={true}
       />
     </div>

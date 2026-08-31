@@ -58,8 +58,6 @@ import {
 } from "@21n/components/account/auth";
 import { resolveAccountBaseUrl } from "@21n/components/network";
 import { clearCachedDatafnE2eeState } from "@21n/stores/datafnE2ee.store";
-import { flux } from "@21n/components/flux/flux";
-import { resolveProductConfig } from "@21n/products/product.config";
 import { clearLegacySurrealLocalData } from "@21n/persistence/legacyLocalDataBackup";
 
 export const isRefreshingToken = writable(false);
@@ -481,32 +479,11 @@ class AccountStore extends ObservableStore<UserAccount> {
         .filter((value): value is string => Boolean(value))
         .map((value) => value.replace(/^user:/, ""))
     );
-    const persistence = flux?.persistence as
-      { destroySearchIndices?: () => Promise<void> } | undefined;
-    if (persistence?.destroySearchIndices) {
-      try {
-        await persistence.destroySearchIndices();
-      } catch (error) {
-        cleanupErrors.push(error);
-      }
-    }
-    if (flux?.persistence) {
-      try {
-        await flux.terminate();
-      } catch (error) {
-        cleanupErrors.push(error);
-      }
-    }
     const product = get(appStore).product;
     const databaseNames = new Set<string>();
     for (const identity of identities) {
       const prefix = `${identity}-1`;
       databaseNames.add(prefix);
-      for (const table of resolveProductConfig(product).tableConfig) {
-        if (!table.searchIndices?.length) continue;
-        databaseNames.add(`searchfn-${prefix}-${table.name}-search`);
-        databaseNames.add(`${prefix}-${table.name}-search`);
-      }
     }
     const indexedDb = indexedDB as IDBFactory & {
       databases?: () => Promise<Array<{ name?: string }>>;

@@ -2,14 +2,14 @@
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { appStore } from "@21n/stores/app.store";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { Size } from "@21n/types/size.enum";
   let {
     id,
     accessMode,
     parentBgIndex = 1,
-    additionalAccessModes = [],
+    additionalAccessModes = []
   }: {
     id: string;
     accessMode: AccessMode;

@@ -5,14 +5,14 @@
   } from "@21n/products/memotron/node/node.type";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { cn } from "@21n/utils/ui.utils";
   import MediaNodeRightPane from "@21n/products/memotron/node/rightPanel/MediaNodeRightPane.svelte";
   import { setContext } from "svelte";
   import view from "@21n/stores/view.store";
   import MediaContentResolver from "@21n/products/memotron/node/content/MediaContentResolver.svelte";
   import { appStore } from "@21n/stores/app.store";
-  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isRecordId } from "@21n/data/datafn/resource.utils";
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
   import { Context } from "@21n/types/appStore.type";
