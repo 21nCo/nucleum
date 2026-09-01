@@ -2,6 +2,9 @@
   "name": "@21n/icons-v2",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "gen": "tsx bundle.ts"
+  },
   "exports": {
     ".": {
       "import": "./index.js",

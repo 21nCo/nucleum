@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
-import { getProductConfig } from "./helpers";
+import { Product } from "@21n/products/product.type";
+import { expectAnyLocatorVisible } from "./locator-assertions";
 import { openSettings } from "./settings";
 
 export type SettingsPanelKey =
@@ -23,13 +24,16 @@ export interface NodeContentPanelContract {
   bookmarksNavigation: "overviewTabThenInfoCard";
 }
 
-function buildSettingsPanelContracts(projectName: string): Record<SettingsPanelKey, SettingsPanelContract> {
-  const capabilities = getProductConfig(projectName).capabilities.settings;
+function buildSettingsPanelContracts(
+  projectName: string
+): Record<SettingsPanelKey, SettingsPanelContract> {
+  const focusProject = isFocusProject(projectName);
+  const memoryProject = isMemoryProject(projectName);
 
   return {
     focus: {
       key: "focus",
-      enabled: capabilities.focusPanel,
+      enabled: focusProject,
       sidebarName: /^Focus$/i,
       titlePattern: /^Focus$/i,
       anchorPatterns: [
@@ -39,14 +43,14 @@ function buildSettingsPanelContracts(projectName: string): Record<SettingsPanelK
     },
     node: {
       key: "node",
-      enabled: capabilities.nodeSettingsPanel,
+      enabled: memoryProject,
       sidebarName: /^Node settings$/i,
       titlePattern: /^Node settings$/i,
       anchorPatterns: [/Don't show text highlight colors/i]
     },
     mode: {
       key: "mode",
-      enabled: capabilities.sharedModeOfInteraction,
+      enabled: memoryProject,
       sidebarName: /^Mode of interaction$/i,
       titlePattern: /^Mode of interaction$/i,
       anchorPatterns: [
@@ -56,22 +60,27 @@ function buildSettingsPanelContracts(projectName: string): Record<SettingsPanelK
     },
     keyboardShortcuts: {
       key: "keyboardShortcuts",
-      enabled:
-        capabilities.sharedModeOfInteraction ||
-        capabilities.sharedShortcutCustomization ||
-        capabilities.sharedHotKeyMatrix,
+      enabled: memoryProject,
       sidebarName: /^Keyboard shortcuts$/i,
       titlePattern: /^Keyboard shortcuts$/i,
       anchorPatterns: [/^Command bar$/i, /^Edit mode$/i]
     },
     accessibility: {
       key: "accessibility",
-      enabled: capabilities.accessibilityPanel,
+      enabled: memoryProject,
       sidebarName: /^Accessibility$/i,
       titlePattern: /^Accessibility$/i,
       anchorPatterns: [/^Block sizing$/i]
     }
   };
+}
+
+function isFocusProject(projectName: string) {
+  return projectName === Product.NUCLEUM || projectName === Product.POINTRON;
+}
+
+function isMemoryProject(projectName: string) {
+  return projectName === Product.NUCLEUM || projectName === Product.MEMOTRON;
 }
 
 export function getSettingsPanelContract(
@@ -87,13 +96,13 @@ export function listEnabledSettingsPanels(projectName: string) {
   );
 }
 
-export function getNodeContentPanelContract(projectName: string): NodeContentPanelContract {
-  const nodePanels = getProductConfig(projectName).capabilities.records.nodePanels;
+export function getNodeContentPanelContract(
+  projectName: string
+): NodeContentPanelContract {
   return {
-    enabled: !!nodePanels,
-    contentNavigation: nodePanels?.contentNavigation ?? "namedContentTab",
-    bookmarksNavigation:
-      nodePanels?.bookmarksNavigation ?? "overviewTabThenInfoCard"
+    enabled: isMemoryProject(projectName),
+    contentNavigation: "firstTab",
+    bookmarksNavigation: "overviewTabThenInfoCard"
   };
 }
 
@@ -104,7 +113,9 @@ export async function openDeclaredSettingsPanel(
 ) {
   const contract = getSettingsPanelContract(projectName, key);
   if (!contract.enabled) {
-    throw new Error(`E2E_CFG_002: settings panel "${key}" is disabled for ${projectName}`);
+    throw new Error(
+      `E2E_CFG_002: settings panel "${key}" is disabled for ${projectName}`
+    );
   }
 
   await openSettings(page);
@@ -114,25 +125,16 @@ export async function openDeclaredSettingsPanel(
   await sidebar
     .getByRole("button", { name: contract.sidebarName })
     .click({ timeout: 5_000 });
-  await page.waitForTimeout(400);
 
   const title = page.getByText(contract.titlePattern).first();
   const anchors = contract.anchorPatterns.map((pattern) =>
     page.getByText(pattern).first()
   );
 
-  await expect
-    .poll(
-      async () => {
-        if (await title.isVisible().catch(() => false)) return true;
-        for (const anchor of anchors) {
-          if (await anchor.isVisible().catch(() => false)) return true;
-        }
-        return false;
-      },
-      { timeout: 10_000 }
-    )
-    .toBe(true);
+  await expectAnyLocatorVisible([title, ...anchors], {
+    message: `${key} settings exposes its title or a semantic anchor`,
+    timeout: 10_000
+  });
 
   return contract;
 }
@@ -143,7 +145,9 @@ export async function openDeclaredNodeContentPanel(
 ) {
   const contract = getNodeContentPanelContract(projectName);
   if (!contract.enabled) {
-    throw new Error(`E2E_CFG_002: node content panel contract is disabled for ${projectName}`);
+    throw new Error(
+      `E2E_CFG_002: node content panel contract is disabled for ${projectName}`
+    );
   }
 
   const tablist = page.getByRole("tablist").first();
@@ -174,7 +178,9 @@ export async function openDeclaredNodeBookmarksPanel(
 ) {
   const contract = getNodeContentPanelContract(projectName);
   if (!contract.enabled) {
-    throw new Error(`E2E_CFG_002: node content panel contract is disabled for ${projectName}`);
+    throw new Error(
+      `E2E_CFG_002: node content panel contract is disabled for ${projectName}`
+    );
   }
 
   const tablist = page.getByRole("tablist").first();

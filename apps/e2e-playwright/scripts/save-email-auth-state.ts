@@ -15,27 +15,48 @@ import { chromium } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
 import net from "node:net";
+import { Product } from "@21n/products/product.type";
 
 const authDir = path.join(__dirname, "..", ".auth");
 const artifactsDir = path.join(__dirname, "..", "artifacts");
-const product = (process.env.PRODUCT ?? "nucleum").toLowerCase();
+const product = (process.env.PRODUCT ?? Product.NUCLEUM).toLowerCase();
 const authFileName =
-  product === "nucleum" ? "user.json" : `user-${product}.json`;
+  product === Product.NUCLEUM ? "user.json" : `user-${product}.json`;
 const authStatePath = path.join(authDir, authFileName);
 
 function getBaseURL(): string {
   // Match playwright.config.ts precedence: product-specific env first, then APP_BASE_URL, then fallback.
   const fallback = "http://127.0.0.1:4173";
-  if (product === "nucleum") {
+  if (product === Product.NUCLEUM) {
     return (
       process.env.APP_BASE_URL_NUCLEUM ??
-      process.env.APP_BASE_URL_NUCLEUS ??
       process.env.APP_BASE_URL ??
       fallback
     );
   }
   const envKey = `APP_BASE_URL_${product.toUpperCase()}`;
   return process.env[envKey] ?? process.env.APP_BASE_URL ?? fallback;
+}
+
+function resolveAccountBaseUrl(appBaseUrl: string, region: string) {
+  const url = new URL(appBaseUrl);
+  const host = url.hostname.toLowerCase();
+  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
+    return null;
+  }
+  const labels = host.split(".").filter(Boolean);
+  const subdomain = labels[0] ?? "";
+  const env =
+    subdomain === "local" || subdomain === "dev" || subdomain === "pre"
+      ? subdomain
+      : subdomain === "web" || subdomain === "app"
+        ? "live"
+      : "dev";
+  const domain = ["local", "dev", "pre", "web", "app"].includes(subdomain)
+    ? labels.slice(1).join(".")
+    : labels.slice(-2).join(".");
+  const envSuffix = env === "live" ? "" : `-${env}`;
+  return `https://account-${region}${envSuffix}.${domain}`;
 }
 
 async function main() {
@@ -72,7 +93,7 @@ async function main() {
 
   const context = await browser.newContext({
     baseURL,
-    viewport: { width: 1280, height: 720 },
+    viewport: { width: 1512, height: 982 },
     // Local dev uses Caddy's `tls internal` certs; Playwright's bundled Chromium may not honor the OS trust store.
     // Keep this enabled so the auth-save script can run in CI/local HTTPS environments without flaking.
     ignoreHTTPSErrors: true,
@@ -345,7 +366,9 @@ async function main() {
             : setCookie;
           return (
             typeof value === "string" &&
-            /session_token|session_data/i.test(value)
+            /session_token|session_data|__Secure-[^=]+\.session|(^|;\s*)[^=]+\.session=/i.test(
+              value
+            )
           );
         },
         { timeout: 25_000 }
@@ -355,6 +378,9 @@ async function main() {
     const hasSessionCookie = async () => {
       const cookies = await context.cookies();
       return cookies.some((c) => {
+        if (c.expires > 0 && c.expires <= Date.now() / 1000 + 60) {
+          return false;
+        }
         const isSessionCookie =
           c.name === legacySessionCookieName ||
           c.name?.includes("session_token") ||
@@ -369,6 +395,23 @@ async function main() {
           c.domain === "nucleum.app"
         );
       });
+    };
+
+    const hasAuthFnBrowserSession = async () => {
+      const accountBaseUrl = resolveAccountBaseUrl(
+        baseURL,
+        forcedAuthRegion || "insouth"
+      );
+      if (!accountBaseUrl) return false;
+      return page
+        .evaluate(async (url) => {
+          const response = await fetch(`${url}/auth/session`, {
+            credentials: "include"
+          });
+          const json = await response.json().catch(() => null);
+          return Boolean(response.ok && json?.data?.session);
+        }, accountBaseUrl)
+        .catch(() => false);
     };
 
     // Avoid clicking the "Log in" tab again; target the form submit button.
@@ -434,7 +477,8 @@ async function main() {
     let hasSavedAuthSession = false;
     while (Date.now() < deadline) {
       const hasSession = await hasSessionCookie();
-      if (hasSession) {
+      const hasBrowserSession = hasSession && (await hasAuthFnBrowserSession());
+      if (hasBrowserSession) {
         logStep("confirmed AuthFn session in browser context");
         hasSavedAuthSession = true;
         break;
@@ -450,7 +494,7 @@ async function main() {
     }
 
     // Save after login success so session cookie is in context. Do NOT click "Continue offline" — tests will do that.
-    await context.storageState({ path: authStatePath });
+    await context.storageState({ path: authStatePath, indexedDB: true });
     console.log("Session saved to", authStatePath);
     console.log("Run tests with: npx playwright test --project=" + product);
   } finally {

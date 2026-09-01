@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { deleteUserAccount, signup } from "./index";
 import { DatabaseProviderFactory } from "$lib/server/database/providers";
 import { SyncProviderFactory } from "$lib/server/common/sync/providers";
@@ -85,14 +85,18 @@ describe("deleteUserAccount integration tests", () => {
         }
       };
 
-      // Wait 5 seconds before deletion
       console.log({ testAgent });
-      await new Promise((resolve) => setTimeout(resolve, 15000));
+      const provider = DatabaseProviderFactory.getProvider();
+      await vi.waitFor(
+        async () => {
+          expect(await provider.getUserById(testUserId)).not.toBeNull();
+        },
+        { interval: 250, timeout: 10_000 }
+      );
       const result = await deleteUserAccount(deleteBody, testAgent);
       expect(result).toBeDefined();
 
       // Verify user is actually deleted by trying to retrieve it
-      const provider = DatabaseProviderFactory.getProvider();
       const deletedUser = await provider.getUserById(testUserId);
       expect(deletedUser).toBeNull();
     }, 20000);
@@ -426,8 +430,21 @@ describe("deleteUserAccount integration tests", () => {
         agent
       );
 
-      // Allow some time for data to be written (eventual consistency)
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const syncProvider = SyncProviderFactory.getProvider();
+      await vi.waitFor(
+        async () => {
+          const result = await syncProvider.cloneDown(
+            {
+              resources: [Resource.node, Resource.kv],
+              isExtension: false
+            },
+            agent
+          );
+          expect(JSON.stringify(result)).toContain(initialRecords[0].id);
+          expect(JSON.stringify(result)).toContain(kvRecords[0].id);
+        },
+        { interval: 250, timeout: 10_000 }
+      );
     } catch (error) {
       console.error("Error adding test data:", error);
       // Don't fail the test setup if adding test data fails

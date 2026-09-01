@@ -1,20 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-import { AppPage } from "../../pages/app.page";
-
-test.skip(process.env.SKIP_E2E === "1", "E2E suite disabled by environment");
+import { ensureInAppOnHome } from "../utils/helpers";
 
 test.describe("smoke @smoke", () => {
   test("home page loads without errors", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
 
-    const app = new AppPage(page);
-    const response = await app.gotoHome();
-    await page.waitForLoadState("domcontentloaded");
-    await page.waitForTimeout(2000);
-
-    expect(response?.status()).toBeLessThan(400);
+    await ensureInAppOnHome(page);
     await expect(page).toHaveURL(/\//);
     expect(errors).toHaveLength(0);
   });

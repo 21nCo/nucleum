@@ -5,7 +5,8 @@ import {
   beforeEach,
   afterEach,
   beforeAll,
-  afterAll
+  afterAll,
+  vi
 } from "vitest";
 import { DynamoDBSyncProvider } from "../dynamodb.provider";
 import { Agent } from "$lib/server/common/account/account.type";
@@ -17,8 +18,27 @@ import {
 } from "$lib/client/types/data.type";
 import { IMutation } from "$lib/client/types/data.type";
 
-// Helper function to add delay for DynamoDB eventual consistency
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+async function waitForResourceRecords(
+  provider: DynamoDBSyncProvider,
+  agent: Agent,
+  resource: Resource,
+  predicate: (records: any[]) => boolean
+) {
+  let records: any[] = [];
+  await vi.waitFor(
+    async () => {
+      const result = await provider.cloneDown(
+        { resources: [resource], isExtension: false },
+        agent
+      );
+      records =
+        Array.isArray(result) && Array.isArray(result[0]) ? result[0] : [];
+      expect(predicate(records)).toBe(true);
+    },
+    { interval: 250, timeout: 10_000 }
+  );
+  return records;
+}
 
 describe("DynamoDBSyncProvider Integration Tests", () => {
   let provider: DynamoDBSyncProvider;
@@ -107,8 +127,12 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
       expect(result).toHaveProperty("deleted");
       expect(result).toHaveProperty("counts");
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) => records.some((record) => record.id === testRecord.id)
+      );
 
       // Verify the record was actually stored by trying to retrieve it
       const cloneDownResult = await provider.cloneDown(
@@ -144,8 +168,12 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) => records.some((record) => record.id === testRecord.id)
+      );
 
       const mutation: IMutation = {
         id: "mutation:delete-test",
@@ -175,8 +203,12 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
       // Verify the operation succeeded
       expect(result).toHaveProperty("latestTimestamp");
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) => records.every((record) => record.id !== testRecord.id)
+      );
 
       // Verify the record was actually deleted
       const cloneDownResult = await provider.cloneDown(
@@ -212,8 +244,12 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) => records.some((record) => record.id === existingRecord.id)
+      );
 
       const updateData = {
         title: "Updated Title"
@@ -247,8 +283,17 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
       // Verify the operation succeeded
       expect(result).toHaveProperty("latestTimestamp");
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) =>
+          records.some(
+            (record) =>
+              record.id === existingRecord.id &&
+              record.title === updateData.title
+          )
+      );
 
       // Verify the record was actually merged
       const cloneDownResult = await provider.cloneDown(
@@ -299,8 +344,12 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) => records.some((record) => record.id === testRecord.id)
+      );
 
       // Create a mutation for this record from another dapId
       const testTimestamp = Date.now();
@@ -330,8 +379,22 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await vi.waitFor(
+        async () => {
+          const synced = await provider.syncDown(
+            {
+              lastSyncDown: testTimestamp - 1000,
+              resources: [Resource.node],
+              dapId: "test-dap-id"
+            },
+            mockAgent
+          );
+          expect(
+            synced.records?.some((record: any) => record.id === testRecord.id)
+          ).toBe(true);
+        },
+        { interval: 250, timeout: 10_000 }
+      );
 
       // Now test syncDown
       const body = {
@@ -373,8 +436,12 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) => records.some((record) => record.id === testRecord.id)
+      );
 
       // Create a DELETE mutation from another dapId
       const testTimestamp = Date.now();
@@ -404,8 +471,22 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await vi.waitFor(
+        async () => {
+          const synced = await provider.syncDown(
+            {
+              lastSyncDown: testTimestamp - 1000,
+              resources: [Resource.node],
+              dapId: "test-dap-id"
+            },
+            mockAgent
+          );
+          expect(
+            synced.deleted?.some((entry: any) => entry.id === mutation.id)
+          ).toBe(true);
+        },
+        { interval: 250, timeout: 10_000 }
+      );
 
       // Now test syncDown
       const body = {
@@ -605,8 +686,15 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) =>
+          testRecords.every((item) =>
+            records.some((record) => record.id === item.id)
+          )
+      );
 
       const body = {
         resource: Resource.node,
@@ -642,8 +730,12 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(2000); // Longer wait for this test
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) => records.some((record) => record.id === testRecords[0].id)
+      );
 
       const body = {
         resource: Resource.node,
@@ -695,8 +787,15 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) =>
+          [...badNodes, ...goodNodes].every((item) =>
+            records.some((record) => record.id === item.id)
+          )
+      );
 
       const body = {
         resources: [Resource.node]
@@ -706,8 +805,18 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
 
       expect(result).toEqual({ success: true });
 
-      // Wait for reconciliation to complete
-      await sleep(2000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) =>
+          badNodes.every((item) =>
+            records.every((record) => record.id !== item.id)
+          ) &&
+          goodNodes.every((item) =>
+            records.some((record) => record.id === item.id)
+          )
+      );
 
       // Verify bad nodes were removed but good nodes remain
       const cloneDownResult = await provider.cloneDown(
@@ -754,8 +863,15 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
         mockAgent
       );
 
-      // Wait for eventual consistency
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) =>
+          goodNodes.every((item) =>
+            records.some((record) => record.id === item.id)
+          )
+      );
 
       const body = {
         resources: [Resource.node]
@@ -765,8 +881,15 @@ describe("DynamoDBSyncProvider Integration Tests", () => {
 
       expect(result).toEqual({ success: true });
 
-      // Wait for reconciliation to complete
-      await sleep(1000);
+      await waitForResourceRecords(
+        provider,
+        mockAgent,
+        Resource.node,
+        (records) =>
+          goodNodes.every((item) =>
+            records.some((record) => record.id === item.id)
+          )
+      );
 
       // All good nodes should still be there
       const cloneDownResult = await provider.cloneDown(
