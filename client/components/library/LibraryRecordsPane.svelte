@@ -62,7 +62,7 @@
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import { dragSelection } from "@21n/actions/dragSelection.action";
-  import { datafn } from "@21n/stores/datafn.store";
+  import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import { datafnHeavyComputedSignalOptions } from "@21n/data/datafn/signalCache";
 
@@ -469,7 +469,7 @@
         },
         limit: searchLimit,
         limitPerResource: searchLimit,
-        source: "local",
+        source: $datafnRuntime?.mode === "sync-direct" ? "remote" : "local",
         prefix: true,
         fuzzy: 0.2,
         signal: params.signal

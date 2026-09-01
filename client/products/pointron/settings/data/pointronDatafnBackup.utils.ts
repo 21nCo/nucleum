@@ -24,8 +24,12 @@ export function isPointronDatafnBackup(value: unknown) {
   if (value.version !== 1) return false;
   if (!isObjectRecord(value.resources)) return false;
   if (!hasOnlyArrayValues(value.resources)) return false;
-  return Object.keys(value.resources).some((resource) =>
-    pointronDatafnBackupResourceNames.has(resource)
+  const resourceNames = Object.keys(value.resources);
+  return (
+    resourceNames.length > 0 &&
+    resourceNames.every((resource) =>
+      pointronDatafnBackupResourceNames.has(resource)
+    )
   );
 }
 

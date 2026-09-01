@@ -27,6 +27,10 @@ function isLinkableResource(resource: Resource) {
  */
 export function assertDatafnMutationSucceeded(result: unknown) {
   if (!result) throw new Error("DataFn mutation failed");
+  if (Array.isArray(result)) {
+    result.forEach(assertDatafnMutationSucceeded);
+    return;
+  }
   if (
     typeof result === "object" &&
     "ok" in result &&

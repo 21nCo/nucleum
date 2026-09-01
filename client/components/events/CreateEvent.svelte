@@ -14,6 +14,7 @@
   import { Size } from "@21n/types/size.enum";
   import { toasts } from "@21n/stores/notification.store";
   import { datafn } from "@21n/stores/datafn.store";
+  import { assertDatafnMutationSucceeded } from "@21n/stores/datafn-linking.store";
 
   let {
     date: initialDate = undefined
@@ -50,13 +51,15 @@
         endUnix
       }
     };
-    const result = await datafn.event.mutate({
-      operation: "insert",
-      id,
-      record,
-      context: action
-    });
-    if (!result) {
+    try {
+      const result = await datafn.event.mutate({
+        operation: "insert",
+        id,
+        record,
+        context: action
+      });
+      assertDatafnMutationSucceeded(result);
+    } catch {
       toasts.error("Failed to create event");
       return;
     }

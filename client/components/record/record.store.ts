@@ -15,6 +15,7 @@ import type { NucleumDatafnResource } from "@21n/shared-data/datafn";
 import { Action } from "@21n/types/action.enum";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 import { LinkType } from "@21n/products/memotron/linking/link.type";
+import { assertDatafnMutationSucceeded } from "@21n/stores/datafn-linking.store";
 
 function normalizeEventRecord<T extends Record<string, any>>(record: T): T {
   const label = record.label ?? record.event ?? "New event";
@@ -289,7 +290,7 @@ export class BulkEditor {
       resource: NucleumDatafnResource,
       record: Record<string, any>
     ) {
-      await datafn.table(resource).mutate(
+      const result = await datafn.table(resource).mutate(
         items.map((id) => ({
           operation: "merge",
           id: id.toString(),
@@ -300,16 +301,18 @@ export class BulkEditor {
           context: additionalParams?.context
         }))
       );
+      assertDatafnMutationSucceeded(result);
     }
 
     async function bulkTrash(resource: NucleumDatafnResource) {
-      await datafn.table(resource).mutate(
+      const result = await datafn.table(resource).mutate(
         items.map((id) => ({
           operation: "trash",
           id: id.toString(),
           context: additionalParams?.context
         }))
       );
+      assertDatafnMutationSucceeded(result);
     }
 
     function onSuccess(action: string, count: number, resource: Resource) {
