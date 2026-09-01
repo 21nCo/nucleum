@@ -191,18 +191,40 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   ) {
     const shouldUpdateActive = !params?.isPreventBackPropagation;
     const previous = shouldUpdateActive ? this.get() : undefined;
+    const { views, ...fields } = val;
     if (shouldUpdateActive) {
       this.update((prev) => ({ ...prev, ...val }) as IActiveCollection);
     }
     try {
-      await datafn.collection.mutate({
+      const mergeMutation = {
         operation: "merge",
         id: this.id.toString(),
         record: pruneUndefined({
           id: this.id,
-          ...val
+          ...fields
         } as Record<string, unknown>)
-      });
+      } as const;
+      if (views !== undefined) {
+        const relateMutation = {
+          operation: "relate",
+          id: this.id.toString(),
+          relations: {
+            views: relationRefs(
+              views.map((item) =>
+                typeof item === "string" ? item : item.id
+              )
+            )
+          }
+        } as const;
+        const hasFields = Object.values(fields).some(
+          (value) => value !== undefined
+        );
+        await datafn.collection.mutate(
+          hasFields ? [mergeMutation, relateMutation] : relateMutation
+        );
+      } else {
+        await datafn.collection.mutate(mergeMutation);
+      }
     } catch (error) {
       if (previous) this.set(previous);
       throw error;

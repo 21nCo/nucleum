@@ -135,9 +135,11 @@ export class ResourceActions<T extends IActionableResource> {
       value: "star",
       icon: resolveResourceActionIcon(ResourceActionType.STAR),
       callback: async () => {
+        const isStarred = !this.resource.isStarred;
         await this.merge({
-          isStarred: !this.resource.isStarred
+          isStarred
         } as Partial<T>);
+        updateActiveResource(this.resource.id, { isStarred });
       }
     };
   }
@@ -151,6 +153,7 @@ export class ResourceActions<T extends IActionableResource> {
       initialValue: this.resource.isStarred,
       callback: async (checked: boolean) => {
         await this.merge({ isStarred: checked } as Partial<T>);
+        updateActiveResource(this.resource.id, { isStarred: checked });
       }
     };
   }
