@@ -3,6 +3,7 @@ import { determineResourceType } from "@21n/data/datafn/resource.utils";
 import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
 import type { IRecordId } from "@21n/types/data.type";
 import { get } from "svelte/store";
+import { assertDatafnMutationSucceeded } from "@21n/data/datafn/mutation.utils";
 
 type DatafnRelationSource = {
   id: string;
@@ -20,27 +21,6 @@ function isLinkableResource(resource: Resource) {
     resource === Resource.task ||
     resource === Resource.event
   );
-}
-
-/**
- * Throws when a DataFn mutation result represents a failed operation.
- */
-export function assertDatafnMutationSucceeded(result: unknown) {
-  if (!result) throw new Error("DataFn mutation failed");
-  if (Array.isArray(result)) {
-    result.forEach(assertDatafnMutationSucceeded);
-    return;
-  }
-  if (
-    typeof result === "object" &&
-    "ok" in result &&
-    (result as { ok?: unknown }).ok === false
-  ) {
-    throw (
-      (result as { error?: unknown }).error ??
-      new Error("DataFn mutation failed")
-    );
-  }
 }
 
 function assertRelationSelection(

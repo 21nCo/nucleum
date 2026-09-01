@@ -32,7 +32,7 @@
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
   import { datafn } from "@21n/stores/datafn.store";
   import { generateResourceId } from "@21n/data/datafn/id.utils";
-  import { assertDatafnMutationSucceeded } from "@21n/stores/datafn-linking.store";
+  import { assertDatafnMutationSucceeded } from "@21n/data/datafn/mutation.utils";
 
   let {
     date: initialDate = undefined,

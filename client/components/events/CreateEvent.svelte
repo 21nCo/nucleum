@@ -14,7 +14,7 @@
   import { Size } from "@21n/types/size.enum";
   import { toasts } from "@21n/stores/notification.store";
   import { datafn } from "@21n/stores/datafn.store";
-  import { assertDatafnMutationSucceeded } from "@21n/stores/datafn-linking.store";
+  import { assertDatafnMutationSucceeded } from "@21n/data/datafn/mutation.utils";
 
   let {
     date: initialDate = undefined
