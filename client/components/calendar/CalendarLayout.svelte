@@ -9,8 +9,6 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { appStore } from "@21n/stores/app.store";
   import { Product } from "@21n/products/product.type";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Action } from "@21n/types/action.enum";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
@@ -81,17 +79,6 @@
       </div>
       {@render header?.()}
       <div class="flex gap--2 justify-end items-center h-full w-full">
-        <!--<Button-->
-        <!--  type={ButtonVariant.SECONDARY}-->
-        <!--  style={ButtonStyle.OUTLINED}-->
-        <!--  size={Size.sm}-->
-        <!--  label="Today"-->
-        <!--  isPreventMinWidth={true}-->
-        <!--  parentBgIndex={2}-->
-        <!--  onclick={() => {-->
-        <!--    onGoToToday?.();-->
-        <!--  }}-->
-        <!--/>-->
         <div class="text-fgs3 h-full">
           <BoxButton
             size={Size.sm}
@@ -103,21 +90,6 @@
           />
         </div>
         {@render headerRightOptions?.()}
-        <!--<Button-->
-        <!--  type={ButtonVariant.SECONDARY}-->
-        <!--  style={ButtonStyle.OUTLINED}-->
-        <!--  size={Size.sm}-->
-        <!--  icon="sliders"-->
-        <!--  tooltip="Calendar settings"-->
-        <!--  parentBgIndex={2}-->
-        <!--  onclick={() => {-->
-        <!--    appStore.runAction(Action.CALENDAR_SETTINGS, {-->
-        <!--      componentParams: {-->
-        <!--        panel-->
-        <!--      }-->
-        <!--    });-->
-        <!--  }}-->
-        <!--/>-->
         <div class="h-full w-10">
           <BoxButton
             icon="sliders"

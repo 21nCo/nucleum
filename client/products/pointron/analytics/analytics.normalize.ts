@@ -6,7 +6,16 @@ import {
   type IAnalyticsConfigStore
 } from "@21n/products/pointron/analytics/analytics.types";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import { TimePeriodType, TimeScale, type TimePeriod } from "@21n/types/time.type";
+import {
+  TimePeriodType,
+  TimeScale,
+  type TimePeriod
+} from "@21n/types/time.type";
+
+type LegacyAnalyticsCard = Omit<Partial<IAnalyticsCard>, "grouping"> & {
+  grouping?: AnalyticsCardGrouping | "TOP_LEVEL_GOALS";
+  isGroupByTopLevelGoals?: boolean;
+};
 
 function resolveDefaultPeriod(): TimePeriod {
   return {
@@ -36,21 +45,26 @@ function resolvePeriod(period: unknown): TimePeriod {
   };
 }
 
-export function normalizeAnalyticsCard(card: unknown): IAnalyticsCard | undefined {
+export function normalizeAnalyticsCard(
+  card: unknown
+): IAnalyticsCard | undefined {
   if (!card || typeof card !== "object") {
     return undefined;
   }
-  const candidate = card as Partial<IAnalyticsCard>;
+  const candidate = card as LegacyAnalyticsCard;
   const type = Object.values(AnalyticsCardType).includes(
     candidate.type as AnalyticsCardType
   )
     ? (candidate.type as AnalyticsCardType)
     : AnalyticsCardType.DONUT;
-  const grouping = Object.values(AnalyticsCardGrouping).includes(
-    candidate.grouping as AnalyticsCardGrouping
-  )
-    ? (candidate.grouping as AnalyticsCardGrouping)
-    : undefined;
+  const grouping =
+    candidate.grouping === "TOP_LEVEL_GOALS"
+      ? AnalyticsCardGrouping.TOP_LEVEL_OBJECTIVES
+      : Object.values(AnalyticsCardGrouping).includes(
+            candidate.grouping as AnalyticsCardGrouping
+          )
+        ? (candidate.grouping as AnalyticsCardGrouping)
+        : undefined;
   return {
     id:
       typeof candidate.id === "string" && candidate.id.length > 0
@@ -60,7 +74,8 @@ export function normalizeAnalyticsCard(card: unknown): IAnalyticsCard | undefine
     grouping,
     filter: Array.isArray(candidate.filter)
       ? candidate.filter.filter(
-          (value): value is string => typeof value === "string" && value.length > 0
+          (value): value is string =>
+            typeof value === "string" && value.length > 0
         )
       : undefined,
     type,
@@ -68,7 +83,11 @@ export function normalizeAnalyticsCard(card: unknown): IAnalyticsCard | undefine
     isGroupByTopLevelObjectives:
       typeof candidate.isGroupByTopLevelObjectives === "boolean"
         ? candidate.isGroupByTopLevelObjectives
-        : undefined,
+        : typeof candidate.isGroupByTopLevelGoals === "boolean"
+          ? candidate.isGroupByTopLevelGoals
+          : grouping === AnalyticsCardGrouping.TOP_LEVEL_OBJECTIVES
+            ? true
+            : undefined,
     stackedBarMode:
       candidate.stackedBarMode === "percentage" ||
       candidate.stackedBarMode === "value"
