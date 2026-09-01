@@ -404,7 +404,8 @@
         output: "unix-ms"
       });
       return {
-        $lte: typeof dayStart === "number" ? dayStart : Date.now()
+        $gt: 0,
+        $lt: typeof dayStart === "number" ? dayStart : Date.now()
       };
     } else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
       return false;

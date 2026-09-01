@@ -22,8 +22,11 @@ function isLinkableResource(resource: Resource) {
   );
 }
 
-function assertMutationSucceeded(result: unknown) {
-  if (!result) throw new Error("DataFn relation mutation failed");
+/**
+ * Throws when a DataFn mutation result represents a failed operation.
+ */
+export function assertDatafnMutationSucceeded(result: unknown) {
+  if (!result) throw new Error("DataFn mutation failed");
   if (
     typeof result === "object" &&
     "ok" in result &&
@@ -31,7 +34,7 @@ function assertMutationSucceeded(result: unknown) {
   ) {
     throw (
       (result as { error?: unknown }).error ??
-      new Error("DataFn relation mutation failed")
+      new Error("DataFn mutation failed")
     );
   }
 }
@@ -115,7 +118,7 @@ async function applyLocalRelationBatchWithRollback(
   try {
     for (const mutation of mutations) {
       const result = await datafn.mutate(mutation);
-      assertMutationSucceeded(result);
+      assertDatafnMutationSucceeded(result);
       appliedMutations.push(mutation);
     }
   } catch (error) {
@@ -126,7 +129,7 @@ async function applyLocalRelationBatchWithRollback(
           ...mutation,
           operation: "unrelate"
         });
-        assertMutationSucceeded(result);
+        assertDatafnMutationSucceeded(result);
       } catch (rollbackError) {
         rollbackErrors.push(rollbackError);
       }
@@ -182,7 +185,7 @@ export async function relateDatafnRecords(input: {
         atomic: true,
         steps: mutations.map((mutation) => ({ mutation }))
       });
-      assertMutationSucceeded(result);
+      assertDatafnMutationSucceeded(result);
     }
   }
   return pendingSources.length;

@@ -33,7 +33,7 @@
     refreshNucleumDatafnStatus
   } from "@21n/stores/datafn.store";
   import {
-    resolvePointronDatafnBackup,
+    isPointronDatafnBackup,
     resolveDatafnImportErrorCount
   } from "@21n/products/pointron/settings/data/pointronDatafnBackup.utils";
 
@@ -271,10 +271,8 @@
               toasts.error("Please select a valid file");
               return;
             }
-            const jsonData = resolvePointronDatafnBackup(
-              parse(importedData as string)
-            );
-            if (jsonData === undefined) {
+            const jsonData = parse(importedData as string);
+            if (!isPointronDatafnBackup(jsonData)) {
               resetCurrentUploadProgress();
               toasts.error("Invalid Pointron DataFn backup file");
               return;

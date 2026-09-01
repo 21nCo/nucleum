@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@21n/components": "*",
+    "@21n/data": "*",
     "@21n/types": "*",
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.0.0",

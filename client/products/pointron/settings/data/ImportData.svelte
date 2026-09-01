@@ -13,7 +13,7 @@
   } from "@21n/stores/datafn.store";
   import { lastImportTime } from "@21n/products/pointron/pointron.store";
   import {
-    resolvePointronDatafnBackup,
+    isPointronDatafnBackup,
     resolveDatafnImportErrorCount
   } from "@21n/products/pointron/settings/data/pointronDatafnBackup.utils";
   import { logger } from "@21n/components/debug/logger.client";
@@ -33,13 +33,12 @@
         const importedData = event.target?.result;
         if (!importedData) return;
         const parsedData = parse(importedData as string);
-        const resolvedData = resolvePointronDatafnBackup(parsedData);
-        if (resolvedData === undefined) {
+        if (!isPointronDatafnBackup(parsedData)) {
           resetFile();
           toasts.error("Invalid Pointron DataFn backup file");
           return;
         }
-        jsonData = resolvedData;
+        jsonData = parsedData;
         fileName = file.name;
       } catch (error) {
         logger.error({ at: "PointronImportData.importData.parse", error });
@@ -55,7 +54,7 @@
       toasts.error("Pointron import is not available in cloud direct mode");
       return;
     }
-    if (jsonData === undefined) {
+    if (!isPointronDatafnBackup(jsonData)) {
       toasts.error("Please select a valid file");
       return;
     }

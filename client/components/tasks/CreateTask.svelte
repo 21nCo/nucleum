@@ -32,6 +32,7 @@
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
   import { datafn } from "@21n/stores/datafn.store";
   import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { assertDatafnMutationSucceeded } from "@21n/stores/datafn-linking.store";
 
   let {
     date: initialDate = undefined,
@@ -74,12 +75,13 @@
       isChecked: false,
       objectiveId: objectiveId ?? objective?.id ?? ""
     };
-    await datafn.task.mutate({
+    const mutationResult = await datafn.task.mutate({
       operation: "insert",
       id: task.id,
       record: task,
       context: action
     });
+    assertDatafnMutationSucceeded(mutationResult);
     appStore.addToRecents({
       record: task,
       type: Resource.task,

@@ -9,10 +9,13 @@ type CalendarEventRange = {
   end: number;
 };
 
+const defaultCalendarEventDurationMs = 60 * 60 * 1000;
+
 /**
  * Builds a half-open event overlap filter for current and legacy event shapes.
  */
 export function resolveCalendarEventOverlapFilters(range: CalendarEventRange) {
+  const openEndedStart = range.start - defaultCalendarEventDurationMs;
   return {
     $or: [
       {
@@ -20,7 +23,7 @@ export function resolveCalendarEventOverlapFilters(range: CalendarEventRange) {
         endUnix: { $gt: range.start }
       },
       {
-        startUnix: { $gte: range.start, $lt: range.end },
+        startUnix: { $gt: openEndedStart, $lt: range.end },
         endUnix: { $is_null: true }
       },
       {
@@ -28,7 +31,7 @@ export function resolveCalendarEventOverlapFilters(range: CalendarEventRange) {
         "value.endUnix": { $gt: range.start }
       },
       {
-        "value.startUnix": { $gte: range.start, $lt: range.end },
+        "value.startUnix": { $gt: openEndedStart, $lt: range.end },
         "value.endUnix": { $is_null: true }
       }
     ]

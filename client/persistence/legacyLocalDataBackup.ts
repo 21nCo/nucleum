@@ -120,7 +120,6 @@ const legacyResourceStores = new Set([
   "kv",
   "goal",
   "PointGoal",
-  "PointTag",
   "PointTask",
   "PointSession",
   "PointLog",
@@ -165,7 +164,6 @@ const joinCapabilityFields = new Set([
 const legacyResourceMap = new Map<string, string>([
   ["goal", "objective"],
   ["PointGoal", "objective"],
-  ["PointTag", "linkTag"],
   ["objective", "objective"],
   ["todo", "task"],
   ["PointTask", "task"],
