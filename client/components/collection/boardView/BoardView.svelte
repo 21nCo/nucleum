@@ -13,21 +13,19 @@
     UNASSIGNED_VALUE
   } from "@21n/components/collection/collection.utils";
   import {
-    determineResourceType,
     extractResourceIdFromElementId,
     isSameResource,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
   import type { IRecordId } from "@21n/types/data.type";
   import {
     type IPropertyValue,
     PropertyType
   } from "@21n/components/collection/properties/property.type";
-  import { datafn } from "@21n/stores/datafn.store";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
 
   let {
     collection,
@@ -58,11 +56,9 @@
     if (!itemId) return;
     const item = await collection.selectItem(itemId);
     if (!item) return;
-    let itemPropertyValues: ICollectionItemPropertyValue[] = Array.isArray(
-      item.propertyValues
-    )
-      ? [...item.propertyValues]
-      : [];
+    let itemPropertyValues: ICollectionItemPropertyValue[] = [
+      ...(item.properties || [])
+    ];
     let isChangesPresent = false;
     const currentGroupValue = itemPropertyValues.find(
       (property: ICollectionItemPropertyValue) =>
@@ -95,27 +91,14 @@
     }
 
     if (!isChangesPresent) return;
-    const resourceType = determineResourceType(itemId);
-    if (resourceType === Resource.unknown) return;
-    await datafn.table(resourceType).mutate({
-      operation: "relate",
-      id: itemId,
-      relations: {
-        propertyValues: itemPropertyValues.map((propertyValue) => ({
-          $ref: propertyValue.id.toString(),
-          fromResource: resourceType.toString(),
-          collectionId: propertyValue.collectionId ?? collection.id,
-          value: propertyValue.value
-        }))
-      },
-      debounceKey: "propertyValues-" + itemId,
-      debounceMs: 1500
+    const result = await nodeStore.modify(itemId, {
+      properties: itemPropertyValues
     });
     data = data.map((node: ICollectionItem) => {
       if (isSameResource(node.id.toString(), itemId)) {
         return {
           ...node,
-          propertyValues: itemPropertyValues
+          properties: itemPropertyValues
         };
       }
       return node;
@@ -140,7 +123,6 @@
           );
           nodePropValues.push({
             id: propertyId,
-            collectionId: collection.id,
             value:
               propertyConfig?.type === PropertyType.MULTI_SELECT
                 ? [newValue]
@@ -162,7 +144,6 @@
                 : newValue;
           nodePropValues.push({
             id: propertyId,
-            collectionId: collection.id,
             value: newValToBeAssigned
           });
           return nodePropValues;

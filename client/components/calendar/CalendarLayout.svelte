@@ -16,8 +16,6 @@
   import { page } from "$app/stores";
   import BackButton from "@21n/elements/button/BackButton.svelte";
   import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
-  import BoxButton from "@21n/elements/button/BoxButton.svelte";
-  import { onMount } from "svelte";
   let {
     panel = $bindable(CalendarLayout.Classic),
     children = undefined,
@@ -34,21 +32,14 @@
     onGoToToday?: (() => void) | undefined;
   } = $props();
   const panelOptions: ISelectItem[] = [
+    { value: CalendarLayout.Classic, label: "Classic" },
     {
       value: CalendarLayout.Bird,
       label: "Columns"
-    },
-    { value: CalendarLayout.Classic, label: "Classic" }
+    }
   ];
-  let backPath = $state<string | null>(null);
+  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
   const dev_enableBirdView = import.meta.env?.DEV;
-
-  onMount(() => {
-    const unsubscribe = page.subscribe((p) => {
-      backPath = p?.url?.searchParams.get(AppSearchParam.RETURN_TO) ?? null;
-    });
-    return () => unsubscribe?.();
-  });
 
   function onPanelSwitch(event: CustomEvent) {
     if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))
@@ -60,7 +51,7 @@
 </script>
 
 <div class="flex flex-col h-full w-full otop:pt-12">
-  <div class="flex items-center gap-4 border-b border-brs3 h-11 pl-3">
+  <div class="flex items-center gap-4 border-b border-brs3 h-12 px-4">
     <header class="grid grid-cols-3 w-full sticky top-0 z-10 h-full">
       <div class="flex items-center gap-4 h-full">
         {#if $appStore.product === Product.NUCLEUM && dev_enableBirdView}
@@ -86,58 +77,34 @@
         {@render headerLeftOptions?.()}
       </div>
       {@render header?.()}
-      <div class="flex gap--2 justify-end items-center h-full w-full">
-        <!--<Button-->
-        <!--  type={ButtonVariant.SECONDARY}-->
-        <!--  style={ButtonStyle.OUTLINED}-->
-        <!--  size={Size.sm}-->
-        <!--  label="Today"-->
-        <!--  isPreventMinWidth={true}-->
-        <!--  parentBgIndex={2}-->
-        <!--  onclick={() => {-->
-        <!--    onGoToToday?.();-->
-        <!--  }}-->
-        <!--/>-->
-        <div class="text-fgs3 h-full">
-          <BoxButton
-            size={Size.sm}
-            label="GO TO TODAY"
-            width="px-2"
-            onclick={() => {
-              onGoToToday?.();
-            }}
-          />
-        </div>
+      <div class="flex gap-2 justify-end items-center h-full w-full">
+        <Button
+          type={ButtonVariant.SECONDARY}
+          style={ButtonStyle.OUTLINED}
+          size={Size.sm}
+          label="Today"
+          isPreventMinWidth={true}
+          parentBgIndex={2}
+          onclick={() => {
+            onGoToToday?.();
+          }}
+        />
         {@render headerRightOptions?.()}
-        <!--<Button-->
-        <!--  type={ButtonVariant.SECONDARY}-->
-        <!--  style={ButtonStyle.OUTLINED}-->
-        <!--  size={Size.sm}-->
-        <!--  icon="sliders"-->
-        <!--  tooltip="Calendar settings"-->
-        <!--  parentBgIndex={2}-->
-        <!--  onclick={() => {-->
-        <!--    appStore.runAction(Action.CALENDAR_SETTINGS, {-->
-        <!--      componentParams: {-->
-        <!--        panel-->
-        <!--      }-->
-        <!--    });-->
-        <!--  }}-->
-        <!--/>-->
-        <div class="h-full w-10">
-          <BoxButton
-            icon="sliders"
-            tooltip="Calendar settings"
-            size={Size.sm}
-            onclick={() => {
-              appStore.runAction(Action.CALENDAR_SETTINGS, {
-                componentParams: {
-                  panel
-                }
-              });
-            }}
-          />
-        </div>
+        <Button
+          type={ButtonVariant.SECONDARY}
+          style={ButtonStyle.OUTLINED}
+          size={Size.sm}
+          icon="sliders"
+          tooltip="Calendar settings"
+          parentBgIndex={2}
+          onclick={() => {
+            appStore.runAction(Action.CALENDAR_SETTINGS, {
+              componentParams: {
+                panel
+              }
+            });
+          }}
+        />
       </div>
     </header>
   </div>

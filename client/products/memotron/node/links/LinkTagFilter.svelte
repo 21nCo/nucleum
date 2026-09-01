@@ -1,31 +1,24 @@
 <script lang="ts">
-  import { resourceInList } from "@21n/data/datafn/resource.utils";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import Tag from "@21n/elements/text/Tag.svelte";
   import type { IRecordId } from "@21n/types/data.type";
   import { Size } from "@21n/types/size.enum";
+  import { linkTagStore } from "@21n/products/memotron/linking/link.store";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
-  import type { ILinkTag } from "@21n/products/memotron/linking/link.type";
   import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
   let {
     links = [],
-    selected = $bindable([])
+    selected = $bindable([]),
+    onChange = undefined
   }: {
     links?: INodeLinkThumb[];
     selected?: IRecordId[];
+    onChange?: (() => void) | undefined;
   } = $props();
-  const linkTagStore = toSvelteStore<ILinkTag[]>(
-    datafn.linkTag.signal({
-      select: ["id", "label", "group"]
-    }),
-    { initialData: [] }
-  );
-  const linkTags = $derived($linkTagStore.data);
 
   let tags = $derived.by(
     () =>
-      linkTags
+      $linkTagStore
         ?.filter((x) => links.some((y) => y.tags?.some(resourceInList(x))))
         ?.map(linkTagLabelMapper) ?? []
   );
@@ -51,6 +44,7 @@
             } else {
               selected = [...selected, tag.id];
             }
+            onChange?.();
           }}
         />
       </div>

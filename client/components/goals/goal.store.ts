@@ -1,22 +1,29 @@
-import { Resource } from "@21n/data/datafn/resource.enum";
-import { ActiveResourceStore } from "@21n/data/datafn/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "@21n/components/flux/resourceStores/resource.store";
 import { PanelSwitcherMixin } from "@21n/components/resource/panelSwitcher.mixin";
 import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
-import { type IRecordId } from "@21n/types/data.type";
+import {
+  type IRecordId,
+  type IResourceSelectAdditionalParams,
+  type IResourceSelectParams
+} from "@21n/types/data.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
 import { logger } from "@21n/components/debug/logger.client";
 import type {
-  IActiveObjective,
-  IObjective,
-  IObjectiveThumb
+  IActiveGoal,
+  IGoal,
+  IGoalCapture,
+  IGoalThumb
 } from "@21n/components/goals/goal.type";
-import { ObjectiveStatus, ObjectiveType } from "@21n/components/goals/goal.type";
-import { updateObjectiveParent } from "@21n/components/goals/goal.utils";
+import { GoalStatus, GoalType } from "@21n/components/goals/goal.type";
 import {
   AccessMode,
   ResourceAccessPoint,
-  ResourceActionType,
-  type IResourceMutationParams
-} from "@21n/data/datafn/resource.type";
+  ResourceActionType
+} from "@21n/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "@21n/components/record/resource.actions";
 import {
   ContextMenuType,
@@ -30,49 +37,349 @@ import { appStore } from "@21n/stores/app.store";
 import context from "@21n/stores/context.store";
 import { Embed } from "@21n/types/context.type";
 import view from "@21n/stores/view.store";
-import { resolveCollectionTypes } from "@21n/components/collection/collection.utils";
-import type { ICollectionExpanded } from "@21n/components/collection/collection.type";
-import { resolveResourceIcon } from "@21n/data/datafn/resource.utils";
+import { collectionStore } from "@21n/components/collection/collection.store";
+import { AppSearchParam } from "@21n/types/appStore.type";
+import { toasts } from "@21n/stores/notification.store";
+import {
+  isSameResource,
+  resolveResourceIcon,
+  resourceAction,
+  resourceInList
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { taskStore } from "@21n/components/tasks/task.store";
 import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-import { datafn } from "@21n/stores/datafn.store";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 
-function pruneUndefined(input: Record<string, unknown>) {
-  return Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== undefined)
-  );
-}
-
-export class ActiveObjectiveStore extends CollectibleStore<
-  IObjective,
-  IActiveObjective
-> {
-  constructor(objectiveId: IRecordId) {
-    super(objectiveId);
+const defaults: Partial<IGoal> = {
+  type: GoalType.INDEFINITE,
+  status: GoalStatus.NOT_STARTED,
+  parent: 0,
+  isPinnedForQuickFocus: false
+};
+class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
+  constructor() {
+    super(Resource.goal, {
+      defaultProps: defaults,
+      expandProps: ["parent"]
+    });
   }
 
-  async modify(val: Partial<IObjective>, params?: IResourceMutationParams) {
-    const shouldUpdateActive = !params?.isPreventBackPropagation;
-    const previous = shouldUpdateActive ? this.get() : undefined;
-    if (shouldUpdateActive) {
-      this.update((prev) => ({ ...prev, ...val }));
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const filters = {
+      ...(params?.filters ?? {}),
+      type:
+        params?.filters && "type" in params.filters && params?.filters?.type
+          ? typeof params.filters.type === "string"
+            ? params.filters.type.toUpperCase()
+            : params.filters.type
+          : undefined,
+      parent: params?.filters?.parent
+        ? params?.filters?.parent
+        : params?.search ||
+            additionalParams?.isIncludeSubItems ||
+            params?.filters?.isStarred ||
+            params?.filters?.id
+          ? undefined
+          : false
+    };
+    params = {
+      ...(params ?? {}),
+      filters
+    };
+    return super.selectMany(params, additionalParams);
+  }
+
+  /**
+   * TODO
+   * addToRecents() is not implemented for goals due to the nature of the goal saving process - the label will always be empty during creation of goal due to inplace creation
+   */
+  async save(params?: {
+    isQuickFocus?: boolean;
+    context?: string;
+    label?: string;
+    isPreventOpenAfterCreate?: boolean;
+    linkSearchParam?: string;
+  }) {
+    const goal = {
+      label: params?.label ?? "",
+      isPinnedForQuickFocus: params?.isQuickFocus ?? false
+    };
+    const result = await this.create([goal], {
+      context:
+        params?.context ??
+        resourceAction(Resource.goal, ResourceActionType.CREATE)
+    });
+    if (!result || result.length === 0) {
+      toasts.error("Failed to create new goal");
+      return;
     }
-    try {
-      await datafn.objective.mutate({
-        operation: "merge",
-        id: this.id.toString(),
-        record: pruneUndefined({
-          id: this.id.toString(),
-          ...val
-        } as Record<string, unknown>),
-        context: params?.context,
-        debounceKey: params?.debounceKey,
-        debounceMs: params?.isDebounced ? 1500 : undefined,
-        system: params?.isModifyAsSystem
+    toasts.success("New goal created successfully");
+    if (params?.isPreventOpenAfterCreate) return result[0];
+    appStore.openResource(result[0].id, AccessMode.POP, {
+      searchParams: {
+        [AppSearchParam.EDIT]: true,
+        [AppSearchParam.LINK]: params?.linkSearchParam ?? null
+      }
+    });
+    return result[0];
+  }
+
+  /**
+   * Adds a sub goal to the source goal
+   * @param subGoal - the sub goal to add
+   * @param srcId - the source goal id
+   * @param params - additional parameters
+   * @param params.srcExpanded - the source goal expanded data
+   * @returns the sub goal id
+   */
+  async addSubGoal(
+    subGoal: {
+      label: string;
+      type?: GoalType;
+    },
+    srcId: IRecordId,
+    params?: {
+      srcExpanded?: IActiveGoal;
+    }
+  ) {
+    let parent: IRecordId[] | undefined = undefined;
+    let children: IRecordId[] = [];
+    if (params?.srcExpanded === undefined) {
+      const goalData: IGoal = await this.select(srcId);
+      if (goalData) {
+        parent = [...(goalData.parent || []), srcId];
+        children = goalData.children || [];
+      }
+    } else {
+      parent = [...(params.srcExpanded?.parent || []).map((p) => p.id), srcId];
+      children = [...(params.srcExpanded?.children || [])].map((c) => c.id);
+    }
+    const goal: IGoalCapture = {
+      id: generateResourceId(Resource.goal),
+      label: subGoal.label,
+      parent,
+      ...(subGoal.type && { type: subGoal.type })
+    };
+    await this.modify(
+      srcId,
+      {
+        children: [...(children || []), goal.id as IRecordId]
+      },
+      {
+        isPreventBackPropagation: true
+      }
+    );
+    console.log({ at: "GoalStore.addSubGoal", goal });
+    return this.create([goal]);
+  }
+
+  private async resolveDependencies(ids: IRecordId[]) {
+    const subGoalsResult = await Promise.all([
+      ...ids.map((id) =>
+        super.selectMany(
+          {
+            properties: {
+              select: ["id"]
+            },
+            filters: {
+              parent: {
+                contains: id.toString()
+              }
+            }
+          },
+          {
+            isIncludeInactiveItems: true
+          }
+        )
+      )
+    ]);
+    const subGoals = subGoalsResult.flat();
+    const tasks = await taskStore.selectMany(
+      {
+        properties: {
+          select: ["id"]
+        },
+        filters: {
+          goalId: [
+            ...ids.map((id) => id.toString()),
+            ...(subGoals?.map((g) => g.id.toString()) ?? [])
+          ]
+        }
+      },
+      {
+        isIncludeInactiveItems: true
+      }
+    );
+    return [tasks, subGoals];
+  }
+
+  private async onParentChange(ids: IRecordId[], status: boolean) {
+    const [tasks, subGoals] = await this.resolveDependencies(ids);
+    if (subGoals?.length) {
+      await this.bulkModify(
+        subGoals.map((g: IGoal) => g.id),
+        { isParentInactive: status }
+      );
+    }
+    if (tasks?.length) {
+      await taskStore.bulkModify(
+        tasks.map((task: { id: IRecordId }) => task.id),
+        { isParentInactive: status }
+      );
+    }
+  }
+
+  async onArchive(ids: IRecordId[]) {
+    return this.onParentChange(ids, true);
+  }
+
+  async onUnarchive(ids: IRecordId[]) {
+    return this.onParentChange(ids, false);
+  }
+
+  async onTrash(ids: IRecordId[]) {
+    return this.onParentChange(ids, true);
+  }
+
+  async onRestore(ids: IRecordId[]) {
+    return this.onParentChange(ids, false);
+  }
+
+  async convertToRoot(src: IGoalThumb) {
+    logger.log({ at: "GoalStore.convertToRoot", src });
+    await this.editParentChain(src);
+    await this.removeSubgoalFromCurrentParent(src);
+  }
+
+  async convertToSubGoal(src: IGoalThumb, parent: IGoal) {
+    logger.log({ at: "GoalStore.convertToSubGoal", src, parent });
+    const result = await this.editParentChain(src, parent);
+    if (!result) return;
+    await this.appendSubgoal(src, parent);
+  }
+
+  async moveSubgoal(src: IGoalThumb, parent: IGoal) {
+    logger.log({ at: "GoalStore.moveSubgoal", src, parent });
+    const result = await this.editParentChain(src, parent);
+    if (!result) return;
+    await this.appendSubgoal(src, parent);
+    await this.removeSubgoalFromCurrentParent(src);
+  }
+
+  /**
+   * Removes the sub goal (src) from the current parent (children array)
+   * @param src - the sub goal to remove
+   * @returns
+   */
+  private async removeSubgoalFromCurrentParent(src: IGoalThumb) {
+    if (!src) return;
+    const immediateParent = src.parent?.[src.parent.length - 1];
+    if (!immediateParent) return;
+    const currentChildren = immediateParent.children;
+    if (!currentChildren?.some(resourceInList(src))) {
+      toasts.error();
+      return;
+    }
+    const newChildren = currentChildren
+      .filter((x) => !isSameResource(x, src))
+      .filter(Boolean);
+    await this.modify(immediateParent.id, {
+      children: newChildren
+    });
+  }
+
+  /**
+   * Adds the sub goal (src) to the new parent (children array)
+   * @param src - the sub goal to add
+   * @param newParent - the new parent to add the sub goal to
+   * @returns
+   */
+  private async appendSubgoal(src: IGoalThumb, newParent: IGoal) {
+    if (!src || !newParent) return;
+    const currentChildren = newParent.children;
+    if (currentChildren?.some(resourceInList(src.id))) {
+      toasts.error("Goal is already a subgoal of this parent");
+      return;
+    }
+    const newChildren = [...(currentChildren || []), src.id];
+    await this.modify(newParent.id, {
+      children: newChildren
+    });
+  }
+
+  /**
+   * Edits all the parent fields of deeply nested sub goals of the source goal (src) to prepend the new parent (newParent) and its parent hierarchy.
+   * @param src
+   * @param newParent
+   * @returns
+   */
+  private async editParentChain(
+    src: IGoalThumb,
+    newParent?: IGoal | IGoalThumb
+  ) {
+    const subGoals: IGoal[] = await this.selectMany(
+      {
+        filters: {
+          parent: {
+            contains: src.id.toString()
+          }
+        }
+      },
+      {
+        isIncludeInactiveItems: true
+      }
+    );
+    const newParentHierarchy = [
+      ...(newParent?.parent
+        ? newParent.parent.map((x) =>
+            typeof x === "string" ? x : x.id?.toString()
+          )
+        : []),
+      ...(newParent ? [newParent.id] : [])
+    ].filter(Boolean);
+    await this.modify(src.id, {
+      parent:
+        newParentHierarchy && newParentHierarchy.length > 0
+          ? newParentHierarchy
+          : defaults.parent
+    });
+    if (!isValidArrayWithData(subGoals)) return true;
+    if (newParent && subGoals.some(resourceInList(newParent))) return false;
+    for (const subGoal of subGoals) {
+      let parentChainToRight: IRecordId[] | undefined = undefined;
+      if (subGoal.parent) {
+        const srcIndexInParentChain = subGoal.parent
+          ?.map((x) => x.toString())
+          .indexOf(src.id.toString());
+        parentChainToRight = subGoal.parent?.slice(srcIndexInParentChain);
+      }
+      const newParentChainForSubGoal = [
+        ...newParentHierarchy,
+        ...(parentChainToRight || [])
+      ].filter(Boolean);
+      await this.modify(subGoal.id, {
+        parent:
+          newParentChainForSubGoal && newParentChainForSubGoal.length > 0
+            ? newParentChainForSubGoal
+            : defaults.parent
       });
-    } catch (error) {
-      if (previous) this.set(previous);
-      throw error;
     }
+    return true;
+  }
+}
+
+export const goalStore = GoalStore.resolve(Resource.goal);
+
+export class ActiveGoalStore extends CollectibleStore<
+  IGoal,
+  GoalStore,
+  IActiveGoal
+> {
+  constructor(goalId: IRecordId) {
+    super(goalId, goalStore);
   }
 
   async init(
@@ -83,21 +390,25 @@ export class ActiveObjectiveStore extends CollectibleStore<
       panel?: string;
     }
   ) {
-    logger.log({ at: "ActiveObjectiveStore.init", id: this.id, params });
+    logger.log({ at: "ActiveGoalStore.init", id: this.id, params });
     try {
-      const result = (await datafn.objective.select(this.id.toString(), {
-        select: ["*", "children.*", "parent.*", "collections"],
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      })) as IObjective | undefined;
+      const oldProps = [
+        "*",
+        "(select * from $parent.children) as children",
+        "(select * from $parent.parent) as parent",
+        "(select id from task where goalId is $parent.id) as tasks",
+        "->link.* as outlinks",
+        "<-link.* as inlinks"
+      ];
+      const result = await this.resourceStore.select(this.id, {
+        expand: ["children", "parent"]
+      });
       if (!result) {
         this.set({
           id: this.id,
           label: "",
-          type: ObjectiveType.INDEFINITE,
-          updatedAt: new Date(),
+          type: GoalType.INDEFINITE,
+          modifiedAt: new Date(),
           createdAt: new Date(),
           accessMode,
           panel: params?.panel ?? ResourcePanelType.DEFAULT,
@@ -106,12 +417,12 @@ export class ActiveObjectiveStore extends CollectibleStore<
           closeEditMode: () => {},
           ...(params?.isInEditMode && { isInEditMode: true }),
           isPageLoading: false
-        } as IActiveObjective);
+        } as IActiveGoal);
         return;
       }
-      let types: ICollectionExpanded[] = [];
+      let types = [];
       if (result.collections && result.collections.length > 0)
-        types = await resolveCollectionTypes(result.collections);
+        types = await collectionStore.resolveTypes(result.collections);
 
       this.set({
         ...result,
@@ -119,23 +430,19 @@ export class ActiveObjectiveStore extends CollectibleStore<
         isPageLoading: false,
         accessMode,
         panel: params?.panel ?? ResourcePanelType.DEFAULT,
-        defaultPanel: ResourcePanelType.DEFAULT,
-        switchPanel: () => {},
-        closeEditMode: () => {},
         ...(params?.isInEditMode && { isInEditMode: true })
       });
 
       appStore.addToRecents({
         record: result,
-        type: Resource.objective,
+        type: Resource.goal,
         timestamp: new Date()
       });
       if (params?.linkSearchParam) {
         this.linkCollection(params.linkSearchParam);
       }
     } catch (e) {
-      logger.error({
-        at: "ActiveObjectiveStore.init",
+      console.error("error in init goal store", {
         id: this.id,
         error: e
       });
@@ -143,30 +450,31 @@ export class ActiveObjectiveStore extends CollectibleStore<
   }
 
   async afterInit() {
-    const taskCount = await datafn.task.query({
-      count: true,
-      select: ["id"],
+    const taskCount = await taskStore.selectMany({
+      properties: {
+        select: ["#"]
+      },
       filters: {
-        objectiveId: this.id.toString()
+        goalId: this.id
       }
     });
-    if (typeof taskCount?.count !== "number") return;
+    if (!taskCount || typeof taskCount !== "number") return;
     this.update((state) => {
       return {
         ...state,
-        taskCount: taskCount.count
+        taskCount: taskCount
       };
     });
   }
 
   switchPanel!: (panel: string) => void;
 
-  static resolve<T extends ActiveResourceStore<any, any>>(
+  static resolve<T extends ActiveResourceStore<any, any, any>>(
     this: new (id: IRecordId) => T,
     id: IRecordId
   ): T {
-    if (!ActiveObjectiveStore.prototype.switchPanel) {
-      ActiveObjectiveStore.prototype.switchPanel = PanelSwitcherMixin.switchPanel;
+    if (!ActiveGoalStore.prototype.switchPanel) {
+      ActiveGoalStore.prototype.switchPanel = PanelSwitcherMixin.switchPanel;
     }
 
     const instance = super.resolve.call(this, id) as T & {
@@ -181,20 +489,20 @@ export class ActiveObjectiveStore extends CollectibleStore<
   }
 }
 
-export type IActiveObjectiveStore = InstanceType<typeof ActiveObjectiveStore>;
+export type IActiveGoalStore = InstanceType<typeof ActiveGoalStore>;
 
-const objectiveStaticPanelActions = {
+const goalStaticPanelActions = {
   infoPane: {
     value: ResourcePanelType.DEFAULT,
     icon: "info",
     label: "Info",
     tooltip: "Show info"
   },
-  subObjectivesPane: {
+  subGoalsPane: {
     value: ResourcePanelType.SUB,
-    icon: resolveResourceIcon(Resource.objective),
-    label: "Sub objectives",
-    tooltip: "Show sub objectives"
+    icon: resolveResourceIcon(Resource.goal),
+    label: "Sub goals",
+    tooltip: "Show sub goals"
   },
   tasksPane: {
     value: ResourcePanelType.TASKS,
@@ -228,9 +536,10 @@ const objectiveStaticPanelActions = {
   }
 };
 
-class ObjectiveActions {
+class GoalActions {
   constructor(
-    private objective: IObjectiveThumb,
+    private goal: IGoalThumb,
+    private store: GoalStore,
     private accessPoint: ResourceAccessPoint
   ) {}
 
@@ -245,44 +554,44 @@ class ObjectiveActions {
     label: "Focus now",
     icon: "circle",
     callback: async () => {
-      await activeSession.focusObjective(this.objective.id);
+      await activeSession.focusGoal(this.goal.id);
     }
   };
 
-  convertToSubObjective = {
-    value: PointronAction.CONVERT_TO_SUBOBJECTIVE,
-    label: "Convert to sub objective",
+  convertToSubGoal = {
+    value: PointronAction.CONVERT_TO_SUBGOAL,
+    label: "Convert to sub goal",
     icon: "to-sub",
     callback: async () => {
-      appStore.runAction(PointronAction.SELECT_PARENT_OBJECTIVE, {
+      appStore.runAction(PointronAction.SELECT_PARENT_GOAL, {
         componentParams: {
-          src: this.objective,
-          action: PointronAction.CONVERT_TO_SUBOBJECTIVE
+          src: this.goal,
+          action: PointronAction.CONVERT_TO_SUBGOAL
         }
       });
     }
   };
 
-  moveObjective = {
+  moveSubgoal = {
     value: ResourceActionType.MOVE,
     label: "Move",
     icon: "move",
     callback: async () => {
-      appStore.runAction(PointronAction.SELECT_PARENT_OBJECTIVE, {
+      appStore.runAction(PointronAction.SELECT_PARENT_GOAL, {
         componentParams: {
-          src: this.objective,
+          src: this.goal,
           action: ResourceActionType.MOVE
         }
       });
     }
   };
 
-  convertToRootObjective = {
-    value: PointronAction.CONVERT_TO_ROOT_OBJECTIVE,
-    label: "Convert to top level objective",
+  convertToRootGoal = {
+    value: PointronAction.CONVERT_TO_ROOT_GOAL,
+    label: "Convert to top level goal",
     icon: "level-up",
     callback: async () => {
-      await updateObjectiveParent(this.objective);
+      return goalStore.convertToRoot(this.goal);
     }
   };
 
@@ -292,24 +601,24 @@ class ObjectiveActions {
       label: "Pin to quick focus",
       icon: "circle",
       type: ContextMenuType.SWITCH,
-      initialValue: this.objective.isPinnedForQuickFocus,
+      initialValue: this.goal.isPinnedForQuickFocus,
       callback: async (checked: boolean) => {
-        await datafn.objective.mutate({
-          operation: "merge",
-          id: this.objective.id.toString(),
-          record: {
-            id: this.objective.id.toString(),
+        return this.store.modify(
+          this.goal.id,
+          {
             isPinnedForQuickFocus: checked
           },
-          context: this.accessPoint
-        });
+          {
+            context: this.accessPoint
+          }
+        );
       }
     };
   }
 }
 
 export function resolvePanelOptions(
-  objective: IActiveObjective,
+  goal: IActiveGoal,
   params?: {
     isConstrainedWidth?: boolean;
     isThreeColumned?: boolean;
@@ -323,39 +632,39 @@ export function resolvePanelOptions(
   };
 
   let items = [
-    objectiveStaticPanelActions.analyticsPane,
-    objectiveStaticPanelActions.linksPane,
-    objectiveStaticPanelActions.activityPane
+    goalStaticPanelActions.analyticsPane,
+    goalStaticPanelActions.linksPane,
+    goalStaticPanelActions.activityPane
   ];
 
   if (params?.isConstrainedWidth) {
-    items.unshift(objectiveStaticPanelActions.tasksPane);
-    items.unshift(objectiveStaticPanelActions.subObjectivesPane);
-    items.unshift(objectiveStaticPanelActions.infoPane);
+    items.unshift(goalStaticPanelActions.tasksPane);
+    items.unshift(goalStaticPanelActions.subGoalsPane);
+    items.unshift(goalStaticPanelActions.infoPane);
   } else if (params?.isThreeColumned === false) {
-    items.unshift(objectiveStaticPanelActions.tasksPane);
-    items.unshift(objectiveStaticPanelActions.infoPane);
+    items.unshift(goalStaticPanelActions.tasksPane);
+    items.unshift(goalStaticPanelActions.infoPane);
   } else {
     items.unshift(overview);
   }
 
-  // if (objective?.types && objective?.types?.length > 0) {
-  //   items.push(objectiveStaticPanelActions.propertiesPane);
+  // if (goal?.types && goal?.types?.length > 0) {
+  //   items.push(goalStaticPanelActions.propertiesPane);
   // }
   return items;
 }
 
-export function resolveObjectiveContextMenu(
-  objective: IObjectiveThumb,
+export function resolveGoalContextMenu(
+  goal: IGoalThumb,
   accessPoint: ResourceAccessPoint,
   params?: {
     accessPointId?: IRecordId;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(objective as unknown as IObjective, {
+  const resourceActions = new ResourceActions(goal as unknown as IGoal, goalStore, {
     accessPoint
   });
-  const objectiveActions = new ObjectiveActions(objective, accessPoint);
+  const goalActions = new GoalActions(goal, goalStore, accessPoint);
 
   let primaryItems: IContextMenuItem[] = [];
 
@@ -385,17 +694,12 @@ export function resolveObjectiveContextMenu(
       resourceActions.copyLink()
     ];
   }
-  const isRootObjective =
-    !objective.parentId &&
-    (!objective.parent ||
-      (Array.isArray(objective.parent) && objective.parent?.length === 0));
-  if (isRootObjective) {
-    primaryItems.push(objectiveActions.convertToSubObjective);
+  const isRootGoal =
+    !goal.parent || (Array.isArray(goal.parent) && goal.parent?.length === 0);
+  if (isRootGoal) {
+    primaryItems.push(goalActions.convertToSubGoal);
   } else {
-    primaryItems.push(
-      objectiveActions.convertToRootObjective,
-      objectiveActions.moveObjective
-    );
+    primaryItems.push(goalActions.convertToRootGoal, goalActions.moveSubgoal);
   }
   const openingActionGroup = {
     group: "open",
@@ -409,12 +713,12 @@ export function resolveObjectiveContextMenu(
   };
   const ctx = get(context);
   const viewStore = get(view);
-  const isCurrentlyFocusing = activeSession.isCurrentFocusItem(objective.id);
+  const isCurrentlyFocusing = activeSession.isCurrentFocusItem(goal.id);
   const focusGroup = {
     group: "focus",
     items: [
-      ...(isCurrentlyFocusing ? [] : [objectiveActions.focusNow]),
-      objectiveActions.pinToQuickFocus()
+      ...(isCurrentlyFocusing ? [] : [goalActions.focusNow]),
+      goalActions.pinToQuickFocus()
     ]
   };
   return [

@@ -18,7 +18,7 @@
   let grid: any = $userPreferences.infiniteGrid.grid;
 
   function syncGrid() {
-    userPreferences.setInfiniteGrid({ grid });
+    $userPreferences.infiniteGrid.grid = grid;
   }
 
   function createGrid() {
@@ -105,17 +105,21 @@
     console.log("cell added", { grid });
   }
   function resetGrid() {
-    userPreferences.setInfiniteGrid({ isGridCreated: false });
+    $userPreferences.infiniteGrid.isGridCreated = false;
+    // $userPreferences.infiniteGrid.grid = [];
     grid = [];
     createGrid();
   }
   onMount(() => {
+    // $userPreferences.infiniteGrid.isGridCreated = false;
+    // $userPreferences.infiniteGrid.grid = [];
+    // grid = [];
     if ($userPreferences.infiniteGrid.isGridCreated) {
       console.log("Grid already created", grid.length);
     } else {
       console.log("Creating Grid");
       createGrid();
-      userPreferences.setInfiniteGrid({ isGridCreated: true });
+      $userPreferences.infiniteGrid.isGridCreated = true;
     }
   });
 </script>

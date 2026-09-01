@@ -2,7 +2,7 @@
   import {
     isNoneResource,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import {
     calculateGroupingCounts,
     resolveOptionsForGrouping
@@ -11,24 +11,27 @@
     ICollectionItem,
     ICollectionView
   } from "@21n/components/collection/collection.type";
-  import type { ISelectItem, ISelectValue } from "@21n/types/select.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "@21n/types/select.type";
   import type { IProperty } from "@21n/components/collection/properties/property.type";
   import ViewTabs from "@21n/components/collection/tabSwitcher/ViewTabs.svelte";
 
   let {
     view,
     properties = [],
-    data = [],
     value = $bindable(),
     onSelect = undefined
   }: {
     view: ICollectionView;
     properties?: IProperty[];
-    data?: ICollectionItem[];
     value?: ISelectValue | undefined;
     onSelect?: ((event: CustomEvent<ISelectValue>) => void) | undefined;
   } = $props();
-  let viewData = $derived(data ?? []);
+  let viewData = $derived(
+    (view as ICollectionView & { data?: ICollectionItem[] }).data ?? []
+  );
   let label = $derived(resolveLabel(view.tabBy));
   let tabCounts = $derived(calculateGroupingCounts(viewData, view.tabBy));
   let tabs = $derived.by(() => resolveTabs(view.tabBy));

@@ -146,23 +146,6 @@ export async function createDatafnPublicLink(input: {
   });
 }
 
-/**
- * Builds a recipient URL while keeping the public-link credential in the fragment.
- */
-export function resolveDatafnPublicLinkUrl(input: {
-  token: string;
-  resource: string;
-  recordId: string;
-  region: string;
-}) {
-  const url = new URL("/share", window.location.origin);
-  url.searchParams.set("resource", input.resource);
-  url.searchParams.set("id", input.recordId);
-  url.searchParams.set("region", input.region);
-  url.hash = new URLSearchParams({ token: input.token }).toString();
-  return url.toString();
-}
-
 export async function revokeDatafnPublicLink(input: {
   id: string;
 }): Promise<void> {

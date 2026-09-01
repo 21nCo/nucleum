@@ -41,7 +41,7 @@
         | PropertyType.MULTI_SELECT
         | PropertyType.UNIVERSAL;
       config: ISelectPropertyConfig | IUniversalPropertyConfig;
-      defaultValue: any;
+      default: any;
     };
     isMultiSelect: boolean;
     value?: string | string[];
@@ -208,7 +208,7 @@
     const changes = {
       id: property.id,
       config: property.config,
-      defaultValue: property.defaultValue
+      default: property.default
     };
     onConfigChange(changes);
   }
@@ -217,11 +217,11 @@
 <div class="flex flex-col h--full w-full max-h-96 h-96 bg-bgs2">
   {#if isEditing && selectConfig && property.type !== PropertyType.UNIVERSAL}
     <div class="flex w-full flex-grow">
-        <SelectOptionsEditor
-          bind:config={selectConfig}
-          parentBgIndex={2}
-          bind:defaultOptionId={property.defaultValue}
-        />
+      <SelectOptionsEditor
+        bind:config={selectConfig}
+        parentBgIndex={2}
+        bind:defaultOptionId={property.default}
+      />
     </div>
   {:else}
     <div class="flex gap-2 px-3 w-full text-b2 py-2">

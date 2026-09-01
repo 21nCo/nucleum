@@ -7,9 +7,12 @@
   } from "@21n/components/files/file.type";
   import { fileStore } from "@21n/components/files/file.store";
   import { onMount } from "svelte";
-  import { fileLoader, fileLoaderv2 } from "@21n/actions/lazyload.action";
+  import {
+    fileLoader,
+    fileLoaderv2
+  } from "@21n/actions/lazyload.action";
   import { imageRepositioner } from "@21n/actions/imageRepositioning.action";
-  import { isSameResource } from "@21n/data/datafn/resource.utils";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import { debouncer } from "@21n/utils/utils";
 
   let {
@@ -53,7 +56,9 @@
     class?: string;
     onLoad?: ((event: CustomEvent<Event>) => void) | undefined;
     onReposition?: ((event: CustomEvent<number>) => void) | undefined;
-    onRepositionDebounced?: ((event: CustomEvent<number>) => void) | undefined;
+    onRepositionDebounced?:
+      | ((event: CustomEvent<number>) => void)
+      | undefined;
     onDragStart?: ((event: DragEvent) => void) | undefined;
     onDragEnd?: ((event: DragEvent) => void) | undefined;
     onDragOver?: ((event: DragEvent) => void) | undefined;

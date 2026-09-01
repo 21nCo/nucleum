@@ -2,23 +2,29 @@
   import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
   import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
-  import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import {
+    AlertType,
+    type IInlineStatus
+  } from "@21n/types/notification.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     determineResourceType,
     isSameResource
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import type { ICollectionItemPropertyValue } from "@21n/components/collection/collection.type";
   import type { IRecordId } from "@21n/types/data.type";
   import type {
     INodeThumb,
     INodeLinkThumb
   } from "@21n/products/memotron/node/node.type";
+  import { linker } from "@21n/products/memotron/linking/link.store";
   import { LinkType } from "@21n/products/memotron/linking/link.type";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import { ResourceError } from "@21n/components/error/errors";
+  import { ResourceErrorCode } from "@21n/components/error/error.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { Size } from "@21n/types/size.enum";
-  import { datafn } from "@21n/stores/datafn.store";
 
   let {
     savedNodeId,
@@ -37,16 +43,8 @@
   type LinkedNodeThumb = INodeThumb & {
     links?: INodeLinkThumb[];
     collections?: IRecordId[];
-    propertyValues?: ICollectionItemPropertyValue[];
+    properties?: ICollectionItemPropertyValue[];
   };
-  const linkableResources = [
-    Resource.node,
-    Resource.objective,
-    Resource.task,
-    Resource.event
-  ] as const;
-
-  type LinkableResource = (typeof linkableResources)[number];
 
   let linkSearchQuery = $state("");
   let linkedResources = $state<IRecordId[]>([]);
@@ -55,186 +53,12 @@
   let isLinkboxLoading = $state(false);
 
   let lastRefreshedId: string | undefined;
-  const linkSearchExclusions = $derived(
-    [...(linkedResources ?? []), ...(savedNodeId ? [savedNodeId] : [])].filter(
-      Boolean
-    ) as IRecordId[]
-  );
+  const linkSearchExclusions = $derived([
+    ...(linkedResources ?? []),
+    ...(savedNodeId ? [savedNodeId] : [])
+  ].filter(Boolean) as IRecordId[]);
 
   const hasLinkedResources = $derived(linkedResources.length > 0);
-
-  function isLinkableResource(resource: Resource): resource is LinkableResource {
-    return linkableResources.includes(resource as LinkableResource);
-  }
-
-  function normalizeCollectionRows(rows: unknown) {
-    return (Array.isArray(rows) ? rows : [])
-      .map((row: any) => row?.to ?? row?.id ?? row)
-      .filter(Boolean) as IRecordId[];
-  }
-
-  function normalizePropertyRows(rows: unknown) {
-    return (Array.isArray(rows) ? rows : []).map((row: any) =>
-      row?.to
-        ? ({
-            id: row.to,
-            value: row.value ?? null,
-            collectionId: row.collectionId
-          } as ICollectionItemPropertyValue)
-        : row
-    ) as ICollectionItemPropertyValue[];
-  }
-
-  async function queryRelationRowsForNode(nodeId: IRecordId) {
-    const nodeIdStr = nodeId.toString();
-    const results = (await datafn.query(
-      linkableResources.map((resource) => ({
-        resource,
-        select: ["id", "links.#"],
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }))
-    )) as Array<{ data?: Array<{ links?: any[] }> }>;
-    const uniqueRows = new Map<string, any>();
-    results
-      .flatMap(
-        (result) =>
-          result.data?.flatMap((record: any) => record.links ?? []) ?? []
-      )
-      .filter(
-        (link: any) =>
-          link?.linkType === LinkType.DIRECT &&
-          (link.from?.toString() === nodeIdStr ||
-            link.to?.toString() === nodeIdStr)
-      )
-      .forEach((link: any) => {
-        uniqueRows.set(`${link.from}|${link.to}|${link.linkType}`, link);
-    });
-    return Array.from(uniqueRows.values());
-  }
-
-  async function queryLinkedDataForNode(nodeId: IRecordId) {
-    const nodeIdStr = nodeId.toString();
-    const [nodeResult, ...relationResults] = (await datafn.query([
-      {
-        resource: Resource.node,
-        select: ["*", "collections.#", "propertyValues.#"],
-        filters: {
-          id: nodeIdStr
-        }
-      },
-      ...linkableResources.map((resource) => ({
-        resource,
-        select: ["id", "links.#"],
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }))
-    ])) as Array<{ data?: Array<any> }>;
-    const uniqueRows = new Map<string, any>();
-    relationResults
-      .flatMap(
-        (result) =>
-          result.data?.flatMap((record: any) => record.links ?? []) ?? []
-      )
-      .filter(
-        (link: any) =>
-          link?.linkType === LinkType.DIRECT &&
-          (link.from?.toString() === nodeIdStr ||
-            link.to?.toString() === nodeIdStr)
-      )
-      .forEach((link: any) => {
-        uniqueRows.set(`${link.from}|${link.to}|${link.linkType}`, link);
-      });
-    return {
-      node: nodeResult.data?.[0],
-      relationRows: Array.from(uniqueRows.values())
-    };
-  }
-
-  async function relateNodeToCollection(nodeId: IRecordId, collectionId: IRecordId) {
-    return datafn.node.mutate({
-      operation: "relate",
-      id: nodeId.toString(),
-      relations: {
-        collections: [
-          {
-            $ref: collectionId.toString(),
-            fromResource: Resource.node
-          }
-        ]
-      },
-      context: ResourceAccessPoint.CAPTURE
-    } as any);
-  }
-
-  async function relateNodeToRecord(nodeId: IRecordId, targetId: IRecordId) {
-    const targetResource = determineResourceType(targetId);
-    if (!isLinkableResource(targetResource)) return;
-    return datafn.node.mutate({
-      operation: "relate",
-      id: nodeId.toString(),
-      relations: {
-        links: [
-          {
-            $ref: targetId.toString(),
-            fromResource: Resource.node,
-            toResource: targetResource,
-            linkType: LinkType.DIRECT
-          }
-        ]
-      },
-      context: ResourceAccessPoint.CAPTURE
-    } as any);
-  }
-
-  async function unrelateNodeFromCollection(
-    nodeId: IRecordId,
-    collectionId: IRecordId
-  ) {
-    return datafn.node.mutate({
-      operation: "unrelate",
-      id: nodeId.toString(),
-      relations: {
-        collections: [collectionId.toString()]
-      },
-      context: ResourceAccessPoint.CAPTURE
-    } as any);
-  }
-
-  async function unrelateNodeFromRecord(nodeId: IRecordId, targetId: IRecordId) {
-    const targetResource = determineResourceType(targetId);
-    await datafn.node.mutate({
-      operation: "unrelate",
-      id: nodeId.toString(),
-      relations: {
-        links: [
-          {
-            $ref: targetId.toString(),
-            linkType: LinkType.DIRECT
-          }
-        ]
-      },
-      context: ResourceAccessPoint.CAPTURE
-    } as any);
-    if (!isLinkableResource(targetResource)) return;
-    await datafn.table(targetResource).mutate({
-      operation: "unrelate",
-      id: targetId.toString(),
-      relations: {
-        links: [
-          {
-            $ref: nodeId.toString(),
-            linkType: LinkType.DIRECT
-          }
-        ]
-      },
-      context: ResourceAccessPoint.CAPTURE
-    } as any);
-  }
 
   $effect(() => {
     if (savedNodeId) {
@@ -259,26 +83,43 @@
     const nodeIdStr = nodeId.toString();
     try {
       isLinkboxLoading = true;
-      const { node, relationRows } = await queryLinkedDataForNode(nodeId);
+      const [nodeResult, inboundLinks, outboundLinks] = await Promise.all([
+        nodeStore.select(nodeId),
+        linker.selectMany({
+          filters: {
+            in: nodeIdStr,
+            linkType: LinkType.DIRECT
+          }
+        }),
+        linker.selectMany({
+          filters: {
+            out: nodeIdStr,
+            linkType: LinkType.DIRECT
+          }
+        })
+      ]);
 
-      const directLinks: INodeLinkThumb[] = relationRows
+      const directLinks: INodeLinkThumb[] = [
+        ...(inboundLinks ?? []),
+        ...(outboundLinks ?? [])
+      ]
         .map((link) => {
-          const isOutgoing = link.from.toString() === nodeIdStr;
-          const target = (isOutgoing ? link.to : link.from) as IRecordId;
+          const isOutgoing = link.in.toString() === nodeIdStr;
+          const target = (isOutgoing ? link.out : link.in) as IRecordId;
           return {
             linkedTo: target,
             linkType: link.linkType,
-            id: `${link.from}|${link.to}|${link.linkType ?? LinkType.DIRECT}`,
+            id: link.id,
             tags: link.tags,
             direction: isOutgoing ? "outgoing" : "incoming"
           } as INodeLinkThumb;
         })
         .filter((link) => !link.linkType || link.linkType === LinkType.DIRECT);
 
-      const collections = normalizeCollectionRows(node?.collections);
-      const propertyValues = normalizePropertyRows(node?.propertyValues);
+      const collections = (nodeResult?.collections ?? []) as IRecordId[];
+      const properties = nodeResult?.properties ?? [];
 
-      linkedProperties = propertyValues;
+      linkedProperties = properties;
 
       const uniqueIds = new Set<string>();
       const aggregated: IRecordId[] = [];
@@ -306,19 +147,19 @@
         expandedLink = null;
       }
 
-      const updatedNode: LinkedNodeThumb | undefined = node
+      const updatedNode: LinkedNodeThumb | undefined = nodeResult
         ? ({
-            ...(node as INodeThumb),
+            ...(nodeResult as INodeThumb),
             links: directLinks,
             collections,
-            propertyValues
+            properties
           } as LinkedNodeThumb)
         : savedNode
           ? ({
               ...(savedNode as INodeThumb),
               links: directLinks,
               collections,
-              propertyValues
+              properties
             } as LinkedNodeThumb)
           : undefined;
 
@@ -346,36 +187,10 @@
     };
 
     try {
-      if (resourceType === Resource.collection) {
-        if (
-          linkedResources.some((item) =>
-            isSameResource(item, targetId as IRecordId)
-          )
-        ) {
-          linkFeedback = {
-            message: "Already part of this collection.",
-            type: AlertType.ERROR
-          };
-          return;
-        }
-        await relateNodeToCollection(savedNodeId, targetId);
-      } else {
-        const existingLinks = await queryRelationRowsForNode(savedNodeId);
-        if (
-          existingLinks.some(
-            (link) =>
-              link.from?.toString() === savedNodeId.toString() &&
-              link.to?.toString() === targetId.toString()
-          )
-        ) {
-          linkFeedback = {
-            message: "Link already exists.",
-            type: AlertType.ERROR
-          };
-          return;
-        }
-        await relateNodeToRecord(savedNodeId, targetId);
-      }
+      await linker.link(savedNodeId, targetId, {
+        linkType: LinkType.DIRECT,
+        context: ResourceAccessPoint.CAPTURE
+      });
       linkFeedback = {
         message:
           resourceType === Resource.collection
@@ -386,10 +201,27 @@
       await refreshLinkedData(savedNodeId);
     } catch (error) {
       logger.error({ at: "LinkBoxOnSaver.handleLinkSelect", error });
-      linkFeedback = {
-        message: error instanceof Error ? error.message : "Failed to add link.",
-        type: AlertType.ERROR
-      };
+      if (error instanceof ResourceError) {
+        if (error.code === ResourceErrorCode.ALREADY_EXISTS) {
+          linkFeedback = {
+            message:
+              resourceType === Resource.collection
+                ? "Already part of this collection."
+                : "Link already exists.",
+            type: AlertType.ERROR
+          };
+        } else {
+          linkFeedback = {
+            message: error.message ?? "Failed to add link.",
+            type: AlertType.ERROR
+          };
+        }
+      } else {
+        linkFeedback = {
+          message: "Failed to add link.",
+          type: AlertType.ERROR
+        };
+      }
     } finally {
       linkSearchQuery = "";
     }
@@ -407,11 +239,11 @@
       type: AlertType.PROGRESS
     };
     try {
-      if (resourceType === Resource.collection) {
-        await unrelateNodeFromCollection(savedNodeId, targetId);
-      } else {
-        await unrelateNodeFromRecord(savedNodeId, targetId);
-      }
+      await linker.unlink(savedNodeId, targetId, {
+        linkType: LinkType.DIRECT,
+        isIncludeReverseDirection: resourceType !== Resource.collection,
+        context: ResourceAccessPoint.CAPTURE
+      });
       linkFeedback = {
         message:
           resourceType === Resource.collection
@@ -439,30 +271,25 @@
       type: AlertType.PROGRESS
     };
     try {
-      let propertyValues = linkedProperties.filter(
+      let properties = linkedProperties.filter(
         (item) => !isSameResource(item.id, property.id)
       );
-      propertyValues = [...propertyValues, property];
-      linkedProperties = propertyValues;
+      properties = [...properties, property];
+      linkedProperties = properties;
       if (savedNode) {
-        savedNode = { ...savedNode, propertyValues };
+        savedNode = { ...savedNode, properties };
         onSavedNodeChange?.({ savedNode });
       }
-      await datafn.node.mutate({
-        operation: "relate",
-        id: savedNodeId.toString(),
-        relations: {
-          propertyValues: [
-            {
-              $ref: property.id.toString(),
-              fromResource: Resource.node,
-              collectionId: property.collectionId?.toString(),
-              value: property.value
-            }
-          ]
+      await nodeStore.modify(
+        savedNodeId,
+        {
+          properties
         },
-        context: ResourceAccessPoint.CAPTURE
-      } as any);
+        {
+          isDebounced: true,
+          debounceKey: property.id.toString()
+        }
+      );
       linkFeedback = {
         message: "Property saved.",
         type: AlertType.SUCCESS

@@ -4,7 +4,6 @@
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { focusItemsStore } from "@21n/products/pointron/focus/session.store";
   import { appStore } from "@21n/stores/app.store";
-  import { advancedCompositionDraft } from "@21n/products/pointron/focus/advanced/composition/advancedCompositionDraft.store";
   let { parentBgIndex = 1 }: { parentBgIndex?: number } = $props();
 
   let focusItemsCount = $derived(
@@ -16,7 +15,7 @@
   class="relative flex flex-col items-center gap-4 dp:gap-12 flex-grow w-full"
 >
   <div class="flex flex-col gap-4 dp:gap-8 w-full flex-grow">
-    <IntervalBar composition={$advancedCompositionDraft} />
+    <IntervalBar />
     <TimeComposition {parentBgIndex} />
   </div>
   <button

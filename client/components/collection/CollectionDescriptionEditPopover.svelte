@@ -24,9 +24,8 @@
       type: AlertType.PROGRESS,
       message: "Updating description..."
     };
-    try {
-      await collection.modify({ description: value });
-    } catch {
+    const result = await collection.modify({ description: value });
+    if (!result || result.error) {
       status = {
         type: AlertType.ERROR,
         message: "Failed to update description"

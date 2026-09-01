@@ -2,26 +2,26 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
-  import { ObjectiveStatus, ObjectiveType, type IObjectiveThumb } from "@21n/components/goals/goal.type";
-  import { resolveObjectiveTypeIcon } from "@21n/components/goals/goal.utils";
+  import { GoalStatus, GoalType, type IGoalThumb } from "@21n/components/goals/goal.type";
+  import { resolveGoalTypeIcon } from "@21n/components/goals/goal.utils";
 
   let {
     item,
     isCurrentlyFocusing = false,
     color = undefined
   }: {
-    item: IObjectiveThumb;
+    item: IGoalThumb;
     isCurrentlyFocusing?: boolean;
     color?: number | undefined;
   } = $props();
 </script>
 
 <div class="flex items-center gap-1.5 userdata">
-  {#if item.status === ObjectiveStatus.COMPLETED}
+  {#if item.status === GoalStatus.COMPLETED}
     <Icon icon="check-circle" class="text-ccs1" isFilled={true} />
   {:else}
     <Icon
-      icon={resolveObjectiveTypeIcon(item.type ?? ObjectiveType.INDEFINITE)}
+      icon={resolveGoalTypeIcon(item.type ?? GoalType.INDEFINITE)}
       class={cn({
         "text-ccs1": color
       })}

@@ -111,8 +111,7 @@ export function generateAnalyticsSeedPages() {
       },
       {
         id: generateSimpleRandomId(),
-        grouping: AnalyticsCardGrouping.TOP_LEVEL_OBJECTIVES,
-        isGroupByTopLevelObjectives: true,
+        grouping: AnalyticsCardGrouping.TOP_LEVEL_GOALS,
         filter: [],
         type: AnalyticsCardType.TOP_N,
         period: {
@@ -125,7 +124,7 @@ export function generateAnalyticsSeedPages() {
       },
       // {
       //   id: generateSimpleRandomId(),
-      //   grouping: AnalyticsCardGrouping.TOP_LEVEL_OBJECTIVES,
+      //   grouping: AnalyticsCardGrouping.TOP_LEVEL_GOALS,
       //   filter: [],
       //   type: AnalyticsCardType.TARGETS,
       //   period: {

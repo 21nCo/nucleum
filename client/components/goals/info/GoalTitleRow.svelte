@@ -1,37 +1,37 @@
 <script lang="ts">
   import { mount } from "@21n/actions/mount.action";
-  import { type IActiveObjectiveStore } from "@21n/components/goals/goal.store";
+  import { type IActiveGoalStore } from "@21n/components/goals/goal.store";
   import Breadcrumbs from "@21n/elements/breadcrumbsV2/Breadcrumbs.svelte";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
 
   let {
-    objective,
+    goal,
     isConstrainedWidth = false,
     status = $bindable()
   }: {
-    objective: IActiveObjectiveStore;
+    goal: IActiveGoalStore;
     isConstrainedWidth?: boolean;
     status?: IInlineStatus | undefined;
   } = $props();
 
-  let labelEditVal = $state($objective.label);
+  let labelEditVal = $state($goal.label);
   let inputRef = $state<TextInput | undefined>(undefined);
 
   function resolveBreadcrumbs() {
-    if (!$objective.parent) return [];
-    const parentItems = $objective.parent?.map((p) => ({
-      label: p.label ?? "",
+    if (!$goal.parent) return [];
+    const parentItems = $goal.parent?.map((p) => ({
+      label: p.label,
       resourceId: p.id?.toString()
     }));
     if (parentItems && parentItems.length > 0) {
       parentItems.push({
-        label: $objective.label ?? "",
-        resourceId: $objective.id?.toString()
+        label: $goal.label,
+        resourceId: $goal.id?.toString()
       });
     }
     return parentItems;
@@ -42,31 +42,30 @@
       message: "Saving...",
       type: AlertType.PROGRESS
     };
-    try {
-      await objective.modify({
-        label: e.detail
-      });
-    } catch {
+    const result = await goal.modify({
+      label: e.detail
+    });
+    if (!result || result.error) {
       status = {
-        message: "Failed to save objective name",
+        message: "Failed to save goal name",
         type: AlertType.ERROR
       };
-      return;
+    } else {
+      status = {
+        message: "Goal name saved",
+        type: AlertType.SUCCESS
+      };
     }
-    status = {
-      message: "Objective name saved",
-      type: AlertType.SUCCESS
-    };
   }
 
   async function handleLabelSave(e: CustomEvent<{ value?: string }>) {
     const nextLabel = e.detail?.value ?? labelEditVal;
-    $objective.label = nextLabel;
-    await objective.modify({
+    $goal.label = nextLabel;
+    await goal.modify({
       label: nextLabel
     });
     labelEditVal = "";
-    objective.toggleEditMode(false);
+    goal.toggleEditMode(false);
   }
 </script>
 
@@ -78,14 +77,14 @@
   <!-- <Icon icon={resolveTaskTypeIcon($task.type)} class="text-fgs3" /> -->
   <div class="w-full flex items-center justify-between gap-1">
     <div class="flex flex-col flex-1 min-w-0">
-      {#if !$objective.isInEditMode}
+      {#if !$goal.isInEditMode}
         <Breadcrumbs items={resolveBreadcrumbs()} />
       {/if}
-      {#if $objective.isInEditMode}
+      {#if $goal.isInEditMode}
         <div
           class="flex items-center gap-2 w-full"
           use:mount={() => {
-            labelEditVal = $objective.label;
+            labelEditVal = $goal.label;
             inputRef?.focus();
           }}
         >
@@ -93,15 +92,15 @@
             <TextInput
               bind:this={inputRef}
               bind:value={labelEditVal}
-              placeholder="Enter objective name"
-              testId="objective-name-input"
+              placeholder="Enter goal name"
+              testId="goal-name-input"
               width="w-full"
               parentBackgroundIndex={2}
               onDebouncedChange={handleLabelChange}
               onSave={handleLabelSave}
               onEnter={handleLabelSave}
               onCancel={() => {
-                objective.toggleEditMode(false);
+                goal.toggleEditMode(false);
                 labelEditVal = "";
               }}
             />
@@ -111,25 +110,25 @@
         <button
           class="w-full"
           onclick={() => {
-            objective.toggleEditMode(true);
-            labelEditVal = $objective.label;
+            goal.toggleEditMode(true);
+            labelEditVal = $goal.label;
           }}
         >
           <div class="flex items-center gap-2 w-full">
             <h1 class="text-left text-h4 lp:text-h3 font-medium text-ccs1-fgs1">
-              {$objective.label ? $objective.label : "Untitled"}
+              {$goal.label ? $goal.label : "Untitled"}
             </h1>
-            <RecordStarStatusFeedback isStarred={$objective.isStarred} />
+            <RecordStarStatusFeedback isStarred={$goal.isStarred} />
           </div>
         </button>
       {/if}
     </div>
     {#if isConstrainedWidth}
       <ResourceInlineCloseButton
-        accessMode={$objective.accessMode}
+        accessMode={$goal.accessMode}
         additionalAccessModes={[AccessMode.POP]}
         parentBgIndex={2}
-        id={$objective.id}
+        id={$goal.id}
       />
     {/if}
   </div>

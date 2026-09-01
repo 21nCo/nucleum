@@ -1,4 +1,4 @@
-import { resourceInList } from "@21n/data/datafn/resource.utils";
+import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
 import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import {
   type IProperty,
@@ -10,11 +10,8 @@ import {
 import type { ISelectItem } from "@21n/types/select.type";
 import type { IRecordId } from "@21n/types/data.type";
 import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
-import type { OmitForCaptureWithId } from "@21n/data/datafn/resource.type";
-import {
-  propertyOptions,
-  universalPropertyOptions
-} from "@21n/components/collection/properties/property.store";
+import type { OmitForCaptureWithId } from "@21n/components/flux/resourceStores/resource.type";
+import { propertyOptions, universalPropertyOptions } from "@21n/components/collection/properties/property.store";
 import { AvatarType } from "@21n/types/avatar.type";
 import { iso31661CountryCodes } from "@21n/components/collection/properties/countries";
 import { languages } from "@21n/components/collection/properties/languages";
@@ -29,46 +26,9 @@ export function resolvePropertyDefaultValue(type: PropertyType) {
     case PropertyType.RATING:
       return 0;
     case PropertyType.SINGLE_SELECT:
-      return "none";
     case PropertyType.MULTI_SELECT:
-      return [];
+      return "none";
   }
-}
-
-export function resolveIsMultiSelectProperty(property: IProperty) {
-  return (
-    property.type === PropertyType.MULTI_SELECT ||
-    (property.type === PropertyType.UNIVERSAL &&
-      Boolean(property.config?.isMultiSelect))
-  );
-}
-
-export function serializePropertyForDatafn(
-  property: OmitForCaptureWithId<IProperty>
-) {
-  const source = property as OmitForCaptureWithId<IProperty> &
-    Record<string, unknown>;
-  const record = {
-    id: source.id,
-    label: source.label,
-    type: source.type,
-    resource: source.resource,
-    propertyType: source.propertyType,
-    config: source.config,
-    options: source.options,
-    isRequired: source.isRequired,
-    isMulti: source.isMulti,
-    isShowOnNodePage: source.isShowOnNodePage,
-    isShowOnCapture: source.isShowOnCapture,
-    order: source.order,
-    defaultValue: source.defaultValue,
-    avatar: source.avatar,
-    description: source.description,
-    importId: source.importId
-  } as Record<string, unknown>;
-  return Object.fromEntries(
-    Object.entries(record).filter(([, value]) => value !== undefined)
-  );
 }
 
 /**

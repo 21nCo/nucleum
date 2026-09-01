@@ -23,7 +23,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { popover, tooltip } from "@21n/actions/popover.action";
   import { Placement } from "@21n/types/direction.enum";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import view from "@21n/stores/view.store";
   import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";

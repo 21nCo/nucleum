@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { LinkType } from "@21n/products/memotron/linking/link.type";
 import {
   NodeType,
@@ -22,20 +22,29 @@ import {
   CaptureMethod,
   type IActiveCapture,
   type ICapture,
+  type ICaptureCapture,
   type ICaptureLink,
   type IPasteCaptureData
 } from "@21n/products/memotron/capture/capture.type";
 import account from "@21n/stores/account.store";
 import { toasts, inlineToasts } from "@21n/stores/notification.store";
-import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
 import {
   generateMarkdownText,
   resolveHeadingParent
 } from "@21n/products/memotron/node/node.utils";
-import { hierarchyFactorLimit } from "@21n/products/memotron/node/node.store";
+import {
+  hierarchyFactorLimit,
+  nodeStore
+} from "@21n/products/memotron/node/node.store";
 import { logger } from "@21n/components/debug/logger.client";
+import { linker } from "@21n/products/memotron/linking/link.store";
+import { collectionStore } from "@21n/components/collection/collection.store";
 import { resolveContentTypeForFile } from "@21n/products/memotron/capture/capture.utils";
-import { AccessMode, ResourceActionType } from "@21n/data/datafn/resource.type";
+import {
+  AccessMode,
+  ResourceActionType
+} from "@21n/components/flux/resourceStores/resource.type";
 import type { IRecordId } from "@21n/types/data.type";
 import {
   CollectionType,
@@ -48,9 +57,9 @@ import {
   isSameResource,
   resourceAction,
   resourceInList
-} from "@21n/data/datafn/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
 import { resolveResource } from "@21n/components/record/record.store";
-import type { IFile } from "@21n/components/files/file.type";
+import { fileStore } from "@21n/components/files/file.store";
 import {
   generateMiniRandomId,
   generateSimpleRandomId
@@ -67,8 +76,7 @@ import { OperatingSystem } from "@21n/types/context.type";
 import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import {
   fetchYouTubeMetadata,
-  resolveUrlData,
-  resolveWebpageLabel
+  resolveUrlData
 } from "@21n/products/memotron/node/url.utils";
 import { getImageColorsFromFile } from "@21n/utils/ui.utils";
 import { parseBuffer } from "music-metadata";
@@ -82,7 +90,10 @@ import {
   textToMdBlocks
 } from "@21n/components/markdown/markdown.utils";
 import type { IBlock } from "@21n/components/markdown/md.type";
-import { ActiveResourceStore } from "@21n/data/datafn/resource.store";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "@21n/components/flux/resourceStores/resource.store";
 import { embedBridge } from "@21n/components/embed/embed.store";
 import { EmbedMessage } from "@21n/types/embedMessage.enum";
 import { convertWebMToWav } from "@21n/utils/audio.utils";
@@ -91,185 +102,12 @@ import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils"
 import { getUtcSafeDay } from "@21n/elements/datetime/datetime.utils";
 import type { IMarkdownTemplate } from "@21n/components/markdown/md.type";
 import { isValidString } from "@21n/shared-utils/text.utils";
-import { isRecordId } from "@21n/data/datafn/resource.utils";
+import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
 import { debouncer } from "@21n/utils/utils";
 import { openPasteConfirmationModalFromClipboard } from "@21n/products/memotron/capture/paste.utils";
-import { datafn } from "@21n/stores/datafn.store";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
-type CaptureRelationMutation = {
-  operation: "relate";
-  id: IRecordId;
-  relations: Record<string, unknown>;
-  context?: string;
-};
-
-function isRecordLinkResource(resource: Resource) {
-  return (
-    resource === Resource.node ||
-    resource === Resource.objective ||
-    resource === Resource.task ||
-    resource === Resource.event
-  );
-}
-
-function isCollectionItemResource(resource: Resource) {
-  return resource === Resource.node || resource === Resource.objective;
-}
-
-async function persistContentLinks(links: any[] = []) {
-  return Promise.all(
-    links.map((link) => {
-      const fromResource = determineResourceType(link.in);
-      const toResource = determineResourceType(link.out);
-      if (
-        toResource === Resource.collection &&
-        isCollectionItemResource(fromResource)
-      ) {
-        return datafn.table(fromResource).mutate({
-          operation: "relate",
-          id: link.in.toString(),
-          relations: {
-            collections: [
-              {
-                $ref: link.out.toString(),
-                fromResource: fromResource.toString(),
-                location: link.location
-              }
-            ]
-          }
-        } as any);
-      }
-      if (
-        fromResource === Resource.collection &&
-        isCollectionItemResource(toResource)
-      ) {
-        return datafn.collection.mutate({
-          operation: "relate",
-          id: link.in.toString(),
-          relations: {
-            items: [
-              {
-                $ref: link.out.toString(),
-                fromResource: toResource.toString(),
-                location: link.location
-              }
-            ]
-          }
-        } as any);
-      }
-      if (!isRecordLinkResource(fromResource) || !isRecordLinkResource(toResource)) {
-        logger.warn({
-          at: "CaptureStore.persistContentLinks.unsupportedRelation",
-          from: link.in,
-          out: link.out,
-          fromResource,
-          toResource
-        });
-        return undefined;
-      }
-      return datafn.table(fromResource).mutate({
-        operation: "relate",
-        id: link.in.toString(),
-        relations: {
-          links: [
-            {
-              $ref: link.out.toString(),
-              fromResource: fromResource.toString(),
-              toResource: toResource.toString(),
-              linkType: link.linkType ?? LinkType.DIRECT,
-              location: link.location,
-              tags: link.tags
-            }
-          ]
-        }
-      } as any);
-    })
-  );
-}
-
-async function insertCapturedNodes(
-  input: INodeCapture<any> | INodeCapture<any>[],
-  params?: { context?: string }
-) {
-  function resolveMarkdownParentFields(mdParent: unknown) {
-    if (!Array.isArray(mdParent)) return {};
-    const parents = mdParent.filter(
-      (parent): parent is IRecordId => typeof parent === "string"
-    );
-    const parent = parents[parents.length - 1];
-    if (!parent) return {};
-    return {
-      parent,
-      parentPath: parents.join("-")
-    };
-  }
-  const nodes = (Array.isArray(input) ? input : [input]).map((node) => ({
-    metaType: "",
-    contentType: NodeType.UNKNOWN,
-    ...node,
-    id: node.id ?? generateResourceId(Resource.node)
-  }));
-  await datafn.node.mutate(
-    nodes.map((node) => {
-      const { collections, propertyValues, ...record } =
-        node as INodeCapture<any> & {
-          collections?: IRecordId[];
-          propertyValues?: ICollectionItemPropertyValue[];
-        };
-      return {
-        operation: "insert",
-        id: record.id,
-        record: {
-          ...record,
-          ...resolveMarkdownParentFields(record.mdParent)
-        },
-        context: params?.context
-      };
-    })
-  );
-  const relationMutations = nodes
-    .map((node): CaptureRelationMutation | undefined => {
-      const relations: Record<string, unknown> = {};
-      const collections =
-        (node as { collections?: IRecordId[] }).collections ?? [];
-      const propertyValues =
-        (node as { propertyValues?: ICollectionItemPropertyValue[] })
-          .propertyValues ?? [];
-      if (collections.length > 0) {
-        relations.collections = collections.map((id) => ({
-          $ref: id.toString(),
-          fromResource: Resource.node
-        }));
-      }
-      if (propertyValues.length > 0) {
-        relations.propertyValues = propertyValues.map((property) => ({
-          $ref: property.id.toString(),
-          fromResource: Resource.node,
-          collectionId: property.collectionId,
-          value: property.value
-        }));
-      }
-      if (Object.keys(relations).length === 0) return undefined;
-      return {
-        operation: "relate",
-        id: node.id,
-        relations,
-        context: params?.context
-      };
-    })
-    .filter(
-      (mutation): mutation is CaptureRelationMutation => Boolean(mutation)
-    );
-  if (relationMutations.length > 0) {
-    await datafn.node.mutate(relationMutations as any);
-  }
-  return nodes.map((node) => ({
-    ...node,
-    updatedAt: "updatedAt" in node ? node.updatedAt : new Date()
-  }));
-}
 
 export const clipboard = writable<IPasteCaptureData | null>(null);
 
@@ -311,7 +149,9 @@ function hasStringProperty<K extends string>(
   return isObject(value) && typeof value[key] === "string";
 }
 
-function isMediaGridBlock(block: IBlock): block is IBlock & {
+function isMediaGridBlock(
+  block: IBlock
+): block is IBlock & {
   contentType: NodeType.MEDIA_GRID;
   body: { items: IMediaGridItem[] };
 } {
@@ -330,14 +170,14 @@ function generateSeedStore(): IActiveCapture {
     id: generateResourceId(Resource.capture),
     accessMode: AccessMode.MAIN,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    modifiedAt: new Date(),
     createdBy: currentUserId,
-    updatedBy: currentUserId,
+    modifiedBy: currentUserId,
     method: CaptureMethod.MARKDOWN,
     nodeId,
     refreshId: new Date().getTime(),
     label: "",
-    propertyValues: [],
+    properties: [],
     links: [],
     avatar: null,
     childrenWithStructure: [],
@@ -354,53 +194,27 @@ function generateSeedStore(): IActiveCapture {
   };
 }
 
+class CaptureStore extends ResourceStore<ICapture, ICaptureCapture> {
+  constructor() {
+    super(Resource.capture);
+  }
+}
+
+export const captureStore = CaptureStore.resolve(Resource.capture);
+
 export type IActiveCaptureStore = InstanceType<typeof ActiveCaptureStore>;
 
 export class ActiveCaptureStore extends ActiveResourceStore<
   ICapture,
+  CaptureStore,
   IActiveCapture
 > {
   // constructor() {
   //   super(Resource.capture, { ...generateSeedStore() });
   // }
   constructor(capture: IRecordId) {
-    super(capture);
+    super(capture, captureStore);
     this.set({ ...generateSeedStore(), id: capture });
-  }
-
-  async modify(
-    val: Partial<ICapture>,
-    params?: { isPreventBackPropagation?: boolean }
-  ) {
-    const shouldUpdateActive = !params?.isPreventBackPropagation;
-    const previous = shouldUpdateActive ? this.get() : undefined;
-    if (shouldUpdateActive) {
-      this.update((prev) => ({ ...prev, ...val }));
-    }
-    try {
-      await datafn.capture.mutate({
-        operation: "merge",
-        id: this.id.toString(),
-        record: {
-          id: this.id,
-          ...val
-        }
-      });
-    } catch (error) {
-      if (previous) this.set(previous);
-      throw error;
-    }
-  }
-
-  async delete() {
-    return this.deletePermanently();
-  }
-
-  async deletePermanently() {
-    await datafn.capture.mutate({
-      operation: "delete",
-      id: this.id.toString()
-    });
   }
 
   //TODO - persistance which is relying on this set fn
@@ -606,15 +420,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       });
       return;
     }
-    const typeResult = await datafn.collection.query({
-      filters: { id: val },
-      limit: 1,
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    });
-    const type = typeResult.data[0] as ICollection | undefined;
+    const type: ICollection = await collectionStore.select(val);
     if (!type) return;
     const link: ICaptureLink = {
       from: "root",
@@ -725,9 +531,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         val.body && "blocks" in val.body ? val.body.blocks.length : undefined,
       rootStructureLength: val.rootStructure.length,
       childrenWithStructureLength: val.childrenWithStructure.length,
-      detailRootLength: Array.isArray(e.detail?.root)
-        ? e.detail.root.length
-        : 0,
+      detailRootLength: Array.isArray(e.detail?.root) ? e.detail.root.length : 0,
       detailChildrenWithStructureLength: Array.isArray(
         e.detail?.childrenWithStructure
       )
@@ -769,6 +573,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           this.setIsSaving(false);
           return;
         }
+        console.log({
+          at: "Capture.svelte - handleCapture - file",
+          file,
+          message: "file not present"
+        });
         // const reader = new FileReader();
         // reader.onload = (e) => {
         //   const result = e.target?.result;
@@ -826,8 +635,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   async directLink(item: IRecordId | INodeThumb | ICollectionThumb) {
     if (typeof item === "string" || "tb" in item) {
       const resource = await resolveResource(item as IRecordId);
-      if (!resource) return;
-      return this._addLink("root", resource as INodeThumb | ICollectionThumb, LinkType.DIRECT);
+      return this._addLink("root", resource, LinkType.DIRECT);
     } else if (typeof item !== "string") {
       return this._addLink("root", item, LinkType.DIRECT);
     }
@@ -856,21 +664,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       location: params?.location,
       tags: params?.linkTags
     };
-    const links = [...(store.links ?? []), link];
-    this.update((current) => ({
-      ...current,
-      isLinksExpanded: true,
-      isEmpty: false,
-      links
-    }));
-    return this.modify(
-      {
-        links
-      },
-      {
-        isPreventBackPropagation: true
-      }
-    );
+    this.modify({
+      links: [...(store.links ?? []), link]
+    });
   }
 
   removeDLink(id: IRecordId) {
@@ -880,18 +676,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const modifiedLinks = store.links.filter(
       (link) => !isSameResource(link.to, id)
     );
-    this.update((current) => ({
-      ...current,
+    this.modify({
       links: modifiedLinks
-    }));
-    this.modify(
-      {
-        links: modifiedLinks
-      },
-      {
-        isPreventBackPropagation: true
-      }
-    );
+    });
   }
 
   private async parseMetadata(file: File) {
@@ -918,13 +705,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           if (parsedMetadata.common.picture?.[0]?.data) {
             try {
               const imageData = parsedMetadata.common.picture[0].data;
-              const imageFile = new File(
-                [resolveBlobPart(imageData)],
-                file.name,
-                {
-                  type: "image/jpeg"
-                }
-              );
+              const imageFile = new File([resolveBlobPart(imageData)], file.name, {
+                type: "image/jpeg"
+              });
               const imageUploadResponse = await account.uploadFileV2(
                 "image/jpeg",
                 file.name,
@@ -937,7 +720,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
                 imageId = imageUploadResponse[0].id;
               }
             } catch (e) {
-              logger.error({ at: "CaptureStore.parseMetadata.picture", error: e });
+              console.error(e);
             }
           }
           metadata = {
@@ -949,7 +732,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         return metadata;
       }
     } catch (e: any) {
-      logger.error({ at: "CaptureStore.parseMetadata", error: e });
+      console.error("CaptureStore - parseMetadata", e);
       return;
     }
 
@@ -1042,15 +825,13 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         metadata: {
           ...metadata
         },
-        propertyValues: params?.isEmbedContext
-          ? []
-          : captureStore.propertyValues,
+        properties: params?.isEmbedContext ? [] : captureStore.properties,
         collections,
         creationContext: params?.isEmbedContext
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined
       } as INodeCapture<IMediaNode>;
-      const result = await insertCapturedNodes([node], {
+      const result = await nodeStore.create([node], {
         context: captureAction
       });
       if (!params?.isEmbedContext) {
@@ -1093,10 +874,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     let root: INodeCapture<INode> = {
       id,
       label: title ?? text.split("\n")[0].trim().slice(0, 100),
-      propertyValues: [],
+      properties: [],
       body: "",
       text: mdText,
-      mdChildOrder: rootStructure.map((x: any) => x.id),
+      children: rootStructure.map((x: any) => x.id),
       contentType: NodeType.NODULAR_MARKDOWN,
       collections
     };
@@ -1124,11 +905,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         label: correspondingContent?.label ?? "",
         text: mdText,
         creationContext: id,
-        mdChildOrder: block.children,
+        children: block.children,
         mdParent: parent
       } as INodeCapture<INode>);
     }
-    const result: any = await insertCapturedNodes([root, ...remainingResources], {
+    const result: any = await nodeStore.create([root, ...remainingResources], {
       context: captureAction
     });
     return result;
@@ -1209,16 +990,14 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           label: item.file.name,
           metadata,
           collections,
-          propertyValues: params?.isEmbedContext
-            ? []
-            : captureStore.propertyValues,
+          properties: params?.isEmbedContext ? [] : captureStore.properties,
           creationContext: params?.isEmbedContext
             ? (params?.creationContext ?? this.get().nodeId)
             : undefined
         } as INodeCapture<IMediaNode>;
         nodes.push(node);
       }
-      const mediaNodesResult = await insertCapturedNodes(nodes, {
+      const mediaNodesResult = await nodeStore.create(nodes, {
         context: captureAction
       });
       const result = [...(mediaNodesResult ?? []), ...(mdNodesResult ?? [])];
@@ -1235,12 +1014,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   }
   // TODO - check for persistance need here
   updateProperty = async (property: ICollectionItemPropertyValue) => {
-    let propertyValues = this.get().propertyValues ?? [];
-    propertyValues = propertyValues.filter((x) => !isSameResource(x, property));
-    this.update((prev) => ({
-      ...prev,
-      propertyValues: [...propertyValues, property]
-    }));
+    let properties = this.get().properties ?? [];
+    properties = properties.filter((x) => !isSameResource(x, property));
+    this.update((prev) => ({ ...prev, properties: [...properties, property] }));
   };
 
   async saveAudioRecording(
@@ -1286,9 +1062,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           ...metadata
         },
         collections,
-        propertyValues: params?.isEmbedContext
-          ? []
-          : captureStore.propertyValues,
+        properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined,
@@ -1299,7 +1073,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           duration
         }
       };
-      const result2 = await insertCapturedNodes(node, {
+      const result2 = await nodeStore.create(node, {
         context: captureAction
       });
       if (!params?.isEmbedContext) {
@@ -1366,7 +1140,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         (isValidString(captureStore.label) ? captureStore.label : null) ??
         `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
-      propertyValues: captureStore.propertyValues,
+      properties: captureStore.properties,
       collections,
       metadata: {
         ...metadata,
@@ -1384,7 +1158,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         }
       }
     };
-    const result2 = await insertCapturedNodes(node, {
+    const result2 = await nodeStore.create(node, {
       context: captureAction
     });
     await this.saveLinks(id);
@@ -1413,7 +1187,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       text = urlData.convertToEmbedUrl(text);
     }
     let contentType = params?.contentType ?? NodeType.WEB_PAGE;
-    let label = resolveWebpageLabel(text);
+    let label = text.split("://").pop() ?? "";
     let url = text;
     const creationContext = params?.isEmbedContext
       ? (params?.creationContext ?? this.get().nodeId)
@@ -1438,14 +1212,14 @@ export class ActiveCaptureStore extends ActiveResourceStore<
             thumbnailUrl: youtubeMetadata.thumbnail_url
           };
         }
-      } else if (!params?.isEmbedContext) {
+      } else {
         const data = await new Persistence().retrieveUrlData(text);
+        console.log({ at: "saveWebpage - retrieveUrlData", data });
         if (data?.parsedData) {
           const parsedData = data.parsedData;
           label = parsedData.label ?? label;
           url = parsedData.url ?? url;
-          contentType =
-            params?.contentType ?? parsedData.contentType ?? contentType;
+          contentType = params?.contentType ?? parsedData.contentType ?? contentType;
           if (hasStringProperty(parsedData.body, "description")) {
             body.description = parsedData.body.description;
           }
@@ -1466,7 +1240,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       body,
       metadata
     } as INodeCapture<IWebPage | IClip>;
-    const result = await insertCapturedNodes(node, {
+    const result = await nodeStore.create(node, {
       context: captureAction
     });
     this.postSave(result, {
@@ -1625,7 +1399,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       };
     });
     logger.log({ at: "CaptureStore.save", rootLinks, blockLinks, links });
-    return persistContentLinks(links);
+    return linker.linkMany(links);
   }
 
   private async saveLinksForMultiFileCapture(nodes: any[]) {
@@ -1646,7 +1420,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         })) ?? [])
       );
     });
-    return persistContentLinks(links);
+    return linker.linkMany(links);
   }
 
   private async resolveLocation() {
@@ -1687,13 +1461,16 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   }
 
   async saveMarkdownCapture() {
+    console.time("saveMarkdownCapture");
     const val = this.get();
     //TODO - extract nodes from markdown blocks and save
     const ctx = get(context);
+    console.time("metadata");
     const location = await this.resolveLocation();
     let metadata = {
       location
     };
+    console.timeEnd("metadata");
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
     // const id = prefixTable(generateRandomId(), Resource.node);
     const id = val.nodeId ?? generateResourceId(Resource.node);
@@ -1701,7 +1478,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     let root: INodeCapture<INode> = {
       id,
       label: val.label ?? "",
-      propertyValues: val.propertyValues,
+      properties: val.properties,
       body: "",
       contentType: NodeType.NODULAR_MARKDOWN,
       metadata,
@@ -1735,19 +1512,15 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       let name;
       for (let block of val.body.blocks) {
         if (isMediaGridBlock(block)) {
-          const filesResult = await datafn.file.query({
-            filters: {
-              id: block.body.items.map((item: IMediaGridItem) => item.file)
-            }
+          let files = await fileStore.selectMany({
+            filters: { id: block.body.items.map((item: IMediaGridItem) => item.file) }
           });
-          const files = filesResult.data as IFile[];
           for (let item of block.body.items) {
             const file = files.find(resourceInList(item.file));
             if (!file) continue;
-            if (!file.url) continue;
             data = await fetch(file.url).then((r) => r.blob());
             contentType = file.type;
-            name = file.name ?? file.label ?? file.id;
+            name = file.name;
             const result = await account.uploadFileV2(contentType, name, data);
             if (result) {
               item.file = result[0].id;
@@ -1760,14 +1533,17 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         const rootBlocks = val.body.blocks.filter((b) =>
           resolvedRootStructure.some(resourceInList(b))
         );
+        console.time("generateMarkdownText");
         mdText = generateMarkdownText(rootBlocks);
+        console.timeEnd("generateMarkdownText");
       }
       root = {
         ...root,
-        mdChildOrder: resolvedRootStructure,
+        children: resolvedRootStructure,
         text: mdText
       };
 
+      console.time("children");
       for (let block of resolvedChildrenWithStructure) {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
@@ -1777,11 +1553,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           correspondingContent?.contentType &&
           headingNodeTypes.includes(correspondingContent.contentType)
         ) {
-          parent = resolveHeadingParent(
-            block.id,
-            resolvedChildrenWithStructure,
-            [id]
-          );
+          parent = resolveHeadingParent(block.id, resolvedChildrenWithStructure, [
+            id
+          ]);
         }
         //TODO - links for each block
         let mdText = "";
@@ -1800,17 +1574,38 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           text: mdText,
           metadata: correspondingContent?.metadata,
           creationContext: id,
-          mdChildOrder: block.children,
+          children: block.children,
           mdParent: parent
         });
       }
+      console.timeEnd("children");
+      console.log(
+        "CaptureStore.saveMarkdownCapture.payload",
+        JSON.stringify({
+          captureId: val.id,
+          label: root.label,
+          rootChildren: root.children,
+          rootText: root.text,
+          firstRemainingResource: remainingResources[0]
+            ? {
+                id: remainingResources[0].id,
+                contentType: remainingResources[0].contentType,
+                body: remainingResources[0].body,
+                label: remainingResources[0].label,
+                children: remainingResources[0].children,
+                mdParent: remainingResources[0].mdParent
+              }
+            : null
+        })
+      );
     }
 
-    let result: any = await insertCapturedNodes([root, ...remainingResources], {
+    let result: any = await nodeStore.create([root, ...remainingResources], {
       context: captureAction
     });
     await this.saveLinks(id);
     this.postSave(result.slice(0, 1));
+    console.timeEnd("saveMarkdownCapture");
     return result;
   }
 
@@ -1872,7 +1667,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         body: "",
         metaType: NodeMetaType.CALENDAR_NOTES,
         date: getUtcSafeDay(params.date),
-        mdChildOrder: []
+        children: []
       };
 
       let remainingResources: INodeCapture<INode>[] = [];
@@ -1886,7 +1681,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         }
         root = {
           ...root,
-          mdChildOrder: rootStructure,
+          children: rootStructure,
           text: mdText
         };
 
@@ -1917,13 +1712,13 @@ export class ActiveCaptureStore extends ActiveResourceStore<
             text: mdText,
             metadata: correspondingContent?.metadata,
             creationContext: id,
-            mdChildOrder: block.children,
+            children: block.children,
             mdParent: parent
           });
         }
       }
 
-      let result: any = await insertCapturedNodes([root, ...remainingResources], {
+      let result: any = await nodeStore.create([root, ...remainingResources], {
         context: captureAction
       });
       return result;

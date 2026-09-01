@@ -9,7 +9,7 @@ export interface IWebpageStore {
   clips?: (IClip & { links: any[] })[];
   links?: string[];
   collections?: IRecordId[];
-  propertyValues?: ICollectionItemPropertyValue[];
+  properties?: ICollectionItemPropertyValue[];
   notes?: string;
   relationships?: { node: string; relation: string }[];
 }

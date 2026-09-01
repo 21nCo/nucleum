@@ -12,8 +12,8 @@
   import { logger } from "@21n/components/debug/logger.client";
   import HighlightColors from "@21n/products/memotron/common/highlighters/HighlightColors.svelte";
   import { debouncer } from "@21n/utils/utils";
-  import { determineResourceType } from "@21n/data/datafn/resource.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { ResourceError } from "@21n/components/error/errors";
   import { ButtonVariant } from "@21n/types/button.type";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
@@ -178,12 +178,12 @@
     {/if}
   </div>
   {#if isLinkboxOpened}
-    <LinkBoxOnClipper {onLink} />
+    <LinkBoxOnClipper onLink={onLink} />
     <LinkItems
       links={clip?.links}
       isWrapItems={true}
       nodeId={id}
-      propertyValues={clip?.propertyValues}
+      propertyValues={clip?.properties}
       onPropertyChange={onPropertyUpdate}
       isExpandable={true}
       onUnlink={async (e) => {

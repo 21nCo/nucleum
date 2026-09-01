@@ -10,7 +10,7 @@
     AccessMode,
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
@@ -29,14 +29,13 @@
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   import { isValidAvatar } from "@21n/elements/avatarPicker/avatar.utils";
-  import { resourceAction } from "@21n/data/datafn/resource.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import CollectionDescriptionEditPopover from "@21n/components/collection/CollectionDescriptionEditPopover.svelte";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   import BackButton from "@21n/elements/button/BackButton.svelte";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
   import type { ICollection } from "@21n/components/collection/collection.type";
-  import { tick } from "svelte";
 
   let {
     searchQuery = $bindable(""),
@@ -61,13 +60,14 @@
   } = $props();
   let dev_isEnableMetaViewsToggle: boolean = false;
 
-  let isSearchFocused = $state(false);
-  let searchBoxRef = $state<TextInput | undefined>(undefined);
-  let rightPartWidth = $state(0);
+  let isSearchFocused: boolean = false;
+  let searchBoxRef: TextInput;
+  let rightPartWidth = 0;
 
   let isMiniSearch = $derived(rightPartWidth < 530);
   let isDetailsBesideTitleRenderable = $derived(
-    !isConstrainedWidth && (!isMiniSearch || (isMiniSearch && !isSearchFocused))
+    !isConstrainedWidth &&
+      (!isMiniSearch || (isMiniSearch && !isSearchFocused))
   );
 
   function onLabelChange(e: CustomEvent<string>) {
@@ -275,7 +275,6 @@
   {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <div class="flex gap-2 justify-center items-center">
       <ContextMenuAction
-        testId="resource-record-context-menu"
         menuResolver={() =>
           resolveCollectionContextMenu(
             resolveCollectionForContextMenu(),
@@ -315,11 +314,11 @@
         >
           {#if isMiniSearch && !isSearchFocused}
             <button
-              type="button"
-              onclick={async () => {
+              onclick={() => {
                 isSearchFocused = true;
-                await tick();
-                searchBoxRef?.focus();
+                setTimeout(() => {
+                  searchBoxRef?.focus();
+                }, 10);
               }}
               class="flex items-center justify-center"
               title={resolveSearchPlaceholder($collection.totalItemCount)}
@@ -352,20 +351,17 @@
           <Toggle
             icon="ph:monitor-play-light"
             tooltip="Play actions"
-            on={Boolean(isShowMetaViews)}
-            onChange={(event) => (isShowMetaViews = event.detail)}
+            bind:on={isShowMetaViews}
           />
         {/if}
         {#if !$collection.isInEditMode}
           <Toggle
             icon="edit"
             tooltip="Enter edit mode"
-            on={Boolean($collection.isInEditMode)}
-            onChange={(event) => ($collection.isInEditMode = event.detail)}
+            bind:on={$collection.isInEditMode}
           />
         {/if}
         <ContextMenuAction
-          testId="resource-record-context-menu"
           menuResolver={() =>
             resolveCollectionContextMenu(
               resolveCollectionForContextMenu(),
@@ -379,7 +375,7 @@
           size={Size.lg}
         />
         {#if isSingleViewMode}
-          <AddResourceAction {onAdd} variant="default" />
+          <AddResourceAction onAdd={onAdd} variant="default" />
         {/if}
         <ResourceInlineCloseButton
           accessMode={$collection.accessMode}

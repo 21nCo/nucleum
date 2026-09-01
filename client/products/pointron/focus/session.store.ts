@@ -1,4 +1,4 @@
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   type IActiveSessionStore,
   type ISessionInterval,
@@ -34,8 +34,12 @@ import {
 } from "@21n/stores/notification.store";
 import { deepCopy, isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import { AlertType } from "@21n/types/notification.type";
-import { generateResourceId } from "@21n/data/datafn/id.utils";
-import type { IRecordId } from "@21n/types/data.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import type {
+  IRecordId,
+  IResourceSelectAdditionalParams,
+  IResourceSelectParams
+} from "@21n/types/data.type";
 import { logger } from "@21n/components/debug/logger.client";
 import {
   type ISession,
@@ -43,33 +47,28 @@ import {
   type ISessionCapture,
   type ISessionLogCapture
 } from "@21n/products/pointron/logs/log.type";
-import { createSessionItemRelationRefs } from "@21n/products/pointron/logs/session-items.utils";
+import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
 import context from "@21n/stores/context.store";
 import { PointronEvent } from "@21n/types/pointron/pointronEvent.enum";
 import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-import { datafn } from "@21n/stores/datafn.store";
-import { advancedCompositionDraft } from "@21n/products/pointron/focus/advanced/composition/advancedCompositionDraft.store";
-import { ObservableStore } from "@21n/stores/client.store";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
 import {
   determineResourceType,
   isSameResource,
   resourceInList
-} from "@21n/data/datafn/resource.utils";
-import {
-  resolveTaskFocus,
-  resolveTotalTaskTime
-} from "@21n/products/pointron/focus/session.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { resolveTaskFocus, resolveTotalTaskTime } from "@21n/products/pointron/focus/session.utils";
 import { postDataToParent } from "@21n/utils/embed.utils";
+import { goalStore } from "@21n/components/goals/goal.store";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import { ObjectiveStatus, type IObjective } from "@21n/components/goals/goal.type";
+import { taskStore } from "@21n/components/tasks/task.store";
+import { GoalStatus } from "@21n/components/goals/goal.type";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 import { uiState } from "@21n/stores/uiState/uiState.store";
 import { UIState } from "@21n/stores/uiState/uiState.type";
-import { removeDuplicatesFilter } from "@21n/data/datafn/resource.utils";
+import { removeDuplicatesFilter } from "@21n/components/flux/resourceStores/resource.utils";
 import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
-import { getUtcSafeDay } from "@21n/elements/datetime/datetime.utils";
-import type { ITaskCapture } from "@21n/components/tasks/task.type";
-import { StoreDataType } from "@21n/types/data.type";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -123,7 +122,6 @@ const seedSessionStore: IActiveSessionStore = {
   isSessionRunning: false,
   currentBlockId: "",
   currentFocusItem: undefined,
-  isBreakReminderNotified: false,
   composition: {
     totalDuration: 60 * 60,
     focusDuration: 60 * 60,
@@ -136,51 +134,55 @@ const seedSessionStore: IActiveSessionStore = {
   }
 };
 
-class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
+class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
   timer: any;
   idleTimer: any;
-  isInitialized = false;
-  private signal = datafn.kv.signal<IActiveSessionStore>(
-    Resource.pointSessionSnapshotv2,
-    { defaultValue: { ...seedSessionStore } }
-  );
+  isIntervalTimeLimitNotified: boolean = false;
   constructor() {
-    super(Resource.pointSessionSnapshotv2, StoreDataType.KVO);
-    this._set({ ...seedSessionStore });
-    this.signal.subscribe((value) => {
-      this.loader(value);
-    });
-  }
-  propagateMessageToParent(n: IActiveSessionStore) {
-  }
-
-  protected persist(n: Partial<IActiveSessionStore> | undefined = undefined) {
-    return datafn.kv.merge(
+    super(
       Resource.pointSessionSnapshotv2,
-      (n ?? this.get()) as Record<string, unknown>
+      { ...seedSessionStore },
+      {
+        isPreventAutoPersist: true
+      }
     );
   }
-
-  async modify(
-    n: Partial<IActiveSessionStore>,
-    params: {
-      isPersist?: boolean;
-      isDebouncedPersist?: boolean;
-      isPreventCachingDefault?: boolean;
-    } = {
-      isPersist: true
-    }
-  ) {
-    const current = this.get();
-    const next = { ...current, ...n };
-    this._set(next);
-    if (params.isPreventCachingDefault) return;
-    if (params.isDebouncedPersist) {
-      return datafn.kv.merge(Resource.pointSessionSnapshotv2, n, {
-        debounceMs: 3000
-      });
-    }
-    if (params.isPersist) return this.persist(n);
+  propagateMessageToParent(n: IActiveSessionStore) {
+    // try {
+    //   const todayFocus = get(todayFocusStore)?.focus;
+    //   const isFocusing = n.currentBlock.type == BlockType.FOCUS;
+    //   const appearanceConfig = get(appearance);
+    //   const colors = retrieveCurrentColors(appearanceConfig);
+    //   const widgetSnapshot = {
+    //     goalName: n.currentLog?.taskName,
+    //     color:
+    //       isFocusing && n.currentLog.color
+    //         ? customColor(appearanceConfig, n.currentLog.color)
+    //         : isFocusing
+    //           ? colors.aps1
+    //           : colors.ass1,
+    //     start:
+    //       n.currentBlock.type == BlockType.FOCUS
+    //         ? n.start?.toISOString()
+    //         : new Date(n.currentBlock.start)?.toISOString(),
+    //     end: n.end?.toISOString(),
+    //     isSessionRunning: n.isSessionRunning,
+    //     isFocusing,
+    //     todayFocus
+    //   };
+    //   postToParent({
+    //     session: JSON.stringify(widgetSnapshot)
+    //   });
+    //   setTimeout(() => {
+    //     const notifications = get(scheduledNotifications);
+    //     postToParent({
+    //       notifications
+    //     });
+    //   }, 2000);
+    //   return widgetSnapshot;
+    // } catch (error) {
+    //   logger.logError(error);
+    // }
   }
 
   private clearTimers() {
@@ -224,12 +226,9 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       session.type != SessionType.PREDEFINED_INTERVALS &&
       session.state === SessionState.FOCUS_RUNNING
     ) {
-      const isBreakReminderNotified = scheduleBreakReminderNotification(
-        session.isBreakReminderNotified === true
+      this.isIntervalTimeLimitNotified = scheduleBreakReminderNotification(
+        this.isIntervalTimeLimitNotified
       );
-      if (isBreakReminderNotified !== session.isBreakReminderNotified) {
-        this.modify({ isBreakReminderNotified }, { isPersist: false });
-      }
       return timeRemainingToTakeBreak;
     }
     if (session.type === SessionType.PREDEFINED_INTERVALS) {
@@ -479,7 +478,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       appEvents.publish(PointronEvent.INTERVAL_ENDED);
     } else {
       appEvents.publish(PointronEvent.BREAK_ENDED);
-      this.modify({ isBreakReminderNotified: false }, { isPersist: false });
+      this.isIntervalTimeLimitNotified = false;
     }
     this._resumeTimer();
     await this.persist();
@@ -554,7 +553,6 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     });
     this.modify(
       {
-        composition: deepCopy(composition),
         intervals: intervals,
         type: sessionType,
         plannedDuration,
@@ -579,15 +577,9 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
         }
       ];
       sessionType = SessionType.COUNTUP;
-      plannedDuration = 0;
     }
   }
 
-  /**
-   * Resolves a stored session end timestamp.
-   * Countup and target focus return undefined so the UI does not treat the
-   * session as having a fixed end time.
-   */
   resolveEndTime(n: {
     start: Date;
     composition: SessionComposition;
@@ -597,11 +589,8 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     if (!n.start) return;
     if (n.composition?.type == SessionCompositionType.END_TIME_FIXED) {
       return n.end;
-    } else if (
-      n.composition?.type == SessionCompositionType.TARGET_FOCUS ||
-      n.composition?.type == SessionCompositionType.COUNTUP
-    ) {
-      return undefined;
+    } else if (n.composition?.type == SessionCompositionType.TARGET_FOCUS) {
+      //todo
     } else {
       return new Date(n.start.getTime() + n.plannedDuration * 1000);
     }
@@ -739,9 +728,9 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     this.modify({
       intervals,
       currentBlockId,
-      state: SessionState.FOCUS_RUNNING,
-      isBreakReminderNotified: false
+      state: SessionState.FOCUS_RUNNING
     });
+    this.isIntervalTimeLimitNotified = false;
     this._resumeTimer();
     return true;
   }
@@ -788,8 +777,6 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
   }
 
   async loader(savedSessionStore: IActiveSessionStore) {
-    if (!savedSessionStore || typeof savedSessionStore !== "object") return;
-    this.isInitialized = true;
     logger.log({ context: "session store loader", savedSessionStore });
     savedSessionStore = normalizeSavedSessionStore(savedSessionStore);
     if (savedSessionStore.start && typeof savedSessionStore.start == "string") {
@@ -854,97 +841,20 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     appEvents.publish(PointronEvent.SESSION_FINISHED);
   }
 
-  private resolveEffectiveFinishEnd(end: number) {
-    const session = this.get();
-    const rawEnd = new Date(end);
-    if (session.type === SessionType.COUNTUP) return rawEnd;
-    if (session.end && rawEnd.getTime() > session.end.getTime()) {
-      return session.end;
-    }
-    if (session.start && session.plannedDuration) {
-      const plannedEnd = new Date(
-        session.start.getTime() + session.plannedDuration * 1000
-      );
-      if (rawEnd.getTime() > plannedEnd.getTime()) return plannedEnd;
-    }
-    return rawEnd;
-  }
-
-  private resolveFinishedSession(end: Date): IActiveSessionStore {
-    const session = this.get();
-    const elapsed = session.start
-      ? Math.max(
-          0,
-          (end.getTime() - session.start.getTime()) / 1000 - session.totalIdle
-        )
-      : session.totalElapsed;
-    const intervals = this.resolveFinishedIntervals(session, end, elapsed);
-    const currentBlock = intervals.find((x) => x.id === session.currentBlockId);
-    const timeElapsed = currentBlock?.start
-      ? Math.max(0, (end.getTime() - currentBlock.start) / 1000)
-      : session.timeElapsed;
-    return {
-      ...session,
-      end,
-      intervals,
-      totalElapsed: elapsed,
-      timeElapsed,
-      isSessionRunning: false,
-      state: SessionState.FINISHED,
-      currentFocusItem: undefined,
-      isQuickStartOn: false
-    };
-  }
-
-  private resolveFinishedIntervals(
-    session: IActiveSessionStore,
-    end: Date,
-    totalElapsed: number
-  ) {
-    if (session.type === SessionType.COUNTUP) {
-      const intervals = [...session.intervals];
-      const lastBar = intervals.pop();
-      if (!lastBar) return intervals;
-      return [
-        ...intervals,
-        {
-          ...lastBar,
-          duration: lastBar.start
-            ? Math.max(0, (end.getTime() - lastBar.start) / 1000)
-            : lastBar.duration
-        }
-      ];
-    }
-    let remaining = Math.max(0, totalElapsed);
-    return session.intervals.map((bar) => {
-      const duration = bar.duration ?? 0;
-      if (duration <= 0) return { ...bar, progress: bar.progress ?? 0 };
-      if (remaining >= duration) {
-        remaining = remaining - duration;
-        return { ...bar, progress: 1 };
-      }
-      const progress = remaining / duration;
-      remaining = 0;
-      return { ...bar, progress };
-    });
-  }
-
   async finishSession(params?: {
     isClose?: boolean;
     isQuickStartSwitch?: boolean;
   }) {
     let session = this.get();
     let currentFocus = get(currentFocusItem);
-    let finishedSession: IActiveSessionStore | undefined;
     if (!session.isQuickStartOn)
       fullPageLoadingScreen.show("Finishing session...");
     try {
       const now = new Date().getTime();
-      const end = this.resolveEffectiveFinishEnd(now);
       if (currentFocus)
         await this._stopCurrentFocusItem({
           isSessionFinish: true,
-          end: end.getTime()
+          end: now
         });
       // let lastBlock = n.intervals?.pop();
       // if (lastBlock) {
@@ -954,9 +864,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       // n.blocks = [...n.blocks, { start: now, duration: 0, progress: 1 }];
       // session.state = SessionState.FINISHED;
       // session.isSessionRunning = false;
-      finishedSession = this.resolveFinishedSession(end);
-      this.modify(finishedSession, { isPersist: false });
-      await sessionStore.finishFocus({ end: end.getTime() });
+      sessionStore.finishFocus({ end: now });
     } catch (err) {
       logger.error({ at: "finishSession", error: err });
     } finally {
@@ -966,19 +874,17 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
         this.shallowReset();
         // this.propagateMessageToParent(session);
         currentFocusItem.set(undefined);
-        this.modify(
-          finishedSession ?? {
-            isSessionRunning: false,
-            state: SessionState.FINISHED,
-            currentFocusItem: undefined,
-            isQuickStartOn: false
-          }
-        );
+        this.modify({
+          isSessionRunning: false,
+          state: SessionState.FINISHED,
+          currentFocusItem: undefined,
+          isQuickStartOn: false
+        });
         appEvents.publish(PointronEvent.SESSION_FINISHED);
       }
       fullPageLoadingScreen.hide();
     }
-    return finishedSession ?? session;
+    return session;
   }
 
   async startTask(id: IRecordId) {
@@ -1030,8 +936,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     this.modify({
       intervals,
       currentBlockId: newBlockId,
-      state: SessionState.BREAK_RUNNING,
-      isBreakReminderNotified: true
+      state: SessionState.BREAK_RUNNING
     });
     this._resumeTimer();
     return true;
@@ -1136,13 +1041,6 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
    * @returns
    */
   async startSession(isQuickStart: boolean = false) {
-    const advancedDraft = get(advancedCompositionDraft);
-    if (!isQuickStart && advancedDraft) {
-      this.modify(
-        { composition: deepCopy(advancedDraft) },
-        { isPersist: false }
-      );
-    }
     this.onComposeComplete(false);
     if (isQuickStart) player.showMini(PointronAction.FOCUS_PLAYER);
     else fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
@@ -1154,6 +1052,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       Notification.requestPermission();
     }
     const sessionId = generateResourceId(Resource.session);
+    this.isIntervalTimeLimitNotified = false;
     let currentFocus = get(currentFocusItem);
     let focusItems = focusItemsStore.get();
     if (!isQuickStart && focusItems.items.length > 0) {
@@ -1174,7 +1073,6 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
         isSessionRunning: true,
         start: new Date(),
         state: SessionState.FOCUS_RUNNING,
-        isBreakReminderNotified: false,
         currentFocusItem: currentFocus
       },
       { isPersist: false }
@@ -1191,36 +1089,36 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     const resourceTypeOfCurrentFocus = determineResourceType(currentFocus.id);
     const resourceTypeOfItem = determineResourceType(id);
     if (
-      resourceTypeOfCurrentFocus === Resource.objective ||
+      resourceTypeOfCurrentFocus === Resource.goal ||
       resourceTypeOfItem === Resource.task
     ) {
       return isSameResource(id, currentFocus);
     } else if (resourceTypeOfCurrentFocus === Resource.task) {
-      const correspondingObjective = get(focusItemsStore).items.find((x) =>
+      const correspondingGoal = get(focusItemsStore).items.find((x) =>
         x.tasks?.some(resourceInList(currentFocus))
       );
-      if (correspondingObjective) {
-        return isSameResource(correspondingObjective.id, id);
+      if (correspondingGoal) {
+        return isSameResource(correspondingGoal.id, id);
       }
       return false;
     }
   }
 
-  async focusObjective(objectiveId: IRecordId) {
-    if (this.isCurrentFocusItem(objectiveId)) return;
+  async focusGoal(goalId: IRecordId) {
+    if (this.isCurrentFocusItem(goalId)) return;
     const session = this.get();
     if (session.isSessionRunning && !session.isQuickStartOn) {
-      await focusItemsStore.addObjective(objectiveId);
-      await this.startTask(objectiveId);
+      await focusItemsStore.addGoal(goalId);
+      await this.startTask(goalId);
     } else {
-      await this.quickStart(objectiveId);
+      await this.quickStart(goalId);
     }
   }
 
-  async focusTask(taskId: IRecordId, objectiveId?: IRecordId) {
+  async focusTask(taskId: IRecordId, goalId?: IRecordId) {
     if (this.isCurrentFocusItem(taskId)) return;
     try {
-      await focusItemsStore.addTask(taskId, objectiveId);
+      await focusItemsStore.addTask(taskId, goalId);
     } catch (err) {
       logger.error({ at: "focusTask", error: err });
     }
@@ -1232,10 +1130,10 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
   }
 
   /**
-   * Starts a quick start session for a given objective.
-   * @param objectiveId
+   * Starts a quick start session for a given goal.
+   * @param goalId
    */
-  async quickStart(objectiveId: IRecordId) {
+  async quickStart(goalId: IRecordId) {
     if (this.get().isSessionRunning)
       await activeSession.finishSession({ isQuickStartSwitch: true });
     let n = this.reset();
@@ -1251,7 +1149,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
         id: "slider",
         breakType: BreakCompositionType.REMINDER
       };
-      const newFocus = { start: new Date().getTime(), id: objectiveId };
+      const newFocus = { start: new Date().getTime(), id: goalId };
       currentFocusItem.set(newFocus);
       this.modify(
         {
@@ -1265,7 +1163,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
         },
         { isPersist: false }
       );
-      await focusItemsStore.addObjective(objectiveId);
+      await focusItemsStore.addGoal(goalId);
       return this.startSession(true);
     } catch (err) {
       logger.error({ at: "quickStart", error: err });
@@ -1273,15 +1171,15 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
   }
 
   async onPresetSelection(preset: SessionComposition) {
-    this.modify({ composition: deepCopy(preset) }, { isPersist: false });
+    this.modify({ composition: preset }, { isPersist: false });
     this.onComposeComplete();
-    if (preset.objectives?.length) {
-      await focusItemsStore.resetToPresetObjectives(preset.objectives);
+    if (preset.goals?.length) {
+      await focusItemsStore.resetToPresetGoals(preset.goals);
     }
   }
 
   async resetComposition() {
-    const composition = {
+    let composition = {
       id: generateSimpleRandomId(),
       type: SessionCompositionType.COUNTUP,
       focusDuration: 0,
@@ -1291,23 +1189,21 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       breakReminder: 60 * 60,
       breakType: BreakCompositionType.REMINDER
     };
-    await this.modify({ composition, end: undefined }, { isPersist: false });
-    this.onComposeComplete(false);
+    this.modify({ composition }, { isPersist: false });
+    this.onComposeComplete();
   }
 
   async saveCurrentCompositionAsPreset(params: {
-    objectives: IRecordId[];
+    goals: IRecordId[];
     name: string;
-    composition?: SessionComposition;
   }) {
     let n = this.get();
-    const composition = params.composition ?? n.composition;
-    if (!composition) return;
+    if (!n.composition) return;
     const result = await pointronPreferences.addPreset({
-      ...deepCopy(composition),
+      ...n.composition,
       name: params.name,
       id: generateSimpleRandomId(),
-      objectives: params.objectives
+      goals: params.goals
     });
     toasts.success("Preset saved successfully");
     return result;
@@ -1348,33 +1244,39 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
   async resolveCurrentFocusItemData(
     params: {
       item?: ICurrentFocusItem;
-      isReturnObjectiveIfTask?: boolean;
+      isReturnGoalIfTask?: boolean;
     } = {}
   ) {
     let item = params.item;
     if (!item) item = get(currentFocusItem);
     if (!item) return;
     const resourceType = determineResourceType(item.id);
-    if (resourceType === Resource.objective) {
-      const objective = await datafn.objective.query({
-        select: ["*", "children.*", "tasks.*"],
-        filters: {
-          id: item.id.toString()
-        }
-      });
-      return objective.data?.[0];
+    if (resourceType === Resource.goal) {
+      const goal = await goalStore.selectMany(
+        {
+          filters: {
+            id: item.id.toString()
+          }
+        },
+        { isIncludeSubItems: true, isExpand: true }
+      );
+      return goal?.[0];
     } else if (resourceType === Resource.task) {
-      const task = await datafn.task.query({
-        select: ["*", "objective.*"],
-        filters: {
-          id: item.id.toString()
-        }
-      });
-      return task.data?.[0];
+      const task = await taskStore.selectMany(
+        {
+          filters: {
+            id: item.id.toString()
+          }
+        },
+        { isExpand: true }
+      );
+      return task?.[0];
     }
   }
 }
-export const activeSession = new ActiveSessionStore();
+export const activeSession = ActiveSessionStore.resolve(
+  Resource.pointSessionSnapshotv2
+);
 
 function normalizeSavedSessionStore(
   savedSessionStore: IActiveSessionStore
@@ -1395,14 +1297,10 @@ function normalizeSavedSessionStore(
     };
   }
   if (typeof savedSessionStore.timeElapsed !== "number") {
-    normalized.timeElapsed = resolveSessionNumber(
-      savedSessionStore.timeElapsed
-    );
+    normalized.timeElapsed = resolveSessionNumber(savedSessionStore.timeElapsed);
   }
   if (typeof savedSessionStore.totalElapsed !== "number") {
-    normalized.totalElapsed = resolveSessionNumber(
-      savedSessionStore.totalElapsed
-    );
+    normalized.totalElapsed = resolveSessionNumber(savedSessionStore.totalElapsed);
   }
   if (typeof savedSessionStore.plannedDuration !== "number") {
     normalized.plannedDuration = resolveSessionNumber(
@@ -1418,9 +1316,7 @@ function normalizeSavedSessionStore(
     );
   }
   if (typeof savedSessionStore.currentIdle !== "number") {
-    normalized.currentIdle = resolveSessionNumber(
-      savedSessionStore.currentIdle
-    );
+    normalized.currentIdle = resolveSessionNumber(savedSessionStore.currentIdle);
   }
   if (
     savedSessionStore.timeRemainingToTakeBreak !== undefined &&
@@ -1450,7 +1346,7 @@ function resolveSessionNumber(value: unknown) {
   return 0;
 }
 
-export const lastActiveObjectiveIdForEditing = writable<IRecordId | undefined>(
+export const lastActiveGoalIdForEditing = writable<IRecordId | undefined>(
   undefined
 );
 
@@ -1459,53 +1355,15 @@ const seedFocusItemsStore: IFocusItemsStore = {
   removedItems: []
 };
 
-class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
-  isInitialized = false;
-  private signal = datafn.kv.signal<IFocusItemsStore>(
-    Resource.sessionFocusItems,
-    { defaultValue: { ...seedFocusItemsStore } }
-  );
-
+class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   constructor() {
-    super(Resource.sessionFocusItems, StoreDataType.KVO);
-    this._set({ ...seedFocusItemsStore });
-    this.signal.subscribe((value) => {
-      this.loader(value);
-    });
+    super(Resource.sessionFocusItems, { ...seedFocusItemsStore });
   }
 
   loader(data: IFocusItemsStore) {
     if (!data.items) data.items = [];
     if (!data.removedItems) data.removedItems = [];
-    this.isInitialized = true;
-    this._set({ ...data });
-  }
-
-  async modify(
-    n: Partial<IFocusItemsStore>,
-    params: {
-      isPersist?: boolean;
-      isDebouncedPersist?: boolean;
-      isPreventCachingDefault?: boolean;
-    } = {
-      isPersist: true
-    }
-  ) {
-    const current = this.get();
-    const next = { ...current, ...n };
-    this._set(next);
-    if (params.isPreventCachingDefault) return;
-    if (params.isDebouncedPersist) {
-      return datafn.kv.merge(Resource.sessionFocusItems, n, {
-        debounceMs: 3000
-      });
-    }
-    if (params.isPersist) {
-      return datafn.kv.merge(
-        Resource.sessionFocusItems,
-        n as Record<string, unknown>
-      );
-    }
+    super.loader(data);
   }
 
   reset(isPersist: boolean = false) {
@@ -1519,66 +1377,62 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
   }
 
   async refreshRecents(items: { id: IRecordId; startUnix: number }[]) {
-    const objectivesResult = await datafn.objective.query({
-      select: ["*", "children.*", "tasks.*"],
-      filters: {
-        id: { $in: items.map((x) => x.id.toString()) },
-        status: {
-          $ne: ObjectiveStatus.COMPLETED
+    console.time("refreshRecents");
+    const goalsResult = await goalStore.selectMany(
+      {
+        filters: {
+          id: items.map((x) => x.id.toString()),
+          status: {
+            notEquals: GoalStatus.COMPLETED
+          }
         }
+      },
+      {
+        isExpand: true
       }
-    });
+    );
+    console.timeEnd("refreshRecents");
     const newRecents = items
       .map((x) => {
-        const objective = (objectivesResult.data as IObjective[] | undefined)?.find(
-          resourceInList(x.id)
-        );
-        if (!objective) return;
+        const goal = goalsResult.find(resourceInList(x.id));
+        if (!goal) return;
         return {
           id: x.id,
-          item: objective,
+          item: goal,
           startUnix: x.startUnix
         };
       })
       .filter(
-        (recent): recent is { id: string; item: any; startUnix: number } =>
+        (
+          recent
+        ): recent is { id: string; item: any; startUnix: number } =>
           Boolean(recent && recent.id && recent.item)
       );
     this.modify({ recents: newRecents });
   }
 
-  async addNewTask(label: string, objectiveId?: IRecordId) {
+  async addNewTask(label: string, goalId?: IRecordId) {
     let id = generateResourceId(Resource.task);
-    await this.addTask(id, objectiveId);
-    const task: ITaskCapture = {
-      id,
-      label,
-      isChecked: false,
-      dateUnix: resolveUnixTimestamp(getUtcSafeDay(new Date())),
-      ...(objectiveId && { objectiveId })
-    };
-    appStore.addToRecents({
-      record: task,
-      type: Resource.task,
-      timestamp: new Date()
-    });
-    await datafn.task.mutate({
-      operation: "insert",
-      id: id.toString(),
-      record: task
-    });
-    return [task];
+    await this.addTask(id, goalId);
+    return taskStore.save(
+      {
+        label,
+        goalId: goalId,
+        dateUnix: new Date().getTime()
+      },
+      { id }
+    );
   }
 
-  async addTask(id: IRecordId, objectiveId?: IRecordId) {
+  async addTask(id: IRecordId, goalId?: IRecordId) {
     let n = this.get();
     if (n.items.some(resourceInList(id)))
       throw new Error("Task already exists");
     let blocks:
       | {
-          start: number;
-          end: number;
-        }[]
+        start: number;
+        end: number;
+      }[]
       | undefined = undefined;
     const removedTask = n.removedItems?.find(resourceInList(id));
     if (removedTask) {
@@ -1587,23 +1441,21 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
       blocks = removedTask.blocks ?? [];
     }
 
-    if (objectiveId && !n.items.some(resourceInList(objectiveId))) {
-      const removedObjective = n.removedItems?.find(resourceInList(objectiveId));
-      if (removedObjective) {
+    if (goalId && !n.items.some(resourceInList(goalId))) {
+      const removedGoal = n.removedItems?.find(resourceInList(goalId));
+      if (removedGoal) {
         n.removedItems =
-          n.removedItems?.filter(
-            (item) => !isSameResource(item, objectiveId)
-          ) ?? [];
-        n.items.push({ ...removedObjective, tasks: [] });
+          n.removedItems?.filter((item) => !isSameResource(item, goalId)) ?? [];
+        n.items.push({ ...removedGoal, tasks: [] });
       } else {
-        n.items.push({ id: objectiveId, tasks: [], blocks: [] });
+        n.items.push({ id: goalId, tasks: [], blocks: [] });
       }
     }
 
     this.modify({
       items: [
         ...(n.items.map((x: IFocusItem) => {
-          if (objectiveId && isSameResource(x.id, objectiveId))
+          if (goalId && isSameResource(x.id, goalId))
             x.tasks = [...(x.tasks ?? []), id];
           return x;
         }) ?? []),
@@ -1614,29 +1466,29 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
         }
       ]
     });
-    if (objectiveId) lastActiveObjectiveIdForEditing.set(objectiveId);
+    if (goalId) lastActiveGoalIdForEditing.set(goalId);
   }
 
-  async addObjective(id: IRecordId) {
+  async addGoal(id: IRecordId) {
     let n = this.get();
     if (n.items.some(resourceInList(id))) return;
 
-    const removedObjective = n.removedItems?.find(resourceInList(id));
-    if (removedObjective) {
+    const removedGoal = n.removedItems?.find(resourceInList(id));
+    if (removedGoal) {
       n.removedItems =
         n.removedItems?.filter((item) => !isSameResource(item, id)) ?? [];
-      n.items.push(removedObjective);
+      n.items.push(removedGoal);
     } else {
       n.items.push({ id, tasks: [], blocks: [] });
     }
     this.modify(n);
-    lastActiveObjectiveIdForEditing.set(id);
+    lastActiveGoalIdForEditing.set(id);
   }
-  async resetToPresetObjectives(ids: IRecordId[]) {
+  async resetToPresetGoals(ids: IRecordId[]) {
     let n = this.get();
     n.items = ids.map((id) => ({ id, tasks: [], blocks: [] }));
     this.modify(n);
-    lastActiveObjectiveIdForEditing.set(ids[0]);
+    lastActiveGoalIdForEditing.set(ids[0]);
     appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
   }
 
@@ -1687,11 +1539,11 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
       context: "propagateDependencyChanges to focusItemsStore",
       data
     });
-    //TODO - check if any existing task or objective is dependent on this change - change of label or color etc
+    //TODO - check if any existing task or goal is dependent on this change - change of label for a goal or color etc
   }
 
   resolveCount(items: IFocusItem[]) {
-    //TODO - don't count objectives with tasks as focus item
+    //TODO - don't count goals with tasks as focus item
     return items.length;
   }
 
@@ -1715,36 +1567,32 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
     this.modify({ items });
   }
 
-  async rearrangeTasksInObjective(
-    objectiveId: IRecordId,
+  async rearrangeTasksInGoal(
+    goalId: IRecordId,
     fromId: IRecordId,
     toId: IRecordId
   ) {
     let n = this.get();
-    const objectiveItem = n.items.find(resourceInList(objectiveId));
-    if (
-      !objectiveItem ||
-      !objectiveItem.tasks ||
-      objectiveItem.tasks.length === 0
-    ) {
+    const goalItem = n.items.find(resourceInList(goalId));
+    if (!goalItem || !goalItem.tasks || goalItem.tasks.length === 0) {
       return;
     }
-    const fromIndex = objectiveItem.tasks.findIndex(resourceInList(fromId));
-    const toIndex = objectiveItem.tasks.findIndex(resourceInList(toId));
+    const fromIndex = goalItem.tasks.findIndex(resourceInList(fromId));
+    const toIndex = goalItem.tasks.findIndex(resourceInList(toId));
     if (
       fromIndex < 0 ||
       toIndex < 0 ||
-      fromIndex >= objectiveItem.tasks.length ||
-      toIndex >= objectiveItem.tasks.length
+      fromIndex >= goalItem.tasks.length ||
+      toIndex >= goalItem.tasks.length
     ) {
       return;
     }
-    const tasks = [...objectiveItem.tasks];
+    const tasks = [...goalItem.tasks];
     const [movedTask] = tasks.splice(fromIndex, 1);
     tasks.splice(toIndex, 0, movedTask);
 
     const items = n.items.map((item) => {
-      if (isSameResource(item.id, objectiveId)) {
+      if (isSameResource(item.id, goalId)) {
         return { ...item, tasks };
       }
       return item;
@@ -1753,177 +1601,211 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
   }
 }
 
-export const focusItemsStore = new FocusItemsStore();
+export const focusItemsStore = FocusItemsStore.resolve(
+  Resource.sessionFocusItems
+);
 
-function addToRecentFocusItems(logs: ISessionLogCapture[]) {
-  const newEntries = logs
-    .filter((x) => x.objectiveId && !x.taskId)
-    .map((log) => ({
-      id: log.objectiveId,
-      startUnix: log.startUnix
-    }));
-  const newVal = [
-    ...newEntries,
-    ...(uiState.getState(UIState.recentFocusItems) ?? [])
-  ]
-    .filter(removeDuplicatesFilter)
-    .slice(0, 15);
-  uiState.setState(UIState.recentFocusItems, newVal);
-  focusItemsStore.refreshRecents(newVal);
-}
+class SessionStore extends ResourceStore<ISession, ISessionCapture> {
+  constructor() {
+    super(Resource.session);
+  }
 
-async function finishFocus(params?: { end?: number }) {
-  const activeSessionVal = activeSession.get();
-  const focusItemStore = focusItemsStore.get();
-  const plannedEndTime = resolvePlannedEndTime(activeSessionVal);
-  const endTime =
-    plannedEndTime && new Date().getTime() > plannedEndTime.getTime()
-      ? plannedEndTime
-      : new Date(params?.end ?? new Date().getTime());
-
-  const session: ISessionCapture = {
-    elapsed: activeSessionVal.totalElapsed,
-    extended: activeSessionVal.totalExtended,
-    // start: activeSessionVal.start?.toISOString() ?? "",
-    startUnix: activeSessionVal.start
-      ? resolveUnixTimestamp(activeSessionVal.start)
-      : 0,
-    // end: endTime.toISOString(),
-    endUnix: resolveUnixTimestamp(endTime),
-    plannedEndUnix: plannedEndTime
-      ? resolveUnixTimestamp(plannedEndTime)
-      : undefined,
-    id:
-      activeSessionVal.currentSessionId ?? generateResourceId(Resource.session),
-    type: activeSessionVal.type,
-    blocks: [
-      ...activeSessionVal.intervals,
-      {
-        id: generateSimpleRandomId(),
-        start: endTime.getTime(),
-        type: BlockType.NONE,
-        progress: 0,
-        duration: 0
-      }
-    ],
-    notes: activeSessionVal.notes
-  };
-  const logs: ISessionLogCapture[] = [];
-
-  // Process both active items and removed items to preserve all focus data
-  const allItems = [
-    ...focusItemStore.items,
-    ...(focusItemStore.removedItems ?? [])
-  ];
-
-  allItems.forEach((item: IFocusItem) => {
-    const resourceType = determineResourceType(item.id);
-    const objectiveId =
-      resourceType === Resource.objective
-        ? item.id
-        : (allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
-          "");
-    const taskId = resourceType === Resource.task ? item.id : "";
-    if (item.blocks && item.blocks.length > 0) {
-      logs.push(
-        ...item.blocks.map((block) => {
-          return generateLogFromBlock(objectiveId, taskId, block);
-        })
+  async selectManyWithItemsExpansion(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const result = await this.selectMany(params, additionalParams);
+    if (!Array.isArray(result)) return;
+    const itemIds = result
+      .map((x) => x.items)
+      ?.flat()
+      ?.map((x) => x.id);
+    if (itemIds && itemIds.length > 0) {
+      const goalIds = itemIds.filter(
+        (x) => determineResourceType(x) === Resource.goal
       );
+      const taskIds = itemIds.filter(
+        (x) => determineResourceType(x) === Resource.task
+      );
+      const goals = await goalStore.selectMany(
+        {
+          filters: {
+            id: goalIds
+          }
+        },
+        {
+          isExpand: true
+        }
+      );
+      const tasks = await taskStore.selectMany({
+        filters: {
+          id: taskIds
+        }
+      });
+      result.map((x) => {
+        if (x.items) {
+          x.expandedItems = [...goals, ...tasks].filter((item) =>
+            x.items.some(resourceInList(item))
+          );
+        }
+      });
     }
-  });
-
-  const totalTimeFromLogs = logs.reduce((acc, log) => {
-    return acc + ((log.focus ?? 0) + (log.breakTime ?? 0));
-  }, 0);
-
-  const sessionTotals = resolveSessionTimeSplit(session);
-
-  const remainingTime =
-    sessionTotals.focus + sessionTotals.brek - totalTimeFromLogs;
-  if (remainingTime > 0) {
-    logs.push({
-      id: generateResourceId(Resource.sessionLog),
-      // start: new Date(session.start).toISOString(),
-      // end: new Date(session.end).toISOString(),
-      startUnix: session.startUnix,
-      endUnix: session.endUnix,
-      sessionId: session.id,
-      focus: remainingTime,
-      breakTime: 0
-    });
-  }
-  await datafn.session.mutate([
-    {
-      operation: "insert",
-      id: session.id,
-      record: session,
-      context: PointronAction.FINISH_FOCUS_SESSION
-    },
-    {
-      operation: "relate",
-      id: session.id,
-      relations: {
-        items: createSessionItemRelationRefs(focusItemStore.items)
-      },
-      context: PointronAction.FINISH_FOCUS_SESSION
-    }
-  ]);
-  await datafn.sessionLog.mutate(
-    logs.map((record) => ({
-      operation: "insert",
-      id: record.id,
-      record: {
-        ...record,
-        objectiveId: record.objectiveId ?? "",
-        sessionId: record.sessionId ?? "",
-        taskId: record.taskId ?? ""
-      },
-      context: PointronAction.FINISH_FOCUS_SESSION
-    }))
-  );
-  addToRecentFocusItems(logs);
-
-  function resolvePlannedEndTime(session: IActiveSessionStore) {
-    if (session.type == SessionType.COUNTUP) {
-      return;
-    } else if (session.end) return session.end;
-    else if (session.start) {
-      return new Date(session.start.getTime() + session.plannedDuration * 1000);
-    }
+    return result;
   }
 
-  function generateLogFromBlock(
-    objectiveId: IRecordId,
-    taskId: IRecordId,
-    block: { start: number; end: number }
-  ): ISessionLogCapture {
-    const total = resolveTotalTaskTime([block]);
-    const focus = resolveTaskFocus(session.blocks, [block]);
-    const breakTime = Number((total - focus).toFixed(1));
-    logger.log({
-      focus,
-      blocks: deepCopy(session.blocks),
-      total,
-      block,
-      breakTime
-    });
-    return {
-      id: generateResourceId(Resource.sessionLog),
-      // start: new Date(block.start).toISOString(),
-      // end: new Date(block.end).toISOString(),
-      startUnix: resolveUnixTimestamp(new Date(block.start)),
-      endUnix: resolveUnixTimestamp(new Date(block.end)),
-      sessionId: session.id,
-      objectiveId,
-      taskId,
-      focus,
-      breakTime
+  addToRecentFocusItems(logs: ISessionLogCapture[]) {
+    const newEntries = logs
+      .filter((x) => x.goalId && !x.taskId)
+      .map((log) => ({
+        id: log.goalId,
+        startUnix: log.startUnix
+      }));
+    const newVal = [
+      ...newEntries,
+      ...(uiState.getState(UIState.recentFocusItems) ?? [])
+    ]
+      .filter(removeDuplicatesFilter)
+      .slice(0, 15);
+    uiState.setState(UIState.recentFocusItems, newVal);
+    focusItemsStore.refreshRecents(newVal);
+  }
+
+  /**
+   * Saves focus logs to the database. This function is called when user finishes a focus session delegated from active session store.
+   * @param activeSession
+   * @param focusItemStore
+   * @param isClose
+   */
+  finishFocus(params?: { end?: number }) {
+    const activeSessionVal = activeSession.get();
+    const focusItemStore = focusItemsStore.get();
+    const plannedEndTime = resolvePlannedEndTime(activeSessionVal);
+    const endTime =
+      plannedEndTime && new Date().getTime() > plannedEndTime.getTime()
+        ? plannedEndTime
+        : new Date(params?.end ?? new Date().getTime());
+
+    const session: ISessionCapture = {
+      elapsed: activeSessionVal.totalElapsed,
+      extended: activeSessionVal.totalExtended,
+      // start: activeSessionVal.start?.toISOString() ?? "",
+      startUnix: activeSessionVal.start
+        ? resolveUnixTimestamp(activeSessionVal.start)
+        : 0,
+      // end: endTime.toISOString(),
+      endUnix: resolveUnixTimestamp(endTime),
+      plannedEndUnix: plannedEndTime
+        ? resolveUnixTimestamp(plannedEndTime)
+        : undefined,
+      id:
+        activeSessionVal.currentSessionId ??
+        generateResourceId(Resource.session),
+      type: activeSessionVal.type,
+      blocks: [
+        ...activeSessionVal.intervals,
+        {
+          id: generateSimpleRandomId(),
+          start: endTime.getTime(),
+          type: BlockType.NONE,
+          progress: 0,
+          duration: 0
+        }
+      ],
+      items: focusItemStore.items,
+      notes: activeSessionVal.notes
     };
+    const logs: ISessionLogCapture[] = [];
+
+    // Process both active items and removed items to preserve all focus data
+    const allItems = [
+      ...focusItemStore.items,
+      ...(focusItemStore.removedItems ?? [])
+    ];
+
+    allItems.forEach((item: IFocusItem) => {
+      const resourceType = determineResourceType(item.id);
+      const goalId =
+        resourceType === Resource.goal
+          ? item.id
+          : (allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
+            "");
+      const taskId = resourceType === Resource.task ? item.id : "";
+      if (item.blocks && item.blocks.length > 0) {
+        logs.push(
+          ...item.blocks.map((block) => {
+            return generateLogFromBlock(goalId, taskId, block);
+          })
+        );
+      }
+    });
+
+    const totalTimeFromLogs = logs.reduce((acc, log) => {
+      return acc + ((log.focus ?? 0) + (log.breakTime ?? 0));
+    }, 0);
+
+    const sessionTotals = resolveSessionTimeSplit(session);
+
+    const remainingTime =
+      sessionTotals.focus + sessionTotals.brek - totalTimeFromLogs;
+    console.log({ sessionTotals, remainingTime, totalTimeFromLogs });
+    if (remainingTime > 0) {
+      logs.push({
+        id: generateResourceId(Resource.sessionLog),
+        // start: new Date(session.start).toISOString(),
+        // end: new Date(session.end).toISOString(),
+        startUnix: session.startUnix,
+        endUnix: session.endUnix,
+        sessionId: session.id,
+        focus: remainingTime,
+        breakTime: 0
+      });
+    }
+    this.create(session);
+    sessionLogStore.create(logs, {
+      context: PointronAction.FINISH_FOCUS_SESSION
+    });
+    this.addToRecentFocusItems(logs);
+
+    function resolvePlannedEndTime(session: IActiveSessionStore) {
+      if (session.type == SessionType.COUNTUP) {
+        return;
+      } else if (session.end) return session.end;
+      else if (session.start) {
+        return new Date(
+          session.start.getTime() + session.plannedDuration * 1000
+        );
+      }
+    }
+
+    function generateLogFromBlock(
+      goalId: IRecordId,
+      taskId: IRecordId,
+      block: { start: number; end: number }
+    ): ISessionLogCapture {
+      const total = resolveTotalTaskTime([block]);
+      const focus = resolveTaskFocus(session.blocks, [block]);
+      const breakTime = Number((total - focus).toFixed(1));
+      logger.log({
+        focus,
+        blocks: deepCopy(session.blocks),
+        total,
+        block,
+        breakTime
+      });
+      return {
+        id: generateResourceId(Resource.sessionLog),
+        // start: new Date(block.start).toISOString(),
+        // end: new Date(block.end).toISOString(),
+        startUnix: resolveUnixTimestamp(new Date(block.start)),
+        endUnix: resolveUnixTimestamp(new Date(block.end)),
+        sessionId: session.id,
+        goalId,
+        taskId,
+        focus,
+        breakTime
+      };
+    }
   }
 }
 
-export const sessionStore = {
-  addToRecentFocusItems,
-  finishFocus
-};
+export const sessionStore = SessionStore.resolve(Resource.session);

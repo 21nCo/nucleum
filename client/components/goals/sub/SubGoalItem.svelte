@@ -4,96 +4,89 @@
   import { InputStyle } from "@21n/types/input.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import {
-    SubObjectivesLayout,
-    type SubObjectivesLayoutValue,
-    ObjectiveStatus,
-    type IObjective
-  } from "@21n/components/goals/goal.type";
+  import { SubGoalsLayout, GoalStatus, type IGoal } from "@21n/components/goals/goal.type";
   import StepMarker from "@21n/components/goals/sub/StepMarker.svelte";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
 
-  type IAddSubObjectiveItem = { label?: string; type: "add" };
+  type IAddSubGoalItem = { label?: string; type: "add" };
 
   let {
-    subObjective,
+    subGoal,
     index,
     totalLength,
-    method = SubObjectivesLayout.DEFAULT,
+    method = SubGoalsLayout.DEFAULT,
     onAdd = undefined,
     onClick = undefined
   }: {
-    subObjective: IObjective | IAddSubObjectiveItem;
+    subGoal: IGoal | IAddSubGoalItem;
     index: number;
     totalLength: number;
-    method?: SubObjectivesLayoutValue;
+    method?: SubGoalsLayout;
     onAdd?: ((event: CustomEvent<{ label: string }>) => void) | undefined;
     onClick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
 
-  let newSubObjectiveLabel = $state("");
+  let newSubGoalLabel = $state("");
 
-  function isSavedSubObjective(
-    subObjective: IObjective | IAddSubObjectiveItem
-  ): subObjective is IObjective {
-    return "id" in subObjective;
+  function isSavedSubGoal(subGoal: IGoal | IAddSubGoalItem): subGoal is IGoal {
+    return "id" in subGoal;
   }
 
   const stepMarkerItem = $derived(
-    isSavedSubObjective(subObjective)
-      ? subObjective
-      : { ...subObjective, status: ObjectiveStatus.NOT_STARTED }
+    isSavedSubGoal(subGoal)
+      ? subGoal
+      : { ...subGoal, status: GoalStatus.NOT_STARTED }
   );
 
   function onSave() {
     onAdd?.(
       new CustomEvent("add", {
-        detail: { label: newSubObjectiveLabel }
+        detail: { label: newSubGoalLabel }
       })
     );
-    newSubObjectiveLabel = "";
+    newSubGoalLabel = "";
   }
 </script>
 
-{#if method === SubObjectivesLayout.STEPS}
+{#if method === SubGoalsLayout.STEPS}
   <button
     class={cn(
       "flex group items-center gap-4 relative border border-transparent rounded-md p-1",
       {
-        "hover:border-ccs2 hover:bg-ccs3": subObjective.label
+        "hover:border-ccs2 hover:bg-ccs3": subGoal.label
       }
     )}
     onclick={onClick}
-    data-id={isSavedSubObjective(subObjective) ? subObjective.id : undefined}
+    data-id={isSavedSubGoal(subGoal) ? subGoal.id : undefined}
     data-index={index}
-    data-type={subObjective.type}
+    data-type={subGoal.type}
     draggable={true}
   >
     <StepMarker item={stepMarkerItem} {index} {totalLength} />
-    {#if subObjective.label}
+    {#if subGoal.label}
       <div
         class={cn("text-left flex-1 py-1.5 group-hover:text-ccs1", {
           "line-through":
-            isSavedSubObjective(subObjective) &&
-            subObjective.status === ObjectiveStatus.COMPLETED
+            isSavedSubGoal(subGoal) &&
+            subGoal.status === GoalStatus.COMPLETED
         })}
       >
-        {subObjective.label ? subObjective.label : "Untitled"}
+        {subGoal.label ? subGoal.label : "Untitled"}
       </div>
-      {#if isSavedSubObjective(subObjective) && subObjective.startDate && subObjective.endDate}
+      {#if isSavedSubGoal(subGoal) && subGoal.startDate && subGoal.endDate}
         <div class="text-b3 text-fgs3">
-          {parseAndFormatDate(new Date(subObjective.startDate))} -
-          {parseAndFormatDate(new Date(subObjective.endDate))}
+          {parseAndFormatDate(new Date(subGoal.startDate))} -
+          {parseAndFormatDate(new Date(subGoal.endDate))}
         </div>
       {/if}
     {:else}
       <TextInput
-        bind:value={newSubObjectiveLabel}
-        placeholder="Add a sub-objective"
+        bind:value={newSubGoalLabel}
+        placeholder="Add a subgoal"
         style={InputStyle.PLAIN}
-        isShowSaveControl={newSubObjectiveLabel !== ""}
+        isShowSaveControl={newSubGoalLabel !== ""}
         onEnter={onSave}
-        onCancel={() => (newSubObjectiveLabel = "")}
+        onCancel={() => (newSubGoalLabel = "")}
         onSave={onSave}
       />
     {/if}
@@ -103,19 +96,19 @@
     class="flex items-center group gap-4 p-2 border border-transparent hover:border-aps2 rounded-md"
     onclick={onClick}
   >
-    {#if subObjective.label}
+    {#if subGoal.label}
       <div class="text-left flex-1 group-hover:text-aps1">
-        {subObjective.label}
+        {subGoal.label}
       </div>
     {:else}
       <TextInput
-        bind:value={newSubObjectiveLabel}
-        placeholder="Add a sub-objective"
+        bind:value={newSubGoalLabel}
+        placeholder="Add a subgoal"
         style={InputStyle.PLAIN}
-        isShowSaveControl={newSubObjectiveLabel !== ""}
+        isShowSaveControl={newSubGoalLabel !== ""}
         onEnter={onSave}
         onSave={onSave}
-        onCancel={() => (newSubObjectiveLabel = "")}
+        onCancel={() => (newSubGoalLabel = "")}
       />
     {/if}
   </button>

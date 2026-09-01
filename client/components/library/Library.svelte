@@ -3,18 +3,18 @@
   import { onMount } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import ResourceSwitcher from "@21n/components/library/resourceSwitcher/ResourceSwitcher.svelte";
   import { appStore } from "@21n/stores/app.store";
   import {
     resourceAction,
     availableResources,
     resolveResourceIcon
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import { recentsStore } from "@21n/components/record/recent.store";
   import { page } from "$app/stores";
   import view from "@21n/stores/view.store";
@@ -132,12 +132,7 @@
     let resources: Resource[] = [];
     switch ($appStore.product) {
       case Product.POINTRON:
-        resources = [
-          Resource.task,
-          Resource.objective,
-          Resource.event,
-          Resource.collection
-        ];
+        resources = [Resource.task, Resource.goal, Resource.collection];
         break;
       case Product.MEMOTRON:
         resources = [Resource.node, Resource.collection];
@@ -146,8 +141,7 @@
         resources = [
           Resource.node,
           Resource.task,
-          Resource.objective,
-          Resource.event,
+          Resource.goal,
           Resource.collection
         ];
         break;
@@ -252,7 +246,9 @@
   {#snippet right()}
     <div class="flex flex-col gap-4 w-full">
       {#key selectedResource}
-        <LibraryRecordsPane resource={selectedResource} />
+        <LibraryRecordsPane
+          resource={selectedResource}
+        />
       {/key}
     </div>
   {/snippet}

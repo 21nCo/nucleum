@@ -36,7 +36,6 @@
         ).length}
         {@const pendingCount = data.tasks.length - completedCount}
         <div
-          data-testid="calendar-tile-indicator-task"
           class="flex items-center gap-2"
           use:tooltip={{
             text: `${completedCount} completed out of ${data.tasks.length} task${data.tasks.length > 1 ? "s" : ""}`
@@ -81,7 +80,6 @@
           TimeFormat.DECIMALS
         )}
         <div
-          data-testid="calendar-tile-indicator-session"
           class="flex items-center gap-2"
           use:tooltip={{
             text: `Focus: ${focusTime} | Break: ${breakTime}`
@@ -115,7 +113,6 @@
     <div class="flex items-center gap-1">
       {#if data.nodes.length > 0}
         <div
-          data-testid="calendar-tile-indicator-node"
           class={cn("flex items-center gap-0.5 border rounded-md px-1 h-5", {
             "border-brs2": !isActive,
             "border-aps2": isActive
@@ -135,7 +132,6 @@
       {/if}
       {#if data.calendarNotes.length > 0}
         <div
-          data-testid="calendar-tile-indicator-notes"
           class={cn("flex items-center gap-0.5 border rounded-md px-1 h-5", {
             "border-brs2": !isActive,
             "border-aps2": isActive

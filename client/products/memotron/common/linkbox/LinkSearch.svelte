@@ -4,26 +4,20 @@
   import type { IPopoverOptions } from "@21n/types/popover.type";
   import { Placement } from "@21n/types/direction.enum";
   import { type InputLabel, InputStyle } from "@21n/types/input.type";
-  import {
-    queryLinkingSearchResults,
-    queryLinkingSearchResultsOnExtension
-  } from "@21n/products/memotron/linking/link-search";
+  import { SearchStore } from "@21n/components/record/record.store";
   import { onMount } from "svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { isExtensionEnvironment } from "@21n/utils/browser.utils";
   import view from "@21n/stores/view.store";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { NodeType } from "@21n/products/memotron/node/node.type";
-  import {
-    CollectionLayout,
-    CollectionType
-  } from "@21n/components/collection/collection.type";
+  import { collectionStore } from "@21n/components/collection/collection.store";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { toasts } from "@21n/stores/notification.store";
   import type { IRecordId } from "@21n/types/data.type";
   import context from "@21n/stores/context.store";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
-  import { datafn } from "@21n/stores/datafn.store";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
   let {
     accessPoint = ResourceAccessPoint.CAPTURE,
     isCollectionsLane = false,
@@ -49,9 +43,7 @@
   } = $props();
   let popoverOptions = $state<IPopoverOptions | undefined>(undefined);
   let inputStyle = $state<InputStyle>(InputStyle.PLAIN);
-  let placeholder = $state(
-    "Start typing to link to a node or add to a curation"
-  );
+  let placeholder = $state("Start typing to link to a node or add to a curation");
   let icon = $state("");
   let label = $state<InputLabel | undefined>(undefined);
   let searchInputRef = $state<TextSearchInput | undefined>(undefined);
@@ -129,14 +121,14 @@
       query = searchQuery.slice(1);
     }
     if (isExtensionEnvironment()) {
-      return queryLinkingSearchResultsOnExtension(query, resource);
+      return new SearchStore().searchForLinkingOnExtension(query, resource);
     }
-    return queryLinkingSearchResults(query, {
+    return new SearchStore().searchForLinking(query, {
       resource,
       exclude: excludeFromSearch,
       collectionResource:
-        accessPoint === ResourceAccessPoint.OBJECTIVE
-          ? [Resource.objective]
+        accessPoint === ResourceAccessPoint.GOAL
+          ? [Resource.goal]
           : accessPoint === ResourceAccessPoint.NODE
             ? [Resource.node]
             : undefined
@@ -169,50 +161,11 @@
       case ResourceAccessPoint.CLIPPER:
       case ResourceAccessPoint.NODE:
         return Resource.node;
-      case ResourceAccessPoint.OBJECTIVE:
-        return Resource.objective;
+      case ResourceAccessPoint.GOAL:
+        return Resource.goal;
       default:
         return undefined;
     }
-  }
-
-  async function createCollection(label: string, resource: Resource | undefined) {
-    const collectionId = generateResourceId(Resource.collection);
-    const viewId = generateResourceId(Resource.view);
-    const collection = {
-      id: collectionId,
-      label,
-      type: CollectionType.TYPED,
-      typeToExtend: "",
-      resource: resource ?? Resource.node
-    };
-    await datafn.view.mutate({
-      operation: "insert",
-      id: viewId,
-      record: {
-        id: viewId,
-        layout: CollectionLayout.BOARD,
-        label: "Default",
-        tabBy: "none",
-        groupBy: "none",
-        subGroupBy: "none"
-      }
-    });
-    await datafn.collection.mutate([
-      {
-        operation: "insert",
-        id: collectionId,
-        record: collection
-      },
-      {
-        operation: "relate",
-        id: collectionId,
-        relations: {
-          views: [{ $ref: viewId, sortOrder: 0 }]
-        }
-      }
-    ]);
-    return [collection];
   }
 
   async function onEmptyEnter(
@@ -231,23 +184,22 @@
       if (val.startsWith("@")) {
         val = val.slice(1);
       }
-      result = await createCollection(
-        val,
-        resolveResourceForCreation(accessPoint)
+      result = await collectionStore.save(
+        {
+          label: val,
+          resource: resolveResourceForCreation(accessPoint)
+        },
+        {
+          isIgnorePropertyEditor: true
+        }
       );
     } else {
-      const node = {
+      result = await nodeStore.create({
         id: generateResourceId(Resource.node),
         label: e.detail.value,
         contentType: NodeType.NODULAR_MARKDOWN,
         body: ""
-      };
-      await datafn.node.mutate({
-        operation: "insert",
-        id: node.id,
-        record: node
       });
-      result = [node];
     }
     if (result && isValidArrayWithData(result)) {
       handleSelect({ detail: { item: result[0] } } as CustomEvent);
@@ -306,7 +258,7 @@
   emptyStateLabel={resolveEmptyStateLabel(searchQuery, isCreationInProgress)}
   onSelect={handleSelect}
   onHide={handleHide}
-  {onEmptyEnter}
+  onEmptyEnter={onEmptyEnter}
   onFocus={handleFocus}
   searchCallback={onsearch}
   {placeholder}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { BlockAction, InlineType } from "@21n/components/markdown/md.type";
   import {
     mdContentChangeEvent,
@@ -23,7 +23,7 @@
   import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { getContext } from "svelte";
   import { logger } from "@21n/components/debug/logger.client";
-  import { queryLinkingSearchResults } from "@21n/products/memotron/linking/link-search";
+  import { SearchStore } from "@21n/components/record/record.store";
   import type { IRecordId } from "@21n/types/data.type";
   import {
     inlineLinkPatterns,
@@ -38,7 +38,6 @@
   import { GlobalEvent } from "@21n/types/event.enum";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { Context } from "@21n/types/appStore.type";
-  import { isSameResource } from "@21n/data/datafn/resource.utils";
 
   const nodeContentContext = getContext<any>(Context.CONTENT);
   const blockContext = getContext<any>(Context.BLOCK);
@@ -96,7 +95,6 @@
 
   let isFirstBlockAndIsEmpty = $state(false);
   let textRef: InlineMarkdownTextInput;
-  let isDestroyed = false;
   function refreshFirstBlockEmptyState() {
     isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
   }
@@ -206,9 +204,6 @@
       focusBlockSub();
     };
   });
-  onDestroy(() => {
-    isDestroyed = true;
-  });
 
   /**
    * Relays the convert event to the parent.
@@ -222,14 +217,12 @@
       indentLevel?: number;
       listOrder?: number;
       isChecked?: boolean;
-    },
-    bodyText?: string
+    }
   ) {
     if (contentType === toType) return;
     relay(BlockAction.CONVERT, {
       toType,
-      params,
-      bodyText
+      params
     });
   }
 
@@ -612,12 +605,11 @@
   /**
    * Handles escape shortcuts for text, structural and list nodes when entered at the start of the block
    */
-  function performEscapeShortcutsT2(event?: KeyboardEvent) {
+  function performEscapeShortcutsT2() {
     const nodeContentType =
       nodeContext?.contentType ?? NodeType.NODULAR_MARKDOWN;
 
-    const shortcutText = event?.key === " " ? `${text} ` : text;
-    const result = performEscShortcuts(nodeContentType, shortcutText);
+    const result = performEscShortcuts(nodeContentType, text);
     if (!result) return false;
     const { shortcut, type, isFullReplace, indentLevel, listOrder, isChecked } =
       result;
@@ -628,24 +620,15 @@
       relay(BlockAction.INSERT, { blockType: type });
       return true;
     }
-    text = removeShortcutText(text, shortcut);
+    text = text.replace(shortcut, "");
     dispatchChangeEvent();
-    textRef.set(text);
+    textRef.replace(shortcut, "");
     convert(type as SimpleTextNodeType | ListNodeType, {
       indentLevel,
       listOrder,
       isChecked
-    }, text);
+    });
     return true;
-  }
-
-  function removeShortcutText(value: string, shortcut: string) {
-    if (value.startsWith(shortcut)) return value.replace(shortcut, "");
-    const trimmedShortcut = shortcut.trimEnd();
-    if (trimmedShortcut && value.startsWith(trimmedShortcut)) {
-      return value.slice(trimmedShortcut.length);
-    }
-    return value;
   }
 
   function diffStrings(oldStr: string, newStr: string) {
@@ -706,7 +689,7 @@
       () => handleBlockBrowser(event, "keyup"),
       () => handleMentionShortcut(event, "keyup"),
       () => handleEmojiShortcut(event, "keyup"),
-      () => performEscapeShortcutsT2(event)
+      performEscapeShortcutsT2
       // () =>
       //   handleBackspace(event, {
       //     caretPosition,
@@ -718,13 +701,6 @@
     }
     mdContentChangeEvent.trigger();
     dispatchChangeEvent();
-  }
-
-  function handleInput() {
-    refreshFirstBlockEmptyState();
-    if (performEscapeShortcutsT2()) {
-      mdContentChangeEvent.trigger();
-    }
   }
 
   /**
@@ -870,19 +846,10 @@
     }
     hidePopover();
   }
-  async function onMentionSearch(searchQuery: string) {
+  function onMentionSearch(searchQuery: string) {
     mentionSearchQuery = searchQuery;
-    const results = await queryLinkingSearchResults(searchQuery, {
+    return new SearchStore().searchForLinking(searchQuery, {
       exclude: [nodeContext?.id]
-    });
-    return results.filter((item: any) => {
-      if (!nodeContext?.id) return true;
-      const mdParent = item?.mdParent;
-      if (!Array.isArray(mdParent)) return true;
-      return !mdParent.some((parent: any) => {
-        const parentId = typeof parent === "string" ? parent : parent?.id;
-        return parentId && isSameResource(parentId, nodeContext.id);
-      });
     });
   }
 
@@ -915,7 +882,6 @@
   }
 
   function handleBlur() {
-    if (isDestroyed) return;
     const event = new CustomEvent<void>("blur");
     onBlur?.(event);
     isFocusing = false;
@@ -964,7 +930,6 @@
         onKeydown={handleKeyDown}
         onKeyup={handleKeyUp}
         onChange={dispatchChangeEvent}
-        onInput={handleInput}
         onFocus={handleFocus}
         onBlur={handleBlur}
         onPaste={handlePaste}

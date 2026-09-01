@@ -61,8 +61,8 @@ export function resolveTimePeriodFilterForDay(day: Date) {
   const localDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
   const end = new Date(localDay.getTime() + 24 * 60 * 60 * 1000);
   return {
-    $gte: resolveUnixTimestamp(localDay),
-    $lte: resolveUnixTimestamp(end)
+    greaterThanOrEqual: resolveUnixTimestamp(localDay),
+    lessThanOrEqual: resolveUnixTimestamp(end)
   };
 }
 
@@ -75,8 +75,8 @@ export function resolveTimePeriodFilterForMonth(day: Date) {
   const localDay = new Date(day.getFullYear(), day.getMonth(), 1);
   const end = new Date(localDay.getFullYear(), localDay.getMonth() + 1, 0);
   return {
-    $gte: resolveUnixTimestamp(localDay),
-    $lte: resolveUnixTimestamp(end)
+    greaterThanOrEqual: resolveUnixTimestamp(localDay),
+    lessThanOrEqual: resolveUnixTimestamp(end)
   };
 }
 
@@ -89,8 +89,8 @@ export function resolveTimePeriodFilterForYear(day: Date) {
   const localDay = new Date(day.getFullYear(), 0, 1);
   const end = new Date(day.getFullYear(), 11, 31);
   return {
-    $gte: resolveUnixTimestamp(localDay),
-    $lte: resolveUnixTimestamp(end)
+    greaterThanOrEqual: resolveUnixTimestamp(localDay),
+    lessThanOrEqual: resolveUnixTimestamp(end)
   };
 }
 

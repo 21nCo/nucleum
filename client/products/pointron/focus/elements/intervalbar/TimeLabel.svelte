@@ -2,10 +2,7 @@
   import { activeSession } from "@21n/products/pointron/focus/session.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { SessionUIContext } from "@21n/types/pointron/session.type";
-  import {
-    SessionCompositionType,
-    type SessionComposition
-  } from "@21n/types/pointron/sessionComposition.type";
+  import { SessionCompositionType } from "@21n/types/pointron/sessionComposition.type";
   import { SessionState } from "@21n/types/pointron/sessionState.enum";
   import { SessionType } from "@21n/products/pointron/logs/log.type";
   import { appStore, currentTime } from "@21n/stores/app.store";
@@ -15,22 +12,11 @@
   import { cn } from "@21n/utils/ui.utils";
   let {
     label = "start",
-    context = SessionUIContext.DEFAULT,
-    composition = undefined,
-    plannedDuration = undefined,
-    sessionType = undefined
+    context = SessionUIContext.DEFAULT
   }: {
     label?: "start" | "end";
     context?: SessionUIContext;
-    composition?: SessionComposition;
-    plannedDuration?: number;
-    sessionType?: SessionType;
   } = $props();
-  let resolvedComposition = $derived(composition ?? $activeSession.composition);
-  let resolvedPlannedDuration = $derived(
-    plannedDuration ?? $activeSession.plannedDuration
-  );
-  let resolvedSessionType = $derived(sessionType ?? $activeSession.type);
   let timeClassList = "";
   let labelClassList = "";
   let labelRef: HTMLElement;
@@ -75,7 +61,7 @@
   {:else}
     {#if context !== SessionUIContext.PIP}
       <div class={cn("text-fgs3", labelClassList)}>
-        {resolvedComposition?.type === SessionCompositionType.COUNTUP &&
+        {$activeSession.composition?.type === SessionCompositionType.COUNTUP &&
         $activeSession.isSessionRunning
           ? "Now"
           : "End"}
@@ -83,31 +69,31 @@
     {/if}
     {#if $activeSession.state === SessionState.NOT_STARTED}
       <button
-        class=" rounded-md underline-dotted border- border--dotted border--brs3 {resolvedComposition?.type ===
-        SessionCompositionType.COUNTUP
+        class=" rounded-md underline-dotted border- border--dotted border--brs3 {$activeSession
+          .composition?.type === SessionCompositionType.COUNTUP
           ? 'text--base px--2'
           : 'text--b3 px--2 py--[0.2rem]'}"
         onclick={() =>
           appStore.runAction(PointronAction.COMPOSE_BY_END_TIME_MODAL)}
       >
-        {#if resolvedComposition?.type === SessionCompositionType.END_TIME_FIXED && $activeSession.end}
+        {#if $activeSession.composition?.type === SessionCompositionType.END_TIME_FIXED && $activeSession.end}
           {formatTime($userPreferences, $activeSession.end)}
-        {:else if resolvedComposition?.type === SessionCompositionType.COUNTUP}
+        {:else if $activeSession.composition?.type === SessionCompositionType.COUNTUP}
           <span>&nbsp; ♾️ &nbsp;</span>
         {:else}
           {formatTime(
             $userPreferences,
             new Date(
-              $currentTime.getTime() + resolvedPlannedDuration * 1000
+              $currentTime.getTime() + $activeSession.plannedDuration * 1000
             )
           )}
         {/if}
       </button>
     {:else}
       <div class={timeClassList}>
-        {#if resolvedSessionType === SessionType.COUNTUP && $activeSession.state != SessionState.FINISHED}
+        {#if $activeSession.type === SessionType.COUNTUP && $activeSession.state != SessionState.FINISHED}
           {$currentTime ? formatTime($userPreferences, $currentTime) : ""}
-        {:else if resolvedSessionType === SessionType.COUNTUP && $activeSession.state === SessionState.FINISHED}
+        {:else if $activeSession.type === SessionType.COUNTUP && $activeSession.state === SessionState.FINISHED}
           <!-- {#if $sessionStore.end}
             {formatTime($userPreferences, $sessionStore.end)}
           {:else if $sessionStore.start} -->

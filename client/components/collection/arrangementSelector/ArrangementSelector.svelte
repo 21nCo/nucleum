@@ -3,7 +3,7 @@
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { popover } from "@21n/actions/popover.action";
   import ArrangementSelectorPopover from "@21n/components/collection/arrangementSelector/ArrangementSelectorPopover.svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   let {
     arrangement = $bindable(Arrangement.LIST),
     resource = undefined,
@@ -22,13 +22,9 @@
     isHideThumbnailPreview?: boolean;
     isHideThumbnailTitle?: boolean;
     isBoardContext?: boolean;
-    onArrangementChange?:
-      | ((event: CustomEvent<Arrangement>) => void)
-      | undefined;
+    onArrangementChange?: ((event: CustomEvent<Arrangement>) => void) | undefined;
     onDensityChange?: ((event: CustomEvent<number>) => void) | undefined;
-    onPreviewSettingChange?:
-      | ((event: CustomEvent<boolean>) => void)
-      | undefined;
+    onPreviewSettingChange?: ((event: CustomEvent<boolean>) => void) | undefined;
     onTitleSettingChange?: ((event: CustomEvent<boolean>) => void) | undefined;
   } = $props();
 
@@ -92,8 +88,7 @@
   }
 
   function onPopoverChange(event: Event) {
-    isPopoverVisible =
-      (event as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
+    isPopoverVisible = (event as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
   }
 </script>
 

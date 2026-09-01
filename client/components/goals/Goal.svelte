@@ -1,30 +1,32 @@
 <script lang="ts">
   import {
-    ActiveObjectiveStore,
+    ActiveGoalStore,
     resolvePanelOptions,
-    type IActiveObjectiveStore
+    type IActiveGoalStore
   } from "@21n/components/goals/goal.store";
   import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/data/datafn/resource.type";
-  import ObjectiveTitleRow from "@21n/components/goals/info/GoalTitleRow.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import GoalTitleRow from "@21n/components/goals/info/GoalTitleRow.svelte";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import { onDestroy, untrack } from "svelte";
+  import { onDestroy } from "svelte";
   import { page } from "$app/stores";
   import { cn } from "@21n/utils/ui.utils";
   import appearance from "@21n/stores/appearance.store";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { type IInlineStatus } from "@21n/types/notification.type";
+  import { logger } from "@21n/components/debug/logger.client";
   import { Size } from "@21n/types/size.enum";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
-  import ObjectivePanelSwitcher from "./GoalPanelSwitcher.svelte";
+  import GoalPanelSwitcher from "./GoalPanelSwitcher.svelte";
   import { resolvePanelParam } from "@21n/components/resource/panelParam.mixin";
   import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import ObjectivePanelContentResolver from "./GoalPanelContentResolver.svelte";
-  import ObjectiveLeftPanel from "./GoalLeftPanel.svelte";
+  import GoalPanelContentResolver from "./GoalPanelContentResolver.svelte";
+  import GoalLeftPanel from "./GoalLeftPanel.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { ResourcePanelType } from "../resource/resourcePanel.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
@@ -36,9 +38,6 @@
   import { resolveMinWidth } from "@21n/layout/layout.utils";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
 
   let {
     id,
@@ -57,7 +56,7 @@
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
     readable(undefined);
-  const objective: IActiveObjectiveStore = $derived(ActiveObjectiveStore.resolve(id));
+  const goal: IActiveGoalStore = $derived(ActiveGoalStore.resolve(id));
   let isReady = $state(false);
 
   const isConstrainedWidth = $derived(
@@ -68,23 +67,23 @@
   );
 
   const tabs = $derived(
-    resolvePanelOptions($objective, { isConstrainedWidth, isThreeColumned })
+    resolvePanelOptions($goal, { isConstrainedWidth, isThreeColumned })
   );
 
   $effect(() => {
     if (
       tabs &&
-      $objective &&
-      $objective.panel &&
-      !tabs.find((tab) => tab.value === $objective.panel)
+      $goal &&
+      $goal.panel &&
+      !tabs.find((tab) => tab.value === $goal.panel)
     ) {
-      objective.switchPanel(tabs[0].value);
+      goal.switchPanel(tabs[0].value);
     }
   });
 
   onDestroy(() => {
-    const latestAccessMode = $objective?.accessMode ?? accessMode;
-    ActiveObjectiveStore.destroy(id, latestAccessMode);
+    const latestAccessMode = $goal?.accessMode ?? accessMode;
+    ActiveGoalStore.destroy(id, latestAccessMode);
   });
 
   function resolvePreviouslySelectedView() {
@@ -102,7 +101,7 @@
     const editSearchParam = $page.url.searchParams.get(AppSearchParam.EDIT);
     const linkSearchParam = $page.url.searchParams.get(AppSearchParam.LINK);
     const panel = resolvePanelParam(id, "Goal.svelte");
-    await objective.init(accessMode, {
+    await goal.init(accessMode, {
       isInEditMode: editSearchParam === "true",
       linkSearchParam: linkSearchParam ?? undefined,
       panel:
@@ -113,49 +112,19 @@
           : ResourcePanelType.DEFAULT)
     });
     isReady = true;
-    return objective.afterInit();
+    return goal.afterInit();
   }
 
   let initPromise = $state<Promise<void>>(initialize());
-  let previousParentValue: string | undefined = undefined;
-
-  const parentStore = toSvelteStore<Array<{ parent?: unknown }>>(
-    datafn.objective.signal({
-      filters: { id },
-      select: ["id", "parent"],
-      limit: 1,
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    }),
-    { initialData: [] }
-  );
-
-  $effect(() => {
-    const record = $parentStore.data[0];
-    const parentValue = JSON.stringify(record?.parent ?? null);
-    untrack(() => {
-      if (previousParentValue === undefined) {
-        previousParentValue = parentValue;
-        return;
-      }
-      if (parentValue !== previousParentValue) {
-        previousParentValue = parentValue;
-        isReady = false;
-        initPromise = initialize();
-      }
-    });
-  });
 
   async function rearrangePanels(e: CustomEvent) {
     if (!Array.isArray(e.detail)) {
       return;
     }
     const items = e.detail;
-    await objective.modify({
+    await goal.modify({
       uiState: {
-        ...($objective.uiState ?? {}),
+        ...($goal.uiState ?? {}),
         tabsOrder: items
       }
     });
@@ -171,25 +140,25 @@
         "to-ccs5/50": $appearance?.colorScheme?.isDark,
         "to-ccs5": !$appearance?.colorScheme?.isDark
       })}
-      color={$objective?.color ??
-        ($objective?.parent ? $objective.parent?.[0]?.color : undefined)}
+      color={$goal?.color ??
+        ($goal?.parent ? $goal.parent?.[0]?.color : undefined)}
     >
-      {#if !$objective || !isReady}
+      {#if !$goal || !isReady}
         <div class="w-full h-full p-4">
           <PageLoadingPulse />
         </div>
-      {:else if $objective}
+      {:else if $goal}
         <div class="flex w-full h-full overflow-auto">
           {#if !isConstrainedWidth}
             <aside
               class="flex flex-col gap-4 border-r border-brs2 w-96 2k:w-[35rem]"
             >
-              <ObjectiveLeftPanel {objective} {isConstrainedWidth} bind:status />
+              <GoalLeftPanel {goal} {isConstrainedWidth} bind:status />
             </aside>
           {/if}
-          <ObjectivePanelSwitcher
+          <GoalPanelSwitcher
             panels={tabs}
-            {objective}
+            {goal}
             {isConstrainedWidth}
             {isThreeColumned}
           />
@@ -203,13 +172,13 @@
                   }
                 )}
               >
-                <ObjectiveTitleRow {objective} isConstrainedWidth={true} bind:status />
+                <GoalTitleRow {goal} isConstrainedWidth={true} bind:status />
                 {#if dev_isPanelSwitcherOnTop}
                   <div class="relative">
                     <PanelSwitcher
                       items={tabs}
                       style={PanelSwitcherStyle.BAR}
-                      value={$objective.panel}
+                      value={$goal.panel}
                       isExpandToFullWidth={true}
                       parentBgIndex={2}
                       isBgBar={true}
@@ -217,16 +186,16 @@
                       isRearrangeableByDefault={true}
                       onRearrange={rearrangePanels}
                       onSwitch={(e) => {
-                        objective.switchPanel(e.detail);
+                        goal.switchPanel(e.detail);
                       }}
                     >
                       {#snippet right()}
                         <div>
-                          {#if $objective.accessMode === AccessMode.FULL && !isConstrainedWidth}
+                          {#if $goal.accessMode === AccessMode.FULL && !isConstrainedWidth}
                             <ResourceInlineCloseButton
-                              accessMode={$objective.accessMode}
+                              accessMode={$goal.accessMode}
                               parentBgIndex={2}
-                              id={$objective.id}
+                              id={$goal.id}
                             />
                           {/if}
                         </div>
@@ -246,8 +215,8 @@
                 "pt-4 w-full": isConstrainedWidth
               })}
             >
-              <ObjectivePanelContentResolver
-                {objective}
+              <GoalPanelContentResolver
+                {goal}
                 {isConstrainedWidth}
                 {isThreeColumned}
                 bind:status
@@ -260,6 +229,28 @@
         </div>
       {/if}
     </CustomColorPropagator>
+
+    <ComponentBaseLayer
+      subscribeToRecords={[id]}
+      onChange={(e) => {
+        try {
+          if (
+            "params" in e &&
+            e.params?.record &&
+            "parent" in e.params.record
+          ) {
+            isReady = false;
+            initPromise = initialize();
+          }
+        } catch (error) {
+          logger.error({
+            at: "Goal.svelte - change subscription error",
+            error,
+            goalId: $goal?.id
+          });
+        }
+      }}
+    />
   {:catch}
     <EmptyStatusView mainText={ErrorMessage.DEFAULT} />
   {/await}

@@ -13,7 +13,6 @@ export function hoverable(node: HTMLElement, params: HoverableParams = {}) {
   let toolTipRef: HTMLDivElement;
   let toolTipTimeout: number;
   let isHovered = false;
-  let isDestroyed = false;
 
   const defaultTooltipOptions: IToolTipOptions = {
     placement: Placement.BottomCenter,
@@ -41,11 +40,7 @@ export function hoverable(node: HTMLElement, params: HoverableParams = {}) {
       node.dispatchEvent(new CustomEvent("hover", { detail: isHovered }));
 
       if (params.onHover) {
-        const onHover = params.onHover;
-        const hoverState = isHovered;
-        queueMicrotask(() => {
-          if (!isDestroyed) onHover(hoverState);
-        });
+        params.onHover(isHovered);
       }
     }
 
@@ -83,7 +78,6 @@ export function hoverable(node: HTMLElement, params: HoverableParams = {}) {
 
   return {
     destroy() {
-      isDestroyed = true;
       node.removeEventListener("mouseover", toggleHoveringState);
       node.removeEventListener("mouseleave", toggleHoveringState);
       node.removeEventListener("focus", toggleHoveringState);

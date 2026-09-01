@@ -1,127 +1,80 @@
 <script lang="ts">
-  import { get } from "svelte/store";
-  import type { DatafnChangelogEntry } from "@datafn/client";
+  import { onMount } from "svelte";
   import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
   import HistoryItem from "@21n/products/memotron/common/history/HistoryItem.svelte";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import type { IAccessLog } from "@21n/components/accessLogging/accessLog.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { flux } from "@21n/components/flux/flux";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { logger } from "@21n/components/debug/logger.client";
+  import {
+    PersistenceActionType,
+    type IMutation
+  } from "@21n/types/data.type";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-
-  type HistoryEntry = { action: string; timestamp: Date };
-
+  import { resolveMutationAction } from "@21n/components/flux/flux.utils";
   let { node = null }: { node?: IActiveNodeStore | null } = $props();
-  let changelogLogs = $state<HistoryEntry[]>([]);
-  let isChangelogLoading = $state(false);
-  const nodeId = $derived($node?.id?.toString());
-  const accessLogStore = $derived.by(() =>
-    toSvelteStore<IAccessLog[]>(
-      nodeId
-        ? datafn.accessLog.signal({
-            filters: {
-              resourceId: nodeId
-            }
-          })
-        : datafn.emptySignal([]),
-      { initialData: [] }
-    )
-  );
-  const accessLogs = $derived.by(() => {
-    const createdLogs: HistoryEntry[] = $node?.createdAt
-      ? [
+  let accessLogs = $state<{ action: string; timestamp: Date }[]>([]);
+  let isLoading = $state(false);
+  onMount(() => {
+    refresh();
+  });
+
+  async function refresh() {
+    try {
+      isLoading = true;
+      if ($node?.createdAt)
+        accessLogs = [
           {
             action: "Created",
-            timestamp: new Date($node.createdAt)
+            timestamp: new Date($node?.createdAt)
           }
-        ]
-      : [];
-    const openLogs = $accessLogStore.data.map((log) => ({
-      action: "Opened",
-      timestamp: new Date(log.createdAt)
-    }));
-    return [...createdLogs, ...openLogs, ...changelogLogs].sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-    );
-  });
-  const isLoading = $derived(
-    isChangelogLoading || $accessLogStore.loading || $accessLogStore.refreshing
-  );
-
-  $effect(() => {
-    if (nodeId) void refreshChangelog(nodeId);
-    else changelogLogs = [];
-  });
-
-  async function refreshChangelog(nodeId: string) {
-    try {
-      isChangelogLoading = true;
-      const mutations = await get(datafnRuntime)?.storage?.changelogList({
-        limit: 500
+        ];
+      if (!node?.id) return;
+      const result = await accessLogStore.selectMany({
+        filters: {
+          resourceId: node?.id.toString()
+        }
+      });
+      let openActions: { action: string; timestamp: Date }[] = [];
+      if (isValidArrayWithData(result)) {
+        openActions = result.map((log: IAccessLog) => ({
+          action: "Opened",
+          timestamp: new Date(log.createdAt)
+        }));
+        accessLogs = [...accessLogs, ...openActions];
+      }
+      const mutations = await flux.selectMany(Resource.mutation, {
+        filters: {
+          resource: Resource.node,
+          resourceId: node.id.toString()
+        }
       });
       if (isValidArrayWithData(mutations)) {
-        const nodeMutations = (mutations ?? []).filter((mutation) =>
-          isNodeMutation(mutation, nodeId)
+        const _mutations = mutations.filter(
+          (m: IMutation) =>
+            m.params.action !== PersistenceActionType.MERGE ||
+            (m.params.action === PersistenceActionType.MERGE &&
+              m.params.record.modifiedAt)
         );
-        changelogLogs = [
-          ...nodeMutations.map((mutation) => ({
-            action: resolveDatafnAction(
-              mutation.mutation.operation?.toString()
-            ),
-            timestamp: resolveDatafnTimestamp(mutation)
+        accessLogs = [
+          ...accessLogs,
+          ..._mutations.map((mutation: IMutation) => ({
+            action: resolveMutationAction(mutation),
+            timestamp: new Date(mutation.createdAt)
           }))
         ];
-      } else {
-        changelogLogs = [];
       }
+      accessLogs = accessLogs.sort(
+        (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+      );
     } catch (e) {
-      logger.error({ at: "NodeHistoryPane.refreshChangelog", e });
-      changelogLogs = [];
+      logger.error({ at: "NodeHistoryPane.refresh", e });
     } finally {
-      isChangelogLoading = false;
+      isLoading = false;
     }
-  }
-
-  function isNodeMutation(entry: DatafnChangelogEntry, nodeId: string) {
-    const mutation = entry.mutation;
-    if (mutation.resource !== Resource.node) return false;
-    const mutationIds = Array.isArray(mutation.id)
-      ? mutation.id
-      : [mutation.id, (mutation.record as Record<string, unknown>)?.id];
-    return mutationIds.filter(Boolean).some((id) => id?.toString() === nodeId);
-  }
-
-  function resolveDatafnAction(operation?: string) {
-    switch (operation) {
-      case "insert":
-        return "Created";
-      case "merge":
-      case "replace":
-        return "Updated";
-      case "trash":
-        return "Deleted";
-      case "archive":
-        return "Archived";
-      case "restore":
-      case "unarchive":
-        return "Restored";
-      case "delete":
-        return "Removed";
-      default:
-        return operation ?? "Updated";
-    }
-  }
-
-  function resolveDatafnTimestamp(entry: DatafnChangelogEntry) {
-    if (entry.timestampMs) return new Date(entry.timestampMs);
-    if (entry.timestamp) return new Date(entry.timestamp);
-    const record = entry.mutation.record as Record<string, unknown> | undefined;
-    const recordTimestamp = record?.updatedAt ?? record?.createdAt;
-    if (recordTimestamp) return new Date(recordTimestamp as string | number);
-    return new Date();
   }
 </script>
 

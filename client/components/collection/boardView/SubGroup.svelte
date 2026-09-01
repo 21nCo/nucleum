@@ -5,9 +5,9 @@
   import { dropzone } from "@21n/actions/dragAndDrop.action";
   import Badge from "@21n/elements/text/Badge.svelte";
   import type { ISelectValue } from "@21n/types/select.type";
-  import { resourceInList } from "@21n/data/datafn/resource.utils";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import type { ICollectionView } from "@21n/components/collection/collection.type";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
   import { filterNodesByPropertyValue } from "@21n/components/collection/collection.utils";
   import type { Arrangement } from "@21n/types/direction.enum";
@@ -32,9 +32,7 @@
   } = $props();
   let isCollapsed = true;
 
-  let _data = $derived(
-    filterNodesByPropertyValue(data, view.subGroupBy, subGroup.value)
-  );
+  let _data = $derived(filterNodesByPropertyValue(data, view.subGroupBy, subGroup.value));
 
   $effect(() => {
     isCollapsed = _data?.length > 0 ? false : true;

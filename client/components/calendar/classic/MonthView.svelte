@@ -21,6 +21,7 @@
   let {
     selectedDate = $bindable(new Date()),
     indicatorData = [],
+    indicatorRefreshId = 0,
     selectedScale = $bindable(TimeScaleUnit.DAY),
     onDateChange = void 0,
     onMonthChange = void 0,
@@ -28,6 +29,7 @@
   }: {
     selectedDate?: Date;
     indicatorData?: ICalendarIndicatorData[];
+    indicatorRefreshId?: number;
     selectedScale?: TimeScaleUnit;
     onDateChange?: (date: Date) => void;
     onMonthChange?: (date: Date) => void;
@@ -120,16 +122,6 @@
   function handleWeekSelect(weekReferenceDay: Date) {
     onWeekSelect?.({ date: weekReferenceDay });
   }
-
-  /**
-   * Formats a local calendar day key for deterministic E2E tile selection.
-   */
-  function formatCalendarDateKey(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
 </script>
 
 <div
@@ -195,8 +187,6 @@
         day.getFullYear() === selectedDate.getFullYear() &&
         getWeekNumber(day) === getWeekNumber(selectedDate)}
       <button
-        data-testid="calendar-month-day-tile"
-        data-date-key={formatCalendarDateKey(day)}
         class={cn(
           "p-1.5 border-b border-brs2 relative group flex flex-col items-start",
           {
@@ -236,6 +226,7 @@
         {#if indicatorData.length > 0 && showMonthIndicators}
           <div class="pl-1 pt-1 w-full flex-1">
             <CalendarTileIndicator
+              date={day}
               isActive={isSelected}
               resolvedData={resolvedIndicatorDataByDay.get(
                 resolveIndicatorDayKey(day)

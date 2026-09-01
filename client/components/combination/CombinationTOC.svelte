@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import type { IRecordId } from "@21n/client/types/data.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/client/components/flux/resourceStores/resource.enum";
   import {
     ActiveNodeStore,
     type IActiveNodeStore

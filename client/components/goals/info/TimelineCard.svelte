@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IActiveObjectiveStore } from "@21n/components/goals/goal.store";
+  import type { IActiveGoalStore } from "@21n/components/goals/goal.store";
   import { TimeScale } from "@21n/types/time.type";
   import { InputStyle } from "@21n/types/input.type";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
@@ -11,18 +11,18 @@
     resolveDefaultSpanScale
   } from "@21n/elements/datetime/datetime.utils";
 
-  let { objective }: { objective: IActiveObjectiveStore } = $props();
+  let { goal }: { goal: IActiveGoalStore } = $props();
 
   const startDate = $derived(
-    $objective.startDate ? new Date($objective.startDate) : new Date()
+    $goal.startDate ? new Date($goal.startDate) : new Date()
   );
-  const endDate = $derived($objective.endDate ? new Date($objective.endDate) : new Date());
+  const endDate = $derived($goal.endDate ? new Date($goal.endDate) : new Date());
 
   $effect(() => {
-    if (!$objective.spanScale && $objective.startDate && $objective.endDate) {
+    if (!$goal.spanScale && $goal.startDate && $goal.endDate) {
     const spanScale = resolveDefaultSpanScale(startDate, endDate, activeScales);
     if (spanScale) {
-      objective.modify({
+      goal.modify({
         spanScale
       });
     }
@@ -30,21 +30,21 @@
   });
 
   function handleStartDateChange(e: CustomEvent) {
-    $objective.startDate = e.detail;
-    objective.modify({
+    $goal.startDate = e.detail;
+    goal.modify({
       startDate: e.detail
     });
   }
 
   function handleEndDateChange(e: CustomEvent) {
-    $objective.endDate = e.detail;
-    objective.modify({
+    $goal.endDate = e.detail;
+    goal.modify({
       endDate: e.detail
     });
   }
 
   function handleSpanChange(e: CustomEvent<TimeScale>) {
-    objective.modify({
+    goal.modify({
       spanScale: e.detail
     });
   }
@@ -70,11 +70,11 @@
   <Divider />
   <div class="flex flex-col gap-2">
     <div class="relative px-6">
-      <TimelineCardAxis {startDate} {endDate} spanScale={$objective.spanScale} />
+      <TimelineCardAxis {startDate} {endDate} spanScale={$goal.spanScale} />
     </div>
   </div>
 
-  {#if $objective.startDate && $objective.endDate}
+  {#if $goal.startDate && $goal.endDate}
     <div class="flex text-b3 text-fgs3 w-full justify-center">
       <TimeSpan
         scales={[
@@ -83,9 +83,9 @@
           TimeScale.MONTHS,
           TimeScale.YEARS
         ]}
-        start={new Date($objective.startDate)}
-        end={new Date($objective.endDate)}
-        spanScale={$objective.spanScale}
+        start={new Date($goal.startDate)}
+        end={new Date($goal.endDate)}
+        spanScale={$goal.spanScale}
         onChange={handleSpanChange}
       />
     </div>

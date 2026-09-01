@@ -1,7 +1,10 @@
 <script lang="ts">
   import modalEvent from "@21n/components/modal/modal.store";
   import { Action } from "@21n/types/action.enum";
-  import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "@21n/types/switcher.enum";
   import { TextStyle } from "@21n/types/text.enum";
   import Button from "@21n/elements/button/Button.svelte";
   import ColorPicker from "@21n/elements/colorPicker/ColorPicker.svelte";
@@ -13,7 +16,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import account from "@21n/stores/account.store";
   import type { IRecordId } from "@21n/types/data.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import FileView from "@21n/components/files/FileView.svelte";
   import { FileType } from "@21n/components/files/file.type";
   import { cn } from "@21n/utils/ui.utils";
@@ -22,7 +25,7 @@
   import view from "@21n/stores/view.store";
   import UnsplashPicker from "@21n/elements/coverPicker/UnsplashPicker.svelte";
   import CoverPickerFromLibrary from "@21n/elements/coverPicker/CoverPickerFromLibrary.svelte";
-  import { isRecordId } from "@21n/data/datafn/resource.utils";
+  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
   import { appStore } from "@21n/stores/app.store";
   import { resolveProductConfig } from "@21n/products/product.config";
 
@@ -48,8 +51,8 @@
     onSelect?: ((event: CustomEvent<string>) => void) | undefined;
   } = $props();
   const isFileUploadAvailable = $derived(
-    resolveProductConfig($appStore.product).resources.table.includes(
-      Resource.file
+    resolveProductConfig($appStore.product).tableConfig.some(
+      (table) => table.name === Resource.file
     )
   );
 
@@ -237,14 +240,15 @@
         "h-full": orientation === Orientation.Horizontal
       })}
     >
-      <PanelSwitcher
-        barStyle={BarStyle.EXACT}
-        bind:value={selectedMethod}
-        items={resolvePanelSwitcherItems(isFileUploadAvailable)}
-        style={PanelSwitcherStyle.BAR}
-        isExpandToFullWidth={true}
-        onSwitch={() => {}}
-      ></PanelSwitcher>
+        <PanelSwitcher
+          barStyle={BarStyle.EXACT}
+          bind:value={selectedMethod}
+          items={resolvePanelSwitcherItems(isFileUploadAvailable)}
+          style={PanelSwitcherStyle.BAR}
+          isExpandToFullWidth={true}
+          onSwitch={() => {}}
+      >
+      </PanelSwitcher>
       {#if selectedMethod === Method.COLOR}
         <div class="flex-1 flex items-center justify-center">
           <ColorPicker

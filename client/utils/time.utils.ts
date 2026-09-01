@@ -1,5 +1,4 @@
 import type { IUserGlobalPreferences } from "@21n/types/preferences.type";
-import type { DatafnDateValue } from "@21n/data/datafn/resource.type";
 import {
   TimePeriodType,
   type TimePeriod,
@@ -29,34 +28,24 @@ const months = [
 const locale =
   typeof window !== "undefined"
     ? navigator.language || navigator.languages[0]
-    : undefined;
-
-export function toDateValue(
-  value: DatafnDateValue | undefined | null
-): Date | undefined {
-  if (value === undefined || value === null) return undefined;
-  const date = value instanceof Date ? value : new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date;
-}
-
+    : "";
 export function formatTime(
   userPreferences: IUserGlobalPreferences,
-  date: DatafnDateValue,
+  date: Date | string,
   params?: { format?: string; isIncludeSeconds?: boolean }
 ) {
-  const resolvedDate = toDateValue(date);
-  if (!resolvedDate) return undefined;
+  if (typeof date === "string") date = new Date(date);
   let userPreferredFormat = userPreferences.timeFormat;
   const format = params?.format ?? userPreferredFormat ?? "meridian";
   if (format === "24") {
-    let hours = resolvedDate.getHours().toString().padStart(2, "0");
-    let minutes = resolvedDate.getMinutes().toString().padStart(2, "0");
+    let hours = date?.getHours().toString().padStart(2, "0");
+    let minutes = date?.getMinutes().toString().padStart(2, "0");
     if (!params?.isIncludeSeconds) return `${hours}:${minutes}`;
-    let seconds = resolvedDate.getSeconds().toString().padStart(2, "0");
+    let seconds = date?.getSeconds().toString().padStart(2, "0");
     return `${hours}:${minutes}:${seconds}`;
   } else if (format === "meridian") {
-    let hours = resolvedDate.getHours();
-    let minutes = resolvedDate.getMinutes().toString().padStart(2, "0");
+    let hours = date?.getHours();
+    let minutes = date?.getMinutes().toString().padStart(2, "0");
     let meridian = hours >= 12 ? "PM" : "AM";
     hours = hours % 12;
     hours = hours || 12;
@@ -72,12 +61,9 @@ export function formatSeconds(
     verboseTextSize?: Size.sm | Size.md | Size.lg;
   }
 ) {
-  const numericSeconds =
-    typeof seconds === "number" ? seconds : Number(seconds);
-  const safeSeconds = Number.isFinite(numericSeconds) ? numericSeconds : 0;
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const secs = Math.floor(safeSeconds % 60);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
   if (format === TimeFormat.VERBOSE) {
     const size = params?.verboseTextSize ?? Size.sm;
     const minutesLabel =
@@ -771,12 +757,12 @@ export function attachTimeToDate(date: Date, time: string) {
 
 export function formatDatetime(
   userPreferences: IUserGlobalPreferences,
-  date: DatafnDateValue
+  date: Date | string
 ) {
-  const resolvedDate = toDateValue(date);
-  if (!resolvedDate) return "";
-  const formattedDate = parseAndFormatDate(resolvedDate);
-  const formattedTime = formatTime(userPreferences, resolvedDate);
+  if (typeof date === "string") date = new Date(date);
+  else if (typeof date === "number") date = new Date(date);
+  const formattedDate = parseAndFormatDate(date);
+  const formattedTime = formatTime(userPreferences, date);
   return `${formattedDate} ${formattedTime}`;
 }
 

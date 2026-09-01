@@ -1,5 +1,5 @@
 import { Agent } from "$lib/server/common/account/account.type";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import {
   ISyncUpBody,
   ISyncDownBody,

@@ -9,14 +9,15 @@
   import { onDestroy, onMount } from "svelte";
   import WaveSurfer from "wavesurfer.js";
   import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { Audio2MD } from "@21n/products/memotron/audio/AudioToMarkdown.utils";
   import { logger } from "@21n/components/debug/logger.client";
   import view from "@21n/stores/view.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { Taco } from "@21n/components/taco/taco";
   import FileView from "@21n/components/files/FileView.svelte";
-  import { isRecordId } from "@21n/data/datafn/resource.utils";
+  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
   import Icon from "@21n/elements/Icon.svelte";
   import type { IJobStatus } from "@21n/components/taco/taco.type";
   import { AudioView } from "@21n/products/memotron/audio/audio.type";
@@ -26,11 +27,7 @@
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
   import { Size } from "@21n/types/size.enum";
-  import type {
-    IAudioBody,
-    IAudioMetadata
-  } from "@21n/products/memotron/node/node.type";
-  import { datafn } from "@21n/stores/datafn.store";
+  import type { IAudioBody, IAudioMetadata } from "@21n/products/memotron/node/node.type";
 
   let {
     body = {},
@@ -66,11 +63,12 @@
   let isPreviewLoading: boolean = true;
   let selectedView: AudioView = AudioView.TRANSCRIPTION;
 
-  const isTranscribeAvailable = $derived(
+  const isTranscribeAvailable =
+    $derived(
     accessPoint === ResourceAccessPoint.SELF &&
-      $context.isEmbed &&
-      !!metadata?.duration &&
-      metadata?.duration <= 15 * 60
+    $context.isEmbed &&
+    !!metadata?.duration &&
+    metadata?.duration <= 15 * 60
   );
 
   function emitRefresh() {
@@ -109,13 +107,13 @@
         result,
         jobId
       });
-      await datafn.node.mutate({
-        operation: "merge",
-        id: nodeId,
-        record: {
+      await nodeStore.modify(
+        nodeId,
+        {
           body: { transcriptionJobId: jobId, initTranscription: true }
-        }
-      });
+        },
+        { isPreventBackPropagation: true }
+      );
       if (body) body.initTranscription = true;
       if (jobId) {
         pollTranscriptionStatus(jobId);
@@ -147,19 +145,15 @@
       ) {
         const transcription = jobResult.output.transcription;
         const mdBlocks = Audio2MD.convertAudioToMarkdown(transcription);
-        await datafn.node.mutate({
-          operation: "merge",
-          id: nodeId,
-          record: {
-            body: {
-              transcription,
-              mdBlocks,
-              transcriptionUpdatedAt: new Date().toISOString(),
-              initTranscription: false,
-              transcriptionJobId: null
-            },
-            text: transcription
-          }
+        await nodeStore.modify(nodeId, {
+          body: {
+            transcription,
+            mdBlocks,
+            transcriptionUpdatedAt: new Date().toISOString(),
+            initTranscription: false,
+            transcriptionJobId: null
+          },
+          text: transcription
         });
         emitRefresh();
       } else if (jobResult.status === "failed") {
@@ -284,13 +278,15 @@
     const mdBlocks = Audio2MD.convertAudioToMarkdown(body?.transcription);
     body.mdBlocks = mdBlocks;
     console.log({ mdBlocks, transcription: body?.transcription });
-    await datafn.node.mutate({
-      operation: "merge",
-      id: nodeId,
-      record: {
+    await nodeStore.modify(
+      nodeId,
+      {
         body: { mdBlocks }
       },
-    });
+      {
+        isPreventBackPropagation: true
+      }
+    );
   }
 </script>
 

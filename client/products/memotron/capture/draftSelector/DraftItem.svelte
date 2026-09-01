@@ -33,7 +33,7 @@
   </div>
   <div class="flex items-center gap-2">
     <div class="text-b3 text-fgs3 whitespace-nowrap">
-      {parseAndFormatDate(new Date(draft.updatedAt))}
+      {parseAndFormatDate(new Date(draft.modifiedAt))}
     </div>
     {#if isHovered || $context.isTouchDevice}
       <Button

@@ -1,4 +1,4 @@
-import type { OmitForCapture } from "@21n/data/datafn/resource.type";
+import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
 import {
   NodeType,
   type IInstagramPost,
@@ -10,16 +10,11 @@ import {
   isHostnameMatch
 } from "@21n/products/memotron/node/url.utils";
 import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
-import type {
-  ISocialPost,
-  ISocialPostBase
-} from "@21n/extensions/clipper/clipper.type";
+import type { ISocialPost, ISocialPostBase } from "@21n/extensions/clipper/clipper.type";
 import { findAncestorOrSelf } from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 function resolveInstagramContentType(url: string): NodeType {
-  return /\/reel\//.test(url)
-    ? NodeType.INSTAGRAM_REEL
-    : NodeType.INSTAGRAM_POST;
+  return /\/reel\//.test(url) ? NodeType.INSTAGRAM_REEL : NodeType.INSTAGRAM_POST;
 }
 
 function extractInstagramPostId(url: string): string {
@@ -140,7 +135,9 @@ export function extractInstagramProfileFromPage(): OmitForCapture<IInstagramProf
 
 export function extractInstagramPostFromInlineClip(
   element: Element
-): ISocialPost<IInstagramPost | IInstagramReel, IInstagramProfile> | undefined {
+):
+  | ISocialPost<IInstagramPost | IInstagramReel, IInstagramProfile>
+  | undefined {
   const postArticle = findAncestorOrSelf(element, "article");
   if (!postArticle) return;
   const isPostPage = /\/(?:p|reel)\//.test(window.location.pathname);

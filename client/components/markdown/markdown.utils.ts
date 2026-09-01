@@ -763,7 +763,7 @@ export function performEscShortcuts(
 
 /**
  *
- * Note: removed generateResourceId() for generating id to keep this utility independent from app data modules.
+ * Note: removed generateResourceId() for generating id to remove dependency on flux.utils or surreal.utils as this utils is being used in landing pages
  * @param text
  * @param nodeContentType
  * @returns

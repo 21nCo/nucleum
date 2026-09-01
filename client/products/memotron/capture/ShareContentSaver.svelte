@@ -5,7 +5,7 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
   import { Arrangement } from "@21n/types/direction.enum";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/types/size.enum";
   import FileView from "@21n/components/files/FileView.svelte";
   import {
@@ -27,8 +27,9 @@
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "@21n/products/memotron/capture/capture.store";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import context from "@21n/stores/context.store";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
@@ -45,7 +46,6 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { tick } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
-  import { datafn } from "@21n/stores/datafn.store";
 
   let {
     data = undefined,
@@ -100,10 +100,10 @@
   );
   const isShowSaveOptions = $derived(
     !savedNodeId &&
-      !error &&
-      !isOffline &&
-      nodeType &&
-      !unsupportedNodeTypes.includes(nodeType)
+    !error &&
+    !isOffline &&
+    nodeType &&
+    !unsupportedNodeTypes.includes(nodeType)
   );
   const multipleFilesLength = $derived(data?.multipleFiles?.files?.length ?? 0);
 
@@ -150,10 +150,10 @@
       ) {
         result = await captureStore.saveMarkdownFromText(data.text);
       } else if (data.text) {
-        result = (await captureStore.saveWebpage(data.text, {
+        result = await captureStore.saveWebpage(data.text, {
           contentType: nodeType,
           isOpenOnSave: false
-        })) as unknown as INode;
+        });
       } else if (data.file) {
         result = await captureStore.saveFile(data.file, nodeType, {
           isOpenOnSave: false
@@ -204,14 +204,14 @@
         return stored.node;
       }
     } else {
-      const results = (await datafn.node.query({
+      const results = await nodeStore.selectMany({
         filters: {
           contentType: nodeType,
           url
         }
-      } as any)) as { data?: INodeThumb[] };
-      if (results.data && results.data.length > 0) {
-        return results.data[0];
+      });
+      if (results && results.length > 0) {
+        return results[0];
       }
     }
   }
@@ -221,12 +221,8 @@
 
     try {
       isSavingSideNotes = true;
-      await datafn.node.mutate({
-        operation: "merge",
-        id: savedNodeId,
-        record: {
-          notes: sideNotes
-        }
+      await nodeStore.modify(savedNodeId, {
+        notes: sideNotes
       });
       if (savedNode) {
         savedNode = { ...savedNode, notes: sideNotes };
@@ -314,12 +310,8 @@
 
     try {
       const trimmedLabel = editedLabel.trim();
-      await datafn.node.mutate({
-        operation: "merge",
-        id: savedNodeId,
-        record: {
-          label: trimmedLabel
-        }
+      await nodeStore.modify(savedNodeId, {
+        label: trimmedLabel
       });
       if (savedNode) {
         savedNode = { ...savedNode, label: trimmedLabel };

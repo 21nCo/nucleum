@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "dependencies": {
-    "@datafn/svelte": "0.1.0"
-  },
   "exports": {
     "./*": "./*"
   }

@@ -65,9 +65,9 @@ export function normalizeAnalyticsCard(card: unknown): IAnalyticsCard | undefine
       : undefined,
     type,
     period: resolvePeriod(candidate.period),
-    isGroupByTopLevelObjectives:
-      typeof candidate.isGroupByTopLevelObjectives === "boolean"
-        ? candidate.isGroupByTopLevelObjectives
+    isGroupByTopLevelGoals:
+      typeof candidate.isGroupByTopLevelGoals === "boolean"
+        ? candidate.isGroupByTopLevelGoals
         : undefined,
     stackedBarMode:
       candidate.stackedBarMode === "percentage" ||

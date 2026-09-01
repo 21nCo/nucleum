@@ -7,8 +7,8 @@ import { cloneUp } from "$lib/server/common/sync/cloneup";
 import { Agent } from "./account.type";
 import { ValidationError } from "../errors";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
-import { Resource } from "@21n/data/datafn/resource.enum";
-import { ResourceActionType } from "@21n/data/datafn/resource.type";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
 import { PersistenceActionType } from "$lib/client/types/data.type";
 import { createMutation } from "$lib/tests/fixtures/mutations";
 

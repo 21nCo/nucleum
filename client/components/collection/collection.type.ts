@@ -6,17 +6,14 @@ import type {
   IResourceStarrable,
   IResourceShareable,
   IResourceImportable
-} from "@21n/data/datafn/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import type { IAvatar } from "@21n/types/avatar.type";
 import type { IRecordId } from "@21n/types/data.type";
 import type { Arrangement, Placement } from "@21n/types/direction.enum";
 import type { INodeThumb } from "@21n/products/memotron/node/node.type";
-import type {
-  IProperty,
-  IPropertyValue
-} from "@21n/components/collection/properties/property.type";
-import type { Resource } from "@21n/data/datafn/resource.enum";
-import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
+import type { IProperty, IPropertyValue } from "@21n/components/collection/properties/property.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { IGoalThumb } from "@21n/components/goals/goal.type";
 
 export enum CollectionType {
   /**
@@ -73,13 +70,14 @@ type IResourcePropertiesForCollection = IResource &
   IResourceArchivable;
 
 export interface ICollection
-  extends ICollectionBase, IResourcePropertiesForCollection {
+  extends ICollectionBase,
+    IResourcePropertiesForCollection {
   type: CollectionType;
   resource: Resource;
   /**
    * Type collection to extend - string identifier ex: collection:sometypecollection
    */
-  [CollectionObjectKey.typeToExtend]: IRecordId | null;
+  [CollectionObjectKey.typeToExtend]: IRecordId;
   properties?: IRecordId[];
   views: IRecordId[];
 }
@@ -88,29 +86,31 @@ export interface ICollectionCapture extends ICollectionBase {
   defaultLayout?: CollectionLayout;
   views?: IRecordId[];
   properties?: IRecordId[];
-  typeToExtend?: IRecordId | null;
+  typeToExtend?: IRecordId;
 }
 
 export type ICollectionThumb = ICollectionBase &
   IResourcePropertiesForCollection & {
     type: CollectionType;
     resource: Resource;
-    typeToExtend?: ICollection | null;
+    typeToExtend?: ICollection;
     properties?: IRecordId[];
     views: IRecordId[];
   };
 
 export interface ICollectionExpanded
-  extends ICollectionBase, IResourcePropertiesForCollection {
+  extends ICollectionBase,
+    IResourcePropertiesForCollection {
   type: CollectionType;
   resource: Resource;
   properties?: IProperty[];
-  [CollectionObjectKey.typeToExtend]?: ICollectionExpanded | null;
+  [CollectionObjectKey.typeToExtend]?: ICollection;
   extendProperties?: IProperty[];
 }
 
 export type IActiveCollection = IActiveResource &
   ICollectionExpanded & {
+    isViewDataLoading: boolean;
     isPageLoading: boolean;
     totalItemCount: number;
     views: ICollectionViewWithData[];
@@ -176,12 +176,11 @@ export interface ICollectionViewArrangementConfig {
   density?: number;
 }
 
-export type ICollectionItem = INodeThumb | IObjectiveThumb;
+export type ICollectionItem = INodeThumb | IGoalThumb;
 
 export type ICollectionItemPropertyValue = {
   id: IRecordId;
   value: IPropertyValue | null;
-  collectionId?: IRecordId;
 };
 
 export type ICollectionCountStore = {
@@ -192,6 +191,6 @@ export type ICollectionCountStore = {
 };
 
 export interface ICollectible {
-  propertyValues?: ICollectionItemPropertyValue[];
+  properties?: ICollectionItemPropertyValue[];
   collections?: IRecordId[];
 }

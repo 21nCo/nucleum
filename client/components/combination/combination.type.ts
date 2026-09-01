@@ -2,8 +2,8 @@ import type {
   IActiveResource,
   IResourceLabeled,
   IResourceStarrable
-} from "@21n/data/datafn/resource.type";
-import type { Resource } from "@21n/data/datafn/resource.enum";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type { IMemotronItemBase } from "@21n/products/memotron/memotron.type";
 import type { IAvatar } from "@21n/types/avatar.type";
 import type { IRecordId } from "@21n/types/data.type";
@@ -52,7 +52,8 @@ export interface ISideNavCombination extends ICombinationBase {
 export type ICombination = ISideNavCombination;
 
 export interface IActiveCombination
-  extends IActiveResource, ISideNavCombination {
+  extends IActiveResource,
+    ISideNavCombination {
   isPageLoading?: boolean;
 }
 
@@ -60,7 +61,7 @@ export enum CombinationType {
   /**
    * @deprecated - use {@link CombinationType.NOTEBOOK} instead.
    * Side nav is now a view type in notebook.
-   *
+   * 
    * A markdown page can be inserted as a sub side nav (TOC becomes the hierarchy).
    */
   SIDENAV = "sidenav",
@@ -70,14 +71,14 @@ export enum CombinationType {
   WHITEBOARD = "whiteboard",
   /**
    * @deprecated - use {@link CombinationType.CANVAS} instead.
-   *
+   * 
    * A canvas can have option to insert a mind map.
    * A markdown page can be inserted as a mind map (TOC becomes the hierarchy).
    */
   MINDMAP = "mindmap",
   /**
    * @deprecated - use {@link CombinationType.NOTEBOOK} instead. WALL is now a view type in notebook.
-   *
+   * 
    * Infinitely deep structured layout.
    * A markdown page can be inserted as sub wall (TOC becomes the hierarchy).
    */
@@ -88,8 +89,5 @@ export enum CombinationType {
    */
   TIMELINE = "timeline",
   NOTEBOOK = "notebook",
-  /**
-   * @deprecated - Notebook is the only and default layout now and Canvas has moved as a node type instead.
-   */
   CANVAS = "canvas"
 }

@@ -1,6 +1,9 @@
 <script lang="ts">
   import view from "@21n/stores/view.store";
-  import { confirmationNotification } from "@21n/stores/notification.store";
+  import {
+    toasts,
+    confirmationNotification
+  } from "@21n/stores/notification.store";
   import { lastImportTime } from "@21n/products/pointron/pointron.store";
   import {
     StatusMessageType,
@@ -16,6 +19,7 @@
   } from "@21n/types/tableCell.type";
   import { onMount } from "svelte";
   import ExportData from "@21n/products/pointron/settings/data/ExportData.svelte";
+  // import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
   import { ButtonVariant } from "@21n/types/button.type";
   import Table2 from "@21n/elements/table/Table2.svelte";
   import {
@@ -49,8 +53,17 @@
       confirmAction: {
         label: "Revert",
         variant: ButtonVariant.DANGER
+        // callback: () => revertImport(rowId)
       }
     });
+  }
+  async function revertImport(id: string) {
+    //TODO - use latest persistence
+    // let response = await new PointronPersistence().revertImport(id);
+    // if (response) {
+    //   toasts.success("Import reverted successfully");
+    //   refreshImportHistory();
+    // }
   }
 
   const columns: TableColumn[] = [
@@ -86,6 +99,9 @@
   let importHistoryData: TableRowItem[] = [];
 
   async function refreshImportHistory() {
+    //TODO - use latest persistence
+    // let response = await new PointronPersistence().fetchImportHistory();
+    // importHistoryData = response;
     if (importHistoryData.length > 0) {
       importHistoryData = importHistoryData.map((item) => {
         return {

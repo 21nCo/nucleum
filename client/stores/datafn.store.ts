@@ -1096,31 +1096,3 @@ export async function createNucleumDatafnHttpOptions(
     }
   };
 }
-
-/**
- * Configures the shared DataFn client for a read-only public-link session.
- */
-export async function initializeNucleumPublicLinkDatafn(input: {
-  token: string;
-  region: string;
-}) {
-  await destroyNucleumDatafn();
-  const remoteUrl = `${resolveAccountBaseUrl(input.region).replace(/\/$/, "")}/datafn`;
-  await datafn.switchContext({
-    clientId: `public-link-${crypto.randomUUID()}`,
-    namespace: "public-link",
-    storage: null,
-    searchProvider: null,
-    e2ee: null,
-    sync: {
-      mode: "sync",
-      remote: remoteUrl,
-      http: await createNucleumDatafnHttpOptions({
-        publicLinkToken: input.token
-      }),
-      offlinability: false,
-      crossTab: false,
-      ws: false
-    }
-  });
-}

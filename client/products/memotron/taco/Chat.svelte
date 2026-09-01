@@ -1,13 +1,15 @@
 <script lang="ts">
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
   import { tacoWorker } from "@21n/products/memotron/memotron.utils";
+  import { SearchType } from "@21n/types/data.type";
 
   import { onMount, onDestroy } from "svelte";
   import { TacoActions } from "@21n/products/memotron/taco/taco.types";
-  import { datafn } from "@21n/stores/datafn.store";
 
+  const QAsearchStore = new SearchStore();
   let isLoading: boolean = false;
   let type = "";
   let index = 0;
@@ -19,20 +21,15 @@
     index = 0;
   }
   async function onQuestion() {
-    if (!question.trim()) return;
     isLoading = true;
     typeWriter();
     answer = "";
-    const result = await datafn.search({
-      query: question,
-      resources: [Resource.node],
-      fields: ["label", "text", "notes"],
-      limit: 1,
-      limitPerResource: 1,
-      source: "local",
-      fuzzy: 0.2
+    let node = await QAsearchStore.select({
+      resource: Resource.node,
+      searchQuery: question,
+      searchType: SearchType.SEMANTIC,
+      semanticSearchTopK: 1
     });
-    const node = result.results?.map((entry: any) => entry.data) ?? [];
     if (node.length == 0) {
       answer = "No relevant information found";
       resetLoadingState();

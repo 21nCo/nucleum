@@ -3,7 +3,7 @@ import { writable } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
 import { ObservableStore } from "@21n/stores/client.store";
 import { appStore } from "@21n/stores/app.store";
-import { AccessMode } from "@21n/data/datafn/resource.type";
+import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
 import { appEvents } from "@21n/stores/notification.store";
 import { GlobalEvent } from "@21n/types/event.enum";
 

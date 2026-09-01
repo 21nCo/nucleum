@@ -1,0 +1,323 @@
+import { Surreal } from "surrealdb";
+import type { MergeRecord, QueryParams } from "@21n/types/persistance.type";
+import {
+  resolveCurrentUserId,
+  resolveLegacyToken
+} from "@21n/utils/account.utils";
+import { performApiCall } from "@21n/utils/network.utils";
+import {
+  replaceParams,
+  resolveMutationQuery
+} from "@21n/shared-utils/surreal.utils";
+import { PersistenceActionType } from "@21n/types/data.type";
+import type { ISurrealDatabase } from "@21n/types/db.type";
+import type { IResourceBase } from "@21n/components/flux/resourceStores/resource.type";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+
+const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? false;
+
+export class SurrealDatabaseUsingRest {
+  token: string | null = null;
+  db: string | undefined;
+  constructor(private instance: string = "") {}
+  async connect(instance: string, options: any) {
+    this.instance = instance;
+    this.token =
+      (await clientStorage.get(ClientStorageKey.STOKEN)) ?? this.token;
+    await fetch(instance, { method: "POST" });
+  }
+  /**
+   *
+   * @param recordId Id of the record to be created
+   * @param data data to be created
+   * @returns Id of the created record or null if failed
+   */
+  async create(recordId: string, data: IResourceBase) {
+    return this.query(
+      resolveMutationQuery(PersistenceActionType.CREATE, recordId),
+      {
+        data
+      }
+    );
+  }
+  async insert(tableName: string, data: IResourceBase[]) {
+    return this.query(
+      resolveMutationQuery(PersistenceActionType.INSERT, tableName),
+      {
+        data
+      }
+    );
+  }
+  /**
+   *
+   * @param recordId Id of the record to be merged
+   * @param data Data to be updated
+   * @returns Updated record or null if failed
+   */
+  async merge(recordId: string, data: MergeRecord) {
+    return this.query(
+      resolveMutationQuery(PersistenceActionType.MERGE, recordId),
+      {
+        data
+      }
+    );
+  }
+  async update(recordId: string, data: IResourceBase) {
+    return this.query(
+      resolveMutationQuery(PersistenceActionType.REPLACE, recordId),
+      {
+        data
+      }
+    );
+  }
+  async select(recordId: string) {
+    let response = await this.query(`select * from ${recordId};`);
+    if (response?.length > 0) return response[0];
+    else return null;
+  }
+  async delete(recordId: string, userId?: string) {
+    return await this.query(
+      resolveMutationQuery(PersistenceActionType.DELETE, recordId, { userId })
+    );
+  }
+  async executeReadFn(
+    query: string,
+    params: {
+      [key: string]: QueryParams;
+    } = {}
+  ) {
+    return this.query(query, params, true);
+  }
+  async query(
+    query: string,
+    params: {
+      [key: string]: QueryParams;
+    } = {},
+    isReadOperation: boolean = false
+  ) {
+    try {
+      // const isValid = await performLoginStatusCheck();
+      // if (!isValid) return null;
+      const token = await resolveLegacyToken();
+      if (!token) return null;
+      this.token = token;
+      this.db = await resolveUserDatabase();
+      query = replaceParams(query, params);
+      const response = await performApiCall("account/n/run", "POST", {
+        query,
+        db: this.db,
+        isReadOperation
+      });
+      if (response?.ok) {
+        let result = await response.json();
+        if (result.length > 0) {
+          return result.slice(1).map((item: any) => {
+            return { result: item.result, status: item.status };
+          });
+        }
+      } else return null;
+    } catch (error) {
+      //TODO - error handling
+      console.log(error);
+      return null;
+    }
+  }
+}
+
+export class SurrealDatabaseUsingSdk {
+  token: string | null = null;
+  db: string | undefined;
+  surreal: Surreal;
+  constructor(private instance: string = "") {
+    // this.token = resolveToken();
+    this.surreal = new Surreal();
+  }
+  async close() {
+    //todo urgent - maintaining persistant connection vs closing connection
+    //fly only allows 25 concurrent connections...
+    //await this.db.close();
+  }
+  async connect() {
+    try {
+      console.warn(
+        "Surreal SDK auth is disabled for AuthFn opaque sessions. Use the backend REST proxy instead."
+      );
+      return null;
+    } catch (error) {
+      console.error("Error in Surreal connect", JSON.stringify(error));
+      return null;
+    }
+  }
+  async reconnectIfRequired() {
+    console.log("reconnectIfRequired", this.surreal.status);
+    // const isValid = await performLoginStatusCheck();
+    // if (!isValid) return false;
+    if (this.surreal.status === 0) return true;
+    else {
+      let isConnected = await this.connect();
+      return isConnected;
+    }
+  }
+  async create(recordId: string, data: Record<string, unknown>) {
+    try {
+      let isConnected = await this.reconnectIfRequired();
+      if (!isConnected) return null;
+      // console.log("create", { recordId, data });
+      let response = await this.surreal.create(recordId, data);
+      return response;
+    } catch (error) {
+      console.log(error);
+      return null;
+    } finally {
+      this.close();
+    }
+  }
+  async insert(tableName: string, data: Record<string, unknown>[]) {
+    try {
+      let isConnected = await this.reconnectIfRequired();
+      if (!isConnected) return null;
+      // console.log("insert", { tableName, data });
+      let response = await this.surreal.insert(tableName, data);
+      return response;
+    } catch (error) {
+      console.log(error);
+      return null;
+    } finally {
+      this.close();
+    }
+  }
+  async merge(recordId: string, data: Record<string, unknown>) {
+    try {
+      let isConnected = await this.reconnectIfRequired();
+      if (!isConnected) return null;
+      // console.log("merge", { recordId, data });
+      let response = await this.surreal.merge(recordId, data);
+      return response;
+    } catch (error) {
+      console.log(error);
+      return null;
+    } finally {
+      this.close();
+    }
+  }
+  async update(recordId: string, data: Record<string, unknown>) {
+    try {
+      let isConnected = await this.reconnectIfRequired();
+      if (!isConnected) return null;
+      // console.log("update", { recordId, data });
+      let response = await this.surreal.update(recordId, data);
+      return response;
+    } catch (error) {
+      console.log(error);
+      return null;
+    } finally {
+      this.close();
+    }
+  }
+  async select(recordId: string) {
+    try {
+      let isConnected = await this.reconnectIfRequired();
+      if (!isConnected) return null;
+      // console.log("select", { recordId });
+      let response = await this.surreal.select(recordId);
+      return response;
+    } catch (error) {
+      console.log({ error });
+      return null;
+    } finally {
+      this.close();
+    }
+  }
+  async delete(recordId: string, userId?: string) {
+    try {
+      // this.reconnectIfRequired();
+      let response = await this.surreal.delete(recordId);
+      return response;
+    } catch (error) {
+      console.log(error);
+      return null;
+    } finally {
+      this.close();
+    }
+  }
+  executeReadFn = this.query;
+  async query(
+    query: string,
+    params: {
+      [key: string]: QueryParams;
+    } = {}
+  ) {
+    try {
+      let isConnected = await this.reconnectIfRequired();
+      if (!isConnected) return null;
+      // console.log("query", { query, params });
+      let response = await this.surreal.query(query, params);
+      return response;
+    } catch (error) {
+      console.log({ error });
+      return null;
+    } finally {
+      this.close();
+    }
+  }
+}
+
+export class SurrealDatabase implements ISurrealDatabase {
+  token: string | null = null;
+  db: string | undefined;
+  surreal: SurrealDatabaseUsingSdk | SurrealDatabaseUsingRest;
+  constructor(private instance: string = "") {
+    const instanceDefault =
+      import.meta.env?.VITE_DB ??
+      (typeof process !== "undefined"
+        ? process.env?.PLASMO_PUBLIC_DB
+        : undefined);
+    this.instance = instanceDefault ?? instance;
+    // this.token = resolveToken();
+    if (isUseSurrealSDK == "true")
+      this.surreal = new SurrealDatabaseUsingSdk(this.instance);
+    else this.surreal = new SurrealDatabaseUsingRest(this.instance);
+  }
+  //todo - add strong types
+  create(recordId: string, data: any) {
+    return this.surreal.create(recordId, data);
+  }
+  insert(tableName: string, data: any[]) {
+    return this.surreal.insert(tableName, data);
+  }
+  merge(recordId: string, data: any) {
+    return this.surreal.merge(recordId, data);
+  }
+  update(recordId: string, data: any) {
+    return this.surreal.update(recordId, data);
+  }
+  select(recordId: string) {
+    return this.surreal.select(recordId);
+  }
+  delete(recordId: string, userId?: string) {
+    return this.surreal.delete(recordId, userId);
+  }
+  executeReadFn(
+    query: string,
+    params: {
+      [key: string]: QueryParams;
+    } = {}
+  ) {
+    return this.surreal.executeReadFn(query, params);
+  }
+  query(
+    query: string,
+    params: {
+      [key: string]: QueryParams;
+    } = {}
+  ) {
+    return this.surreal.query(query, params);
+  }
+}
+
+async function resolveUserDatabase(): Promise<string | undefined> {
+  const userId = await resolveCurrentUserId();
+  if (!userId) return undefined;
+  return userId.includes("user:") ? userId.split("user:")[1] : userId;
+}

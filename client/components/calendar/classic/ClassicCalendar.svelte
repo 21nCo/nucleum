@@ -8,22 +8,33 @@
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
-  import { CalendarLayout } from "@21n/components/calendar/calendar.type";
+  import {
+    CalendarLayout,
+    type ICalendarIndicatorData
+  } from "@21n/components/calendar/calendar.type";
   import { resizable } from "@21n/actions/resize.action";
   import { debouncer } from "@21n/utils/utils";
   import { cn } from "@21n/utils/ui.utils";
-  import { MetaResource, Resource } from "@21n/data/datafn/resource.enum";
+  import {
+    MetaResource,
+    Resource
+  } from "@21n/components/flux/resourceStores/resource.enum";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { compareObjects } from "@21n/shared-utils/obj.utils";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import { appStore } from "@21n/stores/app.store";
   import { Product } from "@21n/products/product.type";
+  import { NodeMetaType } from "@21n/products/memotron/node/node.type";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   import MemotronTempCalendarColumn from "@21n/components/calendar/column/MemotronTempCalendarColumn.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import ClassicCalendarHeaderLeftOptions from "@21n/components/calendar/classic/ClassicCalendarHeaderLeftOptions.svelte";
+  import { onMount } from "svelte";
   import { Display } from "@21n/types/view.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { RemovalProperty } from "@21n/types/data.type";
   import YearViewV2 from "@21n/components/calendar/classic/YearViewV2.svelte";
-  import { toSvelteStore } from "@datafn/svelte";
-  import {
-    areIndicatorDataEqual,
-    createClassicCalendarIndicatorSignal
-  } from "@21n/components/calendar/classic/indicator/classicCalendarIndicator.signal";
   let {
     panel = $bindable(CalendarLayout.Classic)
   }: {
@@ -33,38 +44,20 @@
   let selectedDate = $state(new Date());
   let selectedView = $state<TimeScaleUnit>(resolveSavedScaleSelection());
   let selectedScale = $state<TimeScaleUnit>(TimeScaleUnit.DAY);
-  let yearViewRef = $state<YearViewV2>();
-  let weekViewRef = $state<WeekView>();
+  let events = $state<any[]>([]);
+  let yearViewRef: YearViewV2;
+  let weekViewRef: WeekView;
   let visibleWeekDates = $state<Date[] | undefined>(undefined);
-  let width = $derived(resolveSavedWidthSelection(selectedView));
+  let width = $state(resolveSavedWidthSelection(selectedView));
+  let indicatorData = $state<ICalendarIndicatorData[]>([]);
+  let indicatorRefreshId = $state<number>(new Date().getTime());
+  let currentDateFilterForIndicatorData: any = {};
+  let isRefreshing = $state(false);
   let yearViewRefreshId = $state(new Date().getTime());
-  const resourcesForIndicators = $derived(resolveResourcesForIndicators());
-  const indicatorStore = $derived.by(() => {
-    if (selectedView === TimeScaleUnit.DAY) return undefined;
-    const date = selectedDate;
-    const scale = selectedView;
-    const resources = resourcesForIndicators;
-    return toSvelteStore(
-      () =>
-        createClassicCalendarIndicatorSignal({
-          resources,
-          date,
-          scale
-        }),
-      {
-        initialData: [],
-        defer: { strategy: "idle", delayMs: 500 },
-        equals: areIndicatorDataEqual
-      }
-    );
+
+  onMount(() => {
+    refreshIndicatorDataWithDelay();
   });
-  const indicatorData = $derived(indicatorStore ? $indicatorStore!.data : []);
-  const isRefreshing = $derived(
-    Boolean(
-      indicatorStore &&
-      ($indicatorStore!.loading || $indicatorStore!.refreshing)
-    )
-  );
 
   function resolveSavedScaleSelection() {
     if ($appStore.product === Product.MEMOTRON) return TimeScaleUnit.YEAR;
@@ -148,15 +141,151 @@
     }
   }
 
+  function refreshIndicatorDataWithDelay(
+    resource?: (Resource | MetaResource)[]
+  ) {
+    setTimeout(() => {
+      refreshIndicatorData(selectedDate, resource);
+    }, 500);
+  }
+
+  let isRefreshOperationInProgress = false;
+  async function refreshIndicatorData(
+    date: Date,
+    resource?: (Resource | MetaResource)[]
+  ) {
+    try {
+      if (selectedView === TimeScaleUnit.DAY || isRefreshOperationInProgress)
+        return;
+      console.time("refreshIndicatorData");
+      isRefreshOperationInProgress = true;
+      const resourcesForIndicators = resolveResourcesForIndicators();
+      if (resourcesForIndicators.length === 0) return;
+      const filteredResourcesForIndicators = resource
+        ? resourcesForIndicators.filter((r) => resource.includes(r))
+        : resourcesForIndicators;
+      if (filteredResourcesForIndicators.length === 0) return;
+      const dateFilter = tzStore.resolveTimePeriodFilter(date, {
+        scale: selectedView
+      });
+      if (
+        compareObjects(currentDateFilterForIndicatorData, dateFilter) &&
+        (!resource || resource.length === 0)
+      ) {
+        return;
+      }
+      const cachedData = cache.retrieve(CacheKey.CALENDAR_CACHE);
+      const dateFilterCached = cachedData?.[selectedView]?.dateFilter;
+      if (dateFilterCached && compareObjects(dateFilterCached, dateFilter)) {
+        indicatorData = cachedData[selectedView].indicatorData;
+      } else {
+        indicatorData = [];
+        isRefreshing = true;
+      }
+      currentDateFilterForIndicatorData = dateFilter;
+      const legacyDateFilter = {
+        greaterThanOrEqual: dateFilter.$gte,
+        lessThanOrEqual: dateFilter.$lte
+      };
+      const promises = filteredResourcesForIndicators.map((resource) => {
+        let filters: any = {};
+        let properties: string[] = [
+          "id",
+          "modifiedAt",
+          "trashInformation",
+          "isArchived"
+        ];
+        if (resource === Resource.task) {
+          properties.push("dateUnix");
+          filters = {
+            dateUnix: legacyDateFilter
+          };
+        } else if (resource === Resource.session) {
+          properties.push("startUnix", "blocks", "start");
+          filters = {
+            startUnix: legacyDateFilter
+          };
+        } else if (resource === Resource.node) {
+          properties.push("createdAt");
+          filters = {
+            createdAt: {
+              greaterThanOrEqual: new Date(dateFilter.$gte),
+              lessThanOrEqual: new Date(dateFilter.$lte)
+            }
+          };
+        } else if (resource === MetaResource.calendarNotes) {
+          properties.push("metaType", "date", "text");
+          filters = {
+            metaType: NodeMetaType.CALENDAR_NOTES,
+            date: {
+              greaterThanOrEqual: new Date(dateFilter.$gte),
+              lessThanOrEqual: new Date(dateFilter.$lte)
+            }
+          };
+        }
+        const searchResource =
+          resource === MetaResource.calendarNotes
+            ? Resource.node
+            : (resource as Resource);
+        return new SearchStore(searchResource).select({
+          properties: {
+            select: properties
+          },
+          filters,
+          isIncludeMetaItems: resource === MetaResource.calendarNotes
+        });
+      });
+      const results = await Promise.all(promises);
+      results.forEach((result, index) => {
+        const resource = filteredResourcesForIndicators[index];
+        indicatorData = indicatorData.filter((x) => x.resource !== resource);
+        indicatorData.push({
+          resource,
+          data: result,
+          color: resolveColor(resource)
+        });
+      });
+      indicatorRefreshId = new Date().getTime();
+      console.timeEnd("refreshIndicatorData");
+      cache.replaceUsingSubKey(CacheKey.CALENDAR_CACHE, selectedView, {
+        dateFilter,
+        indicatorData
+      });
+      isRefreshing = false;
+    } catch (error) {
+      logger.error("refreshIndicatorData", error);
+    } finally {
+      isRefreshOperationInProgress = false;
+    }
+  }
+
+  function resolveColor(resource: Resource | MetaResource) {
+    switch (resource) {
+      case Resource.task:
+        return "fgs4";
+      case Resource.sessionLog:
+      case Resource.session:
+        return "aps1";
+      case Resource.node:
+      case MetaResource.calendarNotes:
+        return "aps1";
+    }
+  }
+
   function handleScaleSelection(event: CustomEvent) {
     selectedView = event.detail;
+    width = resolveSavedWidthSelection(selectedView);
+    refreshIndicatorDataWithDelay();
   }
 
   function setDate(date: Date) {
     selectedDate = date;
+    onDateChange();
   }
 
-  function onDateChange() {}
+  function onDateChange() {
+    refreshIndicatorDataWithDelay();
+  }
 
   function onWindowResize() {
     if (selectedView !== TimeScaleUnit.YEAR) return;
@@ -217,6 +346,7 @@
   {/snippet}
 
   <div class="flex h-full">
+    <!-- <CalendarSidebar {events} /> -->
     <div
       class={cn("flex-1 overflow-auto", {
         "min-w-60": selectedView !== TimeScaleUnit.DAY
@@ -227,6 +357,7 @@
           bind:selectedDate
           {selectedScale}
           {indicatorData}
+          {indicatorRefreshId}
           onMonthChange={handleMonthChange}
           onDateChange={() => {
             selectedScale = TimeScaleUnit.DAY;
@@ -241,6 +372,7 @@
             bind:selectedDate
             {selectedScale}
             {indicatorData}
+            {indicatorRefreshId}
             onYearChange={handleYearChange}
             onDateChange={() => {
               selectedScale = TimeScaleUnit.DAY;
@@ -303,4 +435,33 @@
     {/if}
   </div>
 </CalendarLayoutView>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.task])}
+  subscriptionPropsForMergeAction={[
+    RemovalProperty.IS_ARCHIVED,
+    RemovalProperty.TRASH_INFORMATION,
+    "dateUnix",
+    "isChecked"
+  ]}
+  onChange={() => {
+    refreshIndicatorDataWithDelay([Resource.task]);
+  }}
+/>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.session])}
+  onChange={() => {
+    refreshIndicatorDataWithDelay([Resource.session]);
+  }}
+/>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.node])}
+  subscriptionPropsForMergeAction={[
+    RemovalProperty.IS_ARCHIVED,
+    RemovalProperty.TRASH_INFORMATION,
+    "text"
+  ]}
+  onChange={() => {
+    refreshIndicatorDataWithDelay([Resource.node, MetaResource.calendarNotes]);
+  }}
+/>
 <svelte:window onresize={onWindowResize} />

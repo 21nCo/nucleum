@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { onMount } from "svelte";
   import Records from "@21n/components/record/Records.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
@@ -9,10 +9,9 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { recentsStore } from "@21n/components/record/recent.store";
   import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { SearchStore } from "@21n/components/record/record.store";
   import { Arrangement } from "@21n/types/direction.enum";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { activeResourceFilter } from "@21n/utils/utils";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
 
   let {
     onSelect = undefined
@@ -20,32 +19,23 @@
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
 
+  const searchStore = new SearchStore(Resource.node);
   let isLoading = false;
   let searchQuery = "";
   let imageNodes: any[] = [];
   onMount(async () => {
     imageNodes = await refresh();
   });
-  async function refresh() {
+  function refresh() {
     try {
       isLoading = true;
       if (searchQuery) {
-        const result = await datafn.search({
-          query: searchQuery,
-          resources: [Resource.node],
-          fields: ["label", "text"],
+        return searchStore.select({
+          searchQuery,
           filters: {
-            [Resource.node]: {
-              contentType: NodeType.IMAGE
-            }
-          },
-          source: "local",
-          prefix: true,
-          fuzzy: 0.2
+            contentType: NodeType.IMAGE
+          }
         });
-        return ((result as { results?: { data: unknown }[] }).results ?? [])
-          .map((entry: any) => entry.data)
-          .filter(activeResourceFilter);
       } else {
         const recentNodes = recentsStore.resolve({ type: Resource.node });
         return recentNodes.filter(

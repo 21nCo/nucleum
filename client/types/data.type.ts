@@ -1,6 +1,6 @@
 import type { Writable } from "svelte/store";
-import type { ResourceActionType } from "@21n/data/datafn/resource.type";
-import type { Resource } from "@21n/data/datafn/resource.enum";
+import type { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 /**
  * The operations which can be performed on a cacheable store
@@ -19,6 +19,11 @@ export interface IStore {
    * The type of data the store holds
    */
   dataType: StoreDataType;
+
+  /**
+   * @deprecated - use tables config to determine if the store is in memory
+   */
+  isInMemory?: boolean;
 
   /**
    * @deprecated - use tables config to determine if the store is cloud only
@@ -121,7 +126,7 @@ export enum PersistenceActionType {
   /**
    * Deletes the record.
    *
-   * Note: Use this to completely delete the record. To move to trash, use MERGE with trashedAt.
+   * Note: Use this to completely delete the record. To move to trash, use MERGE with trashInformation property.
    */
   DELETE = "DELETE",
   /**
@@ -287,6 +292,8 @@ export type IResourceSelectProperties = {
 
   /**
    * Properties that needs to be expanded.
+   *
+   * Ex: parent.*, typeToExtend.* in Surreal provider
    */
   expand?: string[];
 
@@ -298,6 +305,7 @@ export type IResourceSelectProperties = {
   recurse?: string;
   /**
    * The fields to be omitted.
+   * This will use OMIT clause in case of Surreal provider.
    */
   omit?: string[];
 };
@@ -317,6 +325,7 @@ export type IResourceSelectParams = {
 
   /**
    * Filters to be applied on the resources.
+   * This will be translated to the where clause in case of Surreal provider.
    *
    * Use filterGroup instead to combine multiple filters using AND or OR condition in cases of user facing filters. For rest of the application system cases, basic filters in combination with search can be used.
    *
@@ -336,6 +345,8 @@ export type IResourceSelectParams = {
   /**
    * @deprecated - use filters instead
    * Use only if filters doesn't cover the use case.
+   *
+   * The raw `WHERE` clause to be used in case of Surreal provider if filters doesn't cover the use case. This will be appended to the filters if filters are also provided.
    */
   whereClause?: string | string[];
   /**
@@ -361,7 +372,7 @@ export type IRecordId = string;
 export type IMutation = {
   id: string;
   createdAt: Date;
-  updatedAt: Date;
+  modifiedAt: Date;
   timestamp: number;
   /**
    * @deprecated - storing dapId on kv:local
@@ -376,7 +387,7 @@ export type IMutation = {
 
 export type IMutationAdditionalParams = {
   /**
-   * Whether the mutation should prevent local resource subscriptions
+   * Whether the mutation should prevent subscriptions via ComponentBaseLayer
    */
   isPreventSubscriptions?: boolean;
   /**
@@ -394,6 +405,21 @@ export type IResourceSelectAdditionalParams = {
    * Whether to use cloud to select. Local will be used if not provided.
    */
   isUseCloud?: boolean;
+  /**
+   * @deprecated - use isExpand instead
+   * Whether to prevent expansion of the resource. When set to true, joins will not be performed.
+   */
+  isPreventExpansion?: boolean;
+  /**
+   * Whether to expand the resource. When set to true, joins will be performed.
+   */
+  isExpand?: boolean;
+  /**
+   * Whether to include sub items of the resource.
+   *
+   * Ex: goal -> sub goals
+   */
+  isIncludeSubItems?: boolean;
 
   /**
    * Whether to include inactive items i.e. archived and trashed items.
@@ -421,5 +447,5 @@ export type IResourceSelectAdditionalParams = {
 
 export enum RemovalProperty {
   IS_ARCHIVED = "isArchived",
-  TRASHED_AT = "trashedAt"
+  TRASH_INFORMATION = "trashInformation"
 }

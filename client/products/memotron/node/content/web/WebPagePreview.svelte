@@ -6,10 +6,14 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import HoverableElement from "@21n/elements/HoverableElement.svelte";
   import type { IWebPage } from "@21n/products/memotron/node/node.type";
+  import { UserDataMode } from "@21n/types/account.type";
+  import account from "@21n/stores/account.store";
+  import { Persistence } from "@21n/persistence/persistence";
   import FileView from "@21n/components/files/FileView.svelte";
   import ImagePreview from "@21n/products/memotron/node/content/ImagePreview.svelte";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { resolveUrlData } from "@21n/products/memotron/node/url.utils";
+  import { parse } from "@21n/shared-utils/json.utils";
   import context from "@21n/stores/context.store";
 
   let {
@@ -40,7 +44,9 @@
         isCheckingIframability = false;
       }
       if (!customMessage && !isIframeable) {
-        const result = resolveIframability(node.url);
+        const result = await resolveIframability(node.url, {
+          isUseCloud: $account.dataMode === UserDataMode.CLOUD
+        });
         isIframeable = result;
         if (
           isIframeable &&
@@ -56,7 +62,10 @@
     }
   }
 
-  function resolveIframability(url: string): boolean {
+  async function resolveIframability(
+    url: string,
+    params?: { isUseCloud?: boolean }
+  ): Promise<boolean> {
     if (!url) {
       throw new Error("URL is required");
     }
@@ -64,7 +73,34 @@
     if (fromUrlMap?.isIframeable) {
       return true;
     }
+    if (params?.isUseCloud) {
+      const urlData = await new Persistence().retrieveUrlData(url, {
+        isReturnRawData: true
+      });
+      if (isValidString(urlData?.headers)) {
+        const headers = parse(urlData.headers);
+        if (!headers) return false;
+        return resolveIframabilityFromHeaders(headers);
+      }
+    }
     return false;
+
+    function resolveIframabilityFromHeaders(headers: Record<string, string>) {
+      if (!headers) return false;
+      if (headers["x-frame-options"]) {
+        const xFrameVal = headers["x-frame-options"];
+        if (xFrameVal === "SAMEORIGIN" || xFrameVal === "DENY") return false;
+      }
+      if (headers["frame-ancestors"]) {
+        const frameAncestorsVal = headers["frame-ancestors"];
+        if (frameAncestorsVal === "'none'") return false;
+      }
+      if (headers["content-security-policy"]) {
+        const cspVal = headers["content-security-policy"];
+        if (cspVal.includes("frame-ancestors")) return false;
+      }
+      return true;
+    }
   }
 
   function resolveCustomSettings(url: string) {
@@ -94,7 +130,7 @@
       frameborder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen
-    ></iframe>
+    />
   {:else if isValidString(node.metadata?.ogImage)}
     <ImagePreview
       src={node.metadata?.ogImage || ""}

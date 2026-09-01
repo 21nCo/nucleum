@@ -9,11 +9,13 @@
   let value = $state(0);
 
   function onInput(event: CustomEvent<{ value: number }>) {
-    let targets = ($pointronPreferences.horizonTargets ?? []).filter(
+    if (!$pointronPreferences.horizonTargets)
+      $pointronPreferences.horizonTargets = [];
+    let targets = $pointronPreferences.horizonTargets?.filter(
       (x) => x.scale != item
     );
-    targets.push({ scale: item, target: +event.detail.value });
-    pointronPreferences.modify({ horizonTargets: targets });
+    targets?.push({ scale: item, target: +event.detail.value });
+    $pointronPreferences.horizonTargets = targets;
   }
   onMount(() => {
     value =

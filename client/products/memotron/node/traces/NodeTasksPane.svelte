@@ -1,23 +1,32 @@
 <script lang="ts">
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import { onMount } from "svelte";
   import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import TaskThumbnail from "@21n/components/tasks/TaskThumbnail.svelte";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import type { IEmbedBlock } from "@21n/components/markdown/md.type";
   import type { IRecordId } from "@21n/types/data.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
 
   let {
     node = null
   }: {
     node?: IActiveNodeStore | null;
   } = $props();
-  const taskIds = $derived.by(() => {
-    if (!node || !$node?.md?.blocks) return [];
-    return $node.md.blocks
+  let tasks: ITaskThumb[] = [];
+  let isRefreshing = false;
+
+  onMount(() => {
+    refresh();
+  });
+
+  async function refresh() {
+    if (!node || !$node?.md?.blocks) return;
+    isRefreshing = true;
+    const taskIds = $node.md.blocks
       .filter(
         (b): b is IEmbedBlock =>
           b.contentType === NodeType.EMBED &&
@@ -29,27 +38,21 @@
       )
       .map((b) => b.body.id)
       .filter((id): id is IRecordId => Boolean(id));
-  });
-  const taskStore = $derived.by(() =>
-    toSvelteStore<ITaskThumb[]>(
-      datafn.task.signal({
-        select: ["*", "objective.*"],
+    const tasksResult = await taskStore.selectMany(
+      {
         filters: {
-          id: { $in: taskIds }
+          id: taskIds
         }
-      }),
-      { initialData: [] }
-    )
-  );
-  const tasks = $derived.by(() => {
-    const order = new Map(taskIds.map((id, index) => [id.toString(), index]));
-    return [...$taskStore.data].sort(
-      (a, b) =>
-        (order.get(a.id?.toString()) ?? 0) -
-        (order.get(b.id?.toString()) ?? 0)
+      },
+      {
+        isExpand: true
+      }
     );
-  });
-  const isRefreshing = $derived($taskStore.loading || $taskStore.refreshing);
+    if (isValidArrayWithData(tasksResult)) {
+      tasks = [...tasksResult];
+    }
+    isRefreshing = false;
+  }
 </script>
 
 {#if tasks.length > 0}

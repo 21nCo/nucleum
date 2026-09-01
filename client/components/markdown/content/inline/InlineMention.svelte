@@ -2,7 +2,7 @@
   import { hoverable } from "@21n/actions/hover.action";
   import { tooltip } from "@21n/actions/popover.action";
   import { logger } from "@21n/components/debug/logger.client";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { resolveResource } from "@21n/components/record/record.store";
   import NodeAvatar from "@21n/products/memotron/node/avatar/NodeAvatar.svelte";
   import { webNodeTypeList } from "@21n/products/memotron/node/node.type";

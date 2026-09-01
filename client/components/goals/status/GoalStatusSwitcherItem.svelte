@@ -6,11 +6,8 @@
   import { cn } from "@21n/utils/ui.utils";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { fly } from "svelte/transition";
-  import {
-    ObjectiveStatus,
-    type ObjectiveStatusValue
-  } from "@21n/components/goals/goal.type";
-  import { resolveObjectiveStatusIcon } from "@21n/components/goals/goal.utils";
+  import { GoalStatus } from "@21n/components/goals/goal.type";
+  import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
 
   let {
     status,
@@ -18,7 +15,7 @@
     isAccent = false,
     onClick = undefined
   }: {
-    status: ObjectiveStatusValue;
+    status: GoalStatus;
     isActive?: boolean;
     isAccent?: boolean;
     onClick?: ((event: MouseEvent) => void) | undefined;
@@ -37,9 +34,9 @@
   onclick={onClick}
 >
   <Icon
-    icon={status === ObjectiveStatus.COMPLETED
+    icon={status === GoalStatus.COMPLETED
       ? "check-circle"
-      : resolveObjectiveStatusIcon(status)}
+      : resolveGoalStatusIcon(status)}
     size={Size.sm}
     class={cn({
       "text-ccs1": isActive || isAccent,

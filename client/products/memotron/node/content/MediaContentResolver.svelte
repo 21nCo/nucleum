@@ -13,7 +13,7 @@
   import AudioContent from "@21n/products/memotron/audio/AudioContent.svelte";
   import type { IFile } from "@21n/components/files/file.type";
   import { fileStore } from "@21n/components/files/file.store";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { formatBytes } from "@21n/shared-utils/text.utils";
@@ -44,10 +44,7 @@
   let currentFileId = "";
 
   function resolveFileSource() {
-    return (
-      node.file ??
-      (typeof node.body === "object" && node.body ? node.body.file : undefined)
-    );
+    return node.file ?? (typeof node.body === "object" && node.body ? node.body.file : undefined);
   }
 
   export function onTraceClick(details: any) {
@@ -81,10 +78,7 @@
   }
 
   function resolveFileId() {
-    const file = resolveFileSource() as
-      | string
-      | { id?: string | number }
-      | undefined;
+    const file = resolveFileSource() as string | { id?: string | number } | undefined;
     if (typeof file === "string") return file;
     if (file && typeof file === "object" && file.id != null) {
       return String(file.id);

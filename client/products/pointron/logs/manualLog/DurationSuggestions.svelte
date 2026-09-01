@@ -6,7 +6,10 @@
   import { abg, cn } from "@21n/utils/ui.utils";
   import { Size } from "@21n/types/size.enum";
   import { TimeFormat } from "@21n/types/time.type";
-  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "@21n/stores/uiState/uiState.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
@@ -53,7 +56,7 @@
       />
     </div>
     <div class="w-full grid cw:grid-cols-2 grid-cols-3 dp:grid-cols-4 gap-2">
-      {#each $pointronPreferences.manualEntryQuickDurations as item, index (`${item}-${index}`)}
+      {#each $pointronPreferences.manualEntryQuickDurations as item (item)}
         <button
           class={cn(
             "px-4 cw:py-1.5 py-2 rounded-md min-w-fit grow text-b2 border",

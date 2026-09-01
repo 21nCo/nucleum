@@ -9,12 +9,12 @@
   import { ButtonVariant } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { MAX_FILE_SIZE_MB } from "$lib/client/components/record/record.store";
+  import { nodeStore } from "./node.store";
   import { MemotronAction } from "../memotronAction.enum";
   import modalStore from "$lib/client/components/modal/modal.store";
   import { Size } from "$lib/client/types/size.enum";
   import { toasts } from "$lib/client/stores/notification.store";
   import { onDestroy } from "svelte";
-  import { datafn } from "@21n/stores/datafn.store";
 
   let {
     nodeId,
@@ -95,12 +95,9 @@
       );
       if (response && response.length > 0) {
         const fileId = response[0].id;
-        await datafn.node.mutate({
-          operation: "merge",
-          id: nodeId,
-          record: {
-            previewImage: fileId
-          }
+        // Update the node with the preview image
+        await nodeStore.modify(nodeId, {
+          previewImage: fileId
         });
         toasts.success("Preview image updated successfully");
         handleClose();

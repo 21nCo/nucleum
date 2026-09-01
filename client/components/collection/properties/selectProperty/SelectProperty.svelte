@@ -157,7 +157,7 @@
                       type: property.config?.type
                     }
                   : property.config,
-              defaultValue: property.defaultValue
+              default: property.default
             },
             isMultiSelect,
             value,

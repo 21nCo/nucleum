@@ -4,12 +4,12 @@ import type {
   IActiveResource,
   IResource,
   IResourceArchivable,
-  IResourceInActivableFromAncestor,
+  IResourceInActivableFromParent,
   IResourceLabeled,
   IResourcePageWithPanels,
   IResourceStarrable,
   IResourceShareable
-} from "@21n/data/datafn/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import type {
   ICollectible,
   ICollectionExpanded
@@ -17,7 +17,7 @@ import type {
 import type { TimeScale } from "@21n/types/time.type";
 import type { ITask } from "@21n/components/tasks/task.type";
 
-export enum ObjectiveType {
+export enum GoalType {
   INDEFINITE = "INDEFINITE",
   DEFINITE = "DEFINITE",
   /**
@@ -25,33 +25,22 @@ export enum ObjectiveType {
    */
   ROUTINE = "ROUTINE"
 }
-export type ObjectiveTypeValue = `${ObjectiveType}`;
-export enum SubObjectivesLayout {
+export enum SubGoalsLayout {
   DEFAULT = "DEFAULT",
   TREE = "TREE",
   STEPS = "STEPS",
   TABS = "TABS",
   BOARDS = "BOARDS"
 }
-export type SubObjectivesLayoutValue = `${SubObjectivesLayout}`;
-
-export enum ObjectiveStatus {
-  NOT_STARTED = "NOT_STARTED",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED"
-}
-export type ObjectiveStatusValue = `${ObjectiveStatus}`;
-
-export interface IObjectiveBase extends IResourceLabeled, ICollectible {
-  type?: ObjectiveTypeValue;
+export interface IGoalBase extends IResourceLabeled, ICollectible {
+  type?: GoalType;
   description?: IMarkdown;
   startDate?: Date;
   endDate?: Date;
   spanScale?: TimeScale;
-  subObjectivesLayout?: SubObjectivesLayoutValue;
-  status?: ObjectiveStatusValue;
+  subGoalsLayout?: SubGoalsLayout;
+  status?: GoalStatus;
   color?: number;
-  sortOrder?: number;
   isPinnedForQuickFocus?: boolean;
   /**
    * @deprecated - use uiState.tabsOrder instead
@@ -59,61 +48,61 @@ export interface IObjectiveBase extends IResourceLabeled, ICollectible {
   tabsOrder?: string[];
   uiState?: {
     /**
-     * Order of tabs on objective page.
+     * Order of tabs on goal page.
      */
     tabsOrder?: string[];
     isHideCompleted?: boolean;
   };
 }
-export interface IObjectiveCapture extends IObjectiveBase {
+export interface IGoalCapture extends IGoalBase {
   id?: IRecordId;
-  parentId?: IRecordId | null;
-  parentPath?: string;
+  parent?: IRecordId[];
+  children?: IRecordId[];
 }
 
-type IResourcePropertiesForObjective = IResource &
+type IResourcePropertiesForGoal = IResource &
   IResourceShareable &
   IResourceStarrable &
   IResourceArchivable &
-  IResourceInActivableFromAncestor;
+  IResourceInActivableFromParent;
 
-export type IObjective = IResourcePropertiesForObjective &
-  IObjectiveBase & {
+export type IGoal = IResourcePropertiesForGoal &
+  IGoalBase & {
     /**
      * Has index
      */
-    type: ObjectiveTypeValue;
+    type: GoalType;
     /**
      * Has index
      */
-    status: ObjectiveStatusValue;
+    status: GoalStatus;
     /**
      * Has index
      */
-    parentId?: IRecordId | null;
-    parentPath?: string;
-    parent?: IObjectiveThumb[];
-    children?: IObjectiveThumb[];
+    parent: IRecordId[] | 0;
+    children?: IRecordId[];
   };
 
-export type IObjectiveThumb = IResourcePropertiesForObjective &
-  IObjectiveBase & {
-    type: ObjectiveTypeValue;
-    status: ObjectiveStatusValue;
-    parentId?: IRecordId | null;
-    parentPath?: string;
-    parent?: IObjectiveThumb[];
-    children?: IObjectiveThumb[];
+export type IGoalThumb = IResourcePropertiesForGoal &
+  IGoalBase & {
+    parent?: IGoal[];
+    children?: IRecordId[];
   };
 
-export type IActiveObjective = IActiveResource &
+export type IActiveGoal = IActiveResource &
   IResourcePageWithPanels &
-  Omit<IObjective, "parent" | "children"> & {
-    type: ObjectiveTypeValue;
-    parent?: IObjectiveThumb[];
-    children?: IObjectiveThumb[];
+  Omit<IGoal, "parent" | "children"> & {
+    type: GoalType;
+    parent?: IGoalThumb[];
+    children?: IGoal[];
     isPageLoading: boolean;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
     taskCount?: number;
   };
+
+export enum GoalStatus {
+  NOT_STARTED = "NOT_STARTED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED"
+}

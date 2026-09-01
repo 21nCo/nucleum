@@ -1,20 +1,24 @@
 <script lang="ts">
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import { onDestroy, onMount } from "svelte";
-  import { BulkEditor } from "@21n/components/record/record.store";
+  import { BulkEditor, SearchStore } from "@21n/components/record/record.store";
   import {
     TaskDueDateFilter,
     TaskSubTypeForSwitcher,
     type ITaskThumb
   } from "@21n/components/tasks/task.type";
-  import { isValidArray } from "@21n/shared-utils/obj.utils";
+  import {
+    isValidArray,
+    isValidArrayWithData
+  } from "@21n/shared-utils/obj.utils";
   import TaskRecords from "@21n/components/tasks/TaskRecords.svelte";
   import {
     IResourceFilterDateGrouping,
+    RemovalProperty,
     type IRecordId
   } from "@21n/types/data.type";
   import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
@@ -24,10 +28,6 @@
   import LibrarySubTypeSwitcher from "@21n/components/library/LibrarySubTypeSwitcher.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  import {
-    activeResourceFilter,
-    archivedResourceFilter
-  } from "@21n/utils/utils";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { Size } from "@21n/types/size.enum";
   import DatePickerRow from "@21n/elements/datetime/DatePickerRow.svelte";
@@ -39,14 +39,16 @@
     parseAndFormatDate,
     isSameDay
   } from "@21n/utils/time.utils";
+  import { taskStore } from "@21n/components/tasks/task.store";
   import { toasts } from "@21n/stores/notification.store";
   import Button from "@21n/elements/button/Button.svelte";
   import { appStore } from "@21n/stores/app.store";
   import {
     removeDuplicatesFilter,
     resourceAction
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import { ButtonVariant, ButtonStyle } from "@21n/types/button.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
@@ -61,24 +63,21 @@
   import { intersection } from "@21n/actions/intersection.action";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import { AppSearchParam } from "@21n/types/appStore.type";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import { dragSelection } from "@21n/actions/dragSelection.action";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { logger } from "@21n/components/debug/logger.client";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { time } from "@datafn/client";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
 
   let {
-    objectiveId = undefined,
+    goalId = undefined,
     collectionId = undefined,
     accessPoint = undefined,
     parentBgIndex = 1,
     isPreventAddNew = false
   }: {
-    objectiveId?: IRecordId | undefined;
+    goalId?: IRecordId | undefined;
     collectionId?: IRecordId | undefined;
     accessPoint?: ResourceAccessPoint | undefined;
     parentBgIndex?: number;
@@ -87,17 +86,16 @@
 
   const instance = generateMiniRandomId();
   let tasks = $state<ITaskThumb[]>([]);
-  let taskLimit = $state(50);
+  let searchStore = new SearchStore(Resource.task);
   let searchQuery = $state("");
   let searchInputRef = $state<InlineSearchBar | undefined>(undefined);
   let isArchivedFilterSelected = $state(false);
-  let isHideObjectiveTasksFilterSelected = $state(false);
+  let isHideGoalTasksFilterSelected = $state(false);
   let dueDateFilter = $state<TaskDueDateFilter>(TaskDueDateFilter.ALL);
   let isFiltersExpanded = $state(false);
   let selectedSubType = $state<SubType>("all");
   let selectedDate = $state(new Date());
   let viewDate = $state(new Date());
-  let lastSelectableTaskIds = $state<IRecordId[]>([]);
   let taskRecordsRef = $state<TaskRecords | undefined>(undefined);
   let dateSelectionPopoverRef = $state<HTMLButtonElement | undefined>(
     undefined
@@ -106,33 +104,6 @@
   let isInSelectionMode = $state(false);
   let isShowSearchBar = $state(false);
   let bulkEditChangeUnsub = $state<(() => void) | undefined>(undefined);
-  const isSearchActive = $derived(Boolean(searchQuery.trim()));
-  const signalQuery = $derived.by(() => resolveSignalQuery());
-  const signalLimit = $derived(
-    selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH &&
-      selectedSubType !== TaskSubTypeForSwitcher.BY_DATE
-      ? taskLimit
-      : undefined
-  );
-  const taskStore = $derived.by(() =>
-    toSvelteStore(
-      datafn.task.signal({
-        select: ["*", "objective.*"],
-        filters: signalQuery.filters,
-        metadata: resolveQueryMetadata(),
-        ...(signalQuery.temporal ? { temporal: signalQuery.temporal } : {}),
-        limit: signalLimit
-      }),
-      { initialData: [] as ITaskThumb[] }
-    )
-  );
-  const signalTasks = $derived.by(() =>
-    normalizeTasks(($taskStore.data ?? []) as ITaskThumb[])
-  );
-  const displayedTasks = $derived(isSearchActive ? tasks : signalTasks);
-  const displayedIsRefreshing = $derived(
-    isSearchActive ? isRefreshing : $taskStore.loading || $taskStore.refreshing
-  );
   const multiSelectContext = $derived.by(() => ({
     resource: Resource.task,
     accessPoint: resolveAccessPoint(),
@@ -189,22 +160,16 @@
     isFiltersExpanded = resolveFiltersExpandedState();
     selectedSubType = resolveSelectedSubTypeState();
 
+    refresh();
+
     bulkEditChangeUnsub = bulkEditStore.count.subscribe((count) => {
       if (count === 0) {
         isInSelectionMode = false;
-        return;
-      }
-      if (bulkEditStore.matchesContext(multiSelectContext)) {
-        bulkEditStore.activate(multiSelectContext, {
-          onAction: onBulkAction,
-          onSelectAll: onSelectAll,
-          subContext: resolveBulkEditSubContext()
-        });
       }
     });
 
     const pageSub = page.subscribe(async (p) => {
-      const subResourceParam = objectiveId
+      const subResourceParam = goalId
         ? p.url.searchParams.get(`${instance}-${AppSearchParam.TYPE}`)
         : p.url.searchParams.get(AppSearchParam.TYPE);
       let isRefreshNeeded = false;
@@ -242,39 +207,36 @@
     isPagination?: boolean;
     scrollToDate?: boolean;
   }) {
-    if (!isSearchActive) {
-      if (params?.isPagination) taskLimit += 50;
-      else taskLimit = 50;
-      if (params?.scrollToDate) scrollToDate();
-      return;
-    }
     try {
       if (!params?.isPagination) {
         isRefreshing = true;
         tasks = [];
       }
-      const taskQuery = resolveFilters();
-      const limit =
-        selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH &&
-        selectedSubType !== TaskSubTypeForSwitcher.BY_DATE
-          ? 50
-          : undefined;
-      let result = await queryTasks({
-        filters: taskQuery.filters,
-        temporal: taskQuery.temporal,
-        query: searchQuery,
-        limit,
-        offset: params?.isPagination ? tasks.length : undefined
+      const filters = resolveFilters();
+      let result = await searchStore.select({
+        filters,
+        searchQuery,
+        limit:
+          selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH &&
+          selectedSubType !== TaskSubTypeForSwitcher.BY_DATE
+            ? 50
+            : undefined,
+        offset: params?.isPagination ? tasks.length : undefined,
+        isIgnoreParentInactive: goalId ? true : false
       });
       if (isValidArray(result)) {
-        result = normalizeTasks(result);
+        if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
+          result = result.filter((x: any) => {
+            return (
+              x.dateUnix && compareDates(new Date(x.dateUnix), new Date(), "<")
+            );
+          });
+        }
         if (params?.isPagination)
           tasks = [...tasks, ...result].filter(removeDuplicatesFilter);
         else tasks = [...result];
-        lastSelectableTaskIds = tasks.map((x) => x.id);
       } else if (!params?.isPagination) {
         tasks = [];
-        lastSelectableTaskIds = [];
       }
       isRefreshing = false;
       if (params?.scrollToDate) scrollToDate();
@@ -285,134 +247,55 @@
     }
   }
 
-  function normalizeTasks(records: ITaskThumb[]) {
-    let result = records.filter(resolveStatusFilter());
-    if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
-      result = result.filter((x: any) => {
-        return (
-          x.dateUnix && compareDates(new Date(x.dateUnix), new Date(), "<")
-        );
-      });
-    }
-    return result;
-  }
-
-  async function queryTasks(params: {
-    filters: any;
-    temporal?: ReturnType<typeof time.day>;
-    query?: string;
-    limit?: number;
-    offset?: number;
-  }) {
-    if (params.query?.trim()) {
-      const result = await datafn.search({
-        query: params.query.trim(),
-        resources: [Resource.task],
-        fields: ["label"],
-        filters: {
-          [Resource.task]: params.filters
-        },
-        ...(params.temporal
-          ? { temporalByResource: { [Resource.task]: params.temporal } }
-          : {}),
-        select: ["*", "objective.*"],
-        limit: params.limit,
-        limitPerResource: params.limit,
-        source: "local",
-        prefix: true,
-        fuzzy: 0.2
-      });
-      return (result.results?.map((entry: any) => entry.data) ?? []).filter(
-        resolveStatusFilter()
-      );
-    }
-    const result = await datafn.task.query({
-      select: ["*", "objective.*"],
-      filters: params.filters,
-      metadata: resolveQueryMetadata(),
-      ...(params.temporal ? { temporal: params.temporal } : {}),
-      limit: params.limit,
-      offset: params.offset
-    });
-    return result.data ?? [];
-  }
-
   function resolveBaseFilters() {
     return {
       isArchived: isArchivedFilterSelected ? true : undefined,
-      objectiveId: isHideObjectiveTasksFilterSelected ? false : undefined,
+      goalId: isHideGoalTasksFilterSelected ? false : undefined,
       isChecked: dueDateFilter === TaskDueDateFilter.OVERDUE ? false : undefined
     };
   }
 
-  function resolveStatusFilter() {
-    return isArchivedFilterSelected
-      ? archivedResourceFilter
-      : activeResourceFilter;
-  }
-
-  function resolveQueryMetadata() {
-    return isArchivedFilterSelected ? { includeArchived: true } : undefined;
-  }
-
-  function resolveSignalQuery() {
-    const filters: any = resolveBaseFilters();
-    if (objectiveId) {
-      filters.objectiveId = objectiveId.toString();
-    }
-    if (selectedSubType === TaskSubTypeForSwitcher.BY_DATE) {
-      return {
-        filters,
-        temporal: time.day("dateUnix", selectedDate)
-      };
-    }
-    if (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH) {
-      return {
-        filters,
-        temporal: time.month("dateUnix", selectedDate)
-      };
-    }
-    return { filters: { ...filters, dateUnix: resolveDateFilter() } };
-  }
-
   function resolveFilters() {
     let filters: any = resolveBaseFilters();
-    if (objectiveId) {
-      filters = { ...filters, objectiveId: objectiveId.toString() };
+    if (goalId) {
+      filters = { ...filters, goalId: goalId.toString() };
     }
+    let dateFilter: any = undefined;
     if (selectedSubType === TaskSubTypeForSwitcher.BY_DATE) {
-      return {
-        filters,
-        temporal: time.day("dateUnix", selectedDate)
-      };
+      dateFilter = resolveLegacyDateFilter(
+        tzStore.resolveTimePeriodFilterForDay(selectedDate)
+      );
+    } else if (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH) {
+      dateFilter = resolveLegacyDateFilter(
+        tzStore.resolveTimePeriodFilterForMonth(selectedDate)
+      );
+    } else {
+      dateFilter = resolveDateFilter();
     }
-    if (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH) {
-      return {
-        filters,
-        temporal: time.month("dateUnix", selectedDate)
-      };
-    }
-    return { filters: { ...filters, dateUnix: resolveDateFilter() } };
-  }
+    return { ...filters, dateUnix: dateFilter };
 
-  function resolveDateFilter() {
-    if (dueDateFilter === TaskDueDateFilter.ALL) return undefined;
-    else if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
-      const dayStart = datafn.temporal.resolveBucketSync({
-        value: new Date(),
-        scale: "day",
-        output: "unix-ms"
-      });
+    function resolveDateFilter() {
+      if (dueDateFilter === TaskDueDateFilter.ALL) return undefined;
+      else if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
+        const dayFilter = tzStore.resolveTimePeriodFilterForDay(new Date());
+        return {
+          lessThanOrEqual: dayFilter.$gte
+        };
+      } else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
+        return false;
+    }
+
+    function resolveLegacyDateFilter(filter: { $gte: number; $lte: number }) {
       return {
-        $lte: typeof dayStart === "number" ? dayStart : Date.now()
+        greaterThanOrEqual: filter.$gte,
+        lessThanOrEqual: filter.$lte
       };
-    } else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
-      return false;
+    }
   }
 
   function resolveAccessPoint() {
     if (accessPoint) return accessPoint;
-    if (objectiveId) return ResourceAccessPoint.OBJECTIVE;
+    if (goalId) return ResourceAccessPoint.GOAL;
     else if (collectionId) return ResourceAccessPoint.COLLECTION;
     return ResourceAccessPoint.LIBRARY;
   }
@@ -431,33 +314,22 @@
   async function onAdd(e: any) {
     const label = e.detail;
     if (!label) return;
-    try {
-      const newTaskDate = resolveDateForNewTask();
-      const now = new Date();
-      const createdTask = {
-        id: generateResourceId(Resource.task),
+    const createdTasks =
+      (await taskStore.save({
         label,
-        dateUnix: newTaskDate ? resolveUnixTimestamp(newTaskDate) : 0,
-        isChecked: false,
-        objectiveId: objectiveId ?? "",
-        createdAt: now,
-        updatedAt: now
-      };
-      await datafn.task.mutate({
-        operation: "insert",
-        id: createdTask.id,
-        record: createdTask,
-        context: resourceAction(Resource.task, ResourceActionType.CREATE)
-      });
-      appStore.addToRecents({
-        record: createdTask,
-        type: Resource.task,
-        timestamp: new Date()
-      });
-      if (isSearchActive) tasks = [...tasks, createdTask];
+        dateUnix: resolveUnixTimestamp(resolveDateForNewTask()),
+        goalId,
+        collectionId
+      })) ?? [];
+    if (isValidArrayWithData(createdTasks)) {
+      const createdTask = createdTasks[0];
+      if (!createdTask) {
+        toasts.error("Failed to add task. Please try again.");
+        return;
+      }
+      tasks = [...tasks, createdTask];
       toasts.success("Task created successfully.");
-    } catch (error) {
-      logger.error({ at: "TaskLibrary.onAdd", error });
+    } else {
       toasts.error("Failed to add task. Please try again.");
     }
 
@@ -470,23 +342,12 @@
     }
   }
 
-  function resolveVisibleTaskIds() {
-    if (typeof document === "undefined") return [];
-    return Array.from(
-      document.querySelectorAll<HTMLElement>(
-        "#task-library div[id^='thumbnail-task:'][data-id]"
-      )
-    )
-      .map((element) => element.dataset.id)
-      .filter((id): id is IRecordId => !!id);
+  function onResourceMutation(e: any) {
+    refresh();
   }
 
   function onSelectAll() {
-    const visibleTaskIds = resolveVisibleTaskIds();
-    if (visibleTaskIds.length > 0) return visibleTaskIds;
-    if (displayedTasks.length > 0) return displayedTasks.map((x) => x.id);
-    if (displayedIsRefreshing) return lastSelectableTaskIds;
-    return [];
+    return tasks.map((x) => x.id);
   }
 
   async function onBulkAction(
@@ -504,7 +365,7 @@
   }
 
   function resolveAccessPointId() {
-    if (objectiveId) return objectiveId.toString();
+    if (goalId) return goalId.toString();
     else if (collectionId) return collectionId.toString();
     return undefined;
   }
@@ -525,7 +386,6 @@
     "p-4": accessPoint === ResourceAccessPoint.LIBRARY,
     "px-4": accessPoint === ResourceAccessPoint.BROWSER
   })}
-  data-testid="task-library"
   id="task-library"
   use:dragSelection={{
     selectableSelector: "div[id^='thumbnail-']",
@@ -552,10 +412,10 @@
     resource={Resource.task}
     accessPoint={resolveAccessPoint()}
     {selectedSubType}
-    subContext={objectiveId ? instance : undefined}
+    subContext={goalId ? instance : undefined}
   >
     <Toggle bind:on={isShowSearchBar} icon="search" tooltip="Search" />
-    {#if selectedSubType !== TaskSubTypeForSwitcher.BY_DATE || !objectiveId}
+    {#if selectedSubType !== TaskSubTypeForSwitcher.BY_DATE || !goalId}
       <Toggle
         bind:on={isFiltersExpanded}
         icon="ph:sliders-light"
@@ -563,7 +423,7 @@
         onChange={() => persistFiltersExpandedState()}
       />
     {/if}
-    {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.OBJECTIVE)}
+    {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
       <Button
         icon="plus"
         type={ButtonVariant.PRIMARY}
@@ -578,7 +438,7 @@
                 selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
                   ? selectedDate
                   : undefined,
-              objectiveId: objectiveId,
+              goalId: goalId,
               collectionId: collectionId
             }
           });
@@ -610,11 +470,11 @@
           }}
         />
       {/if}
-      {#if !objectiveId}
+      {#if !goalId}
         <SwitchInput
-          bind:checked={isHideObjectiveTasksFilterSelected}
+          bind:checked={isHideGoalTasksFilterSelected}
           isExpanded={true}
-          label={{ label: "Hide tasks with an objective" }}
+          label={{ label: "Hide tasks with a goal" }}
           onChange={() => refresh()}
         />
       {/if}
@@ -703,12 +563,12 @@
   >
     <TaskRecords
       bind:this={taskRecordsRef}
-      data={displayedTasks}
+      data={tasks}
       accessPoint={resolveAccessPoint()}
       accessPointId={resolveAccessPointId()}
       {parentBgIndex}
       subType={selectedSubType}
-      isRefreshing={displayedIsRefreshing}
+      {isRefreshing}
       {searchQuery}
       onCreate={() => {
         appStore.runAction(PointronAction.CREATE_TASK_INLINE, {
@@ -718,7 +578,7 @@
               selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
                 ? selectedDate
                 : undefined,
-            objectiveId: objectiveId,
+            goalId: goalId,
             collectionId: collectionId
           }
         });
@@ -735,3 +595,16 @@
     <ScrollViewBottomSpacer />
   </div>
 </div>
+<ComponentBaseLayer
+  syncDownOnMount={true}
+  subscribeToResource={new Set([Resource.task])}
+  subscriptionPropsForMergeAction={[
+    RemovalProperty.IS_ARCHIVED,
+    RemovalProperty.TRASH_INFORMATION,
+    "dateUnix"
+  ]}
+  onSyncDown={() => {
+    refresh();
+  }}
+  onChange={onResourceMutation}
+/>

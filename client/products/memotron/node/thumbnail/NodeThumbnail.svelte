@@ -18,7 +18,7 @@
   } from "@21n/products/memotron/node/node.utils";
   import ResourceGridThumbnail from "@21n/components/record/thumbnail/ResourceGridThumbnail.svelte";
   import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import NodeThumbnailTitle from "@21n/products/memotron/node/thumbnail/NodeThumbnailTitle.svelte";
@@ -36,11 +36,13 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { fileStore } from "@21n/components/files/file.store";
   import type { IFile } from "@21n/components/files/file.type";
+  import { onMount } from "svelte";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
-  import CollectionItemThumbnailProperties from "@21n/components/collection/properties/CollectionItemThumbnailProperties.svelte";
+  import NodeThumbnailProperties from "@21n/products/memotron/node/thumbnail/NodeThumbnailProperties.svelte";
   import type { IProperty } from "@21n/components/collection/properties/property.type";
   import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
   import ImagePreview from "@21n/products/memotron/node/content/ImagePreview.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import NodeThumbnailTwitterProfilePreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailTwitterProfilePreview.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import NodeThumbnailSocialPostPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
@@ -61,6 +63,7 @@
     isDraggable = false,
     refreshId = new Date().getTime(),
     isAlwaysShowContextMenuOnTouchDevice = false,
+    isHovering = $bindable(false),
     onAction = undefined,
     onClick = undefined,
     onLoad = undefined,
@@ -82,6 +85,7 @@
     isDraggable?: boolean;
     refreshId?: number;
     isAlwaysShowContextMenuOnTouchDevice?: boolean;
+    isHovering?: boolean;
     onAction?: ((event: CustomEvent<any>) => void) | undefined;
     onClick?: ((event: MouseEvent) => void) | undefined;
     onLoad?: ((event: CustomEvent<Event>) => void) | undefined;
@@ -91,12 +95,8 @@
   let item = $state<INode | INodeThumb>(itemProp);
 
   let _url = $state<string | undefined>(undefined);
-  let filePreview = $derived(
-    resolveFilePreview(item) as IFile | IRecordId | undefined
-  );
-  let hasFullFileDetails = $derived(
-    !!filePreview && typeof filePreview === "object"
-  );
+  let filePreview = $derived(resolveFilePreview(item) as IFile | IRecordId | undefined);
+  let hasFullFileDetails = $derived(!!filePreview && typeof filePreview === "object");
   let resolvedFilePreview = $derived(
     hasFullFileDetails ? (filePreview as IFile) : undefined
   );
@@ -147,7 +147,6 @@
 
   $effect(() => {
     item = itemProp;
-    refreshId = new Date().getTime();
   });
 
   $effect(() => {
@@ -165,18 +164,23 @@
     );
   });
 
-  $effect(() => {
-    filePreview;
-    void resolveUrl();
+  onMount(async () => {
+    await resolveUrl();
   });
 
   async function resolveUrl() {
     if (item?.file) {
       const result = await fileStore.refresh(item.file);
       if (result) _url = result.url ?? "";
-      return;
     }
-    _url = undefined;
+  }
+
+  function onNodeChange(e: any) {
+    const data = e.detail?.params?.record;
+    if (data) {
+      item = { ...item, ...data };
+      refreshId = new Date().getTime();
+    }
   }
 
   function propagateClick(event: MouseEvent) {
@@ -209,6 +213,7 @@
   {arrangement}
   {isHidePreview}
   {isAlwaysShowContextMenuOnTouchDevice}
+  bind:isHovering
   onAction={propagateAction}
   right={rightContent}
 >
@@ -230,7 +235,7 @@
         class={cn(
           "flex w-full items-center border- rounded--md truncate",
           !isFullExpand && {
-            "h-16":
+          "h-16":
               (!isLinkContext || isFullExpand) &&
               (!visibleProps || visibleProps.length === 0)
           }
@@ -324,21 +329,18 @@
             {#if !isLinkContext}
               <div class="text-b4 text-fgs3">
                 {#if accessPoint === ResourceAccessPoint.CALENDAR}
-                  {formatTime($userPreferences, new Date(item.createdAt))}
+                  {formatTime($userPreferences, item.createdAt)}
                 {:else}
-                  {formatDatetime($userPreferences, new Date(item.createdAt))}
+                  {formatDatetime($userPreferences, item.createdAt)}
                 {/if}
               </div>
             {/if}
             {#if visibleProps.length > 0 && !isLinkContext}
               <div class="py-1">
-                <CollectionItemThumbnailProperties
-                  {item}
-                  values={item.propertyValues}
+                <NodeThumbnailProperties
+                  values={item.properties}
                   properties={visibleProps}
-                  collectionId={accessPoint === ResourceAccessPoint.COLLECTION
-                    ? accessPointId
-                    : undefined}
+                  nodeId={item.id}
                   {accessPoint}
                 />
               </div>
@@ -435,25 +437,22 @@
         </div>
       {/if}
       {#snippet bottom()}
-        <div class="flex flex-col w-full h--5">
-          {#key refreshId}
-            <NodeThumbnailTitle node={item} {accessPoint} />
-          {/key}
-          {#if visibleProps.length > 0}
-            <div class="py-1">
-              <CollectionItemThumbnailProperties
-                {item}
-                values={item.propertyValues}
-                properties={visibleProps}
-                collectionId={accessPoint === ResourceAccessPoint.COLLECTION
-                  ? accessPointId
-                  : undefined}
-                {accessPoint}
-              />
-            </div>
-          {/if}
-          {@render bottomContent?.()}
-        </div>
+      <div class="flex flex-col w-full h--5">
+        {#key refreshId}
+          <NodeThumbnailTitle node={item} {accessPoint} />
+        {/key}
+        {#if visibleProps.length > 0}
+          <div class="py-1">
+            <NodeThumbnailProperties
+              values={item.properties}
+              properties={visibleProps}
+              nodeId={item.id}
+              {accessPoint}
+            />
+          </div>
+        {/if}
+        {@render bottomContent?.()}
+      </div>
       {/snippet}
     </ResourceGridThumbnail>
   {:else if arrangement === Arrangement.MASONRY}
@@ -545,13 +544,10 @@
         </div>
         {#if visibleProps.length > 0}
           <div class="py-1">
-            <CollectionItemThumbnailProperties
-              {item}
-              values={item.propertyValues}
+            <NodeThumbnailProperties
+              values={item.properties}
               properties={visibleProps}
-              collectionId={accessPoint === ResourceAccessPoint.COLLECTION
-                ? accessPointId
-                : undefined}
+              nodeId={item.id}
               {accessPoint}
             />
           </div>
@@ -560,3 +556,5 @@
     {/if}
   {/if}
 </ResourceThumbnailBase>
+
+<ComponentBaseLayer subscribeToRecords={[item.id]} onChange={onNodeChange} />

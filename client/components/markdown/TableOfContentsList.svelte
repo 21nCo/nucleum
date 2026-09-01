@@ -3,7 +3,7 @@
   import {
     isSameResource,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import { tooltip } from "@21n/actions/popover.action";
 
   let {
@@ -20,7 +20,9 @@
 </script>
 
 {#each headingBlocks as block}
-  {@const isInView = $mdStore?.headingsInView?.some(resourceInList(block))}
+  {@const isInView = $mdStore?.headingsInView?.some(
+    resourceInList(block)
+  )}
   {@const isFirstInView =
     $mdStore?.headingsInView?.[0] &&
     isSameResource($mdStore.headingsInView[0], block)}

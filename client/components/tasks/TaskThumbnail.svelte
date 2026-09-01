@@ -5,18 +5,20 @@
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
   import { compareDates, parseAndFormatDate } from "@21n/utils/time.utils";
   import TaskCheckbox from "@21n/components/tasks/TaskCheckbox.svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import { taskStore } from "@21n/components/tasks/task.store";
   import Button from "@21n/elements/button/Button.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import type { IRecordId } from "@21n/types/data.type";
-  import TaskThumbnailObjectiveLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
+  import TaskThumbnailGoalLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import ResourceThumbnailContextMenu from "@21n/components/record/thumbnail/ResourceThumbnailContextMenu.svelte";
   import view from "@21n/stores/view.store";
@@ -24,6 +26,7 @@
   import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
+  import { goalStore } from "@21n/components/goals/goal.store";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import FocusItemPickOverlay from "@21n/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
   import {
@@ -33,13 +36,12 @@
   import { movingBorder } from "@21n/actions/movingBorder.action";
   import { appStore } from "@21n/stores/app.store";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
-  import { resolveBulkSelectionAccessPointId } from "@21n/data/datafn/resource.utils";
+  import { resolveBulkSelectionAccessPointId } from "@21n/components/flux/resourceStores/resource.utils";
   import Task from "@21n/components/tasks/Task.svelte";
   import context from "@21n/stores/context.store";
   import { stringify } from "@21n/shared-utils/json.utils";
-  import { datafn } from "@21n/stores/datafn.store";
 
   let {
     item: initialItem,
@@ -50,7 +52,7 @@
     isApplyCustomColor = false,
     isDraggable = false,
     parentBgIndex = 1,
-    isShowObjective = false,
+    isShowGoal = false,
     onClick = undefined
   }: {
     item: ITaskThumb;
@@ -61,7 +63,7 @@
     isApplyCustomColor?: boolean;
     isDraggable?: boolean;
     parentBgIndex?: number;
-    isShowObjective?: boolean;
+    isShowGoal?: boolean;
     onClick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
 
@@ -72,11 +74,6 @@
   let isDatePickerOpen = $state(false);
   let isShowDatePickerOnCw = $state(false);
   let isTaskOpened = $state(false);
-
-  $effect(() => {
-    item = initialItem;
-  });
-
   const dev_isEnableBorderAnimation = false;
   const dev_isRenderTaskAsSheetOnMobile = false;
   const isOverdue = $derived(
@@ -90,7 +87,10 @@
   const multiSelectContext = $derived({
     resource: Resource.task,
     accessPoint,
-    accessPointId: resolveBulkSelectionAccessPointId(accessPoint, accessPointId)
+    accessPointId: resolveBulkSelectionAccessPointId(
+      accessPoint,
+      accessPointId
+    )
   });
   let hasBulkSelection = $state(false);
 
@@ -109,6 +109,44 @@
 
   const instanceId = generateMiniRandomId();
 
+  type TaskMutationRecord = {
+    isChecked?: boolean;
+    goalId?: string | undefined;
+    label?: string;
+    dateUnix?: number | undefined;
+    completedAtUnix?: number | undefined;
+  };
+
+  async function onTaskChanges(detail: {
+    resource?: unknown;
+    params?: { record?: TaskMutationRecord };
+    context?: string;
+  } | { key: string }) {
+    const record = "params" in detail ? detail.params?.record : undefined;
+    if (!record) return;
+    if (record.isChecked !== undefined) {
+      if (!record.isChecked) {
+        item.isChecked = false;
+        item.completedAtUnix = undefined;
+      } else {
+        item.isChecked = true;
+        item.completedAtUnix = resolveUnixTimestamp();
+      }
+    } else if (record.goalId !== undefined && record.goalId !== item.goalId) {
+      item.goalId = record.goalId;
+      item.goal = await goalStore.select(record.goalId);
+    } else if (record.label !== undefined && record.label !== item.label) {
+      item.label = record.label;
+    } else if (record.dateUnix !== undefined && record.dateUnix !== item.dateUnix) {
+      item.dateUnix = record.dateUnix;
+    } else if (
+      record.completedAtUnix !== undefined &&
+      record.completedAtUnix !== item.completedAtUnix
+    ) {
+      item.completedAtUnix = record.completedAtUnix;
+    }
+  }
+
   function onContextMenuAction(event: CustomEvent) {
     const action = event.detail.action;
     if (action === "editDate") {
@@ -116,22 +154,20 @@
     } else if (action === "openTask") {
       if ($view.isConstrainedWidth && dev_isRenderTaskAsSheetOnMobile)
         isTaskOpened = true;
-      else openTask();
+      else appStore.openResource(item.id, AccessMode.POP);
     }
   }
 
   async function onDateChange(val: Date | undefined) {
     if (!val) return;
     item.dateUnix = resolveUnixTimestamp(val);
-    await datafn.task.mutate({
-      operation: "merge",
-      id: item.id.toString(),
-      record: {
-        id: item.id.toString(),
-        dateUnix: item.dateUnix
-      },
-      context: accessPoint
-    });
+    await taskStore.modify(
+      item.id,
+      { dateUnix: item.dateUnix },
+      {
+        context: accessPoint
+      }
+    );
     isShowDatePickerOnCw = false;
   }
 
@@ -154,60 +190,6 @@
       isShowDatePickerOnCw = false;
     }
   }
-
-  function isInteractiveClick(event: MouseEvent) {
-    const target = event.target as HTMLElement | null;
-    if (
-      accessPoint === ResourceAccessPoint.OBJECTIVE &&
-      target instanceof HTMLInputElement &&
-      accessPointId
-    ) {
-      const selectedTask = new URL(window.location.href).searchParams.get(
-        appStore.resolveRecordSpecificSearchParam(accessPointId, "task")
-      );
-      return selectedTask === item.id.toString();
-    }
-    return !!target?.closest(
-      "button,input,textarea,select,a,[contenteditable='true'],[role='textbox']"
-    );
-  }
-
-  function openTask(event?: MouseEvent) {
-    const isInlineContext =
-      !$view.isConstrainedWidth &&
-      (accessPoint === ResourceAccessPoint.BROWSER ||
-        accessPoint === ResourceAccessPoint.OBJECTIVE);
-    if (isInlineContext && accessPoint === ResourceAccessPoint.OBJECTIVE) {
-      if (accessPointId)
-        appStore.toggleSearchParamRecordSpecific(accessPointId, {
-          task: item.id.toString()
-        });
-      return;
-    }
-    appStore.openResource(
-      item.id,
-      isInlineContext ? AccessMode.INLINE : AccessMode.POP,
-      {
-        origin:
-          accessPoint === ResourceAccessPoint.OBJECTIVE ? accessPointId : undefined
-      }
-    );
-  }
-
-  function handleThumbnailClick(event: MouseEvent) {
-    if (onClick) {
-      onClick(event);
-      return;
-    }
-    if (
-      accessPoint === ResourceAccessPoint.PICKER ||
-      accessPoint === ResourceAccessPoint.SELF ||
-      isInteractiveClick(event)
-    ) {
-      return;
-    }
-    openTask(event);
-  }
 </script>
 
 <ResourceThumbnailBase
@@ -215,10 +197,10 @@
   {arrangement}
   {accessPoint}
   {accessPointId}
-  {isApplyCustomColor}
-  {isDraggable}
-  isPreventDefaultContextMenu={true}
-  onClick={handleThumbnailClick}
+    {isApplyCustomColor}
+    {isDraggable}
+    isPreventDefaultContextMenu={true}
+    onClick={onClick}
 >
   {#if $view.isConstrainedWidth && isTaskOpened}
     <div
@@ -243,8 +225,8 @@
       "border-aps1": isCurrentlyFocusing,
       "border-transparent hover:border-brs2":
         !isCurrentlyFocusing && accessPoint !== ResourceAccessPoint.SELF,
-      "min-h-14 h-14": item.objective && isShowObjective,
-      "min-h-10 h-10": !item.objective || !isShowObjective
+      "min-h-14 h-14": item.goal && isShowGoal,
+      "min-h-10 h-10": !item.goal || !isShowGoal
     })}
     use:movingBorder={{
       speed: 4000,
@@ -260,7 +242,7 @@
   >
     <div
       class={cn("flex", {
-        "self-start": item.objective && accessPoint !== ResourceAccessPoint.OBJECTIVE,
+        "self-start": item.goal && accessPoint !== ResourceAccessPoint.GOAL,
         "opacity-0": hasBulkSelection
       })}
     >
@@ -272,8 +254,8 @@
       />
     </div>
     <div class="flex-1 min-w-0 flex flex-col userdata whitespace-no-wrap">
-      {#if item.objective && isShowObjective}
-        <TaskThumbnailObjectiveLabel objective={item.objective} {accessPoint} />
+      {#if item.goal && isShowGoal}
+        <TaskThumbnailGoalLabel goal={item.goal} {accessPoint} />
       {/if}
       {#if item.isChecked}
         <span class="flex line-through whitespace-no-wrap w-full">
@@ -288,15 +270,11 @@
             style={InputStyle.PLAIN}
             placeholder="Task name"
             onDebouncedChange={(e) => {
-              datafn.task.mutate({
-                operation: "merge",
-                id: item.id.toString(),
-                record: {
-                  id: item.id.toString(),
-                  label: e.detail
-                },
-                context: accessPoint
-              });
+              taskStore.modify(
+                item.id,
+                { label: e.detail },
+                { context: accessPoint }
+              );
             }}
           />
         </span>
@@ -359,7 +337,7 @@
         {@const isInlineContext =
           !$view.isConstrainedWidth &&
           (accessPoint === ResourceAccessPoint.BROWSER ||
-            accessPoint === ResourceAccessPoint.OBJECTIVE)}
+            accessPoint === ResourceAccessPoint.GOAL)}
         {#if !isCurrentlyFocusing}
           <Button
             icon="circle"
@@ -368,7 +346,7 @@
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}
             onclick={() => {
-              activeSession.focusTask(item.id, item.objectiveId ?? undefined);
+              activeSession.focusTask(item.id, item.goalId);
             }}
           />
         {/if}
@@ -402,7 +380,19 @@
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
           isPreventMinWidth={true}
-          onclick={openTask}
+          onclick={() => {
+            if (isInlineContext && accessPoint === ResourceAccessPoint.GOAL) {
+              if (accessPointId)
+                appStore.toggleSearchParamRecordSpecific(accessPointId, {
+                  task: item.id.toString()
+                });
+              return;
+            }
+            appStore.openResource(
+              item.id,
+              isInlineContext ? AccessMode.INLINE : AccessMode.POP
+            );
+          }}
         />
       {/if}
       <ResourceThumbnailContextMenu
@@ -420,3 +410,4 @@
     {/if}
   </div>
 </ResourceThumbnailBase>
+<ComponentBaseLayer subscribeToRecords={[item.id]} onChange={onTaskChanges} />

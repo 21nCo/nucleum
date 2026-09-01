@@ -1,11 +1,8 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import type {
-    DropdownGroup,
-    DropdownItem
-  } from "@21n/types/dropdownItem.type";
+  import type { DropdownGroup, DropdownItem } from "@21n/types/dropdownItem.type";
   import { InputStyle } from "@21n/types/input.type";
   import { Size } from "@21n/types/size.enum";
   import { AnalyticsCardType } from "@21n/products/pointron/analytics/analytics.types";
@@ -87,7 +84,7 @@
       badge: "new"
     },
     {
-      label: "Top objectives",
+      label: "Top goals",
       value: AnalyticsCardType.TOP_N,
       icon: resolveChartIcon(AnalyticsCardType.TOP_N),
       groupId: "other"
@@ -97,7 +94,7 @@
       value: AnalyticsCardType.METRICS,
       icon: resolveChartIcon(AnalyticsCardType.METRICS),
       groupId: "other"
-    }
+    },
   ];
   let groups: DropdownGroup[] = [
     {
@@ -106,7 +103,7 @@
       order: 0
     }
   ];
-  if (accessPoint !== ResourceAccessPoint.OBJECTIVE) {
+  if (accessPoint !== ResourceAccessPoint.GOAL) {
     groups.push(
       ...[
         {
@@ -161,7 +158,7 @@
   }
 </script>
 
-{#if accessPoint === ResourceAccessPoint.OBJECTIVE}
+{#if accessPoint === ResourceAccessPoint.GOAL}
   <ContextMenuAction
     id="chart-selector"
     icon={resolveChartIcon(selected)}

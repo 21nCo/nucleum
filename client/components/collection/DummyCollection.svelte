@@ -2,7 +2,7 @@
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import Collection from "@21n/components/collection/Collection.svelte";
   let {
     id,

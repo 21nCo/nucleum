@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { untrack } from "svelte";
   import type { IRecordId } from "@21n/types/data.type";
+  import { onMount } from "svelte";
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { taskStore } from "@21n/components/tasks/task.store";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { recentsStore } from "@21n/components/record/recent.store";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
@@ -20,11 +22,13 @@
   import { appStore } from "@21n/stores/app.store";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
-  import TaskThumbnailObjectiveLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
+  import TaskThumbnailGoalLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
-  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { SearchStore } from "@21n/components/record/record.store";
   import { Product } from "@21n/products/product.type";
+  import { goalStore } from "@21n/components/goals/goal.store";
   import {
     activeSession,
     currentFocusItem
@@ -34,9 +38,6 @@
   import RecordTrashBanner from "@21n/components/record/RecordTrashBanner.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import view from "@21n/stores/view.store";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { resolveTrashedAtDate } from "@21n/data/datafn/resource.utils";
 
   let {
     id,
@@ -50,76 +51,69 @@
     accessPointId?: IRecordId | undefined;
   } = $props();
 
+  let isRefreshing = $state(false);
   let status = $state<IInlineStatus | undefined>(undefined);
   let task = $state<ITaskThumb | undefined>(undefined);
   let date = $state<Date | undefined>(undefined);
   let completedDate = $state<Date | undefined>(undefined);
   let inputRef = $state<TextInput | undefined>(undefined);
-  let isShowObjectivePicker = $state(
+  let isShowGoalPicker = $state(
     $appStore.product === Product.POINTRON ||
-      $appStore.product === Product.NUCLEUM
+    $appStore.product === Product.NUCLEUM
   );
-  let objectiveSearchQuery = $state("");
-  let objective = $state<IObjectiveThumb | undefined>(undefined);
+  let goalSearchQuery = $state("");
+  let goal = $state<IGoalThumb | undefined>(undefined);
+  const searchStore = new SearchStore(Resource.goal);
   const isCurrentlyFocusing = $derived(
     activeSession.isCurrentFocusItem(id, $currentFocusItem)
   );
-  const taskStore = $derived.by(() =>
-    toSvelteStore(
-      datafn.task.signal({
-        select: ["*", "objective.*"],
-        filters: {
-          id: id?.toString()
-        },
-        limit: 1,
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }),
-      { initialData: [] }
-    )
-  );
-  const isLoading = $derived($taskStore.loading);
-  const trashedAt = $derived(resolveTrashedAtDate(task));
 
-  $effect(() => {
-    const record = $taskStore.data?.[0];
-    if (record) {
-      untrack(() => applyTaskRecord(record));
-    }
+  onMount(async () => {
+    await refresh();
   });
 
-  async function updateTaskRecord(properties: Partial<ITaskThumb>) {
-    return datafn.task.mutate({
-      operation: "merge",
-      id: id.toString(),
-      record: {
-        id: id.toString(),
-        ...properties
+  async function refresh() {
+    isRefreshing = true;
+    const result = await taskStore.selectMany(
+      {
+        filters: {
+          id: id?.toString()
+        }
       },
-      context: accessPoint
-    });
-  }
-
-  function applyTaskRecord(record: ITaskThumb) {
-    task = record;
-    if (!task) return;
-    date = task.dateUnix ? new Date(task.dateUnix) : undefined;
-    completedDate = task.completedAtUnix
-      ? new Date(task.completedAtUnix)
-      : undefined;
-    if (task.objective) {
-      objective = task.objective;
-      isShowObjectivePicker = false;
-    } else if (!task.objectiveId) {
-      objective = undefined;
-      isShowObjectivePicker = true;
+      {
+        isExpand: true
+      }
+    );
+    if (isValidArrayWithData(result)) {
+      task = result[0];
+      if (!task) return;
+      if (task.dateUnix) date = new Date(task.dateUnix);
+      if (task.completedAtUnix) completedDate = new Date(task.completedAtUnix);
+      if (task.goalId && !task.goal) {
+        const result = await goalStore.selectMany(
+          {
+            filters: {
+              id: task.goalId as IRecordId
+            }
+          },
+          {
+            isExpand: true
+          }
+        );
+        if (isValidArrayWithData(result)) {
+          goal = result[0];
+        }
+        isShowGoalPicker = false;
+      } else if (task.goal) {
+        goal = task.goal;
+        isShowGoalPicker = false;
+      }
+      recentsStore.add(task, {
+        type: Resource.task,
+        timestamp: new Date()
+      });
     }
-    recentsStore.add(task, {
-      type: Resource.task,
-      timestamp: new Date()
-    });
+    isRefreshing = false;
   }
 
   async function handleLabelChange(e: CustomEvent) {
@@ -127,7 +121,11 @@
       message: "Updating task name...",
       type: AlertType.PROGRESS
     };
-    const result = await updateTaskRecord({ label: e.detail });
+    const result = await taskStore.modify(
+      id,
+      { label: e.detail },
+      { context: accessPoint }
+    );
     if (result) {
       status = {
         message: "Task name updated",
@@ -148,7 +146,13 @@
       type: AlertType.PROGRESS
     };
     task.dateUnix = resolveUnixTimestamp(val);
-    const result = await updateTaskRecord({ dateUnix: task.dateUnix });
+    const result = await taskStore.modify(
+      task.id,
+      { dateUnix: task.dateUnix },
+      {
+        context: accessPoint
+      }
+    );
     if (result) {
       status = {
         message: "Due date updated",
@@ -165,9 +169,11 @@
     const val = e.detail;
     if (!task) return;
     task.completedAtUnix = resolveUnixTimestamp(val);
-    const result = await updateTaskRecord({
-      completedAtUnix: task.completedAtUnix
-    });
+    const result = await taskStore.modify(
+      task.id,
+      { completedAtUnix: task.completedAtUnix },
+      { context: accessPoint }
+    );
     if (result) {
       status = {
         message: "Completed date updated",
@@ -181,62 +187,69 @@
     }
   }
 
-  function objectiveSearchCallback(query: string) {
-    return datafn.objective.query({
-      select: ["*", "parent.*"],
-      search: query ? { query, fields: ["label"] } : undefined,
+  function goalSearchGoalCallback(query: string) {
+    return searchStore.select({
+      searchQuery: query,
       limit: 30
-    }).then((result) => result.data);
+    });
   }
 
-  async function onObjectiveSelect(e: CustomEvent<{ item: IObjectiveThumb }>) {
-    objective = e.detail.item;
-    isShowObjectivePicker = false;
+  async function onGoalSelect(e: CustomEvent<{ item: IGoalThumb }>) {
+    goal = e.detail.item;
+    isShowGoalPicker = false;
     if (!task) return;
     status = {
-      message: "Updating objective...",
+      message: "Updating goal...",
       type: AlertType.PROGRESS
     };
-    task.objectiveId = objective.id;
-    const result = await updateTaskRecord({ objectiveId: objective.id });
+    task.goalId = goal.id;
+    const result = await taskStore.modify(
+      task.id,
+      { goalId: goal.id },
+      { context: accessPoint }
+    );
     if (result) {
       status = {
-        message: "Objective updated",
+        message: "Goal updated",
         type: AlertType.SUCCESS
       };
     } else {
       status = {
-        message: "Failed to update objective. Please try again.",
+        message: "Failed to update goal. Please try again.",
         type: AlertType.ERROR
       };
     }
   }
 
-  async function onObjectiveClear() {
+  async function onGoalClear() {
     if (!task) return;
     status = {
-      message: "Clearing objective...",
+      message: "Clearing goal...",
       type: AlertType.PROGRESS
     };
-    const result = await updateTaskRecord({ objectiveId: null as any });
+    const result = await taskStore.modify(
+      task.id,
+      { goalId: undefined },
+      { context: accessPoint }
+    );
     if (result) {
-      objective = undefined;
-      task.objectiveId = undefined;
-      isShowObjectivePicker = true;
+      goal = undefined;
+      task.goalId = undefined;
+      isShowGoalPicker = true;
       status = {
-        message: "Objective cleared",
+        message: "Goal cleared",
         type: AlertType.SUCCESS
       };
     } else {
       status = {
-        message: "Failed to clear objective. Please try again.",
+        message: "Failed to clear goal. Please try again.",
         type: AlertType.ERROR
       };
     }
   }
 
   function onClose() {
-    if (accessPoint === ResourceAccessPoint.OBJECTIVE) {
+    if (accessPoint === ResourceAccessPoint.GOAL) {
       if (accessPointId)
         appStore.toggleSearchParamRecordSpecific(accessPointId, ["task"]);
     } else {
@@ -257,8 +270,8 @@
     }
   )}
 >
-  {#if isLoading}
-    <EmptyStatusView isLoadingState={isLoading} />
+  {#if isRefreshing}
+    <EmptyStatusView isLoadingState={isRefreshing} />
   {:else if task}
     <div
       class="w-full flex flex-col justify-between gap-4 h-full userdata ph-no-capture"
@@ -274,19 +287,19 @@
           </div>
         {/if}
         <div class="flex flex-col gap-1">
-          {#if isShowObjectivePicker}
+          {#if isShowGoalPicker}
             <TextSearchInput
-              bind:value={objectiveSearchQuery}
-              searchCallback={objectiveSearchCallback}
-              placeholder="Search to assign an objective"
+              bind:value={goalSearchQuery}
+              searchCallback={goalSearchGoalCallback}
+              placeholder="Search to assign a goal"
               icon="plus"
-              onSelect={onObjectiveSelect}
+              onSelect={onGoalSelect}
               style={InputStyle.PLAIN}
             />
-          {:else if objective}
-            <TaskThumbnailObjectiveLabel
-              {objective}
-              onClearObjective={onObjectiveClear}
+          {:else if goal}
+            <TaskThumbnailGoalLabel
+              {goal}
+              onClearGoal={onGoalClear}
               {accessPoint}
             />
           {/if}
@@ -347,13 +360,11 @@
             <span> Currently focusing... </span>
           </button>
         {/if}
-        {#if trashedAt}
+        {#if task.trashInformation}
           <RecordTrashBanner
-            deletedAt={trashedAt.toISOString()}
-            onRestore={async () => {
-              await datafn.task.mutate({
-                operation: "restore",
-                id: id.toString(),
+            deletedAt={task.trashInformation.deletedAt.toISOString()}
+            onRestore={() => {
+              taskStore.restore(id, {
                 context: accessPoint
               });
             }}
@@ -368,10 +379,8 @@
             label="Delete"
             style={ButtonStyle.OUTLINED}
             type={ButtonVariant.DANGER}
-            onclick={async () => {
-              await datafn.task.mutate({
-                operation: "trash",
-                id: id.toString(),
+            onclick={() => {
+              taskStore.trash(id, {
                 context: accessPoint
               });
               appStore.closeResource({

@@ -1,18 +1,15 @@
 <script lang="ts">
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
+  import {
+    linker,
+    linkTagStore
+  } from "@21n/products/memotron/linking/link.store";
   import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
   import type { IRecordId } from "@21n/types/data.type";
   import { logger } from "@21n/components/debug/logger.client";
-  import {
-    LinkType,
-    type ILinkTag
-  } from "@21n/products/memotron/linking/link.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
-  import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
-  import { determineResourceType } from "@21n/data/datafn/resource.utils";
+  import { LinkType } from "@21n/products/memotron/linking/link.type";
 
   let {
     link = $bindable(),
@@ -35,49 +32,22 @@
     onTag?.(tagEvent);
   }
 
-  function parseLinkId(id: IRecordId) {
-    const [from, to] = id.toString().split("|");
-    return from && to ? { from, to } : undefined;
-  }
-
-  async function updateRelationTags(
-    row: NonNullable<INodeLinkThumb["links"]>[number],
-    tags: IRecordId[] = []
-  ) {
-    const parsed = parseLinkId(row.id);
-    if (!parsed) return;
-    const fromResource = determineResourceType(parsed.from);
-    const toResource = determineResourceType(parsed.to);
-    return datafn.table(fromResource).mutate({
-      operation: "modifyRelation",
-      id: parsed.from,
-      relations: {
-        links: [
-          {
-            $ref: parsed.to,
-            fromResource: fromResource.toString(),
-            toResource: toResource.toString(),
-            linkType: row.linkType ?? LinkType.DIRECT,
-            tags
-          }
-        ]
-      }
-    } as any);
-  }
-
   async function processSelect(id: IRecordId) {
     link.tags = [...(link.tags || []), id];
-    const linkRow =
-      link.links?.find((x) => x.linkType === LinkType.DIRECT) ??
-      link.links?.[0];
-    if (!linkRow) return;
-    const result = await updateRelationTags(linkRow, link.tags);
+    const linkId =
+      link.links?.find((x) => x.linkType === LinkType.DIRECT)?.id ??
+      link.links?.[0].id;
+    if (!linkId) return;
+    const result = await linker.modify(linkId, {
+      tags: link.tags
+    });
     logger.log({ at: "processSelect", result });
     emitTag(id);
   }
 
   async function onEmptyEnter() {
-    const savedLinkTag = await saveLinkTag(searchQuery);
+    const result = await linkTagStore.save(searchQuery);
+    const savedLinkTag = Array.isArray(result) ? result[0] : result;
     if (savedLinkTag) {
       processSelect(savedLinkTag.id);
     }
@@ -85,50 +55,13 @@
     searchInputRef?.reset();
   }
 
-  function resolveTagParts(label: string) {
-    let resolvedLabel = label.trim();
-    let resolvedGroup = "";
-    if (resolvedLabel.includes(":")) {
-      const [groupPart, ...labelParts] = resolvedLabel.split(":");
-      resolvedGroup = groupPart.trim().toLowerCase();
-      resolvedLabel = labelParts.join(":").trim();
-    }
-    return {
-      label: resolvedLabel,
-      group: resolvedGroup
-    };
-  }
-
-  async function saveLinkTag(label: string) {
-    const next = resolveTagParts(label);
-    const existing = await datafn.linkTag.query({
-      select: ["id", "label", "group", "updatedAt", "createdAt"]
-    });
-    const existingTag = ((existing.data ?? []) as ILinkTag[]).find(
-      (tag) =>
-        tag.label?.toLowerCase() === next.label.toLowerCase() &&
-        (tag.group ?? "").toLowerCase() === next.group
-    );
-    if (existingTag) return existingTag;
-    const record = {
-      id: generateResourceId(Resource.linkTag),
-      ...next
-    };
-    await datafn.linkTag.mutate({
-      operation: "insert",
-      id: record.id,
-      record
-    });
-    return record;
-  }
-
+  /**
+   *
+   * Note: using searchCallback instead of searchStoreId as linkTagStore is in memory store and it fails in extension environment as background script is ephemeral.
+   * @param query
+   */
   async function searchCallback(query: string) {
-    const result = await datafn.linkTag.query({
-      select: ["id", "label", "group"]
-    });
-    return ((result.data ?? []) as ILinkTag[])
-      .map(linkTagLabelMapper)
-      .filter((tag) => tag.label?.toLowerCase().includes(query.toLowerCase()));
+    return linkTagStore.search(query);
   }
 </script>
 
@@ -144,7 +77,7 @@
     style={InputStyle.PLAIN}
     {searchCallback}
     onSelect={handleSelect}
-    {onEmptyEnter}
+    onEmptyEnter={onEmptyEnter}
     emptyStateLabel="No relations found. Press enter to create a new relation"
     placeholder="Start typing to add relations"
   />

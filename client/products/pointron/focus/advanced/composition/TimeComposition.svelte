@@ -13,10 +13,7 @@
   } from "@21n/types/switcher.enum";
   import PresetPicker from "@21n/products/pointron/focus/advanced/composition/PresetPicker.svelte";
   import { onMount } from "svelte";
-  import {
-    SessionCompositionType,
-    type SessionComposition
-  } from "@21n/types/pointron/sessionComposition.type";
+  import { SessionCompositionType } from "@21n/types/pointron/sessionComposition.type";
   import Icon from "@21n/elements/Icon.svelte";
   import ComposeTotalsText from "@21n/products/pointron/focus/advanced/composition/ComposeTotalsText.svelte";
   import { appStore } from "@21n/stores/app.store";
@@ -29,18 +26,11 @@
   import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { logger } from "@21n/components/debug/logger.client";
   import { cn } from "@21n/utils/ui.utils";
-  import { advancedCompositionDraft } from "@21n/products/pointron/focus/advanced/composition/advancedCompositionDraft.store";
 
   let { parentBgIndex = 1 }: { parentBgIndex?: number } = $props();
-  let selectedMode = $state(refreshAdvancedModeState());
-  let selectedDynamicDuration = $state(0);
-  let isSliderVariant = $state(false);
-  let compositionDraft = $state<SessionComposition>(
-    deepCopy($activeSession.composition)
-  );
-  const visibleComposition = $derived(
-    $advancedCompositionDraft ?? compositionDraft
-  );
+  let selectedMode: number = refreshAdvancedModeState();
+  let selectedDynamicDuration: number = 0;
+  let isSliderVariant: boolean = false;
   function onDynamicSliderChange(event: any) {
     if (
       $activeSession.isSessionRunning ||
@@ -50,29 +40,21 @@
     selectedDynamicDuration = Number(event.detail.value);
     activeSession.onSliderDurationChange(selectedDynamicDuration);
   }
-  async function onCompositionChanges(
-    event?: CustomEvent<SessionComposition>
-  ) {
-    compositionDraft = event?.detail ?? compositionDraft;
-    advancedCompositionDraft.set(deepCopy(compositionDraft));
+  function onCompositionChanges() {
     logger.log({
       at: "onCompositionChanges",
-      composition: deepCopy(compositionDraft)
+      composition: deepCopy($activeSession.composition)
     });
-    await activeSession.modify(
-      { composition: deepCopy(compositionDraft) },
-      { isPersist: false }
-    );
     activeSession.onComposeComplete();
   }
   function onModeSwitch(event: any) {
+    console.log({ event });
     selectedMode = event.detail === "Presets" ? 0 : 1;
     uiState.setState(UIState.focusAdvancedComposeMode, selectedMode, {
       scope: UIStateScope.DEVICE
     });
   }
   onMount(() => {
-    advancedCompositionDraft.set(deepCopy($activeSession.composition));
     const userPreferencesUnsub = userPreferences.subscribe(() => {
       selectedMode = refreshAdvancedModeState();
     });
@@ -83,17 +65,9 @@
   });
 
   function refreshAdvancedModeState() {
-    return (
-      uiState.getState(UIState.focusAdvancedComposeMode, {
-        scope: UIStateScope.DEVICE
-      }) ?? 0
-    );
-  }
-
-  async function clearEndTimeComposition() {
-    await activeSession.resetComposition();
-    compositionDraft = deepCopy(activeSession.get().composition);
-    advancedCompositionDraft.set(deepCopy(activeSession.get().composition));
+    return uiState.getState(UIState.focusAdvancedComposeMode, {
+      scope: UIStateScope.DEVICE
+    });
   }
 </script>
 
@@ -105,15 +79,28 @@
   {#if !isSliderVariant}
     <div class="flex flex-col items-center w-full gap-4 dp:gap-8">
       <ComposeTotalsText
-        composition={visibleComposition}
+        composition={$activeSession.composition}
         {parentBgIndex}
       />
+      {#if $activeSession.composition.type !== SessionCompositionType.END_TIME_FIXED}
+        <div class="flex w-full justify-center">
+          <PanelSwitcher
+            style={PanelSwitcherStyle.TRAIN}
+            {parentBgIndex}
+            items={["Presets", "Custom"]}
+            value={selectedMode === 0 ? "Presets" : "Custom"}
+            onSwitch={onModeSwitch}
+            activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
+          />
+          <!-- <AdvancedFocusModeSwitcher bind:selectedMode /> -->
+        </div>
+      {/if}
     </div>
-    {#if visibleComposition.type === SessionCompositionType.END_TIME_FIXED}
-      <div
-        class="py-8 flex flex-col items-center gap-4"
-        data-testid="composition-end-time-selected"
-      >
+    {#if selectedMode == 0}
+      <PresetPicker parentBackgroundIndex={parentBgIndex} />
+    {:else if $activeSession.composition.type === SessionCompositionType.END_TIME_FIXED}
+      <!-- TODO -->
+      <div class="py-8 flex flex-col items-center gap-4">
         <div class="flex flex-col gap-2 items-center">
           <Icon icon="clock" />
           <div class="text-fgs2">End time selected.</div>
@@ -122,32 +109,18 @@
           label="Clear"
           size={Size.sm}
           icon="cross"
-          testId="composition-clear-end-time"
-          onclick={clearEndTimeComposition}
+          onclick={() => {
+            activeSession.resetComposition();
+          }}
         />
       </div>
     {:else}
-      <div class="flex w-full justify-center">
-        <PanelSwitcher
-          style={PanelSwitcherStyle.TRAIN}
-          {parentBgIndex}
-          items={["Presets", "Custom"]}
-          value={selectedMode === 0 ? "Presets" : "Custom"}
-          onSwitch={onModeSwitch}
-          activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
-        />
-      </div>
-      {#if selectedMode == 0}
-        <PresetPicker parentBackgroundIndex={parentBgIndex} />
-      {:else}
-        <ComposeDuration
-          {parentBgIndex}
-          composition={visibleComposition}
-          isActiveSessionContext={true}
-          compositionChangeHandler={onCompositionChanges}
-          isShowSave={true}
-        />
-      {/if}
+      <ComposeDuration
+        {parentBgIndex}
+        bind:composition={$activeSession.composition}
+        onChange={onCompositionChanges}
+        isShowSave={true}
+      />
     {/if}
   {:else}
     <div class="flex flex-col px-4 gap-8">
@@ -171,6 +144,7 @@
               />
             </div>
           </div>
+          <!-- <TimeleftIndicator /> -->
         {/if}
       </div>
     </div>

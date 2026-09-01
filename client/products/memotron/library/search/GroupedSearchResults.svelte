@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Resource } from "@21n/data/datafn/resource.enum";
+  import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
   import { KeyboardKey } from "@21n/types/keyboard.type";
@@ -18,7 +18,7 @@
     onExpand?: ((event: CustomEvent<{ group: any }>) => void) | undefined;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
-  let groupRefs = $state<(GroupItem | undefined)[]>([]);
+  let groupRefs: GroupItem[] = [];
   let activeGroupIndex = $state(0);
 
   const groupSwitcherKeys = new Set([
@@ -56,10 +56,10 @@
       event.preventDefault();
       event.stopPropagation();
       const activeGroup = groupRefs[activeGroupIndex];
-      activeGroup?.keydown(event);
+      activeGroup.keydown(event);
       return;
     }
-    groupRefs.forEach((group) => group?.keydown(event));
+    groupRefs.forEach((group) => group.keydown(event));
   }
 
   export function keyup(event: KeyboardEvent) {
@@ -68,19 +68,19 @@
       event.preventDefault();
       event.stopPropagation();
       const activeGroup = groupRefs[activeGroupIndex];
-      activeGroup?.keyup(event);
+      activeGroup.keyup(event);
       return;
     }
     if (event.key === KeyboardKey.ENTER) {
       const activeGroup = groupRefs[activeGroupIndex];
-      activeGroup?.keyup(event);
+      activeGroup.keyup(event);
       return;
     }
-    groupRefs.forEach((group) => group?.keyup(event));
+    groupRefs.forEach((group) => group.keyup(event));
   }
 
   export function search(query?: string) {
-    groupRefs.forEach((group) => group?.search(query));
+    groupRefs.forEach((group) => group.search(query));
   }
 </script>
 

@@ -10,7 +10,7 @@ import {
   type IActiveResource,
   type IResource,
   type IResourceArchivable,
-  type IResourceInActivableFromAncestor,
+  type IResourceInActivableFromParent,
   type IResourceLabeled,
   type IResourceLockable,
   type IResourcePageWithPanels,
@@ -18,7 +18,7 @@ import {
   type IResourceStarrable,
   type OmitFields,
   type OmitForCapture
-} from "@21n/data/datafn/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import type { IBlockBody, IMarkdown } from "@21n/components/markdown/md.type";
 import type { IAvatar } from "@21n/types/avatar.type";
 import type { IRecordId, IStore } from "@21n/types/data.type";
@@ -39,7 +39,7 @@ type IResourcePropertiesForNode = IResource &
   IResourceStarrable &
   IResourceLockable &
   IResourceArchivable &
-  IResourceInActivableFromAncestor &
+  IResourceInActivableFromParent &
   ICollectible;
 
 type INodeInterface<
@@ -51,8 +51,7 @@ type INodeInterface<
   contentType: TType;
   metadata?: TMetadata;
   parent?: IRecordId;
-  mdChildOrder?: IRecordId[] | INode[];
-  sortOrder?: number;
+  children?: IRecordId[];
   /**
    * Parent hierarchy for markdown heading nodes
    */
@@ -91,7 +90,7 @@ type INodeInterface<
   config?: any;
   metaType?: NodeMetaType | "";
   /**
-   * Used with meta types like Calendar notes as createdAt or updatedAt can be different from date of the calendar notes.
+   * Used with meta types like Calendar notes as createdAt or modifiedAt can be different from date of the calendar notes.
    */
   date?: Date;
 };
@@ -1085,7 +1084,7 @@ export type IClipCapture = OmitFields<
   IClip,
   | Extract<
       CaptureOmittedFields,
-      "createdAt" | "updatedAt" | "createdBy" | "updatedBy" | "id"
+      "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy" | "id"
     >
   | "label"
   | "url"

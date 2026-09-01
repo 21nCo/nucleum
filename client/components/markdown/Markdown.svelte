@@ -32,20 +32,20 @@
     isSameResource,
     resourceInList,
     shiftResourceInArray
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import context from "@21n/stores/context.store";
   import MarkdownkeyboardToolbar from "@21n/components/markdown/toolbar/MarkdownkeyboardToolbar.svelte";
   import { debouncer } from "@21n/utils/utils";
   import { toasts } from "@21n/stores/notification.store";
   import { dragSelection } from "@21n/actions/dragSelection.action";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import { bulkEditStore as globalBulkEditStore } from "@21n/components/record/bulkedit.store";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
   import { ErrorMessage } from "@21n/components/error/error.type";
   import { resizeListener } from "@21n/actions/resize.action";
   import { stringify } from "@21n/shared-utils/json.utils";
@@ -131,13 +131,9 @@
     onBlocks?: ((event: CustomEvent<IBlock[]>) => void) | undefined;
     onBlur?: ((event: CustomEvent<any>) => void) | undefined;
     onChange?: ((event: CustomEvent<any>) => void) | undefined;
-    onDebouncedChange?:
-      | ((event: CustomEvent<IMarkdown | undefined>) => void)
-      | undefined;
+    onDebouncedChange?: ((event: CustomEvent<IMarkdown | undefined>) => void) | undefined;
     onFocus?: ((event: CustomEvent<any>) => void) | undefined;
-    onRearrange?:
-      | ((event: CustomEvent<{ md: IMarkdown | undefined }>) => void)
-      | undefined;
+    onRearrange?: ((event: CustomEvent<{ md: IMarkdown | undefined }>) => void) | undefined;
     title?: Snippet | undefined;
   } = $props();
   const generatedMdId = generateSimpleRandomId();
@@ -441,7 +437,11 @@
     }
   }
 
-  function handleBulkAction(_ids: IRecordId[], action: string, data?: unknown) {
+  function handleBulkAction(
+    _ids: IRecordId[],
+    action: string,
+    data?: unknown
+  ) {
     onBulkAction(action as BlockAction | ResourceActionType, data);
   }
 

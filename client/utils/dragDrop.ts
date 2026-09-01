@@ -2,7 +2,7 @@ import type { DragAndDrop } from "@21n/types/draganddrop.type";
 import { DragStatus } from "@21n/types/dragstatus.enum";
 
 export function handleDragNDrop(x: DragAndDrop, items: any[]) {
-  const objectiveIdCheck = x.dropItem.objectiveId === x.dragItem.objectiveId;
+  const goalIdCheck = x.dropItem.goalId === x.dragItem.goalId;
   const dropItemCheck = x.dropItem ? true : false;
   const dragItemCheck = x.dragItem ? true : false;
 
@@ -10,7 +10,7 @@ export function handleDragNDrop(x: DragAndDrop, items: any[]) {
     x.dragStatus == DragStatus.DROPPED &&
     dropItemCheck &&
     dragItemCheck &&
-    objectiveIdCheck
+    goalIdCheck
   ) {
     let draggedItem = x.dragItem;
     let targetItem = x.dropItem;

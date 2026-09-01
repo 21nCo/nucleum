@@ -1,8 +1,11 @@
 import {
   AccessMode,
   ResourceAccessPoint
-} from "@21n/data/datafn/resource.type";
-import { isRecordId, resourceInList } from "@21n/data/datafn/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.type";
+import {
+  isRecordId,
+  resourceInList
+} from "@21n/components/flux/resourceStores/resource.utils";
 import { appStore } from "@21n/stores/app.store";
 import { uiState } from "@21n/stores/uiState/uiState.store";
 import { UIStateScope } from "@21n/stores/uiState/uiState.type";

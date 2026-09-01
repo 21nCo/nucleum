@@ -3,11 +3,11 @@
   import { searchStore } from "@21n/components/search/search.store";
   import { InputStyle } from "@21n/types/input.type";
   import { cn } from "@21n/utils/ui.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     resolveProductResources,
     resolveResourceIcon
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import { appStore } from "@21n/stores/app.store";
   import { properCase } from "@21n/shared-utils/text.utils";
   import Icon from "@21n/elements/Icon.svelte";
@@ -70,17 +70,17 @@
 
   function emitChange(value: string) {
     const changeEvent = new CustomEvent<string>("change", { detail: value });
-    if (typeof onChange === "function") onChange(changeEvent);
+    onChange?.(changeEvent);
   }
 
   function emitBlur() {
     const blurEvent = new CustomEvent<void>("blur");
-    if (typeof onBlur === "function") onBlur(blurEvent);
+    onBlur?.(blurEvent);
   }
 
   function emitFocus() {
     const focusEvent = new CustomEvent<void>("focus");
-    if (typeof onFocus === "function") onFocus(focusEvent);
+    onFocus?.(focusEvent);
   }
 
   function handleInput(e: Event) {

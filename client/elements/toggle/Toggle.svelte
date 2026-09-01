@@ -55,8 +55,7 @@
 
 <svelte:element
   this={isRenderAsDiv ? "div" : "button"}
-  aria-label={tooltip}
-  {onclick}
+  onclick={onclick}
   onmousedown={(event: MouseEvent) => {
     onMouseDown?.(event);
   }}

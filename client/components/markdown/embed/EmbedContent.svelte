@@ -6,21 +6,21 @@
     type INode,
     type INodeThumb
   } from "@21n/products/memotron/node/node.type";
-  import { getContext, onMount, untrack } from "svelte";
-  import { get } from "svelte/store";
+  import { getContext, onMount } from "svelte";
   import type { IEmbedBlockBody } from "@21n/components/markdown/md.type";
   import EmbedContentPlaceholder from "@21n/components/markdown/embed/EmbedContentPlaceholder.svelte";
   import { logger } from "@21n/components/debug/logger.client";
   import type { IRecordId } from "@21n/types/data.type";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import YoutubeVideoPreview from "@21n/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Collection from "@21n/components/collection/Collection.svelte";
-  import { determineResourceType } from "@21n/data/datafn/resource.utils";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
   import { resizable } from "@21n/actions/resize.action";
   import { appStore } from "@21n/stores/app.store";
   import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
@@ -35,21 +35,27 @@
   import { fileStore } from "@21n/components/files/file.store";
   import type { IFile } from "@21n/components/files/file.type";
   import { ErrorMessage } from "@21n/components/error/error.type";
-  import {
-    fetchYouTubeMetadata,
-    resolveWebpageLabel,
-    sanitizeAndResolve
-  } from "@21n/products/memotron/node/url.utils";
+  import { sanitizeAndResolve } from "@21n/products/memotron/node/url.utils";
   import { debouncer } from "@21n/utils/utils";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
   import view from "@21n/stores/view.store";
+  import {
+    ActiveCaptureStore,
+    type IActiveCaptureStore
+  } from "@21n/products/memotron/capture/capture.store";
   import Task from "@21n/components/tasks/Task.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { Context } from "@21n/types/appStore.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
   const nodeContext = getContext<any>(Context.NODE);
+  const captureContext = getContext<any>(Context.CAPTURE);
+  const captureStore = $derived.by<IActiveCaptureStore | undefined>(() => {
+    if (!nodeContext?.id && !captureContext?.id) return undefined;
+    const id = nodeContext?.id
+      ? nodeContext?.id + "capture"
+      : captureContext?.id;
+    return ActiveCaptureStore.resolve(id);
+  });
   const contentContext = getContext<any>(Context.CONTENT);
   let {
     id,
@@ -154,19 +160,12 @@
   }
 
   async function assignNodeMediaContent(id: IRecordId) {
-    const result = (await datafn.node.query({
-      select: ["*", "parent.*", "file.*"],
-      filters: { id },
-      limit: 1,
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    } as any)) as { data?: INode[] };
-    const node = result.data?.[0];
+    const node = await nodeStore.select(id, {
+      expand: ["parent", "file"]
+    });
     if (node) {
       _mediaBlock = node;
-      _mediaBlockFile = node.file as unknown as IFile;
+      _mediaBlockFile = node.file as IFile;
       return;
     }
     _mediaBlock = undefined;
@@ -202,31 +201,6 @@
     };
   });
 
-  const bodyStore = $derived.by(() => {
-    const bodyId = body?.id;
-    if (!bodyId || embedResourceType !== Resource.node) return undefined;
-    return toSvelteStore<Partial<INode>[]>(
-      datafn.node.signal({
-        filters: { id: bodyId },
-        limit: 1,
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }),
-      { initialData: [] }
-    );
-  });
-
-  $effect(() => {
-    if (!bodyStore) return;
-    if (get(bodyStore).data[0]) {
-      untrack(() => {
-        void onNodeChange();
-      });
-    }
-  });
-
   async function onLinkInput() {
     try {
       isLoading = true;
@@ -244,55 +218,20 @@
         dispatchUpdateEvent({ url: sanitized.url });
         return;
       }
-      const result = await createEmbeddedWebNode(sanitized);
+      const result = await captureStore?.saveWebpage(sanitized.url, {
+        contentType: sanitized.contentType,
+        isEmbedContext: true,
+        creationContext: nodeContext?.id ?? undefined
+      });
       if (!result || !("id" in result)) return;
       dispatchUpdateEvent({ id: result.id, subType: sanitized.contentType });
-      _mediaBlock = result as unknown as INode;
+      _mediaBlock = result;
     } catch (e) {
       logger.error({ at: "EmbedContent onLinkInput", e });
       toasts.error(ErrorMessage.DEFAULT);
     } finally {
       isLoading = false;
     }
-  }
-
-  async function createEmbeddedWebNode(sanitized: {
-    contentType: NodeType;
-    url: string;
-  }) {
-    let label = resolveWebpageLabel(sanitized.url);
-    let metadata: Record<string, unknown> | undefined = undefined;
-    if (isYoutubeEmbedSubType(sanitized.contentType)) {
-      const youtubeMetadata = await fetchYouTubeMetadata(sanitized.url);
-      if (youtubeMetadata) {
-        label = youtubeMetadata.title;
-        metadata = {
-          authorName: youtubeMetadata.author_name,
-          authorUrl: youtubeMetadata.author_url,
-          thumbnailUrl: youtubeMetadata.thumbnail_url
-        };
-      }
-    }
-    const node = {
-      id: generateResourceId(Resource.node),
-      metaType: "",
-      contentType: sanitized.contentType,
-      label,
-      url: sanitized.url,
-      creationContext: nodeContext?.id,
-      body: {
-        hash: "",
-        description: ""
-      },
-      metadata
-    } as INode;
-    await datafn.node.mutate({
-      operation: "insert",
-      id: node.id,
-      record: node,
-      context: ResourceAccessPoint.MARKDOWN_EMBED
-    });
-    return node;
   }
 
   function onResize(e: any) {
@@ -327,7 +266,7 @@
     }, 100);
   }
 
-  async function onNodeChange() {
+  async function onNodeChange(e: any) {
     if (body.id) await assignNodeMediaContent(body.id);
     refreshId = new Date().getTime();
   }
@@ -392,11 +331,7 @@
               onSave={() => {
                 if (_mediaBlock) {
                   _mediaBlock.label = titleInputValue;
-                  datafn.node.mutate({
-                    operation: "merge",
-                    id: _mediaBlock.id,
-                    record: { label: titleInputValue }
-                  });
+                  nodeStore.modify(_mediaBlock.id, { label: titleInputValue });
                 }
                 setTimeout(() => {
                   isEditingTitle = false;
@@ -554,4 +489,7 @@
     onSelect={onSelectFromLibrary}
     {onLinkInput}
   />
+{/if}
+{#if body?.id && embedResourceType === Resource.node}
+  <ComponentBaseLayer subscribeToRecords={[body.id]} onChange={onNodeChange} />
 {/if}

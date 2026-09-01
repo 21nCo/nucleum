@@ -13,7 +13,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { logger } from "@21n/components/debug/logger.client";
   import { resolveModalOnFront } from "@21n/utils/browser.utils";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import view from "@21n/stores/view.store";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import context from "@21n/stores/context.store";
@@ -54,7 +54,7 @@
   let focusTrap = $state<HTMLDivElement | undefined>();
   $effect(() => {
     if (show && dialog && !dialog.open) {
-      dialog.showModal();
+    dialog.showModal();
     }
   });
 
@@ -185,7 +185,6 @@
         <dialog
           bind:this={dialog}
           id={id + "-modal"}
-          data-testid={`modal-${id}`}
           onclose={(event) => {
             event.preventDefault();
             handleClose(event);
@@ -209,7 +208,6 @@
       {:else}
         <div
           id={id + "-modal"}
-          data-testid={`modal-${id}`}
           class={cn(
             "bg-bgs1 max-h-full cursor-default otopl:pt-12",
             {
@@ -233,11 +231,11 @@
               "mt-auto": alignment === Placement.BottomCenter
             }
           )}
-        >
-          <ColorLayer>
-            {@render children?.()}
-          </ColorLayer>
-        </div>
+          >
+            <ColorLayer>
+              {@render children?.()}
+            </ColorLayer>
+          </div>
       {/if}
     </div>
   {/if}
