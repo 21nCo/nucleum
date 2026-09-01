@@ -274,7 +274,7 @@
           const previousLogs = logs.filter(
             (log) =>
               log.startUnix >= correctedPreviousBegin &&
-              log.startUnix <= correctedBegin
+              log.startUnix < correctedBegin
           );
           previousLogs.forEach((log: ISessionLog) => {
             previousTimePeriodData.push(dataMapper(log));

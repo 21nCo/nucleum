@@ -162,6 +162,19 @@ type LegacySessionComposition = SessionComposition & {
   goals?: SessionComposition["objectives"];
 };
 
+function normalizeSessionComposition(
+  preset: LegacySessionComposition
+): SessionComposition {
+  const { goals, ...currentPreset } = preset;
+  return {
+    ...currentPreset,
+    objectives: currentPreset.objectives ?? goals,
+    additional: currentPreset.additional?.map((item) =>
+      normalizeSessionComposition(item as LegacySessionComposition)
+    )
+  };
+}
+
 function normalizePointronPreferences(data?: Partial<IPointronPreferences>) {
   const value = {
     ...seedLocalPreferences,
@@ -169,13 +182,9 @@ function normalizePointronPreferences(data?: Partial<IPointronPreferences>) {
   };
   if (!value.uiStates) value.uiStates = seedLocalPreferences.uiStates;
   if (!value.presets) value.presets = generateSeedPresets();
-  value.presets = value.presets.map((preset) => {
-    const { goals, ...currentPreset } = preset as LegacySessionComposition;
-    return {
-      ...currentPreset,
-      objectives: currentPreset.objectives ?? goals
-    };
-  });
+  value.presets = value.presets.map((preset) =>
+    normalizeSessionComposition(preset as LegacySessionComposition)
+  );
   return value;
 }
 

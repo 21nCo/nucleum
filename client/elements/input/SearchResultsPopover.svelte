@@ -120,6 +120,7 @@
   }
   function resetSearch() {
     searchGeneration += 1;
+    isSearchInProgress = false;
     results = [];
     selectedIndex = resolveDefaultIndexSelection();
     hide();
@@ -245,12 +246,15 @@
     }
   }
 
-  let debouncedSearch = debouncer(search, 500);
+  const debouncedSearch = debouncer((newValue: string, generation: number) => {
+    if (generation !== searchGeneration) return;
+    void search(newValue);
+  }, 500);
 
   export function queueSearch(newValue?: string) {
-    searchGeneration += 1;
+    const generation = ++searchGeneration;
     currentValue = newValue ?? value;
-    debouncedSearch(currentValue);
+    debouncedSearch(currentValue, generation);
   }
 
   export async function search(newValue?: string) {

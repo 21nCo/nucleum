@@ -33,7 +33,7 @@
     refreshNucleumDatafnStatus
   } from "@21n/stores/datafn.store";
   import {
-    isPointronDatafnBackup,
+    resolvePointronDatafnBackup,
     resolveDatafnImportErrorCount
   } from "@21n/products/pointron/settings/data/pointronDatafnBackup.utils";
 
@@ -244,10 +244,6 @@
     );
   }
 
-  function isValidImportData(rawJson: unknown) {
-    return isPointronDatafnBackup(rawJson);
-  }
-
   async function onUpload() {
     if (tempFileList) {
       isUploading = true;
@@ -275,8 +271,10 @@
               toasts.error("Please select a valid file");
               return;
             }
-            const jsonData = parse(importedData as string);
-            if (!isValidImportData(jsonData)) {
+            const jsonData = resolvePointronDatafnBackup(
+              parse(importedData as string)
+            );
+            if (jsonData === undefined) {
               resetCurrentUploadProgress();
               toasts.error("Invalid Pointron DataFn backup file");
               return;

@@ -1661,13 +1661,22 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
     if (!n || n.items.length === 0) return;
     const removedItem = n.items.find((item) => isSameResource(item.id, id));
     if (!removedItem) return;
+    const parentObjectiveId = n.items.find((item) =>
+      item.tasks?.some(resourceInList(id))
+    )?.id;
 
     if (!n.removedItems) n.removedItems = [];
-    const itemsToRemove = n.items.filter(
-      (item) =>
-        isSameResource(item.id, id) ||
-        removedItem.tasks?.some(resourceInList(item.id))
-    );
+    const itemsToRemove = n.items
+      .filter(
+        (item) =>
+          isSameResource(item.id, id) ||
+          removedItem.tasks?.some(resourceInList(item.id))
+      )
+      .map((item) =>
+        isSameResource(item.id, id) && parentObjectiveId
+          ? { ...item, parentObjectiveId }
+          : item
+      );
     n.removedItems.push(...itemsToRemove);
 
     n.items = n.items.filter(
@@ -1820,7 +1829,8 @@ async function finishFocus(params?: { end?: number }) {
     const objectiveId =
       resourceType === Resource.objective
         ? item.id
-        : (allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
+        : (item.parentObjectiveId ??
+          allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
           "");
     const taskId = resourceType === Resource.task ? item.id : "";
     if (item.blocks && item.blocks.length > 0) {

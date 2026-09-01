@@ -4,6 +4,37 @@ import { Resource } from "@21n/data/datafn/resource.enum";
 import { CalendarColumnLayout, CalendarColumnPanel } from "./calendar.type";
 import { Product } from "@21n/products/product.type";
 
+type CalendarEventRange = {
+  start: number;
+  end: number;
+};
+
+/**
+ * Builds a half-open event overlap filter for current and legacy event shapes.
+ */
+export function resolveCalendarEventOverlapFilters(range: CalendarEventRange) {
+  return {
+    $or: [
+      {
+        startUnix: { $lt: range.end },
+        endUnix: { $gt: range.start }
+      },
+      {
+        startUnix: { $gte: range.start, $lt: range.end },
+        endUnix: { $is_null: true }
+      },
+      {
+        "value.startUnix": { $lt: range.end },
+        "value.endUnix": { $gt: range.start }
+      },
+      {
+        "value.startUnix": { $gte: range.start, $lt: range.end },
+        "value.endUnix": { $is_null: true }
+      }
+    ]
+  };
+}
+
 /**
  *
  * Note: using reference date for week notes instead of week number to avoid different week resolution issues. The Thursday of the week is used as reference day of the week irrespective of first day of week, week resolution strategy (ISO vs 1st date of the year etc)

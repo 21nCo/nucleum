@@ -95,6 +95,7 @@ export enum BlockType {
 
 export type IFocusItem = {
   id: IRecordId;
+  parentObjectiveId?: IRecordId;
   blocks?: {
     start: number;
     end: number;

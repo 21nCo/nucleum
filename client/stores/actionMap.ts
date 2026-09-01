@@ -89,7 +89,10 @@ import { activeResourceFilter } from "@21n/utils/utils";
 import DatafnSharePanel from "@21n/components/share/DatafnSharePanel.svelte";
 import { datafn } from "@21n/stores/datafn.store";
 import { appMenuActionLabelsByAction } from "@21n/products/product-nav.config";
-import { relateDatafnRecords } from "@21n/stores/datafn-linking.store";
+import {
+  addDatafnRecordToCollection,
+  relateDatafnRecords
+} from "@21n/stores/datafn-linking.store";
 
 function isCollectionItemResource(resource: Resource) {
   return resource === Resource.node || resource === Resource.objective;
@@ -753,19 +756,11 @@ export const globalActions: IAction[] = [
             toasts.error();
             return;
           }
-          const result = await datafn.table(resource).mutate({
-            operation: "relate",
-            id: item.id.toString(),
-            relations: {
-              collections: [
-                {
-                  $ref: componentParams.id.toString(),
-                  fromResource: resource.toString()
-                }
-              ]
-            },
+          const result = await addDatafnRecordToCollection({
+            sourceId: item.id,
+            collectionId: componentParams.id,
             context: componentParams.id.toString()
-          } as any);
+          });
           logger.log({
             at: "addNodeToCollection",
             id: item.id,
@@ -773,8 +768,8 @@ export const globalActions: IAction[] = [
             componentParams,
             result
           });
-          if (!result) {
-            toasts.error();
+          if (result === 0) {
+            toasts.error("Already added to collection");
             return;
           }
           toasts.success(`**${item.label}** added to collection`);

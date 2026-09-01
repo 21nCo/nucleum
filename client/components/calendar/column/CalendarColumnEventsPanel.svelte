@@ -7,6 +7,7 @@
   import { Arrangement } from "@21n/types/direction.enum";
   import { datafn } from "@21n/stores/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
+  import { resolveCalendarEventOverlapFilters } from "@21n/components/calendar/calendar.utils";
 
   let {
     date,
@@ -19,7 +20,9 @@
   const eventStore = $derived.by(() =>
     toSvelteStore<Partial<ICalendarEvent>[]>(
       datafn.event.signal({
-        filters: resolveEventOverlapFilters(date),
+        filters: resolveCalendarEventOverlapFilters(
+          datafn.temporal.resolveRangeSync({ scale: "day", at: date })
+        ),
         sort: ["startUnix"]
       }),
       { initialData: [] }
@@ -27,22 +30,6 @@
   );
   const events = $derived($eventStore.data.map(normalizeEventRecord));
   const isRefreshing = $derived($eventStore.loading || $eventStore.refreshing);
-
-  function resolveEventOverlapFilters(value: Date) {
-    const range = datafn.temporal.resolveRangeSync({ scale: "day", at: value });
-    return {
-      $or: [
-        {
-          startUnix: { $lte: range.end },
-          endUnix: { $gte: range.start }
-        },
-        {
-          "value.startUnix": { $lte: range.end },
-          "value.endUnix": { $gte: range.start }
-        }
-      ]
-    };
-  }
 
   function normalizeEventRecord(
     record: Partial<ICalendarEvent>

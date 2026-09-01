@@ -12,6 +12,7 @@
   import { time } from "@datafn/client";
   import { toSvelteStore } from "@datafn/svelte";
   import { resolveExpandedSessionItems } from "@21n/products/pointron/logs/session-items.utils";
+  import { resolveCalendarEventOverlapFilters } from "@21n/components/calendar/calendar.utils";
 
   let {
     date,
@@ -36,7 +37,9 @@
   const eventStore = $derived.by(() =>
     toSvelteStore<ICalendarEvent[]>(
       datafn.event.signal({
-        filters: resolveEventOverlapFilters(date),
+        filters: resolveCalendarEventOverlapFilters(
+          datafn.temporal.resolveRangeSync({ scale: "day", at: date })
+        ),
         sort: ["startUnix"]
       }),
       { initialData: [] }
@@ -54,22 +57,6 @@
       $eventStore.loading ||
       $eventStore.refreshing
   );
-
-  function resolveEventOverlapFilters(value: Date) {
-    const range = datafn.temporal.resolveRangeSync({ scale: "day", at: value });
-    return {
-      $or: [
-        {
-          startUnix: { $lte: range.end },
-          endUnix: { $gte: range.start }
-        },
-        {
-          "value.startUnix": { $lte: range.end },
-          "value.endUnix": { $gte: range.start }
-        }
-      ]
-    };
-  }
 
   function resolveFocusEntries(sessionRecordsInput: ISessionThumb[]) {
     const sessions = sessionRecordsInput.map((session) => ({ ...session }));

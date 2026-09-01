@@ -34,7 +34,7 @@
     timeZones = getTimeZonesWithOffsets();
     if ($userPreferences.timeZone) {
       selectedTimezone = $userPreferences.timeZone;
-    } else if ($userPreferences.timeZoneOffset) {
+    } else if (typeof $userPreferences.timeZoneOffset === "number") {
       const savedSetting = timeZones.find(
         (zone) => zone.offset * 60 === $userPreferences.timeZoneOffset
       )?.zone;

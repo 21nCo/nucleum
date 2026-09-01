@@ -47,13 +47,16 @@ export function createSessionItemRelationRefs(
   return items.map((item, sortOrder) => {
     const itemId = item.id.toString();
     const toResource = determineResourceType(item.id).toString();
-    const parentObjectiveId = items.find((candidate) =>
-      candidate.tasks?.some(resourceInList(item.id))
-    )?.id;
+    const parentObjectiveId =
+      item.parentObjectiveId ??
+      items.find((candidate) => candidate.tasks?.some(resourceInList(item.id)))
+        ?.id;
     return {
       $ref: itemId,
       toResource,
-      ...(parentObjectiveId ? { parentObjectiveId: parentObjectiveId.toString() } : {}),
+      ...(parentObjectiveId
+        ? { parentObjectiveId: parentObjectiveId.toString() }
+        : {}),
       sortOrder,
       blocks: item.blocks ?? []
     };
@@ -117,7 +120,9 @@ export function resolveSessionFocusView(
   });
   const allFocusItems = [...objectiveFocusItems, ...taskFocusItems];
   const groupedTaskIds = new Set(
-    objectiveFocusItems.flatMap((item) => item.tasks ?? []).map((id) => id.toString())
+    objectiveFocusItems
+      .flatMap((item) => item.tasks ?? [])
+      .map((id) => id.toString())
   );
   const topLevelFocusItems = allFocusItems.filter(
     (item) => !groupedTaskIds.has(item.id.toString())
@@ -138,7 +143,9 @@ export function resolveExpandedSessionItems(
 ): SessionRelatedItem[] {
   return orderSessionRelatedItems(items).filter((item) => {
     const resourceType = determineResourceType(item.id);
-    return resourceType === Resource.objective || resourceType === Resource.task;
+    return (
+      resourceType === Resource.objective || resourceType === Resource.task
+    );
   });
 }
 
