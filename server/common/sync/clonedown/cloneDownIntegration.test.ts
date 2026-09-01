@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { cloneDown } from "./index";
 import { cloneUp } from "../cloneup";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { SyncProviderFactory, SyncProvider } from "../providers";
 import { ICloneDownBody, ICloneUpBody } from "$lib/shared/types/sync.type";
 

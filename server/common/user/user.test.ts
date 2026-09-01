@@ -5,7 +5,7 @@ import {
   resolveCloneDownQuery,
   resolveSyncDownQuery
 } from "../sync/legacy/sync.utils";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 describe("performQueryOnBehalfOfUser", () => {
   it("should execute a query on behalf of an agent", async () => {
     const testQuery = "array::first(SELECT count() FROM node group all);";

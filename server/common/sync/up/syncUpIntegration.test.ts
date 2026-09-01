@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
 import { syncUp } from "./index";
 import { cloneUp } from "../cloneup";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { SyncProviderFactory, SyncProvider } from "../providers";
 import { ISyncUpBody, ICloneUpBody } from "$lib/shared/types/sync.type";
-import { ResourceActionType } from "@21n/data/datafn/resource.type";
+import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
 import { PersistenceActionType } from "$lib/client/types/data.type";
 import { createMutation } from "$lib/tests/fixtures";
 
