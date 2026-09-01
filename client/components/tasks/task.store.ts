@@ -24,6 +24,7 @@ import { activeSession } from "@21n/products/pointron/focus/session.store";
 import { datafn } from "@21n/stores/datafn.store";
 import { bulkEditStore } from "@21n/components/record/bulkedit.store";
 import { BulkEditor } from "@21n/components/record/record.store";
+import { Product } from "@21n/products/product.type";
 
 class TaskActions {
   constructor(
@@ -177,13 +178,16 @@ export function resolveTaskContextMenu(
 ): IContextMenu {
   const taskActions = new TaskActions(task, accessPoint);
   const viewStore = get(view);
+  const product = get(appStore).product;
   const isCurrentlyFocusing = activeSession.isCurrentFocusItem(task.id);
   let primaryItems: IContextMenuItem[] = [
     ...(accessPoint !== ResourceAccessPoint.SELF
       ? [taskActions.openTask()]
       : []),
     taskActions.select(params?.accessPointId),
-    taskActions.editObjective(),
+    ...(product === Product.POINTRON || product === Product.NUCLEUM
+      ? [taskActions.editObjective()]
+      : []),
     ...(viewStore.isConstrainedWidth ? [taskActions.editDate] : []),
     taskActions.toggle(),
     ...(isCurrentlyFocusing ? [] : [taskActions.focusNow])

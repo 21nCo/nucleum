@@ -36,7 +36,7 @@
   const eventStore = $derived.by(() =>
     toSvelteStore<ICalendarEvent[]>(
       datafn.event.signal({
-        temporal: time.day("startUnix", date),
+        filters: resolveEventOverlapFilters(date),
         sort: ["startUnix"]
       }),
       { initialData: [] }
@@ -54,6 +54,14 @@
       $eventStore.loading ||
       $eventStore.refreshing
   );
+
+  function resolveEventOverlapFilters(value: Date) {
+    const range = datafn.temporal.resolveRangeSync({ scale: "day", at: value });
+    return {
+      startUnix: { $lte: range.end },
+      endUnix: { $gte: range.start }
+    };
+  }
 
   function resolveFocusEntries(sessionRecordsInput: ISessionThumb[]) {
     const sessions = sessionRecordsInput.map((session) => ({ ...session }));

@@ -6,7 +6,6 @@
   import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import { Arrangement } from "@21n/types/direction.enum";
   import { datafn } from "@21n/stores/datafn.store";
-  import { time } from "@datafn/client";
   import { toSvelteStore } from "@datafn/svelte";
 
   let {
@@ -20,7 +19,7 @@
   const eventStore = $derived.by(() =>
     toSvelteStore<Partial<ICalendarEvent>[]>(
       datafn.event.signal({
-        temporal: time.day("startUnix", date),
+        filters: resolveEventOverlapFilters(date),
         sort: ["startUnix"]
       }),
       { initialData: [] }
@@ -28,6 +27,14 @@
   );
   const events = $derived($eventStore.data.map(normalizeEventRecord));
   const isRefreshing = $derived($eventStore.loading || $eventStore.refreshing);
+
+  function resolveEventOverlapFilters(value: Date) {
+    const range = datafn.temporal.resolveRangeSync({ scale: "day", at: value });
+    return {
+      startUnix: { $lte: range.end },
+      endUnix: { $gte: range.start }
+    };
+  }
 
   function normalizeEventRecord(
     record: Partial<ICalendarEvent>

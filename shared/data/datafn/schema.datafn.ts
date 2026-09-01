@@ -22,8 +22,18 @@ const shareableCapabilities: CapabilityEntry[] = [
 
 const systemCapabilities: CapabilityEntry[] = ["timestamps", "audit"];
 
-const idField = { name: "id", type: "string", required: true, unique: true } as const;
-const labelField = { name: "label", type: "string", required: false, nullable: false } as const;
+const idField = {
+  name: "id",
+  type: "string",
+  required: true,
+  unique: true
+} as const;
+const labelField = {
+  name: "label",
+  type: "string",
+  required: false,
+  nullable: false
+} as const;
 
 const jsonField = <
   const Name extends string,
@@ -256,7 +266,10 @@ export const nucleumDatafnSchema = defineSchema({
         numberField("endUnix"),
         jsonField("value")
       ],
-      indices: { base: ["event", "startUnix", "endUnix"], search: ["event", "label"] }
+      indices: {
+        base: ["event", "startUnix", "endUnix"],
+        search: ["event", "label"]
+      }
     },
     {
       name: "file",
@@ -309,7 +322,10 @@ export const nucleumDatafnSchema = defineSchema({
         numberField("sortOrder"),
         ...commonShareFields
       ],
-      indices: { base: ["type", "status", "parentId", "parentPath"], search: ["label"] }
+      indices: {
+        base: ["type", "status", "parentId", "parentPath"],
+        search: ["label"]
+      }
     },
     {
       name: "linkTag",
@@ -396,7 +412,12 @@ export const nucleumDatafnSchema = defineSchema({
         idField,
         {
           ...stringField("type", true),
-          enum: ["PREDEFINED_INTERVALS", "COUNTDOWN", "COUNTUP", "MANUAL_ENTRY"] as const
+          enum: [
+            "PREDEFINED_INTERVALS",
+            "COUNTDOWN",
+            "COUNTUP",
+            "MANUAL_ENTRY"
+          ] as const
         },
         arrayField("blocks", true),
         numberField("elapsed", true),
@@ -503,9 +524,7 @@ export const nucleumDatafnSchema = defineSchema({
       inverse: "schemaCollections",
       joinTable: "collection_properties",
       joinColumns: { from: "collectionId", to: "propertyId" },
-      metadata: [
-        { name: "sortOrder", type: "number" }
-      ],
+      metadata: [{ name: "sortOrder", type: "number" }],
       capabilities: ["timestamps", "audit"]
     },
     {
@@ -524,9 +543,7 @@ export const nucleumDatafnSchema = defineSchema({
       inverse: "collections",
       joinTable: "collection_views",
       joinColumns: { from: "collectionId", to: "viewId" },
-      metadata: [
-        { name: "sortOrder", type: "number" }
-      ],
+      metadata: [{ name: "sortOrder", type: "number" }],
       capabilities: ["timestamps", "audit"]
     },
     {
@@ -551,6 +568,7 @@ export const nucleumDatafnSchema = defineSchema({
       inverse: "backlinks",
       joinTable: "record_links",
       joinColumns: { from: "in", to: "out" },
+      onDelete: "detach",
       metadata: [
         { name: "linkType", type: "string" },
         { name: "location", type: "string" },
@@ -671,6 +689,7 @@ export const nucleumDatafnSchema = defineSchema({
 });
 
 export type NucleumDatafnSchema = typeof nucleumDatafnSchema;
-export type NucleumDatafnResource = NucleumDatafnSchema["resources"][number]["name"];
+export type NucleumDatafnResource =
+  NucleumDatafnSchema["resources"][number]["name"];
 
 export default nucleumDatafnSchema;

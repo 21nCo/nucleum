@@ -50,7 +50,9 @@ export function createClassicCalendarIndicatorSignal({
   resources,
   date,
   scale
-}: ClassicCalendarIndicatorSignalInput): DatafnSignal<ICalendarIndicatorData[]> {
+}: ClassicCalendarIndicatorSignalInput): DatafnSignal<
+  ICalendarIndicatorData[]
+> {
   const entries: IndicatorSignalEntry[] = [];
   const temporalScale = resolveTemporalScale(scale);
 
@@ -65,6 +67,7 @@ export function createClassicCalendarIndicatorSignal({
             "updatedAt",
             "trashedAt",
             "isArchived",
+            "isAncestorInactive",
             "isChecked",
             "dateUnix"
           ],
@@ -86,6 +89,7 @@ export function createClassicCalendarIndicatorSignal({
             "updatedAt",
             "trashedAt",
             "isArchived",
+            "isAncestorInactive",
             "startUnix",
             "blocks",
             "start"
@@ -108,6 +112,7 @@ export function createClassicCalendarIndicatorSignal({
             "updatedAt",
             "trashedAt",
             "isArchived",
+            "isAncestorInactive",
             "createdAt",
             "metaType",
             "contentType",
@@ -140,6 +145,7 @@ export function createClassicCalendarIndicatorSignal({
             "updatedAt",
             "trashedAt",
             "isArchived",
+            "isAncestorInactive",
             "metaType",
             "date",
             "text"
@@ -196,6 +202,7 @@ export function areIndicatorDataEqual(
         record.id === nextRecord?.id &&
         record.updatedAt === nextRecord?.updatedAt &&
         record.isArchived === nextRecord?.isArchived &&
+        record.isAncestorInactive === nextRecord?.isAncestorInactive &&
         record.trashedAt === nextRecord?.trashedAt &&
         record.dateUnix === nextRecord?.dateUnix &&
         record.startUnix === nextRecord?.startUnix &&

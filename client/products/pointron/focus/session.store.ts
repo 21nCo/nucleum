@@ -61,7 +61,10 @@ import {
 } from "@21n/products/pointron/focus/session.utils";
 import { postDataToParent } from "@21n/utils/embed.utils";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import { ObjectiveStatus, type IObjective } from "@21n/components/goals/goal.type";
+import {
+  ObjectiveStatus,
+  type IObjective
+} from "@21n/components/goals/goal.type";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 import { uiState } from "@21n/stores/uiState/uiState.store";
 import { UIState } from "@21n/stores/uiState/uiState.type";
@@ -151,8 +154,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       this.loader(value);
     });
   }
-  propagateMessageToParent(n: IActiveSessionStore) {
-  }
+  propagateMessageToParent(n: IActiveSessionStore) {}
 
   protected persist(n: Partial<IActiveSessionStore> | undefined = undefined) {
     return datafn.kv.merge(
@@ -1530,9 +1532,9 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
     });
     const newRecents = items
       .map((x) => {
-        const objective = (objectivesResult.data as IObjective[] | undefined)?.find(
-          resourceInList(x.id)
-        );
+        const objective = (
+          objectivesResult.data as IObjective[] | undefined
+        )?.find(resourceInList(x.id));
         if (!objective) return;
         return {
           id: x.id,
@@ -1588,7 +1590,9 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
     }
 
     if (objectiveId && !n.items.some(resourceInList(objectiveId))) {
-      const removedObjective = n.removedItems?.find(resourceInList(objectiveId));
+      const removedObjective = n.removedItems?.find(
+        resourceInList(objectiveId)
+      );
       if (removedObjective) {
         n.removedItems =
           n.removedItems?.filter(
@@ -1687,11 +1691,9 @@ class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
       context: "propagateDependencyChanges to focusItemsStore",
       data
     });
-    //TODO - check if any existing task or objective is dependent on this change - change of label or color etc
   }
 
   resolveCount(items: IFocusItem[]) {
-    //TODO - don't count objectives with tasks as focus item
     return items.length;
   }
 
@@ -1784,11 +1786,9 @@ async function finishFocus(params?: { end?: number }) {
   const session: ISessionCapture = {
     elapsed: activeSessionVal.totalElapsed,
     extended: activeSessionVal.totalExtended,
-    // start: activeSessionVal.start?.toISOString() ?? "",
     startUnix: activeSessionVal.start
       ? resolveUnixTimestamp(activeSessionVal.start)
       : 0,
-    // end: endTime.toISOString(),
     endUnix: resolveUnixTimestamp(endTime),
     plannedEndUnix: plannedEndTime
       ? resolveUnixTimestamp(plannedEndTime)
@@ -1810,7 +1810,6 @@ async function finishFocus(params?: { end?: number }) {
   };
   const logs: ISessionLogCapture[] = [];
 
-  // Process both active items and removed items to preserve all focus data
   const allItems = [
     ...focusItemStore.items,
     ...(focusItemStore.removedItems ?? [])
@@ -1844,8 +1843,6 @@ async function finishFocus(params?: { end?: number }) {
   if (remainingTime > 0) {
     logs.push({
       id: generateResourceId(Resource.sessionLog),
-      // start: new Date(session.start).toISOString(),
-      // end: new Date(session.end).toISOString(),
       startUnix: session.startUnix,
       endUnix: session.endUnix,
       sessionId: session.id,
@@ -1864,7 +1861,7 @@ async function finishFocus(params?: { end?: number }) {
       operation: "relate",
       id: session.id,
       relations: {
-        items: createSessionItemRelationRefs(focusItemStore.items)
+        items: createSessionItemRelationRefs(allItems)
       },
       context: PointronAction.FINISH_FOCUS_SESSION
     }
@@ -1910,8 +1907,6 @@ async function finishFocus(params?: { end?: number }) {
     });
     return {
       id: generateResourceId(Resource.sessionLog),
-      // start: new Date(block.start).toISOString(),
-      // end: new Date(block.end).toISOString(),
       startUnix: resolveUnixTimestamp(new Date(block.start)),
       endUnix: resolveUnixTimestamp(new Date(block.end)),
       sessionId: session.id,

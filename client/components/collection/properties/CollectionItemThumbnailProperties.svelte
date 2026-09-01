@@ -63,11 +63,21 @@
       debounceMs: 1500
     });
   }
+
+  function stopClickPropagation(node: HTMLElement) {
+    const handleClick = (event: MouseEvent) => event.stopPropagation();
+    node.addEventListener("click", handleClick);
+    return {
+      destroy() {
+        node.removeEventListener("click", handleClick);
+      }
+    };
+  }
 </script>
 
-<button
+<div
   class="flex gap-3 flex-wrap items-center userdata"
-  onclick={(event) => event.stopPropagation()}
+  use:stopClickPropagation
 >
   {#each properties as property (property.id)}
     <PropertyItem
@@ -82,4 +92,4 @@
         : "default"}
     />
   {/each}
-</button>
+</div>

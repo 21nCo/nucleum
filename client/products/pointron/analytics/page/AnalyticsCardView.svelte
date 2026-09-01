@@ -22,7 +22,10 @@
   import type { IRecordId } from "@21n/types/data.type";
   import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
   import { resourceInList } from "@21n/data/datafn/resource.utils";
-  import type { IObjective, IObjectiveThumb } from "@21n/components/goals/goal.type";
+  import type {
+    IObjective,
+    IObjectiveThumb
+  } from "@21n/components/goals/goal.type";
   import { resolveObjectiveColor } from "@21n/components/goals/goal.utils";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
@@ -163,7 +166,9 @@
     return objective;
   }
 
-  function resolveObjectiveThumb(objective: IObjective | IObjectiveThumb | undefined) {
+  function resolveObjectiveThumb(
+    objective: IObjective | IObjectiveThumb | undefined
+  ) {
     return objective as IObjectiveThumb | undefined;
   }
 
@@ -203,8 +208,7 @@
       );
       const filteredLogs = logs.filter(
         (log) =>
-          log.startUnix >= correctedBegin &&
-          log.startUnix <= correctedEnd
+          log.startUnix >= correctedBegin && log.startUnix <= correctedEnd
       );
       const randomColor = () => Math.floor(Math.random() * 360);
 
@@ -216,7 +220,10 @@
           log.startUnix
         );
         const resolvedObjectiveLabel = objective?.label ?? "Unknown Objective";
-        if (objective && !colors.some((x) => x.label === resolvedObjectiveLabel)) {
+        if (
+          objective &&
+          !colors.some((x) => x.label === resolvedObjectiveLabel)
+        ) {
           const color = resolveObjectiveColor(objective);
           colors.push({
             label: resolvedObjectiveLabel,
@@ -261,14 +268,13 @@
       ) {
         const previousPeriod = determinePreviousTimePeriod(card.period);
         if (previousPeriod) {
-          const correctedPreviousBegin =
-            datafn.temporal.resolveLocalTimeSync(
-              resolveUnixTimestamp(previousPeriod)
-            );
+          const correctedPreviousBegin = datafn.temporal.resolveLocalTimeSync(
+            resolveUnixTimestamp(previousPeriod)
+          );
           const previousLogs = logs.filter(
             (log) =>
               log.startUnix >= correctedPreviousBegin &&
-              log.startUnix <= resolvedTimePeriod.begin
+              log.startUnix <= correctedBegin
           );
           previousLogs.forEach((log: ISessionLog) => {
             previousTimePeriodData.push(dataMapper(log));
