@@ -24,7 +24,10 @@
     });
   });
   const data = $derived.by(() =>
-    [...$nodeStore.data].sort((a, b) => b.createdAt - a.createdAt)
+    [...$nodeStore.data].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
   );
   const isLoading = $derived($nodeStore.loading || $nodeStore.refreshing);
 </script>

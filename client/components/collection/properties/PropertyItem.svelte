@@ -95,7 +95,12 @@
       Array.isArray(value)
     ) {
       value = "";
-    } else if (resolveIsMultiSelectProperty(property) && !Array.isArray(value)) {
+    } else if (resolveIsMultiSelectProperty(property) && value === "none") {
+      value = [];
+    } else if (
+      resolveIsMultiSelectProperty(property) &&
+      !Array.isArray(value)
+    ) {
       value = value ? [value.toString()] : [];
     }
     if (

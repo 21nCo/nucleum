@@ -78,6 +78,17 @@ export function resolveObjectiveColor(objective?: IObjectiveThumb) {
   return undefined;
 }
 
+function containsObjective(
+  objectives: IObjectiveThumb[],
+  target: IObjective | IObjectiveThumb
+): boolean {
+  return objectives.some(
+    (objective) =>
+      isSameResource(objective, target) ||
+      containsObjective(objective.children ?? [], target)
+  );
+}
+
 export async function updateObjectiveParent(
   src: IObjectiveThumb,
   parent?: IObjective | IObjectiveThumb
@@ -97,7 +108,7 @@ export async function updateObjectiveParent(
   const source = sourceResult.data[0] as IObjective | undefined;
   const subObjectives: IObjectiveThumb[] = source?.children ?? [];
   if (parent && isSameResource(parent, src)) return false;
-  if (parent && subObjectives.some(resourceInList(parent))) return false;
+  if (parent && containsObjective(subObjectives, parent)) return false;
   const parentId = parent?.id?.toString();
   const sourceParentId = source?.parentId?.toString();
   let sortOrder = 0;
@@ -119,7 +130,10 @@ export async function updateObjectiveParent(
         includeAncestorInactive: true
       }
     })) as IObjective | undefined;
-    sortOrder = parentResult?.children?.length ?? 0;
+    sortOrder =
+      parentResult?.children?.find(resourceInList(src))?.sortOrder ??
+      parentResult?.children?.length ??
+      0;
     await datafn.objective.mutate({
       operation: "relate",
       id: parentId,

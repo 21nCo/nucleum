@@ -77,7 +77,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
-    exclude: [],
+    exclude: ["@surrealdb/wasm", "surrealql.wasm"],
     include: [
       "@antv/g6",
       "@carbon/charts-svelte",
@@ -95,7 +95,7 @@ export default defineConfig({
   },
   plugins: [
     nodePolyfills({
-      include: ['process'],
+      include: ["process"],
       globals: {
         process: true
       }

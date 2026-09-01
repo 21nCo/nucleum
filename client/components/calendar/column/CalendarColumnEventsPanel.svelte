@@ -31,8 +31,16 @@
   function resolveEventOverlapFilters(value: Date) {
     const range = datafn.temporal.resolveRangeSync({ scale: "day", at: value });
     return {
-      startUnix: { $lte: range.end },
-      endUnix: { $gte: range.start }
+      $or: [
+        {
+          startUnix: { $lte: range.end },
+          endUnix: { $gte: range.start }
+        },
+        {
+          "value.startUnix": { $lte: range.end },
+          "value.endUnix": { $gte: range.start }
+        }
+      ]
     };
   }
 

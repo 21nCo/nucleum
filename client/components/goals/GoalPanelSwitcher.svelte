@@ -9,13 +9,11 @@
   import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
   import {
     type IResourcePageWithPanels,
-    ResourceAccessPoint,
-    ResourceActionType
+    ResourceAccessPoint
   } from "@21n/data/datafn/resource.type";
   import type { ResourcePanelType } from "../resource/resourcePanel.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
-  import type { ISelectValue } from "@21n/types/select.type";
 
   let {
     objective,
@@ -52,17 +50,6 @@
     })
   );
 
-  function onContextMenuAction(detail: ISelectValue) {
-    if (detail === ResourceActionType.STAR) {
-      objective.update((state) => ({
-        ...state,
-        isStarred: !state.isStarred
-      }));
-    } else if (detail === ResourceActionType.EDIT) {
-      objective.toggleEditMode(!$objective.isInEditMode);
-    }
-  }
-
   function resolveObjectiveThumb() {
     return $objective as unknown as IObjectiveThumb;
   }
@@ -74,6 +61,8 @@
   accessMode={$objective.accessMode}
   {isConstrainedWidth}
   contextMenuResolver={() =>
-    resolveObjectiveContextMenu(resolveObjectiveThumb(), ResourceAccessPoint.SELF)}
-  onAction={onContextMenuAction}
+    resolveObjectiveContextMenu(
+      resolveObjectiveThumb(),
+      ResourceAccessPoint.SELF
+    )}
 />

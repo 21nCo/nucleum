@@ -69,9 +69,9 @@
   }
   let results = $state<SearchItem[]>([]);
   let selectedIndex = $state(resolveDefaultIndexSelection());
-  let previousValue = $state("");
   let currentValue = $state("");
   let isSearchInProgress = $state(false);
+  let searchGeneration = 0;
 
   export function reset() {
     resetSearch();
@@ -119,6 +119,7 @@
     hide();
   }
   function resetSearch() {
+    searchGeneration += 1;
     results = [];
     selectedIndex = resolveDefaultIndexSelection();
     hide();
@@ -222,9 +223,8 @@
         onBlur(blurEvent);
       }
     } else if (event.key === KeyboardKey.BACKSPACE) {
-      previousValue = currentValue;
       currentValue = value;
-      debouncedSearch();
+      queueSearch(value);
     } else if (event.key === KeyboardKey.ENTER) {
       if (results && results.length > 0) {
         onSearchResultSelection(results[selectedIndex]);
@@ -241,14 +241,21 @@
       event.key !== KeyboardKey.ARROW_UP
     ) {
       currentValue = value;
-      debouncedSearch();
+      queueSearch(value);
     }
   }
 
   let debouncedSearch = debouncer(search, 500);
 
+  export function queueSearch(newValue?: string) {
+    searchGeneration += 1;
+    currentValue = newValue ?? value;
+    debouncedSearch(currentValue);
+  }
+
   export async function search(newValue?: string) {
     const val = newValue ?? value;
+    const generation = ++searchGeneration;
     isSearchInProgress = true;
     selectedIndex = resolveDefaultIndexSelection();
     results = [];
@@ -261,11 +268,13 @@
     if (searchCallback) {
       try {
         const result = await searchCallback(val);
+        if (generation !== searchGeneration) return;
         if (result) results = result;
         if (results.length > 0) {
           show();
         }
       } catch (error) {
+        if (generation !== searchGeneration) return;
         logger.error({
           at: "SearchResultsPopover.search",
           value: val,
@@ -274,12 +283,14 @@
         });
         results = [];
       } finally {
-        isSearchInProgress = false;
-        const countEvent = new CustomEvent("count", {
-          detail: { count: results?.length }
-        });
-        if (typeof onCount === "function") {
-          onCount(countEvent);
+        if (generation === searchGeneration) {
+          isSearchInProgress = false;
+          const countEvent = new CustomEvent("count", {
+            detail: { count: results?.length }
+          });
+          if (typeof onCount === "function") {
+            onCount(countEvent);
+          }
         }
       }
       return;

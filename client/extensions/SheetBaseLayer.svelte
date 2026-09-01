@@ -71,7 +71,9 @@
 
   function proceedDatafnSync() {
     if (isInitialized) {
-      void pullDatafnNow();
+      void pullDatafnNow().catch((error) => {
+        logger.error({ at: "SheetBaseLayer.proceedDatafnSync", error });
+      });
     }
   }
 

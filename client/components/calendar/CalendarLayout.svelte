@@ -17,7 +17,6 @@
   import BackButton from "@21n/elements/button/BackButton.svelte";
   import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/elements/button/BoxButton.svelte";
-  import { onMount } from "svelte";
   let {
     panel = $bindable(CalendarLayout.Classic),
     children = undefined,
@@ -40,15 +39,10 @@
     },
     { value: CalendarLayout.Classic, label: "Classic" }
   ];
-  let backPath = $state<string | null>(null);
+  const backPath = $derived(
+    $page.url.searchParams.get(AppSearchParam.RETURN_TO)
+  );
   const dev_enableBirdView = import.meta.env?.DEV;
-
-  onMount(() => {
-    const unsubscribe = page.subscribe((p) => {
-      backPath = p?.url?.searchParams.get(AppSearchParam.RETURN_TO) ?? null;
-    });
-    return () => unsubscribe?.();
-  });
 
   function onPanelSwitch(event: CustomEvent) {
     if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))

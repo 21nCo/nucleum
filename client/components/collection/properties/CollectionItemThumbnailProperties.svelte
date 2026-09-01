@@ -37,10 +37,12 @@
     propertyId: IRecordId,
     value: IPropertyValue | null
   ) {
+    const existingProperty = values?.find(resourceInList(propertyId));
+    const resolvedCollectionId = collectionId ?? existingProperty?.collectionId;
     values = values?.filter((x) => !isSameResource(x, propertyId)) ?? [];
     const property = {
       id: propertyId,
-      collectionId,
+      collectionId: resolvedCollectionId,
       value
     };
     values = [...values, property];
@@ -54,7 +56,9 @@
           {
             $ref: propertyId.toString(),
             fromResource: resourceType.toString(),
-            ...(collectionId ? { collectionId: collectionId.toString() } : {}),
+            ...(resolvedCollectionId
+              ? { collectionId: resolvedCollectionId.toString() }
+              : {}),
             value
           }
         ]

@@ -60,9 +60,7 @@
     searchResultComponent?: any;
     searchResultComponentProps?: Record<string, unknown>;
     emptyStateLabel?:
-      | string
-      | { mainText?: string; subText?: string }
-      | undefined;
+      string | { mainText?: string; subText?: string } | undefined;
     isChipsMode?: boolean;
     isInline?: boolean;
     width?: string | undefined;
@@ -79,11 +77,13 @@
     onHide?: ((event: CustomEvent<void>) => void) | undefined;
     onKeydown?: ((event: KeyboardEvent) => void) | undefined;
     onKeyup?:
-      | ((event: CustomEvent<{
-          value: any;
-          event: KeyboardEvent;
-          isShowSearchResults: boolean;
-        }>) => void)
+      | ((
+          event: CustomEvent<{
+            value: any;
+            event: KeyboardEvent;
+            isShowSearchResults: boolean;
+          }>
+        ) => void)
       | undefined;
     onReset?: ((event: CustomEvent<void>) => void) | undefined;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
@@ -93,7 +93,9 @@
   let chips = $state<any[]>([]);
   let inputRef = $state<any>();
   let popoverRef = $state<any>();
-  let searchResultsPopover = $state<SearchResultsPopover | undefined>(undefined);
+  let searchResultsPopover = $state<SearchResultsPopover | undefined>(
+    undefined
+  );
 
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -172,22 +174,16 @@
       show();
     }
     searchResultsPopover?.keyup(event);
-    const changeEvent = new CustomEvent<{ value: any }>("change", {
-      detail: { value }
-    });
-    if (typeof onChange === "function") {
-      onChange(changeEvent);
-    }
     emitKeyup(event);
   }
 
   function onInputValueChange() {
     if (!searchCallback && !searchStoreId) {
       hide();
-      return;
+    } else {
+      show();
+      searchResultsPopover?.queueSearch(value);
     }
-    show();
-    searchResultsPopover?.search(value);
     const changeEvent = new CustomEvent<{ value: any }>("change", {
       detail: { value }
     });

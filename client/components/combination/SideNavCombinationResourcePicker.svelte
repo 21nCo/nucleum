@@ -5,7 +5,9 @@
   import { resolveProductResources } from "@21n/data/datafn/resource.utils";
   import { appStore } from "@21n/stores/app.store";
 
-  let { onSelect = undefined }: {
+  let {
+    onSelect = undefined
+  }: {
     onSelect?: ((event: CustomEvent<{ item: any }>) => void) | undefined;
   } = $props();
 
@@ -16,7 +18,7 @@
     }
     const searchResult = await datafn.search({
       query: trimmed,
-      resources: resolveProductResources($appStore.product),
+      resources: resolveProductResources($appStore.product, "search"),
       fields: ["label"],
       limit: 30,
       limitPerResource: 30,

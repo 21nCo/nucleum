@@ -36,7 +36,9 @@
     width?: string;
     onAdd?: (() => void) | undefined;
     onReorder?:
-      | ((event: CustomEvent<{ from: number; to: number; listId: string }>) => void)
+      | ((
+          event: CustomEvent<{ from: number; to: number; listId: string }>
+        ) => void)
       | undefined;
     onSelect?: ((row: any) => void) | undefined;
     onMultiSelect?: ((row: any) => void) | undefined;
@@ -159,7 +161,9 @@
         dragImage: "dragimage"
       }}
       onreorder={(event) => {
-        onReorder?.(event as CustomEvent<{ from: number; to: number; listId: string }>);
+        onReorder?.(
+          event as CustomEvent<{ from: number; to: number; listId: string }>
+        );
       }}
     >
       {#each data as row, i (row.id)}
@@ -208,9 +212,9 @@
                     path={column.component}
                     params={{
                       row,
+                      ...componentProps,
                       onRowPatch: (patch: Record<string, unknown>) =>
-                        patchRow(row, patch),
-                      ...componentProps
+                        patchRow(row, patch)
                     }}
                   />
                 {:else}

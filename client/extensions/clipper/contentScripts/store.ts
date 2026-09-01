@@ -417,10 +417,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       args: {
         resource: Resource.node,
         params: {
-          search: {
-            fields: ["url"],
-            query: this.get().url
-          } as any
+          filters: {
+            url: this.get().url
+          }
         }
       }
     });

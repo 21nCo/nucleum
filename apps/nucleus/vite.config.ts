@@ -71,7 +71,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
-    exclude: ["@authfn/client"],
+    exclude: ["@authfn/client", "@surrealdb/wasm", "surrealql.wasm"],
     include: [
       "@antv/g6",
       "@carbon/charts-svelte",

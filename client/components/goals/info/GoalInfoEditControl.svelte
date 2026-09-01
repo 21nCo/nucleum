@@ -2,10 +2,7 @@
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import ColorPickerMini from "@21n/elements/colorPicker/ColorPickerMini.svelte";
   import type { IActiveObjectiveStore } from "@21n/components/goals/goal.store";
-  import {
-    AlertType,
-    type IInlineStatus
-  } from "@21n/types/notification.type";
+  import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { resolveObjectiveSubTypesForSwitcher } from "@21n/components/goals/goal.utils";
   import { InputStyle } from "@21n/types/input.type";
@@ -80,7 +77,7 @@
     <span class="text-left text-b2 text-fgs3">{resolveLabel(control)}</span>
     {#if control === "color"}
       <ColorPickerMini
-        bind:hue={$objective.color}
+        hue={$objective.color}
         width="w-full"
         onDebouncedChangeCallback={handleColorChange}
       />

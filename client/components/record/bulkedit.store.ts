@@ -162,7 +162,7 @@ export const bulkEditStore = {
     );
     if (currentState.selectAllHandler) {
       const ids = currentState.selectAllHandler();
-      if (Array.isArray(ids) && ids.length > 0) {
+      if (Array.isArray(ids)) {
         this.select(Array.from(new Set(ids)));
         return;
       }

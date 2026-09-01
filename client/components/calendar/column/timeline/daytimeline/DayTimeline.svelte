@@ -58,8 +58,16 @@
   function resolveEventOverlapFilters(value: Date) {
     const range = datafn.temporal.resolveRangeSync({ scale: "day", at: value });
     return {
-      startUnix: { $lte: range.end },
-      endUnix: { $gte: range.start }
+      $or: [
+        {
+          startUnix: { $lte: range.end },
+          endUnix: { $gte: range.start }
+        },
+        {
+          "value.startUnix": { $lte: range.end },
+          "value.endUnix": { $gte: range.start }
+        }
+      ]
     };
   }
 
@@ -84,16 +92,21 @@
 
   function resolveEventEntries(events: ICalendarEvent[]) {
     if (isValidArrayWithData(events)) {
-      return events.map((event: ICalendarEvent) => ({
-        startUnix: event.startUnix ?? date.getTime(),
-        endUnix:
-          event.endUnix ?? (event.startUnix ?? date.getTime()) + 60 * 60 * 1000,
-        item: {
-          ...event,
-          label: event.label ?? event.event ?? "New event",
-          event: event.event ?? event.label ?? "New event"
-        }
-      }));
+      return events.map((event: ICalendarEvent) => {
+        const startUnix =
+          event.startUnix ?? event.value?.startUnix ?? date.getTime();
+        const endUnix =
+          event.endUnix ?? event.value?.endUnix ?? startUnix + 60 * 60 * 1000;
+        return {
+          startUnix,
+          endUnix,
+          item: {
+            ...event,
+            label: event.label ?? event.event ?? "New event",
+            event: event.event ?? event.label ?? "New event"
+          }
+        };
+      });
     }
     return [];
   }

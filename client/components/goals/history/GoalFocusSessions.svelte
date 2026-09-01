@@ -40,7 +40,9 @@
     const ids = [id.toString()];
     if (isIncludeSubObjectives) {
       ids.push(
-        ...((objective?.children ?? []).map((objective) => objective.id.toString()) ?? [])
+        ...((objective?.children ?? []).map((objective) =>
+          objective.id.toString()
+        ) ?? [])
       );
     }
     return ids;
@@ -48,7 +50,7 @@
   const sessionLogStore = $derived.by(() =>
     toSvelteStore<ISessionLogThumb[]>(
       datafn.sessionLog.signal({
-        select: ["task.*"],
+        select: ["sessionId", "task.*"],
         filters: {
           objectiveId: { $in: objectiveIds }
         }

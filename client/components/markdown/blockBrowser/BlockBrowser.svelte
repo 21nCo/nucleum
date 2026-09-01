@@ -37,20 +37,20 @@
 
   let filteredResults = $state<any[]>(
     config
-    .map((section) => {
-      return {
-        section: section.section,
-        children: section.children
-          .filter((c) => !c.isDisabled)
-          .map((c) => {
-            return {
-              ...c,
-              section: section.section
-            };
-          })
-      };
-    })
-    .filter((section) => section.children.length > 0)
+      .map((section) => {
+        return {
+          section: section.section,
+          children: section.children
+            .filter((c) => !c.isDisabled)
+            .map((c) => {
+              return {
+                ...c,
+                section: section.section
+              };
+            })
+        };
+      })
+      .filter((section) => section.children.length > 0)
   );
   selectedSection = filteredResults[0].section;
   focusedItem = filteredResults[0].children[0];
@@ -135,23 +135,7 @@
   }
 
   function resolveSearchQuery(query: string) {
-    const normalized = query.trimStart().toLowerCase();
-    if (!normalized) return "";
-    const directMatches = filterBlocks(normalized);
-    if (directMatches.length > 0) return normalized;
-    for (let i = normalized.length - 1; i >= 2; i--) {
-      const prefix = normalized.slice(0, i);
-      if (filterBlocks(prefix).length > 0) return prefix;
-    }
-    return normalized;
-  }
-
-  function filterBlocks(query: string) {
-    return config
-      .filter((section) => !section.isDisabled)
-      .flatMap((section) => section.children)
-      .filter((block) => !block.isDisabled)
-      .filter((block) => block.label.toLowerCase().includes(query));
+    return query.trim().toLowerCase();
   }
 
   function onSelection(e?: CustomEvent) {

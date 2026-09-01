@@ -47,6 +47,7 @@
     }
   )}
   onpointerdown={(event) => {
+    if (event.button !== 0) return;
     event.preventDefault();
     event.stopPropagation();
     selectBlock();
