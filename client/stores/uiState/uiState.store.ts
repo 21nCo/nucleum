@@ -1,7 +1,8 @@
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource as DatafnResource } from "@21n/data/datafn/resource.enum";
+import { Resource as LegacyResource } from "@21n/components/flux/resourceStores/resource.enum";
 import { logger } from "@21n/components/debug/logger.client";
 import { get, writable } from "svelte/store";
-import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
 import { appStore } from "@21n/stores/app.store";
 import { ObservableStore } from "@21n/stores/client.store";
 import { datafn } from "@21n/stores/datafn.store";
@@ -34,7 +35,7 @@ import type { OptimisticKvEntries } from "@21n/types/datafn.type";
 const uiStateSeed: IUIStateStore = {
   $local: {}
 };
-const uiStateSignal = datafn.kv.signal<IUIStateStore>(Resource.uiState, {
+const uiStateSignal = datafn.kv.signal<IUIStateStore>(DatafnResource.uiState, {
   defaultValue: uiStateSeed
 });
 const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
@@ -170,7 +171,7 @@ export const uiState = {
   },
 
   getResourceState(
-    resource: Resource,
+    resource: LegacyResource,
     location: ResourceAccessPoint,
     keyParam: UIState
   ) {
@@ -179,7 +180,7 @@ export const uiState = {
   },
 
   setResourceState(
-    resource: Resource,
+    resource: LegacyResource,
     location: ResourceAccessPoint,
     keyParam: UIState,
     value: any
@@ -192,7 +193,7 @@ export const uiState = {
   modify(n: Partial<IUIStateStore>) {
     const mutationTokens = addOptimisticKvEntries(pendingUiStateValues, n);
     uiStateLocal.update((current) => ({ ...current, ...n }));
-    const mutation = datafn.kv.merge(Resource.uiState, n);
+    const mutation = datafn.kv.merge(DatafnResource.uiState, n);
     const rollbackPendingValues = () => {
       removeOptimisticKvEntries(pendingUiStateValues, mutationTokens);
       refreshUiStateLocal();
@@ -211,7 +212,7 @@ export const uiState = {
       ...migrated,
       $local: resolveStoredLocalState()
     });
-    return datafn.kv.set(Resource.uiState, migrated);
+    return datafn.kv.set(DatafnResource.uiState, migrated);
   },
 
   addResourceToTabs(id: IRecordId) {

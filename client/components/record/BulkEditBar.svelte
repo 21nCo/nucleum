@@ -3,16 +3,16 @@
     ResourceAccessPoint,
     ResourceActionType,
     type IMultiSelectContext
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { LinkType } from "@21n/products/memotron/linking/link.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import appearance from "@21n/stores/appearance.store";
   import { Theme } from "@21n/types/appearance.type";
-  import { resolveResourceActionIcon } from "@21n/data/datafn/resource.utils";
+  import { resolveResourceActionIcon } from "@21n/components/flux/resourceStores/resource.utils";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { isSameDay } from "@21n/utils/time.utils";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
@@ -39,12 +39,12 @@
     label: string;
     icon: string;
   };
-  let isHideStar = $derived(
-    [Resource.task, Resource.session].includes(context.resource)
-  );
-  let isHideArchive = $derived(
-    [Resource.task, Resource.session].includes(context.resource)
-  );
+  let isHideStar = $derived([Resource.task, Resource.session].includes(
+    context.resource
+  ));
+  let isHideArchive = $derived([Resource.task, Resource.session].includes(
+    context.resource
+  ));
   const buttonProps = {
     size: Size.sm,
     style: ButtonStyle.OUTLINED,
@@ -154,7 +154,7 @@
     } else if (
       context.resource === Resource.task &&
       (context.accessPoint === ResourceAccessPoint.CALENDAR ||
-        context.accessPoint === ResourceAccessPoint.OBJECTIVE)
+        context.accessPoint === ResourceAccessPoint.GOAL)
     ) {
       actions.push(completeAction);
       actions.push(setDate);
@@ -196,7 +196,6 @@
   function emitClear() {
     onClear?.();
   }
-
 </script>
 
 <!-- TODO - invert color layer with corresponding opposite light/dark color scheme -->
@@ -219,6 +218,10 @@
           <DatePicker
             variant="inline-with-icon"
             onChange={(e) => {
+              onAction?.({
+                action: action.action,
+                data: e.detail
+              });
               emitAction({
                 action: action.action,
                 data: e.detail
@@ -238,6 +241,9 @@
           {parentBgIndex}
           {...buttonProps}
           onclick={() => {
+            onAction?.({
+              action: action.action
+            });
             emitAction({
               action: action.action
             });
@@ -257,10 +263,15 @@
         {...buttonProps}
         onclick={() => {
           if (action.action === "selectAll") {
+            onSelectAll?.();
             emitSelectAll();
           } else if (action.action === "clearSelection") {
+            onClear?.();
             emitClear();
           } else {
+            onAction?.({
+              action: action.action
+            });
             emitAction({
               action: action.action
             });

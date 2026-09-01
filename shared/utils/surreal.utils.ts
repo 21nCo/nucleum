@@ -17,6 +17,7 @@ import {
   IResourceFilterDateGrouping,
   type IResourceSelectProperties
 } from "@21n/types/data.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { generateRandomId } from "@21n/shared-utils/crypto.utils";
 
 type IComparisonFilterValue = {
@@ -321,7 +322,7 @@ function isValidIdentifier(identifier: string): boolean {
  * Newer versions of Surreal SDK doesn't automatically convert the date to the surreal date format and record links. There d'format' is used for dates and removing quotes around record links to be detected as record links.
  */
 export function commonQueryReplacements(query: string, resource?: Resource) {
-  if (resource === "mutation") return query;
+  if (resource === Resource.mutation) return query;
   const dateRegex = /"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z)"/g;
   const recordLinkRegex = /"([\w-]+:[\w-]+)"/g;
   const recordLinkRegexSingleQuotes = /'([\w-]+:[\w-]+)'/g;

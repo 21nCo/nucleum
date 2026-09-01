@@ -29,15 +29,15 @@
       img: ""
     },
     {
-      title: "1. Create objectives",
+      title: "1. Create goals",
       description:
-        "You can create objectives and infinitely nest sub-objectives, attach tags to objectives to track your progress across various objectives of your life in a more granular manner",
+        "You can create goals and infinitely nest sub goals, attach tags to goals to track your progress across various goals of your life in a more granular manner",
       img: "images/onboarding/goals.gif"
     },
     {
       title: "2. Focus using focus sessions",
       description:
-        "Begin focusing by tapping on an objective in quick focus section or composing your own advanced focus session.",
+        "Begin focusing by tapping on a goal in quick focus section or composing your own advanced focus session.",
       img: "images/onboarding/custom.gif"
     },
     {

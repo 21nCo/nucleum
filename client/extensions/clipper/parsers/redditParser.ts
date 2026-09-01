@@ -1,4 +1,4 @@
-import type { OmitForCapture } from "@21n/data/datafn/resource.type";
+import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
 import {
   NodeType,
   type IRedditPost,
@@ -7,10 +7,7 @@ import {
 } from "@21n/products/memotron/node/node.type";
 import { createUrlFilter } from "@21n/products/memotron/node/url.utils";
 import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
-import type {
-  ISocialPost,
-  ISocialPostBase
-} from "@21n/extensions/clipper/clipper.type";
+import type { ISocialPost, ISocialPostBase } from "@21n/extensions/clipper/clipper.type";
 import { findAncestorOrSelf } from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 export function extractRedditPostFromInlineClip(

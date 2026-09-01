@@ -1,6 +1,6 @@
 <script lang="ts">
   import { logger } from "@21n/components/debug/logger.client";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import Button from "@21n/elements/button/Button.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import Icon from "@21n/elements/Icon.svelte";
@@ -13,16 +13,12 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { InputStyle } from "@21n/types/input.type";
   import { cn } from "@21n/utils/ui.utils";
+  import { linkTagStore } from "@21n/products/memotron/linking/link.store";
   import type {
     ILinkTag,
     ILinkTagGroup
   } from "@21n/products/memotron/linking/link.type";
   import LinkTagsGroup from "@21n/products/memotron/linking/LinkTagsGroup.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { Resource } from "@21n/data/datafn/resource.enum";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
-  import { activeResourceFilter } from "@21n/utils/utils";
 
   let {
     accessPoint = null
@@ -32,40 +28,13 @@
   let inputValue = $state("");
   let errorMessage = $state<string | null>(null);
   let isAddFocused = $state(false);
-  const linkTagStore = toSvelteStore<ILinkTag[]>(
-    datafn.linkTag.signal({
-      select: ["id", "label", "group", "updatedAt", "createdAt"]
-    }),
-    { initialData: [] }
-  );
-  const linkTags = $derived($linkTagStore.data);
   const groups = $derived.by(() =>
-    resolveLinkTagGroups(linkTags).filter((group): group is ILinkTagGroup =>
-      Boolean(group)
-    )
+    $linkTagStore
+      ? linkTagStore
+          .transform($linkTagStore)
+          .filter((group): group is ILinkTagGroup => Boolean(group))
+      : []
   );
-
-  function resolveLinkTagGroups(data: ILinkTag[]): ILinkTagGroup[] {
-    const groupsArray = data?.reduce(
-      (acc, item) => {
-        const group = item.group ?? "";
-        if (!acc[group]) {
-          acc[group] = [];
-        }
-        acc[group].push(item);
-        return acc;
-      },
-      {} as Record<string, ILinkTag[]>
-    );
-    const groups = Object.entries(groupsArray).map(([group, items]) => ({
-      group,
-      items: items.filter(activeResourceFilter)
-    }));
-    const withoutGroup = groups.find((item) => item.group === "");
-    return [withoutGroup, ...groups.filter((item) => item.group !== "")].filter(
-      (item): item is ILinkTagGroup => Boolean(item)
-    );
-  }
 
   function resolveSavedLinkTag(result: ILinkTag | ILinkTag[] | undefined) {
     return Array.isArray(result) ? result[0] : result;
@@ -75,43 +44,6 @@
     return groups.find((group) => group.group === groupName)?.items ?? [];
   }
 
-  function resolveTagParts(label: string, group?: string) {
-    let resolvedLabel = label.trim();
-    let resolvedGroup = group?.trim();
-    if (!resolvedGroup && resolvedLabel.includes(":")) {
-      const [groupPart, ...labelParts] = resolvedLabel.split(":");
-      resolvedGroup = groupPart.trim();
-      resolvedLabel = labelParts.join(":").trim();
-    }
-    return {
-      label: resolvedLabel,
-      group: resolvedGroup?.toLowerCase() ?? ""
-    };
-  }
-
-  async function saveLinkTag(label: string, group?: string) {
-    const next = resolveTagParts(label, group);
-    const existingTag = linkTags.find(
-      (tag) =>
-        tag.label?.toLowerCase() === next.label.toLowerCase() &&
-        (tag.group ?? "").toLowerCase() === next.group
-    );
-    if (existingTag) return existingTag;
-    const now = new Date();
-    const record = {
-      id: generateResourceId(Resource.linkTag),
-      ...next,
-      createdAt: now,
-      updatedAt: now
-    };
-    await datafn.linkTag.mutate({
-      operation: "insert",
-      id: record.id,
-      record
-    });
-    return record;
-  }
-
   async function save(params?: { group: string; label: string }) {
     if (!inputValue && !params?.label) {
       errorMessage = "Tag cannot be empty";
@@ -119,9 +51,9 @@
     }
     let result;
     if (params) {
-      result = await saveLinkTag(params.label, params.group);
+      result = await linkTagStore.save(params.label, params.group);
     } else {
-      result = await saveLinkTag(inputValue);
+      result = await linkTagStore.save(inputValue);
     }
     logger.log({ at: "LinkTagsControlPanel save", result });
     const savedLinkTag = resolveSavedLinkTag(result);
@@ -133,20 +65,13 @@
 
   function onRemove(e: CustomEvent<IRecordId>) {
     logger.log({ at: "LinkTagsControlPanel onRemove", id: e.detail });
-    datafn.linkTag.mutate({
-      operation: "trash",
-      id: e.detail
-    });
+    linkTagStore.trash(e.detail);
   }
 
   function onUpdate(e: CustomEvent<{ id: IRecordId; label: string }>) {
     logger.log({ at: "LinkTagsControlPanel onUpdate", ...e.detail });
-    datafn.linkTag.mutate({
-      operation: "merge",
-      id: e.detail.id,
-      record: {
-        label: e.detail.label
-      }
+    linkTagStore.modify(e.detail.id, {
+      label: e.detail.label
     });
   }
 
@@ -159,27 +84,14 @@
       newgroup,
       tags
     });
-    if (tags)
-      datafn.linkTag.mutate(
-        tags.map((id) => ({
-          operation: "merge",
-          id,
-          record: { group: newgroup }
-        }))
-      );
+    if (tags) linkTagStore.bulkModify(tags, { group: newgroup });
   }
 
   async function onBulkDelete(e: CustomEvent<string>) {
     const group = e.detail;
     const tags = resolveGroupItems(group).map((item) => item.id);
     logger.log({ at: "LinkTagsControlPanel onBulkDelete", group, tags });
-    if (tags)
-      await datafn.linkTag.mutate(
-        tags.map((id) => ({
-          operation: "trash",
-          id
-        }))
-      );
+    if (tags) await linkTagStore.bulkTrash(tags);
     else toasts.error("No tags to delete");
   }
 </script>
@@ -244,9 +156,9 @@
             {group}
             onSave={(e) => save(e.detail)}
             onUpdateGroupName={onUpdategroup}
-            {onBulkDelete}
-            {onRemove}
-            {onUpdate}
+            onBulkDelete={onBulkDelete}
+            onRemove={onRemove}
+            onUpdate={onUpdate}
           />
         {/if}
       {/each}

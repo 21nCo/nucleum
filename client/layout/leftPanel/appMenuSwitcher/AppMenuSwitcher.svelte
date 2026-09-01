@@ -16,12 +16,12 @@
   import view from "@21n/stores/view.store";
   import { cn } from "@21n/utils/ui.utils";
   import AppMenuSwitcherItemGroup from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcherItemGroup.svelte";
-  import { ResourceActionType } from "@21n/data/datafn/resource.type";
-  import { resourceAction } from "@21n/data/datafn/resource.utils";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { resolveProductConfig } from "@21n/products/product.config";
-  import type { Resource } from "@21n/data/datafn/resource.enum";
+  import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { hTrail, vTrail } from "@21n/layout/topNav/tabs/tabs.store";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   let {
     layoutContext = LayoutContext.DEFAULT,
     parentBackgroundIndex,
@@ -36,7 +36,6 @@
   let userPinnedPages = $state<IAction[]>([]);
   let current = $state("");
   const productConfig = resolveProductConfig();
-  const isEnableUserPinnedPages = false;
 
   refresh(appMenuStore.get());
   onMount(() => {
@@ -155,9 +154,9 @@
       {parentBackgroundIndex}
       {layoutContext}
       items={defaultPages}
-      {onClick}
+      onClick={onClick}
     />
-    {#if isEnableUserPinnedPages && userPinnedPages.length > 0}
+    {#if userPinnedPages.length > 0}
       <div
         class={cn("flex flex-col", {
           "gap-3": layoutContext === LayoutContext.THIN_WITH_LABEL,
@@ -173,7 +172,7 @@
           {parentBackgroundIndex}
           {layoutContext}
           items={userPinnedPages}
-          {onClick}
+          onClick={onClick}
         />
       </div>
     {/if}

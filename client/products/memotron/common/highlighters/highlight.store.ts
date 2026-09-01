@@ -1,7 +1,6 @@
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type { IHighlightStore } from "@21n/products/memotron/common/highlighters/highlight.type";
-import { datafn } from "@21n/stores/datafn.store";
-import { get, writable } from "svelte/store";
 
 const seedHighlighters: IHighlightStore = {
   highlighters: [
@@ -13,35 +12,14 @@ const seedHighlighters: IHighlightStore = {
   ]
 };
 
-const highlightSignal = datafn.kv.signal<IHighlightStore>(Resource.highlight, {
-  defaultValue: seedHighlighters
-});
-const highlightLocal = writable<IHighlightStore>(seedHighlighters);
-
-highlightSignal.subscribe((value) => {
-  highlightLocal.set(value ?? seedHighlighters);
-});
-
-export const highlightStore = {
-  subscribe: highlightLocal.subscribe,
-  get() {
-    return get(highlightLocal);
-  },
+class HighlightColorsStore extends KeyValueStore<IHighlightStore> {
+  constructor() {
+    super(Resource.highlight, seedHighlighters);
+  }
   resolveColor(id: string) {
     return this.get().highlighters.find((x) => x.id === id)?.color ?? "#f6e05e";
-  },
-
-  loader(data: IHighlightStore) {
-    highlightLocal.set(data);
-    return datafn.kv.set(Resource.highlight, data);
-  },
-
-  modify(n: Partial<IHighlightStore>) {
-    highlightLocal.update((current) => ({ ...current, ...n }));
-    return datafn.kv.merge(Resource.highlight, n);
-  },
-
-  destroy() {
-    highlightSignal.dispose();
   }
-};
+}
+export const highlightStore = HighlightColorsStore.resolve(
+  Resource.highlight
+);

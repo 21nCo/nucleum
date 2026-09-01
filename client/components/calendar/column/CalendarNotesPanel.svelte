@@ -1,46 +1,30 @@
-<script module lang="ts">
-  const calendarNotesCreationPromises = new Map<string, Promise<void>>();
-
-  async function ensureCalendarNotesCreated(
-    id: string,
-    create: () => Promise<void>
-  ) {
-    let pending = calendarNotesCreationPromises.get(id);
-    if (!pending) {
-      pending = create().finally(() => {
-        calendarNotesCreationPromises.delete(id);
-      });
-      calendarNotesCreationPromises.set(id, pending);
-    }
-    await pending;
-  }
-</script>
-
 <script lang="ts">
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import NodeContent from "@21n/products/memotron/node/content/NodeContent.svelte";
   import {
     ActiveNodeStore,
+    nodeStore,
     type IActiveNodeStore
   } from "@21n/products/memotron/node/node.store";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import type { TimeScaleUnit } from "@21n/types/time.type";
-  import { onDestroy, onMount, setContext } from "svelte";
+  import { setContext } from "svelte";
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
   import { preferences } from "@21n/stores/preferences/preferences.store";
   import { ActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import { Preference } from "@21n/stores/preferences/preferences.type";
   import type { IMarkdownTemplate } from "@21n/components/markdown/md.type";
+  import SyncStatusListener from "@21n/elements/listeners/SyncStatusListener.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { Size } from "@21n/types/size.enum";
   import { page } from "$app/stores";
   import { Context } from "@21n/types/appStore.type";
-  import { datafn, nucleumDatafnStatus } from "@21n/stores/datafn.store";
-  import { acquireDnDPage, appStore } from "@21n/stores/app.store";
 
   let {
     date,
@@ -54,37 +38,25 @@
 
   let node = $state<IActiveNodeStore | undefined>(undefined);
   const captureStore = ActiveCaptureStore.resolve(mdId);
-  const isSyncing = $derived(
-    $nucleumDatafnStatus.status === "syncing" ||
-      $nucleumDatafnStatus.status === "starting"
-  );
+  let isSyncing = $state(false);
   const isFullScreenActive = $derived(
-    $page.url?.searchParams?.get(AccessMode.POP) ===
-      resolveCalendarNotesId(date, scale)
+    $page.url.searchParams.get(AccessMode.POP) === resolveCalendarNotesId(date, scale)
   );
 
   async function initialize(scaleParam: TimeScaleUnit) {
     if (isSyncing) return;
     const id = resolveCalendarNotesId(date, scaleParam);
-    const result = await datafn.node.select(id, {
-      select: ["id"],
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    });
+    const result = await nodeStore.select(id);
     const savedTemplate = preferences.resolve(Preference.NOTES_TEMPLATE, {
       subVariables: [scaleParam]
     });
     if (!result?.id) {
       if (isSyncing) return;
-      await ensureCalendarNotesCreated(id, () =>
-        captureStore.saveCalendarNotes({
-          date,
-          scale: scaleParam,
-          template: savedTemplate as IMarkdownTemplate | undefined
-        })
-      );
+      await captureStore.saveCalendarNotes({
+        date,
+        scale: scaleParam,
+        template: savedTemplate as IMarkdownTemplate | undefined
+      });
     }
     node = ActiveNodeStore.resolve(id);
     const nodeInitResult = await node.init({
@@ -103,18 +75,9 @@
   };
 
   setContext(Context.NODE, nodeContext);
-
-  let releaseDnDPage: (() => void) | undefined;
-
-  onMount(() => {
-    releaseDnDPage = acquireDnDPage();
-  });
-
-  onDestroy(() => {
-    releaseDnDPage?.();
-  });
 </script>
 
+<SyncStatusListener resource={Resource.everything} bind:isSyncing />
 {#if isSyncing || isFullScreenActive}
   <EmptyStatusView
     size={Size.sm}
@@ -144,3 +107,5 @@
     />
   {/await}
 {/if}
+
+<ComponentBaseLayer hasDragAndDrop={true} />

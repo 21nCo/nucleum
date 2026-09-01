@@ -17,13 +17,13 @@
     data,
     parentBgIndex = 1,
     previousTimePeriodData = [],
-    objectiveColors
+    goalColors
   }: {
     card: IAnalyticsCard;
     data: AnalyticsDataRecord[];
     parentBgIndex?: number;
     previousTimePeriodData?: AnalyticsDataRecord[];
-    objectiveColors: IAnalyticsLabelColor[];
+    goalColors: IAnalyticsLabelColor[];
   } = $props();
 </script>
 
@@ -32,7 +32,7 @@
     class="flex self-start w-full h-full mo:p-0.5 p-3 overflow-auto userdata"
   >
     {#if card.type === AnalyticsCardType.TOP_N}
-      <TopNCard {card} {data} {objectiveColors} {previousTimePeriodData} />
+      <TopNCard {card} {data} {goalColors} {previousTimePeriodData} />
     {:else if card.type === AnalyticsCardType.TARGETS}
       <div class="w-full h-full flex items-center">
         <TargetGuages
@@ -46,5 +46,5 @@
     {/if}
   </div>
 {:else}
-  <AnalyticsChart chart={card} rawData={data} {objectiveColors} />
+  <AnalyticsChart chart={card} rawData={data} {goalColors} />
 {/if}

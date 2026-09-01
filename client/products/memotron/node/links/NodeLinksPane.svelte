@@ -1,35 +1,47 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import LinkThumbnailItems from "@21n/products/memotron/node/links/LinkThumbnailItems.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { Size } from "@21n/types/size.enum";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
+  import {
+    AccessMode,
+    ResourceAccessPoint
+  } from "@21n/components/flux/resourceStores/resource.type";
   import InlineTimeoutMessage from "@21n/elements/text/InlineTimeoutMessage.svelte";
   import { AlertType } from "@21n/types/notification.type";
-  import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import {
+    nodeStore,
+    type IActiveNodeStore
+  } from "@21n/products/memotron/node/node.store";
   import {
     type INode,
     type INodeLinkThumb
   } from "@21n/products/memotron/node/node.type";
   import { LinkType } from "@21n/products/memotron/linking/link.type";
+  import { linker } from "@21n/products/memotron/linking/link.store";
   import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { appStore } from "@21n/stores/app.store";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { flux } from "@21n/components/flux/flux";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { logger } from "@21n/components/debug/logger.client";
   import type { IRecordId } from "@21n/types/data.type";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import LinkTagFilter from "@21n/products/memotron/node/links/LinkTagFilter.svelte";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
   import {
-    determineResourceType,
     resourceInList,
     isSameResource
-  } from "@21n/data/datafn/resource.utils";
-  import {
-    BulkEditor,
-    resolveResource
-  } from "@21n/components/record/record.store";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { activeResourceFilterV2 } from "@21n/utils/utils";
+  import { BulkEditor } from "@21n/components/record/record.store";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import { toasts } from "@21n/stores/notification.store";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import {
     ErrorMessage,
     ResourceErrorCode
@@ -38,9 +50,6 @@
   import { LoadingAnimationType } from "@21n/types/feedback.type";
   import Tag from "@21n/elements/text/Tag.svelte";
   import { resolveLinkTypeConfig } from "@21n/products/memotron/linking/link.utils";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-
   let { node }: { node: IActiveNodeStore } = $props();
   let multiSelectContext = $derived({
     resource: Resource.node,
@@ -81,6 +90,7 @@
             (x) => !ids.some(resourceInList(x.linkedTo))
           );
         }
+        await refresh();
       }
     } catch (e) {
       toasts.error("Failed to perform bulk action");
@@ -93,179 +103,42 @@
     resolveBulkEditorInstance();
   });
   let _links = $state<INodeLinkThumb[]>([]);
-  let optimisticItems = $state<{ link: INodeLinkThumb; node: INode }[]>([]);
+  let all = $state<{ link: INodeLinkThumb; node: INode }[]>([]);
+  let outgoingMentions = $state<{ link: INodeLinkThumb; node: INode }[]>([]);
+  let filtered = $state<{ link: INodeLinkThumb; node: INode }[]>([]);
+
   let selectedLinkType = $state<
     { linkType: LinkType; direction?: "incoming" | "outgoing" } | undefined
   >(undefined);
   let selectedLinkTags = $state<IRecordId[]>([]);
+  let fetchError = $state<string | undefined>(undefined);
   let linkStatus = $state<{ message: string; type: AlertType }>({
     message: "",
     type: AlertType.INFO
   });
+  let previousFocus: IRecordId;
   let searchQuery = $state("");
   let dev_linkTagFilter = $state<"and" | "or">("and");
-  const linkedIds = $derived.by(() => [
-    ...new Set(
-      _links
-        .map((link) => link.linkedTo?.toString())
-        .filter((id): id is string => Boolean(id))
-    )
-  ]);
-  const linkedNodeStore = $derived.by(() =>
-    toSvelteStore<INode[]>(
-      datafn.node.signal({
-        select: ["*", "parent.*", "file.*"],
-        filters: {
-          id: { $in: linkedIds }
-        }
-      }),
-      { initialData: [] }
-    )
-  );
-  const all = $derived.by(() => [
-    ...($linkedNodeStore.data as INode[])
-      .map((x: INode) => ({
-        link: _links.find((y) => y.linkedTo.toString() == x.id.toString()),
-        node: x
-      }))
-      .filter((item) => !!item.link)
-      .map((item) => item as { link: INodeLinkThumb; node: INode }),
-    ...optimisticItems.filter(
-      (item) =>
-        !($linkedNodeStore.data as INode[]).some((node) =>
-          isSameResource(node.id, item.node.id)
-        )
-    )
-  ]);
-  const activeNodeRelationStore = $derived.by(() =>
-    toSvelteStore<Array<{ links?: Record<string, any>[] }>>(
-      $node.id
-        ? datafn.node.signal({
-            select: ["id", "links.#"],
-            filters: {
-              id: $node.id.toString()
-            },
-            metadata: {
-              includeTrashed: true,
-              includeArchived: true
-            }
-          })
-        : datafn.emptySignal([]),
-      { initialData: [] }
-    )
-  );
-  const outgoingMentionLinks = $derived.by(() => {
-    const locations = new Set($node.blocks?.map((x) => x.id.toString()) ?? []);
-    return ($activeNodeRelationStore.data[0]?.links ?? [])
-      .filter(
-        (row: any) =>
-          row.linkType === LinkType.MENTION &&
-          locations.has(row.location?.toString())
-      )
-      .map((row: any) => ({
-        id: `${row.from}|${row.to}`,
-        in: row.from,
-        out: row.to,
-        linkType: row.linkType,
-        tags: row.tags ?? []
-      }));
-  });
-  const outgoingMentionIds = $derived.by(() => [
-    ...new Set(
-      outgoingMentionLinks
-        .map((link) => link.out?.toString())
-        .filter((id): id is string => Boolean(id))
-    )
-  ]);
-  const outgoingMentionNodeStore = $derived.by(() =>
-    toSvelteStore<INode[]>(
-      datafn.node.signal({
-        select: ["*", "parent.*", "file.*"],
-        filters: {
-          id: {
-            $in: outgoingMentionIds
-          }
-        }
-      }),
-      { initialData: [] }
-    )
-  );
-  const outgoingMentions = $derived.by(() =>
-    outgoingMentionLinks
-      .map((x: any) => ({
-        link: {
-          linkedTo: x.out,
-          links: [
-            {
-              linkType: LinkType.MENTION,
-              id: x.id,
-              direction: "outgoing"
-            }
-          ],
-          tags: x.tags as IRecordId[] | undefined
-        },
-        node: ($outgoingMentionNodeStore.data as INode[]).find((y: INode) =>
-          isSameResource(y.id, x.out)
-        )
-      }))
-      .filter((item) => !!item.node)
-      .map((item) => item as { link: INodeLinkThumb; node: INode })
-  );
-  const combined = $derived.by(() =>
-    [...all, ...outgoingMentions].filter(
-      (item, index, self) =>
-        index ===
-        self.findIndex(
-          (t) => t.link.linkedTo.toString() === item.link.linkedTo.toString()
-        )
-    )
-  );
-  const availableLinkTags = $derived.by(() => {
-    const allTags = new Set<IRecordId>();
-    combined.forEach((item) => {
-      item.link.tags?.forEach((tag) => {
-        allTags.add(tag);
-      });
-    });
-    return Array.from(allTags);
-  });
-  const filtered = $derived.by(() => {
-    let items = combined;
-    if (selectedLinkTags.length > 0) {
-      if (dev_linkTagFilter === "or") {
-        items = items.filter((x) =>
-          x.link.tags?.some((y) => selectedLinkTags.some(resourceInList(y)))
-        );
-      } else {
-        items = items.filter((x) =>
-          selectedLinkTags.every((y) => x.link.tags?.some(resourceInList(y)))
-        );
-      }
-    }
-    const currentSelectedLinkType = selectedLinkType;
-    if (currentSelectedLinkType) {
-      items = items.filter((x) =>
-        x.link.links?.some(
-          (y) =>
-            y.linkType === currentSelectedLinkType.linkType &&
-            (!currentSelectedLinkType.direction ||
-              y.direction === currentSelectedLinkType.direction)
-        )
-      );
-    }
-    return items;
-  });
-  const isRefreshing = $derived(
-    $linkedNodeStore.loading ||
-      $linkedNodeStore.refreshing ||
-      $activeNodeRelationStore.loading ||
-      $activeNodeRelationStore.refreshing ||
-      $outgoingMentionNodeStore.loading ||
-      $outgoingMentionNodeStore.refreshing
-  );
+  let isRefreshing = $state(false);
+  let availableLinkTags = $state<IRecordId[]>([]);
 
-  $effect(() => {
-    _links = $node.links ?? [];
+  onMount(() => {
+    const unsubscribe = node.subscribe(async (x) => {
+      if (!x.links) return;
+      let currentFocus = previousFocus;
+      if (!x.focusedBlock) currentFocus = x.id;
+      else currentFocus = x.focusedBlock;
+      if (
+        !previousFocus ||
+        (previousFocus && !isSameResource(previousFocus, currentFocus))
+      ) {
+        await refresh();
+        previousFocus = currentFocus;
+      }
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   });
 
   onDestroy(() => {
@@ -295,24 +168,9 @@
         linkStatus.type = AlertType.ERROR;
         return;
       }
-      const fromResource = determineResourceType(linkSource);
-      const toResource = determineResourceType(e.detail.item.id);
-      const result = await datafn.table(fromResource).mutate({
-        operation: "relate",
-        id: linkSource.toString(),
-        relations: {
-          links: [
-            {
-              $ref: e.detail.item.id.toString(),
-              fromResource: fromResource.toString(),
-              toResource: toResource.toString(),
-              linkType: LinkType.DIRECT
-            }
-          ]
-        }
-      } as any);
+      const result = await linker.link(linkSource, e.detail.item.id);
 
-      let addedLink = await resolveResource(e.detail.item.id);
+      let addedLink = await flux.select(e.detail.item.id);
       if (!addedLink && e.detail?.item?.id) {
         addedLink = e.detail.item;
       }
@@ -328,19 +186,20 @@
         links: [
           {
             linkType: LinkType.DIRECT,
-            id: result ? `${linkSource}|${e.detail.item.id}|${LinkType.DIRECT}` : ""
+            id: result[0]?.id ?? ""
           }
         ]
       };
       _links = [...(_links ?? []), link];
       $node.links = [...($node.links ?? []), link];
-      optimisticItems = [
-        ...optimisticItems,
+      all = [
+        ...(all ?? []),
         {
           node: addedLink,
           link
-        } as { link: INodeLinkThumb; node: INode }
+        }
       ];
+      await applyFilters();
       searchQuery = "";
     } catch (e) {
       logger.error({ at: "NodeLinksPane.onSelect", error: e });
@@ -353,6 +212,123 @@
       } else {
         toasts.error();
       }
+    }
+  }
+
+  async function refresh() {
+    if (!$node.links) {
+      _links = [];
+      filtered = [];
+      fetchError = "Error fetching links.";
+      return;
+    }
+    _links = $node.links;
+    isRefreshing = true;
+    const result = await nodeStore.selectMany(
+      {
+        filters: {
+          id: _links.map((x) => x.linkedTo.toString())
+        }
+      },
+      {
+        isExpand: true
+      }
+    );
+    if (!result || result.length == 0) {
+      all = [];
+      isRefreshing = false;
+      return;
+    }
+    all = result.map((x: INode) => ({
+      link: _links.find((y) => y.linkedTo.toString() == x.id.toString()),
+      node: x
+    }));
+    applyFilters();
+    isRefreshing = false;
+  }
+
+  async function refreshOutgoingMentions() {
+    try {
+      const result = await linker.selectMany({
+        filters: {
+          linkType: LinkType.MENTION,
+          location: $node.blocks?.map((x) => x.id.toString()) ?? []
+        }
+      });
+      if (!isValidArrayWithData(result)) return [];
+      const nodes = await nodeStore.selectMany(
+        {
+          filters: {
+            id: result.map((x: any) => x.out.toString())
+          }
+        },
+        {
+          isExpand: true
+        }
+      );
+      if (!isValidArrayWithData(nodes)) return [];
+      outgoingMentions = result.map((x: any) => ({
+        link: {
+          linkedTo: x.out,
+          links: [
+            {
+              linkType: LinkType.MENTION,
+              id: x.id,
+              direction: "outgoing"
+            }
+          ],
+          tags: x.tags
+        },
+        node: nodes.find((y: any) => isSameResource(y.id, x.out))
+      }));
+      return [...outgoingMentions];
+    } catch (e) {
+      logger.error({ at: "refreshOutgoingMentions", error: e });
+      return [];
+    }
+  }
+
+  async function applyFilters() {
+    const outgoing = await refreshOutgoingMentions();
+    const combined = [...all, ...outgoing].filter(
+      (item, index, self) =>
+        index ===
+        self.findIndex(
+          (t) => t.link.linkedTo.toString() === item.link.linkedTo.toString()
+        )
+    );
+
+    filtered = combined;
+
+    const allTags = new Set<IRecordId>();
+    combined.forEach((item) => {
+      item.link.tags?.forEach((tag) => {
+        allTags.add(tag);
+      });
+    });
+    availableLinkTags = Array.from(allTags);
+
+    if (selectedLinkTags.length > 0) {
+      if (dev_linkTagFilter === "or") {
+        filtered = filtered.filter((x) =>
+          x.link.tags?.some((y) => selectedLinkTags.some(resourceInList(y)))
+        );
+      } else {
+        filtered = filtered.filter((x) =>
+          selectedLinkTags.every((y) => x.link.tags?.some(resourceInList(y)))
+        );
+      }
+    }
+    const currentSelectedLinkType = selectedLinkType;
+    if (currentSelectedLinkType) {
+      filtered = filtered.filter((x) =>
+        x.link.links?.some(
+          (y) =>
+            y.linkType === currentSelectedLinkType.linkType &&
+            (!currentSelectedLinkType.direction ||
+              y.direction === currentSelectedLinkType.direction)
+        )
+      );
     }
   }
 
@@ -372,9 +348,10 @@
 
   function onAction(e: CustomEvent) {
     if (e.detail.action === "unlink") {
-      optimisticItems = optimisticItems.filter(
+      filtered = filtered.filter(
         (x) => !isSameResource(x.node.id, e.detail.id)
       );
+      all = all.filter((x) => !isSameResource(x.node.id, e.detail.id));
       $node.links = $node.links?.filter(
         (x) => !isSameResource(x.linkedTo, e.detail.id)
       );
@@ -386,11 +363,13 @@
     if (!e.detail) return;
     if (selectedLinkTags.some(resourceInList(e.detail))) return;
     selectedLinkTags = [...selectedLinkTags, e.detail];
+    applyFilters();
   }
 
   function onLinkTypeSelect(e: CustomEvent) {
     if (!e.detail) return;
     selectedLinkType = e.detail;
+    applyFilters();
   }
 </script>
 
@@ -398,7 +377,7 @@
   <div class="flex flex-col w-full">
     <LinkSearch
       accessPoint={ResourceAccessPoint.NODE_LINKS}
-      {onSelect}
+      onSelect={onSelect}
       bind:searchQuery
       excludeFromSearch={_links.map((x) => x.linkedTo).concat(node.id)}
     />
@@ -435,9 +414,11 @@
           isRemovable={true}
           onRemove={() => {
             selectedLinkType = undefined;
+            applyFilters();
           }}
           onclick={() => {
             selectedLinkType = undefined;
+            applyFilters();
           }}
         />
       </div>
@@ -447,18 +428,24 @@
         <LinkTagFilter
           links={filtered.map((x) => x.link)}
           bind:selected={selectedLinkTags}
+          onChange={applyFilters}
         />
       </div>
     {/if}
-    {#if filtered.length > 0 && !isRefreshing}
+    {#if fetchError}
+      <ErrorStatusPane error={fetchError} />
+    {:else if filtered.length > 0 && !isRefreshing}
       <div class="flex flex-col flex-grow w-full">
         <LinkThumbnailItems
           links={filtered}
           accessPointId={node.id}
-          {onClick}
-          {onAction}
-          {onTagClick}
-          {onLinkTypeSelect}
+          onClick={onClick}
+          onAction={onAction}
+          onTagClick={onTagClick}
+          onTag={() => {
+            applyFilters();
+          }}
+          onLinkTypeSelect={onLinkTypeSelect}
         />
         <ScrollViewBottomSpacer />
       </div>

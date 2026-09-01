@@ -1,97 +1,67 @@
 import { appStore } from "@21n/stores/app.store";
-import {
-  copyActiveResourceContents,
-  updateActiveResource
-} from "@21n/data/datafn/resource.store";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import { bulkEditStore } from "@21n/components/record/bulkedit.store";
 import { copyResourceLinkToClipboard } from "@21n/products/memotron/memotron.utils";
-import { LinkType } from "@21n/products/memotron/linking/link.type";
 import {
   ResourceAccessPoint,
   AccessMode,
   ResourceActionType,
+  type IResourceCaptureV2,
   type IActiveResource,
   type IResource,
   type IResourceArchivable,
   type IResourceLockable,
   type IResourceStarrable
-} from "@21n/data/datafn/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import { uiState } from "@21n/stores/uiState/uiState.store";
 import {
   determineResourceAccessMode,
   determineResourceType,
   isSameResource,
-  isTrashedResource,
   resolveBulkSelectionAccessPointId,
   resolveResourceActionIcon,
   resourceInList
-} from "@21n/data/datafn/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { linker } from "@21n/products/memotron/linking/link.store";
 import { ContextMenuType, type IContextMenuItem } from "@21n/types/select.type";
 import type { IRecordId } from "@21n/types/data.type";
 import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { LinkType } from "@21n/products/memotron/linking/link.type";
 import { toasts } from "@21n/stores/notification.store";
 import { Action } from "@21n/types/action.enum";
 import { AppSearchParam } from "@21n/types/appStore.type";
 import { UIStateScope } from "@21n/stores/uiState/uiState.type";
 import { BulkEditor } from "@21n/components/record/record.store";
 import { GlobalEvent } from "@21n/types/event.enum";
-import { datafn } from "@21n/stores/datafn.store";
 
 type IActionableResource = IResource &
   Partial<
-    Pick<IActiveResource, "isInEditMode" | "isInReadOnlyMode" | "isInFocusMode">
+    Pick<
+      IActiveResource,
+      "isInEditMode" | "isInReadOnlyMode" | "isInFocusMode"
+    >
   > &
   Partial<IResourceArchivable & IResourceLockable & IResourceStarrable> & {
     collections?: IRecordId[];
     url?: string;
   };
 
-type ResourceLifecycleHooks = {
-  onArchive?: (ids: IRecordId[]) => Promise<unknown> | unknown;
-  onUnarchive?: (ids: IRecordId[]) => Promise<unknown> | unknown;
-  onTrash?: (ids: IRecordId[]) => Promise<unknown> | unknown;
-  onRestore?: (ids: IRecordId[]) => Promise<unknown> | unknown;
-};
-
 export class ResourceActions<T extends IActionableResource> {
   accessPoint?: ResourceAccessPoint;
   accessMode?: AccessMode;
-  private lifecycle?: ResourceLifecycleHooks;
   constructor(
     private resource: T,
+    private store: ResourceStore<T, IResourceCaptureV2<T>>,
     params?: {
       accessPoint?: ResourceAccessPoint;
       accessMode?: AccessMode;
-      lifecycle?: ResourceLifecycleHooks;
     }
   ) {
     this.resource = resource;
+    this.store = store;
     this.accessPoint = params?.accessPoint;
     this.accessMode = params?.accessMode;
-    this.lifecycle = params?.lifecycle;
-  }
-
-  private resourceType() {
-    return determineResourceType(this.resource.id);
-  }
-
-  private mutate(
-    mutation: Parameters<ReturnType<typeof datafn.table>["mutate"]>[0]
-  ) {
-    return datafn.table(this.resourceType()).mutate(mutation);
-  }
-
-  private merge(record: Partial<T>) {
-    return this.mutate({
-      operation: "merge",
-      id: this.resource.id.toString(),
-      record: {
-        id: this.resource.id.toString(),
-        ...record
-      },
-      context: this.accessPoint
-    });
   }
   copyLink(): IContextMenuItem {
     return {
@@ -124,7 +94,7 @@ export class ResourceActions<T extends IActionableResource> {
       value: ResourceActionType.COPY_CONTENTS,
       icon: resolveResourceActionIcon(ResourceActionType.COPY_CONTENTS),
       callback: async () => {
-        copyActiveResourceContents(this.resource.id);
+        this.store.copyContents(this.resource.id);
         toasts.success("Contents copied to clipboard");
       }
     };
@@ -135,9 +105,15 @@ export class ResourceActions<T extends IActionableResource> {
       value: "star",
       icon: resolveResourceActionIcon(ResourceActionType.STAR),
       callback: async () => {
-        await this.merge({
-          isStarred: !this.resource.isStarred
-        } as Partial<T>);
+        this.store.modify(
+          this.resource.id,
+          {
+            isStarred: !this.resource.isStarred
+          } as T,
+          {
+            context: this.accessPoint
+          }
+        );
       }
     };
   }
@@ -150,7 +126,9 @@ export class ResourceActions<T extends IActionableResource> {
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isStarred,
       callback: async (checked: boolean) => {
-        await this.merge({ isStarred: checked } as Partial<T>);
+        this.store.modify(this.resource.id, { isStarred: checked } as T, {
+          context: this.accessPoint
+        });
       }
     };
   }
@@ -164,45 +142,34 @@ export class ResourceActions<T extends IActionableResource> {
       ),
       callback: async () => {
         if (this.resource.isArchived) {
-          await this.mutate({
-            operation: "unarchive",
-            id: this.resource.id.toString(),
+          this.store.unarchive(this.resource.id, {
             context: this.accessPoint
           });
-          await this.lifecycle?.onUnarchive?.([this.resource.id]);
         } else {
-          await this.mutate({
-            operation: "archive",
-            id: this.resource.id.toString(),
+          this.store.archive(this.resource.id, {
             context: this.accessPoint
           });
-          await this.lifecycle?.onArchive?.([this.resource.id]);
         }
       }
     };
   }
   trash(): IContextMenuItem {
-    const isTrashed = isTrashedResource(this.resource);
     return {
-      value: isTrashed ? "restore" : "delete",
+      value: this.resource.trashInformation ? "restore" : "delete",
       icon: resolveResourceActionIcon(
-        isTrashed ? ResourceActionType.RESTORE : ResourceActionType.DELETE
+        this.resource.trashInformation
+          ? ResourceActionType.RESTORE
+          : ResourceActionType.DELETE
       ),
       callback: async () => {
-        if (isTrashed) {
-          await this.mutate({
-            operation: "restore",
-            id: this.resource.id.toString(),
+        if (this.resource.trashInformation) {
+          this.store.restore(this.resource.id, {
             context: this.accessPoint
           });
-          await this.lifecycle?.onRestore?.([this.resource.id]);
         } else {
-          await this.mutate({
-            operation: "trash",
-            id: this.resource.id.toString(),
+          this.store.trash(this.resource.id, {
             context: this.accessPoint
           });
-          await this.lifecycle?.onTrash?.([this.resource.id]);
         }
       }
     };
@@ -235,6 +202,7 @@ export class ResourceActions<T extends IActionableResource> {
             );
             bulkEditor.run(action, data);
           },
+          onSelectAll: () => bulkEditStore.getState().selectedIds,
           subContext: resolvedAccessPointId?.toString()
         });
       }
@@ -242,14 +210,13 @@ export class ResourceActions<T extends IActionableResource> {
 
     const state = bulkEditStore.getState();
     const selectedItems = state.selectedIds;
-    const isSameSelectionContext =
-      bulkEditStore.matchesContext(multiSelectContext);
+    const isSameSelectionContext = bulkEditStore.matchesContext(multiSelectContext);
     return {
       label:
         isSameSelectionContext &&
         selectedItems.some(resourceInList(this.resource.id))
-          ? "Unselect"
-          : "Select",
+        ? "Unselect"
+        : "Select",
       value: ResourceActionType.SELECT,
       icon: "check-circle",
       callback: async () => {
@@ -285,9 +252,10 @@ export class ResourceActions<T extends IActionableResource> {
             }
           );
         } else {
-          updateActiveResource(this.resource.id, {
-            isInEditMode: !this.resource.isInEditMode
-          });
+          this.store.toggleEditMode(
+            this.resource.id,
+            !this.resource.isInEditMode
+          );
         }
       }
     };
@@ -300,9 +268,8 @@ export class ResourceActions<T extends IActionableResource> {
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInReadOnlyMode,
       callback: async (checked: boolean) => {
-        updateActiveResource(this.resource.id, {
-          isInReadOnlyMode: checked
-        });
+        console.log({ checked });
+        this.store.toggleReadMode(this.resource.id, checked);
       }
     };
   }
@@ -315,9 +282,7 @@ export class ResourceActions<T extends IActionableResource> {
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInFocusMode,
       callback: async (checked: boolean) => {
-        updateActiveResource(this.resource.id, {
-          isInFocusMode: checked
-        });
+        this.store.toggleFocusMode(this.resource.id, checked);
       }
     };
   }
@@ -331,9 +296,9 @@ export class ResourceActions<T extends IActionableResource> {
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isLocked,
       callback: async (checked: boolean) => {
-        await this.merge({
+        return this.store.modify(this.resource.id, {
           isLocked: checked
-        } as Partial<T>);
+        } as T);
       }
     };
   }
@@ -409,47 +374,17 @@ export class ResourceActions<T extends IActionableResource> {
       value: ResourceActionType.UNLINK,
       icon: resolveResourceActionIcon(ResourceActionType.UNLINK),
       callback: async () => {
-        if (isCollection) {
-          const resource = determineResourceType(this.resource.id);
-          await datafn.table(resource).mutate({
-            operation: "unrelate",
-            id: this.resource.id.toString(),
-            relations: {
-              collections: [contextId.toString()]
-            },
-            context: contextId.toString()
-          } as any);
-          return;
-        }
-        const resource = determineResourceType(this.resource.id);
-        await datafn.table(resource).mutate({
-          operation: "unrelate",
-          id: this.resource.id.toString(),
-          relations: {
-            links: [
-              {
-                $ref: contextId.toString(),
-                linkType: LinkType.DIRECT
-              }
-            ]
-          },
+        await linker.unlink(this.resource.id, contextId, {
+          linkType: LinkType.DIRECT,
+          isIncludeReverseDirection: !isCollection,
           context: contextId.toString()
-        } as any);
-        const contextResource = determineResourceType(contextId);
-        if (contextResource !== Resource.unknown) {
-          await datafn.table(contextResource).mutate({
-            operation: "unrelate",
-            id: contextId.toString(),
-            relations: {
-              links: [
-                {
-                  $ref: this.resource.id.toString(),
-                  linkType: LinkType.DIRECT
-                }
-              ]
-            },
-            context: contextId.toString()
-          } as any);
+        });
+        if (isCollection) {
+          this.store.modify(this.resource.id, {
+            collections: this.resource.collections?.filter(
+              (x: IRecordId) => !isSameResource(x, contextId)
+            )
+          } as Partial<T>);
         }
       }
     };

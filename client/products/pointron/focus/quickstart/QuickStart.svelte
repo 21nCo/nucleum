@@ -7,68 +7,44 @@
   import { appStore } from "@21n/stores/app.store";
   import Button from "@21n/elements/button/Button.svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "@21n/stores/uiState/uiState.type";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
-  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import { isValidArray } from "@21n/shared-utils/obj.utils";
   import {
-    isSameResource,
-    resourceAction
-  } from "@21n/data/datafn/resource.utils";
-  import { ResourceActionType } from "@21n/data/datafn/resource.type";
-  import { resolveObjectiveColor } from "@21n/components/goals/goal.utils";
+    resourceAction,
+    resourceInList
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import { focusAggregates } from "@21n/products/pointron/analytics/analytics.store";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import QuickStartThumbnailList from "@21n/products/pointron/focus/quickstart/QuickStartThumbnailList.svelte";
   import view from "@21n/stores/view.store";
   import QuickStartLayoutToggle from "@21n/products/pointron/focus/quickstart/actions/QuickStartLayoutToggle.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { time } from "@datafn/client";
-  import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
 
-  let isLoadingState = $state(false);
-  let searchQuery = $state("");
-  let layout = $state(Layout.LIST);
-  let isInEditMode = $state(false);
+  let isLoadingState = false;
+  let searchQuery = "";
+  let layout = Layout.LIST;
+  let isInEditMode = false;
+  let searchStore: SearchStore = new SearchStore(Resource.goal);
   restoreLayoutState();
-  let searchPinnedItems = $state<IObjectiveThumb[]>([]);
-  let searchUnpinnedItems = $state<IObjectiveThumb[]>([]);
-  const pinnedObjectiveStore = toSvelteStore<IObjectiveThumb[]>(
-    datafn.objective.signal({
-      select: ["*", "parent.*"],
-      filters: {
-        id: { $ne: "" },
-        isPinnedForQuickFocus: true
-      },
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    }),
-    { initialData: [] }
-  );
-  const currentDayLogStore = toSvelteStore<ISessionLog[]>(
-    datafn.sessionLog.signal({
-      select: ["id", "objectiveId", "focus", "breakTime", "startUnix"],
-      temporal: time.day("startUnix", new Date())
-    }),
-    { initialData: [] }
-  );
-  const items = $derived(
-    resolvePinnedItems($pinnedObjectiveStore.data, $currentDayLogStore.data)
-  );
-  const isLoading = $derived(
-    isLoadingState ||
-      (!searchQuery &&
-        ($pinnedObjectiveStore.loading || $currentDayLogStore.loading))
-  );
+  let items: IGoalThumb[] = [];
+  let searchPinnedItems: IGoalThumb[] = [];
+  let searchUnpinnedItems: IGoalThumb[] = [];
 
   onMount(() => {
+    refresh();
     const sub = uiState.subscribe((x) => {
       restoreLayoutState();
     });
@@ -84,49 +60,59 @@
     layout = layoutState ?? Layout.LIST;
   }
 
-  function resolvePinnedItems(objectives: IObjectiveThumb[], logs: ISessionLog[]) {
-    return objectives
-      .map((objective: IObjectiveThumb) => ({
-        ...objective,
-        color: resolveObjectiveColor(objective),
-        focus: logs
-          .filter((log) =>
-            log.objectiveId
-              ? isSameResource(log.objectiveId, objective.id)
-              : false
-          )
-          .reduce((total, log) => total + (log.focus ?? 0), 0)
-      }))
-      .sort((a: IObjectiveThumb, b: IObjectiveThumb) => {
-        if (a.color === b.color) {
-          return (a.label ?? "").localeCompare(b.label ?? "");
-        }
-        if (a.color === undefined) return 1;
-        if (b.color === undefined) return -1;
-        return a.color - b.color;
-      });
+  async function refresh(params?: { isPreventLoadingPulse?: boolean }) {
+    if (!params?.isPreventLoadingPulse) isLoadingState = true;
+    const result = await searchStore.select({
+      filters: {
+        isPinnedForQuickFocus: true
+      },
+      searchQuery: "",
+      isIncludeSubItems: true
+    });
+    const focusData = await focusAggregates.aggregateFocusForCurrentDay({
+      goalIds: result.map((x: any) => x.id)
+    });
+    const goalFocusData = Array.isArray(focusData) ? focusData : [];
+    if (isValidArray(result)) {
+      items = result
+        .map((x: any) => ({
+          ...x,
+          color: resolveGoalColor(x),
+          focus: goalFocusData.find(resourceInList(x.id))?.focus ?? 0
+        }))
+        .sort((a: IGoalThumb, b: IGoalThumb) => {
+          if (a.color === b.color) {
+            return a.label.localeCompare(b.label);
+          }
+          if (a.color === undefined) return 1;
+          if (b.color === undefined) return -1;
+          return a.color - b.color;
+        });
+    }
+    isLoadingState = false;
   }
 
   async function onSearch(val: string) {
     if (!val) {
       searchQuery = "";
+      refresh({ isPreventLoadingPulse: true });
       searchPinnedItems = [];
       searchUnpinnedItems = [];
       return;
     }
     isLoadingState = true;
     searchQuery = val;
-    const result = await datafn.objective.query({
-      select: ["*", "parent.*"],
-      search: searchQuery ? { query: searchQuery, fields: ["label"] } : undefined,
+    const result = await searchStore.select({
+      searchQuery,
       filters: {
-        id: { $ne: "" }
-      }
+        isPinnedForQuickFocus: undefined
+      },
+      isIncludeSubItems: true
     });
-    if (isValidArray(result.data)) {
-      const allItems = result.data.map((x: any) => ({
+    if (isValidArray(result)) {
+      const allItems = result.map((x: any) => ({
         ...x,
-        color: resolveObjectiveColor(x)
+        color: resolveGoalColor(x)
       }));
       searchPinnedItems = allItems.filter((x: any) => x.isPinnedForQuickFocus);
       searchUnpinnedItems = allItems.filter(
@@ -137,6 +123,7 @@
   }
 
   function handleUnpin(event: CustomEvent<string>) {
+    items = items.filter((x) => x.id?.toString() !== event.detail?.toString());
     searchPinnedItems = searchPinnedItems.filter(
       (x) => x.id?.toString() !== event.detail?.toString()
     );
@@ -147,7 +134,7 @@
 
   function createNewGoal(isPreventOpenAfterCreate: boolean = true) {
     appStore.runAction(
-      resourceAction(Resource.objective, ResourceActionType.CREATE),
+      resourceAction(Resource.goal, ResourceActionType.CREATE),
       {
         componentParams: {
           isQuickFocus: true,
@@ -160,15 +147,12 @@
   }
 </script>
 
-<div
-  class="flex flex-col flex-grow gap-4 w-full"
-  data-testid="quick-focus-panel"
->
+<div class="flex flex-col flex-grow gap-4 w-full" data-testid="quick-focus-panel">
   <InlineSearchBar
     query={searchQuery}
     isPadded={true}
-    {onSearch}
-    placeholder="Search an objective to quick focus"
+    onSearch={onSearch}
+    placeholder="Search a goal to quick focus"
     testId="quick-focus-search"
     onEnter={() => createNewGoal()}
     padding={$context.embed === Embed.HANDSET || $view.isConstrainedWidth
@@ -181,7 +165,7 @@
       </div>
     {/if}
   </InlineSearchBar>
-  {#if !isLoading && ((items.length > 0 && !searchQuery) || (searchQuery && (searchPinnedItems.length > 0 || searchUnpinnedItems.length > 0)))}
+  {#if !isLoadingState && ((items.length > 0 && !searchQuery) || (searchQuery && (searchPinnedItems.length > 0 || searchUnpinnedItems.length > 0)))}
     {#if searchQuery}
       <div class="flex flex-col gap-12">
         <QuickStartThumbnailList
@@ -189,15 +173,15 @@
           {layout}
           {isInEditMode}
           title="Pinned"
-          emptyStatusText={`No pinned objectives found with "${searchQuery}"`}
+          emptyStatusText={`No pinned goals found with "${searchQuery}"`}
           onUnpin={handleUnpin}
         />
         <QuickStartThumbnailList
           items={searchUnpinnedItems}
           {layout}
           {isInEditMode}
-          title="Other objectives"
-          emptyStatusText={`No other objectives found with "${searchQuery}"`}
+          title="Other goals"
+          emptyStatusText={`No other goals found with "${searchQuery}"`}
           onUnpin={handleUnpin}
         />
       </div>
@@ -212,7 +196,7 @@
     <div class="flex flex--col gap-2 w-full justify-center items-center">
       {#if isInEditMode}
         <Button
-          label="Pin another objective"
+          label="Pin another goal"
           size={Size.sm}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
@@ -233,23 +217,31 @@
   {:else}
     <EmptyStatusView
       size={Size.sm}
-      isLoadingState={isLoading}
+      {isLoadingState}
       isSearchContext={true}
       loadingAnimation={layout !== Layout.LIST
         ? LoadingAnimationType.QUICK_FOCUS_ITEMS_GRID_PULSE
         : LoadingAnimationType.FOCUS_ITEMS_PULSE}
       mainText={searchQuery
-        ? `No objectives found for "${searchQuery}"`
-        : "No pinned objectives found"}
+        ? `No goals found for "${searchQuery}"`
+        : "No pinned goals found"}
       subText={searchQuery
-        ? "Press **Enter** to create a new objective & pin it here"
-        : "Please create a new objective or pin an existing one"}
-      actionText={"Create new objective"}
-      secondaryActionText="Pin existing"
+        ? "Press **Enter** to create a new goal & pin it here"
+        : "Please create a new goal or pin an existing one"}
+      actionText={"Create new goal"}
       onclick={() => createNewGoal(false)}
-      onSecondaryClick={() => {
-        appStore.runAction(PointronAction.PIN_TO_QUICK_FOCUS);
-      }}
     />
   {/if}
 </div>
+
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.goal, Resource.sessionLog])}
+  subscribeToContext={new Set([
+    PointronAction.PIN_TO_QUICK_FOCUS,
+    PointronAction.FINISH_FOCUS_SESSION,
+    PointronAction.MANUAL_FOCUS_ENTRY
+  ])}
+  onChange={() => {
+    refresh({ isPreventLoadingPulse: true });
+  }}
+/>

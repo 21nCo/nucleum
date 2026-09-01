@@ -6,6 +6,11 @@ import {
   type PlasmoMessaging
 } from "@plasmohq/messaging";
 
+type SurrealResponse = {
+  result?: string;
+  status?: string;
+};
+
 type ExtensionRelayMessage = {
   data?: unknown;
   event: ClipperExtensionEvent | ExtensionEvent;
@@ -17,6 +22,30 @@ type StoredTabPayload = {
 
 const sendBackgroundMessage =
   sendToBackground as PlasmoMessaging.SendFx<ClipperExtensionEvent | ExtensionEvent>;
+
+export function interceptSurrealResponse(
+  response: SurrealResponse[] | null | undefined,
+  context: string = ""
+) {
+  console.log({ context, response });
+  if (!response || !(response.length > 0)) return null;
+  return checkSurrealResponse(response[0], false);
+}
+function checkSurrealResponse(
+  response: SurrealResponse,
+  isShowErrMessage: boolean = false
+) {
+  if (response.status === "ERR") {
+    const pattern = /Database record `.*` already exists/;
+    const match = pattern.test(response.result ?? "");
+    if (match) return "Record already exists";
+    else return null;
+  } else if (response.status === "OK" && response.result) {
+    return response.result;
+  } else {
+    return response.status === "OK";
+  }
+}
 
 /**
  * @param message

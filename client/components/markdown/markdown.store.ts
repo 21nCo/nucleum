@@ -16,14 +16,14 @@ import {
   type IListBlock,
   type IBlock
 } from "@21n/components/markdown/md.type";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { ObservableStore } from "@21n/stores/client.store";
 import type { IRecordId } from "@21n/types/data.type";
-import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
 import {
   isSameResource,
   resourceInList
-} from "@21n/data/datafn/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
 import { logger } from "@21n/components/debug/logger.client";
 
 /**

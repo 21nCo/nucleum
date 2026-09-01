@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { MouseEventHandler } from "svelte/elements";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/types/size.enum";
   import { bg, cn } from "@21n/utils/ui.utils";
   import Icon from "@21n/elements/Icon.svelte";

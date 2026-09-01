@@ -1,4 +1,7 @@
-import type { MetaResource, Resource } from "@21n/data/datafn/resource.enum";
+import type {
+  MetaResource,
+  Resource
+} from "@21n/components/flux/resourceStores/resource.enum";
 
 export enum CalendarLayout {
   Classic = "classic",

@@ -21,26 +21,22 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import type { IRecordId } from "@21n/types/data.type";
   import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
-  import { resourceInList } from "@21n/data/datafn/resource.utils";
-  import type { IObjective, IObjectiveThumb } from "@21n/components/goals/goal.type";
-  import { resolveObjectiveColor } from "@21n/components/goals/goal.utils";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { IGoal, IGoalThumb } from "@21n/components/goals/goal.type";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-  import {
-    TimePeriodType,
-    TimeScale,
-    type ITimePeriodResolved
-  } from "@21n/types/time.type";
-  import { datafn } from "@21n/stores/datafn.store";
+  import type { ITimePeriodResolved } from "@21n/types/time.type";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import { logger } from "@21n/components/debug/logger.client";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { ErrorMessage } from "@21n/components/error/error.type";
   import { untrack } from "svelte";
   let {
     card,
     position,
     pageId,
-    objectives = [],
+    goals = [],
     logs = [],
     timePeriod,
     isPageLoaded = false,
@@ -52,7 +48,7 @@
     card: IAnalyticsCard;
     position: { index: number; total: number };
     pageId: string;
-    objectives?: IObjectiveThumb[];
+    goals?: IGoalThumb[];
     logs?: ISessionLog[];
     timePeriod?: ITimePeriodResolved;
     isPageLoaded?: boolean;
@@ -64,23 +60,10 @@
   let cardBgIndex = $derived(parentBgIndex - 1);
   let data = $state<AnalyticsDataRecord[]>([]);
   let previousTimePeriodData = $state<AnalyticsDataRecord[]>([]);
-  let objectiveColors = $state<IAnalyticsLabelColor[]>([]);
+  let goalColors = $state<IAnalyticsLabelColor[]>([]);
   let isRefreshing = $state(true);
   let refreshId = $state(new Date().getTime());
   let errorMessage = $state<string | undefined>(undefined);
-  function resolveDefaultCardPeriod(): IAnalyticsCard["period"] {
-    return {
-      scale: TimeScale.DAYS,
-      value: {
-        type: TimePeriodType.RELATIVE,
-        param: 0
-      }
-    };
-  }
-
-  let cardLabel = $state("");
-  let cardPeriod = $state<IAnalyticsCard["period"]>(resolveDefaultCardPeriod());
-  let cardType = $state<IAnalyticsCard["type"]>(AnalyticsCardType.PIE);
   let timePeriodTitle = $derived(timePeriod?.title ?? "");
   const isCarbonChart = false;
   const isCanRenderInSmallerArea = [
@@ -92,12 +75,9 @@
   ];
 
   $effect(() => {
-    cardLabel = card.label ?? "";
-    cardPeriod = card.period;
-    cardType = card.type;
     card;
     logs;
-    objectives;
+    goals;
     timePeriod;
     parentBgIndex;
     isPageLoaded;
@@ -125,51 +105,43 @@
   }
 
   function onTimePeriodChange(e: CustomEvent) {
-    cardPeriod = e.detail;
     analyticsConfigStore.updateCardConfig(pageId, {
       ...card,
-      period: cardPeriod
+      period: e.detail
     });
     emitReload();
   }
 
   function onCardTypeChange(e: CustomEvent) {
-    cardType = e.detail;
     analyticsConfigStore.updateCardConfig(pageId, {
       ...card,
-      type: cardType
+      type: e.detail
     });
     refresh();
   }
 
   function onGroupByChange(e: CustomEvent) {
+    card.isGroupByTopLevelGoals = e.detail;
     analyticsConfigStore.updateCardConfig(pageId, {
-      ...card,
-      isGroupByTopLevelObjectives: e.detail
+      ...card
     });
     refresh();
   }
 
   function onCardLabelChange() {
     analyticsConfigStore.updateCardConfig(pageId, {
-      ...card,
-      label: cardLabel
+      ...card
     });
   }
 
-  function resolveObjectiveFromId(id: IRecordId | undefined) {
+  function resolveGoalFromId(id: IRecordId | undefined) {
     if (!id) return;
-    const objective = objectives.find(resourceInList(id));
-    return objective;
+    const goal = goals.find(resourceInList(id));
+    return goal;
   }
 
-  function resolveObjectiveThumb(objective: IObjective | IObjectiveThumb | undefined) {
-    return objective as IObjectiveThumb | undefined;
-  }
-
-  function resolveAnalyticsSeconds(value: unknown) {
-    const numericValue = typeof value === "number" ? value : Number(value);
-    return Number.isFinite(numericValue) ? numericValue : 0;
+  function resolveGoalThumb(goal: IGoal | IGoalThumb | undefined) {
+    return goal as IGoalThumb | undefined;
   }
 
   async function refresh() {
@@ -195,59 +167,54 @@
         isRefreshing = false;
         return;
       }
-      const correctedBegin = datafn.temporal.resolveLocalTimeSync(
-        resolvedTimePeriod.begin
-      );
-      const correctedEnd = datafn.temporal.resolveLocalTimeSync(
-        resolvedTimePeriod.end
+      const correctedTimePeriod = tzStore.resolveTimePeriodCorrectedByTz(
+        {
+          begin: resolvedTimePeriod.begin,
+          end: resolvedTimePeriod.end
+        },
+        { tzRecords: $tzStore }
       );
       const filteredLogs = logs.filter(
         (log) =>
-          log.startUnix >= correctedBegin &&
-          log.startUnix <= correctedEnd
+          log.startUnix >= correctedTimePeriod.correctedBegin &&
+          log.startUnix <= correctedTimePeriod.correctedEnd
       );
       const randomColor = () => Math.floor(Math.random() * 360);
 
       const dataMapper = (log: ISessionLog) => {
-        const objective = log.objectiveId
-          ? resolveObjectiveFromId(log.objectiveId)
-          : undefined;
-        const tzCorrectedStart = datafn.temporal.resolveLocalTimeSync(
-          log.startUnix
+        const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
+        const tzCorrectedStart = tzStore.resolveTimezoneCorrectedTimestamp(
+          log.startUnix,
+          {
+            tzRecords: $tzStore
+          }
         );
-        const resolvedObjectiveLabel = objective?.label ?? "Unknown Objective";
-        if (objective && !colors.some((x) => x.label === resolvedObjectiveLabel)) {
-          const color = resolveObjectiveColor(objective);
+        if (goal && !colors.some((x) => x.label === goal.label)) {
+          const color = resolveGoalColor(goal);
           colors.push({
-            label: resolvedObjectiveLabel,
+            label: goal.label,
             color: color ?? randomColor()
           });
         }
-        const topLevelObjective = objective?.parent?.[0];
-        const topLevelObjectiveLabel =
-          topLevelObjective?.label ?? "Unknown Objective";
+        const topLevelGoal = goal?.parent?.[0];
         if (
-          topLevelObjective &&
-          !colors.some((x) => x.label === topLevelObjectiveLabel)
+          topLevelGoal &&
+          !colors.some((x) => x.label === topLevelGoal.label)
         ) {
-          const color = resolveObjectiveColor(
-            resolveObjectiveThumb(topLevelObjective)
-          );
+          const color = resolveGoalColor(resolveGoalThumb(topLevelGoal));
           colors.push({
-            label: topLevelObjectiveLabel,
+            label: topLevelGoal.label,
             color: color ?? randomColor()
           });
         }
-        const objectiveLabel = objective
-          ? objective.label || "Unknown Objective"
-          : "No Objective";
+        const goalLabel = goal ? goal.label || "Unknown Goal" : "No Goal";
         return {
-          brek: resolveAnalyticsSeconds(log.breakTime),
-          focus: resolveAnalyticsSeconds(log.focus),
-          objectiveLabel,
-          objectiveId: log.objectiveId || "",
+          brek: log.breakTime || 0,
+          focus: log.focus || 0,
+          goal: goalLabel,
+          goalId: log.goalId || "",
           start: new Date(tzCorrectedStart).toISOString(),
-          topLevelObjectiveLabel: topLevelObjective?.label ?? objectiveLabel
+          topLevelGoal: topLevelGoal?.label ?? goalLabel
         };
       };
 
@@ -262,27 +229,30 @@
         const previousPeriod = determinePreviousTimePeriod(card.period);
         if (previousPeriod) {
           const correctedPreviousBegin =
-            datafn.temporal.resolveLocalTimeSync(
-              resolveUnixTimestamp(previousPeriod)
+            tzStore.resolveTimezoneCorrectedTimestamp(
+              resolveUnixTimestamp(previousPeriod),
+              {
+                tzRecords: $tzStore
+              }
             );
           const previousLogs = logs.filter(
             (log) =>
               log.startUnix >= correctedPreviousBegin &&
-              log.startUnix <= resolvedTimePeriod.begin
+              log.startUnix <= correctedTimePeriod.begin
           );
           previousLogs.forEach((log: ISessionLog) => {
             previousTimePeriodData.push(dataMapper(log));
           });
         }
       }
-      objectiveColors = [
+      goalColors = [
         ...colors.filter((x) => x.color),
         {
-          label: "No Objective",
+          label: "No Goal",
           color: 250
         },
         {
-          label: "Unknown Objective",
+          label: "Unknown Goal",
           color: 250
         }
       ];
@@ -337,7 +307,7 @@
       >
         <span class="flex justify-between w-full">
           <TextInput
-            bind:value={cardLabel}
+            bind:value={card.label}
             placeholder="chart title"
             style={InputStyle.PLAIN}
             onDebouncedChange={onCardLabelChange}
@@ -367,14 +337,14 @@
           {#if card.type != AnalyticsCardType.TARGETS}
             <span class="w-1/2">
               <TimePeriodPicker
-                bind:period={cardPeriod}
+                bind:period={card.period}
                 onChange={onTimePeriodChange}
               />
             </span>
           {/if}
           <span class="w-1/2">
             <CardSelector
-              bind:selected={cardType}
+              bind:selected={card.type}
               onSelect={onCardTypeChange}
               accessPoint={ResourceAccessPoint.ANALYTICS}
             />
@@ -435,7 +405,7 @@
             <CardResolver
               {card}
               {data}
-              {objectiveColors}
+              {goalColors}
               {previousTimePeriodData}
               parentBgIndex={cardBgIndex}
             />
@@ -444,7 +414,7 @@
           <CardResolver
             {card}
             {data}
-            {objectiveColors}
+            {goalColors}
             {previousTimePeriodData}
             parentBgIndex={cardBgIndex}
           />

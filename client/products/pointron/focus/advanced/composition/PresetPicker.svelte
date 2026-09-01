@@ -15,16 +15,15 @@
     isExpandedVariant?: boolean;
     parentBackgroundIndex?: number;
   } = $props();
-  let isInEditMode = $state(false);
-  let selectedPresetIndex = $state($activeSession.composition
+  let isInEditMode: boolean = false;
+  let selectedPresetIndex: number = $activeSession.composition
     ? $pointronPreferences.presets.indexOf($activeSession.composition)
-    : 0);
+    : 0;
 
-  async function onPresetSelection(event: any) {
+  function onPresetSelection(event: any) {
     const preset = event.detail.preset;
-    selectedPresetIndex = $pointronPreferences.presets.findIndex(
-      (item) => item.id === preset.id
-    );
+    activeSession.onPresetSelection(preset);
+    selectedPresetIndex = $pointronPreferences.presets.indexOf(preset);
   }
 
   function onAddNewClicked() {
@@ -55,7 +54,7 @@
       {isExpandedVariant}
       {isInEditMode}
       onEdit={onEdit}
-      onPresetSelect={onPresetSelection}
+      onSelect={onPresetSelection}
     />
     {#if isInEditMode}
         <Button

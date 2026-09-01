@@ -3,7 +3,7 @@
     isSameResource,
     removeDuplicatesFilter,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
@@ -14,8 +14,15 @@
     PanelSwitcherStyle
   } from "@21n/types/switcher.enum";
   import NodeGraph from "@21n/products/memotron/graph/NodeGraph.svelte";
+  import {
+    linker,
+    linkTagStore
+  } from "@21n/products/memotron/linking/link.store";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
-  import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import {
+    nodeStore,
+    type IActiveNodeStore
+  } from "@21n/products/memotron/node/node.store";
   import {
     NodeView,
     webNodeTypeList,
@@ -41,25 +48,22 @@
   import { logger } from "@21n/components/debug/logger.client";
   import NodeRightPaneContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { toasts } from "@21n/stores/notification.store";
   import NodeTimelineView from "@21n/products/memotron/node/timeline/NodeTimelineView.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { NodeBirdViewMode } from "@21n/products/memotron/node/birdView/birdView.type";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
   let { node }: { node: IActiveNodeStore } = $props();
-  let selectedView = $state(NodeBirdViewMode.Graph);
-  let depth = $state(
-    $page.url?.searchParams?.get(AppSearchParam.DEPTH)
-      ? parseInt($page.url?.searchParams?.get(AppSearchParam.DEPTH) ?? "1")
-      : 1
-  );
-  let graphRef = $state<NodeGraph>();
-  let isAutoGrouping = $state(true);
-  let isTraverseMode = $state(
-    $page.url?.searchParams?.get(AppSearchParam.TRAVERSE) === "true"
-  );
+  let linkedNodes: INode[];
+  let selectedView = NodeBirdViewMode.Graph;
+  let depth = $page.url?.searchParams?.get(AppSearchParam.DEPTH)
+    ? parseInt($page.url?.searchParams?.get(AppSearchParam.DEPTH) ?? "1")
+    : 1;
+  let graphRef: NodeGraph;
+  let isAutoGrouping = true;
+  let isTraverseMode =
+    $page.url?.searchParams?.get(AppSearchParam.TRAVERSE) === "true";
   type GraphNode = {
     id: string;
     label: string;
@@ -79,7 +83,13 @@
     id: string;
     label: string;
   };
-  let splitResource = $state<IRecordId | undefined>(undefined);
+  let combos: GraphCombo[] = [];
+  let graphData: {
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+    combos: GraphCombo[];
+  } = { nodes: [], edges: [], combos: [] };
+  let splitResource: IRecordId | undefined = undefined;
   const depthOptions = [
     {
       label: "Depth: 1",
@@ -98,167 +108,30 @@
     //   value: 4
     // }
   ];
-  let groupOptions = $state<DropdownItem[]>([]);
-  let subgroupOptions = $state<DropdownItem[]>([]);
-  const linkTagStore = toSvelteStore<ILinkTag[]>(
-    datafn.linkTag.signal({
-      select: ["id", "label", "group"]
-    }),
-    { initialData: [] }
-  );
-  const linkTags = $derived($linkTagStore.data);
-  let tags = $state<ILinkTag[]>([]);
-  let tagGroups = $state<string[]>([]);
-  const linkedNodeIds = $derived(
-    $node.links?.map((link) => link.linkedTo.toString()) ?? []
-  );
-  const linkedNodeStore = $derived.by(() =>
-    toSvelteStore<INode[]>(
-      datafn.node.signal({
-        select: [
-          "id",
-          "label",
-          "body",
-          "contentType",
-          "metadata",
-          "url",
-          "parent.*"
-        ],
-        filters: {
-          id: {
-            $in: linkedNodeIds.length
-              ? linkedNodeIds
-              : ["__datafn_empty_bird_view__"]
-          }
-        },
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }),
-      { initialData: [] }
-    )
-  );
-  const linkedNodes = $derived($linkedNodeStore.data);
-  const depthSourceRowsStore = $derived.by(() =>
-    toSvelteStore<Array<{ links?: Record<string, any>[] }>>(
-      datafn.node.signal({
-        select: ["id", "links.#"],
-        filters: {
-          id: {
-            $in:
-              depth > 1 && linkedNodeIds.length
-                ? linkedNodeIds
-                : ["__datafn_empty_bird_view__"]
-          }
-        },
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }),
-      { initialData: [] }
-    )
-  );
-  const allRelationRowsStore = $derived.by(() =>
-    toSvelteStore<Array<{ links?: Record<string, any>[] }>>(
-      datafn.node.signal({
-        select: ["id", "links.#"],
-        filters:
-          depth > 1
-            ? undefined
-            : {
-                id: "__datafn_empty_bird_view__"
-              },
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }),
-      { initialData: [] }
-    )
-  );
-  const depthRows = $derived(
-    buildDepthRows(
-      $node,
-      linkedNodeIds,
-      flattenRelationRows($depthSourceRowsStore.data),
-      flattenRelationRows($allRelationRowsStore.data)
-    )
-  );
-  const depthNodeIds = $derived(
-    Array.from(
-      new Set(
-        depthRows
-          .map((edge) => [edge.source, edge.target])
-          .flat()
-          .filter(Boolean)
-      )
-    )
-  );
-  const depthNodeStore = $derived.by(() =>
-    toSvelteStore<INodeThumb[]>(
-      datafn.node.signal({
-        select: ["id", "label", "body", "contentType", "parent.*"],
-        filters: {
-          id: {
-            $in:
-              depth > 1 && depthNodeIds.length
-                ? depthNodeIds
-                : ["__datafn_empty_bird_view__"]
-          }
-        },
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }),
-      { initialData: [] }
-    )
-  );
-  const graphData = $derived(
-    buildGraphData(
-      $node,
-      $node.links ?? [],
-      linkedNodes,
-      tags,
-      depth,
-      depthRows,
-      $depthNodeStore.data
-    )
-  );
-
-  $effect(() => {
-    initializeConfig();
-  });
-
-  $effect(() => {
-    graphData;
-    depth;
-    isTraverseMode;
-    setTimeout(() => {
-      graphRef?.rerender();
-    }, 100);
-  });
+  let groupOptions: DropdownItem[];
+  let subgroupOptions: DropdownItem[];
+  let tags: ILinkTag[];
+  let tagGroups: string[];
+  initializeConfig();
 
   function initializeConfig() {
     try {
-      const nextTags =
-        linkTags
-          .filter((x) =>
-            $node.links?.some((y) => y.tags?.some(resourceInList(x)))
-          )
-          ?.map(linkTagLabelMapper) ?? [];
-      const nextTagGroups = Array.from(
-        new Set(nextTags?.map((x) => x.group ?? "No group"))
-      );
-      tags = nextTags;
-      tagGroups = nextTagGroups;
+      if ($linkTagStore) {
+        tags =
+          $linkTagStore
+            .filter((x) =>
+              $node.links?.some((y) => y.tags?.some(resourceInList(x)))
+            )
+            ?.map(linkTagLabelMapper) ?? [];
+        tagGroups = Array.from(
+          new Set(tags?.map((x) => x.group ?? "No group"))
+        );
+      }
 
       let commonGroupOptions = [
         { label: "Link tags", value: "linktags" },
         { label: "Link types", value: "linktypes" },
-        ...(nextTagGroups?.map((x) => ({
+        ...(tagGroups?.map((x) => ({
           label: x,
           value: x,
           groupId: "Link tag groups"
@@ -278,147 +151,214 @@
     }
   }
 
-  function flattenRelationRows(records: Array<{ links?: Record<string, any>[] }>) {
-    return records.flatMap((record) => record.links ?? []);
+  async function loadLinkedNodesData(links: INodeLinkThumb[]) {
+    try {
+      linkedNodes = await nodeStore.selectMany({
+        properties: {
+          select: ["id", "label", "body", "contentType", "metadata", "url"],
+          expand: ["parent"]
+        },
+        filters: {
+          id: links.map((x) => x.linkedTo.toString())
+        }
+      });
+    } catch (error) {
+      logger.error({ at: "loadLinkedNodesData", error });
+    }
   }
 
-  function buildDepthRows(
-    activeNode: INode,
-    sourceIds: string[],
-    inLinks: Record<string, any>[],
-    allRelationRows: Record<string, any>[]
+  /**
+   * TODO - filters
+   *
+   * Note: removed no relation category altogether since this is not looking visually appealing when no other link tags are present. Even if other link tags are present, not having `no relation` category is not looking visually appealing.
+   */
+  async function refreshGraphData(
+    links: INodeLinkThumb[] | undefined,
+    depth: number
   ) {
-    const targetIds = new Set(sourceIds);
-    const outLinks = allRelationRows.filter((link) =>
-      targetIds.has(link.to?.toString())
-    );
-    return [...inLinks, ...outLinks]
+    try {
+      const activeNode = $node;
+      const activeLinks = links ?? [];
+      if (activeLinks.length === 0) {
+        graphData = { nodes: [], edges: [], combos: [] };
+        return;
+      }
+      await loadLinkedNodesData(activeLinks);
+      if (isAutoGrouping) {
+        let linkTagsInUse = new Set<string>();
+        let nodes: GraphNode[] = linkedNodes.map((linkedNode: INode) => {
+          const link = activeLinks.find((l) =>
+            isSameResource(l.linkedTo, linkedNode)
+          );
+          let combo = null;
+          if (link?.tags?.length === 0) {
+            // combo = "no relation";
+          } else {
+            const linkTags = tags.filter((x) =>
+              link?.tags?.some(resourceInList(x))
+            );
+            if (linkTags.length === 0) {
+              // combo = "no relation";
+            } else if (linkTags.length === 1) {
+              combo = linkTags[0].label;
+            } else {
+              // combo = linkTags[0].label;
+              combo = linkTags.map((x) => x.label).join(", ");
+            }
+          }
+          if (combo) {
+            linkTagsInUse.add(combo);
+          }
+          return {
+            id: linkedNode.id.toString(),
+            label: resolveNodeLabelString(linkedNode as INodeThumb),
+            icon: webNodeTypeList.includes(linkedNode.contentType)
+              ? resolveNodeFavicon(linkedNode)
+              : undefined,
+            fill: resolveNodeGraphFill(linkedNode),
+            combo: combo ?? undefined
+          };
+        });
+        nodes.push({
+          id: activeNode.id.toString(),
+          type: "hexagon",
+          badge: activeLinks.length,
+          label: resolveNodeLabelString(activeNode as INodeThumb),
+          icon: webNodeTypeList.includes(activeNode.contentType)
+            ? resolveNodeFavicon(activeNode)
+            : undefined,
+          fill: resolveNodeGraphFill(activeNode),
+          combo: undefined
+        });
+
+        let edges: GraphEdge[] = activeLinks.map((l) => {
+          return {
+            source: activeNode.id.toString(),
+            target: l.linkedTo.toString(),
+            id: l.links?.[0]?.id,
+            linkType: l.linkType
+          };
+        });
+
+        const uniqueLinkTags = Array.from(linkTagsInUse);
+
+        combos = uniqueLinkTags
+          .map((x) => {
+            return {
+              id: x,
+              label: x
+            };
+          })
+          .filter(Boolean);
+        // combos = [
+        //   ...combos,
+        //   ...tagGroups.map((x) => ({
+        //     id: x,
+        //     label: x
+        //   }))
+        // ];
+        if (depth > 1) {
+          const remainingNodes = nodes
+            .filter((x) => x.id !== activeNode.id.toString())
+            .map((x) => x.id);
+          const data = await fetchDepth(remainingNodes);
+          if (!data.edges || data.edges.length === 0) return;
+          edges.push(...data.edges);
+          nodes.push(...data.nodes);
+          nodes = nodes.filter(removeDuplicatesFilter).map((x) => {
+            return {
+              ...x,
+              combo: depth === 1 ? x.combo : undefined
+            };
+          });
+        }
+        edges = edges
+          .map((x) => {
+            return {
+              ...x,
+              linkType:
+                x.linkType === LinkType.DIRECT
+                  ? undefined
+                  : enumToString(x.linkType)
+            };
+          })
+          .filter(removeDuplicatesFilter)
+          .filter((x, index) => {
+            return (
+              x.source &&
+              x.target &&
+              nodes.some((y) => y.id === x.source) &&
+              nodes.some((y) => y.id === x.target) &&
+              edges.findIndex(
+                (y) => y.source === x.source && y.target === x.target
+              ) === index
+            );
+          });
+        graphData = {
+          nodes,
+          edges,
+          combos: depth === 1 ? combos : []
+        };
+      }
+    } catch (error) {
+      logger.error({ at: "refreshGraphData", error });
+      toasts.error("Something went wrong. Please try again later.");
+    }
+  }
+
+  export async function fetchDepth(nodes: IRecordId[]) {
+    const activeNode = $node;
+    const linkProperties = {
+      select: ["id", "in", "out", "linkType", "tags"]
+    };
+    const inLinks = await linker.selectMany({
+      properties: linkProperties,
+      filters: {
+        in: nodes.map((x) => x.toString())
+      }
+    });
+    const outLinks = await linker.selectMany({
+      properties: linkProperties,
+      filters: {
+        out: nodes.map((x) => x.toString())
+      }
+    });
+    const edges: GraphEdge[] = [...inLinks, ...outLinks]
       .filter(
         (link: any) =>
-          link.from &&
-          link.to &&
-          link.from.toString().includes("node") &&
-          link.to.toString().includes("node") &&
-          !isSameResource(link.from, activeNode) &&
-          !isSameResource(link.to, activeNode)
+          link.in &&
+          link.out &&
+          link.in.toString().includes("node") &&
+          link.out.toString().includes("node") &&
+          !isSameResource(link.in, activeNode) &&
+          !isSameResource(link.out, activeNode)
       )
       .map((link: any) => ({
-        source: link.from.toString(),
-        target: link.to.toString(),
-        id: `${link.from}|${link.to}`,
+        source: link.in.toString(),
+        target: link.out.toString(),
+        id: link.id,
         linkType: link.linkType
       }));
-  }
-
-  function normalizeEdges(edges: GraphEdge[], nodes: GraphNode[]) {
-    return edges
-      .map((x) => {
-        return {
-          ...x,
-          linkType:
-            x.linkType === LinkType.DIRECT ? undefined : enumToString(x.linkType)
-        };
-      })
-      .filter(removeDuplicatesFilter)
-      .filter((x, index) => {
-        return (
-          x.source &&
-          x.target &&
-          nodes.some((y) => y.id === x.source) &&
-          nodes.some((y) => y.id === x.target) &&
-          edges.findIndex(
-            (y) => y.source === x.source && y.target === x.target
-          ) === index
-        );
-      });
-  }
-
-  function buildGraphData(
-    activeNode: INode,
-    activeLinks: INodeLinkThumb[],
-    directLinkedNodes: INode[],
-    activeTags: ILinkTag[],
-    graphDepth: number,
-    depthEdges: GraphEdge[],
-    depthNodes: INodeThumb[]
-  ) {
-    if (activeLinks.length === 0 || !isAutoGrouping) {
-      return { nodes: [], edges: [], combos: [] };
-    }
-    let linkTagsInUse = new Set<string>();
-    let nodes: GraphNode[] = directLinkedNodes.map((linkedNode: INode) => {
-      const link = activeLinks.find((l) => isSameResource(l.linkedTo, linkedNode));
-      let combo = null;
-      if (link?.tags?.length) {
-        const linkTags = activeTags.filter((x) =>
-          link?.tags?.some(resourceInList(x))
-        );
-        if (linkTags.length === 1) {
-          combo = linkTags[0].label;
-        } else if (linkTags.length > 1) {
-          combo = linkTags.map((x) => x.label).join(", ");
-        }
+    const allNodesList = Array.from(
+      new Set(edges.map((link: any) => [link.source, link.target]).flat())
+    );
+    let allNodes: GraphNode[] = await nodeStore.selectMany({
+      properties: {
+        select: ["id", "label", "body", "contentType"],
+        expand: ["parent"]
+      },
+      filters: {
+        id: allNodesList
       }
-      if (combo) {
-        linkTagsInUse.add(combo);
-      }
+    });
+
+    allNodes = allNodes.map((node: any) => {
       return {
-        id: linkedNode.id.toString(),
-        label: resolveNodeLabelString(linkedNode as INodeThumb),
-        icon: webNodeTypeList.includes(linkedNode.contentType)
-          ? resolveNodeFavicon(linkedNode)
-          : undefined,
-        fill: resolveNodeGraphFill(linkedNode),
-        combo: combo ?? undefined
+        id: node.id.toString(),
+        label: resolveNodeLabelString(node as INodeThumb)
       };
     });
-    nodes.push({
-      id: activeNode.id.toString(),
-      type: "hexagon",
-      badge: activeLinks.length,
-      label: resolveNodeLabelString(activeNode as INodeThumb),
-      icon: webNodeTypeList.includes(activeNode.contentType)
-        ? resolveNodeFavicon(activeNode)
-        : undefined,
-      fill: resolveNodeGraphFill(activeNode),
-      combo: undefined
-    });
-    let edges: GraphEdge[] = activeLinks.map((l) => {
-      return {
-        source: activeNode.id.toString(),
-        target: l.linkedTo.toString(),
-        id: l.links?.[0]?.id,
-        linkType: l.linkType
-      };
-    });
-    const combos: GraphCombo[] = Array.from(linkTagsInUse)
-      .map((x) => {
-        return {
-          id: x,
-          label: x
-        };
-      })
-      .filter(Boolean);
-    if (graphDepth > 1 && depthEdges.length > 0) {
-      edges.push(...depthEdges);
-      nodes.push(
-        ...depthNodes.map((node) => ({
-          id: node.id.toString(),
-          label: resolveNodeLabelString(node)
-        }))
-      );
-      nodes = nodes.filter(removeDuplicatesFilter).map((x) => {
-        return {
-          ...x,
-          combo: undefined
-        };
-      });
-    }
-    return {
-      nodes,
-      edges: normalizeEdges(edges, nodes),
-      combos: graphDepth === 1 ? combos : []
-    };
+    return { nodes: allNodes, edges };
   }
 
   async function onNodeSelect(e: CustomEvent) {
@@ -576,14 +516,13 @@
             isDisableSearch={true}
             value={depth}
             size={Size.sm}
-            onSelect={(e) => {
+            onSelect={async (e) => {
               depth = e.detail;
               appStore.toggleSearchParam({
                 [AppSearchParam.DEPTH]: depth
               });
-              setTimeout(() => {
-                graphRef?.rerender();
-              }, 100);
+              await refreshGraphData($node.links, depth);
+              graphRef?.rerender();
             }}
           />
         </div>
@@ -626,11 +565,11 @@
   <div class="flex w-full flex-1 min-h-0">
     <div class="flex-1 h-full min-w-0">
       {#if selectedView === NodeBirdViewMode.Graph}
-        {#if $linkedNodeStore.loading && linkedNodeIds.length > 0}
+        {#await refreshGraphData($node.links, depth)}
           <div class="flex-1 h-full min-w-0">
             <EmptyStatusView isLoadingState={true} />
           </div>
-        {:else}
+        {:then}
           <NodeGraph
             bind:this={graphRef}
             layout={depth === 1 && !isTraverseMode
@@ -641,7 +580,7 @@
             onSelect={onNodeSelect}
             onCanvasClick={closeSplitResource}
           />
-        {/if}
+        {/await}
       {:else if selectedView === NodeBirdViewMode.Timeline}
         <NodeTimelineView node={$node} />
       {:else}

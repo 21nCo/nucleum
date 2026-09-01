@@ -1,10 +1,17 @@
 <script lang="ts">
   import Button from "@21n/elements/button/Button.svelte";
+  import { generateUID } from "@21n/utils/utils";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
   import {
     SessionCompositionType,
     type SessionComposition,
     BreakCompositionType
   } from "@21n/types/pointron/sessionComposition.type";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "@21n/types/switcher.enum";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import { getTotalsFromComposition } from "@21n/products/pointron/pointron.utils";
   import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
   import { Orientation } from "@21n/types/direction.enum";
@@ -13,97 +20,33 @@
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle } from "@21n/types/button.type";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { appStore } from "@21n/stores/app.store";
+  import Divider from "@21n/elements/Divider.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { deepCopy } from "@21n/shared-utils/obj.utils";
-  import { activeSession } from "@21n/products/pointron/focus/session.store";
-  import { advancedCompositionDraft } from "@21n/products/pointron/focus/advanced/composition/advancedCompositionDraft.store";
-  import BackButton from "@21n/elements/button/BackButton.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { TextStyle } from "@21n/types/text.enum";
-
   let {
-    composition,
+    composition = $bindable(),
     isShowSave = false,
-    isActiveSessionContext = false,
     parentBgIndex = 1,
-    startInConfig = false,
-    compositionChangeHandler = undefined,
-    onChange = undefined,
-    onCompositionChange = undefined
+    onChange = undefined
   }: {
     composition: SessionComposition;
     isShowSave?: boolean;
-    isActiveSessionContext?: boolean;
     parentBgIndex?: number;
-    startInConfig?: boolean;
-    compositionChangeHandler?:
-      | ((event: CustomEvent<SessionComposition>) => void)
-      | undefined;
     onChange?: ((event: CustomEvent<SessionComposition>) => void) | undefined;
-    onCompositionChange?:
-      | ((event: CustomEvent<SessionComposition>) => void)
-      | undefined;
   } = $props();
-  void parentBgIndex;
+  let isTargetFocus: boolean =
+    composition.type === SessionCompositionType.TARGET_FOCUS;
 
-  const compositionModes = [
-    {
-      id: "Countup",
-      label: "Countup",
-      icon: "ph:infinity",
-      description:
-        "Run without a fixed end time. Get reminded to take breaks along the way."
-    },
-    {
-      id: "Pomodoro",
-      label: "Pomodoro",
-      icon: "pomodoro",
-      description: "Alternate focus rounds and breaks with set durations."
-    },
-    {
-      id: "Countdown",
-      label: "Countdown",
-      icon: "ph:timer",
-      description:
-        "Focus for a fixed total duration, with optional reminder or predefined breaks."
-    },
-    {
-      id: "Target duration",
-      label: "Target duration",
-      icon: "ph:target",
-      description:
-        "Keep going until you reach a focus-time target. Get reminded to take breaks; end time adjusts when you do."
-    }
-  ] as const;
-
-  type CompositionModeId = (typeof compositionModes)[number]["id"];
-
-  function resolveInitialComposition() {
-    const draft = deepCopy(composition);
-    if (draft.type === SessionCompositionType.SLIDER) {
-      draft.type = SessionCompositionType.TOTAL_DURATION;
-    }
-    return draft;
-  }
-
-  function resolveModeFromType(
-    type: SessionCompositionType
-  ): CompositionModeId {
-    if (type === SessionCompositionType.POMODORO) return "Pomodoro";
-    if (type === SessionCompositionType.COUNTUP) return "Countup";
-    if (type === SessionCompositionType.TARGET_FOCUS) return "Target duration";
-    return "Countdown";
-  }
-
-  let compositionDraft = $state<SessionComposition>(
-    resolveInitialComposition()
-  );
-  let selectedMode = $state<CompositionModeId | null>(
-    startInConfig ? resolveModeFromType(compositionDraft.type) : null
-  );
+  let selectedType: string =
+    composition.type === SessionCompositionType.POMODORO
+      ? "Pomodoro"
+      : composition.type === SessionCompositionType.COUNTUP
+        ? "Countup"
+        : "Countdown";
+  if (composition.type === SessionCompositionType.SLIDER)
+    composition.type = SessionCompositionType.TOTAL_DURATION;
 
   function generateSeedPomodoroRound() {
     const id = generateSimpleRandomId();
@@ -120,295 +63,173 @@
     };
   }
 
-  let totals = $derived(
-    getTotalsFromComposition({ composition: compositionDraft })
-  );
+  let totals = $derived(getTotalsFromComposition({ composition }));
 
-  function resolveUsableDuration(duration?: number) {
-    return duration && duration >= 60 ? duration : 0;
-  }
-
-  function applySelectedMode(nextMode: CompositionModeId) {
-    let nextComposition = compositionDraft;
-    if (nextMode === "Pomodoro") {
-      nextComposition = {
-        ...compositionDraft,
-        type: SessionCompositionType.POMODORO,
-        numberOfFocusRounds: compositionDraft.numberOfFocusRounds || 2,
-        focusDuration:
-          resolveUsableDuration(compositionDraft.focusDuration) || 28 * 60,
-        breakDuration:
-          resolveUsableDuration(compositionDraft.breakDuration) || 2 * 60,
-        breakType: BreakCompositionType.PREDEFINED
-      };
-    } else if (nextMode === "Countdown") {
-      const totalDuration =
-        resolveUsableDuration(totals.duration) ||
-        resolveUsableDuration(compositionDraft.totalDuration) ||
-        resolveUsableDuration(compositionDraft.focusDuration) ||
-        60 * 60;
-      nextComposition = {
-        ...compositionDraft,
-        type: SessionCompositionType.TOTAL_DURATION,
-        numberOfBreaks: compositionDraft.numberOfBreaks || 0,
-        breakDuration: compositionDraft.breakDuration || 0,
-        totalDuration,
-        breakType: compositionDraft.breakType || BreakCompositionType.REMINDER
-      };
-    } else if (nextMode === "Countup") {
-      nextComposition = {
-        ...compositionDraft,
-        type: SessionCompositionType.COUNTUP,
-        breakType: BreakCompositionType.REMINDER
-      };
-    } else if (nextMode === "Target duration") {
-      const focusDuration =
-        resolveUsableDuration(compositionDraft.focusDuration) ||
-        resolveUsableDuration(compositionDraft.totalDuration) ||
-        60 * 60;
-      nextComposition = {
-        ...compositionDraft,
-        type: SessionCompositionType.TARGET_FOCUS,
-        focusDuration,
-        breakType: BreakCompositionType.REMINDER
-      };
-    }
-    compositionDraft = nextComposition;
-    selectedMode = nextMode;
-    emitChange(nextComposition);
-  }
-
-  function backToModeList() {
-    selectedMode = null;
-  }
-
-  function emitChange(nextComposition: SessionComposition = compositionDraft) {
-    if (isActiveSessionContext || isShowSave) {
-      advancedCompositionDraft.set(deepCopy(nextComposition));
-      activeSession.modify(
-        { composition: deepCopy(nextComposition) },
-        { isPersist: false }
-      );
-      activeSession.onComposeComplete(false);
-    }
+  function emitChange() {
     const changeEvent = new CustomEvent<SessionComposition>("change", {
-      detail: deepCopy(nextComposition)
+      detail: composition
     });
-    compositionChangeHandler?.(changeEvent);
-    onCompositionChange?.(changeEvent);
     onChange?.(changeEvent);
   }
 
-  function handlePrimaryPomodoroChange(event: CustomEvent<SessionComposition>) {
-    const nextComposition = event.detail ?? compositionDraft;
-    compositionDraft = nextComposition;
-    emitChange(nextComposition);
-  }
-
-  function normalizeDurationInputValue(event: CustomEvent<{ value: number }>) {
-    const numericValue = Number(event.detail?.value);
-    return Number.isFinite(numericValue) ? numericValue : 0;
-  }
-
-  function updateTotalDuration(event: CustomEvent<{ value: number }>) {
-    const nextComposition = {
-      ...compositionDraft,
-      totalDuration: normalizeDurationInputValue(event)
-    };
-    compositionDraft = nextComposition;
-    emitChange(nextComposition);
-  }
-
-  function updateFocusDuration(event: CustomEvent<{ value: number }>) {
-    const nextComposition = {
-      ...compositionDraft,
-      focusDuration: normalizeDurationInputValue(event)
-    };
-    compositionDraft = nextComposition;
-    emitChange(nextComposition);
-  }
-
   function removeAdditionalHandler(event: any) {
-    const nextComposition = {
-      ...compositionDraft,
-      additional: compositionDraft.additional?.filter(
-        (x) => x.id !== event?.detail?.preset?.id
-      )
-    };
-    compositionDraft = nextComposition;
-    emitChange(nextComposition);
+    composition.additional = composition.additional?.filter(
+      (x) => x.id !== event?.detail?.preset?.id
+    );
+    emitChange();
   }
-
   function onAddAdditionalClicked() {
-    const nextComposition = {
-      ...compositionDraft,
-      additional: [
-        ...(compositionDraft.additional ?? []),
-        generateSeedPomodoroRound()
-      ]
-    };
-    compositionDraft = nextComposition;
-    emitChange(nextComposition);
+    composition.additional = [
+      ...(composition.additional ?? []),
+      generateSeedPomodoroRound()
+    ];
+    emitChange();
   }
-
   function onEachAdditionalEdit(item: SessionComposition) {
     if (!item) return;
     let presetToBeSaved = { ...item };
-    if (presetToBeSaved?.id !== compositionDraft.id) {
-      const nextComposition = {
-        ...compositionDraft,
-        additional: [
-          ...(compositionDraft.additional?.filter(
-            (x) => x.id !== presetToBeSaved.id
-          ) ?? []),
-          presetToBeSaved
-        ]
-      };
-      compositionDraft = nextComposition;
-      emitChange(nextComposition);
+    if (presetToBeSaved?.id !== composition.id) {
+      composition.additional = composition.additional?.filter(
+        (x) => x.id !== presetToBeSaved.id
+      );
+      composition.additional = [
+        ...(composition.additional ?? []),
+        presetToBeSaved
+      ];
+      emitChange();
     }
   }
-
-  const selectedModeLabel = $derived(
-    compositionModes.find((mode) => mode.id === selectedMode)?.label ?? ""
-  );
+  function saveHandler() {
+    // if (id) {
+    //   userLocalPreferences.updatePreset(composition);
+    // } else {
+    //   userLocalPreferences.addPreset(composition);
+    // }
+  }
+  function deleteHandler() {
+    if (composition && composition.id)
+      pointronPreferences.removePreset(composition.id);
+  }
 </script>
 
 <div class="flex flex-col items-center flex-grow w-full my-2 gap-4">
-  {#if selectedMode === null}
-    <div class="w-full text-b2 text-fgs2">Choose a focus mode</div>
-    <div
-      class="flex flex-col w-full gap-3 flex-grow"
-      data-testid="composition-mode-list"
-    >
-      {#each compositionModes as mode}
-        <button
-          type="button"
-          class="flex items-center gap-3 w-full text-left p-4 rounded-md border border-brs3 bg-bgs2 hover:bg-bgs3 transition-colors"
-          data-testid={`composition-mode-${mode.id.toLowerCase().replace(/\s+/g, "-")}`}
-          onclick={() => applySelectedMode(mode.id)}
-        >
-          <span
-            class="flex items-center justify-center shrink-0 w-10 h-10 rounded-md text-fgs2"
-          >
-            <Icon icon={mode.icon} size={Size.md} />
-          </span>
-          <span class="flex flex-col gap-1 min-w-0 flex-1">
-            <span class="text-b1 text-fgs1 line-clamp-1 h-[1lh]"
-              >{mode.label}</span
-            >
-            <span class="text-b3 text-fgs3 line-clamp-2 h-[2lh]"
-              >{mode.description}</span
-            >
-          </span>
-        </button>
-      {/each}
-    </div>
-  {:else}
-    <div class="flex items-center justify-between w-full gap-2">
-      <div
-        class="flex items-center min-w-0 gap-2"
-        data-testid="composition-mode-config-header"
-      >
-        <BackButton isPreventDefault={true} onclick={backToModeList} />
-      </div>
-      <Text style={TextStyle.PANEL_HEADING_SMALL} content={selectedModeLabel} />
+  <PanelSwitcher
+    items={["Countup", "Countdown", "Pomodoro"]}
+    size={Size.sm}
+    bind:value={selectedType}
+    style={PanelSwitcherStyle.BAR}
+    isExpandToFullWidth={isShowSave}
+    barStyle={BarStyle.EXACT}
+    {parentBgIndex}
+    onSwitch={() => {
+      if (selectedType === "Pomodoro") {
+        composition.type = SessionCompositionType.POMODORO;
+        if (!composition.numberOfFocusRounds) {
+          composition.numberOfFocusRounds = 1;
+        }
+        composition.breakType = BreakCompositionType.PREDEFINED;
+        // composition.type = SessionCompositionType.POMODORO;
+      } else if (selectedType === "Countdown") {
+        composition.type = SessionCompositionType.TOTAL_DURATION;
+        if (!composition.numberOfBreaks) composition.numberOfBreaks = 0;
+        if (!composition.breakDuration) composition.breakDuration = 0;
+        composition.totalDuration = totals.duration;
+        // numberOfBreaksInput = composition.numberOfFocusRounds - 1;
+        // breakInput = composition.breakDuration;
+        // composition.type = SessionCompositionType.TOTAL_DURATION;
+      } else if (selectedType === "Countup") {
+        composition.type = SessionCompositionType.COUNTUP;
+        composition.breakType = BreakCompositionType.REMINDER;
+      }
+      emitChange();
+    }}
+  >
+    {#snippet right()}
       {#if isShowSave}
         <Button
           icon="bookmark"
-          testId="composition-save-as-preset"
           onclick={() => {
             appStore.runAction(PointronAction.SAVE_PRESET_MODAL);
           }}
           tooltip="Save as preset"
         />
       {/if}
-    </div>
-    <div
-      class="flex flex-col w-full flex-grow gap-8"
-      data-testid="composition-mode-config"
-      data-composition-mode={selectedMode}
-    >
-      {#if selectedMode === "Pomodoro"}
-        <div class="flex flex-col gap-6 items-center h-96 overflow-y-auto">
-          <PomodoroUnitView
-            bind:composition={compositionDraft}
-            onChange={handlePrimaryPomodoroChange}
-          />
-          {#if compositionDraft.additional && compositionDraft.additional.length > 0}
-            {#each compositionDraft.additional as item}
-              <PomodoroUnitView
-                composition={item}
-                onRemove={removeAdditionalHandler}
-                onChange={() => onEachAdditionalEdit(item)}
-                isShowRemove={true}
-              />
-            {/each}
-          {/if}
-          <div class="mb-40">
-            <Button
-              onclick={onAddAdditionalClicked}
-              style={ButtonStyle.OUTLINED}
-              size={Size.sm}
-              icon="plus"
-              label="add another round"
+    {/snippet}
+  </PanelSwitcher>
+  <div class="flex flex-col w-full flex-grow gap-8">
+    {#if composition.type === SessionCompositionType.POMODORO}
+      <div class="flex flex-col gap-6 items-center h-96 overflow-y-auto">
+        <PomodoroUnitView bind:composition onChange={emitChange} />
+        {#if composition.additional && composition.additional.length > 0}
+          {#each composition.additional as item}
+            <PomodoroUnitView
+              composition={item}
+              onRemove={removeAdditionalHandler}
+              onChange={() => onEachAdditionalEdit(item)}
+              isShowRemove={true}
             />
-          </div>
+          {/each}
+        {/if}
+        <div class="mb-40">
+          <Button
+            onclick={onAddAdditionalClicked}
+            style={ButtonStyle.OUTLINED}
+            size={Size.sm}
+            icon="plus"
+            label="add another round"
+          />
         </div>
-      {:else if selectedMode === "Countdown"}
-        <div class="flex flex-col gap-6 overflow-y-auto">
-          <DurationInput
-            bind:value={compositionDraft.totalDuration}
+      </div>
+    {:else}
+      <div class="flex flex-col gap-6 h--96 overflow-y-auto">
+        {#if composition.type != SessionCompositionType.COUNTUP}
+          {#if composition.type !== SessionCompositionType.TARGET_FOCUS}
+            <DurationInput
+              bind:value={composition.totalDuration}
+              label={{
+                label: "Total duration",
+                orientation: Orientation.Vertical
+              }}
+              onChange={emitChange}
+            />
+          {:else if composition.type === SessionCompositionType.TARGET_FOCUS}
+            <DurationInput
+              bind:value={composition.focusDuration}
+              label={{
+                label: "Focus target duration",
+                orientation: Orientation.Vertical
+              }}
+              onChange={emitChange}
+            />{/if}
+          <SwitchInput
+            bind:checked={isTargetFocus}
+            isExpanded={true}
             label={{
-              label: "Total duration",
-              orientation: Orientation.Vertical
+              label: "Adjust end time until target is reached",
+              tooltip: {
+                body: "Once you start the session, if you take breaks in between, the end time will be auto adjusted until you reach the target duration entered above. Turn this off to keep the end time fixed."
+              }
             }}
-            onChange={updateTotalDuration}
-            testId="advanced-focus-total-duration"
-          />
-          <ComposeBreak
-            bind:composition={compositionDraft}
-            onChange={(event) => {
-              compositionDraft = event.detail;
-              emitChange(event.detail);
-            }}
-          />
-          <ScrollViewBottomSpacer />
-        </div>
-      {:else if selectedMode === "Target duration"}
-        <div class="flex flex-col gap-6 overflow-y-auto">
-          <DurationInput
-            bind:value={compositionDraft.focusDuration}
-            label={{
-              label: "Focus target duration",
-              orientation: Orientation.Vertical
-            }}
-            onChange={updateFocusDuration}
-            testId="advanced-focus-target-duration"
-          />
-          <ComposeBreak
-            bind:composition={compositionDraft}
-            reminderOnly={true}
-            onChange={(event) => {
-              compositionDraft = event.detail;
-              emitChange(event.detail);
+            onChange={(e) => {
+              if (e?.detail) {
+                composition.type = SessionCompositionType.TARGET_FOCUS;
+                composition.focusDuration = composition.totalDuration;
+              } else {
+                composition.type = SessionCompositionType.TOTAL_DURATION;
+              }
+              emitChange();
             }}
           />
-          <ScrollViewBottomSpacer />
-        </div>
-      {:else}
-        <div class="flex flex-col gap-6 overflow-y-auto">
-          <ComposeBreak
-            bind:composition={compositionDraft}
-            reminderOnly={true}
-            onChange={(event) => {
-              compositionDraft = event.detail;
-              emitChange(event.detail);
-            }}
-          />
-          <ScrollViewBottomSpacer />
-        </div>
-      {/if}
-    </div>
-  {/if}
+          <Divider />
+        {/if}
+        <ComposeBreak
+          {composition}
+          isDisablePredefined={composition.type ===
+            SessionCompositionType.COUNTUP}
+          onChange={emitChange}
+        />
+        <ScrollViewBottomSpacer />
+      </div>
+    {/if}
+  </div>
 </div>

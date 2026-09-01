@@ -20,11 +20,11 @@
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import { appMenuStore } from "@21n/stores/appMenu/appMenu.store";
-  import { resourceAction } from "@21n/data/datafn/resource.utils";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { ResourceActionType } from "@21n/data/datafn/resource.type";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
   import { isHideCreateAction } from "@21n/components/library/library.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
   let {
     item,
@@ -43,15 +43,9 @@
     $uiStateDerived?.isShowHotKeyHints &&
       (layoutContext === LayoutContext.DEFAULT || hideMenuLabels)
   );
-  let itemPath = $derived(item?.path ?? item?.action);
-  let currentRouteParam = $state<string | undefined>(undefined);
-  let currentRouteId = $state<string | undefined>(undefined);
   let isActive = $derived(
-    Boolean(
-      itemPath &&
-        (currentRouteParam?.includes(itemPath) ||
-          currentRouteId?.includes(itemPath))
-    )
+    $page.params.route?.includes(item.path ?? item.action) ||
+      $page.route.id?.includes(item.path ?? item.action)
   );
 
   onMount(() => {
@@ -60,14 +54,9 @@
     const unsubscribe = uiState.subscribe(() => {
       refreshHideMenuLabels();
     });
-    const pageUnsubscribe = page.subscribe((p) => {
-      currentRouteParam = p?.params?.route;
-      currentRouteId = p?.route?.id ?? undefined;
-    });
 
     return () => {
       if (unsubscribe) unsubscribe();
-      if (pageUnsubscribe) pageUnsubscribe();
     };
   });
 
@@ -80,7 +69,7 @@
 
   let isShowLabel = $derived(
     layoutContext === LayoutContext.PORTRAIT ||
-      layoutContext === LayoutContext.DEFAULT ||
+    layoutContext === LayoutContext.DEFAULT ||
       (layoutContext === LayoutContext.THIN_WITH_LABEL && !hideMenuLabels)
   );
   let buttonRef = $state<HTMLElement>();

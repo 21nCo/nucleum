@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { Size } from "@21n/types/size.enum";
   import {
     TableCellDefaultAction,
@@ -7,7 +7,7 @@
     type TableColumn
   } from "@21n/types/table.type";
   import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
 
   import {
     manualPropertyTypes,
@@ -17,10 +17,13 @@
     UniversalPropertyType,
     type IProperty
   } from "@21n/components/collection/properties/property.type";
-  import { propertyEditorStore } from "@21n/components/collection/properties/property.store";
-  import { datafn } from "@21n/stores/datafn.store";
+  import {
+    propertyEditorStore,
+    propertyStore
+  } from "@21n/components/collection/properties/property.store";
   import {
     ActiveCollectionStore,
+    collectionStore,
     type IActiveCollectionStore
   } from "@21n/components/collection/collection.store";
   import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
@@ -28,12 +31,13 @@
     AccessMode,
     ResourceActionType,
     type OmitForCaptureWithId
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import { logger } from "@21n/components/debug/logger.client";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import SearchSingleSelect from "@21n/elements/select/SearchSingleSelect.svelte";
@@ -45,14 +49,14 @@
   import { AlertType } from "@21n/types/notification.type";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
-  import { acquireDnDPage, appStore } from "@21n/stores/app.store";
+  import { appStore } from "@21n/stores/app.store";
   import modalEvent from "@21n/components/modal/modal.store";
   import PropertyTypeSelector from "@21n/components/collection/properties/propertyTypeSelector/PropertyTypeSelector.svelte";
   import {
     isSameResource,
     resourceAction,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import { resolvePropertyDefaultConfig } from "@21n/components/collection/properties/property.utils";
   import { objIsEmpty } from "@21n/shared-utils/obj.utils";
   import CollectionTitleLabelPart from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
@@ -103,7 +107,7 @@
       width: 0.5,
       type: TableCellType.TOGGLE,
       tooltip: {
-        body: "Selecting this will make the property always visible on the node/objective page. Otherwise, it will be present in properties panel.",
+        body: "Selecting this will make the property always visible on the node/goal page. Otherwise, it will be present in properties panel.",
         size: Size.xs
       }
     }
@@ -135,12 +139,12 @@
       order: properties.length
     };
     properties = [...properties, newProperty];
+    if (collection) {
+      await propertyStore.create([newProperty]);
+    }
   }
 
-  let releaseDnDPage: (() => void) | undefined;
-
   onMount(async () => {
-    releaseDnDPage = acquireDnDPage();
     if (collection && (!$collection || !$collection.label)) {
       await collection.init(AccessMode.POP);
     } else if (collection) {
@@ -151,18 +155,10 @@
       });
     }
     properties = propertyEditorStore.get()?.properties ?? [];
-    if (collection) {
-      const result = await datafn.collection.query({
-        filters: {
-          typeToExtend: collection.id.toString()
-        }
-      });
-      derivedCollections = result.data as ICollection[];
-    }
-  });
-
-  onDestroy(() => {
-    releaseDnDPage?.();
+    if (collection)
+      derivedCollections = await collectionStore.fetchDerivedCollections(
+        collection?.id
+      );
   });
 
   $effect(() => {
@@ -251,17 +247,15 @@
   }
 
   function searchForTypeExtension(searchQuery: string) {
-    return datafn.collection
-      .query({
-        filters: {
-          type: CollectionType.TYPED
-        },
-        search: {
-          query: searchQuery,
-          fields: ["label"]
-        }
-      } as any)
-      .then((result) => (result as { data?: ICollection[] }).data ?? []);
+    return collectionStore.selectMany({
+      filters: {
+        type: CollectionType.TYPED
+      },
+      search: {
+        query: searchQuery,
+        properties: ["label"]
+      }
+    });
   }
 
   function onGotoBase() {
@@ -301,10 +295,6 @@
         error: `Please select a sub type for all Universal properties`
       };
     }
-    propertyEditorStore.set({
-      properties,
-      typeToExtend: $propertyEditorStore.typeToExtend
-    });
     const result = await collection?.updateProperties();
     return result;
   }
@@ -411,3 +401,5 @@
       : undefined}
   />
 </div>
+
+<ComponentBaseLayer hasDragAndDrop={true} />

@@ -2,7 +2,7 @@
   import { getContext, onMount } from "svelte";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import type { INode } from "@21n/products/memotron/node/node.type";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import TweetPreviewUsingWidget from "@21n/products/memotron/node/content/web/social/TweetPreviewUsingWidget.svelte";
   import InstagramPostWidget from "@21n/products/memotron/node/content/web/social/InstagramPostWidget.svelte";
   import LinkedInPostWidget from "@21n/products/memotron/node/content/web/social/LinkedInPostWidget.svelte";
@@ -102,13 +102,25 @@
       {:else if node.contentType === NodeType.REDDIT_POST}
         <RedditPostWidget postUrl={node.url} />
       {:else if node.contentType === NodeType.FACEBOOK_POST}
-        <FacebookPostWidget postUrl={node.url} {onError} onFallback={onError} />
+        <FacebookPostWidget
+          postUrl={node.url}
+          onError={onError}
+          onFallback={onError}
+        />
       {:else if node.contentType === NodeType.MASTODON_POST}
-        <MastodonPostWidget postUrl={node.url} {onError} onFallback={onError} />
+        <MastodonPostWidget
+          postUrl={node.url}
+          onError={onError}
+          onFallback={onError}
+        />
       {:else if node.contentType === NodeType.BLUESKY_POST}
-        <BlueskyPostWidget postUrl={node.url} {onError} />
+        <BlueskyPostWidget postUrl={node.url} onError={onError} />
       {:else if node.contentType === NodeType.THREADS_POST}
-        <ThreadsPostWidget postUrl={node.url} {onError} onFallback={onError} />
+        <ThreadsPostWidget
+          postUrl={node.url}
+          onError={onError}
+          onFallback={onError}
+        />
       {/if}
     </div>
   </div>

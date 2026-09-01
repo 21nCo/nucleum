@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import type {
     INode,
     INodeLinkThumb,
@@ -7,69 +8,65 @@
   import {
     isSameResource,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
   import { resolveNodeLabelString } from "@21n/products/memotron/node/node.utils";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/types/size.enum";
+  import { logger } from "@21n/components/debug/logger.client";
   import { appStore } from "@21n/stores/app.store";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { linkTagStore } from "@21n/products/memotron/linking/link.store";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
-  import type { ILinkTag } from "@21n/products/memotron/linking/link.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
 
   let {
     node
   }: {
     node: INode & { links?: INodeLinkThumb[] };
   } = $props();
-  const linkTagStore = toSvelteStore<ILinkTag[]>(
-    datafn.linkTag.signal({
-      select: ["id", "label", "group"]
-    }),
-    { initialData: [] }
-  );
-  const linkTags = $derived($linkTagStore.data);
+  let isLoading = false;
+  let linkedNodes: INodeThumb[] = [];
+  let groups: { date: string; nodes: INodeThumb[] }[] = [];
 
-  let tags = $derived(linkTags.map(linkTagLabelMapper) || []);
-  const linkedNodeIds = $derived(
-    node?.links?.map((link) => link.linkedTo.toString()) ?? []
-  );
+  let tags = $derived($linkTagStore?.map(linkTagLabelMapper) || []);
 
-  const linkedNodesStore = $derived.by(() =>
-    toSvelteStore<INodeThumb[]>(
-      datafn.node.signal({
-        select: [
-          "id",
-          "label",
-          "body",
-          "contentType",
-          "metadata",
-          "url",
-          "createdAt",
-          "parent.*"
-        ],
-        filters: {
-          id: {
-            $in: linkedNodeIds.length
-              ? linkedNodeIds
-              : ["__datafn_empty_timeline__"]
-          }
+  async function loadTimelineData(links: INodeLinkThumb[] | undefined) {
+    try {
+      isLoading = true;
+      if (!links || links.length === 0) {
+        linkedNodes = [];
+        return;
+      }
+      linkedNodes = await nodeStore.selectMany({
+        properties: {
+          select: [
+            "id",
+            "label",
+            "body",
+            "contentType",
+            "metadata",
+            "url",
+            "createdAt"
+          ],
+          expand: ["parent"]
         },
-        sort: ["-createdAt"]
-      }),
-      { initialData: [] }
-    )
-  );
+        filters: {
+          id: links.map((x: INodeLinkThumb) => x.linkedTo.toString())
+        }
+      });
+      linkedNodes.sort((a, b) => {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
 
-  const linkedNodes = $derived(
-    [...$linkedNodesStore.data].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-  );
-  const groups = $derived(groupNodesByDate(linkedNodes));
+      groups = groupNodesByDate(linkedNodes);
+    } catch (error) {
+      logger.error({ at: "loadTimelineData", error });
+    } finally {
+      isLoading = false;
+    }
+  }
 
   function groupNodesByDate(nodes: INodeThumb[]) {
     const groups = new Map<string, INodeThumb[]>();
@@ -95,21 +92,19 @@
   }
 
   function findLink(linkedNode: INodeThumb) {
-    return node.links?.find((link) =>
-      isSameResource(link.linkedTo, linkedNode)
-    );
+    return node.links?.find((link) => isSameResource(link.linkedTo, linkedNode));
   }
 </script>
 
 <div class="flex flex-col w-full h-full overflow-auto px-4 dp:px-12">
-  {#if $linkedNodesStore.loading && linkedNodeIds.length > 0}
+  {#await loadTimelineData(node?.links)}
     <EmptyStatusView
       size={Size.sm}
       isLoadingState={true}
       mainText="Loading timeline"
       subText="Please wait while we load the timeline data"
     />
-  {:else}
+  {:then}
     <div class="flex flex-col gap-8 relative pl-6">
       <div class="absolute left-[6px] -top-2 bottom-0 w-[2px] bg-bgs4" />
       {#each groups as group, index}
@@ -157,5 +152,5 @@
         {/if}
       {/each}
     </div>
-  {/if}
+  {/await}
 </div>

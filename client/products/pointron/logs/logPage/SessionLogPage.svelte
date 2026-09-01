@@ -2,7 +2,11 @@
   import Markdown from "@21n/components/markdown/Markdown.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/types/size.enum";
-  import { isValidMarkdown } from "@21n/shared-utils/text.utils";
+  import {
+    isValidDataString,
+    isValidMarkdown
+  } from "@21n/shared-utils/text.utils";
+  import { onMount } from "svelte";
   import LogIntervalBar from "@21n/products/pointron/logs/logPage/LogIntervalBar.svelte";
   import LogTotals from "@21n/products/pointron/logs/logPage/LogTotals.svelte";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
@@ -24,19 +28,21 @@
     isSameDateTime
   } from "@21n/utils/time.utils";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { sessionStore } from "@21n/products/pointron/focus/session.store";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import { taskStore } from "@21n/components/tasks/task.store";
   import view from "@21n/stores/view.store";
-  import {
-    SessionType,
-    type ISession
-  } from "@21n/products/pointron/logs/log.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { SessionType } from "@21n/products/pointron/logs/log.type";
+  import type { IFocusItem } from "@21n/types/pointron/session.type";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Button from "@21n/elements/button/Button.svelte";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import type { IMarkdown } from "@21n/components/markdown/md.type";
-  import { resolveSessionFocusView } from "@21n/products/pointron/logs/session-items.utils";
 
   let {
     id,
@@ -47,42 +53,65 @@
     log?: any;
     accessMode?: AccessMode;
   } = $props();
-  let selectedTab = $state<"Summary" | "Notes">("Summary");
-  const sessionStore = $derived.by(() =>
-    toSvelteStore<ISession[]>(
-      datafn.session.signal({
-        select: ["*", "items.*#"],
-        filters: { id },
-        limit: 1
-      }),
-      { initialData: [] }
-    )
-  );
-  const currentLog = $derived(($sessionStore.data[0] as ISession) ?? log);
-  const sessionFocusView = $derived(resolveSessionFocusView(currentLog?.items));
-  const logItems = $derived(sessionFocusView.allFocusItems);
-  const focusItems = $derived(sessionFocusView.topLevelFocusItems);
-  const objectives = $derived(sessionFocusView.objectives);
-  const tasks = $derived(sessionFocusView.tasks);
-  const currentNotes = $derived(
-    (currentLog?.notes ?? { blocks: [] }) as IMarkdown
-  );
-  const isLoadingState = $derived(
-    $sessionStore.loading || $sessionStore.refreshing
-  );
+  let selectedTab: "Summary" | "Notes" = "Summary";
+  let isLoadingState: boolean = false;
+  let focusItems: IFocusItem[] = [];
+  let goals: IGoalThumb[] = [];
+  let tasks: ITaskThumb[] = [];
 
-  $effect(() => {
-    if ($sessionStore.data[0]) log = $sessionStore.data[0];
-  });
+  async function refreshv2() {
+    try {
+      isLoadingState = true;
+      const response = await sessionStore.select(id);
+      if (response && response.id) {
+        log = response;
+        const tasksWithGoal = log.items
+          ?.map((x: any) => x.tasks)
+          ?.flat()
+          ?.filter((x: any) => x);
+        focusItems = log.items.filter(
+          (x: any) => !tasksWithGoal.some(resourceInList(x))
+        );
+      }
+      if (log.items) {
+        goals = await goalStore.selectMany(
+          {
+            filters: {
+              id: log.items.map((x: any) => x.id.toString())
+            }
+          },
+          {
+            isIncludeSubItems: true,
+            isExpand: true
+          }
+        );
+        tasks = await taskStore.selectMany(
+          {
+            filters: {
+              id: log.items.map((x: any) => x.id.toString())
+            }
+          },
+          {
+            isExpand: true
+          }
+        );
+      }
+      isLoadingState = false;
+    } catch (error) {
+      logger.error({ at: "SessionLogPage", error });
+    } finally {
+      isLoadingState = false;
+    }
+  }
 </script>
 
-{#if isLoadingState || !currentLog}
+{#await refreshv2()}
   <EmptyStatusView
     {isLoadingState}
     mainText="Session log not found"
     loadingText="Loading..."
   />
-{:else}
+{:then}
   <div
     class="flex flex-col gap-6 flex-grow w-full max-w-3xl items-center userdata otop:pt-12"
   >
@@ -100,30 +129,22 @@
           />
         {/if}
       </div>
-      <LogIntervalBar log={currentLog} />
-      {#if currentLog?.plannedEndUnix && !isSameDateTime( new Date(currentLog.endUnix), new Date(currentLog.plannedEndUnix), { isIgnoreSeconds: true } ) && new Date(currentLog.endUnix).getTime() < new Date(currentLog.plannedEndUnix).getTime()}
+      <LogIntervalBar {log} />
+      {#if log?.plannedEndUnix && !isSameDateTime( new Date(log.endUnix), new Date(log.plannedEndUnix), { isIgnoreSeconds: true } ) && new Date(log.endUnix).getTime() < new Date(log.plannedEndUnix).getTime()}
         <InlineInfoBanner>
           <span>
             This Session was planned to end at <b>
-              {formatTime(
-                $userPreferences,
-                new Date(currentLog.plannedEndUnix)
-              )}</b
+              {formatTime($userPreferences, new Date(log.plannedEndUnix))}</b
             >
             but was finished early at
-            <b>{formatTime($userPreferences, new Date(currentLog.endUnix))}.</b>
+            <b>{formatTime($userPreferences, new Date(log.endUnix))}.</b>
           </span>
         </InlineInfoBanner>
       {/if}
-      {#if currentLog.type === SessionType.MANUAL_ENTRY && currentLog.updatedAt}
+      {#if log.type === SessionType.MANUAL_ENTRY && log.modifiedAt}
         <span class="text-fgs2 text-b2">
           This session was created from a manual entry at
-          <b
-            >{formatDatetime(
-              $userPreferences,
-              new Date(currentLog.updatedAt)
-            )}</b
-          >
+          <b>{formatDatetime($userPreferences, new Date(log.modifiedAt))}</b>
         </span>
       {/if}
       <div class="flex flex-col gap-6 w-full flex-grow items-center">
@@ -135,10 +156,10 @@
             activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
           />
         </div>
-        {#if selectedTab === "Notes" && isValidMarkdown(currentNotes)}
+        {#if selectedTab === "Notes" && isValidMarkdown(log.notes)}
           <div class="flex flex-col h-full w-full rounded-md overflow-auto">
             <Markdown
-              md={currentNotes}
+              md={log.notes}
               params={{
                 isReadOnly: true,
                 actions: ["copy"],
@@ -153,18 +174,18 @@
           />
         {:else}
           <div class="flex flex-col gap-6 overflow-auto w-full flex-grow">
-            <LogTotals log={currentLog} />
+            <LogTotals {log} />
             <div class="flex flex-col items-start gap-2 w-full">
               <Text content="Focus items" style={TextStyle.SECTION_HEADING} />
               <div class="flex flex-col gap-2 h-full w-full pb-40">
-                {#if logItems.length > 0}
+                {#if log.items.length > 0}
                   {#each focusItems as item (item.id)}
                     <FocusItem
                       focusItem={item}
-                      {objectives}
+                      {goals}
                       {tasks}
-                      focusItemsList={logItems}
-                      intervals={currentLog.blocks}
+                      focusItemsList={log.items}
+                      intervals={log.blocks}
                       contxt="history"
                     />
                   {/each}
@@ -190,7 +211,7 @@
         variant: ButtonVariant.DANGER,
         callback: async () => {
           appStore.runAction(PointronAction.DELETE_SESSION, {
-            componentParams: { id }
+            componentParams: { id: log.id }
           });
         }
       }}
@@ -201,4 +222,4 @@
       }}
     />
   </div>
-{/if}
+{/await}

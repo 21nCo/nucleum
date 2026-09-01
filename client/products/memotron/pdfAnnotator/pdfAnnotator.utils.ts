@@ -13,12 +13,12 @@ import {
   type WIDTH_HEIGHT
 } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
 import { PDFDocument, rgb } from "pdf-lib";
+import { nodeStore } from "@21n/products/memotron/node/node.store";
 import type { IRecordId } from "@21n/types/data.type";
 import { logger } from "@21n/components/debug/logger.client";
+import { flux } from "@21n/components/flux/flux";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type { IHighlighter } from "@21n/products/memotron/common/highlighters/highlight.type";
-import { datafn } from "@21n/stores/datafn.store";
-import { generateResourceId } from "@21n/data/datafn/id.utils";
-import { Resource } from "@21n/data/datafn/resource.enum";
 
 export class PdfHandler {
   id: IRecordId;
@@ -27,23 +27,17 @@ export class PdfHandler {
   }
 
   async saveClip(content: IPdfBookmarkBody) {
-    const nodeId = generateResourceId(Resource.node);
     let node = {
-      id: nodeId,
       label: content.selectedText ?? content.comment ?? "PDF clip",
       body: { ...content },
       contentType: NodeType.PDF_BOOKMARK,
+      parent: this.id,
       text: content.selectedText ?? "",
-      notes: content.comment ?? "",
-      parent: this.id.toString()
+      notes: content.comment ?? ""
     };
     logger.log({ at: "PdfHandler.saveClip", node });
-    await datafn.node.mutate({
-      operation: "insert",
-      id: nodeId,
-      record: node
-    });
-    return node;
+    let response = await nodeStore.create(node as any);
+    return response;
   }
 
   /**
@@ -51,16 +45,14 @@ export class PdfHandler {
    * @returns
    */
   async fetchAllClips(): Promise<IPdfBookmarkBody[]> {
-    const response = (await datafn.node.query({
+    let response = await flux.selectMany(Resource.node, {
       filters: {
-        contentType: NodeType.PDF_BOOKMARK,
         parent: this.id.toString()
       }
-    } as any)) as { data?: { id: IRecordId; body?: IPdfBookmarkBody }[] };
+    });
     logger.log({ at: "PdfHandler.fetchAllClips", response });
-    const annotations = response.data ?? [];
-    if (!annotations.length) return [];
-    return annotations.map((annot: any) => {
+    if (!response || !response.length) return [];
+    return response.map((annot: any) => {
       return { ...annot.body, id: "annot" + annot.id };
     });
   }
@@ -68,10 +60,7 @@ export class PdfHandler {
   async deleteClip(id: string) {
     let nodeId = id.split("annot")[1];
     logger.debug({ at: "PdfHandler.deleteClip", nodeId });
-    let response = await datafn.node.mutate({
-      operation: "delete",
-      id: nodeId
-    });
+    let response = await nodeStore.delete(nodeId);
     logger.debug({ at: "PdfHandler.deleteClip", response });
     return response;
   }
@@ -81,11 +70,7 @@ export class PdfHandler {
     let contentToUpdate = {
       body: { ...content }
     };
-    let response = await datafn.node.mutate({
-      operation: "merge",
-      id: nodeId,
-      record: contentToUpdate
-    });
+    let response = await nodeStore.modify(nodeId, contentToUpdate);
     return response;
   }
 }

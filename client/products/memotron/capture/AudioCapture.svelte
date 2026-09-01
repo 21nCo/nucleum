@@ -11,7 +11,7 @@
   import view from "@21n/stores/view.store";
   import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
   import { onDestroy } from "svelte";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
@@ -238,7 +238,11 @@
             label="Finish"
           />
         {:else if recordingState === PlayActionState.PAUSED}
-          <PlayerControl onclick={toggleRecording} icon="play" label="Resume" />
+          <PlayerControl
+            onclick={toggleRecording}
+            icon="play"
+            label="Resume"
+          />
           <PlayerControl
             onclick={stopRecording}
             type={ButtonVariant.PRIMARY}

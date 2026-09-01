@@ -3,7 +3,7 @@
   import { Size } from "@21n/types/size.enum";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { Arrangement, Orientation } from "@21n/types/direction.enum";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { appStore } from "@21n/stores/app.store";
   import {
@@ -11,23 +11,29 @@
     ResourceAccessPoint,
     ResourceAccessPointState,
     ResourceActionType
-  } from "@21n/data/datafn/resource.type";
-  import { BulkEditor } from "@21n/components/record/record.store";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { BulkEditor, SearchStore } from "@21n/components/record/record.store";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
 
   import LibrarySearchBox from "@21n/components/library/LibrarySearchBox.svelte";
-  import { CollectionType } from "@21n/components/collection/collection.type";
+  import {
+    CollectionType,
+    type ICollection
+  } from "@21n/components/collection/collection.type";
   import {
     NodeType,
-    rootNodeTypeList
+    rootNodeTypeList,
+    type INode
   } from "@21n/products/memotron/node/node.type";
 
+  import { debouncer } from "@21n/utils/utils";
   import {
-    activeResourceFilter,
-    archivedResourceFilter,
-    debouncer
-  } from "@21n/utils/utils";
-  import { type IRecordId, SearchType } from "@21n/types/data.type";
+    PersistenceActionType,
+    RemovalProperty,
+    type IMutationParamsv2,
+    type IRecordId,
+    type IResourceSelectOrderBy
+  } from "@21n/types/data.type";
   import LibraryLoadingPulse from "@21n/components/library/LibraryLoadingPulse.svelte";
   import view from "@21n/stores/view.store";
   import { logger } from "@21n/components/debug/logger.client";
@@ -50,9 +56,12 @@
   import { fade, fly } from "svelte/transition";
   import {
     availableResources,
+    isSameResource,
     removeDuplicatesFilter,
-    resourceAction
-  } from "@21n/data/datafn/resource.utils";
+    resourceAction,
+    resourceCacheKey
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import TaskLibrary from "@21n/components/tasks/TaskLibrary.svelte";
   import LibrarySubTypeSwitcher from "@21n/components/library/LibrarySubTypeSwitcher.svelte";
   import type { SubType } from "@21n/components/library/library.type";
@@ -61,10 +70,14 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   import { dragSelection } from "@21n/actions/dragSelection.action";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { datafnHeavyComputedSignalOptions } from "@21n/data/datafn/signalCache";
+
+  enum CacheSubKey {
+    DATA = "data",
+    STARRED = "starred"
+  }
 
   let {
     resource,
@@ -86,8 +99,9 @@
   let isArchivedFilterSelected = $state(false);
   let data = $state<any[]>([]);
   let starredData = $state<any[]>([]);
-  let recordLimit = $state(50);
-  let searchType = $state<SearchType>(SearchType.FULL_TEXT);
+  const searchStore = new SearchStore();
+  const QAsearchStore = new SearchStore();
+  // QAsearchStore.searchType = SearchType.SEMANTIC;
   let selectedSubType = $state<SubType>("all");
   let isRefreshing = $state(true);
   let totalCountAfterFilter = $state(0);
@@ -95,135 +109,14 @@
   let refreshResetTimeout: any;
   let searchInputRef: InlineSearchBar;
   let isRefineShown = $state(false);
+  let subTypeSwitcherRef: LibrarySubTypeSwitcher;
   let abortController: AbortController | null = null;
   let isInSelectionMode = $state(false);
   let bulkEditChangeUnsub: (() => void) | undefined;
-  let searchRefreshRunId = 0;
-  let activeSearchSignature = $state("");
-  let resolvedSearchSignature = $state("");
-  const isSearchActive = $derived(Boolean(searchQuery.trim()));
-  const currentSearchSignature = $derived(resolveSearchSignature());
-  const isSearchResultPending = $derived(
-    isSearchActive && resolvedSearchSignature !== currentSearchSignature
-  );
-  const signalResource = $derived(
-    resource === Resource.relation ? Resource.linkTag : resource
-  );
-  const signalFilters = $derived.by(() => resolveFilters());
-  const listQuery = $derived.by(() =>
-    resolveLibraryQuery({
-      filters: signalFilters,
-      subType: resolveSelectedSubType()
-    })
-  );
-  const recordStore = $derived.by(() =>
-    toSvelteStore(
-      datafn.table(listQuery.resource).signal({
-        select: resolveExpandedSelect(listQuery.resource),
-        filters: listQuery.filters,
-        metadata: resolveQueryMetadata(),
-        sort: resolveSort(listQuery.resource),
-        limit: recordLimit
-      }),
-      { initialData: [] as any[] }
-    )
-  );
-  const starredStore = $derived.by(() =>
-    toSvelteStore(
-      datafn.table(listQuery.resource).signal({
-        select: resolveExpandedSelect(listQuery.resource),
-        filters: {
-          ...listQuery.filters,
-          isStarred: true
-        },
-        metadata: resolveQueryMetadata(),
-        sort: resolveSort(listQuery.resource)
-      }),
-      { initialData: [] as any[] }
-    )
-  );
-  const countQuery = $derived.by(() => listQuery);
-  const countStore = $derived.by(() =>
-    toSvelteStore(
-      datafn.table(countQuery.resource).signal(
-        {
-          select: ["id", "isArchived", "trashedAt", "isAncestorInactive"],
-          filters: countQuery.filters,
-          metadata: resolveQueryMetadata()
-        },
-        datafnHeavyComputedSignalOptions
-      ),
-      { initialData: [] as any[] }
-    )
-  );
-  const displayedData = $derived(
-    isSearchActive
-      ? isSearchResultPending
-        ? []
-        : data
-      : normalizeLibraryRecords($recordStore.data ?? [])
-  );
-  const displayedStarredData = $derived(
-    isSearchActive
-      ? isSearchResultPending
-        ? []
-        : starredData
-      : normalizeLibraryRecords($starredStore.data ?? [])
-  );
-  const displayedTotalCount = $derived(
-    isSearchActive
-      ? isSearchResultPending
-        ? 0
-        : totalCountAfterFilter
-      : ($countStore.data ?? []).filter(resolveStatusFilter()).length
-  );
-  const displayedIsInitialLoading = $derived(
-    isSearchActive
-      ? isRefreshing || isSearchResultPending
-      : $recordStore.loading && ($recordStore.data ?? []).length === 0
-  );
-  const displayedIsRefreshingTotalCount = $derived(
-    isSearchActive
-      ? isRefreshingTotalCount
-      : $countStore.loading || $countStore.refreshing
-  );
-  const isShowingSeparateStarredSection = $derived(
-    isConstrainedWidth &&
-      !searchQuery &&
-      !isStarFilterSelected &&
-      !isArchivedFilterSelected &&
-      selectedSubType !== "starred" &&
-      displayedStarredData &&
-      displayedStarredData.length > 0
-  );
 
   let multiSelectContext = $derived({
     resource,
     accessPoint
-  });
-
-  $effect(() => {
-    const signature = currentSearchSignature;
-    if (isSearchActive) {
-      if (signature !== activeSearchSignature) {
-        activeSearchSignature = signature;
-        resolvedSearchSignature = "";
-        data = [];
-        starredData = [];
-        totalCountAfterFilter = 0;
-        isRefreshing = true;
-        isRefreshingTotalCount = false;
-      }
-    } else if (activeSearchSignature || resolvedSearchSignature) {
-      activeSearchSignature = "";
-      resolvedSearchSignature = "";
-      data = [];
-      starredData = [];
-      totalCountAfterFilter = 0;
-      isRefreshing = false;
-      isRefreshingTotalCount = false;
-      abortController?.abort();
-    }
   });
 
   $effect(() => {
@@ -233,20 +126,13 @@
   });
 
   let isCustom = $derived(isCustomLibrary(resource));
-  let hasChildren = $derived(
-    [Resource.node, Resource.objective].includes(resource)
-  );
+  let hasChildren = $derived([Resource.node, Resource.goal].includes(resource));
 
   let pageSub: any;
-  let datafnChangeUnsub: (() => void) | undefined;
   onMount(async () => {
     bulkEditChangeUnsub = bulkEditStore.count.subscribe((count) => {
       if (count === 0) {
         isInSelectionMode = false;
-        return;
-      }
-      if (bulkEditStore.matchesContext(multiSelectContext)) {
-        resolveBulkEditorInstance();
       }
     });
     if (isCustom) return;
@@ -275,20 +161,12 @@
       }
       if (isRefreshNeeded) await refresh();
     });
-    datafnChangeUnsub = datafn.subscribe((event) => {
-      if (
-        event.type === "mutation_applied" &&
-        event.resource === signalResource &&
-        isSearchActive
-      ) {
-        refresh();
-      }
-    });
+    refresh();
   });
 
   onDestroy(() => {
     if (pageSub) pageSub();
-    if (datafnChangeUnsub) datafnChangeUnsub();
+    // Abort any ongoing operations when component unmounts
     if (abortController) {
       abortController.abort();
       abortController = null;
@@ -319,10 +197,7 @@
   }
 
   function onSelectAll() {
-    const visibleData = isShowingSeparateStarredSection
-      ? [...displayedStarredData, ...displayedData]
-      : displayedData;
-    return [...new Set(visibleData.map((x) => x.id))];
+    return data.map((x) => x.id);
   }
 
   async function onBulkAction(
@@ -338,23 +213,20 @@
     }
   }
 
+  async function refreshFilteredRecordsCount() {
+    const filters = resolveFilters();
+    await _refreshFilteredRecordsTotalCount(filters);
+  }
+
   async function refresh(isPagination?: boolean) {
     if (isCustom) return;
-    if (!isSearchActive) {
-      if (isPagination) recordLimit += 50;
-      else recordLimit = 50;
-      return;
-    }
 
+    // Abort any previous operation and create new controller
     if (abortController) {
       abortController.abort();
     }
     abortController = new AbortController();
     const signal = abortController.signal;
-    const runId = ++searchRefreshRunId;
-    const requestedSearchQuery = searchQuery.trim();
-    const requestedSearchSignature =
-      resolveSearchSignature(requestedSearchQuery);
 
     logger.log({
       at: "LibraryRecordsPane - refresh",
@@ -362,11 +234,9 @@
       resource,
       selectedSubType
     });
-    const refreshTimerLabel = `LibraryRecordsPane - refresh ${runId}`;
-    console.time(refreshTimerLabel);
+    console.time("LibraryRecordsPane - refresh");
     if (!availableResources.has(resource)) {
       data = [];
-      resolvedSearchSignature = requestedSearchSignature;
       return;
     }
     if (isPagination !== true) {
@@ -374,47 +244,75 @@
       data = [];
     }
     try {
-      const filters = resolveFilters();
-      const newData = await queryLibraryRecords({
-        filters,
-        searchQuery: requestedSearchQuery,
-        limit: 50,
-        offset: isPagination ? data.length : 0,
-        signal
-      });
-      if (!isLatestSearchRequest(runId, requestedSearchSignature, signal)) {
-        return;
+      const cacheKey = resourceCacheKey(
+        resource,
+        CacheKey.LIBRARY_DEFAULT_RECORDS
+      );
+      let orderBy: IResourceSelectOrderBy | undefined;
+      let semanticSearchTopK: number | undefined;
+      // if (searchStore.searchType == SearchType.SEMANTIC) {
+      //   orderBy = {
+      //     dist: "desc",
+      //     createdAt: "desc"
+      //   };
+      // }
+      subTypeSwitcherRef?.refresh();
+      const isDefaultLoad = resolveIfDefaultLoad();
+      if (!isPagination && isDefaultLoad) {
+        const cachedData = cache.retrieve(cacheKey);
+        if (cachedData) {
+          isRefreshing = false;
+          data = cachedData[CacheSubKey.DATA] ?? [];
+          starredData = cachedData[CacheSubKey.STARRED] ?? [];
+        }
+        const cachedTotalCount = cache.retrieve(
+          resourceCacheKey(resource, CacheKey.COUNT)
+        );
+        if (cachedTotalCount) {
+          totalCountAfterFilter = cachedTotalCount;
+        }
       }
+      const filters = resolveFilters();
+      const newData =
+        (await searchStore.select({
+          resource,
+          searchQuery,
+          filters,
+          orderBy,
+          semanticSearchTopK,
+          limit: 50,
+          offset: isPagination ? data.length : 0,
+          signal
+        })) ?? [];
       if (isPagination)
         data = [...data, ...newData]?.filter(removeDuplicatesFilter);
-      else data = [...newData];
-      resolvedSearchSignature = requestedSearchSignature;
-      if (isConstrainedWidth && !requestedSearchQuery) {
-        starredData = await queryLibraryRecords({
-          filters: {
-            ...filters,
-            isStarred: true
-          },
-          signal
-        });
-        if (!isLatestSearchRequest(runId, requestedSearchSignature, signal)) {
-          return;
-        }
+      else {
+        data = [...newData];
+        if (isDefaultLoad)
+          cache.replaceUsingSubKey(cacheKey, CacheSubKey.DATA, data);
+      }
+      if (isConstrainedWidth && !searchQuery) {
+        starredData =
+          (await searchStore.select({
+            resource,
+            filters: {
+              ...filters,
+              isStarred: true
+            },
+            signal
+          })) ?? [];
+        if (isDefaultLoad)
+          cache.replaceUsingSubKey(cacheKey, CacheSubKey.STARRED, starredData);
       }
       clearTimeout(refreshResetTimeout);
       refreshResetTimeout = setTimeout(() => {
-        if (isLatestSearchRequest(runId, requestedSearchSignature, signal)) {
-          isRefreshing = false;
-        }
+        isRefreshing = false;
       }, 1);
-      await _refreshFilteredRecordsTotalCount(filters, {
-        runId,
-        searchSignature: requestedSearchSignature,
-        signal
-      });
-      console.timeEnd(refreshTimerLabel);
+      await _refreshFilteredRecordsTotalCount(filters);
+      console.timeEnd("LibraryRecordsPane - refresh");
     } catch (e) {
       isRefreshing = false;
+      // Don't log error if it was just an abort
       if (e instanceof Error && e.message === "Operation aborted") {
         logger.log({ at: "Library - refresh - aborted", e });
       } else {
@@ -423,133 +321,32 @@
     }
   }
 
-  function resolveSearchSignature(query: string = searchQuery.trim()) {
-    return JSON.stringify({
-      query,
-      resource,
-      selectedSubType,
-      isStarFilterSelected,
-      isArchivedFilterSelected
-    });
-  }
-
-  function isLatestSearchRequest(
-    runId: number,
-    searchSignature: string,
-    signal?: AbortSignal
-  ) {
-    return (
-      !signal?.aborted &&
-      runId === searchRefreshRunId &&
-      searchSignature === currentSearchSignature
-    );
-  }
-
-  async function queryLibraryRecords(params: {
-    filters: any;
-    searchQuery?: string;
-    limit?: number;
-    offset?: number;
-    signal?: AbortSignal;
-  }) {
-    const query = resolveLibraryQuery({
-      filters: params.filters,
-      subType: resolveSelectedSubType()
-    });
-    if (params.searchQuery?.trim()) {
-      const offset = params.offset ?? 0;
-      const limit = params.limit ?? 50;
-      const searchLimit = offset + limit;
-      const result = await datafn.search({
-        query: params.searchQuery.trim(),
-        resources: [query.resource],
-        fields: resolveSearchFields(query.resource),
-        filters: {
-          [query.resource]: query.filters
-        },
-        limit: searchLimit,
-        limitPerResource: searchLimit,
-        source: "local",
-        prefix: true,
-        fuzzy: 0.2,
-        signal: params.signal
-      });
-      return normalizeLibraryRecords(
-        result.results?.map((entry: any) => entry.data) ?? []
-      ).slice(offset, searchLimit);
-    }
-    const result = await datafn.table(query.resource).query({
-      select: resolveExpandedSelect(query.resource),
-      filters: query.filters,
-      metadata: resolveQueryMetadata(),
-      sort: resolveSort(query.resource),
-      limit: params.limit,
-      offset: params.offset,
-      signal: params.signal
-    } as any);
-    return normalizeLibraryRecords(result.data ?? []);
-  }
-
-  function normalizeLibraryRecords(records: any[]) {
-    return records.filter((record) => {
-      if (resource === Resource.node && record.metaType) return false;
-      return resolveStatusFilter()(record);
-    });
-  }
-
-  function resolveStatusFilter() {
-    return isArchivedFilterSelected
-      ? archivedResourceFilter
-      : activeResourceFilter;
-  }
-
-  function resolveQueryMetadata() {
-    return isArchivedFilterSelected ? { includeArchived: true } : undefined;
-  }
-
-  function resolveSearchFields(resource: Resource) {
-    if (resource === Resource.node) return ["label", "text", "notes"];
-    if (resource === Resource.event) return ["label", "event"];
-    return ["label"];
-  }
-
-  function resolveSort(resource: Resource) {
-    if (resource === Resource.event) return ["startUnix"];
-    return ["-updatedAt"];
-  }
-
-  function resolveExpandedSelect(resource: Resource) {
-    if (resource === Resource.collection)
-      return ["*", "properties.*", "views.*", "typeToExtend.*"];
-    if (resource === Resource.node)
-      return [
-        "*",
-        "parent.*",
-        "file.*",
-        "collections.type",
-        "collections.avatar",
-        "collections.typeToExtend.avatar"
-      ];
-    if (resource === Resource.objective)
-      return ["*", "parent.*", "children.*", "tasks.*"];
-    if (resource === Resource.task) return ["*", "objective.*"];
-    return undefined;
-  }
-
   function isGenericSubType() {
     return ["all", "starred", "recents"].includes(selectedSubType);
+  }
+
+  /**
+   * Resolves if the current load is a default load i.e. no filters applied and the first load that happens after the page is loaded.
+   */
+  function resolveIfDefaultLoad() {
+    return (
+      selectedSubType === "all" &&
+      !searchQuery &&
+      !isStarFilterSelected &&
+      !isArchivedFilterSelected
+    );
   }
 
   function resolveFilters() {
     let filters: any = resolveBaseFilters();
     if (!isGenericSubType()) {
       if (resource === Resource.node) {
-        filters = { ...filters, contentType: selectedSubType.toUpperCase() };
+        filters = { ...filters, contentType: selectedSubType };
       } else if (
         resource === Resource.collection ||
-        resource === Resource.objective
+        resource === Resource.goal
       ) {
-        filters = { ...filters, type: selectedSubType.toUpperCase() };
+        filters = { ...filters, type: selectedSubType };
       } else if (resource === Resource.task) {
         if (selectedSubType === "incomplete") {
           filters = { ...filters, isChecked: false };
@@ -571,39 +368,23 @@
     };
   }
 
-  async function _refreshFilteredRecordsTotalCount(
-    filters: any,
-    request?: {
-      runId: number;
-      searchSignature: string;
-      signal?: AbortSignal;
-    }
-  ) {
+  async function _refreshFilteredRecordsTotalCount(filters: any) {
     try {
-      const signal = request?.signal ?? abortController?.signal;
-      if (signal?.aborted) {
+      // Check if operation was aborted before starting
+      if (abortController?.signal?.aborted) {
         return;
       }
 
       isRefreshingTotalCount = true;
-      const nextTotalCount = await queryLibraryRecordCount({
-        filters,
-        subType: !isGenericSubType()
-          ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
-          : undefined,
-        signal
-      });
-      if (
-        request &&
-        !isLatestSearchRequest(
-          request.runId,
-          request.searchSignature,
-          request.signal
-        )
-      ) {
-        return;
-      }
-      totalCountAfterFilter = nextTotalCount;
+      totalCountAfterFilter =
+        (await searchStore.resolveCount({
+          resource,
+          subType: !isGenericSubType()
+            ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
+            : undefined,
+          filters,
+          signal: abortController?.signal
+        })) ?? 0;
       isRefreshingTotalCount = false;
     } catch (e) {
       if (e instanceof Error && e.message === "Operation aborted") {
@@ -615,79 +396,17 @@
     }
   }
 
-  async function queryLibraryRecordCount(params: {
-    filters: any;
-    subType?: NodeType | CollectionType;
-    signal?: AbortSignal;
-  }) {
-    const query = resolveLibraryQuery(params);
-    const result = await datafn.table(query.resource).query({
-      select: ["id", "isArchived", "trashedAt", "isAncestorInactive"],
-      filters: query.filters,
-      metadata: resolveQueryMetadata(),
-      signal: params.signal
-    } as any);
-    return (result.data ?? []).filter(resolveStatusFilter()).length;
-  }
-
-  function resolveSelectedSubType() {
-    return !isGenericSubType()
-      ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
-      : undefined;
-  }
-
-  function resolveLibraryQuery(params: {
-    filters: any;
-    subType?: NodeType | CollectionType;
-  }) {
-    const targetResource =
-      signalResource ??
-      (resource === Resource.relation ? Resource.linkTag : resource);
-    const filters =
-      targetResource === Resource.node
-        ? {
-            ...(params.filters ?? {}),
-            contentType: params.subType
-              ? params.subType
-              : { $in: [...rootNodeTypeList] },
-            metaType: { $is_empty: true },
-            creationContext: params.subType ? undefined : { $is_empty: true }
-          }
-        : {
-            ...(params.filters ?? {}),
-            ...(targetResource === Resource.objective
-              ? {
-                  parentId: { $is_empty: true }
-                }
-              : {}),
-            ...(params.subType
-              ? {
-                  type:
-                    targetResource === Resource.objective
-                      ? params.subType
-                      : { $in: [params.subType] }
-                }
-              : {})
-          };
-    return { resource: targetResource, filters };
-  }
-
   const debouncedSearch = debouncer(refresh, 500);
 
   function resolveFooterMessage(data: any[], totalCount: number) {
     if (!data || !data.length) return;
-    const visibleCount =
-      typeof totalCount === "number"
-        ? Math.min(data.length, totalCount)
-        : data.length;
-    let prefix = "Showing " + visibleCount + " ";
+    let prefix = "Showing " + data.length + " ";
     const label = resolveResourceLabel();
     if (isStarFilterSelected)
       return `${prefix} ⭐️ staaarrrrrred ${label} ${hasChildren ? "including sub " + label : ""}`;
     else if (searchQuery)
       return `${prefix} ${label} containing "${searchQuery}"`;
-    else
-      return `Showing ${visibleCount} of ${totalCount ?? "Unknown"} ${label}`;
+    else return `Showing ${data.length} of ${totalCount ?? "Unknown"} ${label}`;
   }
 
   function resolveEmptyStateMessage() {
@@ -726,10 +445,116 @@
       }
       label = ` ${txt} ${resource}`;
     } else label = resource;
-    return (
-      label +
-      ((displayedData && displayedData.length > 1) || isPlural ? "s" : "")
-    );
+    return label + ((data && data.length > 1) || isPlural ? "s" : "");
+  }
+
+  /**
+   *
+   * For nodes, filters nodes if has isArchived or trashInformation i.e. deleted or archived irrespective of whether its a root node or md block node as md blocks are anyways not present in data. Currently does full refresh for unarchive or undelete which is optimal if the nodes are root nodes.
+   *
+   *
+   * For goal merge - children is being listened to handle the cases of conversion of goal to sub goal and sub goal to a root goal etc.
+   *
+   *
+   * TODO - undo delete for block nodes case in markdown node - to avoid flickering in the background when editing a markdown node in modal.
+   * @param e
+   */
+  async function onResourceMutation(
+    e: CustomEvent<{
+      resource: Resource;
+      params: IMutationParamsv2<INode | ICollection>;
+    }>
+  ) {
+    const resource = e.detail.resource;
+    const mutation = e.detail.params;
+    logger.log({
+      at: "LibraryRecordsPane - onResourceMutation",
+      resource,
+      ...mutation
+    });
+    if (
+      mutation.action === PersistenceActionType.MERGE &&
+      Object.values(RemovalProperty).some((x) => mutation.record[x])
+    ) {
+      const id = mutation.record.id;
+      await refreshFilteredRecordsCount();
+      if (id) data = data.filter((x) => !isSameResource(x.id, id));
+      if (id)
+        starredData = starredData.filter((x) => !isSameResource(x.id, id));
+      return;
+    }
+    if (
+      isConstrainedWidth &&
+      !searchQuery &&
+      mutation.action === PersistenceActionType.MERGE &&
+      "isStarred" in mutation.record
+    ) {
+      const id = mutation.record.id;
+      if (!id) return;
+      if (
+        mutation.record.isStarred &&
+        !starredData.find((x) => isSameResource(x.id, id))
+      ) {
+        const item = data.find((x) => isSameResource(x.id, id));
+        if (item) {
+          starredData = [...starredData, item];
+          data = data.filter((x) => !isSameResource(x.id, id));
+          totalCountAfterFilter = totalCountAfterFilter - 1;
+        }
+      } else {
+        const item = starredData.find((x) => isSameResource(x.id, id));
+        starredData = starredData.filter((x) => !isSameResource(x.id, id));
+        data = [...data, item];
+        totalCountAfterFilter = totalCountAfterFilter + 1;
+      }
+      return;
+    }
+    if (mutation.action === PersistenceActionType.MERGE) {
+      if (resource === Resource.goal && "children" in mutation.record) {
+        await refresh();
+        return;
+      }
+      const id = mutation.record.id;
+      if (!id) return;
+      const updateRecord = (item: any) =>
+        isSameResource(item.id, id) ? { ...item, ...mutation.record } : item;
+      const hasDataMatch = data.some((item) => isSameResource(item.id, id));
+      const hasStarredMatch = starredData.some((item) =>
+        isSameResource(item.id, id)
+      );
+      if (hasDataMatch) {
+        data = data.map(updateRecord);
+      }
+      if (hasStarredMatch) {
+        starredData = starredData.map(updateRecord);
+      }
+      if (hasDataMatch || hasStarredMatch) {
+        const cacheKey = resourceCacheKey(
+          resource,
+          CacheKey.LIBRARY_DEFAULT_RECORDS
+        );
+        cache.replaceUsingSubKey(cacheKey, CacheSubKey.DATA, data);
+        cache.replaceUsingSubKey(cacheKey, CacheSubKey.STARRED, starredData);
+      }
+      return;
+    }
+
+    const insertedRecord =
+      mutation.action === PersistenceActionType.INSERT ||
+      mutation.action === PersistenceActionType.BULK_INSERT
+        ? mutation.records?.[0]
+        : undefined;
+    if (
+      resource === Resource.node &&
+      mutation.action === PersistenceActionType.INSERT &&
+      insertedRecord &&
+      "contentType" in insertedRecord &&
+      (!rootNodeTypeList.includes(insertedRecord.contentType as NodeType) ||
+        ("creationContext" in insertedRecord && insertedRecord.creationContext))
+    ) {
+      return;
+    }
+    await refresh();
   }
 
   function resolveArrangement(arrangement?: Arrangement | null) {
@@ -837,12 +662,16 @@
   {:else}
     <LibrarySearchBox
       {selectedSubType}
-      {searchType}
+      {searchStore}
       {resource}
       bind:searchQuery
       onRefresh={debouncedSearch}
       onSemanticSearch={(e) => {
-        searchType = e.detail ? SearchType.SEMANTIC : SearchType.FULL_TEXT;
+        // if (e.detail) {
+        //   searchStore.searchType = SearchType.SEMANTIC;
+        // } else {
+        //   searchStore.searchType = SearchType.FULL_TEXT;
+        // }
         refresh();
       }}
     />
@@ -851,19 +680,19 @@
       {isConstrainedWidth}
       {accessPoint}
       {selectedSubType}
+      bind:this={subTypeSwitcherRef}
     />
   {/if}
   <div
     class="flex flex-col gap-4 px-4 overflow-auto-scrollbar grow"
-    data-testid="resource-records-container"
     id="records-container"
   >
     <InlineSyncingFeedback {resource} />
-    {#if isShowingSeparateStarredSection}
+    {#if isConstrainedWidth && !searchQuery && starredData && starredData.length > 0}
       <div class="flex flex-col gap-2">
         <Text content="Starred" style={TextStyle.SECTION_HEADING} />
         <Records
-          data={displayedStarredData}
+          data={starredData}
           {accessPoint}
           {accessPointState}
           {resource}
@@ -877,16 +706,16 @@
             : Size.md}
           arrangement={resolveArrangement(arrangement)}
         />
-        {#if displayedData.length > 0}
+        {#if data.length > 0}
           <div class="mt-4 -mb-2">
             <Text content="Other" style={TextStyle.SECTION_HEADING} />
           </div>
         {/if}
       </div>
     {/if}
-    {#if displayedIsInitialLoading}
+    {#if isRefreshing}
       <LibraryLoadingPulse {isConstrainedWidth} {arrangement} />
-    {:else if displayedData && displayedData.length > 0}
+    {:else if data && data.length > 0}
       <div
         use:dragSelection={{
           selectableSelector: "div[id^='thumbnail-']",
@@ -912,7 +741,7 @@
         }}
       >
         <Records
-          data={displayedData}
+          {data}
           {accessPoint}
           {accessPointState}
           {resource}
@@ -924,9 +753,7 @@
           accessPoint === ResourceAccessPoint.BROWSER
             ? Size.sm
             : Size.md}
-          isShowLoadingPulseAtTheEnd={displayedData.length <
-            displayedTotalCount &&
-            recordLimit < displayedTotalCount &&
+          isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}
           arrangement={resolveArrangement(arrangement)}
         />
@@ -936,24 +763,20 @@
         use:intersection={{
           rootMargin: "100px",
           callback: () => {
-            if (
-              displayedData.length > 0 &&
-              displayedData.length < displayedTotalCount &&
-              recordLimit < displayedTotalCount
-            ) {
+            if (data.length > 0 && data.length < totalCountAfterFilter) {
               refresh(true);
             }
           }
         }}
       >
-        {#if displayedIsRefreshingTotalCount}
+        {#if isRefreshingTotalCount}
           <Icon icon="svg-spinners:3-dots-fade" />
         {:else if !isConstrainedWidth}
-          {resolveFooterMessage(displayedData, displayedTotalCount) ?? ""}
+          {resolveFooterMessage(data, totalCountAfterFilter) ?? ""}
         {/if}
       </div>
       <ScrollViewBottomSpacer />
-    {:else if displayedData.length === 0 && ((displayedStarredData && displayedStarredData.length === 0) || !displayedStarredData || searchQuery)}
+    {:else if data.length === 0 && ((starredData && starredData.length === 0) || !starredData || searchQuery)}
       <EmptyStatusView
         size={Size.lg}
         {...resolveEmptyStateMessage()}
@@ -979,3 +802,22 @@
     {/if}
   </div>
 {/if}
+
+<ComponentBaseLayer
+  syncDownOnMount={true}
+  subscribeToResource={new Set([resource])}
+  onSyncDown={() => {
+    refresh();
+  }}
+  onChange={(detail) => {
+    if ("key" in detail || !detail.resource || !detail.params) return;
+    onResourceMutation(
+      new CustomEvent("change", {
+        detail: {
+          resource: detail.resource,
+          params: detail.params
+        }
+      })
+    );
+  }}
+/>

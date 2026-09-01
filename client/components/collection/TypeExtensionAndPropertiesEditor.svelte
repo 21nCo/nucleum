@@ -7,9 +7,9 @@
   import Icon from "@21n/elements/Icon.svelte";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { type IActiveCollectionStore } from "@21n/components/collection/collection.store";
-  import { resourceAction } from "@21n/data/datafn/resource.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
-  import { ResourceActionType } from "@21n/data/datafn/resource.type";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
   let {
     isCaptureShortcutEnabled = $bindable(false),
     collection = undefined,
@@ -47,7 +47,9 @@
   >
     <span class="flex gap-2 text-fgs2 text-b2">
       <Icon
-        icon={$propertyEditorStore.properties.length > 0 ? "edit" : "plus"}
+        icon={$propertyEditorStore.properties.length > 0
+          ? "edit"
+          : "plus"}
         size={Size.sm}
       />
       {$propertyEditorStore.properties.length > 0

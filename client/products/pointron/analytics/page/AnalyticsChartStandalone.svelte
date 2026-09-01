@@ -8,113 +8,94 @@
   import {
     TimePeriodType,
     TimeScale,
-    type TimePeriod,
     type TimePeriodValue
   } from "@21n/types/time.type";
   import CardSelector from "@21n/products/pointron/analytics/page/CardSelector.svelte";
+  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
   import { resolveRelativeTimePeriodOptions } from "@21n/elements/datetime/datetime.utils";
+  import { onMount, untrack } from "svelte";
   import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
   import type { IRecordId } from "@21n/types/data.type";
   import {
     removeDuplicatesFilter,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
-  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { resolveObjectiveColor } from "@21n/components/goals/goal.utils";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import { cn } from "@21n/utils/ui.utils";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import {
     determineTimePeriodv2,
     resolveUpperRelativeTimePeriodTitle
   } from "@21n/utils/time.utils";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { Size } from "@21n/types/size.enum";
-  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import {
+    OptionSelectorStyle,
+    type ISelectItem
+  } from "@21n/types/select.type";
+  import { logger } from "@21n/components/debug/logger.client";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { fly } from "svelte/transition";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import view from "@21n/stores/view.store";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { time } from "@datafn/client";
-  import { toSvelteStore } from "@datafn/svelte";
   let {
     accessPoint = ResourceAccessPoint.CALENDAR,
     date,
     showLegend = true,
     scale,
-    objectiveId
+    goalId
   }: {
     accessPoint?: ResourceAccessPoint;
     date?: Date;
     showLegend?: boolean;
     scale?: TimeScale;
-    objectiveId?: IRecordId;
+    goalId?: IRecordId;
   } = $props();
   let periodValue = $state<TimePeriodValue>({
     type: TimePeriodType.RELATIVE,
     param: 0
   });
 
+  let resolvedTimePeriod = $state<
+    | {
+        begin: Date;
+        end: Date;
+        title: string;
+      }
+    | undefined
+  >(undefined);
+  let goals = $state<IGoalThumb[]>([]);
+  let goalColors = $state<IAnalyticsLabelColor[]>([]);
+  let data = $state<AnalyticsDataRecord[]>([]);
   let chartType = $state(AnalyticsCardType.DONUT);
+  let isRefreshing = $state(false);
+  let isMounted = $state(false);
   const scales = $userPreferences.timeScales ?? [
     TimeScale.DAYS,
     TimeScale.MONTHS,
     TimeScale.YEARS
   ];
   let isShowOptions = $state(resolveShowOptionsState());
-  let isIncludeSubObjectives = $state(false);
+  let isIncludeSubgoals = $state(false);
   let timePeriodOptions = $derived(
     resolveRelativeTimePeriodOptions(scale ?? TimeScale.DAYS)
-  );
-  const objectiveStore = toSvelteStore<IObjectiveThumb[]>(
-    datafn.objective.signal({
-      select: ["*", "parent.*", "children.*", "tasks.*"],
-      filters: {
-        id: { $ne: "" }
-      }
-    }),
-    { initialData: [] }
-  );
-  const queryContext = $derived.by(() =>
-    resolveQueryContext($objectiveStore.data)
-  );
-  const sessionLogStore = $derived.by(() =>
-    toSvelteStore<ISessionLog[]>(
-      datafn.sessionLog.signal({
-        select: ["id", "startUnix", "objectiveId", "focus", "breakTime"],
-        filters: {
-          ...(queryContext.startFilter
-            ? { startUnix: queryContext.startFilter }
-            : {}),
-          ...(queryContext.objectiveIds.length > 0
-            ? { objectiveId: { $in: queryContext.objectiveIds } }
-            : {})
-        },
-        ...(queryContext.temporal ? { temporal: queryContext.temporal } : {})
-      }),
-      { initialData: [] }
-    )
-  );
-  const data = $derived(
-    resolveChartData($sessionLogStore.data, queryContext.objectives)
-  );
-  const objectiveColors = $derived(
-    resolveObjectiveColors(data, queryContext)
-  );
-  const resolvedTimePeriod = $derived(queryContext.resolvedTimePeriod);
-  const isRefreshing = $derived(
-    $objectiveStore.loading ||
-      $objectiveStore.refreshing ||
-      $sessionLogStore.loading ||
-      $sessionLogStore.refreshing
   );
 
   function resolveShowOptionsState() {
@@ -135,6 +116,10 @@
     );
   }
 
+  onMount(() => {
+    isMounted = true;
+  });
+
   function resolveDateInput(value: unknown) {
     if (value instanceof Date) return value;
     if (typeof value === "string" || typeof value === "number") {
@@ -150,170 +135,153 @@
       : TimeScale.DAYS;
   }
 
-  function resolveObjectiveIdInput(value: unknown) {
+  function resolveGoalIdInput(value: unknown) {
     return typeof value === "string" && value.length > 0 ? value : undefined;
   }
 
-  function resolveQueryContext(objectives: IObjectiveThumb[]) {
+  $effect(() => {
+    date;
+    scale;
+    goalId;
+    isIncludeSubgoals;
+    if (!isMounted) return;
     if (
       accessPoint === ResourceAccessPoint.CALENDAR &&
       !resolveDateInput(date)
     ) {
-      return {
-        objectives,
-        objectiveIds: [] as IRecordId[],
-        resolvedObjectiveId: undefined,
-        startFilter: { $gte: 1, $lte: 0 },
-        temporal: undefined,
-        resolvedTimePeriod: undefined
-      };
+      return;
     }
-    const resolvedScale = resolveScaleInput(scale);
-    const resolvedObjectiveId = resolveObjectiveIdInput(objectiveId);
-    const resolvedDate = resolveDateInput(date);
-    let startFilter;
-    let temporal;
-    let resolvedPeriod;
-    if (resolvedDate) {
-      temporal = time.day("startUnix", resolvedDate);
-    } else {
-      resolvedPeriod = determineTimePeriodv2({
-        scale: resolvedScale,
-        value: periodValue
-      } as TimePeriod);
-      temporal = time.between(
-        "startUnix",
-        datafn.temporal.resolveLocalTimeSync(resolvedPeriod.begin),
-        datafn.temporal.resolveLocalTimeSync(resolvedPeriod.end)
+    untrack(() => {
+      void refresh();
+    });
+  });
+
+  async function refresh() {
+    isRefreshing = true;
+    logger.log({
+      at: "AnalyticsChartStandalone.svelte - refresh",
+      periodValue
+    });
+    try {
+      goals = await goalStore.selectMany(
+        {},
+        { isIncludeSubItems: true, isExpand: true }
       );
-    }
-    let objectiveIds: IRecordId[] = [];
-    if (resolvedObjectiveId) {
-      objectiveIds.push(resolvedObjectiveId);
-      if (isIncludeSubObjectives) {
-        const subObjectives = objectives.filter((objective) =>
-          isObjectiveDescendantOf(objective, resolvedObjectiveId)
+      const resolvedScale = resolveScaleInput(scale);
+      const resolvedGoalId = resolveGoalIdInput(goalId);
+      let startFilter = {};
+      const resolvedDate = resolveDateInput(date);
+      if (resolvedDate) {
+        const range = tzStore.resolveTimePeriodFilterForDay(resolvedDate);
+        startFilter = {
+          greaterThanOrEqual: range.$gte,
+          lessThanOrEqual: range.$lte
+        };
+      } else {
+        const result = tzStore.resolveTimePeriodCorrectedByTz(
+          {
+            scale: resolvedScale,
+            value: periodValue
+          },
+          { tzRecords: $tzStore }
         );
-        if (subObjectives) {
-          objectiveIds.push(...subObjectives.map((x) => x.id));
+        resolvedTimePeriod = result.resolvedTimePeriod;
+        startFilter = {
+          greaterThanOrEqual: result.correctedBegin,
+          lessThanOrEqual: result.correctedEnd
+        };
+      }
+      let goalIds: IRecordId[] = [];
+      if (resolvedGoalId) {
+        goalIds.push(resolvedGoalId);
+        if (isIncludeSubgoals) {
+          const subGoals = goals.filter(
+            (x) =>
+              x.parent &&
+              Array.isArray(x.parent) &&
+              x.parent?.some(resourceInList(resolvedGoalId))
+          );
+          if (subGoals) {
+            goalIds.push(...subGoals.map((x) => x.id));
+          }
         }
       }
-    }
-    return {
-      objectives,
-      objectiveIds,
-      resolvedObjectiveId,
-      startFilter,
-      temporal,
-      resolvedTimePeriod: resolvedPeriod
-    };
-  }
-
-  function resolveChartData(logs: ISessionLog[], objectives: IObjectiveThumb[]) {
-    return logs.flatMap((log: ISessionLog) => {
-      const start = resolveTimestampIso(log.startUnix);
-      if (!start) return [];
-      const objective = log.objectiveId
-        ? resolveObjectiveFromId(log.objectiveId, objectives)
-        : undefined;
-      return {
-        brek: log.breakTime || 0,
-        focus: log.focus || 0,
-        objectiveLabel: objective
-          ? objective.label || "Unknown Objective"
-          : "No Objective",
-        objectiveId: log.objectiveId || "",
-        start,
-        topLevelObjectiveLabel: objective?.parent?.[0]?.label ?? "Unknown"
-      };
-    });
-  }
-
-  function resolveTimestampIso(value: unknown) {
-    let timestamp: number | undefined;
-    if (value instanceof Date) {
-      timestamp = value.getTime();
-    } else if (typeof value === "number") {
-      timestamp = value;
-    } else if (typeof value === "string") {
-      const trimmed = value.trim();
-      timestamp = /^-?\d+(\.\d+)?$/.test(trimmed)
-        ? Number(trimmed)
-        : Date.parse(trimmed);
-    }
-    if (timestamp === undefined || !Number.isFinite(timestamp)) return undefined;
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) return undefined;
-    return date.toISOString();
-  }
-
-  function resolveObjectiveColors(
-    processedLogs: AnalyticsDataRecord[],
-    context: ReturnType<typeof resolveQueryContext>
-  ) {
-    if (context.resolvedObjectiveId && !isIncludeSubObjectives) {
-      const currentObjective = resolveObjectiveFromId(
-        context.resolvedObjectiveId,
-        context.objectives
-      );
-      const color = resolveObjectiveColor(currentObjective);
-      if (currentObjective && color) {
-        return [
-          {
-            label: currentObjective.label ?? "Untitled objective",
-            color
-          }
-        ];
-      }
-      return [];
-    }
-    if (objectiveId) return [];
-    const colors: IAnalyticsLabelColor[] = [];
-    const objectiveIdsInData = processedLogs.map((x) => x.objectiveId);
-    objectiveIdsInData
-      .filter(removeDuplicatesFilter)
-      .forEach((objectiveId: IRecordId) => {
-        const objective = resolveObjectiveFromId(objectiveId, context.objectives);
-        if (!objective) return;
-        let color = resolveObjectiveColor(objective);
-        color = color ?? Math.floor(Math.random() * 360);
-        const label = objective.label ?? "Untitled objective";
-        if (!colors.some((x) => x.label === label)) {
-          colors.push({
-            label,
-            color
-          });
+      const logsResult = await sessionLogStore.selectMany({
+        properties: {
+          select: ["id", "startUnix", "goalId", "focus", "breakTime"]
+        },
+        filters: {
+          startUnix: startFilter,
+          goalId: goalIds.length > 0 ? goalIds : undefined
         }
       });
-    return colors;
+      if (!logsResult || logsResult.length === 0) {
+        data = [];
+        isRefreshing = false;
+        return;
+      }
+
+      const processedLogs: AnalyticsDataRecord[] = logsResult.map(
+        (log: ISessionLog) => {
+          const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
+          return {
+            brek: log.breakTime || 0,
+            focus: log.focus || 0,
+            goal: goal ? goal.label || "Unknown Goal" : "No Goal",
+            goalId: log.goalId || "",
+            start: new Date(log.startUnix),
+            topLevelGoal: goal?.parent?.[0]?.label ?? "Unknown"
+          };
+        }
+      );
+      data = processedLogs;
+      goalColors = [];
+      if (resolvedGoalId && !isIncludeSubgoals) {
+        const currentGoal = resolveGoalFromId(resolvedGoalId);
+        const color = resolveGoalColor(currentGoal);
+        if (currentGoal && color) {
+          goalColors.push({
+            label: currentGoal.label,
+            color: color
+          });
+        }
+      } else if (!goalId) {
+        const goalIdsInData = processedLogs.map((x) => x.goalId);
+        goalIdsInData
+          .filter(removeDuplicatesFilter)
+          .forEach((goalId: IRecordId) => {
+            const goal = resolveGoalFromId(goalId);
+            if (!goal) return;
+            let color = resolveGoalColor(goal);
+            color = color ?? Math.floor(Math.random() * 360);
+            if (!goalColors.some((x) => x.label === goal.label)) {
+              goalColors.push({
+                label: goal.label,
+                color: color
+              });
+            }
+          });
+      }
+      isRefreshing = false;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  function resolveObjectiveFromId(
-    id: IRecordId | undefined,
-    objectives: IObjectiveThumb[]
-  ) {
+  function resolveGoalFromId(id: IRecordId | undefined) {
     if (!id) return;
-    const objective = objectives.find(resourceInList(id));
-    return objective;
-  }
-
-  function isObjectiveDescendantOf(
-    objective: IObjectiveThumb,
-    ancestorId: IRecordId
-  ) {
-    if (objective.parentId === ancestorId) return true;
-    if (objective.parent?.some(resourceInList(ancestorId))) return true;
-    return (objective.parentPath ?? "").split("-").includes(ancestorId);
+    const goal = goals.find(resourceInList(id));
+    return goal;
   }
 </script>
 
 <div
   class={cn("flex flex-col w-full rounded-md p-3", {
     "h-80 border border-brs3": accessPoint === ResourceAccessPoint.CALENDAR,
-    "h-full": accessPoint === ResourceAccessPoint.OBJECTIVE
+    "h-full": accessPoint === ResourceAccessPoint.GOAL
   })}
 >
-  {#if accessPoint === ResourceAccessPoint.OBJECTIVE}
+  {#if accessPoint === ResourceAccessPoint.GOAL}
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between gap-4 w-full">
         {#if !$view.isConstrainedWidth}
@@ -338,6 +306,11 @@
               bind:value={scale}
               popoverWidth={"w-36"}
               isDisableSearch={true}
+              onSelect={(event) => {
+                const val = event.detail;
+                if (!val) return;
+                refresh();
+              }}
             />
           </div>
           <div class="flex items-center gap-2">
@@ -357,9 +330,12 @@
           in:fly={{ y: -20, duration: 300 }}
         >
           <SwitchInput
-            bind:checked={isIncludeSubObjectives}
-            label={{ label: "Include sub-objectives" }}
+            bind:checked={isIncludeSubgoals}
+            label={{ label: "Include subgoals" }}
             isExpanded={true}
+            onChange={(event) => {
+              refresh();
+            }}
           />
         </div>
       {/if}
@@ -378,6 +354,7 @@
                 type: segments[0],
                 param: parseInt(segments[1])
               };
+              refresh();
             }}
           />
         </div>
@@ -386,7 +363,7 @@
   {/if}
   <div
     class={cn("relative w-full flex-1", {
-      "cw:p-3 p-6": accessPoint === ResourceAccessPoint.OBJECTIVE
+      "cw:p-3 p-6": accessPoint === ResourceAccessPoint.GOAL
     })}
   >
     {#if isRefreshing}
@@ -406,10 +383,16 @@
             id: "analytics-chart-standalone"
           }}
           rawData={data}
-          {objectiveColors}
+          {goalColors}
           {showLegend}
         />
       {/key}
     {/if}
   </div>
 </div>
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.sessionLog])}
+  onChange={() => {
+    refresh();
+  }}
+/>

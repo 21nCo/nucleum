@@ -1,212 +1,318 @@
-import { Resource } from "@21n/data/datafn/resource.enum";
-import { ActiveResourceStore } from "@21n/data/datafn/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "@21n/components/flux/resourceStores/resource.store";
 import {
   CollectionLayout,
-  CollectionType,
   type IActiveCollection,
-  type ICollectionItem,
   type ICollectionView,
+  CollectionType,
   type ICollection,
   type ICollectionExpanded,
+  CollectionObjectKey,
+  type ICollectionCapture,
   type ICollectionViewCapture
 } from "@21n/components/collection/collection.type";
-import { propertyEditorStore } from "@21n/components/collection/properties/property.store";
+import {
+  propertyEditorStore,
+  propertyStore
+} from "@21n/components/collection/properties/property.store";
 import {
   AccessMode,
   ResourceAccessPoint,
-  ResourceActionType
-} from "@21n/data/datafn/resource.type";
+  ResourceActionType,
+  type OmitForCaptureWithId
+} from "@21n/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "@21n/components/record/resource.actions";
 import { logger } from "@21n/components/debug/logger.client";
-import type { IRecordId } from "@21n/types/data.type";
-import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { flux } from "@21n/components/flux/flux";
 import {
-  assignDefaultLabelAsFallback,
-  serializePropertyForDatafn
-} from "@21n/components/collection/properties/property.utils";
+  StoreDataType,
+  type IRecordId,
+  type IResourceSelectAdditionalParams,
+  type IResourceSelectParams
+} from "@21n/types/data.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { assignDefaultLabelAsFallback } from "@21n/components/collection/properties/property.utils";
+import type { IProperty } from "@21n/components/collection/properties/property.type";
 import {
   ContextMenuType,
   type IContextMenu,
-  type IContextMenuItem
+  type IContextMenuItem,
+  type ISelectItem
 } from "@21n/types/select.type";
 import context from "@21n/stores/context.store";
 import { get } from "svelte/store";
-import { resourceAction } from "@21n/data/datafn/resource.utils";
+import {
+  isRecordId,
+  resourceAction,
+  resourceInList
+} from "@21n/components/flux/resourceStores/resource.utils";
 import { toasts } from "@21n/stores/notification.store";
 import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 import { GlobalEvent } from "@21n/types/event.enum";
 import { Embed } from "@21n/types/context.type";
 import { appStore } from "@21n/stores/app.store";
-import { datafn } from "@21n/stores/datafn.store";
+import { resolveCollectionResource } from "@21n/components/collection/collection.utils";
+import { viewStore } from "@21n/components/collection/view.store";
+import { uiState } from "@21n/stores/uiState/uiState.store";
+import { UIState } from "@21n/stores/uiState/uiState.type";
 import view from "@21n/stores/view.store";
-import type { IProperty } from "@21n/components/collection/properties/property.type";
 
-const viewDefaults = {
-  layout: CollectionLayout.BOARD,
-  tabBy: "none",
-  groupBy: "none",
-  subGroupBy: "none"
+const defaults: Partial<ICollection> = {
+  type: CollectionType.TYPED,
+  typeToExtend: "",
+  resource: Resource.node
 };
+class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
+  collectibleResource: Resource[] | undefined;
+  constructor() {
+    super(Resource.collection, {
+      dataType: StoreDataType.FIR,
+      defaultProps: defaults,
 
-function pruneUndefined(input: Record<string, unknown>) {
-  return Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== undefined)
-  );
-}
-
-function relationRefs(ids: IRecordId[]) {
-  return ids.map((id, sortOrder) => ({
-    $ref: id.toString(),
-    sortOrder
-  }));
-}
-
-/**
- * Creates a collection and its owned property and view records atomically at the workflow level.
- */
-export async function createDatafnCollection(input: {
-  title?: string;
-  description?: string;
-  isStarred: boolean;
-  isCaptureShortcutEnabled: boolean;
-  selectedType: CollectionType;
-  selectedView: CollectionLayout;
-  resource: Resource;
-  properties: IProperty[];
-  typeToExtendId?: IRecordId;
-  avatar?: any;
-  coverPhoto?: any;
-  context: string;
-}) {
-  const collectionId = generateResourceId(Resource.collection);
-  const viewId = generateResourceId(Resource.view);
-  let propertyRecords =
-    input.selectedType === CollectionType.TYPED
-      ? input.properties.map(assignDefaultLabelAsFallback)
-      : [];
-  propertyRecords = propertyRecords.map((property) => ({
-    ...property,
-    id: property.id ?? generateResourceId(Resource.property)
-  }));
-  if (propertyRecords.length > 0) {
-    await datafn.property.mutate(
-      propertyRecords.map((property) => ({
-        operation: "insert",
-        id: property.id,
-        record: serializePropertyForDatafn(property),
-        context: input.context
-      }))
-    );
+      expandProps: [CollectionObjectKey.typeToExtend]
+    });
+    this.refreshCollectibleResource();
   }
-  await datafn.view.mutate({
-    operation: "insert",
-    id: viewId,
-    record: {
-      id: viewId,
-      layout: input.selectedView,
-      label: "Default",
-      tabBy: "none",
-      groupBy: "none",
-      subGroupBy: "none"
-    },
-    context: input.context
-  });
-  const record = {
-    id: collectionId,
-    label: input.title ?? "",
-    description: input.description,
-    isStarred: input.isStarred,
-    isCaptureShortcutEnabled:
-      input.selectedType === CollectionType.TYPED
-        ? input.isCaptureShortcutEnabled
-        : undefined,
-    typeToExtend: input.typeToExtendId ?? null,
-    type: input.selectedType,
-    resource: input.resource,
-    ...(input.avatar
-      ? {
-          avatar: {
-            code: input.avatar.code,
-            color: input.avatar.color,
-            file: input.avatar.file,
-            isFilled: input.avatar.isFilled,
-            type: input.avatar.type
-          }
-        }
-      : {}),
-    ...(input.coverPhoto ? { cover: input.coverPhoto } : {})
-  };
-  await datafn.collection.mutate([
-    {
-      operation: "insert",
-      id: collectionId,
-      record,
-      context: input.context
-    },
-    {
-      operation: "relate",
-      id: collectionId,
-      relations: {
-        views: [{ $ref: viewId, sortOrder: 0 }],
-        ...(propertyRecords.length > 0
-          ? {
-              properties: propertyRecords.map((property, sortOrder) => ({
-                $ref: property.id,
-                sortOrder
-              }))
-            }
-          : {})
-      },
-      context: input.context
+
+  refreshCollectibleResource() {
+    this.collectibleResource = resolveCollectionResource(get(appStore).product);
+  }
+
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    this.refreshCollectibleResource();
+
+    if (additionalParams?.isQueryAsIs) {
+      return super.selectMany(
+        {
+          ...(params ?? {})
+        },
+        additionalParams
+      );
     }
-  ]);
-  const created = {
-    ...record,
-    views: [viewId],
-    properties: propertyRecords.map((property) => property.id)
-  };
-  appStore.addToRecents({
-    record: created,
-    type: Resource.collection,
-    timestamp: new Date()
-  });
-  return [created];
+    const filters = {
+      ...(params?.filters ?? {}),
+      type:
+        params?.filters && "type" in params.filters && params?.filters?.type
+          ? typeof params.filters.type === "string"
+            ? params.filters.type.toUpperCase()
+            : params.filters.type
+          : undefined,
+      ...(this.collectibleResource
+        ? {
+            resource:
+              params?.filters &&
+              "resource" in params.filters &&
+              params?.filters?.resource
+                ? params.filters.resource
+                : this.collectibleResource
+          }
+        : {})
+    };
+    params = {
+      ...(params ?? {}),
+      filters
+    };
+    return super.selectMany(params, additionalParams);
+  }
+
+  async save(
+    form: ICollectionCapture,
+    additionalParams?: {
+      context?: string;
+      isIgnorePropertyEditor?: boolean;
+    }
+  ) {
+    this.refreshCollectibleResource();
+    const propertyEditor = additionalParams?.isIgnorePropertyEditor
+      ? null
+      : propertyEditorStore.get();
+    logger.log({ at: "CollectionStore.save", propertyEditor, form });
+    let properties: OmitForCaptureWithId<IProperty>[] =
+      propertyEditor?.properties ?? [];
+    const record: ICollectionCapture = {
+      label: form.label ?? "",
+      description: form.description,
+      isStarred: form.isStarred,
+      isCaptureShortcutEnabled: form.isCaptureShortcutEnabled,
+      views: [],
+      properties: [],
+      typeToExtend: propertyEditor?.typeToExtend?.id ?? defaults.typeToExtend,
+      type: form.type ?? defaults.type,
+      resource: form.resource ?? this.collectibleResource?.[0],
+      ...(form.avatar ? { avatar: form.avatar } : {}),
+      ...(form.cover ? { cover: form.cover } : {}),
+      ...(form.query ? { query: form.query } : {})
+    };
+    if (form.type === CollectionType.TYPED && properties?.length > 0) {
+      properties = properties.map(assignDefaultLabelAsFallback);
+      await propertyStore.create(properties);
+      record.properties = properties.map((p) => p.id);
+    }
+    const viewId = generateResourceId(Resource.view);
+    await viewStore.create({
+      id: viewId,
+      layout: form.defaultLayout ?? CollectionLayout.BOARD,
+      label: "Default"
+    });
+    record.views = [viewId];
+    const result = await super.create(record, additionalParams);
+    if (Array.isArray(result) && result?.[0])
+      appStore.addToRecents({
+        record: result[0],
+        type: Resource.collection,
+        timestamp: new Date()
+      });
+    return result;
+  }
+
+  /**
+   * @param collections - ids of collections - can be any type of collection.
+   * @returns
+   */
+  async resolveTypes(
+    collections: IRecordId[],
+    isFromExtension: boolean = false
+  ) {
+    let types: ICollectionExpanded[] = [];
+    if (!collections) return types;
+
+    if (isFromExtension) {
+      const result = await this.select(collections[0]);
+      if (!result) return types;
+      if (!result || result.type !== CollectionType.TYPED) return [];
+      if (!result.properties && !result.typeToExtend) return [result];
+      let typeToExtend: ICollection | undefined;
+      if (isRecordId(result.typeToExtend)) {
+        typeToExtend = await this.select(result.typeToExtend);
+      }
+      const properties = await propertyStore.selectMany({
+        filters: {
+          id: [
+            ...(result.properties ?? []),
+            ...(typeToExtend?.properties ?? [])
+          ]
+        }
+      });
+      if (!typeToExtend) return [{ ...result, properties }];
+      const mainProps = result.properties?.map((x: IRecordId) => {
+        const property = properties.find(resourceInList(x));
+        return { ...property };
+      });
+      const extendedProps = typeToExtend.properties?.map((x: IRecordId) => {
+        const property = properties.find(resourceInList(x));
+        return { ...property };
+      });
+      return [
+        {
+          ...result,
+          properties: mainProps,
+          typeToExtend,
+          extendProperties: extendedProps
+        }
+      ];
+    }
+    const oldProps = [
+      "(select * from $parent.properties) as properties",
+      "(select * from $parent.typeToExtend.properties) as extendProperties"
+    ];
+    const result = await this.selectMany({
+      properties: {
+        expand: ["properties", "typeToExtend"]
+      },
+      filters: {
+        id: collections.map((x) => x.toString())
+      }
+    });
+    if (!result || !Array.isArray(result)) return types;
+    if (result.some((x) => x.typeToExtend)) {
+      const extendProperties = await propertyStore.selectMany({
+        filters: {
+          id: result
+            .map((x) => x.typeToExtend?.properties)
+            ?.flat()
+            ?.filter(Boolean)
+        }
+      });
+      if (extendProperties && Array.isArray(extendProperties)) {
+        result.map((x) => {
+          if (x.typeToExtend) {
+            x.extendProperties = extendProperties.filter((y) =>
+              x.typeToExtend?.properties?.includes(y.id)
+            );
+          }
+        });
+      }
+    }
+    types = result.filter((x) => x.type === CollectionType.TYPED);
+    return types;
+  }
+
+  async fetchDerivedCollections(collectionId: IRecordId) {
+    return this.selectMany({
+      filters: {
+        typeToExtend: collectionId.toString()
+      }
+    });
+  }
+
+  async resolveCaptureShortcuts(): Promise<
+    (ISelectItem & { value: string; isShortcut?: boolean })[]
+  > {
+    const data = await this.selectMany({
+      filters: {
+        isCaptureShortcutEnabled: true
+      }
+    });
+
+    const recents =
+      uiState
+        .getState(UIState.captureShortcutRecents)
+        ?.map((x: IRecordId) => x.toString()) ?? [];
+    const _types: (ISelectItem & { value: string; isShortcut?: boolean })[] =
+      data
+        .filter((x: ICollection) => !x.resource || x.resource === Resource.node)
+        .map((type: ICollection) => ({
+          value: type.id,
+          label: type.label,
+          icon: type.avatar,
+          isShortcut: true
+        }));
+    const types = _types.sort((a, b) => {
+      const aIndex = recents.indexOf(a.value.toString());
+      const bIndex = recents.indexOf(b.value.toString());
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      if (aIndex !== -1) {
+        return -1;
+      }
+      if (bIndex !== -1) {
+        return 1;
+      }
+      return 0;
+    });
+    return types;
+  }
 }
+
+export const collectionStore = CollectionStore.resolve(Resource.collection);
 
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
 export class ActiveCollectionStore extends ActiveResourceStore<
-  ICollectionExpanded,
+  ICollection,
+  CollectionStore,
   IActiveCollection
 > {
   constructor(collectionId: IRecordId) {
-    super(collectionId);
-  }
-
-  async modify(
-    val: Partial<ICollectionExpanded> & {
-      views?: IRecordId[] | IActiveCollection["views"];
-    },
-    params?: { isPreventBackPropagation?: boolean }
-  ) {
-    const shouldUpdateActive = !params?.isPreventBackPropagation;
-    const previous = shouldUpdateActive ? this.get() : undefined;
-    if (shouldUpdateActive) {
-      this.update((prev) => ({ ...prev, ...val }) as IActiveCollection);
-    }
-    try {
-      await datafn.collection.mutate({
-        operation: "merge",
-        id: this.id.toString(),
-        record: pruneUndefined({
-          id: this.id,
-          ...val
-        } as Record<string, unknown>)
-      });
-    } catch (error) {
-      if (previous) this.set(previous);
-      throw error;
-    }
+    super(collectionId, collectionStore);
   }
 
   /**
@@ -222,40 +328,35 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         val.isInEditMode ??= false;
         return val;
       });
-      let result: IActiveCollection | undefined;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        result = (await datafn.collection.select(this.id.toString(), {
-          select: ["*", "views.*", "properties.*", "typeToExtend.*"],
-          metadata: {
-            includeTrashed: true,
-            includeArchived: true
-          }
-        })) as unknown as IActiveCollection | undefined;
-        if (result && Array.isArray(result.views)) break;
-        if (attempt < 2) {
-          await new Promise((resolve) => setTimeout(resolve, 150));
-        }
-      }
+      console.time("ActiveCollectionStore.init - select");
+      const oldProps = [
+        "*",
+        "(select * from $parent.views) as views",
+        "(select * from $parent.properties) as properties",
+        "typeToExtend.* as typeToExtend"
+        // "(array::first(select out, count() from link where out is $parent.id group by out)).count as totalNodeCount"
+      ];
+      const result = await this.resourceStore.select(this.id, {
+        expand: ["views", "properties", "typeToExtend"]
+      });
+      console.timeEnd("ActiveCollectionStore.init - select");
       logger.log({ at: "ActiveCollectionStore.init - select", result });
       let record = result;
       if (!record) return;
-      const views = Array.isArray(record.views) ? record.views : [];
       this.set({
         ...record,
         accessMode,
         isInEditMode: record.isInEditMode ?? false,
+        isViewDataLoading: true,
         isPageLoading: false,
         properties: record.properties ?? [],
-        views: views.map((x: ICollectionView) => {
+        views: record.views.map((x: ICollectionView) => {
           return { ...x, data: [] };
         })
       });
       propertyEditorStore.set({
         properties: record.properties ?? [],
-        typeToExtend:
-          record.typeToExtend && typeof record.typeToExtend === "object"
-            ? record.typeToExtend
-            : undefined
+        typeToExtend: record.typeToExtend
       });
       appStore.addToRecents({
         record,
@@ -263,8 +364,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         timestamp: new Date()
       });
     } catch (e) {
-      logger.error({
-        at: "ActiveCollectionStore.init",
+      console.error("error in init collection store", {
         id: this.id,
         error: e
       });
@@ -277,13 +377,9 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       id: this.id
     });
     try {
-      const result = (await datafn.collection.select(this.id.toString(), {
-        select: ["*", "properties.*", "typeToExtend.*"],
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      })) as unknown as ICollectionExpanded | undefined;
+      const result = await this.resourceStore.select(this.id, {
+        expand: ["properties", "typeToExtend"]
+      });
       if (!result) return;
       this.update((val) => {
         val.properties = result.properties ?? [];
@@ -303,33 +399,13 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       viewToBeDuplicated = collection.views.find(
         (v) => v.id == viewToDuplicate
       );
-      if (!viewToBeDuplicated) return;
-      const {
-        id: _id,
-        data: _data,
-        ...duplicatedView
-      } = viewToBeDuplicated as ICollectionView & { data?: unknown };
-      view = duplicatedView;
+      view = viewToBeDuplicated as ICollectionView;
     } else {
       view = {
         label: "New view"
       };
     }
-    if (!view) return;
-    const viewId = viewToDuplicate
-      ? generateResourceId(Resource.view)
-      : (view.id ?? generateResourceId(Resource.view));
-    const record = {
-      ...viewDefaults,
-      ...view,
-      id: viewId
-    };
-    await datafn.view.mutate({
-      operation: "insert",
-      id: viewId,
-      record
-    });
-    const response = [record] as ICollectionView[];
+    const response = await viewStore.create(view);
     logger.log({ at: "ActiveCollectionStore.createView", response });
     if (!response || !Array.isArray(response)) return;
     const createdView = response[0];
@@ -340,13 +416,15 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       return val;
     });
 
-    await datafn.collection.mutate({
-      operation: "relate",
-      id: this.id.toString(),
-      relations: {
-        views: relationRefs(this.get().views.map((x) => x.id))
+    this.resourceStore.modify(
+      this.id,
+      {
+        views: [...(this.get().views.map((x) => x.id) ?? [])]
+      },
+      {
+        isPreventBackPropagation: true
       }
-    });
+    );
     return createdView.id;
   }
 
@@ -354,13 +432,13 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     this.update((val: IActiveCollection) => {
       const viewToBeDeleted = val.views.find((v) => v.id == id);
       if (!viewToBeDeleted) return val;
-      viewToBeDeleted.trashedAt = new Date();
+      viewToBeDeleted.trashInformation = {
+        deletedAt: new Date(),
+        deletedBy: this.currentUserId ?? ""
+      };
       return val;
     });
-    return datafn.view.mutate({
-      operation: "trash",
-      id
-    });
+    return viewStore.trash(id);
   }
 
   updateView(id: IRecordId, view: Partial<ICollectionView>, key?: string) {
@@ -371,16 +449,68 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       });
       return val;
     });
-    datafn.view.mutate({
-      operation: "merge",
-      id,
-      record: {
-        id,
-        ...view
-      },
-      debounceKey: key ?? id.toString(),
-      debounceMs: 1500
+    viewStore.modify(id, view, {
+      isDebounced: true,
+      debounceKey: key ?? id.toString()
     });
+  }
+
+  /**
+   * Fetches the view data from the server and updates the store with the new data.
+   * @param viewId
+   * @returns
+   */
+  async loadViewData(
+    viewId: IRecordId,
+    resourceStore: ResourceStore<any, any>,
+    isFirstLoad: boolean = false
+  ) {
+    try {
+      logger.log({ at: "ActiveCollectionStore.loadViewData", viewId });
+      if (!viewId) return;
+      const collection = this.get();
+      let view = collection.views.find(resourceInList(viewId));
+      if (!view) return;
+      this.update((val: IActiveCollection) => {
+        val.isViewDataLoading = true;
+        return val;
+      });
+      console.time("ActiveCollectionStore.loadViewData - fetchViewData");
+      const response = await viewStore.fetchViewData(
+        collection.id,
+        resourceStore,
+        {
+          view,
+          resource: collection.resource
+        }
+      );
+      console.timeEnd("ActiveCollectionStore.loadViewData - fetchViewData");
+      logger.log({
+        at: "ActiveCollectionStore.loadViewData - response",
+        view,
+        response
+      });
+      if (!response || !isValidArrayWithData(response.items)) {
+        this.update((val: IActiveCollection) => {
+          val.isViewDataLoading = false;
+          return val;
+        });
+        return;
+      }
+      this.update((val: IActiveCollection) => {
+        val.isViewDataLoading = false;
+        view.data = [...response.items];
+        val.totalItemCount = response.totalCount;
+        return val;
+      });
+      return true;
+    } catch (e) {
+      logger.error({
+        at: "ActiveCollectionStore.loadViewData - error",
+        error: e
+      });
+      return false;
+    }
   }
 
   async updateProperties() {
@@ -389,46 +519,26 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     properties = properties.map(assignDefaultLabelAsFallback);
     if (!properties) return;
     for (const property of properties) {
-      await datafn.property.mutate({
-        operation: "merge",
-        id: property.id,
-        record: serializePropertyForDatafn(property)
-      });
+      await propertyStore.modify(property.id, property);
     }
-    const propertyIds = properties.map((p) => p.id);
-    const result = await datafn.collection.mutate([
+    const result = await this.resourceStore.modify(
+      this.id,
       {
-        operation: "merge",
-        id: this.id.toString(),
-        record: pruneUndefined({
-          id: this.id,
-          typeToExtend: propertiesEditor.typeToExtend?.id ?? null
-        } as Record<string, unknown>)
+        properties: properties.map((p) => p.id),
+        typeToExtend: propertiesEditor.typeToExtend?.id ?? undefined
       },
       {
-        operation: "relate",
-        id: this.id.toString(),
-        relations: {
-          properties: relationRefs(propertyIds)
-        }
+        isPreventBackPropagation: true
       }
-    ]);
+    );
     await this.refreshProperties();
     return result;
   }
 
   async selectItem(itemId: IRecordId) {
-    const resource = itemId.split(":")[0];
-    const result = await datafn.table(resource).query({
-      select: ["*", "propertyValues.*#"],
-      filters: { id: itemId },
-      limit: 1,
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    } as any);
-    return result.data?.[0] as ICollectionItem | undefined;
+    const result = await flux.select(itemId);
+    if (!result) return;
+    return result;
   }
 }
 
@@ -467,7 +577,7 @@ export function resolveCollectionContextMenu(
     isConstrainedWidth?: boolean;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(collection, {
+  const resourceActions = new ResourceActions(collection, collectionStore, {
     accessPoint,
     accessMode: params?.accessMode
   });
@@ -527,16 +637,13 @@ export function resolveCollectionContextMenu(
       type: ContextMenuType.SWITCH,
       initialValue: collection.isCaptureShortcutEnabled,
       callback: async (checked: boolean) => {
-        const result = await datafn.collection.mutate({
-          operation: "merge",
-          id: collection.id,
-          record: {
-            isCaptureShortcutEnabled: checked
-          }
+        const result = await collectionStore.modify(collection.id, {
+          isCaptureShortcutEnabled: checked
         });
         if (result) {
           toasts.success("Capture shortcut updated");
         }
+        return result;
       }
     };
     return [
@@ -587,16 +694,14 @@ export function resolveCollectionContextMenu(
           icon: "convert",
           label: "Convert to Typed",
           callback: async () => {
-            const result = await datafn.collection.mutate({
-              operation: "merge",
-              id: collection.id,
-              record: {
-                type: CollectionType.TYPED
-              }
+            console.log({ at: "resolveCollectionContextMenu.convert" });
+            const result = await collectionStore.modify(collection.id, {
+              type: CollectionType.TYPED
             });
             if (result) {
               toasts.success("Collection converted to typed");
             }
+            return result;
           }
         }
       ]

@@ -9,7 +9,10 @@
   import account from "@21n/stores/account.store";
   import { getDapId } from "@21n/persistence/persistence.utils";
   import { appStore } from "@21n/stores/app.store";
+  import { resolveExtensionConfig } from "@21n/products/product.config";
   import { Extension } from "@21n/products/product.type";
+  import { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
+  import { initFlux, flux } from "@21n/components/flux/flux";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { clientStorage } from "@21n/persistence/persistence.utils";
@@ -18,10 +21,6 @@
   import context from "@21n/stores/context.store";
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
-  import {
-    initializeNucleumDatafn,
-    pullDatafnNow
-  } from "@21n/stores/datafn.store";
 
   let {
     extension,
@@ -61,7 +60,7 @@
 
   let interval: any;
   interval = setInterval(() => {
-    proceedDatafnSync();
+    proceedSync();
   }, 3500);
 
   onDestroy(() => {
@@ -69,9 +68,9 @@
     clearTokenCheckTimeout();
   });
 
-  function proceedDatafnSync() {
+  function proceedSync() {
     if (isInitialized) {
-      void pullDatafnNow();
+      flux?.sync();
     }
   }
 
@@ -118,7 +117,7 @@
       addToDebugLog("User session already active");
       clearTokenCheckTimeout();
       error = undefined;
-      await initializeDatafn();
+      await initializeFlux();
     } else if (token) {
       addToDebugLog("Authenticating using URL param token");
       await authenticateWithToken(token);
@@ -132,7 +131,7 @@
       if (await isSessionActive()) return;
       isAuthenticating = true;
       await account.embedOAuthSignin(token);
-      if ($account.userId) await initializeDatafn();
+      if ($account.userId) await initializeFlux();
     } catch (e: any) {
       addToDebugLog("Authentication failed");
       error = "Authentication failed";
@@ -141,16 +140,18 @@
     }
   }
 
-  async function initializeDatafn() {
+  async function initializeFlux() {
     try {
       const dapId = await getDapId();
-      await initializeNucleumDatafn({
-        product: $appStore.product,
-        account: $account,
+      const initParams = {
         dapId: dapId!,
-        isOffline: $context.isInOfflineMode,
-        env: import.meta.env.MODE
-      });
+        userId: $account.userId,
+        product: $appStore.product,
+        isStandaloneSheet: true,
+        tables: resolveExtensionConfig(extension).tableConfig,
+        loaderCallback: () => {}
+      };
+      await initFlux(new DexiePersistence(), initParams);
       isInitialized = true;
     } catch (e: any) {
       addToDebugLog("Failed to initialize");

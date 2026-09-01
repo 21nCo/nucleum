@@ -11,7 +11,7 @@
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { Action } from "@21n/types/action.enum";
   import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { UIStateScope } from "@21n/stores/uiState/uiState.type";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";

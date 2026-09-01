@@ -1,4 +1,5 @@
 <script lang="ts">
+  // import { AnalyticsPersistence } from "$lib/client/products/pointron/analytics/analytics.persistence";
   import { getCorrespoingHorizonFrequencyLabel } from "@21n/utils/time.utils";
   import Guage from "@21n/products/pointron/analytics/charts/Guage.svelte";
   import { Size } from "@21n/types/size.enum";

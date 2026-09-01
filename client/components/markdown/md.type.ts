@@ -8,7 +8,7 @@ import type {
   INodeStructure,
   INodeMetadata
 } from "@21n/products/memotron/node/node.type";
-import type { IResourceBase } from "@21n/data/datafn/resource.type";
+import type { IResourceBase } from "@21n/components/flux/resourceStores/resource.type";
 
 export type IMarkdownStore = IMarkdown & {
   /**

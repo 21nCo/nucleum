@@ -6,66 +6,65 @@
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import PresetItem from "@21n/products/pointron/focus/advanced/presets/PresetItem.svelte";
-  import PresetObjectivesSelector from "@21n/products/pointron/focus/advanced/presets/PresetGoalsSelector.svelte";
-  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
+  import PresetGoalsSelector from "@21n/products/pointron/focus/advanced/presets/PresetGoalsSelector.svelte";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { goalStore } from "@21n/components/goals/goal.store";
   import { onMount } from "svelte";
   import type { IFocusItem } from "@21n/types/pointron/session.type";
   import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { Size } from "@21n/types/size.enum";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { advancedCompositionDraft } from "@21n/products/pointron/focus/advanced/composition/advancedCompositionDraft.store";
-  let selectedObjectives = $state<IObjectiveThumb[]>([]);
-  let newPresetLabel = $state("");
-  const currentComposition = $derived(
-    $advancedCompositionDraft ?? $activeSession.composition
-  );
+  let selectedGoals: IGoalThumb[] = [];
+  let newPresetLabel = "";
 
   onMount(async () => {
     const currentFocusItems = $focusItemsStore.items;
     if (currentFocusItems?.length) {
       const focusItemIds = currentFocusItems.map((item) => item.id);
-      const objectives = await datafn.objective.query({
-        select: ["*", "children.*", "tasks.*"],
-        filters: {
-          id: { $in: focusItemIds }
+      const goals = await goalStore.selectMany(
+        {
+          filters: {
+            id: focusItemIds
+          }
+        },
+        {
+          isExpand: true
         }
-      });
-      if (objectives.data) {
-        selectedObjectives = objectives.data as IObjectiveThumb[];
+      );
+      if (goals) {
+        selectedGoals = goals;
       }
     }
   });
 
   async function savePreset() {
     return activeSession.saveCurrentCompositionAsPreset({
-      objectives: selectedObjectives.map((g) => g.id),
-      name: newPresetLabel,
-      composition: currentComposition
+      goals: selectedGoals.map((g) => g.id),
+      name: newPresetLabel
     });
   }
 </script>
 
-<div class="flex flex-col gap-6 justify-between w-full h-full">
-  <ModalContentPadded class="flex flex-col gap-6 flex-grow">
-    <div class="flex justify-center">
-      <PresetItem
-        preset={{
-          ...currentComposition,
-          name: newPresetLabel,
-          objectives: selectedObjectives.map((g) => g.id)
-        }}
-        isExpandedVariant={true}
-      />
-    </div>
-    <TextInput
-      bind:value={newPresetLabel}
-      placeholder="Preset name or leave empty"
-      label={{ label: "Preset name", orientation: Orientation.Vertical }}
+<ModalContentPadded class="flex flex-col gap-6">
+  <div class="flex justify-center">
+    <PresetItem
+      preset={{
+        ...$activeSession.composition,
+        name: newPresetLabel,
+        goals: selectedGoals.map((g) => g.id)
+      }}
+      isExpandedVariant={true}
     />
-    <PresetObjectivesSelector bind:selectedObjectives />
-  </ModalContentPadded>
+  </div>
+  <TextInput
+    bind:value={newPresetLabel}
+    placeholder="Preset name or leave empty"
+    label={{ label: "Preset name", orientation: Orientation.Vertical }}
+  />
+  <PresetGoalsSelector bind:selectedGoals />
+</ModalContentPadded>
+<div class="mt-auto">
   <ModalFooter
     action={PointronAction.SAVE_PRESET_MODAL}
     size={Size.sm}

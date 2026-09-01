@@ -25,7 +25,7 @@
     isRenderAsModalForCW: true,
     id: "analytics-grouping-filters-popover",
     componentProps: {
-      isGroupByTopLevelObjectives: card.isGroupByTopLevelObjectives,
+      isGroupByTopLevelGoals: card.isGroupByTopLevelGoals,
       onGroupByChange
     }
   }}

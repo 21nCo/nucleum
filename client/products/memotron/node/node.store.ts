@@ -1,4 +1,4 @@
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { LinkType } from "@21n/products/memotron/linking/link.type";
 import {
   type IActiveNode,
@@ -9,39 +9,54 @@ import {
   NodeView,
   headingNodeTypes,
   mediaNodeTypeList,
-  socialPostNodeTypeList
+  rootNodeTypeList,
+  socialPostNodeTypeList,
+  type INodeCapture
 } from "@21n/products/memotron/node/node.type";
 import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
-import { ActiveResourceStore } from "@21n/data/datafn/resource.store";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "@21n/components/flux/resourceStores/resource.store";
 import { PanelSwitcherMixin } from "@21n/components/resource/panelSwitcher.mixin";
 import {
-  activeResourceFilterIgnoreAncestorInactive
+  activeResourceFilterIgnoreParentInactive,
+  debouncer
 } from "@21n/utils/utils";
 import {
   AccessMode,
   ResourceAccessPoint,
-  ResourceActionType,
-  type IResourceMutationParams
-} from "@21n/data/datafn/resource.type";
+  ResourceActionType
+} from "@21n/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "@21n/components/record/resource.actions";
 import { get, writable } from "svelte/store";
+import { linker } from "@21n/products/memotron/linking/link.store";
 import {
   ContextMenuType,
   type IContextMenu,
   type IContextMenuItem
 } from "@21n/types/select.type";
+import { flux } from "@21n/components/flux/flux";
 import { logger } from "@21n/components/debug/logger.client";
-import { resolveCollectionTypes } from "@21n/components/collection/collection.utils";
-import type { IRecordId } from "@21n/types/data.type";
+import { collectionStore } from "@21n/components/collection/collection.store";
+import type {
+  IRecordId,
+  IResourceFilterValue,
+  IResourceSelectAdditionalParams,
+  IResourceSelectParams
+} from "@21n/types/data.type";
 import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
-import { generateMarkdownText } from "@21n/products/memotron/node/node.utils";
+import {
+  generateMarkdownText,
+  getMarkdownSymbolPrepended
+} from "@21n/products/memotron/node/node.utils";
+import { isValidString } from "@21n/shared-utils/text.utils";
 import {
   resourceInList,
   isSameResource,
   isRecordId,
-  removeDuplicatesFilter,
-  determineResourceType
-} from "@21n/data/datafn/resource.utils";
+  removeDuplicatesFilter
+} from "@21n/components/flux/resourceStores/resource.utils";
 
 import context from "@21n/stores/context.store";
 import { Embed } from "@21n/types/context.type";
@@ -52,386 +67,236 @@ import view from "@21n/stores/view.store";
 import { CollectibleStore } from "@21n/components/collection/collectible.store";
 import { appStore } from "@21n/stores/app.store";
 import type { ILink } from "@21n/products/memotron/linking/link.type";
+import { MemotronAction } from "../memotronAction.enum";
 import { toasts } from "@21n/stores/notification.store";
-import { datafn } from "@21n/stores/datafn.store";
 
 export const hierarchyFactorLimit = 5;
 const defaults: Partial<INode> = {
   metaType: "",
   contentType: NodeType.UNKNOWN
 };
+class NodeStore extends ResourceStore<INode, INodeCapture<INode>> {
+  searchStore: any;
+  constructor() {
+    super(Resource.node, {
+      expandProps: ["parent", "file", "mdParent"],
+      defaultProps: defaults
+    });
+  }
 
-type NodeWithExpandedChildren = INode & {
-  children?: INode[];
-};
+  selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    const expandedProps = [
+      "*",
+      "parent.* as parent",
+      "file.* as file",
+      "(select * from $parent.mdParent) as mdParent",
+      "search::highlight('**', '**', 2, false) AS bodySearch"
+    ];
+    if (additionalParams?.isQueryAsIs) {
+      return super.selectMany(
+        {
+          ...(params ?? {})
+        },
+        additionalParams
+      );
+    }
+    const isContentTypePresent =
+      params?.filters &&
+      "contentType" in params?.filters &&
+      params.filters.contentType;
+    const isMetaTypePresent =
+      params?.filters &&
+      "metaType" in params?.filters &&
+      params.filters.metaType;
+    const isIdPresent =
+      params?.filters && "id" in params?.filters && params?.filters?.id;
+    const filters = {
+      creationContext:
+        isValidString(params?.search?.query) ||
+        isContentTypePresent ||
+        isIdPresent
+          ? undefined
+          : false,
+      metaType:
+        isValidString(params?.search?.query) ||
+        isMetaTypePresent ||
+        isIdPresent ||
+        additionalParams?.isIncludeMetaItems
+          ? undefined
+          : false,
+      ...(params?.filters ?? {}),
+      contentType: isContentTypePresent
+        ? resolveContentTypeParam(params?.filters?.contentType)
+        : params?.search?.query || isIdPresent
+          ? undefined
+          : rootNodeTypeList
+    };
+    params = {
+      ...(params ?? {}),
+      filters
+    };
+    return super.selectMany(params, additionalParams);
 
-function linkId(from: IRecordId, to: IRecordId, linkType: LinkType = LinkType.DIRECT) {
-  return `${from.toString()}|${to.toString()}|${linkType}`;
-}
-
-function isNodeId(id: IRecordId | undefined) {
-  return id?.toString().startsWith(`${Resource.node}:`);
-}
-
-function normalizeNodeRelationLink(sourceId: IRecordId, row: Record<string, any>) {
-  const from = (row.in ?? row.from ?? sourceId).toString();
-  const to = (row.out ?? row.to ?? row.id)?.toString();
-  if (!to) return undefined;
-  const metadata = row.$relation_metadata ?? row;
-  const linkType = metadata.linkType ?? LinkType.DIRECT;
-  return {
-    id: linkId(from, to, linkType),
-    in: from,
-    out: to,
-    linkType,
-    tags: metadata.tags ?? [],
-    location: metadata.location,
-    metadata: metadata.metadata,
-    createdAt: metadata.createdAt,
-    updatedAt: metadata.updatedAt,
-    createdBy: metadata.createdBy,
-    updatedBy: metadata.updatedBy
-  } as ILink;
-}
-
-function pruneUndefined(input: Record<string, unknown>) {
-  return Object.fromEntries(
-    Object.entries(input).filter(([, value]) => value !== undefined)
-  );
-}
-
-function resolveDate(value: unknown) {
-  if (value instanceof Date) return value;
-  if (typeof value === "number" || typeof value === "string")
-    return new Date(value);
-  return undefined;
-}
-
-function normalizeNodeRecord(input: Record<string, unknown>) {
-  const record = { ...input } as Record<string, unknown>;
-  const createdAt = resolveDate(record.createdAt);
-  const updatedAt = resolveDate(record.updatedAt);
-  if (createdAt) record.createdAt = createdAt;
-  record.updatedAt = updatedAt ?? createdAt ?? new Date();
-  return record as unknown as INode;
-}
-
-function normalizeMdChildOrderIds(mdChildOrder: unknown) {
-  if (!Array.isArray(mdChildOrder)) return [];
-  return mdChildOrder
-    .map((child) => {
-      if (typeof child === "string") return child;
-      if (child && typeof child === "object" && "id" in child) {
-        return (child as { id?: unknown }).id;
+    function resolveContentTypeParam(
+      contentType: IResourceFilterValue
+    ): string | string[] | undefined {
+      if (typeof contentType === "string") {
+        return contentType.toUpperCase();
+      }
+      if (Array.isArray(contentType)) {
+        return contentType.filter(
+          (item): item is string => typeof item === "string"
+        );
       }
       return undefined;
-    })
-    .filter((child): child is IRecordId => typeof child === "string");
-}
-
-function resolveMarkdownParentFields(mdParent: unknown) {
-  if (!Array.isArray(mdParent)) return {};
-  const parents = mdParent.filter(
-    (parent): parent is IRecordId => typeof parent === "string"
-  );
-  const parent = parents[parents.length - 1];
-  if (!parent) return { parent: undefined, parentPath: undefined };
-  return {
-    parent,
-    parentPath: parents.join("-")
-  };
-}
-
-function resolveBlockParentFields(mdParent: unknown, fallbackParent: IRecordId) {
-  const parentChain = Array.isArray(mdParent)
-    ? mdParent.filter(
-        (parent): parent is IRecordId => typeof parent === "string"
-      )
-    : [];
-  const resolvedMdParent =
-    parentChain.length > 0 ? parentChain : [fallbackParent];
-  return {
-    mdParent: resolvedMdParent,
-    ...resolveMarkdownParentFields(resolvedMdParent)
-  };
-}
-
-async function queryNodes(params: any) {
-  const result = await datafn.node.query(params);
-  return (result.data ?? []).map(normalizeNodeRecord);
-}
-
-async function selectNode(
-  id: IRecordId,
-  select?: string[],
-  params?: { signal?: AbortSignal }
-) {
-  const result = (await datafn.node.select(id.toString(), {
-    select,
-    signal: params?.signal,
-    metadata: {
-      includeTrashed: true,
-      includeArchived: true
     }
-  })) as Record<string, unknown> | undefined;
-  if (!result) return undefined;
-  return normalizeNodeRecord(result);
-}
-
-async function expandNodeMdChildOrder(
-  mdChildOrder: Array<IRecordId | INode>,
-  parentId?: IRecordId,
-  seen = new Set<IRecordId>()
-): Promise<INode[]> {
-  if (mdChildOrder.some((child) => child && typeof child === "object")) {
-    return nestExpandedNodeChildren(
-      mdChildOrder.filter(Boolean) as INode[],
-      parentId
-    );
   }
-  const childIds = mdChildOrder
-    .filter(
-      (childId): childId is IRecordId =>
-        typeof childId === "string" && !seen.has(childId)
-    )
-    .map((childId) => {
-      seen.add(childId);
-      return childId;
+
+  /**
+   *
+   *
+   * Note: sending nodeId as param with $nodeId placeholder is not working in case of surreal.js + wasm engine. It is not detecting it as record id. Sending the fn param without single quotes is working.
+   *
+   * @param nodeId
+   * @returns
+   */
+  async fetch(nodeId: IRecordId) {
+    // const query = `fn::memotron::node::fetch(${nodeId})`;
+    // const response = await flux.selectByQuery(query);
+    const oldProps = [
+      "*",
+      "parent.* as parent",
+      "file.* as file",
+      "(fn::memotron::node::children($parent.children)) as children"
+    ];
+    const response = await super.select(nodeId, {
+      expand: ["parent", "file"],
+      recurse: "children"
     });
-  const childRecords = await queryNodes({
-    select: ["*", "parent.*", "file.*"],
-    filters: {
-      id: {
-        $in: childIds.map((childId) => childId.toString())
+    logger.debug({ at: "fetch node", response });
+    return response;
+  }
+
+  /**
+   * @deprecated
+   * @param query
+   * @returns
+   */
+  async search(query: string) {
+    if (isValidString(query)) {
+      this.searchStore.searchQuery = query;
+      return this.searchStore.nodes();
+    } else {
+      return this.searchStore.recents();
+    }
+  }
+
+  async download(node: IRecordId | INode) {
+    let file;
+    if (isRecordId(node)) {
+      const result = await this.select(node as IRecordId);
+      if (result?.file) {
+        file = result.file;
       }
-    },
-    metadata: {
-      includeTrashed: true,
-      includeArchived: true
+    } else if (typeof node === "object" && "file" in node) {
+      file = node.file;
     }
-  });
-  const childById = new Map(
-    childRecords.map((child) => [child.id.toString(), child])
-  );
-  const nodes = (
-    await Promise.all(
-      childIds.map(async (childId) => {
-        const child = childById.get(
-          childId.toString()
-        ) as NodeWithExpandedChildren | undefined;
-        if (!child) return undefined;
-        if (child.mdChildOrder && Array.isArray(child.mdChildOrder)) {
-          child.children = await expandNodeMdChildOrder(
-            child.mdChildOrder,
-            child.id,
-            seen
-          );
+    if (file) {
+      return fileStore.download(file);
+    }
+  }
+
+  private async resolveDependencies(ids: IRecordId[]) {
+    const childrenResult = await super.selectMany(
+      {
+        properties: {
+          select: ["id"]
+        },
+        filters: {
+          parent: ids.map((id) => id.toString())
         }
-        return child;
-      })
-    )
-  ).filter(Boolean) as INode[];
-  return nodes;
-}
-
-function resolveDirectNodeParentId(child: INode) {
-  if (typeof child.parent === "string") return child.parent;
-  if (
-    typeof (child as INode & { parentPath?: string }).parentPath === "string"
-  ) {
-    const parents = (child as INode & { parentPath?: string }).parentPath
-      ?.split("-")
-      .filter(Boolean);
-    return parents?.[parents.length - 1];
-  }
-  if (Array.isArray(child.mdParent)) {
-    const parents = child.mdParent.filter(
-      (item): item is IRecordId => typeof item === "string"
+      },
+      {
+        isIncludeInactiveItems: true
+      }
     );
-    return parents[parents.length - 1];
-  }
-  return undefined;
-}
 
-function nestExpandedNodeChildren(
-  children: INode[],
-  parentId?: IRecordId
-): INode[] {
-  const byId = new Map(
-    children.map((child) => [child.id, { ...child, children: [] as INode[] }])
-  );
-  const roots: INode[] = [];
-  for (const child of byId.values()) {
-    const directParentId = resolveDirectNodeParentId(child);
-    const parent = directParentId ? byId.get(directParentId) : undefined;
-    if (parent) {
-      parent.children = [...(parent.children ?? []), child];
-    } else if (!parentId || directParentId === parentId) {
-      roots.push(child);
-    }
-  }
-  return roots.length > 0 ? roots : children;
-}
-
-async function fetchNode(id: IRecordId) {
-  const response = (await selectNode(id, [
-    "*",
-    "parent.*",
-    "file.*",
-    "collections",
-    "mdChildOrder"
-  ])) as NodeWithExpandedChildren | undefined;
-  if (response?.mdChildOrder && Array.isArray(response.mdChildOrder)) {
-    response.children = await expandNodeMdChildOrder(
-      response.mdChildOrder,
-      response.id
-    );
-  }
-  return response;
-}
-
-async function queryNodeLinksForNode(id: IRecordId) {
-  const nodeId = id.toString();
-  const relationQuery = {
-    select: ["#"],
-    metadata: {
-      includeTrashed: true,
-      includeArchived: true
-    }
-  };
-  const [outgoingResult, incomingResult] = (await Promise.all([
-    datafn.node.relation("links").query(nodeId, relationQuery),
-    datafn.node.relation("backlinks").query(nodeId, relationQuery)
-  ])) as Array<{
-    data?: Record<string, any>[];
-  }>;
-  const outgoing =
-    (outgoingResult.data ?? [])
-      .map((row) => normalizeNodeRelationLink(nodeId, row))
-      .filter((link): link is ILink => Boolean(link));
-  const incoming =
-    (incomingResult.data ?? [])
-      .map((row) => normalizeNodeRelationLink(nodeId, row))
-      .filter((link): link is ILink => Boolean(link))
-      .filter((link) => link.out?.toString() === nodeId);
-  return Array.from(
-    new Map(
-      [...outgoing, ...incoming]
-        .filter(
-          (link) =>
-            link.in?.toString() === nodeId || link.out?.toString() === nodeId
+    const mdChildrenResult = await Promise.all([
+      ...ids.map((id) =>
+        super.selectMany(
+          {
+            properties: {
+              select: ["id"]
+            },
+            filters: {
+              parent: {
+                contains: id.toString()
+              }
+            }
+          },
+          {
+            isIncludeInactiveItems: true
+          }
         )
-        .filter((link) => {
-          const linkedId = link.in?.toString() === nodeId ? link.out : link.in;
-          return isNodeId(linkedId);
-        })
-        .map((link) => [link.id.toString(), link])
-    ).values()
-  );
-}
+      )
+    ]);
+    return [...(childrenResult ?? []), ...(mdChildrenResult ?? [])];
+  }
 
-export async function downloadNode(node: IRecordId | INode) {
-  let file;
-  if (isRecordId(node)) {
-    const result = await selectNode(node as IRecordId);
-    if (result?.file) {
-      file = result.file;
+  private async onParentChange(ids: IRecordId[], status: boolean) {
+    try {
+      const children = await this.resolveDependencies(ids);
+      if (!children || children.length === 0) return;
+      const childrenIds = children.map((g: INode) => g.id)?.filter(Boolean);
+      if (!childrenIds || childrenIds.length === 0) return;
+      await this.bulkModify(childrenIds, { isParentInactive: status });
+    } catch (e) {
+      logger.error({ at: "onParentChange - node store", error: e });
     }
-  } else if (typeof node === "object" && "file" in node) {
-    file = node.file;
   }
-  if (file) {
-    return fileStore.download(file);
+
+  async onArchive(ids: IRecordId[]) {
+    return this.onParentChange(ids, true);
   }
-}
 
-async function resolveNodeDependencies(ids: IRecordId[]) {
-  const [childrenResult, ...mdChildrenResult] = (await datafn.query([
-    {
-      resource: Resource.node,
-      select: ["id"],
-      filters: {
-        parent: { $in: ids.map((id) => id.toString()) }
-      },
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    },
-    ...ids.map((id) => ({
-      resource: Resource.node,
-      select: ["id"],
-      filters: {
-        mdParent: {
-          $contains: id.toString()
-        }
-      },
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    }))
-  ])) as Array<{ data?: Record<string, unknown>[] }>;
-  return [
-    ...((childrenResult.data ?? []).map(normalizeNodeRecord) ?? []),
-    ...mdChildrenResult.flatMap(
-      (result) => result.data?.map(normalizeNodeRecord) ?? []
-    )
-  ];
-}
+  async onUnarchive(ids: IRecordId[]) {
+    return this.onParentChange(ids, false);
+  }
 
-async function onNodeParentChange(ids: IRecordId[], status: boolean) {
-  try {
-    const children = await resolveNodeDependencies(ids);
-    if (!children || children.length === 0) return;
-    const childrenIds = children.map((g: INode) => g.id)?.filter(Boolean);
-    if (!childrenIds || childrenIds.length === 0) return;
-    await datafn.node.mutate(
-      childrenIds.map((id) => ({
-        operation: "merge",
-        id,
-        record: {
-          isAncestorInactive: status
-        }
-      }))
-    );
-  } catch (e) {
-    logger.error({ at: "onParentChange - node", error: e });
+  async onTrash(ids: IRecordId[]) {
+    return this.onParentChange(ids, true);
+  }
+
+  async onRestore(ids: IRecordId[]) {
+    return this.onParentChange(ids, false);
   }
 }
 
-export async function onNodeArchive(ids: IRecordId[]) {
-  return onNodeParentChange(ids, true);
-}
+export const nodeStore = NodeStore.resolve(Resource.node);
 
-export async function onNodeUnarchive(ids: IRecordId[]) {
-  return onNodeParentChange(ids, false);
-}
-
-export async function onNodeTrash(ids: IRecordId[]) {
-  return onNodeParentChange(ids, true);
-}
-
-export async function onNodeRestore(ids: IRecordId[]) {
-  return onNodeParentChange(ids, false);
-}
+export const vectorResourceStore = new ResourceStore(Resource.vector);
 
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
 export class ActiveNodeStore extends CollectibleStore<
   INode,
+  NodeStore,
   IActiveNode
 > {
   eventStore: any;
+  debouncers = new Map<string, any>();
 
   constructor(node: IRecordId) {
-    super(node);
+    super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node.toString());
   }
 
   /**
    *
-   * For changes to markdown child order - using isModifyAsSystem: true in additionalParams - since when structure changes are happeneing - currently structure is being updated for all heading nodes in the markdown and therefore all of the heading nodes are being perceived as recents in recentStore due to updatedAt being updated.
+   * For changes to children structure - using isModifyAsSystem: true in additionalParams - since when structure changes are happeneing - currently structure is being updated for all heading nodes in the markdown and therefore all of the heading nodes are being perceived as recents in recentStore due to modifiedAt being updated.
    *
    * @param id
    * @param changedProps
@@ -439,32 +304,24 @@ export class ActiveNodeStore extends CollectibleStore<
    */
   updateBlockPropagator = async (
     id: IRecordId,
-    changedProps: Partial<INode>,
-    params?: IResourceMutationParams
+    changedProps: { body?: string; children?: string[] }
   ) => {
     logger.log({
       at: "ActiveNodeStore.updateBlockPropagator",
       changedProps,
       id: id.toString()
     });
-    if ("mdChildOrder" in changedProps) {
-      const childIds = normalizeMdChildOrderIds(changedProps.mdChildOrder);
+    if (changedProps.children) {
       const node = this.get();
-      const markdownBlocks = node.md?.blocks ?? node.blocks ?? [];
-      const childrenNodes = markdownBlocks.filter(
-        (x) => x.id && childIds.some(resourceInList(x.id))
+      const childrenNodes = node.md.blocks.filter(
+        (x) => x.id && changedProps.children?.some(resourceInList(x.id))
       );
 
-      const currentNodeResult = await datafn.node.query({
-        filters: { id },
-        limit: 1,
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      } as any);
-      const currentNode = currentNodeResult.data?.[0] as INode | undefined;
-      if (!currentNode) return;
+      const currentNode = await nodeStore.select(id);
+      let parentValue;
+      if (currentNode.contentType == NodeType.NODULAR_MARKDOWN)
+        parentValue = currentNode.label ?? currentNode.body;
+      else parentValue = getMarkdownSymbolPrepended(currentNode);
       const mdText = generateMarkdownText(childrenNodes);
       logger.log({
         at: "ActiveNodeStore.updateBlockPropagator - end",
@@ -472,60 +329,35 @@ export class ActiveNodeStore extends CollectibleStore<
         mdText,
         id: id.toString()
       });
-      const result = await datafn.node.mutate({
-        operation: "merge",
+      return this.resourceStore.modify(
         id,
-        record: pruneUndefined({
-          id,
-          ...changedProps,
-          mdChildOrder: childIds,
-          text: mdText
-        } as Record<string, unknown>),
-        context: params?.context,
-        debounceKey: params?.debounceKey,
-        debounceMs: params?.isDebounced ? 1500 : undefined,
-        system: params?.isModifyAsSystem ?? true
-      });
-      return result;
+        { ...changedProps, text: mdText },
+        {
+          isPreventBackPropagation: true,
+          isModifyAsSystem: true
+        }
+      );
     }
-    const result = await datafn.node.mutate({
-      operation: "merge",
-      id,
-      record: pruneUndefined({
-        id,
-        ...changedProps,
-        ...resolveMarkdownParentFields(changedProps.mdParent)
-      } as Record<string, unknown>),
-      context: params?.context,
-      debounceKey: params?.debounceKey,
-      debounceMs: params?.isDebounced ? 1500 : undefined,
-      system: params?.isModifyAsSystem
-    });
-    return result;
+    this.resourceStore.modify(id, changedProps);
   };
-
-  async modify(val: Partial<INode>, params?: IResourceMutationParams) {
-    const shouldUpdateActive = !params?.isPreventBackPropagation;
-    const previous = shouldUpdateActive ? this.get() : undefined;
-    if (shouldUpdateActive) {
-      this.update((prev) => ({ ...prev, ...val }) as IActiveNode);
+  resolveDebouncerForBlockPersistance(id: string) {
+    if (!this.debouncers?.has(id)) {
+      this.debouncers.set(id, debouncer(this.updateBlockPropagator, 500));
     }
-    try {
-      await this.updateBlockPropagator(this.id, val, params);
-    } catch (error) {
-      if (previous) this.set(previous);
-      throw error;
-    }
+    let val = this.debouncers.get(id);
+    return val!;
   }
-
   init = async (params: {
     accessMode: AccessMode;
     accessPoint: ResourceAccessPoint;
     panel?: ResourcePanelType;
   }) => {
     logger.log({ at: "ActiveNodeStore.init", id: this.id });
+    console.time("ActiveNodeStore.init");
     try {
-      const node = await fetchNode(this.id);
+      console.time("ActiveNodeStore.init.fetch");
+      const node = await this.resourceStore.fetch(this.id);
+      console.timeEnd("ActiveNodeStore.init.fetch");
       if (!node || !node.id) {
         return {
           error: "Node not found"
@@ -539,14 +371,8 @@ export class ActiveNodeStore extends CollectibleStore<
         ...node,
         defaultPanel,
         accessMode: params.accessMode,
-        panel: params.panel ?? defaultPanel,
-        switchPanel: (panel?: string) => {
-          this.update((prev) => ({ ...prev, panel: panel ?? prev.panel }));
-        },
-        closeEditMode: () => {
-          this.update((prev) => ({ ...prev, isInEditMode: false }));
-        }
-      } as IActiveNode);
+        panel: params.panel ?? defaultPanel
+      });
       if (
         params.accessPoint === ResourceAccessPoint.CALENDAR ||
         !node.metaType
@@ -562,9 +388,7 @@ export class ActiveNodeStore extends CollectibleStore<
         node.contentType === NodeType.NODULAR_MARKDOWN ||
         headingNodeTypes.includes(node.contentType)
       ) {
-        blocks = recursivelyExtractAllChildrenIntoArray(
-          node as IActiveNode
-        ) as INode[];
+        blocks = recursivelyExtractAllChildrenIntoArray(node) as INode[];
       }
       if (blocks.some((x) => !x?.id)) {
         return {
@@ -573,13 +397,14 @@ export class ActiveNodeStore extends CollectibleStore<
       }
       let types: any[] = [];
       if (params.accessPoint !== ResourceAccessPoint.CALENDAR) {
-        types = await resolveCollectionTypes(node.collections ?? []);
+        types = await collectionStore.resolveTypes(node.collections ?? []);
       }
       this.update((n) => {
         n.types = types;
         n.blocks = blocks;
         return n;
       });
+      console.timeEnd("ActiveNodeStore.init");
     } catch (e) {
       logger.error({ at: "node.store fetch", e });
     }
@@ -588,7 +413,28 @@ export class ActiveNodeStore extends CollectibleStore<
   afterInit = async () => {
     try {
       const node = this.get();
-      const linksResult = await queryNodeLinksForNode(this.id);
+      console.time("ActiveNodeStore.afterInit - links");
+      const inLinks = await linker.selectMany({
+        filters: {
+          in: this.id.toString()
+        }
+      });
+      const outLinks = await linker.selectMany({
+        filters: {
+          out: this.id.toString()
+        }
+      });
+      const linksResult = [...(inLinks ?? []), ...(outLinks ?? [])].filter(
+        (x: ILink) => {
+          return (
+            (x.in.toString() === this.id &&
+              x.out.toString()?.includes(Resource.node)) ||
+            (x.out.toString() === this.id &&
+              x.in.toString()?.includes(Resource.node))
+          );
+        }
+      );
+      console.timeEnd("ActiveNodeStore.afterInit - links");
       if (linksResult && isValidArrayWithData(linksResult)) {
         let uniqueLinkIds = new Set();
         linksResult.forEach((x: ILink) => {
@@ -620,14 +466,14 @@ export class ActiveNodeStore extends CollectibleStore<
         });
       }
       if (canHaveTraces.includes(node.contentType)) {
-        const result = await queryNodes({
+        const result = await this.resourceStore.selectMany({
           filters: {
             parent: this.id.toString()
           }
         });
         let clips: any[] = [];
         if (result && isValidArrayWithData(result)) {
-          clips = result.filter(activeResourceFilterIgnoreAncestorInactive);
+          clips = result.filter(activeResourceFilterIgnoreParentInactive);
         }
         if (
           [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT].includes(
@@ -660,35 +506,25 @@ export class ActiveNodeStore extends CollectibleStore<
       return this.updateBlockPropagator(id, changedProps);
     }
     const mutationId = `${id.toString()}-${params.debounceKey ?? "block"}`;
-    return this.updateBlockPropagator(id, changedProps, {
-      isDebounced: true,
-      debounceKey: mutationId
-    });
+    const debouncer = this.resolveDebouncerForBlockPersistance(mutationId);
+    debouncer(id, changedProps);
   };
 
   createBlock = async (
     id: IRecordId,
     contentType: any,
-    params?: { body?: any; mdParent?: IRecordId[] }
+    params?: { body?: any }
   ) => {
     logger.log({ at: "ActiveNodeStore.createBlock", id, contentType, params });
-    await datafn.node.mutate({
-      operation: "insert",
-      id,
-      record: {
+    return this.resourceStore.create([
+      {
         id,
-        ...defaults,
         contentType,
         creationContext: this.id,
-        ...resolveBlockParentFields(params?.mdParent, this.id),
         body: params?.body,
         label: ""
       }
-    });
-    return queryNodes({
-      filters: { id },
-      limit: 1
-    });
+    ]);
   };
 
   createBlocks = async (
@@ -697,49 +533,25 @@ export class ActiveNodeStore extends CollectibleStore<
       contentType: NodeType;
       body: any;
       label?: string;
-      mdParent?: IRecordId[];
     }[]
   ) => {
-    await datafn.node.mutate(
+    return this.resourceStore.create(
       blocks.map((x) => ({
-        operation: "insert",
         id: x.id,
-        record: {
-          id: x.id,
-          ...defaults,
-          contentType: x.contentType,
-          creationContext: this.id,
-          ...resolveBlockParentFields(x.mdParent, this.id),
-          body: x.body,
-          label: x.label ?? ""
-        }
+        contentType: x.contentType,
+        creationContext: this.id,
+        body: x.body,
+        label: x.label ?? ""
       }))
     );
-    return queryNodes({
-      filters: {
-        id: blocks.map((block) => block.id)
-      }
-    });
   };
 
   deleteBlock = async (id: IRecordId) => {
-    const result = await datafn.node.mutate({
-      operation: "trash",
-      id
-    });
-    await onNodeTrash([id]);
-    return result;
+    return this.resourceStore.trash(id);
   };
 
   deleteMany = async (ids: IRecordId[]) => {
-    const result = await datafn.node.mutate(
-      ids.map((id) => ({
-        operation: "trash",
-        id
-      }))
-    );
-    await onNodeTrash(ids);
-    return result;
+    return this.resourceStore.bulkTrash(ids);
   };
 
   mention = async (
@@ -747,24 +559,13 @@ export class ActiveNodeStore extends CollectibleStore<
     id: string,
     params?: { tags?: IRecordId[] }
   ) => {
-    const fromResource = determineResourceType(this.id);
-    const toResource = determineResourceType(id);
-    const result = await datafn.table(fromResource).mutate({
-      operation: "relate",
-      id: this.id.toString(),
-      relations: {
-        links: [
-          {
-            $ref: id.toString(),
-            fromResource: fromResource.toString(),
-            toResource: toResource.toString(),
-            linkType: LinkType.MENTION,
-            location,
-            tags: params?.tags
-          }
-        ]
+    const result = await linker.link(this.id, id, {
+      linkType: LinkType.MENTION,
+      content: {
+        location,
+        tags: params?.tags
       }
-    } as any);
+    });
     if (!result) return;
     this.update((n) => ({
       ...n,
@@ -774,42 +575,39 @@ export class ActiveNodeStore extends CollectibleStore<
           linkedTo: id,
           linkType: LinkType.MENTION,
           direction: "outgoing",
-          id: linkId(this.id, id, LinkType.MENTION)
+          id: result?.[0]?.id
         }
       ]
     }));
   };
   unmention = async (location: string, id: string) => {
-    const fromResource = determineResourceType(this.id);
-    const result = await datafn.table(fromResource).mutate({
-      operation: "unrelate",
-      id: this.id.toString(),
-      relations: {
-        links: [
-          {
-            $ref: id.toString(),
-            linkType: LinkType.MENTION
-          }
-        ]
-      }
-    } as any);
+    const result = await linker.unlink(this.id, id, {
+      linkType: LinkType.MENTION
+    });
     this.update((n) => ({
       ...n,
       links: n.links?.filter(
         (x) =>
-          !(isSameResource(x.linkedTo, id) && x.linkType === LinkType.MENTION)
+          !(
+            isSameResource(x.linkedTo, id) &&
+            x.linkType === LinkType.MENTION
+          )
       )
     }));
   };
 
   async linkCollection(id: IRecordId) {
     const node = this.get();
-    return super.linkCollection(id, node.focusedBlock ?? node.id);
+    let src = node.id;
+    if (node.focusedBlock) src = node.focusedBlock;
+    return super.linkCollection(id, src);
   }
 
   async unlinkCollection(id: IRecordId) {
     const node = this.get();
-    return super.unlinkCollection(id, node.focusedBlock ?? node.id);
+    let src = node.id;
+    if (node.focusedBlock) src = node.focusedBlock;
+    return super.unlinkCollection(id, src);
   }
 
   /**
@@ -846,13 +644,13 @@ export class ActiveNodeStore extends CollectibleStore<
     const node = this.get();
     let id = node.id;
     if (node.focusedBlock) id = node.focusedBlock;
-    const links = await queryNodeLinksForNode(id);
-    const to = links.filter((link) => link.in?.toString() === id.toString());
-    const from = links.filter((link) => link.out?.toString() === id.toString());
-    const response = {
-      from,
-      to
-    };
+    const query = `BEGIN TRANSACTION; let $to = array::first(select value ->link.* from node where id is $id); 
+    let $from = array::first(select value <-link.* from node where id is $id);
+   return {from: $from, to: $to};
+    COMMIT TRANSACTION;`;
+    const response = await flux.selectByQuery(query, {
+      id
+    });
     logger.log({ at: "ActiveNodeStore.resolveLinks", response });
     return response;
   }
@@ -879,7 +677,7 @@ export class ActiveNodeStore extends CollectibleStore<
     });
   }
 
-  static resolve<T extends ActiveResourceStore<any, any>>(
+  static resolve<T extends ActiveResourceStore<any, any, any>>(
     this: new (id: IRecordId) => T,
     id: IRecordId
   ): T {
@@ -954,8 +752,14 @@ const nodeStaticActions = {
   }
 };
 class NodeActions {
-  constructor(private node: INode) {
+  constructor(
+    private node: INode,
+    private store: NodeStore,
+    private accessPoint: ResourceAccessPoint
+  ) {
     this.node = node;
+    this.store = store;
+    this.accessPoint = accessPoint;
   }
 
   download = {
@@ -1026,12 +830,8 @@ class NodeActions {
       label: "Remove cover photo",
       icon: "trash",
       callback: async () => {
-        await datafn.node.mutate({
-          operation: "merge",
-          id: this.node.id,
-          record: {
-            cover: ""
-          }
+        await this.store.modify(this.node.id, {
+          cover: undefined
         });
         toasts.success("Cover photo removed");
       }
@@ -1100,13 +900,9 @@ class NodeActions {
       type: ContextMenuType.SWITCH,
       initialValue: this.node.config?.isWidened,
       callback: async (checked: boolean) => {
-        await datafn.node.mutate({
-          operation: "merge",
-          id: this.node.id,
-          record: {
-            config: {
-              isWidened: checked
-            }
+        await this.store.modify(this.node.id, {
+          config: {
+            isWidened: checked
           }
         });
       }
@@ -1125,17 +921,11 @@ export function resolveNodeContextMenu(
     isConstrainedWidth?: boolean;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(node, {
+  const resourceActions = new ResourceActions(node, nodeStore, {
     accessPoint,
-    accessMode: params?.accessMode,
-    lifecycle: {
-      onArchive: onNodeArchive,
-      onUnarchive: onNodeUnarchive,
-      onTrash: onNodeTrash,
-      onRestore: onNodeRestore
-    }
+    accessMode: params?.accessMode
   });
-  const nodeActions = new NodeActions(node);
+  const nodeActions = new NodeActions(node, nodeStore, accessPoint);
   const isMediaNode = node.contentType !== NodeType.NODULAR_MARKDOWN;
   if (accessPoint === ResourceAccessPoint.CLIPPER) {
     return [
@@ -1379,7 +1169,11 @@ export function resolveVisibleActions(
     isConstrainedWidth?: boolean;
   }
 ): IToggleItem[] {
-  const nodeActions = new NodeActions(node);
+  const nodeActions = new NodeActions(
+    node,
+    nodeStore,
+    ResourceAccessPoint.SELF
+  );
   if (
     (node.contentType === NodeType.NODULAR_MARKDOWN ||
       headingNodeTypes.includes(node.contentType)) &&
@@ -1412,7 +1206,11 @@ export function resolveVisibleActions(
 }
 
 export function resolvePanelOptions(node: INode) {
-  const nodeActions = new NodeActions(node);
+  const nodeActions = new NodeActions(
+    node,
+    nodeStore,
+    ResourceAccessPoint.SELF
+  );
   const overviewPanel = {
     value: ResourcePanelType.OVERVIEW,
     label: "Overview",

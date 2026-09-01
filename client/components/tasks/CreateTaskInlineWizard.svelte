@@ -6,49 +6,51 @@
   import { InputStyle } from "@21n/types/input.type";
   import { Size } from "@21n/types/size.enum";
   import { onMount } from "svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/data/datafn/resource.type";
-  import { resourceAction } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import {
-    ObjectiveStatus,
-    type IObjective,
-    type IObjectiveThumb
+    GoalStatus,
+    type IGoal,
+    type IGoalThumb
   } from "@21n/components/goals/goal.type";
   import modalEvent from "@21n/components/modal/modal.store";
-  import TaskThumbnailObjectiveLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import TaskThumbnailGoalLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
   import { Product } from "@21n/products/product.type";
   import { appStore } from "@21n/stores/app.store";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import { appEvents, toasts } from "@21n/stores/notification.store";
-  import ObjectiveSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
+  import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
   import { GlobalEvent } from "@21n/types/event.enum";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
 
   let {
     date: initialDate = undefined,
-    objectiveId: initialObjectiveId = undefined,
+    goalId: initialGoalId = undefined,
     onClose = undefined
   }: {
     date?: Date | undefined;
-    objectiveId?: IRecordId | undefined;
+    goalId?: IRecordId | undefined;
     onClose?: ((event: CustomEvent<void>) => void) | undefined;
   } = $props();
 
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
   let date = $state<Date | undefined>(initialDate);
-  let objectiveId = $state<IRecordId | undefined>(initialObjectiveId);
+  let goalId = $state<IRecordId | undefined>(initialGoalId);
   let label = $state("");
   let inputRef = $state<TextInput | undefined>(undefined);
-  let isShowObjectivePicker = $state(false);
-  let objectiveSearchQuery = $state("");
-  let objectiveSearchInput = $state<TextSearchInput | undefined>(undefined);
-  let objective = $state<IObjective | undefined>(undefined);
+  let isShowGoalPicker = $state(false);
+  let goalSearchQuery = $state("");
+  let goalSearchInput = $state<TextSearchInput | undefined>(undefined);
+  let searchStore = new SearchStore(Resource.goal);
+  let goal = $state<IGoal | undefined>(undefined);
   let isFocusing = $state(false);
   let isCreateInProgress = $state(false);
   onMount(() => {
@@ -59,14 +61,9 @@
     });
 
     const initialize = async () => {
-      if (objectiveId) {
-        const result = await datafn.objective.query({
-          select: ["*", "parent.*"],
-          filters: { id: objectiveId.toString() },
-          limit: 1
-        });
-        objective = result.data[0] as IObjective | undefined;
-        isShowObjectivePicker = false;
+      if (goalId) {
+        goal = await goalStore.select(goalId);
+        isShowGoalPicker = false;
       }
     };
 
@@ -80,26 +77,26 @@
   function handleKeydown(keyboardEvent: KeyboardEvent) {
     if (keyboardEvent.key === "ArrowDown") {
       keyboardEvent.preventDefault();
-      isShowObjectivePicker = true;
+      isShowGoalPicker = true;
       setTimeout(() => {
-        objectiveSearchInput?.focus();
-        objectiveSearchInput?.showDefaultResults();
+        goalSearchInput?.focus();
+        goalSearchInput?.showDefaultResults();
       }, 0);
     }
   }
 
-  function handleKeydownFromObjectiveSearch(keyboardEvent: KeyboardEvent) {
+  function handleKeydownFromGoalSearch(keyboardEvent: KeyboardEvent) {
     if (keyboardEvent.key === "ArrowUp") {
       keyboardEvent.preventDefault();
-      isShowObjectivePicker = false;
+      isShowGoalPicker = false;
       setTimeout(() => {
         inputRef?.focus();
       }, 0);
     }
   }
 
-  function resolveObjectiveThumb(objective: IObjective) {
-    return objective as unknown as IObjectiveThumb;
+  function resolveGoalThumb(goal: IGoal) {
+    return goal as unknown as IGoalThumb;
   }
 
   function emitClose() {
@@ -111,25 +108,16 @@
     if (isCreateInProgress) return;
     try {
       isCreateInProgress = true;
-      const task = {
-        id: generateResourceId(Resource.task),
-        label,
-        dateUnix: date ? resolveUnixTimestamp(date) : 0,
-        isChecked: false,
-        objectiveId: objectiveId ?? objective?.id ?? ""
-      };
-      await datafn.task.mutate({
-        operation: "insert",
-        id: task.id,
-        record: task,
-        context: action
-      });
-      appStore.addToRecents({
-        record: task,
-        type: Resource.task,
-        timestamp: new Date()
-      });
-      const result = [task];
+      const result = await taskStore.save(
+        {
+          label,
+          dateUnix: date ? resolveUnixTimestamp(date) : undefined,
+          goalId: goalId ?? goal?.id
+        },
+        {
+          context: action
+        }
+      );
       if (result) {
         label = "";
         if (event instanceof KeyboardEvent && event.shiftKey === true) {
@@ -150,17 +138,16 @@
     if (result) modalEvent.hide(action);
   }
 
-  function searchObjectiveCallback(query: string) {
-    return datafn.objective.query({
-      select: ["*", "parent.*"],
-      search: query ? { query, fields: ["label"] } : undefined,
+  function searchGoalCallback(query: string) {
+    return searchStore.select({
+      searchQuery: query,
       limit: 30,
       filters: {
         status: {
-          $ne: ObjectiveStatus.COMPLETED
+          notEquals: GoalStatus.COMPLETED
         }
       }
-    }).then((result) => result.data);
+    });
   }
 </script>
 
@@ -196,48 +183,48 @@
     </div>
   </div>
   <div class="w-full flex items-center justify-between">
-    {#if isShowObjectivePicker}
+    {#if isShowGoalPicker}
       <div
         class="flex items-center h-fit flex-grow transition-all duration-200"
       >
         <TextSearchInput
-          bind:value={objectiveSearchQuery}
-          bind:this={objectiveSearchInput}
-          searchCallback={searchObjectiveCallback}
-          searchResultComponent={ObjectiveSearchResultItem}
-          onKeydown={handleKeydownFromObjectiveSearch}
-          placeholder="Search to assign an objective"
+          bind:value={goalSearchQuery}
+          bind:this={goalSearchInput}
+          searchCallback={searchGoalCallback}
+          searchResultComponent={GoalSearchResultItem}
+          onKeydown={handleKeydownFromGoalSearch}
+          placeholder="Search to assign a goal"
           onSelect={(e) => {
-            objective = e.detail.item;
-            isShowObjectivePicker = false;
+            goal = e.detail.item;
+            isShowGoalPicker = false;
           }}
           style={InputStyle.PLAIN}
         />
         <Button
           icon="cross"
           size={Size.sm}
-          onclick={() => (isShowObjectivePicker = false)}
+          onclick={() => (isShowGoalPicker = false)}
         />
       </div>
-    {:else if objective}
+    {:else if goal}
       <div class="min-w-0 flex-1 transition-all duration-200">
-        <TaskThumbnailObjectiveLabel
-          objective={resolveObjectiveThumb(objective)}
-          onClearObjective={() => {
-            isShowObjectivePicker = true;
-            objective = undefined;
+        <TaskThumbnailGoalLabel
+          goal={resolveGoalThumb(goal)}
+          onClearGoal={() => {
+            isShowGoalPicker = true;
+            goal = undefined;
           }}
           accessPoint={ResourceAccessPoint.CAPTURE}
         />
       </div>
     {/if}
     <div class="flex gap-2 items-center">
-      {#if !isShowObjectivePicker && !objective && ($appStore.product === Product.POINTRON || $appStore.product === Product.NUCLEUM)}
+      {#if !isShowGoalPicker && !goal && ($appStore.product === Product.POINTRON || $appStore.product === Product.NUCLEUM)}
         <Button
-          label="Assign objective"
+          label="Assign goal"
           size={Size.xs}
           style={ButtonStyle.OUTLINED}
-          onclick={() => (isShowObjectivePicker = true)}
+          onclick={() => (isShowGoalPicker = true)}
         />
       {/if}
       <span class="flex items-center shrink-0">

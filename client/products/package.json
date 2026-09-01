@@ -5,9 +5,7 @@
   "type": "module",
   "dependencies": {
     "@21n/data": "*",
-    "@21n/shared-config": "*",
-    "@datafn/client": "0.1.0",
-    "@datafn/svelte": "0.1.0"
+    "@21n/shared-config": "*"
   },
   "exports": {
     "./*": "./*"

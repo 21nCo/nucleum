@@ -37,10 +37,7 @@
   );
 </script>
 
-<div
-  class="flex flex-col gap-6 overflow-auto"
-  data-testid="mode-of-interaction-settings"
->
+<div class="flex flex-col gap-6 overflow-auto" data-testid="mode-of-interaction-settings">
   <OptionSelector
     bind:selected={selectedMode}
     onSelect={(event) => {
@@ -64,8 +61,8 @@
       },
       {
         value: InteractionMode.AGENT,
-        label: "Home only",
-        icon: "home"
+        label: "Agent",
+        icon: "rhombus"
       }
     ]}
   />
@@ -74,34 +71,34 @@
       <SwitchInput
         label={{
           label: "Hide all hot key and shortcut hints",
-          tooltip: {
-            body: "All hot key and shortcut hints will be hidden at relevant places throughout the app."
-          }
-        }}
-        isExpanded={true}
-        bind:checked={isShortcutHintsEnabled}
-        onChange={(e) => {
-          uiState.setState(UIState.hideShortcutHints, e.detail, {
-            scope: UIStateScope.DEVICE
-          });
-        }}
+        tooltip: {
+          body: "All hot key and shortcut hints will be hidden at relevant places throughout the app."
+        }
+      }}
+      isExpanded={true}
+      bind:checked={isShortcutHintsEnabled}
+      onChange={(e) => {
+        uiState.setState(UIState.hideShortcutHints, e.detail, {
+          scope: UIStateScope.DEVICE
+        });
+      }}
       />
     </div>
     <div data-testid="toggle-hide-menu-bar">
       <SwitchInput
         bind:checked={isCompletelyHideLeftNavBar}
-        onChange={(e) => {
-          uiState.setState(UIState.completelyHideLeftNavBar, e.detail, {
-            scope: UIStateScope.PRODUCT
-          });
-        }}
-        label={{
-          label: "Hide App menu bar on hot key",
-          tooltip: {
-            body: "Completely hides the app menu bar on usage of the hot key **Q**. By default, it minimizes the app menu bar."
-          }
-        }}
-        isExpanded={true}
+      onChange={(e) => {
+        uiState.setState(UIState.completelyHideLeftNavBar, e.detail, {
+          scope: UIStateScope.PRODUCT
+        });
+      }}
+      label={{
+        label: "Hide App menu bar on hot key",
+        tooltip: {
+          body: "Completely hides the app menu bar on usage of the hot key **Q**. By default, it minimizes the app menu bar."
+        }
+      }}
+      isExpanded={true}
       />
     </div>
     <Divider />

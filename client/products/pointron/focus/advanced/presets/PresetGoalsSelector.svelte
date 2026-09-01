@@ -1,88 +1,85 @@
 <script lang="ts">
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
-  import ObjectiveSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
+  import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
   import {
-    ObjectiveStatus,
-    type IObjectiveThumb
+    GoalStatus,
+    type IGoalThumb
   } from "@21n/components/goals/goal.type";
   import {
     isSameResource,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import { resolveObjectiveColor } from "@21n/components/goals/goal.utils";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import type { IRecordId } from "@21n/types/data.type";
   import Icon from "@21n/elements/Icon.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
 
   let {
-    selectedObjectives = $bindable([])
+    selectedGoals = $bindable([])
   }: {
-    selectedObjectives?: IObjectiveThumb[];
+    selectedGoals?: IGoalThumb[];
   } = $props();
-  let label = $state("");
-  let inputRef = $state<any>();
+  let searchStore = new SearchStore(Resource.goal);
+  let label: string = "";
+  let inputRef: any;
 
   async function searchCallback(searchQuery: string) {
-    const result = await datafn.objective.query({
-      select: ["*", "parent.*"],
-      search: searchQuery
-        ? { query: searchQuery, fields: ["label"] }
-        : undefined,
+    const result = await searchStore.select({
+      searchQuery,
+      isIncludeSubItems: true,
       filters: {
-        id: { $ne: "" },
         status: {
-          $ne: ObjectiveStatus.COMPLETED
+          notEquals: GoalStatus.COMPLETED
         }
       }
     });
-    return result.data;
+    return result;
   }
 
-  function onObjectiveSelect(objective: IObjectiveThumb) {
-    if (!selectedObjectives.some(resourceInList(objective))) {
-      selectedObjectives = [...selectedObjectives, objective];
+  function onGoalSelect(goal: IGoalThumb) {
+    if (!selectedGoals.some(resourceInList(goal))) {
+      selectedGoals = [...selectedGoals, goal];
     }
     label = "";
   }
 
-  function removeObjective(objectiveId: IRecordId) {
-    selectedObjectives = selectedObjectives.filter(
-      (objective) => !isSameResource(objective, objectiveId)
-    );
+  function removeGoal(goalId: IRecordId) {
+    selectedGoals = selectedGoals.filter((g) => !isSameResource(g, goalId));
   }
 </script>
 
 <div class="flex flex-col gap-2">
   <TextSearchInput
-    onSelect={(e) => onObjectiveSelect(e?.detail?.item)}
+    onSelect={(e) => onGoalSelect(e?.detail?.item)}
     label={{
-      label: "Preset objectives (Optional)",
+      label: "Preset goals (Optional)",
       tooltip: {
-        body: "Objectives added in a preset will be automatically added to the focus session when the preset is selected."
+        body: "Goals added in a preset will be automatically added to the focus session when the preset is selected."
       }
     }}
     bind:value={label}
     bind:this={inputRef}
-    searchResultComponent={ObjectiveSearchResultItem}
+    searchResultComponent={GoalSearchResultItem}
     {searchCallback}
     style={InputStyle.BORDERED}
-    placeholder="Start typing to search for objectives"
+    placeholder="Start typing to search for goals"
   />
-  {#if selectedObjectives.length > 0}
+  {#if selectedGoals.length > 0}
     <div class="flex items-center flex-wrap gap-3 userdata">
-      {#each selectedObjectives as objective}
+      {#each selectedGoals as goal}
         <CustomColorPropagator
-          color={resolveObjectiveColor(objective)}
+          color={resolveGoalColor(goal)}
           class="flex items-center gap-2 border border-ccs1 rounded-md px-2 py-1 text-ccs1 bg-ccs5 hover:bg-ccs4"
         >
-          <span>{objective.label || "Untitled"}</span>
+          <span>{goal.label || "Untitled"}</span>
           <Icon
             icon="cross"
             class="text-ccs1 hover:text-ccs2"
-            data-testid={`remove-objective-${objective.id}`}
-            onclick={() => removeObjective(objective.id)}
+            data-testid={`remove-goal-${goal.id}`}
+            onclick={() => removeGoal(goal.id)}
           />
         </CustomColorPropagator>
       {/each}

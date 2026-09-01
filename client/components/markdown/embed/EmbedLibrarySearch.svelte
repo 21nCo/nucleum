@@ -1,11 +1,11 @@
 <script lang="ts">
   import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
-  import { queryLinkingSearchResults } from "@21n/products/memotron/linking/link-search";
 
   let {
     subType,
@@ -18,9 +18,10 @@
   } = $props();
   let searchQuery = $state("");
   let searchRef: TextSearchInput | undefined;
+  const searchStore = new SearchStore();
 
   function searchCallback(searchQuery: string) {
-    return queryLinkingSearchResults(searchQuery, {
+    return searchStore.searchForLinking(searchQuery, {
       resource:
         subType === NodeType.COLLECTION_AS_EMBED
           ? Resource.collection

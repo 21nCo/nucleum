@@ -23,7 +23,6 @@
     <Switch
       on={$isInEditMode}
       size={Size.sm}
-      ariaLabel="Edit mode"
       onChange={(event) => isInEditMode.toggle(event.detail)}
     />
   </div>

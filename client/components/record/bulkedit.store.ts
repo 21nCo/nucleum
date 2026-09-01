@@ -1,12 +1,9 @@
 import type { IRecordId } from "@21n/types/data.type";
-import {
-  ResourceAccessPoint,
-  type IMultiSelectContext
-} from "@21n/data/datafn/resource.type";
+import { type IMultiSelectContext } from "@21n/components/flux/resourceStores/resource.type";
 import {
   isSameResource,
   resourceInList
-} from "@21n/data/datafn/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
 import { stringify } from "@21n/shared-utils/json.utils";
 import { writable, derived, get } from "svelte/store";
 
@@ -36,16 +33,6 @@ const initialState: IBulkEditState = {
 
 const state = writable<IBulkEditState>(initialState);
 
-const selectableAccessPoints = new Set<ResourceAccessPoint>([
-  ResourceAccessPoint.BROWSER,
-  ResourceAccessPoint.LIBRARY,
-  ResourceAccessPoint.COLLECTION,
-  ResourceAccessPoint.OBJECTIVE,
-  ResourceAccessPoint.CALENDAR,
-  ResourceAccessPoint.NODE_LINKS,
-  ResourceAccessPoint.NODE_TRACES
-]);
-
 function isSameContext(
   currentContext: IMultiSelectContext | null,
   newContext: IMultiSelectContext
@@ -55,22 +42,6 @@ function isSameContext(
     stringify(currentContext, { isPreventReplacer: true }) ===
     stringify(newContext, { isPreventReplacer: true })
   );
-}
-
-function resolveVisibleSelectionIds(
-  context: IMultiSelectContext | null
-): IRecordId[] {
-  if (!context || !selectableAccessPoints.has(context.accessPoint)) return [];
-  if (typeof document === "undefined") return [];
-  const ids = Array.from(
-    document.querySelectorAll<HTMLElement>(
-      `div[id^='thumbnail-${context.resource}:'][data-id]`
-    )
-  )
-    .filter((element) => element.getClientRects().length > 0)
-    .map((element) => element.dataset.id)
-    .filter((id): id is IRecordId => !!id);
-  return Array.from(new Set(ids));
 }
 
 export const bulkEditStore = {
@@ -157,18 +128,11 @@ export const bulkEditStore = {
 
   onSelectAll() {
     const currentState = get(state);
-    const visibleSelectionIds = resolveVisibleSelectionIds(
-      currentState.context
-    );
     if (currentState.selectAllHandler) {
       const ids = currentState.selectAllHandler();
-      if (Array.isArray(ids) && ids.length > 0) {
-        this.select(Array.from(new Set(ids)));
-        return;
+      if (Array.isArray(ids)) {
+        this.select(ids);
       }
-    }
-    if (visibleSelectionIds.length > 0) {
-      this.select(visibleSelectionIds);
     }
   },
 

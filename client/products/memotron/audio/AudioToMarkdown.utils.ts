@@ -7,7 +7,7 @@ import {
   type A2MDBlock,
   BlockKeys
 } from "@21n/products/memotron/audio/AudioToMarkdown.type";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
 import { reparse } from "@21n/shared-utils/json.utils";
 class AudioToMarkdown {

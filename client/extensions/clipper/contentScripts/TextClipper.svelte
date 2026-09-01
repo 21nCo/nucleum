@@ -25,7 +25,7 @@
   import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
   import { relayToSidePanel } from "@21n/utils/extension.utils";
   import { activeResourceFilter } from "@21n/utils/utils";
-  import { isRecordId } from "@21n/data/datafn/resource.utils";
+  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
 
   let isShowInlineToolbar: boolean = false;
@@ -357,4 +357,4 @@
   </div>
 {/if}
 
-<svelte:window {onscroll} {onmouseup} />
+<svelte:window onscroll={onscroll} onmouseup={onmouseup} />

@@ -2,25 +2,41 @@ import { attachTimeToDate, formatTime } from "@21n/utils/time.utils";
 import { currentTime } from "@21n/stores/app.store";
 import { userPreferences } from "@21n/components/settings/userPreferences.store";
 import { get } from "svelte/store";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { toasts } from "@21n/stores/notification.store";
 import {
   SessionType,
   type IManualSessionLogForm,
+  type ISessionLog,
   type IManualLogStore,
   type ISessionCapture,
   type ISessionLogCapture
 } from "@21n/products/pointron/logs/log.type";
 import { ObservableStore } from "@21n/stores/client.store";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import { sessionStore } from "@21n/products/pointron/focus/session.store";
 import { BlockType } from "@21n/types/pointron/session.type";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
 import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 import { deepCopy } from "@21n/shared-utils/obj.utils";
-import { datafn } from "@21n/stores/datafn.store";
-import { createSessionItemRelationRefs } from "@21n/products/pointron/logs/session-items.utils";
+
+const defaults = {
+  goalId: "",
+  sessionId: "",
+  taskId: ""
+};
+class SessionLogStore extends ResourceStore<ISessionLog, ISessionLogCapture> {
+  constructor() {
+    super(Resource.sessionLog, {
+      defaultProps: defaults,
+      expandProps: ["goalId", "sessionId"]
+    });
+  }
+}
+
+export const sessionLogStore = SessionLogStore.resolve(Resource.sessionLog);
 
 class ManualLogStore extends ObservableStore<IManualLogStore> {
   constructor() {
@@ -33,7 +49,7 @@ class ManualLogStore extends ObservableStore<IManualLogStore> {
     });
   }
 
-  generateNewLog(objectiveId: string | undefined = undefined) {
+  generateNewLog(goalId: string | undefined = undefined) {
     const userGlobalPreferences = get(userPreferences);
     let newLog: IManualSessionLogForm = {
       startDate: new Date(), //.toISOString().split("T")[0],
@@ -45,15 +61,15 @@ class ManualLogStore extends ObservableStore<IManualLogStore> {
         format: "24"
       })!,
       id: generateSimpleRandomId(),
-      objectiveId: objectiveId ?? "",
+      goalId: goalId ?? "",
       duration: 0
     };
     return newLog;
   }
 
-  addNew(objectiveId?: string) {
+  addNew(goalId?: string) {
     this.update((n) => {
-      let newLog = this.generateNewLog(objectiveId);
+      let newLog = this.generateNewLog(goalId);
       n.manualLogs.push(newLog);
       return n;
     });
@@ -90,7 +106,7 @@ class ManualLogStore extends ObservableStore<IManualLogStore> {
         sessionId: sessionId,
         focus: duration,
         breakTime: 0,
-        objectiveId: entry.objectiveId,
+        goalId: entry.goalId,
         manualEntryId: entry.id
       };
 
@@ -117,6 +133,17 @@ class ManualLogStore extends ObservableStore<IManualLogStore> {
             duration: 0
           }
         ],
+        items: [
+          {
+            id: entry.goalId,
+            blocks: [
+              {
+                start: start.getTime(),
+                end: end.getTime()
+              }
+            ]
+          }
+        ],
         notes: deepCopy(
           entry.notes ?? {
             blocks: []
@@ -128,53 +155,12 @@ class ManualLogStore extends ObservableStore<IManualLogStore> {
       sessionEntries.push(session);
       logEntries.push(log);
     });
-    await datafn.session.mutate(
-      sessionEntries.flatMap((record) => {
-        const log = logEntries.find((log) => log.sessionId === record.id);
-        const relationItems = log?.objectiveId
-          ? [
-              {
-                id: log.objectiveId,
-                blocks: [
-                  {
-                    start: record.startUnix,
-                    end: record.endUnix
-                  }
-                ]
-              }
-            ]
-          : [];
-        return [
-          {
-            operation: "insert",
-            id: record.id,
-            record,
-            context: PointronAction.MANUAL_FOCUS_ENTRY
-          },
-          {
-            operation: "relate",
-            id: record.id,
-            relations: {
-              items: createSessionItemRelationRefs(relationItems)
-            },
-            context: PointronAction.MANUAL_FOCUS_ENTRY
-          }
-        ];
-      })
-    );
-    await datafn.sessionLog.mutate(
-      logEntries.map((record) => ({
-        operation: "insert",
-        id: record.id,
-        record: {
-          objectiveId: "",
-          sessionId: "",
-          taskId: "",
-          ...record
-        },
-        context: PointronAction.MANUAL_FOCUS_ENTRY
-      }))
-    );
+    await sessionLogStore.create(logEntries, {
+      context: PointronAction.MANUAL_FOCUS_ENTRY
+    });
+    await sessionStore.create(sessionEntries, {
+      context: PointronAction.MANUAL_FOCUS_ENTRY
+    });
     sessionStore.addToRecentFocusItems(logEntries);
     this.reset();
     toasts.success("Manual log added successfully");

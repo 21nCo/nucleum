@@ -6,7 +6,7 @@
   import { Size } from "@21n/types/size.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import ResultItem from "@21n/components/commandBar/ResultItem.svelte";
-  import type { IResource } from "@21n/data/datafn/resource.type";
+  import type { IResource } from "@21n/components/flux/resourceStores/resource.type";
   import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
   import { debouncer } from "@21n/utils/utils";
   import { logger } from "@21n/components/debug/logger.client";
@@ -90,8 +90,7 @@
     if (direction === "down") {
       nextIndex = selectedIndex + 1 >= results.length ? 0 : selectedIndex + 1;
     } else if (direction === "up") {
-      nextIndex =
-        selectedIndex - 1 < 0 ? results.length - 1 : selectedIndex - 1;
+      nextIndex = selectedIndex - 1 < 0 ? results.length - 1 : selectedIndex - 1;
     }
     selectedIndex = nextIndex;
   }
@@ -120,7 +119,7 @@
         {@const hierarchy = resolveHierarchy(result)}
         <div class="flex flex-col w-full items-start">
           {#if hierarchy.length > 0}
-            <BreadcrumbMini {hierarchy} />
+            <BreadcrumbMini hierarchy={hierarchy} />
           {/if}
           <TextWithHoverTooltip
             text={resolveLabel(result)}

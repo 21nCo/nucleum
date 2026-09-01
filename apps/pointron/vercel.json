@@ -1,5 +1,4 @@
 {
-  "buildCommand": "npm run build-vercel",
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "status": 404, "dest": "/index.html" }

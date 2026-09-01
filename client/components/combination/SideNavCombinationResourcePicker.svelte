@@ -1,9 +1,9 @@
 <script lang="ts">
   import TextSearchInput from "@21n/client/elements/input/TextSearchInput.svelte";
+  import { SearchStore } from "@21n/client/components/record/record.store";
   import LinkSearchResultItem from "@21n/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { resolveProductResources } from "@21n/data/datafn/resource.utils";
-  import { appStore } from "@21n/stores/app.store";
+
+  const searchStore = new SearchStore();
 
   let { onSelect = undefined }: {
     onSelect?: ((event: CustomEvent<{ item: any }>) => void) | undefined;
@@ -14,21 +14,12 @@
     if (!trimmed) {
       return [];
     }
-    const searchResult = await datafn.search({
-      query: trimmed,
-      resources: resolveProductResources($appStore.product),
-      fields: ["label"],
+    const results = await searchStore.select({
+      searchQuery: trimmed,
       limit: 30,
-      limitPerResource: 30,
-      source: "local",
-      prefix: true,
-      fuzzy: 0.2
+      isExpand: false
     });
-    return (
-      (searchResult as { results?: { data: unknown }[] }).results?.map(
-        (entry) => entry.data
-      ) ?? []
-    );
+    return Array.isArray(results) ? results : [];
   }
 </script>
 

@@ -13,7 +13,6 @@
     label = undefined,
     placeholder = undefined,
     isExpanded = false,
-    testId = undefined,
     onChange = undefined,
     onDebouncedChange = undefined
   }: {
@@ -22,7 +21,6 @@
     label?: InputLabel | undefined;
     placeholder?: string | undefined;
     isExpanded?: boolean;
-    testId?: string | undefined;
     onChange?: ((event: CustomEvent<{ value: number }>) => void) | undefined;
     onDebouncedChange?:
       | ((event: CustomEvent<{ value: number }>) => void)
@@ -79,19 +77,15 @@
   }
 
   function onDebouncedValueChange(value: number) {
-    if (typeof onDebouncedChange !== "function") {
-      return;
-    }
     const debouncedChangeEvent = new CustomEvent("debouncedChange", {
       detail: { value }
     });
-    onDebouncedChange(debouncedChangeEvent);
+    onDebouncedChange?.(debouncedChangeEvent);
   }
 </script>
 
 <FormControlLabelWrapper props={label}>
   <div
-    data-testid={testId}
     class={label?.orientation === Orientation.Vertical
       ? "max-w--md"
       : isExpanded

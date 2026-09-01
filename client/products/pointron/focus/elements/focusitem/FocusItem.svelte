@@ -22,17 +22,17 @@
     ISessionInterval
   } from "@21n/types/pointron/session.type";
   import { resolveTaskFocus } from "@21n/products/pointron/focus/session.utils";
-  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import {
     isSameResource,
     resourceInList,
     shiftResourceInArray
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import FocusTask from "@21n/products/pointron/focus/elements/focusitem/FocusTask.svelte";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
   import { appStore } from "@21n/stores/app.store";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
-  import { resolveObjectiveColor } from "@21n/components/goals/goal.utils";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import { toasts } from "@21n/stores/notification.store";
   import { reorderList } from "@21n/actions/rearrange.action";
   import Icon from "@21n/elements/Icon.svelte";
@@ -40,7 +40,7 @@
   let {
     focusItem,
     tasks = [],
-    objectives = [],
+    goals = [],
     isFocusAddTask = false,
     isInEditMode = false,
     contxt = "current",
@@ -53,14 +53,14 @@
   }: {
     focusItem: IFocusItem;
     tasks?: ITaskThumb[];
-    objectives?: IObjectiveThumb[];
+    goals?: IGoalThumb[];
     isFocusAddTask?: boolean;
     isInEditMode?: boolean;
     contxt?: "current" | "history";
     intervals?: ISessionInterval[];
     focusItemsList?: IFocusItem[];
     onCreateNew?:
-      | ((event: CustomEvent<{ label: string; objectiveId: any }>) => void)
+      | ((event: CustomEvent<{ label: string; goalId: any }>) => void)
       | undefined;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
     onRemove?: ((event: CustomEvent<any>) => void) | undefined;
@@ -69,9 +69,9 @@
   /**
    * Needed if the contxt param is "history"
    */
-  let objective = $derived(objectives.find(resourceInList(focusItem.id)));
-  let color = $derived(resolveObjectiveColor(objective));
-  let tasksUnderObjective = $derived(resolveTaskFocusItems(focusItem));
+  let goal = $derived(goals.find(resourceInList(focusItem.id)));
+  let color = $derived(resolveGoalColor(goal));
+  let tasksUnderGoal = $derived(resolveTaskFocusItems(focusItem));
 
   let parentHierarchy: string[] = [];
   let addTaskInputRef: any;
@@ -83,7 +83,7 @@
   );
 
   let parentHierarchyDerived = $derived(
-    objective?.parent ? objective.parent?.map((x: any) => x.label) : []
+    goal?.parent ? goal.parent?.map((x: any) => x.label) : []
   );
 
   onMount(() => {
@@ -164,9 +164,9 @@
 
   function handleReorderTasks(event: any) {
     const { fromId, toId } = event;
-    if (!objective || !focusItem.tasks) return;
+    if (!goal || !focusItem.tasks) return;
     const reorderTasksEvent = new CustomEvent("reorderTasks", {
-      detail: { fromId, toId, objectiveId: focusItem.id }
+      detail: { fromId, toId, goalId: focusItem.id }
     });
     onReorderTasks?.(reorderTasksEvent);
   }
@@ -177,17 +177,12 @@
     "cursor-move": isInEditMode
   })}
 >
-  {#if (objective &&
-      (!$activeSession.isSessionRunning || isInEditMode) &&
-      contxt === "current") ||
-    (objective && tasksUnderObjective.length > 0)}
+  {#if goal && tasksUnderGoal.length > 0}
     <CustomColorPropagator
       {color}
       class="relative flex items-center gap-2 w-full"
     >
-      <div
-        class="relative flex flex-col gap-2 w-full pb-2 border border-brs3 rounded-md"
-      >
+      <div class="relative flex flex-col gap-2 w-full pb-2 border border-brs3 rounded-md">
         {#if isInEditMode}
           <span class="absolute left-2 top-3">
             <Icon icon="rearrange" class="text-fgs2" />
@@ -211,14 +206,14 @@
             class="notouch:hover:underline active:underline"
             onclick={(e) => {
               e.stopPropagation();
-              appStore.openResource(objective.id, AccessMode.POP);
+              appStore.openResource(goal.id, AccessMode.POP);
             }}
           >
-            {objective.label}
+            {goal.label}
           </button>
         </div>
         <div class="px-2">
-          {#if tasksUnderObjective && tasksUnderObjective.length > 0}
+          {#if tasksUnderGoal && tasksUnderGoal.length > 0}
             <div
               use:reorderList={{
                 listId: `focus-tasks-${focusItem.id}`,
@@ -227,17 +222,12 @@
                 onDrop: handleReorderTasks
               }}
             >
-              {#each tasksUnderObjective as taskFocusItem, index (taskFocusItem.id)}
+              {#each tasksUnderGoal as taskFocusItem, index (taskFocusItem.id)}
                 {@const task = tasks.find(resourceInList(taskFocusItem.id))}
                 {#if task}
                   <div
                     data-index={index}
                     data-id={taskFocusItem.id}
-                    data-testid={`focus-session-item:${taskFocusItem.id}`}
-                    data-current-focus={$currentFocusItem &&
-                    isSameResource(taskFocusItem, $currentFocusItem)
-                      ? "true"
-                      : "false"}
                     draggable={(contxt === "current" &&
                       !$activeSession.isSessionRunning) ||
                       isInEditMode}
@@ -252,7 +242,7 @@
                     />
                   </div>
                 {/if}
-                {#if index < tasksUnderObjective.length - 1}
+                {#if index < tasksUnderGoal.length - 1}
                   <div class="mx-1 border-b border-bgs2" />
                 {/if}
               {/each}
@@ -261,7 +251,7 @@
           {#if (contxt === "current" && !$activeSession.isSessionRunning) || isInEditMode}
             <div class="mx-1 border-b border-bgs2" />
             <AddTodo
-              objectiveId={focusItem.id}
+              goalId={focusItem.id}
               placeholder="Add a task"
               bind:this={addTaskInputRef}
               {onCreateNew}
@@ -279,14 +269,12 @@
             style={ButtonStyle.OUTLINED}
             isPreventMinWidth={true}
             tooltip="Remove"
-            ariaLabel={`Remove ${objective.label}`}
-            testId={`focus-session-remove:${focusItem.id}`}
             onclick={onRemoveClicked}
           />
         </div>
       {/if}
     </CustomColorPropagator>
-  {:else if objective}
+  {:else if goal}
     <CustomColorPropagator
       type="button"
       class={cn(
@@ -311,10 +299,10 @@
           class="notouch:hover:underline active:underline"
           onclick={(e) => {
             e.stopPropagation();
-            appStore.openResource(objective.id, AccessMode.POP);
+            appStore.openResource(goal.id, AccessMode.POP);
           }}
         >
-          {objective.label}
+          {goal.label}
         </button>
       </div>
       {#if isInprogressDerived && contxt == "current" && $currentFocusItem}
@@ -329,7 +317,9 @@
         </div>
       {:else}
         <div class="text-fgs3 text-b3">
-          {formatSeconds(resolveWorkedDuration())}
+          {formatSeconds(
+            resolveWorkedDuration()
+          )}
         </div>
       {/if}
     </CustomColorPropagator>

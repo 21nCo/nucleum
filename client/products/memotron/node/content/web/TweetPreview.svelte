@@ -6,7 +6,7 @@
   import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
   import type { ITweet } from "@21n/products/memotron/node/node.type";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { Persistence } from "@21n/persistence/persistence";
   import TweetPreviewUsingWidget from "@21n/products/memotron/node/content/web/social/TweetPreviewUsingWidget.svelte";
   import account from "@21n/stores/account.store";

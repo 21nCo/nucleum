@@ -16,6 +16,7 @@
     isRewind?: boolean;
   } = $props();
 
+  let isRefreshing = $state(false);
 </script>
 
 <div class="flex flex-col gap-4 h-full w-full">
@@ -23,7 +24,7 @@
   {#if !isRewind}
     <div class="flex flex-col gap-4">
       <Text content="On this day" style={TextStyle.SECTION_HEADING} />
-      <OnThisDayPanel {date} />
+      <OnThisDayPanel {date} {isRefreshing} />
     </div>
   {/if}
   <ScrollViewBottomSpacer />

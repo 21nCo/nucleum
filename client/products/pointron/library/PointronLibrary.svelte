@@ -1,12 +1,19 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Library from "@21n/components/library/Library.svelte";
-  import { Product } from "@21n/products/product.type";
-  import { resolveProductConfig } from "@21n/products/product.config";
 
-  const libraryResources = resolveProductConfig(Product.POINTRON).resources
-    .browse;
+  const isDev = import.meta.env.DEV;
+  function resolveLibraryItems() {
+    const items = [Resource.goal, Resource.task, Resource.collection];
+    if (isDev) {
+      items.push(Resource.event);
+    }
+    return items;
+  }
+
+  const libraryResources = resolveLibraryItems();
 </script>
 
 <Library resources={libraryResources} />

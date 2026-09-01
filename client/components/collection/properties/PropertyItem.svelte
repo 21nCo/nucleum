@@ -15,20 +15,25 @@
     type IPropertyValue,
     type ISelectProperty,
     type IUniversalProperty,
+    manualPropertyTypes,
     PropertyType,
     textPropertyTypes
   } from "@21n/components/collection/properties/property.type";
-  import { type IRecordId } from "@21n/types/data.type";
+  import {
+    PersistenceActionType,
+    type IRecordId
+  } from "@21n/types/data.type";
   import SelectPropertyOption from "@21n/components/collection/properties/selectProperty/SelectPropertyOption.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import {
     resolvePropertyDefaultValue,
-    resolveIsMultiSelectProperty,
     resolveUniversalPropertyOptions
   } from "@21n/components/collection/properties/property.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { resourceInList } from "@21n/data/datafn/resource.utils";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import { debouncer } from "@21n/utils/utils";
   import type { InputLabel } from "@21n/types/input.type";
   import type { ICollectionItem } from "@21n/components/collection/collection.type";
@@ -95,8 +100,6 @@
       Array.isArray(value)
     ) {
       value = "";
-    } else if (resolveIsMultiSelectProperty(property) && !Array.isArray(value)) {
-      value = value ? [value.toString()] : [];
     }
     if (
       !value ||
@@ -131,6 +134,20 @@
     return property.config?.options ?? [];
   }
 
+  function onChangesElsewhere(e: any) {
+    const params = e?.detail?.params;
+    if (!params) return;
+    const { action, record } = params;
+    if (action !== PersistenceActionType.MERGE || !record || !record.properties)
+      return;
+    const { properties } = record;
+    const prop = properties.find(resourceInList(property.id));
+    if (!prop) return;
+    if (prop.value.toString() !== _value?.toString()) {
+      _value = assignDefaultValue(prop.value);
+    }
+  }
+
   function propagateChange() {
     const event = new CustomEvent<any>("change", { detail: _value });
     onChange?.(event);
@@ -147,8 +164,7 @@
 
   function resolveSelectedOption(value: IPropertyValue | null) {
     const option = options.find(
-      (x) =>
-        x.id === value || (value === null && x.id === property.defaultValue)
+      (x) => x.id === value || (value === null && x.id === property.default)
     );
     return option;
   }
@@ -157,14 +173,10 @@
     if (!Array.isArray(value)) return [];
     return value
       .map((entry) => options.find((x) => x.id === entry))
-      .filter((option): option is NonNullable<typeof option> =>
-        Boolean(option)
-      );
+      .filter((option): option is NonNullable<typeof option> => Boolean(option));
   }
 
-  function resolveSelectValue(
-    value: IPropertyValue | null
-  ): string | string[] | null {
+  function resolveSelectValue(value: IPropertyValue | null): string | string[] | null {
     if (typeof value === "string" || Array.isArray(value)) return value;
     return value === null ? null : null;
   }
@@ -231,10 +243,7 @@
         {#if property.type === PropertyType.SINGLE_SELECT}
           {@const selectedOption = resolveSelectedOption(_value)}
           {#if selectedOption}
-            <SelectPropertyOption
-              item={selectedOption}
-              isSelectedContext={true}
-            />
+            <SelectPropertyOption item={selectedOption} isSelectedContext={true} />
           {:else}
             N/A
           {/if}
@@ -301,10 +310,7 @@
       {:else if _value && _value !== "none"}
         {@const selectedOption = resolveSelectedOption(_value)}
         {#if selectedOption}
-          <SelectPropertyOption
-            item={selectedOption}
-            isSelectedContext={true}
-          />
+          <SelectPropertyOption item={selectedOption} isSelectedContext={true} />
         {/if}
       {/if}
     {:else}
@@ -316,8 +322,8 @@
         parentBackgroundIndex={parentBgIndex}
         value={resolveSelectValue(_value)}
         onChange={onSelectChange}
-        {onNewOption}
-        {onConfigChange}
+        onNewOption={onNewOption}
+        onConfigChange={onConfigChange}
       />
     {/if}
   {:else if property.type === PropertyType.DATE}
@@ -332,3 +338,12 @@
     <MetaPropertyItem {property} {item} />
   {/if}
 </div>
+
+{#if !isReadOnlyMode && item?.id && manualPropertyTypes.includes(property.type)}
+  <!-- TODO - use the collection resource type instead of node -->
+  <ComponentBaseLayer
+    subscribeToResource={new Set([Resource.node])}
+    subscribeToRecords={[item.id]}
+    onChange={onChangesElsewhere}
+  />
+{/if}

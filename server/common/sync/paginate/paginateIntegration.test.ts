@@ -5,7 +5,7 @@ import {
   ICloneUpBody,
   ICloneDownPaginateBody
 } from "$lib/shared/types/sync.type";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { SyncProvider, SyncProviderFactory } from "../providers";
 
 describe("Paginate Integration Tests", () => {

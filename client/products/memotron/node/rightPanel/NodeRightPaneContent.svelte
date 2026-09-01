@@ -12,7 +12,7 @@
   import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
   import NodeMetadataPane from "@21n/products/memotron/node/metadata/NodeMetadataPane.svelte";
   import Button from "@21n/elements/button/Button.svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   let {
     node,
     mdId = undefined,

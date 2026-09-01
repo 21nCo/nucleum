@@ -4,21 +4,14 @@
     ISelectValue
   } from "@21n/types/select.type";
   import ResourceSwitcherItem from "@21n/components/library/resourceSwitcher/ResourceSwitcherItem.svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { appStore } from "@21n/stores/app.store";
   import { Product } from "@21n/products/product.type";
   import { resolveProductConfig } from "@21n/products/product.config";
-  import { resolveResourceSwitcher } from "@21n/data/datafn/resource.utils";
+  import { resolveResourceSwitcher } from "@21n/components/flux/resourceStores/resource.utils";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { properCase } from "@21n/shared-utils/text.utils";
-  import {
-    nextProductSectionsPre,
-    nextProductSectionsPost
-  } from "@21n/next/product.config";
-  import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteDataStore } from "@datafn/svelte";
-  import { datafnHeavyComputedSignalOptions } from "@21n/data/datafn/signalCache";
+  import { nextProductSectionsPre, nextProductSectionsPost } from "@21n/next/product.config";
   let {
     resources = [],
     selected = undefined,
@@ -38,13 +31,11 @@
   let selectedValue = $state<Resource | undefined>(undefined);
   const isDev = import.meta.env.DEV;
 
-  let options = $derived(
-    resources.map((x) => {
-      const resource = resourceList.find((y) => y.value === x);
-      if (!resource) return { label: x, value: x, icon: "circle" };
-      return resource;
-    })
-  );
+  let options = $derived(resources.map((x) => {
+    const resource = resourceList.find((y) => y.value === x);
+    if (!resource) return { label: x, value: x, icon: "circle" };
+    return resource;
+  }));
 
   const isProductSection = (value: string): value is Product =>
     Object.values(Product).includes(value as Product);
@@ -54,7 +45,7 @@
     Product.POINTRON,
     ...nextProductSectionsPre,
     Product.MEMOTRON,
-    ...nextProductSectionsPost
+    ...nextProductSectionsPost,
   ].filter(isProductSection);
   $effect(() => {
     selectedValue = selected ?? (options[0]?.value as Resource | undefined);
@@ -75,66 +66,7 @@
   }
 
   function resolveSectionLabel(section: Product) {
-    return (
-      resolveProductConfig(section).librarySectionLabel ?? properCase(section)
-    );
-  }
-
-  const countResources = $derived.by(() => {
-    const items =
-      $appStore.product === Product.NUCLEUM
-        ? sections.flatMap(resolveResourcesForSection)
-        : options;
-    return [
-      ...new Set(
-        items
-          .map((item) =>
-            item.value === Resource.relation ? Resource.linkTag : item.value
-          )
-          .filter((resource): resource is Resource =>
-            [
-              Resource.node,
-              Resource.collection,
-              Resource.space,
-              Resource.objective,
-              Resource.task,
-              Resource.event,
-              Resource.linkTag
-            ].includes(resource as Resource)
-          )
-      )
-    ];
-  });
-  const countStore = $derived.by(() =>
-    toSvelteDataStore(
-      datafn.resourceCountsSignal(
-        {
-          resources: isShowCount ? countResources : [],
-          queriesByResource: {
-            [Resource.node]: {
-              filters: {
-                contentType: { $in: [...rootNodeTypeList] },
-                metaType: { $is_empty: true },
-                creationContext: { $is_empty: true }
-              }
-            },
-            [Resource.objective]: {
-              filters: {
-                parentId: { $is_empty: true }
-              }
-            }
-          }
-        },
-        datafnHeavyComputedSignalOptions
-      ),
-      { initialData: {} }
-    )
-  );
-
-  function resolveCount(resource: Resource) {
-    const countResource =
-      resource === Resource.relation ? Resource.linkTag : resource;
-    return $countStore[countResource] ?? 0;
+    return resolveProductConfig(section).librarySectionLabel ?? properCase(section);
   }
 </script>
 
@@ -155,7 +87,6 @@
             <ResourceSwitcherItem
               {item}
               {isShowCount}
-              count={resolveCount(item.value as Resource)}
               {parentBgIndex}
               isActive={selectedValue === item.value}
               onClick={() => {
@@ -178,7 +109,6 @@
       <ResourceSwitcherItem
         {item}
         {isShowCount}
-        count={resolveCount(item.value as Resource)}
         {parentBgIndex}
         isActive={selectedValue === item.value}
         onClick={() => {

@@ -1,11 +1,11 @@
 import {
   isSameResource,
   resolveProductResources
-} from "@21n/data/datafn/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
 import { ObservableStore } from "@21n/stores/client.store";
 import type { IRecordId } from "@21n/types/data.type";
-import { Resource } from "@21n/data/datafn/resource.enum";
-import { resourceInList } from "@21n/data/datafn/resource.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
 import type { IRecentsStore } from "@21n/components/record/record.type";
 import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
 import { logger } from "@21n/components/debug/logger.client";
@@ -39,7 +39,7 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
         recents = [
           ...recents,
           ...data.flatMap((x) => {
-            const timestamp = resolveTimestamp(x.updatedAt);
+            const timestamp = resolveTimestamp(x.updatedAt ?? x.modifiedAt);
             if (!timestamp) return [];
             return [
               {
@@ -54,6 +54,17 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
         logger.error({ at: "recentsStore.refresh", resource }, error);
       }
     }
+    // const accessLogs = await accessLogStore.selectMany({
+    //   filters: {
+    //     resource: resources,
+    //     action: ResourceActionType.OPEN
+    //   },
+    //   limit: 50,
+    //   orderBy: {
+    //     createdAt: "desc"
+    //   }
+    // });
+    //TODO - fetch records from accessLogs by Id and merge
     this.set({ recents, isInitialized: true });
   }
 
@@ -113,17 +124,22 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
   }
 
   private async recentResources(resource: Resource) {
-    const queryResult = (await datafn.table(resource).query({
+    const datafnResource =
+      resource === Resource.goal
+        ? "objective"
+        : resource === Resource.combination
+          ? "space"
+          : resource.toString();
+    const result = await datafn.table(datafnResource).query({
+      filters: {
+        trashedAt: null,
+        isArchived: false
+      },
       sort: ["-updatedAt"],
-      limit: this.LIMIT,
-      metadata: {
-        includeTrashed: false,
-        includeArchived: false
-      }
-    } as any)) as { data?: any[] };
-    const result = queryResult.data ?? [];
+      limit: this.LIMIT
+    });
     logger.log({ at: "recentResources", resource, result });
-    return result;
+    return result.data;
   }
 }
 

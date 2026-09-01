@@ -20,8 +20,6 @@
     width = "",
     type = ButtonVariant.SECONDARY,
     shortcut = undefined,
-    testId = undefined,
-    ariaLabel = undefined,
     onclick = undefined
   }: {
     icon?: string | undefined;
@@ -32,17 +30,20 @@
     width?: string;
     type?: ButtonVariant;
     shortcut?: string | IKeyboardShortcut | undefined;
-    testId?: string | undefined;
-    ariaLabel?: string | undefined;
     onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
   } = $props();
 
+  
+  
+  
+  
+  
+  
+  
   const id = generateSimpleRandomId();
 </script>
 
 <button
-  aria-label={ariaLabel ?? tooltip}
-  data-testid={testId}
   class={cn(
     "flex gap-1 justify-center h-full w-full items-center",
     width,

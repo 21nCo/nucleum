@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import Text from "@21n/elements/text/Text.svelte";
@@ -19,7 +19,7 @@
   import NodeTitle from "../title/NodeTitle.svelte";
   import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
   import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import WebNodeUrlSegment from "../content/web/WebNodeUrlSegment.svelte";
   import SocialPostActions from "../content/web/SocialPostActions.svelte";
   let { node }: { node: IActiveNodeStore } = $props();
@@ -69,7 +69,7 @@
       {/if}
       <InfoCard
         label="Saved at"
-        value={new Date($node.createdAt).toISOString()}
+        value={$node.createdAt.toISOString()}
         parentBgIndex={0}
         onclick={() => node.switchPanel(ResourcePanelType.METADATA)}
       />
@@ -80,8 +80,8 @@
         onclick={() => node.switchPanel(ResourcePanelType.LINKS)}
       />
       <InfoCard
-      label="Properties"
-      value={$node.propertyValues?.length || 0}
+        label="Properties"
+        value={$node.properties?.length || 0}
         parentBgIndex={0}
         onclick={() => node.switchPanel(ResourcePanelType.PROPERTIES)}
       />

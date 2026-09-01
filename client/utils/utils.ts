@@ -1,6 +1,7 @@
 import type { UserDate } from "@21n/types/userDate.type";
 import { FileSizeMeasurement } from "@21n/types/fileSizeMeasurement.enum";
 import { ActionType } from "@21n/types/action.type";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 
 /**
  * @deprecated - use lib/shared/crypto.utils instead
@@ -212,6 +213,35 @@ export function downloadJson(data: string, label: string | null = null) {
   URL.revokeObjectURL(url);
 }
 /**
+ * TODO - move to surreal.utils
+ * @param response
+ * @param context
+ * @returns
+ */
+export function interceptSurrealResponse(response: any, context: string = "") {
+  // console.log({ context, response });
+  if (!response || !isValidArrayWithData(response)) return null;
+  return checkSurrealResponse(response[0], false);
+}
+export function checkSurrealResponse(
+  response: any,
+  isShowErrMessage: boolean = false
+) {
+  if (response.status === "ERR") {
+    //TODO - removed dependency on notification store and toasts
+    // if (isShowErrMessage)
+    //   toasts.error("Something went wrong. Please try again", "ERR: S001");
+    const pattern = /Database record `.*` already exists/;
+    const match = pattern.test(response.result);
+    if (match) return "Record already exists";
+    else return null;
+  } else if (response.status === "OK" && response.result) {
+    return response.result;
+  } else if (response.result) return response.result;
+  else return response;
+}
+
+/**
  * Used to create a debounced version of a function so that the uneccessary calls to that function can be reduced. Closure is used to remember the previous timer. "this" is used here to remember the context of the func passed and "apply" is used to apply the remembered context.
  * @summary To create a debounced version of a function.
  * @param func the function to be debounced
@@ -228,24 +258,22 @@ export function debouncer(func: any, timeout: number) {
   };
 }
 
-export const isTrashedResource = (x: any) => x?.trashedAt != null;
-
 export const activeResourceFilter = (x: any) =>
-  !x.isArchived && !isTrashedResource(x) && !x.isAncestorInactive;
+  !x.isArchived && !x.trashInformation && !x.isParentInactive;
 
-export const activeResourceFilterIgnoreAncestorInactive = (x: any) =>
-  !x.isArchived && !isTrashedResource(x);
+export const activeResourceFilterIgnoreParentInactive = (x: any) =>
+  !x.isArchived && !x.trashInformation;
 
 export const activeResourceFilterV2 = {
   isArchived: false,
-  trashedAt: { $is_null: true },
-  isAncestorInactive: false
+  trashInformation: false,
+  isParentInactive: false
 };
 
 export const archivedResourceFilter = (x: any) =>
-  x.isArchived && !isTrashedResource(x) && !x.isAncestorInactive;
+  x.isArchived && !x.trashInformation && !x.isParentInactive;
 
-export const nonTrashFilter = (x: any) => !isTrashedResource(x);
+export const nonTrashFilter = (x: any) => !x.trashInformation;
 
 export const textTruncateMapper = (x: string, length: number = 15) =>
   x?.length > length ? x.slice(0, length) + "..." : x;

@@ -6,6 +6,7 @@
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { extractProduct } from "@21n/shared-utils/utils";
   import {
     cleanExtensionSprites,
@@ -21,7 +22,7 @@
   import {
     isRecordId,
     removeDuplicatesFilter
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import { parse } from "@21n/shared-utils/json.utils";
   import { ExtensionStore } from "@21n/extensions/extension.store";
   import { Extension } from "@21n/products/product.type";
@@ -30,6 +31,7 @@
     extention,
     isLoggedIn = $bindable(false),
     product,
+    stores = undefined,
     onLogin = undefined,
     onMount = undefined,
     children = undefined
@@ -38,6 +40,7 @@
     extention: Extension;
     isLoggedIn?: boolean;
     product: { product: string; env: string };
+    stores?: unknown;
     onLogin?: ((event: CustomEvent<{ code: number }>) => void) | undefined;
     onMount?: ((event: CustomEvent<void>) => void) | undefined;
     children?: Snippet | undefined;
@@ -45,9 +48,8 @@
   const currentPage = extractProduct(window.location.hostname);
   const isSelfPage =
     currentPage.product === "memotron" ||
-    (typeof process !== "undefined"
-      ? process.env?.NODE_ENV === "development"
-      : false);
+    (typeof process !== "undefined" ? process.env?.NODE_ENV === "development" : false);
+  void stores;
 
   const sprites = [
     "sprite",
@@ -142,7 +144,7 @@
   export async function onTabUpdate() {
     const token = await resolveToken();
     if (token) {
-      await ExtensionStore.getInstance()?.pullLatest();
+      await ExtensionStore.getInstance()?.syncDown();
     }
     return token;
   }
@@ -163,6 +165,15 @@
         error: e
       });
     }
+  }
+
+  export async function loadInMemoryStore(resource: Resource) {
+    logger.log({
+      at: "ExtensionBaseLayer.loadInMemoryResourceStore",
+      resource
+    });
+    if (!resource) return;
+    await ExtensionStore.getInstance()?.loadInMemoryResourceStore(resource);
   }
 
   async function handleAddToRecents(event: any) {

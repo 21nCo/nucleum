@@ -8,7 +8,7 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import CalendarNotesPanel from "@21n/components/calendar/column/CalendarNotesPanel.svelte";
   import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import { setContext } from "svelte";

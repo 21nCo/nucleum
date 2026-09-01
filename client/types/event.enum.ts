@@ -11,8 +11,20 @@ export enum GlobalEvent {
   NONE = "NONE",
   EVENT = "event",
   SHOW_APPEARANCE_PREVIEW = "SHOW_APPEARANCE_PREVIEW",
+  /**
+   * @deprecated - using flux.terminate and flux.init to load or invalidate stores.
+   */
   USER_LOGIN = "USER_LOGIN",
+  /**
+   * @deprecated - using flux.terminate and flux.init to load or invalidate stores.
+   */
   USER_SIGNUP = "USER_SIGNUP",
+  /**
+   *
+   * @deprecated - using flux.terminate and flux.init to load or invalidate stores.
+   *
+   * Bootstraps the user account - on singup - with seed data and necessary base data
+   */
   BOOTSTRAP = "BOOTSTRAP",
   CUSTOM_NAVIGATION = "custom:navigation",
   PERSIST_APPEARANCE_USER = "PERSIST_APPEARANCE_USER",
@@ -21,7 +33,9 @@ export enum GlobalEvent {
   ENTER = "Enter",
   ESCAPE = "Escape",
   HIDE_POPOVER = "hidePopover",
+  SYNC_DOWN = "syncDown",
   APP_MENU_SWITCHED = "APP_MENU_SWITCHED",
+  MUTATION = "mutation",
   /**
    * @deprecated - using full screen/maximize for resources instead
    */
@@ -35,6 +49,7 @@ export enum GlobalEvent {
   SEARCH_RESULT_KEYDOWN = "searchresultkeydown",
   ADD_TO_RECENTS = "addToRecents",
   TOGGLE_SEARCH_PARAM = "toggleSearchParam",
+  CACHE_UPDATE = "cacheUpdate",
   COLLAPSE_PANEL = "collapsePanel",
   EXPAND_PANEL = "expandPanel",
   INLINE_TOAST = "inlinetoast",

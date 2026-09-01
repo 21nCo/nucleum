@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import { vTrail } from "../topNav/tabs/tabs.store";
   import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   import type { Action } from "@21n/types/action.enum";
   const ITEM_WIDTH =

@@ -1,23 +1,15 @@
 <script lang="ts">
   import { activeSession } from "@21n/products/pointron/focus/session.store";
-  import {
-    SessionCompositionType,
-    type SessionComposition
-  } from "@21n/types/pointron/sessionComposition.type";
+  import { SessionCompositionType } from "@21n/types/pointron/sessionComposition.type";
   import TimeSelector from "@21n/components/TimeSelector.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import { incrementTime } from "@21n/utils/time.utils";
   import ComposeBreak from "@21n/products/pointron/focus/advanced/composition/ComposeBreak.svelte";
   import ComposeTotalsText from "@21n/products/pointron/focus/advanced/composition/ComposeTotalsText.svelte";
-  import { deepCopy } from "@21n/shared-utils/obj.utils";
-  import { advancedCompositionDraft } from "@21n/products/pointron/focus/advanced/composition/advancedCompositionDraft.store";
   export const id: string = "";
   let endTime: Date = new Date(incrementTime(new Date(), 1, true));
-  let hour = $state(endTime.getHours());
-  let minute = $state(endTime.getMinutes());
-  let composition = $state<SessionComposition>(
-    deepCopy(activeSession.get().composition)
-  );
+  let hour: number = endTime.getHours();
+  let minute: number = endTime.getMinutes();
   onChange();
   function resolveEndTime() {
     const endTime = new Date();
@@ -27,23 +19,15 @@
     endTime.setMilliseconds(0);
     return endTime;
   }
-  async function onChange() {
-    composition.type = SessionCompositionType.END_TIME_FIXED;
-    const nextComposition = deepCopy(composition);
-    advancedCompositionDraft.set(nextComposition);
-    await activeSession.modify(
-      {
-        end: resolveEndTime(),
-        composition: nextComposition
-      },
-      { isPersist: false }
-    );
-    activeSession.onComposeComplete(false);
+  function onChange() {
+    $activeSession.end = resolveEndTime();
+    $activeSession.composition.type = SessionCompositionType.END_TIME_FIXED;
+    activeSession.onComposeComplete();
   }
 </script>
 
 <div class="flex flex-col h-full w-full gap-12">
-  <ComposeTotalsText {composition} />
+  <ComposeTotalsText composition={$activeSession.composition} />
   <div class="flex flex-col gap-6 w-full">
     <TimeSelector
       label="Session end time"
@@ -55,7 +39,7 @@
     />
     <ComposeBreak
       onChange={onChange}
-      bind:composition
+      bind:composition={$activeSession.composition}
     />
   </div>
 </div>

@@ -22,14 +22,14 @@
     onDelete?: (() => void) | undefined;
   } = $props();
 
-  let language = $state(body?.language ?? "javascript");
-  let code = $state(body?.text ?? "");
+  let language = body?.language ?? "javascript";
+  let code = body?.text ?? "";
   let codeElement: HTMLElement;
   let textareaElement: HTMLTextAreaElement;
   let containerElement: HTMLDivElement;
-  let isHovering = $state(false);
-  let isEditing = $state(false);
-  let containerHeight = $state("auto");
+  let isHovering: boolean = false;
+  let isEditing: boolean = false;
+  let containerHeight: string = 'auto';
 
   const languages = [
     { label: "ABAP", value: "abap" },
@@ -74,7 +74,7 @@
 
   function highlightCode() {
     if (codeElement && !isEditing) {
-      codeElement.removeAttribute("data-highlighted");
+      codeElement.removeAttribute('data-highlighted');
       hljs.highlightElement(codeElement);
     }
   }
@@ -100,7 +100,7 @@
     updateContainerHeight();
     isEditing = true;
   }
-
+  
   async function handleBlur() {
     isEditing = false;
     await tick();
@@ -111,17 +111,17 @@
     if (containerElement) {
       const currentHeight = containerElement.offsetHeight;
       if (currentHeight > 0) {
-        containerHeight = currentHeight + "px";
+        containerHeight = currentHeight + 'px';
       }
     }
   }
 
   function autoResize() {
     if (textareaElement) {
-      textareaElement.style.height = "auto";
+      textareaElement.style.height = 'auto';
       const newHeight = Math.max(300, textareaElement.scrollHeight);
-      textareaElement.style.height = newHeight + "px";
-      containerHeight = newHeight + "px";
+      textareaElement.style.height = newHeight + 'px';
+      containerHeight = newHeight + 'px';
     }
   }
 
@@ -185,24 +185,22 @@
     </div>
   {/if}
 
-  <div
+  <div 
     bind:this={containerElement}
     class="relative rounded-md overflow-hidden code-container"
     style="min-height: 300px; height: {containerHeight};"
   >
     {#if $mdStore.params?.isReadOnly}
-      <pre class="hljs m-0 p-4 text-sm font-mono leading-relaxed overflow-x-auto h-full"><code
-        bind:this={codeElement}
+      <pre class="hljs m-0 p-4 text-sm font-mono leading-relaxed overflow-x-auto h-full"><code 
+        bind:this={codeElement} 
         class="language-{language || 'plaintext'}"
       >{code}</code></pre>
     {:else if isEditing}
+      <!-- Simple textarea when editing -->
       <textarea
         bind:this={textareaElement}
         bind:value={code}
-        oninput={() => {
-          handleCodeChange();
-          autoResize();
-        }}
+        oninput={() => { handleCodeChange(); autoResize(); }}
         onfocus={handleFocus}
         onblur={handleBlur}
         class="bg-[#1e1e1e] text-[#d4d4d4] p-4 text-sm font-mono leading-relaxed resize-none w-full h-full border-none outline-none rounded-md"
@@ -211,6 +209,7 @@
         style="font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace; min-height: 300px;"
       />
     {:else}
+      <!-- Syntax highlighted view -->
       <button
         type="button"
         class="block h-full w-full cursor-text border-none bg-transparent p-0 text-left"

@@ -1,22 +1,22 @@
 <script lang="ts">
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import ColorPickerMini from "@21n/elements/colorPicker/ColorPickerMini.svelte";
-  import type { IActiveObjectiveStore } from "@21n/components/goals/goal.store";
+  import type { IActiveGoalStore } from "@21n/components/goals/goal.store";
   import {
     AlertType,
     type IInlineStatus
   } from "@21n/types/notification.type";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import { resolveObjectiveSubTypesForSwitcher } from "@21n/components/goals/goal.utils";
+  import { resolveGoalSubTypesForSwitcher } from "@21n/components/goals/goal.utils";
   import { InputStyle } from "@21n/types/input.type";
-  import type { ObjectiveType } from "@21n/components/goals/goal.type";
+  import type { GoalType } from "@21n/components/goals/goal.type";
 
   let {
-    objective,
+    goal,
     control,
     status = $bindable()
   }: {
-    objective: IActiveObjectiveStore;
+    goal: IActiveGoalStore;
     control: "color" | "type";
     status?: IInlineStatus | undefined;
   } = $props();
@@ -26,14 +26,13 @@
       message: "Updating color...",
       type: AlertType.PROGRESS
     };
-    try {
-      await objective.modify({
-        color: +e
-      });
-    } catch {
+    const result = await goal.modify({
+      color: +e
+    });
+    if (!result || result.error) {
       status = {
         type: AlertType.ERROR,
-        message: "Failed to update objective color"
+        message: "Failed to update goal color"
       };
       return;
     }
@@ -50,19 +49,18 @@
     return "Type";
   }
 
-  async function handleTypeChange(e: CustomEvent<ObjectiveType>) {
+  async function handleTypeChange(e: CustomEvent<GoalType>) {
     status = {
       message: "Updating type...",
       type: AlertType.PROGRESS
     };
-    try {
-      await objective.modify({
-        type: e.detail
-      });
-    } catch {
+    const result = await goal.modify({
+      type: e.detail
+    });
+    if (!result || result.error) {
       status = {
         type: AlertType.ERROR,
-        message: "Failed to update objective type"
+        message: "Failed to update goal type"
       };
       return;
     }
@@ -73,22 +71,22 @@
   }
 </script>
 
-{#if (control === "color" && !isValidArrayWithData($objective.parent)) || control !== "color"}
+{#if (control === "color" && !isValidArrayWithData($goal.parent)) || control !== "color"}
   <div
     class="flex flex-col gap-2 border border-brs3 rounded-md px-2 py-1 h-full"
   >
     <span class="text-left text-b2 text-fgs3">{resolveLabel(control)}</span>
     {#if control === "color"}
       <ColorPickerMini
-        bind:hue={$objective.color}
+        bind:hue={$goal.color}
         width="w-full"
         onDebouncedChangeCallback={handleColorChange}
       />
     {:else if control === "type"}
       <div class="my-auto">
         <DropDown
-          items={resolveObjectiveSubTypesForSwitcher()}
-          value={$objective.type}
+          items={resolveGoalSubTypesForSwitcher()}
+          value={$goal.type}
           isDisableSearch={true}
           style={InputStyle.PLAIN}
           onSelect={handleTypeChange}

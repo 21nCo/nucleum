@@ -1,23 +1,14 @@
 import { userPreferences } from "@21n/components/settings/userPreferences.store";
 import { get } from "svelte/store";
+import { nodeStore, vectorResourceStore } from "@21n/products/memotron/node/node.store";
 import { NodeType } from "@21n/products/memotron/node/node.type";
 import { TacoActions } from "@21n/products/memotron/taco/taco.types";
 import { tacoWorker } from "@21n/products/memotron/memotron.utils";
 import { Embed, OperatingSystem } from "@21n/types/context.type";
 import context from "@21n/stores/context.store";
 import { deleteAllLocalModels } from "@21n/products/memotron/taco/taco.utils";
-import { datafn } from "@21n/stores/datafn.store";
-import { Resource } from "@21n/data/datafn/resource.enum";
 
 const dev_isEnableSemanticSearch = false;
-const vectorNodeTypes = [
-  NodeType.NODULAR_MARKDOWN,
-  NodeType.HEADING1,
-  NodeType.HEADING2,
-  NodeType.HEADING3,
-  NodeType.HEADING4,
-  NodeType.HEADING5
-];
 
 export async function initializeTaco() {
   try {
@@ -61,43 +52,36 @@ export async function runVectorGeneration(isRegenerateForAll: boolean = false) {
 
     let nodes;
     if (isRegenerateForAll) {
-      const nodesResult = (await datafn.node.query({
+      nodes = await nodeStore.selectMany({
         filters: {
-          contentType: { $in: vectorNodeTypes }
+          contentType: [
+            NodeType.NODULAR_MARKDOWN,
+            NodeType.HEADING1,
+            NodeType.HEADING2,
+            NodeType.HEADING3,
+            NodeType.HEADING4,
+            NodeType.HEADING5
+          ]
         }
-      } as any)) as { data?: any[] };
-      nodes = nodesResult.data ?? [];
-      const vectors = await datafn.vector.query({ select: ["id"] });
-      const vectorIds = vectors.data?.map((vector: any) => vector.id) ?? [];
-      if (vectorIds.length > 0) {
-        await datafn.vector.mutate(
-          vectorIds.map((id: string) => ({
-            operation: "delete",
-            id
-          }))
-        );
+      });
+      const vectors = await vectorResourceStore.selectMany();
+      for (let vector of vectors) {
+        await vectorResourceStore.delete(vector.id);
       }
-    } else {
-      const vectorsResult = await datafn.vector.query({
-        select: ["resourceId"],
+    } else
+      nodes = await nodeStore.selectMany({
         filters: {
-          resource: Resource.node
+          contentType: [
+            NodeType.NODULAR_MARKDOWN,
+            NodeType.HEADING1,
+            NodeType.HEADING2,
+            NodeType.HEADING3,
+            NodeType.HEADING4,
+            NodeType.HEADING5
+          ],
+          vector: false
         }
-      } as any);
-      const vectorizedNodeIds = new Set(
-        vectorsResult.data
-          ?.map((vector: any) => vector.resourceId)
-          .filter(Boolean) ?? []
-      );
-      const nodesResult = (await datafn.node.query({
-        filters: {
-          contentType: { $in: vectorNodeTypes }
-        }
-      } as any)) as { data?: any[] };
-      nodes = (nodesResult.data ?? []).filter(
-        (node: any) => !vectorizedNodeIds.has(node.id?.toString())
-      );
-    }
+      });
 
     console.log("nodes without vector: ", nodes.length);
     if (nodes.length === 0) return;
@@ -120,14 +104,17 @@ export async function runVectorGeneration(isRegenerateForAll: boolean = false) {
     });
     semanticSearchWorker.onmessage = async (e) => {
       if (e.data.params) {
-        const { vectorRecords } = e.data.params;
-        await datafn.vector.mutate(
-          vectorRecords.map((record: any) => ({
-            operation: "insert",
-            id: record.id,
-            record
-          }))
-        );
+        const { vectorRecords, updatedNodes } = e.data.params;
+        const resp = await vectorResourceStore.create(vectorRecords);
+        /**
+         * the current bulkmodify applies the same value to all nodes, here the requirement for bulkmodify is different values for different nodes. until that store modifcation is done utilizing this temporarily.
+         */
+        for (let node of updatedNodes) {
+          let id = `${node.id.tb}:${node.id.id}`;
+          const noderesp = await nodeStore.modify(id, {
+            vector: node.vector
+          });
+        }
       }
       semanticSearchWorker.terminate();
     };

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type {
     INode,
     INodeLinkThumb
@@ -40,12 +40,12 @@
       {accessPoint}
       {accessPointContext}
       onClick={(event) => {
-        const clickEvent = new CustomEvent<{
-          event: MouseEvent;
-          id: IRecordId;
-        }>("click", {
-          detail: { event, id: item.node.id }
-        });
+        const clickEvent = new CustomEvent<{ event: MouseEvent; id: IRecordId }>(
+          "click",
+          {
+            detail: { event, id: item.node.id }
+          }
+        );
         onClick?.(clickEvent);
       }}
       onLinkTypeSelect={(event) => {

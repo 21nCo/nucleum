@@ -24,8 +24,8 @@
   import TextClip from "@21n/extensions/clipper/sidePanel/clips/TextClip.svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
-  import { determineResourceType } from "@21n/data/datafn/resource.utils";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
@@ -34,7 +34,7 @@
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import NodeTitle from "@21n/products/memotron/node/title/NodeTitle.svelte";
   import { fly } from "svelte/transition";
 
@@ -210,7 +210,7 @@
       message: "Synced!",
       type: AlertType.SUCCESS
     };
-    if (result.clip.propertyValues) clip.propertyValues = result.clip.propertyValues;
+    if (result.clip.properties) clip.properties = result.clip.properties;
   }
 
   async function onLabelChanges(label: string) {
@@ -321,7 +321,10 @@
               />
             {/if}
             {#if isHovered || clip?.links.length || isLinkboxOpened}
-              <LinkActionOnClipper links={clip?.links} bind:isLinkboxOpened />
+              <LinkActionOnClipper
+                links={clip?.links}
+                bind:isLinkboxOpened
+              />
             {/if}
           {/if}
           <ResourceThumbnailContextMenu
@@ -358,7 +361,7 @@
         <LinkItems
           links={clip?.links}
           nodeId={clip.id}
-          propertyValues={clip?.propertyValues}
+          propertyValues={clip?.properties}
           isWrapItems={true}
           isExpandable={true}
           onUnlink={(e) => onLinkAction(e, "unlink")}

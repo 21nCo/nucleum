@@ -9,7 +9,9 @@
   import { ButtonStyle } from "@21n/types/button.type";
   import Icon from "@21n/elements/Icon.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { onMount } from "svelte";
   import {
     AnalyticsCardType,
     type AnalyticsPage
@@ -20,9 +22,9 @@
     determineTimePeriodv2
   } from "@21n/utils/time.utils";
   import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
-  import { datafn } from "@21n/stores/datafn.store";
+  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-  import { toSvelteStore } from "@datafn/svelte";
+  import { logger } from "@21n/components/debug/logger.client";
 
   let {
     id,
@@ -32,101 +34,118 @@
     parentBgIndex?: number;
   } = $props();
 
-  const objectiveStore = toSvelteStore<IObjectiveThumb[]>(
-    datafn.objective.signal({
-      select: ["*", "parent.*", "children.*", "tasks.*"],
-      filters: {
-        id: { $ne: "" }
-      }
-    }),
-    { initialData: [] }
-  );
-  const config = $derived.by(() =>
-    ($analyticsConfigStore.pages ?? []).find((x) => x.id === id)
+  let goals = $state<IGoalThumb[]>([]);
+  let logs = $state<ISessionLog[]>([]);
+  let isLoading = $state(true);
+  let config = $state<AnalyticsPage | undefined>(undefined);
+  let cardsTimePeriods = $state<{ [key: string]: ITimePeriodResolved }>({});
+  let timeRangeForPage = $state<{ begin: number; end: number } | undefined>(
+    undefined
   );
   let cards = $derived(config?.cards ?? []);
-  const pageTimeContext = $derived.by(() => resolvePageTimeContext(cards));
-  const cardsTimePeriods = $derived(pageTimeContext.cardsTimePeriods);
-  const timeRangeForPage = $derived(pageTimeContext.timeRangeForPage);
-  const sessionLogStore = $derived.by(() =>
-    toSvelteStore<ISessionLog[]>(
-      datafn.sessionLog.signal({
-        select: ["id", "startUnix", "objectiveId", "focus", "breakTime"],
-        filters: {
-          startUnix: timeRangeForPage
-            ? {
-                $gte: timeRangeForPage.begin - 24 * 60 * 60,
-                $lte: timeRangeForPage.end + 24 * 60 * 60
-              }
-            : { $gte: 1, $lte: 0 }
-        },
-        sort: ["-startUnix"]
-      }),
-      { initialData: [] }
-    )
-  );
-  const objectives = $derived($objectiveStore.data);
-  const logs = $derived($sessionLogStore.data);
-  const isLoading = $derived(
-    $objectiveStore.loading ||
-      $objectiveStore.refreshing ||
-      $sessionLogStore.loading ||
-      $sessionLogStore.refreshing
-  );
 
   const heightAdjuster = "4.475rem";
 
   async function addCard() {
     analyticsConfigStore.addCard(id);
+    refreshConfig();
   }
 
-  function resolvePageTimeContext(cards: AnalyticsPage["cards"] = []) {
-    const cardsTimePeriods = cards.reduce(
-      (acc, card) => {
-        const timePeriod = determineTimePeriodv2(card.period);
-        acc[card.id] = {
-          begin: resolveUnixTimestamp(timePeriod.begin),
-          end: resolveUnixTimestamp(timePeriod.end),
-          title: timePeriod.title
-        };
-        return acc;
-      },
-      {} as { [key: string]: ITimePeriodResolved }
+  onMount(() => {
+    refreshConfig();
+    void refreshData();
+  });
+
+  /**
+   * Refresh data for the page
+   * 24 hours buffer is added to the time range for the page to accommodate for the timezone offset
+   */
+  async function refreshData() {
+    isLoading = true;
+    goals = await goalStore.selectMany(
+      {},
+      { isIncludeSubItems: true, isExpand: true }
     );
-    let previousPeriods: { [key: string]: number } = {};
-    if (
-      cards.some(
-        (x) =>
-          x.type === AnalyticsCardType.TOP_N ||
-          x.type === AnalyticsCardType.METRICS
-      )
-    ) {
-      const cardsWithPreviousPeriods = cards.filter(
-        (x) =>
-          x.type === AnalyticsCardType.TOP_N ||
-          x.type === AnalyticsCardType.METRICS
+    if (!timeRangeForPage) {
+      logs = [];
+      isLoading = false;
+      return;
+    }
+    logs = await sessionLogStore.selectMany({
+      properties: {
+        select: ["id", "startUnix", "goalId", "focus", "breakTime"]
+      },
+      filters: {
+        startUnix: {
+          greaterThanOrEqual: timeRangeForPage.begin - 24 * 60 * 60,
+          lessThanOrEqual: timeRangeForPage.end + 24 * 60 * 60
+        }
+      },
+      orderBy: {
+        startUnix: "desc"
+      }
+    });
+    isLoading = false;
+  }
+
+  function refreshConfig() {
+    try {
+      const pages = $analyticsConfigStore.pages ?? [];
+      config = pages.find((x) => x.id === id);
+      if (!config) return;
+      const cards = Array.isArray(config.cards) ? config.cards : [];
+      cardsTimePeriods = cards.reduce(
+        (acc, card) => {
+          const timePeriod = determineTimePeriodv2(card.period);
+          acc[card.id] = {
+            begin: resolveUnixTimestamp(timePeriod.begin),
+            end: resolveUnixTimestamp(timePeriod.end),
+            title: timePeriod.title
+          };
+          return acc;
+        },
+        {} as { [key: string]: ITimePeriodResolved }
       );
-      cardsWithPreviousPeriods.forEach((card) => {
-        const timePeriod = determinePreviousTimePeriod(card.period);
-        previousPeriods[card.id] = resolveUnixTimestamp(timePeriod);
-      });
-    }
-    if (cards.length === 0) {
-      return {
-        cardsTimePeriods,
-        timeRangeForPage: undefined
-      };
-    }
-    return {
-      cardsTimePeriods,
-      timeRangeForPage: {
+      let previousPeriods: { [key: string]: number } = {};
+      if (
+        cards.some(
+          (x) =>
+            x.type === AnalyticsCardType.TOP_N ||
+            x.type === AnalyticsCardType.METRICS
+        )
+      ) {
+        const cardsWithPreviousPeriods = cards.filter(
+          (x) =>
+            x.type === AnalyticsCardType.TOP_N ||
+            x.type === AnalyticsCardType.METRICS
+        );
+        cardsWithPreviousPeriods.forEach((card) => {
+          const timePeriod = determinePreviousTimePeriod(card.period);
+          previousPeriods[card.id] = resolveUnixTimestamp(timePeriod);
+        });
+      }
+      if (cards.length === 0) {
+        timeRangeForPage = undefined;
+        return;
+      }
+      timeRangeForPage = {
         begin: Math.min(
           ...Object.values(cardsTimePeriods).map((x) => x.begin),
           ...Object.values(previousPeriods).map((x) => x)
         ),
         end: Math.max(...Object.values(cardsTimePeriods).map((x) => x.end))
-      }
-    };
+      };
+    } catch (error) {
+      logger.error({
+        at: "AnalyticsPageView.svelte - refreshConfig",
+        error
+      });
+    }
+  }
+
+  function onReload() {
+    refreshConfig();
+    void refreshData();
   }
 </script>
 
@@ -140,7 +159,7 @@
     {#each cards as card, index (card.id)}
       <AnalyticsCardView
         {card}
-        {objectives}
+        {goals}
         {logs}
         isPageLoaded={!isLoading}
         timePeriod={cardsTimePeriods[card.id]}
@@ -148,6 +167,8 @@
         pageId={id}
         {parentBgIndex}
         {heightAdjuster}
+        onReload={onReload}
+        onRemoved={() => refreshConfig()}
       />
     {/each}
     {#if $isInEditMode && cards.length < 10}

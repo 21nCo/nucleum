@@ -1,32 +1,54 @@
 <script lang="ts">
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import type { INodeThumb } from "@21n/products/memotron/node/node.type";
   import { Arrangement } from "@21n/types/direction.enum";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import Records from "@21n/components/record/Records.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { time } from "@datafn/client";
-  import { toSvelteStore } from "@datafn/svelte";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
 
   let { date }: { date: Date } = $props();
-  const nodeStore = $derived.by(() => {
+  let isLoading = $state(false);
+  let data = $state<INodeThumb[]>([]);
+
+  $effect(() => {
     if (date) {
-      return toSvelteStore<INodeThumb[]>(
-        datafn.node.signal({
-          select: ["*", "parent.*", "file.*"],
-          temporal: time.day("createdAt", date, { storage: "date" })
-        }),
-        { initialData: [] }
-      );
+      refresh(date);
     }
-    return toSvelteStore<INodeThumb[]>(datafn.emptySignal([]), {
-      initialData: []
-    });
   });
-  const data = $derived.by(() =>
-    [...$nodeStore.data].sort((a, b) => b.createdAt - a.createdAt)
-  );
-  const isLoading = $derived($nodeStore.loading || $nodeStore.refreshing);
+
+  async function refresh(date: Date) {
+    isLoading = true;
+    try {
+      const dateFilter = tzStore.resolveTimePeriodFilter(date, {
+        isReturnAsDateObjectFilter: true
+      });
+      const legacyDateFilter = {
+        greaterThanOrEqual: dateFilter.$gte,
+        lessThanOrEqual: dateFilter.$lte
+      };
+      const result = await nodeStore.selectMany(
+        {
+          filters: {
+            createdAt: legacyDateFilter
+          }
+        },
+        {
+          isExpand: true
+        }
+      );
+      if (isValidArrayWithData(result)) {
+        data = [...result].sort((a, b) => b.createdAt - a.createdAt);
+      } else {
+        data = [];
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      isLoading = false;
+    }
+  }
 </script>
 
 {#if data.length > 0}

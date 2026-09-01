@@ -1,21 +1,12 @@
 <script lang="ts">
   import CheckboxInput from "@21n/elements/toggle/CheckboxInput.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  import {
-    type IProperty,
-    PropertyType
-  } from "@21n/components/collection/properties/property.type";
+  import { type IProperty, PropertyType } from "@21n/components/collection/properties/property.type";
   import EndText from "@21n/components/collection/properties/propertyConfig/EndText.svelte";
   import RatingPropertyConfig from "@21n/components/collection/properties/ratingProperty/config/RatingPropertyConfig.svelte";
   import SelectPropertyConfig from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectPropertyConfig.svelte";
   import UniversalPropertyConfig from "@21n/components/collection/properties/propertyConfig/universalProperty/UniversalPropertyConfig.svelte";
-  let {
-    row,
-    onRowPatch = undefined
-  }: {
-    row: IProperty;
-    onRowPatch?: ((patch: Partial<IProperty>) => void) | undefined;
-  } = $props();
+  let { row }: { row: IProperty } = $props();
   let dev_isEnableDefaultSelection: boolean = false;
   let isPopoverOpen = $state(false);
   let propertyTypesWithConfiguration = [
@@ -34,27 +25,16 @@
     })}
   >
     {#if row.type === PropertyType.SINGLE_SELECT || row.type === PropertyType.MULTI_SELECT}
-      <SelectPropertyConfig
-        property={row}
-        bind:isPopoverOpen
-        onConfigChange={(event) => {
-          const patch = {
-            config: event.detail.config,
-            defaultValue: event.detail.defaultValue
-          };
-          Object.assign(row, patch);
-          onRowPatch?.(patch);
-        }}
-      />
+      <SelectPropertyConfig property={row} bind:isPopoverOpen />
     {:else if row.type === PropertyType.UNIVERSAL}
       <UniversalPropertyConfig property={row} bind:isPopoverOpen />
     {:else if row.type === PropertyType.RATING}
       <RatingPropertyConfig property={row} />
-    {:else if row.type === PropertyType.CHECKBOX && dev_isEnableDefaultSelection && (typeof row.defaultValue === "boolean" || row.defaultValue === null || row.defaultValue === undefined)}
+    {:else if row.type === PropertyType.CHECKBOX && dev_isEnableDefaultSelection && (typeof row.default === "boolean" || row.default === null || row.default === undefined)}
       <span class="flex items-center justify-between w-full">
         <CheckboxInput
-          label={row.defaultValue ? "Checked" : "Unchecked"}
-          bind:checked={row.defaultValue}
+          label={row.default ? "Checked" : "Unchecked"}
+          bind:checked={row.default}
         />
         <EndText text="Default" />
       </span>

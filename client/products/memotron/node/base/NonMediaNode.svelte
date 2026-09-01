@@ -1,7 +1,9 @@
 <script lang="ts">
   import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
-  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
-  import { updateActiveResource } from "@21n/data/datafn/resource.store";
+  import {
+    nodeStore,
+    type IActiveNodeStore
+  } from "@21n/products/memotron/node/node.store";
   import NodeRightPane from "@21n/products/memotron/node/rightPanel/NodeRightPane.svelte";
   import BottomFloat from "@21n/elements/BottomFloat.svelte";
   import NodeTitleBreadcrumbs from "@21n/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
@@ -25,14 +27,14 @@
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
   import { getMdStore } from "@21n/components/markdown/markdown.store";
   import TableOfContents from "@21n/components/markdown/TableOfContents.svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { appStore } from "@21n/stores/app.store";
   import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
@@ -68,7 +70,7 @@
     $node.isInReadOnlyMode ||
       $node.isLocked ||
       $node.isArchived ||
-      $node.trashedAt != null
+      $node.trashInformation !== undefined
   );
 
   function onScroll(e: any) {
@@ -141,7 +143,7 @@
   async function removeCoverPhoto(e: MouseEvent) {
     e.stopPropagation();
     await node.modify({
-      cover: ""
+      cover: undefined
     });
     node.toggleCoverPicker(false);
   }
@@ -282,22 +284,22 @@
                           id={`title-${$node.id}`}
                           size={Size.xl}
                           bind:value={$node.label}
-                          isExperimentalMdInput={true}
-                          style={InputStyle.PLAIN}
-                          placeholder="Node title"
-                          width="w-full"
-                          onDebouncedChange={onLabelChange}
-                          onKeydown={(e) => {
-                            const event = e.detail;
-                            if (event.key === "ArrowDown") {
-                              event.preventDefault();
-                              if ($mdStore.blocks[0].id)
-                                mdStore.focus.set({
-                                  id: $mdStore.blocks[0].id
-                                });
-                            }
-                          }}
-                        />
+                        isExperimentalMdInput={true}
+                        style={InputStyle.PLAIN}
+                        placeholder="Node title"
+                        width="w-full"
+                        onDebouncedChange={onLabelChange}
+                        onKeydown={(e) => {
+                          const event = e.detail;
+                          if (event.key === "ArrowDown") {
+                            event.preventDefault();
+                            if ($mdStore.blocks[0].id)
+                              mdStore.focus.set({
+                                id: $mdStore.blocks[0].id
+                              });
+                          }
+                        }}
+                      />
                       {:else}
                         {$node.label ?? $node.body ?? ""}
                       {/if}
@@ -349,7 +351,7 @@
         <button
           class="flex justify-center items-center gap-2 bg-bgs2 border border-brs3 rounded-md px-4 py-2 shadow-sm hover:bg-bgs3"
           onclick={() => {
-            updateActiveResource($node.id, { isInFocusMode: false });
+            nodeStore.toggleFocusMode($node.id, false);
           }}
         >
           <Icon icon="cross" />

@@ -7,12 +7,11 @@
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import {
-    determineResourceAccessMode,
     determineResourceType,
     isRecordId
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import { resolveResource } from "@21n/components/record/record.store";
   import { appStore } from "@21n/stores/app.store";
@@ -21,19 +20,20 @@
   import { Placement } from "@21n/types/direction.enum";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import { abg, cn } from "@21n/utils/ui.utils";
-  import { onMount, untrack } from "svelte";
-  import { get } from "svelte/store";
+  import { onMount } from "svelte";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { rearrangeOnAxis } from "@21n/actions/rearrange.action";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import context from "@21n/stores/context.store";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
+  import { ResourceActions } from "@21n/components/record/resource.actions";
+  import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
+  import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
   let {
     item,
     isInterimTab = false,
@@ -70,91 +70,41 @@
     }
   ];
   let isActive = $derived(
-    item.toString() === $page.url?.searchParams?.get(AccessMode.POP)
+    item.toString() === $page.url.searchParams.get(AccessMode.POP)
   );
-  const recordStore = $derived.by(() => {
-    if (!isRecordId(item) || resourceType === Resource.unknown)
-      return undefined;
-    return toSvelteStore<unknown[]>(
-      datafn.table(resourceType).signal({
-        filters: { id: item },
-        limit: 1,
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }),
-      { initialData: [] }
-    );
-  });
-
-  $effect(() => {
-    if (!recordStore) return;
-    const record = get(recordStore).data[0];
-    if (record && typeof record === "object") {
-      resource = { ...untrack(() => resource), ...record };
-    }
-  });
-
-  onMount(() => {
-    void initialize();
-
-    async function initialize() {
-      if (isRecordId(item)) {
-        resourceType = determineResourceType(item);
-        action = appStore.resolveAction(resourceType);
-        resource = await resolveResource(item);
-      } else {
-        action = appStore.resolveAction(item);
-        if (action) {
-          resource = {
-            label: action.label,
-            icon: action.icon
-          };
-        }
+  onMount(async () => {
+    if (isRecordId(item)) {
+      resourceType = determineResourceType(item);
+      action = appStore.resolveAction(resourceType);
+      resource = await resolveResource(item);
+    } else {
+      action = appStore.resolveAction(item);
+      if (action) {
+        resource = {
+          label: action.label,
+          icon: action.icon
+        };
       }
     }
   });
 
   function resolveContextMenu() {
-    if (!resource?.id) return contextMenu;
-    const currentMode = determineResourceAccessMode(resource.id);
-    const maxSearchParam = new URLSearchParams(window.location.search).get(
-      AppSearchParam.MAX
-    );
+    const resourceStore = resolveResourceStore(resourceType);
+    if (
+      !resource ||
+      !resourceStore ||
+      !(resourceStore instanceof ResourceStore)
+    )
+      return contextMenu;
+    const resourceActions = new ResourceActions(resource, resourceStore, {
+      accessPoint: ResourceAccessPoint.SELF,
+      accessMode: AccessMode.TAB
+    });
     return [
       ...contextMenu,
       {
         group: "open",
-        items: [
-          {
-            value: "open-as-split",
-            label:
-              currentMode === AccessMode.SPLIT
-                ? "Close split screen"
-                : "Open in split screen",
-            icon:
-              currentMode === AccessMode.SPLIT ? "minus-circle" : "split-screen",
-            callback: async () => {
-              if (currentMode === AccessMode.SPLIT) {
-                appStore.closeResource({
-                  id: resource.id,
-                  accessMode: AccessMode.SPLIT
-                });
-              } else {
-                appStore.openResource(resource.id, AccessMode.SPLIT);
-              }
-            }
-          },
-          {
-            value: "open-in-full-screen",
-            label: maxSearchParam ? "Minimize" : "Maximize",
-            icon: maxSearchParam ? "exitfullscreen" : "fullscreen",
-            callback: async () => {
-              appStore.toggleFullScreen(currentMode, resource.id);
-            }
-          }
-        ]
+        items: [resourceActions.openAsSplit(), resourceActions.maximize()]
       }
     ];
   }
@@ -259,7 +209,7 @@
           size={Size.sm}
           parentBgIndex={2}
           onclick={() => {
-            const backParam = $page.url?.searchParams?.get(AppSearchParam.BACK);
+            const backParam = $page.url.searchParams.get(AppSearchParam.BACK);
             tabs.open(item, backParam ?? undefined);
           }}
         />
@@ -305,3 +255,13 @@
     {/if}
   </div>
 </div>
+
+<ComponentBaseLayer
+  subscribeToRecords={[item]}
+  onChange={(data) => {
+    if ("params" in data && data.params?.record) {
+      const record = data.params.record;
+      resource = { ...resource, ...record };
+    }
+  }}
+/>

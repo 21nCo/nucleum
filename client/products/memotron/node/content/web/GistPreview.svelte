@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import type { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import type { IGist } from "@21n/products/memotron/node/node.type";
   let {
@@ -104,9 +104,8 @@
 
 <style>
   pre {
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-      "Courier New", monospace;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      "Liberation Mono", "Courier New", monospace;
     font-size: 0.875rem;
     line-height: 1.25rem;
     white-space: pre-wrap;

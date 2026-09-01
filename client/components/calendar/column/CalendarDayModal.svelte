@@ -7,8 +7,7 @@
 
   let {
     date = new Date(
-      $page.url?.searchParams?.get(AppSearchParam.DATE) ??
-        new Date().toISOString()
+      $page.url.searchParams.get(AppSearchParam.DATE) ?? new Date().toISOString()
     ),
     scale = TimeScaleUnit.DAY
   }: {

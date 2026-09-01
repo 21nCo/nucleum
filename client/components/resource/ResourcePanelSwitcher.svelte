@@ -8,7 +8,7 @@
   import {
     AccessMode,
     type IResourcePageWithPanels
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/types/size.enum";
   import { ButtonVariant } from "@21n/types/button.type";
   import { appStore } from "@21n/stores/app.store";
@@ -57,20 +57,20 @@
 </script>
 
 <div
-  class={cn("absolute bottom-0 inset-x-0 mx-auto w-fit z-10", {
+  class={cn("fixed bottom-0 inset-x-0 mx-auto w-fit z-10", {
     // "mb-3": $resourceStore.isInFocusMode,
     // "mb-4": !$resourceStore.isInFocusMode
   })}
 >
   <div
     class={cn(
-      "flex flex-col border- border-t border-x border-brs2 border-t--bgs1 shadow-sm rounded-t-md overflow-hidden"
+      "flex flex-col border-t border-x border-brs3 border-t-bgs1 shadow--md rounded--md  overflow-hidden"
     )}
   >
     <div
       class={cn("flex cw:flex-row-reverse  overflow-hidden", {
         "h-8 bg-bgs3": $resourceStore.isInFocusMode,
-        "h-[50px] bg-bgs2": !$resourceStore.isInFocusMode,
+        "h-[50px] bg-bgs1": !$resourceStore.isInFocusMode,
         "rounded--md": !$resourceStore.isInEditMode,
         "rounded-t--md": $resourceStore.isInEditMode
       })}
@@ -92,7 +92,7 @@
         </div>
       {:else}
         <div
-          class="flex cw:border-l border-r border--t border-brs2 text-fgs2 mr-3"
+          class="flex cw:border-l border-r border-t border-brs2 text-fgs2 mr-3"
         >
           <BoxButton
             label="Close"
@@ -135,9 +135,7 @@
               }}
             />
           {:else}
-            <div
-              class="flex items-center bg--bgs3 border--t border-brs2 h-full"
-            >
+            <div class="flex items-center bg--bgs3 border-t border-brs2 h-full">
               <BoxButton
                 icon={isMaximized ? "exitfullscreen" : "fullscreen"}
                 tooltip={isMaximized ? "Minimize" : "Maximize"}
@@ -150,7 +148,6 @@
               {#if contextMenuResolver !== undefined}
                 <div class="flex items-center h-full">
                   <ContextMenuAction
-                    testId="resource-record-context-menu"
                     menuResolver={resolveContextMenu}
                     size={Size.lg}
                     isBoxed={true}

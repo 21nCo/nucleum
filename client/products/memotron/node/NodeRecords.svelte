@@ -13,11 +13,11 @@
   import view from "@21n/stores/view.store";
   import NodeThumbnailTitle from "@21n/products/memotron/node/thumbnail/NodeThumbnailTitle.svelte";
   import type { IRecordId } from "@21n/types/data.type";
-  import { isSameResource } from "@21n/data/datafn/resource.utils";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import { hoverable } from "@21n/actions/hover.action";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IProperty } from "@21n/components/collection/properties/property.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import { BulkEditor } from "@21n/components/record/record.store";
   import { toasts } from "@21n/stores/notification.store";
@@ -52,9 +52,7 @@
     gap?: number;
   } = $props();
 
-  let columns = $derived(
-    Math.max(1, Math.floor(($view.width / 500) * density))
-  );
+  let columns = $derived(Math.max(1, Math.floor(($view.width / 500) * density)));
 
   let rowHeight = 4;
   let gridRef: any;

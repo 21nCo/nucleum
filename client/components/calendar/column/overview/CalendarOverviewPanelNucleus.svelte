@@ -14,7 +14,8 @@
   } = $props();
 </script>
 
+<!-- TODO - combined query for all data -->
 <div class="flex flex-col gap-4 w-full">
-  <CalendarOverviewPanelPointron {date} {isRewind} />
   <MemoryOverviewForTimePeriod {date} {scale} {isRewind} />
+  <CalendarOverviewPanelPointron {date} {isRewind} />
 </div>

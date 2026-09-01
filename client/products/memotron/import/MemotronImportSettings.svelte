@@ -6,7 +6,10 @@
   import context from "@21n/stores/context.store";
   import { ButtonVariant } from "@21n/types/button.type";
   import Table2 from "@21n/elements/table/Table2.svelte";
-  import { TableCellType, type TableColumn } from "@21n/types/table.type";
+  import {
+    TableCellType,
+    type TableColumn
+  } from "@21n/types/table.type";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/types/size.enum";
@@ -15,16 +18,17 @@
   import { preferences } from "@21n/stores/preferences/preferences.store";
   import { type ImportHistoryItem } from "@21n/products/memotron/import/data.type";
   import { enumToString, properCase } from "@21n/shared-utils/text.utils";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import MemotronImportAppList from "@21n/products/memotron/import/MemotronImportAppList.svelte";
   import { Preference } from "@21n/stores/preferences/preferences.type";
   import {
     removeDuplicatesFilter,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import { linker } from "@21n/products/memotron/linking/link.store";
 
-  type ImportHistoryRow = Omit<
+  let importHistoryData: (Omit<
     ImportHistoryItem,
     "source" | "totalRecords" | "status" | "createdAt"
   > & {
@@ -32,9 +36,7 @@
     totalRecords: string;
     status: string;
     createdAt: string;
-  };
-
-  const importHistoryData = $derived(resolveImportHistoryData($preferences));
+  })[] = [];
 
   function handleDeleteImportEntry(importId: string) {
     confirmationNotification.notify({
@@ -64,42 +66,34 @@
         toasts.error("Import already reverted");
         return;
       }
-      const [nodesResult, collectionsResult] = (await datafn.query([
-        {
-          resource: Resource.node,
-          filters: {
-            importId: importId.toString()
-          }
-        },
-        {
-          resource: Resource.collection,
-          filters: {
-            importId: importId.toString()
-          }
+      const nodesResult = await nodeStore.selectMany({
+        filters: {
+          importId: importId.toString()
         }
-      ])) as Array<{ data?: { id: string }[] }>;
+      });
 
-      const nodeIds = (nodesResult.data ?? []).map((node) => node.id);
-      if (nodeIds.length > 0) {
-        await datafn.node.mutate(
-          nodeIds.map((id) => ({
-            operation: "delete",
-            id
-          }))
-        );
-      }
+      const collectionsResult = await collectionStore.selectMany({
+        filters: {
+          importId: importId.toString()
+        }
+      });
 
-      const collectionIds = (collectionsResult.data ?? []).map(
-        (collection) => collection.id
+      const linksResult = await linker.selectMany({
+        filters: {
+          importId: importId.toString()
+        }
+      });
+
+      const nodeIds = nodesResult.map((node: any) => node.id);
+      await nodeStore.deleteMany(nodeIds);
+
+      const collectionIds = collectionsResult.map(
+        (collection: any) => collection.id
       );
-      if (collectionIds.length > 0) {
-        await datafn.collection.mutate(
-          collectionIds.map((id) => ({
-            operation: "delete",
-            id
-          }))
-        );
-      }
+      await collectionStore.deleteMany(collectionIds);
+
+      const linkIds = linksResult.map((link: any) => link.id);
+      await linker.deleteMany(linkIds);
 
       const updatedImports = imports.map((item: ImportHistoryItem) =>
         item.id === importId ? { ...item, status: "REVERTED" } : item
@@ -107,6 +101,7 @@
       preferences.save(Preference.IMPORT_HISTORY, updatedImports);
 
       toasts.success("Import reverted successfully");
+      refreshImportHistory();
     } catch (error) {
       console.error("Error reverting import:", error);
       toasts.error("Failed to revert import");
@@ -153,13 +148,11 @@
     }
   ];
 
-  function resolveImportHistoryData(
-    preferencesData: Record<string, unknown>
-  ): ImportHistoryRow[] {
+  function refreshImportHistory() {
     const imports =
-      (preferencesData?.[Preference.IMPORT_HISTORY] as ImportHistoryItem[]) ||
+      (preferences.resolve(Preference.IMPORT_HISTORY) as ImportHistoryItem[]) ||
       [];
-    return imports
+    importHistoryData = imports
       .filter(removeDuplicatesFilter)
       .sort(
         (a: ImportHistoryItem, b: ImportHistoryItem) =>
@@ -198,11 +191,20 @@
     <div class="flex flex-col w-full flex-grow gap-3">
       <div class="text-left mo:text-b2">Import history</div>
       <div class="flex w-full flex-grow">
-        {#if !importHistoryData || importHistoryData.length === 0}
-          <EmptyStatusView size={Size.sm} subText="No import history found" />
-        {:else}
-          <Table2 {columns} data={importHistoryData} isStyled={true} />
-        {/if}
+        {#await refreshImportHistory()}
+          <EmptyStatusView isLoadingState={true} />
+        {:then}
+          {#if !importHistoryData || importHistoryData.length === 0}
+            <EmptyStatusView size={Size.sm} subText="No import history found" />
+          {:else}
+            <Table2 {columns} data={importHistoryData} isStyled={true} />
+          {/if}
+        {:catch}
+          <EmptyStatusView
+            size={Size.sm}
+            subText="Error loading import history"
+          />
+        {/await}
       </div>
     </div>
     <ScrollViewBottomSpacer />

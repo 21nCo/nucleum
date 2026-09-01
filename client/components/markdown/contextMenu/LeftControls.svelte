@@ -29,7 +29,7 @@
   import {
     AccessMode,
     ResourceActionType
-  } from "@21n/data/datafn/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { Action } from "@21n/types/action.enum";
   import { MemotronEvent } from "@21n/products/memotron/memotron.type";
@@ -38,8 +38,8 @@
   import { popover, tooltip } from "@21n/actions/popover.action";
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "@21n/actions/hover.action";
-  import { downloadNode } from "@21n/products/memotron/node/node.store";
-  import { resolveResourceActionIcon } from "@21n/data/datafn/resource.utils";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import { resolveResourceActionIcon } from "@21n/components/flux/resourceStores/resource.utils";
   import type { IRecordId } from "@21n/types/data.type";
   let {
     block,
@@ -61,9 +61,7 @@
     onAction?:
       | ((event: CustomEvent<{ action: BlockAction; data?: any }>) => void)
       | undefined;
-    onNodularize?:
-      | ((event: CustomEvent<{ id: IRecordId }>) => void)
-      | undefined;
+    onNodularize?: ((event: CustomEvent<{ id: IRecordId }>) => void) | undefined;
     onPopoverVisibility?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
   let isHovering: boolean = false;
@@ -77,12 +75,9 @@
   const isDebugLeftControls = false;
 
   function emitAction(detail: { action: BlockAction; data?: any }) {
-    const event = new CustomEvent<{ action: BlockAction; data?: any }>(
-      "action",
-      {
-        detail
-      }
-    );
+    const event = new CustomEvent<{ action: BlockAction; data?: any }>("action", {
+      detail
+    });
     onAction?.(event);
   }
 
@@ -246,7 +241,7 @@
       callback: async () => {
         const embedBody = resolveEmbedBody(block);
         if (embedBody?.id) {
-          downloadNode(embedBody.id);
+          nodeStore.download(embedBody.id);
         }
       }
     }

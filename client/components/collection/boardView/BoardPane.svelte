@@ -15,10 +15,10 @@
     resolveOptionsForGrouping
   } from "@21n/components/collection/collection.utils";
   import TabCountBadge from "@21n/components/collection/counts/TabCountBadge.svelte";
-  import { resourceInList } from "@21n/data/datafn/resource.utils";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import { logger } from "@21n/components/debug/logger.client";
   import { dropzone } from "@21n/actions/dragAndDrop.action";
-  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
   import CollectionItems from "@21n/components/collection/CollectionItems.svelte";
   let {
@@ -47,9 +47,7 @@
       { isBoardView: true }
     )
   );
-  let _groupData = $derived(
-    filterNodesByPropertyValue(data, view.groupBy, group.value)
-  );
+  let _groupData = $derived(filterNodesByPropertyValue(data, view.groupBy, group.value));
 
   function handleDropForSubGroup(e: any) {
     onDropItem?.(

@@ -9,11 +9,11 @@
   import type { IRecordId } from "@21n/types/data.type";
 
   let {
-    objectiveId,
+    goalId,
     session,
     logs = []
   }: {
-    objectiveId: IRecordId;
+    goalId: IRecordId;
     session: ISessionThumb;
     logs?: ISessionLogThumb[];
   } = $props();
@@ -31,7 +31,7 @@
   class="relative flex items-start pl-6"
   onclick={(e) => {
     appStore.resourceClickHandler(e, session.id, {
-      origin: objectiveId
+      origin: goalId
     });
   }}
 >

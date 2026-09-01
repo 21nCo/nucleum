@@ -16,7 +16,7 @@
     isSameResource,
     removeDuplicatesFilter,
     resourceInList
-  } from "@21n/data/datafn/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   let {
     item,
     isBoxed = false,

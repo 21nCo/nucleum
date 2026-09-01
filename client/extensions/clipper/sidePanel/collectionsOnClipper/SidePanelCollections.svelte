@@ -1,29 +1,23 @@
 <script lang="ts">
-  import { extensionDatafn } from "@21n/extensions/extension.store";
-  import { DatafnExtensionMethod } from "@21n/extensions/extension.store";
-  import { Resource } from "@21n/data/datafn/resource.enum";
-  import {
-    CollectionLayout,
-    CollectionType
-  } from "@21n/components/collection/collection.type";
+  import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
+  import { FluxMethod } from "@21n/components/flux/flux.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { CollectionType } from "@21n/components/collection/collection.type";
   import type { ICollection } from "@21n/components/collection/collection.type";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import { activeResourceFilter } from "@21n/utils/utils";
   import CollectionsList from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/CollectionsList.svelte";
   import CollectionItemsView from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/CollectionItemsView.svelte";
-  import type {
-    CollectionData,
-    CollectionItem
-  } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
+  import type { CollectionData, CollectionItem } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import Badge from "@21n/elements/text/Badge.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { Size } from "@21n/types/size.enum";
   import NewCollectionWizard from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/NewCollectionWizard.svelte";
+  import { collectionStore } from "@21n/components/collection/collection.store";
   import { logger } from "@21n/components/debug/logger.client";
   import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
 
   let {
     currentUrl
@@ -62,67 +56,24 @@
     NodeType.GIST
   ];
 
-  async function queryWebNodesWithCollections() {
-    return (
-      (await extensionDatafn({
-        method: DatafnExtensionMethod.SELECT_MANY,
-        args: {
-          resource: Resource.node,
-          params: {
-            filters: {
-              contentType: { $in: webContentTypes }
-            },
-            select: [
-              "id",
-              "label",
-              "url",
-              "body",
-              "metadata",
-              "contentType",
-              "createdAt",
-              "updatedAt",
-              "collections.#"
-            ]
-          }
-        }
-      })) ?? []
-    );
-  }
-
-  function collectionRowsForNode(node: any, collectionId: string) {
-    return (node.collections ?? []).filter(
-      (row: any) =>
-        (row.to ?? row.out ?? row.id)?.toString() === collectionId.toString()
-    );
-  }
-
-  function latestCollectionUpdatedAt(nodes: any[], collectionId: string) {
-    const timestamps = nodes
-      .flatMap((node) =>
-        collectionRowsForNode(node, collectionId).map(
-          (row: any) =>
-            row.updatedAt ?? row.createdAt ?? node.updatedAt ?? node.createdAt
-        )
-      )
-      .map((value) => new Date(value || 0).getTime())
-      .filter((value) => Number.isFinite(value) && value > 0);
-    return timestamps.length > 0
-      ? new Date(Math.max(...timestamps))
-      : undefined;
-  }
-
   async function loadCollections() {
     try {
       isLoading = true;
-      const allCollections = await extensionDatafn({
-        method: DatafnExtensionMethod.SELECT_MANY,
+      const allCollections = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
         args: {
           resource: Resource.collection,
           params: {}
         }
       });
 
-      const webNodes = await queryWebNodesWithCollections();
+      const allLinks = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.link,
+          params: {}
+        }
+      });
 
       const collectionsWithCounts = await Promise.all(
         (allCollections || [])
@@ -131,23 +82,33 @@
             (collection: ICollection) => collection.resource === Resource.node
           )
           .map(async (collection: ICollection) => {
-            const collectionId = collection.id.toString();
-            const collectionNodes = webNodes.filter(
-              (node: any) =>
-                collectionRowsForNode(node, collectionId).length > 0
+            const collectionLinks = (allLinks || []).filter(
+              (link: any) =>
+                link.out && link.out.toString() === collection.id.toString()
             );
 
-            const lastModified = latestCollectionUpdatedAt(
-              collectionNodes,
-              collectionId
-            );
+            const webContentNodeIds =
+              await getWebContentNodeIds(collectionLinks);
+
+            const lastModified =
+              collectionLinks.length > 0
+                ? new Date(
+                    Math.max(
+                      ...collectionLinks.map((link: any) =>
+                        new Date(
+                          link.modifiedAt || link.createdAt || 0
+                        ).getTime()
+                      )
+                    )
+                  )
+                : undefined;
 
             return {
-              id: collectionId,
+              id: collection.id.toString(),
               label: collection.label || "Untitled Collection",
               avatar: collection.avatar,
               type: collection.type || CollectionType.UNTYPED,
-              itemCount: collectionNodes.length,
+              itemCount: webContentNodeIds.length,
               lastModified
             };
           })
@@ -178,22 +139,68 @@
     }
   }
 
+  async function getWebContentNodeIds(
+    collectionLinks: any[]
+  ): Promise<string[]> {
+    const nodeIds = [
+      ...new Set(collectionLinks.map((link: any) => link.in.toString()))
+    ];
+    if (nodeIds.length === 0) return [];
+    const nodes = await extensionFlux({
+      method: FluxMethod.SELECT_MANY,
+      args: {
+        resource: Resource.node,
+        params: {
+          filters: {
+            id: nodeIds,
+            contentType: webContentTypes
+          }
+        }
+      }
+    });
+
+    return (nodes || []).map((node: any) => node.id.toString());
+  }
+
   async function loadCollectionItems(collection: CollectionData) {
     try {
       isLoadingItems = true;
       selectedCollection = collection;
 
-      const nodes = (await queryWebNodesWithCollections()).filter(
-        (node: any) => collectionRowsForNode(node, collection.id).length > 0
-      );
-      if (nodes.length === 0) {
+      const allLinks = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.link,
+          params: {
+            filters: {
+              out: collection.id
+            }
+          }
+        }
+      });
+
+      const nodeIds = (allLinks || []).map((link: any) => link.in.toString());
+      if (nodeIds.length === 0) {
         collectionItems = [];
         return;
       }
 
+      const nodes = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.node,
+          params: {
+            filters: {
+              id: nodeIds,
+              contentType: webContentTypes
+            }
+          }
+        }
+      });
+
       const sortedNodes = (nodes || []).sort((a: any, b: any) => {
-        const aModified = new Date(a.updatedAt || a.createdAt).getTime();
-        const bModified = new Date(b.updatedAt || b.createdAt).getTime();
+        const aModified = new Date(a.modifiedAt || a.createdAt).getTime();
+        const bModified = new Date(b.modifiedAt || b.createdAt).getTime();
         return bModified - aModified;
       });
 
@@ -225,51 +232,9 @@
 
   async function handleNewCollectionSave(label: string) {
     newCollectionLabel = label;
-    const collectionId = generateResourceId(Resource.collection);
-    const viewId = generateResourceId(Resource.view);
-    await extensionDatafn({
-      method: DatafnExtensionMethod.MUTATION,
-      args: {
-        resource: Resource.view,
-        params: {
-          operation: "insert",
-          id: viewId,
-          record: {
-            id: viewId,
-            layout: CollectionLayout.BOARD,
-            label: "Default",
-            tabBy: "none",
-            groupBy: "none",
-            subGroupBy: "none"
-          }
-        } as any
-      }
-    });
-    const result = await extensionDatafn({
-      method: DatafnExtensionMethod.MUTATION,
-      args: {
-        resource: Resource.collection,
-        params: [
-          {
-            operation: "insert",
-            id: collectionId,
-            record: {
-              id: collectionId,
-              label: newCollectionLabel,
-              type: CollectionType.TYPED,
-              typeToExtend: "",
-              resource: Resource.node
-            }
-          },
-          {
-            operation: "relate",
-            id: collectionId,
-            relations: {
-              views: [{ $ref: viewId, sortOrder: 0 }]
-            }
-          }
-        ] as any
-      }
+    const result = await collectionStore.save({
+      label: newCollectionLabel,
+      resource: Resource.node
     });
     if (result) {
       isHideEmptyCollections = false;
@@ -339,10 +304,7 @@
           onSave={handleNewCollectionSave}
         />
       {/if}
-      <CollectionsList
-        {collections}
-        onCollectionClick={handleCollectionClick}
-      />
+      <CollectionsList {collections} onCollectionClick={handleCollectionClick} />
     {/if}
   {:catch}
     <ErrorStatusPane

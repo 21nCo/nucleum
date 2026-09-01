@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { relay } from ".";
 import { FluxMethod } from "$lib/client/components/flux/flux.type";
 

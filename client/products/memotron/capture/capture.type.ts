@@ -11,12 +11,12 @@ import type {
   CollectionType,
   ICollectionItemPropertyValue
 } from "@21n/components/collection/collection.type";
-import type { Resource } from "@21n/data/datafn/resource.enum";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type {
   IActiveResource,
   IResource,
   IResourceShareable
-} from "@21n/data/datafn/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 
 export enum CaptureMethod {
   MARKDOWN = "MARKDOWN",
@@ -24,7 +24,6 @@ export enum CaptureMethod {
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
   SKETCH = "SKETCH",
-  CANVAS = "CANVAS",
   WEB = "WEB",
   UPLOAD = "UPLOAD",
   SCAN = "SCAN",
@@ -45,7 +44,7 @@ export type ICaptureBase = {
   rootStructure: string[];
   links?: ICaptureLink[];
   propertyConfig?: IProperty[];
-  propertyValues?: ICollectionItemPropertyValue[];
+  properties?: ICollectionItemPropertyValue[];
   /**
    * To trigger refresh of capture page when on appear or reset etc...
    * as change of body object in markdown is not detected by svelte

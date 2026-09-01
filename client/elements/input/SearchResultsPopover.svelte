@@ -4,13 +4,13 @@
   import SearchResultItem from "@21n/elements/input/SearchResultItem.svelte";
   import { debouncer } from "@21n/utils/utils";
   import { cn } from "@21n/utils/ui.utils";
-  import type { IResource } from "@21n/data/datafn/resource.type";
+  import type { IResource } from "@21n/components/flux/resourceStores/resource.type";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import { logger } from "@21n/components/debug/logger.client";
   import Icon from "@21n/elements/Icon.svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { determineResourceType } from "@21n/data/datafn/resource.utils";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
   import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
   type SearchItem = Partial<IResource & Record<string, unknown>>;
 
@@ -43,7 +43,9 @@
     searchResultComponentProps?: Record<string, unknown>;
     shortcutTrigger?: string | undefined;
     shortcutTriggers?: string[];
-    emptyStateLabel?: string | { mainText?: string; subText?: string };
+    emptyStateLabel?:
+      | string
+      | { mainText?: string; subText?: string };
     isPreventDefaultResults?: boolean;
     isInlineContext?: boolean;
     isAlwaysShowSearchFeedback?: boolean;
@@ -98,9 +100,7 @@
       currentValue,
       resultsCount: results.length
     });
-    const selectEvent = new CustomEvent("select", {
-      detail: { item, event: e }
-    });
+    const selectEvent = new CustomEvent("select", { detail: { item, event: e } });
     if (typeof onSelect === "function") {
       onSelect(selectEvent);
     }

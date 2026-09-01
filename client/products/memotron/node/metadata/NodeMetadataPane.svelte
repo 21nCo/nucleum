@@ -4,24 +4,19 @@
   import { cn } from "@21n/utils/ui.utils";
   import { enumToString, formatBytes } from "@21n/shared-utils/text.utils";
   import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
-  import {
-    headingNodeTypes,
-    NodeType,
-    webNodeTypeList
-  } from "@21n/products/memotron/node/node.type";
+  import { headingNodeTypes, NodeType, webNodeTypeList } from "@21n/products/memotron/node/node.type";
   import BasicInfoItem from "@21n/products/memotron/node/metadata/BasicInfoItem.svelte";
   import InfoCard from "@21n/products/memotron/node/metadata/InfoCard.svelte";
 
-  import { ResourceActionType } from "@21n/data/datafn/resource.type";
-  import type { DatafnDateValue } from "@21n/data/datafn/resource.type";
+  import { onMount } from "svelte";
+  import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
   import type { IAccessLog } from "@21n/components/accessLogging/accessLog.type";
   import { page } from "$app/stores";
+  import { logger } from "@21n/components/debug/logger.client";
   import AudioMetadata from "@21n/products/memotron/node/metadata/AudioMetadata.svelte";
   import ImageMetadata from "@21n/products/memotron/node/metadata/ImageMetadata.svelte";
   import LocationProperty from "@21n/components/collection/properties/locationProperty/LocationProperty.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { toDateValue } from "@21n/utils/time.utils";
   let {
     node,
     renderingDetails = undefined
@@ -29,39 +24,8 @@
     node: IActiveNodeStore;
     renderingDetails?: any;
   } = $props();
-  const accessLogStore = $derived.by(() =>
-    toSvelteStore<IAccessLog[]>(
-      $node.id
-        ? datafn.accessLog.signal({
-            filters: {
-              resourceId: $node.id.toString()
-            },
-            select: ["id", "resourceId", "action", "timestamp", "createdAt"]
-          })
-        : datafn.emptySignal([]),
-      { initialData: [] }
-    )
-  );
-  const viewLogs = $derived.by(() =>
-    [...$accessLogStore.data]
-      .filter((x) => x.action === ResourceActionType.OPEN)
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-  );
-  const lastAccessLog = $derived.by(() => {
-    if (viewLogs.length === 0) return undefined;
-    const currentAccess = $node.accessMode + "At";
-    const currentAccessId = $page.url.searchParams.get(currentAccess);
-    if (
-      currentAccessId &&
-      new Date(viewLogs[0].timestamp).getTime() === parseInt(currentAccessId)
-    ) {
-      return viewLogs[1];
-    }
-    return viewLogs[0];
-  });
+  let lastAccessLog: IAccessLog | undefined = undefined;
+  let viewLogs: IAccessLog[] | undefined = undefined;
   let kind = $derived(resolveKind($node.contentType));
   let isMediaNode = $derived(
     $node.contentType !== NodeType.NODULAR_MARKDOWN &&
@@ -94,8 +58,9 @@
     }
   }
 
-  function resolveInfoValue(value: DatafnDateValue | undefined | null) {
-    return toDateValue(value)?.toISOString();
+  function resolveInfoValue(value: Date | string | undefined) {
+    if (!value) return undefined;
+    return value instanceof Date ? value.toISOString() : value;
   }
 
   function resolveFileFormat(fileType: string) {
@@ -117,6 +82,38 @@
     else return "NA";
   }
 
+  onMount(async () => {
+    await initAccessLogs();
+  });
+
+  async function initAccessLogs() {
+    try {
+      const currentAccess = $node.accessMode + "At";
+      const currentAccessId = $page.url.searchParams.get(currentAccess);
+      const accessLogs = await accessLogStore.fetch($node.id);
+      logger.log({
+        at: "NodeMetadataPane.svelte:initAccessLogs",
+        accessLogs
+      });
+      if (accessLogs && accessLogs.length > 0) {
+        viewLogs = accessLogs
+          .filter((x) => x.action === ResourceActionType.OPEN)
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        if (viewLogs.length === 0) return;
+        if (
+          currentAccessId &&
+          new Date(viewLogs[0].timestamp).getTime() ===
+            parseInt(currentAccessId)
+        ) {
+          lastAccessLog = viewLogs[1];
+        } else {
+          lastAccessLog = viewLogs[0];
+        }
+      }
+    } catch (e) {
+      logger.error({ at: "NodeMetadataPane.svelte:initAccessLogs", error: e });
+    }
+  }
 </script>
 
 <div class="flex flex-col gap-3 w-full flex-grow items-start">
@@ -146,7 +143,7 @@
       {#if !isWebNode}
         <BasicInfoItem
           label="Last modified at"
-          value={resolveInfoValue($node.updatedAt)}
+          value={resolveInfoValue($node.modifiedAt)}
         />
       {/if}
     </div>

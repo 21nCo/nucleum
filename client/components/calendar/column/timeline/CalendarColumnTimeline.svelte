@@ -5,21 +5,21 @@
   import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { cn } from "@21n/utils/ui.utils";
   import CalendarColumnTasksPanel from "@21n/components/calendar/column/CalendarColumnTasksPanel.svelte";
-  import CalendarColumnEventsPanel from "@21n/components/calendar/column/CalendarColumnEventsPanel.svelte";
   import { CalendarColumnLayout } from "@21n/components/calendar/calendar.type";
   import DayTimeline from "@21n/components/calendar/column/timeline/daytimeline/DayTimeline.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
-  import { ResourceActionType } from "@21n/data/datafn/resource.type";
-  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
   import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
   import { Size } from "@21n/types/size.enum";
   import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
   import { TimeScaleUnit } from "@21n/types/time.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import BoxButton from "@21n/elements/button/BoxButton.svelte";
-  import { resourceAction } from "@21n/data/datafn/resource.utils";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { Action } from "@21n/types/action.enum";
 
@@ -37,16 +37,10 @@
     onDateChange?: ((event: CustomEvent<Date>) => void) | undefined;
   } = $props();
 
-  let timelinePanelSubItem = $state<"tasks" | "events">(
-    resolveTimlinePanelSelection()
-  );
-  let allDayPanelState = $state<"default" | "collapsed" | "expanded">(
-    "default"
-  );
-  let tasksPanelRef: CalendarColumnTasksPanel | undefined = $state(undefined);
-  const timelinePanelSubItems = $derived(
-    resolveTimelinePanelSubItems($appStore.product)
-  );
+  let timelinePanelSubItem = $state<"tasks" | "events">(resolveTimlinePanelSelection());
+  let allDayPanelState = $state<"default" | "collapsed" | "expanded">("default");
+  let tasksPanelRef: CalendarColumnTasksPanel | undefined = undefined;
+  const timelinePanelSubItems = $derived(resolveTimelinePanelSubItems($appStore.product));
 
   const createNewLabel = $derived(
     timelinePanelSubItem === "tasks" ? "New task" : "New event"
@@ -150,7 +144,6 @@
             icon="plus"
             label={scale === TimeScaleUnit.DAY ? createNewLabel : undefined}
             tooltip={scale !== TimeScaleUnit.DAY ? createNewLabel : undefined}
-            testId="calendar-timeline-create-button"
             shortcut={Action.CREATE}
             onclick={handleCreate}
           />
@@ -198,7 +191,6 @@
                 <Button
                   icon="plus"
                   tooltip={createNewLabel}
-                  testId="calendar-timeline-create-button"
                   onclick={handleCreate}
                   shortcut={Action.CREATE}
                 />
@@ -212,7 +204,11 @@
           {#if timelinePanelSubItem === "tasks"}
             <CalendarColumnTasksPanel {date} bind:this={tasksPanelRef} />
           {:else if timelinePanelSubItem === "events"}
-            <CalendarColumnEventsPanel {date} />
+            <EmptyStatusView
+              mainText="Events"
+              subText="Coming soon..."
+              size={Size.sm}
+            />
           {/if}
         </div>
       {/if}
