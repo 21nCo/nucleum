@@ -32,57 +32,6 @@ class FileStore {
     });
   }
 
-  async select(
-    resourceId: IRecordId,
-    properties?: IResourceSelectProperties,
-    params?: { signal?: AbortSignal }
-  ) {
-    if (isExtensionEnvironment()) {
-      return super.select(resourceId, properties, params);
-    }
-    return datafn.file.select(resourceId.toString(), {
-      select:
-        properties?.select && properties.select.length > 0
-          ? properties.select
-          : undefined,
-      signal: params?.signal
-    }) as Promise<IFile | undefined>;
-  }
-
-  async selectMany(
-    params?: IResourceSelectParams,
-    additionalParams?: IResourceSelectAdditionalParams
-  ) {
-    if (isExtensionEnvironment()) {
-      return super.selectMany(params, additionalParams);
-    }
-    const sort = Object.entries(params?.orderBy ?? {}).map(
-      ([field, direction]) => (direction === "desc" ? `-${field}` : field)
-    );
-    const result = await datafn.file.query({
-      filters: resolveDatafnFilters(params?.filters),
-      select:
-        params?.properties?.select && params.properties.select.length > 0
-          ? params.properties.select
-          : undefined,
-      omit:
-        params?.properties?.omit && params.properties.omit.length > 0
-          ? params.properties.omit
-          : undefined,
-      sort: sort.length > 0 ? sort : undefined,
-      limit: params?.limit,
-      offset: params?.offset,
-      signal: additionalParams?.signal,
-      metadata: {
-        includeArchived:
-          additionalParams?.isIncludeInactiveItems === true ||
-          params?.filters?.isArchived === true,
-        includeTrashed: additionalParams?.isIncludeInactiveItems === true
-      }
-    });
-    return result.data as unknown as IFile[];
-  }
-
   async download(file: IFile | IRecordId | string) {
     logger.log({ at: "fileStore - download", file });
     const defaultErrMessage = "Error downloading file. Please try again.";

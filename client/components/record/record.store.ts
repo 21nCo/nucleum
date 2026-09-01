@@ -1,68 +1,683 @@
-import { Resource } from "@21n/data/datafn/resource.enum";
-import { type IRecordId } from "@21n/types/data.type";
-import { logger } from "@21n/components/debug/logger.client";
-import { toasts } from "@21n/stores/notification.store";
 import {
-  onNodeArchive,
-  onNodeTrash,
-  onNodeUnarchive
-} from "@21n/products/memotron/node/node.store";
+  headingNodeTypes,
+  NodeType,
+  rootNodeTypeList,
+  type INode
+} from "@21n/products/memotron/node/node.type";
+import { activeResourceFilter, activeResourceFilterV2 } from "@21n/utils/utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { isValidString } from "@21n/shared-utils/text.utils";
+import {
+  SearchType,
+  type IRecordId,
+  type IResourceSelectFilters,
+  type IResourceSelectOrderBy,
+  type IResourceSelectParams,
+  type IResourceSelectProperties
+} from "@21n/types/data.type";
+import { flux } from "@21n/components/flux/flux";
+import { logger } from "@21n/components/debug/logger.client";
+import {
+  isValidArray,
+  isValidArrayWithData
+} from "@21n/shared-utils/obj.utils";
+import { toasts } from "@21n/stores/notification.store";
+import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "@21n/components/flux/flux.type";
+import type { CollectionType } from "@21n/components/collection/collection.type";
+import { collectionStore } from "@21n/components/collection/collection.store";
+import { nodeStore } from "@21n/products/memotron/node/node.store";
+import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import type { BulkEditStore } from "@21n/components/record/bulkedit.store";
 import { appStore } from "@21n/stores/app.store";
-import { determineResourceType } from "@21n/data/datafn/resource.utils";
-import { datafn } from "@21n/stores/datafn.store";
-import type { NucleumDatafnResource } from "@21n/shared-data/datafn";
+import { linker } from "@21n/products/memotron/linking/link.store";
+import {
+  highlightSearchQuery,
+  searchSort
+} from "@21n/products/memotron/memotron.utils";
+import {
+  determineResourceType,
+  isSameResource,
+  removeDuplicatesFilter,
+  resolveProductResources,
+  resourceInList
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { recentsStore } from "@21n/components/record/recent.store";
+import { get } from "svelte/store";
+import { resolveCollectionResource } from "@21n/components/collection/collection.utils";
+import { goalStore } from "@21n/components/goals/goal.store";
 import { Action } from "@21n/types/action.enum";
+import { taskStore } from "@21n/components/tasks/task.store";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-import { LinkType } from "@21n/products/memotron/linking/link.type";
+import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { parse } from "@21n/shared-utils/json.utils";
+import { contentTypeSort } from "@21n/products/memotron/node/node.utils";
 
-function normalizeEventRecord<T extends Record<string, any>>(record: T): T {
-  const label = record.label ?? record.event ?? "New event";
-  return {
-    ...record,
-    event: record.event ?? label,
-    label,
-    startUnix: record.startUnix ?? record.value?.startUnix,
-    endUnix: record.endUnix ?? record.value?.endUnix
-  };
-}
+const resolveSearchPriority = (item: any) => {
+  if (isValidString(item?.labelSearch)) return 0;
+  if (isValidString(item?.bodySearch)) return 1;
+  return 2;
+};
 
-function normalizeResourceRecord(resource: Resource, record: Record<string, any>) {
-  return resource === Resource.event ? normalizeEventRecord(record) : record;
+const combinedSearchSort = (a: any, b: any) => {
+  const priorityDiff = resolveSearchPriority(a) - resolveSearchPriority(b);
+  if (priorityDiff !== 0) return priorityDiff;
+
+  const contentTypeDiff = contentTypeSort(a, b);
+  if (contentTypeDiff !== 0) return contentTypeDiff;
+
+  return searchSort(a, b);
+};
+
+function hasSelectMany(
+  store: ReturnType<typeof resolveResourceStore>
+): store is ResourceStore<any, any> {
+  return Boolean(store && "selectMany" in store);
 }
 
 export const MAX_FILE_SIZE_MB = 100;
 
-function isCollectionItemResource(resource: Resource) {
-  return resource === Resource.node || resource === Resource.objective;
-}
-
-function isLinkableResource(resource: Resource) {
-  return (
-    resource === Resource.node ||
-    resource === Resource.objective ||
-    resource === Resource.task ||
-    resource === Resource.event
-  );
-}
-
 export function resolveResource(id: IRecordId) {
-  const resource = determineResourceType(id);
-  return datafn
-    .table(resource as any)
-    .query({
-      filters: { id },
-      limit: 1,
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
+  return flux.select(id);
+}
+
+function resolveSearchProperties(resource: Resource) {
+  switch (resource) {
+    case Resource.node:
+      return ["label", "text", "notes"];
+    default:
+      return ["label"];
+  }
+}
+
+export class SearchStore {
+  resource: Resource = Resource.everything;
+  collectibleResource: Resource[] | undefined;
+  searcheableResources: Resource[] | undefined;
+  resourceStore: ResourceStore<any, any> | undefined;
+  /**
+   * Test run for pre filtering by loading all records first into memory - then querying only the filtered records for expansion like joins.
+   */
+  isPreFilterBeforeExpand: boolean = false;
+  constructor(resource: Resource = Resource.everything) {
+    this.resource = resource;
+    const product = get(appStore).product;
+    this.searcheableResources = resolveProductResources(product);
+    this.collectibleResource = resolveCollectionResource(product);
+    if (resource !== Resource.everything) {
+      this.setResourceStore(resource);
+    }
+  }
+
+  setResourceStore(resource: Resource) {
+    const store = resolveResourceStore(resource);
+    this.resourceStore = hasSelectMany(store) ? store : undefined;
+  }
+
+  levenshteinDistance(a: string, b: string): number {
+    const matrix = [];
+
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
       }
-    } as any)
-    .then((result: any) =>
-      result.data?.[0]
-        ? normalizeResourceRecord(resource, result.data[0])
-        : undefined
-    );
+    }
+
+    return matrix[b.length][a.length];
+  }
+
+  async select(params: {
+    resource?: Resource;
+    searchQuery?: string;
+    limit?: number | undefined;
+    offset?: number;
+    orderBy?: IResourceSelectOrderBy | undefined;
+    filters?: IResourceSelectFilters;
+    searchType?: SearchType;
+    semanticSearchTopK?: number | undefined;
+    isIncludeSubItems?: boolean;
+    isIgnoreParentInactive?: boolean;
+    isExpand?: boolean;
+    properties?: IResourceSelectProperties;
+    isIncludeMetaItems?: boolean;
+    signal?: AbortSignal;
+    isStrictSearch?: boolean;
+  }) {
+    this.resource = params.resource ?? this.resource;
+    logger.log({
+      at: "SearchStore.refresh",
+      params
+    });
+
+    let data: any;
+    const selectParams: IResourceSelectParams = {
+      properties: params.properties,
+      filters: params.filters,
+      search: isValidString(params.searchQuery)
+        ? {
+            query: params.searchQuery!,
+            properties: resolveSearchProperties(this.resource),
+            type: params.searchType
+          }
+        : undefined,
+      limit: params.limit ?? params.semanticSearchTopK,
+      offset: params.offset,
+      orderBy: params.orderBy ?? {
+        modifiedAt: "desc"
+      }
+    };
+    if (this.resource === Resource.everything && this.searcheableResources) {
+      data = (
+        await Promise.all(
+          this.searcheableResources.map(async (resource) => {
+            const resourceSelectParams: IResourceSelectParams = {
+              ...selectParams,
+              search: isValidString(params.searchQuery)
+                ? {
+                    ...(selectParams.search ?? {}),
+                    query: params.searchQuery!,
+                    properties: resolveSearchProperties(resource)
+                  }
+                : undefined
+            };
+
+            this.setResourceStore(resource);
+            const result = await this.resourceStore?.selectMany(
+              resourceSelectParams,
+              {
+                isIncludeSubItems: params.isIncludeSubItems,
+                isExpand: params.isExpand ?? true,
+                isIgnoreParentInactive: params.isIgnoreParentInactive,
+                isIncludeMetaItems: params.isIncludeMetaItems
+              }
+            );
+            return Array.isArray(result) ? result : [];
+          })
+        )
+      ).flat();
+    } else {
+      this.setResourceStore(this.resource);
+      if (this.isPreFilterBeforeExpand && this.resource === Resource.node) {
+        const allRecords = await this.resourceStore?.selectMany(
+          {
+            properties: {
+              select: [
+                "id",
+                "isArchived",
+                "trashInformation",
+                "contentType",
+                "isStarred"
+              ]
+            }
+          },
+          {
+            isQueryAsIs: true
+          }
+        );
+
+        const activeRecords = allRecords
+          .filter((x: any) => rootNodeTypeList.includes(x.contentType))
+          .filter((x: any) =>
+            params.filters?.isStarred ? x.isStarred === true : true
+          )
+          .filter((x: any) => {
+            if (params.filters?.isArchived) {
+              return x.isArchived === true;
+            }
+            return true;
+          })
+          .slice(
+            params.offset ?? 0,
+            (params.offset ?? 0) + (params.limit ?? 50)
+          );
+        data = await this.resourceStore?.selectMany(
+          {
+            filters: {
+              id: activeRecords.map((x: INode) => x.id?.toString())
+            }
+          },
+          {
+            isQueryAsIs: true,
+            isExpand: true
+          }
+        );
+      } else {
+        data = await this.resourceStore?.selectMany(selectParams, {
+          isIncludeSubItems: params.isIncludeSubItems,
+          isIgnoreParentInactive: params.isIgnoreParentInactive,
+          isExpand: params.isExpand ?? true,
+          isIncludeMetaItems: params.isIncludeMetaItems
+        });
+      }
+    }
+    // console.log({ at: "record.store.ts - select - " + this.resource, data });
+    // console.timeEnd("record.store.ts - select - " + this.resource);
+    if (isValidArray(data)) {
+      if (isValidString(params.searchQuery)) {
+        data = highlightSearchQuery(data, params.searchQuery!);
+        if (params.isStrictSearch) {
+          data = data.filter(
+            (x: unknown) =>
+              typeof x === "object" &&
+              x &&
+              (("labelSearch" in x && x.labelSearch) ||
+                ("bodySearch" in x && x.bodySearch))
+          );
+        }
+        data = data.sort(combinedSearchSort);
+      }
+      return data;
+    } else {
+      toasts.error("An error occurred while fetching data.");
+      return [];
+    }
+  }
+
+  starred() {
+    return flux.selectMany(this.resource, {
+      filters: {
+        ...activeResourceFilterV2,
+        isStarred: true
+      },
+      orderBy: {
+        modifiedAt: "desc"
+      }
+    });
+  }
+
+  /**
+   *
+   * @param query
+   * @returns
+   */
+  async searchForLinking(
+    query: string,
+    params?: {
+      resource?: Resource;
+      subType?: NodeType | CollectionType;
+      collectionResource?: Resource[];
+      exclude?: IRecordId[];
+    }
+  ) {
+    logger.log({ at: "searchForLinking", query, params });
+    const timerLabel = `searchForLinking:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+    console.time(timerLabel);
+    const collectionResource =
+      params?.collectionResource ?? this.collectibleResource;
+    if (!isValidString(query)) {
+      let items = [];
+      if (params?.resource) {
+        items = recentsStore.resolve({
+          type: params?.resource,
+          exclude: params?.exclude
+        });
+      } else {
+        const recentNodes = recentsStore.resolve({
+          type: Resource.node,
+          exclude: params?.exclude
+        });
+        const recentCollections = recentsStore.resolve({
+          type: Resource.collection,
+          exclude: params?.exclude
+        });
+        items = [...recentNodes, ...recentCollections];
+      }
+      if (params?.subType && params.resource === Resource.node) {
+        items = items.filter((x) => x.contentType === params.subType);
+      } else if (params?.subType && params.resource === Resource.collection) {
+        items = items.filter((x) => x.type === params.subType);
+      }
+      if (params?.resource === Resource.collection && collectionResource) {
+        items = items.filter((x) => collectionResource.includes(x.resource));
+      }
+      console.timeEnd(timerLabel);
+      return items;
+    }
+    let nodes: INode[] = [];
+    if (params?.resource === Resource.node || !params?.resource) {
+      nodes = await flux.selectMany(Resource.node, {
+        properties: {
+          expand: ["parent"]
+        },
+        filters: {
+          contentType: params?.subType
+            ? [params.subType]
+            : [...rootNodeTypeList, ...headingNodeTypes],
+          ...activeResourceFilterV2
+        },
+        search: isValidString(query)
+          ? {
+              properties: ["label", "text"],
+              query
+            }
+          : undefined,
+        limit: isValidString(query) ? 100 : 50,
+        orderBy: !isValidString(query)
+          ? {
+              modifiedAt: "desc"
+            }
+          : undefined
+      });
+      if (nodes && isValidArrayWithData(nodes)) {
+        try {
+          const parentIds: IRecordId[] = Array.from(
+            new Set(
+              nodes
+                .flatMap((x) =>
+                  x?.mdParent && Array.isArray(x.mdParent)
+                    ? (x.mdParent as IRecordId[])
+                    : []
+                )
+                .filter(Boolean) as IRecordId[]
+            )
+          );
+          const parentItems = await nodeStore.selectMany({
+            properties: {
+              select: ["label", "id", "body"]
+            },
+            filters: {
+              contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN],
+              id: parentIds?.map((x) => x.toString())
+            }
+          });
+          nodes = nodes.map((x: INode) => {
+            if (!("mdParent" in x) || !Array.isArray(x.mdParent)) return x;
+            const parents = x.mdParent
+              .map((y: IRecordId) => parentItems.find(resourceInList(y)))
+              .filter(Boolean) as INode[];
+            return {
+              ...x,
+              mdParent: parents
+            } as any;
+          });
+        } catch (e) {
+          logger.error({ at: "searchForLinking - parentItems", error: e });
+        }
+      }
+    }
+    let collections = [];
+    if (params?.resource === Resource.collection || !params?.resource) {
+      collections = await flux.selectMany(Resource.collection, {
+        filters: {
+          ...activeResourceFilterV2,
+          ...((params?.collectionResource?.length ?? 0) > 0 ||
+          (this.collectibleResource?.length ?? 0) > 0
+            ? {
+                resource:
+                  (params?.collectionResource?.length ?? 0) > 0
+                    ? params?.collectionResource
+                    : this.collectibleResource
+              }
+            : {})
+        },
+        search: isValidString(query)
+          ? {
+              properties: ["label"],
+              query
+            }
+          : undefined
+      });
+    }
+    let data = [...(nodes ?? []), ...(collections ?? [])];
+    if (isValidString(query) && isValidArray(data)) {
+      data = highlightSearchQuery(data, query);
+      data = data.filter((x) => x.labelSearch || x.bodySearch);
+      data = data.sort(combinedSearchSort);
+    }
+    if (params?.exclude) {
+      data = data.filter((x) => !params.exclude?.some(resourceInList(x.id)));
+    }
+    console.timeEnd(timerLabel);
+    return data;
+  }
+
+  async searchForLinkingOnExtension(query: string, resource?: Resource) {
+    let nodes = [];
+    const isValidSearchQuery = isValidString(query);
+    if (resource === Resource.node || !resource) {
+      nodes = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.node,
+          params: {
+            filters: {
+              contentType: [...rootNodeTypeList, ...headingNodeTypes]
+            },
+            search: isValidSearchQuery
+              ? {
+                  properties: ["body", "label", "text"],
+                  query
+                }
+              : undefined,
+            limit: 100,
+            orderBy: isValidSearchQuery
+              ? undefined
+              : {
+                  modifiedAt: "desc"
+                }
+          }
+        }
+      });
+    }
+    let collections = [];
+    if (resource === Resource.collection || !resource) {
+      collections = await extensionFlux({
+        method: FluxMethod.SELECT_MANY,
+        args: {
+          resource: Resource.collection,
+          params: {
+            filters: {
+              resource: Resource.node
+            },
+            search: isValidSearchQuery
+              ? {
+                  properties: ["label"],
+                  query
+                }
+              : undefined,
+            limit: 100,
+            orderBy: isValidSearchQuery
+              ? undefined
+              : {
+                  modifiedAt: "desc"
+                }
+          }
+        }
+      });
+    }
+    let recentItemsArray = [];
+    if (!isValidSearchQuery) {
+      try {
+        const recentItems = await clientStorage.get(ClientStorageKey.RECENTS);
+        recentItemsArray = recentItems ? parse(recentItems) : [];
+        if (recentItemsArray.length > 0) {
+          recentItemsArray = recentItemsArray.filter((x: any) => {
+            const itemResourceType = determineResourceType(x.id);
+            return (
+              itemResourceType === resource ||
+              (!resource &&
+                (itemResourceType === Resource.node ||
+                  itemResourceType === Resource.collection))
+            );
+          });
+        }
+      } catch (e) {
+        logger.error({
+          at: "searchForLinkingOnExtension - recentItems",
+          error: e
+        });
+      }
+    }
+    let data = [...recentItemsArray, ...(nodes ?? []), ...(collections ?? [])]
+      .filter(activeResourceFilter)
+      .filter(removeDuplicatesFilter);
+    if (isValidString(query) && isValidArray(data)) {
+      data = highlightSearchQuery(data, query);
+      data = data.filter((x) => x.labelSearch || x.bodySearch);
+      data = data.sort(combinedSearchSort);
+    }
+    return data;
+  }
+
+  async resolveCount(params?: {
+    resource?: Resource;
+    subType?: NodeType | CollectionType;
+    filters?: IResourceSelectFilters;
+    signal?: AbortSignal;
+  }) {
+    try {
+      if (params?.signal?.aborted) {
+        throw new Error("Operation aborted");
+      }
+
+      logger.log({
+        at: "resolveCount",
+        params
+      });
+      let resource = params?.resource ?? this.resource;
+      if (resource === Resource.node) {
+        const result = await flux.selectMany(
+          resource,
+          {
+            properties: {
+              select: ["#"]
+            },
+            filters: {
+              ...activeResourceFilterV2,
+              ...(params?.filters ?? {}),
+              isArchived: params?.filters?.isArchived ?? false,
+              contentType: params?.subType
+                ? [params.subType]
+                : [...rootNodeTypeList],
+              metaType: false,
+              creationContext: params?.subType ? undefined : false
+            }
+          },
+          {
+            signal: params?.signal
+          }
+        );
+        return result && typeof result === "number" ? result : 0;
+      } else if (
+        resource === Resource.collection ||
+        resource === Resource.combination ||
+        resource === Resource.goal ||
+        resource === Resource.task ||
+        resource === Resource.relation
+      ) {
+        if (resource === Resource.relation) resource = Resource.linkTag;
+        this.setResourceStore(resource);
+        const selectParams: IResourceSelectParams = {
+          properties: {
+            select: ["#"]
+          },
+          filters: {
+            ...activeResourceFilterV2,
+            ...(params?.filters ?? {}),
+            ...(resource === Resource.collection && this.collectibleResource
+              ? {
+                  resource: this.collectibleResource
+                }
+              : {}),
+            isArchived: params?.filters?.isArchived ?? false,
+            ...(params?.subType
+              ? {
+                  type:
+                    resource === Resource.goal
+                      ? params.subType
+                      : [params.subType]
+                }
+              : {})
+          }
+        };
+        const result = await this.resourceStore?.selectMany(selectParams, {
+          signal: params?.signal
+        });
+        logger.log({
+          at: "SearchStore.resolveCount",
+          resource,
+          result,
+          resourceStore: this.resourceStore
+        });
+        // const resultOld = await flux.selectMany(resource, selectParams);
+        return result && typeof result === "number" ? result : 0;
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message === "Operation aborted") {
+        logger.log({ at: "resolveCount - aborted", e });
+        throw e;
+      }
+      logger.error({ at: "resolveCount", error: e });
+      return 0;
+    }
+  }
+
+  resolveSubTypeCounts(
+    resource: Resource,
+    additionalFilters?: any,
+    signal?: AbortSignal
+  ) {
+    try {
+      if (resource === Resource.node) {
+        return flux.selectMany(
+          resource,
+          {
+            properties: {
+              select: ["#"]
+            },
+            filters: {
+              ...activeResourceFilterV2,
+              ...additionalFilters,
+              metaType: false
+            },
+            groupBy: ["contentType"]
+          },
+          {
+            signal
+          }
+        );
+      } else if (
+        resource === Resource.collection ||
+        resource === Resource.combination ||
+        resource === Resource.task
+      ) {
+        return flux.selectMany(
+          resource,
+          {
+            properties: {
+              select: ["#"]
+            },
+            filters: { ...activeResourceFilterV2, ...additionalFilters },
+            groupBy: ["type"]
+          },
+          {
+            signal
+          }
+        );
+      }
+    } catch (e) {
+      logger.error({ at: "resolveSubTypeCounts", error: e });
+      return [];
+    }
+  }
 }
 
 export class BulkEditor {
@@ -77,64 +692,35 @@ export class BulkEditor {
   }
 
   async bulkUnlink(items: IRecordId[], accessPointId: IRecordId) {
-    const accessPointResource = determineResourceType(accessPointId);
-    await Promise.all(
-      items.map(async (item) => {
-        const itemResource = determineResourceType(item);
-        if (accessPointResource === Resource.collection) {
-          if (!isCollectionItemResource(itemResource)) return undefined;
-          return datafn.table(itemResource).mutate({
-            operation: "unrelate",
-            id: item.toString(),
-            relations: {
-              collections: [accessPointId.toString()]
-            }
-          } as any);
+    const result = await linker.bulkUnlinkForDirect(items, accessPointId);
+    const resourceType = determineResourceType(items[0]);
+    const resourceStore = resolveResourceStore(resourceType);
+    if (hasSelectMany(resourceStore)) {
+      const expandedItems = await resourceStore.selectMany({
+        filters: {
+          id: items.map((x) => x.toString())
         }
-        if (!isLinkableResource(itemResource)) return undefined;
-        await datafn.table(itemResource).mutate({
-          operation: "unrelate",
-          id: item.toString(),
-          relations: {
-            links: [
-              {
-                $ref: accessPointId.toString(),
-                linkType: LinkType.DIRECT
-              }
-            ]
-          }
-        } as any);
-        if (accessPointResource === Resource.node) {
-          await datafn.node.mutate({
-            operation: "unrelate",
-            id: accessPointId.toString(),
-            relations: {
-              links: [
-                {
-                  $ref: item.toString(),
-                  linkType: LinkType.DIRECT
-                }
-              ]
-            }
-          } as any);
-        }
-        return true;
-      })
-    );
-    return true;
+      });
+      const promises = expandedItems.map((i: any) => {
+        resourceStore.modify(i.id, {
+          collections: i.collections?.filter(
+            (x: IRecordId) => !isSameResource(x, accessPointId)
+          )
+        });
+      });
+      await Promise.all(promises);
+    }
+    return result;
   }
 
   async run(action: string, data?: unknown) {
     let isResetItems = false;
-    if (this.resource === Resource.everything) return;
-    const state = this.multiSelectStore.getState();
-    const items = state.selectedIds;
-    const accessPointId = state.context?.accessPointId;
-    const accessPoint = state.context?.accessPoint;
-    const additionalParams = {
-      context: accessPoint
-    };
     try {
+      if (this.resource === Resource.everything) return;
+      const state = this.multiSelectStore.getState();
+      const items = state.selectedIds;
+      const accessPointId = state.context?.accessPointId;
+      const accessPoint = state.context?.accessPoint;
       logger.log({
         at: "BulkEditor.run",
         action,
@@ -142,6 +728,9 @@ export class BulkEditor {
         accessPointId,
         accessPoint
       });
+      const additionalParams = {
+        context: accessPoint
+      };
       if (this.resource === Resource.node) {
         switch (action) {
           case "unlink":
@@ -182,96 +771,181 @@ export class BulkEditor {
             });
             break;
           case "star":
-            await bulkMerge(Resource.node, { isStarred: true });
+            await nodeStore.bulkModify(
+              items,
+              {
+                isStarred: true
+              } as Partial<INode>,
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.node);
             break;
           case "unstar":
-            await bulkMerge(Resource.node, { isStarred: false });
+            await nodeStore.bulkModify(
+              items,
+              {
+                isStarred: false
+              } as Partial<INode>,
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.node);
             break;
           case "archive":
-            await bulkMerge(Resource.node, { isArchived: true });
-            await onNodeArchive(items);
+            await nodeStore.bulkModify(
+              items,
+              {
+                isArchived: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.node);
             break;
           case "unarchive":
-            await bulkMerge(Resource.node, { isArchived: false });
-            await onNodeUnarchive(items);
+            await nodeStore.bulkModify(
+              items,
+              {
+                isArchived: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.node);
             break;
           case "delete":
-            await bulkTrash(Resource.node);
-            await onNodeTrash(items);
+            await nodeStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, Resource.node);
             break;
         }
       } else if (this.resource === Resource.collection) {
         switch (action) {
           case "star":
-            await bulkMerge(Resource.collection, { isStarred: true });
+            await collectionStore.bulkModify(
+              items,
+              {
+                isStarred: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.collection);
             break;
           case "unstar":
-            await bulkMerge(Resource.collection, { isStarred: false });
+            await collectionStore.bulkModify(
+              items,
+              {
+                isStarred: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.collection);
             break;
           case "archive":
-            await bulkMerge(Resource.collection, { isArchived: true });
+            await collectionStore.bulkModify(
+              items,
+              {
+                isArchived: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.collection);
             break;
           case "unarchive":
-            await bulkMerge(Resource.collection, { isArchived: false });
+            await collectionStore.bulkModify(
+              items,
+              {
+                isArchived: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, Resource.collection);
             break;
           case "delete":
-            await bulkTrash(Resource.collection);
+            await collectionStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, Resource.collection);
             break;
         }
-      } else if (this.resource === Resource.objective) {
+      } else if (this.resource === Resource.goal) {
         switch (action) {
           case "star":
-            await bulkMerge(Resource.objective, { isStarred: true });
+            await goalStore.bulkModify(
+              items,
+              {
+                isStarred: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, this.resource);
             break;
           case "unstar":
-            await bulkMerge(Resource.objective, { isStarred: false });
+            await goalStore.bulkModify(
+              items,
+              {
+                isStarred: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, this.resource);
             break;
           case "archive":
-            await bulkMerge(Resource.objective, { isArchived: true });
+            await goalStore.bulkModify(
+              items,
+              {
+                isArchived: true
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, this.resource);
             break;
           case "unarchive":
-            await bulkMerge(Resource.objective, { isArchived: false });
+            await goalStore.bulkModify(
+              items,
+              {
+                isArchived: false
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, this.resource);
             break;
           case "delete":
-            await bulkTrash(Resource.objective);
+            await goalStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, this.resource);
             break;
         }
       } else if (this.resource === Resource.task) {
         switch (action) {
           case "complete":
-            await bulkMerge(Resource.task, {
-              isChecked: true,
-              completedAtUnix: resolveUnixTimestamp()
-            });
+            await taskStore.bulkModify(
+              items,
+              {
+                isChecked: true,
+                completedAtUnix: resolveUnixTimestamp()
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, this.resource);
             break;
           case "moveToToday":
             const dateUnix = resolveUnixTimestamp(new Date());
-            await bulkMerge(Resource.task, { dateUnix });
+            await taskStore.bulkModify(
+              items,
+              {
+                dateUnix
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, this.resource);
             break;
           case "setDate":
             const targetDateUnix = resolveUnixTimestamp(data as Date);
-            await bulkMerge(Resource.task, { dateUnix: targetDateUnix });
+            await taskStore.bulkModify(
+              items,
+              {
+                dateUnix: targetDateUnix
+              },
+              additionalParams
+            );
             onSuccess(action, items.length, this.resource);
             break;
           case "delete":
-            await bulkTrash(Resource.task);
+            await taskStore.bulkTrash(items, additionalParams);
             onSuccess(action, items.length, this.resource);
             break;
         }
@@ -283,33 +957,6 @@ export class BulkEditor {
     } catch (e) {
       toasts.error("Failed to perform bulk action");
       return false;
-    }
-
-    async function bulkMerge(
-      resource: NucleumDatafnResource,
-      record: Record<string, any>
-    ) {
-      await datafn.table(resource).mutate(
-        items.map((id) => ({
-          operation: "merge",
-          id: id.toString(),
-          record: {
-            id: id.toString(),
-            ...record
-          },
-          context: additionalParams?.context
-        }))
-      );
-    }
-
-    async function bulkTrash(resource: NucleumDatafnResource) {
-      await datafn.table(resource).mutate(
-        items.map((id) => ({
-          operation: "trash",
-          id: id.toString(),
-          context: additionalParams?.context
-        }))
-      );
     }
 
     function onSuccess(action: string, count: number, resource: Resource) {
