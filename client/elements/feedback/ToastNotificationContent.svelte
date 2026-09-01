@@ -12,7 +12,7 @@
 
 </script>
 
-<div class="flex gap-2 items-center">
+<div class="flex gap-2 items-center" data-testid="toast-notification-content">
   {#if notification.type === AlertType.PROGRESS}
     <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-bgs1" />
   {:else}

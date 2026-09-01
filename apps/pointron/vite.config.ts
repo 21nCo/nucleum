@@ -1,11 +1,18 @@
 import { sveltekit } from "@sveltejs/kit/vite";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import fetchJsonPlugin from "../fetch-json-data.js";
 import { staticPlugin } from "@21n/static/vite-plugin.js";
 import { buildViteAliases, loadAliasMap } from "../../tools/alias-utils.mjs";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const aliasConfig = buildViteAliases(loadAliasMap());
+const processShimPath = path.resolve(
+  __dirname,
+  "../../node_modules/vite-plugin-node-polyfills/shims/process/dist/index.js"
+);
 process.env.VITE_PRODUCT ||= "pointron";
 
 export default defineConfig({
@@ -13,7 +20,10 @@ export default defineConfig({
     allowedHosts: ["local.pointron.app"]
   },
   resolve: {
-    alias: aliasConfig
+    alias: {
+      ...aliasConfig,
+      "vite-plugin-node-polyfills/shims/process": processShimPath
+    }
   },
   worker: {
     format: "es"
@@ -85,7 +95,7 @@ export default defineConfig({
   },
   plugins: [
     nodePolyfills({
-      include: ['process'],
+      include: ["process"],
       globals: {
         process: true
       }

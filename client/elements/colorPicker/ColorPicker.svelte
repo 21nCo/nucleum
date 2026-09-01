@@ -6,7 +6,6 @@
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import type { InputLabel } from "@21n/types/input.type";
   import ColorPickerElement from "@21n/elements/colorPicker/ColorPickerElement.svelte";
-  import { debouncer } from "@21n/utils/utils";
   let {
     hue = $bindable(0),
     label = undefined,
@@ -77,8 +76,6 @@
     hex = payload.hex;
     onDebouncedChange(payload.hex);
   }
-
-  const debouncedChangePropagation = debouncer(onDebouncedChange, 1000);
 </script>
 
 <FormControlLabelWrapper props={label}>
@@ -90,7 +87,7 @@
         bind:fgColorHsl
         bind:lightness
         {onChange}
-        onDebouncedChange={debouncedChangePropagation}
+        {onDebouncedChange}
       />
     {:else}
       <ColorPickerElement

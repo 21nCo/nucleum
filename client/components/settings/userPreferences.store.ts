@@ -4,7 +4,11 @@ import type {
   UserAppearanceSettings
 } from "@21n/types/preferences.type";
 import { TimeScale } from "@21n/types/time.type";
-import { detectTimeZone, detectTimeZoneFallback } from "@21n/utils/time.utils";
+import {
+  detectTimeZone,
+  detectTimeZoneFallback,
+  getTimeZonesWithOffsets
+} from "@21n/utils/time.utils";
 import { Resource } from "@21n/data/datafn/resource.enum";
 import { TranscriptionModel } from "@21n/products/memotron/taco/taco.types";
 import { tzStore } from "@21n/components/settings/timezone/tz.store";
@@ -78,6 +82,22 @@ const pendingUserPreferenceValues: OptimisticKvEntries = new Map();
 let userPreferencesNamespace = datafn.currentNamespace();
 let userPreferencesIsInitialized = false;
 
+function resolveStoredTimeZone(data: Partial<IUserGlobalPreferences>) {
+  if (typeof data.timeZone === "string" && data.timeZone.trim()) {
+    return data.timeZone;
+  }
+  if (typeof data.timeZoneOffset !== "number") return undefined;
+  const timeZones = getTimeZonesWithOffsets();
+  const labelMatch =
+    typeof data.timeZoneLabel === "string"
+      ? timeZones.find((zone) => zone.label === data.timeZoneLabel)
+      : undefined;
+  return (
+    labelMatch?.zone ??
+    timeZones.find((zone) => zone.offset * 60 === data.timeZoneOffset)?.zone
+  );
+}
+
 function normalizeUserPreferences(data?: Partial<IUserGlobalPreferences>) {
   const value = data ?? {};
   return {
@@ -102,7 +122,8 @@ function normalizeUserPreferences(data?: Partial<IUserGlobalPreferences>) {
     annotations: value.annotations ?? seedUserPreferences.annotations,
     mediaGridTestitems:
       value.mediaGridTestitems ?? seedUserPreferences.mediaGridTestitems,
-    isAnonymousAnalyticsEnabled: value.isAnonymousAnalyticsEnabled ?? true
+    isAnonymousAnalyticsEnabled: value.isAnonymousAnalyticsEnabled ?? true,
+    timeZone: resolveStoredTimeZone(value) ?? seedUserPreferences.timeZone
   };
 }
 

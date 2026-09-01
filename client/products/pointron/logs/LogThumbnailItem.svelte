@@ -14,7 +14,7 @@
   import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
   import { cn } from "@21n/utils/ui.utils";
   import HoverableElement from "@21n/elements/HoverableElement.svelte";
-  import LogThumbnailGoalsInfo from "@21n/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
+  import LogThumbnailObjectivesInfo from "@21n/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
 
   let {
     session,
@@ -134,9 +134,9 @@
   >
     <div class="flex-grow flex flex-col items-start gap-2 overflow-y-auto">
       {#if variant === "v1"}
-        <Text content="Goals" style={TextStyle.SECTION_HEADING} />
+        <Text content="Objectives" style={TextStyle.SECTION_HEADING} />
       {/if}
-      <LogThumbnailGoalsInfo {session} />
+      <LogThumbnailObjectivesInfo {session} />
     </div>
     {#if variant === "v2"}
       <div

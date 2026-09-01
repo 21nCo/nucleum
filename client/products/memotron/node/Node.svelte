@@ -7,7 +7,7 @@
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import {
     mediaNodeTypeList,
     NodeType,
@@ -16,12 +16,11 @@
   } from "@21n/products/memotron/node/node.type";
   import MediaNode from "@21n/products/memotron/node/base/MediaNode.svelte";
   import NonMediaNode from "@21n/products/memotron/node/base/NonMediaNode.svelte";
-  import { onDestroy, setContext } from "svelte";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { onDestroy, onMount, setContext, untrack } from "svelte";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { debouncer } from "@21n/utils/utils";
   import { logger } from "@21n/components/debug/logger.client";
-  import { appStore } from "@21n/stores/app.store";
+  import { acquireDnDPage, appStore } from "@21n/stores/app.store";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { page } from "$app/stores";
   import { AppSearchParam } from "@21n/types/appStore.type";
@@ -36,6 +35,8 @@
   import { readable, type Writable } from "svelte/store";
   import type { IContainer } from "@21n/layout/layout.type";
   import { resolveMinWidth } from "@21n/layout/layout.utils";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
 
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
@@ -112,11 +113,41 @@
 
   setContext(Context.NODE, nodeContext);
 
+  let releaseDnDPage: (() => void) | undefined;
+
+  onMount(() => {
+    releaseDnDPage = acquireDnDPage();
+  });
+
   onDestroy(() => {
+    releaseDnDPage?.();
     ActiveNodeStore.destroy(id, accessMode);
   });
 
   const debouncedInitialize = debouncer(initialize, 1500);
+  let hasReceivedInitialPropertySignal = false;
+
+  const propertyStore = toSvelteStore(
+    datafn.property.signal({
+      limit: 1,
+      sort: ["-updatedAt"],
+      metadata: {
+        includeTrashed: true,
+        includeArchived: true
+      }
+    })
+  );
+
+  $effect(() => {
+    $propertyStore.data;
+    untrack(() => {
+      if (!hasReceivedInitialPropertySignal) {
+        hasReceivedInitialPropertySignal = true;
+        return;
+      }
+      debouncedInitialize();
+    });
+  });
 </script>
 
 {#if error}
@@ -144,11 +175,6 @@
     <NodeLoadingPulse />
   </div>
 {/if}
-<ComponentBaseLayer
-  hasDragAndDrop={true}
-  subscribeToResource={new Set([Resource.property])}
-  onChange={debouncedInitialize}
-/>
 {#if $context.isEmbed && accessMode !== AccessMode.POP && !isFromSplitView}
   <ComponentEmbedLayer isBackNavigable={true} />
 {/if}

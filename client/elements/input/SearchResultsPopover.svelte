@@ -4,13 +4,13 @@
   import SearchResultItem from "@21n/elements/input/SearchResultItem.svelte";
   import { debouncer } from "@21n/utils/utils";
   import { cn } from "@21n/utils/ui.utils";
-  import type { IResource } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IResource } from "@21n/data/datafn/resource.type";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import { logger } from "@21n/components/debug/logger.client";
   import Icon from "@21n/elements/Icon.svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { determineResourceType } from "@21n/data/datafn/resource.utils";
   import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
   type SearchItem = Partial<IResource & Record<string, unknown>>;
 
@@ -43,9 +43,7 @@
     searchResultComponentProps?: Record<string, unknown>;
     shortcutTrigger?: string | undefined;
     shortcutTriggers?: string[];
-    emptyStateLabel?:
-      | string
-      | { mainText?: string; subText?: string };
+    emptyStateLabel?: string | { mainText?: string; subText?: string };
     isPreventDefaultResults?: boolean;
     isInlineContext?: boolean;
     isAlwaysShowSearchFeedback?: boolean;
@@ -71,9 +69,9 @@
   }
   let results = $state<SearchItem[]>([]);
   let selectedIndex = $state(resolveDefaultIndexSelection());
-  let previousValue = $state("");
   let currentValue = $state("");
   let isSearchInProgress = $state(false);
+  let searchGeneration = 0;
 
   export function reset() {
     resetSearch();
@@ -100,7 +98,9 @@
       currentValue,
       resultsCount: results.length
     });
-    const selectEvent = new CustomEvent("select", { detail: { item, event: e } });
+    const selectEvent = new CustomEvent("select", {
+      detail: { item, event: e }
+    });
     if (typeof onSelect === "function") {
       onSelect(selectEvent);
     }
@@ -119,6 +119,8 @@
     hide();
   }
   function resetSearch() {
+    searchGeneration += 1;
+    isSearchInProgress = false;
     results = [];
     selectedIndex = resolveDefaultIndexSelection();
     hide();
@@ -222,9 +224,8 @@
         onBlur(blurEvent);
       }
     } else if (event.key === KeyboardKey.BACKSPACE) {
-      previousValue = currentValue;
       currentValue = value;
-      debouncedSearch();
+      queueSearch(value);
     } else if (event.key === KeyboardKey.ENTER) {
       if (results && results.length > 0) {
         onSearchResultSelection(results[selectedIndex]);
@@ -241,14 +242,24 @@
       event.key !== KeyboardKey.ARROW_UP
     ) {
       currentValue = value;
-      debouncedSearch();
+      queueSearch(value);
     }
   }
 
-  let debouncedSearch = debouncer(search, 500);
+  const debouncedSearch = debouncer((newValue: string, generation: number) => {
+    if (generation !== searchGeneration) return;
+    void search(newValue);
+  }, 500);
+
+  export function queueSearch(newValue?: string) {
+    const generation = ++searchGeneration;
+    currentValue = newValue ?? value;
+    debouncedSearch(currentValue, generation);
+  }
 
   export async function search(newValue?: string) {
     const val = newValue ?? value;
+    const generation = ++searchGeneration;
     isSearchInProgress = true;
     selectedIndex = resolveDefaultIndexSelection();
     results = [];
@@ -261,11 +272,13 @@
     if (searchCallback) {
       try {
         const result = await searchCallback(val);
+        if (generation !== searchGeneration) return;
         if (result) results = result;
         if (results.length > 0) {
           show();
         }
       } catch (error) {
+        if (generation !== searchGeneration) return;
         logger.error({
           at: "SearchResultsPopover.search",
           value: val,
@@ -274,12 +287,14 @@
         });
         results = [];
       } finally {
-        isSearchInProgress = false;
-        const countEvent = new CustomEvent("count", {
-          detail: { count: results?.length }
-        });
-        if (typeof onCount === "function") {
-          onCount(countEvent);
+        if (generation === searchGeneration) {
+          isSearchInProgress = false;
+          const countEvent = new CustomEvent("count", {
+            detail: { count: results?.length }
+          });
+          if (typeof onCount === "function") {
+            onCount(countEvent);
+          }
         }
       }
       return;

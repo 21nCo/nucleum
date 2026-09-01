@@ -1,8 +1,42 @@
 import { TimeScaleUnit } from "@21n/types/time.type";
-import { generateResourceId } from "@21n/components/flux/flux.utils";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { CalendarColumnLayout, CalendarColumnPanel } from "./calendar.type";
 import { Product } from "@21n/products/product.type";
+
+type CalendarEventRange = {
+  start: number;
+  end: number;
+};
+
+const defaultCalendarEventDurationMs = 60 * 60 * 1000;
+
+/**
+ * Builds a half-open event overlap filter for current and legacy event shapes.
+ */
+export function resolveCalendarEventOverlapFilters(range: CalendarEventRange) {
+  const openEndedStart = range.start - defaultCalendarEventDurationMs;
+  return {
+    $or: [
+      {
+        startUnix: { $lt: range.end },
+        endUnix: { $gt: range.start }
+      },
+      {
+        startUnix: { $gt: openEndedStart, $lt: range.end },
+        endUnix: { $is_null: true }
+      },
+      {
+        "value.startUnix": { $lt: range.end },
+        "value.endUnix": { $gt: range.start }
+      },
+      {
+        "value.startUnix": { $gt: openEndedStart, $lt: range.end },
+        "value.endUnix": { $is_null: true }
+      }
+    ]
+  };
+}
 
 /**
  *

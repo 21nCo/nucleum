@@ -4,14 +4,11 @@
   import { vTrail } from "../topNav/tabs/tabs.store";
   import TopBarResourceItem from "../topNav/tabs/TopBarResourceItem.svelte";
   import type { IRecordId } from "@21n/types/data.type";
-  import BoxButton from "@21n/elements/button/BoxButton.svelte";
-  import { appStore } from "@21n/stores/app.store";
-  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isRecordId } from "@21n/data/datafn/resource.utils";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/types/size.enum";
   import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import Badge from "@21n/elements/text/Badge.svelte";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
 
   function handleClick(item: IRecordId) {
     vTrail.activate(item);
@@ -20,24 +17,14 @@
 
 <div class="flex flex-col h-full w-full gap-2">
   <div
-    class="w-full h-10 flex items-center justify-between border-b border-brs3"
+    class="w-full h--10 pt-3 flex items-center justify-between border--b border-brs3"
   >
-    <div class="px-3 flex items-center gap-2">
-      <span> Navigator </span>
-      <Badge text="new" size={Size.sm} />
-    </div>
-    <div class="h-full w-10">
-      <BoxButton
-        icon="cross"
-        onclick={() => {
-          appStore.toggleSearchParam([AccessMode.RIGHT]);
-        }}
-      />
+    <div class="px-3 flex items-center gap-2 flex-1">
+      <TextInput placeholder="Search..." size={Size.sm} />
     </div>
   </div>
   <div class="grid grid-rows-2 grow w-full">
     <div class="flex flex-col gap-2 w-full truncate">
-      <!-- TODO - recently opened items if global or no items are currently opened - if currently opened present - show switcher for recently opened - currently opened -->
       <div class="text-b2 text-fgs3 w-full bg-bgs2 px-3">Currently opened</div>
       {#if $vTrail.items.length > 0 && $vTrail.base}
         <div class="pl-3 pr-2 trail relative flex flex-col gap-2">
@@ -77,7 +64,6 @@
       {/if}
     </div>
     <div class="flex flex-col gap-2 px-3 border-t border-brs3 py-1">
-      <!-- TODO - Frequently accessed from: (record or global: in last 30 days) if local dropdown selectable for global - todo after datafn implementation - recent items, access maps -->
       <div class="text-b2 text-fgs3">Frequently accessed</div>
       <ComingSoonView size={Size.sm} />
     </div>

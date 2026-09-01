@@ -1,9 +1,6 @@
 import { logger } from "@21n/components/debug/logger.client";
-import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
-import {
-  NodeType,
-  type INode
-} from "@21n/products/memotron/node/node.type";
+import type { OmitForCapture } from "@21n/data/datafn/resource.type";
+import { NodeType, type INode } from "@21n/products/memotron/node/node.type";
 import {
   contentTypeMap,
   fetchYouTubeMetadata
@@ -87,7 +84,10 @@ export function createClipPointer() {
 
   const path = pointer.querySelector("path");
   const strokePath = pointer.querySelectorAll("path")[1];
-  if (!(path instanceof SVGPathElement) || !(strokePath instanceof SVGPathElement))
+  if (
+    !(path instanceof SVGPathElement) ||
+    !(strokePath instanceof SVGPathElement)
+  )
     return pointer;
   path.style.transition = "fill-opacity 0.2s";
   path.style.fillOpacity = "0.6";
@@ -220,7 +220,8 @@ export async function extractYoutubeVideoData() {
 export function resolveUrl(url?: string) {
   if (!url) url = window.location.href;
   url = url.split("#")[0];
-  if (url.includes("youtube.com")) {
+  const hostname = new URL(url, window.location.href).hostname.toLowerCase();
+  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
     return url.split("&")[0];
   }
   return url;

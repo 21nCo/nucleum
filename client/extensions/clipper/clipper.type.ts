@@ -1,4 +1,4 @@
-import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "@21n/data/datafn/resource.type";
 import type {
   INode,
   IVideoBookmarkCapture,

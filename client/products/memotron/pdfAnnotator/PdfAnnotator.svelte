@@ -34,7 +34,7 @@
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import type { IHighlighter } from "@21n/products/memotron/common/highlighters/highlight.type";
   import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import context from "@21n/stores/context.store";
   import { Embed, OperatingSystem } from "@21n/types/context.type";
   import { fileStore } from "@21n/components/files/file.store";
@@ -56,9 +56,9 @@
     annots?: IPdfBookmarkBody[];
     accessPoint?: ResourceAccessPoint;
     onAnnotation?: ((annotations: IPdfBookmarkBody[]) => void) | undefined;
-    onConfigUpdate?: ((detail: {
-      config: { pdfScale: number; pdfPage: number };
-    }) => void) | undefined;
+    onConfigUpdate?:
+      | ((detail: { config: { pdfScale: number; pdfPage: number } }) => void)
+      | undefined;
   } = $props();
 
   const pdfPersistence = $derived(
@@ -119,7 +119,10 @@
   let mainRects: any = [];
   let onViewerMouseDown: ((event: MouseEvent) => void) | null = null;
 
-  const highlightLayerComponents = new Map<HTMLElement, Record<string, any>[]>();
+  const highlightLayerComponents = new Map<
+    HTMLElement,
+    Record<string, any>[]
+  >();
 
   $effect(() => {
     annots = initialAnnots;
@@ -245,9 +248,7 @@
         annotationToPersist.due = {};
         annotationToPersist.due.date = new Date(
           editorValues.dueDate
-        ).toLocaleDateString(
-          "en-CA"
-        );
+        ).toLocaleDateString("en-CA");
         annotationToPersist.due.completed = false;
       }
     }
@@ -653,7 +654,10 @@
     event: MouseEvent,
     targetViewerContainerElement: HTMLElement
   ) {
-    targetViewerContainerElement?.removeEventListener("mouseup", mouseUpHandler);
+    targetViewerContainerElement?.removeEventListener(
+      "mouseup",
+      mouseUpHandler
+    );
     const target = event.target as HTMLElement;
     const pageNode = asElement(target.closest(".page"));
     endPageNumber = Number(asElement(pageNode)?.dataset?.pageNumber);

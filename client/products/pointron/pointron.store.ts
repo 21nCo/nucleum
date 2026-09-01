@@ -1,7 +1,7 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import type { PointronConstants } from "@21n/types/pointron/pointronConstants.type";
 
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { TimerMode } from "@21n/types/pointron/timerMode.enum";
 import {
   SessionCompositionType,
@@ -10,15 +10,13 @@ import {
 } from "@21n/types/pointron/sessionComposition.type";
 import { ChartType } from "@21n/types/analytics.type";
 import { TimePeriodType, TimeScale } from "@21n/types/time.type";
-import { objIsEmpty, shallowDiff } from "@21n/shared-utils/obj.utils";
 import { Layout } from "@21n/types/layout.type";
 import type {
   HorizonChart,
   IPointronPreferences
 } from "@21n/types/pointron/pointronPreferences.type";
-import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import { parse } from "@21n/shared-utils/json.utils";
+import { datafn } from "@21n/stores/datafn.store";
 
 /**
  * @deprecated
@@ -151,42 +149,74 @@ export const seedLocalPreferences: IPointronPreferences = {
     }
   }
 };
-class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
-  constructor() {
-    super(Resource.pointronPreferences, seedLocalPreferences);
-  }
+
+const pointronPreferencesSignal = datafn.kv.signal<IPointronPreferences>(
+  Resource.pointronPreferences,
+  { defaultValue: seedLocalPreferences }
+);
+const pointronPreferencesLocal = writable<IPointronPreferences>(
+  normalizePointronPreferences(seedLocalPreferences)
+);
+
+type LegacySessionComposition = SessionComposition & {
+  goals?: SessionComposition["objectives"];
+};
+
+function normalizeSessionComposition(
+  preset: LegacySessionComposition
+): SessionComposition {
+  const { goals, ...currentPreset } = preset;
+  return {
+    ...currentPreset,
+    objectives: currentPreset.objectives ?? goals,
+    additional: currentPreset.additional?.map((item) =>
+      normalizeSessionComposition(item as LegacySessionComposition)
+    )
+  };
+}
+
+function normalizePointronPreferences(data?: Partial<IPointronPreferences>) {
+  const value = {
+    ...seedLocalPreferences,
+    ...(data ?? {})
+  };
+  if (!value.uiStates) value.uiStates = seedLocalPreferences.uiStates;
+  if (!value.presets) value.presets = generateSeedPresets();
+  value.presets = value.presets.map((preset) =>
+    normalizeSessionComposition(preset as LegacySessionComposition)
+  );
+  return value;
+}
+
+pointronPreferencesSignal.subscribe((value) => {
+  pointronPreferencesLocal.set(normalizePointronPreferences(value));
+});
+
+export const pointronPreferences = {
+  subscribe: pointronPreferencesLocal.subscribe,
+  get() {
+    return get(pointronPreferencesLocal);
+  },
   loader(data: IPointronPreferences) {
-    if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
-    if (!data.presets) data.presets = generateSeedPresets();
-    //m.horizonCharts = defaultHorizonChartConfiguration;
-    this.modify(data, { isPersist: false });
-  }
+    pointronPreferencesLocal.set(normalizePointronPreferences(data));
+    return datafn.kv.set(
+      Resource.pointronPreferences,
+      normalizePointronPreferences(data)
+    );
+  },
   async set(newValue: IPointronPreferences) {
-    let changedProperties: Partial<IPointronPreferences> = {};
-    if (this.previousValue) {
-      let differences = shallowDiff(newValue, parse(this.previousValue));
-      differences.forEach((key: string) => {
-        const preferenceKey = key as keyof IPointronPreferences;
-        Object.assign(changedProperties, {
-          [preferenceKey]: newValue[preferenceKey]
-        });
-      });
-      //TODO - create separate method for updating horizons with targets instead of duplicating custom set method (set() is present in KeyValueStore class)
-      console.log({ differences });
-      if (differences.some((x) => x === "horizonsWithTarget")) {
-        let horizonTargets = newValue.horizonTargets?.filter((x) =>
-          newValue.horizonsWithTarget?.some((y) => y === x.scale)
-        );
-        changedProperties.horizonTargets = horizonTargets;
-      }
+    const value = normalizePointronPreferences(newValue);
+    if (value.horizonsWithTarget) {
+      value.horizonTargets = value.horizonTargets?.filter((x) =>
+        value.horizonsWithTarget?.some((y) => y === x.scale)
+      );
     }
-    this.modify(changedProperties, {
-      isPersist: !objIsEmpty(changedProperties)
-    });
-  }
+    pointronPreferencesLocal.set(value);
+    return datafn.kv.set(Resource.pointronPreferences, value);
+  },
   resetHorizonChartConfiguration() {
     this.modify({ horizonCharts: defaultHorizonChartConfiguration });
-  }
+  },
   async updatePreset(preset: SessionComposition) {
     let m = this.get();
     let n = m.presets;
@@ -196,32 +226,44 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
     n = [...n, preset];
     n = n.concat(presetsToRight);
     return this.modify({ presets: n });
-  }
+  },
   async removePreset(presetId: string) {
     let m = this.get();
     let n = m.presets;
     n = n.filter((x: SessionComposition) => x.id != presetId);
     return this.modify({ presets: n });
-  }
+  },
   async addPreset(preset: SessionComposition) {
     let m = this.get();
     m.presets.push(preset);
     return this.modify({ presets: m.presets });
-  }
+  },
 
   async setSeedManualEntryQuickDurations() {
     return this.modify({
       manualEntryQuickDurations: [10, 15, 30, 60, 120]
     });
-  }
+  },
 
   async updateManualEntryQuickDurations(durations: number[]) {
     return this.modify({ manualEntryQuickDurations: durations });
+  },
+
+  modify(
+    n: Partial<IPointronPreferences>,
+    params: { isPersist?: boolean } = { isPersist: true }
+  ) {
+    pointronPreferencesLocal.update((current) =>
+      normalizePointronPreferences({ ...current, ...n })
+    );
+    if (params.isPersist === false) return;
+    return datafn.kv.merge(Resource.pointronPreferences, n);
+  },
+
+  destroy() {
+    pointronPreferencesSignal.dispose();
   }
-}
-export const pointronPreferences = PointronPreferencesStore.resolve(
-  Resource.pointronPreferences
-);
+};
 export const pointronConstants = initPointronConstants({
   timerModes: ["Minimal", "Journal"],
   focusPlaceholderText: [

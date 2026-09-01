@@ -37,20 +37,20 @@
 
   let filteredResults = $state<any[]>(
     config
-    .map((section) => {
-      return {
-        section: section.section,
-        children: section.children
-          .filter((c) => !c.isDisabled)
-          .map((c) => {
-            return {
-              ...c,
-              section: section.section
-            };
-          })
-      };
-    })
-    .filter((section) => section.children.length > 0)
+      .map((section) => {
+        return {
+          section: section.section,
+          children: section.children
+            .filter((c) => !c.isDisabled)
+            .map((c) => {
+              return {
+                ...c,
+                section: section.section
+              };
+            })
+        };
+      })
+      .filter((section) => section.children.length > 0)
   );
   selectedSection = filteredResults[0].section;
   focusedItem = filteredResults[0].children[0];
@@ -104,7 +104,8 @@
   }
 
   export function filter(query: string) {
-    const newQueryString = query.split("/")[1];
+    const rawQueryString = query.split("/").pop() ?? "";
+    const newQueryString = resolveSearchQuery(rawQueryString);
     if (searchQueryString === newQueryString) {
       return;
     }
@@ -131,6 +132,10 @@
       focusedItem = filteredResults[0].children[0];
     } else {
     }
+  }
+
+  function resolveSearchQuery(query: string) {
+    return query.trim().toLowerCase();
   }
 
   function onSelection(e?: CustomEvent) {

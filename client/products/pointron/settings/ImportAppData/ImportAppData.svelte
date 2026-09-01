@@ -15,9 +15,11 @@
   import { toasts } from "@21n/stores/notification.store";
   import { lastImportTime } from "@21n/products/pointron/pointron.store";
   import CheckboxInput from "@21n/elements/toggle/CheckboxInput.svelte";
-  import { isEmptyArray, isValidArray } from "@21n/shared-utils/obj.utils";
   import { performApiCall } from "@21n/utils/network.utils";
-  import { ImportSource, StepType } from "@21n/products/pointron/settings/data/data.type";
+  import {
+    ImportSource,
+    StepType
+  } from "@21n/products/pointron/settings/data/data.type";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import Divider from "@21n/elements/Divider.svelte";
   import { cn } from "@21n/utils/ui.utils";
@@ -25,6 +27,15 @@
   import { enumToString, properCase } from "@21n/shared-utils/text.utils";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import { parse } from "@21n/shared-utils/json.utils";
+  import {
+    datafn,
+    datafnRuntime,
+    refreshNucleumDatafnStatus
+  } from "@21n/stores/datafn.store";
+  import {
+    isPointronDatafnBackup,
+    resolveDatafnImportErrorCount
+  } from "@21n/products/pointron/settings/data/pointronDatafnBackup.utils";
 
   let { importSource = ImportSource.SELF }: { importSource?: ImportSource } =
     $props();
@@ -77,7 +88,7 @@
       },
       {
         subTitle:
-          "Note: Each task from Atracker will become a goal in Pointron",
+          "Note: Each task from Atracker will become an objective in Pointron",
         description: "Upload the csv file you downloaded in the previous step.",
         type: StepType.UPLOAD
       }
@@ -97,7 +108,7 @@
       },
       {
         subTitle:
-          "**Note:** Each project from Session will become a goal and each task will become a task in Pointron. Also, Session currently does not support bulk export. So, please export the data for each month and then import it individually.",
+          "**Note:** Each project from Session will become an objective and each task will become a task in Pointron. Also, Session currently does not support bulk export. So, please export the data for each month and then import it individually.",
         description: "Upload the csv file you downloaded in the previous step.",
         type: StepType.UPLOAD
       }
@@ -121,7 +132,7 @@
       },
       {
         subTitle:
-          "Note: Each folder from Timemator will become a goal and each task  inside a folder will become its sub goal",
+          "Note: Each folder from Timemator will become an objective and each task inside a folder will become its sub-objective",
         description: "Upload",
         type: StepType.UPLOAD
       }
@@ -141,7 +152,7 @@
       },
       {
         subTitle:
-          "Note: Each project from Toggl will become a goal and each task will become a task in Pointron",
+          "Note: Each project from Toggl will become an objective and each task will become a task in Pointron",
         description: "Upload the csv file you downloaded in the previous step.",
         type: StepType.UPLOAD
       }
@@ -189,6 +200,10 @@
   }
   function keepIncreasingProgress() {
     const interval = setInterval(() => {
+      if (!isUploading || !tempFileList) {
+        clearInterval(interval);
+        return;
+      }
       if (tempFileList) {
         tempFileList = tempFileList.map((item) => {
           if (item.uploadProgress < 90) {
@@ -210,24 +225,27 @@
       }
     }, 500);
   }
-  function isValidImportData(rawJson: any) {
+
+  function resetCurrentUploadProgress() {
+    isUploading = false;
+    tempFileList = tempFileList
+      ? tempFileList.map((item) => ({
+          ...item,
+          uploadStatus: UploadStatus.NOT_STARTED,
+          uploadProgress: 0
+        }))
+      : null;
+  }
+
+  function isJsonFile(file: File) {
     return (
-      rawJson &&
-      isValidArray(rawJson.goals) &&
-      isValidArray(rawJson.tags) &&
-      isValidArray(rawJson.logs) &&
-      isValidArray(rawJson.sessions) &&
-      !(
-        isEmptyArray(rawJson.goals) &&
-        isEmptyArray(rawJson.tags) &&
-        isEmptyArray(rawJson.logs) &&
-        isEmptyArray(rawJson.sessions)
-      )
+      file.type === "application/json" ||
+      file.name.toLowerCase().endsWith(".json")
     );
   }
+
   async function onUpload() {
     if (tempFileList) {
-      let response;
       isUploading = true;
       tempFileList = tempFileList.map((item) => {
         return {
@@ -237,41 +255,52 @@
         };
       });
       keepIncreasingProgress();
-      if (tempFileList[0].file.type === "application/json") {
+      if (isJsonFile(tempFileList[0].file)) {
         const file = tempFileList[0].file;
-        let jsonData;
-        let fileName: string;
-        let fileSize: number;
+        if (!get(datafnRuntime)?.storage) {
+          resetCurrentUploadProgress();
+          toasts.error("Pointron import is not available in cloud direct mode");
+          return;
+        }
         const reader = new FileReader();
         reader.onload = async (event) => {
           try {
             const importedData = event.target?.result;
-            if (!importedData) return;
-            jsonData = parse(importedData as string);
-            if (isValidImportData(jsonData)) {
-              fileName = file.name;
-              fileSize = file.size;
+            if (!importedData) {
+              resetCurrentUploadProgress();
+              toasts.error("Please select a valid file");
+              return;
             }
-            if (!jsonData) toasts.error("Please select a valid file");
-            else {
-              //TODO - use latest persistence
-              // response = await new PointronPersistence().importData(
-              //   jsonData,
-              //   fileName,
-              //   fileSize
-              // );
-              tempFileList = tempFileList
-                ? tempFileList.map((item) => ({
-                    ...item,
-                    uploadStatus: UploadStatus.UPLOADED,
-                    uploadProgress: 100
-                  }))
-                : null;
-              isUploading = false;
-              $lastImportTime = Date.now();
+            const jsonData = parse(importedData as string);
+            if (!isPointronDatafnBackup(jsonData)) {
+              resetCurrentUploadProgress();
+              toasts.error("Invalid Pointron DataFn backup file");
+              return;
+            }
+            const result = await datafn.importData(jsonData, {
+              triggerCloneUp: true
+            });
+            await refreshNucleumDatafnStatus();
+            const errorCount = resolveDatafnImportErrorCount(result);
+            tempFileList = tempFileList
+              ? tempFileList.map((item) => ({
+                  ...item,
+                  uploadStatus: UploadStatus.UPLOADED,
+                  uploadProgress: 100
+                }))
+              : null;
+            isUploading = false;
+            $lastImportTime = Date.now();
+            if (errorCount > 0) {
+              toasts.error(
+                `Pointron data imported with ${errorCount} skipped records`
+              );
+            } else {
+              toasts.success("Pointron data imported successfully");
             }
           } catch (error) {
             console.error("Error parsing JSON file:", error);
+            resetCurrentUploadProgress();
             toasts.error("Invalid file selected");
           }
         };
@@ -279,9 +308,7 @@
       } else {
         try {
           const userId = get(account)?.userInfo?.id.split(":")[1] ?? "";
-          const [url, customName, itemLocalURL] = await account.tempUploadToS3(
-            tempFileList[0].file
-          );
+          const [url] = await account.tempUploadToS3(tempFileList[0].file);
           const timeZone = detectTimeZone();
           const region = $account.userInfo?.region;
           let body = {
@@ -291,7 +318,7 @@
             region: region,
             isArchiveAll: checked
           };
-          response = await performApiCall("pointron/import", "POST", body);
+          await performApiCall("pointron/import", "POST", body);
           tempFileList = tempFileList
             ? tempFileList.map((item) => ({
                 ...item,
@@ -344,9 +371,7 @@
     return true;
   }
 
-  function resolveTempFileList(
-    locallyUploadedFiles?: FileList | null
-  ) {
+  function resolveTempFileList(locallyUploadedFiles?: FileList | null) {
     let nextTempFileList = tempFileList;
     if (locallyUploadedFiles) {
       if (!isFileCountInLimit(locallyUploadedFiles)) {
@@ -583,14 +608,13 @@
     {/if}
     {#if importSource != ImportSource.SELF && activeStepIndex === steps[importSource]?.length - 1 && !isEverythingUploaded}
       <div class="p-4">
-        <CheckboxInput bind:checked label="Archive All Imported Goals" />
+        <CheckboxInput bind:checked label="Archive All Imported Objectives" />
       </div>
     {/if}
     <div class="flex mo:px-3 mo:py-2 p-4">
       {#if $view.isPortrait}
         {#if activeStepIndex !== steps[importSource]?.length - 1}
-          <Button size={Size.sm} onclick={onJumpToUpload}
-            >Jump to upload</Button
+          <Button size={Size.sm} onclick={onJumpToUpload}>Jump to upload</Button
           >
         {:else}
           <Button size={Size.sm} onclick={onClose}>Cancel</Button>

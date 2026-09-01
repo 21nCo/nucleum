@@ -6,10 +6,10 @@
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/client/components/flux/resourceStores/resource.type";
-  import { Resource } from "@21n/client/components/flux/resourceStores/resource.enum";
+  } from "@21n/data/datafn/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import type { IRecordId } from "@21n/client/types/data.type";
-  import Goal from "../goals/Goal.svelte";
+  import Objective from "../goals/Goal.svelte";
 
   let {
     resourceId = undefined,
@@ -28,13 +28,13 @@
   const unsupportedMessage = "Selected resource type is not yet supported";
 
   let isRecursiveLoop = $derived(
-    resourceType === Resource.combination &&
-    resourceId &&
-    visitedCombinationIds.has(resourceId.toString())
+    resourceType === Resource.space &&
+      resourceId &&
+      visitedCombinationIds.has(resourceId.toString())
   );
 
   function resolveVisitedIds() {
-    if (resourceType !== Resource.combination || !resourceId)
+    if (resourceType !== Resource.space || !resourceId)
       return visitedCombinationIds;
     const next = new Set(visitedCombinationIds);
     next.add(resourceId.toString());
@@ -51,8 +51,8 @@
   />
 {:else if isRecursiveLoop}
   <EmptyStatusView
-    mainText="Recursive combination detected"
-    subText="This combination references itself. Choose a different item."
+    mainText="Recursive space detected"
+    subText="This space references itself. Choose a different item."
     isSearchContext={false}
   />
 {:else if resourceType === Resource.node}
@@ -63,13 +63,13 @@
     {accessMode}
     accessPoint={ResourceAccessPoint.COMBINATION}
   />
-{:else if resourceType === Resource.goal}
-  <Goal
+{:else if resourceType === Resource.objective}
+  <Objective
     id={resourceId}
     {accessMode}
     accessPoint={ResourceAccessPoint.COMBINATION}
   />
-{:else if resourceType === Resource.combination}
+{:else if resourceType === Resource.space}
   <SideNavCombination
     id={resourceId}
     {accessMode}

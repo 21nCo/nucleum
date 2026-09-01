@@ -28,6 +28,7 @@ export type IActiveSessionStore = {
   preventSliderReverseEventTemp?: boolean;
   widgetSnapshot?: any;
   timeRemainingToTakeBreak?: number;
+  isBreakReminderNotified?: boolean;
   notes?: IMarkdown;
 };
 
@@ -40,7 +41,7 @@ export type FocusLog = {
   start: number;
   end?: number;
   previousWorked?: number;
-  goalId?: string;
+  objectiveId?: string;
   taskId?: string;
   taskName?: string;
   color?: number;
@@ -94,6 +95,7 @@ export enum BlockType {
 
 export type IFocusItem = {
   id: IRecordId;
+  parentObjectiveId?: IRecordId;
   blocks?: {
     start: number;
     end: number;
@@ -104,7 +106,7 @@ export type IFocusItem = {
 /**
  * @deprecated - use {@link IFocusItem} instead
  */
-export type IFocusGoal = IFocusItem & {
+export type IFocusObjective = IFocusItem & {
   tasks?: IRecordId[];
 };
 
@@ -119,14 +121,14 @@ export enum SessionUIContext {
   THIN_ON_DESKTOP = "THIN_ON_DESKTOP",
   FOCUS_PLAYER = "FOCUS_PLAYER",
   PIP = "PIP",
-  GOAL_PAGE = "GOAL_PAGE"
+  OBJECTIVE_PAGE = "OBJECTIVE_PAGE"
 }
 
 export interface IFocusItemsStore {
   /**
    * @deprecated - use items instead
    */
-  goals?: IFocusGoal[];
+  objectives?: IFocusObjective[];
   /**
    * @deprecated - use items instead
    */

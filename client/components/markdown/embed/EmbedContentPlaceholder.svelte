@@ -26,7 +26,7 @@
   import { cn } from "@21n/utils/ui.utils";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { logger } from "@21n/components/debug/logger.client";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import EmbedLibrarySearch from "@21n/components/markdown/embed/EmbedLibrarySearch.svelte";
   import { getContext } from "svelte";
   import view from "@21n/stores/view.store";
@@ -34,8 +34,10 @@
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "@21n/products/memotron/capture/capture.store";
-  import { taskStore } from "@21n/components/tasks/task.store";
   import { Context } from "@21n/types/appStore.type";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   const nodeContext = getContext<any>(Context.NODE);
   const captureContext = getContext<any>(Context.CAPTURE);
   const captureStore = $derived.by<IActiveCaptureStore | undefined>(() => {
@@ -193,11 +195,20 @@
   }
 
   async function onCreateNewTask() {
-    const task = await taskStore.create({
+    const task = {
+      id: generateResourceId(Resource.task),
       label: "",
-      isChecked: false
+      isChecked: false,
+      dateUnix: 0,
+      objectiveId: ""
+    };
+    await datafn.task.mutate({
+      operation: "insert",
+      id: task.id,
+      record: task,
+      context: ResourceAccessPoint.MARKDOWN_EMBED
     });
-    if (Array.isArray(task) && task.length > 0) emitSelect(task[0]);
+    emitSelect(task);
   }
 </script>
 
@@ -280,7 +291,7 @@
           </span>
         {/if}
         {#if (subType && webNodeTypeList.includes(subType) && !libraryOnlyTypesTemporary.includes(subType)) || !subType}
-          <button
+          <div
             class="flex justify-center items-center gap-3 mo:w-full w-3/4"
             onclick={(event) => {
               event.stopPropagation();
@@ -298,7 +309,7 @@
               style={ButtonStyle.OUTLINED}
               onclick={emitLinkInput}
             />
-          </button>
+          </div>
         {/if}
         {#if $context.embed !== Embed.HANDSET && ((subType && ![...libraryOnlyTypesTemporary, ...nonUploadTypes].includes(subType)) || !subType)}
           <div class="w-1/3">
@@ -344,7 +355,7 @@
               onclick={onCreateNewTask}
             />
           {/if}
-          <button
+          <div
             onclick={(event) => {
               event.stopPropagation();
             }}
@@ -367,7 +378,7 @@
               icon="library"
               {...commonButtonParams}
             />
-          </button>
+          </div>
         </div>
         {#if subType && [...libraryOnlyTypesTemporary].includes(subType)}
           <span class="text-fgs2 text-b2">

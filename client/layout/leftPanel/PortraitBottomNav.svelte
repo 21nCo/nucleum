@@ -8,14 +8,27 @@
   import { page } from "$app/stores";
   import { cn } from "@21n/utils/ui.utils";
   import LibrarySearchPortrait from "@21n/products/memotron/library/search/LibrarySearchPortrait.svelte";
+  import { onMount } from "svelte";
 
   let testingInMobileBrowser: boolean = false;
   let isSearchFocused = $state(false);
   let dev_isAppNavLibrarySearch: boolean = false;
+  let currentRouteParam = $state<string | undefined>(undefined);
+  let currentRouteId = $state<string | undefined>(undefined);
   let isLibraryActive = $derived(
-    $page.params.route?.includes("library") ||
-      $page.route.id?.includes("library")
+    Boolean(
+      currentRouteParam?.includes("library") ||
+        currentRouteId?.includes("library")
+    )
   );
+
+  onMount(() => {
+    const unsubscribe = page.subscribe((p) => {
+      currentRouteParam = p?.params?.route;
+      currentRouteId = p?.route?.id ?? undefined;
+    });
+    return () => unsubscribe?.();
+  });
 </script>
 
 <div

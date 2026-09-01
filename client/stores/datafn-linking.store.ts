@@ -3,6 +3,7 @@ import { determineResourceType } from "@21n/data/datafn/resource.utils";
 import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
 import type { IRecordId } from "@21n/types/data.type";
 import { get } from "svelte/store";
+import { assertDatafnMutationSucceeded } from "@21n/data/datafn/mutation.utils";
 
 type DatafnRelationSource = {
   id: string;
@@ -20,20 +21,6 @@ function isLinkableResource(resource: Resource) {
     resource === Resource.task ||
     resource === Resource.event
   );
-}
-
-function assertMutationSucceeded(result: unknown) {
-  if (!result) throw new Error("DataFn relation mutation failed");
-  if (
-    typeof result === "object" &&
-    "ok" in result &&
-    (result as { ok?: unknown }).ok === false
-  ) {
-    throw (
-      (result as { error?: unknown }).error ??
-      new Error("DataFn relation mutation failed")
-    );
-  }
 }
 
 function assertRelationSelection(
@@ -115,7 +102,7 @@ async function applyLocalRelationBatchWithRollback(
   try {
     for (const mutation of mutations) {
       const result = await datafn.mutate(mutation);
-      assertMutationSucceeded(result);
+      assertDatafnMutationSucceeded(result);
       appliedMutations.push(mutation);
     }
   } catch (error) {
@@ -126,7 +113,7 @@ async function applyLocalRelationBatchWithRollback(
           ...mutation,
           operation: "unrelate"
         });
-        assertMutationSucceeded(result);
+        assertDatafnMutationSucceeded(result);
       } catch (rollbackError) {
         rollbackErrors.push(rollbackError);
       }
@@ -182,7 +169,7 @@ export async function relateDatafnRecords(input: {
         atomic: true,
         steps: mutations.map((mutation) => ({ mutation }))
       });
-      assertMutationSucceeded(result);
+      assertDatafnMutationSucceeded(result);
     }
   }
   return pendingSources.length;

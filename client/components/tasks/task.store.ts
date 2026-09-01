@@ -1,127 +1,34 @@
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { Resource } from "@21n/data/datafn/resource.enum";
+import { type IRecordId } from "@21n/types/data.type";
+import type { ITask } from "@21n/components/tasks/task.type";
 import {
-  type IRecordId,
-  type IResourceSelectAdditionalParams,
-  type IResourceSelectParams
-} from "@21n/types/data.type";
-import { generateResourceId } from "@21n/components/flux/flux.utils";
-import { logger } from "@21n/components/debug/logger.client";
-import type { ITask, ITaskCapture, ITaskThumb } from "@21n/components/tasks/task.type";
-import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-import type {
-  IContextMenu,
-  IContextMenuItem
-} from "@21n/types/select.type";
-import { ResourceActions } from "@21n/components/record/resource.actions";
+  ResourceAccessPoint,
+  ResourceActionType
+} from "@21n/data/datafn/resource.type";
+import type { IContextMenu, IContextMenuItem } from "@21n/types/select.type";
 import { appStore } from "@21n/stores/app.store";
 import { Action } from "@21n/types/action.enum";
-import { getUtcSafeDay } from "@21n/elements/datetime/datetime.utils";
-import { Product } from "@21n/products/product.type";
 import { get } from "svelte/store";
 import view from "@21n/stores/view.store";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-import { resolveResourceIcon } from "@21n/components/flux/resourceStores/resource.utils";
+import {
+  determineResourceType,
+  isTrashedResource,
+  isSameResource,
+  resolveBulkSelectionAccessPointId,
+  resolveResourceActionIcon,
+  resolveResourceIcon,
+  resourceInList
+} from "@21n/data/datafn/resource.utils";
 import { activeSession } from "@21n/products/pointron/focus/session.store";
-import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-import { goalStore } from "@21n/components/goals/goal.store";
-import type { IGoalThumb } from "@21n/components/goals/goal.type";
-
-const defaults = {
-  dateUnix: 0,
-  goalId: "",
-  isChecked: false
-};
-class TaskStore extends ResourceStore<ITask, ITaskCapture> {
-  constructor() {
-    super(Resource.task, {
-      expandProps: ["goalId"],
-      defaultProps: defaults
-    });
-  }
-
-  async selectMany(
-    params?: IResourceSelectParams,
-    additionalParams?: IResourceSelectAdditionalParams
-  ) {
-    if (!additionalParams?.isExpand)
-      return super.selectMany(params, additionalParams);
-    const result = await super.selectMany(params, additionalParams);
-    if (!isValidArrayWithData(result)) return result;
-    const goalIds = Array.from(
-      new Set((result as ITaskThumb[]).map((x) => x.goalId).filter(Boolean))
-    ) as IRecordId[];
-    if (goalIds.length === 0) return result;
-    const goals = await goalStore.selectMany(
-      {
-        filters: {
-          id: goalIds
-        }
-      },
-      {
-        isExpand: true
-      }
-    );
-    const goalMap = new Map<IRecordId, IGoalThumb>(
-      (goals ?? []).map((g: IGoalThumb) => [g.id, g])
-    );
-    (result as ITaskThumb[]).forEach((x) => {
-      if (x.goalId) x.goal = goalMap.get(x.goalId);
-    });
-    return result;
-  }
-
-  async save(
-    form: {
-      label?: string;
-      dateUnix?: number;
-      goalId?: IRecordId;
-      collectionId?: IRecordId;
-    },
-    params?: { id?: IRecordId; context?: string }
-  ) {
-    logger.log({ at: "TaskStore.save", form });
-    const resource: ITaskCapture = {
-      id: params?.id ?? generateResourceId(Resource.task),
-      label: form.label ?? "",
-      dateUnix: form.dateUnix
-        ? resolveUnixTimestamp(getUtcSafeDay(new Date(form.dateUnix)))
-        : defaults.dateUnix,
-      ...(form.goalId && { goalId: form.goalId })
-    };
-    appStore.addToRecents({
-      record: resource,
-      type: Resource.task,
-      timestamp: new Date()
-    });
-    return super.create([resource], {
-      context: params?.context
-    });
-  }
-
-  async toggle(id: IRecordId, params?: { context?: string }) {
-    const task = await super.select(id);
-    if (!task) return;
-    const newVal = !task.isChecked;
-    return super.modify(
-      id,
-      {
-        isChecked: newVal,
-        completedAtUnix: newVal ? resolveUnixTimestamp() : undefined
-      },
-      {
-        context: params?.context
-      }
-    );
-  }
-}
-
-export const taskStore = TaskStore.resolve(Resource.task);
+import { datafn } from "@21n/stores/datafn.store";
+import { bulkEditStore } from "@21n/components/record/bulkedit.store";
+import { BulkEditor } from "@21n/components/record/record.store";
+import { Product } from "@21n/products/product.type";
 
 class TaskActions {
   constructor(
     private task: ITask,
-    private store: TaskStore,
     private accessPoint: ResourceAccessPoint
   ) {}
 
@@ -130,7 +37,10 @@ class TaskActions {
     label: "Focus now",
     icon: "circle",
     callback: async () => {
-      await activeSession.focusTask(this.task.id, this.task.goalId);
+      await activeSession.focusTask(
+        this.task.id,
+        this.task.objectiveId ?? undefined
+      );
     }
   };
 
@@ -140,25 +50,33 @@ class TaskActions {
       label: this.task.isChecked ? "Mark as incomplete" : "Mark as complete",
       icon: this.task.isChecked ? "square" : "check-square",
       callback: async () => {
-        await this.store.toggle(this.task.id, {
+        const isChecked = !this.task.isChecked;
+        await datafn.task.mutate({
+          operation: "merge",
+          id: this.task.id,
+          record: {
+            id: this.task.id,
+            isChecked,
+            completedAtUnix: isChecked ? resolveUnixTimestamp() : null
+          },
           context: this.accessPoint
         });
       }
     };
   }
 
-  editGoal() {
+  editObjective() {
     return {
-      value: "editGoal",
-      icon: resolveResourceIcon(Resource.goal),
+      value: "editObjective",
+      icon: resolveResourceIcon(Resource.objective),
       label:
-        this.accessPoint === ResourceAccessPoint.GOAL
-          ? "Move to another goal"
-          : this.task.goalId
-            ? "Change goal"
-            : "Assign goal",
+        this.accessPoint === ResourceAccessPoint.OBJECTIVE
+          ? "Move to another objective"
+          : this.task.objectiveId
+            ? "Change objective"
+            : "Assign objective",
       callback: async () => {
-        appStore.runAction(Action.EDIT_TASK_GOAL, {
+        appStore.runAction(Action.EDIT_TASK_OBJECTIVE, {
           componentParams: {
             taskId: this.task.id,
             context: this.accessPoint
@@ -181,6 +99,74 @@ class TaskActions {
     icon: "calendar",
     label: "Edit due date"
   };
+
+  select(accessPointId?: IRecordId) {
+    const resolvedAccessPointId = resolveBulkSelectionAccessPointId(
+      this.accessPoint,
+      accessPointId
+    );
+    const multiSelectContext = {
+      resource: determineResourceType(this.task.id),
+      accessPoint: this.accessPoint,
+      accessPointId: resolvedAccessPointId
+    };
+    const resolveEditor = () => {
+      if (!bulkEditStore.matchesContext(multiSelectContext)) {
+        bulkEditStore.activate(multiSelectContext, {
+          onAction: (ids, action, data) => {
+            const bulkEditor = new BulkEditor(
+              multiSelectContext.resource,
+              bulkEditStore
+            );
+            bulkEditor.run(action, data);
+          },
+          subContext: resolvedAccessPointId?.toString()
+        });
+      }
+    };
+    const state = bulkEditStore.getState();
+    const selectedItems = state.selectedIds;
+    const isSameSelectionContext =
+      bulkEditStore.matchesContext(multiSelectContext);
+    return {
+      label:
+        isSameSelectionContext &&
+        selectedItems.some(resourceInList(this.task.id))
+          ? "Unselect"
+          : "Select",
+      value: ResourceActionType.SELECT,
+      icon: "check-circle",
+      callback: async () => {
+        resolveEditor();
+        const currentState = bulkEditStore.getState();
+        const currentSelection = currentState.selectedIds;
+        if (currentSelection.some(resourceInList(this.task.id))) {
+          bulkEditStore.select(
+            currentSelection.filter((y) => !isSameResource(y, this.task.id))
+          );
+        } else {
+          bulkEditStore.select([...currentSelection, this.task.id]);
+        }
+      }
+    };
+  }
+
+  trash() {
+    const isTrashed = isTrashedResource(this.task);
+    return {
+      value: isTrashed ? "restore" : "delete",
+      icon: resolveResourceActionIcon(
+        isTrashed ? ResourceActionType.RESTORE : ResourceActionType.DELETE
+      ),
+      callback: async () => {
+        await datafn.task.mutate({
+          operation: isTrashed ? "restore" : "trash",
+          id: this.task.id,
+          context: this.accessPoint
+        } as any);
+      }
+    };
+  }
 }
 
 export function resolveTaskContextMenu(
@@ -190,20 +176,17 @@ export function resolveTaskContextMenu(
     accessPointId?: IRecordId;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(task, taskStore, {
-    accessPoint
-  });
-  const taskActions = new TaskActions(task, taskStore, accessPoint);
-  const product = get(appStore).product;
+  const taskActions = new TaskActions(task, accessPoint);
   const viewStore = get(view);
+  const product = get(appStore).product;
   const isCurrentlyFocusing = activeSession.isCurrentFocusItem(task.id);
   let primaryItems: IContextMenuItem[] = [
     ...(accessPoint !== ResourceAccessPoint.SELF
       ? [taskActions.openTask()]
       : []),
-    resourceActions.select(accessPoint, params?.accessPointId),
+    taskActions.select(params?.accessPointId),
     ...(product === Product.POINTRON || product === Product.NUCLEUM
-      ? [taskActions.editGoal()]
+      ? [taskActions.editObjective()]
       : []),
     ...(viewStore.isConstrainedWidth ? [taskActions.editDate] : []),
     taskActions.toggle(),
@@ -216,7 +199,7 @@ export function resolveTaskContextMenu(
     },
     {
       group: "more",
-      items: [resourceActions.trash()]
+      items: [taskActions.trash()]
     }
   ];
 }

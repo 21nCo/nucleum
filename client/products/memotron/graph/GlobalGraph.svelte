@@ -1,19 +1,13 @@
 <script lang="ts">
-  import { flushSync, mount, onMount, unmount } from "svelte";
-  import { nodeStore } from "@21n/products/memotron/node/node.store";
-  import { linker } from "@21n/products/memotron/linking/link.store";
+  import { flushSync, mount, unmount } from "svelte";
   import GlobalGraphUsingG6 from "@21n/products/memotron/graph/GlobalGraphUsingG6.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import {
-    headingNodeTypes,
-    rootNodeTypeList
-  } from "@21n/products/memotron/node/node.type";
-  import { removeDuplicatesFilter } from "@21n/components/flux/resourceStores/resource.utils";
+  import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
+  import { removeDuplicatesFilter } from "@21n/data/datafn/resource.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { resolveNodeLabelString } from "@21n/products/memotron/node/node.utils";
   import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
-  import { activeResourceFilterV2 } from "@21n/utils/utils";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { Size } from "@21n/types/size.enum";
   import Divider from "@21n/elements/Divider.svelte";
@@ -22,109 +16,139 @@
   import { logger } from "@21n/components/debug/logger.client";
   import type { IRecordId } from "@21n/types/data.type";
   import MemotronOverviewLayout from "@21n/products/memotron/overview/MemotronOverviewLayout.svelte";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
+  import { browser } from "$app/environment";
 
-  let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
-  let isRendered = false;
-  let isLoading = false;
-  let isHideOrphans = false;
-  let _nodes: any[] = [];
-  let _edges: any[] = [];
-  let graphRef: GlobalGraphUsingG6;
-  let splitResource: IRecordId | undefined = undefined;
-  let isConstrainedWidth = false;
+  let isRendered = $state(false);
+  let isHideOrphans = $state(false);
+  let graphRef = $state<GlobalGraphUsingG6>();
+  let splitResource = $state<IRecordId | undefined>(undefined);
+  let isConstrainedWidth = $state(false);
+  const relationRowsStore = toSvelteStore<Array<{ links?: Record<string, any>[] }>>(
+    datafn.node.signal({
+      select: ["id", "links.#"],
+      metadata: {
+        includeTrashed: true,
+        includeArchived: true
+      }
+    }),
+    { initialData: [] }
+  );
+  const rootNodesStore = toSvelteStore(
+    datafn.node.signal({
+      select: ["id", "label", "body", "contentType", "parent.*"],
+      filters: {
+        contentType: { $in: [...rootNodeTypeList] },
+        creationContext: { $is_empty: true },
+        metaType: { $is_empty: true }
+      }
+    }),
+    { initialData: [] }
+  );
+  const relationRows = $derived(
+    $relationRowsStore.data.flatMap((record) => record.links ?? [])
+  );
+  const graphEdges = $derived(resolveGraphEdges(relationRows));
+  const linkedNodeIds = $derived(
+    Array.from(
+      new Set(graphEdges.map((link: any) => [link.source, link.target]).flat())
+    ) as string[]
+  );
+  const linkedNodesStore = $derived.by(() =>
+    toSvelteStore(
+      datafn.node.signal({
+        select: ["id", "label", "body", "contentType", "parent.*"],
+        filters: {
+          id: {
+            $in: linkedNodeIds.length
+              ? linkedNodeIds
+              : ["__datafn_empty_global_graph__"]
+          }
+        }
+      }),
+      { initialData: [] }
+    )
+  );
+  const graphNodes = $derived(
+    resolveGraphNodes([...$linkedNodesStore.data, ...$rootNodesStore.data])
+  );
+  const unfilteredData = $derived({
+    nodes: graphNodes,
+    edges: graphEdges
+      .filter((x: any) => {
+        return (
+          x.source &&
+          x.target &&
+          graphNodes.some((y) => y.id === x.source) &&
+          graphNodes.some((y) => y.id === x.target)
+        );
+      })
+      .filter(removeDuplicatesFilter)
+  });
+  const data = $derived(resolveFilteredData(unfilteredData, isHideOrphans));
+  const isLoading = $derived(
+    $relationRowsStore.loading || $rootNodesStore.loading || $linkedNodesStore.loading
+  );
 
-  onMount(async () => {
-    await fetchData();
-    applyFilters();
+  $effect(() => {
+    data;
+    setTimeout(() => {
+      graphRef?.rerender();
+    }, 100);
   });
 
-  async function fetchData() {
-    isLoading = true;
-    try {
-      const links = await linker.selectMany();
-      const edges = links
-        .filter(
-          (link: any) =>
-            link.in &&
-            link.out &&
-            link.in.toString().includes("node") &&
-            link.out.toString().includes("node")
-        )
-        .map((link: any) => ({
-          source: link.in.toString(),
-          target: link.out.toString(),
-          id: link.id.toString()
-        }));
-      const allNodesList = Array.from(
-        new Set(edges.map((link: any) => [link.source, link.target]).flat())
-      ) as string[];
-      const properties = {
-        select: ["id", "label", "body", "contentType"],
-        expand: ["parent"]
-      };
-      const nodesWithLinks = await nodeStore.selectMany({
-        properties,
-        filters: {
-          // contentType: [...rootNodeTypeList, ...headingNodeTypes]
-          id: allNodesList,
-          ...activeResourceFilterV2
-        }
-      });
-      const allRootNodes = await nodeStore.selectMany({
-        properties,
-        filters: {
-          // contentType: [...rootNodeTypeList, ...headingNodeTypes],
-          contentType: [...rootNodeTypeList],
-          creationContext: false,
-          ...activeResourceFilterV2
-        }
-      });
-      const nodes = [...nodesWithLinks, ...allRootNodes];
-      _nodes = nodes
-        .map((node: any) => {
-          const nodeLabel = resolveNodeLabelString(node) || "";
-          return {
-            id: node.id.toString(),
-            label: nodeLabel,
-            innerHTML: renderComponentToString(node),
-            innerHTMLTest: `<div>${node.label || "Untitled"}</div>`,
-            type: "circle"
-          };
-        })
-        .filter(removeDuplicatesFilter);
-      _edges = edges
-        .filter((x: any) => {
-          return (
-            x.source &&
-            x.target &&
-            _nodes.some((y) => y.id === x.source) &&
-            _nodes.some((y) => y.id === x.target)
-          );
-        })
-        .filter(removeDuplicatesFilter);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      isLoading = false;
-    }
+  function resolveGraphEdges(links: Record<string, any>[]) {
+    return links
+      .filter(
+        (link: any) =>
+          link.from &&
+          link.to &&
+          link.from.toString().includes("node") &&
+          link.to.toString().includes("node")
+      )
+      .map((link: any) => ({
+        source: link.from.toString(),
+        target: link.to.toString(),
+        id: `${link.from}|${link.to}`
+      }));
   }
 
-  function applyFilters() {
-    if (isHideOrphans) {
-      const nodes = _nodes.filter((node) => {
-        return _edges.some(
+  function resolveFilteredData(
+    input: { nodes: any[]; edges: any[] },
+    isFilterOrphans: boolean
+  ) {
+    if (isFilterOrphans) {
+      const nodes = input.nodes.filter((node) => {
+        return input.edges.some(
           (edge) => edge.source === node.id || edge.target === node.id
         );
       });
-      data.nodes = nodes;
-      data.edges = _edges;
-      return;
+      return {
+        nodes,
+        edges: input.edges
+      };
     }
-    data.nodes = _nodes;
-    data.edges = _edges;
+    return input;
+  }
+
+  function resolveGraphNodes(nodes: any[]) {
+    return nodes
+      .map((node: any) => {
+        const nodeLabel = resolveNodeLabelString(node) || "";
+        return {
+          id: node.id.toString(),
+          label: nodeLabel,
+          innerHTML: renderComponentToString(node),
+          innerHTMLTest: `<div>${node.label || "Untitled"}</div>`,
+          type: "circle"
+        };
+      })
+      .filter(removeDuplicatesFilter);
   }
 
   function renderComponentToString(node: any) {
+    if (!browser) return `<div>${node.label || "Untitled"}</div>`;
     const target = document.createElement("div");
     const component = mount(NodeTitleLabelPart, {
       target,
@@ -189,8 +213,9 @@
         size={Size.sm}
         bind:checked={isHideOrphans}
         onChange={() => {
-          applyFilters();
-          graphRef?.rerender();
+          setTimeout(() => {
+            graphRef?.rerender();
+          }, 100);
         }}
       />
     </span>
@@ -206,9 +231,9 @@
     <GlobalGraphUsingG6
       bind:this={graphRef}
       {data}
-      onRender={onRender}
+      {onRender}
       onSelect={onNodeSelect}
-      onCanvasClick={onCanvasClick}
+      {onCanvasClick}
       layout="d3-force"
     />
   {/if}

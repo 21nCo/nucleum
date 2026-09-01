@@ -3,7 +3,8 @@ import { type IRecordId } from "@21n/types/data.type";
 import {
   AccessMode,
   type IActiveResource,
-  type IResource
+  type IResource,
+  type IResourceStarrable
 } from "./resource.type";
 import {
   determineResourceAccessMode,
@@ -18,7 +19,7 @@ const activeResources = new Map<string, ActiveResourceStore<any, any>>();
 
 export function updateActiveResource(
   id: IRecordId,
-  value: Partial<IActiveResource>
+  value: Partial<IActiveResource & IResourceStarrable>
 ) {
   const activeResource = activeResources.get(id.toString());
   if (!activeResource) return;

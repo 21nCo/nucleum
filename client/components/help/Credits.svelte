@@ -97,12 +97,6 @@
       link: "https://tailwindcss.com/"
     },
     {
-      name: "SurrealDB",
-      description: "Cloud-native multi-model database",
-      creator: "SurrealDB",
-      link: "https://surrealdb.com/"
-    },
-    {
       name: "Node.js",
       description: "JavaScript runtime environment",
       creator: "Ryan Dahl",

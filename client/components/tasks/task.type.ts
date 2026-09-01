@@ -1,10 +1,11 @@
 import type { IRecordId } from "@21n/types/data.type";
 import type {
+  DatafnDateValue,
   IResource,
-  IResourceInActivableFromParent,
+  IResourceInActivableFromAncestor,
   IResourceLabeled
-} from "@21n/components/flux/resourceStores/resource.type";
-import type { IGoalThumb } from "@21n/components/goals/goal.type";
+} from "@21n/data/datafn/resource.type";
+import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
 
 interface ITaskBase extends IResourceLabeled {
   isChecked?: boolean;
@@ -15,7 +16,7 @@ interface ITaskBase extends IResourceLabeled {
   /**
    * @deprecated - use {@link dateUnix} instead
    */
-  date?: Date;
+  date?: DatafnDateValue;
   /**
    * The unix timestamp of the date
    */
@@ -28,29 +29,29 @@ interface ITaskBase extends IResourceLabeled {
    * @deprecated - use {@link completedAtUnix} instead
    * The date the task was completed
    */
-  completedAt?: Date;
+  completedAt?: DatafnDateValue;
   /**
    * The unix timestamp of the completed date
    */
-  completedAtUnix?: number;
+  completedAtUnix?: number | null;
 }
 
-type IResourcePropertiesForTask = IResource & IResourceInActivableFromParent;
+type IResourcePropertiesForTask = IResource & IResourceInActivableFromAncestor;
 
 export type ITaskCapture = ITaskBase & {
   id?: IRecordId;
-  goalId?: IRecordId;
+  objectiveId?: IRecordId | null;
 };
 
 export type ITask = IResourcePropertiesForTask &
   ITaskBase & {
     dateUnix: number;
-    goalId: IRecordId;
+    objectiveId: IRecordId | null;
   };
 
 export interface ITaskThumb extends ITaskBase, IResourcePropertiesForTask {
-  goalId?: IRecordId;
-  goal?: IGoalThumb;
+  objectiveId?: IRecordId | null;
+  objective?: IObjectiveThumb;
 }
 
 export enum TaskSubTypeForSwitcher {
@@ -67,7 +68,7 @@ export enum TaskSubTypeForSwitcher {
   /**
    * @deprecated
    */
-  WITHOUT_GOAL = "without-goal"
+  WITHOUT_OBJECTIVE = "without-objective"
 }
 
 export enum TaskDueDateFilter {

@@ -66,9 +66,7 @@
     type?: string;
     id?: string;
     width?: string | undefined;
-    numberInputParams?:
-      | { min: number; max: number; step: number }
-      | undefined;
+    numberInputParams?: { min: number; max: number; step: number } | undefined;
     isExperimentalMdInput?: boolean;
     icon?: string | undefined;
     hasControls?: boolean;
@@ -85,8 +83,7 @@
     children?: Snippet | undefined;
     onBlur?: ((event: CustomEvent<void>) => void) | undefined;
     onCancel?:
-      | ((event: CustomEvent<{ event?: MouseEvent }>) => void)
-      | undefined;
+      ((event: CustomEvent<{ event?: MouseEvent }>) => void) | undefined;
     onChange?: ((event: CustomEvent<any>) => void) | undefined;
     onClear?: (() => void) | undefined;
     onDebouncedChange?: ((event: CustomEvent<any>) => void) | undefined;
@@ -109,6 +106,11 @@
   let isFocused = $state(false);
   let inputRef = $state<any>();
   let isValidLink = $state(false);
+  let onBlurCallback = onBlur;
+
+  $effect(() => {
+    onBlurCallback = onBlur;
+  });
 
   export async function focus() {
     await tick();
@@ -171,7 +173,9 @@
     }
   }, 1000);
 
-  function createKeyboardEventDetail(event: KeyboardEvent): KeyboardEventDetail {
+  function createKeyboardEventDetail(
+    event: KeyboardEvent
+  ): KeyboardEventDetail {
     return new Proxy(event as KeyboardEvent, {
       get(target, prop) {
         if (prop === "event") return target;
@@ -202,15 +206,20 @@
 
   function emitBlur() {
     const blurEvent = new CustomEvent<void>("blur");
-    if (typeof onBlur === "function") {
-      onBlur(blurEvent);
-    }
+    const callback = onBlurCallback;
+    setTimeout(() => {
+      if (typeof callback !== "function") return;
+      callback(blurEvent);
+    }, 0);
   }
 
   function emitSave(event: MouseEvent) {
-    const saveEvent = new CustomEvent<{ event: MouseEvent; value: any }>("save", {
-      detail: { event, value }
-    });
+    const saveEvent = new CustomEvent<{ event: MouseEvent; value: any }>(
+      "save",
+      {
+        detail: { event, value }
+      }
+    );
     if (typeof onSave === "function") {
       onSave(saveEvent);
     }
@@ -290,9 +299,12 @@
         const keyboardEvent = event.detail;
         if (isPreventDefaultOnEnter && keyboardEvent.key === "Enter") {
           keyboardEvent.preventDefault();
-          const enterEvent = new CustomEvent<{ event: KeyboardEvent }>("enter", {
-            detail: { event: keyboardEvent }
-          });
+          const enterEvent = new CustomEvent<{ event: KeyboardEvent }>(
+            "enter",
+            {
+              detail: { event: keyboardEvent }
+            }
+          );
           onEnter?.(enterEvent);
         } else {
           const keydownEvent = new CustomEvent<KeyboardEventDetail>("keydown", {

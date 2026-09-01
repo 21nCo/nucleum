@@ -1,4 +1,4 @@
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import type { IMutation } from "@21n/types/data.type";
 
 export enum SyncMethod {
@@ -42,7 +42,7 @@ export type ICloneDownPaginateBody = {
   isExtension: boolean;
   offset: number;
   limit: number;
-  cursor?: string; // Optional cursor for efficient pagination
+  cursor?: string;
 };
 
 export type ICloneDownPaginatev2Body = {

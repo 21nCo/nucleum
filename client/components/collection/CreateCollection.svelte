@@ -5,7 +5,6 @@
   import { Orientation } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import { TextStyle } from "@21n/types/text.enum";
-  import { collectionStore } from "@21n/components/collection/collection.store";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { OptionSelectorStyle } from "@21n/types/select.type";
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
@@ -13,7 +12,7 @@
     CollectionLayout,
     CollectionType
   } from "@21n/components/collection/collection.type";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import type { IProperty } from "@21n/components/collection/properties/property.type";
   import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
   import { propertyEditorStore } from "@21n/components/collection/properties/property.store";
@@ -22,11 +21,11 @@
   import {
     resolveResourceIcon,
     resourceAction
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import { logger } from "@21n/components/debug/logger.client";
   import {
     resolveCollectionResource,
@@ -40,30 +39,38 @@
   import { toasts } from "@21n/stores/notification.store";
   import { tooltip } from "@21n/actions/popover.action";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
+  import { createDatafnCollection } from "@21n/components/collection/collection.store";
 
   let {
     context = undefined
   }: {
     context?: ResourceAccessPoint | undefined;
   } = $props();
-  let title: string;
-  let description: string;
-  let isStarred: boolean = false;
-  let selectedType: CollectionType = CollectionType.TYPED;
-  let selectedView: CollectionLayout = CollectionLayout.BOARD;
-  let isCaptureShortcutEnabled: boolean = true;
-  let properties: IProperty[] = [];
-  let avatar: any;
-  let coverPhoto: any;
-  let collectibleResources: Resource[] = resolveCollectionResource(
-    $appStore.product
+  let title = $state<string>();
+  let description = $state<string>();
+  let isStarred = $state(false);
+  let selectedType = $state(CollectionType.TYPED);
+  let selectedView = $state(CollectionLayout.BOARD);
+  let isCaptureShortcutEnabled = $state(true);
+  let properties = $state<IProperty[]>([]);
+  let avatar = $state<any>();
+  let coverPhoto = $state<any>();
+  let collectibleResources = $derived(
+    resolveCollectionResource($appStore.product)
   );
-  let resource: Resource = collectibleResources[0];
+  let resource = $state<Resource>(Resource.node);
   const dev_isShowTypeSelector: boolean = false;
 
   const formLabelConfig = {
     orientation: Orientation.Vertical
   };
+
+  $effect(() => {
+    const defaultResource = collectibleResources[0];
+    if (defaultResource && !collectibleResources.includes(resource)) {
+      resource = defaultResource;
+    }
+  });
 
   onMount(() => {
     propertyEditorStore.reset();
@@ -99,35 +106,23 @@
         title,
         selectedType
       });
-      const result = await collectionStore.save(
-        {
-          label: title,
-          description,
-          type: selectedType,
-          defaultLayout: selectedView,
-          isStarred,
-          cover: coverPhoto,
-          resource: resource,
-          isCaptureShortcutEnabled:
-            selectedType === CollectionType.TYPED
-              ? isCaptureShortcutEnabled
-              : undefined,
-          avatar: avatar
-            ? {
-                code: avatar.code,
-                color: avatar.color,
-                file: avatar.file,
-                isFilled: avatar.isFilled,
-                type: avatar.type
-              }
-            : undefined
-        },
-        {
-          context:
-            context ??
-            resourceAction(Resource.collection, ResourceActionType.CREATE)
-        }
-      );
+      const propertyEditor = propertyEditorStore.get();
+      const result = await createDatafnCollection({
+        title,
+        description,
+        isStarred,
+        isCaptureShortcutEnabled,
+        selectedType,
+        selectedView,
+        resource,
+        properties: propertyEditor?.properties ?? [],
+        typeToExtendId: propertyEditor?.typeToExtend?.id,
+        avatar,
+        coverPhoto,
+        context:
+          context ??
+          resourceAction(Resource.collection, ResourceActionType.CREATE)
+      });
       if (!result) {
         toasts.error("Error creating collection. Please try again.");
         return;
