@@ -12,7 +12,6 @@ import { logger } from "@21n/components/debug/logger.client";
 import { appStore } from "@21n/stores/app.store";
 import { datafn } from "@21n/stores/datafn.store";
 import { get } from "svelte/store";
-import { datafn } from "@21n/stores/datafn.store";
 
 function resolveTimestamp(value: unknown): Date | null {
   if (value instanceof Date) {
@@ -124,7 +123,7 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
     } as any)) as { data?: any[] };
     const result = queryResult.data ?? [];
     logger.log({ at: "recentResources", resource, result });
-    return result.data;
+    return result;
   }
 }
 

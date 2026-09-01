@@ -1,11 +1,25 @@
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   type IProperty,
+  type IPropertyCapture,
   type IPropertyEditorStore,
   PropertyType,
   UniversalPropertyType
 } from "@21n/components/collection/properties/property.type";
 import { ObservableStore } from "@21n/stores/client.store";
+import { StoreDataType } from "@21n/types/data.type";
 import { PropertyTypeGroup } from "@21n/components/collection/properties/propertyTypeSelector/propertyTypeSelector.type";
+
+class PropertyStore extends ResourceStore<IProperty, IPropertyCapture> {
+  constructor() {
+    super(Resource.property, {
+      dataType: StoreDataType.FIR
+    });
+  }
+}
+
+export const propertyStore = PropertyStore.resolve(Resource.property);
 
 export class PropertyEditorStore extends ObservableStore<IPropertyEditorStore> {
   constructor() {
