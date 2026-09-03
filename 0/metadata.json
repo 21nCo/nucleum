@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.10.4",
+  "checkpoint_id": "01M1JS7MK4DH04WZ1KBPVFB8SS",
+  "session_id": "794acd5a-ec37-4ff6-b3bf-b300a2b42b5b",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-03T04:43:07.971945Z",
+  "branch": "dev",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "shared/data/datafn/search.provider.invariants.test.ts",
+    "shared/data/datafn/search.provider.test.ts",
+    "shared/data/datafn/search.provider.ts"
+  ],
+  "agent": "Cursor",
+  "model": "cursor-grok-4.6-high",
+  "turn_id": "e21ef663bad2",
+  "compact_transcript_start": 0,
+  "initial_attribution": {
+    "calculated_at": "2026-09-03T04:43:07.955796Z",
+    "agent_lines": 73,
+    "agent_removed": 8,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 73,
+    "total_lines_changed": 81,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 36,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".codex/hooks.json": 36
+      }
+    }
+  ]
+}
