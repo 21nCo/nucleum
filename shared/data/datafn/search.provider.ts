@@ -1,6 +1,20 @@
+import type { DatafnSchemaLiteral } from "@datafn/core";
+
 import { nucleumDatafnSchema } from "./schema.datafn";
 
 export type NucleumDatafnSearchResourceFields = Record<string, string[]>;
+
+type NucleumDatafnSchemaResource = DatafnSchemaLiteral<
+  typeof nucleumDatafnSchema
+>["resources"][number];
+type NucleumDatafnSearchField =
+  NucleumDatafnSchemaResource extends infer Resource
+    ? Resource extends {
+        readonly indices: { readonly search: readonly (infer Field)[] };
+      }
+      ? Extract<Field, string>
+      : never
+    : never;
 
 /** Default SearchFn query behavior used by DataFn client and server search. */
 export const nucleumDatafnSearchDefaults = {
@@ -8,10 +22,9 @@ export const nucleumDatafnSearchDefaults = {
   fuzzy: 1,
   fieldBoosts: {
     label: 4,
-    title: 3,
     text: 1.5,
     notes: 1.25
-  }
+  } satisfies Partial<Record<NucleumDatafnSearchField, number>>
 } as const;
 
 /** Text pipeline settings for local IndexedDB-backed SearchFn indexes. */
@@ -21,9 +34,13 @@ export const nucleumDatafnSearchPipeline = {
   edgeNGramMinLength: 2,
   edgeNGramMaxLength: 20,
   edgeNGramFieldConfig: {
-    label: { enabled: true, minLength: 1, maxLength: 30 },
-    title: { enabled: true, minLength: 1, maxLength: 30 }
-  }
+    label: { enabled: true, minLength: 1, maxLength: 30 }
+  } satisfies Partial<
+    Record<
+      NucleumDatafnSearchField,
+      { enabled: boolean; minLength: number; maxLength: number }
+    >
+  >
 } as const;
 
 /** Search indexing disclosure for local and server-side resource fields. */

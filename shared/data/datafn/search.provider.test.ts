@@ -27,7 +27,6 @@ describe("Nucleum DataFn search provider", () => {
       fuzzy: 1,
       fieldBoosts: {
         label: 4,
-        title: 3,
         text: 1.5,
         notes: 1.25
       }
@@ -35,8 +34,7 @@ describe("Nucleum DataFn search provider", () => {
     expect(nucleumDatafnSearchPipeline).toMatchObject({
       enableEdgeNGrams: true,
       edgeNGramFieldConfig: {
-        label: { enabled: true, minLength: 1, maxLength: 30 },
-        title: { enabled: true, minLength: 1, maxLength: 30 }
+        label: { enabled: true, minLength: 1, maxLength: 30 }
       }
     });
   });
