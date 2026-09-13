@@ -54,13 +54,9 @@ export default defineConfig({
         preset: "smallest",
         propertyReadSideEffects: false,
         tryCatchDeoptimization: false,
-        // Preserve G6's internal extension registry
-        moduleSideEffects: (id) => {
-          if (id.includes("@antv/g6")) {
-            return true; // Preserve side effects for G6
-          }
-          return false;
-        }
+        moduleSideEffects: (id) =>
+          id.includes("@antv/g6") ||
+          id.includes("/client/application/composition/")
       }
     },
     chunkSizeWarningLimit: 1000
