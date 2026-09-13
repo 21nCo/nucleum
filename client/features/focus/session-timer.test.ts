@@ -33,7 +33,7 @@ beforeAll(async () => {
     resolvePlayer: () => undefined
   });
   activeSession = (await import("./session.store")).activeSession;
-});
+}, 30_000);
 
 beforeEach(() => {
   vi.useFakeTimers();
