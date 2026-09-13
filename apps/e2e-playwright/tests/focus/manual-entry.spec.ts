@@ -19,20 +19,14 @@ async function fillManualLogEntryAndSave(page: Page, objectiveName: string) {
   ).toBeVisible({ timeout: 10_000 });
   await page.keyboard.press("Enter");
 
-  const quickDurationBtn = page
-    .getByRole("button", { name: /last\s+10\s*min/i })
-    .first();
-  const hasQuick = await quickDurationBtn
-    .waitFor({ state: "visible", timeout: 2_000 })
-    .then(() => true)
-    .catch(() => false);
-  if (hasQuick)
-    await quickDurationBtn.click({ timeout: 2_000 }).catch(() => null);
-
-  await page
-    .locator("button")
-    .filter({ hasText: /Save entries/i })
-    .click({ timeout: 5_000 });
+  const modal = page.locator('[id="MANUAL_FOCUS_ENTRY"]');
+  const quickDurationButton = modal.getByRole("button", {
+    name: /^last\s+10\s*min(?:ute)?s?$/i
+  });
+  await expect(quickDurationButton).toBeVisible();
+  await quickDurationButton.click();
+  await modal.getByRole("button", { name: /^Save entries(?:\s|$)/i }).click();
+  await expect(modal).toBeHidden({ timeout: 15_000 });
 }
 
 test.beforeEach(async ({ page, seed }) => {
