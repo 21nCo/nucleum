@@ -1,13 +1,33 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { accessSync, constants } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { schema } from "../db/generated/datafn/datafn-schema.drizzle";
 
+const dockerExecutable = [
+  "/usr/bin/docker",
+  "/usr/local/bin/docker",
+  "/opt/homebrew/bin/docker",
+  "/Applications/Docker.app/Contents/Resources/bin/docker",
+  "C:/Program Files/Docker/Docker/resources/bin/docker.exe"
+].find((candidate) => {
+  try {
+    accessSync(candidate, constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+});
+assert(dockerExecutable, "Install Docker in a standard system location");
+
 /** Runs SQL only against a disposable PostgreSQL container created by this process. */
 function docker(args: string[], input?: string) {
-  const result = spawnSync("docker", args, { input, encoding: "utf8" });
+  const result = spawnSync(dockerExecutable!, args, {
+    input,
+    encoding: "utf8"
+  });
   if (result.status !== 0)
     throw new Error(
       result.stderr || result.error?.message || "Docker command failed"
@@ -65,7 +85,7 @@ try {
   for (let attempt = 0; attempt < 120; attempt++) {
     if (
       spawnSync(
-        "docker",
+        dockerExecutable,
         ["exec", container, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"],
         { stdio: "ignore" }
       ).status === 0
