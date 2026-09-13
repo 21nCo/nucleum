@@ -59,47 +59,33 @@ const CALENDAR_SURFACE: SurfaceContract = {
 const CALENDAR_LAYOUT_CLASSIC_SURFACE: SurfaceContract = {
   route: "/calendar",
   triggerRole: "button",
-  triggerName: /^Columns$/i,
-  anchorTestIds: [],
-  anchorTexts: [/^(?:D|Day|Days|W|Week|M|Month|Y|Year)$/i]
+  triggerName: /^Classic$/i,
+  anchorTestIds: ["calendar-layout-classic"]
 };
 
 const CALENDAR_LAYOUT_BIRD_SURFACE: SurfaceContract = {
   route: "/calendar",
-  anchorTestIds: [],
-  anchorTexts: [
-    /^(?:P|Parts|D|Day|Days|W|Week|Weeks|M|Month|Months|Y|Year|Years)$/i
-  ]
+  triggerRole: "button",
+  triggerName: /^Columns$/i,
+  anchorTestIds: ["calendar-layout-bird"]
 };
 
-const CALENDAR_VIEW_DAY_TIME_ANCHOR_SURFACE: SurfaceContract = {
+const CALENDAR_VIEW_DAY_SURFACE: SurfaceContract = {
   route: "/calendar",
   triggerText: /^(?:D|Day|Days)$/i,
-  anchorTestIds: [],
-  anchorTexts: [/^(?:12:00 AM|1:00 AM|2:00 AM|Today)$/i]
-};
-
-const CALENDAR_VIEW_DAY_WEEKDAY_ANCHOR_SURFACE: SurfaceContract = {
-  route: "/calendar",
-  triggerText: /^(?:D|Day|Days)$/i,
-  anchorTestIds: [],
-  anchorTexts: [
-    /^(?:Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)$/i
-  ]
+  anchorTestIds: ["calendar-view-day"]
 };
 
 const CALENDAR_VIEW_MONTH_SURFACE: SurfaceContract = {
   route: "/calendar",
   triggerText: /^(?:M|Month|Months)$/i,
-  anchorTestIds: [],
-  anchorTexts: [/^Sun$/i, /^Mon$/i, /^Tue$/i]
+  anchorTestIds: ["calendar-view-month"]
 };
 
 const CALENDAR_VIEW_YEAR_SURFACE: SurfaceContract = {
   route: "/calendar",
   triggerText: /^(?:Y|Year|Years)$/i,
-  anchorTestIds: [],
-  anchorTexts: [/^Jan$/i, /^Feb$/i, /^Mar$/i]
+  anchorTestIds: ["calendar-view-year"]
 };
 
 const OVERVIEW_FOCUS_SURFACE: SurfaceContract = {
@@ -182,13 +168,11 @@ function isMemoryProduct(product: E2EProduct): boolean {
 
 const surfaceResolvers: Record<SurfaceKey, SurfaceResolver> = {
   calendar: () => CALENDAR_SURFACE,
-  "calendar.layout.classic": (product) =>
-    product === Product.NUCLEUM ? CALENDAR_LAYOUT_CLASSIC_SURFACE : null,
-  "calendar.layout.bird": () => CALENDAR_LAYOUT_BIRD_SURFACE,
+  "calendar.layout.classic": () => CALENDAR_LAYOUT_CLASSIC_SURFACE,
+  "calendar.layout.bird": (product) =>
+    product === Product.NUCLEUM ? CALENDAR_LAYOUT_BIRD_SURFACE : null,
   "calendar.view.day": (product) =>
-    product === Product.NUCLEUM
-      ? CALENDAR_VIEW_DAY_TIME_ANCHOR_SURFACE
-      : CALENDAR_VIEW_DAY_WEEKDAY_ANCHOR_SURFACE,
+    isFocusProduct(product) ? CALENDAR_VIEW_DAY_SURFACE : null,
   "calendar.view.month": () => CALENDAR_VIEW_MONTH_SURFACE,
   "calendar.view.year": () => CALENDAR_VIEW_YEAR_SURFACE,
   "overview.focus": (product) =>

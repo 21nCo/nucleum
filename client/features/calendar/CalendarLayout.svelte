@@ -54,7 +54,10 @@
   }
 </script>
 
-<div class="flex flex-col h-full w-full otop:pt-12">
+<div
+  class="flex flex-col h-full w-full otop:pt-12"
+  data-testid={`calendar-layout-${panel}`}
+>
   <div class="flex items-center gap-4 border-b border-brs3 h-11 pl-3">
     <header class="grid grid-cols-3 w-full sticky top-0 z-10 h-full">
       <div class="flex items-center gap-4 h-full">
