@@ -75,6 +75,8 @@
     captureStore = ActiveCaptureStore.resolve(captureId);
   });
 
+  const owningUrl = window.location.href;
+
   onMount(async () => {
     if (!isWindowDnD) {
       releaseDnDPage = acquireDnDPage();
@@ -111,6 +113,7 @@
     }
     subs.forEach((x) => x());
     setTimeout(() => {
+      if (window.location.href !== owningUrl) return;
       navigation.toggleSearchParam([
         AppSearchParam.LINK,
         AppSearchParam.BULK,

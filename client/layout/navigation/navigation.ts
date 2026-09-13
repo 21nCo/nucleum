@@ -221,7 +221,7 @@ export const navigation = {
           });
         }
       });
-      if (!additional?.isPreventRefresh) {
+      if (!additional?.isPreventRefresh && url.href !== window.location.href) {
         navigation.gotoPath(url.href, {
           replaceState: additional?.replaceState ?? true
         });
@@ -233,7 +233,7 @@ export const navigation = {
       if (value === null) url.searchParams.delete(key);
       else url.searchParams.set(key, value.toString());
     });
-    if (!additional?.isPreventRefresh) {
+    if (!additional?.isPreventRefresh && url.href !== window.location.href) {
       navigation.gotoPath(url.href, {
         replaceState: additional?.replaceState ?? true
       });

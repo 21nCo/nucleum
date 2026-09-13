@@ -27,8 +27,17 @@
   type RouteAuthState =
     "authenticated" | "expired" | "signed-out" | "unavailable";
 
-  async function resolveRouteAuthState(): Promise<RouteAuthState> {
-    if ($page.url.searchParams.has("token")) return "authenticated";
+  const authPath = $derived($page.url.pathname);
+  const hasAuthToken = $derived($page.url.searchParams.has("token"));
+  const routeAuth = $derived({
+    path: authPath,
+    session: resolveRouteAuthState(hasAuthToken)
+  });
+
+  async function resolveRouteAuthState(
+    hasToken: boolean
+  ): Promise<RouteAuthState> {
+    if (hasToken) return "authenticated";
     const resolution = await resolveAuthSession();
     if (
       resolution.status === "authenticated" ||
@@ -53,7 +62,7 @@
   }
 </script>
 
-{#await resolveRouteAuthState()}
+{#await routeAuth.session}
   <AppLoadingView />
 {:then authState}
   {#if authState === "authenticated"}
