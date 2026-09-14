@@ -75,8 +75,6 @@
     captureStore = ActiveCaptureStore.resolve(captureId);
   });
 
-  const owningUrl = window.location.href;
-
   onMount(async () => {
     if (!isWindowDnD) {
       releaseDnDPage = acquireDnDPage();
@@ -98,6 +96,13 @@
     const clipBoardQueryParam = $page.url.searchParams.get(
       AppSearchParam.CLIPBOARD
     );
+    if (!isWindowDnD) {
+      navigation.toggleSearchParam([
+        AppSearchParam.LINK,
+        AppSearchParam.BULK,
+        AppSearchParam.CLIPBOARD
+      ]);
+    }
     await captureStore.init({
       isWindowDnD,
       linkQueryParam,
@@ -112,14 +117,6 @@
       releaseDnDPage?.();
     }
     subs.forEach((x) => x());
-    setTimeout(() => {
-      if (window.location.href !== owningUrl) return;
-      navigation.toggleSearchParam([
-        AppSearchParam.LINK,
-        AppSearchParam.BULK,
-        AppSearchParam.CLIPBOARD
-      ]);
-    }, 100);
   });
 
   async function onTypeSelect(selected: string) {

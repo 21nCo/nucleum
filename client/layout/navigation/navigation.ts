@@ -46,6 +46,16 @@ const recordSpecificSearchParams = [
   AccessMode.FSPLIT
 ];
 
+/** Compare navigation targets without treating equivalent query encodings as changes. */
+function areNavigationUrlsEqual(left: URL, right: URL) {
+  return (
+    left.origin === right.origin &&
+    left.pathname === right.pathname &&
+    left.hash === right.hash &&
+    left.searchParams.toString() === right.searchParams.toString()
+  );
+}
+
 /** URL, history, and resource navigation owned by the application layout. */
 export const navigation = {
   /**
@@ -221,7 +231,10 @@ export const navigation = {
           });
         }
       });
-      if (!additional?.isPreventRefresh && url.href !== window.location.href) {
+      if (
+        !additional?.isPreventRefresh &&
+        !areNavigationUrlsEqual(url, new URL(window.location.href))
+      ) {
         navigation.gotoPath(url.href, {
           replaceState: additional?.replaceState ?? true
         });
@@ -233,7 +246,10 @@ export const navigation = {
       if (value === null) url.searchParams.delete(key);
       else url.searchParams.set(key, value.toString());
     });
-    if (!additional?.isPreventRefresh && url.href !== window.location.href) {
+    if (
+      !additional?.isPreventRefresh &&
+      !areNavigationUrlsEqual(url, new URL(window.location.href))
+    ) {
       navigation.gotoPath(url.href, {
         replaceState: additional?.replaceState ?? true
       });
