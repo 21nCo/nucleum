@@ -13,12 +13,16 @@ export function resolveNavigationLinkTarget(
   const isRelative =
     !input.startsWith("//") && !/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(input);
   try {
-    const parsed = new URL(input, origin);
+    const base = new URL(
+      /^https?:\/\//i.test(origin) ? origin : "https://navigation.invalid/"
+    );
+    const parsed = new URL(input, base);
     if (parsed.protocol === "mailto:" || parsed.protocol === "tel:") {
       return { kind: "system", url: parsed.href };
     }
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return;
-    if (isRelative) return { kind: "internal", url: input };
+    if (isRelative && parsed.origin === base.origin)
+      return { kind: "internal", url: input };
     return { kind: "external", url: parsed.href };
   } catch {
     return;
