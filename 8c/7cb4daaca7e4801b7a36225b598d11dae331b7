@@ -1,0 +1,19 @@
+client/layout/navigation/native-link-target.test.ts
+  s_6d1c81ce53bddc::t_c6a1a6514609e1 1-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "8c7cb4daaca7e4801b7a36225b598d11dae331b7",
+  "prompts": {},
+  "sessions": {
+    "s_6d1c81ce53bddc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a09686-1f4a-7263-9e66-2e58b0b47a6f",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
