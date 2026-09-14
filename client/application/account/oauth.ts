@@ -80,9 +80,10 @@ export const oauth = {
         config.isUseAuthClient &&
         (ctx.os === OperatingSystem.MACOS || ctx.os === OperatingSystem.WINDOWS)
       ) {
-        const authClientHost = dev
-          ? "http://localhost:5002"
-          : `https://${import.meta.env?.VITE_HOST}`;
+        const authClientHost =
+          dev || app.isDebugMode
+            ? "http://localhost:5002"
+            : `https://${import.meta.env?.VITE_HOST}`;
         const authClientUrl = new URL("/embed", authClientHost);
         authClientUrl.searchParams.set("provider", config.oauth_slug);
         authClientUrl.searchParams.set("guest", guestPartForState);
