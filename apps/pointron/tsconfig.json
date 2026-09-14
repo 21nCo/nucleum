@@ -41,7 +41,6 @@
     "../nucleus/**/*",
     "build/**/*",
     "dist/**/*",
-    ".svelte-kit/**/*",
-    "../../packages/static/**/*"
+    ".svelte-kit/**/*"
   ]
 }

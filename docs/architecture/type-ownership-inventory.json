@@ -11378,19 +11378,6 @@
       "typeModules": 2
     },
     {
-      "path": "client/cx/package.json",
-      "name": "@nucleum/cx",
-      "exports": {
-        ".": {
-          "import": "./index.js",
-          "types": "./index.d.ts"
-        },
-        "./*": "./*"
-      },
-      "disposition": "retained: audit covers declarations, exports, aliases and importing modules",
-      "typeModules": 0
-    },
-    {
       "path": "client/datafn/package.json",
       "name": "@nucleum/datafn",
       "exports": {
@@ -11649,19 +11636,6 @@
       "typeModules": 6
     },
     {
-      "path": "client/legacy/package.json",
-      "name": "@nucleum/legacy",
-      "exports": {
-        ".": {
-          "import": "./index.js",
-          "types": "./index.d.ts"
-        },
-        "./*": "./*"
-      },
-      "disposition": "retained: audit covers declarations, exports, aliases and importing modules",
-      "typeModules": 0
-    },
-    {
       "path": "client/persistence/package.json",
       "name": "@nucleum/persistence",
       "exports": {
@@ -11848,11 +11822,9 @@
         "dev:gathery": "turbo run dev --filter=gathery-app",
         "dev:pointron": "turbo run dev --filter=pointron-app",
         "dev:memotron-share": "turbo run dev --filter=memotron-share",
-        "dev:memotron-clipper": "turbo run dev --filter=memotron-clipper",
         "codemod:alias": "tsx tools/codemods/alias-migration/index.ts",
         "lint": "npm run check:architecture && npm run check:no-fixed-test-waits && turbo run lint",
         "test": "turbo run test --filter=tidigit-tests",
-        "build:packages": "turbo run build --filter='./packages/*'",
         "build:products": "turbo run build --filter='./apps/*'",
         "build:nucleus": "turbo run build --filter=nucleus-app",
         "build:memotron": "turbo run build --filter=memotron-app",
@@ -12108,10 +12080,8 @@
     "@21n/branding": "client/branding",
     "@21n/icons": "client/icons",
     "@21n/theme": "client/theme",
-    "@nucleum/legacy": "client/legacy",
     "@21n/illustrations": "client/illustrations",
     "@21n/icons-v2": "client/iconsV2",
-    "@nucleum/cx": "client/cx",
     "@nucleum/client": "client",
     "@21n/shared-utils": "shared/utils",
     "@21n/shared-dbo": "shared/dbo",
@@ -13429,7 +13399,7 @@
     {
       "path": "client/features/memory/markdown/markdown.utils.ts",
       "name": "symbolPatterns",
-      "initializer": "[\n  { regex: /\u2190&gt;/g, replacement: \"\u2194\" },\n  { regex: /-&gt;/g, replacement: \"\u2192\" },\n  { regex: /&lt;-/g, replacement: \"\u2190\" },\n  { regex: /&lt;=/g, replacement: \"\u2264\" },\n  { regex: /&g",
+      "initializer": "[\n  { regex: /←&gt;/g, replacement: \"↔\" },\n  { regex: /-&gt;/g, replacement: \"→\" },\n  { regex: /&lt;-/g, replacement: \"←\" },\n  { regex: /&lt;=/g, replacement: \"≤\" },\n  { regex: /&g",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },
@@ -14129,7 +14099,7 @@
     {
       "path": "client/static/build.js",
       "name": "copyAssetsTo",
-      "initializer": "(targetDir) => {\n  console.log(`\ud83d\udcc2 Copying assets to ${targetDir}`);\n  \n  // Validate target directory path\n  const validatedTargetDir = validatePath(targetDir, process.cwd());\n  \n",
+      "initializer": "(targetDir) => {\n  console.log(`📂 Copying assets to ${targetDir}`);\n  \n  // Validate target directory path\n  const validatedTargetDir = validatePath(targetDir, process.cwd());\n  \n",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },
@@ -15872,19 +15842,6 @@
       }
     },
     {
-      "path": "client/cx/package.json",
-      "name": "@nucleum/cx",
-      "version": "0.0.0",
-      "private": true,
-      "exports": {
-        ".": {
-          "import": "./index.js",
-          "types": "./index.d.ts"
-        },
-        "./*": "./*"
-      }
-    },
-    {
       "path": "client/datafn/package.json",
       "name": "@nucleum/datafn",
       "version": "0.1.0",
@@ -16172,19 +16129,6 @@
       }
     },
     {
-      "path": "client/legacy/package.json",
-      "name": "@nucleum/legacy",
-      "version": "0.0.0",
-      "private": true,
-      "exports": {
-        ".": {
-          "import": "./index.js",
-          "types": "./index.d.ts"
-        },
-        "./*": "./*"
-      }
-    },
-    {
       "path": "client/persistence/package.json",
       "name": "@nucleum/persistence",
       "version": "0.1.0",
@@ -16465,10 +16409,8 @@
         "client/branding",
         "client/icons",
         "client/theme",
-        "client/legacy",
         "client/illustrations",
         "client/iconsV2",
-        "client/cx",
         "shared/utils",
         "shared/dbo",
         "schema",
@@ -16513,11 +16455,9 @@
         "dev:gathery": "turbo run dev --filter=gathery-app",
         "dev:pointron": "turbo run dev --filter=pointron-app",
         "dev:memotron-share": "turbo run dev --filter=memotron-share",
-        "dev:memotron-clipper": "turbo run dev --filter=memotron-clipper",
         "codemod:alias": "tsx tools/codemods/alias-migration/index.ts",
         "lint": "npm run check:architecture && npm run check:no-fixed-test-waits && turbo run lint",
         "test": "turbo run test --filter=tidigit-tests",
-        "build:packages": "turbo run build --filter='./packages/*'",
         "build:products": "turbo run build --filter='./apps/*'",
         "build:nucleus": "turbo run build --filter=nucleus-app",
         "build:memotron": "turbo run build --filter=memotron-app",

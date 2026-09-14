@@ -314,26 +314,6 @@
       "@21n/theme/*": [
         "./client/theme/*"
       ],
-      "@nucleum/legacy": [
-        "./client/legacy/index.ts",
-        "./client/legacy/index.tsx",
-        "./client/legacy/index.js",
-        "./client/legacy/index.mjs",
-        "./client/legacy/index.cjs",
-        "./client/legacy/index.svelte",
-        "./client/legacy/index.d.ts",
-        "./client/legacy/src/index.ts",
-        "./client/legacy/src/index.tsx",
-        "./client/legacy/src/index.js",
-        "./client/legacy/src/index.mjs",
-        "./client/legacy/src/index.cjs",
-        "./client/legacy/src/index.svelte",
-        "./client/legacy/src/index.d.ts",
-        "./client/legacy"
-      ],
-      "@nucleum/legacy/*": [
-        "./client/legacy/*"
-      ],
       "@21n/illustrations": [
         "./client/illustrations/index.ts",
         "./client/illustrations/index.tsx",
@@ -373,26 +353,6 @@
       ],
       "@21n/icons-v2/*": [
         "./client/iconsV2/*"
-      ],
-      "@nucleum/cx": [
-        "./client/cx/index.ts",
-        "./client/cx/index.tsx",
-        "./client/cx/index.js",
-        "./client/cx/index.mjs",
-        "./client/cx/index.cjs",
-        "./client/cx/index.svelte",
-        "./client/cx/index.d.ts",
-        "./client/cx/src/index.ts",
-        "./client/cx/src/index.tsx",
-        "./client/cx/src/index.js",
-        "./client/cx/src/index.mjs",
-        "./client/cx/src/index.cjs",
-        "./client/cx/src/index.svelte",
-        "./client/cx/src/index.d.ts",
-        "./client/cx"
-      ],
-      "@nucleum/cx/*": [
-        "./client/cx/*"
       ],
       "@nucleum/client": [
         "./client/index.ts",
@@ -532,7 +492,6 @@
     ".plasmo/index.d.ts",
     "client/**/*",
     "apps/**/*",
-    "packages/**/*",
     "shared/**/*"
   ]
 }
