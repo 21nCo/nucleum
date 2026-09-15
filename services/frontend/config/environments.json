@@ -10,7 +10,7 @@
     }
   },
   "defaultBuildEnv": {
-    "VITE_STATIC_URL": "https://cdn.nucleum.app",
+    "VITE_STATIC_URL": "https://cdn-dev.21n.org",
     "VITE_CUSTOM_PROTOCOL": "tauri",
     "VITE_LOG_LEVEL": "2",
     "VITE_PLANS": "7,60,200,15,144,450",

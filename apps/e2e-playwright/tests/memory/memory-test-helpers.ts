@@ -1,6 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { LibraryTab, openLibraryAndTab, runCommand } from "../utils/helpers";
-import { expectAnyLocatorVisible } from "../utils/locator-assertions";
 import {
   getResourceRecordsContainer,
   getResourceThumbnail,
@@ -26,58 +25,16 @@ function resolveNodeLabel(options: CreateMemoryNodeOptions) {
   return options.label ?? `${options.prefix ?? "E2E node"} ${Date.now()}`;
 }
 
+/** Resolve the editable textbox inside Capture after the editor mounts. */
 async function resolveCaptureEditor(page: Page): Promise<Locator> {
-  const captureRoot = page.getByTestId("capture-editor");
-  const placeholderEditor = captureRoot
-    .getByPlaceholder(/Start typing/i)
+  const editor = page
+    .getByTestId("capture-editor")
+    .getByRole("textbox")
+    .and(page.locator('[contenteditable]:not([contenteditable="false"])'))
     .first();
-  if (await placeholderEditor.isVisible().catch(() => false)) {
-    return placeholderEditor;
-  }
-
-  const contentEditable = captureRoot
-    .locator('[contenteditable="true"]')
-    .first();
-  if (await contentEditable.isVisible().catch(() => false)) {
-    return contentEditable;
-  }
-
-  const semanticEditor = captureRoot
-    .getByRole("textbox", {
-      name: /Markdown editor|Start typing/i
-    })
-    .first();
-  if (await semanticEditor.isVisible().catch(() => false)) {
-    return semanticEditor;
-  }
-
-  const markdownButton = page
-    .getByRole("button", { name: /^Markdown$/i })
-    .first();
-  const markdownButtonVisible = await markdownButton
-    .waitFor({ state: "visible", timeout: 2_000 })
-    .then(() => true)
-    .catch(() => false);
-  if (markdownButtonVisible) {
-    await markdownButton.click({ timeout: 5_000 });
-  }
-
-  await expectAnyLocatorVisible(
-    [placeholderEditor, semanticEditor, contentEditable],
-    {
-      message: "capture exposes an editable text surface",
-      timeout: 10_000
-    }
-  );
-  if (await placeholderEditor.isVisible().catch(() => false))
-    return placeholderEditor;
-  if (await semanticEditor.isVisible().catch(() => false))
-    return semanticEditor;
-  if (await contentEditable.isVisible().catch(() => false))
-    return contentEditable;
-
-  await captureRoot.waitFor({ state: "visible", timeout: 15_000 });
-  return captureRoot;
+  await expect(editor).toBeVisible({ timeout: 15_000 });
+  await expect(editor).toBeEditable();
+  return editor;
 }
 
 /** Block external Google authentication requests during memory-domain tests. */
@@ -120,22 +77,8 @@ export async function fillCapture(page: Page, content: string, title?: string) {
   }
 
   const editor = await resolveCaptureEditor(page);
-  const captureRoot = page.getByTestId("capture-editor");
-  await editor.waitFor({ state: "visible", timeout: 15_000 });
-  await editor.click({ timeout: 5_000 });
-  await page.keyboard.type(content, { delay: 25 });
-  await expect
-    .poll(
-      async () => {
-        const value = await editor.inputValue().catch(() => undefined);
-        const editorText = (await editor.textContent().catch(() => "")) ?? "";
-        const captureText =
-          (await captureRoot.innerText().catch(() => "")) ?? "";
-        return [value ?? "", editorText, captureText].join(" ");
-      },
-      { message: "fillCapture: toContain content" }
-    )
-    .toContain(content);
+  await editor.fill(content);
+  await expect(editor).toHaveText(content);
 }
 
 /** Save the active Capture and optionally close the Capture surface. */
