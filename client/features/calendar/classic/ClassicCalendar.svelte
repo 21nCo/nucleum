@@ -67,11 +67,21 @@
   );
 
   function resolveSavedScaleSelection() {
-    if ($appStore.product === Product.MEMOTRON) return TimeScaleUnit.YEAR;
     const scaleState = uiState.getState(UIState.classicCalendarScale, {
       scope: UIStateScope.DAP
     });
-    return scaleState ?? TimeScaleUnit.YEAR;
+    const supportedScales =
+      $appStore.product === Product.MEMOTRON
+        ? [TimeScaleUnit.MONTH, TimeScaleUnit.YEAR]
+        : [
+            TimeScaleUnit.DAY,
+            TimeScaleUnit.WEEK,
+            TimeScaleUnit.MONTH,
+            TimeScaleUnit.YEAR
+          ];
+    return supportedScales.includes(scaleState)
+      ? scaleState
+      : TimeScaleUnit.YEAR;
   }
 
   function resolveSavedWidthSelection(view: TimeScaleUnit) {
@@ -216,7 +226,10 @@
     />
   {/snippet}
 
-  <div class="flex h-full">
+  <div
+    class="flex h-full"
+    data-testid={`calendar-view-${selectedView.toLowerCase()}`}
+  >
     <div
       class={cn("flex-1 overflow-auto", {
         "min-w-60": selectedView !== TimeScaleUnit.DAY

@@ -1,12 +1,14 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import { navigation } from "@21n/layout/navigation/navigation";
+
   import type { Snippet } from "svelte";
   import { page } from "$app/stores";
   import { resolveAuthSession } from "@nucleum/client/runtime/account/auth";
   import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
   import Button from "@21n/elements/button/Button.svelte";
-  import { appStore } from "../../stores/app.store";
+
   import { productData } from "@nucleum/products/product.resolver";
   import AuthGuard from "@21n/layout/layers/AuthGuard.svelte";
   import { postMessageToParent } from "@nucleum/client/runtime/embed/embed.utils";
@@ -25,8 +27,17 @@
   type RouteAuthState =
     "authenticated" | "expired" | "signed-out" | "unavailable";
 
-  async function resolveRouteAuthState(): Promise<RouteAuthState> {
-    if ($page.url.searchParams.has("token")) return "authenticated";
+  const authPath = $derived($page.url.pathname);
+  const hasAuthToken = $derived($page.url.searchParams.has("token"));
+  const routeAuth = $derived({
+    path: authPath,
+    session: resolveRouteAuthState(hasAuthToken)
+  });
+
+  async function resolveRouteAuthState(
+    hasToken: boolean
+  ): Promise<RouteAuthState> {
+    if (hasToken) return "authenticated";
     const resolution = await resolveAuthSession();
     if (
       resolution.status === "authenticated" ||
@@ -45,13 +56,13 @@
       window.location.reload();
       return;
     }
-    appStore.gotoPath("/account/login", {
+    navigation.gotoPath("/account/login", {
       queryParams: authState === "expired" ? { msg: "expired" } : undefined
     });
   }
 </script>
 
-{#await resolveRouteAuthState()}
+{#await routeAuth.session}
   <AppLoadingView />
 {:then authState}
   {#if authState === "authenticated"}
@@ -95,7 +106,7 @@
     <Button
       label="Login/Signup"
       onclick={() => {
-        appStore.gotoPath("/account/login");
+        navigation.gotoPath("/account/login");
       }}
     />
   </div>

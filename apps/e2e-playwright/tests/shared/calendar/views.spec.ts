@@ -5,6 +5,11 @@ import {
   navigateToSurface
 } from "../../utils/helpers";
 
+import {
+  requireE2EProduct,
+  resolveSurfaceContract
+} from "../../../config/e2e.config";
+
 const viewContracts = [
   {
     label: "day",
@@ -25,29 +30,35 @@ test.describe("calendar view matrix @smoke", () => {
     await ensureInAppOnHome(page);
   });
 
-  test("calendar bird layout exposes semantic anchors", async ({
+  test("calendar classic layout exposes semantic anchors", async ({
     page
   }, testInfo) => {
     await navigateToSurface(
       page,
-      "calendar.layout.bird",
+      "calendar.layout.classic",
       testInfo.project.name
     );
     await expect(page).toHaveURL(/\/calendar/);
   });
 
-  test("calendar day, month, and year views switch with semantic anchors", async ({
+  test("supported calendar views switch with semantic anchors", async ({
     page
   }, testInfo) => {
     const executedViews: string[] = [];
 
     await navigateToSurface(
       page,
-      "calendar.layout.bird",
+      "calendar.layout.classic",
       testInfo.project.name
     );
 
-    for (const view of viewContracts) {
+    const supportedViews = viewContracts.filter((view) =>
+      resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        view.surface
+      )
+    );
+    for (const view of supportedViews) {
       await navigateToSurface(page, view.surface, testInfo.project.name);
       executedViews.push(view.label);
       await page.reload({ waitUntil: "domcontentloaded" });
@@ -58,18 +69,28 @@ test.describe("calendar view matrix @smoke", () => {
       );
     }
 
-    expect(executedViews).toEqual(viewContracts.map((view) => view.label));
+    expect(executedViews).toEqual(supportedViews.map((view) => view.label));
   });
 
   for (const view of viewContracts) {
-    test(`calendar ${view.label} view exposes semantic anchors`, async ({
+    test(`calendar ${view.label} availability and persistence`, async ({
       page
     }, testInfo) => {
       await navigateToSurface(
         page,
-        "calendar.layout.bird",
+        "calendar.layout.classic",
         testInfo.project.name
       );
+      if (
+        !resolveSurfaceContract(
+          requireE2EProduct(testInfo.project.name),
+          view.surface
+        )
+      ) {
+        await expect(page.getByText(/^(?:D|Day|Days)$/i)).toHaveCount(0);
+        await expect(page.getByTestId("calendar-view-year")).toBeVisible();
+        return;
+      }
       await navigateToSurface(page, view.surface, testInfo.project.name);
 
       await expect(page).toHaveURL(/\/calendar/);
