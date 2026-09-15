@@ -13,7 +13,7 @@ executors:
     working_directory: ~/project
   playwright-executor:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.49.0-noble
+      - image: mcr.microsoft.com/playwright:v1.62.1-noble
     resource_class: large
     working_directory: ~/project
     environment:
