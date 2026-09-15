@@ -325,26 +325,6 @@
       "@21n/theme/*": [
         "./theme/*"
       ],
-      "@nucleum/legacy": [
-        "./legacy/index.ts",
-        "./legacy/index.tsx",
-        "./legacy/index.js",
-        "./legacy/index.mjs",
-        "./legacy/index.cjs",
-        "./legacy/index.svelte",
-        "./legacy/index.d.ts",
-        "./legacy/src/index.ts",
-        "./legacy/src/index.tsx",
-        "./legacy/src/index.js",
-        "./legacy/src/index.mjs",
-        "./legacy/src/index.cjs",
-        "./legacy/src/index.svelte",
-        "./legacy/src/index.d.ts",
-        "./legacy"
-      ],
-      "@nucleum/legacy/*": [
-        "./legacy/*"
-      ],
       "@21n/illustrations": [
         "./illustrations/index.ts",
         "./illustrations/index.tsx",

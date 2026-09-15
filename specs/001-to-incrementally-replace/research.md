@@ -1,7 +1,7 @@
 # Research: Workspace Alias Migration
 
 ## 1. Alias Inventory (Post-Migration)
-- Centralized registry lives at `/tools/alias-map.json` covering **28 workspace aliases** (new additions: `@nucleum/datafn`, `@21n/illustrations`, `@21n/icons-v2`, `@nucleum/cx`, `@nucleum/client`).
+- Centralized registry lives at `/tools/alias-map.json` covering workspace aliases (new additions: `@nucleum/datafn`, `@21n/illustrations`, `@21n/icons-v2`, `@nucleum/client`).
 - `tools/alias-utils.(mjs|cjs)` load the registry and emit TS/Vite mappings; `tools/sync-aliases.mjs` keeps all `tsconfig` files in sync.
 - All apps/extensions now consume aliases through shared utilities; Vite configs import `buildViteAliases` rather than embedding path literals.
 
