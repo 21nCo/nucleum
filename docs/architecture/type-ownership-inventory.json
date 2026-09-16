@@ -2690,38 +2690,6 @@
       ]
     },
     {
-      "path": "client/features/calendar/calendarHeatmap/calendarHeatmap.types.ts",
-      "disposition": "retained",
-      "destinations": [
-        "client/features/calendar/calendarHeatmap/calendarHeatmap.types.ts"
-      ],
-      "ownership": "capability-public",
-      "rationale": "Capability-owned contract retained beside implementation; external production imports are declared in the feature entrypoint registry.",
-      "declarations": [
-        "TileAppearance",
-        "TileScale",
-        "CalendarHmVariant",
-        "DailyData",
-        "MonthlyData",
-        "YearlyData",
-        "ICalendarHeatMapDataProvider",
-        "HeatmapDataItem",
-        "CalendarHeatmapOptions"
-      ],
-      "consumers": [
-        "client/features/calendar/calendarHeatmap/CalendarHeatMap.svelte",
-        "client/features/calendar/calendarHeatmap/Footer.svelte",
-        "client/features/calendar/calendarHeatmap/HeaderV1.svelte",
-        "client/features/calendar/calendarHeatmap/HeaderV2.svelte",
-        "client/features/calendar/calendarHeatmap/HorizontalCalendarLayout.svelte",
-        "client/features/calendar/calendarHeatmap/MacroIndicatorTIle.svelte",
-        "client/features/calendar/calendarHeatmap/MicroIndicatorTile.svelte",
-        "client/features/calendar/calendarHeatmap/VerticalCalendarLayout.svelte",
-        "client/features/calendar/calendarHeatmap/calendarHeatMap.utils.ts",
-        "client/features/calendar/calendarHeatmap/calendarHeatMap.utils.ts"
-      ]
-    },
-    {
       "path": "client/features/calendar/classic/indicator/classicCalendarIndicator.signal.ts",
       "disposition": "retained",
       "destinations": [
@@ -12953,20 +12921,6 @@
       "path": "client/features/calendar/birdView/Year.stories.ts",
       "name": "Default",
       "initializer": "{}",
-      "disposition": "retained with owning implementation; no runtime initializer changes",
-      "ownership": "implementation-private"
-    },
-    {
-      "path": "client/features/calendar/calendarHeatmap/calendarHeatmap.store.ts",
-      "name": "CalendarHeatMapData",
-      "initializer": "writable<any>()",
-      "disposition": "retained with owning implementation; no runtime initializer changes",
-      "ownership": "implementation-private"
-    },
-    {
-      "path": "client/features/calendar/calendarHeatmap/calendarHeatmap.store.ts",
-      "name": "CalendarHeatMapLayout",
-      "initializer": "writable<\n  Orientation.Horizontal | Orientation.Vertical\n>(Orientation.Horizontal)",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },
