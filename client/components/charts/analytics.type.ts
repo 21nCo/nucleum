@@ -5,7 +5,6 @@ export enum ChartType {
   AREA = "area",
   DOUGHNUT = "doughnut",
   TREEMAP = "treemap",
-  CALENDARHEATMAP = "calendarheatmap",
   STACKEDBAR = "stackedbar",
   STACKEDAREA = "stackedarea",
   GUAGE = "guage",
