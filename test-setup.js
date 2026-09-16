@@ -22,7 +22,7 @@ function validatePath(inputPath, basePath = __dirname) {
 
 // Test 1: Check if packages exist
 console.log('📦 Checking packages...');
-const packages = ['components', 'elements', 'types', 'utils', 'stores', 'actions', 'static'];
+const packages = ['components', 'elements', 'utils', 'stores', 'actions', 'static'];
 packages.forEach(pkg => {
   try {
     // Validate package name to prevent malicious input
@@ -31,7 +31,7 @@ packages.forEach(pkg => {
       return;
     }
     
-    const pkgPath = validatePath(path.join('packages', pkg));
+    const pkgPath = validatePath(path.join('client', pkg));
     const exists = fs.existsSync(pkgPath);
     console.log(`  ${exists ? '✅' : '❌'} ${pkg}`);
   } catch (error) {

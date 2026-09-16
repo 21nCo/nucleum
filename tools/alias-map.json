@@ -14,7 +14,6 @@
   "@21n/branding": "client/branding",
   "@21n/icons": "client/icons",
   "@21n/theme": "client/theme",
-  "@nucleum/legacy": "client/legacy",
   "@21n/illustrations": "client/illustrations",
   "@21n/icons-v2": "client/iconsV2",
   "@nucleum/client": "client",

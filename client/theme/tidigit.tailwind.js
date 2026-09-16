@@ -40,8 +40,7 @@ export default {
   content: [
     "./src/**/*.{html,js,svelte,ts}",
     "./lib/**/*.{html,js,svelte,ts}",
-    "../../client/**/*.{html,js,svelte,ts}",
-    "../../packages/**/*.{html,js,svelte,ts}"
+    "../../client/**/*.{html,js,svelte,ts}"
   ],
   theme: {
     screens: {
