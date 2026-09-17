@@ -6,13 +6,8 @@
   import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
   import { isValidHyperlink } from "@21n/shared-utils/utils";
   import Link from "@21n/elements/text/Link.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { debouncer } from "@21n/utils/utils";
-  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import context from "@nucleum/stores/context.store";
-  import { OperatingSystem } from "@nucleum/client/runtime/context.type";
   import { mount } from "@nucleum/actions/mount.action";
 
   type KeyboardEventDetail = KeyboardEvent & { event: KeyboardEvent };
@@ -36,8 +31,6 @@
     isPreventDefaultOnEnter = false,
     isRounded = false,
     height = undefined,
-    isPreventKeyboardToolbar = false,
-    isPreserveKeyboardToolbar = false,
     isAccentBackground = false,
     testId = undefined,
     isDisabled = false,
@@ -74,8 +67,6 @@
     isPreventDefaultOnEnter?: boolean;
     isRounded?: boolean;
     height?: string | undefined;
-    isPreventKeyboardToolbar?: boolean;
-    isPreserveKeyboardToolbar?: boolean;
     isAccentBackground?: boolean;
     testId?: string | undefined;
     isDisabled?: boolean;
@@ -273,11 +264,6 @@
     }
     isFocused = false;
     emitBlur();
-  }
-
-  function blurActiveElement() {
-    const activeElement = document.activeElement as HTMLElement | null;
-    activeElement?.blur?.();
   }
 
   function focusInput() {
@@ -526,34 +512,4 @@
     {/if}
     {@render children?.()}
   </InputBaseElement>
-{/if}
-{#if isPreserveKeyboardToolbar || (!isPreventKeyboardToolbar && isFocused)}
-  <KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
-    <div class="flex items-center justify-center gap-2"></div>
-    <div class="flex items-center justify-center gap-2">
-      <Button
-        icon="cross"
-        label="clear"
-        parentBgIndex={2}
-        size={Size.sm}
-        style={ButtonStyle.DEFAULT}
-        isPreventMinWidth={true}
-        onclick={() => {
-          value = "";
-          emitClear();
-          emitCancel();
-        }}
-        onmousedown={(event) => event.preventDefault()}
-      />
-      <Button
-        icon="chevron-down"
-        label="close"
-        parentBgIndex={2}
-        size={Size.sm}
-        style={ButtonStyle.DEFAULT}
-        isPreventMinWidth={true}
-        onclick={blurActiveElement}
-      />
-    </div>
-  </KeyboardToolbar>
 {/if}
