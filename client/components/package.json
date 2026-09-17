@@ -12,7 +12,6 @@
     "@datafn/svelte": "0.1.0",
     "@nucleum/datafn": "*",
     "@nucleum/schema": "*",
-    "d3": "^7.8.5",
     "echarts": "^5.5.0",
     "maplibre-gl": "^4.5.1",
     "svelte": "^5.55.0"
