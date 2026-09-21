@@ -1,0 +1,52 @@
+What is the current organization or ownership structure of the folders in this report? And is the organization or ownership of files, code represented in the agents.md file?
+
+---
+
+difference between client/components and client/application?
+
+reasoning from commandBar to be present in application instead of components?
+
+---
+
+for me in cursor side bar why empty folders like account, commandBar etc are showing in components/ as well?
+
+---
+
+proceed
+
+---
+
+Import path `../record/resource-link.utils` is restricted. Use workspace aliases defined in tools/alias-map.json.eslint(tidigit/alias-imports)
+
+why some imports are still relative imports? how pervasive this pattern is right now in codebase?
+
+Dont edit anything yet
+
+---
+
+what should we do?
+
+---
+
+Must intra-package hops like ../collection.store become @nucleum/features/..., or only package-crossing ../?
+Are the leftover $lib imports in memory capture/node UI next, or ignored until those files are touched?
+
+Advice me
+
+---
+
+Do not schedule a memory $lib cleanup on its own.
+
+Why not?
+
+---
+
+@client/stores/account.store.ts why this store is in client/stores instead of application/account?
+
+Why there is a separate stores/ directory?
+
+---
+
+why does elements depend on account.store?
+
+the name stores/ for this directory is feeling confusing... its like god like types/ directory which we moved away from to colocate types at their respective functionality
