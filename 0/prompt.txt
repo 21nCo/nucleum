@@ -1,0 +1,66 @@
+I am confused about the code organization of client/layout client/components client/application and client/runtime... what goes where and why?
+
+---
+
+why does breadcrumb UI belong in layout rather than in elements or components?
+
+why there is account-session.ts and account.store.ts split across?
+
+---
+
+this is all feeling too much for me... is this organization architecture actually useful?
+
+---
+
+no I get it... but is there any improvement that can be made? why client/layout client/components are feeling too similar? any better naming like account-session.ts and account.store better naming?
+
+---
+
+1. why do we need to separate client/runtime from client/application?
+2. aren't client/layout/ compositions themselves?
+
+---
+
+1. why should nested list, search be placed in components instead of elements?
+2. why there is stores/ folder?
+
+---
+
+give me suggestions for all renaming like client/shared-state
+
+---
+
+application or app directory is feeling catch-all or too broad
+
+---
+
+then where will things like notifications, help, onboarding, etc go if we collapse application into features?
+
+---
+
+I have made many reoranizations - check the current state now
+
+---
+
+what do you think of using top-level meta-features for account, command, library etc?
+
+---
+
+how about using surfaces/ instead of meta-features
+
+---
+
+go ahead and make all the recommended improvements that we discussed use surfaces/ and also make sure the boundaries are well documented at all relevant places to avoid future junk drawers
+
+---
+
+shell's nav chrome still imports a few surface modules (e.g. 
+   TrailLeftIndicator → subscription utils), which is why those edges are peer-declared; inverting them through host contracts would be the next refinement if you ever want a
+   strictly acyclic package graph.
+
+
+What's the remediation that we can do? what are the dependencies?
+
+---
+
+yes proceed with groups 1-3
