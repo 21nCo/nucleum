@@ -1,0 +1,114 @@
+why does elements depend on account.store?
+
+the name stores/ for this directory is feeling confusing... its like god like types/ directory which we moved away from to colocate types at their respective functionality
+
+---
+
+what should we do now
+
+---
+
+proceed
+
+---
+
+proceed
+
+---
+
+1. what is the difference bw client/runtime and client/application?
+2. why does client/elements still depend on client/runtime? elements should be fundamental building blocks of UI and should be able to use in other projects apart from nucleum
+
+
+
+Just answer
+
+---
+
+then where does client/components sit here?
+
+---
+
+document this permanent architectural layer requirement in agents.md and other relevant places and then make all necessary refactoring to achive this architecture fully
+
+---
+
+just becuase only focu analytics is using charts - dont move it there... there is a future use reason why some are kept as shared components
+
+---
+
+I am thinking of moving elements, components, actions into client/ui/ - domain-free, portable UI reusable across products
+
+These shouldn't depend on any of domain or product code
+and should be used via @21n/ui/elements, 21n/ui/compositions and 21n/ui/actions
+
+What do you think?
+
+elements are atomic single-purpose controls
+compositions are domain free UI compositions that combines several elements like nested lists, complex search, etc
+
+
+
+Also tell me why
+
+---
+
+I am thinking of moving elements, components, actions into client/ui/ - domain-free, portable UI reusable across products
+
+These shouldn't depend on any of domain or product code
+and should be used via @21n/ui/elements, 21n/ui/compositions and 21n/ui/actions
+
+What do you think?
+
+elements are atomic single-purpose controls
+compositions are domain free UI compositions that combines several elements like nested lists, complex search, etc
+
+
+Also I am worried about layout having portable looking components like breadcrumbs etc - how should we handle that?
+
+Also client/stores name doesn't make sense for shared-state
+
+---
+
+proceed and implement all of these improvements, also document in agents.md about the architecture requirement
+
+---
+
+what do you think of having these under client/application? `appearance`, `files`, `notifications`, `preferences`, `resources`, and `shortcuts`
+
+
+Also what do you think of having ui/elements/environment in ui/environment instead?
+
+---
+
+is there any other way to group those shared capabilities while not polluting the client folder?
+
+---
+
+go ahead with ui and this capabilities changes
+
+---
+
+authorized for test files
+
+
+
+also answer these:
+
+1. can icons be moved into ui/
+2. can layout be renamed as shell and moved into application?
+3. why there is still generic client/state?
+
+---
+
+proceed with these improvements
+
+---
+
+1. does client/commands, client/events also belong in client/capabilities?
+2. there are many overlapping folders in application and capabilities like notifications, shortcuts, settings etc... why is that?
+3. should illustrations and branding also go into client/ui/ ?
+
+---
+
+proceed and implement all these improvements
