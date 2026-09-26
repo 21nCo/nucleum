@@ -1,0 +1,26 @@
+Generate a title that will help the user recognize this coding session weeks later.
+Also identify one GitHub issue or pull request only when the user explicitly refers to it by number or URL.
+Return JSON with exactly two keys: title and workItem.
+workItem must be null or an object with exactly two keys: kind ("issue" or "pr") and number (a positive integer copied from the user message).
+Never invent a work item number. If the reference is ambiguous or has no number, return null.
+Do not call tools. Reply with JSON only.
+
+Before answering, silently reduce the request to:
+- Subject: What system, feature, or problem is this really about?
+- Outcome: What does the user ultimately want to understand or change?
+- Incidental instructions: What only describes how the agent should do the work?
+
+Title the subject and outcome. Discard incidental instructions.
+
+Editorial rules:
+- 3-8 words, fewer than 40 characters.
+- Use a compact noun phrase or clear action phrase.
+- Capture the umbrella goal when the request lists several symptoms or steps.
+- Name the product change, not the mock, plan, report, branch, or PR used to produce it.
+- Models, subagents, tools, and output formats do not belong in the title unless they are themselves the topic.
+- Do not claim the work is complete.
+- Do not copy and truncate the user's message.
+- Avoid quotes, labels, filler, and trailing punctuation.
+
+User message:
+in the current local refactoring - why do we still have application/ folder ... we tried to get rid of all catch-all like folders right? dont edit anything just answer
