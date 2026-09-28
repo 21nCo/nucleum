@@ -1,0 +1,73 @@
+thoroughly review all local changes
+
+---
+
+fix all the issues
+
+---
+
+why does application folder still has so many items in it? [Image #1] Aren't we moving towards avoiding god like applcation folder?
+
+Just answer
+
+---
+
+review the remaining items in application and tell me where should they go... dont edit yet
+
+---
+
+make all the listed out improvements including removals and slimming down layers
+
+for what should be removed section - proceed with the removal
+
+---
+
+perform a thorough review/scan of similar leftovers of codebase organization and potential improvements in organization, naming, splitting, etc
+
+---
+
+proceed and iteratively work and make all the recommended improvements
+
+---
+
+proceed
+
+---
+
+proceed
+
+---
+
+proceed
+
+---
+
+anything remaining from your recommendation list?
+
+---
+
+should we retire utils to avoid god like folder and colocate utils in their respective folders?
+
+---
+
+proceed
+
+---
+
+proceed
+
+---
+
+sanity check the entire uncommited chageset
+
+---
+
+run full playwright suite and see if any tests are broken (dont edit of fix any tests yet)
+
+---
+
+check among all the failures which can be fixed without chaging the core assertions or the functionality code
+
+---
+
+proceed
