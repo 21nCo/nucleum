@@ -1,0 +1,64 @@
+in the current local refactoring - why do we still have application/ folder ... we tried to get rid of all catch-all like folders right? dont edit anything just answer
+
+---
+
+what are all the remaining such catch-all leftovers? and what should we do about them? renaming, moving/splitting etc?
+
+---
+
+proceed and implement all of your findings
+
+---
+
+proceed
+
+---
+
+proceed
+
+---
+
+explain me now as per new design what goes into shell, surfaces, application and features and the distinction
+
+explain me what's left in client/application folder and the reasoning for them to stay there or still need to move somewhere else
+
+---
+
+proceed and complete the still refine parts
+
+---
+
+1. difference bw application/chrome and shell?
+2. should we rename application/ to composition/ ?
+
+---
+
+application is the only catch-all like folder left and I want to rename it appropriately? what else can we rename if not composition?
+
+---
+
+how about renaming to client/composition and getting rid sub nesting for branding, paint, composition - flattening into client/composition directly?
+
+---
+
+proceed
+
+---
+
+what does ambient contain? and is there any visual map of what each directory is and what each of it can depend on based on the current architecture?
+
+---
+
+what enforcement gaps are present and are there any leftovers for this intended dependency map?
+
+---
+
+we need a strict DAG and a matrix... incrementally work and resolve the remaining gaps and ask me any questions or decisions if needed
+
+---
+
+proceed
+
+---
+
+I authorize to make test files changes in this run
