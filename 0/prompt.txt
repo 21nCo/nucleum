@@ -1,0 +1,18 @@
+for nucleum (memotron, etc) - for semantic search, AI workflows - we want to store and query vector embeddings
+current user data is in AWS DynamoDB (old server code) and new code uses datafn + postgres (aws profile for old dynamoDB data - phidata) - we will be generating embeddings for fields marked for search in current datafn schema
+
+1. which vector db should we use? postgres + pgvector or cloudflare vectorize (https://developers.cloudflare.com/vectorize/) ? pros and cons in terms of cost, latency, scalability, maintainability etc (for postgres we are using planetscale postgres via cloudflare hyperdrive) or something else all together that are used by existing scaled systems
+2. for generating existing data embeddings - we will use digital ocean open models (check which models or service on digital ocean can be used)... and for ongoing generation we might use CF workers AI (check the pricing for using CF for embeddings generation and updating and compare with digital ocean and other alternatives)
+
+
+you can use aws cli if needed to inspect existing data on aws dynamodb and composio CLI, wrangler if needed to query cloudflare and any other tools that we use
+
+---
+
+will there be any quality differences between using these open models on cf or do vs other closed models like openAI etc?
+if yes, what is the cost difference of using better embdedding models?
+just $20 for 1 million record backfill via digital ocean? that means our existing 800k records cost even less?
+
+---
+
+what details/credentials etc to you need from me to complete evalutions for which embedding model, provider to use, which db to use etc
