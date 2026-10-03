@@ -1,0 +1,28 @@
+Are these valid findings for the local changeset?
+
+Found two actionable issues in the staged, unstaged, and untracked changes.
+
+[P1] Workspace renames break frontend deployments.
+apps/nucleus/package.json:2 renames the workspace to @nucleum/app; Memotron and Pointron are also renamed. However, deployment configuration (services/frontend/config/environments.json:25) still contains nucleus-app, memotron-app, and pointron-app. The deployment script (services/frontend/scripts/deploy.mjs:36) passes these directly to npm, so normal deployments fail before building. Confirmed with npm --workspace nucleus-app run, which returns No workspaces found. Update all three deployment selectors with the package renames.
+
+[P2] Incomplete caller migration leaves architecture and unit-test gates failing.
+Several tests still reference removed modules or exports:
+client/shared-state/resources/resource-action-host.test.ts:32 imports the relocated resource.actions and bulk-editor modules from their old locations, preventing the suite from loading.
+
+client/products/nucleus/nucleus.datafn.test.ts:8 imports resolveDatafnBootResources from datafn.store, although it now belongs to resource-selection.
+
+client/persistence/migrations/import-legacy-data.test.ts:16 and client/surfaces/settings/data-recovery/legacy-data-recovery.test.ts:43 mock the deleted legacyLocalDataBackup module. The mocks no longer intercept the extracted implementations, causing eight failures.
+
+Update these callers and mock targets to the new owners. The current state produces five architecture violations, nine failed tests, and one unloadable suite.
+
+Verification covered the ownership changes, substantive logic changes, host wiring, lifecycle extraction, extension entry points, and deployment callers:
+
+Passed: all four product compiler checks; type ownership; retired-runtime checks; fixed-wait checks; diff whitespace checks.
+Unit tests: 103 files passed, four failed; 391 tests passed, nine failed.
+Not exercised: browser/Playwright workflows, native packaging, production builds, or deployment.
+
+No source files or index entries were changed.
+
+---
+
+fix the valid findings
