@@ -1,0 +1,232 @@
+in memotron... we want to build a infinite horizontal graph placed by proximity of closeness
+
+how to achieve this with heavy accuracy?
+
+
+examples: I saved webpage bookmarks for example for onorca.dev, trysynara.com, usemono.dev (which are all very close - ADEs) and also saved lets say VS code, cursor (which are coding ides but not as close as those) - so proximity group closer the first group because commonalities of coding IDEs
+
+---
+
+I meant a horizontally scrollabel infinite 2d canvas (scrolling only in 1 direction for ease of use)
+
+2 stages - first using embeddings - using embeddings to filter first - wont this loose out on some cases? where similarity might not be established?
+
+
+also how about auto properties, auto tags etc for each new entry?
+
+---
+
+how does your previous suggestion of pair wise comparison and recorded judgements, ordering help in this new approach?
+
+
+also with auto tags, properties - user should be able to ask the AI agent in the app to preciely tabulate the differences between items without much rework like web search or firecrwal etc
+
+Also consider that entries can not just be web pages but also user's markdown pages, voice recordings, web bookmarks, kindle highlights etc... the proximity algorithm should be intelligent enough to associate underlying concepts as well (We will use LLM with reasoning of course in the algorithm)
+for example: if user came across an observation in a kindle book and came across similar observation in a web article - the in built AI serendipity engine built on top the graph should be able to find interesting correlations etc
+
+---
+
+$use-skillplane add-to-backlog nucleum team - call it "m graph" - create detailed architecture and ideation docs about everything we discussed and briefly about the consuming surfaces like AI chat, serendipity, horizontal map etc (those will be built separately as their own tickets)
+
+Ignore existing vector datafn schema (that was legacy vector table)
+
+---
+
+1. like how search index maintenance and querying is taken care by abstracted searchfn - is it possible to create m graph using super functions abstractions? - and have plugin or extension for datafn for declaring which fields are search scoped/embedding scoped etc?
+2. will it benefit if we maintain separate global internet database where we store websites data to avoid same website processed many times for many users? - like a service or abstraction instead of duplicating website data for all users
+
+---
+
+1. with the proposed architecture - how should we proceed with extracting profile per entry which will be used for m graph algorithm? the profile which includes auto tags, etc etc will be persisted alongside main data or separate m graph index which includes embeddings?
+2. how does our architecture compare against solutions like memgraph.com, mem0, graphRAG?
+
+just answer
+
+---
+
+is it enough to start with - using postgres for everything? including the derived m graph projections, embeddings?
+
+also Am I thinking right? the authoritative data for projections, rederivation of projections is datafn main tables + global public page cache (for web page nodes etc) - correct?
+
+---
+
+alright this sounds good... include this further ideation that we did in the linear issue
+
+---
+
+Currently user data exists in AWS DynamoDB (uses old server code)... (local aws profile phidata)  new code that uses datafn + postgres isn't deployed, migrated yet...
+
+I want to build the m graph algorithm pipeline and test for my entire data (one user) that's currently in  DynamoDB by backfilling, including a infinite horizontal map prototype, local MCP (which I can connect to any AI agents to query m graph)
+
+
+using Digital ocean open models (serverless inference) for reasoning, image understanding, audio transcription (if DO doesn't support - we can deploy and use whisper running on DO droplets), and Cloudflare for embeddings generation
+
+Also as the currently stored data might have limited information about public web pages - we can use local aside browser workflow to extract web page data if needed (in real migration - we will automate this part with firecrawl or similar service to fetch info about public web pages)
+
+how should we proceed?
+
+Use composio CLI if you want to access any of my tools and aws CLI to access AWS if needed
+
+---
+
+<send_user_message_question_reply>
+[{"answer":"user id: m34n2ih47rdb5ovwodg8jih7, email: thyaravind@gmail.com","question":"Which Memotron account should the one-user DynamoDB backfill use? Please provide the user ID or account email and its AWS region, if you know it.","questionItemId":"[\"request_user_input_async\",\"call_ljjJJ0QIxPQIAzqL00wZF5HS\",0]"}]
+</send_user_message_question_reply>
+
+---
+
+<send_user_message_question_reply>
+[{"answer":"Memotron memory only (recommended)","question":"For the first m graph pilot, should I index Memotron memory entries and related links/files only, or also include Pointron tasks and sessions from the same account?","questionItemId":"[\"request_user_input_async\",\"call_QHrssDtazpp4aSJuis0tQVQA\",0]"}]
+</send_user_message_question_reply>
+
+---
+
+lets operate all of this in dev/n/agent/experiments/mgraph... create that directory and an example .env file - I will fill the credentials like postgres connection string, digital ocean model access key, cloudflare keys, etc
+
+I want to use hosted postgres for this instead of locally storing to avoid local disk usage... for any intermediary artifacts we can use cloudflare R2 - let me know
+
+---
+
+using composio CLI, wrangler, aside browser workflow - configure as many details in .env as possible like R2 bucket, CF account id etc
+
+---
+
+<send_user_message_question_reply>
+[{"answer":"done","question":"Cloudflare’s dashboard is asking for a second factor before I can create bucket-scoped R2 and Workers AI API credentials. Could you complete the Cloudflare sign-in in your personal Aside Browser profile and let me know when it is done?","questionItemId":"[\"request_user_input_async\",\"call_WsI22h04L9HZ1OcOcik49N0M\",0]"}]
+</send_user_message_question_reply>
+
+---
+
+I already added DO key
+
+---
+
+build the pipeline
+
+Also for evaluation - evaluate glm 5.3, kimi k3 and also let me know the cost of transcription generation with cloudflare (we have credits on DO to use so using DO is better if possible for transcription as well)
+
+---
+
+<send_user_message_question_reply>
+[{"answer":"I think files are in different AWS profile... can you try with other available aws credentials and see if any of those work?","question":"The `phidata` AWS profile can read DynamoDB but gets S3 403 from `tidyfileslive.ap-south-1`. How should the pilot access your saved audio, image, and PDF files?","questionItemId":"[\"request_user_input_async\",\"call_bPNjsVcWTsWV9KYhAXVKpiSH\",0]"}]
+</send_user_message_question_reply>
+
+---
+
+We can go ahead with CF for transcription of pilot...
+
+what will be the approx. cost of llm inference if we use kimi k3 for everything in pilot? also when we process all remaining entries - we need to make sure we will not run into DO rate limits (we are tier 4 account)
+
+also are there any other open models on DO that we can evaluate comparable to kimi k3, glm 5.3 etc
+
+---
+
+which model did we use for embeddings in the eval?
+
+---
+
+alright, lets use CF itself for transcription, embeddings and Kimi K3 for reasoning and rest of the LLM need
+
+Any questions for me before we kickoff the run?
+
+Also confirm, If rate limited or errored - the job can be resumed?
+
+---
+
+<send_user_message_question_reply>
+[{"answer":"Cap first pass at 20,000 pairs (recommended)","question":"For the full m graph run, should I judge every generated candidate pair (roughly $700–$1,000 total Kimi inference by our current estimate), or cap the first pass at 20,000 pairs (roughly $465 baseline including profiles) and review graph coverage before expanding?","questionItemId":"[\"request_user_input_async\",\"call_p7m8ciEROsp6xQdJqXt7oleM\",0]"}]
+</send_user_message_question_reply>
+
+---
+
+what's the current status?
+
+---
+
+what's the current status?
+
+---
+
+is it possible to render library (like in Nucleum app in this repo) in local UI that we built for horizontal map http://127.0.0.1:8765/ ?
+
+Paginated records by resource rendering authoritative info, extracted projections info etc
+
+You can use npm linked nucleum ui library if that makes it easy to render
+
+Also improve the horizontal map - dont render standalone entries in the map, paginate or lazy load the map as well to avoid memory issue loading too many entries as we keep adding to the map, within each proximity group rendering connected entries closer or far based on the proximity score (like the graph in Memotron app but rendered using our m graph info)
+
+---
+
+what's the current status of the backfill run?
+
+---
+
+what's the current status of the backfill run?
+
+---
+
+why profiling will take days? how to pace it up a little?
+
+---
+
+I connected to a different wifi network now... check now
+
+---
+
+what's the current status of the backfill run?
+
+---
+
+what's the current status of the backfill run?
+
+---
+
+how much time will it take according to the current pace?
+
+---
+
+are we hitting into any rate limits at current pace? is there any room for more parallelization?
+
+---
+
+proceed
+
+---
+
+what's the current status of the backfill run?
+
+---
+
+can you randomly pick and inspect the quality of output of profiles?
+
+---
+
+why is the gaps happening? should we improve the prompt? or increase the reasoning level?
+
+---
+
+proceed
+
+---
+
+did we also use higher reasoning setting for the model? will it improve?
+
+---
+
+does do provide a way to track total cost incurred by a  model access key so far?
+
+---
+
+what's the current status of the backfill run?
+
+---
+
+can you randomly pick and inspect the output quality?
+
+---
+
+proceed
+
+---
+
+resume
