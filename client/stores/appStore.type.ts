@@ -99,7 +99,6 @@ export type IAppData = {
     statusPage?: string;
     systemStatusJson?: string;
     systemStatusEmbed?: string;
-    changelogEmbed?: string;
     roadmapEmbed?: string;
     privacy?: string;
     [key: string]: string | undefined;

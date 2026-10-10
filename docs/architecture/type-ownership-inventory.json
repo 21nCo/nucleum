@@ -6603,12 +6603,10 @@
     },
     {
       "path": "client/types/controlpanel.type.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/application/settings/controlpanel.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "implementation-private",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Unused colocated duplicate has no consumers.",
       "declarations": [
         "ControlPanelConfiguration"
       ],
@@ -7797,12 +7795,10 @@
     },
     {
       "path": "client/types/log.type.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/application/debug/log.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "implementation-private",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Unused colocated duplicate has no consumers.",
       "declarations": [
         "LogStore",
         "DebugLog"
@@ -7905,12 +7901,10 @@
     },
     {
       "path": "client/types/persistance.type.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/persistence/persistance.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "implementation-private",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Unused colocated duplicate has no consumers.",
       "declarations": [
         "QueryParams",
         "MergeRecord"
@@ -7919,12 +7913,10 @@
     },
     {
       "path": "client/types/player.type.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/application/modal/player.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "implementation-private",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Unused colocated duplicate has no consumers.",
       "declarations": [
         "Player"
       ],
