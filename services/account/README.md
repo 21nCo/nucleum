@@ -60,6 +60,21 @@ server certificate:
 - `DATAFN_USEAST_DATABASE_URL`
 - `DATAFN_EUWEST_DATABASE_URL`
 
+Dev is the one exception. The dev Railway databases present a certificate for
+`localhost` signed by a per-instance `root-ca`, so they cannot pass
+`verify-full`. Dev deploys instead verify the certificate chain against that
+pinned CA and skip only the hostname check. Set the CA PEMs as variables on the
+`dev` GitHub environment only:
+
+- `DATAFN_INSOUTH_ROOT_CA_PEM`
+- `DATAFN_USEAST_ROOT_CA_PEM`
+- `DATAFN_EUWEST_ROOT_CA_PEM`
+
+The migration config uses a pinned CA only when `deploy.mjs` targets `dev`, and
+the dev URLs may carry no query parameters other than `sslmode`. Pre and live
+deployments, and the Worker and Node runtimes, always require `verify-full` or
+`sslrootcert=system`.
+
 Optional sync settings:
 
 ```bash

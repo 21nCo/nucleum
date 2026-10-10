@@ -74,9 +74,13 @@ function migrateDatafnDatabase(region) {
     console.error(`Cannot deploy ${environment}/${region}; set the ${variable} secret.`);
     process.exit(1);
   }
+  const rootCaVariable = `DATAFN_${region}_ROOT_CA_PEM`
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_');
   run('npm', ['run', 'datafn:migrate'], {
     DATAFN_DATABASE_URL: databaseUrl,
-    DATAFN_DEPLOY_ENVIRONMENT: environment
+    DATAFN_DEPLOY_ENVIRONMENT: environment,
+    DATAFN_DEV_ROOT_CA_PEM: environment === 'dev' ? process.env[rootCaVariable] ?? '' : ''
   });
 }
 

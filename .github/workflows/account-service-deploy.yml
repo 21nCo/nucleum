@@ -157,6 +157,7 @@ jobs:
           DATAFN_INSOUTH_DATABASE_URL: ${{ secrets.DATAFN_INSOUTH_DATABASE_URL }}
           DATAFN_USEAST_DATABASE_URL: ${{ secrets.DATAFN_USEAST_DATABASE_URL }}
           DATAFN_EUWEST_DATABASE_URL: ${{ secrets.DATAFN_EUWEST_DATABASE_URL }}
-          # Set only on the dev GitHub environment; the migration also requires a dev deploy.
-          DATAFN_ALLOW_UNVERIFIED_TLS: ${{ vars.DATAFN_ALLOW_UNVERIFIED_TLS }}
+          DATAFN_INSOUTH_ROOT_CA_PEM: ${{ vars.DATAFN_INSOUTH_ROOT_CA_PEM }}
+          DATAFN_USEAST_ROOT_CA_PEM: ${{ vars.DATAFN_USEAST_ROOT_CA_PEM }}
+          DATAFN_EUWEST_ROOT_CA_PEM: ${{ vars.DATAFN_EUWEST_ROOT_CA_PEM }}
         run: npm --workspace @21n/account-service run deploy:${{ needs.detect.outputs.environment }} -- --regions=${{ needs.detect.outputs.regions }}
