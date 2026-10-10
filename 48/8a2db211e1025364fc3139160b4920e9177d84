@@ -1,0 +1,71 @@
+client/application/network/dev-zone.test.ts
+  s_ce12272281eb3b::t_ecb547dd3c0322 1-99
+  s_ce12272281eb3b::t_4b839bfc9870b3 100-121
+apps/e2e-playwright/scripts/account-base-url.ts
+  s_ce12272281eb3b::t_202c862d5ddfc6 1,6-9
+  s_ce12272281eb3b::t_17111042bec34a 2-5,10-33
+.github/workflows/debug-sink-deploy.yml
+  s_ce12272281eb3b::t_17a50fe9089e50 25-27,30,36,53-55,58,64,69-86
+.github/workflows/frontend-cloudflare-routes.yml
+  s_ce12272281eb3b::t_98ec5b443a6508 54-64
+.github/workflows/tests-weekly.yml
+  s_ce12272281eb3b::t_92bf7f40343b00 63,67,71,85-90,93,105
+.github/workflows/tests.yml
+  s_ce12272281eb3b::t_77a61afc0b4359 88,92,96,110-115,118,130
+apps/e2e-playwright/scripts/save-email-auth-state.ts
+  s_ce12272281eb3b::t_ed9d529740c89c 19
+apps/e2e-playwright/scripts/save-google-auth-state.ts
+  s_ce12272281eb3b::t_cc8239cdfbf74c 16
+apps/memotron/vite.config.ts
+  s_ce12272281eb3b::t_c35180cbfbcda3 18-22
+apps/nucleus/vite.config.ts
+  s_ce12272281eb3b::t_d148560dbe9866 23
+apps/pointron/vite.config.ts
+  s_ce12272281eb3b::t_2071298e3b7b09 20
+client/application/network/index.test.ts
+  s_ce12272281eb3b::t_b2fe8cf4235b17 35,37-39
+client/runtime/account/network.ts
+  s_ce12272281eb3b::t_4a0e654d1506fc 47-49,124-129,232-244,259,267,269-270
+ios/memotron/Memotron/local/LocalConfig.swift
+  s_ce12272281eb3b::t_971cedff4b8fc7 35-36
+ios/nucleum/Nucleum/local/LocalConfig.swift
+  s_ce12272281eb3b::t_6a1ed5e0f4cd1e 35-36
+ios/pointron/Pointron/local/LocalConfig.swift
+  s_ce12272281eb3b::t_20f29d358e7dea 36-37
+services/account/README.md
+  s_ce12272281eb3b::t_bbc5a2151c2cde 292-295,310-315,319,333-340
+services/account/config/environments.json
+  s_ce12272281eb3b::t_a1cefcd9b37874 73,75-79,117,119-123
+services/account/package.json
+  s_ce12272281eb3b::t_87f724ffbee015 34
+services/account/scripts/cloudflare-sync.mjs
+  s_ce12272281eb3b::t_95d907c6515baf 24-30
+services/account/scripts/sync-secrets-store.mjs
+  s_ce12272281eb3b::t_11052b53128e8f 13,17-18,20,24-29,102-117,119-125,166
+services/account/scripts/wrangler-config.mjs
+  s_ce12272281eb3b::t_61ac2f6cf139d5 241-245,255-259,261,265-272
+services/frontend/scripts/cloudflare-sync.mjs
+  s_ce12272281eb3b::t_f01872d521b240 1-44
+services/frontend/scripts/frontend-config.mjs
+  s_ce12272281eb3b::t_9179e6007c4773 82-83
+services/frontend/scripts/sync-routes.mjs
+  s_ce12272281eb3b::t_da886e20039c69 10
+services/frontend/scripts/sync-waf-exceptions.mjs
+  s_ce12272281eb3b::t_8087f5cf7e9e4b 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "488a2db211e1025364fc3139160b4920e9177d84",
+  "prompts": {},
+  "sessions": {
+    "s_ce12272281eb3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d2376f8-4af3-4920-96da-dff6a042ab4c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
