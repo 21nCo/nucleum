@@ -1,0 +1,25 @@
+client/application/network/dev-zone.test.ts
+  s_ce12272281eb3b::t_6b0ddbf5cbb635 59-65
+client/runtime/account/network.ts
+  s_ce12272281eb3b::t_acad0b419f29ff 236,240,243-244
+services/account/scripts/deploy.mjs
+  s_ce12272281eb3b::t_f3531dfcfb2660 36
+services/frontend/scripts/deploy.mjs
+  s_ce12272281eb3b::t_4710c38849ce6b 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6fe71bb9e4d44e5b8efee517322f4c9960c7a394",
+  "prompts": {},
+  "sessions": {
+    "s_ce12272281eb3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d2376f8-4af3-4920-96da-dff6a042ab4c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
