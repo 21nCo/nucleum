@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
-import { missingHyperdriveIds, missingSecretsStoreId, renderWranglerConfig } from './wrangler-config.mjs';
+import { applyCloudflareCredentialAliases, missingHyperdriveIds, missingSecretsStoreId, renderWranglerConfig } from './wrangler-config.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
@@ -25,6 +25,12 @@ if (missing.length > 0) {
   for (const item of missing) {
     console.error(`- ${item}`);
   }
+  process.exit(1);
+}
+
+const credentialsEnv = config.environments[environment].cloudflareCredentialsEnv;
+if (credentialsEnv && !applyCloudflareCredentialAliases(credentialsEnv) && !process.env.CI && !dryRun) {
+  console.error(`Cannot deploy ${environment} manually; set ${credentialsEnv.accountId} and ${credentialsEnv.token} (CI passes the selected credentials as CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN).`);
   process.exit(1);
 }
 

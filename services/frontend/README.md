@@ -65,6 +65,12 @@ Dev routes use the `21n.dev` zone ID pinned in `config/environments.json`
 use `CLOUDFLARE_DEV_API_TOKEN` / `CLOUDFLARE_DEV_ACCOUNT_ID`; pre/live keep
 `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`.
 
+Manual `deploy:dev` runs (outside CI) require `CLOUDFLARE_DEV_ACCOUNT_ID` and
+`CLOUDFLARE_DEV_API_TOKEN`. The script maps them to the variables Wrangler
+reads and removes any other Cloudflare credentials first. In CI the workflow
+already passes the dev credentials as `CLOUDFLARE_ACCOUNT_ID` /
+`CLOUDFLARE_API_TOKEN`.
+
 Optional zone ID overrides:
 
 - `CLOUDFLARE_ZONE_ID_NUCLEUM_APP`

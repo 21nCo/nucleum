@@ -84,6 +84,10 @@
       "buildScript": "build",
       "workersDev": true,
       "accountBaseUrlTemplate": "https://{product}-account-{region}.21n.dev",
+      "cloudflareCredentialsEnv": {
+        "accountId": "CLOUDFLARE_DEV_ACCOUNT_ID",
+        "token": "CLOUDFLARE_DEV_API_TOKEN"
+      },
       "buildEnv": {
         "VITE_ENV": "dev",
         "VITE_STATIC_URL": "https://cms-cdn.21n.dev",

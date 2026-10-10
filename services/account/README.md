@@ -220,8 +220,11 @@ Those resources live in the 21n-dev account, so the local Workers need
 `CLOUDFLARE_DEV_ACCOUNT_ID` and `ACCOUNT_DEV_SECRETS_STORE_ID`. The script
 passes the account ID to Wrangler as `CLOUDFLARE_ACCOUNT_ID`. It uses
 `CLOUDFLARE_DEV_API_TOKEN` as `CLOUDFLARE_API_TOKEN` when that is set, and
-otherwise falls back to your `wrangler login` session. It never uses a generic
-`CLOUDFLARE_API_TOKEN`.
+otherwise falls back to your `wrangler login` session. It removes any other
+Cloudflare credential variables (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_API_KEY`,
+`CLOUDFLARE_EMAIL`, `CF_*`) first. Manual `deploy:dev` runs (outside CI)
+require `CLOUDFLARE_DEV_ACCOUNT_ID` and `CLOUDFLARE_DEV_API_TOKEN` and are
+mapped the same way.
 
 You can run one local region when needed:
 
