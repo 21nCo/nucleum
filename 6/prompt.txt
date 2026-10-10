@@ -1,0 +1,17 @@
+in the new reorganization - what is the dependency map and starting points, chain of components in the apps?
+
+---
+
+Create a readable md file with the dependency diagrams if not already present in the repo
+
+---
+
+why @docs/architecture/client-boundaries.md has delivery checklist, migration details etc?
+
+---
+
+how to improve the architecture documentation then?
+
+---
+
+proceed with this improvement
