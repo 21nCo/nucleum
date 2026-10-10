@@ -314,26 +314,6 @@
       "@21n/theme/*": [
         "./client/theme/*"
       ],
-      "@nucleum/legacy": [
-        "./client/legacy/index.ts",
-        "./client/legacy/index.tsx",
-        "./client/legacy/index.js",
-        "./client/legacy/index.mjs",
-        "./client/legacy/index.cjs",
-        "./client/legacy/index.svelte",
-        "./client/legacy/index.d.ts",
-        "./client/legacy/src/index.ts",
-        "./client/legacy/src/index.tsx",
-        "./client/legacy/src/index.js",
-        "./client/legacy/src/index.mjs",
-        "./client/legacy/src/index.cjs",
-        "./client/legacy/src/index.svelte",
-        "./client/legacy/src/index.d.ts",
-        "./client/legacy"
-      ],
-      "@nucleum/legacy/*": [
-        "./client/legacy/*"
-      ],
       "@21n/illustrations": [
         "./client/illustrations/index.ts",
         "./client/illustrations/index.tsx",
@@ -512,7 +492,6 @@
     ".plasmo/index.d.ts",
     "client/**/*",
     "apps/**/*",
-    "packages/**/*",
     "shared/**/*"
   ]
 }

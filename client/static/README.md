@@ -80,7 +80,7 @@ copyAssetsTo('./static');
 
 ## Adding New Assets
 
-1. Add asset files to the appropriate subdirectory in `packages/static/`
+1. Add asset files to the appropriate subdirectory in `client/static/`
 2. Update `index.js` to export the new asset paths
 3. Update `index.d.ts` with TypeScript definitions
 4. Run `npm run build` to update the manifest
