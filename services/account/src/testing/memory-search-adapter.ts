@@ -45,7 +45,7 @@ export class MetadataFilteringMemoryAdapter implements SearchAdapter {
     await this.inner.index(params);
     const entries = this.resourceMetadata(params.resource);
     for (const document of params.documents) {
-      entries.set(String(document.id), { ...(document.metadata ?? {}) });
+      entries.set(String(document.id), { ...document.metadata });
     }
   }
 
