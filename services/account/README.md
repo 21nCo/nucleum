@@ -72,8 +72,8 @@ pinned CA and skip only the hostname check. Set the CA PEMs as variables on the
 
 The migration config uses a pinned CA only when `deploy.mjs` targets `dev`, and
 the dev URLs may carry no query parameters other than `sslmode`. Pre and live
-deployments, and the Worker and Node runtimes, always require `verify-full` or
-`sslrootcert=system`.
+deployments require `verify-full` or `sslrootcert=system`; remote Worker and
+Node runtime connections require the same.
 
 Optional sync settings:
 
