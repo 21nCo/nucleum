@@ -75,7 +75,8 @@ function migrateDatafnDatabase(region) {
     process.exit(1);
   }
   run('npm', ['run', 'datafn:migrate'], {
-    DATAFN_DATABASE_URL: databaseUrl
+    DATAFN_DATABASE_URL: databaseUrl,
+    DATAFN_DEPLOY_ENVIRONMENT: environment
   });
 }
 

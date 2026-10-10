@@ -34,3 +34,18 @@ export function requireSecureRemotePostgresUrl(value: string): void {
     );
   }
 }
+
+/**
+ * Returns true only for dev DataFn migrations that explicitly opt in to
+ * unverified TLS. The dev Railway databases present a self-signed
+ * certificate for `localhost`, so they can never pass `verify-full`.
+ * Every other environment keeps the strict check above.
+ */
+export function allowsUnverifiedDevMigrationTls(
+  env: Record<string, string | undefined>
+): boolean {
+  return (
+    env.DATAFN_DEPLOY_ENVIRONMENT === "dev" &&
+    env.DATAFN_ALLOW_UNVERIFIED_TLS === "1"
+  );
+}
