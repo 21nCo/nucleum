@@ -16,6 +16,7 @@ import path from "node:path";
 import fs from "node:fs";
 import net from "node:net";
 import { Product } from "@nucleum/client/config/product.type";
+import { resolveAccountBaseUrl } from "./account-base-url";
 
 const authDir = path.join(__dirname, "..", ".auth");
 const artifactsDir = path.join(__dirname, "..", "artifacts");
@@ -36,27 +37,6 @@ function getBaseURL(): string {
   }
   const envKey = `APP_BASE_URL_${product.toUpperCase()}`;
   return process.env[envKey] ?? process.env.APP_BASE_URL ?? fallback;
-}
-
-function resolveAccountBaseUrl(appBaseUrl: string, region: string) {
-  const url = new URL(appBaseUrl);
-  const host = url.hostname.toLowerCase();
-  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
-    return null;
-  }
-  const labels = host.split(".").filter(Boolean);
-  const subdomain = labels[0] ?? "";
-  const env =
-    subdomain === "local" || subdomain === "dev" || subdomain === "pre"
-      ? subdomain
-      : subdomain === "web" || subdomain === "app"
-        ? "live"
-      : "dev";
-  const domain = ["local", "dev", "pre", "web", "app"].includes(subdomain)
-    ? labels.slice(1).join(".")
-    : labels.slice(-2).join(".");
-  const envSuffix = env === "live" ? "" : `-${env}`;
-  return `https://account-${region}${envSuffix}.${domain}`;
 }
 
 async function main() {

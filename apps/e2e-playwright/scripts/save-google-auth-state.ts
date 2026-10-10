@@ -13,6 +13,7 @@ import { chromium } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
 import { Product } from "@nucleum/client/config/product.type";
+import { resolveAccountBaseUrl } from "./account-base-url";
 
 const authDir = path.join(__dirname, "..", ".auth");
 const product = (process.env.PRODUCT ?? Product.NUCLEUM).toLowerCase();
@@ -27,8 +28,9 @@ const baseHost = new URL(baseURL).host;
 const allowedOrigins = [
   baseOrigin,
   baseOrigin.startsWith("http:") ? `https://${baseHost}` : `http://${baseHost}`,
-  "https://dev.nucleum.app",
-  "http://dev.nucleum.app",
+  "https://nucleum.21n.dev",
+  "https://memotron.21n.dev",
+  "https://pointron.21n.dev",
   "https://local.nucleum.app",
   "http://local.nucleum.app",
   "https://local.memotron.app",
@@ -41,27 +43,6 @@ const allowedOrigins = [
   "http://dev.pointron.to"
 ];
 const allowedOriginsSet = new Set(allowedOrigins);
-
-function resolveAccountBaseUrl(appBaseUrl: string, region = "insouth") {
-  const url = new URL(appBaseUrl);
-  const host = url.hostname.toLowerCase();
-  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
-    return null;
-  }
-  const labels = host.split(".").filter(Boolean);
-  const subdomain = labels[0] ?? "";
-  const env =
-    subdomain === "local" || subdomain === "dev" || subdomain === "pre"
-      ? subdomain
-      : subdomain === "web" || subdomain === "app"
-        ? "live"
-      : "dev";
-  const domain = ["local", "dev", "pre", "web", "app"].includes(subdomain)
-    ? labels.slice(1).join(".")
-    : labels.slice(-2).join(".");
-  const envSuffix = env === "live" ? "" : `-${env}`;
-  return `https://account-${region}${envSuffix}.${domain}`;
-}
 
 function resolveParentDomain(appBaseUrl: string) {
   const hostname = new URL(appBaseUrl).hostname;

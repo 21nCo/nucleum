@@ -21,10 +21,19 @@ export function groupByZoneName(entries) {
   return grouped;
 }
 
-export async function resolveZoneIdForRouteZone(config, zoneName, token) {
+/**
+ * Resolves the Cloudflare zone ID for a route zone. Precedence:
+ * `CLOUDFLARE_ZONE_ID_<ZONE>` env override, then the zone ID pinned in
+ * environments.json (`hosts.zoneId`, which avoids ambiguous name lookups when
+ * the same zone name exists in more than one account), then
+ * `CLOUDFLARE_ZONE_ID` for the account domain, then a lookup by name.
+ */
+export async function resolveZoneIdForRouteZone(config, zoneName, token, configuredZoneId) {
   const specificEnvName = `CLOUDFLARE_ZONE_ID_${zoneName.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
   const specificZoneId = process.env[specificEnvName];
   if (specificZoneId) return specificZoneId;
+
+  if (configuredZoneId) return configuredZoneId;
 
   if (zoneName === config.accountDomain && process.env.CLOUDFLARE_ZONE_ID) {
     return process.env.CLOUDFLARE_ZONE_ID;

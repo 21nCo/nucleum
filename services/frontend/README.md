@@ -10,7 +10,7 @@ Cloudflare frontend deploys use separate workflows and scripts.
 
 Frontend routes:
 
-- Dev: `dev.<product-domain>`
+- Dev: `<product>.21n.dev` (21n-dev Cloudflare account, `21n.dev` zone)
 - Pre: `pre.<product-domain>`
 - Live: `web.<product-domain>`
 
@@ -22,7 +22,7 @@ Current products:
 
 The app resolves the account service from the frontend origin, for example:
 
-- `dev.memotron.app` -> `account-{region}-dev.memotron.app`
+- `memotron.21n.dev` -> `memotron-account-{region}.21n.dev`
 - `pre.pointron.app` -> `account-{region}-pre.pointron.app`
 - `web.nucleum.app` -> `account-{region}.nucleum.app`
 
@@ -59,6 +59,17 @@ Required token permissions:
 - Account Workers Scripts edit
 - Zone read for each product zone
 - Workers routes edit for each product zone
+
+Dev routes use the `21n.dev` zone ID pinned in `config/environments.json`
+(`hosts.zoneId`) and the `CLOUDFLARE_DEV_API_TOKEN` secret in CI. Dev deploys
+use `CLOUDFLARE_DEV_API_TOKEN` / `CLOUDFLARE_DEV_ACCOUNT_ID`; pre/live keep
+`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`.
+
+Manual `deploy:dev` runs (outside CI, except `--dry-run`) require both `CLOUDFLARE_DEV_ACCOUNT_ID` and
+`CLOUDFLARE_DEV_API_TOKEN`. The script maps them to the variables Wrangler
+reads and removes any other Cloudflare credentials first. In CI the workflow
+already passes the dev credentials as `CLOUDFLARE_ACCOUNT_ID` /
+`CLOUDFLARE_API_TOKEN`.
 
 Optional zone ID overrides:
 

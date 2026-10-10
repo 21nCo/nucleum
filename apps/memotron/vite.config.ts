@@ -15,7 +15,11 @@ export default defineConfig({
     format: "es"
   },
   server: {
-    allowedHosts: ["local.memotron.app", "debug-pre.memotron.app"]
+    allowedHosts: [
+      "local.memotron.app",
+      "debug-pre.memotron.app",
+      "memotron.21n.dev"
+    ]
   },
   build: {
     target: "esnext",

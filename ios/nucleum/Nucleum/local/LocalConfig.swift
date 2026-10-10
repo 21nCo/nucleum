@@ -17,7 +17,7 @@ struct LocalConfig {
   static var product: String { infoString("NucleusProduct", fallback: "nucleum.app") }
   static var accountDomain: String { infoString("NucleusAccountDomain", fallback: product) }
   static var debugSinkUrl: String {
-    infoString("NucleusDebugSinkUrl", fallback: "https://nucleus-debug-sink.21n.workers.dev")
+    infoString("NucleusDebugSinkUrl", fallback: "https://nucleus-debug-sink.21n-dev.workers.dev")
   }
   static var normalizedEnvironment: String {
     switch environment.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
@@ -26,6 +26,14 @@ struct LocalConfig {
     default:
       return "dev"
     }
+  }
+
+  /// Deployed dev hosts are single-label hosts on the shared 21n.dev zone:
+  /// `<product>.21n.dev` (web) and `<product>-account-<region>.21n.dev` (account).
+  static let devHostZone = "21n.dev"
+  static var productLabel: String {
+    let domain = product.hasPrefix(".") ? String(product.dropFirst()) : product
+    return domain.split(separator: ".").first.map(String.init) ?? domain
   }
 
   static var webOrigin: String {
@@ -37,7 +45,7 @@ struct LocalConfig {
     case "live":
       return "https://web.\(product)"
     default:
-      return "https://dev.\(product)"
+      return "https://\(productLabel).\(devHostZone)"
     }
   }
 
@@ -48,6 +56,9 @@ struct LocalConfig {
   static func accountUrl(for region: String?) -> String {
     let resolvedRegion = region?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     let regionId = resolvedRegion?.isEmpty == false ? resolvedRegion! : defaultRegion
+    if normalizedEnvironment == "dev" {
+      return "https://\(productLabel)-account-\(regionId).\(devHostZone)"
+    }
     let environmentSuffix = normalizedEnvironment == "live" ? "" : "-\(normalizedEnvironment)"
     return "https://account-\(regionId)\(environmentSuffix).\(accountDomain)"
   }

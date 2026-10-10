@@ -64,26 +64,34 @@
       "workersDev": true,
       "lookupWorkerEnv": "dev-lookup",
       "lookupWorkerName": "nucleus-account-dev-lookup",
-      "cacheKvNamespaceId": "0cad2abe3c97473cb481c11d960e7996",
+      "cacheKvNamespaceId": "c4418eae3ce44ae9a8e002fab3cbf44f",
       "cachePrefix": "authfn:nucleus_account_dev:",
       "cookiePrefix": "nucleus_local",
       "latencyDebug": true,
       "includeLocalWebOrigins": false,
+      "debugSinkUrl": "https://nucleus-debug-sink.21n-dev.workers.dev",
+      "secretsStoreId": "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID",
+      "secretsStoreIdEnv": "ACCOUNT_DEV_SECRETS_STORE_ID",
+      "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY"],
+      "cloudflareCredentialsEnv": {
+        "accountId": "CLOUDFLARE_DEV_ACCOUNT_ID",
+        "token": "CLOUDFLARE_DEV_API_TOKEN"
+      },
       "regions": {
         "insouth": {
           "wranglerEnv": "local-insouth",
-          "hyperdriveId": "9b2122770f74463e92e41da547bcf260",
-          "syncHyperdriveId": "2807e6c0d0aa4fa081d7b3d579fedf6e"
+          "hyperdriveId": "7ce444adb09f40d49b3b8db252620aec",
+          "syncHyperdriveId": "7a66a72654cd4424a1150d846ab8737f"
         },
         "useast": {
           "wranglerEnv": "local-useast",
-          "hyperdriveId": "b81e52666883484386ae507f1aa77571",
-          "syncHyperdriveId": "6544ab082a3341228608b1044e172c8a"
+          "hyperdriveId": "a30f7ceb50ce491185a938098c653bce",
+          "syncHyperdriveId": "59e48253468e4c728eaedf30326abae4"
         },
         "euwest": {
           "wranglerEnv": "local-euwest",
-          "hyperdriveId": "627c5625e5204efcb1ec0afea943b7b2",
-          "syncHyperdriveId": "890b1dc6d9ff44cc91b4c22995ee85a5"
+          "hyperdriveId": "3ac47e171cd1474ab0198b54c7870c46",
+          "syncHyperdriveId": "44c20c19204e4ac68782e66643cf80d0"
         }
       }
     },
@@ -91,28 +99,43 @@
       "urlSegment": "dev",
       "webSubdomain": "dev",
       "workersDev": true,
+      "hosts": {
+        "zoneName": "21n.dev",
+        "zoneId": "824efd7a2359ef2e191e66a9c4fff0de",
+        "account": "{product}-account-{region}.21n.dev",
+        "web": "{product}.21n.dev"
+      },
+      "cookieDomain": ".21n.dev",
       "lookupWorkerEnv": "dev-lookup",
       "lookupWorkerName": "nucleus-account-dev-lookup",
-      "cacheKvNamespaceId": "0cad2abe3c97473cb481c11d960e7996",
+      "cacheKvNamespaceId": "c4418eae3ce44ae9a8e002fab3cbf44f",
       "cachePrefix": "authfn:nucleus_account_dev:",
       "cookiePrefix": "nucleus",
       "latencyDebug": false,
       "includeLocalWebOrigins": true,
+      "debugSinkUrl": "https://nucleus-debug-sink.21n-dev.workers.dev",
+      "secretsStoreId": "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID",
+      "secretsStoreIdEnv": "ACCOUNT_DEV_SECRETS_STORE_ID",
+      "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY"],
+      "cloudflareCredentialsEnv": {
+        "accountId": "CLOUDFLARE_DEV_ACCOUNT_ID",
+        "token": "CLOUDFLARE_DEV_API_TOKEN"
+      },
       "regions": {
         "insouth": {
           "wranglerEnv": "dev-insouth",
-          "hyperdriveId": "9b2122770f74463e92e41da547bcf260",
-          "syncHyperdriveId": "2807e6c0d0aa4fa081d7b3d579fedf6e"
+          "hyperdriveId": "7ce444adb09f40d49b3b8db252620aec",
+          "syncHyperdriveId": "7a66a72654cd4424a1150d846ab8737f"
         },
         "useast": {
           "wranglerEnv": "dev-useast",
-          "hyperdriveId": "b81e52666883484386ae507f1aa77571",
-          "syncHyperdriveId": "6544ab082a3341228608b1044e172c8a"
+          "hyperdriveId": "a30f7ceb50ce491185a938098c653bce",
+          "syncHyperdriveId": "59e48253468e4c728eaedf30326abae4"
         },
         "euwest": {
           "wranglerEnv": "dev-euwest",
-          "hyperdriveId": "627c5625e5204efcb1ec0afea943b7b2",
-          "syncHyperdriveId": "890b1dc6d9ff44cc91b4c22995ee85a5"
+          "hyperdriveId": "3ac47e171cd1474ab0198b54c7870c46",
+          "syncHyperdriveId": "44c20c19204e4ac68782e66643cf80d0"
         }
       }
     },

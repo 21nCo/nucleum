@@ -47,7 +47,7 @@ if (!token) {
 const exceptionsByZone = groupByZoneName(wafExceptionDefinitions(config, environment, regions, productDomains));
 
 for (const [zoneName, exceptions] of exceptionsByZone) {
-  const zoneId = await resolveZoneIdForRouteZone(config, zoneName, token);
+  const zoneId = await resolveZoneIdForRouteZone(config, zoneName, token, exceptions[0]?.zoneId);
   const entrypoint = await readManagedRulesEntrypoint(zoneId, token);
   if (!entrypoint) {
     throw new Error(`Cloudflare managed WAF entrypoint not found for ${zoneName}. Enable the managed ruleset first, then sync exceptions.`);
@@ -85,12 +85,13 @@ function wafExceptionDefinitions(config, environment, regions, productDomains) {
     throw new Error('Missing account browser auth route WAF exception config.');
   }
 
-  return routeDefinitions(config, environment, regions).filter((route) => productDomains.has(route.zoneName)).map((route) => {
+  return routeDefinitions(config, environment, regions).filter((route) => productDomains.has(route.productDomain)).map((route) => {
     const host = route.pattern.replace(/\/\*$/, '');
     return {
       zoneName: route.zoneName,
+      zoneId: route.zoneId,
       rule: {
-        ref: `21n_account_oauth_callback_${environment}_${route.script.replaceAll('-', '_')}_${route.zoneName.replace(/[^a-zA-Z0-9]+/g, '_')}`,
+        ref: `21n_account_oauth_callback_${environment}_${route.script.replaceAll('-', '_')}_${route.productDomain.replace(/[^a-zA-Z0-9]+/g, '_')}`,
         description: `21n account browser auth route WAF exception: ${environment}/${host}`,
         expression: [
           `http.host eq ${quoteCloudflareString(host)}`,

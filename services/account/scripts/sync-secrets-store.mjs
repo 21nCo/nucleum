@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
-import { secretStoreBindingsForEnvironment } from './wrangler-config.mjs';
+import { missingSecretsStoreId, resolveSecretsStoreId, secretStoreBindingsForEnvironment } from './wrangler-config.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
@@ -10,18 +10,30 @@ const environment = normalizeEnvironment(process.argv[2] ?? 'dev');
 const replace = process.argv.includes('--replace');
 
 if (!environment || !config.environments[environment]) {
-  console.error('Usage: node scripts/sync-secrets-store.mjs <dev|pre|live> [--replace]');
+  console.error('Usage: node scripts/sync-secrets-store.mjs <local|dev|pre|live> [--replace]');
   process.exit(1);
 }
 
-const accountId = readEnvValue('CLOUDFLARE_ACCOUNT_ID');
-const token = readEnvValue('CLOUDFLARE_SECRETS_STORE_TOKEN')
-  ?? readEnvValue('CLOUDFLARE_API_TOKEN')
-  ?? readEnvValue('CLOUDFLARE_USER_TOKEN');
+const envConfig = config.environments[environment];
+const { accountId, token, missingMessage } = resolveCloudflareCredentials(envConfig.cloudflareCredentialsEnv);
 if (!accountId || !token) {
-  console.error('Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_SECRETS_STORE_TOKEN or CLOUDFLARE_API_TOKEN.');
+  console.error(missingMessage);
   process.exit(1);
 }
+
+const storeIdEnv = envConfig.secretsStoreIdEnv;
+if (storeIdEnv && !process.env[storeIdEnv]) {
+  const storeIdOverride = readEnvValue(storeIdEnv);
+  if (storeIdOverride) process.env[storeIdEnv] = storeIdOverride;
+}
+
+const missingStore = missingSecretsStoreId(config, environment);
+if (missingStore) {
+  console.error(`Cannot sync ${environment} secrets; configure the Secrets Store ID first:`);
+  console.error(`- ${missingStore}`);
+  process.exit(1);
+}
+const storeId = resolveSecretsStoreId(config, environment);
 
 const envValues = readEnvironmentValues(environment);
 const bindings = secretStoreBindingsForEnvironment(config, environment);
@@ -34,7 +46,7 @@ if (missingLocalValues.length > 0) {
   process.exit(1);
 }
 
-const existing = await listSecrets(accountId, config.secretsStore.storeId, token);
+const existing = await listSecrets(accountId, storeId, token);
 const existingByName = new Map(existing.map((secret) => [secret.name, secret]));
 const toCreate = [];
 
@@ -56,7 +68,7 @@ for (const binding of bindings) {
     continue;
   }
 
-  await updateSecret(accountId, config.secretsStore.storeId, existingSecret.id, token, {
+  await updateSecret(accountId, storeId, existingSecret.id, token, {
     value,
     scopes: ['workers'],
     comment: `Nucleus account ${environment} ${binding.binding}`
@@ -65,7 +77,7 @@ for (const binding of bindings) {
 }
 
 if (toCreate.length > 0) {
-  const created = await createSecrets(accountId, config.secretsStore.storeId, token, toCreate);
+  const created = await createSecrets(accountId, storeId, token, toCreate);
   for (const secret of created) {
     console.log(`created ${secret.name}`);
   }
@@ -87,13 +99,30 @@ function readEnvironmentValues(environment) {
 
 function readEnvValue(key) {
   if (process.env[key]) return process.env[key];
-  for (const file of ['.env.local', `.env.${environment}`]) {
-    const filePath = path.join(serviceRoot, file);
-    if (!fs.existsSync(filePath)) continue;
-    const parsed = dotenv.parse(fs.readFileSync(filePath));
-    if (parsed[key]) return parsed[key];
+  return readEnvironmentValues(environment)[key] || undefined;
+}
+
+/**
+ * Reads the Cloudflare account ID and token for the selected environment.
+ * Environments with `cloudflareCredentialsEnv` (dev/local in the 21n-dev
+ * account) read only those variables and never fall back to the generic
+ * production variables.
+ */
+function resolveCloudflareCredentials(credentialsEnv) {
+  if (credentialsEnv) {
+    return {
+      accountId: readEnvValue(credentialsEnv.accountId),
+      token: readEnvValue(credentialsEnv.token),
+      missingMessage: `Set ${credentialsEnv.accountId} and ${credentialsEnv.token} for ${environment}.`
+    };
   }
-  return undefined;
+  return {
+    accountId: readEnvValue('CLOUDFLARE_ACCOUNT_ID'),
+    token: readEnvValue('CLOUDFLARE_SECRETS_STORE_TOKEN')
+      ?? readEnvValue('CLOUDFLARE_API_TOKEN')
+      ?? readEnvValue('CLOUDFLARE_USER_TOKEN'),
+    missingMessage: 'Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_SECRETS_STORE_TOKEN or CLOUDFLARE_API_TOKEN.'
+  };
 }
 
 async function listSecrets(accountId, storeId, token) {
@@ -134,6 +163,6 @@ async function cloudflare(accountId, pathname, token, options = {}) {
 
 function normalizeEnvironment(value) {
   const normalized = value.trim().toLowerCase();
-  if (['dev', 'pre', 'live'].includes(normalized)) return normalized;
+  if (['local', 'dev', 'pre', 'live'].includes(normalized)) return normalized;
   return null;
 }

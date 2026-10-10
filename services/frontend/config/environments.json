@@ -76,11 +76,21 @@
   "environments": {
     "dev": {
       "webSubdomain": "dev",
+      "hosts": {
+        "zoneName": "21n.dev",
+        "zoneId": "824efd7a2359ef2e191e66a9c4fff0de",
+        "web": "{product}.21n.dev"
+      },
       "buildScript": "build",
       "workersDev": true,
-      "accountBaseUrlTemplate": "https://account-{region}-dev.{domain}",
+      "accountBaseUrlTemplate": "https://{product}-account-{region}.21n.dev",
+      "cloudflareCredentialsEnv": {
+        "accountId": "CLOUDFLARE_DEV_ACCOUNT_ID",
+        "token": "CLOUDFLARE_DEV_API_TOKEN"
+      },
       "buildEnv": {
         "VITE_ENV": "dev",
+        "VITE_STATIC_URL": "https://cms-cdn.21n.dev",
         "VITE_API_URL": "https://api.21n.dev",
         "VITE_FILE_API_URL": "https://files.21n.dev",
         "VITE_IPINFO_TOKEN": "8b7af6433568ef"
