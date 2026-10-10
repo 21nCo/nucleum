@@ -1,0 +1,84 @@
+which is uptodate? @WARP.md  or @AGENTS.md or @conduct/AGENTS.md ?
+
+---
+
+delete WARP.md
+
+---
+
+are any of these code review findings valid?
+
+Findings                                                                                                                                                                                       
+
+ ### 1. P1 — Radix Markdown links permit script injection
+
+ .radix/components/Markdown.tsx:21–25 (.radix/components/Markdown.tsx#L21)
+
+ escape() encodes &, <, and > but not quotes. The renderer interpolates link titles and URLs into double-quoted HTML attributes, then renders the result through dangerouslySetInnerHTML.
+
+ A crafted Markdown link title can escape its attribute and introduce an executable event handler. Agent transcript messages use this renderer, so quoted external content can reach this path.
+ Execution in the Radix page context is particularly sensitive because it exposes radix.files.read/write.
+
+ Reproduced: the current renderer emitted an injected onmouseover attribute; dispatching the event in JSDOM executed the handler. No repository files were written. The native host’s CSP was
+ not inspected; a strict policy could block inline handlers.
+
+ Fix: use attribute-context escaping, including quotes, or safe DOM/React link construction. Sanitize the resulting HTML as defense in depth.
+
+ ### 2. P2 — Keyboard search selection now throws instead of closing
+
+ client/ui/compositions/search/SearchResultsPopover.svelte:102–106 (client/ui/compositions/search/SearchResultsPopover.svelte#L102)
+
+ With results present and the first result selected, ArrowUp → Enter passes undefined to the selection handler: the existing wraparound logic sets selectedIndex to results.length.
+
+ Previously, recents handling guarded item?.id and then closed the popover. The new unconditional notifyElementSearchSelection(item) invokes the callback in configure-hosts.ts:122–123
+ (client/composition/configure-hosts.ts#L122), which dereferences item.id. This throws before hide().
+
+ Reproduced using the actual handlers:
+ - HEAD: hidden=true, no exception.
+ - Current: hidden=false, Cannot read properties of undefined (reading 'id').
+
+ Fix: guard the host notification when no item exists. Correct the keyboard wraparound as well.
+
+ ### 3. P2 — Relocated icon generator writes to the wrong directory
+
+ tools/icons/bundle.ts:145–149 (tools/icons/bundle.ts#L145)
+
+ The generator moved from client/iconsV2 to tools/icons, but its output and deletion paths remain cwd-relative: ../static/icons.
+
+ From the repository root, this resolves outside the repository. From tools/icons, it resolves to tools/static/icons. Neither targets client/static/icons.
+
+ Reproduced: running the generator with real icon data while intercepting filesystem mutations produced 11 sprite writes targeting the wrong directory; the observed parent directory did not
+ exist. No files were written or deleted.
+
+ Fix: resolve ../../client/static/icons relative to import.meta.url, and restore an accessible generator command replacing the retired workspace script.
+
+ Coverage and verification
+
+ Reviewed the 1,965-file staged, unstaged, and untracked snapshot, including detected renames, extractions, caller migrations, runtime/persistence, UI, products/extensions, tooling, tests,
+ configuration, and Radix. The source snapshot was unchanged when the review resumed.
+
+ Passed:
+ - Architecture, type ownership, legacy-runtime, and fixed-wait checks.
+ - App checks for Nucleum, Memotron, Pointron, and Timear.
+ - Forced uncached unit run: 108 files / 409 tests passed; one file / three tests skipped.
+ - Nucleum and Memotron-share production builds, with compiler warnings.
+
+---
+
+fix 2,3
+
+---
+
+@AGENTS.md:1 Why is this still named with the old name tidigit instead of Nucleum?
+
+---
+
+fix
+
+---
+
+@client/features/system what is this folder?
+
+---
+
+remove all such leftover empty folders
