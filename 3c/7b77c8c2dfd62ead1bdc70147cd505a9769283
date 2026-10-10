@@ -1,0 +1,25 @@
+services/account/scripts/deploy.mjs
+  s_ce12272281eb3b::t_6eb38e865962e4 5-6
+services/account/scripts/dev-multiregion.mjs
+  s_ce12272281eb3b::t_1297161f8ce226 5-6
+services/frontend/scripts/deploy.mjs
+  s_ce12272281eb3b::t_82b4ef3adaec9f 15,17
+tools/cloudflare/credential-aliases.mjs
+  s_ce12272281eb3b::t_c62e415d83152e 1-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3c7b77c8c2dfd62ead1bdc70147cd505a9769283",
+  "prompts": {},
+  "sessions": {
+    "s_ce12272281eb3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d2376f8-4af3-4920-96da-dff6a042ab4c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
