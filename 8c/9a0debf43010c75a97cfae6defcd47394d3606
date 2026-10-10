@@ -1,0 +1,25 @@
+services/account/src/testing/memory-search-adapter.ts
+  s_ce12272281eb3b::t_619892b2b40ddd 1-114
+package-lock.json
+  s_ce12272281eb3b::t_bc3d2fac62d973 64-65,24828-24837,33548-33550
+package.json
+  s_ce12272281eb3b::t_f1bba602fb53d3 59-60
+services/account/src/testing/harness.ts
+  s_ce12272281eb3b::t_2bb9ea1e767b2c 21,122
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c9a0debf43010c75a97cfae6defcd47394d3606",
+  "prompts": {},
+  "sessions": {
+    "s_ce12272281eb3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d2376f8-4af3-4920-96da-dff6a042ab4c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
