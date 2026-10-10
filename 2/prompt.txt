@@ -1,0 +1,5 @@
+sanity check the local changeset for should ignore files
+
+---
+
+drop radix blocks from agents.md, stop tracking assets-manifest

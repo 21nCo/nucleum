@@ -3,7 +3,7 @@
   "checkpoint_id": "01M4JPF6PNJ41KTW17QJC8B50K",
   "strategy": "manual-commit",
   "branch": "chore/cloudflare-21n-dev",
-  "checkpoints_count": 8,
+  "checkpoints_count": 10,
   "files_touched": [
     ".github/workflows/tests-weekly.yml",
     ".github/workflows/tests.yml",
@@ -26,6 +26,13 @@
       "compact_transcript": "/1/transcript.jsonl",
       "content_hash": "/1/content_hash.txt",
       "prompt": "/1/prompt.txt"
+    },
+    {
+      "metadata": "/2/metadata.json",
+      "transcript": "/2/full.jsonl",
+      "compact_transcript": "/2/transcript.jsonl",
+      "content_hash": "/2/content_hash.txt",
+      "prompt": "/2/prompt.txt"
     }
   ],
   "token_usage": {
@@ -33,7 +40,6 @@
     "cache_creation_tokens": 0,
     "cache_read_tokens": 21403392,
     "output_tokens": 97700,
-    "api_call_count": 153,
-    "subagent_tokens_complete": true
+    "api_call_count": 153
   }
 }
