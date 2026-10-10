@@ -238,6 +238,11 @@ export function resolveSecretsStoreId(config, environment) {
   return override || envConfig.secretsStoreId || config.secretsStore?.storeId;
 }
 
+/**
+ * Returns a human-readable error when the environment's resolved Secrets Store
+ * ID (after the `secretsStoreIdEnv` override) is missing or a `REPLACE_WITH_*`
+ * placeholder, or null when the ID is usable or no secrets are configured.
+ */
 export function missingSecretsStoreId(config, environment) {
   const envConfig = readEnvironment(config, environment);
   const storeId = resolveSecretsStoreId(config, environment);
@@ -247,15 +252,24 @@ export function missingSecretsStoreId(config, environment) {
   return `${environment}: ${hint}replace secretsStoreId (${storeId ?? 'missing'}) in services/account/config/environments.json`;
 }
 
+/**
+ * Secrets Store bindings for an environment. Bindings listed in the
+ * environment's `omitSecretsStoreBindings` are left out (for optional secrets
+ * that do not exist in that environment's store yet, e.g. OpenSearch in dev).
+ */
 export function secretStoreBindingsForEnvironment(config, environment) {
+  const envConfig = readEnvironment(config, environment);
   const storeId = resolveSecretsStoreId(config, environment);
   const names = config.secretsStore?.names ?? {};
   if (!storeId) return [];
-  return Object.entries(names).map(([binding, template]) => ({
-    binding,
-    storeId,
-    secretName: renderSecretName(template, environment)
-  }));
+  const omitted = new Set(envConfig.omitSecretsStoreBindings ?? []);
+  return Object.entries(names)
+    .filter(([binding]) => !omitted.has(binding))
+    .map(([binding, template]) => ({
+      binding,
+      storeId,
+      secretName: renderSecretName(template, environment)
+    }));
 }
 
 function renderSecretName(template, environment) {

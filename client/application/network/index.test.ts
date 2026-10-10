@@ -32,37 +32,11 @@ describe("client/components/network account URL resolution", () => {
   });
 
   it("uses VITE_ACCOUNT_BASE_URL_TEMPLATE for local app against deployed dev multi-region workers", () => {
-    import.meta.env.VITE_ACCOUNT_BASE_URL_TEMPLATE = "https://nucleum-account-{region}.21n.dev";
+    import.meta.env.VITE_ACCOUNT_BASE_URL_TEMPLATE = "https://account-{region}-dev.nucleum.app";
 
-    expect(resolveAccountBaseUrl("insouth")).toBe("https://nucleum-account-insouth.21n.dev");
-    expect(resolveAccountBaseUrl("useast")).toBe("https://nucleum-account-useast.21n.dev");
-    expect(resolveAccountBaseUrl("euwest")).toBe("https://nucleum-account-euwest.21n.dev");
-  });
-
-  it("derives dev account hosts on the shared 21n.dev zone from the dev web host", () => {
-    setWindowHost("memotron.21n.dev");
-    expect(resolveAccountEnvironment()).toBe("dev");
-    expect(resolveAccountBaseUrl("useast")).toBe("https://memotron-account-useast.21n.dev");
-
-    setWindowHost("nucleum.21n.dev");
-    expect(resolveAccountBaseUrl("insouth")).toBe("https://nucleum-account-insouth.21n.dev");
-  });
-
-  it("treats 21n.dev account hosts as the dev backend for cookie prefixes", () => {
-    import.meta.env.VITE_ACCOUNT_BASE_URL_TEMPLATE = "https://pointron-account-{region}.21n.dev";
-    expect(resolveAccountCookiePrefix("euwest")).toBe("nucleus");
-  });
-
-  it("derives native dev account hosts on the shared 21n.dev zone", () => {
-    Object.defineProperty(globalThis, "window", {
-      value: {
-        location: { protocol: "tauri:", hostname: "localhost" },
-        __NUCLEUM_NATIVE_CONFIG__: { environment: "dev", product: "memotron.app", defaultRegion: "insouth" }
-      },
-      writable: true,
-      configurable: true
-    });
-    expect(resolveAccountBaseUrl("euwest")).toBe("https://memotron-account-euwest.21n.dev");
+    expect(resolveAccountBaseUrl("insouth")).toBe("https://account-insouth-dev.nucleum.app");
+    expect(resolveAccountBaseUrl("useast")).toBe("https://account-useast-dev.nucleum.app");
+    expect(resolveAccountBaseUrl("euwest")).toBe("https://account-euwest-dev.nucleum.app");
   });
 
   it("lets templates target upper environments without relying on the local app host", () => {

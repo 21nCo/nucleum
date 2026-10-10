@@ -8,6 +8,7 @@ import {
   readConfig,
   wafExceptionDefinitions
 } from './frontend-config.mjs';
+import { cloudflare, resolveZoneIdForRouteZone } from './cloudflare-sync.mjs';
 
 const managedFirewallPhase = 'http_request_firewall_managed';
 const serviceRoot = path.resolve(import.meta.dirname, '..');
@@ -135,41 +136,4 @@ function toWritableRule(rule) {
 
 function removeUndefinedValues(value) {
   return Object.fromEntries(Object.entries(value).filter((entry) => entry[1] !== undefined));
-}
-
-async function resolveZoneIdForRouteZone(zoneName, token, configuredZoneId) {
-  const specificEnvName = `CLOUDFLARE_ZONE_ID_${zoneName.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
-  const specificZoneId = process.env[specificEnvName];
-  if (specificZoneId) return specificZoneId;
-  // Pinned zone IDs (environments.json `hosts.zoneId`) avoid ambiguous name
-  // lookups when the same zone name exists in more than one account.
-  if (configuredZoneId) return configuredZoneId;
-  return resolveZoneId(zoneName, token);
-}
-
-async function resolveZoneId(zoneName, token) {
-  const zones = await cloudflare(`/zones?name=${encodeURIComponent(zoneName)}`, token);
-  const zone = zones.find((entry) => entry.name === zoneName);
-  if (!zone) {
-    throw new Error(`Cloudflare zone not found: ${zoneName}`);
-  }
-  return zone.id;
-}
-
-async function cloudflare(pathname, token, options = {}) {
-  const response = await fetch(`https://api.cloudflare.com/client/v4${pathname}`, {
-    method: options.method ?? 'GET',
-    headers: {
-      authorization: `Bearer ${token}`,
-      'content-type': 'application/json'
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined
-  });
-  const payload = await response.json();
-  if (!payload.success) {
-    const error = new Error(`Cloudflare API failed: ${JSON.stringify(payload.errors)}`);
-    error.cloudflareStatus = response.status;
-    throw error;
-  }
-  return payload.result;
 }

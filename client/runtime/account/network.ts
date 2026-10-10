@@ -44,8 +44,9 @@ export function resolveAccountBaseUrl(region: string) {
   }
 
   const devProduct = resolveDevZoneProduct(host);
-  if (devProduct) {
-    return devAccountBaseUrl(devProduct, region);
+  const devBaseUrl = devProduct ? devAccountBaseUrl(devProduct, region) : null;
+  if (devBaseUrl) {
+    return devBaseUrl;
   }
 
   const accountEnv = resolveAccountEnvironment(host);
@@ -120,8 +121,12 @@ function resolveNativeAccountBaseUrl(region: string) {
     const accountDomain =
       nativeConfig.accountDomain?.trim() ||
       resolveAccountDomainFromProduct(nativeConfig.product);
-    if (environment === "dev") {
-      return devAccountBaseUrl(accountDomain.split(".")[0], normalizedRegion);
+    const devBaseUrl =
+      environment === "dev"
+        ? devAccountBaseUrl(accountDomain.replace(/^\./, "").split(".")[0], normalizedRegion)
+        : null;
+    if (devBaseUrl) {
+      return devBaseUrl;
     }
     const suffix = environment === "live" ? "" : `-${environment}`;
     return `https://account-${normalizedRegion}${suffix}.${accountDomain}`;
@@ -224,8 +229,19 @@ function resolveProductDomainFromHost(host: string): string | null {
   return labels.slice(-2).join(".");
 }
 
-function devAccountBaseUrl(product: string, region: string | undefined) {
-  return `https://${product}-account-${normalizeAccountRegion(region)}.${DEV_HOST_ZONE}`;
+const DEV_HOST_LABEL = /^[a-z0-9]+$/;
+
+/**
+ * Builds `https://<product>-account-<region>.21n.dev`, or returns null when the
+ * product or region is not a plain host label.
+ */
+function devAccountBaseUrl(product: string, region: string | undefined): string | null {
+  const normalizedProduct = product.trim().toLowerCase();
+  const normalizedRegion = normalizeAccountRegion(region);
+  if (!DEV_HOST_LABEL.test(normalizedProduct) || !DEV_HOST_LABEL.test(normalizedRegion)) {
+    return null;
+  }
+  return `https://${normalizedProduct}-account-${normalizedRegion}.${DEV_HOST_ZONE}`;
 }
 
 function isDevZoneAccountHost(hostname: string): boolean {
@@ -240,7 +256,7 @@ function resolveDevZoneProduct(host: string): string | null {
   const normalized = host.toLowerCase().replace(/:\d+$/, "");
   if (!normalized.endsWith(`.${DEV_HOST_ZONE}`)) return null;
   const label = normalized.slice(0, -DEV_HOST_ZONE.length - 1);
-  return /^[a-z0-9]+$/.test(label) ? label : null;
+  return DEV_HOST_LABEL.test(label) ? label : null;
 }
 
 function resolveAccountDomainFromProduct(product: string | undefined): string {
@@ -248,8 +264,10 @@ function resolveAccountDomainFromProduct(product: string | undefined): string {
   return normalized || "nucleum.app";
 }
 
+/** Normalizes a region id, falling back to `insouth` for empty or non-label values. */
 function normalizeAccountRegion(region: string | undefined): string {
-  return region?.trim().toLowerCase() || "insouth";
+  const normalized = region?.trim().toLowerCase() ?? "";
+  return /^[a-z0-9-]+$/.test(normalized) ? normalized : "insouth";
 }
 
 function isLoopbackHost(host: string): boolean {

@@ -79,8 +79,8 @@ export function buildEnv(config, environment, productId) {
   }
 
   const accountBaseUrlTemplate = envConfig.accountBaseUrlTemplate
-    ?.replaceAll('{domain}', product.domain)
-    .replaceAll('{product}', productId);
+    ? renderHostTemplate(envConfig.accountBaseUrlTemplate, { product: productId, domain: product.domain })
+    : undefined;
   return removeUndefinedValues({
     ...config.defaultBuildEnv,
     ...envConfig.buildEnv,

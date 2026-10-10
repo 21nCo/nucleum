@@ -289,10 +289,10 @@ Configured stores:
 - pre/live (production account) `default_secrets_store`:
   `3bc19f61d4d8498d9fa50d7175085316` (top-level `secretsStore.storeId`)
 - dev/local (21n-dev account): set per environment by `secretsStoreId`
-  (currently the placeholder `REPLACE_WITH_21N_DEV_SECRETS_STORE_ID`). The
-  `ACCOUNT_DEV_SECRETS_STORE_ID` environment variable (GitHub variable in CI)
-  overrides it. Deploys, `secrets:sync:dev` and local Worker dev refuse to run
-  while the placeholder is unresolved.
+  (`abbf8470d947411e9f5bfbc45172eac6`). The `ACCOUNT_DEV_SECRETS_STORE_ID`
+  environment variable (GitHub variable in CI) overrides it. Deploys,
+  `secrets:sync:dev` and local Worker dev refuse to run if the ID is a
+  `REPLACE_WITH_*` placeholder.
 
 Secret names are generated from `services/account/config/environments.json`:
 
@@ -307,9 +307,16 @@ Secret names are generated from `services/account/config/environments.json`:
 - `NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_URL`
 - `NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_API_KEY`
 
+An environment can list binding names in `omitSecretsStoreBindings` to leave
+optional secrets out of its Worker config and `secrets:sync`. Local and dev
+omit `DATAFN_OPENSEARCH_URL` and `DATAFN_OPENSEARCH_API_KEY` until those
+secrets exist in the 21n-dev store; OpenSearch search stays disabled while
+`DATAFN_OPENSEARCH_URL` is unset. Remove the entry once the secrets are added.
+
 Sync missing secrets from local env files:
 
 ```bash
+npm --workspace @21n/account-service run secrets:sync:local
 npm --workspace @21n/account-service run secrets:sync:dev
 npm --workspace @21n/account-service run secrets:sync:pre
 npm --workspace @21n/account-service run secrets:sync:live
@@ -323,7 +330,14 @@ npm --workspace @21n/account-service run secrets:sync:dev -- --replace
 
 The sync script reads `services/account/.env.local` first, then
 `services/account/.env.<env>`, with the environment-specific file taking
-precedence. It requires `CLOUDFLARE_ACCOUNT_ID` plus one token in this order:
+precedence (shell environment variables win over both).
+
+Local and dev (21n-dev account) read only `CLOUDFLARE_DEV_ACCOUNT_ID` and
+`CLOUDFLARE_DEV_API_TOKEN` (set per environment by `cloudflareCredentialsEnv`)
+and never fall back to the production variables. A store ID override in
+`ACCOUNT_DEV_SECRETS_STORE_ID` can also come from those env files.
+
+Pre/live require `CLOUDFLARE_ACCOUNT_ID` plus one token in this order:
 
 1. `CLOUDFLARE_SECRETS_STORE_TOKEN`
 2. `CLOUDFLARE_API_TOKEN`

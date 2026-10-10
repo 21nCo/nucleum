@@ -51,7 +51,17 @@ jobs:
 
       # Dev routes live on the 21n.dev zone in the 21n-dev account (zone ID is
       # pinned in services/frontend/config/environments.json); pre/live keep
-      # the production route token.
+      # the production route token. Dev never falls back to production tokens.
+      - name: Verify Cloudflare route token
+        env:
+          CLOUDFLARE_ROUTES_TOKEN: ${{ github.event.inputs.environment == 'dev' && secrets.CLOUDFLARE_DEV_API_TOKEN || github.event.inputs.environment != 'dev' && (secrets.CLOUDFLARE_ROUTES_TOKEN || secrets.CLOUDFLARE_API_TOKEN) || '' }}
+          ROUTES_ENVIRONMENT: ${{ github.event.inputs.environment }}
+        run: |
+          if [ -z "$CLOUDFLARE_ROUTES_TOKEN" ]; then
+            echo "Missing Cloudflare route token for $ROUTES_ENVIRONMENT (dev uses CLOUDFLARE_DEV_API_TOKEN; pre/live use CLOUDFLARE_ROUTES_TOKEN or CLOUDFLARE_API_TOKEN)" >&2
+            exit 1
+          fi
+
       - name: Sync frontend routes
         env:
           CLOUDFLARE_ROUTES_TOKEN: ${{ github.event.inputs.environment == 'dev' && secrets.CLOUDFLARE_DEV_API_TOKEN || github.event.inputs.environment != 'dev' && (secrets.CLOUDFLARE_ROUTES_TOKEN || secrets.CLOUDFLARE_API_TOKEN) || '' }}

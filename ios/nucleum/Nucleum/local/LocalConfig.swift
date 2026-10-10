@@ -32,7 +32,8 @@ struct LocalConfig {
   /// `<product>.21n.dev` (web) and `<product>-account-<region>.21n.dev` (account).
   static let devHostZone = "21n.dev"
   static var productLabel: String {
-    accountDomain.split(separator: ".").first.map(String.init) ?? accountDomain
+    let domain = product.hasPrefix(".") ? String(product.dropFirst()) : product
+    return domain.split(separator: ".").first.map(String.init) ?? domain
   }
 
   static var webOrigin: String {
