@@ -12,9 +12,9 @@ import {
   readConfig,
   readEnvironment,
   renderWranglerConfig,
-  writeCloudflareAssetHeaders,
-  applyCloudflareCredentialAliases
+  writeCloudflareAssetHeaders
 } from './frontend-config.mjs';
+import { applyCloudflareCredentialAliases } from '../../../tools/cloudflare/credential-aliases.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const repoRoot = path.resolve(serviceRoot, '..', '..');

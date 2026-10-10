@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { spawn } from 'node:child_process';
-import { applyCloudflareCredentialAliases, missingHyperdriveIds, missingSecretsStoreId, renderWranglerConfig } from './wrangler-config.mjs';
+import { applyCloudflareCredentialAliases } from '../../../tools/cloudflare/credential-aliases.mjs';
+import { missingHyperdriveIds, missingSecretsStoreId, renderWranglerConfig } from './wrangler-config.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
