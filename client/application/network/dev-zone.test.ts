@@ -56,6 +56,13 @@ describe("client/runtime/account/network shared 21n.dev zone", () => {
     );
   });
 
+  it("falls back to the default region for hyphenated dev regions", () => {
+    setWindow({ protocol: "https:", hostname: "memotron.21n.dev" });
+    expect(resolveAccountBaseUrl("us-east")).toBe(
+      "https://memotron-account-insouth.21n.dev"
+    );
+  });
+
   it("falls back to the default region for non-label region values", () => {
     setWindow({ protocol: "https:", hostname: "memotron.21n.dev" });
     expect(resolveAccountBaseUrl("evil.com/x")).toBe(

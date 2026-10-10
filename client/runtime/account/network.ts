@@ -233,14 +233,15 @@ const DEV_HOST_LABEL = /^[a-z0-9]+$/;
 
 /**
  * Builds `https://<product>-account-<region>.21n.dev`, or returns null when the
- * product or region is not a plain host label.
+ * product is not a plain host label. Non-label regions fall back to `insouth`.
  */
 function devAccountBaseUrl(product: string, region: string | undefined): string | null {
   const normalizedProduct = product.trim().toLowerCase();
-  const normalizedRegion = normalizeAccountRegion(region);
-  if (!DEV_HOST_LABEL.test(normalizedProduct) || !DEV_HOST_LABEL.test(normalizedRegion)) {
+  if (!DEV_HOST_LABEL.test(normalizedProduct)) {
     return null;
   }
+  const candidateRegion = normalizeAccountRegion(region);
+  const normalizedRegion = DEV_HOST_LABEL.test(candidateRegion) ? candidateRegion : "insouth";
   return `https://${normalizedProduct}-account-${normalizedRegion}.${DEV_HOST_ZONE}`;
 }
 
