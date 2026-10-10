@@ -21,10 +21,14 @@ export function groupByZoneName(entries) {
   return grouped;
 }
 
-export async function resolveZoneIdForRouteZone(config, zoneName, token) {
+export async function resolveZoneIdForRouteZone(config, zoneName, token, configuredZoneId) {
   const specificEnvName = `CLOUDFLARE_ZONE_ID_${zoneName.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
   const specificZoneId = process.env[specificEnvName];
   if (specificZoneId) return specificZoneId;
+
+  // Pinned zone IDs (environments.json `hosts.zoneId`) avoid ambiguous
+  // name lookups when the same zone name exists in more than one account.
+  if (configuredZoneId) return configuredZoneId;
 
   if (zoneName === config.accountDomain && process.env.CLOUDFLARE_ZONE_ID) {
     return process.env.CLOUDFLARE_ZONE_ID;

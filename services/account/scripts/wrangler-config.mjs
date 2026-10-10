@@ -53,7 +53,9 @@ export function routeDefinitions(config, environment, regions = Object.keys(conf
     return productDomains(config).map((domain) => ({
       pattern: `${accountHost(config, environment, regionId, domain)}/*`,
       script: workerName(config, environment, regionId),
-      zoneName: domain
+      zoneName: routeZoneName(envConfig, domain),
+      zoneId: envConfig.hosts?.zoneId,
+      productDomain: domain
     }));
   });
 }
@@ -128,8 +130,8 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
       regionId: id,
       authority: accountAuthority(config, environment, id, domain),
       hosts: [accountHost(config, environment, id, domain)],
-      domain: cookieDomainForProductDomain(domain),
-      cookie: { domain: cookieDomainForProductDomain(domain) }
+      domain: cookieDomain(envConfig, domain),
+      cookie: { domain: cookieDomain(envConfig, domain) }
     }))
   );
   const corsOrigins = webOrigins(config, environment, envConfig);
@@ -159,11 +161,11 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     kv('AUTHFN_COOKIE_PREFIX', envConfig.cookiePrefix ?? config.cookiePrefix),
     kv('AUTHFN_COOKIE_SECURE', 'true'),
     kv('ACCOUNT_LATENCY_DEBUG', String(envConfig.latencyDebug === true)),
-    kv('DEBUG_SINK_URL', config.debugSinkUrl),
+    kv('DEBUG_SINK_URL', envConfig.debugSinkUrl ?? config.debugSinkUrl),
     kv('ACCOUNT_REGION_ID', regionId),
     kv('DATAFN_OPENSEARCH_INDEX_PREFIX', `nucleum_${environment}_${regionId}`),
     kv('ACCOUNT_AUTHORITY', accountAuthority(config, environment, regionId)),
-    kv('ACCOUNT_COOKIE_DOMAIN', cookieDomainForProductDomain(config.accountDomain)),
+    kv('ACCOUNT_COOKIE_DOMAIN', cookieDomain(envConfig, config.accountDomain)),
     kv('ACCOUNT_CORS_ORIGINS', corsOrigins.join(',')),
     kv('ACCOUNT_REGIONS_JSON', JSON.stringify(regionRecords)),
     kv('ACCOUNT_EMAIL_FROM', config.emailFrom)
@@ -186,7 +188,7 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     for (const domain of productDomains(config)) {
       lines.push(arrayHeader(`env.${wranglerEnv}.routes`));
       lines.push(kv('pattern', `${accountHost(config, environment, regionId, domain)}/*`));
-      lines.push(kv('zone_name', domain));
+      lines.push(kv('zone_name', routeZoneName(envConfig, domain)));
       lines.push('');
     }
   }
@@ -222,8 +224,31 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
   return lines;
 }
 
+/**
+ * Resolves the Secrets Store ID for an environment.
+ *
+ * Environments in a different Cloudflare account than the shared store (dev and
+ * local live in the 21n-dev account) set `secretsStoreId` and, optionally,
+ * `secretsStoreIdEnv` naming an environment variable that overrides it. The
+ * top-level `secretsStore.storeId` remains the default for pre/live.
+ */
+export function resolveSecretsStoreId(config, environment) {
+  const envConfig = readEnvironment(config, environment);
+  const override = envConfig.secretsStoreIdEnv ? process.env[envConfig.secretsStoreIdEnv]?.trim() : undefined;
+  return override || envConfig.secretsStoreId || config.secretsStore?.storeId;
+}
+
+export function missingSecretsStoreId(config, environment) {
+  const envConfig = readEnvironment(config, environment);
+  const storeId = resolveSecretsStoreId(config, environment);
+  if (!config.secretsStore?.names || Object.keys(config.secretsStore.names).length === 0) return null;
+  if (!isPlaceholder(storeId)) return null;
+  const hint = envConfig.secretsStoreIdEnv ? `set ${envConfig.secretsStoreIdEnv} or ` : '';
+  return `${environment}: ${hint}replace secretsStoreId (${storeId ?? 'missing'}) in services/account/config/environments.json`;
+}
+
 export function secretStoreBindingsForEnvironment(config, environment) {
-  const storeId = config.secretsStore?.storeId;
+  const storeId = resolveSecretsStoreId(config, environment);
   const names = config.secretsStore?.names ?? {};
   if (!storeId) return [];
   return Object.entries(names).map(([binding, template]) => ({
@@ -253,12 +278,36 @@ function lookupEnvironments(config, selectedEnvironment) {
 }
 
 function webOrigins(config, environment, envConfig) {
-  const origins = productDomains(config).map((domain) => `https://${envConfig.webSubdomain}.${domain}`);
+  const origins = productDomains(config).map((domain) => `https://${webHost(config, envConfig, domain)}`);
   if (envConfig.includeLocalWebOrigins && environment !== 'local') {
     origins.push(...productDomains(config).map((domain) => `https://local.${domain}`));
   }
   origins.push('tauri://localhost');
   return origins;
+}
+
+function webHost(config, envConfig, domain) {
+  if (envConfig.hosts?.web) {
+    return renderHostTemplate(envConfig.hosts.web, { product: productIdForDomain(config, domain), domain });
+  }
+  return `${envConfig.webSubdomain}.${domain}`;
+}
+
+function productIdForDomain(config, domain) {
+  const entry = Object.entries(config.productDomains ?? {}).find(([, value]) => value === domain);
+  if (entry) return entry[0];
+  return domain.split('.')[0];
+}
+
+function renderHostTemplate(template, values) {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value ?? '')),
+    template
+  );
+}
+
+function routeZoneName(envConfig, domain) {
+  return envConfig.hosts?.zoneName ?? domain;
 }
 
 function productDomains(config) {
@@ -271,12 +320,26 @@ function accountAuthority(config, environment, regionId, domain = config.account
 
 function accountHost(config, environment, regionId, domain = config.accountDomain) {
   const envConfig = readEnvironment(config, environment);
+  if (envConfig.hosts?.account) {
+    return renderHostTemplate(envConfig.hosts.account, {
+      product: productIdForDomain(config, domain),
+      region: regionId,
+      env: environment,
+      domain
+    });
+  }
   const suffix = envConfig.urlSegment ? `-${envConfig.urlSegment}` : '';
   return `account-${regionId}${suffix}.${domain}`;
 }
 
-function cookieDomainForProductDomain(domain) {
-  return `.${domain.replace(/^\./, '')}`;
+/**
+ * Cookie domain for a product's account hosts. Defaults to the product domain
+ * (e.g. `.nucleum.app`); environments whose hosts live on a shared zone (dev on
+ * `*.21n.dev`) override it with `cookieDomain`.
+ */
+function cookieDomain(envConfig, domain) {
+  const value = envConfig.cookieDomain ?? domain;
+  return `.${value.replace(/^\./, '')}`;
 }
 
 function workerName(config, environment, regionId) {

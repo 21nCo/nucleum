@@ -6,12 +6,23 @@ Account API domains are product-owned so browser and WKWebView cookies stay
 first-party for each app. The same regional Worker deployment is routed from
 each product account hostname.
 
-| Environment | Domain pattern |
-| --- | --- |
-| local | `https://account-{region}-local.<product-domain>` |
-| dev | `https://account-{region}-dev.<product-domain>` |
-| pre | `https://account-{region}-pre.<product-domain>` |
-| live | `https://account-{region}.<product-domain>` |
+| Environment | Domain pattern | Cookie domain |
+| --- | --- | --- |
+| local | `https://account-{region}-local.<product-domain>` | `.<product-domain>` |
+| dev | `https://<product>-account-{region}.21n.dev` | `.21n.dev` |
+| pre | `https://account-{region}-pre.<product-domain>` | `.<product-domain>` |
+| live | `https://account-{region}.<product-domain>` | `.<product-domain>` |
+
+Dev runs in the **21n-dev** Cloudflare account (`c801efc2879825babdb9b2534199c4dd`)
+on the shared `21n.dev` zone, with single-label hosts so Universal SSL covers
+them: web `https://<product>.21n.dev`, account
+`https://<product>-account-{region}.21n.dev` (for example
+`https://memotron-account-useast.21n.dev`). Because all three products share
+the `21n.dev` zone in dev, the dev cookie domain is `.21n.dev` rather than the
+per-product domain. Both are driven per environment by `hosts` and
+`cookieDomain` in `config/environments.json`; environments without them keep
+the default `account-{region}{-env}.<product-domain>` / `.<product-domain>`
+shape.
 
 Current product domains:
 
@@ -88,7 +99,7 @@ To force a deployed account environment from a local app, start the app with a
 regional account URL template:
 
 ```bash
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace nucleus-app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://nucleum-account-{region}.21n.dev npm --workspace nucleus-app run debug
 ```
 
 Then open:
@@ -100,16 +111,21 @@ https://local.nucleum.app
 Equivalent app commands:
 
 ```bash
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace memotron-app run debug
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace pointron-app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://memotron-account-{region}.21n.dev npm --workspace memotron-app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://pointron-account-{region}.21n.dev npm --workspace pointron-app run debug
 ```
 
 Notes:
 
-- Dev account Workers allow local app origins in CORS.
+- Dev account Workers allow local app origins in CORS. Note that
+  `local.<product-domain>` and `*.21n.dev` are different sites, so the dev
+  account session cookie (`.21n.dev`, `SameSite=Lax`) is not sent from a
+  `local.<product-domain>` page; cookie-dependent flows need a `*.21n.dev`
+  origin.
 - `VITE_ACCOUNT_BASE_URL_TEMPLATE` is region-aware. It replaces `{region}` with
   the selected account region, so signup/OAuth/OTP requests go to
-  `account-insouth-dev`, `account-useast-dev`, or `account-euwest-dev`.
+  `nucleum-account-insouth`, `nucleum-account-useast`, or
+  `nucleum-account-euwest` (on `21n.dev`).
 - `VITE_ACCOUNT_BASE_URL` is still supported as an explicit single-authority
   override. Use it only when you intentionally want every selected region to
   hit one backend.
@@ -118,7 +134,7 @@ Notes:
 
 | Local frontend target | Account env vars | Region behavior |
 | --- | --- | --- |
-| Dev Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain}` | Multi-region |
+| Dev Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://<product>-account-{region}.21n.dev` | Multi-region |
 | Pre Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-pre.{domain}` | Multi-region |
 | Live Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}.{domain}` | Multi-region |
 | Local single backend | `VITE_ACCOUNT_BASE_URL=https://account-insouth-local.<product-domain>` | Single backend by design |
@@ -218,7 +234,7 @@ the AuthFn session cookies and `authfn:user-region-map`/Nucleus region cache.
 regional account-service infrastructure config:
 
 - account/product domains
-- local/dev/pre/live URL shape
+- local/dev/pre/live URL shape (`hosts`, `cookieDomain` per environment)
 - regional Worker env names
 - Hyperdrive IDs
 - KV namespace IDs
@@ -252,9 +268,12 @@ These live Hyperdrive IDs still need to be created and added either to `services
 - `TODO_LIVE_USEAST_SYNC_HYPERDRIVE_ID`
 - `TODO_LIVE_EUWEST_SYNC_HYPERDRIVE_ID`
 
+Dev and local resources (Hyperdrive, KV, Secrets Store) live in the 21n-dev
+Cloudflare account; pre/live resources live in the production account.
+
 KV namespaces are already created:
 
-- dev: `0cad2abe3c97473cb481c11d960e7996`
+- dev/local (21n-dev): `c4418eae3ce44ae9a8e002fab3cbf44f`
 - pre cache: `72bb56e048d941ec92aad94df99d9e36`
 - live: `18a83200ea7542fa9b6929257711065b`
 
@@ -265,9 +284,15 @@ Pre is configured to use live DB/lookup persistence with a separate pre KV cache
 Worker secrets are bound through Cloudflare account-level Secrets Store so
 regional Workers do not each maintain duplicated secret values.
 
-Configured store:
+Configured stores:
 
-- `default_secrets_store`: `3bc19f61d4d8498d9fa50d7175085316`
+- pre/live (production account) `default_secrets_store`:
+  `3bc19f61d4d8498d9fa50d7175085316` (top-level `secretsStore.storeId`)
+- dev/local (21n-dev account): set per environment by `secretsStoreId`
+  (currently the placeholder `REPLACE_WITH_21N_DEV_SECRETS_STORE_ID`). The
+  `ACCOUNT_DEV_SECRETS_STORE_ID` environment variable (GitHub variable in CI)
+  overrides it. Deploys, `secrets:sync:dev` and local Worker dev refuse to run
+  while the placeholder is unresolved.
 
 Secret names are generated from `services/account/config/environments.json`:
 
@@ -359,10 +384,14 @@ environment variables like `CLOUDFLARE_ZONE_ID_NUCLEUM_APP`,
 `CLOUDFLARE_ZONE_ID` is only used as the fallback for the canonical
 `nucleum.app` account domain.
 
-Each product account hostname also needs DNS in that product's Cloudflare zone
-to be proxied by Cloudflare. For example, `account-insouth-dev.memotron.app`
-must resolve through the `memotron.app` Cloudflare zone before the Worker route
-can serve it.
+Environments with `hosts.zoneName` (dev: `21n.dev`) route every product host
+through that zone; `hosts.zoneId` pins the zone ID so the lookup cannot pick a
+same-named zone in another account.
+
+Each product account hostname also needs DNS in its Cloudflare zone to be
+proxied by Cloudflare. For example, `account-insouth-pre.memotron.app` must
+resolve through the `memotron.app` zone, and `memotron-account-insouth.21n.dev`
+through the `21n.dev` zone in 21n-dev, before the Worker route can serve it.
 
 Normal CI deploys do not need route permissions once routes exist.
 

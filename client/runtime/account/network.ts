@@ -1,3 +1,10 @@
+/**
+ * Shared Cloudflare zone for deployed dev hosts. Dev uses single-label hosts
+ * on this zone: `<product>.21n.dev` (web) and
+ * `<product>-account-<region>.21n.dev` (account service).
+ */
+export const DEV_HOST_ZONE = "21n.dev";
+
 export function resolveHost() {
   const nativeWebOrigin = resolveNativeConfigUrl("webOrigin");
   if (nativeWebOrigin) return nativeWebOrigin.hostname;
@@ -34,6 +41,11 @@ export function resolveAccountBaseUrl(region: string) {
   const host = resolveHost().toLowerCase();
   if (isLoopbackHost(host)) {
     return "http://localhost:3000";
+  }
+
+  const devProduct = resolveDevZoneProduct(host);
+  if (devProduct) {
+    return devAccountBaseUrl(devProduct, region);
   }
 
   const accountEnv = resolveAccountEnvironment(host);
@@ -108,6 +120,9 @@ function resolveNativeAccountBaseUrl(region: string) {
     const accountDomain =
       nativeConfig.accountDomain?.trim() ||
       resolveAccountDomainFromProduct(nativeConfig.product);
+    if (environment === "dev") {
+      return devAccountBaseUrl(accountDomain.split(".")[0], normalizedRegion);
+    }
     const suffix = environment === "live" ? "" : `-${environment}`;
     return `https://account-${normalizedRegion}${suffix}.${accountDomain}`;
   }
@@ -137,6 +152,7 @@ function resolveAccountEnvironmentFromAccountBaseUrl(
 ): AccountEnvironment {
   try {
     const hostname = new URL(baseUrl).hostname.toLowerCase();
+    if (isDevZoneAccountHost(hostname)) return "dev";
     if (hostname.startsWith("account-") || hostname.includes(".account-")) {
       if (hostname.includes("-local.")) return "local";
       if (hostname.includes("-pre.")) return "pre";
@@ -206,6 +222,25 @@ function resolveProductDomainFromHost(host: string): string | null {
   }
 
   return labels.slice(-2).join(".");
+}
+
+function devAccountBaseUrl(product: string, region: string | undefined) {
+  return `https://${product}-account-${normalizeAccountRegion(region)}.${DEV_HOST_ZONE}`;
+}
+
+function isDevZoneAccountHost(hostname: string): boolean {
+  return (
+    hostname.endsWith(`.${DEV_HOST_ZONE}`) &&
+    /^[a-z0-9]+-account-[a-z0-9]+$/.test(hostname.slice(0, -DEV_HOST_ZONE.length - 1))
+  );
+}
+
+/** Returns the product label for a dev web host such as `memotron.21n.dev`. */
+function resolveDevZoneProduct(host: string): string | null {
+  const normalized = host.toLowerCase().replace(/:\d+$/, "");
+  if (!normalized.endsWith(`.${DEV_HOST_ZONE}`)) return null;
+  const label = normalized.slice(0, -DEV_HOST_ZONE.length - 1);
+  return /^[a-z0-9]+$/.test(label) ? label : null;
 }
 
 function resolveAccountDomainFromProduct(product: string | undefined): string {

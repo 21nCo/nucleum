@@ -553,7 +553,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -619,7 +619,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -677,7 +677,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -727,7 +727,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -777,7 +777,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -819,7 +819,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -861,7 +861,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -927,7 +927,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -985,7 +985,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1051,7 +1051,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1357,7 +1357,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1407,7 +1407,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1457,7 +1457,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1507,7 +1507,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1757,7 +1757,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1799,7 +1799,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1841,7 +1841,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1883,7 +1883,7 @@
 			buildSettings = {
 				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
-				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n-dev.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
 				NUCLEUS_PRODUCT = nucleum.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;

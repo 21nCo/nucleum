@@ -27,8 +27,9 @@ const baseHost = new URL(baseURL).host;
 const allowedOrigins = [
   baseOrigin,
   baseOrigin.startsWith("http:") ? `https://${baseHost}` : `http://${baseHost}`,
-  "https://dev.nucleum.app",
-  "http://dev.nucleum.app",
+  "https://nucleum.21n.dev",
+  "https://memotron.21n.dev",
+  "https://pointron.21n.dev",
   "https://local.nucleum.app",
   "http://local.nucleum.app",
   "https://local.memotron.app",
@@ -47,6 +48,12 @@ function resolveAccountBaseUrl(appBaseUrl: string, region = "insouth") {
   const host = url.hostname.toLowerCase();
   if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
     return null;
+  }
+  // Deployed dev uses single-label hosts on 21n.dev: <product>.21n.dev ->
+  // <product>-account-<region>.21n.dev.
+  const devZoneMatch = host.match(/^([a-z0-9]+)\.21n\.dev$/);
+  if (devZoneMatch) {
+    return `https://${devZoneMatch[1]}-account-${region}.21n.dev`;
   }
   const labels = host.split(".").filter(Boolean);
   const subdomain = labels[0] ?? "";

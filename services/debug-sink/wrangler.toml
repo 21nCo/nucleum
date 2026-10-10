@@ -3,10 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2026-04-24"
 
 [vars]
-ALLOWED_ORIGINS = "https://dev.nucleum.app,https://local.nucleum.app,https://dev.memotron.app,https://dev.pointron.app"
+ALLOWED_ORIGINS = "https://nucleum.21n.dev,https://local.nucleum.app,https://memotron.21n.dev,https://pointron.21n.dev"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "nucleus-debug-sink"
-database_id = "89690f2d-5ab5-4907-80b0-fc7ffc271781"
+database_id = "af0ca463-2e41-4a5d-96c0-5792260d1761"
 migrations_dir = "migrations"

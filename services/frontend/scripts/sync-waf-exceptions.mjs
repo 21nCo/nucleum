@@ -43,7 +43,7 @@ if (!token) {
 }
 
 for (const [zoneName, exceptions] of exceptionsByZone) {
-  const zoneId = await resolveZoneIdForRouteZone(zoneName, token);
+  const zoneId = await resolveZoneIdForRouteZone(zoneName, token, exceptions[0]?.zoneId);
   const entrypoint = await readManagedRulesEntrypoint(zoneId, token);
   if (!entrypoint) {
     throw new Error(`Cloudflare managed WAF entrypoint not found for ${zoneName}. Enable the managed ruleset first, then sync exceptions.`);
@@ -137,10 +137,13 @@ function removeUndefinedValues(value) {
   return Object.fromEntries(Object.entries(value).filter((entry) => entry[1] !== undefined));
 }
 
-async function resolveZoneIdForRouteZone(zoneName, token) {
+async function resolveZoneIdForRouteZone(zoneName, token, configuredZoneId) {
   const specificEnvName = `CLOUDFLARE_ZONE_ID_${zoneName.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
   const specificZoneId = process.env[specificEnvName];
   if (specificZoneId) return specificZoneId;
+  // Pinned zone IDs (environments.json `hosts.zoneId`) avoid ambiguous name
+  // lookups when the same zone name exists in more than one account.
+  if (configuredZoneId) return configuredZoneId;
   return resolveZoneId(zoneName, token);
 }
 

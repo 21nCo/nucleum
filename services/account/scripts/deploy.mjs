@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
-import { missingHyperdriveIds, renderWranglerConfig } from './wrangler-config.mjs';
+import { missingHyperdriveIds, missingSecretsStoreId, renderWranglerConfig } from './wrangler-config.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
@@ -26,6 +26,16 @@ if (missing.length > 0) {
     console.error(`- ${item}`);
   }
   process.exit(1);
+}
+
+const missingStore = missingSecretsStoreId(config, environment);
+if (missingStore) {
+  if (!dryRun) {
+    console.error(`Cannot deploy ${environment}; configure the Secrets Store ID first:`);
+    console.error(`- ${missingStore}`);
+    process.exit(1);
+  }
+  console.warn(`Warning (dry run): Secrets Store ID is a placeholder: ${missingStore}`);
 }
 
 const wranglerConfig = renderWranglerConfig(serviceRoot, config, environment);

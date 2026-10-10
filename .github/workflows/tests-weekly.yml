@@ -97,7 +97,7 @@ jobs:
         env:
           E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
           E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
-          VITE_ACCOUNT_BASE_URL_TEMPLATE: https://account-{region}-dev.nucleum.app
+          VITE_ACCOUNT_BASE_URL_TEMPLATE: https://nucleum-account-{region}.21n.dev
         run: |
           printf '%s\n' \
             '${{ matrix.domain }} {' \

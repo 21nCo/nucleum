@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import dotenv from 'dotenv';
-import { secretStoreBindingsForEnvironment } from './wrangler-config.mjs';
+import { missingSecretsStoreId, resolveSecretsStoreId, secretStoreBindingsForEnvironment } from './wrangler-config.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
@@ -23,6 +23,14 @@ if (!accountId || !token) {
   process.exit(1);
 }
 
+const missingStore = missingSecretsStoreId(config, environment);
+if (missingStore) {
+  console.error(`Cannot sync ${environment} secrets; configure the Secrets Store ID first:`);
+  console.error(`- ${missingStore}`);
+  process.exit(1);
+}
+const storeId = resolveSecretsStoreId(config, environment);
+
 const envValues = readEnvironmentValues(environment);
 const bindings = secretStoreBindingsForEnvironment(config, environment);
 const missingLocalValues = bindings
@@ -34,7 +42,7 @@ if (missingLocalValues.length > 0) {
   process.exit(1);
 }
 
-const existing = await listSecrets(accountId, config.secretsStore.storeId, token);
+const existing = await listSecrets(accountId, storeId, token);
 const existingByName = new Map(existing.map((secret) => [secret.name, secret]));
 const toCreate = [];
 
@@ -56,7 +64,7 @@ for (const binding of bindings) {
     continue;
   }
 
-  await updateSecret(accountId, config.secretsStore.storeId, existingSecret.id, token, {
+  await updateSecret(accountId, storeId, existingSecret.id, token, {
     value,
     scopes: ['workers'],
     comment: `Nucleus account ${environment} ${binding.binding}`
@@ -65,7 +73,7 @@ for (const binding of bindings) {
 }
 
 if (toCreate.length > 0) {
-  const created = await createSecrets(accountId, config.secretsStore.storeId, token, toCreate);
+  const created = await createSecrets(accountId, storeId, token, toCreate);
   for (const secret of created) {
     console.log(`created ${secret.name}`);
   }

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { spawn } from 'node:child_process';
-import { missingHyperdriveIds, renderWranglerConfig } from './wrangler-config.mjs';
+import { missingHyperdriveIds, missingSecretsStoreId, renderWranglerConfig } from './wrangler-config.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
@@ -22,6 +22,13 @@ if (missing.length > 0) {
   for (const item of missing) {
     console.error(`- ${item}`);
   }
+  process.exit(1);
+}
+
+const missingStore = missingSecretsStoreId(config, environment);
+if (missingStore) {
+  console.error(`Cannot run ${environment} multi-region Worker dev; configure the Secrets Store ID first:`);
+  console.error(`- ${missingStore}`);
   process.exit(1);
 }
 

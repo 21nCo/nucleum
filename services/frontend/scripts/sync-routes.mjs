@@ -31,7 +31,7 @@ const routesByZone = groupRoutesByZone(routeDefinitions(config, environment, pro
 const zoneIds = new Map();
 
 for (const zoneName of routesByZone.keys()) {
-  zoneIds.set(zoneName, await resolveZoneIdForRouteZone(zoneName, token));
+  zoneIds.set(zoneName, await resolveZoneIdForRouteZone(zoneName, token, routesByZone.get(zoneName)[0]?.zoneId));
 }
 
 for (const [zoneName, routes] of routesByZone) {
@@ -79,10 +79,13 @@ function groupRoutesByZone(routes) {
   return grouped;
 }
 
-async function resolveZoneIdForRouteZone(zoneName, token) {
+async function resolveZoneIdForRouteZone(zoneName, token, configuredZoneId) {
   const specificEnvName = `CLOUDFLARE_ZONE_ID_${zoneName.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
   const specificZoneId = process.env[specificEnvName];
   if (specificZoneId) return specificZoneId;
+  // Pinned zone IDs (environments.json `hosts.zoneId`) avoid ambiguous name
+  // lookups when the same zone name exists in more than one account.
+  if (configuredZoneId) return configuredZoneId;
   return resolveZoneId(zoneName, token);
 }
 
