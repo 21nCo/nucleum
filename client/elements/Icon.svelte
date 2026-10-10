@@ -118,8 +118,6 @@
   import Underline from "@21n/icons/Underline.svelte";
   import Strikethrough from "@21n/icons/Strikethrough.svelte";
   import Highlight from "@21n/icons/Highlight.svelte";
-  // import IconifyIcon from "@iconify/svelte";
-  import { logger } from "@nucleum/client/runtime/logging/logger";
   import { isExtensionEnvironment } from "@21n/utils/browser.utils";
   import Crop from "@21n/icons/Crop.svelte";
   import PencilSimpleLine from "@21n/icons/PencilSimpleLine.svelte";
@@ -148,8 +146,8 @@
     class: classListParam = ""
   }: any = $props();
   const resolvedIcon = $derived(icon ? resolveIconName(icon) : undefined);
-  const renderedIconifyIcon = $derived(
-    resolveRenderedIconForIconify(resolvedIcon, isFilled)
+  const renderedSpriteIcon = $derived(
+    resolveRenderedSpriteIcon(resolvedIcon, isFilled)
   );
 
   function resolveIconName(iconName: string): string {
@@ -162,8 +160,6 @@
     return iconName;
   }
 
-  let dev_useIconifyTailwind = false;
-  let isUseIconifySprite = true;
   const _classList = $derived(
     resolveClasses(classListParam, isAccentBgContext, isCustomBgContext)
   );
@@ -246,7 +242,7 @@
     }
   }
 
-  function resolveRenderedIconForIconify(
+  function resolveRenderedSpriteIcon(
     icon: string | undefined,
     isFilled: boolean
   ) {
@@ -276,9 +272,6 @@
       renderedIcon = isFilled ? icon + "-solid" : icon;
     } else if (icon.startsWith("mynaui:")) {
       renderedIcon = isFilled ? icon + "-solid" : icon;
-    }
-    if (dev_useIconifyTailwind) {
-      renderedIcon = renderedIcon.replace(":", "--");
     }
     return renderedIcon;
   }
@@ -329,7 +322,7 @@
 </script>
 
 {#snippet iconContent()}
-  {#if resolvedIcon?.includes(":") && renderedIconifyIcon}
+  {#if resolvedIcon?.includes(":") && renderedSpriteIcon}
     {@const sizeClass =
       size === Size.xxl
         ? "w-12 h-12"
@@ -345,33 +338,13 @@
                   ? "w-3 h-3"
                   : "w-2 h-2"}
     {#if resolvedIcon.startsWith("svg-spinners")}
-      <div class={cn(_classList, "iconifysvg", sizeClass, renderedIconifyIcon)}>
+      <div class={cn(_classList, "iconifysvg", sizeClass, renderedSpriteIcon)}>
         <SvgSpinnerIcon icon={resolvedIcon} />
       </div>
-    {:else if isUseIconifySprite}
-      <svg class={cn(_classList, "iconifysvg", sizeClass)}>
-        <use href={resolveSpriteIconPath(renderedIconifyIcon)} />
-      </svg>
-    {:else if dev_useIconifyTailwind}
-      <span class="iconify text-fgs1 {renderedIconifyIcon} w-5 h-5"></span>
     {:else}
-      <!-- <div
-        class={cn(renderedIconifyIcon, {
-          "w-14 h-14": size === Size.xxl,
-          "w-8 h-8": size === Size.xl,
-          "w-6 h-6": size === Size.lg,
-          "w-[1.25rem] h-[1.25rem]": size === Size.md,
-          "w-4 h-4": size === Size.sm,
-          "w-3 h-3": size === Size.xs
-        })}
-      >
-        <IconifyIcon
-      icon={renderedIconifyIcon}
-      width={sizePx}
-      height={sizePx}
-      class={_classList + " iconifysvg "}
-    />
-      </div> -->
+      <svg class={cn(_classList, "iconifysvg", sizeClass)}>
+        <use href={resolveSpriteIconPath(renderedSpriteIcon)} />
+      </svg>
     {/if}
   {:else if resolvedIcon?.includes("text:")}
     {@const sizeClass =
@@ -585,8 +558,6 @@
         <UnWiden />
       {:else if icon === "split"}
         <Split />
-      {:else if icon === "collapse"}
-        <ArrowsPointingIn {variant} />
       {:else if icon === "chevdoubleleft"}
         <ChevronDouble direction={Placement.Left} />
       {:else if icon === "chevdoubleright"}

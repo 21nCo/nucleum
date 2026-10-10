@@ -88,7 +88,6 @@
   let buttonRef = $state<HTMLElement>();
   let popRef: HTMLButtonElement;
   let pad: number;
-  let rive: any;
   let isOutlineStyle: boolean = false;
   let isHovering = $state(false);
   $effect(() => {
@@ -100,12 +99,7 @@
 
   function handleClick(event: MouseEvent) {
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
-    rive?.fire();
     onClick?.();
-  }
-
-  function onHover() {
-    rive?.fire();
   }
 
   function resolveHotKey() {
@@ -274,7 +268,6 @@
       })}
     >
       {#if item.icon}
-        <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
         <div
           class="w-6 flex flex-col gap-1 items-center justify-center"
           bind:this={buttonRef}
