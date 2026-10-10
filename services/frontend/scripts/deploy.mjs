@@ -31,10 +31,14 @@ const skipBuild = hasFlag(process.argv, 'skip-build');
 const dryRun = hasFlag(process.argv, 'dry-run');
 const envConfig = readEnvironment(config, environment);
 const credentialsEnv = envConfig.cloudflareCredentialsEnv;
-if (credentialsEnv && !applyCloudflareCredentialAliases(credentialsEnv) && !process.env.CI && !dryRun) {
+const hasDevCredentialAliases = Boolean(
+  credentialsEnv && process.env[credentialsEnv.accountId]?.trim() && process.env[credentialsEnv.token]?.trim()
+);
+if (credentialsEnv && !hasDevCredentialAliases && !process.env.CI && !dryRun) {
   console.error(`Cannot deploy ${environment} manually; set ${credentialsEnv.accountId} and ${credentialsEnv.token} (CI passes the selected credentials as CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN).`);
   process.exit(1);
 }
+applyCloudflareCredentialAliases(credentialsEnv);
 
 for (const productId of products) {
   const product = config.products[productId];

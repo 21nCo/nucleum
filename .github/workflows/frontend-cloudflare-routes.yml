@@ -49,9 +49,6 @@ jobs:
       - name: Validate frontend Cloudflare config
         run: npm --workspace @21n/frontend-deploy run check
 
-      # Dev routes live on the 21n.dev zone in the 21n-dev account (zone ID is
-      # pinned in services/frontend/config/environments.json); pre/live keep
-      # the production route token. Dev never falls back to production tokens.
       - name: Verify Cloudflare route token
         env:
           CLOUDFLARE_ROUTES_TOKEN: ${{ github.event.inputs.environment == 'dev' && secrets.CLOUDFLARE_DEV_API_TOKEN || github.event.inputs.environment != 'dev' && (secrets.CLOUDFLARE_ROUTES_TOKEN || secrets.CLOUDFLARE_API_TOKEN) || '' }}

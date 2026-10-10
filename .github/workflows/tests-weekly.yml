@@ -82,11 +82,6 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
         working-directory: apps/e2e-playwright
-      # Serve the local app on its dev web host (<product>.21n.dev -> 127.0.0.1
-      # on this runner only) so it is same-site with the dev account service
-      # (<product>-account-<region>.21n.dev). The account session cookie is
-      # SameSite=Lax on .21n.dev, and the dev account CORS list already allows
-      # these origins.
       - name: Map HTTPS dev web hosts to the local app
         run: |
           sudo tee -a /etc/hosts >/dev/null <<'EOF'

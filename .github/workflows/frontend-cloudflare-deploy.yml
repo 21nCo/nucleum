@@ -120,9 +120,6 @@ jobs:
       - name: Validate frontend Cloudflare config
         run: npm --workspace @21n/frontend-deploy run check
 
-      # Dev deploys go to the 21n-dev Cloudflare account; pre/live keep the
-      # production account credentials. The `cond && a || other && b || ''`
-      # form never falls back to production credentials for dev.
       - name: Verify Cloudflare credentials
         env:
           CLOUDFLARE_API_TOKEN: ${{ needs.detect.outputs.environment == 'dev' && secrets.CLOUDFLARE_DEV_API_TOKEN || needs.detect.outputs.environment != 'dev' && secrets.CLOUDFLARE_API_TOKEN || '' }}
