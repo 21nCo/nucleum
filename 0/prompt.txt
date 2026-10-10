@@ -1,0 +1,9 @@
+Are there any leftovers in the local code organization changes that we missed?
+
+---
+
+fix all leftovers
+
+---
+
+does the current docs/architecture accurately represent the boundaries, ownership and dependency map? and what are your thoughts on the current architecture? any improvements needed and any leftovers?
