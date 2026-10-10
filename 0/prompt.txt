@@ -1,0 +1,9 @@
+is local database reacheable for local backend run? @local-context.md
+
+---
+
+I earlier cleared the Docker Postgres container for this. Does the storage still exist, or was the storage also got cleared? How to get it back running?
+
+---
+
+how to spin up the local docker postgres so that data is separated from container so that even if container is removed - the volume can be used?
