@@ -2182,7 +2182,6 @@
         "client/elements/coverPicker/CoverPickerFromLibrary.svelte",
         "client/elements/coverPicker/UnsplashPicker.svelte",
         "client/elements/dropdown/DropDown.svelte",
-        "client/elements/input/TextInputOnKeyboardToolbar.svelte",
         "client/elements/input/TextSearchInput.svelte",
         "client/elements/switcher/PanelSwitcherItemLabel.svelte",
         "client/elements/table/Table2.svelte",
@@ -2236,19 +2235,15 @@
     },
     {
       "path": "client/elements/keyboardToolbar/keyboardToolbar.action.ts",
-      "disposition": "retained",
-      "destinations": [
-        "client/elements/keyboardToolbar/keyboardToolbar.action.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "frontend-wide",
-      "rationale": "Implementation-local or cohesive frontend owner; no independent domain abstraction is needed.",
+      "rationale": "Always-false web keyboard toolbar had no live callers.",
       "declarations": [
         "ISimpleToolbarParams",
         "IMdToolbarParams"
       ],
-      "consumers": [
-        "client/elements/keyboardToolbar/KeyboardToolbar.svelte"
-      ]
+      "consumers": []
     },
     {
       "path": "client/elements/select/OptionSelector.stories.ts",
@@ -4202,7 +4197,6 @@
         "client/features/memory/markdown/markdown.utils.ts",
         "client/features/memory/markdown/shortcuts/MdShortcutText.svelte",
         "client/features/memory/markdown/shortcuts/MdShortcuts.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/content/NodeContent.svelte",
         "client/features/memory/node/node.type.ts",
         "client/features/memory/node/node.utils.ts",
@@ -4692,7 +4686,6 @@
         "client/features/memory/markdown/mediaGrid/mediaGrid.type.ts",
         "client/features/memory/markdown/shortcuts/MdShortcutText.svelte",
         "client/features/memory/markdown/shortcuts/MdShortcuts.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/Node.svelte",
         "client/features/memory/node/NodeRecords.svelte",
         "client/features/memory/node/avatar/NodeAvatar.svelte",
@@ -6112,7 +6105,6 @@
         "client/features/memory/markdown/content/TextContent.svelte",
         "client/features/memory/markdown/embed/EmbedContent.svelte",
         "client/features/memory/markdown/embed/EmbedContentPlaceholder.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/Node.svelte",
         "client/features/memory/node/Node.svelte",
         "client/features/memory/node/base/NonMediaNode.svelte",
@@ -6178,7 +6170,6 @@
         "client/features/memory/capture/CaptureTopBar.svelte",
         "client/features/memory/graph/GlobalGraph.svelte",
         "client/features/memory/markdown/embed/EmbedContentPlaceholder.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/content/NodeContent.svelte",
         "client/features/memory/node/floatingBar/CollectionsLane.svelte",
         "client/features/memory/pdfAnnotator/toolbar/InlineEditToolBar.svelte",
@@ -6330,7 +6321,6 @@
         "client/elements/button/floating/FloatingButtonItem.svelte",
         "client/elements/feedback/EmptyStatusView.svelte",
         "client/elements/input/TextInput.svelte",
-        "client/elements/input/TextInputOnKeyboardToolbar.svelte",
         "client/elements/player/controls/PlayerControl.svelte",
         "client/elements/table/Table2.svelte",
         "client/elements/table/Table3.svelte",
@@ -6398,7 +6388,6 @@
         "client/features/memory/markdown/embed/EmbedContent.svelte",
         "client/features/memory/markdown/embed/EmbedContentPlaceholder.svelte",
         "client/features/memory/markdown/mediaGrid/MediaGridOptions.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/base/NonMediaNode.svelte",
         "client/features/memory/node/content/web/SocialPostActions.svelte",
         "client/features/memory/node/content/web/TextClipPreview.svelte",
@@ -6775,7 +6764,6 @@
         "client/features/memory/markdown/markdown.store.ts",
         "client/features/memory/markdown/md.type.ts",
         "client/features/memory/markdown/mediaGrid/DraggableMediaGridElement.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/NodeRecords.svelte",
         "client/features/memory/node/avatar/NodeAvatar.svelte",
         "client/features/memory/node/birdView/NodeBirdView.svelte",
@@ -7029,7 +7017,6 @@
         "client/features/memory/markdown/TableOfContents.svelte",
         "client/features/memory/markdown/blockBrowser/BlockItem.svelte",
         "client/features/memory/markdown/contextMenu/LeftControls.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/NodeRecords.svelte",
         "client/features/memory/node/content/ImagePreview.svelte",
         "client/features/memory/node/content/web/TextClipPreview.svelte",
@@ -7621,7 +7608,6 @@
         "client/elements/dropdown/MultiselectDropdown.svelte",
         "client/elements/input/TextArea.svelte",
         "client/elements/input/TextInput.svelte",
-        "client/elements/input/TextInputOnKeyboardToolbar.svelte",
         "client/elements/input/TextSearchInput.svelte",
         "client/elements/input/durationInput/DurationInput.svelte",
         "client/elements/input/durationInput/TimeInputWithSuggestions.svelte",
@@ -8803,7 +8789,6 @@
         "client/elements/input/TextArea.svelte",
         "client/elements/input/TextInput.svelte",
         "client/elements/input/TextSearchInput.svelte",
-        "client/elements/keyboardToolbar/KeyboardToolbarKey.svelte",
         "client/elements/player/controls/PlayerControl.svelte",
         "client/elements/select/OptionSelector.stories.ts",
         "client/elements/select/OptionSelector.svelte",
@@ -9004,7 +8989,6 @@
         "client/features/memory/markdown/embed/EmbedContentPlaceholder.svelte",
         "client/features/memory/markdown/lists/ListContent.svelte",
         "client/features/memory/markdown/mediaGrid/MediaGridOptions.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/avatar/NodeAvatar.svelte",
         "client/features/memory/node/avatar/NodeFavicon.svelte",
         "client/features/memory/node/base/NonMediaNode.svelte",
@@ -9183,7 +9167,6 @@
         "client/features/focus/logs/manualLog/ManualLogItem.svelte",
         "client/features/memory/audio/AudioContentMainPanel.svelte",
         "client/features/memory/markdown/mediaGrid/MediaGridOptions.svelte",
-        "client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte",
         "client/features/memory/node/birdView/NodeBirdView.svelte",
         "client/products/gathery/docs/Docs.svelte",
         "client/products/gathery/docs/PublishDocModal.svelte",
@@ -13428,7 +13411,7 @@
     {
       "path": "client/features/memory/markdown/markdown.utils.ts",
       "name": "symbolPatterns",
-      "initializer": "[\n  { regex: /\u2190&gt;/g, replacement: \"\u2194\" },\n  { regex: /-&gt;/g, replacement: \"\u2192\" },\n  { regex: /&lt;-/g, replacement: \"\u2190\" },\n  { regex: /&lt;=/g, replacement: \"\u2264\" },\n  { regex: /&g",
+      "initializer": "[\n  { regex: /←&gt;/g, replacement: \"↔\" },\n  { regex: /-&gt;/g, replacement: \"→\" },\n  { regex: /&lt;-/g, replacement: \"←\" },\n  { regex: /&lt;=/g, replacement: \"≤\" },\n  { regex: /&g",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },
@@ -14128,7 +14111,7 @@
     {
       "path": "client/static/build.js",
       "name": "copyAssetsTo",
-      "initializer": "(targetDir) => {\n  console.log(`\ud83d\udcc2 Copying assets to ${targetDir}`);\n  \n  // Validate target directory path\n  const validatedTargetDir = validatePath(targetDir, process.cwd());\n  \n",
+      "initializer": "(targetDir) => {\n  console.log(`📂 Copying assets to ${targetDir}`);\n  \n  // Validate target directory path\n  const validatedTargetDir = validatePath(targetDir, process.cwd());\n  \n",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },

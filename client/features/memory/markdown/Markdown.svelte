@@ -34,8 +34,6 @@
     shiftResourceInArray
   } from "@nucleum/datafn/resource.utils";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import context from "@nucleum/stores/context.store";
-  import MarkdownkeyboardToolbar from "@nucleum/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte";
   import { debouncer } from "@21n/utils/utils";
   import { toasts } from "@nucleum/stores/notification.store";
   import { dragSelection } from "@nucleum/actions/dragSelection.action";
@@ -96,12 +94,7 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
     if (!message) return;
     if (message.event === "focus") {
       resetSelection();
-      focusedBlock = message.id;
       return;
-    } else if (message.event === "blur") {
-      if (focusedBlock === message.id) {
-        focusedBlock = undefined;
-      }
     }
     if (message.event) propagate(message.event, message.data);
   }
@@ -178,9 +171,6 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
     mdStore?.setParams(params);
   });
   // $: console.log("blocks", $mdStore.blocks);
-  let keyboardToolbarPanelSelection = $state<string | undefined>();
-  let keyboardToolbarRef = $state<MarkdownkeyboardToolbar | undefined>();
-  let focusedBlock = $state<IRecordId | undefined>();
   let containerWidth = $state(0);
   let isInSelectionMode = $state(false);
   let isSelectionConsecutive = $state(false);
@@ -202,7 +192,6 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
       bulkSelection = [];
       isInSelectionMode = false;
       isSelectionConsecutive = false;
-      keyboardToolbarPanelSelection = undefined;
     }
   });
 
@@ -250,7 +239,6 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
         bulkSelection = value;
         isInSelectionMode = bulkSelection.length > 0;
         if (bulkSelection.length === 0) {
-          keyboardToolbarPanelSelection = undefined;
           isSelectionConsecutive = false;
         }
       });
@@ -380,7 +368,6 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
 
   function resetSelection() {
     globalBulkEditStore.reset();
-    keyboardToolbarPanelSelection = undefined;
     isInSelectionMode = false;
     isSelectionConsecutive = false;
   }
@@ -562,10 +549,7 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
       onSelectionEnd: (elements, ids) => {
         if (ids.length > 0) {
           refreshConsecutiveSelectionState();
-          keyboardToolbarPanelSelection = "actions";
-          keyboardToolbarRef?.action("actions");
         } else {
-          keyboardToolbarPanelSelection = undefined;
           isSelectionConsecutive = false;
         }
       }
@@ -605,13 +589,8 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
               globalBulkEditStore.select(
                 current.filter((x) => x !== resourceId)
               );
-              if (globalBulkEditStore.getState().selectedIds.length === 0) {
-                keyboardToolbarPanelSelection = undefined;
-              }
             } else {
               globalBulkEditStore.select([...current, resourceId]);
-              keyboardToolbarPanelSelection = "actions";
-              keyboardToolbarRef?.action("actions");
             }
             refreshConsecutiveSelectionState();
           }}
@@ -625,56 +604,3 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
     {/if}
   </div>
 </div>
-{#if $context.isTouchDevice && (focusedBlock || keyboardToolbarPanelSelection)}
-  <MarkdownkeyboardToolbar
-    bind:this={keyboardToolbarRef}
-    bind:keyboardToolbarPanelSelection
-    selectedBlocks={bulkSelection}
-    onSelect={() => {
-      resolveBulkEditorInstance();
-      if (focusedBlock) globalBulkEditStore.select([focusedBlock]);
-    }}
-    onUnselect={() => {
-      resolveBulkEditorInstance();
-      globalBulkEditStore.select([]);
-    }}
-    onAction={(e) => {
-      const { action, data } = e;
-      if (bulkSelection.length === 1) {
-        mdStore.alterBlock({ action, data, blockId: bulkSelection[0] });
-      } else if (
-        bulkSelection.length === 0 &&
-        action === BlockAction.INSERT &&
-        focusedBlock
-      ) {
-        mdStore.alterBlock({ action, data, blockId: focusedBlock });
-      } else {
-        onBulkAction(action);
-      }
-      resolveBulkEditorInstance();
-      globalBulkEditStore.select([]);
-    }}
-    onInsert={(toType) => {
-      const block = $mdStore.blocks.find(resourceInList(bulkSelection[0]));
-      if (!block) return;
-      if (block.contentType === NodeType.SIMPLE_TEXT && !block.body) {
-        mdStore.alterBlock({
-          action: BlockAction.CONVERT,
-          data: { toType },
-          blockId: block.id
-        });
-      } else {
-        mdStore.alterBlock({
-          action: BlockAction.INSERT,
-          data: { blockType: toType },
-          blockId: block.id
-        });
-      }
-      resolveBulkEditorInstance();
-      globalBulkEditStore.select([]);
-    }}
-    onFocus={() => {
-      if (bulkSelection.length === 1) mdStore.focusBlock(bulkSelection[0]);
-    }}
-  />
-{/if}

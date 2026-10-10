@@ -23,10 +23,7 @@ import { InlineType } from "@21n/elements/markdown/inline.type";
   import { MAX_FILE_SIZE_MB } from "@nucleum/stores/files/file.constants";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import view from "@nucleum/stores/view.store";
-  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { Size } from "@21n/elements/size.enum";
 
   interface $$Events {
     blur: FocusEvent;
@@ -411,12 +408,6 @@ import { InlineType } from "@21n/elements/markdown/inline.type";
     innerHTML = innerHTML + character;
     content = blockRef.textContent;
     dispatchChangeEvent();
-  }
-
-  function blurActiveElement() {
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
   }
 
   /**
@@ -1374,22 +1365,6 @@ import { InlineType } from "@21n/elements/markdown/inline.type";
     {/if}
   </div>
   <!-- {:else if Array.isArray(block.content)} -->
-{/if}
-
-{#if !isMarkdown}
-  <KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
-    <div class="flex items-center justify-center gap-2"></div>
-    <div class="flex items-center justify-center gap-2">
-      <Button
-        icon="ph:caret-line-down-light"
-        label="close"
-        parentBgIndex={2}
-        size={Size.sm}
-        isPreventMinWidth={true}
-        onclick={blurActiveElement}
-      />
-    </div>
-  </KeyboardToolbar>
 {/if}
 
 <style>

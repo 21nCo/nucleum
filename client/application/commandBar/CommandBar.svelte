@@ -22,7 +22,6 @@
   import { renderMdAsHtml } from "@21n/elements/markdown/markdown.utils";
   import { resolveShortcutText } from "@21n/elements/keyboard/shortcut.utils";
   import { KeyboardKey } from "@21n/elements/keyboard/keyboard.type";
-  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
 
@@ -306,34 +305,5 @@
     </div>
   {/if}
 </div>
-
-<KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
-  <div class="flex items-center justify-center gap-2">
-    <!-- left actions -->
-  </div>
-  <div class="flex items-center justify-center gap-2">
-    <Button
-      icon="cross"
-      label="clear"
-      parentBgIndex={2}
-      size={Size.sm}
-      style={ButtonStyle.DEFAULT}
-      isPreventMinWidth={true}
-      onclick={() => {
-        value = "";
-      }}
-      onmousedown={(e) => e.preventDefault()}
-    />
-    <Button
-      icon="ph:caret-line-down-light"
-      label="cancel"
-      parentBgIndex={2}
-      size={Size.sm}
-      style={ButtonStyle.DEFAULT}
-      isPreventMinWidth={true}
-      onclick={close}
-    />
-  </div>
-</KeyboardToolbar>
 
 <svelte:window onkeydown={shortcutListener} />

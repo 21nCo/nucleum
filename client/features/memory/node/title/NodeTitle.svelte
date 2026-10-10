@@ -2,12 +2,9 @@
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { Size } from "@21n/elements/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import Icon from "@21n/elements/Icon.svelte";
   import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
   import type { IActiveNode } from "@nucleum/features/memory/node/node.type";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import context from "@nucleum/stores/context.store";
-  import TextInputOnKeyboardToolbar from "@21n/elements/input/TextInputOnKeyboardToolbar.svelte";
   import RecordStarStatusFeedback from "@nucleum/components/records/RecordStarStatusFeedback.svelte";
   let {
     node,
@@ -21,8 +18,6 @@
     onEditModeChange?: ((value: boolean) => void) | undefined;
   } = $props();
   let previousLabel = node.label;
-  let isKeyboardEditorMounted = false;
-  let keyboardEditorRef: TextInputOnKeyboardToolbar;
   let textInputRef: TextInput;
 
   function propagateLabelChange(label: string) {
@@ -42,28 +37,6 @@
 >
   {#if !node.focusedBlock}
     {#if node.isInEditMode}
-      {#if $context.isTouchDevice}
-        <TextInputOnKeyboardToolbar
-          bind:value={node.label}
-          bind:this={keyboardEditorRef}
-          onDebouncedChange={(event) => {
-            propagateLabelChange(event.detail);
-          }}
-          onMount={() => {
-            isKeyboardEditorMounted = true;
-            keyboardEditorRef?.focus();
-          }}
-          onSave={() => {
-            propagateEditModeChange(false);
-          }}
-          onCancel={() => {
-            node.label = previousLabel;
-            isKeyboardEditorMounted = false;
-            propagateLabelChange(node.label ?? "");
-            propagateEditModeChange(false);
-          }}
-        />
-      {/if}
       <TextInput
         size={Size.xl}
         bind:value={node.label}
@@ -72,9 +45,7 @@
         width="w-full"
         onMount={() => {
           textInputRef?.focus();
-          keyboardEditorRef?.focus();
         }}
-        isPreserveKeyboardToolbar={isKeyboardEditorMounted}
         isShowSaveControl={true}
         onEnter={() => {
           propagateLabelChange(node.label ?? "");
