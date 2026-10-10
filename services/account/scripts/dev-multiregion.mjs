@@ -32,6 +32,7 @@ if (missingStore) {
   process.exit(1);
 }
 
+const childEnv = wranglerEnvironment(envConfig.cloudflareCredentialsEnv);
 const wranglerConfig = renderWranglerConfig(serviceRoot, config, environment);
 const children = [];
 
@@ -49,7 +50,7 @@ for (const regionId of regions) {
   const child = spawn('wrangler', ['dev', '--config', wranglerConfig, '--env', regionalEnv, '--port', port, '--remote'], {
     cwd: serviceRoot,
     stdio: 'inherit',
-    env: process.env,
+    env: childEnv,
     shell: process.platform === 'win32'
   });
   children.push(child);
@@ -62,6 +63,31 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
     }
     process.exit(0);
   });
+}
+
+/**
+ * Builds the Wrangler process environment. Environments with
+ * `cloudflareCredentialsEnv` (local/dev in the 21n-dev account) require the
+ * configured account ID variable and map it, plus the optional token variable,
+ * to `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN`. Without a dev token the
+ * generic token is removed so Wrangler falls back to `wrangler login` instead
+ * of production credentials.
+ */
+function wranglerEnvironment(credentialsEnv) {
+  if (!credentialsEnv) return process.env;
+  const accountId = process.env[credentialsEnv.accountId]?.trim();
+  if (!accountId) {
+    console.error(`Cannot run ${environment} multi-region Worker dev; set ${credentialsEnv.accountId} (and optionally ${credentialsEnv.token}).`);
+    process.exit(1);
+  }
+  const env = { ...process.env, CLOUDFLARE_ACCOUNT_ID: accountId };
+  const token = process.env[credentialsEnv.token]?.trim();
+  if (token) {
+    env.CLOUDFLARE_API_TOKEN = token;
+  } else {
+    delete env.CLOUDFLARE_API_TOKEN;
+  }
+  return env;
 }
 
 function normalizeEnvironment(value) {

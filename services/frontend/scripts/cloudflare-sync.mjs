@@ -34,9 +34,10 @@ export async function cloudflare(pathname, token, options = {}) {
     },
     body: options.body ? JSON.stringify(options.body) : undefined
   });
-  const payload = await response.json();
-  if (!payload.success) {
-    const error = new Error(`Cloudflare API failed: ${JSON.stringify(payload.errors)}`);
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.success) {
+    const detail = payload ? JSON.stringify(payload.errors) : `HTTP ${response.status}, non-JSON response`;
+    const error = new Error(`Cloudflare API failed: ${detail}`);
     error.cloudflareStatus = response.status;
     throw error;
   }

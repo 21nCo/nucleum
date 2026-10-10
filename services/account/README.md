@@ -216,6 +216,13 @@ runtime behavior. It is configured to use the dev Hyperdrive IDs, dev KV cache,
 and dev Durable Object lookup store so local multi-region behavior matches the
 deployed dev topology closely.
 
+Those resources live in the 21n-dev account, so the local Workers need
+`CLOUDFLARE_DEV_ACCOUNT_ID` and `ACCOUNT_DEV_SECRETS_STORE_ID`. The script
+passes the account ID to Wrangler as `CLOUDFLARE_ACCOUNT_ID`. It uses
+`CLOUDFLARE_DEV_API_TOKEN` as `CLOUDFLARE_API_TOKEN` when that is set, and
+otherwise falls back to your `wrangler login` session. It never uses a generic
+`CLOUDFLARE_API_TOKEN`.
+
 You can run one local region when needed:
 
 ```bash
@@ -288,11 +295,12 @@ Configured stores:
 
 - pre/live (production account) `default_secrets_store`:
   `3bc19f61d4d8498d9fa50d7175085316` (top-level `secretsStore.storeId`)
-- dev/local (21n-dev account): set per environment by `secretsStoreId`
-  (`abbf8470d947411e9f5bfbc45172eac6`). The `ACCOUNT_DEV_SECRETS_STORE_ID`
-  environment variable (GitHub variable in CI) overrides it. Deploys,
-  `secrets:sync:dev` and local Worker dev refuse to run if the ID is a
-  `REPLACE_WITH_*` placeholder.
+- dev/local (21n-dev account): the `ACCOUNT_DEV_SECRETS_STORE_ID` environment
+  variable (GitHub `dev` environment variable in CI; shell or
+  `.env.local`/`.env.<env>` for `secrets:sync`) supplies the store ID. The
+  per-environment `secretsStoreId` stays the placeholder
+  `REPLACE_WITH_21N_DEV_SECRETS_STORE_ID`, and deploys, `secrets:sync:dev`
+  and local Worker dev refuse to run until the variable is set.
 
 Secret names are generated from `services/account/config/environments.json`:
 

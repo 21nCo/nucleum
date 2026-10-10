@@ -1,4 +1,5 @@
 const DEV_HOST_ZONE_PATTERN = /^(nucleum|memotron|pointron)\.21n\.dev$/;
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
 const ENV_SUBDOMAINS = new Set(["local", "dev", "pre", "web", "app"]);
 
 /**
@@ -10,7 +11,7 @@ const ENV_SUBDOMAINS = new Set(["local", "dev", "pre", "web", "app"]);
  */
 export function resolveAccountBaseUrl(appBaseUrl: string, region = "insouth") {
   const host = new URL(appBaseUrl).hostname.toLowerCase();
-  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
+  if (LOOPBACK_HOSTS.has(host)) {
     return null;
   }
   const devZoneMatch = DEV_HOST_ZONE_PATTERN.exec(host);

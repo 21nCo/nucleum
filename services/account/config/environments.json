@@ -70,7 +70,7 @@
       "latencyDebug": true,
       "includeLocalWebOrigins": false,
       "debugSinkUrl": "https://nucleus-debug-sink.21n-dev.workers.dev",
-      "secretsStoreId": "abbf8470d947411e9f5bfbc45172eac6",
+      "secretsStoreId": "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID",
       "secretsStoreIdEnv": "ACCOUNT_DEV_SECRETS_STORE_ID",
       "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY"],
       "cloudflareCredentialsEnv": {
@@ -114,7 +114,7 @@
       "latencyDebug": false,
       "includeLocalWebOrigins": true,
       "debugSinkUrl": "https://nucleus-debug-sink.21n-dev.workers.dev",
-      "secretsStoreId": "abbf8470d947411e9f5bfbc45172eac6",
+      "secretsStoreId": "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID",
       "secretsStoreIdEnv": "ACCOUNT_DEV_SECRETS_STORE_ID",
       "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY"],
       "cloudflareCredentialsEnv": {

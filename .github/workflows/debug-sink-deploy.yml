@@ -42,7 +42,7 @@ jobs:
         run: npm --workspace @21n/debug-sink run deploy -- --dry-run --outdir dist
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     environment: dev
     concurrency:
