@@ -1,0 +1,9 @@
+how to hide tabs pane in cursor editor?
+
+---
+
+why are @client/composition/layers/NucleusBaseLayer.svelte , etc product base layers present in composition instead of client/products?
+
+---
+
+@node_modules/@nucleum/composition/layers/UserBaseLayer.svelte:365 Is there any clear distinction of what should go in each of these stores: app store, account store, and context store?
