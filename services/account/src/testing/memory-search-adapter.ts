@@ -22,6 +22,10 @@ const DEFAULT_LIMIT = 10;
  * neither declares nor enforces them. This wrapper records the `__ns` / `__region`
  * metadata of each indexed document and applies the filters before limits, matching the
  * upstream adapter contract, so the memory E2E exercises real tenant isolation.
+ *
+ * Like the upstream adapter, documents are keyed by resource and id only: the SearchFn
+ * contract's `search`/`remove` carry bare ids, so tenant-scoped identity for colliding ids
+ * belongs in `@searchfn` itself, not in this test double.
  */
 export class MetadataFilteringMemoryAdapter implements SearchAdapter {
   readonly name = 'memory';
