@@ -1,0 +1,167 @@
+client/features/collections/CreateCollection.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 26
+client/features/memory/markdown/content/BlockContent.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 4
+apps/nucleus/package.json
+  s_fc1e5ad5b6d4c0::t_23797eb918adad 5
+client/features/memory/node/thumbnail/NodeThumbnail.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 6,22
+client/surfaces/commandBar/CmdResults.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 7
+client/features/package.json
+  s_fc1e5ad5b6d4c0::t_7f905101ce0cd9 140
+client/features/focus/tasks/TaskThumbnail.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 14
+client/features/calendar/column/overview/HistoricalMetrics.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 11
+client/features/memory/node/traces/NodeTracesPane.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 9
+tools/check/feature-entrypoints.json
+  s_fc1e5ad5b6d4c0::t_7f905101ce0cd9 134
+client/products/memotron/library/search/ResourceSearchBase.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 43
+apps/pointron/package.json
+  s_fc1e5ad5b6d4c0::t_23797eb918adad 5
+client/features/memory/markdown/shortcuts/MdShortcutText.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 7
+client/extensions/clipper/contentScripts/ScreenShot.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 7,9
+client/features/memory/node/content/web/WebClipPreview.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 6
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 10-11
+client/shell/paint/PagePainterV2.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 12
+client/surfaces/settings/SettingsAsModal.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 12
+client/composition/layers/UserBaseLayer.svelte
+  s_fc1e5ad5b6d4c0::t_fd23cff4186ae0 62
+  s_fc1e5ad5b6d4c0::t_c4b7efa861afa6 202
+client/extensions/clipper/ClipModal.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 9
+client/extensions/clipper/ClipperShortcuts.svelte
+  s_fc1e5ad5b6d4c0::t_17818a19827735 2
+client/features/focus/quickstart/QuickStartThumbnail.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 13
+CONTRIBUTING.md
+  s_fc1e5ad5b6d4c0::t_afbd4e3e110024 7
+client/extensions/clipper/contentScripts/ContentScript.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 12-14
+  s_fc1e5ad5b6d4c0::t_ba854465cd26ee 8
+client/surfaces/commandBar/SearchActionResults.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 4
+client/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 8
+client/features/memory/markdown/content/InlineMarkdownTextInput.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 12,14
+client/features/memory/node/thumbnail/NodeThumbnailContentType.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 4
+client/features/README.md
+  s_fc1e5ad5b6d4c0::t_afbd4e3e110024 21
+client/extensions/clipper/sidePanel/clips/ClipsPane.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 5
+client/features/calendar/column/CalendarAllActivityPanel.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 8
+client/shell/navigation/NavigationLayout.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 25
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 11
+client/surfaces/help/Help.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 11
+client/extensions/clipper/toolbar/Toolbar.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 11-12
+client/features/memory/markdown/NodularMarkdown.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 8
+client/features/memory/node/content/MediaContentResolver.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 3
+client/features/memory/markdown/content/TextContent.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 4,13,25
+client/features/records/avatar/avatar.utils.ts
+  s_fc1e5ad5b6d4c0::t_0331f76feb009c 1-13
+client/ui/elements/HoverableElement.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 4
+client/features/memory/markdown/lists/ListContent.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 3
+client/features/focus/tasks/CreateTask.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 11
+client/features/memory/markdown/embed/EmbedContentPlaceholder.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 13
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItemGroup.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 7
+client/surfaces/commandBar/CommandBar.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 5-6
+client/features/memory/node/content/web/TextClipPreview.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 5,7
+client/features/spaces/combination/CombinationTOC.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 10
+client/extensions/clipper/sidePanel/SidePanel.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 9
+client/features/memory/common/linkbox/LinkSearchResultItem.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 6
+client/features/memory/node/content/WebNodeContent.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 4
+client/features/memory/node/metadata/NodeMetadataPane.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 8
+client/extensions/clipper/feedbackPane/feedbackPane.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 7,13
+client/extensions/clipper/sidePanel/clips/Clip.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 4,7,15
+client/ui/elements/popover/Popover.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 11
+tools/check/architecture.mjs
+  s_fc1e5ad5b6d4c0::t_4a551a7f0672c3 294-295
+client/datafn/visibility-sync.ts
+  s_fc1e5ad5b6d4c0::t_c4b7efa861afa6 62
+apps/memotron/package.json
+  s_fc1e5ad5b6d4c0::t_23797eb918adad 5
+client/features/focus/logs/logPage/SessionLogPage.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 25
+client/features/memory/capture/ShareContentSaver.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 12
+client/extensions/clipper/contentScripts/parts/SocialProfileClipButton.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 6
+client/shell/topNav/TopNavLeftMenuItem.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 17
+client/features/memory/markdown/Markdown.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 44
+client/features/focus/analytics/page/AnalyticsChart.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 5-6
+client/features/focus/logs/LogThumbnailItem.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 16
+tools/check/app-imports.mjs
+  s_fc1e5ad5b6d4c0::t_4a551a7f0672c3 46-47
+  s_fc1e5ad5b6d4c0::t_f6feb57c5b6292 39-41
+client/features/memory/node/floatingBar/NodePanelSwitcher.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 3
+client/shell/rightPanel/RightPanel.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 4
+client/ui/elements/switcher/PanelSwitcher.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 21
+client/extensions/clipper/contentScripts/VideoContentScript.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 17
+client/composition/ComponentResolver.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 3
+client/features/collections/CollectionTitleBar.svelte
+  s_fc1e5ad5b6d4c0::t_0331f76feb009c 33
+client/features/memory/node/avatar/NodeAvatar.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 7
+  s_fc1e5ad5b6d4c0::t_0331f76feb009c 19
+client/features/focus/tasks/TaskLibrary.svelte
+  s_fc1e5ad5b6d4c0::t_105154895d798b 34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "76357ea1e4cffcaa104d79a429c79d9d60dbf4ee",
+  "prompts": {},
+  "sessions": {
+    "s_fc1e5ad5b6d4c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35f3409b-369e-4783-b998-c6a953fd6b02",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
