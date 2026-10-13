@@ -32,11 +32,11 @@
     "@nucleum/extensions": "*"
   },
   "peerDependencies": {
-    "@21n/elements": "*",
     "@21n/theme": "*",
     "@nucleum/client": "*",
     "@nucleum/features": "*",
     "@nucleum/schema": "*",
-    "@nucleum/static": "*"
+    "@nucleum/static": "*",
+    "@21n/ui": "*"
   }
 }

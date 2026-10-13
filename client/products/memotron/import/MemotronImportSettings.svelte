@@ -2,21 +2,21 @@
   import {
     toasts,
     confirmationNotification
-  } from "@nucleum/stores/notification.store";
-  import context from "@nucleum/stores/context.store";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import Table2 from "@21n/elements/table/Table2.svelte";
-  import { TableCellType, type TableColumn } from "@21n/elements/table/table.type";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { InfoTextType } from "@21n/elements/text/info.type";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
-  import { preferences } from "@nucleum/stores/preferences/preferences.store";
-  import { type ImportHistoryItem } from "@nucleum/stores/preferences/import.type";
+  } from "@nucleum/shared-state/notifications/notification.store";
+  import context from "@nucleum/client/runtime/context.store";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import Table2 from "@21n/ui/elements/table/Table2.svelte";
+  import { TableCellType, type TableColumn } from "@21n/ui/elements/table/table.type";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { InfoTextType } from "@21n/ui/elements/text/info.type";
+  import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
+  import { type ImportHistoryItem } from "@nucleum/shared-state/preferences/import.type";
   import { enumToString, properCase } from "@21n/shared-utils/text.utils";
   import MemotronImportAppList from "@nucleum/products/memotron/import/MemotronImportAppList.svelte";
-  import { Preference } from "@nucleum/stores/preferences/preferences.type";
+  import { Preference } from "@nucleum/shared-state/preferences/preferences.type";
   import {
     removeDuplicatesFilter,
     resourceInList

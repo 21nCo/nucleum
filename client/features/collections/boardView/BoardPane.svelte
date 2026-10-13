@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
   import type { ICollectionView } from "@nucleum/features/collections/collection.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import SubGroup from "@nucleum/features/collections/boardView/SubGroup.svelte";
   import {
     calculateGroupingCounts,
@@ -17,7 +17,7 @@
   import TabCountBadge from "@nucleum/features/collections/counts/TabCountBadge.svelte";
   import { resourceInList } from "@nucleum/datafn/resource.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { dropzone } from "@nucleum/actions/dragAndDrop.action";
+  import { dropzone } from "@21n/ui/actions/dragAndDrop.action";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import type { IActiveCollectionStore } from "../collection.store";
   import CollectionItems from "@nucleum/features/collections/CollectionItems.svelte";

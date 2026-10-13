@@ -67,7 +67,7 @@ export default defineConfig({
         tryCatchDeoptimization: false,
         moduleSideEffects: (id) =>
           id.includes("@antv/g6") ||
-          id.includes("/client/application/composition/")
+          id.includes("/client/composition/configure-hosts.ts")
       }
     },
     chunkSizeWarningLimit: 1000

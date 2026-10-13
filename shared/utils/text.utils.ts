@@ -1,6 +1,3 @@
-import type { Resource } from "@nucleum/schema/resource.enum";
-import type { EmailParts } from "@nucleum/schema/account/profile.type";
-
 export function properCase(str: string) {
   if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -10,7 +7,7 @@ export function properCase(str: string) {
   // });
 }
 
-export function prefixTable(id: string | number, itemType: Resource) {
+export function prefixTable(id: string | number, itemType: string) {
   return `${itemType}:${id}`;
 }
 
@@ -31,9 +28,6 @@ export function isValidParentDomain(text: string) {
   return domainRegex.test(text);
 }
 
-export function frameEmailFromParts(parts: EmailParts) {
-  return `${parts.firstFew}...${parts.lastFew ?? ""}@${parts.emailDomain}`;
-}
 /**
  * Checks if a string is valid and not empty or null or any other falsy value as string. Returns the string if valid, otherwise returns undefined.
  * @param str The string to check

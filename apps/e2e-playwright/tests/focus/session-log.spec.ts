@@ -2,6 +2,8 @@ import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
 import { ensureInAppOnHome, navigateToSurface } from "../utils/helpers";
 import { resolveRepoFsImportPath } from "../utils/repo-fs";
 import { blockGoogleAccountsNavigation } from "./focus-test-helpers";
+import { getResourceRecordSurface } from "../utils/resource-matrix";
+import { getSessionConfirmationDialog } from "./active-session/session-test-support";
 
 let e2eSeed: E2ESeed;
 
@@ -45,7 +47,9 @@ test("opens direct session log page and renders totals, interval bar, notes, and
   await expect(page.getByText("Summary", { exact: true })).toBeVisible();
   await expect(page.getByText("Notes", { exact: true })).toBeVisible();
   await expect(page.getByText("Total", { exact: true })).toBeVisible();
-  await expect(page.getByText("Focus", { exact: true })).toBeVisible();
+  await expect(
+    getResourceRecordSurface(page).getByText("Focus", { exact: true })
+  ).toBeVisible();
   await expect(page.getByText("Break", { exact: true })).toBeVisible();
   await expect(page.getByText("40:00", { exact: true })).toBeVisible();
   await expect(page.getByText("35:00", { exact: true })).toBeVisible();
@@ -105,9 +109,9 @@ test("opens session log from calendar timeline and delete cascades session logs 
   await expect(
     page.getByText("Are you sure you want to delete this session log?")
   ).toBeVisible({ timeout: 10_000 });
-  await page.getByRole("button", { name: /^Delete/i }).click({
-    timeout: 5_000
-  });
+  await getSessionConfirmationDialog(page)
+    .getByRole("button", { name: /^Delete/i })
+    .click({ timeout: 5_000 });
   await expect(page.getByText("Session details", { exact: true })).toBeHidden({
     timeout: 20_000
   });

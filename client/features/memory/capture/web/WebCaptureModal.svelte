@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { fade } from "svelte/transition";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { browser } from "$app/environment";
   import {
     searchWebArtifacts,

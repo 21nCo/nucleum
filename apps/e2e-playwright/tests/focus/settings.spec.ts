@@ -302,6 +302,11 @@ test("Focus PiP/manual-log flow still works from the declared focus panel @setti
     page.getByText(objectiveName, { exact: true }).first()
   ).toBeVisible({ timeout: 10_000 });
 
+  const logs = page.locator("#LOGS");
+  await expect(logs).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(logs).toBeHidden();
+
   const {
     quickFocusPanel: secondQuickFocusPanel,
     quickFocusSearch: secondQuickFocusSearch

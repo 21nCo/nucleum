@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Size } from "@21n/elements/size.enum";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     splits,

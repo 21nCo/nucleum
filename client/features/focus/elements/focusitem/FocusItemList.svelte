@@ -7,9 +7,9 @@
   } from "@nucleum/features/focus/session.store";
   import FocusItem from "@nucleum/features/focus/elements/focusitem/FocusItem.svelte";
   import AddFocusItem from "@nucleum/features/focus/elements/focusitem/AddFocusItem.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import {
     ObjectiveStatus,
     ObjectiveType,
@@ -22,22 +22,22 @@
   } from "@nucleum/datafn/resource.utils";
   import type { ITaskThumb } from "@nucleum/features/focus/tasks/task.type";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { ErrorMessage } from "@nucleum/stores/notifications/error.enum";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { ErrorMessage } from "@nucleum/shared-state/notifications/error.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { LoadingAnimationType } from "@21n/elements/feedback/feedback.type";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { BarStyle, PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import { requireRecordRenderer } from "@nucleum/stores/resources/record-renderer";
+  import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import { requireRecordRenderer } from "@nucleum/shared-state/resources/record-renderer";
   const Records = requireRecordRenderer();
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState } from "@nucleum/stores/uiState/uiState.type";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import CalendarColumnTasksPanel from "@nucleum/features/calendar/column/CalendarColumnTasksPanel.svelte";
-  import { reorderList } from "@nucleum/actions/rearrange.action";
+  import { reorderList } from "@21n/ui/actions/rearrange.action";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { toSvelteStore } from "@datafn/svelte";

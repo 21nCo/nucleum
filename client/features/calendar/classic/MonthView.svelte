@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { onDestroy } from "svelte";
   import {
     CalendarTileIndicatorDisplayType,
     type ICalendarIndicatorData
   } from "@nucleum/features/calendar/calendar.type";
   import CalendarTileIndicator from "@nucleum/features/calendar/classic/indicator/CalendarTileIndicator.svelte";
-  import { resizeListener } from "@nucleum/actions/resize.action";
-  import { preferences } from "@nucleum/stores/preferences/preferences.store";
-  import { Preference } from "@nucleum/stores/preferences/preferences.type";
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { TimeScaleUnit } from "@21n/utils/time.type";
-  import { getWeekNumber } from "@21n/utils/time.utils";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
+  import { Preference } from "@nucleum/shared-state/preferences/preferences.type";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
+  import { getWeekNumber } from "@21n/shared-utils/datetime/date-arithmetic";
   import {
     buildResolvedIndicatorDataByDayMap,
     resolveIndicatorDayKey

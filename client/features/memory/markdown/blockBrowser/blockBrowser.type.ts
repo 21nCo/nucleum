@@ -1,5 +1,5 @@
 import type { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-import type { InlineType } from "@21n/elements/markdown/inline.type";
+import type { InlineType } from "@21n/ui/elements/markdown/inline.type";
 
 export type IBlockBrowserItem = {
   label: string;

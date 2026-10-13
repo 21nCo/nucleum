@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import ObjectiveAllActivityPanel from "@nucleum/features/focus/goals/history/GoalAllActivityPanel.svelte";
   import ObjectiveFocusSessions from "@nucleum/features/focus/goals/history/GoalFocusSessions.svelte";
 

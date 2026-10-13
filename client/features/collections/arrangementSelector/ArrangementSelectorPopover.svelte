@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Arrangement, Orientation } from "@21n/elements/direction.enum";
-  import Slider from "@21n/elements/slider/Slider.svelte";
-  import VerticalSwitcher from "@21n/elements/switcher/VerticalSwitcher.svelte";
-  import { VerticalSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { Arrangement, Orientation } from "@21n/ui/elements/direction.enum";
+  import Slider from "@21n/ui/elements/slider/Slider.svelte";
+  import VerticalSwitcher from "@21n/ui/elements/switcher/VerticalSwitcher.svelte";
+  import { VerticalSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   let {
     density = $bindable(1),

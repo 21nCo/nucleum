@@ -1,4 +1,4 @@
-import { clientStorage } from "@nucleum/persistence/persistence.utils";
+import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 
 /** Resolves offline mode from the saved preference and current network state. */

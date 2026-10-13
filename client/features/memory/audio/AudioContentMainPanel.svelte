@@ -1,27 +1,27 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import NodularMarkdown from "@nucleum/features/memory/markdown/NodularMarkdown.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import view from "@nucleum/stores/view.store";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import view from "@21n/ui/environment/view.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { type IJobStatus } from "@nucleum/client/runtime/inference/taco.type";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
   import TranscriptionWithTimestamps from "@nucleum/features/memory/audio/TranscriptionWithTimestamps.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { copyToClipboard } from "@21n/utils/utils";
-  import { renderMdAsHtml } from "@21n/elements/markdown/markdown.utils";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { copyToClipboard } from "@21n/shared-utils/clipboard";
+  import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "@21n/elements/switcher/switcher.enum";
+  } from "@21n/ui/elements/switcher/switcher.enum";
   import { AudioView } from "@nucleum/features/memory/audio/audio.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { Action } from "@nucleum/client/config/action.enum";
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { generateMarkdownText } from "@nucleum/features/memory/node/node.utils";
   import type { IAudioBody, IAudioMetadata } from "@nucleum/features/memory/node/node.type";
   import { datafn } from "@nucleum/datafn/datafn.store";

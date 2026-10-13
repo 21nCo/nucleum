@@ -1,4 +1,4 @@
-import type { TimeUnit } from "@21n/utils/time.type";
+import type { TimeUnit } from "@21n/shared-utils/datetime/duration.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
 export type SessionComposition = {

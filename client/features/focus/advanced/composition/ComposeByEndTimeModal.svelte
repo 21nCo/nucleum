@@ -4,9 +4,9 @@
     SessionCompositionType,
     type SessionComposition
   } from "@nucleum/features/focus/sessionComposition.type";
-  import TimeSelector from "@nucleum/components/TimeSelector.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { incrementTime } from "@21n/utils/time.utils";
+  import TimeSelector from "@21n/ui/compositions/TimeSelector.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { incrementTime } from "@21n/shared-utils/datetime/date-arithmetic";
   import ComposeBreak from "@nucleum/features/focus/advanced/composition/ComposeBreak.svelte";
   import ComposeTotalsText from "@nucleum/features/focus/advanced/composition/ComposeTotalsText.svelte";
   import { deepCopy } from "@21n/shared-utils/obj.utils";

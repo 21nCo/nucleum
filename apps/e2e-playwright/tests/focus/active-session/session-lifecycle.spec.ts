@@ -3,6 +3,7 @@ import { ensureInAppOnHome, runCommand } from "../../utils/helpers";
 import {
   addAdvancedFocusItems,
   collectPageErrors,
+  hideFocusFullscreen,
   readSessionRuntime,
   reloadActiveSession,
   resetFocusSession,
@@ -16,6 +17,7 @@ import {
   getCurrentFocusItemRow,
   getCurrentFocusSessionItems,
   getFocusItemRow,
+  getFocusSessionItem,
   getSessionConfirmationDialog,
   readPersistedSession,
   readTaskRecord,
@@ -233,8 +235,8 @@ test("checking the current task stops it while the session continues", async ({
   await startAdvancedFocus(page);
   await waitForSessionElapsed(page, 1);
 
-  const row = getFocusItemRow(page, task.label);
-  await row.locator("button").first().click({ timeout: 5_000 });
+  const row = getFocusSessionItem(page, task.id);
+  await row.getByTestId(`task-checkbox:${task.id}`).click({ timeout: 5_000 });
 
   await expect
     .poll(async () => (await readTaskRecord(page, task.id))?.isChecked, {
@@ -372,6 +374,7 @@ test("cancels and confirms finishing from the command bar", async ({
   await waitForSessionElapsed(page, 1);
   const sessionId = (await readSessionRuntime(page)).currentSessionId!;
 
+  await hideFocusFullscreen(page);
   await runCommand(page, "Finish the current session");
   const confirmation = getSessionConfirmationDialog(page);
   await expect(page.getByText("Finish focus session")).toBeVisible();
@@ -425,6 +428,7 @@ test("cancels and confirms abandoning without persisting a session", async ({
   const sessionId = (await readSessionRuntime(page)).currentSessionId;
   expect(sessionId).toBeTruthy();
 
+  await hideFocusFullscreen(page);
   await runCommand(page, "Abandon the current session");
   await expect(page.getByText("Abandon focus session")).toBeVisible();
   const confirmation = getSessionConfirmationDialog(page);
@@ -462,7 +466,10 @@ test("keyboard activation switches and stops a task", async ({ page }) => {
   );
   await startAdvancedFocus(page);
 
-  const secondRow = getFocusItemRow(page, fixture.standaloneTasks[1].label);
+  const secondRow = getFocusSessionItem(
+    page,
+    fixture.standaloneTasks[1].id
+  ).locator('[role="button"][tabindex="0"]');
   await secondRow.focus();
   await page.keyboard.press("Enter");
   await expect(

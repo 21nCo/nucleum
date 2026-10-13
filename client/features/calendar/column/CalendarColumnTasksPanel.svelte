@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { onDestroy } from "svelte";
 
   import TaskRecords from "@nucleum/features/focus/tasks/TaskRecords.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { BulkEditor } from "@nucleum/stores/resources/bulk-editor";
+  import { BulkEditor } from "@nucleum/features/records/bulk-editor";
 
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { dragSelection } from "@nucleum/actions/dragSelection.action";
-  import { bulkEditStore } from "@nucleum/stores/resources/bulkedit.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { dragSelection } from "@21n/ui/actions/dragSelection.action";
+  import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";

@@ -4,12 +4,12 @@ import { get } from "svelte/store";
 import {
   datafn,
   destroyNucleumDatafn,
-  initializeNucleumDatafn,
-  resolveDatafnBootResources
+  initializeNucleumDatafn
 } from "@nucleum/datafn/datafn.store";
+import { resolveDatafnBootResources } from "@nucleum/datafn/resource-selection";
 import { Product } from "@nucleum/client/config/product.type";
 import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
-import { appStore } from "@nucleum/stores/app.store";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import { CollectionType } from "@nucleum/features/collections/collection.type";

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { TimeScale } from "@21n/utils/time.type";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { TimeScale } from "@21n/shared-utils/datetime/period.type";
   import OnThisDayPanel from "@nucleum/features/calendar/column/overview/OnThisDayPanel.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import CalendarOverviewFocusMetrics from "./CalendarOverviewFocusMetrics.svelte";
 
   let {

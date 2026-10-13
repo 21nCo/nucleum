@@ -7,9 +7,9 @@ import {
   type SessionComposition,
   BreakCompositionType
 } from "@nucleum/features/focus/sessionComposition.type";
-import { ChartType } from "@nucleum/components/charts/analytics.type";
-import { TimePeriodType, TimeScale } from "@21n/utils/time.type";
-import { Layout } from "@21n/layout/layout-mode.type";
+import { ChartType } from "@21n/ui/compositions/charts/analytics.type";
+import { TimePeriodType, TimeScale } from "@21n/shared-utils/datetime/period.type";
+import { Layout } from "@nucleum/shell/layout-mode.type";
 import type {
   HorizonChart,
   IPointronPreferences

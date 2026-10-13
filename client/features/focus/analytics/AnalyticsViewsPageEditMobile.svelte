@@ -1,15 +1,11 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { debouncer } from "@21n/utils/utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { debouncer } from "@21n/shared-utils/debounce";
   import { analyticsConfigStore } from "@nucleum/features/focus/analytics/analytics.store";
-  import {
-    onAddPageClicked,
-    onPagelabelChange,
-    onRemovePageClicked
-  } from "@nucleum/features/focus/analytics/analytics.utils";
+  import { onAddPageClicked, onPagelabelChange, onRemovePageClicked } from "@nucleum/features/focus/analytics/analytics-actions";
 
   let pages = $derived(
     $analyticsConfigStore.pages.length > 0

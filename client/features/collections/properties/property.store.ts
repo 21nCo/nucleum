@@ -4,7 +4,7 @@ import {
   PropertyType,
   UniversalPropertyType
 } from "@nucleum/features/collections/properties/property.type";
-import { ObservableStore } from "@nucleum/stores/client.store";
+import { ObservableStore } from "@nucleum/datafn/observable-store";
 import { PropertyTypeGroup } from "@nucleum/features/collections/properties/propertyTypeSelector/propertyTypeSelector.type";
 
 export class PropertyEditorStore extends ObservableStore<IPropertyEditorStore> {

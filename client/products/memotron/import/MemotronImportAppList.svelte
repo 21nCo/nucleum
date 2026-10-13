@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import view from "@nucleum/stores/view.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import view from "@21n/ui/environment/view.store";
 
-  import { ImportSource } from "@nucleum/stores/preferences/import.type";
+  import { ImportSource } from "@nucleum/shared-state/preferences/import.type";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
-  import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
+  import ExternalLogo from "@21n/ui/branding/external/ExternalLogo.svelte";
 
   const availableImports = [
     {

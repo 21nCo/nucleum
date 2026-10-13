@@ -2,21 +2,19 @@ import { Resource } from "@nucleum/datafn/resource.enum";
 import { LinkType } from "@nucleum/datafn/link.type";
 import { type IActiveNode, type INode, type INodeLinkThumb, canHaveTraces, NodeView, headingNodeTypes, mediaNodeTypeList, socialPostNodeTypeList } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
-import { ActiveResourceStore } from "@nucleum/stores/resources/active-resource.store";
-import { PanelSwitcherMixin } from "@nucleum/stores/resources/panelSwitcher.mixin";
-import {
-  activeResourceFilterIgnoreAncestorInactive
-} from "@21n/utils/utils";
+import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
+import { ActiveResourceStore } from "@nucleum/shared-state/resources/active-resource.store";
+import { PanelSwitcherMixin } from "@nucleum/shared-state/resources/panelSwitcher.mixin";
+import { activeResourceFilterIgnoreAncestorInactive } from "@nucleum/datafn/resource-filters";
 import { AccessMode, ResourceAccessPoint, type IResourceMutationParams } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-import { ResourceActions } from "@nucleum/stores/resources/resource.actions";
+import { ResourceActions } from "@nucleum/features/records/resource.actions";
 import { get, writable } from "svelte/store";
-import { ContextMenuType, type IContextMenu, type IContextMenuItem } from "@21n/elements/contextMenu/context-menu.type";
+import { ContextMenuType, type IContextMenu, type IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { resolveCollectionTypes } from "@nucleum/features/collections/collection.utils";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
+import type { IToggleItem } from "@21n/ui/elements/toggle/toggle.type";
 import { generateMarkdownText } from "@nucleum/features/memory/node/node.utils";
 import {
   resourceInList,
@@ -26,16 +24,16 @@ import {
   determineResourceType
 } from "@nucleum/datafn/resource.utils";
 
-import context from "@nucleum/stores/context.store";
+import context from "@nucleum/client/runtime/context.store";
 import { Embed } from "@nucleum/client/runtime/context.type";
 import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-import { fileStore } from "@nucleum/stores/files/file.store";
+import { fileStore } from "@nucleum/shared-state/files/file.store";
 import { recursivelyExtractAllChildrenIntoArray } from "@nucleum/features/memory/markdown/markdown.utils";
-import view from "@nucleum/stores/view.store";
+import view from "@21n/ui/environment/view.store";
 import { CollectibleStore } from "@nucleum/features/collections/collectible.store";
-import { appStore } from "@nucleum/stores/app.store";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import type { ILink } from "@nucleum/datafn/link.type";
-import { toasts } from "@nucleum/stores/notification.store";
+import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { datafn } from "@nucleum/datafn/datafn.store";
 
 export const hierarchyFactorLimit = 5;

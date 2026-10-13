@@ -19,8 +19,8 @@
   import Day from "@nucleum/features/calendar/birdView/Day.svelte";
   import Month from "@nucleum/features/calendar/birdView/Month.svelte";
   import Year from "@nucleum/features/calendar/birdView/Year.svelte";
-  import { debouncer } from "@21n/utils/utils";
-  import { TimeScaleUnit } from "@21n/utils/time.type";
+  import { debouncer } from "@21n/shared-utils/debounce";
+  import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
 
   let {
     mode = TimeScaleUnit.DAY,

@@ -82,3 +82,6 @@ deployment/**/*.js
 
 # Exponential space data
 .exponential/
+
+.radix/
+local-context.md

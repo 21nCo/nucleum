@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import type { TopNCardDataRecord } from "@nucleum/features/focus/analytics/analytics.types";
 
   let { row }: { row: TopNCardDataRecord } = $props();

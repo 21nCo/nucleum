@@ -1,31 +1,29 @@
 <script lang="ts">
   import ToolbarOpener from "@nucleum/extensions/clipper/toolbar/ToolbarOpener.svelte";
   import {
-    resolveContentTypeForUrl,
     resolveContentTypeString
   } from "@nucleum/extensions/clipper/clipper.utils";
-  import { ExtensionEvent } from "@nucleum/extensions/extension.type";
+  import { resolveContentTypeForUrl } from "@nucleum/features/memory/capture/browser-tab-data";
+  import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
   import FeedbackPane from "@nucleum/extensions/clipper/feedbackPane/FeedbackPane.svelte";
   import Toolbar from "@nucleum/extensions/clipper/toolbar/Toolbar.svelte";
   import TextClipper from "@nucleum/extensions/clipper/contentScripts/TextClipper.svelte";
-  import {
-    webpage,
-    toolbarState,
-    feedbackPane,
-    syncStore
-  } from "@nucleum/extensions/clipper/contentScripts/store";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
+import { toolbarState } from "@nucleum/extensions/clipper/contentScripts/toolbar.store";
+import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
+import { syncStore } from "@nucleum/extensions/clipper/contentScripts/sync.store";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import ExtensionBaseLayer from "@nucleum/extensions/ExtensionBaseLayer.svelte";
   import ScreenShot from "@nucleum/extensions/clipper/contentScripts/ScreenShot.svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import SyncPane from "@nucleum/extensions/clipper/syncPane/SyncPane.svelte";
   import LoginNotification from "@nucleum/extensions/clipper/feedbackPane/LoginNotification.svelte";
-  import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+  import { relayToBackgroundScript } from "@nucleum/client/runtime/extensions/messaging";
   import { resourceInList } from "@nucleum/datafn/resource.utils";
   import { ResourceError } from "@nucleum/datafn/resource-error";
-  import { Placement } from "@21n/elements/direction.enum";
+  import { Placement } from "@21n/ui/elements/direction.enum";
   import ToolbarPlacementHintBlock from "@nucleum/extensions/clipper/toolbar/ToolbarPlacementHintBlock.svelte";
-  import { clientStorage } from "@nucleum/persistence/persistence.utils";
+  import { clientStorage } from "@nucleum/persistence/client-storage";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
   import { onDestroy, onMount } from "svelte";
   import { toolbarUnavailableUrlsList } from "@nucleum/features/memory/common/urlMap";

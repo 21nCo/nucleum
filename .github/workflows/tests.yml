@@ -32,6 +32,8 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Check architecture boundaries
         run: npm run check:architecture
+      - name: Check type ownership, retired runtime and fixed test waits
+        run: npm run check:type-ownership && npm run check:no-legacy-runtime && npm run check:no-fixed-test-waits
       - name: Run app checks
         run: npm run check:apps
 
@@ -83,15 +85,15 @@ jobs:
       matrix:
         include:
           - product: nucleum
-            workspace: nucleus-app
+            workspace: "@nucleum/app"
             port: 5050
             domain: local.nucleum.app
           - product: pointron
-            workspace: pointron-app
+            workspace: pointron
             port: 5001
             domain: local.pointron.app
           - product: memotron
-            workspace: memotron-app
+            workspace: "@memotron/app"
             port: 5002
             domain: local.memotron.app
     steps:

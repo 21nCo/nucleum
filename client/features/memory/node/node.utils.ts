@@ -1,5 +1,5 @@
 import { logger } from "@nucleum/client/runtime/logging/logger";
-import type { IFile } from "@nucleum/stores/files/file.type";
+import type { IFile } from "@nucleum/shared-state/files/file.type";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { isRecordId } from "@nucleum/datafn/resource.utils";
@@ -7,15 +7,15 @@ import type { IBlock } from "@nucleum/features/memory/markdown/md.type";
 import { type INode, type ITwitterProfileBody, type ITextClipBody, type IVideoTimestampClip, type ITwitterProfile, type INodeThumb, type INodeStructure, webNodeTypeList, socialPostNodeTypeList, socialProfileNodeTypeList, socialProfileWithImageUnavailable } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-import { TimeFormat } from "@21n/utils/time.type";
-import { getGeoLocation } from "@21n/utils/browser.utils";
-import { formatSeconds } from "@21n/utils/time.utils";
+import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+import { getGeoLocation } from "@nucleum/client/runtime/geolocation/position";
+import { formatSeconds } from "@21n/ui/elements/time/duration-format";
 import {
   enumToString,
   isValidString,
   properCase
 } from "@21n/shared-utils/text.utils";
-import { isValidUrl } from "@21n/shared-utils/utils";
+import { isValidUrl } from "@21n/shared-utils/url.utils";
 import { resolveUrlData } from "@nucleum/features/memory/node/url.utils";
 
 function isObject(value: unknown): value is Record<string, unknown> {

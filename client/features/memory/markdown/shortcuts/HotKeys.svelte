@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import Table2 from "@21n/elements/table/Table2.svelte";
+  import Table2 from "@21n/ui/elements/table/Table2.svelte";
 
-  import { TableCellType } from "@21n/elements/table/table.type";
+  import { TableCellType } from "@21n/ui/elements/table/table.type";
   import HotKeyShortcutText from "@nucleum/features/memory/markdown/shortcuts/HotKeyShortcutText.svelte";
-  import { keyboardShortcuts } from "@nucleum/stores/keyboard/shortcuts.store";
+  import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   const data = keyboardShortcuts
     .fetchKeyMap()
     .filter((x) => x.key !== undefined && x.modifiers === undefined)

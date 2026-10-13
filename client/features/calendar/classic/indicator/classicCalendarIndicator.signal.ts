@@ -5,7 +5,7 @@ import {
   type DatafnTemporalScale
 } from "@datafn/client";
 import type { ICalendarIndicatorData } from "@nucleum/features/calendar/calendar.type";
-import { activeResourceFilter } from "@21n/utils/utils";
+import { activeResourceFilter } from "@nucleum/datafn/resource-filters";
 import { MetaResource, Resource } from "@nucleum/datafn/resource.enum";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import {
@@ -13,7 +13,7 @@ import {
   rootNodeTypeList
 } from "@nucleum/features/memory/node/node.type";
 import { datafnHeavyComputedSignalOptions } from "@nucleum/datafn/signalCache";
-import { TimeScaleUnit } from "@21n/utils/time.type";
+import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
 import { resolveIndicatorColor } from "@nucleum/features/calendar/classic/indicator/classicCalendarIndicator.utils";
 
 type ClassicCalendarIndicatorSignalInput = {

@@ -1,17 +1,17 @@
 <script lang="ts">
   import TableOfContents from "@nucleum/features/memory/markdown/TableOfContents.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { properCase } from "@21n/shared-utils/text.utils";
   import NodeHistoryPane from "@nucleum/features/memory/common/history/NodeHistoryPane.svelte";
   import NodeLinksPane from "@nucleum/features/memory/node/links/NodeLinksPane.svelte";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
-  import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
+  import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import NodeTracesPane from "@nucleum/features/memory/node/traces/NodeTracesPane.svelte";
   import NodeSidenotesPane from "@nucleum/features/memory/node/rightPanel/NodeSidenotesPane.svelte";
   import PropertiesPane from "@nucleum/features/collections/properties/PropertiesPane.svelte";
   import NodeMetadataPane from "@nucleum/features/memory/node/metadata/NodeMetadataPane.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   let {
     node,

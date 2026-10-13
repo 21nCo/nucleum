@@ -2,13 +2,13 @@
 
 <script lang="ts">
   import { onMount } from "svelte";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { OverviewPanel, Product } from "@nucleum/client/config/product.type";
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
   import AnalyticsV2 from "@nucleum/features/focus/analytics/AnalyticsV2.svelte";
   import MemotronOverview from "@nucleum/products/memotron/overview/MemotronOverview.svelte";
-  import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
+  import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import { resolveProductConfig } from "@nucleum/products/product.config";
 
   let selectedPanel = $state<OverviewPanel>(

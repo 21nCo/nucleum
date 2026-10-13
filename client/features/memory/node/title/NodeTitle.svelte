@@ -1,14 +1,14 @@
 <script lang="ts">
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
   import type { IActiveNode } from "@nucleum/features/memory/node/node.type";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import context from "@nucleum/stores/context.store";
-  import TextInputOnKeyboardToolbar from "@21n/elements/input/TextInputOnKeyboardToolbar.svelte";
-  import RecordStarStatusFeedback from "@nucleum/components/records/RecordStarStatusFeedback.svelte";
+  import context from "@nucleum/client/runtime/context.store";
+  import TextInputOnKeyboardToolbar from "@21n/ui/elements/input/TextInputOnKeyboardToolbar.svelte";
+  import RecordStarStatusFeedback from "@nucleum/features/records/RecordStarStatusFeedback.svelte";
   let {
     node,
     accessPoint = ResourceAccessPoint.SELF,

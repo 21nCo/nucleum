@@ -35,38 +35,6 @@ export function resolveParentNLevel(
   return root;
 }
 
-export function resolveOgData(doc?: Document) {
-  doc = doc ?? document;
-  const ogTitle = (
-    doc.querySelector("meta[property='og:title']") as HTMLMetaElement
-  )?.content;
-  const ogImage = (
-    doc.querySelector("meta[property='og:image']") as HTMLMetaElement
-  )?.content;
-  const ogDescription = (
-    doc.querySelector("meta[property='og:description']") as HTMLMetaElement
-  )?.content;
-  const ogUrl = (
-    doc.querySelector("meta[property='og:url']") as HTMLMetaElement
-  )?.content;
-  const ogSiteName = (
-    doc.querySelector("meta[property='og:site_name']") as HTMLMetaElement
-  )?.content;
-  return { ogTitle, ogImage, ogDescription, ogUrl, ogSiteName };
-}
-
-/**
- * UaData is causing below dexie error when insert -
- * Failed to execute 'put' on 'IDBObjectStore': NavigatorUAData object could not be cloned.
- DataCloneError: Failed to execute 'put' on 'IDBObjectStore': NavigatorUAData object could not be cloned.
-
- * @returns
- */
-export function extractBrowserDetails() {
-  const userAgent = navigator.userAgent;
-  return { userAgent };
-}
-
 export function parseRelativeTimeToISO(relativeTime: string): string | null {
   // Convert relative time strings like "1d", "5h", "3w" to ISO date strings
   const now = new Date();

@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import { resizeListener } from "@nucleum/actions/resize.action";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { Product } from "@nucleum/client/config/product.type";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { TimeScaleUnit } from "@21n/utils/time.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
+  import { cn } from "@21n/ui/environment/presentation";
   import {
     CalendarColumnLayout,
     CalendarColumnPanel,
@@ -22,17 +22,17 @@
 
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { page } from "$app/stores";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import view from "@nucleum/stores/view.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import view from "@21n/ui/environment/view.store";
   import {
     resolveCalendarColumnPanels,
     resolveCalendarNotesId
   } from "@nucleum/features/calendar/calendar.utils";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
-  import BoxButton from "@21n/elements/button/BoxButton.svelte";
+  import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
 
   let {
     scale,

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Placement } from "@21n/elements/direction.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import { toolbarState } from "@nucleum/extensions/clipper/contentScripts/store";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { toolbarState } from "@nucleum/extensions/clipper/contentScripts/toolbar.store";
   let {
     position = Placement.Bottom
   }: {

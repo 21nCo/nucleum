@@ -1,41 +1,42 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import type { Snippet } from "svelte";
   import { page } from "$app/stores";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "@21n/elements/switcher/switcher.enum";
+  } from "@21n/ui/elements/switcher/switcher.enum";
   import { onMount } from "svelte";
   import QuickStart from "@nucleum/features/focus/quickstart/QuickStart.svelte";
   import Advanced from "@nucleum/features/focus/advanced/Advanced.svelte";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import { activeSession } from "@nucleum/features/focus/session.store";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
   import Zen from "@nucleum/features/focus/zen/Zen.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import Panel from "@21n/layout/paint/Panel.svelte";
-  import FloatingButton from "@21n/elements/button/FloatingButton.svelte";
+  import Panel from "@nucleum/shell/paint/Panel.svelte";
+  import FloatingButton from "@nucleum/shell/overlays/FloatingButton.svelte";
   import AdvancedPortrait from "@nucleum/features/focus/advanced/AdvancedPortrait.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import {
     ButtonStyle,
     ButtonVariant,
     type IButtonParams
-  } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
+  } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   import QuickStartLayoutToggle from "@nucleum/features/focus/quickstart/actions/QuickStartLayoutToggle.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import ComponentShortcutListener from "@nucleum/components/keyboard/ComponentShortcutListener.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import ComponentShortcutListener from "@21n/ui/compositions/keyboard/ComponentShortcutListener.svelte";
+  import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { getContext } from "svelte";
   import { readable, type Writable } from "svelte/store";
-  import { Context } from "@nucleum/stores/appStore.type";
-  import type { IContainer } from "@21n/layout/layout.type";
-  import { resolveMinWidth } from "@21n/layout/layout.utils";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
+  import type { IContainer } from "@nucleum/shell/layout.type";
+  import { resolveMinWidth } from "@nucleum/shell/layout.utils";
 
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
@@ -187,6 +188,7 @@
   </div>
 {/if}
 <ComponentShortcutListener
+  checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
   shortcuts={[
     {
       shortcut: manualLogHotKey,

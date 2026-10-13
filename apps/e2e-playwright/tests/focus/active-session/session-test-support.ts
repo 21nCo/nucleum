@@ -12,7 +12,9 @@ const datafnStorePath = resolveRepoFsImportPath(
 const advancedCompositionDraftStorePath = resolveRepoFsImportPath(
   "client/features/focus/advanced/composition/advancedCompositionDraft.store.ts"
 );
-const appStorePath = resolveRepoFsImportPath("client/stores/app.store.ts");
+const appStorePath = resolveRepoFsImportPath(
+  "client/shared-state/app-context/app.store.ts"
+);
 const pointronStorePath = resolveRepoFsImportPath(
   "client/features/focus/preferences.store.ts"
 );

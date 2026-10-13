@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { popover } from "@nucleum/actions/popover.action";
-  import Divider from "@21n/elements/Divider.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
+  import { popover } from "@21n/ui/actions/popover.action";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import {
     iconSelectPropertyTypes,
     UniversalPropertyType,
@@ -9,8 +9,8 @@
     type IUniversalProperty
   } from "@nucleum/features/collections/properties/property.type";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { universalPropertyOptions } from "@nucleum/features/collections/properties/property.store";
   import { resolveUniversalPropertyOptions } from "@nucleum/features/collections/properties/property.utils";

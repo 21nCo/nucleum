@@ -1,4 +1,4 @@
-import type { DropdownGroup } from "@21n/elements/dropdown/dropdownItem.type";
+import type { DropdownGroup } from "@21n/ui/elements/dropdown/dropdownItem.type";
 
 export type IPropertyTypeSelectorGroup = DropdownGroup & {
   mode: PropertyTypeMode;

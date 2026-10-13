@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import { cn } from "@21n/utils/ui.utils";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { IPropertyConfigOption } from "@nucleum/features/collections/properties/property.type";
   let {
     option,

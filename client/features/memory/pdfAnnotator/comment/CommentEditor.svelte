@@ -1,9 +1,9 @@
 <script lang="ts">
   import { AnnotationType } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.type";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     annotationMode = $bindable(),

@@ -3,10 +3,10 @@
   import ObjectiveCollectionsRow from "@nucleum/features/focus/goals/GoalCollectionsRow.svelte";
   import ObjectiveTitleRow from "@nucleum/features/focus/goals/info/GoalTitleRow.svelte";
   import { SubObjectivesLayout } from "@nucleum/features/focus/goals/goal.type";
-  import { cn } from "@21n/utils/ui.utils";
-  import { type IInlineStatus } from "@nucleum/stores/notifications/notification.type";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
   import SubObjectivesPanel from "@nucleum/features/focus/goals/sub/SubGoalsPanel.svelte";
-  import RecordStatusBanner from "@nucleum/components/records/RecordStatusBanner.svelte";
+  import RecordStatusBanner from "@nucleum/features/records/RecordStatusBanner.svelte";
 
   let {
     objective,

@@ -88,7 +88,7 @@ To force a deployed account environment from a local app, start the app with a
 regional account URL template:
 
 ```bash
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace nucleus-app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace @nucleum/app run debug
 ```
 
 Then open:
@@ -100,8 +100,8 @@ https://local.nucleum.app
 Equivalent app commands:
 
 ```bash
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace memotron-app run debug
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace pointron-app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace @memotron/app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace pointron run debug
 ```
 
 Notes:
@@ -146,7 +146,7 @@ npm --workspace @21n/account-service run dev:local
 In another terminal, run the app:
 
 ```bash
-npm --workspace nucleus-app run debug
+npm --workspace @nucleum/app run debug
 ```
 
 Then open:
@@ -180,7 +180,7 @@ npm --workspace @21n/account-service run dev:worker:multi
 In another terminal, run the app:
 
 ```bash
-npm --workspace nucleus-app run debug
+npm --workspace @nucleum/app run debug
 ```
 
 Then open:

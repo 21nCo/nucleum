@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import Icon from "@21n/elements/Icon.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import { tacoWorker } from "@nucleum/products/memotron/memotron.utils";
 
   import { onMount, onDestroy } from "svelte";

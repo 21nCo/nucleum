@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import Tag from "@21n/elements/text/Tag.svelte";
-  import { popover } from "@nucleum/actions/popover.action";
-  import context from "@nucleum/stores/context.store";
-  import { PopoverTriggerMethod } from "@nucleum/actions/popover.type";
-  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
+  import Tag from "@21n/ui/elements/text/Tag.svelte";
+  import { popover } from "@21n/ui/actions/popover.action";
+  import context from "@nucleum/client/runtime/context.store";
+  import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
+  import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import type { IAvatar } from "@21n/elements/avatarPicker/avatar.type";
+  import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 
   let {
     id,

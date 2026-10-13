@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { resolveTaskSubTypesForSwitcher } from "./task.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { onDestroy, onMount } from "svelte";
-  import { BulkEditor } from "@nucleum/stores/resources/bulk-editor";
+  import { BulkEditor } from "@nucleum/features/records/bulk-editor";
   import {
     TaskDueDateFilter,
     TaskSubTypeForSwitcher,
@@ -16,53 +16,47 @@
   import { isValidArray } from "@21n/shared-utils/obj.utils";
   import TaskRecords from "@nucleum/features/focus/tasks/TaskRecords.svelte";
   import { type IRecordId } from "@nucleum/schema/legacy/data.type";
-  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import InlineSearchBar from "@21n/ui/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import { page } from "$app/stores";
   import type { TaskLibrarySubType as SubType } from "./task.type";
-  import LibrarySubTypeSwitcher from "@nucleum/components/records/ResourceSubtypeSwitcher.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import {
-    activeResourceFilter,
-    archivedResourceFilter
-  } from "@21n/utils/utils";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import DatePickerRow from "@21n/elements/datetime/DatePickerRow.svelte";
-  import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { popover } from "@nucleum/actions/popover.action";
-  import {
-    compareDates,
-    parseAndFormatDate,
-    isSameDay
-  } from "@21n/utils/time.utils";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
+  import LibrarySubTypeSwitcher from "@nucleum/features/records/ResourceSubtypeSwitcher.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { activeResourceFilter, archivedResourceFilter } from "@nucleum/datafn/resource-filters";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import DatePickerRow from "@21n/ui/elements/datetime/DatePickerRow.svelte";
+  import CalendarRangePopover from "@21n/ui/elements/datetime/absolute/CalendarRangePopover.svelte";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { popover } from "@21n/ui/actions/popover.action";
+  import { compareDates, isSameDay } from "@21n/shared-utils/datetime/date-arithmetic";
+import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
     removeDuplicatesFilter,
     resourceAction
   } from "@nucleum/datafn/resource.utils";
-  import { ButtonVariant, ButtonStyle } from "@21n/elements/button/button.type";
+  import { ButtonVariant, ButtonStyle } from "@21n/ui/elements/button/button.type";
 
   import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
-  import { bulkEditStore } from "@nucleum/stores/resources/bulkedit.store";
-  import view from "@nucleum/stores/view.store";
-  import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
+  import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
+  import view from "@21n/ui/environment/view.store";
+  import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import { fly } from "svelte/transition";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import { resolveTaskDueDateFilters } from "@nucleum/features/focus/tasks/task.utils";
-  import { OptionSelectorStyle } from "@21n/elements/select/select.type";
+  import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
 
-  import { intersection } from "@nucleum/actions/intersection.action";
+  import { intersection } from "@21n/ui/actions/intersection.action";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import { dragSelection } from "@nucleum/actions/dragSelection.action";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { dragSelection } from "@21n/ui/actions/dragSelection.action";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
@@ -633,7 +627,7 @@
         class="w-32 flex items-center justify-center gap-2 text-b2 text-fgs2 font-medium tabular-nums h-full whitespace-nowrap cw:py-1 py-2 cw:px-2 px-4 rounded-l-md bg-bgs2 hover:bg-bgs3-striped border-r border-brs2"
         bind:this={dateSelectionPopoverRef}
         use:popover={{
-          content: AbsoluteTimeRangePopoverV2,
+          content: CalendarRangePopover,
           placement: Placement.BottomCenter,
           id: "date-picker-popover",
           isRenderAsModalForCW: true,

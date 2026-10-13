@@ -1,18 +1,18 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/store";
-  import LinkBoxOnClipper from "@nucleum/features/memory/common/linkbox/LinkBoxOnClipper.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
+  import LinkBoxOnClipper from "@nucleum/extensions/clipper/LinkBoxOnClipper.svelte";
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
   import { type IClip } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import NodeTitle from "@nucleum/features/memory/node/title/NodeTitle.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { fly } from "svelte/transition";
   import { resumeVideo } from "@nucleum/extensions/clipper/parsers/shared/video.utils";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
 

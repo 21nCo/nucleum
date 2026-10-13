@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import type { Snippet } from "svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import type { ISelectItem } from "@21n/elements/select/select.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import type { ISelectItem } from "@21n/ui/elements/select/select.type";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Product } from "@nucleum/client/config/product.type";
   import { Action } from "@nucleum/client/config/action.enum";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { page } from "$app/stores";
-  import BackButton from "@21n/elements/button/BackButton.svelte";
-  import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
-  import BoxButton from "@21n/elements/button/BoxButton.svelte";
+  import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
+  import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
+  import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
   let {
     panel = $bindable(CalendarLayout.Classic),
     children = undefined,

@@ -14,7 +14,7 @@ import type {
   ICollectible,
   ICollectionExpanded
 } from "@nucleum/features/collections/collection.type";
-import type { TimeScale } from "@21n/utils/time.type";
+import type { TimeScale } from "@21n/shared-utils/datetime/period.type";
 import type { ITask } from "@nucleum/features/focus/tasks/task.type";
 
 export enum ObjectiveType {

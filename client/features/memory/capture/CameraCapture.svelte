@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { onMount } from "svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import view from "@nucleum/stores/view.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import view from "@21n/ui/environment/view.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { cn } from "@21n/utils/ui.utils";
-  import { ErrorMessage } from "@nucleum/stores/notifications/error.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { ErrorMessage } from "@nucleum/shared-state/notifications/error.enum";
 
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import type { IActiveCaptureStore } from "@nucleum/features/memory/capture/capture.store";
@@ -16,7 +16,7 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
+  import PlayerControl from "@21n/ui/elements/player/controls/PlayerControl.svelte";
 
   let {
     captureStore,

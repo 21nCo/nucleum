@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { startTouch } from "@21n/utils/touchGesture";
+  import { startTouch } from "@nucleum/shell/interaction/touch-gestures";
   import MonthsHeader from "@nucleum/features/calendar/calendarHeatmap/MonthsHeader.svelte";
   import WeekDays from "@nucleum/features/calendar/calendarHeatmap/WeekDays.svelte";
   import { TileScale } from "@nucleum/features/calendar/calendarHeatmap/calendarHeatmap.types";

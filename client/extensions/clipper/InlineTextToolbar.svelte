@@ -1,25 +1,25 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import LinkBoxOnClipper from "@nucleum/features/memory/common/linkbox/LinkBoxOnClipper.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import LinkBoxOnClipper from "@nucleum/extensions/clipper/LinkBoxOnClipper.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
-  import { webpage } from "@nucleum/extensions/clipper/contentScripts/store";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
-  import LinkActionOnClipper from "@nucleum/features/memory/common/linkbox/LinkActionOnClipper.svelte";
+  import LinkActionOnClipper from "@nucleum/extensions/clipper/LinkActionOnClipper.svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import HighlightColors from "@nucleum/features/memory/common/highlighters/HighlightColors.svelte";
-  import { debouncer } from "@21n/utils/utils";
+  import { debouncer } from "@21n/shared-utils/debounce";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceError } from "@nucleum/datafn/resource-error";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     id = null,
     selectedHighlighterId = $bindable(null),

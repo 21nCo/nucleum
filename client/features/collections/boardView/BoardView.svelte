@@ -19,7 +19,7 @@
     resourceInList
   } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import type { IActiveCollectionStore } from "../collection.store";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";

@@ -1,6 +1,6 @@
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-import { sanitize } from "@21n/shared-utils/utils";
-import { isValidUrl } from "@21n/shared-utils/utils";
+import { sanitize } from "./embed-sanitizer";
+import { isValidUrl } from "@21n/shared-utils/url.utils";
 
 export const contentTypeMap: {
   contentType:

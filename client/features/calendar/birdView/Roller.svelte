@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tooltip } from "@nucleum/actions/popover.action";
+  import { tooltip } from "@21n/ui/actions/popover.action";
   import {
     Itemtype,
     type ProgrammedVerticalWheelEvent,
@@ -11,7 +11,7 @@
     getLastAlphabetPosition,
     waitForTimeout
   } from "@nucleum/features/calendar/birdView/Birdview.utils";
-  import { debouncer } from "@21n/utils/utils";
+  import { debouncer } from "@21n/shared-utils/debounce";
   import { onMount as onLifecycleMount } from "svelte";
 
   type BirthdateParts = {

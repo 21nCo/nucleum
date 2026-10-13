@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { rgbToHex } from "@21n/utils/ui.utils";
-  import { copyToClipboard } from "@21n/utils/utils";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { rgbToHex } from "@21n/ui/environment/colors";
+  import { copyToClipboard } from "@21n/shared-utils/clipboard";
 
   let { colors = [] }: { colors?: string[] | undefined } = $props();
 </script>

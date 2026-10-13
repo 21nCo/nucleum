@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { isSameDay } from "@21n/utils/time.utils";
-  import { abg, cn } from "@21n/utils/ui.utils";
+  import { isSameDay } from "@21n/shared-utils/datetime/date-arithmetic";
+  import { abg, cn } from "@21n/ui/environment/presentation";
   import {
     getDaysInMonth,
     getFirstAlphabetPosition,

@@ -3,8 +3,8 @@
     SessionCompositionType,
     type SessionComposition
   } from "@nucleum/features/focus/sessionComposition.type";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { bg, cn } from "@21n/utils/ui.utils";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { bg, cn } from "@21n/ui/environment/presentation";
   let {
     preset,
     isExpandedVariant,

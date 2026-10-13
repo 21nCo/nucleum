@@ -1,8 +1,6 @@
-import { activeResourceFilter } from "@21n/utils/utils";
+import { activeResourceFilter } from "@nucleum/datafn/resource-filters";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import {
-  determineResourceType,
-  removeDuplicatesFilter,
   resourceInList
 } from "@nucleum/datafn/resource.utils";
 import { isValidString } from "@21n/shared-utils/text.utils";
@@ -12,16 +10,11 @@ import type { CollectionType } from "@nucleum/features/collections/collection.ty
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { isValidArray, isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-import { extensionDatafn } from "@nucleum/extensions/extension.store";
-import { DatafnExtensionMethod } from "@nucleum/extensions/extension.store";
-import { appStore } from "@nucleum/stores/app.store";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { resolveCollectionResource } from "@nucleum/features/collections/collection.utils";
-import { recentsStore } from "@nucleum/stores/resources/recent.store";
+import { recentsStore } from "@nucleum/shared-state/resources/recent.store";
 import { get } from "svelte/store";
-import { clientStorage } from "@nucleum/persistence/persistence.utils";
-import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
-import { parse } from "@21n/shared-utils/json.utils";
 import {
   highlightSearchQuery,
   searchSort
@@ -41,7 +34,8 @@ const resolveSearchPriority = (item: any) => {
   return 2;
 };
 
-const combinedSearchSort = (a: any, b: any) => {
+/** Applies relevance, content type, and search order to linking results. */
+export const combinedSearchSort = (a: any, b: any) => {
   const priorityDiff = resolveSearchPriority(a) - resolveSearchPriority(b);
   if (priorityDiff !== 0) return priorityDiff;
 
@@ -299,89 +293,6 @@ export async function queryLinkingSearchResults(
   }
   if (params?.exclude) {
     data = data.filter((x) => !params.exclude?.some(resourceInList(x.id)));
-  }
-  return data;
-}
-
-export async function queryLinkingSearchResultsOnExtension(
-  query: string,
-  resource?: Resource
-) {
-  let nodes: unknown[] = [];
-  const isValidSearchQuery = isValidString(query);
-  if (resource === Resource.node || !resource) {
-    nodes = (await extensionDatafn({
-      method: DatafnExtensionMethod.SELECT_MANY,
-      args: {
-        resource: Resource.node,
-        params: {
-          filters: {
-            contentType: { $in: [...rootNodeTypeList, ...headingNodeTypes] }
-          },
-          search: isValidSearchQuery
-            ? {
-                fields: ["body", "label", "text"],
-                query
-              }
-            : undefined,
-          limit: 100,
-          sort: isValidSearchQuery ? undefined : ["-updatedAt"]
-        }
-      }
-    })) as unknown[];
-  }
-  let collections: unknown[] = [];
-  if (resource === Resource.collection || !resource) {
-    collections = (await extensionDatafn({
-      method: DatafnExtensionMethod.SELECT_MANY,
-      args: {
-        resource: Resource.collection,
-        params: {
-          filters: {
-            resource: Resource.node
-          },
-          search: isValidSearchQuery
-            ? {
-                fields: ["label"],
-                query
-              }
-            : undefined,
-          limit: 100,
-          sort: isValidSearchQuery ? undefined : ["-updatedAt"]
-        }
-      }
-    })) as unknown[];
-  }
-  let recentItemsArray = [];
-  if (!isValidSearchQuery) {
-    try {
-      const recentItems = await clientStorage.get(ClientStorageKey.RECENTS);
-      recentItemsArray = recentItems ? parse(recentItems) : [];
-      if (recentItemsArray.length > 0) {
-        recentItemsArray = recentItemsArray.filter((x: any) => {
-          const itemResourceType = determineResourceType(x.id);
-          return (
-            itemResourceType === resource ||
-            (!resource &&
-              (itemResourceType === Resource.node ||
-                itemResourceType === Resource.collection))
-          );
-        });
-      }
-    } catch (e) {
-      logger.error({
-        at: "queryLinkingSearchResultsOnExtension - recentItems",
-        error: e
-      });
-    }
-  }
-  let data = [...recentItemsArray, ...(nodes ?? []), ...(collections ?? [])]
-    .filter(activeResourceFilter)
-    .filter(removeDuplicatesFilter);
-  if (isValidString(query) && isValidArray(data)) {
-    data = highlightSearchQuery(data, query);
-    data = data.filter((x) => x.labelSearch || x.bodySearch);
-    data = data.sort(combinedSearchSort);
   }
   return data;
 }

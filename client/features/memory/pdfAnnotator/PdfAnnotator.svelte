@@ -18,28 +18,28 @@
     PdfHandler,
     viewportToScaled
   } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.utils";
-  import { debouncer } from "@21n/utils/utils";
+  import { debouncer } from "@21n/shared-utils/debounce";
   import { mount, onDestroy, onMount, unmount } from "svelte";
-  import TextHiglighter from "@nucleum/features/memory/pdfAnnotator/TextHiglighter.svelte";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
+  import TextHighlighter from "@nucleum/features/memory/pdfAnnotator/TextHighlighter.svelte";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import InlineToolBar from "@nucleum/features/memory/pdfAnnotator/toolbar/InlineToolBar.svelte";
   import Comment from "@nucleum/features/memory/pdfAnnotator/comment/Comment.svelte";
   import InlineEditToolBar from "@nucleum/features/memory/pdfAnnotator/toolbar/InlineEditToolBar.svelte";
   import CommentEditor from "@nucleum/features/memory/pdfAnnotator/comment/CommentEditor.svelte";
   import ToolBar from "@nucleum/features/memory/pdfAnnotator/toolbar/ToolBar.svelte";
   import { FindState } from "pdfjs-dist/web/pdf_viewer.mjs";
-  import { Size } from "@21n/elements/size.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import type { IHighlighter } from "@nucleum/features/memory/common/highlighters/highlight.type";
   import { highlightStore } from "@nucleum/features/memory/common/highlighters/highlight.store";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { Embed, OperatingSystem } from "@nucleum/client/runtime/context.type";
-  import { fileStore } from "@nucleum/stores/files/file.store";
+  import { fileStore } from "@nucleum/shared-state/files/file.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { fileEmbedChannel } from "@nucleum/stores/files/fileEmbedChannel.store";
+  import { fileEmbedChannel } from "@nucleum/shared-state/files/fileEmbedChannel.store";
   import { fly } from "svelte/transition";
   import type { IPdfBookmarkBody } from "@nucleum/features/memory/node/node.type";
 
@@ -349,7 +349,7 @@
         });
         highlightLayerComponents.get(highlightsContainer)?.push(component);
       } else if (highlight.annotType !== "SHAPE") {
-        const component = mount(TextHiglighter, {
+        const component = mount(TextHighlighter, {
           target: highlightsContainer,
           props: {
             rects: modifiedRects,

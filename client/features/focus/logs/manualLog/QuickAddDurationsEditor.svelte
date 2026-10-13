@@ -1,16 +1,16 @@
 <script lang="ts">
-  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
-  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonVariant, ButtonStyle } from "@21n/elements/button/button.type";
-  import { bg, cn } from "@21n/utils/ui.utils";
-  import type { InputLabel } from "@21n/elements/input/input.type";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { rearrangeOnAxis } from "@nucleum/actions/rearrange.action";
+  import FormControlLabelWrapper from "@21n/ui/elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import DurationInput from "@21n/ui/compositions/datetime/durationInput/DurationInput.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonVariant, ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { bg, cn } from "@21n/ui/environment/presentation";
+  import type { InputLabel } from "@21n/ui/elements/input/input.type";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { rearrangeOnAxis } from "@21n/ui/actions/rearrange.action";
   import { moveItemInArray } from "@21n/shared-utils/obj.utils";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { Size } from "@21n/elements/size.enum";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     values = $bindable<number[]>([]),

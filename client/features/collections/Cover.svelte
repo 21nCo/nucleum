@@ -1,19 +1,19 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import ToggleGroup from "@21n/elements/toggle/ToggleGroup.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import CoverRenderer from "@nucleum/features/records/cover/CoverRenderer.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import ToggleGroup from "@21n/ui/elements/toggle/ToggleGroup.svelte";
   import type { ICoverLayout } from "@nucleum/features/collections/collection.type";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import type { IImageRepositionerOptions } from "@nucleum/stores/files/file.type";
-  import { resizable } from "@nucleum/actions/resize.action";
-  import view from "@nucleum/stores/view.store";
-  import { debouncer } from "@21n/utils/utils";
-  import context from "@nucleum/stores/context.store";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import type { IImageRepositionerOptions } from "@nucleum/shared-state/files/file.type";
+  import { resizable } from "@21n/ui/actions/resize.action";
+  import view from "@21n/ui/environment/view.store";
+  import { debouncer } from "@21n/shared-utils/debounce";
+  import context from "@nucleum/client/runtime/context.store";
 
   let {
     cover = $bindable(),

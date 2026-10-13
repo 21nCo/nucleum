@@ -1,24 +1,23 @@
 <script lang="ts">
   import "@nucleum/client/app.css";
   import ClipsPane from "@nucleum/extensions/clipper/sidePanel/clips/ClipsPane.svelte";
-  import { ExtensionEvent } from "@nucleum/extensions/extension.type";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
+  import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import { onDestroy, onMount } from "svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import {
-    openAppPath,
-    relayToContentScript
-  } from "@21n/utils/extension.utils";
+  import { openAppPath } from "@nucleum/extensions/navigation";
+import { relayToContentScript } from "@nucleum/client/runtime/extensions/messaging";
   import type { IClip } from "@nucleum/features/memory/node/node.type";
   import ExtensionBaseLayer from "@nucleum/extensions/ExtensionBaseLayer.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import account from "@nucleum/stores/account.store";
-  import { resolveToken } from "@21n/utils/account.utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { accountSession } from "@nucleum/surfaces/account/account-session";
+  import { resolveToken } from "@nucleum/client/runtime/account/session-token";
   import { getPort } from "@plasmohq/messaging/port";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { BarStyle, PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
   import { extensionDatafn } from "@nucleum/extensions/extension.store";
   import {
@@ -26,31 +25,31 @@
     memotronUrlsList,
     sidePanelUnavailableUrlsList
   } from "@nucleum/features/memory/common/urlMap";
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Placement } from "@21n/elements/direction.enum";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Placement } from "@21n/ui/elements/direction.enum";
   import {
     OptionSelectorStyle,
     type ISelectItem
-  } from "@21n/elements/select/select.type";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
-  import { AlertType, type IInlineStatus } from "@nucleum/stores/notifications/notification.type";
-  import { cn } from "@21n/utils/ui.utils";
+  } from "@21n/ui/elements/select/select.type";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
+  import { AlertType, type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
+  import { cn } from "@21n/ui/environment/presentation";
   import { fly } from "svelte/transition";
   import { Extension, Product } from "@nucleum/client/config/product.type";
   import ExtensionHelp from "@nucleum/extensions/shared/ExtensionHelp.svelte";
   import { DatafnExtensionMethod } from "@nucleum/extensions/extension.store";
   import SidePanelCollections from "@nucleum/extensions/clipper/sidePanel/collectionsOnClipper/SidePanelCollections.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import { clientStorage } from "@nucleum/persistence/persistence.utils";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import { clientStorage } from "@nucleum/persistence/client-storage";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
-  import InlineSyncingFeedbackBase from "@21n/elements/feedback/InlineSyncingFeedbackBase.svelte";
+  import InlineSyncingFeedbackBase from "@21n/ui/elements/feedback/InlineSyncingFeedbackBase.svelte";
   import { SidePanelPageType } from "@nucleum/extensions/clipper/sidePanel/sidePanel.type";
   import {
-    resolveContentTypeForUrl,
     resolveContentTypeString
   } from "@nucleum/extensions/clipper/clipper.utils";
+  import { resolveContentTypeForUrl } from "@nucleum/features/memory/capture/browser-tab-data";
   import { parse } from "@21n/shared-utils/json.utils";
   import { ExtensionStore } from "@nucleum/extensions/extension.store";
 
@@ -281,7 +280,7 @@
     const token = await resolveToken();
     logger.log({ at: "SidePanel - refreshState", token });
     if (token) {
-      if (!$account) account.init();
+      if (!$account) accountSession.init();
       isLoggedIn = true;
     } else {
       isLoggedIn = false;
@@ -589,7 +588,7 @@
                 type={ButtonVariant.DANGER}
                 style={ButtonStyle.OUTLINED}
                 onclick={() => {
-                  account.signOut();
+                  accountSession.signOut();
                   clips = [];
                   isPageSaved = false;
                   relayToContentScript({

@@ -3,8 +3,8 @@
     SubObjectivesLayout,
     type SubObjectivesLayoutValue
   } from "@nucleum/features/focus/goals/goal.type";
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
 
   let {
     layout = $bindable(),

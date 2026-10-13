@@ -11,20 +11,17 @@
     "@nucleum/features": "*",
     "@nucleum/schema": "*",
     "jszip": "^3.10.1",
-    "svelte": "^5.55.0"
+    "svelte": "^5.55.0",
+    "@nucleum/shell": "*"
   },
   "exports": {
     "./*": "./*"
   },
   "peerDependencies": {
-    "@21n/branding": "*",
-    "@21n/elements": "*",
-    "@21n/layout": "*",
     "@21n/shared-utils": "*",
-    "@21n/utils": "*",
-    "@nucleum/actions": "*",
-    "@nucleum/application": "*",
+    "@nucleum/shared-state": "*",
     "@nucleum/client": "*",
-    "@nucleum/stores": "*"
+    "@21n/ui": "*",
+    "@nucleum/surfaces": "*"
   }
 }

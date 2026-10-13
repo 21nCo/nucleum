@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { resizeListener } from "@nucleum/actions/resize.action";
-  import appearance from "@nucleum/stores/appearance.store";
-  import { retrieveCurrentColors } from "@21n/utils/theme.utils";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
+  import { retrieveCurrentColors } from "@21n/theme/color-presentation";
   import { truncateString } from "@21n/shared-utils/text.utils";
   import { Graph, GraphEvent, NodeEvent, CanvasEvent } from "@antv/g6";
   import { onMount } from "svelte";

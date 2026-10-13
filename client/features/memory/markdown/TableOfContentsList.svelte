@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import {
     isSameResource,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import { tooltip } from "@nucleum/actions/popover.action";
+  import { tooltip } from "@21n/ui/actions/popover.action";
 
   let {
     headingBlocks,

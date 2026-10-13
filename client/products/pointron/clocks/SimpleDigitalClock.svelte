@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { currentTime } from "@nucleum/stores/app.store";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { formatTime } from "@21n/utils/time.utils";
+  import { currentTime } from "@nucleum/shared-state/app-context/app.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
 </script>
 
 <div class="flex flex-col items-center justify-center gap-2 w-full h-full">

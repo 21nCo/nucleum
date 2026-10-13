@@ -1,10 +1,10 @@
 <script lang="ts">
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import context from "@nucleum/stores/context.store";
-  import { ModifierKey } from "@21n/elements/keyboard/keyboard.type";
-  import { resolveShortcutText } from "@21n/elements/keyboard/shortcut.utils";
+  import context from "@nucleum/client/runtime/context.store";
+  import { ModifierKey } from "@21n/ui/elements/keyboard/keyboard.type";
+  import { resolveShortcutText } from "@21n/ui/elements/keyboard/shortcut.utils";
   import { BlockAction } from "@nucleum/features/memory/markdown/md.type";
-import { InlineType } from "@21n/elements/markdown/inline.type";
+import { InlineType } from "@21n/ui/elements/markdown/inline.type";
 
   let {
     row = undefined,

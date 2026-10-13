@@ -7,9 +7,9 @@ import type {
 } from "@nucleum/extensions/clipper/clipper.type";
 import {
   findAncestorOrSelf,
-  parseFullDateTimeString,
-  resolveOgData
+  parseFullDateTimeString
 } from "@nucleum/extensions/clipper/parsers/shared/domUtils";
+import { resolveOgData } from "@nucleum/features/memory/capture/browser-tab-data";
 
 const blueSkyPostThreadSelector = '[data-testid^="postThreadItem-"]';
 

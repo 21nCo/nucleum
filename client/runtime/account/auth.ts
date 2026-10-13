@@ -7,14 +7,14 @@ import {
   type AuthFnTransportAuthOptions
 } from "@authfn/client";
 import type { HttpTransportAuthProvider } from "@superfunctions/http";
-import { clientStorage } from "@nucleum/persistence/persistence.utils";
+import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import {
   resolveAccountBaseUrl,
   resolveAccountCookiePrefix
 } from "@nucleum/client/runtime/account/network";
 import { logger } from "@nucleum/client/runtime/logging/logger";
-import { isExtensionEnvironment } from "@21n/utils/browser.utils";
+import { isExtensionEnvironment } from "@21n/shared-utils/browser-environment";
 import { determineIfOffline } from "@nucleum/client/runtime/connectivity";
 import type {
   AuthSessionResolution,

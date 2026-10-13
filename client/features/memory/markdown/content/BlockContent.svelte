@@ -10,7 +10,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import CodeContent from "@nucleum/features/memory/markdown/content/CodeContent.svelte";
   import ListContent from "@nucleum/features/memory/markdown/lists/ListContent.svelte";
   import HeadingContent from "@nucleum/features/memory/markdown/content/HeadingContent.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     mdStore,
     block,

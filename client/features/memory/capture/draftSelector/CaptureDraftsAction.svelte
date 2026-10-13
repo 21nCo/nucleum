@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { popover } from "@nucleum/actions/popover.action";
+  import { popover } from "@21n/ui/actions/popover.action";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import type { ICapture } from "@nucleum/features/memory/capture/capture.type";
   import { onMount } from "svelte";
   import DraftsPopover from "@nucleum/features/memory/capture/draftSelector/DraftsPopover.svelte";
-  import { Placement } from "@21n/elements/direction.enum";
+  import { Placement } from "@21n/ui/elements/direction.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
   let {

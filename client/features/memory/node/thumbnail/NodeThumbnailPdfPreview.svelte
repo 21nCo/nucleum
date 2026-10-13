@@ -1,6 +1,6 @@
 <script lang="ts">
   import { hideOnOverlay } from "@nucleum/features/memory/node/thumbnail/pdf-overlay.action";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
 
   let { url = "" }: { url?: string } = $props();
 </script>

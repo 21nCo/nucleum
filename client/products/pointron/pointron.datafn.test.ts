@@ -7,11 +7,11 @@ import {
 } from "@nucleum/datafn/datafn.store";
 import { Product } from "@nucleum/client/config/product.type";
 import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
-import { appStore } from "@nucleum/stores/app.store";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { focusAggregates } from "@nucleum/features/focus/analytics/analytics.store";
-import { recentsStore } from "@nucleum/stores/resources/recent.store";
+import { recentsStore } from "@nucleum/shared-state/resources/recent.store";
 import { BlockType } from "@nucleum/features/focus/session.type";
 import { SessionType } from "@nucleum/features/focus/logs/log.type";
 import { ObjectiveStatus, ObjectiveType } from "@nucleum/features/focus/goals/goal.type";

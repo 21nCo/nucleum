@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import { resizeListener } from "@nucleum/actions/resize.action";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import type { ISessionThumb } from "@nucleum/features/focus/logs/log.type";
   import LogThumbnailObjectivesInfo from "@nucleum/features/focus/logs/LogThumbnailGoalsInfo.svelte";
 
-  import { formatTime } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
+  import { cn } from "@21n/ui/environment/presentation";
   import FocusEntryGoalsInfoShort from "@nucleum/features/calendar/column/timeline/focusEntry/FocusEntryGoalsInfoShort.svelte";
   import FocusEntryFocusSplitInfo from "@nucleum/features/calendar/column/timeline/focusEntry/FocusEntryFocusSplitInfo.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     item,

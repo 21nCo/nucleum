@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import {
     BlockAction,
@@ -25,18 +25,18 @@
     listNodeTypes
   } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { setContext } from "svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { copyToClipboard } from "@21n/utils/utils";
+  import { copyToClipboard } from "@21n/shared-utils/clipboard";
   import {
     confirmationNotification,
     toasts
-  } from "@nucleum/stores/notification.store";
-  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
-  import { MemotronEvent } from "@nucleum/client/config/events/memory-event.enum";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import view from "@nucleum/stores/view.store";
+  } from "@nucleum/shared-state/notifications/notification.store";
+  import { dispatchCustomEvent } from "@21n/shared-utils/dom-events";
+  import { MemotronEvent } from "@nucleum/shared-state/events/memory-event.enum";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import view from "@21n/ui/environment/view.store";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
   import {
@@ -47,11 +47,11 @@
     resolvePlainOffsetForMdEnd,
     resolvePlainText,
     splitMarkdownAtPlainOffset
-  } from "@21n/elements/markdown/markdown.utils";
+  } from "@21n/ui/elements/markdown/markdown.utils";
   import { isValidString } from "@21n/shared-utils/text.utils";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { fileDrop } from "@nucleum/actions/fileDrop.action";
-  import { MAX_FILE_SIZE_MB } from "@nucleum/stores/files/file.constants";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { fileDrop } from "@21n/ui/actions/fileDrop.action";
+  import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
   import { resolveFileUploadErrorMessage } from "@nucleum/features/memory/capture/upload-error.utils";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
@@ -59,28 +59,29 @@
     resolveMultipleFilesData,
     resolvePasteContents
   } from "@nucleum/features/memory/capture/capture.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
-  import account from "@nucleum/stores/account.store";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { isCloudUserAndOffline } from "@nucleum/client/runtime/account/account.utils";
 
   import { wait } from "@21n/shared-utils/wait";
 
   import type { IMultiFileCaptureData } from "@nucleum/features/memory/capture/capture.type";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import FocusRing from "@nucleum/features/memory/markdown/contextMenu/FocusRing.svelte";
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { observeAttributes } from "@nucleum/actions/observe.action";
-  import context from "@nucleum/stores/context.store";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { observeAttributes } from "@21n/ui/actions/observe.action";
+  import context from "@nucleum/client/runtime/context.store";
 
-  import { rightswipe } from "@nucleum/actions/gestures.action";
+  import { rightswipe } from "@21n/ui/actions/gestures.action";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "@nucleum/features/memory/capture/capture.store";
 
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
   let {
@@ -867,7 +868,7 @@
     errors: { file: File; type: string }[]
   ) {
     try {
-      if (account.isCloudUserAndOffline()) {
+      if (isCloudUserAndOffline($account, $context.isInOfflineMode)) {
         confirmationNotification.notify({
           title: "Offline",
           message:

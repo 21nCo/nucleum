@@ -1,4 +1,4 @@
-import { convertToRGBA } from "@21n/utils/ui.utils";
+import { convertToRGBA } from "@21n/ui/environment/colors";
 import $ from "jquery";
 
 1;

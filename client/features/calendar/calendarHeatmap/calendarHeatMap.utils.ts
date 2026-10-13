@@ -12,7 +12,7 @@ import type {
   YearlyData
 } from "@nucleum/features/calendar/calendarHeatmap/calendarHeatmap.types";
 import { CalendarHeatMapData } from "@nucleum/features/calendar/calendarHeatmap/calendarHeatmap.store";
-import { TimeScale } from "@21n/utils/time.type";
+import { TimeScale } from "@21n/shared-utils/datetime/period.type";
 import { kmeans } from "ml-kmeans";
 
 let profileStartdate = "2023-02-19"; //replace the value with with logs start date variable

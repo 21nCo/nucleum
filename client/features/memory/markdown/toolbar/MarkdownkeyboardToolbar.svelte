@@ -1,21 +1,21 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import KeyboardToolbar from "@21n/ui/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
   import { embedNodeTypeList, mediaNodeTypeList, structuralNodeTypes, webNodeTypeList } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "@21n/elements/switcher/switcher.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  } from "@21n/ui/elements/switcher/switcher.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { properCase } from "@21n/shared-utils/text.utils";
   import { fly } from "svelte/transition";
   import { resolveBlockBrowserConfigOnKeyboard } from "@nucleum/features/memory/markdown/blockBrowser/blockBrowser.utils";
@@ -24,7 +24,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import MdKeyboardKeysRow from "@nucleum/features/memory/markdown/toolbar/MdKeyboardKeysRow.svelte";
   import { getContext } from "svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   const nodeContext = getContext<any>(Context.NODE);
 
   let {

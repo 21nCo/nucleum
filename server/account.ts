@@ -1,7 +1,7 @@
 import { globalDbo } from "$lib/shared/dbo/global.dbo";
 import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
 import { pointronTables } from "$lib/shared/dbo/pointron.tables";
-import { extractProduct } from "$lib/shared/utils/utils";
+import { extractProduct } from "$lib/shared/utils/product-host";
 import {
   performQueryOnMasterDb,
   performAgentProxyQuery

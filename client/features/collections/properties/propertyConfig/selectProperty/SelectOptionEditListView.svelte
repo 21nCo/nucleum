@@ -2,10 +2,10 @@
   import type { IPropertyConfigOption } from "@nucleum/features/collections/properties/property.type";
   import SelectOptionEditItemView from "@nucleum/features/collections/properties/propertyConfig/selectProperty/SelectOptionEditItemView.svelte";
   import type { IPropertyConfigOptionGroup } from "@nucleum/features/collections/properties/property.type";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   let {
     options,
     group = undefined,

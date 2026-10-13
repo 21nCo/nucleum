@@ -1,14 +1,14 @@
 <script lang="ts">
-  import ProfilePicture from "@nucleum/application/settings/account/ProfilePicture.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import account from "@nucleum/stores/account.store";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
+  import ProfilePicture from "@nucleum/surfaces/account/profile/ProfilePicture.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { isValidString } from "@21n/shared-utils/text.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
+  import OfflineStatusIndicator from "@nucleum/surfaces/settings/sync/OfflineStatusIndicator.svelte";
   let {
     transitionDuration = 250,
     onSettings = undefined
@@ -50,7 +50,7 @@
     </button>
   </div>
   <div class="flex items-center gap-2">
-    <OfflineStatusMessage />
+    <OfflineStatusIndicator />
     <Button
       icon="gear"
       style={ButtonStyle.OUTLINED}

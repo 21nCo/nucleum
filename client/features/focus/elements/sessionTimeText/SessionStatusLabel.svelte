@@ -3,8 +3,8 @@
   import { BlockType } from "@nucleum/features/focus/session.type";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
   import { SessionType } from "@nucleum/features/focus/logs/log.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   let {
     size = Size.md,
     isDefaultColor = false

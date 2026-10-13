@@ -2,25 +2,27 @@
   import type { IHighlighter } from "@nucleum/features/memory/common/highlighters/highlight.type";
   import { onMount } from "svelte";
   import HightlightColorItem from "@nucleum/features/memory/common/highlighters/HightlightColorItem.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import { Placement, Orientation } from "@21n/elements/direction.enum";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { webpage, toolbarState, syncStore } from "@nucleum/extensions/clipper/contentScripts/store";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { Placement, Orientation } from "@21n/ui/elements/direction.enum";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
+import { toolbarState } from "@nucleum/extensions/clipper/contentScripts/toolbar.store";
+import { syncStore } from "@nucleum/extensions/clipper/contentScripts/sync.store";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import {
     saveOnlyPages,
     screenShotOnlyPages
   } from "@nucleum/features/memory/common/urlMap";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { highlightStore } from "@nucleum/features/memory/common/highlighters/highlight.store";
-  import { ExtensionEvent } from "@nucleum/extensions/extension.type";
-  import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+  import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
+  import { relayToBackgroundScript } from "@nucleum/client/runtime/extensions/messaging";
   import { fly, scale } from "svelte/transition";
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import { hoverable } from "@nucleum/actions/hover.action";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import { hoverable } from "@21n/ui/actions/hover.action";
   import { resolveContentTypeString } from "@nucleum/extensions/clipper/clipper.utils";
 
   let {

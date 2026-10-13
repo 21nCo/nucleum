@@ -1,7 +1,7 @@
 <script lang="ts">
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
   import { onMount } from "svelte";
-  import appearance from "@nucleum/stores/appearance.store";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import MastodonWidgetScript from "@nucleum/features/memory/node/content/web/social/MastodonWidgetScript.svelte";
   import { parse } from "@21n/shared-utils/json.utils";

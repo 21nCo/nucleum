@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { Control } from "@nucleum/features/focus/elements/controls/control.enum";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
@@ -8,7 +8,7 @@
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import { SessionType } from "@nucleum/features/focus/logs/log.type";
 
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";
 
   let { context = SessionUIContext.DEFAULT }: { context?: SessionUIContext } =

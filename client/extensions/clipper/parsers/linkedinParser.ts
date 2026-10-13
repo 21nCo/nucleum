@@ -1,12 +1,10 @@
 import type { OmitForCapture } from "@nucleum/datafn/resource.type";
 import { type ILinkedInPost, type ILinkedInProfile } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-import { parseRelativeTimeToISO } from "@21n/utils/time.utils";
+import { parseRelativeTimeToISO } from "@21n/shared-utils/datetime/date-parsing";
 import type { ISocialPost } from "@nucleum/extensions/clipper/clipper.type";
-import {
-  findAncestorOrSelf,
-  resolveOgData
-} from "@nucleum/extensions/clipper/parsers/shared/domUtils";
+import { findAncestorOrSelf } from "@nucleum/extensions/clipper/parsers/shared/domUtils";
+import { resolveOgData } from "@nucleum/features/memory/capture/browser-tab-data";
 
 export function extractLinkedInPostFromPage():
   | ISocialPost<ILinkedInPost, ILinkedInProfile>

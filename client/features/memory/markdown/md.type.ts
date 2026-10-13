@@ -1,4 +1,4 @@
-import type { IAvatar } from "@21n/elements/avatarPicker/avatar.type";
+import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import type { ListType, SimpleTextNodeType, ListNodeType, INodeStructure, INodeMetadata } from "@nucleum/features/memory/node/node.type";
 import type { NodeType } from "@nucleum/schema/legacy/node-type.enum";

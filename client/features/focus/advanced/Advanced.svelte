@@ -1,17 +1,17 @@
 <script lang="ts">
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import FocusItemList from "@nucleum/features/focus/elements/focusitem/FocusItemList.svelte";
   import IntervalBar from "@nucleum/features/focus/elements/intervalbar/IntervalBar.svelte";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import AdvancedPortrait from "@nucleum/features/focus/advanced/AdvancedPortrait.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import TimeComposition from "@nucleum/features/focus/advanced/composition/TimeComposition.svelte";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";
-  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import FormLabelTooltip from "@21n/ui/elements/text/formLabel/FormLabelTooltip.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { advancedCompositionDraft } from "@nucleum/features/focus/advanced/composition/advancedCompositionDraft.store";
 
   let isExpandedMode = $derived(

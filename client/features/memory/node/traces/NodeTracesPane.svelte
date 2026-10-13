@@ -1,30 +1,30 @@
 <script lang="ts">
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import { hexToRGBA } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.utils";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import { getContext } from "svelte";
   import { canHaveTraces, type IPdfBookmarkBody, socialProfileNodeTypeList } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { highlightStore } from "@nucleum/features/memory/common/highlighters/highlight.store";
   import { AnnotationType } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.type";
-  import { requireRecordRenderer } from "@nucleum/stores/resources/record-renderer";
+  import { requireRecordRenderer } from "@nucleum/shared-state/resources/record-renderer";
   const Resources = requireRecordRenderer();
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { convertDateStringToArray } from "@21n/utils/utils";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { convertDateStringToArray } from "@21n/shared-utils/datetime/user-date";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import NodeTasksPane from "@nucleum/features/memory/node/traces/NodeTasksPane.svelte";
   import { resolveNodeIcon } from "@nucleum/features/memory/node/node.utils";
-  import { preferences } from "@nucleum/stores/preferences/preferences.store";
-  import { Preference } from "@nucleum/stores/preferences/preferences.type";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
+  import { Preference } from "@nucleum/shared-state/preferences/preferences.type";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { derived } from "svelte/store";
-  import Icon from "@21n/elements/Icon.svelte";
-  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import InlineSearchBar from "@21n/ui/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   const contentContext = getContext<any>("content");
 
   let {

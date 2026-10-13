@@ -14,7 +14,7 @@ import {
   type IBlock
 } from "@nucleum/features/memory/markdown/md.type";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import { ObservableStore } from "@nucleum/stores/client.store";
+import { ObservableStore } from "@nucleum/datafn/observable-store";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import {

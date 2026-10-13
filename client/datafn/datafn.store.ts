@@ -1,42 +1,39 @@
 import {
-  createDatafnPublicLinkAuthPlugin,
   createDatafnClient,
-  IndexedDbStorageAdapter,
   type DatafnClient,
-  type DatafnE2eeConfig,
   type DatafnHttpTransportOptions,
   type DatafnSyncStatus,
   type DatafnStorageAdapter
 } from "@datafn/client";
 import {
   nucleumDatafnSchema,
-  nucleumDatafnSearchDefaults,
-  nucleumDatafnSearchPipeline,
   resolveNucleumDatafnSearchIndexVersion,
-  resolveNucleumDatafnSearchResourceFields,
-  type NucleumDatafnResource,
   type NucleumDatafnSchema
 } from "@nucleum/schema";
-import { createSearchProvider } from "@searchfn/datafn-provider";
-import { IndexedDbAdapter } from "@searchfn/adapter-indexeddb";
-import { resolveProductResourceConfig } from "@nucleum/schema/product.config";
+import {
+  resolveDatafnBootResources,
+  resolveDatafnBackgroundResources
+} from "@nucleum/datafn/resource-selection";
+import {
+  resolveDatafnNamespace,
+  resolveDatafnMode,
+  resolveDatafnOfflinabilityPreference,
+  setDatafnOfflinabilityPreference,
+  type InitializeNucleumDatafnInput,
+  type NucleumDatafnMode
+} from "@nucleum/datafn/runtime-policy";
 import { resolveAccountBaseUrl } from "@nucleum/client/runtime/account/network";
-import { createNucleumAuthFnTransportAuth } from "@nucleum/client/runtime/account/auth";
+import { createNucleumDatafnHttpOptions } from "@nucleum/datafn/remote-transport";
 import type { Product } from "@nucleum/client/config/product.type";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
-import {
-  clientStorage,
-  deleteIndexedDbDatabase,
-  getDapId
-} from "@nucleum/persistence/persistence.utils";
+import { clientStorage } from "@nucleum/persistence/client-storage";
+import { getDapId } from "@nucleum/persistence/device-id";
 import type { UserAccount } from "@nucleum/client/runtime/account/account.type";
 import type { NucleumDatafnE2eeSettings } from "@nucleum/datafn/e2ee.type";
 import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
 import { get, writable } from "svelte/store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
-import { compareObjects } from "@21n/shared-utils/obj.utils";
 import {
-  DATAFN_E2EE_KV_KEY,
   createDisabledDatafnE2eeSettings,
   createDatafnE2eeSetup,
   datafnE2eeState,
@@ -44,11 +41,28 @@ import {
   getCachedDatafnE2eeProvider,
   getLocalDatafnE2eeSettings,
   persistDatafnE2eeSettings,
-  rewrapCachedDatafnE2eeKey,
-  unlockDatafnE2eeSettings
+  rewrapCachedDatafnE2eeKey
 } from "@nucleum/datafn/datafnE2ee.store";
 
-export type NucleumDatafnMode = "local-only" | "sync" | "sync-direct";
+import {
+  type SearchProvider,
+  createNucleumClientSearchProvider,
+  disposeNucleumDatafnSearchProvider
+} from "./search-provider";
+import { generateDatafnId } from "./record-id";
+import {
+  readRemoteDatafnE2eeSettings,
+  writeRemoteDatafnE2eeSettings,
+  clearDatafnE2eeRecovery,
+  resolveDatafnE2eeConfig
+} from "@nucleum/datafn/encryption-settings";
+import {
+  deleteDatafnLocalClone,
+  closeNucleumDatafnRuntimeStorage,
+  createDatafnStorage,
+  migrateDatafnNodeMdChildOrder,
+  resolveDatafnStorageDbName
+} from "@nucleum/datafn/storage-lifecycle";
 
 export type NucleumDatafnStatus = DatafnSyncStatus & {
   namespace: string | null;
@@ -58,45 +72,6 @@ export type NucleumDatafnStatus = DatafnSyncStatus & {
   remoteUrl: string | null;
   bootResources: string[];
   backgroundResources: string[];
-};
-
-type SearchProvider = {
-  readonly name: string;
-  search(params: {
-    resource: string;
-    query: string;
-    type?: "fullText" | "semantic";
-    fields?: string[];
-    limit?: number;
-    prefix?: boolean;
-    fuzzy?: boolean | number;
-    fieldBoosts?: Record<string, number>;
-    namespaceFilter?: string[];
-    regionFilter?: string[];
-    signal?: AbortSignal;
-  }): Promise<string[]>;
-  searchAll?(params: {
-    query: string;
-    resources?: string[];
-    fields?: string[];
-    limit?: number;
-    limitPerResource?: number;
-    prefix?: boolean;
-    fuzzy?: boolean | number;
-    fieldBoosts?: Record<string, number>;
-    namespaceFilter?: string[];
-    regionFilter?: string[];
-    signal?: AbortSignal;
-  }): Promise<Array<{ resource: string; id: string; score: number }>>;
-  updateIndices(params: {
-    resource: string;
-    records: Record<string, unknown>[];
-    operation: "upsert" | "delete";
-  }): Promise<void>;
-  initialize?(config: {
-    resources: Array<{ name: string; searchFields: string[] }>;
-  }): Promise<void>;
-  dispose?(): Promise<void>;
 };
 
 export type NucleumDatafnRuntime = {
@@ -111,18 +86,6 @@ export type NucleumDatafnRuntime = {
   e2eeKeyRef?: string | null;
   destroy: () => Promise<void>;
 };
-
-export type InitializeNucleumDatafnInput = {
-  product: Product;
-  account: Pick<UserAccount, "dataMode" | "userId" | "userInfo">;
-  env?: string;
-  appVersion?: string;
-  dapId?: string;
-  isOffline?: boolean;
-  isOfflinabilityEnabled?: boolean;
-};
-
-const datafnOfflinabilityDefault = true;
 
 const initialStatus: NucleumDatafnStatus = {
   status: "idle",
@@ -142,54 +105,16 @@ const initialStatus: NucleumDatafnStatus = {
 };
 
 const runtimeStore = writable<NucleumDatafnRuntime | null>(null);
+
 export const datafnRuntime = runtimeStore;
+
 export const nucleumDatafnStatus = writable<NucleumDatafnStatus>(initialStatus);
+
 let datafnSearchProvider: SearchProvider | undefined;
+
 let lastInitializeInput: InitializeNucleumDatafnInput | null = null;
+
 let datafnStatusUnsubscribe: (() => void) | null = null;
-const generateDatafnId = ({
-  resource,
-  idPrefix
-}: {
-  resource: string;
-  idPrefix?: string;
-}) => {
-  const prefix = idPrefix || resource;
-  return `${prefix}:${crypto.randomUUID()}`;
-};
-
-type NucleumDatafnSchemaResource =
-  (typeof nucleumDatafnSchema.resources)[number];
-
-const isRemoteOnlySchemaResource = (resource: NucleumDatafnSchemaResource) =>
-  "isRemoteOnly" in resource && resource.isRemoteOnly === true;
-
-const isValidDatafnSchemaResourceName = (
-  resource: unknown,
-  resources: Set<NucleumDatafnResource>
-): resource is NucleumDatafnResource =>
-  typeof resource === "string" &&
-  resources.has(resource as NucleumDatafnResource);
-
-function createNucleumClientSearchProvider(input: {
-  dbName: string;
-}): SearchProvider | undefined {
-  if (typeof indexedDB === "undefined") return undefined;
-  return createSearchProvider(
-    new IndexedDbAdapter({
-      dbName: input.dbName,
-      pipeline: nucleumDatafnSearchPipeline,
-      defaults: nucleumDatafnSearchDefaults,
-      cache: {
-        terms: 4096,
-        vectors: 1024
-      }
-    }),
-    {
-      resourceFields: resolveNucleumDatafnSearchResourceFields()
-    }
-  );
-}
 
 export const datafn: DatafnClient<NucleumDatafnSchema> = createDatafnClient({
   schema: nucleumDatafnSchema,
@@ -233,161 +158,6 @@ function clearNucleumDatafnStatusBinding() {
   datafnStatusUnsubscribe = null;
 }
 
-export function resolveDatafnProductResources(
-  product: Product
-): NucleumDatafnResource[] {
-  const cloneableResources = new Set(
-    nucleumDatafnSchema.resources
-      .filter((resource) => !isRemoteOnlySchemaResource(resource))
-      .map((resource) => resource.name)
-  );
-  const configuredResources = resolveProductResourceConfig(product, {
-    isDev: import.meta.env?.DEV
-  });
-  const configuredResourceNames = [
-    ...configuredResources.table,
-    ...configuredResources.browse
-  ].map((resource) => resource.toString());
-  const productResources: NucleumDatafnResource[] = [];
-  for (const resource of configuredResourceNames) {
-    if (
-      !productResources.includes(resource as NucleumDatafnResource) &&
-      isValidDatafnSchemaResourceName(resource, cloneableResources)
-    ) {
-      productResources.push(resource);
-    }
-  }
-  return productResources;
-}
-
-export function resolveDatafnBootResources(product: Product): string[] {
-  const cloneableResources = new Set(
-    nucleumDatafnSchema.resources
-      .filter((resource) => !isRemoteOnlySchemaResource(resource))
-      .map((resource) => resource.name)
-  );
-  return resolveProductResourceConfig(product, {
-    isDev: import.meta.env?.DEV
-  })
-    .browse.map((resource) => resource.toString())
-    .filter((resource) =>
-      isValidDatafnSchemaResourceName(resource, cloneableResources)
-    );
-}
-
-export function resolveDatafnBackgroundResources(product: Product): string[] {
-  const boot = new Set(resolveDatafnBootResources(product));
-  return resolveDatafnProductResources(product).filter(
-    (resource) => !boot.has(resource)
-  );
-}
-
-export function resolveDatafnNamespace(input: {
-  account: Pick<UserAccount, "userId" | "userInfo">;
-  dapId: string;
-}) {
-  const userId =
-    input.account.userInfo?.id?.replace(/^user:/, "") ??
-    input.account.userId?.replace(/^user:/, "");
-  if (userId) return `user:${userId}`;
-  return `guest:${input.dapId}`;
-}
-
-export function resolveDatafnBaseDbName(input: {
-  product: Product;
-  env?: string;
-}) {
-  const product = input.product.toString().trim().toLowerCase();
-  const env = input.env?.toString().trim().toLowerCase() || "dev";
-  return `nucleum-datafn-${env}-${product}`;
-}
-
-export function resolveDatafnStorageDbName(input: {
-  product: Product;
-  namespace: string;
-  env?: string;
-}) {
-  return `${resolveDatafnBaseDbName(input)}_${input.namespace.replace(/:/g, "_")}`;
-}
-
-export function createDatafnStorage(input: {
-  product: Product;
-  namespace: string;
-  env?: string;
-}) {
-  const storage = IndexedDbStorageAdapter.createForNamespace(
-    resolveDatafnBaseDbName(input),
-    input.namespace,
-    undefined,
-    nucleumDatafnSchema
-  );
-  return {
-    storage,
-    dbName: storage.dbName
-  };
-}
-
-const nodeMdChildOrderMigrationId = "kv:migration:node-md-child-order-v1";
-
-export async function migrateDatafnNodeMdChildOrder(
-  storage?: DatafnStorageAdapter | null
-) {
-  if (!storage) return;
-  const marker = await storage
-    .getRecord("kv", nodeMdChildOrderMigrationId)
-    .catch(() => null);
-  if (marker) return;
-  const records = await storage.listRecords("node");
-  let migratedCount = 0;
-  for (const record of records) {
-    if (!("children" in record)) continue;
-    const { children, ...nextRecord } = record;
-    if (!Array.isArray(nextRecord.mdChildOrder) && Array.isArray(children)) {
-      nextRecord.mdChildOrder = children;
-      migratedCount++;
-    }
-    await storage.upsertRecord("node", nextRecord);
-  }
-  await storage.upsertRecord("kv", {
-    id: nodeMdChildOrderMigrationId,
-    value: true,
-    migratedCount,
-    migratedAt: new Date().toISOString()
-  });
-}
-
-export function resolveDatafnMode(input: InitializeNucleumDatafnInput) {
-  const hasUserSpace = Boolean(
-    input.account.userId || input.account.userInfo?.id
-  );
-  const isSyncEligible =
-    hasUserSpace && input.account.dataMode !== UserDataMode.LOCAL;
-  if (!isSyncEligible) return "local-only";
-  if (input.isOfflinabilityEnabled === false) return "sync-direct";
-  if (input.isOffline) return "local-only";
-  return "sync";
-}
-
-export async function resolveDatafnOfflinabilityPreference() {
-  if (typeof window === "undefined" && typeof chrome === "undefined") {
-    return datafnOfflinabilityDefault;
-  }
-  const value = await clientStorage.get(ClientStorageKey.DATAFN_OFFLINABILITY);
-  if (value === null) return datafnOfflinabilityDefault;
-  return value !== "false";
-}
-
-export async function setDatafnOfflinabilityPreference(isEnabled: boolean) {
-  if (!isEnabled && get(datafnE2eeState).enabled) {
-    throw new Error("Offline storage is required while E2EE is enabled");
-  }
-  await clientStorage.set(
-    ClientStorageKey.DATAFN_OFFLINABILITY,
-    isEnabled.toString()
-  );
-  return isEnabled;
-}
-
 function isSyncEligibleAccount(input: InitializeNucleumDatafnInput) {
   const hasUserSpace = Boolean(
     input.account.userId || input.account.userInfo?.id
@@ -395,60 +165,7 @@ function isSyncEligibleAccount(input: InitializeNucleumDatafnInput) {
   return hasUserSpace && input.account.dataMode !== UserDataMode.LOCAL;
 }
 
-function isDatafnE2eeSettings(
-  value: unknown
-): value is NucleumDatafnE2eeSettings {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value) &&
-    (value as { version?: unknown }).version === 1 &&
-    typeof (value as { enabled?: unknown }).enabled === "boolean"
-  );
-}
-
-function requestDatafnE2eePassword(message: string) {
-  if (typeof window === "undefined" || typeof window.prompt !== "function") {
-    throw new Error("E2EE password is required");
-  }
-  const password = window.prompt(message);
-  if (!password) throw new Error("E2EE password is required");
-  return password;
-}
-
-async function readRemoteDatafnE2eeSettings(input: {
-  dapId: string;
-  namespace: string;
-  remoteUrl: string;
-  http: DatafnHttpTransportOptions;
-}) {
-  const metadataClient = createDatafnClient({
-    schema: nucleumDatafnSchema,
-    clientId: input.dapId,
-    namespace: input.namespace,
-    sync: {
-      mode: "sync",
-      remote: input.remoteUrl,
-      http: input.http,
-      offlinability: false,
-      crossTab: false,
-      ws: false
-    },
-    temporal: { timezone: "user" },
-    generateId: generateDatafnId
-  });
-  try {
-    const settings =
-      await metadataClient.kv.get<NucleumDatafnE2eeSettings>(
-        DATAFN_E2EE_KV_KEY
-      );
-    return isDatafnE2eeSettings(settings) ? settings : null;
-  } finally {
-    await metadataClient.destroy();
-  }
-}
-
-async function writeRemoteDatafnE2eeSettings(
+async function persistRemoteDatafnE2eeSettings(
   settings: NucleumDatafnE2eeSettings,
   context?: {
     clientId: string;
@@ -464,91 +181,16 @@ async function writeRemoteDatafnE2eeSettings(
   if (!remoteUrl || !namespace) {
     throw new Error("DataFn remote is not available");
   }
-  const metadataClient = createDatafnClient({
-    schema: nucleumDatafnSchema,
+  await writeRemoteDatafnE2eeSettings({
+    settings,
     clientId: context?.clientId ?? (await getDapId()) ?? "unknown",
     namespace,
-    sync: {
-      mode: "sync",
-      remote: remoteUrl,
-      http: context?.http ?? (await createNucleumDatafnHttpOptions()),
-      offlinability: false,
-      crossTab: false,
-      ws: false
-    },
-    temporal: { timezone: "user" },
-    generateId: generateDatafnId
+    remoteUrl,
+    http: context?.http ?? (await createNucleumDatafnHttpOptions()),
+    ...(context && "expectedSettings" in context
+      ? { expectedSettings: context.expectedSettings }
+      : {})
   });
-  try {
-    if (context && "expectedSettings" in context) {
-      const currentSettings =
-        await metadataClient.kv.get<NucleumDatafnE2eeSettings>(
-          DATAFN_E2EE_KV_KEY
-        );
-      if (!compareObjects(currentSettings, context.expectedSettings)) {
-        throw new Error("Remote DataFn E2EE settings changed during recovery");
-      }
-    }
-    const result = await metadataClient.kv.set(DATAFN_E2EE_KV_KEY, settings);
-    if (!result.ok) throw result.error;
-  } finally {
-    await metadataClient.destroy();
-  }
-}
-
-function clearDatafnE2eeRecovery(
-  settings: NucleumDatafnE2eeSettings
-): NucleumDatafnE2eeSettings {
-  const restored = { ...settings };
-  delete restored.recoveryRequired;
-  return restored;
-}
-
-async function resolveDatafnE2eeConfig(input: {
-  namespace: string;
-  remoteSettings: NucleumDatafnE2eeSettings | null;
-  hasRemoteSettingsAuthority: boolean;
-}): Promise<{
-  settings: NucleumDatafnE2eeSettings | null;
-  config?: DatafnE2eeConfig;
-}> {
-  const localSettings = await getLocalDatafnE2eeSettings(input.namespace);
-  if (
-    input.hasRemoteSettingsAuthority &&
-    input.remoteSettings?.enabled === false &&
-    localSettings?.enabled
-  ) {
-    throw new Error("Local and remote E2EE settings are inconsistent");
-  }
-  const settings = input.hasRemoteSettingsAuthority
-    ? (input.remoteSettings ?? (localSettings?.enabled ? localSettings : null))
-    : localSettings;
-
-  if (!settings?.enabled) {
-    datafnE2eeState.set({ enabled: false, unlocked: false, keyRef: null });
-    return { settings: settings ?? null };
-  }
-
-  const cachedProvider = await getCachedDatafnE2eeProvider(settings);
-  if (cachedProvider) {
-    await persistDatafnE2eeSettings(input.namespace, settings);
-    return {
-      settings,
-      config: { enabled: true, provider: cachedProvider }
-    };
-  }
-
-  const password = requestDatafnE2eePassword("Enter your E2EE password");
-  const provider = await unlockDatafnE2eeSettings(
-    settings,
-    password,
-    input.namespace
-  );
-  if (!provider) throw new Error("Unable to unlock E2EE");
-  return {
-    settings,
-    config: { enabled: true, provider }
-  };
 }
 
 export async function initializeNucleumDatafn(
@@ -590,7 +232,7 @@ export async function initializeNucleumDatafn(
     candidateHttp
   ) {
     const restoredSettings = clearDatafnE2eeRecovery(recoverySettings);
-    await writeRemoteDatafnE2eeSettings(restoredSettings, {
+    await persistRemoteDatafnE2eeSettings(restoredSettings, {
       clientId: dapId,
       namespace,
       remoteUrl: candidateRemoteUrl,
@@ -757,6 +399,7 @@ export async function initializeNucleumDatafn(
 }
 
 let connectivityGeneration = 0;
+
 let connectivityTransition = Promise.resolve<
   NucleumDatafnRuntime | null | undefined
 >(undefined);
@@ -808,7 +451,7 @@ export async function enableNucleumDatafnE2ee(password: string) {
   const previousSettings = await getLocalDatafnE2eeSettings(runtime.namespace);
   const setup = await createDatafnE2eeSetup(password, runtime.namespace);
   try {
-    await writeRemoteDatafnE2eeSettings(setup.settings);
+    await persistRemoteDatafnE2eeSettings(setup.settings);
     await initializeNucleumDatafn({
       ...initInput,
       isOfflinabilityEnabled: true
@@ -817,7 +460,7 @@ export async function enableNucleumDatafnE2ee(password: string) {
   } catch (error) {
     const restoredSettings =
       previousSettings ?? createDisabledDatafnE2eeSettings();
-    await writeRemoteDatafnE2eeSettings(restoredSettings).catch(
+    await persistRemoteDatafnE2eeSettings(restoredSettings).catch(
       (restoreError) => {
         logger.error({
           at: "datafn.e2ee.enable.restoreRemoteSettings",
@@ -859,14 +502,14 @@ export async function changeNucleumDatafnE2eePassword(password: string) {
     runtime.namespace
   );
   try {
-    await writeRemoteDatafnE2eeSettings(next.settings);
+    await persistRemoteDatafnE2eeSettings(next.settings);
     await initializeNucleumDatafn({
       ...requireLastInitializeInput(),
       isOfflinabilityEnabled: true
     });
     await cloneUpAllDatafnData();
   } catch (error) {
-    await writeRemoteDatafnE2eeSettings(settings).catch((restoreError) => {
+    await persistRemoteDatafnE2eeSettings(settings).catch((restoreError) => {
       logger.error({
         at: "datafn.e2ee.password.restoreRemoteSettings",
         error: restoreError
@@ -899,13 +542,13 @@ export async function disableNucleumDatafnE2ee() {
   const disabled = createDisabledDatafnE2eeSettings();
   await datafn.switchContext({ e2ee: null });
   try {
-    await writeRemoteDatafnE2eeSettings(disabled);
+    await persistRemoteDatafnE2eeSettings(disabled);
     await cloneUpAllDatafnData();
     await disableLocalDatafnE2ee(settings, runtime.namespace, disabled);
   } catch (error) {
     if (settings?.enabled && restoreProvider) {
       try {
-        await writeRemoteDatafnE2eeSettings(settings);
+        await persistRemoteDatafnE2eeSettings(settings);
       } catch (restoreError) {
         const recoverySettings: NucleumDatafnE2eeSettings = {
           ...settings,
@@ -1046,55 +689,12 @@ function stopNucleumDatafnSync() {
   }
 }
 
-async function closeNucleumDatafnRuntimeStorage(
-  storage: DatafnStorageAdapter | undefined
-) {
-  if (!storage) return;
-  await storage.close();
-}
-
-async function deleteDatafnLocalClone(storageDbName: string) {
-  await Promise.all([
-    deleteIndexedDbDatabase(storageDbName),
-    deleteIndexedDbDatabase(`${storageDbName}-search`)
-  ]);
-}
-
-async function disposeNucleumDatafnSearchProvider(
-  provider: SearchProvider | undefined
-) {
-  if (!provider?.dispose) return;
-  await provider.dispose();
-}
-
 async function resolveDatafnRemoteUrl(account: Pick<UserAccount, "userInfo">) {
   const region =
     account.userInfo?.region ??
     (await clientStorage.get(ClientStorageKey.REGION)) ??
     "insouth";
   return `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/datafn`;
-}
-
-export async function createNucleumDatafnHttpOptions(
-  input: {
-    publicLinkToken?: string;
-  } = {}
-): Promise<DatafnHttpTransportOptions> {
-  return {
-    auth: await createNucleumAuthFnTransportAuth({
-      plugins: input.publicLinkToken
-        ? [createDatafnPublicLinkAuthPlugin(input.publicLinkToken)]
-        : []
-    }),
-    onError: ({ endpoint, status, result }) => {
-      logger.error({
-        at: "datafn.remote.error",
-        endpoint,
-        status,
-        result
-      });
-    }
-  };
 }
 
 /**

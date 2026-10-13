@@ -1,4 +1,4 @@
-import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { type IRecordId } from "@nucleum/schema/legacy/data.type";
 import type { ITask } from "@nucleum/features/focus/tasks/task.type";
@@ -7,11 +7,11 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
 import type {
   IContextMenu,
   IContextMenuItem
-} from "@21n/elements/contextMenu/context-menu.type";
-import { appStore } from "@nucleum/stores/app.store";
+} from "@21n/ui/elements/contextMenu/context-menu.type";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { Action } from "@nucleum/client/config/action.enum";
 import { get } from "svelte/store";
-import view from "@nucleum/stores/view.store";
+import view from "@21n/ui/environment/view.store";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 import {
   determineResourceType,
@@ -24,8 +24,8 @@ import {
 } from "@nucleum/datafn/resource.utils";
 import { activeSession } from "@nucleum/features/focus/session.store";
 import { datafn } from "@nucleum/datafn/datafn.store";
-import { bulkEditStore } from "@nucleum/stores/resources/bulkedit.store";
-import { BulkEditor } from "@nucleum/stores/resources/bulk-editor";
+import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
+import { BulkEditor } from "@nucleum/features/records/bulk-editor";
 import { Product } from "@nucleum/client/config/product.type";
 
 class TaskActions {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { Itemtype } from "@nucleum/features/calendar/birdView/Birdview.type";
   import { getFirstAlphabetPosition } from "@nucleum/features/calendar/birdView/Birdview.utils";
 

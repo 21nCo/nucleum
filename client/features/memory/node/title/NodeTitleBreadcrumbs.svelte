@@ -1,11 +1,14 @@
 <script lang="ts">
-  import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
+  import type { IAppBreadcrumbItem } from "@nucleum/shell/navigation/components/app-breadcrumb.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import Breadcrumbs from "@21n/elements/breadcrumbsV2/Breadcrumbs.svelte";
-  import { headingNodeTypes, type INode } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import Breadcrumbs from "@nucleum/shell/navigation/components/AppBreadcrumbs.svelte";
+  import {
+    headingNodeTypes,
+    type INode
+  } from "@nucleum/features/memory/node/node.type";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { resourceInList } from "@nucleum/datafn/resource.utils";
-  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
+  import BreadcrumbMini from "@21n/ui/compositions/navigation/breadcrumb/BreadcrumbMini.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   let {
@@ -21,7 +24,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
     isThumbnailContext?: boolean;
     onClick?:
       | ((
-          event: CustomEvent<{ event: MouseEvent; item: IBreadcrumbItem }>
+          event: CustomEvent<{ event: MouseEvent; item: IAppBreadcrumbItem }>
         ) => void)
       | undefined;
   } = $props();
@@ -31,11 +34,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   }
 
   const parentIds = $derived.by(() => {
-    if (
-      mdParent &&
-      Array.isArray(mdParent) &&
-      mdParent.some(isResolvedNode)
-    ) {
+    if (mdParent && Array.isArray(mdParent) && mdParent.some(isResolvedNode)) {
       return [];
     }
     return mdParent?.map((x) => x.toString()) ?? [];
@@ -55,11 +54,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
     )
   );
   const parentItems = $derived.by(() => {
-    if (
-      mdParent &&
-      Array.isArray(mdParent) &&
-      mdParent.some(isResolvedNode)
-    ) {
+    if (mdParent && Array.isArray(mdParent) && mdParent.some(isResolvedNode)) {
       return mdParent as INode[];
     }
     return $parentNodeStore.data as INode[];
@@ -85,7 +80,9 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   });
   function onBreadcrumbClick(e: CustomEvent) {
     if (!e.detail.item.resourceId) return;
-    onClick?.(e as CustomEvent<{ event: MouseEvent; item: IBreadcrumbItem }>);
+    onClick?.(
+      e as CustomEvent<{ event: MouseEvent; item: IAppBreadcrumbItem }>
+    );
   }
 </script>
 

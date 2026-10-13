@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@nucleum/datafn/resource.enum";
 import { relay } from ".";
-import { FluxMethod } from "$lib/client/components/flux/flux.type";
+import { FluxMethod } from "./relay.type";
 
 /**
  * Integration test for DynamoDB provider selectMany method with mutation resource.

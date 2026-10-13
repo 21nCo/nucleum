@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     count = 0,

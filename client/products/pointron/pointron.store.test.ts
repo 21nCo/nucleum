@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@21n/utils/browser.utils", async () => {
+vi.mock("@21n/shared-utils/browser-environment", async () => {
   const actual = await vi.importActual<
-    typeof import("@21n/utils/browser.utils")
-  >("@21n/utils/browser.utils");
+    typeof import("@21n/shared-utils/browser-environment")
+  >("@21n/shared-utils/browser-environment");
 
   return {
     ...actual,

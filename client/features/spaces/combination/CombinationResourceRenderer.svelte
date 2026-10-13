@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EmptyStatusView from "@nucleum/client/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import Collection from "@nucleum/features/collections/Collection.svelte";
   import Node from "@nucleum/features/memory/node/Node.svelte";
   import SideNavCombination from "@nucleum/features/spaces/combination/SideNavCombination.svelte";

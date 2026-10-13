@@ -1,28 +1,31 @@
 <script lang="ts">
-  import "@nucleum/application/composition/resource-hosts";
+  import { installApplicationHosts } from "@nucleum/composition/configure-hosts";
   import type { Snippet } from "svelte";
   import "@nucleum/client/app.css";
-  import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import { appearance } from "@nucleum/stores/appearance.store";
+  import ThemeLayer from "@nucleum/shell/layers/themeLayer/ThemeLayer.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { appearance } from "@nucleum/shared-state/appearance/appearance.store";
   import { onDestroy, onMount } from "svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import account from "@nucleum/stores/account.store";
-  import { getDapId } from "@nucleum/persistence/persistence.utils";
-  import { appStore } from "@nucleum/stores/app.store";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { accountSession } from "@nucleum/surfaces/account/account-session";
+  import { getDapId } from "@nucleum/persistence/device-id";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Extension } from "@nucleum/client/config/product.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
-  import { clientStorage } from "@nucleum/persistence/persistence.utils";
+  import { clientStorage } from "@nucleum/persistence/client-storage";
   import { pingParent } from "@nucleum/client/runtime/embed/embed.utils";
   import SheetDebugLogs from "@nucleum/extensions/SheetDebugLogs.svelte";
-  import context from "@nucleum/stores/context.store";
-  import { Size } from "@21n/elements/size.enum";
-  import view from "@nucleum/stores/view.store";
+  import context from "@nucleum/client/runtime/context.store";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import view from "@21n/ui/environment/view.store";
   import {
     initializeNucleumDatafn,
     pullDatafnNow
   } from "@nucleum/datafn/datafn.store";
+
+  onDestroy(installApplicationHosts());
 
   let {
     extension,
@@ -116,7 +119,7 @@
 
   async function bootup() {
     await setLaunchContext();
-    await account.init();
+    await accountSession.init();
     if (await isSessionActive()) {
       addToDebugLog("User session already active");
       clearTokenCheckTimeout();
@@ -134,7 +137,7 @@
       error = undefined;
       if (await isSessionActive()) return;
       isAuthenticating = true;
-      await account.embedOAuthSignin(token);
+      await accountSession.embedOAuthSignin(token);
       if ($account.userId) await initializeDatafn();
     } catch (e: any) {
       addToDebugLog("Authentication failed");
@@ -168,7 +171,8 @@
   }
 
   async function performSessionExpiryCheck() {
-    let isSessionExpiredOrRefreshing = await account.checkIfSessionExpired();
+    let isSessionExpiredOrRefreshing =
+      await accountSession.checkIfSessionExpired();
     if (isSessionExpiredOrRefreshing) {
       error = "Session expired. Please open the app to login again.";
       return false;

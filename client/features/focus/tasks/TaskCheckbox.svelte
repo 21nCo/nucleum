@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";

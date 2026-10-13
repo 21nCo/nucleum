@@ -1,12 +1,12 @@
 <script lang="ts">
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import Table2 from "@21n/elements/table/Table2.svelte";
-  import view from "@nucleum/stores/view.store";
-  import { Size } from "@21n/elements/size.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Table2 from "@21n/ui/elements/table/Table2.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import { Size } from "@21n/ui/elements/size.enum";
   import {
     TableCellType,
     type TableColumn
-  } from "@21n/elements/table/table.type";
+  } from "@21n/ui/elements/table/table.type";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import {

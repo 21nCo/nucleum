@@ -1,5 +1,5 @@
 {
-  "name": "tidigit-tests",
+  "name": "@nucleum/tests",
   "private": true,
   "type": "module",
   "scripts": {

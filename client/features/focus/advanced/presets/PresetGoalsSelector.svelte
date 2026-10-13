@@ -1,6 +1,6 @@
 <script lang="ts">
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
   import {
     ObjectiveStatus,
@@ -10,10 +10,10 @@
     isSameResource,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
   let {

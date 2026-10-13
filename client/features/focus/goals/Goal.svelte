@@ -4,38 +4,38 @@
     resolvePanelOptions,
     type IActiveObjectiveStore
   } from "@nucleum/features/focus/goals/goal.store";
-  import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
+  import PageLoadingPulse from "@21n/ui/elements/feedback/animations/PageLoadingPulse.svelte";
   import {
     AccessMode,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
   import ObjectiveTitleRow from "@nucleum/features/focus/goals/info/GoalTitleRow.svelte";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import { onDestroy, untrack } from "svelte";
   import { page } from "$app/stores";
-  import { cn } from "@21n/utils/ui.utils";
-  import appearance from "@nucleum/stores/appearance.store";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import { type IInlineStatus } from "@nucleum/stores/notifications/notification.type";
-  import { Size } from "@21n/elements/size.enum";
-  import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
   import ObjectivePanelSwitcher from "./GoalPanelSwitcher.svelte";
-  import { resolvePanelParam } from "@nucleum/stores/resources/panelParam.mixin";
-  import { PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { resolvePanelParam } from "@nucleum/shared-state/resources/panelParam.mixin";
+  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
   import ObjectivePanelContentResolver from "./GoalPanelContentResolver.svelte";
   import ObjectiveLeftPanel from "./GoalLeftPanel.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { ErrorMessage } from "@nucleum/stores/notifications/error.enum";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { ErrorMessage } from "@nucleum/shared-state/notifications/error.enum";
   import { getContext } from "svelte";
   import { get, readable, type Writable } from "svelte/store";
-  import { Context } from "@nucleum/stores/appStore.type";
-  import type { IContainer } from "@21n/layout/layout.type";
-  import { resolveMinWidth } from "@21n/layout/layout.utils";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
+  import type { IContainer } from "@nucleum/shell/layout.type";
+  import { resolveMinWidth } from "@nucleum/shell/layout.utils";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";

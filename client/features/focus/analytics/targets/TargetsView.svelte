@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
 
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import TargetGuages from "@nucleum/features/focus/analytics/targets/TargetGuages.svelte";
 

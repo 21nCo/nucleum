@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
-  import { ExtensionEvent } from "@nucleum/extensions/extension.type";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
+  import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
   import { type IClip, type ITextClip, type IVideoTimestampClip } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { relayToContentScript } from "@21n/utils/extension.utils";
+  import { relayToContentScript } from "@nucleum/client/runtime/extensions/messaging";
   import Clip from "@nucleum/extensions/clipper/sidePanel/clips/Clip.svelte";
   import { wait } from "@21n/shared-utils/wait";
   import { onMount } from "svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { onMount } from "svelte";
 
   let {

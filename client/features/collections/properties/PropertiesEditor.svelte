@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import {
     TableCellDefaultAction,
     TableCellType,
     type TableColumn
-  } from "@21n/elements/table/table.type";
+  } from "@21n/ui/elements/table/table.type";
   import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
 
@@ -25,7 +25,7 @@
     ActiveCollectionStore,
     type IActiveCollectionStore
   } from "../collection.store";
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
   import {
     AccessMode,
     type OmitForCaptureWithId
@@ -33,22 +33,22 @@
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { onDestroy, onMount } from "svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import SearchSingleSelect from "@21n/elements/select/SearchSingleSelect.svelte";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import SearchSingleSelect from "@21n/ui/compositions/search/SearchSingleSelect.svelte";
   import {
     CollectionType,
     type ICollection
   } from "@nucleum/features/collections/collection.type";
-  import { confirmationNotification } from "@nucleum/stores/notification.store";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import { acquireDnDPage, appStore } from "@nucleum/stores/app.store";
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
+  import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { acquireDnDPage, appStore } from "@nucleum/shared-state/app-context/app.store";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
   import PropertyTypeSelector from "@nucleum/features/collections/properties/propertyTypeSelector/PropertyTypeSelector.svelte";
   import {
     isSameResource,
@@ -59,8 +59,8 @@
   import { objIsEmpty } from "@21n/shared-utils/obj.utils";
   import CollectionTitleLabelPart from "@nucleum/features/collections/thumbnail/CollectionThumbnailLabel.svelte";
   import { Product } from "@nucleum/client/config/product.type";
-  import Table3 from "@21n/elements/table/Table3.svelte";
-  import ModalContentPadded from "@21n/elements/modal/ModalContentPadded.svelte";
+  import Table3 from "@21n/ui/elements/table/Table3.svelte";
+  import ModalContentPadded from "@21n/ui/elements/modal/ModalContentPadded.svelte";
 
   let { id = undefined }: { id?: IRecordId | undefined } = $props();
   const collection = $derived<IActiveCollectionStore | undefined>(

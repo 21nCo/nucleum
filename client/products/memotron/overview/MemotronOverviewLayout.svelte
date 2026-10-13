@@ -1,16 +1,16 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import view from "@nucleum/stores/view.store";
-  import { resizeListener } from "@nucleum/actions/resize.action";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import view from "@21n/ui/environment/view.store";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
 
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { MemotronOverviewPanel } from "@nucleum/products/memotron/overview/overview.type";
   import { Product } from "@nucleum/client/config/product.type";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
 
   let {
     isConstrainedWidth = $bindable(false),

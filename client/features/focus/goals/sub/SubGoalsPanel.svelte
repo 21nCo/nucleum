@@ -1,23 +1,20 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import {
     reorderList,
     type DragDropEvent
-  } from "@nucleum/actions/rearrange.action";
-  import Button from "@21n/elements/button/Button.svelte";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
+  } from "@21n/ui/actions/rearrange.action";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
 
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import {
-    activeResourceFilterIgnoreAncestorInactive,
-    archivedResourceFilter
-  } from "@21n/utils/utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { activeResourceFilterIgnoreAncestorInactive, archivedResourceFilter } from "@nucleum/datafn/resource-filters";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
@@ -25,8 +22,8 @@
     resourceInList,
     shiftResourceInArray
   } from "@nucleum/datafn/resource.utils";
-  import NestedList from "@nucleum/components/nestedList/NestedList.svelte";
-  import { NestedListStyle } from "@nucleum/components/nestedList/nestedList.type";
+  import NestedList from "@21n/ui/compositions/nestedList/NestedList.svelte";
+  import { NestedListStyle } from "@21n/ui/compositions/nestedList/nestedList.type";
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
   import {
     ObjectiveStatus,

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Size } from "@21n/elements/size.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { onMount } from "svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
@@ -15,17 +15,17 @@
     type IObjective,
     type IObjectiveThumb
   } from "@nucleum/features/focus/goals/goal.type";
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
   import TaskThumbnailObjectiveLabel from "@nucleum/features/focus/tasks/TaskThumbnailGoalLabel.svelte";
   import { Product } from "@nucleum/client/config/product.type";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
   import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import { GlobalEvent } from "@nucleum/stores/notifications/event.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
 

@@ -1,5 +1,12 @@
-import { navigation } from "@21n/layout/navigation/navigation";
-import { fileUpload } from "@nucleum/stores/files/file-upload";
+import { parseMetadata } from "./capture-metadata";
+import {
+  resolveLinkedCollectionId,
+  handleSingleNodePostSave,
+  closeCaptureAfterSave
+} from "./capture-completion";
+import { resolveLocation } from "./capture-location";
+import { navigation } from "@nucleum/shell/navigation/navigation";
+import { fileUpload } from "@nucleum/shared-state/files/file-upload";
 import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
 import { get, writable } from "svelte/store";
 import { Resource } from "@nucleum/datafn/resource.enum";
@@ -10,7 +17,6 @@ import {
   type INodeThumb,
   type IMediaGridItem,
   type IWebPage,
-  type IAudioMetadata,
   type IImageMetadata,
   type IImageNode,
   headingNodeTypes,
@@ -27,8 +33,8 @@ import {
   type ICaptureLink,
   type IPasteCaptureData
 } from "@nucleum/features/memory/capture/capture.type";
-import account from "@nucleum/stores/account.store";
-import { toasts, inlineToasts } from "@nucleum/stores/notification.store";
+import account from "@nucleum/client/runtime/account/account.store";
+import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import {
   generateMarkdownText,
@@ -53,18 +59,17 @@ import {
   resourceInList
 } from "@nucleum/datafn/resource.utils";
 import { resolveResource } from "@nucleum/datafn/resource-query.utils";
-import type { IFile } from "@nucleum/stores/files/file.type";
+import type { IFile } from "@nucleum/shared-state/files/file.type";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
+import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
 import {
-  generateMiniRandomId,
-  generateSimpleRandomId
-} from "@21n/shared-utils/crypto.utils";
-import { appStore } from "@nucleum/stores/app.store";
-import { uiState } from "@nucleum/stores/uiState/uiState.store";
-import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  UIState,
+  UIStateScope
+} from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
-import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
-import view from "@nucleum/stores/view.store";
-import context from "@nucleum/stores/context.store";
+import view from "@21n/ui/environment/view.store";
+import context from "@nucleum/client/runtime/context.store";
 import { OperatingSystem } from "@nucleum/client/runtime/context.type";
 import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import {
@@ -72,10 +77,7 @@ import {
   resolveUrlData,
   resolveWebpageLabel
 } from "@nucleum/features/memory/node/url.utils";
-import { getImageColorsFromFile } from "@21n/utils/ui.utils";
-import { parseBuffer } from "music-metadata";
-import ExifReader from "exifreader";
-import { getDeviceInfo, getGeoLocation } from "@21n/utils/browser.utils";
+import { getDeviceInfo } from "@21n/shared-utils/browser-platform";
 import {
   extractRootStructure,
   extractStructureForChildren,
@@ -84,249 +86,32 @@ import {
   textToMdBlocks
 } from "@nucleum/features/memory/markdown/markdown.utils";
 import type { IBlock } from "@nucleum/features/memory/markdown/md.type";
-import { ActiveResourceStore } from "@nucleum/stores/resources/active-resource.store";
-import { embedBridge } from "@nucleum/client/runtime/embed/embed.store";
-import { EmbedMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
+import { ActiveResourceStore } from "@nucleum/shared-state/resources/active-resource.store";
 import { convertWebMToWav } from "@nucleum/client/runtime/audio/audio.utils";
-import { TimeScaleUnit } from "@21n/utils/time.type";
+import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
 import { resolveCalendarNotesId } from "@nucleum/features/calendar/calendar.utils";
-import { getUtcSafeDay } from "@21n/elements/datetime/datetime.utils";
+import { getUtcSafeDay } from "@21n/ui/elements/datetime/datetime.utils";
 import type { IMarkdownTemplate } from "@nucleum/features/memory/markdown/md.type";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import { isRecordId } from "@nucleum/datafn/resource.utils";
-import { debouncer } from "@21n/utils/utils";
+import { debouncer } from "@21n/shared-utils/debounce";
 import { openPasteConfirmationModalFromClipboard } from "@nucleum/features/memory/capture/paste.utils";
 import { datafn } from "@nucleum/datafn/datafn.store";
+import {
+  resolveClipboardBlockType,
+  hasStringProperty,
+  isMediaGridBlock
+} from "@nucleum/features/memory/capture/clipboard-content";
+import {
+  insertCapturedNodes,
+  persistContentLinks
+} from "@nucleum/features/memory/capture/capture-persistence";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
+
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
-type CaptureRelationMutation = {
-  operation: "relate";
-  id: IRecordId;
-  relations: Record<string, unknown>;
-  context?: string;
-};
-
-function isRecordLinkResource(resource: Resource) {
-  return (
-    resource === Resource.node ||
-    resource === Resource.objective ||
-    resource === Resource.task ||
-    resource === Resource.event
-  );
-}
-
-function isCollectionItemResource(resource: Resource) {
-  return resource === Resource.node || resource === Resource.objective;
-}
-
-async function persistContentLinks(links: any[] = []) {
-  return Promise.all(
-    links.map((link) => {
-      const fromResource = determineResourceType(link.in);
-      const toResource = determineResourceType(link.out);
-      if (
-        toResource === Resource.collection &&
-        isCollectionItemResource(fromResource)
-      ) {
-        return datafn.table(fromResource).mutate({
-          operation: "relate",
-          id: link.in.toString(),
-          relations: {
-            collections: [
-              {
-                $ref: link.out.toString(),
-                fromResource: fromResource.toString(),
-                location: link.location
-              }
-            ]
-          }
-        } as any);
-      }
-      if (
-        fromResource === Resource.collection &&
-        isCollectionItemResource(toResource)
-      ) {
-        return datafn.collection.mutate({
-          operation: "relate",
-          id: link.in.toString(),
-          relations: {
-            items: [
-              {
-                $ref: link.out.toString(),
-                fromResource: toResource.toString(),
-                location: link.location
-              }
-            ]
-          }
-        } as any);
-      }
-      if (
-        !isRecordLinkResource(fromResource) ||
-        !isRecordLinkResource(toResource)
-      ) {
-        logger.warn({
-          at: "CaptureStore.persistContentLinks.unsupportedRelation",
-          from: link.in,
-          out: link.out,
-          fromResource,
-          toResource
-        });
-        return undefined;
-      }
-      return datafn.table(fromResource).mutate({
-        operation: "relate",
-        id: link.in.toString(),
-        relations: {
-          links: [
-            {
-              $ref: link.out.toString(),
-              fromResource: fromResource.toString(),
-              toResource: toResource.toString(),
-              linkType: link.linkType ?? LinkType.DIRECT,
-              location: link.location,
-              tags: link.tags
-            }
-          ]
-        }
-      } as any);
-    })
-  );
-}
-
-async function insertCapturedNodes(
-  input: INodeCapture<any> | INodeCapture<any>[],
-  params?: { context?: string }
-) {
-  function resolveMarkdownParentFields(mdParent: unknown) {
-    if (!Array.isArray(mdParent)) return {};
-    const parents = mdParent.filter(
-      (parent): parent is IRecordId => typeof parent === "string"
-    );
-    const parent = parents[parents.length - 1];
-    if (!parent) return {};
-    return {
-      parent,
-      parentPath: parents.join("-")
-    };
-  }
-  const nodes = (Array.isArray(input) ? input : [input]).map((node) => ({
-    metaType: "",
-    contentType: NodeType.UNKNOWN,
-    ...node,
-    id: node.id ?? generateResourceId(Resource.node)
-  }));
-  await datafn.node.mutate(
-    nodes.map((node) => {
-      const { collections, propertyValues, ...record } =
-        node as INodeCapture<any> & {
-          collections?: IRecordId[];
-          propertyValues?: ICollectionItemPropertyValue[];
-        };
-      return {
-        operation: "insert",
-        id: record.id,
-        record: {
-          ...record,
-          ...resolveMarkdownParentFields(record.mdParent)
-        },
-        context: params?.context
-      };
-    })
-  );
-  const relationMutations = nodes
-    .map((node): CaptureRelationMutation | undefined => {
-      const relations: Record<string, unknown> = {};
-      const collections =
-        (node as { collections?: IRecordId[] }).collections ?? [];
-      const propertyValues =
-        (node as { propertyValues?: ICollectionItemPropertyValue[] })
-          .propertyValues ?? [];
-      if (collections.length > 0) {
-        relations.collections = collections.map((id) => ({
-          $ref: id.toString(),
-          fromResource: Resource.node
-        }));
-      }
-      if (propertyValues.length > 0) {
-        relations.propertyValues = propertyValues.map((property) => ({
-          $ref: property.id.toString(),
-          fromResource: Resource.node,
-          collectionId: property.collectionId,
-          value: property.value
-        }));
-      }
-      if (Object.keys(relations).length === 0) return undefined;
-      return {
-        operation: "relate",
-        id: node.id,
-        relations,
-        context: params?.context
-      };
-    })
-    .filter((mutation): mutation is CaptureRelationMutation =>
-      Boolean(mutation)
-    );
-  if (relationMutations.length > 0) {
-    await datafn.node.mutate(relationMutations as any);
-  }
-  return nodes.map((node) => ({
-    ...node,
-    updatedAt: "updatedAt" in node ? node.updatedAt : new Date()
-  }));
-}
 
 export const clipboard = writable<IPasteCaptureData | null>(null);
-
-type IClipboardBlockType =
-  | NodeType.CODE
-  | NodeType.CALLOUT
-  | NodeType.LIST
-  | NodeType.ORDERED_LIST
-  | NodeType.CHECKLIST
-  | NodeType.SIMPLE_TEXT;
-
-function resolveClipboardBlockType(
-  contentType?: NodeType
-): IClipboardBlockType {
-  switch (contentType) {
-    case NodeType.CODE:
-    case NodeType.CALLOUT:
-    case NodeType.LIST:
-    case NodeType.ORDERED_LIST:
-    case NodeType.CHECKLIST:
-      return contentType;
-    default:
-      return NodeType.SIMPLE_TEXT;
-  }
-}
-
-function resolveBlobPart(data: Uint8Array<ArrayBufferLike>) {
-  return Uint8Array.from(data).buffer;
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === "object";
-}
-
-function hasStringProperty<K extends string>(
-  value: unknown,
-  key: K
-): value is Record<K, string> {
-  return isObject(value) && typeof value[key] === "string";
-}
-
-function isMediaGridBlock(block: IBlock): block is IBlock & {
-  contentType: NodeType.MEDIA_GRID;
-  body: { items: IMediaGridItem[] };
-} {
-  return (
-    block.contentType === NodeType.MEDIA_GRID &&
-    isObject(block.body) &&
-    "items" in block.body &&
-    Array.isArray(block.body.items)
-  );
-}
 
 function generateSeedStore(): IActiveCapture {
   const blockId = generateResourceId(Resource.node);
@@ -827,7 +612,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       linkType,
       toType: toType as typeof Resource.node | typeof Resource.collection,
       toSubType: ("contentType" in to ? to.contentType : to.type) as
-        NodeType | CollectionType,
+        | NodeType
+        | CollectionType,
       location: params?.location,
       tags: params?.linkTags
     };
@@ -867,100 +653,6 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         isPreventBackPropagation: true
       }
     );
-  }
-
-  private async parseMetadata(file: File) {
-    try {
-      if (file.type.startsWith("image/")) {
-        let metadata: IImageMetadata = {};
-        const colors = await getImageColorsFromFile(file, 10);
-        const tags = await ExifReader.load(file);
-        const importantMetadata = extractImportantMetadata(tags);
-        metadata = {
-          colors,
-          ...importantMetadata
-        };
-        return metadata;
-      }
-      if (file.type.startsWith("audio/")) {
-        let metadata: IAudioMetadata = {};
-
-        let parsedMetadata = await parseBuffer(
-          new Uint8Array(await file.arrayBuffer())
-        );
-        if (parsedMetadata?.common) {
-          let imageId: IRecordId | undefined = undefined;
-          if (parsedMetadata.common.picture?.[0]?.data) {
-            try {
-              const imageData = parsedMetadata.common.picture[0].data;
-              const imageFile = new File(
-                [resolveBlobPart(imageData)],
-                file.name,
-                {
-                  type: "image/jpeg"
-                }
-              );
-              const imageUploadResponse = await fileUpload.uploadFileV2(
-                "image/jpeg",
-                file.name,
-                imageFile,
-                {
-                  isGenerateThumbnail: true
-                }
-              );
-              if (imageUploadResponse) {
-                imageId = imageUploadResponse[0].id;
-              }
-            } catch (e) {
-              logger.error({
-                at: "CaptureStore.parseMetadata.picture",
-                error: e
-              });
-            }
-          }
-          metadata = {
-            ...parsedMetadata.common,
-            ...parsedMetadata.format,
-            picture: imageId
-          };
-        }
-        return metadata;
-      }
-    } catch (e: any) {
-      logger.error({ at: "CaptureStore.parseMetadata", error: e });
-      return;
-    }
-
-    function extractImportantMetadata(tags: any): IImageMetadata {
-      return {
-        deviceInfo: {
-          make: tags.Make?.description,
-          model: tags.Model?.description,
-          software: tags.Software?.description
-        },
-        imageDetails: {
-          width: tags["Image Width"]?.value || tags.PixelXDimension?.value || 0,
-          height:
-            tags["Image Height"]?.value || tags.PixelYDimension?.value || 0,
-          orientation: tags.Orientation?.description,
-          dateTime: tags.DateTime?.description
-        },
-        cameraSettings: {
-          aperture: tags.FNumber?.description,
-          exposureTime: tags.ExposureTime?.description,
-          iso: tags.ISOSpeedRatings?.value,
-          focalLength: tags.FocalLength?.description,
-          flash: tags.Flash?.description
-        },
-        location: tags.GPSLatitude
-          ? {
-              latitude: tags.GPSLatitude.description,
-              longitude: tags.GPSLongitude?.description,
-              altitude: tags.GPSAltitude?.description
-            }
-          : undefined
-      };
-    }
   }
 
   async saveFile(
@@ -1004,9 +696,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         ? []
         : this.resolveCollections();
       const fileId = response[0].id;
-      const metadata = (await this.parseMetadata(file)) ?? {};
+      const metadata = (await parseMetadata(file)) ?? {};
       if (!metadata?.location) {
-        metadata.location = await this.resolveLocation();
+        metadata.location = await resolveLocation();
       }
       const captureStore = this.get();
       const node = {
@@ -1181,7 +873,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         if (!response[0].id) continue;
         const fileId = response[0].id;
         const id = generateResourceId(Resource.node);
-        const metadata = await this.parseMetadata(item.file);
+        const metadata = await parseMetadata(item.file);
         const node = {
           id,
           contentType: item.contentType,
@@ -1214,7 +906,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       if (!params?.isEmbedContext) this.setIsSaving(false);
     }
   }
-  // TODO - check for persistance need here
+
   updateProperty = async (property: ICollectionItemPropertyValue) => {
     let propertyValues = this.get().propertyValues ?? [];
     propertyValues = propertyValues.filter((x) => !isSameResource(x, property));
@@ -1253,8 +945,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       );
       if (!result) return;
       const fileId = result[0].id;
-      const location = await this.resolveLocation();
-      const metadata = await this.parseMetadata(
+      const location = await resolveLocation();
+      const metadata = await parseMetadata(
         new File([wavData], `${fileName}.wav`, { type: contentType })
       );
       const captureStore = this.get();
@@ -1328,15 +1020,12 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     );
     if (!result) return;
     const fileId = result[0].id;
-    // const colors = await getImageColorsFromFile(
-    //   new File([data], fileName, { type: contentType }),
-    //   10
-    // );
-    const metadata: IImageMetadata | undefined = await this.parseMetadata(
+
+    const metadata: IImageMetadata | undefined = await parseMetadata(
       new File([data], fileName, { type: contentType })
     );
     const deviceInfo = await getDeviceInfo();
-    const location = await this.resolveLocation();
+    const location = await resolveLocation();
     const captureStore = this.get();
     const collections = this.resolveCollections();
     const node: INodeCapture<IImageNode> = {
@@ -1473,14 +1162,13 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       return;
     }
 
-    // Get the global setting for opening nodes upon save
     const shouldOpenUponSave =
       params?.isOpenOnSave ??
       uiState.getState(UIState.openNodesUponSave, {
         scope: UIStateScope.PRODUCT
       }) ??
       true;
-    const linkedCollectionId = this.resolveLinkedCollectionId(captureState);
+    const linkedCollectionId = resolveLinkedCollectionId(captureState);
     const shouldReturnToLinkedCollection = Boolean(linkedCollectionId);
 
     const viewStore = get(view);
@@ -1490,7 +1178,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         type: Resource.node,
         timestamp: new Date()
       });
-      this.handleSingleNodePostSave({
+      handleSingleNodePostSave({
         node,
         isEmbedContext: params?.isEmbedContext,
         isConstrainedWidth: viewStore.isConstrainedWidth,
@@ -1502,86 +1190,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       toasts.success(`${result.length} nodes saved successfully!`);
     }
     if (params?.isEmbedContext) return;
-    this.closeCaptureAfterSave(shouldOpenUponSave);
+    closeCaptureAfterSave(shouldOpenUponSave);
     this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));
     await this.deletePermanently();
-    // this.modify({ ...generateSeedStore() }, { isPersist: false });
-  }
-
-  private resolveLinkedCollectionId(captureState: {
-    isCaptureFromCollectionPage?: boolean;
-    linkQueryParam?: string | null;
-  }) {
-    const linkQueryParam = captureState.linkQueryParam;
-    if (
-      !captureState.isCaptureFromCollectionPage ||
-      typeof linkQueryParam !== "string" ||
-      !isValidString(linkQueryParam) ||
-      !linkQueryParam.startsWith(`${Resource.collection}:`)
-    ) {
-      return undefined;
-    }
-    return linkQueryParam as IRecordId;
-  }
-
-  private handleSingleNodePostSave(params: {
-    node: { id: IRecordId };
-    isEmbedContext?: boolean;
-    isConstrainedWidth: boolean;
-    shouldOpenUponSave: boolean;
-    linkedCollectionId?: IRecordId;
-    shouldReturnToLinkedCollection: boolean;
-  }) {
-    if (!params.isConstrainedWidth && !params.isEmbedContext) {
-      toasts.success("Node saved successfully!");
-    }
-
-    if (!params.isEmbedContext && !params.shouldOpenUponSave) {
-      inlineToasts.success({
-        id: "nodecapture",
-        message: "Node saved successfully",
-        data: params.node
-      });
-    }
-
-    if (params.isEmbedContext) {
-      return;
-    }
-
-    if (params.shouldReturnToLinkedCollection && params.linkedCollectionId) {
-      navigation.openResource(params.linkedCollectionId, AccessMode.POP, {
-        searchParams: {
-          [AccessMode.MAIN]: null
-        }
-      });
-      return;
-    }
-
-    if (params.shouldOpenUponSave) {
-      navigation.openResource(params.node.id, AccessMode.POP, {
-        searchParams: {
-          [AccessMode.MAIN]: null
-        }
-      });
-    }
-  }
-
-  private closeCaptureAfterSave(shouldOpenUponSave: boolean) {
-    if (shouldOpenUponSave) {
-      return;
-    }
-    navigation.closeResource({
-      id: captureAction,
-      accessMode: AccessMode.MAIN
-    });
-    navigation.closeResource({
-      id: MemotronAction.CAPTURE_DND,
-      accessMode: AccessMode.MAIN
-    });
-    navigation.closeResource({
-      id: MemotronAction.CAPTURE_SECONDARY,
-      accessMode: AccessMode.MAIN
-    });
   }
 
   private async saveLinks(rootId: IRecordId) {
@@ -1630,53 +1241,16 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     return persistContentLinks(links);
   }
 
-  private async resolveLocation() {
-    const ctx = get(context);
-    if (ctx.isEmbed) {
-      try {
-        const locationResult = await embedBridge.fetch(
-          generateMiniRandomId(),
-          EmbedMessage.LOCATION,
-          {}
-        );
-        if (locationResult && !locationResult.error) {
-          return locationResult;
-        }
-      } catch (e) {
-        logger.debug({
-          at: "CaptureStore.resolveLocation - embed timeout",
-          error: e
-        });
-        return undefined;
-      }
-    } else {
-      try {
-        const geoLocation = await getGeoLocation();
-        return {
-          latitude: geoLocation?.coords.latitude ?? 0,
-          longitude: geoLocation?.coords.longitude ?? 0,
-          accuracy: geoLocation?.coords.accuracy ?? 0
-        };
-      } catch (e) {
-        logger.debug({
-          at: "CaptureStore.resolveLocation - geolocation error",
-          error: e
-        });
-        return undefined;
-      }
-    }
-  }
-
   async saveMarkdownCapture() {
     const val = this.get();
-    //TODO - extract nodes from markdown blocks and save
+
     const ctx = get(context);
-    const location = await this.resolveLocation();
+    const location = await resolveLocation();
     let metadata = {
       location
     };
     logger.log({ at: "CaptureStore.saveMarkdownCapture", val, metadata });
-    // const id = prefixTable(generateRandomId(), Resource.node);
+
     const id = val.nodeId ?? generateResourceId(Resource.node);
     const collections = this.resolveCollections();
     let root: INodeCapture<INode> = {
@@ -1768,7 +1342,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
             [id]
           );
         }
-        //TODO - links for each block
+
         let mdText = "";
         if (block.children && block.children.length > 0) {
           const childrenNodes = val.body.blocks.filter((b) =>
@@ -1840,7 +1414,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         }));
       }
 
-      const location = await this.resolveLocation();
+      const location = await resolveLocation();
       let metadata = {
         location
       };

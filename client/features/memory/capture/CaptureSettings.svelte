@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "@nucleum/stores/uiState/uiState.type";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import EditCaptureShortcuts from "@nucleum/features/memory/capture/EditCaptureShortcuts.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
 
   let openNodesUponSave =
     uiState.getState(UIState.openNodesUponSave, {

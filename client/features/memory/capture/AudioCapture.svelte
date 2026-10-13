@@ -1,23 +1,23 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { PlayActionState } from "@nucleum/stores/notifications/event.enum";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { PlayActionState } from "@nucleum/shared-state/events/event.enum";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import WaveSurfer from "wavesurfer.js";
   import RecordPlugin from "wavesurfer.js/dist/plugins/record";
-  import { retrieveCurrentColors } from "@21n/utils/theme.utils";
-  import appearance from "@nucleum/stores/appearance.store";
-  import view from "@nucleum/stores/view.store";
-  import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
+  import { retrieveCurrentColors } from "@21n/theme/color-presentation";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
+  import view from "@21n/ui/environment/view.store";
+  import PlayerControl from "@21n/ui/elements/player/controls/PlayerControl.svelte";
   import { onDestroy } from "svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import type { IActiveCaptureStore } from "@nucleum/features/memory/capture/capture.store";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { confirmationNotification } from "@nucleum/stores/notification.store";
-  import { cn } from "@21n/utils/ui.utils";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     captureStore,

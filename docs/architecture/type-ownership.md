@@ -1,65 +1,53 @@
 # Type and contract ownership
 
-Tracked in TIDY-478; coordinated with TIDY-477. Module moves preserve runtime enum values and persisted representations.
+Current type-placement contract. The constitution and semantic ownership rules remain authoritative. The inventory/checker verifies recorded destinations and baseline runtime enum declarations, not semantic placement of every type. Update the inventory in the same change that moves a type module.
+
+Application, navigation, account, file, and command ownership lives in [client boundaries](client-boundaries.md). The TIDY-478 phase journal lives in [history/tidy-478-type-ownership.md](history/tidy-478-type-ownership.md).
 
 ## Conventions
 
-Definitions stay beside their implementation unless independent consumers need a neutral contract. Feature contracts belong to the feature and external callers use explicit public entries. UI controls own their prop and style types; keyboard contracts are shared by controls and application shortcuts. Application actions, panel choices, and notification models belong to their orchestration layer. Browser ambient declarations live in client/ambient.
+Definitions stay beside their implementation unless independent consumers need a neutral contract. Feature contracts belong to the feature, and external callers use the public entries in `tools/check/feature-entrypoints.json`.
 
-Schema owns cross-layer account, subscription, and legacy persistence wire contracts. Shared account contracts must not import client modules. Legacy serialized formats remain distinct from current DataFn records: deriving them from a newer schema would change their accepted shape. Generated AuthFn and DataFn/Drizzle files remain owned by services/account generation scripts and are never manually rewritten. Type-only dependencies use import type; enums used at runtime retain value imports.
+Portable UI controls own their structural prop and style types:
 
-The global client/types and shared/types packages are retired, without replacement catch-all packages or compatibility exports. Splits use direct imports to the actual owner. Billing presentation fields remain in application/subscription; wire enums and billing data belong to schema/account. Store interfaces are separated from legacy mutation/filter wire contracts. Markdown validation and responsive text truncation leave shared utilities for their frontend owners.
+| Contract | Owner |
+| --- | --- |
+| Primitive prop and style types | `client/ui/elements` |
+| Domain-neutral composition contracts | `client/ui/compositions` |
+| Generic DOM-action contracts | `client/ui/actions` |
+| Package-wide host contracts | `client/ui/hosts` |
+| Portable platform state | `client/ui/environment` |
+| Visual asset contracts | `client/ui/icons`, `client/ui/illustrations`, or `client/ui/branding` |
 
-## Current ownership follow-up
+Those UI contracts do not derive from schema records, DataFn resources, runtime types, application actions, or state interfaces. Owning adapters translate domain models at the UI boundary.
 
-Product menu contracts now live in `client/layout/navigation/app-menu.type.ts`. The inventory retains original paths as baseline provenance and updates destinations for current ownership. The unused `@nucleum/cx` workspace and active aliases are removed; historical manifest snapshots are retained as evidence. `@nucleum/client` is a registered private source workspace and is not an independently publishable build.
+| Contract | Owner |
+| --- | --- |
+| Keyboard and interaction mode | `client/ui/elements/keyboard` |
+| Global action identifiers | `client/config`; capability-specific identifiers may live with their feature, such as memory actions. |
+| Command host | `client/shared-state/commands` |
+| Application events | `client/shared-state/events`. Focus and memory events live here. Clipper transport events live in `client/runtime/extensions`. |
+| Resource panel and selection | `client/shared-state/resources` |
+| Headless notification state | `client/shared-state/notifications` |
+| Connected notification rendering | `client/shell/notifications` |
+| Error recovery screens | `client/surfaces/help/errors` |
+| Product menu contracts | `client/shell/navigation/app-menu.type.ts` |
+| Browser ambient declarations | `client/ambient` |
+| Cross-layer account, subscription, and legacy wire contracts | `schema` |
+| Generated AuthFn and DataFn/Drizzle files | `services/account` generation scripts. Do not edit them by hand. |
 
-The following migration checklist and audit evidence describe the TIDY-478 baseline. Current application, navigation, account, file, and command ownership is described in `client-boundaries.md`.
+`schema/account` owns profile and subscription wire data. Billing presentation fields stay in `client/surfaces/subscription`. `schema/legacy` owns the existing Surreal mutation, query, sync, resource-action, and store-data encodings. Do not derive those legacy shapes from current DataFn records. `schema/datafn.ts` derives resource names from `nucleumDatafnSchema`. Client `Resource` and `Product` compose schema values with the Next overlay; `MetaResource` directly aliases the schema value; backend callers import schema directly.
 
-## Execution checklist
+Generic error codes are schema-owned. The default error message belongs to `client/shared-state/notifications`. Markdown validation belongs to memory. Responsive text truncation belongs to the text primitive. The legacy relay request contract lives in `server/common/relay/relay.type.ts` and imports only schema-owned resource and query contracts.
 
-- [x] Inventory first-party declarations, imports, packages, aliases, and generated modules.
-- [x] Define ownership and migration conventions before edits.
-- [x] Complete module colocation and mixed-contract splits.
-- [x] Retire global aliases/packages and update all callers.
-- [x] Enforce contract ownership and audit schema derivation and exceptions.
-- [x] Verify products, services, extensions, shared packages, and relevant workflows.
-- [x] Deliver coherent commits and record issue completion.
+Native transcription model identifiers and worker model identifiers are different protocols. Both live in `client/runtime/inference`, in separate modules, with their original enum values.
 
-The inventory records every discovered module, its declarations and consumers, original ownership, and disposition. Locally declared types in implementation modules remain colocated; generated schemas remain generated; explicit type modules are reviewed against their consumers.
-
-## Audit evidence and retained contracts
-
-[type-ownership-inventory.json](type-ownership-inventory.json) records all 383 baseline type modules (1,168 declarations), their consumers and explicit dispositions, all 41 package manifests including nested deployment packages, and 462 exported constants. The baseline is commit `32154c37`; destinations reflect this migration. Embedded types remain beside their implementation. Packages without type declarations were audited for exports and dependencies too. Source aliases are build-time paths; `@nucleum/client` is a private source workspace, not an independently publishable package.
-
-- `schema/account` owns profile and subscription wire data. `EmailParts` has one definition. `IPlan` is an application presentation model. The Apple verification response now has one source in the payment provider.
-- `schema/legacy` owns the existing Surreal mutation, query, sync, resource-action and store-data encodings. The store-data enum is shared with query generation; Svelte observable interfaces remain in DataFn. Legacy contracts are not derived from modern database rows because their date unions and projected fields differ.
-- `schema/datafn.ts` derives resource names from `nucleumDatafnSchema`; `schema/features.ts` derives resource/relation inputs from `defineSchema`. The installed schema API does not provide a compatible generic record inference helper for legacy UI models. Generated account/AuthFn and DataFn files remain unchanged and are produced by `db:generate` and `datafn:generate`; no authoritative schema changed in this task.
-- Client `Resource`, `MetaResource` and `Product` compose schema values with the existing Next overlay. This composition is intentional; backend callers import schema directly. Memory node models include editor projections and legacy serialized dates and remain capability-owned rather than copying generated service database types.
-- Native transcription model identifiers (`tiny.en`) and worker model identifiers (`Xenova/whisper-tiny.en`) are different protocols. Both live in runtime/inference, in separate native and worker modules with their original enum values. ImportSource and StepType enums in product import adapters likewise describe different supported inputs. Position types in the PDF annotator and media grid represent different coordinate contracts.
-- Keyboard and interaction-mode definitions belong to primitives; resource-panel actions belong to application orchestration. Generic error codes are schema-owned, while user-facing error presentation stays in the application. Markdown validation belongs to memory, and responsive truncation belongs to the text primitive; shared utilities no longer import client implementations.
-- Existing shared utility tests import the relocated validation/truncation functions directly. Their assertions remain unchanged; moving test ownership can be considered separately. Architecture production-layer rules exclude tests, but retired aliases are forbidden in tests too.
-- One pre-existing legacy exception remains: `server/common/relay/index.ts` imports the already missing `client/components/flux/flux.type`. The architecture rule allows only that exact pair. Its original protocol cannot safely be reconstructed in a type migration; TIDY-477 must determine whether to retire the legacy relay or restore its authoritative contract. No new client/server exception was added by the migration.
-- Existing frontend implementation cycles are not claimed to be removed. Type-only imports erase type dependencies; runtime composition and feature API reduction remain coordinated with TIDY-477. This issue enforces cross-layer contract ownership and deliberate feature entries, not complete acyclicity of the application.
+The global `client/types` and `shared/types` packages are retired. Do not replace them with a catch-all types package or a compatibility export. Splits use a direct import to the actual owner.
 
 ## Import and export rules
 
-Import interfaces and aliases with `import type` or named `type` specifiers. Runtime enum uses must remain value imports. Do not re-export a moved definition from its former location. Public feature entries are listed in `tools/check/feature-entrypoints.json` and must match the feature package exports. DataFn and schema expose their new contracts directly. Do not create a new generic types package.
+Import interfaces and aliases with `import type` or a named `type` specifier. A runtime enum stays a value import. Do not re-export a moved definition from its former location. Public feature entries in `tools/check/feature-entrypoints.json` match the feature package exports. DataFn and schema expose their contracts directly.
 
-`npm run check:architecture` checks static imports, exports, dynamic imports, import types, CommonJS requires and Vitest mock imports. It rejects production schema/shared/server/service imports into client code except the documented legacy relay pair, and rejects the retired package aliases. Historical specs and append-only `.conduct` reports retain references to the old layout as historical evidence; active guidance and configuration use the new owners.
+`npm run check:architecture` checks static imports, exports, dynamic imports, import types, CommonJS requires, and Vitest mock imports. Production files under `schema`, `shared`, `server`, and `services` may not import `client` files. This boundary rule excludes tests/specs. Client-to-schema/shared imports are permitted subject to portable UI restrictions and workspace declarations. Retired package aliases are rejected in tests as well as production code. Historical specs and append-only `.conduct` reports may still name the old layout. Active guidance and configuration use the current owners.
 
-
-## Verification
-
-`npm run check:apps` passes for Nucleum, Memotron, Pointron and Timear with zero errors (379, 302, 308 and 0 warnings respectively). Account-service typechecking passes. The repository unit suite passes 277 tests with 3 skips; Playwright discovers 549 tests in 55 files. Focus session and Markdown persistence browser probes pass on the local HTTPS Nucleum host.
-
-The share extension production build passes. Its check now reports two pre-existing errors instead of 47: unsupported `aria-label` on the debug-log button component and an optional NodeType at the route boundary. The original commit reproduces both. Timear extension build cannot initialize because the installed Sharp native binary is missing. Account memory integration cannot initialize because installed zod-to-json-schema imports an unavailable zod/v3 export; the original commit reproduces this failure. The separate legacy server suite has identical original/current results: 27 failing suites, 2 passing suites, 9 failed tests, 35 passed and 9 skipped. These include removed legacy Flux imports, missing provider dependencies, real-service integration failures and existing assertions. They are not evidence of migration regressions or passing end-to-end coverage.
-
-`node tools/check/type-ownership.mjs` checks all recorded destinations and compares 199 runtime enum declarations to the baseline. `npm run check:architecture`, `npm run check:no-fixed-test-waits`, `npm run check:no-legacy-runtime`, `npm run lint` and the Turbo build graph dry-run pass. Lint has no package lint scripts and runs the configured static build prerequisite; it is not a claim of repository-wide formatting or ESLint coverage. Existing source aliases remain build-time dependencies; they are not indiscriminately added as workspace dependencies, which would create Turbo cycles. Contract consumers use the schema dependency and the existing frontend package/alias model.
-
-Reproduce the browser checks with `node apps/e2e-playwright/scripts/probe-review-session.mjs` and `node apps/e2e-playwright/scripts/probe-markdown-ownership.mjs` while the local product server is running. Neither requires existing user data; each runs in a fresh offline browser context. Full cross-product Playwright, live auth/sync, native app packaging and production deployment were not exercised.
-
-
-## Subsequent overlay/resource ownership refinement
-
-TIDY-477 moves reusable popup contracts to `client/elements/modal`, overlay state to `client/stores/overlays`, active-resource/selection state to `client/stores/resources`, and generic ResourceError to DataFn. The default error message belongs to notification state. The inventory destinations follow these moves so baseline enum validation stays reproducible. See client-boundaries.md for the permanent overlay host contract and the remaining application-specific dependencies.
+`node tools/check/type-ownership.mjs` checks every recorded destination in [type-ownership-inventory.json](type-ownership-inventory.json) and compares runtime enum declarations to that baseline. One audited retirement is recorded there: the disconnected shell cache `CacheKey` enum. No other runtime-enum retirement is exempt.

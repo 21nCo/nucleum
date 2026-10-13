@@ -1,21 +1,22 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import Divider from "@21n/elements/Divider.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
 
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import view from "@nucleum/stores/view.store";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import view from "@21n/ui/environment/view.store";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { resolveHoverState } from "@21n/utils/browser.utils";
-  import { formatSeconds, formatTime } from "@21n/utils/time.utils";
+  import { resolveHoverState } from "@21n/ui/actions/interaction-dom";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
   import type { ISessionThumb } from "@nucleum/features/focus/logs/log.type";
-  import { cn } from "@21n/utils/ui.utils";
-  import HoverableElement from "@21n/elements/HoverableElement.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import HoverableElement from "@21n/ui/elements/HoverableElement.svelte";
   import LogThumbnailObjectivesInfo from "@nucleum/features/focus/logs/LogThumbnailGoalsInfo.svelte";
 
   let {

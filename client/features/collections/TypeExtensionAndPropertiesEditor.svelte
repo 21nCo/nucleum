@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import { Size } from "@21n/elements/size.enum";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import FormControlLabel from "@21n/ui/elements/text/formLabel/FormControlLabel.svelte";
   import { propertyEditorStore } from "@nucleum/features/collections/properties/property.store";
-  import Icon from "@21n/elements/Icon.svelte";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
   import { type IActiveCollectionStore } from "./collection.store";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";

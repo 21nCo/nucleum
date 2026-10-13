@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { resolveSyncDownQuery } from "./sync.utils";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@nucleum/datafn/resource.enum";
 import { syncV2 } from "./sync";
 import { SyncMethod } from "@nucleum/schema/legacy/sync.type";
 import { Agent } from "../../account/account.type";
