@@ -7,6 +7,12 @@ describe("shared/utils/url.utils isUrlMatchPattern", () => {
     expect(isUrlMatchPattern("1.5")).toBe(false);
   });
 
+  it("rejects alternate IPv4 spellings that URL parsing canonicalizes", () => {
+    expect(isUrlMatchPattern("0x7f000001")).toBe(false);
+    expect(isUrlMatchPattern("https://2130706433/admin")).toBe(false);
+    expect(isUrlMatchPattern("%31%32%37.0.0.1")).toBe(false);
+  });
+
   it("rejects email addresses and mailto strings parsed as credentials", () => {
     expect(isUrlMatchPattern("john@example.com")).toBe(false);
     expect(isUrlMatchPattern("mailto:a@b.com")).toBe(false);

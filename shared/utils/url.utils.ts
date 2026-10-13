@@ -75,7 +75,8 @@ export function isUrlMatchPattern(url: string) {
       .split(/[/?#]/)[0]
       .replace(/:\d+$/, "")
       .toLowerCase();
-    if (/^[\d.]+$/.test(typedHost) && typedHost !== hostname) return false;
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname) && typedHost !== hostname)
+      return false;
     return Boolean(
       hostname && !hostname.endsWith(".") && hostname.includes(".")
     );
