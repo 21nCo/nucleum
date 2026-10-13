@@ -14,6 +14,7 @@ import {
   renderWranglerConfig,
   writeCloudflareAssetHeaders
 } from './frontend-config.mjs';
+import { applyCloudflareCredentialAliases } from '../../../tools/cloudflare/credential-aliases.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const repoRoot = path.resolve(serviceRoot, '..', '..');
@@ -29,6 +30,15 @@ const products = parseProducts(config, getArgValue(process.argv, 'products') ?? 
 const skipBuild = hasFlag(process.argv, 'skip-build');
 const dryRun = hasFlag(process.argv, 'dry-run');
 const envConfig = readEnvironment(config, environment);
+const credentialsEnv = envConfig.cloudflareCredentialsEnv;
+const hasDevCredentialAliases = Boolean(
+  credentialsEnv && process.env[credentialsEnv.accountId]?.trim() && process.env[credentialsEnv.token]?.trim()
+);
+if (credentialsEnv && !hasDevCredentialAliases && !/^(1|true)$/i.test(process.env.CI ?? '') && !dryRun) {
+  console.error(`Cannot deploy ${environment} manually; set ${credentialsEnv.accountId} and ${credentialsEnv.token} (CI passes the selected credentials as CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN).`);
+  process.exit(1);
+}
+applyCloudflareCredentialAliases(credentialsEnv);
 
 for (const productId of products) {
   const product = config.products[productId];

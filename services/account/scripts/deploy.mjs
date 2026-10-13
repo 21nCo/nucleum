@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
-import { missingHyperdriveIds, renderWranglerConfig } from './wrangler-config.mjs';
+import { applyCloudflareCredentialAliases } from '../../../tools/cloudflare/credential-aliases.mjs';
+import { missingHyperdriveIds, missingSecretsStoreId, renderWranglerConfig } from './wrangler-config.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
 const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
@@ -26,6 +27,26 @@ if (missing.length > 0) {
     console.error(`- ${item}`);
   }
   process.exit(1);
+}
+
+const credentialsEnv = config.environments[environment].cloudflareCredentialsEnv;
+const hasDevCredentialAliases = Boolean(
+  credentialsEnv && process.env[credentialsEnv.accountId]?.trim() && process.env[credentialsEnv.token]?.trim()
+);
+if (credentialsEnv && !hasDevCredentialAliases && !/^(1|true)$/i.test(process.env.CI ?? '') && !dryRun) {
+  console.error(`Cannot deploy ${environment} manually; set ${credentialsEnv.accountId} and ${credentialsEnv.token} (CI passes the selected credentials as CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN).`);
+  process.exit(1);
+}
+applyCloudflareCredentialAliases(credentialsEnv);
+
+const missingStore = missingSecretsStoreId(config, environment);
+if (missingStore) {
+  if (!dryRun) {
+    console.error(`Cannot deploy ${environment}; configure the Secrets Store ID first:`);
+    console.error(`- ${missingStore}`);
+    process.exit(1);
+  }
+  console.warn(`Warning (dry run): Secrets Store ID is a placeholder: ${missingStore}`);
 }
 
 const wranglerConfig = renderWranglerConfig(serviceRoot, config, environment);
@@ -53,8 +74,13 @@ function migrateDatafnDatabase(region) {
     console.error(`Cannot deploy ${environment}/${region}; set the ${variable} secret.`);
     process.exit(1);
   }
+  const rootCaVariable = `DATAFN_${region}_ROOT_CA_PEM`
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_');
   run('npm', ['run', 'datafn:migrate'], {
-    DATAFN_DATABASE_URL: databaseUrl
+    DATAFN_DATABASE_URL: databaseUrl,
+    DATAFN_DEPLOY_ENVIRONMENT: environment,
+    DATAFN_DEV_ROOT_CA_PEM: environment === 'dev' ? process.env[rootCaVariable] ?? '' : ''
   });
 }
 

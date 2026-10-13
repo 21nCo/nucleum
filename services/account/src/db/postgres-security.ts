@@ -34,3 +34,20 @@ export function requireSecureRemotePostgresUrl(value: string): void {
     );
   }
 }
+
+/**
+ * Returns the pinned root CA for dev DataFn migrations, or undefined when the
+ * strict check must apply. The dev Railway databases present a certificate for
+ * `localhost` signed by a per-instance `root-ca`, so they can never pass
+ * `verify-full`; dev migrations instead verify the chain against that pinned
+ * CA and skip only the hostname check. Every other environment stays strict.
+ */
+export function devMigrationRootCa(
+  env: Record<string, string | undefined>
+): string | undefined {
+  if (env.DATAFN_DEPLOY_ENVIRONMENT !== "dev") {
+    return undefined;
+  }
+  const rootCa = env.DATAFN_DEV_ROOT_CA_PEM?.trim();
+  return rootCa ? rootCa : undefined;
+}

@@ -1,3 +1,10 @@
+/**
+ * Shared Cloudflare zone for deployed dev hosts. Dev uses single-label hosts
+ * on this zone: `<product>.21n.dev` (web) and
+ * `<product>-account-<region>.21n.dev` (account service).
+ */
+export const DEV_HOST_ZONE = "21n.dev";
+
 export function resolveHost() {
   const nativeWebOrigin = resolveNativeConfigUrl("webOrigin");
   if (nativeWebOrigin) return nativeWebOrigin.hostname;
@@ -34,6 +41,12 @@ export function resolveAccountBaseUrl(region: string) {
   const host = resolveHost().toLowerCase();
   if (isLoopbackHost(host)) {
     return "http://localhost:3000";
+  }
+
+  const devProduct = resolveDevZoneProduct(host);
+  const devBaseUrl = devProduct ? devAccountBaseUrl(devProduct, region) : null;
+  if (devBaseUrl) {
+    return devBaseUrl;
   }
 
   const accountEnv = resolveAccountEnvironment(host);
@@ -108,6 +121,13 @@ function resolveNativeAccountBaseUrl(region: string) {
     const accountDomain =
       nativeConfig.accountDomain?.trim() ||
       resolveAccountDomainFromProduct(nativeConfig.product);
+    const devBaseUrl =
+      environment === "dev"
+        ? devAccountBaseUrl(accountDomain.replace(/^\./, "").split(".")[0], normalizedRegion)
+        : null;
+    if (devBaseUrl) {
+      return devBaseUrl;
+    }
     const suffix = environment === "live" ? "" : `-${environment}`;
     return `https://account-${normalizedRegion}${suffix}.${accountDomain}`;
   }
@@ -137,6 +157,7 @@ function resolveAccountEnvironmentFromAccountBaseUrl(
 ): AccountEnvironment {
   try {
     const hostname = new URL(baseUrl).hostname.toLowerCase();
+    if (isDevZoneAccountHost(hostname)) return "dev";
     if (hostname.startsWith("account-") || hostname.includes(".account-")) {
       if (hostname.includes("-local.")) return "local";
       if (hostname.includes("-pre.")) return "pre";
@@ -208,13 +229,46 @@ function resolveProductDomainFromHost(host: string): string | null {
   return labels.slice(-2).join(".");
 }
 
+const DEV_HOST_LABEL = /^[a-z0-9]+$/;
+
+/**
+ * Builds `https://<product>-account-<region>.21n.dev`, or returns null when the
+ * product is not a plain host label. Non-label regions fall back to `insouth`.
+ */
+function devAccountBaseUrl(product: string, region: string | undefined): string | null {
+  const normalizedProduct = product.trim().toLowerCase();
+  if (!DEV_HOST_LABEL.test(normalizedProduct)) {
+    return null;
+  }
+  const candidateRegion = normalizeAccountRegion(region);
+  const normalizedRegion = DEV_HOST_LABEL.test(candidateRegion) ? candidateRegion : "insouth";
+  return `https://${normalizedProduct}-account-${normalizedRegion}.${DEV_HOST_ZONE}`;
+}
+
+function isDevZoneAccountHost(hostname: string): boolean {
+  return (
+    hostname.endsWith(`.${DEV_HOST_ZONE}`) &&
+    /^[a-z0-9]+-account-[a-z0-9]+$/.test(hostname.slice(0, -DEV_HOST_ZONE.length - 1))
+  );
+}
+
+/** Returns the product label for a dev web host such as `memotron.21n.dev`. */
+function resolveDevZoneProduct(host: string): string | null {
+  const normalized = host.toLowerCase().replace(/:\d+$/, "");
+  if (!normalized.endsWith(`.${DEV_HOST_ZONE}`)) return null;
+  const label = normalized.slice(0, -DEV_HOST_ZONE.length - 1);
+  return DEV_HOST_LABEL.test(label) ? label : null;
+}
+
 function resolveAccountDomainFromProduct(product: string | undefined): string {
   const normalized = product?.trim().toLowerCase().replace(/^\./, "");
   return normalized || "nucleum.app";
 }
 
+/** Normalizes a region id, falling back to `insouth` for empty or non-label values. */
 function normalizeAccountRegion(region: string | undefined): string {
-  return region?.trim().toLowerCase() || "insouth";
+  const normalized = region?.trim().toLowerCase() ?? "";
+  return /^[a-z0-9-]+$/.test(normalized) ? normalized : "insouth";
 }
 
 function isLoopbackHost(host: string): boolean {

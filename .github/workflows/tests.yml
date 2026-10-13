@@ -87,15 +87,15 @@ jobs:
           - product: nucleum
             workspace: "@nucleum/app"
             port: 5050
-            domain: local.nucleum.app
+            domain: nucleum.21n.dev
           - product: pointron
             workspace: pointron
             port: 5001
-            domain: local.pointron.app
+            domain: pointron.21n.dev
           - product: memotron
             workspace: "@memotron/app"
             port: 5002
-            domain: local.memotron.app
+            domain: memotron.21n.dev
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -109,10 +109,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
         working-directory: apps/e2e-playwright
-      - name: Map HTTPS local domains
+      - name: Map HTTPS dev web hosts to the local app
         run: |
           sudo tee -a /etc/hosts >/dev/null <<'EOF'
-          127.0.0.1 local.nucleum.app local.memotron.app local.pointron.app
+          127.0.0.1 nucleum.21n.dev memotron.21n.dev pointron.21n.dev
           EOF
       - name: Install Caddy
         run: |
@@ -124,7 +124,7 @@ jobs:
         env:
           E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
           E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
-          VITE_ACCOUNT_BASE_URL_TEMPLATE: https://account-{region}-dev.nucleum.app
+          VITE_ACCOUNT_BASE_URL_TEMPLATE: https://${{ matrix.product }}-account-{region}.21n.dev
         run: |
           printf '%s\n' \
             '${{ matrix.domain }} {' \
@@ -187,7 +187,7 @@ jobs:
         env:
           E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
           E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
-          VITE_ACCOUNT_BASE_URL_TEMPLATE: https://account-{region}-dev.nucleum.app
+          VITE_ACCOUNT_BASE_URL_TEMPLATE: https://nucleum-account-{region}.21n.dev
         run: npm --workspace e2e-playwright run test:static:nucleum:app-smoke
       - name: Upload static Playwright artifacts
         if: always()

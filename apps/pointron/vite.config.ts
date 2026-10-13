@@ -17,7 +17,7 @@ process.env.VITE_PRODUCT ||= "pointron";
 
 export default defineConfig({
   server: {
-    allowedHosts: ["local.pointron.app"]
+    allowedHosts: ["local.pointron.app", "pointron.21n.dev"]
   },
   resolve: {
     alias: {

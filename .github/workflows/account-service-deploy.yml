@@ -127,10 +127,27 @@ jobs:
       - name: Account service E2E memory
         run: npm --workspace @21n/account-service run test:e2e:apifn:memory
 
+      - name: Verify Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ needs.detect.outputs.environment == 'dev' && secrets.CLOUDFLARE_DEV_API_TOKEN || needs.detect.outputs.environment != 'dev' && secrets.CLOUDFLARE_API_TOKEN || '' }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ needs.detect.outputs.environment == 'dev' && vars.CLOUDFLARE_DEV_ACCOUNT_ID || needs.detect.outputs.environment != 'dev' && secrets.CLOUDFLARE_ACCOUNT_ID || '' }}
+          ACCOUNT_DEV_SECRETS_STORE_ID: ${{ vars.ACCOUNT_DEV_SECRETS_STORE_ID }}
+          DEPLOY_ENVIRONMENT: ${{ needs.detect.outputs.environment }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Missing Cloudflare token or account ID for $DEPLOY_ENVIRONMENT (dev uses CLOUDFLARE_DEV_API_TOKEN / CLOUDFLARE_DEV_ACCOUNT_ID)" >&2
+            exit 1
+          fi
+          if [ "$DEPLOY_ENVIRONMENT" = "dev" ] && [ -z "$ACCOUNT_DEV_SECRETS_STORE_ID" ]; then
+            echo "Missing ACCOUNT_DEV_SECRETS_STORE_ID (21n-dev Secrets Store ID) for dev" >&2
+            exit 1
+          fi
+
       - name: Deploy account service
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ needs.detect.outputs.environment == 'dev' && secrets.CLOUDFLARE_DEV_API_TOKEN || needs.detect.outputs.environment != 'dev' && secrets.CLOUDFLARE_API_TOKEN || '' }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ needs.detect.outputs.environment == 'dev' && vars.CLOUDFLARE_DEV_ACCOUNT_ID || needs.detect.outputs.environment != 'dev' && secrets.CLOUDFLARE_ACCOUNT_ID || '' }}
+          ACCOUNT_DEV_SECRETS_STORE_ID: ${{ vars.ACCOUNT_DEV_SECRETS_STORE_ID }}
           TODO_LIVE_INSOUTH_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_INSOUTH_HYPERDRIVE_ID }}
           TODO_LIVE_USEAST_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_USEAST_HYPERDRIVE_ID }}
           TODO_LIVE_EUWEST_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_EUWEST_HYPERDRIVE_ID }}
@@ -140,4 +157,7 @@ jobs:
           DATAFN_INSOUTH_DATABASE_URL: ${{ secrets.DATAFN_INSOUTH_DATABASE_URL }}
           DATAFN_USEAST_DATABASE_URL: ${{ secrets.DATAFN_USEAST_DATABASE_URL }}
           DATAFN_EUWEST_DATABASE_URL: ${{ secrets.DATAFN_EUWEST_DATABASE_URL }}
+          DATAFN_INSOUTH_ROOT_CA_PEM: ${{ vars.DATAFN_INSOUTH_ROOT_CA_PEM }}
+          DATAFN_USEAST_ROOT_CA_PEM: ${{ vars.DATAFN_USEAST_ROOT_CA_PEM }}
+          DATAFN_EUWEST_ROOT_CA_PEM: ${{ vars.DATAFN_EUWEST_ROOT_CA_PEM }}
         run: npm --workspace @21n/account-service run deploy:${{ needs.detect.outputs.environment }} -- --regions=${{ needs.detect.outputs.regions }}

@@ -52,7 +52,23 @@ export function workerName(config, environment, productId) {
 export function webHost(config, environment, productId) {
   const envConfig = readEnvironment(config, environment);
   const product = config.products[productId];
+  if (envConfig.hosts?.web) {
+    return renderHostTemplate(envConfig.hosts.web, { product: productId, domain: product.domain });
+  }
   return `${envConfig.webSubdomain}.${product.domain}`;
+}
+
+/** Cloudflare zone that owns the product's web host for an environment. */
+export function routeZoneName(config, environment, productId) {
+  const envConfig = readEnvironment(config, environment);
+  return envConfig.hosts?.zoneName ?? config.products[productId].domain;
+}
+
+function renderHostTemplate(template, values) {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value ?? '')),
+    template
+  );
 }
 
 export function buildEnv(config, environment, productId) {
@@ -62,7 +78,9 @@ export function buildEnv(config, environment, productId) {
     throw new Error(`Unknown frontend product: ${productId}`);
   }
 
-  const accountBaseUrlTemplate = envConfig.accountBaseUrlTemplate?.replaceAll('{domain}', product.domain);
+  const accountBaseUrlTemplate = envConfig.accountBaseUrlTemplate
+    ? renderHostTemplate(envConfig.accountBaseUrlTemplate, { product: productId, domain: product.domain })
+    : undefined;
   return removeUndefinedValues({
     ...config.defaultBuildEnv,
     ...envConfig.buildEnv,
@@ -74,16 +92,17 @@ export function buildEnv(config, environment, productId) {
 }
 
 export function routeDefinitions(config, environment, products = Object.keys(config.products)) {
-  readEnvironment(config, environment);
+  const envConfig = readEnvironment(config, environment);
   return products.map((productId) => ({
     pattern: `${webHost(config, environment, productId)}/*`,
     script: workerName(config, environment, productId),
-    zoneName: config.products[productId].domain
+    zoneName: routeZoneName(config, environment, productId),
+    zoneId: envConfig.hosts?.zoneId
   }));
 }
 
 export function wafExceptionDefinitions(config, environment, products = Object.keys(config.products)) {
-  readEnvironment(config, environment);
+  const envConfig = readEnvironment(config, environment);
   const staticFrontend = config.waf?.staticFrontend;
   if (!staticFrontend?.rules) {
     throw new Error('Missing static frontend WAF exception config.');
@@ -92,7 +111,8 @@ export function wafExceptionDefinitions(config, environment, products = Object.k
   return products.map((productId) => {
     const host = webHost(config, environment, productId);
     return {
-      zoneName: config.products[productId].domain,
+      zoneName: routeZoneName(config, environment, productId),
+      zoneId: envConfig.hosts?.zoneId,
       rule: {
         ref: `21n_frontend_worker_asset_${environment}_${productId}`,
         description: `21n static frontend WAF exception: ${environment}/${productId}`,

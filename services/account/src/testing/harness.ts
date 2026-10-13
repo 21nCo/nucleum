@@ -6,7 +6,6 @@ import type {
   AuthFnMultiRegionRegionConfig
 } from "@authfn/multi-region";
 import { createSearchProvider } from "@searchfn/datafn-provider";
-import { MemoryAdapter } from "@searchfn/adapter-memory";
 import { createMemoryRuntimeStores, memoryAdapter } from "@superfunctions/db/adapters/memory";
 import type { Adapter, KVStoreAdapter } from "@superfunctions/db";
 import { resolveNucleumDatafnSearchResourceFields } from "@nucleum/schema";
@@ -19,6 +18,7 @@ import { createCapturingDeliveryProvider } from "./outbox.js";
 import type { CapturingDeliveryProvider } from "./outbox.js";
 import { createCapturedLogger } from "./logger.js";
 import { createInMemoryRegionLookupStore } from "./memory-lookup.js";
+import { MetadataFilteringMemoryAdapter } from "./memory-search-adapter.js";
 import type { InMemoryRegionLookupStore } from "./memory-lookup.js";
 import { createMockOAuthConfig, type MockOAuthConfig } from "./oauth.js";
 
@@ -119,7 +119,7 @@ export function createAccountTestHarness(
       syncDatabase: datafnDatabase,
       stores,
       logger: logger.logger,
-      syncSearchProvider: createSearchProvider(new MemoryAdapter(), {
+      syncSearchProvider: createSearchProvider(new MetadataFilteringMemoryAdapter(), {
         resourceFields: resolveNucleumDatafnSearchResourceFields()
       })
     },

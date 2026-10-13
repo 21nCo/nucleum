@@ -27,7 +27,12 @@ curl -ksS 'https://account-insouth-local.nucleum.app/debug-sink/v1/logs?limit=50
 
 ## Cloudflare
 
-Remote deployment needs `CLOUDFLARE_API_TOKEN` in the shell running Wrangler.
+The deployed sink lives in the **21n-dev** Cloudflare account
+(`c801efc2879825babdb9b2534199c4dd`). CI (`.github/workflows/debug-sink-deploy.yml`)
+deploys it on pushes to `dev` that touch `services/debug-sink/**`.
+
+Manual remote deployment needs `CLOUDFLARE_API_TOKEN` (a 21n-dev token) and
+`CLOUDFLARE_ACCOUNT_ID=c801efc2879825babdb9b2534199c4dd` in the shell running Wrangler.
 
 ```sh
 export CLOUDFLARE_API_TOKEN=...
@@ -44,7 +49,7 @@ npm --workspace @21n/debug-sink run deploy
 Current deployed URL:
 
 ```txt
-https://nucleus-debug-sink.21n.workers.dev
+https://nucleus-debug-sink.21n-dev.workers.dev
 ```
 
 Remote deployments must be protected:

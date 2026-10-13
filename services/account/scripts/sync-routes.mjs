@@ -31,7 +31,7 @@ if (!token) {
 const routesByZone = groupByZoneName(routeDefinitions(config, environment, regions));
 
 for (const [zoneName, routes] of routesByZone) {
-  const zoneId = await resolveZoneIdForRouteZone(config, zoneName, token);
+  const zoneId = await resolveZoneIdForRouteZone(config, zoneName, token, routes[0]?.zoneId);
   const existingRoutes = await cloudflare(`/zones/${zoneId}/workers/routes`, token);
   const existingByPattern = new Map(existingRoutes.map((route) => [route.pattern, route]));
 
