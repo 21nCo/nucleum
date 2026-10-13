@@ -5,7 +5,7 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { type IRecordId } from "@nucleum/schema/legacy/data.type";
   import { formatSeconds } from "@21n/ui/elements/time/duration-format";
-import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { AccessMode } from "@nucleum/datafn/resource.type";

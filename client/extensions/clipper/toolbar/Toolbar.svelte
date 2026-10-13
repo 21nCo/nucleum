@@ -8,8 +8,8 @@
   import { Placement, Orientation } from "@21n/ui/elements/direction.enum";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
-import { toolbarState } from "@nucleum/extensions/clipper/contentScripts/toolbar.store";
-import { syncStore } from "@nucleum/extensions/clipper/contentScripts/sync.store";
+  import { toolbarState } from "@nucleum/extensions/clipper/contentScripts/toolbar.store";
+  import { syncStore } from "@nucleum/extensions/clipper/contentScripts/sync.store";
   import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import {

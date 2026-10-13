@@ -10,7 +10,7 @@
   import { Layout } from "@nucleum/shell/layout-mode.type";
   import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
   import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
-import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import BreadcrumbMini from "@21n/ui/compositions/navigation/breadcrumb/BreadcrumbMini.svelte";
   import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import { cn } from "@21n/ui/environment/presentation";

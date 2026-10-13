@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { KeyboardShortcut } from "@nucleum/shared-state/preferences/user-preferences.type";
+  type KeyboardShortcut = { key: string; modifiers: string[]; action: string };
   let { onCollapse = undefined }: { onCollapse?: (() => void) | undefined } =
     $props();
   let defaultKeyMap: KeyboardShortcut[] = [

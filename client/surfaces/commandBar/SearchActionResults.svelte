@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import type { Component } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";

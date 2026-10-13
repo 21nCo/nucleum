@@ -3,7 +3,7 @@
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { cn } from "@21n/ui/environment/presentation";
   import { type IKindleHighlight, type ITextClip, type IWebScreenshotClip } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { resolveContentPreview } from "@nucleum/features/memory/node/node.utils";
   import TextClipPreview from "@nucleum/features/memory/node/content/web/TextClipPreview.svelte";
   let {

@@ -8,7 +8,7 @@
   import { onMount } from "svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import view from "@21n/ui/environment/view.store";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { Size } from "@21n/ui/elements/size.enum";
   import { postMessageToParent } from "@nucleum/client/runtime/embed/embed.utils";
   import { Placement } from "@21n/ui/elements/direction.enum";

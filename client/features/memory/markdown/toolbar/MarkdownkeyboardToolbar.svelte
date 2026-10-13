@@ -5,7 +5,7 @@
   import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
   import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
   import { embedNodeTypeList, mediaNodeTypeList, structuralNodeTypes, webNodeTypeList } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import context from "@nucleum/client/runtime/context.store";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";

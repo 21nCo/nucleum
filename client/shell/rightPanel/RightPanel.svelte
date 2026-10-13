@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cn } from "@21n/ui/environment/presentation";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { Size } from "@21n/ui/elements/size.enum";
   import context from "@nucleum/client/runtime/context.store";
   import { fly } from "svelte/transition";

@@ -4,7 +4,7 @@
   import { ModifierKey } from "@21n/ui/elements/keyboard/keyboard.type";
   import { resolveShortcutText } from "@21n/ui/elements/keyboard/shortcut.utils";
   import { BlockAction } from "@nucleum/features/memory/markdown/md.type";
-import { InlineType } from "@21n/ui/elements/markdown/inline.type";
+  import { InlineType } from "@21n/ui/elements/markdown/inline.type";
 
   let {
     row = undefined,

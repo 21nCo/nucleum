@@ -1,6 +1,6 @@
 <script lang="ts">
   import { type IAudioBody, type IClip, type IWebPage, webNodeTypeList, type INode } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import WebNodeContent from "@nucleum/features/memory/node/content/WebNodeContent.svelte";
   import PdfAnnotator from "@nucleum/features/memory/pdfAnnotator/PdfAnnotator.svelte";
   import FileView from "@21n/ui/compositions/files/FileView.svelte";

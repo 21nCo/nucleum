@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
+  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import {
     resolveNodeContextMenu,
     resolvePanelOptions,

@@ -18,7 +18,7 @@
   import PanelSwitcherItem from "@21n/ui/elements/switcher/PanelSwitcherItem.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { bg, cn } from "@21n/ui/environment/presentation";
-import { emptyTranstition } from "@21n/ui/actions/animation";
+  import { emptyTranstition } from "@21n/ui/actions/animation";
   import type {
     ISelectItem,
     ISelectValue

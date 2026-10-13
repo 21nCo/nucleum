@@ -18,7 +18,7 @@ supplies their headless selection state and application-configured host.
 
 - May import `config`, `datafn`, `persistence`, `runtime`, `shared-state`,
   `shell`, `theme`, and `ui`, plus permitted schema/shared contracts.
-- May **not** import `products` `surfaces` or `composition`.
+- May **not** import `products`, `surfaces`, or `composition`.
 - Cross-feature imports must target a path declared in
   `tools/check/feature-entrypoints.json`; there is no barrel.
 

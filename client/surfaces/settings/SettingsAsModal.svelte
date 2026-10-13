@@ -9,7 +9,7 @@
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import SettingThumbnail from "@nucleum/surfaces/settings/SettingThumbnail.svelte";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   import ProfileCpSection from "@nucleum/surfaces/account/profile/ProfileCPSection.svelte";

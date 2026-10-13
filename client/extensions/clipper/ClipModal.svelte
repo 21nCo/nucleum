@@ -6,7 +6,7 @@
   import LinkBoxOnClipper from "@nucleum/extensions/clipper/LinkBoxOnClipper.svelte";
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
   import { type IClip } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import NodeTitle from "@nucleum/features/memory/node/title/NodeTitle.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { fly } from "svelte/transition";

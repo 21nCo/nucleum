@@ -9,7 +9,7 @@
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import context from "@nucleum/client/runtime/context.store";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { onDestroy, onMount } from "svelte";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";

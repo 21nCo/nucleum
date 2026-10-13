@@ -40,7 +40,7 @@
   } from "@nucleum/features/memory/linking/search-results.utils";
   import { contentTypeSort } from "@nucleum/features/memory/node/node.utils";
   import { activeResourceFilter } from "@nucleum/datafn/resource-filters";
-import { debouncer } from "@21n/shared-utils/debounce";
+  import { debouncer } from "@21n/shared-utils/debounce";
 
   let {
     children,

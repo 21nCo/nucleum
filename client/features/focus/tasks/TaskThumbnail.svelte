@@ -11,7 +11,7 @@
   } from "@nucleum/datafn/resource.type";
   import ResourceThumbnailBase from "@nucleum/features/records/ResourceThumbnailBase.svelte";
   import { compareDates } from "@21n/shared-utils/datetime/date-arithmetic";
-import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
   import TaskCheckbox from "@nucleum/features/focus/tasks/TaskCheckbox.svelte";
   import { hoverable } from "@21n/ui/actions/hover.action";
   import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";

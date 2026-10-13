@@ -30,7 +30,7 @@
 
   import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
 
-  import { isValidAvatar } from "@21n/ui/elements/avatarPicker/avatar.utils";
+  import { isValidAvatar } from "@nucleum/features/records/avatar/avatar.utils";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import CollectionDescriptionEditPopover from "@nucleum/features/collections/CollectionDescriptionEditPopover.svelte";

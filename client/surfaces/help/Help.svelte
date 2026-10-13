@@ -8,7 +8,7 @@
   import AppNameWithVersion from "@nucleum/surfaces/settings/about/AppNameWithVersion.svelte";
   import ProductInfoFooter from "@nucleum/surfaces/settings/about/ProductInfoFooter.svelte";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import NavigationHeader from "@nucleum/shell/navigation/components/NavigationHeader.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";

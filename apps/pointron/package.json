@@ -2,6 +2,7 @@
   "name": "pointron",
   "version": "0.84.0",
   "build": 4,
+  "private": true,
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 5001",
     "debug": "vite dev --host 0.0.0.0 --port 5001",

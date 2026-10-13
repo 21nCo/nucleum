@@ -4,7 +4,6 @@
   import { refreshTimeZone } from "@nucleum/shared-state/preferences/timezone";
   import { performAppUpdateCheck } from "@nucleum/surfaces/settings/about/app-update";
   import { isExtensionEnvironment } from "@21n/shared-utils/browser-environment";
-  import { pullForegroundDatafn } from "@nucleum/datafn/visibility-sync";
   import { createLegacyDataRecovery } from "@nucleum/surfaces/settings/data-recovery/legacy-data-recovery.svelte";
 
   import { refreshAppStaticData } from "@nucleum/shared-state/app-context/app-data";
@@ -60,6 +59,7 @@
   import {
     nucleumDatafnStatus,
     initializeNucleumDatafn,
+    pullDatafnNow,
     reconcileDatafnNow,
     refreshNucleumDatafnStatus
   } from "@nucleum/datafn/datafn.store";
@@ -199,7 +199,7 @@
       await refreshTimeZone();
       const isCloudUser = $nucleumDatafnStatus.nucleumMode === "sync";
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
-        await pullForegroundDatafn();
+        await pullDatafnNow();
       }
       if (isExtensionEnvironment() || isDebug) return;
       performAppUpdateCheck();

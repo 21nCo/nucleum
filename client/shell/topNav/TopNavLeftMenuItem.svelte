@@ -14,7 +14,7 @@
   import { Action } from "@nucleum/client/config/action.enum";
   import { page } from "$app/stores";
   import { onMount } from "svelte";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";

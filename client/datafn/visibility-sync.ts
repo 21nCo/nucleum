@@ -1,33 +1,10 @@
 import context from "@nucleum/client/runtime/context.store";
 import {
   nucleumDatafnStatus,
-  datafnRuntime,
-  type NucleumDatafnRuntime,
   pullDatafnNow,
   refreshNucleumDatafnStatus
 } from "@nucleum/datafn/datafn.store";
 import { get } from "svelte/store";
-
-let foregroundPull:
-  | {
-      runtime: NucleumDatafnRuntime | null;
-      promise: ReturnType<typeof pullDatafnNow>;
-    }
-  | undefined;
-
-/** Coalesces overlapping focus and visibility pulls for the same runtime. */
-export function pullForegroundDatafn() {
-  const runtime = get(datafnRuntime);
-  if (foregroundPull?.runtime === runtime) return foregroundPull.promise;
-  const pending = { runtime, promise: pullDatafnNow() };
-  foregroundPull = pending;
-  void pending.promise
-    .finally(() => {
-      if (foregroundPull === pending) foregroundPull = undefined;
-    })
-    .catch(() => {});
-  return pending.promise;
-}
 
 /** Installs visibility-triggered synchronization for a mounted application. */
 export function installVisibilitySync() {
@@ -82,7 +59,7 @@ export function installVisibilitySync() {
     }, MAX_SYNC_DURATION);
 
     try {
-      await pullForegroundDatafn();
+      await pullDatafnNow();
       await refreshNucleumDatafnStatus();
     } catch (error) {
       console.error("Sync failed:", error);

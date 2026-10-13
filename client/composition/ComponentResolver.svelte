@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import ModalLayout from "@nucleum/shell/modal/ModalLayout.svelte";
   import context from "@nucleum/client/runtime/context.store";
   import { postMessageToParent } from "@nucleum/client/runtime/embed/embed.utils";

@@ -4,9 +4,9 @@
   import { onMount, onDestroy } from "svelte";
   import type { IArea } from "@nucleum/extensions/clipper/contentScripts/types";
   import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
-import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
   import { type IWebScreenshotClip } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { relayToBackgroundScript } from "@nucleum/client/runtime/extensions/messaging";

@@ -9,7 +9,7 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import { type INode, type INodeThumb } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import {
     resolveNodeContentLabel,
     resolveNodeIcon

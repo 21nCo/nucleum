@@ -2,8 +2,8 @@
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { onMount } from "svelte";
-import { ActionType } from "@nucleum/client/config/action.type";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import { ActionType } from "@nucleum/client/config/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import SearchActionResults from "@nucleum/surfaces/commandBar/SearchActionResults.svelte";
   import CmdResults from "@nucleum/surfaces/commandBar/CmdResults.svelte";
   import { Size } from "@21n/ui/elements/size.enum";

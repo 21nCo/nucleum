@@ -5,13 +5,13 @@
   } from "@nucleum/extensions/clipper/clipper.utils";
   import { resolveContentTypeForUrl } from "@nucleum/features/memory/capture/browser-tab-data";
   import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
-  import FeedbackPane from "@nucleum/extensions/clipper/feedbackPane/FeedbackPane.svelte";
+  import FeedbackPane from "@nucleum/extensions/clipper/feedbackPane/feedbackPane.svelte";
   import Toolbar from "@nucleum/extensions/clipper/toolbar/Toolbar.svelte";
   import TextClipper from "@nucleum/extensions/clipper/contentScripts/TextClipper.svelte";
   import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
-import { toolbarState } from "@nucleum/extensions/clipper/contentScripts/toolbar.store";
-import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
-import { syncStore } from "@nucleum/extensions/clipper/contentScripts/sync.store";
+  import { toolbarState } from "@nucleum/extensions/clipper/contentScripts/toolbar.store";
+  import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
+  import { syncStore } from "@nucleum/extensions/clipper/contentScripts/sync.store";
   import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import ExtensionBaseLayer from "@nucleum/extensions/ExtensionBaseLayer.svelte";
   import ScreenShot from "@nucleum/extensions/clipper/contentScripts/ScreenShot.svelte";

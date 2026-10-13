@@ -2,8 +2,8 @@
   import { ChartType } from "@21n/ui/compositions/charts/analytics.type";
   import Chart from "@21n/ui/compositions/charts/Chart.svelte";
   import { determineTimePeriodv2 } from "@21n/shared-utils/datetime/period";
-import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
-import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/ui/elements/size.enum";

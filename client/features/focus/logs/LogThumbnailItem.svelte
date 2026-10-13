@@ -13,7 +13,7 @@
   import { ColorStrength } from "@21n/theme/appearance.type";
   import { resolveHoverState } from "@21n/ui/actions/interaction-dom";
   import { formatSeconds } from "@21n/ui/elements/time/duration-format";
-import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
   import type { ISessionThumb } from "@nucleum/features/focus/logs/log.type";
   import { cn } from "@21n/ui/environment/presentation";
   import HoverableElement from "@21n/ui/elements/HoverableElement.svelte";

@@ -131,6 +131,7 @@
   "client/features/records/ResourceThumbnailBase.svelte",
   "client/features/records/ResourceThumbnailContextMenu.svelte",
   "client/features/records/avatar/Avatar.svelte",
+  "client/features/records/avatar/avatar.utils.ts",
   "client/features/records/cover/CoverPicker.svelte",
   "client/features/records/cover/CoverRenderer.svelte",
   "client/features/records/bulk-editor.ts",

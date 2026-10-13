@@ -23,7 +23,7 @@
     resourceAction
   } from "@nucleum/datafn/resource.utils";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
+  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import {
     resolveCollectionResource,

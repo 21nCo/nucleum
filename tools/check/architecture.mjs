@@ -291,7 +291,8 @@ for (const file of files) {
             targets.some((item) => !fs.existsSync(path.join(root, item)))) ||
             (specifier.startsWith("$") &&
               !targets.length &&
-              !resolveAppImport(specifier, file, appHosts)?.framework))
+              !resolveAppImport(specifier, file, appHosts)?.framework &&
+              !resolveAppImport(specifier, file, appHosts)?.generated))
         )
           resolutionDiagnostics.push({
             from: file,

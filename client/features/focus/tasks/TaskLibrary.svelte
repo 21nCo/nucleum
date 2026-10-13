@@ -31,7 +31,7 @@
   import { Placement } from "@21n/ui/elements/direction.enum";
   import { popover } from "@21n/ui/actions/popover.action";
   import { compareDates, isSameDay } from "@21n/shared-utils/datetime/date-arithmetic";
-import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";

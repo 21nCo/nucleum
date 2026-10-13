@@ -2,9 +2,9 @@
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { highlightStore } from "@nucleum/features/memory/common/highlighters/highlight.store";
   import { type INode } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { cn } from "@21n/ui/environment/presentation";
-import { convertToRGBA } from "@21n/ui/environment/colors";
+  import { convertToRGBA } from "@21n/ui/environment/colors";
   import { truncateString } from "@21n/shared-utils/text.utils";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";

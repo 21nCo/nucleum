@@ -6,7 +6,7 @@
   import { onDestroy, onMount } from "svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { openAppPath } from "@nucleum/extensions/navigation";
-import { relayToContentScript } from "@nucleum/client/runtime/extensions/messaging";
+  import { relayToContentScript } from "@nucleum/client/runtime/extensions/messaging";
   import type { IClip } from "@nucleum/features/memory/node/node.type";
   import ExtensionBaseLayer from "@nucleum/extensions/ExtensionBaseLayer.svelte";
   import Button from "@21n/ui/elements/button/Button.svelte";

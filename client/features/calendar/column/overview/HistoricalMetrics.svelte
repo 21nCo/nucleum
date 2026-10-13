@@ -8,7 +8,7 @@
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
   import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
-import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
 
   let {
     date,

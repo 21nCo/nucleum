@@ -10,7 +10,7 @@
   import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
   import { resolveFileUploadErrorMessage } from "@nucleum/features/memory/capture/upload-error.utils";
   import { mediaNodeTypeList, webNodeTypeList } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import context from "@nucleum/client/runtime/context.store";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import {

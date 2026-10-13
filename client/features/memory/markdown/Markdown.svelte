@@ -41,7 +41,7 @@
   import { dragSelection } from "@21n/ui/actions/dragSelection.action";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
+  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { bulkEditStore as globalBulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { ErrorMessage } from "@nucleum/shared-state/notifications/error.enum";

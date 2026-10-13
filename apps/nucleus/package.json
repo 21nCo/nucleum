@@ -2,6 +2,7 @@
   "name": "@nucleum/app",
   "version": "0.4.0",
   "build": 4,
+  "private": true,
   "scripts": {
     "dev": "vite dev --port 5050",
     "debug": "vite dev --host 0.0.0.0 --port 5050",

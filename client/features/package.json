@@ -137,6 +137,7 @@
     "./records/bulk-editor": "./records/bulk-editor.ts",
     "./records/resource.actions": "./records/resource.actions.ts",
     "./records/avatar/Avatar.svelte": "./records/avatar/Avatar.svelte",
+    "./records/avatar/avatar.utils": "./records/avatar/avatar.utils.ts",
     "./records/cover/CoverPicker.svelte": "./records/cover/CoverPicker.svelte",
     "./records/cover/CoverRenderer.svelte": "./records/cover/CoverRenderer.svelte",
     "./spaces/combination/SideNavCombination.svelte": "./spaces/combination/SideNavCombination.svelte",

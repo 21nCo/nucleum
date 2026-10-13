@@ -22,7 +22,7 @@
   import BottomNav from "@nucleum/shell/bottomNav/BottomNav.svelte";
   import { hTrail } from "@nucleum/shell/topNav/tabs/tabs.store";
   import Trail from "@nucleum/shell/trail/Trail.svelte";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";

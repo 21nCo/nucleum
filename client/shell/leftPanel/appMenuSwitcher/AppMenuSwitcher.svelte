@@ -7,8 +7,8 @@
   import { onMount } from "svelte";
   import type { Snippet } from "svelte";
   import AppMenuSwitcherItem from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte";
-import { ActionType } from "@nucleum/client/config/action.type";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import { ActionType } from "@nucleum/client/config/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { appStore, isInEditMode } from "@nucleum/shared-state/app-context/app.store";
   import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
   import type { IAppMenuStore } from "@nucleum/shell/navigation/app-menu.type";

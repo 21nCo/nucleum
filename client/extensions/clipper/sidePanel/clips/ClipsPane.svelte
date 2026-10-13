@@ -2,7 +2,7 @@
   import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
   import { type IClip, type ITextClip, type IVideoTimestampClip } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { relayToContentScript } from "@nucleum/client/runtime/extensions/messaging";
   import Clip from "@nucleum/extensions/clipper/sidePanel/clips/Clip.svelte";
   import { wait } from "@21n/shared-utils/wait";

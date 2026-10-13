@@ -4,7 +4,7 @@
   import { cn } from "@21n/ui/environment/presentation";
   import { LayoutContext } from "@nucleum/shell/layout-mode.type";
   import AppMenuSwitcherItem from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   let {
     items,

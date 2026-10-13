@@ -9,9 +9,9 @@
     type ComponentType
   } from "svelte";
   import { type IBlock } from "@nucleum/features/memory/markdown/md.type";
-import { InlineType } from "@21n/ui/elements/markdown/inline.type";
+  import { InlineType } from "@21n/ui/elements/markdown/inline.type";
   import { debouncer } from "@21n/shared-utils/debounce";
-import { generateUID } from "@21n/shared-utils/legacy-id";
+  import { generateUID } from "@21n/shared-utils/legacy-id";
   import { extractInlineMarkdownFromHtml, findInlineStylingPatterns, findSymbolPatterns, inlineLinkPatterns, replaceInlineStylePatterns, replaceSymbolPatterns } from "@21n/ui/elements/markdown/markdown.utils";
   import InlineMention from "@nucleum/features/memory/markdown/content/inline/InlineMention.svelte";
   import { cn } from "@21n/ui/environment/presentation";

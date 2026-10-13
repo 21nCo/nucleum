@@ -36,10 +36,15 @@ export function readAppAliases(file, text) {
   return { directory, aliases, routes };
 }
 
+/** App-host modules written by build plugins, absent from a clean checkout. */
+const GENERATED_APP_MODULES = new Set(["$lib/product.json"]);
+
 /** Expands app-relative imports in every applicable host; framework modules stay external. */
 export function resolveAppImport(specifier, importer, hosts) {
   if (/^\$(?:app|env|service-worker)(?:\/|$)/.test(specifier))
     return { framework: true, targets: [] };
+  if (GENERATED_APP_MODULES.has(specifier))
+    return { framework: false, generated: true, targets: [] };
   if (!specifier.startsWith("$")) return undefined;
   const ownHost = hosts.find((host) =>
     importer.startsWith(`${host.directory}/`)

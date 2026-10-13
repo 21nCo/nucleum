@@ -4,13 +4,13 @@
   import LinkBoxOnClipper from "@nucleum/extensions/clipper/LinkBoxOnClipper.svelte";
   import { onMount } from "svelte";
   import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
-import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
   import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
   import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
   import { socialPostNodeTypeList } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { resolveContentTypeString } from "@nucleum/extensions/clipper/clipper.utils";
   import FeedbackPaneBase from "@nucleum/extensions/clipper/feedbackPane/FeedbackPaneBase.svelte";
   import FileView from "@21n/ui/compositions/files/FileView.svelte";

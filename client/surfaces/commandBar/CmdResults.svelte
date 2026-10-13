@@ -4,7 +4,7 @@
   import { tick } from "svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import view from "@21n/ui/environment/view.store";
-import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { ActionType } from "@nucleum/client/config/action.type";
   import { Action } from "@nucleum/client/config/action.enum";
 

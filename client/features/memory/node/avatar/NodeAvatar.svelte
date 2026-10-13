@@ -4,7 +4,7 @@
   import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
   import { Size } from "@21n/ui/elements/size.enum";
   import { type IActiveNode, type INode, webNodeTypeList } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import {
     resolveFileIcon,
     resolveNodeIcon
@@ -16,7 +16,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
     CollectionType,
     type ICollectionExpanded
   } from "@nucleum/features/collections/collection.type";
-  import { isValidAvatar } from "@21n/ui/elements/avatarPicker/avatar.utils";
+  import { isValidAvatar } from "@nucleum/features/records/avatar/avatar.utils";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
   type NodeCollectionReference = IRecordId | ICollectionExpanded;

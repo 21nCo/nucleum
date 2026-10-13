@@ -1,10 +1,10 @@
 <script lang="ts">
   import { resolveNodeContextMenu } from "@nucleum/features/memory/node/node.store";
   import { type ITextClip, type IVideoTimestampClip, type IWebScreenshotClip } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
   import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
-import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
   import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import LinkBoxOnClipper from "@nucleum/extensions/clipper/LinkBoxOnClipper.svelte";
@@ -12,7 +12,7 @@ import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import LinkActionOnClipper from "@nucleum/extensions/clipper/LinkActionOnClipper.svelte";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import { openAppPath } from "@nucleum/extensions/navigation";
-import { relayToContentScript } from "@nucleum/client/runtime/extensions/messaging";
+  import { relayToContentScript } from "@nucleum/client/runtime/extensions/messaging";
   import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
   import { onMount, onDestroy } from "svelte";

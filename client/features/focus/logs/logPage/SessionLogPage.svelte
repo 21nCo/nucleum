@@ -22,7 +22,7 @@
 
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { formatDatetime, formatTime } from "@21n/shared-utils/datetime/date-formatting";
-import { isSameDateTime } from "@21n/shared-utils/datetime/date-arithmetic";
+  import { isSameDateTime } from "@21n/shared-utils/datetime/date-arithmetic";
   import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import view from "@21n/ui/environment/view.store";

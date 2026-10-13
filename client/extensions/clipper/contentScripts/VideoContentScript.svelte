@@ -14,7 +14,7 @@
     getVideoPlayData
   } from "@nucleum/extensions/clipper/parsers/shared/video.utils";
   import { relayToBackgroundScript } from "@nucleum/client/runtime/extensions/messaging";
-import { resolveAppPath } from "@nucleum/extensions/navigation";
+  import { resolveAppPath } from "@nucleum/extensions/navigation";
   import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
   import { Size } from "@21n/ui/elements/size.enum";
   import VideoTimelineClipItem from "@nucleum/extensions/clipper/contentScripts/parts/VideoTimelineClipItem.svelte";

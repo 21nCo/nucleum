@@ -3,7 +3,7 @@
   import type { Snippet } from "svelte";
   import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { headingNodeTypes, type INode, type INodeThumb, socialPostNodeTypeList, socialProfileNodeTypeList, socialProfileWithImageUnavailable } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import {
     resolveContentPreview,
     resolveFilePreview,
@@ -19,7 +19,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import TextClipPreview from "@nucleum/features/memory/node/content/web/TextClipPreview.svelte";
   import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import { formatDatetime, formatTime } from "@21n/shared-utils/datetime/date-formatting";
-import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import NodeThumbnailAudioPreview from "@nucleum/features/memory/node/thumbnail/NodeThumbnailAudioPreview.svelte";
   import NodeThumbnailPdfPreview from "@nucleum/features/memory/node/thumbnail/NodeThumbnailPdfPreview.svelte";
