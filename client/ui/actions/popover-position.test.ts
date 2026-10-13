@@ -6,15 +6,6 @@ const originalCanvasGetContext = HTMLCanvasElement.prototype.getContext;
 
 const originalCanvasToDataURL = HTMLCanvasElement.prototype.toDataURL;
 
-const mockedModules = vi.hoisted(() => ({
-  logger: {
-    log: vi.fn(),
-    error: vi.fn()
-  }
-}));
-
-vi.mock("@nucleum/client/runtime/logging/logger", () => mockedModules);
-
 vi.mock("@21n/shared-utils/obj.utils", () => ({
   deepCopy: (value: any) => value
 }));

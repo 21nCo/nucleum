@@ -68,7 +68,14 @@ export function isUrlMatchPattern(url: string) {
       /^https?:\/\//i.test(value) ? value : `https://${value}`
     );
     if (!["http:", "https:"].includes(parsed.protocol)) return false;
+    if (parsed.username || parsed.password) return false;
     const hostname = parsed.hostname;
+    const typedHost = value
+      .replace(/^(?:https?:)?\/\//i, "")
+      .split(/[/?#]/)[0]
+      .replace(/:\d+$/, "")
+      .toLowerCase();
+    if (/^[\d.]+$/.test(typedHost) && typedHost !== hostname) return false;
     return Boolean(
       hostname && !hostname.endsWith(".") && hostname.includes(".")
     );

@@ -39,7 +39,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
   }
 
   async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
-    logger.log({ at: "syncStore save", items });
+    logger.log({ at: "syncStore save", itemCount: items?.length ?? 0 });
     if (!items || items.length < 1) return;
     const limitCount = 300;
     this.update((n) => {
@@ -48,11 +48,11 @@ class SyncStore extends ObservableStore<ISyncStore> {
     });
     if (items.length > limitCount) {
       const chunks = resolveChunks();
-      logger.log({ at: "syncStore save", chunks });
+      logger.log({ at: "syncStore save", chunkCount: chunks.length });
       for (const chunk of chunks) {
         await chunk();
         this.update((n) => {
-          n.progress = (chunks.indexOf(chunk) / chunks.length) * 100;
+          n.progress = ((chunks.indexOf(chunk) + 1) / chunks.length) * 100;
           return n;
         });
       }

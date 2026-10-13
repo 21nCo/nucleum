@@ -72,7 +72,8 @@ export const toolbarState = {
       toolbarStateStore.update((state) => ({
         ...state,
         isOpen: result.isOpen,
-        position: result.position
+        position: result.position,
+        isHidden: result.isHidden
       }));
     }
   }

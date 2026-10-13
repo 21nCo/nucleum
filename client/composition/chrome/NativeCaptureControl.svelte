@@ -7,8 +7,13 @@
   import { HapticFeedback } from "@nucleum/client/runtime/embed/haptic.enum";
   import { EmbedMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
 
+  const actionMessages: Partial<Record<string, EmbedMessage>> = {
+    camera: EmbedMessage.CAMERA
+  };
+
   function triggerAction(icon: string) {
-    if (icon.includes("camera")) postMessageToParent(EmbedMessage.CAMERA);
+    const message = actionMessages[icon];
+    if (message) postMessageToParent(message);
   }
 </script>
 

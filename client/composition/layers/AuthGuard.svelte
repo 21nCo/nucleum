@@ -8,6 +8,7 @@
 
   import type { Snippet } from "svelte";
   import { page } from "$app/stores";
+  import { replaceState } from "$app/navigation";
 
   import account from "@nucleum/client/runtime/account/account.store";
 
@@ -49,10 +50,13 @@
   });
 
   async function parseEmbedToken() {
-    const token = $page.url?.searchParams?.get("token");
-    if (token) {
-      await accountSession.embedOAuthSignin(token);
-    }
+    const url = $page.url;
+    const token = url?.searchParams?.get("token");
+    if (!token) return;
+    const cleanUrl = new URL(url);
+    cleanUrl.searchParams.delete("token");
+    replaceState(cleanUrl, $page.state);
+    await accountSession.embedOAuthSignin(token);
   }
 </script>
 

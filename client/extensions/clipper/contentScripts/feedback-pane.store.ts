@@ -36,7 +36,11 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
     clip: IClip | null,
     message: string | { message: string; type: AlertType }
   ) {
-    logger.log({ at: "feedbackPane.focus", clip, message });
+    logger.log({
+      at: "feedbackPane.focus",
+      clipId: clip?.id,
+      clipType: clip?.contentType
+    });
     this.update((n) => {
       n.focusedClip = clip;
       n.feedback = message;

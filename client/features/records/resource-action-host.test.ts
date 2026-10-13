@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccessMode, ResourceAccessPoint } from "@nucleum/datafn/resource.type";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-import type { BulkEditStore } from "./bulkedit.store";
+import type { BulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
 import {
   configureResourceActionHost,
   type ResourceActionHost
-} from "./resource-action-host";
+} from "@nucleum/shared-state/resources/resource-action-host";
 
 const mocks = vi.hoisted(() => ({
   mutate: vi.fn(),

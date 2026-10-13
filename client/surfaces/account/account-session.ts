@@ -202,6 +202,7 @@ async function embedOAuthSignin(token: string) {
   if (response?.userInfo) {
     void signIn({ userInfo: response.userInfo, token });
   } else {
+    await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
     logger.error({ at: "account.embedOAuthSignin", response });
   }
 }
