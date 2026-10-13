@@ -55,8 +55,8 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: Run workspace lint
-          command: npm run lint
+          name: Run static workspace checks
+          command: npm run check:static
 
   type-check:
     executor: node-executor
