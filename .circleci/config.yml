@@ -42,7 +42,8 @@ jobs:
   install:
     executor: node-executor
     steps:
-      - checkout
+      - checkout:
+          method: full
       - install-deps
       - persist_to_workspace:
           root: ~/project
