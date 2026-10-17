@@ -1,6 +1,6 @@
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import { Embed } from "@nucleum/client/runtime/context.type";
-import { InlineType } from "@21n/elements/markdown/inline.type";
+import { InlineType } from "@21n/ui/elements/markdown/inline.type";
 import type {
   IBlockBrowserItem,
   IBlockBrowserSection

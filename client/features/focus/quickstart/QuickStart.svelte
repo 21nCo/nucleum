@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { onMount } from "svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { Layout } from "@21n/layout/layout-mode.type";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { Layout } from "@nucleum/shell/layout-mode.type";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 
-  import Button from "@21n/elements/button/Button.svelte";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
-  import context from "@nucleum/stores/context.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import InlineSearchBar from "@21n/ui/elements/InlineSearchBar.svelte";
+  import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
@@ -23,10 +23,10 @@
   } from "@nucleum/datafn/resource.utils";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
-  import { LoadingAnimationType } from "@21n/elements/feedback/feedback.type";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import QuickStartThumbnailList from "@nucleum/features/focus/quickstart/QuickStartThumbnailList.svelte";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import QuickStartLayoutToggle from "@nucleum/features/focus/quickstart/actions/QuickStartLayoutToggle.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";

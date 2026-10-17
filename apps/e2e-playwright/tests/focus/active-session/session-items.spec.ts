@@ -68,13 +68,15 @@ async function expectVisibleFocusItemLabel(
   label: string
 ) {
   const item = getFocusSessionItem(page, itemId);
-  const visibleInput = item.locator("input").filter({ visible: true }).first();
+  const visibleInput = item
+    .getByPlaceholder("Enter task label", { exact: true })
+    .filter({ visible: true });
   const visibleText = item
     .getByText(label, { exact: true })
     .filter({ visible: true })
     .first();
   await expect(async () => {
-    if ((await visibleInput.count()) > 0) {
+    if (itemId.startsWith("task:") && (await visibleInput.count()) > 0) {
       await expect(visibleInput).toHaveValue(label, { timeout: 500 });
       return;
     }

@@ -1,0 +1,32 @@
+{
+  "name": "@nucleum/shared-state",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./app-context/*": "./app-context/*",
+    "./appearance/*": "./appearance/*",
+    "./commands/*": "./commands/*",
+    "./events/*": "./events/*",
+    "./files/*": "./files/*",
+    "./notifications/*": "./notifications/*",
+    "./preferences/*": "./preferences/*",
+    "./resources/*": "./resources/*",
+    "./shortcuts/*": "./shortcuts/*",
+    "./product/*": "./product/*"
+  },
+  "dependencies": {
+    "@21n/shared-utils": "*",
+    "@datafn/client": "0.1.0",
+    "@nucleum/schema": "*",
+    "svelte": "^5.55.0",
+    "pdfjs-dist": "^4.1.392"
+  },
+  "peerDependencies": {
+    "@21n/theme": "*",
+    "@21n/ui": "*",
+    "@nucleum/client": "*",
+    "@nucleum/datafn": "*",
+    "@nucleum/persistence": "*"
+  }
+}

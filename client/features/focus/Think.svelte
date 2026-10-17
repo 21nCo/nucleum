@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import TypewritingText from "@21n/elements/text/animatingText/TypewritingText.svelte";
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TypewritingText from "@21n/ui/elements/text/animatingText/TypewritingText.svelte";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
+  import { Size } from "@21n/ui/elements/size.enum";
   import FocusPlayerTimeText from "@nucleum/features/focus/player/FocusPlayerTimeText.svelte";
   import SessionNotes from "@nucleum/features/focus/notes/SessionNotes.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import view from "@nucleum/stores/view.store";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import view from "@21n/ui/environment/view.store";
 </script>
 
 <div

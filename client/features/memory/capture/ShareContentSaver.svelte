@@ -1,15 +1,15 @@
 <script lang="ts">
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import Button from "@21n/elements/button/Button.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import NodeThumbnail from "@nucleum/features/memory/node/thumbnail/NodeThumbnail.svelte";
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import { Size } from "@21n/elements/size.enum";
-  import FileView from "@nucleum/components/files/FileView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import { type INode, type INodeThumb } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import {
     resolveNodeContentLabel,
     resolveNodeIcon
@@ -18,7 +18,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
     IPasteCaptureData,
     IMultiFileCaptureData
   } from "@nucleum/features/memory/capture/capture.type";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
   import { onMount } from "svelte";
   import {
     ActiveCaptureStore,
@@ -26,22 +26,22 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   } from "@nucleum/features/memory/capture/capture.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import context from "@nucleum/stores/context.store";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import context from "@nucleum/client/runtime/context.store";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
-  import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
-  import { AlertType, type IInlineStatus } from "@nucleum/stores/notifications/notification.type";
+  import ButtonGroup from "@21n/ui/elements/button/ButtonGroup.svelte";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
+  import { AlertType, type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
   import LinkBoxOnSaver from "@nucleum/features/memory/capture/LinkBoxOnSaver.svelte";
   import {
     getSheetNodeByUrl,
     saveSheetNode
   } from "@nucleum/persistence/dexie/sheetStorage";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import { Action } from "@nucleum/client/config/action.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { tick } from "svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
   let {
@@ -196,7 +196,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
     const url = data?.text;
     if (!url) return;
     if ($context.isStandaloneSheet) {
-      const stored = await getSheetNodeByUrl(url);
+      const stored = await getSheetNodeByUrl<INodeThumb>(url);
       if (stored?.node) {
         return stored.node;
       }

@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { IMediaGridItem } from "@nucleum/features/memory/node/node.type";
-  import { dragAndDropStore } from "@nucleum/stores/app.store";
-  import view from "@nucleum/stores/view.store";
-  import { DragStatus } from "@nucleum/actions/dragstatus.enum";
-  import type { IFile } from "@nucleum/stores/files/file.type";
+  import { dragAndDropStore } from "@nucleum/shared-state/app-context/app.store";
+  import view from "@21n/ui/environment/view.store";
+  import { DragStatus } from "@21n/ui/actions/dragstatus.enum";
+  import type { IFile } from "@nucleum/shared-state/files/file.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { fileStore } from "@nucleum/stores/files/file.store";
-  import FileView from "@nucleum/components/files/FileView.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { fileStore } from "@nucleum/shared-state/files/file.store";
+  import FileView from "@21n/ui/compositions/files/FileView.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     isGridItem = true,

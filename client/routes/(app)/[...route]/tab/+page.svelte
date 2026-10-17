@@ -3,7 +3,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
+  import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";
 
   let tab = $derived($page.url.searchParams.get(AccessMode.TAB));
 </script>

@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(currentDir, "../../..");
 const configFile = path.join(repoRoot, "eslint.config.mjs");
-const sampleFilePath = path.join(repoRoot, "client/actions/hover.action.ts");
+const sampleFilePath = path.join(repoRoot, "client/ui/actions/hover.action.ts");
 
 const lint = async (code: string) => {
   const eslint = new FlatESLint({
@@ -22,7 +22,7 @@ const lint = async (code: string) => {
 describe("alias-imports lint rule", () => {
   it("allows workspace alias imports", async () => {
     const [result] = await lint(
-      "import Button from \"@nucleum/components/Button.svelte\";"
+      'import Button from "@21n/ui/elements/button/Button.svelte";'
     );
 
     expect(result.messages).toHaveLength(0);
@@ -30,7 +30,7 @@ describe("alias-imports lint rule", () => {
 
   it("warns on $lib imports", async () => {
     const [result] = await lint(
-      "import Button from \"$lib/client/components/Button.svelte\";"
+      'import Button from "$lib/client/ui/elements/button/Button.svelte";'
     );
 
     expect(result.messages).toHaveLength(1);
@@ -39,7 +39,7 @@ describe("alias-imports lint rule", () => {
   });
 
   it("warns on relative parent imports", async () => {
-    const [result] = await lint("import helper from \"../utils/helper.js\";");
+    const [result] = await lint('import helper from "../utils/helper.js";');
 
     expect(result.messages).toHaveLength(1);
     expect(result.messages[0]?.ruleId).toBe("tidigit/alias-imports");

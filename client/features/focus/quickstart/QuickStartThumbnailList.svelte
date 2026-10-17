@@ -1,12 +1,12 @@
 <script lang="ts">
   import { isSameResource } from "@nucleum/datafn/resource.utils";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { Layout } from "@21n/layout/layout-mode.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Layout } from "@nucleum/shell/layout-mode.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import QuickStartThumbnail from "@nucleum/features/focus/quickstart/QuickStartThumbnail.svelte";
 
   let {

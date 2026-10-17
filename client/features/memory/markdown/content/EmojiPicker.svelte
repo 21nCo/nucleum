@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { emojis } from "@21n/elements/avatarPicker/avatars";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
+  import { emojis } from "@21n/ui/elements/avatarPicker/avatars";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { onMount } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import {
     AvatarType,
     type AvatarWithCode,
     type EmojiAvatar,
     type IAvatar
-  } from "@21n/elements/avatarPicker/avatar.type";
+  } from "@21n/ui/elements/avatarPicker/avatar.type";
 
   let {
     searchQuery = $bindable(""),

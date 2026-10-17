@@ -22,10 +22,7 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     name: "client",
-    setupFiles: [
-      baseSetupFile,
-      path.join(__dirname, "../client/setup.ts")
-    ],
+    setupFiles: [baseSetupFile, path.join(__dirname, "../client/setup.ts")],
     include: [
       "client/**/*.test.ts",
       "client/**/*.test.tsx",
@@ -34,6 +31,11 @@ export default defineConfig({
       "client/**/*.spec.svelte"
     ],
     exclude: ["**/node_modules/**", "**/.turbo/**", "**/dist/**"],
+    server: {
+      deps: {
+        inline: ["@testing-library/svelte", "@testing-library/svelte-core"]
+      }
+    },
     coverage: coverageConfig("client")
   }
 });

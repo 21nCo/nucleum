@@ -1,24 +1,24 @@
 <script lang="ts">
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { enumToString, formatBytes } from "@21n/shared-utils/text.utils";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import { headingNodeTypes, webNodeTypeList } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import BasicInfoItem from "@nucleum/features/memory/node/metadata/BasicInfoItem.svelte";
   import InfoCard from "@nucleum/features/memory/node/metadata/InfoCard.svelte";
 
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import type { DatafnDateValue } from "@nucleum/datafn/resource.type";
-  import type { IAccessLog } from "@nucleum/features/system/accessLogging/accessLog.type";
+  import type { IAccessLog } from "@nucleum/shared-state/resources/history/access-log.type";
   import { page } from "$app/stores";
   import AudioMetadata from "@nucleum/features/memory/node/metadata/AudioMetadata.svelte";
   import ImageMetadata from "@nucleum/features/memory/node/metadata/ImageMetadata.svelte";
   import LocationProperty from "@nucleum/features/collections/properties/locationProperty/LocationProperty.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
-  import { toDateValue } from "@21n/utils/time.utils";
+  import { toDateValue } from "@21n/shared-utils/datetime/date-arithmetic";
   let {
     node,
     renderingDetails = undefined

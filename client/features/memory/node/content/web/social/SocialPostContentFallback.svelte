@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
 
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { formatDatetime } from "@21n/utils/time.utils";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
   import { getContext, onMount } from "svelte";
   import { resolveContentPreview } from "@nucleum/features/memory/node/node.utils";
   import {
@@ -17,11 +17,11 @@
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
 
   import { parse } from "@21n/shared-utils/json.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
 
   let {
     node,

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import CaptureDraftsAction from "@nucleum/features/memory/capture/draftSelector/CaptureDraftsAction.svelte";
   import { CaptureMethod } from "@nucleum/features/memory/capture/capture.type";
-  import { cn } from "@21n/utils/ui.utils";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import TypeSelectorItem from "@nucleum/features/memory/capture/typeSelector/TypeSelectorItem.svelte";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
 
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
@@ -16,11 +16,11 @@
     CollectionObjectKey,
     type ICollectionThumb
   } from "@nucleum/features/collections/collection.type";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState } from "@nucleum/stores/uiState/uiState.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   type IBaseType = {
     icon: string;

@@ -8,21 +8,21 @@
   } from "@nucleum/features/collections/collection.type";
   import type { ICollection } from "@nucleum/features/collections/collection.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { activeResourceFilter } from "@21n/utils/utils";
+  import { activeResourceFilter } from "@nucleum/datafn/resource-filters";
   import CollectionsList from "@nucleum/extensions/clipper/sidePanel/collectionsOnClipper/CollectionsList.svelte";
   import CollectionItemsView from "@nucleum/extensions/clipper/sidePanel/collectionsOnClipper/CollectionItemsView.svelte";
   import type {
     CollectionData,
     CollectionItem
   } from "@nucleum/extensions/clipper/sidePanel/collectionsOnClipper/types";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import Badge from "@21n/elements/text/Badge.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import NewCollectionWizard from "@nucleum/extensions/clipper/sidePanel/collectionsOnClipper/NewCollectionWizard.svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
+  import ErrorStatusPane from "@21n/ui/elements/feedback/ErrorStatusPane.svelte";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
 
   let {

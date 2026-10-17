@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { InputStyle, type InputLabel } from "@21n/elements/input/input.type";
-  import { cn } from "@21n/utils/ui.utils";
-  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle, type InputLabel } from "@21n/ui/elements/input/input.type";
+  import { cn } from "@21n/ui/environment/presentation";
+  import InputBaseElement from "@21n/ui/elements/InputBaseElement.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   let {
     avatar = "star",
     count = $bindable(5),

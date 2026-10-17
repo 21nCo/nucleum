@@ -1,28 +1,26 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
-  import LinkBoxOnClipper from "@nucleum/features/memory/common/linkbox/LinkBoxOnClipper.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import FormControlLabel from "@21n/ui/elements/text/formLabel/FormControlLabel.svelte";
+  import LinkBoxOnClipper from "@nucleum/extensions/clipper/LinkBoxOnClipper.svelte";
   import { onMount } from "svelte";
-  import {
-    feedbackPane,
-    webpage
-  } from "@nucleum/extensions/clipper/contentScripts/store";
+  import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
   import { socialPostNodeTypeList } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { resolveContentTypeString } from "@nucleum/extensions/clipper/clipper.utils";
   import FeedbackPaneBase from "@nucleum/extensions/clipper/feedbackPane/FeedbackPaneBase.svelte";
-  import FileView from "@nucleum/components/files/FileView.svelte";
+  import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import {
     determineResourceType,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
   import NodeThumbnailTweetPreview from "@nucleum/features/memory/node/thumbnail/NodeThumbnailTweetPreview.svelte";
-  import { Placement } from "@21n/elements/direction.enum";
+  import { Placement } from "@21n/ui/elements/direction.enum";
   import type { IWebpageStore } from "@nucleum/extensions/clipper/contentScripts/types";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { Resource } from "@nucleum/datafn/resource.enum";

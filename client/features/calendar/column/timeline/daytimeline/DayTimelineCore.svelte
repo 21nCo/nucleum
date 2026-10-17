@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { onMount, onDestroy } from "svelte";
   import dayjs from "dayjs";
@@ -8,16 +8,16 @@
     CalendarColumnLayout,
     type CalendarTimelineEntry
   } from "@nucleum/features/calendar/calendar.type";
-  import { formatTime } from "@21n/utils/time.utils";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { cn } from "@21n/ui/environment/presentation";
 
-  import RefreshingOverlayFeedback from "@21n/elements/feedback/RefreshingOverlayFeedback.svelte";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import RefreshingOverlayFeedback from "@21n/ui/elements/feedback/RefreshingOverlayFeedback.svelte";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 

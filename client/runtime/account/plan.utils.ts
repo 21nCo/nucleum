@@ -61,3 +61,15 @@ export function determineIfSubscriptionExpired(plan: IUserPlan) {
     isExpired: false
   };
 }
+
+/** Resolves the whole days remaining in an active trial plan without UI dependencies. */
+export function resolveTrialDaysLeft(plan: IUserPlan) {
+  if (plan.plan !== PlanType.TRIAL) return null;
+  const trialPlan = plan.trialPlan;
+  if (!trialPlan) return null;
+  const expiry = new Date(trialPlan.expiry);
+  const daysLeft = Math.ceil(
+    (expiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+  );
+  return daysLeft;
+}

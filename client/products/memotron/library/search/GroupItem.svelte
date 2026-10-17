@@ -1,17 +1,17 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import LinkSearchResultItem from "@nucleum/features/memory/common/linkbox/LinkSearchResultItem.svelte";
-  import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import Badge from "@21n/elements/text/Badge.svelte";
+  import SearchResultsPopover from "@21n/ui/compositions/search/SearchResultsPopover.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
   import { isValidNumber } from "@21n/shared-utils/text.utils";
-  import { Display } from "@21n/elements/display.enum";
-  import view from "@nucleum/stores/view.store";
+  import { Display } from "@21n/ui/elements/display.enum";
+  import view from "@21n/ui/environment/view.store";
   let {
     group,
     index,

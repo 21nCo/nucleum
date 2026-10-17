@@ -3,7 +3,7 @@ import type {
   IResourceShareable,
   OmitForCaptureWithId
 } from "@nucleum/datafn/resource.type";
-import type { AvatarWithCode, IconAvatar } from "@21n/elements/avatarPicker/avatar.type";
+import type { AvatarWithCode, IconAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import type { ICollectionExpanded } from "@nucleum/features/collections/collection.type";
 
 /**

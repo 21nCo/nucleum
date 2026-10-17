@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import {
     headingNodeTypes,
@@ -7,9 +7,9 @@
     type INodeThumb
   } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { renderMdAsHtml } from "@21n/elements/markdown/markdown.utils";
+  import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
 
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import {
     AccessMode,
     ResourceAccessPoint

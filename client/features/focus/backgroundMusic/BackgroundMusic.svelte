@@ -1,11 +1,11 @@
 <script>
   import { backgroundSoundStore } from "@nucleum/features/focus/backgroundMusic/background-sound.store";
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import SystemSounds from "@nucleum/features/focus/backgroundMusic/SystemSounds.svelte";
   let youtubeUrl = $backgroundSoundStore.youtubeUrl;
 </script>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import MediaContentResolver from "@nucleum/features/memory/node/content/MediaContentResolver.svelte";
   import {
@@ -19,35 +19,35 @@
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
   import YoutubeVideoPreview from "@nucleum/features/memory/node/content/web/YoutubeVideoPreview.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import Collection from "@nucleum/features/collections/Collection.svelte";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
-  import { resizable } from "@nucleum/actions/resize.action";
+  import { resizable } from "@21n/ui/actions/resize.action";
 
   import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import type { MdStoreType } from "@nucleum/features/memory/markdown/markdown.store";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { formatBytes } from "@21n/shared-utils/text.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { fileStore } from "@nucleum/stores/files/file.store";
-  import type { IFile } from "@nucleum/stores/files/file.type";
-  import { ErrorMessage } from "@nucleum/stores/notifications/error.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { fileStore } from "@nucleum/shared-state/files/file.store";
+  import type { IFile } from "@nucleum/shared-state/files/file.type";
+  import { ErrorMessage } from "@nucleum/shared-state/notifications/error.enum";
   import {
     fetchYouTubeMetadata,
     resolveWebpageLabel,
     sanitizeAndResolve
   } from "@nucleum/features/memory/node/url.utils";
-  import { debouncer } from "@21n/utils/utils";
-  import context from "@nucleum/stores/context.store";
+  import { debouncer } from "@21n/shared-utils/debounce";
+  import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import Task from "@nucleum/features/focus/tasks/Task.svelte";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import { generateResourceId } from "@nucleum/datafn/id.utils";

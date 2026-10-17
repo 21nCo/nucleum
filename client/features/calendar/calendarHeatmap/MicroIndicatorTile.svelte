@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { selectedTimePeriod } from "@nucleum/stores/app.store";
-  import { Placement, Orientation } from "@21n/elements/direction.enum";
-  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { selectedTimePeriod } from "@nucleum/features/calendar/calendar-selection.store";
+  import { Placement, Orientation } from "@21n/ui/elements/direction.enum";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
   import {
     TileAppearance,
     type DailyData,
     type MonthlyData
   } from "@nucleum/features/calendar/calendarHeatmap/calendarHeatmap.types";
   import { CalendarHeatMapLayout } from "@nucleum/features/calendar/calendarHeatmap/calendarHeatmap.store";
-  import { heatMapColorRange } from "@21n/utils/theme.utils";
-  import appearance from "@nucleum/stores/appearance.store";
-  import HoverableElement from "@21n/elements/HoverableElement.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { heatMapColorRange } from "@21n/theme/color-presentation";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
+  import HoverableElement from "@21n/ui/elements/HoverableElement.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     data,

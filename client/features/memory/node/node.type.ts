@@ -4,7 +4,7 @@ import type {
   ICollectionExpanded
 } from "@nucleum/features/collections/collection.type";
 import type { IPropertyValue } from "@nucleum/features/collections/properties/property.type";
-import type { IFile } from "@nucleum/stores/files/file.type";
+import type { IFile } from "@nucleum/shared-state/files/file.type";
 import {
   AccessMode,
   type CaptureOmittedFields,
@@ -21,10 +21,10 @@ import {
   type OmitForCapture
 } from "@nucleum/datafn/resource.type";
 import type { IBlockBody, IMarkdown } from "@nucleum/features/memory/markdown/md.type";
-import type { IAvatar } from "@21n/elements/avatarPicker/avatar.type";
+import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import type { IStore } from "@nucleum/datafn/observable-store.type";
-import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
+import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
 import type {
   ILink,
   ILinkBase,

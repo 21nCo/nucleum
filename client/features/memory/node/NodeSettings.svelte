@@ -1,10 +1,10 @@
 <script lang="ts">
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { preferences } from "$lib/client/stores/preferences/preferences.store";
-  import { Preference, PreferencesScope } from "$lib/client/stores/preferences/preferences.type";
-  import { appStore } from "$lib/client/stores/app.store";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
+  import { Preference, PreferencesScope } from "@nucleum/shared-state/preferences/preferences.type";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { derived } from "svelte/store";
 
   const hideHighlightColors = derived(

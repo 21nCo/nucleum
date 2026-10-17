@@ -1,18 +1,20 @@
-import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+import {
+  refreshSessionNotifications,
+  publishSessionNotifications
+} from "./notifications/session-notifications";
+import { buildSessionCompletion } from "./session-completion";
+import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import {
   type IActiveSessionStore,
   type ISessionInterval,
   BlockType,
-  type IFocusItemsStore,
-  type ICurrentFocusItem,
-  type IFocusItem
+  type ICurrentFocusItem
 } from "@nucleum/features/focus/session.type";
 import {
   generateIntervalsFromComposition,
   getTotalsFromComposition,
-  refreshPredefinedIntervalsStartTime,
-  resolveSessionTimeSplit
+  refreshPredefinedIntervalsStartTime
 } from "@nucleum/features/focus/composition.utils";
 import { get, writable } from "svelte/store";
 import { SessionState } from "@nucleum/features/focus/sessionState.enum";
@@ -22,58 +24,50 @@ import {
   type SessionComposition,
   BreakCompositionType
 } from "@nucleum/features/focus/sessionComposition.type";
-import { appStore } from "@nucleum/stores/app.store";
 import modalEvent, {
   fullScreen,
   player
-} from "@nucleum/stores/overlays/modal.store";
+} from "@nucleum/shell/overlays/modal.store";
 import {
   toasts,
   fullPageLoadingScreen
-} from "@nucleum/stores/notification.store";
-import { appEvents } from "@nucleum/stores/events/app-events.store";
+} from "@nucleum/shared-state/notifications/notification.store";
+import { appEvents } from "@nucleum/shared-state/events/app-events.store";
 import { scheduledNotifications } from "./notifications/scheduled-notifications.store";
 import { deepCopy, isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-import { AlertType } from "@nucleum/stores/notifications/notification.type";
+import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
   SessionType,
-  type ISessionCapture,
   type ISessionLogCapture
 } from "@nucleum/features/focus/logs/log.type";
 import { createSessionItemRelationRefs } from "@nucleum/features/focus/logs/session-items.utils";
-import context from "@nucleum/stores/context.store";
-import { PointronEvent } from "@nucleum/client/config/events/focus-event.enum";
+import context from "@nucleum/client/runtime/context.store";
+import { PointronEvent } from "@nucleum/shared-state/events/focus-event.enum";
 import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { advancedCompositionDraft } from "@nucleum/features/focus/advanced/composition/advancedCompositionDraft.store";
-import { ObservableStore } from "@nucleum/stores/client.store";
+import { ObservableStore } from "@nucleum/datafn/observable-store";
 import {
   determineResourceType,
   isSameResource,
   resourceInList
 } from "@nucleum/datafn/resource.utils";
-import {
-  resolveTaskFocus,
-  resolveTotalTaskTime
-} from "@nucleum/features/focus/session.utils";
 import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import {
-  ObjectiveStatus,
-  type IObjective
-} from "@nucleum/features/focus/goals/goal.type";
-import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-import { toDateValue } from "@21n/utils/time.utils";
-import { uiState } from "@nucleum/stores/uiState/uiState.store";
-import { UIState } from "@nucleum/stores/uiState/uiState.type";
+import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+import { UIState } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 import { removeDuplicatesFilter } from "@nucleum/datafn/resource.utils";
 import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
-import { getUtcSafeDay } from "@21n/elements/datetime/datetime.utils";
-import type { ITaskCapture } from "@nucleum/features/focus/tasks/task.type";
 import { StoreDataType } from "@nucleum/schema/legacy/store-data-type.enum";
+import {
+  resolveSessionDate,
+  resolveSessionNumber,
+  normalizeSavedSessionStore
+} from "@nucleum/features/focus/session-snapshot";
+import { FocusItemsStore } from "@nucleum/features/focus/session-items.store";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -216,134 +210,6 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     return newSession;
   }
 
-  private refreshNotifications(session: IActiveSessionStore) {
-    scheduledNotifications.set([]);
-    let sessionTimeRemaining: number | undefined = undefined;
-    if (session.type != SessionType.COUNTUP) {
-      sessionTimeRemaining = session.plannedDuration - session.totalElapsed;
-      scheduleSessionFinishNotification();
-    }
-    let timeRemainingToTakeBreak: number | undefined = undefined;
-
-    if (
-      session.type != SessionType.PREDEFINED_INTERVALS &&
-      session.state === SessionState.FOCUS_RUNNING
-    ) {
-      const isBreakReminderNotified = scheduleBreakReminderNotification(
-        session.isBreakReminderNotified === true
-      );
-      if (isBreakReminderNotified !== session.isBreakReminderNotified) {
-        this.modify({ isBreakReminderNotified }, { isPersist: false });
-      }
-      return timeRemainingToTakeBreak;
-    }
-    if (session.type === SessionType.PREDEFINED_INTERVALS) {
-      const currentBlockIndex = session.intervals.findIndex(
-        (x) => x.id == session.currentBlockId
-      );
-      const currentBlock = session.intervals[currentBlockIndex];
-      if (!currentBlock?.duration) return;
-
-      const timeRemainingForNextInterval =
-        currentBlock.duration - session.timeElapsed;
-      if (!timeRemainingForNextInterval) return;
-      const title = currentBlock.type === BlockType.FOCUS ? "Focus" : "Break";
-      const next = currentBlock.type === BlockType.FOCUS ? "break" : "focus";
-      scheduledNotifications.push({
-        inSeconds: timeRemainingForNextInterval,
-        message: `${title} ended. Starting ${next}.`,
-        timestamp: new Date().getTime() + timeRemainingForNextInterval * 1000,
-        title: title + " ended.",
-        sound: "ping.wav",
-        id: "breakReminder"
-      });
-    }
-
-    /**
-     * Schedules the session finish notification.
-     */
-    function scheduleSessionFinishNotification() {
-      // if (sessionTimeRemaining < 0) this.clearTimers();
-      // if (n.type == SessionType.COUNTDOWN && sessionTimeRemaining < 0) {
-      //   n.state = SessionState.TIME_IS_UP;
-      //   appEvents.publish(PointronEventEnum.SESSION_TIME_IS_UP);
-      // } else if (
-      //   n.type == SessionType.COUNTDOWN &&
-      //   sessionTimeRemaining < get(pointronConstants).runningOutDuration &&
-      //   (n.state == SessionState.FOCUS_RUNNING ||
-      //     n.state == SessionState.TIME_IS_UP)
-      // ) {
-      //   n.state = SessionState.TIME_IS_RUNNING_OUT;
-      // }
-      if (!sessionTimeRemaining) return;
-      scheduledNotifications.push({
-        inSeconds: sessionTimeRemaining,
-        message: "Session time is up. Please extend or finish the session",
-        timestamp: new Date().getTime() + sessionTimeRemaining * 1000,
-        title: "Focus session time is up",
-        sound: "dingding.mp3",
-        id: "timeIsUp"
-      });
-    }
-
-    /**
-     * Schedules the break reminder notification based on current composition or fallback to the user preferences.
-     * @returns time remaining to take break in seconds
-     *
-     * TODO - remind if no break taken - for multiples of the reminder...
-     */
-    function scheduleBreakReminderNotification(isNotified: boolean = false) {
-      let breakReminderSetting =
-        session.composition.breakType === BreakCompositionType.REMINDER
-          ? (session.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder)
-          : undefined;
-      if (!breakReminderSetting) return isNotified;
-      timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
-      if (timeRemainingToTakeBreak < 0 && !isNotified) {
-        appEvents.publish(PointronEvent.BREAK_REMINDER);
-        isNotified = true;
-      }
-      if (
-        !breakReminderSetting ||
-        isNotified ||
-        !timeRemainingToTakeBreak ||
-        (session.type != SessionType.COUNTUP &&
-          sessionTimeRemaining &&
-          sessionTimeRemaining < timeRemainingToTakeBreak)
-      )
-        return isNotified;
-      scheduledNotifications.push({
-        inSeconds: timeRemainingToTakeBreak,
-        message:
-          "Its been " +
-          breakReminderSetting / 60 +
-          " minute(s) since you took a break. Please consider taking a break.",
-        timestamp: new Date().getTime() + timeRemainingToTakeBreak * 1000,
-        title: "Break Reminder",
-        sound: "ping.wav",
-        id: "breakReminder"
-      });
-      return isNotified;
-      // scheduledNotifications.push({
-      //   inSeconds: timeRemainingToTakeBreak * 2,
-      //   message:
-      //     "Its been " +
-      //     2 * (breakReminder / 60) +
-      //     " minute(s) since you took a break. Please consider taking a break.",
-      //   timestamp: new Date().getTime() + 2 * timeRemainingToTakeBreak * 1000,
-      //   title: "Break Reminder",
-      //   sound: "ping.wav",
-      //   id: "breakReminderTwo",
-      // });
-    }
-  }
-
-  private _postNotificationsToEmbed() {
-    const notifications = get(scheduledNotifications);
-    postDataToParent(EmbedDataMessage.NOTIFICATIONS, notifications);
-  }
-
   /**
    * Resume the session timer and sets everything related to timer including notifications, progress on interval bars, etc.
    * @param n current session store
@@ -356,7 +222,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     }
   ) {
     let session = this.get();
-    //TODO - check if this is needed
+
     if (options.isResetTimer) {
       this.modify({ timeElapsed: 0 });
     }
@@ -385,8 +251,12 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       const blockStart =
         resolveSessionNumber(currentBlock?.start) || sessionStart.getTime();
       const timeElapsed = Math.max(0, (currentTime - blockStart) / 1000);
-      const timeRemainingToTakeBreak = this.refreshNotifications(session);
-      if (isFirstRun) this._postNotificationsToEmbed();
+      const timeRemainingToTakeBreak = refreshSessionNotifications(
+        session,
+        (isBreakReminderNotified) =>
+          this.modify({ isBreakReminderNotified }, { isPersist: false })
+      );
+      if (isFirstRun) publishSessionNotifications();
       let plannedDuration = session.plannedDuration;
       let end = session.end;
       if (
@@ -507,8 +377,10 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     }
     this._restorePredefinedSessionState(session);
     this.modify({ timeElapsed: 0 }, { isPersist: false });
-    this.refreshNotifications(this.get());
-    this._postNotificationsToEmbed();
+    refreshSessionNotifications(this.get(), (isBreakReminderNotified) =>
+      this.modify({ isBreakReminderNotified }, { isPersist: false })
+    );
+    publishSessionNotifications();
     await this.persist();
   }
 
@@ -811,7 +683,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     focusItemsStore.reset(true);
     let session = this.reset();
     this.modify(session);
-    // this.propagateMessageToParent(session);
+
     appEvents.publish(PointronEvent.SESSION_CLOSED);
     return session;
   }
@@ -990,14 +862,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
           isSessionFinish: true,
           end: end.getTime()
         });
-      // let lastBlock = n.intervals?.pop();
-      // if (lastBlock) {
-      //   lastBlock.end = now;
-      //   n.intervals = [...(n.intervals ?? []), lastBlock];
-      // }
-      // n.blocks = [...n.blocks, { start: now, duration: 0, progress: 1 }];
-      // session.state = SessionState.FINISHED;
-      // session.isSessionRunning = false;
+
       finishedSession = this.resolveFinishedSession(end);
       this.modify(finishedSession, { isPersist: false });
       await sessionStore.finishFocus({ end: end.getTime() });
@@ -1008,7 +873,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
         this.close();
       } else if (!params?.isQuickStartSwitch) {
         this.shallowReset();
-        // this.propagateMessageToParent(session);
+
         currentFocusItem.set(undefined);
         this.modify(
           finishedSession ?? {
@@ -1377,7 +1242,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       totalDuration: duration,
       focusDuration: duration
     };
-    //TODO - debounced
+
     this.onComposeComplete();
   }
 
@@ -1419,447 +1284,16 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     }
   }
 }
+
 export const activeSession = new ActiveSessionStore();
-
-function resolveSessionDate(value: unknown): Date | undefined {
-  if (value instanceof Date) {
-    return Number.isFinite(value.getTime()) ? value : undefined;
-  }
-  const fromKnown = toDateValue(
-    value as Date | string | number | undefined | null
-  );
-  if (fromKnown) return fromKnown;
-  if (value && typeof value === "object") {
-    if (typeof (value as { getTime?: unknown }).getTime === "function") {
-      const timestamp = (value as Date).getTime();
-      if (Number.isFinite(timestamp)) return new Date(timestamp);
-    }
-    const record = value as Record<string, unknown>;
-    for (const key of [
-      "value",
-      "date",
-      "iso",
-      "datetime",
-      "$date",
-      "epochMs",
-      "ms"
-    ]) {
-      const nested = toDateValue(
-        record[key] as Date | string | number | undefined | null
-      );
-      if (nested) return nested;
-    }
-    const parsed = new Date(String(value));
-    if (Number.isFinite(parsed.getTime())) return parsed;
-  }
-  return undefined;
-}
-
-function normalizeSavedSessionStore(
-  savedSessionStore: IActiveSessionStore
-): IActiveSessionStore {
-  const normalized = { ...savedSessionStore };
-  const start = resolveSessionDate(savedSessionStore.start);
-  if (start) {
-    normalized.start = start;
-  }
-  const end = resolveSessionDate(savedSessionStore.end);
-  if (end) {
-    normalized.end = end;
-  }
-  normalized.intervals = Array.isArray(savedSessionStore.intervals)
-    ? savedSessionStore.intervals.map((interval) => ({
-        ...interval,
-        start: resolveSessionNumber(interval?.start),
-        duration: resolveSessionNumber(interval?.duration),
-        progress: resolveSessionNumber(interval?.progress)
-      }))
-    : [];
-  if (savedSessionStore.currentFocusItem) {
-    normalized.currentFocusItem = {
-      ...savedSessionStore.currentFocusItem,
-      start: resolveSessionNumber(savedSessionStore.currentFocusItem.start)
-    };
-  }
-  if (typeof savedSessionStore.timeElapsed !== "number") {
-    normalized.timeElapsed = resolveSessionNumber(
-      savedSessionStore.timeElapsed
-    );
-  }
-  if (typeof savedSessionStore.totalElapsed !== "number") {
-    normalized.totalElapsed = resolveSessionNumber(
-      savedSessionStore.totalElapsed
-    );
-  }
-  if (typeof savedSessionStore.plannedDuration !== "number") {
-    normalized.plannedDuration = resolveSessionNumber(
-      savedSessionStore.plannedDuration
-    );
-  }
-  if (typeof savedSessionStore.totalIdle !== "number") {
-    normalized.totalIdle = resolveSessionNumber(savedSessionStore.totalIdle);
-  }
-  if (typeof savedSessionStore.totalExtended !== "number") {
-    normalized.totalExtended = resolveSessionNumber(
-      savedSessionStore.totalExtended
-    );
-  }
-  if (typeof savedSessionStore.currentIdle !== "number") {
-    normalized.currentIdle = resolveSessionNumber(
-      savedSessionStore.currentIdle
-    );
-  }
-  if (
-    savedSessionStore.timeRemainingToTakeBreak !== undefined &&
-    typeof savedSessionStore.timeRemainingToTakeBreak !== "number"
-  ) {
-    normalized.timeRemainingToTakeBreak = resolveSessionNumber(
-      savedSessionStore.timeRemainingToTakeBreak
-    );
-  }
-  return normalized;
-}
-
-function resolveSessionNumber(value: unknown) {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-  if (value instanceof Date) {
-    const timestamp = value.getTime();
-    return Number.isFinite(timestamp) ? timestamp : 0;
-  }
-  if (typeof value === "string") {
-    const numericValue = Number(value);
-    if (Number.isFinite(numericValue)) {
-      return numericValue;
-    }
-    const dateValue = new Date(value).getTime();
-    if (Number.isFinite(dateValue)) {
-      return dateValue;
-    }
-  }
-  if (value && typeof value === "object") {
-    const timestamp = resolveSessionDate(value)?.getTime();
-    if (timestamp && Number.isFinite(timestamp)) {
-      return timestamp;
-    }
-  }
-  return 0;
-}
 
 export const lastActiveObjectiveIdForEditing = writable<IRecordId | undefined>(
   undefined
 );
 
-const seedFocusItemsStore: IFocusItemsStore = {
-  items: [],
-  removedItems: []
-};
-
-class FocusItemsStore extends ObservableStore<IFocusItemsStore> {
-  isInitialized = false;
-  private signal = datafn.kv.signal<IFocusItemsStore>(
-    Resource.sessionFocusItems,
-    { defaultValue: { ...seedFocusItemsStore } }
-  );
-
-  constructor() {
-    super(Resource.sessionFocusItems, StoreDataType.KVO);
-    this._set({ ...seedFocusItemsStore });
-    this.signal.subscribe((value) => {
-      this.loader(value);
-    });
-  }
-
-  loader(data: IFocusItemsStore) {
-    if (!data.items) data.items = [];
-    if (!data.removedItems) data.removedItems = [];
-    this.isInitialized = true;
-    this._set({ ...data });
-  }
-
-  async modify(
-    n: Partial<IFocusItemsStore>,
-    params: {
-      isPersist?: boolean;
-      isDebouncedPersist?: boolean;
-      isPreventCachingDefault?: boolean;
-    } = {
-      isPersist: true
-    }
-  ) {
-    const current = this.get();
-    const next = { ...current, ...n };
-    this._set(next);
-    if (params.isPreventCachingDefault) return;
-    if (params.isDebouncedPersist) {
-      return datafn.kv.merge(Resource.sessionFocusItems, n, {
-        debounceMs: 3000
-      });
-    }
-    if (params.isPersist) {
-      return datafn.kv.merge(
-        Resource.sessionFocusItems,
-        n as Record<string, unknown>
-      );
-    }
-  }
-
-  reset(isPersist: boolean = false) {
-    logger.log({ context: "focus items store - reset" });
-    this.modify(
-      { items: [], removedItems: [] },
-      {
-        isPersist
-      }
-    );
-  }
-
-  async refreshRecents(items: { id: IRecordId; startUnix: number }[]) {
-    const objectivesResult = await datafn.objective.query({
-      select: ["*", "children.*", "tasks.*"],
-      filters: {
-        id: { $in: items.map((x) => x.id.toString()) },
-        status: {
-          $ne: ObjectiveStatus.COMPLETED
-        }
-      }
-    });
-    const newRecents = items
-      .map((x) => {
-        const objective = (
-          objectivesResult.data as IObjective[] | undefined
-        )?.find(resourceInList(x.id));
-        if (!objective) return;
-        return {
-          id: x.id,
-          item: objective,
-          startUnix: x.startUnix
-        };
-      })
-      .filter(
-        (recent): recent is { id: string; item: any; startUnix: number } =>
-          Boolean(recent && recent.id && recent.item)
-      );
-    this.modify({ recents: newRecents });
-  }
-
-  async addNewTask(label: string, objectiveId?: IRecordId) {
-    let id = generateResourceId(Resource.task);
-    await this.addTask(id, objectiveId);
-    const task: ITaskCapture = {
-      id,
-      label,
-      isChecked: false,
-      dateUnix: resolveUnixTimestamp(getUtcSafeDay(new Date())),
-      ...(objectiveId && { objectiveId })
-    };
-    appStore.addToRecents({
-      record: task,
-      type: Resource.task,
-      timestamp: new Date()
-    });
-    await datafn.task.mutate({
-      operation: "insert",
-      id: id.toString(),
-      record: task
-    });
-    return [task];
-  }
-
-  async addTask(id: IRecordId, objectiveId?: IRecordId) {
-    let n = this.get();
-    if (n.items.some(resourceInList(id)))
-      throw new Error("Task already exists");
-    let blocks:
-      | {
-          start: number;
-          end: number;
-        }[]
-      | undefined = undefined;
-    const removedTask = n.removedItems?.find(resourceInList(id));
-    if (removedTask) {
-      n.removedItems =
-        n.removedItems?.filter((item) => !isSameResource(item, id)) ?? [];
-      blocks = removedTask.blocks ?? [];
-    }
-
-    if (objectiveId && !n.items.some(resourceInList(objectiveId))) {
-      const removedObjective = n.removedItems?.find(
-        resourceInList(objectiveId)
-      );
-      if (removedObjective) {
-        n.removedItems =
-          n.removedItems?.filter(
-            (item) => !isSameResource(item, objectiveId)
-          ) ?? [];
-        n.items.push({ ...removedObjective, tasks: [] });
-      } else {
-        n.items.push({ id: objectiveId, tasks: [], blocks: [] });
-      }
-    }
-
-    this.modify({
-      items: [
-        ...(n.items.map((x: IFocusItem) => {
-          if (objectiveId && isSameResource(x.id, objectiveId))
-            x.tasks = [...(x.tasks ?? []), id];
-          return x;
-        }) ?? []),
-        {
-          id,
-          tasks: [],
-          blocks: [...(blocks ?? [])]
-        }
-      ]
-    });
-    if (objectiveId) lastActiveObjectiveIdForEditing.set(objectiveId);
-  }
-
-  async addObjective(id: IRecordId) {
-    let n = this.get();
-    if (n.items.some(resourceInList(id))) return;
-
-    const removedObjective = n.removedItems?.find(resourceInList(id));
-    if (removedObjective) {
-      n.removedItems =
-        n.removedItems?.filter((item) => !isSameResource(item, id)) ?? [];
-      n.items.push(removedObjective);
-    } else {
-      n.items.push({ id, tasks: [], blocks: [] });
-    }
-    this.modify(n);
-    lastActiveObjectiveIdForEditing.set(id);
-  }
-  async resetToPresetObjectives(ids: IRecordId[]) {
-    let n = this.get();
-    n.items = ids.map((id) => ({ id, tasks: [], blocks: [] }));
-    this.modify(n);
-    lastActiveObjectiveIdForEditing.set(ids[0]);
-    appEvents.publish(PointronEvent.REFRESH_FOCUSITEMS);
-  }
-
-  async appendFocusBlock(id: IRecordId, block: { start: number; end: number }) {
-    let n = this.get();
-    const items = n.items.map((item) => {
-      if (isSameResource(item.id, id)) {
-        item.blocks = [...(item.blocks ?? []), block];
-        return item;
-      }
-      return item;
-    });
-    return this.modify({ items });
-  }
-
-  async removeFocusItem(id: IRecordId) {
-    let n = this.get();
-    if (!n || n.items.length === 0) return;
-    const removedItem = n.items.find((item) => isSameResource(item.id, id));
-    if (!removedItem) return;
-    const parentObjectiveId = n.items.find((item) =>
-      item.tasks?.some(resourceInList(id))
-    )?.id;
-
-    if (!n.removedItems) n.removedItems = [];
-    const itemsToRemove = n.items
-      .filter(
-        (item) =>
-          isSameResource(item.id, id) ||
-          removedItem.tasks?.some(resourceInList(item.id))
-      )
-      .map((item) =>
-        isSameResource(item.id, id) && parentObjectiveId
-          ? { ...item, parentObjectiveId }
-          : item
-      );
-    n.removedItems.push(...itemsToRemove);
-
-    n.items = n.items.filter(
-      (item) =>
-        !isSameResource(item.id, id) &&
-        !removedItem.tasks?.some(resourceInList(item.id))
-    );
-
-    n.items = n.items.map((item) => {
-      if (item.tasks && item.tasks?.length > 0) {
-        item.tasks = item.tasks.filter((t) => !isSameResource(t, id));
-      }
-      return item;
-    });
-
-    this.modify(n);
-  }
-
-  async propagateDependencyChanges(data: any) {
-    logger.log({
-      context: "propagateDependencyChanges to focusItemsStore",
-      data
-    });
-  }
-
-  resolveCount(items: IFocusItem[]) {
-    return items.length;
-  }
-
-  async rearrangeFocusItems(fromId: IRecordId, toId: IRecordId) {
-    let n = this.get();
-    if (
-      !fromId ||
-      !toId ||
-      !n.items.some(resourceInList(fromId)) ||
-      !n.items.some(resourceInList(toId))
-    ) {
-      return;
-    }
-    const items = [...n.items];
-    const fromIndex = items.findIndex((item) =>
-      isSameResource(item.id, fromId)
-    );
-    const toIndex = items.findIndex((item) => isSameResource(item.id, toId));
-    const [movedItem] = items.splice(fromIndex, 1);
-    items.splice(toIndex, 0, movedItem);
-    this.modify({ items });
-  }
-
-  async rearrangeTasksInObjective(
-    objectiveId: IRecordId,
-    fromId: IRecordId,
-    toId: IRecordId
-  ) {
-    let n = this.get();
-    const objectiveItem = n.items.find(resourceInList(objectiveId));
-    if (
-      !objectiveItem ||
-      !objectiveItem.tasks ||
-      objectiveItem.tasks.length === 0
-    ) {
-      return;
-    }
-    const fromIndex = objectiveItem.tasks.findIndex(resourceInList(fromId));
-    const toIndex = objectiveItem.tasks.findIndex(resourceInList(toId));
-    if (
-      fromIndex < 0 ||
-      toIndex < 0 ||
-      fromIndex >= objectiveItem.tasks.length ||
-      toIndex >= objectiveItem.tasks.length
-    ) {
-      return;
-    }
-    const tasks = [...objectiveItem.tasks];
-    const [movedTask] = tasks.splice(fromIndex, 1);
-    tasks.splice(toIndex, 0, movedTask);
-
-    const items = n.items.map((item) => {
-      if (isSameResource(item.id, objectiveId)) {
-        return { ...item, tasks };
-      }
-      return item;
-    });
-    this.modify({ items });
-  }
-}
-
-export const focusItemsStore = new FocusItemsStore();
+export const focusItemsStore = new FocusItemsStore((id) =>
+  lastActiveObjectiveIdForEditing.set(id)
+);
 
 function addToRecentFocusItems(logs: ISessionLogCapture[]) {
   const newEntries = logs
@@ -1881,80 +1315,11 @@ function addToRecentFocusItems(logs: ISessionLogCapture[]) {
 async function finishFocus(params?: { end?: number }) {
   const activeSessionVal = activeSession.get();
   const focusItemStore = focusItemsStore.get();
-  const plannedEndTime = resolvePlannedEndTime(activeSessionVal);
-  const endTime =
-    plannedEndTime && new Date().getTime() > plannedEndTime.getTime()
-      ? plannedEndTime
-      : new Date(params?.end ?? new Date().getTime());
-
-  const session: ISessionCapture = {
-    elapsed: activeSessionVal.totalElapsed,
-    extended: activeSessionVal.totalExtended,
-    startUnix: activeSessionVal.start
-      ? resolveUnixTimestamp(activeSessionVal.start)
-      : 0,
-    endUnix: resolveUnixTimestamp(endTime),
-    plannedEndUnix: plannedEndTime
-      ? resolveUnixTimestamp(plannedEndTime)
-      : undefined,
-    id:
-      activeSessionVal.currentSessionId ?? generateResourceId(Resource.session),
-    type: activeSessionVal.type,
-    blocks: [
-      ...activeSessionVal.intervals,
-      {
-        id: generateSimpleRandomId(),
-        start: endTime.getTime(),
-        type: BlockType.NONE,
-        progress: 0,
-        duration: 0
-      }
-    ],
-    notes: activeSessionVal.notes
-  };
-  const logs: ISessionLogCapture[] = [];
-
-  const allItems = [
-    ...focusItemStore.items,
-    ...(focusItemStore.removedItems ?? [])
-  ];
-
-  allItems.forEach((item: IFocusItem) => {
-    const resourceType = determineResourceType(item.id);
-    const objectiveId =
-      resourceType === Resource.objective
-        ? item.id
-        : (item.parentObjectiveId ??
-          allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
-          "");
-    const taskId = resourceType === Resource.task ? item.id : "";
-    if (item.blocks && item.blocks.length > 0) {
-      logs.push(
-        ...item.blocks.map((block) => {
-          return generateLogFromBlock(objectiveId, taskId, block);
-        })
-      );
-    }
-  });
-
-  const totalTimeFromLogs = logs.reduce((acc, log) => {
-    return acc + ((log.focus ?? 0) + (log.breakTime ?? 0));
-  }, 0);
-
-  const sessionTotals = resolveSessionTimeSplit(session);
-
-  const remainingTime =
-    sessionTotals.focus + sessionTotals.brek - totalTimeFromLogs;
-  if (remainingTime > 0) {
-    logs.push({
-      id: generateResourceId(Resource.sessionLog),
-      startUnix: session.startUnix,
-      endUnix: session.endUnix,
-      sessionId: session.id,
-      focus: remainingTime,
-      breakTime: 0
-    });
-  }
+  const { session, logs, allItems } = buildSessionCompletion(
+    activeSessionVal,
+    focusItemStore,
+    params
+  );
   await datafn.session.mutate([
     {
       operation: "insert",
@@ -1985,42 +1350,6 @@ async function finishFocus(params?: { end?: number }) {
     }))
   );
   addToRecentFocusItems(logs);
-
-  function resolvePlannedEndTime(session: IActiveSessionStore) {
-    if (session.type == SessionType.COUNTUP) {
-      return;
-    } else if (session.end) return session.end;
-    else if (session.start) {
-      return new Date(session.start.getTime() + session.plannedDuration * 1000);
-    }
-  }
-
-  function generateLogFromBlock(
-    objectiveId: IRecordId,
-    taskId: IRecordId,
-    block: { start: number; end: number }
-  ): ISessionLogCapture {
-    const total = resolveTotalTaskTime([block]);
-    const focus = resolveTaskFocus(session.blocks, [block]);
-    const breakTime = Number((total - focus).toFixed(1));
-    logger.log({
-      focus,
-      blocks: deepCopy(session.blocks),
-      total,
-      block,
-      breakTime
-    });
-    return {
-      id: generateResourceId(Resource.sessionLog),
-      startUnix: resolveUnixTimestamp(new Date(block.start)),
-      endUnix: resolveUnixTimestamp(new Date(block.end)),
-      sessionId: session.id,
-      objectiveId,
-      taskId,
-      focus,
-      breakTime
-    };
-  }
 }
 
 export const sessionStore = {

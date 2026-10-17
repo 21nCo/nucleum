@@ -42,7 +42,8 @@ jobs:
   install:
     executor: node-executor
     steps:
-      - checkout
+      - checkout:
+          method: full
       - install-deps
       - persist_to_workspace:
           root: ~/project
@@ -55,8 +56,8 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: Run workspace lint
-          command: npm run lint
+          name: Run static workspace checks
+          command: npm run check:static
 
   type-check:
     executor: node-executor

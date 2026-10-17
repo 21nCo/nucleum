@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { BlockAction } from "@nucleum/features/memory/markdown/md.type";
-import { InlineType } from "@21n/elements/markdown/inline.type";
+  import { InlineType } from "@21n/ui/elements/markdown/inline.type";
   import {
     mdContentChangeEvent,
     type MdStoreType
@@ -10,11 +10,11 @@ import { InlineType } from "@21n/elements/markdown/inline.type";
   import EmojiPicker from "@nucleum/features/memory/markdown/content/EmojiPicker.svelte";
 
   import { headingNodeTypes, ListType, type ListNodeType, type SimpleTextNodeType } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import Popover from "@21n/elements/popover/Popover.svelte";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Popover from "@21n/ui/elements/popover/Popover.svelte";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
-  import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
+  import SearchResultsPopover from "@21n/ui/compositions/search/SearchResultsPopover.svelte";
   import LinkSearchResultItem from "@nucleum/features/memory/common/linkbox/LinkSearchResultItem.svelte";
   import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { getContext } from "svelte";
@@ -22,15 +22,15 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { queryLinkingSearchResults } from "@nucleum/features/memory/linking/link-search";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { performEscShortcuts } from "@nucleum/features/memory/markdown/markdown.utils";
-import { inlineLinkPatterns, renderMdAsHtml } from "@21n/elements/markdown/markdown.utils";
-  import view from "@nucleum/stores/view.store";
-  import context from "@nucleum/stores/context.store";
-  import { popover } from "@nucleum/actions/popover.action";
-  import { PopoverTriggerMethod } from "@nucleum/actions/popover.type";
-  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
-  import { GlobalEvent } from "@nucleum/stores/notifications/event.enum";
+  import { inlineLinkPatterns, renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
+  import view from "@21n/ui/environment/view.store";
+  import context from "@nucleum/client/runtime/context.store";
+  import { popover } from "@21n/ui/actions/popover.action";
+  import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
+  import { dispatchCustomEvent } from "@21n/shared-utils/dom-events";
+  import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
 
   const nodeContentContext = getContext<any>(Context.CONTENT);

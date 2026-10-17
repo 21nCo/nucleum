@@ -1,4 +1,4 @@
-import { resolveToken } from "$lib/client/utils/account.utils";
+import { resolveToken } from "@nucleum/client/runtime/account/session-token";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import type {
   WebArtifactCategory,

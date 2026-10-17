@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { get } from "svelte/store";
   import type { DatafnChangelogEntry } from "@datafn/client";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import type { IAccessLog } from "@nucleum/features/system/accessLogging/accessLog.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import type { IAccessLog } from "@nucleum/shared-state/resources/history/access-log.type";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import type {
     ISessionThumb,
     ISessionLog
   } from "@nucleum/features/focus/logs/log.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
 

@@ -1,12 +1,12 @@
 <script>
-  import Button from "@21n/elements/button/Button.svelte";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "@nucleum/stores/uiState/uiState.type";
-  import { Layout } from "@21n/layout/layout-mode.type";
-  import { Size } from "@21n/elements/size.enum";
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import { Layout } from "@nucleum/shell/layout-mode.type";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { onMount } from "svelte";
   let layout = refreshLayoutState();
   onMount(() => {

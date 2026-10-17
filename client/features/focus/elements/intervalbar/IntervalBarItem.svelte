@@ -4,11 +4,11 @@
     BlockType,
     SessionUIContext
   } from "@nucleum/features/focus/session.type";
-  import { currentTime } from "@nucleum/stores/app.store";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import view from "@nucleum/stores/view.store";
-  import { formatTime } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { currentTime } from "@nucleum/shared-state/app-context/app.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import view from "@21n/ui/environment/view.store";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     progress = 0,
     color = undefined,

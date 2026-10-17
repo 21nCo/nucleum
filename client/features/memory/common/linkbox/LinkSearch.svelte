@@ -1,26 +1,22 @@
 <script lang="ts">
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
   import LinkSearchResultItem from "@nucleum/features/memory/common/linkbox/LinkSearchResultItem.svelte";
-  import type { IPopoverOptions } from "@nucleum/actions/popover.type";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { type InputLabel, InputStyle } from "@21n/elements/input/input.type";
-  import {
-    queryLinkingSearchResults,
-    queryLinkingSearchResultsOnExtension
-  } from "@nucleum/features/memory/linking/link-search";
+  import type { IPopoverOptions } from "@21n/ui/actions/popover.type";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { type InputLabel, InputStyle } from "@21n/ui/elements/input/input.type";
+  import { queryLinkingSearchResults } from "@nucleum/features/memory/linking/link-search";
   import { onMount } from "svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { isExtensionEnvironment } from "@21n/utils/browser.utils";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import {
     CollectionLayout,
     CollectionType
   } from "@nucleum/features/collections/collection.type";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { datafn } from "@nucleum/datafn/datafn.store";
@@ -34,7 +30,8 @@
     excludeFromSearch = [],
     onFocus = undefined,
     onHide = undefined,
-    onSelect = undefined
+    onSelect = undefined,
+    extensionSearch = undefined
   }: {
     accessPoint?: ResourceAccessPoint;
     isCollectionsLane?: boolean;
@@ -46,6 +43,7 @@
     onFocus?: ((event: CustomEvent<void>) => void) | undefined;
     onHide?: ((event: CustomEvent<void>) => void) | undefined;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+    extensionSearch?: (query: string, resource?: Resource) => Promise<any[]>;
   } = $props();
   let popoverOptions = $state<IPopoverOptions | undefined>(undefined);
   let inputStyle = $state<InputStyle>(InputStyle.PLAIN);
@@ -128,9 +126,7 @@
       resource = Resource.collection;
       query = searchQuery.slice(1);
     }
-    if (isExtensionEnvironment()) {
-      return queryLinkingSearchResultsOnExtension(query, resource);
-    }
+    if (extensionSearch) return extensionSearch(query, resource);
     return queryLinkingSearchResults(query, {
       resource,
       exclude: excludeFromSearch,

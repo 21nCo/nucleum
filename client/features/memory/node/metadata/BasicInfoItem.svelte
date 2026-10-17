@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { formatDatetime } from "@21n/utils/time.utils";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
 
   let {
     label,

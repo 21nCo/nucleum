@@ -1,6 +1,6 @@
 <script lang="ts">
   import LinkItem from "@nucleum/features/memory/common/linkbox/LinkItem.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import {
     determineResourceType,
@@ -14,15 +14,15 @@
   import LinkTagger from "@nucleum/features/memory/linking/LinkTagger.svelte";
   import type { INodeLinkThumb } from "@nucleum/features/memory/node/node.type";
   import LinkTags from "@nucleum/features/memory/linking/LinkTags.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import context from "@nucleum/stores/context.store";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import context from "@nucleum/client/runtime/context.store";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import type { ICollectionItemPropertyValue } from "@nucleum/features/collections/collection.type";
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteDataStore, toSvelteStore } from "@datafn/svelte";
   let {

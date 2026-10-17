@@ -1,31 +1,31 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import appearance from "@nucleum/stores/appearance.store";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { PlayActionState } from "@nucleum/stores/notifications/event.enum";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { retrieveCurrentColors } from "@21n/utils/theme.utils";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { PlayActionState } from "@nucleum/shared-state/events/event.enum";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { retrieveCurrentColors } from "@21n/theme/color-presentation";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { onDestroy, onMount } from "svelte";
   import WaveSurfer from "wavesurfer.js";
   import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline";
   import { Audio2MD } from "@nucleum/features/memory/audio/AudioToMarkdown.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { Taco } from "@nucleum/client/runtime/inference/taco";
-  import FileView from "@nucleum/components/files/FileView.svelte";
+  import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import { isRecordId } from "@nucleum/datafn/resource.utils";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import type { IJobStatus } from "@nucleum/client/runtime/inference/taco.type";
   import { AudioView } from "@nucleum/features/memory/audio/audio.type";
   import AudioContentMainPanel from "@nucleum/features/memory/audio/AudioContentMainPanel.svelte";
-  import { preferences } from "@nucleum/stores/preferences/preferences.store";
-  import { Preference } from "@nucleum/stores/preferences/preferences.type";
-  import context from "@nucleum/stores/context.store";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
+  import { Preference } from "@nucleum/shared-state/preferences/preferences.type";
+  import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import type {
     IAudioBody,
     IAudioMetadata

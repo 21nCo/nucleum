@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
 
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   import { type IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import {
     canHaveTraces,
     socialPostNodeTypeList
   } from "@nucleum/features/memory/node/node.type";
-  import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
+  import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
 
-  import { focusById } from "@nucleum/actions/focusById.action";
+  import { focusById } from "@21n/ui/actions/focusById.action";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import InfoCard from "@nucleum/features/memory/node/metadata/InfoCard.svelte";
   import { resolveNodeLabel } from "../node.utils";

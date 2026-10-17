@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { cloneUp } from "./index";
-import { resolveInsertQuery } from "$lib/shared/utils/surreal.utils";
+import { resolveInsertQuery } from "$lib/server/common/sync/legacy/surreal-query";
 import { performQueryOnBehalfOfUser } from "../../user/user";
 import { ICloneUpBody } from "@nucleum/schema/legacy/sync.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@nucleum/datafn/resource.enum";
 
-vi.mock("$lib/shared/utils/surreal.utils", () => ({
+vi.mock("$lib/server/common/sync/legacy/surreal-query", () => ({
   resolveInsertQuery: vi.fn()
 }));
 

@@ -1,18 +1,18 @@
 <script lang="ts">
-  import EditToggleButton from "@21n/elements/toggle/EditModeToggle.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { isInEditMode } from "@nucleum/stores/app.store";
+  import EditToggleButton from "@21n/ui/elements/toggle/EditModeToggle.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { isInEditMode } from "@nucleum/shared-state/app-context/app.store";
   import { focusItemsStore } from "@nucleum/features/focus/session.store";
   import { Action } from "@nucleum/client/config/action.enum";
-  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
 </script>
 
 <div class="flex flex-col w-full items-center gap-2">
   <div class="flex w-full justify-between">
     <Text style={TextStyle.PANEL_HEADING_SMALL} content="Focus Items" />
     <span class="flex items-center gap-1">
-      <EditToggleButton />
+      <EditToggleButton bind:value={$isInEditMode} />
       <ShortcutText shortcut={Action.EDIT_MODE} parentBgIndex={1} />
     </span>
   </div>

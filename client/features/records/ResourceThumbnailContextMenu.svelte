@@ -1,0 +1,116 @@
+<script lang="ts">
+  import type { Snippet } from "svelte";
+  import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
+  import type { IRecordId } from "@nucleum/schema/legacy/data.type";
+  import { Arrangement, Placement } from "@21n/ui/elements/direction.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import context from "@nucleum/client/runtime/context.store";
+  import view from "@21n/ui/environment/view.store";
+  import type { ResourceContextMenuResolver } from "./context-menu.type";
+  let {
+    menuResolver,
+    item = $bindable(),
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointId = undefined,
+    accessPointContext = undefined,
+    arrangement = Arrangement.LIST,
+    isHidePreview = false,
+    isApplyCustomColor = false,
+    size = Size.md,
+    bgSize = Size.md,
+    isInline = false,
+    icon = "more",
+    isPopoverVisible = $bindable(false),
+    onAction = undefined,
+    right = undefined,
+    class: className = ""
+  }: {
+    item: any;
+    menuResolver: ResourceContextMenuResolver;
+    accessPoint?: ResourceAccessPoint;
+    accessPointId?: IRecordId | undefined;
+    accessPointContext?: string | undefined;
+    arrangement?: Arrangement;
+    isHidePreview?: boolean;
+    isApplyCustomColor?: boolean;
+    size?: Size.sm | Size.md | Size.lg;
+    bgSize?: Size.sm | Size.md | Size.lg;
+    isInline?: boolean;
+    icon?: string;
+    isPopoverVisible?: boolean;
+    onAction?:
+      | ((event: CustomEvent<{ action: string; id: string }>) => void)
+      | undefined;
+    right?: Snippet | undefined;
+    class?: string;
+  } = $props();
+  function handleAction(e: CustomEvent<string>) {
+    if (e.detail === "star") item.isStarred = !item.isStarred;
+    const actionEvent = new CustomEvent<{ action: string; id: string }>(
+      "action",
+      { detail: { action: e.detail, id: item.id } }
+    );
+    onAction?.(actionEvent);
+  }
+</script>
+
+<ContextMenuAction
+  id="resourceThumbnailContextMenu"
+  testId="thumbnail-context-menu-trigger"
+  menuResolver={() =>
+    menuResolver(item, accessPoint, { accessPointId, accessPointContext })}
+  bind:isPopoverVisible
+  {size}
+  actionSize={bgSize ?? size}
+  onAction={handleAction}
+  position={Placement.BottomCenter}
+  isRenderAsSibling={!$view.isConstrainedWidth}
+  isStopPropagation={true}
+  class={cn(
+    "flex gap-2 p--1 z-10",
+    {
+      "absolute top-0 right-0": !isInline,
+      "bg-gradient-to-r from-transparent via-bgs2/90 to-bgs2 rounded-md":
+        $context.isTouchDevice,
+      "h-full flex-col justify-center": arrangement === Arrangement.LIST
+    },
+    !isInline &&
+      arrangement !== Arrangement.LIST && {
+        "border rounded-md": true,
+        "m-3": !isHidePreview,
+        "m-1": isHidePreview,
+        "bg-ccs4 border-ccs2": isApplyCustomColor,
+        "bg-bgs2 border-brs3": !isApplyCustomColor
+      },
+    className
+  )}
+>
+  {#snippet children()}
+    <div class="flex">
+      {@render right?.()}
+      <div
+        class={cn(
+          !isInline &&
+            arrangement === Arrangement.LIST && {
+              "mx-2 border rounded-md": arrangement === Arrangement.LIST,
+              "bg-ccs4 border-ccs2":
+                arrangement === Arrangement.LIST && isApplyCustomColor,
+              "bg-bgs2 border-brs3":
+                arrangement === Arrangement.LIST && !isApplyCustomColor
+            }
+        )}
+      >
+        <Toggle
+          {icon}
+          isPreventFillOnActive={true}
+          size={bgSize ?? size}
+          bgSize={bgSize ?? size}
+          bind:on={isPopoverVisible}
+        />
+      </div>
+    </div>
+  {/snippet}
+</ContextMenuAction>

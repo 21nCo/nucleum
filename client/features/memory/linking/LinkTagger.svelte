@@ -1,6 +1,6 @@
 <script lang="ts">
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import type { INodeLinkThumb } from "@nucleum/features/memory/node/node.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";

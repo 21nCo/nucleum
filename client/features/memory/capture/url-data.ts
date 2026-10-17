@@ -1,10 +1,7 @@
-import { performApiCall } from "@21n/utils/network.utils";
-import {
-  isContentScript,
-  isExtensionEnvironment
-} from "@21n/utils/browser.utils";
-import { extractFullTabData } from "@nucleum/extensions/clipper/clipper.utils";
-import { resolveJsonResponse } from "@nucleum/persistence/response.utils";
+import { performApiCall } from "@nucleum/client/runtime/network/legacy-api";
+import { isContentScript, isExtensionEnvironment } from "@21n/shared-utils/browser-environment";
+import { extractFullTabData } from "@nucleum/features/memory/capture/browser-tab-data";
+import { resolveJsonResponse } from "@nucleum/client/runtime/network/json-response";
 
 /** Retrieves remote page data and applies memory capture parsing unless raw data is requested. */
 export async function retrieveUrlData(

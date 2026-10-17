@@ -1,9 +1,9 @@
 <script lang="ts">
-  import view from "@nucleum/stores/view.store";
-  import { TimeFormat } from "@21n/utils/time.type";
+  import view from "@21n/ui/environment/view.store";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
   import { properCase } from "@21n/shared-utils/text.utils";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     value,

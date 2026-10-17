@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import type { IPropertyConfigOption } from "@nucleum/features/collections/properties/property.type";
   import { isValidString } from "@21n/shared-utils/text.utils";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   let {
     item,
     isSelectedContext = false,

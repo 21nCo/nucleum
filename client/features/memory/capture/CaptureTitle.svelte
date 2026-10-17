@@ -1,9 +1,9 @@
 <script lang="ts">
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
   import type { IActiveCaptureStore } from "@nucleum/features/memory/capture/capture.store";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { cn } from "@21n/ui/environment/presentation";
   import { logger } from "@nucleum/client/runtime/logging/logger";
 
   let {

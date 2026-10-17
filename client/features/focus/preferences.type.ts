@@ -3,10 +3,10 @@ import type {
   SessionCompositionType
 } from "@nucleum/features/focus/sessionComposition.type";
 import type { TimerMode } from "@nucleum/features/focus/timerMode.enum";
-import type { ChartType } from "@nucleum/components/charts/analytics.type";
+import type { ChartType } from "@21n/ui/compositions/charts/analytics.type";
 import type { Cloud } from "@nucleum/persistence/cloud.enum";
-import type { Layout } from "@21n/layout/layout-mode.type";
-import type { TimePeriod, TimeScale } from "@21n/utils/time.type";
+import type { Layout } from "@nucleum/shell/layout-mode.type";
+import type { TimePeriod, TimeScale } from "@21n/shared-utils/datetime/period.type";
 import type { AnalyticsFilters } from "@nucleum/features/focus/analytics/preferences.type";
 
 export type HorizonChart = {

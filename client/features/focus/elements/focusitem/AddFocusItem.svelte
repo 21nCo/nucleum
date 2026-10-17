@@ -1,11 +1,11 @@
 <script lang="ts">
   import { focusItemsStore } from "@nucleum/features/focus/session.store";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
   import {
     determineResourceType,
     resourceInList

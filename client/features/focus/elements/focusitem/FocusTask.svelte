@@ -10,22 +10,22 @@
     ICurrentFocusItem
   } from "@nucleum/features/focus/session.type";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import view from "@nucleum/stores/view.store";
-  import { Size } from "@21n/elements/size.enum";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { onMount } from "svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { cn } from "@21n/ui/environment/presentation";
   import { SessionType } from "@nucleum/features/focus/logs/log.type";
   import { resolveTaskFocus } from "@nucleum/features/focus/session.utils";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
   import type { ITaskThumb } from "@nucleum/features/focus/tasks/task.type";
   import TaskCheckbox from "@nucleum/features/focus/tasks/TaskCheckbox.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import { popover } from "@nucleum/actions/popover.action";
+  import { popover } from "@21n/ui/actions/popover.action";
   import FocusTaskEstimatedTimePopover from "@nucleum/features/focus/elements/focusitem/FocusTaskEstimatedTimePopover.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   let {

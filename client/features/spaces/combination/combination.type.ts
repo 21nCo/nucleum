@@ -5,7 +5,7 @@ import type {
 } from "@nucleum/datafn/resource.type";
 import type { Resource } from "@nucleum/datafn/resource.enum";
 import type { IMemotronItemBase } from "@nucleum/features/memory/memory.type";
-import type { IAvatar } from "@21n/elements/avatarPicker/avatar.type";
+import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
 export enum CombinationNavItemType {

@@ -1,6 +1,6 @@
-import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import { ActiveResourceStore } from "@nucleum/stores/resources/active-resource.store";
+import { ActiveResourceStore } from "@nucleum/shared-state/resources/active-resource.store";
 import {
   CollectionLayout,
   CollectionType,
@@ -14,7 +14,7 @@ import {
 import { propertyEditorStore } from "@nucleum/features/collections/properties/property.store";
 import { AccessMode, ResourceAccessPoint } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-import { ResourceActions } from "@nucleum/stores/resources/resource.actions";
+import { ResourceActions } from "@nucleum/features/records/resource.actions";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
@@ -26,16 +26,16 @@ import {
   ContextMenuType,
   type IContextMenu,
   type IContextMenuItem
-} from "@21n/elements/contextMenu/context-menu.type";
-import context from "@nucleum/stores/context.store";
+} from "@21n/ui/elements/contextMenu/context-menu.type";
+import context from "@nucleum/client/runtime/context.store";
 import { get } from "svelte/store";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
-import { toasts } from "@nucleum/stores/notification.store";
+import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 
 import { Embed } from "@nucleum/client/runtime/context.type";
-import { appStore } from "@nucleum/stores/app.store";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { datafn } from "@nucleum/datafn/datafn.store";
-import view from "@nucleum/stores/view.store";
+import view from "@21n/ui/environment/view.store";
 import type { IProperty } from "@nucleum/features/collections/properties/property.type";
 
 const viewDefaults = {

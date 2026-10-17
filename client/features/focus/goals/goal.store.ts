@@ -1,8 +1,8 @@
-import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import { ActiveResourceStore } from "@nucleum/stores/resources/active-resource.store";
-import { PanelSwitcherMixin } from "@nucleum/stores/resources/panelSwitcher.mixin";
-import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
+import { ActiveResourceStore } from "@nucleum/shared-state/resources/active-resource.store";
+import { PanelSwitcherMixin } from "@nucleum/shared-state/resources/panelSwitcher.mixin";
+import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
 import { type IRecordId } from "@nucleum/schema/legacy/data.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import type {
@@ -18,19 +18,19 @@ import {
   type IResourceMutationParams
 } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-import { ResourceActions } from "@nucleum/stores/resources/resource.actions";
+import { ResourceActions } from "@nucleum/features/records/resource.actions";
 import {
   ContextMenuType,
   type IContextMenu,
   type IContextMenuItem
-} from "@21n/elements/contextMenu/context-menu.type";
+} from "@21n/ui/elements/contextMenu/context-menu.type";
 import { CollectibleStore } from "@nucleum/features/collections/collectible.store";
 import { activeSession } from "@nucleum/features/focus/session.store";
 import { get } from "svelte/store";
-import { appStore } from "@nucleum/stores/app.store";
-import context from "@nucleum/stores/context.store";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
+import context from "@nucleum/client/runtime/context.store";
 import { Embed } from "@nucleum/client/runtime/context.type";
-import view from "@nucleum/stores/view.store";
+import view from "@21n/ui/environment/view.store";
 import { resolveCollectionTypes } from "@nucleum/features/collections/collection.utils";
 import type { ICollectionExpanded } from "@nucleum/features/collections/collection.type";
 import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";

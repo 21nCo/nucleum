@@ -6,7 +6,7 @@ Shared static assets package for all product apps.
 
 ### Basic Import
 ```javascript
-import { assets, assetPath } from 'static';
+import { assets, assetPath } from '@nucleum/static';
 
 // Use predefined assets
 const logoSrc = assets.nucleusLogo;
@@ -20,7 +20,7 @@ const customPath = assetPath('my-custom-asset.png');
 ### In Svelte Components
 ```svelte
 <script>
-  import { assets } from 'static';
+  import { assets } from '@nucleum/static';
 </script>
 
 <img src={assets.nucleusLogo} alt="Nucleum Logo" />
@@ -51,7 +51,7 @@ const customPath = assetPath('my-custom-asset.png');
 ```json
 {
   "dependencies": {
-    "static": "*"
+    "@nucleum/static": "*"
   }
 }
 ```
@@ -61,12 +61,12 @@ const customPath = assetPath('my-custom-asset.png');
 **For SvelteKit apps:**
 ```javascript
 // vite.config.js
-import { nucleusStaticPlugin } from 'static/vite-plugin.js';
+import { staticPlugin } from '@nucleum/static/vite-plugin.js';
 
 export default defineConfig({
   plugins: [
     sveltekit(),
-    nucleusStaticPlugin()
+    staticPlugin()
   ]
 });
 ```
@@ -74,13 +74,13 @@ export default defineConfig({
 **Manual setup:**
 Copy assets to your app's static directory during build:
 ```javascript
-import { copyAssetsTo } from 'static/build.js';
+import { copyAssetsTo } from '@nucleum/static/build.js';
 copyAssetsTo('./static');
 ```
 
 ## Adding New Assets
 
-1. Add asset files to the appropriate subdirectory in `packages/static/`
+1. Add asset files to the appropriate subdirectory in `client/static/`
 2. Update `index.js` to export the new asset paths
 3. Update `index.d.ts` with TypeScript definitions
 4. Run `npm run build` to update the manifest

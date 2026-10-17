@@ -1,5 +1,5 @@
 <script>
-  import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
+  import AppLoadingView from "@nucleum/composition/AppLoadingView.svelte";
 </script>
 
 <AppLoadingView

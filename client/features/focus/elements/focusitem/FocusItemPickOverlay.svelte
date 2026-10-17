@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { AccessMode } from "@nucleum/datafn/resource.type";
@@ -7,13 +7,13 @@
     determineResourceType,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { isInEditMode } from "@nucleum/stores/app.store";
-  import context from "@nucleum/stores/context.store";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { formatDateRelativeToToday } from "@21n/utils/time.utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { isInEditMode } from "@nucleum/shared-state/app-context/app.store";
+  import context from "@nucleum/client/runtime/context.store";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { formatDateRelativeToToday } from "@21n/shared-utils/datetime/date-formatting";
   import {
     activeSession,
     currentFocusItem,

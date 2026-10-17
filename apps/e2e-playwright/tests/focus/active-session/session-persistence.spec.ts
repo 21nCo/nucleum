@@ -2,6 +2,7 @@ import { expect, test, type E2ESeed } from "../../fixtures/e2e-test";
 import { ensureInAppOnHome } from "../../utils/helpers";
 import {
   addAdvancedFocusItems,
+  hideFocusFullscreen,
   readSessionRuntime,
   reloadActiveSession,
   resetFocusSession,
@@ -102,7 +103,7 @@ test("keeps the global timer active while navigating away", async ({
   });
   await addAdvancedFocusItems(page, [fixture.objective.label]);
   await startAdvancedFocus(page);
-  await page.keyboard.press("Escape").catch(() => null);
+  await hideFocusFullscreen(page);
   await page
     .getByRole("button", { name: /^Calendar$/i })
     .first()

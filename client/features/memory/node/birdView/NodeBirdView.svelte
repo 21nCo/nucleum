@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import {
     isSameResource,
     removeDuplicatesFilter,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
 
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "@21n/elements/switcher/switcher.enum";
+  } from "@21n/ui/elements/switcher/switcher.enum";
   import NodeGraph from "@nucleum/features/memory/graph/NodeGraph.svelte";
   import { linkTagLabelMapper } from "@nucleum/features/memory/linking/link.utils";
   import { type IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
@@ -25,13 +25,13 @@
     type INodeLinkThumb,
     type INodeThumb
   } from "@nucleum/features/memory/node/node.type";
-  import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
-  import type { DropdownItem } from "@21n/elements/dropdown/dropdownItem.type";
+  import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
+  import type { DropdownItem } from "@21n/ui/elements/dropdown/dropdownItem.type";
   import { LinkType, type ILinkTag } from "@nucleum/datafn/link.type";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import view from "@nucleum/stores/view.store";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import view from "@21n/ui/environment/view.store";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import {
     resolveNodeFavicon,
     resolveNodeGraphFill,
@@ -39,11 +39,11 @@
   } from "@nucleum/features/memory/node/node.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import NodeRightPaneContent from "@nucleum/features/memory/node/rightPanel/NodeRightPaneContent.svelte";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
   import NodeTimelineView from "@nucleum/features/memory/node/timeline/NodeTimelineView.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { NodeBirdViewMode } from "@nucleum/features/memory/node/birdView/birdView.type";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { page } from "$app/stores";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";

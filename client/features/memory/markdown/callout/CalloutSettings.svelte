@@ -1,25 +1,25 @@
 <script lang="ts">
-  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
-  import ColorPickerMini from "@21n/elements/colorPicker/ColorPickerMini.svelte";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import Table2 from "@21n/elements/table/Table2.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
+  import Avatar from "@nucleum/features/records/avatar/Avatar.svelte";
+  import ColorPickerMini from "@21n/ui/elements/colorPicker/ColorPickerMini.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
+  import Table2 from "@21n/ui/elements/table/Table2.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
   import {
     AvatarPickerContext,
     AvatarType,
     type IAvatar
-  } from "@21n/elements/avatarPicker/avatar.type";
+  } from "@21n/ui/elements/avatarPicker/avatar.type";
   import {
     TableCellDefaultAction,
     TableCellType,
     type TableColumn
-  } from "@21n/elements/table/table.type";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  } from "@21n/ui/elements/table/table.type";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
   import { markdownSettings } from "@nucleum/features/memory/markdown/markdown.settings";
-  import ModalContentPadded from "@21n/elements/modal/ModalContentPadded.svelte";
+  import ModalContentPadded from "@21n/ui/elements/modal/ModalContentPadded.svelte";
   let callouts = $state([...$markdownSettings.callout]);
   let previewId: string | undefined = callouts[0]?.id;
   let error: string | undefined = undefined;

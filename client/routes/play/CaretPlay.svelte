@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { generateUID } from "@21n/utils/utils";
+  import { generateUID } from "@21n/shared-utils/legacy-id";
   let savedNode: Node | null = null;
   let savedOffset: number | null = null;
   let innerHTML = "";

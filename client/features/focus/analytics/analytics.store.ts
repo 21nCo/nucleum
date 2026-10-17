@@ -7,7 +7,7 @@ import {
   type IAnalyticsCard,
   AnalyticsCardType
 } from "@nucleum/features/focus/analytics/analytics.types";
-import { TimePeriodType, TimeScale } from "@21n/utils/time.type";
+import { TimePeriodType, TimeScale } from "@21n/shared-utils/datetime/period.type";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import {
   generateAnalyticsSeedPage,
@@ -19,7 +19,7 @@ import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { isSameResource } from "@nucleum/datafn/resource.utils";
-import { toasts } from "@nucleum/stores/notification.store";
+import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { time } from "@datafn/client";
 
 type IFocusLogAggregate = {

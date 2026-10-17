@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import TimePeriodPicker from "@21n/elements/datetime/timeperiodpicker/TimePeriodPicker.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { isInEditMode } from "@nucleum/stores/app.store";
-  import view from "@nucleum/stores/view.store";
-  import { Size } from "@21n/elements/size.enum";
-  import { determinePreviousTimePeriod } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TimePeriodPicker from "@21n/ui/elements/datetime/timeperiodpicker/TimePeriodPicker.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { isInEditMode } from "@nucleum/shared-state/app-context/app.store";
+  import view from "@21n/ui/environment/view.store";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { determinePreviousTimePeriod } from "@21n/shared-utils/datetime/period";
+  import { cn } from "@21n/ui/environment/presentation";
   import {
     AnalyticsCardType,
     type IAnalyticsCard,
@@ -15,10 +15,10 @@
   } from "@nucleum/features/focus/analytics/analytics.types";
   import { analyticsConfigStore } from "@nucleum/features/focus/analytics/analytics.store";
   import CardSelector from "@nucleum/features/focus/analytics/page/CardSelector.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import GroupingAndFilters from "@nucleum/features/focus/analytics/page/GroupingAndFilters.svelte";
   import CardResolver from "@nucleum/features/focus/analytics/page/CardResolver.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import type { ISessionLog } from "@nucleum/features/focus/logs/log.type";
   import { resourceInList } from "@nucleum/datafn/resource.utils";
@@ -27,18 +27,15 @@
     IObjectiveThumb
   } from "@nucleum/features/focus/goals/goal.type";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-  import {
-    TimePeriodType,
-    TimeScale,
-    type ITimePeriodResolved
-  } from "@21n/utils/time.type";
+  import { TimePeriodType, TimeScale, type ITimePeriodResolved } from "@21n/shared-utils/datetime/period.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import { ErrorMessage } from "@nucleum/stores/notifications/error.enum";
+  import { ErrorMessage } from "@nucleum/shared-state/notifications/error.enum";
   import { untrack } from "svelte";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   let {
     card,
     position,
@@ -374,6 +371,7 @@
             <span class="w-1/2">
               <TimePeriodPicker
                 bind:period={cardPeriod}
+                scales={$userPreferences.timeScales}
                 onChange={onTimePeriodChange}
               />
             </span>

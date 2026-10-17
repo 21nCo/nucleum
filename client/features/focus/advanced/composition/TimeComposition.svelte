@@ -1,33 +1,33 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { activeSession } from "@nucleum/features/focus/session.store";
   import Slider from "@nucleum/features/focus/advanced/slider/Slider.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import AdvancedFocusModeSwitcher from "@nucleum/features/focus/advanced/modeSwitcher/AdvancedFocusModeSwitcher.svelte";
   import ComposeDuration from "@nucleum/features/focus/advanced/composition/ComposeDuration.svelte";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "@21n/elements/switcher/switcher.enum";
+  } from "@21n/ui/elements/switcher/switcher.enum";
   import PresetPicker from "@nucleum/features/focus/advanced/composition/PresetPicker.svelte";
   import { onMount } from "svelte";
   import {
     SessionCompositionType,
     type SessionComposition
   } from "@nucleum/features/focus/sessionComposition.type";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import ComposeTotalsText from "@nucleum/features/focus/advanced/composition/ComposeTotalsText.svelte";
 
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { advancedCompositionDraft } from "@nucleum/features/focus/advanced/composition/advancedCompositionDraft.store";
 
   let { parentBgIndex = 1 }: { parentBgIndex?: number } = $props();

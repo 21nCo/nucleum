@@ -4,7 +4,7 @@ import { SyncMethod } from "@nucleum/schema/legacy/sync.type";
 import {
   resolveInsertQuery,
   resolveMutationQueryV2
-} from "$lib/shared/utils/surreal.utils";
+} from "$lib/server/common/sync/legacy/surreal-query";
 import { performQueryOnBehalfOfUser } from "../../user/user";
 
 /**

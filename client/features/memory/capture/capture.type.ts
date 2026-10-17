@@ -1,5 +1,5 @@
 import type { IProperty } from "@nucleum/features/collections/properties/property.type";
-import type { IAvatar } from "@21n/elements/avatarPicker/avatar.type";
+import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import type { IMarkdown } from "@nucleum/features/memory/markdown/md.type";
 import type { INodeStructure } from "@nucleum/features/memory/node/node.type";

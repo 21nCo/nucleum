@@ -1,11 +1,11 @@
 <script lang="ts">
   import WaveSurfer from "wavesurfer.js";
-  import { retrieveCurrentColors } from "@21n/utils/theme.utils";
-  import appearance from "@nucleum/stores/appearance.store";
+  import { retrieveCurrentColors } from "@21n/theme/color-presentation";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
   import { onMount } from "svelte";
   import { parseBlob } from "music-metadata";
   import { onDestroy } from "svelte";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   let { url = "" }: { url?: string } = $props();
   let imageUrl: string | null = null;
   let showWaveform = true;

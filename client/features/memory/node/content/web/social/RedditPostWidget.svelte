@@ -1,7 +1,7 @@
 <script lang="ts">
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
   import { onMount } from "svelte";
-  import appearance from "@nucleum/stores/appearance.store";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
   import { parse } from "@21n/shared-utils/json.utils";
   import RedditWidgetScript from "@nucleum/features/memory/node/content/web/social/RedditWidgetScript.svelte";
   import SocialPostLoadingInfo from "@nucleum/features/memory/node/content/web/social/SocialPostLoadingInfo.svelte";

@@ -242,6 +242,7 @@ test("restores session notes after reload", async ({ page }) => {
   const notesText = `E2E reloaded note ${Date.now()}`;
   await addAdvancedFocusItems(page, [fixture.objective.label]);
   await startAdvancedFocus(page);
+  await hideFocusFullscreen(page);
   await runCommand(page, "Think mode");
 
   const editor = getSessionNotesEditor(page);

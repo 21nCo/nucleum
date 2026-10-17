@@ -2,9 +2,9 @@
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import type { ITaskThumb } from "@nucleum/features/focus/tasks/task.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import TaskThumbnail from "@nucleum/features/focus/tasks/TaskThumbnail.svelte";
-  import { LoadingAnimationType } from "@21n/elements/feedback/feedback.type";
+  import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
   import type { IEmbedBlock } from "@nucleum/features/memory/markdown/md.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { datafn } from "@nucleum/datafn/datafn.store";

@@ -1,47 +1,47 @@
 <script lang="ts">
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { formatTime } from "@21n/utils/time.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
   import { onMount } from "svelte";
   import DurationSuggestions from "@nucleum/features/focus/logs/manualLog/DurationSuggestions.svelte";
-  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
+  import FormControlLabel from "@21n/ui/elements/text/formLabel/FormControlLabel.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import DurationInput from "@21n/ui/compositions/datetime/durationInput/DurationInput.svelte";
   import { manualLogStore } from "@nucleum/features/focus/logs/log.store";
-  import TimeInput from "@21n/elements/datetime/TimeInput.svelte";
+  import TimeInput from "@21n/ui/elements/datetime/TimeInput.svelte";
   import {
     LastActionPerformed,
     type IManualSessionLogForm
   } from "@nucleum/features/focus/logs/log.type";
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import FocusNotes from "@nucleum/features/focus/notes/FocusNotes.svelte";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import { isPrimaryActionDisabled } from "@nucleum/stores/overlays/modal.store";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
+  import { isPrimaryActionDisabled } from "@nucleum/shell/overlays/modal.store";
   import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { BarStyle, PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import Divider from "@21n/elements/Divider.svelte";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import Divider from "@21n/ui/elements/Divider.svelte";
   import {
     ObjectiveStatus,
     type IObjective,
     type IObjectiveThumb
   } from "@nucleum/features/focus/goals/goal.type";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
   import {
     removeDuplicatesFilter,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import view from "@nucleum/stores/view.store";
-  import { cn } from "@21n/utils/ui.utils";
+  import view from "@21n/ui/environment/view.store";
+  import { cn } from "@21n/ui/environment/presentation";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { datafn } from "@nucleum/datafn/datafn.store";
 

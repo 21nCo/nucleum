@@ -3,15 +3,15 @@
     IRatingProperty,
     IRatingPropertyConfig
   } from "@nucleum/features/collections/properties/property.type";
-  import Divider from "@21n/elements/Divider.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import RatingPropertyPreview from "@nucleum/features/collections/properties/ratingProperty/config/RatingPropertyPreview.svelte";
   import { resolvePropertyDefaultConfig } from "@nucleum/features/collections/properties/property.utils";
   import RatingAvatarPicker from "@nucleum/features/collections/properties/ratingProperty/config/RatingAvatarPicker.svelte";
-  import { popover } from "@nucleum/actions/popover.action";
+  import { popover } from "@21n/ui/actions/popover.action";
   let { property }: { property: IRatingProperty } = $props();
   let popoverRef = $state<HTMLElement | undefined>();
   let isPopoverOpen = $state(false);

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import Rating from "@nucleum/features/collections/properties/ratingProperty/Rating.svelte";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import view from "@nucleum/stores/view.store";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import MetaPropertyItem from "@nucleum/features/collections/properties/MetaPropertyItem.svelte";
   import SelectProperty from "@nucleum/features/collections/properties/selectProperty/SelectProperty.svelte";
   import {
@@ -20,8 +20,8 @@
   } from "@nucleum/features/collections/properties/property.type";
   import { type IRecordId } from "@nucleum/schema/legacy/data.type";
   import SelectPropertyOption from "@nucleum/features/collections/properties/selectProperty/SelectPropertyOption.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import {
     resolvePropertyDefaultValue,
     resolveIsMultiSelectProperty,
@@ -29,8 +29,8 @@
   } from "@nucleum/features/collections/properties/property.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { resourceInList } from "@nucleum/datafn/resource.utils";
-  import { debouncer } from "@21n/utils/utils";
-  import type { InputLabel } from "@21n/elements/input/input.type";
+  import { debouncer } from "@21n/shared-utils/debounce";
+  import type { InputLabel } from "@21n/ui/elements/input/input.type";
   import type { ICollectionItem } from "@nucleum/features/collections/collection.type";
 
   let {

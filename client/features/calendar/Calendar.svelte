@@ -1,10 +1,10 @@
 <script lang="ts">
-  import BirdCalendar from "@nucleum/features/calendar/birdViewV2/BirdCalendar.svelte";
+  import BirdCalendar from "@nucleum/features/calendar/birdView/BirdCalendar.svelte";
   import ClassicCalendar from "@nucleum/features/calendar/classic/ClassicCalendar.svelte";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import view from "@nucleum/stores/view.store";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import view from "@21n/ui/environment/view.store";
   import CalendarCw from "@nucleum/features/calendar/CalendarCW.svelte";
   let {
     panel = $bindable(resolvePanelSelection())

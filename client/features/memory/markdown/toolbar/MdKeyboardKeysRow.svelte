@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
-  import KeyboardToolbarKey from "@21n/elements/keyboardToolbar/KeyboardToolbarKey.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import KeyboardToolbarKey from "@21n/ui/elements/keyboardToolbar/KeyboardToolbarKey.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { fly } from "svelte/transition";
   let {
     onKey = undefined,

@@ -17,30 +17,30 @@
 </script>
 
 <script lang="ts">
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import NodeContent from "@nucleum/features/memory/node/content/NodeContent.svelte";
   import {
     ActiveNodeStore,
     type IActiveNodeStore
   } from "@nucleum/features/memory/node/node.store";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import type { TimeScaleUnit } from "@21n/utils/time.type";
+  import type { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
   import { onDestroy, onMount, setContext } from "svelte";
   import {
     AccessMode,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
   import { resolveCalendarNotesId } from "@nucleum/features/calendar/calendar.utils";
-  import { LoadingAnimationType } from "@21n/elements/feedback/feedback.type";
-  import { preferences } from "@nucleum/stores/preferences/preferences.store";
+  import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
   import { ActiveCaptureStore } from "@nucleum/features/memory/capture/capture.store";
-  import { Preference } from "@nucleum/stores/preferences/preferences.type";
+  import { Preference } from "@nucleum/shared-state/preferences/preferences.type";
   import type { IMarkdownTemplate } from "@nucleum/features/memory/markdown/md.type";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { page } from "$app/stores";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import { datafn, nucleumDatafnStatus } from "@nucleum/datafn/datafn.store";
-  import { acquireDnDPage, appStore } from "@nucleum/stores/app.store";
+  import { acquireDnDPage, appStore } from "@nucleum/shared-state/app-context/app.store";
 
   let {
     date,

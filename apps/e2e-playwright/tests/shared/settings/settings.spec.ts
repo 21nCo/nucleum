@@ -13,16 +13,18 @@ import {
   openDeclaredSettingsPanel
 } from "../../utils/settings-contracts";
 
-const appStorePath = resolveRepoFsImportPath("client/stores/app.store.ts");
+const appStorePath = resolveRepoFsImportPath(
+  "client/shared-state/app-context/app.store.ts"
+);
 const interactionModePath = resolveRepoFsImportPath(
-  "client/elements/keyboard/interaction-mode.type.ts"
+  "client/ui/elements/keyboard/interaction-mode.type.ts"
 );
 const actionEnumPath = resolveRepoFsImportPath("client/config/action.enum.ts");
 const uiStateStorePath = resolveRepoFsImportPath(
-  "client/stores/uiState/uiState.store.ts"
+  "client/shared-state/preferences/ui-state/uiState.store.ts"
 );
 const uiStateTypePath = resolveRepoFsImportPath(
-  "client/stores/uiState/uiState.type.ts"
+  "client/shared-state/preferences/ui-state/uiState.type.ts"
 );
 
 async function readGlobalEditMode(page: import("@playwright/test").Page) {

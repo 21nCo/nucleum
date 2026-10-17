@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import HighlightColors from "@nucleum/features/memory/common/highlighters/HighlightColors.svelte";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   let {
     style = "",
     selectedColor = $bindable(""),

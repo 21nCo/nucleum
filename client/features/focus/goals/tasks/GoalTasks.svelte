@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { page } from "$app/stores";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
   import {
     AccessMode,
     ResourceAccessPoint

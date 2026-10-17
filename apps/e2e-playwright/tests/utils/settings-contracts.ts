@@ -2,6 +2,7 @@ import { expect, type Page } from "@playwright/test";
 import { Product } from "@nucleum/client/config/product.type";
 import { expectAnyLocatorVisible } from "./locator-assertions";
 import { openSettings } from "./settings";
+import { getResourceRecordSurface } from "./resource-matrix";
 
 export type SettingsPanelKey =
   | "focus"
@@ -150,7 +151,7 @@ export async function openDeclaredNodeContentPanel(
     );
   }
 
-  const tablist = page.getByRole("tablist").first();
+  const tablist = getResourceRecordSurface(page).getByRole("tablist").first();
   await expect(tablist).toBeVisible({ timeout: 10_000 });
 
   if (contract.contentNavigation === "firstTab") {

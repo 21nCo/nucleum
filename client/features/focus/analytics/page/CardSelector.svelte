@@ -1,13 +1,13 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
   import type {
     DropdownGroup,
     DropdownItem
-  } from "@21n/elements/dropdown/dropdownItem.type";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Size } from "@21n/elements/size.enum";
+  } from "@21n/ui/elements/dropdown/dropdownItem.type";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { AnalyticsCardType } from "@nucleum/features/focus/analytics/analytics.types";
 
   let {

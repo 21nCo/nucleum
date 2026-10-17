@@ -1,27 +1,28 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import {
     activeSession,
     currentFocusItem
   } from "@nucleum/features/focus/session.store";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { Layout } from "@21n/layout/layout-mode.type";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { formatTime, formatSeconds } from "@21n/utils/time.utils";
-  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { Layout } from "@nucleum/shell/layout-mode.type";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import BreadcrumbMini from "@21n/ui/compositions/navigation/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import { resolveTaskFocus } from "@nucleum/features/focus/session.utils";
   import UnpinAction from "@nucleum/features/focus/quickstart/actions/UnpinAction.svelte";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
-  import { hoverable } from "@nucleum/actions/hover.action";
+  import { hoverable } from "@21n/ui/actions/hover.action";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
   let {

@@ -1,15 +1,15 @@
 <script lang="ts">
   import { type IAudioBody, type IClip, type IWebPage, webNodeTypeList, type INode } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import WebNodeContent from "@nucleum/features/memory/node/content/WebNodeContent.svelte";
   import PdfAnnotator from "@nucleum/features/memory/pdfAnnotator/PdfAnnotator.svelte";
-  import FileView from "@nucleum/components/files/FileView.svelte";
+  import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import AudioContent from "@nucleum/features/memory/audio/AudioContent.svelte";
-  import type { IFile } from "@nucleum/stores/files/file.type";
-  import { fileStore } from "@nucleum/stores/files/file.store";
+  import type { IFile } from "@nucleum/shared-state/files/file.type";
+  import { fileStore } from "@nucleum/shared-state/files/file.store";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { formatBytes } from "@21n/shared-utils/text.utils";
   import { resolveFileIcon } from "@nucleum/features/memory/node/node.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";

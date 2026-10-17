@@ -1,21 +1,22 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import { fileDrop } from "@nucleum/actions/fileDrop.action";
+  import { fileDrop } from "@21n/ui/actions/fileDrop.action";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import Button from "@21n/elements/button/Button.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import account from "@nucleum/stores/account.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { isCloudUserAndOffline } from "@nucleum/client/runtime/account/account.utils";
 
-  import context from "@nucleum/stores/context.store";
-  import view from "@nucleum/stores/view.store";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
+  import context from "@nucleum/client/runtime/context.store";
+  import view from "@21n/ui/environment/view.store";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { wait } from "@21n/shared-utils/wait";
-  import { MAX_FILE_SIZE_MB } from "@nucleum/stores/files/file.constants";
+  import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
   import { resolveFileUploadErrorMessage } from "@nucleum/features/memory/capture/upload-error.utils";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 
@@ -25,7 +26,7 @@
     clipboard,
     type IActiveCaptureStore
   } from "@nucleum/features/memory/capture/capture.store";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { fly } from "svelte/transition";
 
   let {
@@ -70,7 +71,7 @@
   ) {
     try {
       error = undefined;
-      if (account.isCloudUserAndOffline()) {
+      if (isCloudUserAndOffline($account, $context.isInOfflineMode)) {
         error =
           "You seem to be offline. File upload is not yet available in offline mode.";
         return;

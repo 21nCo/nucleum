@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { IBlock } from "@nucleum/features/memory/markdown/md.type";
   import { headingNodeTypes, listNodeTypes, simpleTextNodeTypeList, type IMediaGridNode } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import EmbedContent from "@nucleum/features/memory/markdown/embed/EmbedContent.svelte";
   import type { MdStoreType } from "@nucleum/features/memory/markdown/markdown.store";
   import MediaGrid from "@nucleum/features/memory/markdown/mediaGrid/MediaGrid.svelte";
@@ -10,7 +10,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import CodeContent from "@nucleum/features/memory/markdown/content/CodeContent.svelte";
   import ListContent from "@nucleum/features/memory/markdown/lists/ListContent.svelte";
   import HeadingContent from "@nucleum/features/memory/markdown/content/HeadingContent.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     mdStore,
     block,

@@ -1,29 +1,29 @@
 <script lang="ts">
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { OptionSelectorStyle } from "@21n/elements/select/select.type";
-  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
+  import FormControlLabel from "@21n/ui/elements/text/formLabel/FormControlLabel.svelte";
   import {
     CollectionLayout,
     CollectionType
   } from "@nucleum/features/collections/collection.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import type { IProperty } from "@nucleum/features/collections/properties/property.type";
-  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
+  import Avatar from "@nucleum/features/records/avatar/Avatar.svelte";
   import { propertyEditorStore } from "@nucleum/features/collections/properties/property.store";
   import { onMount } from "svelte";
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
   import {
     resolveResourceIcon,
     resourceAction
   } from "@nucleum/datafn/resource.utils";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
+  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import {
     resolveCollectionResource,
@@ -31,12 +31,12 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
     resolveCollectionTypeLabel
   } from "@nucleum/features/collections/collection.utils";
   import TypeExtensionAndPropertiesEditor from "@nucleum/features/collections/TypeExtensionAndPropertiesEditor.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
-  import view from "@nucleum/stores/view.store";
-  import TextArea from "@21n/elements/input/TextArea.svelte";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import ModalContentPadded from "@21n/elements/modal/ModalContentPadded.svelte";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import view from "@21n/ui/environment/view.store";
+  import TextArea from "@21n/ui/elements/input/TextArea.svelte";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import ModalContentPadded from "@21n/ui/elements/modal/ModalContentPadded.svelte";
   import { createDatafnCollection } from "./collection.store";
 
   let {

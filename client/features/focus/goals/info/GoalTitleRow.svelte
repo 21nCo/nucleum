@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { mount } from "@nucleum/actions/mount.action";
+  import { mount } from "@21n/ui/actions/mount.action";
   import { type IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
-  import Breadcrumbs from "@21n/elements/breadcrumbsV2/Breadcrumbs.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import Breadcrumbs from "@nucleum/shell/navigation/components/AppBreadcrumbs.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import RecordStarStatusFeedback from "@nucleum/components/records/RecordStarStatusFeedback.svelte";
-  import { AlertType, type IInlineStatus } from "@nucleum/stores/notifications/notification.type";
-  import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
+  import RecordStarStatusFeedback from "@nucleum/features/records/RecordStarStatusFeedback.svelte";
+  import { AlertType, type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
+  import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
 
   let {
     objective,

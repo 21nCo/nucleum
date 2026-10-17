@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import type { LinkThumbnail } from "@nucleum/features/memory/node/node.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     link,
     context,

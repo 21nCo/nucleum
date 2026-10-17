@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import type {
     ISessionLogThumb,
     ISessionThumb
   } from "@nucleum/features/focus/logs/log.type";
 
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
   let {

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
-  import { renderMdAsHtml } from "@21n/elements/markdown/markdown.utils";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
 
   let {
     transcription = "",

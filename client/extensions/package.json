@@ -11,22 +11,18 @@
     "@nucleum/schema": "*",
     "@plasmohq/messaging": "^0.6.2",
     "jquery": "3.7.1",
-    "svelte": "^5.55.0"
+    "svelte": "^5.55.0",
+    "@nucleum/shell": "*",
+    "@nucleum/surfaces": "*"
   },
   "peerDependencies": {
-    "@21n/branding": "*",
-    "@21n/elements": "*",
-    "@21n/icons-v2": "*",
-    "@21n/layout": "*",
     "@21n/shared-utils": "*",
-    "@21n/utils": "*",
-    "@nucleum/actions": "*",
-    "@nucleum/application": "*",
+    "@nucleum/composition": "*",
+    "@nucleum/shared-state": "*",
     "@nucleum/client": "*",
-    "@nucleum/components": "*",
     "@nucleum/datafn": "*",
     "@nucleum/features": "*",
     "@nucleum/persistence": "*",
-    "@nucleum/stores": "*"
+    "@21n/ui": "*"
   }
 }

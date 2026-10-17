@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
+  import NodeLoadingPulse from "@21n/ui/elements/feedback/animations/NodeLoadingPulse.svelte";
   import { ActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import {
     AccessMode,
@@ -17,23 +17,23 @@
   import NonMediaNode from "@nucleum/features/memory/node/base/NonMediaNode.svelte";
   import { onDestroy, onMount, setContext, untrack } from "svelte";
 
-  import { debouncer } from "@21n/utils/utils";
+  import { debouncer } from "@21n/shared-utils/debounce";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { acquireDnDPage } from "@nucleum/stores/app.store";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { acquireDnDPage } from "@nucleum/shared-state/app-context/app.store";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { page } from "$app/stores";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
-  import context from "@nucleum/stores/context.store";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import ComponentEmbedLayer from "@nucleum/shell/layers/ComponentEmbedLayer.svelte";
+  import context from "@nucleum/client/runtime/context.store";
   import NodePanelSwitcher from "./floatingBar/NodePanelSwitcher.svelte";
   import { fly } from "svelte/transition";
-  import { resolvePanelParam } from "@nucleum/stores/resources/panelParam.mixin";
-  import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { resolvePanelParam } from "@nucleum/shared-state/resources/panelParam.mixin";
+  import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import { getContext } from "svelte";
   import { get, readable, type Writable } from "svelte/store";
-  import type { IContainer } from "@21n/layout/layout.type";
-  import { resolveMinWidth } from "@21n/layout/layout.utils";
+  import type { IContainer } from "@nucleum/shell/layout.type";
+  import { resolveMinWidth } from "@nucleum/shell/layout.utils";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
 

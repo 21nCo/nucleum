@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { tooltip } from "@nucleum/actions/popover.action";
+  import { tooltip } from "@21n/ui/actions/popover.action";
   import type { ITaskThumb } from "@nucleum/features/focus/tasks/task.type";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import type { DaySummary } from "@nucleum/features/focus/logs/log.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { cn } from "@21n/ui/environment/presentation";
   import TinyPieChart from "@nucleum/features/calendar/classic/indicator/TinyPieChart.svelte";
   let {
     data,

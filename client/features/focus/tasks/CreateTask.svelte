@@ -1,33 +1,33 @@
 <script lang="ts">
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Size } from "@21n/elements/size.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { onMount } from "svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
+  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import {
     ObjectiveStatus,
     type IObjective,
     type IObjectiveThumb
   } from "@nucleum/features/focus/goals/goal.type";
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
   import TaskThumbnailObjectiveLabel from "@nucleum/features/focus/tasks/TaskThumbnailGoalLabel.svelte";
   import { Product } from "@nucleum/client/config/product.type";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
-  import { ModifierKey } from "@21n/elements/keyboard/keyboard.type";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import context from "@nucleum/stores/context.store";
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
+  import { ModifierKey } from "@21n/ui/elements/keyboard/keyboard.type";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
-  import ModalContentPadded from "@21n/elements/modal/ModalContentPadded.svelte";
+  import ModalContentPadded from "@21n/ui/elements/modal/ModalContentPadded.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";

@@ -2,18 +2,13 @@ import {
   TimePeriodType,
   TimeScale,
   type TimePeriod
-} from "@21n/utils/time.type";
+} from "@21n/shared-utils/datetime/period.type";
 import { deepCopy } from "@21n/shared-utils/obj.utils";
 import {
   determinePreviousTimePeriod,
   determineTimePeriod,
   determineTimePeriodv2
-} from "@21n/utils/time.utils";
-import { get } from "svelte/store";
-import {
-  analyticsConfigStore,
-  selectedPageId
-} from "@nucleum/features/focus/analytics/analytics.store";
+} from "@21n/shared-utils/datetime/period";
 import {
   AnalyticsCardGrouping,
   AnalyticsCardType,
@@ -21,32 +16,6 @@ import {
   type IAnalyticsCard
 } from "@nucleum/features/focus/analytics/analytics.types";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-
-export function onAddPageClicked() {
-  analyticsConfigStore.addPage();
-}
-export function onRemovePageClicked(e: CustomEvent<string>) {
-  const id = e.detail;
-  if (id == get(selectedPageId)) {
-    const pages = get(analyticsConfigStore).pages;
-    const index = pages.findIndex((page) => page.id !== id);
-    if (index !== -1) {
-      selectedPageId.set(
-        get(analyticsConfigStore).pages.find(
-          (page) => page.id === pages[index]?.id
-        )?.id as string
-      );
-    } else selectedPageId.set(undefined);
-  }
-  analyticsConfigStore.removePage(e.detail);
-}
-
-export function onPagelabelChange(
-  e: CustomEvent<{ value: string; label: string }>
-) {
-  if (!e.detail.label || !e.detail.value) return;
-  analyticsConfigStore.editPageLabel(e.detail.value, e.detail.label);
-}
 
 /**
  * @deprecated - Use generateParamsForCards instead
@@ -83,12 +52,6 @@ export function generateParamsForCards(cards: IAnalyticsCard[]) {
     });
   });
   return params;
-}
-
-export function onPageRearrange(e: CustomEvent) {
-  const ids = e.detail;
-  if (!Array.isArray(ids)) return;
-  analyticsConfigStore.rearrangePages(ids);
 }
 
 export function generateAnalyticsSeedPages() {

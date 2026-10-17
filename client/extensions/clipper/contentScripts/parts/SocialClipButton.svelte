@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Placement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import HoverableElement from "@21n/elements/HoverableElement.svelte";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import HoverableElement from "@21n/ui/elements/HoverableElement.svelte";
   import type { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { webpage } from "@nucleum/extensions/clipper/contentScripts/store";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import { enumToString } from "@21n/shared-utils/text.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
 
   let {
     contentType,

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import Avatar from "@nucleum/features/records/avatar/Avatar.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { markdownSettings } from "@nucleum/features/memory/markdown/markdown.settings";
   import type { ICalloutSetting } from "@nucleum/features/memory/markdown/md.type";
   let {

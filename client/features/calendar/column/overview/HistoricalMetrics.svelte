@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
 
   import { Action } from "@nucleum/client/config/action.enum";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { parseAndFormatDate, formatSeconds } from "@21n/utils/time.utils";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
 
   let {
     date,

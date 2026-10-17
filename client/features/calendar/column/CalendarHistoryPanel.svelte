@@ -1,12 +1,12 @@
 <script lang="ts">
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import LogsPane from "@nucleum/features/focus/logs/LogsPane.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { Product } from "@nucleum/client/config/product.type";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { CalendarHistoryTab } from "@nucleum/features/calendar/calendar.type";
   import CalendarAllActivityPanel from "@nucleum/features/calendar/column/CalendarAllActivityPanel.svelte";
   import CalendarHistoryNodeEntries from "@nucleum/features/calendar/column/CalendarHistoryNodeEntries.svelte";

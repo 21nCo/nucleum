@@ -1,17 +1,17 @@
 <script lang="ts">
   import type { ISelectProperty } from "@nucleum/features/collections/properties/property.type";
-  import Divider from "@21n/elements/Divider.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import Popover from "@21n/elements/popover/Popover.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import Popover from "@21n/ui/elements/popover/Popover.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { Orientation, Placement } from "@21n/elements/direction.enum";
-  import type { IPopoverOptions } from "@nucleum/actions/popover.type";
+  import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
+  import type { IPopoverOptions } from "@21n/ui/actions/popover.type";
   import EndText from "@nucleum/features/collections/properties/propertyConfig/EndText.svelte";
   import SelectOptionsEditor from "@nucleum/features/collections/properties/propertyConfig/selectProperty/SelectOptionsEditor.svelte";
-  import { popover } from "@nucleum/actions/popover.action";
+  import { popover } from "@21n/ui/actions/popover.action";
   import SelectPropertyOption from "@nucleum/features/collections/properties/selectProperty/SelectPropertyOption.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import { Size } from "@21n/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     property,

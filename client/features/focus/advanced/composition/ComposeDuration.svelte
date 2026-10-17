@@ -1,30 +1,30 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import {
     SessionCompositionType,
     type SessionComposition,
     BreakCompositionType
   } from "@nucleum/features/focus/sessionComposition.type";
   import { getTotalsFromComposition } from "@nucleum/features/focus/composition.utils";
-  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import DurationInput from "@21n/ui/compositions/datetime/durationInput/DurationInput.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import PomodoroUnitView from "@nucleum/features/focus/advanced/presets/PomodoroUnitView.svelte";
   import ComposeBreak from "@nucleum/features/focus/advanced/composition/ComposeBreak.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
 
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { activeSession } from "@nucleum/features/focus/session.store";
   import { advancedCompositionDraft } from "@nucleum/features/focus/advanced/composition/advancedCompositionDraft.store";
-  import BackButton from "@21n/elements/button/BackButton.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
 
   let {
     composition,

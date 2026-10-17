@@ -1,4 +1,4 @@
-import { Orientation } from "@21n/elements/direction.enum";
+import { Orientation } from "@21n/ui/elements/direction.enum";
 import { readable, writable } from "svelte/store";
 
 /**

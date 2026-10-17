@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
 
-  import { toasts } from "@nucleum/stores/notification.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { Orientation, Placement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
   import LinkSearch from "@nucleum/features/memory/common/linkbox/LinkSearch.svelte";
   import { resourceInList } from "@nucleum/datafn/resource.utils";
-  import { popover, tooltip } from "@nucleum/actions/popover.action";
+  import { popover, tooltip } from "@21n/ui/actions/popover.action";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { ResourceError } from "@nucleum/datafn/resource-error";
   import { ResourceErrorCode } from "@nucleum/schema/resource-error.enum";
@@ -24,7 +24,7 @@
     AccessMode,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   let {
     objective,

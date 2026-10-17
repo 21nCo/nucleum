@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { Orientation, Placement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
   import LinkSearch from "@nucleum/features/memory/common/linkbox/LinkSearch.svelte";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
@@ -21,7 +21,7 @@
     resourceAction,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import { popover, tooltip } from "@nucleum/actions/popover.action";
+  import { popover, tooltip } from "@21n/ui/actions/popover.action";
   import { headingNodeTypes } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -32,11 +32,11 @@
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import view from "@nucleum/stores/view.store";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import view from "@21n/ui/environment/view.store";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { getContext } from "svelte";
+  import { PRODUCT_NAV_CONTEXT } from "@nucleum/shell/navigation/product-nav-context";
   import {
-    PRODUCT_NAV_CONTEXT,
     getProductNavConfig,
     type IProductNavConfig
   } from "@nucleum/client/config/product-nav.config";

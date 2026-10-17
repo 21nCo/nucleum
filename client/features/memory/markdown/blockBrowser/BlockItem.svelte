@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import Badge from "@21n/elements/text/Badge.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
   import type { IBlockBrowserItem } from "@nucleum/features/memory/markdown/blockBrowser/blockBrowser.type";
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import { Placement } from "@21n/elements/direction.enum";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import { Placement } from "@21n/ui/elements/direction.enum";
   import MdShortcutText from "@nucleum/features/memory/markdown/shortcuts/MdShortcutText.svelte";
 
   let {

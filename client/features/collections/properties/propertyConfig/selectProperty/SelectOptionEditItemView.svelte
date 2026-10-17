@@ -1,19 +1,19 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import ColorPicker from "@21n/elements/colorPicker/ColorPicker.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import Popover from "@21n/elements/popover/Popover.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import ColorPicker from "@21n/ui/elements/colorPicker/ColorPicker.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import Popover from "@21n/ui/elements/popover/Popover.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import type { IPropertyConfigOption } from "@nucleum/features/collections/properties/property.type";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import Badge from "@21n/elements/text/Badge.svelte";
-  import context from "@nucleum/stores/context.store";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
+  import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
   let {
     option,

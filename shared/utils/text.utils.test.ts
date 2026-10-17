@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { Resource } from "@nucleum/schema/resource.enum";
 import type { EmailParts } from "@nucleum/schema/account/profile.type";
 import type { IMarkdown } from "@nucleum/features/memory/markdown/md.type";
-import { Display } from "@21n/elements/display.enum";
-import { Size } from "@21n/elements/size.enum";
+import { Display } from "@21n/ui/elements/display.enum";
+import { Size } from "@21n/ui/elements/size.enum";
 
-import { determineTruncateLength } from "@21n/elements/text/truncation.utils";
-import { enumToCamelCase, enumToString, formatBytes, frameEmailFromParts, isValidDataString, isValidEmail, isValidEnumValue, isValidNumber, isValidParentDomain, isValidString, prefix, prefixTable, properCase, stripTablePrefix, textIsCode, truncateString } from "@21n/shared-utils/text.utils";
+import { determineTruncateLength } from "@21n/ui/elements/text/truncation.utils";
+import { enumToCamelCase, enumToString, formatBytes, isValidDataString, isValidEmail, isValidEnumValue, isValidNumber, isValidParentDomain, isValidString, prefix, prefixTable, properCase, stripTablePrefix, textIsCode, truncateString } from "@21n/shared-utils/text.utils";
+import { frameEmailFromParts } from "@nucleum/surfaces/account/profile/email-presentation";
 import { isValidMarkdown } from "@nucleum/features/memory/markdown/validation.utils";
 
 describe("text utils", () => {

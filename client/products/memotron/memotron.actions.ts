@@ -1,10 +1,11 @@
-import { ActionType, type IAction } from "@nucleum/client/config/action.type";
-import { Orientation, Placement } from "@21n/elements/direction.enum";
-import { Size } from "@21n/elements/size.enum";
+import { ActionType } from "@nucleum/client/config/action.type";
+import type { IAction } from "@nucleum/shared-state/commands/action.type";
+import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
+import { Size } from "@21n/ui/elements/size.enum";
 import Capture from "@nucleum/features/memory/capture/Capture.svelte";
 import Node from "@nucleum/features/memory/node/Node.svelte";
-import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
-import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+import NodeLoadingPulse from "@21n/ui/elements/feedback/animations/NodeLoadingPulse.svelte";
+import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
 import SideNavCombination from "@nucleum/features/spaces/combination/SideNavCombination.svelte";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import MemotronLibrary from "@nucleum/products/memotron/library/MemotronLibrary.svelte";
@@ -19,7 +20,7 @@ import MemotronOnboarding from "@nucleum/products/memotron/base/MemotronOnboardi
 import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "@nucleum/products/memotron/base/MemotronGreenUse.svelte";
 import CalloutSettings from "@nucleum/features/memory/markdown/callout/CalloutSettings.svelte";
-import ResourceBrowser from "@nucleum/application/library/resourceBrowser/ResourceBrowser.svelte";
+import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
 import MemotronOverview from "@nucleum/products/memotron/overview/MemotronOverview.svelte";
 import { Action } from "@nucleum/client/config/action.enum";
 import ImportAppData from "@nucleum/products/memotron/import/ImportAppData.svelte";
@@ -28,7 +29,7 @@ import MemotronHomeOnMobile from "@nucleum/products/memotron/home/MemotronHomeOn
 import EditCaptureShortcuts from "@nucleum/features/memory/capture/EditCaptureShortcuts.svelte";
 import CaptureSettings from "@nucleum/features/memory/capture/CaptureSettings.svelte";
 import LinkTagsControlPanel from "@nucleum/features/memory/linking/LinkTagsControlPanel.svelte";
-import LibraryPanelContentResolver from "@nucleum/application/library/LibraryPanelContentResolver.svelte";
+import LibraryPanelContentResolver from "@nucleum/surfaces/library/LibraryPanelContentResolver.svelte";
 import PreviewImageUploader from "@nucleum/features/memory/node/PreviewImageUploader.svelte";
 import NodeSettings from "@nucleum/features/memory/node/NodeSettings.svelte";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";

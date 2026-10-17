@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import type { IProperty } from "@nucleum/features/collections/properties/property.type";
@@ -7,7 +7,7 @@
   import type { ICollectionItem } from "@nucleum/features/collections/collection.type";
   import type { INodeThumb } from "@nucleum/features/memory/node/node.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { requireRecordRenderer } from "@nucleum/stores/resources/record-renderer";
+  import { requireRecordRenderer } from "@nucleum/shared-state/resources/record-renderer";
   const Records = requireRecordRenderer();
 
   let {

@@ -1,5 +1,5 @@
 <script>
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
 </script>
 
 <ComingSoonView />

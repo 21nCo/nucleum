@@ -3,7 +3,7 @@
   import MediaContent from "@nucleum/features/memory/node/content/MediaContent.svelte";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { NodeView } from "@nucleum/features/memory/node/node.type";
-  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import FullScreenCloseButton from "@nucleum/shell/navigation/components/FullScreenCloseButton.svelte";
   import NodeBirdView from "@nucleum/features/memory/node/birdView/NodeBirdView.svelte";
   import MediaNodeCwTitlePanel from "../MediaNodeCwTitlePanel.svelte";
   let {

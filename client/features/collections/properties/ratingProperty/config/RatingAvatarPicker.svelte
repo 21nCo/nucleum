@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import Divider from "@21n/elements/Divider.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { phosphorRatingIcons } from "@21n/icons-v2/icons-list";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { phosphorRatingIcons } from "@21n/ui/icons/icons-list";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     onAvatarSelect,
     onSizeSelect,

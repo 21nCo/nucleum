@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { type IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
   import ObjectiveCollectionsRow from "@nucleum/features/focus/goals/GoalCollectionsRow.svelte";
@@ -11,7 +11,7 @@
     ObjectiveType,
     type ObjectiveStatusValue
   } from "@nucleum/features/focus/goals/goal.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import TimelineCard from "@nucleum/features/focus/goals/info/TimelineCard.svelte";
   import {
     activeSession,
@@ -20,20 +20,20 @@
   import { isEmptyMd } from "@nucleum/features/memory/markdown/markdown.utils";
   import ObjectiveInfoEditControl from "@nucleum/features/focus/goals/info/GoalInfoEditControl.svelte";
 
-  import { formatDatetime } from "@21n/utils/time.utils";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
+  import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import PropertiesPane from "@nucleum/features/collections/properties/PropertiesPane.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { debouncer } from "@21n/utils/utils";
+  import { debouncer } from "@21n/shared-utils/debounce";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";
   import ControlBar from "@nucleum/features/focus/elements/controls/ControlBar.svelte";
   import FocusPlayerTimeText from "@nucleum/features/focus/player/FocusPlayerTimeText.svelte";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
+  import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "@nucleum/stores/notifications/notification.type";
+  } from "@nucleum/shared-state/notifications/notification.type";
 
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 

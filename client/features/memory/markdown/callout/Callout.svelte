@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import { popover } from "@nucleum/actions/popover.action";
-  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { popover } from "@21n/ui/actions/popover.action";
+  import Avatar from "@nucleum/features/records/avatar/Avatar.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import { markdownSettings } from "@nucleum/features/memory/markdown/markdown.settings";
   import type { MdStoreType } from "@nucleum/features/memory/markdown/markdown.store";
   import type {
@@ -14,7 +14,7 @@
   import CalloutSelector from "@nucleum/features/memory/markdown/callout/CalloutSelector.svelte";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
 
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";

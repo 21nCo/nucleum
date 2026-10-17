@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -32,6 +34,8 @@ jobs:
         run: npm install --legacy-peer-deps
       - name: Check architecture boundaries
         run: npm run check:architecture
+      - name: Check type ownership, retired runtime and fixed test waits
+        run: npm run check:type-ownership && npm run check:no-legacy-runtime && npm run check:no-fixed-test-waits
       - name: Run app checks
         run: npm run check:apps
 
@@ -83,15 +87,15 @@ jobs:
       matrix:
         include:
           - product: nucleum
-            workspace: nucleus-app
+            workspace: "@nucleum/app"
             port: 5050
             domain: nucleum.21n.dev
           - product: pointron
-            workspace: pointron-app
+            workspace: pointron
             port: 5001
             domain: pointron.21n.dev
           - product: memotron
-            workspace: memotron-app
+            workspace: "@memotron/app"
             port: 5002
             domain: memotron.21n.dev
     steps:

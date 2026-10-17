@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Product } from "@nucleum/client/config/product.type";
   import CalendarOverviewPanelNucleus from "@nucleum/features/calendar/column/overview/CalendarOverviewPanelNucleus.svelte";
   import CalendarOverviewPanelPointron from "@nucleum/features/calendar/column/overview/CalendarOverviewPanelPointron.svelte";

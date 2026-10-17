@@ -8,16 +8,12 @@
   "exports": {
     ".": "./index.js",
     "./*": "./*",
-    "./assets/*": "./assets/*",
     "./icons/*": "./icons/*",
-    "./sounds/*": "./sounds/*",
-    "./monaco-editor/*": "./monaco-editor/*"
+    "./sounds/*": "./sounds/*"
   },
   "files": [
-    "assets/**/*",
     "icons/**/*",
     "sounds/**/*",
-    "monaco-editor/**/*",
     "index.js",
     "index.d.ts"
   ],

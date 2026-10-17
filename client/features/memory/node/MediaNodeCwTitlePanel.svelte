@@ -1,9 +1,9 @@
 <script lang="ts">
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { type IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import NodeTitle from "@nucleum/features/memory/node/title/NodeTitle.svelte";
-  import ResourceStatusBanner from "@nucleum/components/records/RecordStatusBanner.svelte";
+  import ResourceStatusBanner from "@nucleum/features/records/RecordStatusBanner.svelte";
   import CollectionsLane from "@nucleum/features/memory/node/floatingBar/CollectionsLane.svelte";
   import { isShowStatusBanner } from "@nucleum/datafn/resource.utils";
   let { node }: { node: IActiveNodeStore } = $props();

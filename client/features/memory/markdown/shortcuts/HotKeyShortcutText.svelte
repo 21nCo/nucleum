@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
 
   let { row }: { row: any } = $props();
 </script>

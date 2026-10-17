@@ -1,4 +1,4 @@
-import type { TimeScale } from "@21n/utils/time.type";
+import type { TimeScale } from "@21n/shared-utils/datetime/period.type";
 
 export enum TileAppearance {
   DEFAULT,

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { TileScale } from "@nucleum/features/calendar/calendarHeatmap/calendarHeatmap.types";
-  import { isTouchDevice } from "@nucleum/stores/app.store";
-  import { moveTouch } from "@21n/utils/touchGesture";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import { isTouchDevice } from "@nucleum/features/calendar/calendar-selection.store";
+  import { moveTouch } from "@nucleum/shell/interaction/touch-gestures";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   let {
     orientation,
     onPrev = undefined,

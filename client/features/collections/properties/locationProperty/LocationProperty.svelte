@@ -1,5 +1,6 @@
 <script lang="ts">
-  import PointInMap from "@nucleum/components/maps/PointInMap.svelte";
+  import PointInMap from "@21n/ui/compositions/maps/PointInMap.svelte";
+  import { resolveLocationAddress } from "@nucleum/features/collections/properties/locationProperty/location-address";
   let {
     location = undefined
   }: {
@@ -12,4 +13,4 @@
   } = $props();
 </script>
 
-<PointInMap {location} />
+<PointInMap {location} resolveAddress={resolveLocationAddress} />

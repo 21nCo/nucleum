@@ -13,9 +13,10 @@ import { SessionType } from "./logs/log.type";
 import { BlockType } from "./session.type";
 import { SessionState } from "./sessionState.enum";
 import { SessionCompositionType } from "./sessionComposition.type";
-import { appEvents } from "@nucleum/stores/events/app-events.store";
-import { configureCommandHost } from "@nucleum/stores/commands/command-host";
-import { configureOverlayHost } from "@nucleum/stores/overlays/modal.store";
+import { appEvents } from "@nucleum/shared-state/events/app-events.store";
+import { configureCommandHost } from "@nucleum/shared-state/commands/command-host";
+import { configureOverlayHost } from "@nucleum/shell/overlays/modal.store";
+import * as sessionNotifications from "./notifications/session-notifications";
 
 vi.mock("@nucleum/client/runtime/embed/embed.utils", async (original) => ({
   ...(await original<
@@ -50,10 +51,10 @@ beforeEach(() => {
     resolvePlayer: () => undefined
   });
   vi.spyOn(activeSession as any, "persist").mockResolvedValue(undefined);
-  vi.spyOn(activeSession as any, "refreshNotifications").mockReturnValue(0);
+  vi.spyOn(sessionNotifications, "refreshSessionNotifications").mockReturnValue(0);
   vi.spyOn(
-    activeSession as any,
-    "_postNotificationsToEmbed"
+    sessionNotifications,
+    "publishSessionNotifications"
   ).mockImplementation(() => {});
 });
 

@@ -16,7 +16,7 @@ const pointronStorePath = resolveRepoFsImportPath(
   "client/features/focus/preferences.store.ts"
 );
 const modalStorePath = resolveRepoFsImportPath(
-  "client/stores/overlays/modal.store.ts"
+  "client/shell/overlays/modal.store.ts"
 );
 
 export interface CreateFocusResourceOptions {
@@ -203,17 +203,16 @@ export async function waitForSessionElapsed(page: Page, seconds: number) {
  * Hides the focus full-screen surface while leaving the session running.
  */
 export async function hideFocusFullscreen(page: Page) {
-  await page.evaluate(
-    async ({ modulePath }) => {
-      const modalMod = await import(modulePath);
-      modalMod.fullScreen.hide();
-      modalMod.player.showMini("FOCUS_PLAYER");
-    },
-    { modulePath: modalStorePath }
-  );
+  const fullscreen = page.getByTestId("modal-FULL_SCREEN_FOCUS-focus");
+  const exitButton = fullscreen.getByRole("button").filter({
+    has: page.locator('use[href*="arrows-in"], use[href*="minimize"]')
+  });
+  await exitButton.hover();
   await expect(
-    page.locator('[aria-roledescription="zen mode"]').first()
-  ).toBeHidden({ timeout: 15_000 });
+    page.getByText("Exit full screen", { exact: true })
+  ).toBeVisible();
+  await exitButton.click();
+  await expect(fullscreen).toBeHidden({ timeout: 15_000 });
 }
 
 /** Opens the focus full-screen surface for the restored running session. */

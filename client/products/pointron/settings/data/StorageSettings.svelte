@@ -1,31 +1,31 @@
 <script lang="ts">
-  import view from "@nucleum/stores/view.store";
-  import { confirmationNotification } from "@nucleum/stores/notification.store";
+  import view from "@21n/ui/environment/view.store";
+  import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
   import { lastImportTime } from "@nucleum/products/pointron/pointron.store";
   import {
     StatusMessageType,
     type StatusMessage
-  } from "@21n/elements/feedback/statusMessage.type";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
-  import context from "@nucleum/stores/context.store";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import Text from "@21n/elements/text/Text.svelte";
+  } from "@21n/ui/elements/feedback/statusMessage.type";
+  import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
+  import context from "@nucleum/client/runtime/context.store";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
   import type {
     TableColumnItem,
     TableRowItem
-  } from "@21n/elements/table/tableCell.type";
+  } from "@21n/ui/elements/table/tableCell.type";
   import { onMount } from "svelte";
   import ExportData from "@nucleum/products/pointron/settings/data/ExportData.svelte";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import Table2 from "@21n/elements/table/Table2.svelte";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import Table2 from "@21n/ui/elements/table/Table2.svelte";
   import {
     TableCellType,
     type TableColumn
-  } from "@21n/elements/table/table.type";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { InfoTextType } from "@21n/elements/text/info.type";
+  } from "@21n/ui/elements/table/table.type";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { InfoTextType } from "@21n/ui/elements/text/info.type";
   import ImportAppListPart from "@nucleum/products/pointron/settings/data/ImportAppListPart.svelte";
 
   let clearMessage: string | undefined = undefined;

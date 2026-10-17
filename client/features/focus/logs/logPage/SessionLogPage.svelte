@@ -1,41 +1,38 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import Markdown from "@nucleum/features/memory/markdown/Markdown.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { isValidMarkdown } from "@nucleum/features/memory/markdown/validation.utils";
   import LogIntervalBar from "@nucleum/features/focus/logs/logPage/LogIntervalBar.svelte";
   import LogTotals from "@nucleum/features/focus/logs/logPage/LogTotals.svelte";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "@21n/elements/switcher/switcher.enum";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  } from "@21n/ui/elements/switcher/switcher.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import FocusItem from "@nucleum/features/focus/elements/focusitem/FocusItem.svelte";
 
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import {
-    formatDatetime,
-    formatTime,
-    isSameDateTime
-  } from "@21n/utils/time.utils";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { formatDatetime, formatTime } from "@21n/shared-utils/datetime/date-formatting";
+  import { isSameDateTime } from "@21n/shared-utils/datetime/date-arithmetic";
+  import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import {
     SessionType,
     type ISession
   } from "@nucleum/features/focus/logs/log.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import ModalContentPadded from "@21n/elements/modal/ModalContentPadded.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import ModalContentPadded from "@21n/ui/elements/modal/ModalContentPadded.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import type { IMarkdown } from "@nucleum/features/memory/markdown/md.type";
