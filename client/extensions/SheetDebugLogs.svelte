@@ -36,7 +36,7 @@
     <div>
       <Button
         label="copy"
-        aria-label="Copy debug logs"
+        ariaLabel="Copy debug logs"
         onclick={copy}
         size={Size.sm}
       />
