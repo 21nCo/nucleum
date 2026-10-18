@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { UploadStatus } from "@nucleum/application/settings/import/uploadStatus.enum";
-  import view from "@nucleum/stores/view.store";
-  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { UploadStatus } from "@nucleum/surfaces/settings/import/uploadStatus.enum";
+  import view from "@21n/ui/environment/view.store";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     label,

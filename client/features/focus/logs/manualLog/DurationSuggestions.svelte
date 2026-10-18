@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
-  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import FormControlLabel from "@21n/ui/elements/text/formLabel/FormControlLabel.svelte";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { onMount } from "svelte";
-  import { abg, cn } from "@21n/utils/ui.utils";
-  import { Size } from "@21n/elements/size.enum";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  import { abg, cn } from "@21n/ui/environment/presentation";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
 
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   let {

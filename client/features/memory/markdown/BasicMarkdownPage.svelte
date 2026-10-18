@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
+  import PageLoadingAnimation from "@21n/ui/elements/feedback/animations/PageLoadingAnimation.svelte";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import type { IMarkdown } from "@nucleum/features/memory/markdown/md.type";
   import { onMount, tick } from "svelte";
   import MarkdownView from "@nucleum/features/memory/markdown/Markdown.svelte";
@@ -30,5 +30,7 @@
     <MarkdownView md={resolvedMd} params={{ isReadOnly: true }} />
   </article>
 {:else}
-  <AppLoadingView message="loading..." />
+  <div class="flex items-center justify-center p-10">
+    <PageLoadingAnimation />
+  </div>
 {/if}

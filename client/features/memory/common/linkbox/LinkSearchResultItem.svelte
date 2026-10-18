@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import { isValidString, properCase } from "@21n/shared-utils/text.utils";
   import { type INodeThumb } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import CollectionTitleLabelPart from "@nucleum/features/collections/thumbnail/CollectionThumbnailLabel.svelte";
@@ -11,7 +11,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
     CollectionType,
     ICollectionThumb
   } from "@nucleum/features/collections/collection.type";
-  import { renderMdAsHtml } from "@21n/elements/markdown/markdown.utils";
+  import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
   import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
   import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
   import type {

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { fly } from "svelte/transition";
   import {

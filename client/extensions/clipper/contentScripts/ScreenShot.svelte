@@ -1,17 +1,15 @@
 <script lang="ts">
-  import { ExtensionEvent } from "@nucleum/extensions/extension.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { onMount, onDestroy } from "svelte";
   import type { IArea } from "@nucleum/extensions/clipper/contentScripts/types";
-  import {
-    feedbackPane,
-    webpage
-  } from "@nucleum/extensions/clipper/contentScripts/store";
+  import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
   import { type IWebScreenshotClip } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+  import { relayToBackgroundScript } from "@nucleum/client/runtime/extensions/messaging";
   import type { OmitForCapture } from "@nucleum/datafn/resource.type";
   let {
     onSaved = undefined,

@@ -6,7 +6,7 @@
   import { sanitizeAndResolve } from "@nucleum/features/memory/node/url.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import SheetDebugLogs from "@nucleum/extensions/SheetDebugLogs.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { resolveContentTypeForFile } from "@nucleum/features/memory/capture/capture.utils";
 
   let data: IPasteCaptureData | undefined = undefined;

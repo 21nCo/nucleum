@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { requireRecordRenderer } from "@nucleum/stores/resources/record-renderer";
+  import { requireRecordRenderer } from "@nucleum/shared-state/resources/record-renderer";
   const Records = requireRecordRenderer();
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import type { ICalendarEvent } from "@nucleum/features/calendar/events/event.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import { resolveCalendarEventOverlapFilters } from "@nucleum/features/calendar/calendar.utils";

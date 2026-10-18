@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import NodeGraphUsingG6 from "@nucleum/features/memory/graph/NodeGraphUsingG6.svelte";
 
   let {

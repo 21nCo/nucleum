@@ -1,7 +1,7 @@
 <script lang="ts">
-  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import BreadcrumbMini from "@21n/ui/compositions/navigation/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
 

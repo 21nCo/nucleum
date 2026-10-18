@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { popover } from "@nucleum/actions/popover.action";
-  import Button from "@21n/elements/button/Button.svelte";
-  import view from "@nucleum/stores/view.store";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { popover } from "@21n/ui/actions/popover.action";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { type IAnalyticsCard } from "@nucleum/features/focus/analytics/analytics.types";
   import GroupingAndFiltersPopover from "@nucleum/features/focus/analytics/page/GroupingAndFiltersPopover.svelte";
 

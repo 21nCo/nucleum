@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { TopNCardDataRecord } from "@nucleum/features/focus/analytics/analytics.types";
 
   let { row }: { row: TopNCardDataRecord } = $props();

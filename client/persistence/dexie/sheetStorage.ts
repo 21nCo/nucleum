@@ -1,14 +1,13 @@
-import { logger } from "@nucleum/client/runtime/logging/logger";
-import type { INodeThumb } from "@nucleum/features/memory/node/node.type";
+import { requirePersistenceLogger } from "@nucleum/persistence/logging-host";
 import { Dexie, type Table } from "dexie";
 
 const DB_NAME = "tidigit-sheet-storage";
 const DB_VERSION = 1;
 
-export type ISheetStoredNode = {
+export type ISheetStoredNode<TNode extends { id: string } = { id: string }> = {
   url: string;
   nodeId: string;
-  node: INodeThumb;
+  node: TNode;
   savedAt: number;
   updatedAt: number;
 };
@@ -53,9 +52,9 @@ function normalizeUrl(url: string | undefined) {
   }
 }
 
-export async function saveSheetNode(params: {
+export async function saveSheetNode<TNode extends { id: string }>(params: {
   url: string;
-  node: INodeThumb;
+  node: TNode;
 }): Promise<void> {
   try {
     const db = resolveDb();
@@ -65,7 +64,7 @@ export async function saveSheetNode(params: {
 
     const existing = await db.nodes.get(url);
     const now = Date.now();
-    const record: ISheetStoredNode = {
+    const record: ISheetStoredNode<TNode> = {
       url,
       nodeId: params.node.id,
       node: params.node,
@@ -75,21 +74,21 @@ export async function saveSheetNode(params: {
 
     await db.nodes.put(record);
   } catch (error) {
-    logger.error({ at: "sheetStorage.saveSheetNode", error, params });
+    requirePersistenceLogger().error({ at: "sheetStorage.saveSheetNode", error, params });
   }
 }
 
-export async function getSheetNodeByUrl(
+export async function getSheetNodeByUrl<TNode extends { id: string }>(
   url: string | undefined
-): Promise<ISheetStoredNode | undefined> {
+): Promise<ISheetStoredNode<TNode> | undefined> {
   try {
     const db = resolveDb();
     if (!db) return undefined;
     const normalizedUrl = normalizeUrl(url);
     if (!normalizedUrl) return undefined;
-    return await db.nodes.get(normalizedUrl);
+    return (await db.nodes.get(normalizedUrl)) as ISheetStoredNode<TNode> | undefined;
   } catch (error) {
-    logger.error({ at: "sheetStorage.getSheetNodeByUrl", error, url });
+    requirePersistenceLogger().error({ at: "sheetStorage.getSheetNodeByUrl", error, url });
     return undefined;
   }
 }

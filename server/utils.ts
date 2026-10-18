@@ -1,4 +1,4 @@
-import { extractProduct } from "$lib/shared/utils/utils";
+import { extractProduct } from "$lib/shared/utils/product-host";
 import { DatabaseProviderFactory } from "$lib/server/database/providers";
 
 export async function retrieveAppConfig(app: string) {

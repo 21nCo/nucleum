@@ -3,7 +3,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import ts from "typescript";
+import { checkWorkspaceExports } from "./workspace-exports.mjs";
+import {
+  readAppAliases,
+  resolveAppImport,
+  checkAppAssemblyImport
+} from "./app-imports.mjs";
 import { checkWorkspaceDependencies } from "./workspace-dependencies.mjs";
+import {
+  checkClientDependencyMatrix,
+  checkClientManifestMatrix
+} from "./client-dependency-matrix.mjs";
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -24,12 +34,19 @@ const files = execFileSync(
       fs.existsSync(path.join(root, file))
   );
 const sourceFiles = new Set(files);
+const appHosts = files
+  .filter((file) => /^apps\/[^/]+\/svelte\.config\.[cm]?js$/.test(file))
+  .map((file) =>
+    readAppAliases(file, fs.readFileSync(path.join(root, file), "utf8"))
+  );
+const resolutionDiagnostics = [];
+const sourceImports = [];
 const edges = [];
 const externalImports = [];
 const retiredImports = [];
 const retiredStoreMethods = new Map([
   [
-    "client/stores/app.store.ts",
+    "client/shared-state/app-context/app.store.ts",
     new Set([
       "gotoPath",
       "openResource",
@@ -40,8 +57,19 @@ const retiredStoreMethods = new Map([
     ])
   ],
   [
-    "client/stores/account.store.ts",
+    "client/runtime/account/account.store.ts",
     new Set([
+      "init",
+      "signIn",
+      "signOut",
+      "gotoPostAuthRoute",
+      "embedOAuthSignin",
+      "signInFromAuthFnSession",
+      "refreshPlanData",
+      "logGuest",
+      "startOfflineSession",
+      "bootstrap",
+      "checkIfSessionExpired",
       "delete",
       "confirmDelete",
       "uploadFile",
@@ -56,34 +84,58 @@ const retiredStoreMethods = new Map([
     ])
   ],
   [
-    "client/stores/uiState/uiState.store.ts",
+    "client/shared-state/preferences/ui-state/uiState.store.ts",
     new Set(["addResourceToTabs", "removeResourceFromTabs", "toggleSidebar"])
   ]
 ]);
-const retiredApplicationPaths = new Set(
+const retiredClientPaths = new Set(
   JSON.parse(
     fs.readFileSync(
-      path.join(root, "tools/check/retired-application-paths.json"),
+      path.join(root, "tools/check/retired-client-paths.json"),
       "utf8"
     )
   ).map((file) => file.replace(/\.(ts|svelte)$/, ""))
 );
+const retiredOwnershipPaths = new Set([
+  "client/products/product.resolver",
+  "client/config/product-resources",
+  "client/runtime/commands/command-kind",
+  "client/config/metadata.type",
+  "client/config/events/focus-event.enum",
+  "client/config/events/memory-event.enum",
+  "client/config/events/clipper-event.type",
+  "client/shell/leftPanel/LeftNavOfflineStatus.svelte",
+  "client/shared-state/resources/resource.actions",
+  "client/shared-state/resources/bulk-editor",
+  "shared/utils/utils",
+  "shared/utils/surreal.utils",
+  "client/persistence/persistence.utils",
+  "client/persistence/legacyLocalDataBackup",
+  "client/surfaces/settings/ExtensionLoginStatusPage.svelte",
+  "client/surfaces/settings/ShareToFriends.svelte"
+]);
 
 /** Resolves aliases and relative source imports before applying ownership rules. */
 function resolveImport(specifier, importer) {
+  specifier = specifier.split("?")[0];
+  const appImport = resolveAppImport(specifier, importer, appHosts);
+  if (appImport) return appImport.targets.map(resolveSource);
   let target;
   if (specifier.startsWith("."))
     target = path.posix.normalize(
       path.posix.join(path.posix.dirname(importer), specifier)
     );
-  else if (specifier.startsWith("$lib/")) target = specifier.slice(5);
   else {
     const alias = aliases.find(
       ([name]) => specifier === name || specifier.startsWith(`${name}/`)
     );
     if (alias) target = alias[1] + specifier.slice(alias[0].length);
   }
-  if (!target) return;
+  return target ? [resolveSource(target)] : [];
+}
+
+/** Resolves source extensions while preserving missing targets for diagnostics. */
+function resolveSource(target) {
   return (
     [
       target,
@@ -146,11 +198,75 @@ for (const file of files) {
       )
         specifier = node.arguments[0].text;
       if (specifier) {
+        const relativeTarget = specifier.startsWith(".")
+          ? path.posix.normalize(
+              path.posix.join(path.posix.dirname(file), specifier)
+            )
+          : specifier;
+        if (
+          /^@nucleum\/client\/utils(?:\/|$)/.test(specifier) ||
+          /^(?:\$lib\/)?client\/utils(?:\/|$)/.test(relativeTarget)
+        )
+          retiredImports.push({
+            from: file,
+            to: specifier,
+            reason: "Retired utility workspace; import its semantic owner"
+          });
+        if (
+          /^(?:@21n\/utils\/(?:browser\.utils|account\.utils|network\.utils|ui\.utils|utils)|@nucleum\/persistence\/persistence|@nucleum\/extensions\/clipper\/contentScripts\/store|@nucleum\/surfaces\/commandBar\/actionMap)(?:\.(?:ts|js))?$/.test(
+            specifier
+          )
+        ) {
+          retiredImports.push({
+            from: file,
+            to: specifier,
+            reason: "Retired catch-all module; import its semantic owner"
+          });
+        }
+        if (
+          /^@nucleum\/client\/(?:shell|surfaces|shared-state|ui|features|composition|application)(?:\/|$)/.test(
+            specifier
+          )
+        )
+          retiredImports.push({
+            from: file,
+            to: specifier,
+            reason:
+              "Use the explicit owning workspace subpath, not the client alias"
+          });
         if (/^@nucleum\/cx(?:\/|$)/.test(specifier))
           retiredImports.push({
             from: file,
             to: specifier,
             reason: "Retired empty workspace"
+          });
+        if (
+          /^@(?:21n\/elements|nucleum\/(?:actions|components|stores))(?:\/|$)/.test(
+            specifier
+          )
+        )
+          retiredImports.push({
+            from: file,
+            to: specifier,
+            reason: "Retired client workspace alias"
+          });
+        if (
+          /^@21n\/(?:utils|branding|illustrations|layout|icons|icons-v2)(?:\/|$)/.test(
+            specifier
+          ) ||
+          /^@nucleum\/client\/(?:commands|events|state)(?:\/|$)/.test(
+            specifier
+          ) ||
+          /^@nucleum\/application(?:\/|$)/.test(specifier) ||
+          /^@nucleum\/client\/(?:appearance|files|notifications|preferences|resources|shortcuts)(?:\/|$)/.test(
+            specifier
+          ) ||
+          /^@21n\/ui\/elements\/(?:environment|hosts)(?:\/|$)/.test(specifier)
+        )
+          retiredImports.push({
+            from: file,
+            to: specifier,
+            reason: "Relocated package subpath"
           });
         if (
           /^@21n\/(types|shared-types)(\/|$)/.test(specifier) ||
@@ -163,15 +279,61 @@ for (const file of files) {
             to: specifier,
             reason: "Retired type package"
           });
-        const target = resolveImport(specifier, file);
+        const targets = resolveImport(specifier, file);
+        const target = targets[0];
+        sourceImports.push({ from: file, specifier, targets });
+        retiredImports.push(...checkAppAssemblyImport(file, specifier));
+        if (
+          /^(client|apps)\//.test(file) &&
+          !/\.(test|spec|stories)\./.test(file) &&
+          !file.includes("/tests/") &&
+          ((targets.length &&
+            targets.some((item) => !fs.existsSync(path.join(root, item)))) ||
+            (specifier.startsWith("$") &&
+              !targets.length &&
+              !resolveAppImport(specifier, file, appHosts)?.framework &&
+              !resolveAppImport(specifier, file, appHosts)?.generated))
+        )
+          resolutionDiagnostics.push({
+            from: file,
+            to: specifier,
+            reason: "Unresolved local import",
+            targets
+          });
         if (
           target &&
-          retiredApplicationPaths.has(target.replace(/\.(ts|svelte)$/, ""))
+          (/^client\/(?:actions|branding|commands|components|elements|events|illustrations|stores|layout|icons|iconsV2|state)(?:\/|$)/.test(
+            target
+          ) ||
+            /^client\/application(?:\/|$)/.test(target) ||
+            /^client\/(?:appearance|files|notifications|preferences|resources|shortcuts)(?:\/|$)/.test(
+              target
+            ) ||
+            /^client\/ui\/elements\/(?:environment|hosts)(?:\/|$)/.test(target))
+        )
+          retiredImports.push({
+            from: file,
+            to: target,
+            reason: "Retired client workspace path"
+          });
+        if (
+          target &&
+          retiredClientPaths.has(target.replace(/\.(ts|svelte)$/, ""))
         )
           retiredImports.push({
             from: file,
             to: target,
             reason: "Relocated reusable application module"
+          });
+        if (
+          (target && retiredOwnershipPaths.has(target)) ||
+          (target &&
+            retiredOwnershipPaths.has(target.replace(/\.(ts|js)$/, "")))
+        )
+          retiredImports.push({
+            from: file,
+            to: target,
+            reason: "Relocated semantic owner"
           });
         if (target) {
           const typeOnly =
@@ -188,7 +350,13 @@ for (const file of files) {
                   ))
               )) ||
             (ts.isExportDeclaration(node) && Boolean(node.isTypeOnly));
-          edges.push({ from: file, to: target, typeOnly });
+          for (const to of targets)
+            edges.push({
+              from: file,
+              to,
+              typeOnly,
+              ...(specifier.startsWith("$local/") ? { appHost: true } : {})
+            });
         } else externalImports.push({ from: file, to: specifier });
       }
       ts.forEachChild(node, visit);
@@ -199,79 +367,104 @@ for (const file of files) {
 
 const production = ({ from }) =>
   !/\.(test|spec)\./.test(from) && !from.includes("/tests/");
-const violations = edges.filter(production).filter(({ from, to }) => {
+const portableUiRoots = ["client/ui/"];
+const portableUiDependencies = ["client/theme/", "client/ui/", "shared/"];
+
+/** Returns whether a portable UI source may import the resolved target. */
+function isAllowedPortableUiDependency(from, to) {
   if (
-    from === "client/stores/app.store.ts" &&
-    (/^client\/(application|features|products|layout)\//.test(to) ||
-      to === "client/stores/account.store.ts")
-  )
-    return true;
-  if (
-    /^client\/stores\/resources\/recent(?:\.store|\.type|-host)\.ts$/.test(
+    /client\/ui\/(?:actions|elements|environment|hosts|icons|illustrations|branding)\//.test(
       from
     ) &&
-    (/^client\/(application|features|products)\//.test(to) ||
-      to === "client/stores/app.store.ts")
+    to.startsWith("client/ui/compositions/")
+  )
+    return false;
+  return portableUiDependencies.some((prefix) => to.startsWith(prefix));
+}
+
+const violations = edges.filter(production).filter(({ from, to }) => {
+  if (
+    from === "client/shared-state/app-context/app.store.ts" &&
+    (/^client\/(composition|surfaces|shell|features|products)\//.test(to) ||
+      to === "client/runtime/account/account.store.ts")
   )
     return true;
   if (
-    from.startsWith("client/stores/overlays/") &&
-    /^client\/(application|features|products)\//.test(to)
+    /^client\/shared-state\/resources\/recent(?:\.store|\.type|-host)\.ts$/.test(
+      from
+    ) &&
+    (/^client\/(composition|surfaces|shell|features|products)\//.test(to) ||
+      to === "client/shared-state/app-context/app.store.ts")
   )
     return true;
   if (
     /^(schema|shared|services|server)\//.test(from) &&
     to.startsWith("client/")
   )
-    return !(
-      from === "server/common/relay/index.ts" &&
-      to === "client/components/flux/flux.type"
-    );
+    return true;
   if (
     from.startsWith("client/features/") &&
-    /^client\/(products|application)\//.test(to)
+    (to.startsWith("client/products/") ||
+      to.startsWith("client/composition/") ||
+      to.startsWith("client/surfaces/"))
   )
     return true;
   if (
-    from === "client/stores/resources/record-renderer.ts" &&
-    (/^client\/(application|features|products)\//.test(to) ||
-      to === "client/stores/app.store.ts")
+    from.startsWith("client/surfaces/") &&
+    to.startsWith("client/composition/")
   )
     return true;
   if (
-    /^client\/(components|elements)\//.test(from) &&
-    /^client\/(features|products|application)\//.test(to)
+    from.startsWith("client/shell/") &&
+    (to.startsWith("client/products/") ||
+      to.startsWith("client/composition/") ||
+      to.startsWith("client/surfaces/"))
+  )
+    return true;
+  if (
+    from === "client/shared-state/resources/record-renderer.ts" &&
+    (/^client\/(composition|surfaces|shell|features|products)\//.test(to) ||
+      to === "client/shared-state/app-context/app.store.ts")
+  )
+    return true;
+  if (
+    portableUiRoots.some((prefix) => from.startsWith(prefix)) &&
+    !isAllowedPortableUiDependency(from, to)
   )
     return true;
   if (
     /^client\/(datafn|runtime)\//.test(from) &&
-    /^client\/(features|products|application|components|stores|layout|elements|actions)\//.test(
+    /^client\/(features|products|composition|surfaces|shell|shared-state|ui|events)\//.test(
       to
     )
   )
     return true;
   if (
-    /^client\/stores\/resources\/(resource\.actions|bulk-editor|resource-action-host)\.ts$/.test(
-      from
-    ) &&
-    (/^client\/(application|products)\//.test(to) ||
+    /^client\/shared-state\/resources\/resource-action-host\.ts$/.test(from) &&
+    (/^client\/(composition|surfaces|shell|products)\//.test(to) ||
       (to.startsWith("client/features/") &&
         to !== "client/datafn/link.type.ts"))
   )
     return true;
   if (
-    /^client\/(stores\/resources\/(resource-panel[^/]*|panelParam\.mixin|panelSwitcher\.mixin)\.ts|components\/records\/ResourcePanelSwitcher\.svelte)$/.test(
+    /^client\/(shared-state\/resources\/(resource-panel[^/]*|panelParam\.mixin|panelSwitcher\.mixin)\.ts|features\/records\/ResourcePanelSwitcher\.svelte)$/.test(
       from
     ) &&
-    (/^client\/(application|features|products)\//.test(to) ||
-      to === "client/stores/app.store.ts")
+    (/^client\/(composition|surfaces|shell|features|products)\//.test(to) ||
+      to === "client/shared-state/app-context/app.store.ts")
   )
     return true;
   if (
-    (from.startsWith("client/stores/keyboard/") ||
-      from === "client/components/keyboard/ComponentShortcutListener.svelte") &&
-    (/^client\/(application|features|products)\//.test(to) ||
-      to === "client/stores/app.store.ts")
+    (from.startsWith("client/shared-state/shortcuts/") ||
+      from ===
+        "client/ui/compositions/keyboard/ComponentShortcutListener.svelte") &&
+    (/^client\/(composition|surfaces|shell|features|products)\//.test(to) ||
+      to === "client/shared-state/app-context/app.store.ts")
+  )
+    return true;
+  if (
+    from.startsWith("client/shared-state/") &&
+    /^client\/(composition|surfaces|shell|features|products)\//.test(to)
   )
     return true;
   if (
@@ -282,58 +475,169 @@ const violations = edges.filter(production).filter(({ from, to }) => {
   return false;
 });
 violations.push(...retiredImports);
-if (
-  fs.existsSync(path.join(root, "client/cx/package.json")) ||
-  JSON.parse(
-    fs.readFileSync(path.join(root, "package.json"), "utf8")
-  ).workspaces.includes("client/cx") ||
-  aliases.some(([name]) => name === "@nucleum/cx")
-)
-  violations.push({
-    from: "package.json",
-    to: "client/cx",
-    reason: "Retired empty workspace"
-  });
+const clientDependencyMatrix = JSON.parse(
+  fs.readFileSync(
+    path.join(root, "tools/check/client-dependency-matrix.json"),
+    "utf8"
+  )
+);
+violations.push(
+  ...checkClientDependencyMatrix(
+    edges.filter(production),
+    clientDependencyMatrix,
+    files.filter((file) => production({ from: file }))
+  )
+);
+const clientManifests = Object.keys(clientDependencyMatrix)
+  .map((owner) => ({
+    owner,
+    file: path.join(root, "client", owner, "package.json")
+  }))
+  .filter(({ file }) => fs.existsSync(file))
+  .map(({ owner, file }) => ({
+    owner,
+    manifest: JSON.parse(fs.readFileSync(file, "utf8"))
+  }));
+violations.push(
+  ...checkClientManifestMatrix(clientManifests, clientDependencyMatrix)
+);
+const rootManifest = JSON.parse(
+  fs.readFileSync(path.join(root, "package.json"), "utf8")
+);
+const retiredWorkspaces = [
+  ["client/utils", "@21n/utils"],
+  ["client/legacy", "@nucleum/legacy"],
+  ["client/cx", "@nucleum/cx"],
+  ["client/actions", "@nucleum/actions"],
+  ["client/components", "@nucleum/components"],
+  ["client/elements", "@21n/elements"],
+  ["client/stores", "@nucleum/stores"],
+  ["client/layout", "@21n/layout"],
+  ["client/icons", "@21n/icons"],
+  ["client/iconsV2", "@21n/icons-v2"],
+  ["client/state", "@nucleum/client/state"],
+  ["client/branding", "@21n/branding"],
+  ["client/illustrations", "@21n/illustrations"],
+  ["client/application", "@nucleum/application"]
+];
+for (const [directory, alias] of retiredWorkspaces) {
+  if (
+    fs.existsSync(path.join(root, directory)) ||
+    rootManifest.workspaces.includes(directory) ||
+    aliases.some(([name]) => name === alias)
+  )
+    violations.push({
+      from: "package.json",
+      to: directory,
+      reason: "Retired client workspace"
+    });
+}
+const retiredDirectories = [
+  "client/shell/layers/cache",
+  "client/shell/layers/analytics",
+  "client/shell/layers/support",
+  "client/commands",
+  "client/events",
+  "client/composition/composition",
+  "client/composition/branding",
+  "client/composition/paint",
+  "client/composition/notifications",
+  "client/composition/shortcuts",
+  "client/composition/cx",
+  "client/composition/debug",
+  "client/composition/error",
+  "client/composition/home",
+  "client/composition/maps",
+  "client/composition/modal",
+  "client/composition/network",
+  "client/composition/oauth",
+  "client/composition/overview",
+  "client/composition/record",
+  "client/composition/resource",
+  "client/composition/share",
+  "client/composition/storybook",
+  "client/composition/taco",
+  "client/composition/embed",
+  "client/appearance",
+  "client/files",
+  "client/notifications",
+  "client/preferences",
+  "client/resources",
+  "client/shortcuts"
+];
+for (const directory of retiredDirectories) {
+  if (fs.existsSync(path.join(root, directory)))
+    violations.push({
+      from: "package.json",
+      to: directory,
+      reason: "Retired client directory"
+    });
+}
+const compositionOwners = new Set(["layers", "chrome"]);
+const compositionRootFiles = new Set([
+  "AppLoadingView.svelte",
+  "ComponentResolver.svelte",
+  "SubAtomLogo.svelte",
+  "global-commands.ts",
+  "configure-hosts.ts",
+  "settings-actions.ts",
+  "shortcuts.config.ts"
+]);
+for (const file of files.filter((file) =>
+  file.startsWith("client/composition/")
+)) {
+  const segments = file.split("/");
+  if (
+    !(segments.length === 3 && compositionRootFiles.has(segments[2])) &&
+    !(segments.length > 3 && compositionOwners.has(segments[2]))
+  ) {
+    violations.push({
+      from: file,
+      to: "client/composition",
+      reason: "Composition source requires an explicit owner"
+    });
+  }
+}
 const productionGraph = new Map();
-const runtimeGraph = new Map();
 for (const { from, to } of edges.filter(production)) {
   if (!productionGraph.has(from)) productionGraph.set(from, []);
   productionGraph.get(from).push(to);
 }
-for (const { from, to, typeOnly } of edges.filter(production)) {
-  if (typeOnly) continue;
-  if (!runtimeGraph.has(from)) runtimeGraph.set(from, []);
-  runtimeGraph.get(from).push(to);
-}
-for (const root of runtimeGraph.keys()) {
-  if (!/^client\/(stores|utils|actions|components|elements)\//.test(root))
-    continue;
-  const pending = [...runtimeGraph.get(root)];
+for (const root of productionGraph.keys()) {
+  const isPortableUi = portableUiRoots.some((prefix) =>
+    root.startsWith(prefix)
+  );
+  const isSharedFoundation = /^client\/(shared-state)\//.test(root);
+  if (!isPortableUi && !isSharedFoundation) continue;
+  const pending = [...productionGraph.get(root)];
   const visited = new Set();
   while (pending.length) {
     const target = pending.pop();
     if (visited.has(target)) continue;
     visited.add(target);
-    if (/^client\/(application|features|products)\//.test(target))
+    if (
+      isPortableUi
+        ? !isAllowedPortableUiDependency(root, target)
+        : /^client\/(composition|surfaces|shell|features|products)\//.test(
+            target
+          )
+    )
       violations.push({
         from: root,
         to: target,
-        reason: "Shared runtime dependency reaches composition"
+        reason: isPortableUi
+          ? "Portable UI transitively depends on product implementation"
+          : "Shared runtime dependency reaches composition"
       });
-    pending.push(...(runtimeGraph.get(target) ?? []));
+    pending.push(...(productionGraph.get(target) ?? []));
   }
 }
 for (const root of productionGraph.keys()) {
-  const isSharedMarkdown = root.startsWith("client/elements/markdown/");
+  const isSharedMarkdown = root.startsWith("client/ui/elements/markdown/");
   const isIsolatedRuntime = /^client\/runtime\/(embed|inference|audio)\//.test(
     root
   );
-  if (
-    !isSharedMarkdown &&
-    !isIsolatedRuntime &&
-    !root.startsWith("client/stores/overlays/")
-  )
-    continue;
+  if (!isSharedMarkdown && !isIsolatedRuntime) continue;
   const pending = [...productionGraph.get(root)];
   const visited = new Set();
   while (pending.length) {
@@ -343,20 +647,15 @@ for (const root of productionGraph.keys()) {
     if (
       isSharedMarkdown
         ? target.startsWith("client/") &&
-          !target.startsWith("client/elements/markdown/")
-        : isIsolatedRuntime
-          ? target.startsWith("client/") &&
-            !target.startsWith("client/runtime/")
-          : /^client\/(application|features|products)\//.test(target)
+          !target.startsWith("client/ui/elements/markdown/")
+        : target.startsWith("client/") && !target.startsWith("client/runtime/")
     )
       violations.push({
         from: root,
         to: target,
         reason: isSharedMarkdown
           ? "Shared Markdown presentation transitively depends on frontend implementation"
-          : isIsolatedRuntime
-            ? "Runtime transport transitively depends on frontend implementation"
-            : "Overlay state transitively depends on composition"
+          : "Runtime transport transitively depends on frontend implementation"
       });
     pending.push(...(productionGraph.get(target) ?? []));
   }
@@ -391,15 +690,26 @@ for (const entry of contract) {
     });
 }
 violations.push(...checkWorkspaceDependencies(edges, externalImports));
+const exportedPackages = aliases.flatMap(([name, directory]) => {
+  const file = path.join(root, directory, "package.json");
+  if (!fs.existsSync(file)) return [];
+  const manifest = JSON.parse(fs.readFileSync(file, "utf8"));
+  return manifest.name === name ? [{ ...manifest, directory }] : [];
+});
+violations.push(...checkWorkspaceExports(sourceImports, exportedPackages));
 if (process.argv.includes("--graph"))
   console.log(JSON.stringify(edges, null, 2));
 else {
+  for (const diagnostic of resolutionDiagnostics)
+    console.error(
+      `${diagnostic.from} -> ${diagnostic.to}: ${diagnostic.reason} (${diagnostic.targets.join(", ")})`
+    );
   for (const edge of violations)
     console.error(
       `${edge.from} -> ${edge.to}${edge.reason ? `: ${edge.reason}` : ""}`
     );
   console.log(
-    `Architecture: ${files.length} source files, ${edges.length} resolved imports, ${violations.length} violations.`
+    `Architecture: ${files.length} source files, ${edges.length} resolved imports, ${violations.length} violations, ${resolutionDiagnostics.length} unresolved local imports.`
   );
 }
-process.exitCode = violations.length ? 1 : 0;
+process.exitCode = violations.length || resolutionDiagnostics.length ? 1 : 0;

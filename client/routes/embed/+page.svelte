@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { oauth } from "@nucleum/application/account/oauth";
+  import { oauth } from "@nucleum/surfaces/account/oauth";
 
-  import { clientStorage } from "@nucleum/persistence/persistence.utils";
+  import { clientStorage } from "@nucleum/persistence/client-storage";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import type { OAuthProviderConfig } from "@nucleum/client/runtime/account/oauth.type";
-  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import SubAtomLogo from "@nucleum/composition/SubAtomLogo.svelte";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   onMount(async () => {
     clientStorage.setForSession(ClientStorageKey.EMBED_OAUTH, true);
     await triggerOAuth();

@@ -1,20 +1,22 @@
 <script lang="ts">
-  import { fileUpload } from "@nucleum/stores/files/file-upload";
+  import { fileUpload } from "@nucleum/shared-state/files/file-upload";
 
-  import { fileDrop } from "$lib/client/actions/fileDrop.action";
+  import { fileDrop } from "@21n/ui/actions/fileDrop.action";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import account from "$lib/client/stores/account.store";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { isCloudUserAndOffline } from "@nucleum/client/runtime/account/account.utils";
+  import context from "@nucleum/client/runtime/context.store";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { MAX_FILE_SIZE_MB } from "@nucleum/stores/files/file.constants";
+  import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
-  import modalStore from "@nucleum/stores/overlays/modal.store";
-  import { Size } from "@21n/elements/size.enum";
-  import { toasts } from "$lib/client/stores/notification.store";
+  import modalStore from "@nucleum/shell/overlays/modal.store";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { onDestroy } from "svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
@@ -48,7 +50,7 @@
   ) {
     try {
       error = undefined;
-      if (account.isCloudUserAndOffline()) {
+      if (isCloudUserAndOffline($account, $context.isInOfflineMode)) {
         error =
           "You seem to be offline. File upload is not yet available in offline mode.";
         return;

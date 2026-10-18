@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { deepCopy, isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import {
     type ISelectPropertyConfig,
     type IUniversalPropertyConfig,
@@ -11,7 +11,7 @@
     UniversalPropertyType
   } from "@nucleum/features/collections/properties/property.type";
   import SelectOptionsEditor from "@nucleum/features/collections/properties/propertyConfig/selectProperty/SelectOptionsEditor.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import SelectPropertyOptionList from "@nucleum/features/collections/properties/selectProperty/SelectPropertyOptionList.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
@@ -20,11 +20,11 @@
     isHighVolumeUniversalType,
     resolveUniversalPropertyOptions
   } from "@nucleum/features/collections/properties/property.utils";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "@nucleum/stores/uiState/uiState.type";
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 
   let {
     property,

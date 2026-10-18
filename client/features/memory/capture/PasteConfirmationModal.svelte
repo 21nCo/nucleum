@@ -1,22 +1,24 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
   import { onMount } from "svelte";
-  import { MAX_FILE_SIZE_MB } from "@nucleum/stores/files/file.constants";
+  import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { clipboard } from "@nucleum/features/memory/capture/capture.store";
   import type { IPasteCaptureData } from "@nucleum/features/memory/capture/capture.type";
   import { resolvePasteContents } from "@nucleum/features/memory/capture/capture.utils";
-  import account from "@nucleum/stores/account.store";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { isCloudUserAndOffline } from "@nucleum/client/runtime/account/account.utils";
+  import context from "@nucleum/client/runtime/context.store";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   import ShareContentSaver from "@nucleum/features/memory/capture/ShareContentSaver.svelte";
 
@@ -32,7 +34,7 @@
   resolveV2(event);
 
   onMount(async () => {
-    isOffline = account.isCloudUserAndOffline();
+    isOffline = isCloudUserAndOffline($account, $context.isInOfflineMode);
   });
 
   async function resolveV2(event: ClipboardEvent) {

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { activeSession } from "@nucleum/features/focus/session.store";
-  import { Size } from "@21n/elements/size.enum";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { onMount } from "svelte";
   import SessionTimeText from "@nucleum/features/focus/elements/sessionTimeText/SessionTimeText.svelte";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
-  import { PointronEvent } from "@nucleum/client/config/events/focus-event.enum";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
+  import { PointronEvent } from "@nucleum/shared-state/events/focus-event.enum";
   onMount(() => {
     const sub = activeSession.subscribe((x) => {
       if (x.state === SessionState.BREAK_RUNNING) {

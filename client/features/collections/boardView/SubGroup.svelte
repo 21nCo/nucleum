@@ -1,16 +1,16 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import CollectionItems from "@nucleum/features/collections/CollectionItems.svelte";
-  import { dropzone } from "@nucleum/actions/dragAndDrop.action";
-  import Badge from "@21n/elements/text/Badge.svelte";
-  import type { ISelectValue } from "@21n/elements/select/select.type";
+  import { dropzone } from "@21n/ui/actions/dragAndDrop.action";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import { resourceInList } from "@nucleum/datafn/resource.utils";
   import type { ICollectionView } from "@nucleum/features/collections/collection.type";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import type { IActiveCollectionStore } from "../collection.store";
   import { filterNodesByPropertyValue } from "@nucleum/features/collections/collection.utils";
-  import type { Arrangement } from "@21n/elements/direction.enum";
+  import type { Arrangement } from "@21n/ui/elements/direction.enum";
   let {
     collection,
     view,

@@ -4,7 +4,7 @@
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
   import { queryLinkingSearchResults } from "@nucleum/features/memory/linking/link-search";
 
   let {

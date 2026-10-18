@@ -5,14 +5,9 @@
     type IAnalyticsLabelColor,
     AnalyticsCardType
   } from "@nucleum/features/focus/analytics/analytics.types";
-  import {
-    TimePeriodType,
-    TimeScale,
-    type TimePeriod,
-    type TimePeriodValue
-  } from "@21n/utils/time.type";
+  import { TimePeriodType, TimeScale, type TimePeriod, type TimePeriodValue } from "@21n/shared-utils/datetime/period.type";
   import CardSelector from "@nucleum/features/focus/analytics/page/CardSelector.svelte";
-  import { resolveRelativeTimePeriodOptions } from "@21n/elements/datetime/datetime.utils";
+  import { resolveRelativeTimePeriodOptions } from "@21n/ui/elements/datetime/datetime.utils";
   import type { ISessionLog } from "@nucleum/features/focus/logs/log.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import {
@@ -20,28 +15,25 @@
     resourceInList
   } from "@nucleum/datafn/resource.utils";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import {
-    determineTimePeriodv2,
-    resolveUpperRelativeTimePeriodTitle
-  } from "@21n/utils/time.utils";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { OptionSelectorStyle } from "@21n/elements/select/select.type";
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { determineTimePeriodv2, resolveUpperRelativeTimePeriodTitle } from "@21n/shared-utils/datetime/period";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
   import { fly } from "svelte/transition";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import view from "@nucleum/stores/view.store";
-  import { LoadingAnimationType } from "@21n/elements/feedback/feedback.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { time } from "@datafn/client";
   import { toSvelteStore } from "@datafn/svelte";

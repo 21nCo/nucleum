@@ -1,33 +1,32 @@
 <script lang="ts">
   import { resolveNodeContextMenu } from "@nucleum/features/memory/node/node.store";
   import { type ITextClip, type IVideoTimestampClip, type IWebScreenshotClip } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { formatDatetime, formatSeconds } from "@21n/utils/time.utils";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
-  import LinkBoxOnClipper from "@nucleum/features/memory/common/linkbox/LinkBoxOnClipper.svelte";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
+  import LinkBoxOnClipper from "@nucleum/extensions/clipper/LinkBoxOnClipper.svelte";
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
-  import LinkActionOnClipper from "@nucleum/features/memory/common/linkbox/LinkActionOnClipper.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import {
-    openAppPath,
-    relayToContentScript
-  } from "@21n/utils/extension.utils";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
+  import LinkActionOnClipper from "@nucleum/extensions/clipper/LinkActionOnClipper.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { openAppPath } from "@nucleum/extensions/navigation";
+  import { relayToContentScript } from "@nucleum/client/runtime/extensions/messaging";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
   import { onMount, onDestroy } from "svelte";
-  import FileView from "@nucleum/components/files/FileView.svelte";
+  import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import TextClip from "@nucleum/extensions/clipper/sidePanel/clips/TextClip.svelte";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import ResourceThumbnailContextMenu from "@nucleum/components/records/ResourceThumbnailContextMenu.svelte";
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import ResourceThumbnailContextMenu from "@nucleum/features/records/ResourceThumbnailContextMenu.svelte";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import NodeTitle from "@nucleum/features/memory/node/title/NodeTitle.svelte";

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   let { length = 0 }: { length?: number } = $props();
 </script>
 

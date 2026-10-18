@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import { tooltip } from "@nucleum/actions/popover.action";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import { tooltip } from "@21n/ui/actions/popover.action";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { resolveResource } from "@nucleum/datafn/resource-query.utils";

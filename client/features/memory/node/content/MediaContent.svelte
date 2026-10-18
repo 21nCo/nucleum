@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { webNodeTypeList } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
+  import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import { type IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import MediaNodeRightPane from "@nucleum/features/memory/node/rightPanel/MediaNodeRightPane.svelte";
   import { setContext } from "svelte";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import MediaContentResolver from "@nucleum/features/memory/node/content/MediaContentResolver.svelte";
 
   import { isRecordId } from "@nucleum/datafn/resource.utils";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   let {
     node,
     isConstrainedWidth = false

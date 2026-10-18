@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import UploadButton from "@21n/elements/button/UploadButton.svelte";
-  import Slider from "@21n/elements/slider/Slider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import UploadButton from "@21n/ui/elements/button/UploadButton.svelte";
+  import Slider from "@21n/ui/elements/slider/Slider.svelte";
   import { MediaGridType } from "@nucleum/features/memory/node/node.type";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import Button from "@21n/elements/button/Button.svelte";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
 
   let {
     config = $bindable(),

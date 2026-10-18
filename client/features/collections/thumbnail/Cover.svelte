@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { ICollectionThumb } from "@nucleum/features/collections/collection.type";
-  import { Arrangement } from "@21n/elements/direction.enum";
-  import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
+  import CoverRenderer from "@nucleum/features/records/cover/CoverRenderer.svelte";
   let {
     item,
     arrangement = Arrangement.LIST

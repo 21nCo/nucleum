@@ -2,21 +2,22 @@
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { highlightStore } from "@nucleum/features/memory/common/highlighters/highlight.store";
   import { type INode } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { cn, convertToRGBA } from "@21n/utils/ui.utils";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { convertToRGBA } from "@21n/ui/environment/colors";
   import { truncateString } from "@21n/shared-utils/text.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { preferences } from "@nucleum/stores/preferences/preferences.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
   import {
     Preference,
     PreferencesScope
-  } from "@nucleum/stores/preferences/preferences.type";
-  import { appStore } from "@nucleum/stores/app.store";
+  } from "@nucleum/shared-state/preferences/preferences.type";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { derived } from "svelte/store";
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   let {
     node,
     contentPreview,

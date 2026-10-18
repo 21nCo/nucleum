@@ -27,8 +27,13 @@ export const searchSort = (a: any, b: any) => {
   return aLabel.localeCompare(bLabel);
 };
 
+/** Escapes a user query so it matches literally inside a regular expression. */
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const highlightSearchQuery = (items: any[], searchQuery: string) => {
   const normalizedQuery = searchQuery.trim().toLowerCase();
+  const queryPattern = new RegExp(`(${escapeRegExp(searchQuery)})`, "gi");
 
   return items.map((item) => {
     const aLabel = (item.label ?? "").toLowerCase();
@@ -38,10 +43,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
     let bodySearch = undefined;
 
     if (aLabel.includes(normalizedQuery)) {
-      labelSearch = item.label.replace(
-        new RegExp(`(${searchQuery})`, "gi"),
-        "**$1**"
-      );
+      labelSearch = item.label.replace(queryPattern, "**$1**");
     }
 
     if (aText.includes(normalizedQuery)) {
@@ -53,7 +55,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
           .replace(/\(resource=[^)]+\)/g, "")
           .replace(/[\r\n\s]+/g, " ")
           .trim()
-          .replace(new RegExp(`(${searchQuery})`, "gi"), "**$1**");
+          .replace(queryPattern, "**$1**");
       } else {
         const startIndex = Math.max(0, matchIndex - preContextLength);
         const endIndex = Math.min(
@@ -70,10 +72,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
         if (startIndex > 0) truncatedText = "..." + truncatedText;
         if (endIndex < item.text.length) truncatedText = truncatedText + "...";
 
-        bodySearch = truncatedText.replace(
-          new RegExp(`(${searchQuery})`, "gi"),
-          "**$1**"
-        );
+        bodySearch = truncatedText.replace(queryPattern, "**$1**");
       }
     }
 

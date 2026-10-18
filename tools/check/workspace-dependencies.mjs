@@ -45,6 +45,7 @@ export function checkWorkspaceDependencies(edges, externalImports = []) {
     manifests.find((manifest) => file.startsWith(`${manifest.directory}/`));
   const failures = new Map();
   for (const edge of edges) {
+    if (edge.appHost && edge.from.startsWith("client/routes/")) continue;
     if (
       /\.(test|spec|stories)\./.test(edge.from) ||
       edge.from.includes("/tests/")

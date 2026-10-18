@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    selectedTimePeriod,
-    isTouchDevice
-  } from "@nucleum/stores/app.store";
+  import { selectedTimePeriod, isTouchDevice } from "@nucleum/features/calendar/calendar-selection.store";
   import {
     CalendarHeatMapData,
     CalendarHeatMapLayout
@@ -25,9 +22,9 @@
   import VerticalQuadrennialLayout from "@nucleum/features/calendar/calendarHeatmap/VerticalQuadrennialLayout.svelte";
   import VerticalYearsLayout from "@nucleum/features/calendar/calendarHeatmap/VerticalYearsLayout.svelte";
   import YearsLayout from "@nucleum/features/calendar/calendarHeatmap/YearsLayout.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     variant = CalendarHmVariant.PLAIN,

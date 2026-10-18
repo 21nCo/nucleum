@@ -1,32 +1,32 @@
 <script lang="ts">
-  import { startTouch, moveTouch } from "@21n/utils/touchGesture";
+  import { startTouch, moveTouch } from "@nucleum/shell/interaction/touch-gestures";
   import {
     activeSession,
     currentFocusItem
   } from "@nucleum/features/focus/session.store";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";
-  import Icon from "@21n/elements/Icon.svelte";
-  import view from "@nucleum/stores/view.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import view from "@21n/ui/environment/view.store";
   import ControlBar from "@nucleum/features/focus/elements/controls/ControlBar.svelte";
   import { onMount, tick } from "svelte";
   import FocusPlayerTimeText from "@nucleum/features/focus/player/FocusPlayerTimeText.svelte";
-  import InlineLoadingAnimation from "@21n/elements/feedback/animations/InlineLoadingAnimation.svelte";
+  import InlineLoadingAnimation from "@21n/ui/elements/feedback/animations/InlineLoadingAnimation.svelte";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import context from "@nucleum/stores/context.store";
-  import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
+  import context from "@nucleum/client/runtime/context.store";
+  import ThemeLayer from "@nucleum/shell/layers/themeLayer/ThemeLayer.svelte";
   import appearance, {
     fallBackTypefaceString
-  } from "@nucleum/stores/appearance.store";
+  } from "@nucleum/shared-state/appearance/appearance.store";
   import IntervalBar from "@nucleum/features/focus/elements/intervalbar/IntervalBar.svelte";
-  import { fullScreen, player } from "@nucleum/stores/overlays/modal.store";
+  import { fullScreen, player } from "@nucleum/shell/overlays/modal.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import { tooltip } from "@nucleum/actions/popover.action";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import { tooltip } from "@21n/ui/actions/popover.action";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import type { ITaskThumb } from "@nucleum/features/focus/tasks/task.type";
   import { datafn } from "@nucleum/datafn/datafn.store";

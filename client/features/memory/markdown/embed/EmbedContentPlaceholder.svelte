@@ -1,37 +1,37 @@
 <script lang="ts">
-  import { fileDrop } from "@nucleum/actions/fileDrop.action";
-  import { popover } from "@nucleum/actions/popover.action";
-  import Button from "@21n/elements/button/Button.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import { fileDrop } from "@21n/ui/actions/fileDrop.action";
+  import { popover } from "@21n/ui/actions/popover.action";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
   import AudioCapture from "@nucleum/features/memory/capture/AudioCapture.svelte";
-  import { MAX_FILE_SIZE_MB } from "@nucleum/stores/files/file.constants";
+  import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
   import { resolveFileUploadErrorMessage } from "@nucleum/features/memory/capture/upload-error.utils";
   import { mediaNodeTypeList, webNodeTypeList } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import context from "@nucleum/stores/context.store";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import context from "@nucleum/client/runtime/context.store";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import {
     ButtonStyle,
     ButtonVariant,
     type IButtonParams
-  } from "@21n/elements/button/button.type";
+  } from "@21n/ui/elements/button/button.type";
   import { Embed } from "@nucleum/client/runtime/context.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import EmbedLibrarySearch from "@nucleum/features/memory/markdown/embed/EmbedLibrarySearch.svelte";
   import { getContext } from "svelte";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "@nucleum/features/memory/capture/capture.store";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";

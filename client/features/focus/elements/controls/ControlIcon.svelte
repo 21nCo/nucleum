@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import view from "@nucleum/stores/view.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import view from "@21n/ui/environment/view.store";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { Display } from "@21n/elements/display.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { Display } from "@21n/ui/elements/display.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { activeSession } from "@nucleum/features/focus/session.store";
   let {
     icon,

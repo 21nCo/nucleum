@@ -1,15 +1,15 @@
 <script lang="ts">
-  import AvatarRenderer from "@nucleum/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "@nucleum/client/elements/Icon.svelte";
-  import ResourceGridThumbnail from "@nucleum/components/records/ResourceGridThumbnail.svelte";
-  import ResourceThumbnailBase from "@nucleum/components/records/ResourceThumbnailBase.svelte";
+  import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import ResourceGridThumbnail from "@nucleum/features/records/ResourceGridThumbnail.svelte";
+  import ResourceThumbnailBase from "@nucleum/features/records/ResourceThumbnailBase.svelte";
   import {
     ResourceAccessPoint,
     ResourceAccessPointState
   } from "@nucleum/datafn/resource.type";
-  import { Arrangement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@nucleum/client/utils/ui.utils";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { countNavItems } from "@nucleum/features/spaces/combination/combination.utils";
   import type { ISideNavCombination } from "@nucleum/features/spaces/combination/combination.type";
 

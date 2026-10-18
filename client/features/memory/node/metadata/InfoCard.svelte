@@ -1,11 +1,8 @@
 <script lang="ts">
-  import { bg, cn } from "@21n/utils/ui.utils";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import {
-    formatDateRelativeToToday,
-    formatDatetime
-  } from "@21n/utils/time.utils";
-  import Icon from "@21n/elements/Icon.svelte";
+  import { bg, cn } from "@21n/ui/environment/presentation";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { formatDateRelativeToToday, formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
+  import Icon from "@21n/ui/elements/Icon.svelte";
 
   let {
     label,

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
 
   let {
@@ -36,7 +36,7 @@
     <div>
       <Button
         label="copy"
-        aria-label="Copy debug logs"
+        ariaLabel="Copy debug logs"
         onclick={copy}
         size={Size.sm}
       />

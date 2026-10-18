@@ -10,8 +10,8 @@
   } from "@antv/g6";
   import { onMount } from "svelte";
   import { truncateString } from "@21n/shared-utils/text.utils";
-  import appearance from "@nucleum/stores/appearance.store";
-  import { resizeListener } from "@nucleum/actions/resize.action";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
 
   let {
     data = { nodes: [], edges: [], combos: [] },

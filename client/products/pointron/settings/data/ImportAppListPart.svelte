@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 
   import { ImportSource } from "@nucleum/products/pointron/settings/data/data.type";

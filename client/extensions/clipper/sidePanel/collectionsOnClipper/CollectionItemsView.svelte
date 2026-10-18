@@ -1,14 +1,14 @@
 <script lang="ts">
-  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { CollectionType } from "@nucleum/features/collections/collection.type";
   import WebpageItem from "@nucleum/extensions/clipper/sidePanel/collectionsOnClipper/WebpageItem.svelte";
   import type { CollectionData, CollectionItem } from "@nucleum/extensions/clipper/sidePanel/collectionsOnClipper/types";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { openAppPath } from "@21n/utils/extension.utils";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { openAppPath } from "@nucleum/extensions/navigation";
 
   let {
     selectedCollection,

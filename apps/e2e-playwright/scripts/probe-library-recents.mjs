@@ -58,7 +58,9 @@ try {
           text: ""
         }
       });
-      const { recentsStore } = await loaded("stores/resources/recent.store");
+      const { recentsStore } = await loaded(
+        "shared-state/resources/recent.store"
+      );
       await recentsStore.refresh(["everything"]);
     },
     { root, label }

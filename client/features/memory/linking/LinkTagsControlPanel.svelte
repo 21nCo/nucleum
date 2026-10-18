@@ -1,18 +1,18 @@
 <script lang="ts">
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import Button from "@21n/elements/button/Button.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import view from "@nucleum/stores/view.store";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import view from "@21n/ui/environment/view.store";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { cn } from "@21n/ui/environment/presentation";
   import type {
     ILinkTag,
     ILinkTagGroup
@@ -22,7 +22,7 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { toSvelteStore } from "@datafn/svelte";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
-  import { activeResourceFilter } from "@21n/utils/utils";
+  import { activeResourceFilter } from "@nucleum/datafn/resource-filters";
 
   let {
     accessPoint = null

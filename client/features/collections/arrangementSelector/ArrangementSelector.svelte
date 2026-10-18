@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Arrangement, Orientation } from "@21n/elements/direction.enum";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { popover } from "@nucleum/actions/popover.action";
+  import { Arrangement, Orientation } from "@21n/ui/elements/direction.enum";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { popover } from "@21n/ui/actions/popover.action";
   import ArrangementSelectorPopover from "@nucleum/features/collections/arrangementSelector/ArrangementSelectorPopover.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   let {

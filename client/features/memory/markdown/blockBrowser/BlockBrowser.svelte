@@ -1,18 +1,18 @@
 <script lang="ts">
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { properCase } from "@21n/shared-utils/text.utils";
   import BlockItem from "@nucleum/features/memory/markdown/blockBrowser/BlockItem.svelte";
   import { getContext } from "svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import Badge from "@21n/elements/text/Badge.svelte";
-  import context from "@nucleum/stores/context.store";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
+  import context from "@nucleum/client/runtime/context.store";
   import type { IBlockBrowserSection } from "@nucleum/features/memory/markdown/blockBrowser/blockBrowser.type";
   import { resolveBlockBrowserConfig } from "@nucleum/features/memory/markdown/blockBrowser/blockBrowser.utils";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   const nodeContext = getContext<any>(Context.NODE);
 
   let {

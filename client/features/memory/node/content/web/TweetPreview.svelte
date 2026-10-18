@@ -1,20 +1,22 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
 
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { formatDatetime } from "@21n/utils/time.utils";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
   import { getContext, onMount } from "svelte";
   import { resolveContentPreview } from "@nucleum/features/memory/node/node.utils";
   import type { ITweet } from "@nucleum/features/memory/node/node.type";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import TweetPreviewUsingWidget from "@nucleum/features/memory/node/content/web/social/TweetPreviewUsingWidget.svelte";
-  import account from "@nucleum/stores/account.store";
-  import { InfoTextType } from "@21n/elements/text/info.type";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { isCloudUserAndOnline } from "@nucleum/client/runtime/account/account.utils";
+  import context from "@nucleum/client/runtime/context.store";
+  import { InfoTextType } from "@21n/ui/elements/text/info.type";
   import { parse } from "@21n/shared-utils/json.utils";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   let {
     node,
     accessPoint = ResourceAccessPoint.SELF
@@ -53,7 +55,7 @@
 
 {#if oembedHtml}
   {@html oembedHtml}
-{:else if account.isCloudUserAndOnline()}
+{:else if isCloudUserAndOnline($account, $context.isInOfflineMode)}
   <button
     class="w-full h-full px-4 flex justify-center items-center overflow-y-auto"
     onclick={() => {

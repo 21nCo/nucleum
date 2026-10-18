@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import {
     ActiveCollectionStore,
@@ -8,26 +8,26 @@
   import Cover from "@nucleum/features/collections/Cover.svelte";
   import CollectionTitleBar from "@nucleum/features/collections/CollectionTitleBar.svelte";
   import View from "@nucleum/features/collections/View.svelte";
-  import { acquireDnDPage, appStore } from "@nucleum/stores/app.store";
+  import { acquireDnDPage, appStore } from "@nucleum/shared-state/app-context/app.store";
   import ViewSettingsBar from "@nucleum/features/collections/ViewSettingsBar.svelte";
-  import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
-  import { bg, cn } from "@21n/utils/ui.utils";
+  import PageLoadingPulse from "@21n/ui/elements/feedback/animations/PageLoadingPulse.svelte";
+  import { bg, cn } from "@21n/ui/environment/presentation";
   import ViewTabSwitcher from "@nucleum/features/collections/tabSwitcher/ViewTabSwitcher.svelte";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "@21n/elements/switcher/switcher.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  } from "@21n/ui/elements/switcher/switcher.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { type IProperty } from "@nucleum/features/collections/properties/property.type";
-  import { activeResourceFilter } from "@21n/utils/utils";
+  import { activeResourceFilter } from "@nucleum/datafn/resource-filters";
   import { onDestroy, onMount, untrack } from "svelte";
-  import type { DropdownItem } from "@21n/elements/dropdown/dropdownItem.type";
+  import type { DropdownItem } from "@21n/ui/elements/dropdown/dropdownItem.type";
   import type {
     ISelectItem,
     ISelectValue
-  } from "@21n/elements/select/select.type";
+  } from "@21n/ui/elements/select/select.type";
   import {
     AccessMode,
     ResourceAccessPoint
@@ -39,15 +39,15 @@
     type ICollectionItem,
     type ICollectionViewWithData
   } from "@nucleum/features/collections/collection.type";
-  import ResourceStatusBanner from "@nucleum/components/records/RecordStatusBanner.svelte";
+  import ResourceStatusBanner from "@nucleum/features/records/RecordStatusBanner.svelte";
   import {
     Arrangement,
     Orientation,
     Placement
-  } from "@21n/elements/direction.enum";
+  } from "@21n/ui/elements/direction.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import CoverPicker from "@nucleum/features/records/cover/CoverPicker.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import ArrangementSelector from "@nucleum/features/collections/arrangementSelector/ArrangementSelector.svelte";
 
@@ -58,20 +58,20 @@
     resourceInList
   } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
 
   import {
     resolvePropertyIcon,
     tabAndGroupableProperties
   } from "@nucleum/features/collections/properties/property.utils";
 
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { resizeListener } from "@nucleum/actions/resize.action";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
   import { Action } from "@nucleum/client/config/action.enum";
-  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
+  import InlineSearchBar from "@21n/ui/elements/InlineSearchBar.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import ComponentEmbedLayer from "@nucleum/shell/layers/ComponentEmbedLayer.svelte";
   import { Product } from "@nucleum/client/config/product.type";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
   import { datafn } from "@nucleum/datafn/datafn.store";

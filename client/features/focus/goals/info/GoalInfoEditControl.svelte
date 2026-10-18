@@ -1,11 +1,11 @@
 <script lang="ts">
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import ColorPickerMini from "@21n/elements/colorPicker/ColorPickerMini.svelte";
+  import ColorPickerMini from "@21n/ui/elements/colorPicker/ColorPickerMini.svelte";
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
-  import { AlertType, type IInlineStatus } from "@nucleum/stores/notifications/notification.type";
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { AlertType, type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
   import { resolveObjectiveSubTypesForSwitcher } from "@nucleum/features/focus/goals/goal.utils";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import type { ObjectiveType } from "@nucleum/features/focus/goals/goal.type";
 
   let {

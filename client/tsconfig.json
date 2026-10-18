@@ -25,105 +25,45 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@nucleum/actions": [
-        "./actions/index.ts",
-        "./actions/index.tsx",
-        "./actions/index.js",
-        "./actions/index.mjs",
-        "./actions/index.cjs",
-        "./actions/index.svelte",
-        "./actions/index.d.ts",
-        "./actions/src/index.ts",
-        "./actions/src/index.tsx",
-        "./actions/src/index.js",
-        "./actions/src/index.mjs",
-        "./actions/src/index.cjs",
-        "./actions/src/index.svelte",
-        "./actions/src/index.d.ts",
-        "./actions"
+      "@21n/ui": [
+        "./ui/index.ts",
+        "./ui/index.tsx",
+        "./ui/index.js",
+        "./ui/index.mjs",
+        "./ui/index.cjs",
+        "./ui/index.svelte",
+        "./ui/index.d.ts",
+        "./ui/src/index.ts",
+        "./ui/src/index.tsx",
+        "./ui/src/index.js",
+        "./ui/src/index.mjs",
+        "./ui/src/index.cjs",
+        "./ui/src/index.svelte",
+        "./ui/src/index.d.ts",
+        "./ui"
       ],
-      "@nucleum/actions/*": [
-        "./actions/*"
+      "@21n/ui/*": [
+        "./ui/*"
       ],
-      "@nucleum/components": [
-        "./components/index.ts",
-        "./components/index.tsx",
-        "./components/index.js",
-        "./components/index.mjs",
-        "./components/index.cjs",
-        "./components/index.svelte",
-        "./components/index.d.ts",
-        "./components/src/index.ts",
-        "./components/src/index.tsx",
-        "./components/src/index.js",
-        "./components/src/index.mjs",
-        "./components/src/index.cjs",
-        "./components/src/index.svelte",
-        "./components/src/index.d.ts",
-        "./components"
+      "@nucleum/shared-state": [
+        "./shared-state/index.ts",
+        "./shared-state/index.tsx",
+        "./shared-state/index.js",
+        "./shared-state/index.mjs",
+        "./shared-state/index.cjs",
+        "./shared-state/index.svelte",
+        "./shared-state/index.d.ts",
+        "./shared-state/src/index.ts",
+        "./shared-state/src/index.tsx",
+        "./shared-state/src/index.js",
+        "./shared-state/src/index.mjs",
+        "./shared-state/src/index.cjs",
+        "./shared-state/src/index.svelte",
+        "./shared-state/src/index.d.ts",
+        "./shared-state"
       ],
-      "@nucleum/components/*": [
-        "./components/*"
-      ],
-      "@21n/elements": [
-        "./elements/index.ts",
-        "./elements/index.tsx",
-        "./elements/index.js",
-        "./elements/index.mjs",
-        "./elements/index.cjs",
-        "./elements/index.svelte",
-        "./elements/index.d.ts",
-        "./elements/src/index.ts",
-        "./elements/src/index.tsx",
-        "./elements/src/index.js",
-        "./elements/src/index.mjs",
-        "./elements/src/index.cjs",
-        "./elements/src/index.svelte",
-        "./elements/src/index.d.ts",
-        "./elements"
-      ],
-      "@21n/elements/*": [
-        "./elements/*"
-      ],
-      "@nucleum/stores": [
-        "./stores/index.ts",
-        "./stores/index.tsx",
-        "./stores/index.js",
-        "./stores/index.mjs",
-        "./stores/index.cjs",
-        "./stores/index.svelte",
-        "./stores/index.d.ts",
-        "./stores/src/index.ts",
-        "./stores/src/index.tsx",
-        "./stores/src/index.js",
-        "./stores/src/index.mjs",
-        "./stores/src/index.cjs",
-        "./stores/src/index.svelte",
-        "./stores/src/index.d.ts",
-        "./stores"
-      ],
-      "@nucleum/stores/*": [
-        "./stores/*"
-      ],
-      "@21n/utils": [
-        "./utils/index.ts",
-        "./utils/index.tsx",
-        "./utils/index.js",
-        "./utils/index.mjs",
-        "./utils/index.cjs",
-        "./utils/index.svelte",
-        "./utils/index.d.ts",
-        "./utils/src/index.ts",
-        "./utils/src/index.tsx",
-        "./utils/src/index.js",
-        "./utils/src/index.mjs",
-        "./utils/src/index.cjs",
-        "./utils/src/index.svelte",
-        "./utils/src/index.d.ts",
-        "./utils"
-      ],
-      "@21n/utils/*": [
-        "./utils/*"
+      "@nucleum/shared-state/*": [
+        "./shared-state/*"
       ],
       "@nucleum/products": [
         "./products/index.ts",
@@ -205,26 +145,6 @@
       "@nucleum/static/*": [
         "./static/*"
       ],
-      "@21n/layout": [
-        "./layout/index.ts",
-        "./layout/index.tsx",
-        "./layout/index.js",
-        "./layout/index.mjs",
-        "./layout/index.cjs",
-        "./layout/index.svelte",
-        "./layout/index.d.ts",
-        "./layout/src/index.ts",
-        "./layout/src/index.tsx",
-        "./layout/src/index.js",
-        "./layout/src/index.mjs",
-        "./layout/src/index.cjs",
-        "./layout/src/index.svelte",
-        "./layout/src/index.d.ts",
-        "./layout"
-      ],
-      "@21n/layout/*": [
-        "./layout/*"
-      ],
       "@nucleum/persistence": [
         "./persistence/index.ts",
         "./persistence/index.tsx",
@@ -265,46 +185,6 @@
       "@nucleum/extensions/*": [
         "./extensions/*"
       ],
-      "@21n/branding": [
-        "./branding/index.ts",
-        "./branding/index.tsx",
-        "./branding/index.js",
-        "./branding/index.mjs",
-        "./branding/index.cjs",
-        "./branding/index.svelte",
-        "./branding/index.d.ts",
-        "./branding/src/index.ts",
-        "./branding/src/index.tsx",
-        "./branding/src/index.js",
-        "./branding/src/index.mjs",
-        "./branding/src/index.cjs",
-        "./branding/src/index.svelte",
-        "./branding/src/index.d.ts",
-        "./branding"
-      ],
-      "@21n/branding/*": [
-        "./branding/*"
-      ],
-      "@21n/icons": [
-        "./icons/index.ts",
-        "./icons/index.tsx",
-        "./icons/index.js",
-        "./icons/index.mjs",
-        "./icons/index.cjs",
-        "./icons/index.svelte",
-        "./icons/index.d.ts",
-        "./icons/src/index.ts",
-        "./icons/src/index.tsx",
-        "./icons/src/index.js",
-        "./icons/src/index.mjs",
-        "./icons/src/index.cjs",
-        "./icons/src/index.svelte",
-        "./icons/src/index.d.ts",
-        "./icons"
-      ],
-      "@21n/icons/*": [
-        "./icons/*"
-      ],
       "@21n/theme": [
         "./theme/index.ts",
         "./theme/index.tsx",
@@ -324,66 +204,6 @@
       ],
       "@21n/theme/*": [
         "./theme/*"
-      ],
-      "@nucleum/legacy": [
-        "./legacy/index.ts",
-        "./legacy/index.tsx",
-        "./legacy/index.js",
-        "./legacy/index.mjs",
-        "./legacy/index.cjs",
-        "./legacy/index.svelte",
-        "./legacy/index.d.ts",
-        "./legacy/src/index.ts",
-        "./legacy/src/index.tsx",
-        "./legacy/src/index.js",
-        "./legacy/src/index.mjs",
-        "./legacy/src/index.cjs",
-        "./legacy/src/index.svelte",
-        "./legacy/src/index.d.ts",
-        "./legacy"
-      ],
-      "@nucleum/legacy/*": [
-        "./legacy/*"
-      ],
-      "@21n/illustrations": [
-        "./illustrations/index.ts",
-        "./illustrations/index.tsx",
-        "./illustrations/index.js",
-        "./illustrations/index.mjs",
-        "./illustrations/index.cjs",
-        "./illustrations/index.svelte",
-        "./illustrations/index.d.ts",
-        "./illustrations/src/index.ts",
-        "./illustrations/src/index.tsx",
-        "./illustrations/src/index.js",
-        "./illustrations/src/index.mjs",
-        "./illustrations/src/index.cjs",
-        "./illustrations/src/index.svelte",
-        "./illustrations/src/index.d.ts",
-        "./illustrations"
-      ],
-      "@21n/illustrations/*": [
-        "./illustrations/*"
-      ],
-      "@21n/icons-v2": [
-        "./iconsV2/index.ts",
-        "./iconsV2/index.tsx",
-        "./iconsV2/index.js",
-        "./iconsV2/index.mjs",
-        "./iconsV2/index.cjs",
-        "./iconsV2/index.svelte",
-        "./iconsV2/index.d.ts",
-        "./iconsV2/src/index.ts",
-        "./iconsV2/src/index.tsx",
-        "./iconsV2/src/index.js",
-        "./iconsV2/src/index.mjs",
-        "./iconsV2/src/index.cjs",
-        "./iconsV2/src/index.svelte",
-        "./iconsV2/src/index.d.ts",
-        "./iconsV2"
-      ],
-      "@21n/icons-v2/*": [
-        "./iconsV2/*"
       ],
       "@nucleum/client": [
         "./index.ts",
@@ -485,35 +305,75 @@
       "@nucleum/next/*": [
         "./next/noop/*"
       ],
-      "@nucleum/application": [
-        "./application/index.ts",
-        "./application/index.tsx",
-        "./application/index.js",
-        "./application/index.mjs",
-        "./application/index.cjs",
-        "./application/index.svelte",
-        "./application/index.d.ts",
-        "./application/src/index.ts",
-        "./application/src/index.tsx",
-        "./application/src/index.js",
-        "./application/src/index.mjs",
-        "./application/src/index.cjs",
-        "./application/src/index.svelte",
-        "./application/src/index.d.ts",
-        "./application"
+      "@nucleum/composition": [
+        "./composition/index.ts",
+        "./composition/index.tsx",
+        "./composition/index.js",
+        "./composition/index.mjs",
+        "./composition/index.cjs",
+        "./composition/index.svelte",
+        "./composition/index.d.ts",
+        "./composition/src/index.ts",
+        "./composition/src/index.tsx",
+        "./composition/src/index.js",
+        "./composition/src/index.mjs",
+        "./composition/src/index.cjs",
+        "./composition/src/index.svelte",
+        "./composition/src/index.d.ts",
+        "./composition"
       ],
-      "@nucleum/application/*": [
-        "./application/*"
+      "@nucleum/composition/*": [
+        "./composition/*"
+      ],
+      "@nucleum/shell": [
+        "./shell/index.ts",
+        "./shell/index.tsx",
+        "./shell/index.js",
+        "./shell/index.mjs",
+        "./shell/index.cjs",
+        "./shell/index.svelte",
+        "./shell/index.d.ts",
+        "./shell/src/index.ts",
+        "./shell/src/index.tsx",
+        "./shell/src/index.js",
+        "./shell/src/index.mjs",
+        "./shell/src/index.cjs",
+        "./shell/src/index.svelte",
+        "./shell/src/index.d.ts",
+        "./shell"
+      ],
+      "@nucleum/shell/*": [
+        "./shell/*"
+      ],
+      "@nucleum/surfaces": [
+        "./surfaces/index.ts",
+        "./surfaces/index.tsx",
+        "./surfaces/index.js",
+        "./surfaces/index.mjs",
+        "./surfaces/index.cjs",
+        "./surfaces/index.svelte",
+        "./surfaces/index.d.ts",
+        "./surfaces/src/index.ts",
+        "./surfaces/src/index.tsx",
+        "./surfaces/src/index.js",
+        "./surfaces/src/index.mjs",
+        "./surfaces/src/index.cjs",
+        "./surfaces/src/index.svelte",
+        "./surfaces/src/index.d.ts",
+        "./surfaces"
+      ],
+      "@nucleum/surfaces/*": [
+        "./surfaces/*"
       ]
     }
   },
   "include": [
-    "components/**/*",
-    "elements/**/*",
-    "stores/**/*",
-    "products/**/*",
-    "layout/**/*",
-    "extensions/**/*",
-    "next/**/*"
+    "**/*.ts",
+    "**/*.js",
+    "**/*.svelte"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules"
   ]
 }

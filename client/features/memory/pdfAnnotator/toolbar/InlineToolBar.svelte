@@ -1,8 +1,8 @@
 <script lang="ts">
   import { AnnotationType } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.type";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { resolveAnnotationModes } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.utils";
-  import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
+  import type { IToggleItem } from "@21n/ui/elements/toggle/toggle.type";
   let {
     selectedColor = $bindable(""),
     style = "",

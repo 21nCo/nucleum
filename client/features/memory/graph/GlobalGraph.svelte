@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import {
     flushSync,
@@ -9,17 +9,17 @@
     type Snippet
   } from "svelte";
   import GlobalGraphUsingG6 from "@nucleum/features/memory/graph/GlobalGraphUsingG6.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { rootNodeTypeList } from "@nucleum/features/memory/node/node.type";
   import { removeDuplicatesFilter } from "@nucleum/datafn/resource.utils";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { resolveNodeLabelString } from "@nucleum/features/memory/node/node.utils";
   import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import Divider from "@21n/elements/Divider.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";

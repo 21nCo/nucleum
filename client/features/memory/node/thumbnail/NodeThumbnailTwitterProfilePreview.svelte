@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { fileLoaderv2 } from "@nucleum/actions/lazyload.action";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { fileLoaderv2 } from "@21n/ui/actions/lazyload.action";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   let { src }: { src: string } = $props();
 
   function handleImageError(event: Event) {

@@ -1,22 +1,18 @@
 <script lang="ts">
-  import { ChartType } from "@nucleum/components/charts/analytics.type";
-  import Chart from "@nucleum/components/charts/Chart.svelte";
-  import {
-    determineTimePeriodv2,
-    parseAndFormatDate,
-    formatSeconds
-  } from "@21n/utils/time.utils";
+  import { ChartType } from "@21n/ui/compositions/charts/analytics.type";
+  import Chart from "@21n/ui/compositions/charts/Chart.svelte";
+  import { determineTimePeriodv2 } from "@21n/shared-utils/datetime/period";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { TimeScale } from "@21n/utils/time.type";
-  import { getCorrespoingHorizonFrequencyLabel } from "@21n/utils/time.utils";
-  import {
-    resolveSaturationAndLightness,
-    retrieveCurrentColors
-  } from "@21n/utils/theme.utils";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TimeScale } from "@21n/shared-utils/datetime/period.type";
+  import { getCorrespoingHorizonFrequencyLabel } from "@21n/shared-utils/datetime/period";
+  import { resolveSaturationAndLightness, retrieveCurrentColors } from "@21n/theme/color-presentation";
   import { ChartVariant } from "@nucleum/features/focus/analytics/chartVariant.enum";
-  import appearance from "@nucleum/stores/appearance.store";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import {
     AnalyticsCardGrouping,
     AnalyticsCardType,
@@ -25,8 +21,8 @@
     type ChartDataRecord,
     type IAnalyticsLabelColor
   } from "@nucleum/features/focus/analytics/analytics.types";
-  import { cn } from "@21n/utils/ui.utils";
-  import view from "@nucleum/stores/view.store";
+  import { cn } from "@21n/ui/environment/presentation";
+  import view from "@21n/ui/environment/view.store";
   let {
     chart,
     rawData,
@@ -160,6 +156,7 @@
   );
   const options = $derived.by<any>(() => {
     let nextOptions: any = {
+      typeface: $userPreferences?.appearance?.typeface ?? "Sen",
       ...(chart.type === AnalyticsCardType.BAR
         ? { stackedBarMode: chart.stackedBarMode ?? "value" }
         : {}),

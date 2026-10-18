@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Badge from "@21n/elements/text/Badge.svelte";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
   import type { ISessionThumb } from "@nucleum/features/focus/logs/log.type";
   let { item }: { item: ISessionThumb } = $props();
 </script>

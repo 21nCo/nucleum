@@ -1,9 +1,9 @@
 <script lang="ts">
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import type { INodeThumb } from "@nucleum/features/memory/node/node.type";
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import { requireRecordRenderer } from "@nucleum/stores/resources/record-renderer";
+  import { requireRecordRenderer } from "@nucleum/shared-state/resources/record-renderer";
   const Records = requireRecordRenderer();
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { time } from "@datafn/client";

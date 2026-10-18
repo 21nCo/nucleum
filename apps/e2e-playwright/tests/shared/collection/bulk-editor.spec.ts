@@ -38,7 +38,7 @@ async function getSelectedCollectionIds(page: Page) {
     {
       modulePaths: {
         bulkEditStorePath: resolveRepoFsImportPath(
-          "client/stores/resources/bulkedit.store.ts"
+          "client/shared-state/resources/bulkedit.store.ts"
         )
       }
     }

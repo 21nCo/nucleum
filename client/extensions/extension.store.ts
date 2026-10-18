@@ -1,14 +1,14 @@
 import { get } from "svelte/store";
-import { ExtensionEvent } from "@nucleum/extensions/extension.type";
-import { relayToSidePanel } from "$lib/client/utils/extension.utils";
+import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
+import { relayToSidePanel } from "@nucleum/client/runtime/extensions/messaging";
 import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-import { clientStorage } from "$lib/client/persistence/persistence.utils";
-import { getDapId } from "$lib/client/persistence/persistence.utils";
+import { clientStorage } from "$lib/client/persistence/client-storage";
+import { getDapId } from "$lib/client/persistence/device-id";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import type { Extension } from "@nucleum/client/config/product.type";
-import { appStore } from "$lib/client/stores/app.store";
-import account from "$lib/client/stores/account.store";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
+import account from "@nucleum/client/runtime/account/account.store";
 import {
   datafn,
   datafnRuntime,

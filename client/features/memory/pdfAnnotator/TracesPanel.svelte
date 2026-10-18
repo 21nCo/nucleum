@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { hexToRGBA } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.utils";
 
   let {

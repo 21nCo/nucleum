@@ -1,10 +1,10 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import TextArea from "@21n/elements/input/TextArea.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import RecordTrashBanner from "@nucleum/components/records/RecordTrashBanner.svelte";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import TextArea from "@21n/ui/elements/input/TextArea.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import RecordTrashBanner from "@nucleum/features/records/RecordTrashBanner.svelte";
   import type { ICalendarEvent } from "@nucleum/features/calendar/events/event.type";
   import {
     AccessMode,
@@ -12,10 +12,10 @@
   } from "@nucleum/datafn/resource.type";
   import { resolveTrashedAtDate } from "@nucleum/datafn/resource.utils";
   import { datafn } from "@nucleum/datafn/datafn.store";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { toSvelteStore } from "@datafn/svelte";
 
   let {

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { fileUpload } from "@nucleum/stores/files/file-upload";
+  import { fileUpload } from "@nucleum/shared-state/files/file-upload";
 
   import { onDestroy, onMount } from "svelte";
 
   import MediaGridOptions from "@nucleum/features/memory/markdown/mediaGrid/MediaGridOptions.svelte";
   import type { Config } from "@nucleum/features/memory/markdown/mediaGrid/mediaGrid.type";
-  import { dragAndDropStore } from "@nucleum/stores/app.store";
-  import { DragStatus } from "@nucleum/actions/dragstatus.enum";
+  import { dragAndDropStore } from "@nucleum/shared-state/app-context/app.store";
+  import { DragStatus } from "@21n/ui/actions/dragstatus.enum";
   import DraggableMediaGridElement from "@nucleum/features/memory/markdown/mediaGrid/DraggableMediaGridElement.svelte";
-  import type { DragAndDrop } from "@nucleum/actions/draganddrop.type";
+  import type { DragAndDrop } from "@21n/ui/actions/draganddrop.type";
 
   import {
     isReplaceableMd,
@@ -20,10 +20,10 @@
     type IMediaGridNode
   } from "@nucleum/features/memory/node/node.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import type { IFile } from "@nucleum/stores/files/file.type";
+  import type { IFile } from "@nucleum/shared-state/files/file.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
-  import { cn } from "@21n/utils/ui.utils";
-  import { debouncer } from "@21n/utils/utils";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { debouncer } from "@21n/shared-utils/debounce";
   import { datafn } from "@nucleum/datafn/datafn.store";
   let {
     block,

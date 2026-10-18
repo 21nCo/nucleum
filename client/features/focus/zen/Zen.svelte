@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { startTouch, moveTouch } from "@21n/utils/touchGesture";
+  import { startTouch, moveTouch } from "@nucleum/shell/interaction/touch-gestures";
   import { activeSession } from "@nucleum/features/focus/session.store";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";
-  import { isInEditMode } from "@nucleum/stores/app.store";
-  import view from "@nucleum/stores/view.store";
-  import { Size } from "@21n/elements/size.enum";
+  import { isInEditMode } from "@nucleum/shared-state/app-context/app.store";
+  import view from "@21n/ui/environment/view.store";
+  import { Size } from "@21n/ui/elements/size.enum";
   import SessionTimeText from "@nucleum/features/focus/elements/sessionTimeText/SessionTimeText.svelte";
   import ControlBar from "@nucleum/features/focus/elements/controls/ControlBar.svelte";
   import FocusItemList from "@nucleum/features/focus/elements/focusitem/FocusItemList.svelte";
@@ -13,21 +13,21 @@
   import TimeleftIndicator from "@nucleum/features/focus/zen/timeleftindicator/TimeleftIndicator.svelte";
   import { SessionType } from "@nucleum/features/focus/logs/log.type";
   import { AppSkin } from "@21n/theme/appearance.type";
-  import Divider from "@21n/elements/Divider.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import Extras from "@nucleum/features/focus/elements/controls/Extras.svelte";
   import SessionNotes from "@nucleum/features/focus/notes/SessionNotes.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import { fullScreen } from "@nucleum/stores/overlays/modal.store";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { fullScreen } from "@nucleum/shell/overlays/modal.store";
   import { page } from "$app/stores";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { getContext } from "svelte";
   import { readable, type Writable } from "svelte/store";
-  import { Context } from "@nucleum/stores/appStore.type";
-  import type { IContainer } from "@21n/layout/layout.type";
-  import { resolveMinWidth } from "@21n/layout/layout.utils";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
+  import type { IContainer } from "@nucleum/shell/layout.type";
+  import { resolveMinWidth } from "@nucleum/shell/layout.utils";
 
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||

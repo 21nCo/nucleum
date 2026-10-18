@@ -1,3 +1,20 @@
+# Architecture and app verification
+
+- `npm run check:architecture`: checker tests, source/manifest owner boundaries,
+  app alias resolution, consumed workspace exports, and dependency-map parity.
+- `npm run check:type-ownership`: recorded destinations and baseline runtime enum declarations.
+- `npm run check:no-legacy-runtime`: forbidden retired web data runtime references.
+- `node tools/check/architecture.mjs --graph`: observed resolved imports, including type-only and app-host edges.
+
+The owner matrix is acyclic; neither file-level cycles nor aggregate npm peer
+cycles are prohibited by that fact alone. Shared routes resolve app-local
+assembly in every host configured to use the shared route tree. Framework
+modules are external. Missing local targets are reported separately and fail the check.
+Tests/specs are excluded from production boundaries; stories are included.
+Workspace dependency/export checks exclude tests and stories. Retired imports
+remain checked in tests. Unused-file decisions require entrypoint, worker, asset,
+and external-host evidence in addition to this static graph.
+
 # App Check Reporter
 
 `tools/check/run-app-checks.mjs` is the repo-root reporter for the four app workspaces covered by the check-fix spec.
@@ -7,18 +24,18 @@
 - `npm run check:apps`
 - `node tools/check/run-app-checks.mjs --format=json`
 - `node tools/check/run-app-checks.mjs --format=text`
-- `node tools/check/run-app-checks.mjs --workspace=nucleus-app --format=json`
-- `node tools/check/run-app-checks.mjs --workspace=memotron-app --format=json`
-- `node tools/check/run-app-checks.mjs --workspace=pointron-app --format=json`
+- `node tools/check/run-app-checks.mjs --workspace=@nucleum/app --format=json`
+- `node tools/check/run-app-checks.mjs --workspace=@memotron/app --format=json`
+- `node tools/check/run-app-checks.mjs --workspace=pointron --format=json`
 - `node tools/check/run-app-checks.mjs --workspace=timear --format=json`
 
 ## Workspace order
 
 The reporter always evaluates workspaces in this deterministic order:
 
-1. `nucleus-app`
-2. `memotron-app`
-3. `pointron-app`
+1. `@nucleum/app`
+2. `@memotron/app`
+3. `pointron`
 4. `timear`
 
 If `--workspace` is provided, the reporter filters that list without changing the canonical ordering.

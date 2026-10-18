@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import type {
     INode,
     INodeLinkThumb,
@@ -8,7 +8,7 @@
   } from "@nucleum/features/memory/node/node.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import LinkTagger from "@nucleum/features/memory/linking/LinkTagger.svelte";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
   import LinkTags from "@nucleum/features/memory/linking/LinkTags.svelte";
   import NodeThumbnail from "@nucleum/features/memory/node/thumbnail/NodeThumbnail.svelte";
   import LinkTypeIndicator from "./LinkTypeIndicator.svelte";

@@ -11,22 +11,26 @@
   "dependencies": {
     "@21n/shared-utils": "*",
     "@authfn/client": "0.2.0",
+    "@datafn/client": "0.1.0",
     "@nucleum/schema": "*",
     "@superfunctions/http": "0.2.0",
     "pdf-lib": "^1.17.1",
     "svelte": "^5.55.0",
-    "svelte-preprocess": "^5.1.1"
+    "svelte-preprocess": "^5.1.1",
+    "@nucleum/shell": "*",
+    "@nucleum/surfaces": "*",
+    "heic2any": "^0.0.4",
+    "posthog-js": "^1.154.0",
+    "@plasmohq/messaging": "^0.6.2"
   },
   "peerDependencies": {
-    "@21n/branding": "*",
-    "@21n/elements": "*",
-    "@21n/icons": "*",
-    "@21n/layout": "*",
-    "@21n/utils": "*",
-    "@nucleum/application": "*",
+    "@21n/theme": "*",
+    "@nucleum/composition": "*",
+    "@nucleum/shared-state": "*",
     "@nucleum/datafn": "*",
     "@nucleum/persistence": "*",
     "@nucleum/products": "*",
-    "@nucleum/stores": "*"
+    "@21n/ui": "*",
+    "@nucleum/extensions": "*"
   }
 }

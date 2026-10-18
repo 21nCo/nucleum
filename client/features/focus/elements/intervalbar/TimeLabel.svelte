@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { activeSession } from "@nucleum/features/focus/session.store";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
@@ -10,11 +10,11 @@
   } from "@nucleum/features/focus/sessionComposition.type";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
   import { SessionType } from "@nucleum/features/focus/logs/log.type";
-  import { currentTime } from "@nucleum/stores/app.store";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { formatTime } from "@21n/utils/time.utils";
+  import { currentTime } from "@nucleum/shared-state/app-context/app.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
   import { onMount } from "svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     label = "start",
     context = SessionUIContext.DEFAULT,

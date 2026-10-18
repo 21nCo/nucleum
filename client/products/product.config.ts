@@ -1,9 +1,14 @@
-import { Extension, OverviewPanel, Product } from "@nucleum/client/config/product.type";
+import {
+  Extension,
+  OverviewPanel,
+  Product
+} from "@nucleum/client/config/product.type";
 import { getProductNavConfig } from "@nucleum/client/config/product-nav.config";
+import { PlanType } from "@nucleum/schema/account/subscription";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { Action } from "@nucleum/client/config/action.enum";
 import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
-import type { ISelectItem } from "@21n/elements/select/select.type";
+import type { ISelectItem } from "@21n/ui/elements/select/select.type";
 import {
   nextProducts,
   nextResourceTableMap,
@@ -28,6 +33,8 @@ interface SettingsSection {
 type IProductConfigBase = ISharedProductConfigBase;
 
 export interface IAppConfigBase extends IProductConfigBase {
+  /** Plan required for authenticated access; offline-only sessions remain available. */
+  requiredPlan?: PlanType;
   /**
    * @deprecated
    */
@@ -102,6 +109,7 @@ const resolveClientProductResources = (productName: Product) => {
 
 export const products: Record<string, IAppConfigBase> = {
   [Product.NUCLEUM]: {
+    requiredPlan: PlanType.NUCLEUS,
     ...resolveBaseSharedProductConfig(Product.NUCLEUM),
     appMenu: (isDev && nucleusNav.appMenuDev
       ? nucleusNav.appMenuDev

@@ -11,12 +11,13 @@
   import MastodonPostWidget from "@nucleum/features/memory/node/content/web/social/MastodonPostWidget.svelte";
   import BlueskyPostWidget from "@nucleum/features/memory/node/content/web/social/BlueskyPostWidget.svelte";
   import ThreadsPostWidget from "@nucleum/features/memory/node/content/web/social/ThreadsPostWidget.svelte";
-  import account from "@nucleum/stores/account.store";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { isCloudUserAndOnline } from "@nucleum/client/runtime/account/account.utils";
   import SocialPostContentFallback from "@nucleum/features/memory/node/content/web/social/SocialPostContentFallback.svelte";
-  import context from "@nucleum/stores/context.store";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import context from "@nucleum/client/runtime/context.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
 
   let {
     node,
@@ -40,7 +41,7 @@
   }
 
   function shouldShowWidget() {
-    if (!account.isCloudUserAndOnline()) return false;
+    if (!isCloudUserAndOnline($account, $context.isInOfflineMode)) return false;
 
     const supportedWidgets = [
       NodeType.TWEET,

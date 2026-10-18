@@ -1,6 +1,6 @@
 <script lang="ts">
-  import appearance from "@nucleum/stores/appearance.store";
-  import { retrieveCurrentColors } from "@21n/utils/theme.utils";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
+  import { retrieveCurrentColors } from "@21n/theme/color-presentation";
   import { onMount, onDestroy } from "svelte";
   let canvasElement: HTMLCanvasElement;
   let canvasContext: CanvasRenderingContext2D;

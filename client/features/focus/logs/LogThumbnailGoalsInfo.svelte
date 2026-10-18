@@ -4,7 +4,7 @@
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
 
   let { session }: { session: ISessionThumb } = $props();
 

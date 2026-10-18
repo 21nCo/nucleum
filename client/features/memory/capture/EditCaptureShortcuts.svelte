@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { Resource } from "@nucleum/datafn/resource.enum";
   import type { ICollectionThumb } from "@nucleum/features/collections/collection.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import Switch from "@21n/elements/toggle/Switch.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import Switch from "@21n/ui/elements/toggle/Switch.svelte";
 
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import CollectionThumbnailLabel from "@nucleum/features/collections/thumbnail/CollectionThumbnailLabel.svelte";
-  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import InlineSearchBar from "@21n/ui/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
 

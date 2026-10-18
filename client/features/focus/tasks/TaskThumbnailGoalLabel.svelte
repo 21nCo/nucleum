@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";
-  import { Size } from "@21n/elements/size.enum";
-  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import context from "@nucleum/stores/context.store";
+  import { cn } from "@21n/ui/environment/presentation";
+  import context from "@nucleum/client/runtime/context.store";
 
   import {
     AccessMode,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
   import { Embed } from "@nucleum/client/runtime/context.type";
 

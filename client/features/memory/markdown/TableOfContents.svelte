@@ -5,20 +5,20 @@
   } from "@nucleum/features/memory/markdown/md.type";
   import { onMount } from "svelte";
   import { getMdStore } from "@nucleum/features/memory/markdown/markdown.store";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { headingNodeTypes } from "@nucleum/features/memory/node/node.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import { Placement } from "@21n/elements/direction.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import { Placement } from "@21n/ui/elements/direction.enum";
   import {
     isSameResource,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
   import TableOfContentsList from "@nucleum/features/memory/markdown/TableOfContentsList.svelte";
-  import { hoverable } from "@nucleum/actions/hover.action";
+  import { hoverable } from "@21n/ui/actions/hover.action";
   let {
     mdId,
     isHideEmptyPlaceholder = false,

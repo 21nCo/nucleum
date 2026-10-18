@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { untrack } from "svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
@@ -9,36 +9,36 @@
   } from "@nucleum/datafn/resource.type";
   import type { ITaskThumb } from "@nucleum/features/focus/tasks/task.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { recentsStore } from "@nucleum/stores/resources/recent.store";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import Button from "@21n/elements/button/Button.svelte";
+  import { recentsStore } from "@nucleum/shared-state/resources/recent.store";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import TaskCheckbox from "@nucleum/features/focus/tasks/TaskCheckbox.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { appStore } from "@nucleum/stores/app.store";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "@nucleum/stores/notifications/notification.type";
+  } from "@nucleum/shared-state/notifications/notification.type";
   import TaskThumbnailObjectiveLabel from "@nucleum/features/focus/tasks/TaskThumbnailGoalLabel.svelte";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
-  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import { Product } from "@nucleum/client/config/product.type";
   import {
     activeSession,
     currentFocusItem
   } from "@nucleum/features/focus/session.store";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import RecordTrashBanner from "@nucleum/components/records/RecordTrashBanner.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import view from "@nucleum/stores/view.store";
+  import RecordTrashBanner from "@nucleum/features/records/RecordTrashBanner.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import view from "@21n/ui/environment/view.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import { resolveTrashedAtDate } from "@nucleum/datafn/resource.utils";

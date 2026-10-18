@@ -14,30 +14,30 @@ const DEFAULT_FORMAT = "json";
 const SUPPORTED_FORMATS = new Set(["json", "text"]);
 const WORKSPACES = [
   {
-    name: "nucleus-app",
+    name: "@nucleum/app",
     cwd: "apps/nucleus",
-    tsconfigPath: "apps/nucleus/tsconfig.json",
+    tsconfigPath: "apps/nucleus/tsconfig.json"
   },
   {
-    name: "memotron-app",
+    name: "@memotron/app",
     cwd: "apps/memotron",
-    tsconfigPath: "apps/memotron/tsconfig.json",
+    tsconfigPath: "apps/memotron/tsconfig.json"
   },
   {
-    name: "pointron-app",
+    name: "pointron",
     cwd: "apps/pointron",
-    tsconfigPath: "apps/pointron/tsconfig.json",
+    tsconfigPath: "apps/pointron/tsconfig.json"
   },
   {
     name: "timear",
     cwd: "apps/timear",
-    tsconfigPath: "apps/timear/tsconfig.json",
-  },
+    tsconfigPath: "apps/timear/tsconfig.json"
+  }
 ];
 const ERROR_CODES = {
   baselineFailed: "CHK_BASELINE_FAILED",
   configRollback: "CHK_CONFIG_ROLLBACK",
-  reporterUsage: "CHK_REPORTER_USAGE",
+  reporterUsage: "CHK_REPORTER_USAGE"
 };
 
 function sanitizeMessage(message) {
@@ -52,13 +52,19 @@ function toRepoPath(value) {
   return path.relative(REPO_ROOT, value).split(path.sep).join("/");
 }
 
-function buildEnvelope({ status, generatedAt, workspaceOrder, results, errors }) {
+function buildEnvelope({
+  status,
+  generatedAt,
+  workspaceOrder,
+  results,
+  errors
+}) {
   return {
     status,
     generatedAt,
     workspaceOrder,
     results,
-    errors,
+    errors
   };
 }
 
@@ -71,9 +77,9 @@ function buildUsageFailure(generatedAt, message) {
     errors: [
       {
         code: ERROR_CODES.reporterUsage,
-        message,
-      },
-    ],
+        message
+      }
+    ]
   });
 }
 
@@ -88,7 +94,7 @@ function parseArgs(argv) {
       index += 1;
       if (index >= argv.length) {
         return {
-          error: "Unsupported format",
+          error: "Unsupported format"
         };
       }
       format = argv[index];
@@ -104,7 +110,7 @@ function parseArgs(argv) {
       index += 1;
       if (index >= argv.length) {
         return {
-          error: "Unsupported workspace",
+          error: "Unsupported workspace"
         };
       }
       requestedWorkspaces.push(argv[index]);
@@ -117,21 +123,23 @@ function parseArgs(argv) {
     }
 
     return {
-      error: `Unsupported argument: ${argument}`,
+      error: `Unsupported argument: ${argument}`
     };
   }
 
   if (!SUPPORTED_FORMATS.has(format)) {
     return {
-      error: "Unsupported format",
+      error: "Unsupported format"
     };
   }
 
   const requestedWorkspaceSet = new Set(requestedWorkspaces);
   for (const requestedWorkspace of requestedWorkspaceSet) {
-    if (!WORKSPACES.some((workspace) => workspace.name === requestedWorkspace)) {
+    if (
+      !WORKSPACES.some((workspace) => workspace.name === requestedWorkspace)
+    ) {
       return {
-        error: "Unsupported workspace",
+        error: "Unsupported workspace"
       };
     }
   }
@@ -139,11 +147,13 @@ function parseArgs(argv) {
   const selectedWorkspaces =
     requestedWorkspaceSet.size === 0
       ? WORKSPACES
-      : WORKSPACES.filter((workspace) => requestedWorkspaceSet.has(workspace.name));
+      : WORKSPACES.filter((workspace) =>
+          requestedWorkspaceSet.has(workspace.name)
+        );
 
   return {
     format,
-    workspaces: selectedWorkspaces,
+    workspaces: selectedWorkspaces
   };
 }
 
@@ -160,7 +170,7 @@ function auditWorkspaceConfigs(workspaces) {
     const compilerOptions = config.compilerOptions ?? {};
     const checks = [
       ["strict", compilerOptions.strict],
-      ["checkJs", compilerOptions.checkJs],
+      ["checkJs", compilerOptions.checkJs]
     ];
 
     for (const [field, value] of checks) {
@@ -169,7 +179,7 @@ function auditWorkspaceConfigs(workspaces) {
           code: ERROR_CODES.configRollback,
           workspace: workspace.name,
           path: workspace.tsconfigPath,
-          message: `${field} must remain true`,
+          message: `${field} must remain true`
         });
       }
     }
@@ -181,13 +191,15 @@ function auditWorkspaceConfigs(workspaces) {
 function parseSummaryCounts(output) {
   const normalizedOutput = stripAnsi(output);
   const matches = Array.from(
-    normalizedOutput.matchAll(/svelte-check found\s+(\d+)\s+errors?\s+and\s+(\d+)\s+warnings?/gi),
+    normalizedOutput.matchAll(
+      /svelte-check found\s+(\d+)\s+errors?\s+and\s+(\d+)\s+warnings?/gi
+    )
   );
 
   if (matches.length === 0) {
     return {
       errors: 0,
-      warnings: 0,
+      warnings: 0
     };
   }
 
@@ -195,18 +207,22 @@ function parseSummaryCounts(output) {
 
   return {
     errors: Number(lastMatch[1]),
-    warnings: Number(lastMatch[2]),
+    warnings: Number(lastMatch[2])
   };
 }
 
 function runWorkspaceCheck(workspace) {
   const startedAt = Date.now();
-  const child = spawnSync(NPM_COMMAND, ["run", "check", `--workspace=${workspace.name}`], {
-    cwd: REPO_ROOT,
-    encoding: "utf8",
-    env: process.env,
-    maxBuffer: 1024 * 1024 * 64,
-  });
+  const child = spawnSync(
+    NPM_COMMAND,
+    ["run", "check", `--workspace=${workspace.cwd}`],
+    {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      env: process.env,
+      maxBuffer: 1024 * 1024 * 64
+    }
+  );
   const durationMs = Date.now() - startedAt;
   const output = `${child.stdout ?? ""}\n${child.stderr ?? ""}`;
   const summary = parseSummaryCounts(output);
@@ -217,7 +233,7 @@ function runWorkspaceCheck(workspace) {
     exitCode: child.status ?? 1,
     errors: summary.errors,
     warnings: summary.warnings,
-    durationMs,
+    durationMs
   };
 }
 
@@ -228,7 +244,7 @@ function summarizeFailures(results) {
       code: ERROR_CODES.baselineFailed,
       workspace: result.workspace,
       path: result.cwd,
-      message: "Workspace check failed",
+      message: "Workspace check failed"
     }));
 }
 
@@ -242,7 +258,7 @@ function formatTextEnvelope(envelope) {
       `exitCode=${result.exitCode}`,
       `errors=${result.errors}`,
       `warnings=${result.warnings}`,
-      `durationMs=${result.durationMs}`,
+      `durationMs=${result.durationMs}`
     ].join(" ");
   });
 
@@ -293,7 +309,7 @@ function main() {
     generatedAt,
     workspaceOrder,
     results,
-    errors,
+    errors
   });
 
   printEnvelope(parsed.format, envelope);

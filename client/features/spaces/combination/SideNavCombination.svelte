@@ -3,12 +3,12 @@
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@nucleum/client/utils/ui.utils";
-  import Button from "@nucleum/client/elements/button/Button.svelte";
-  import TextInput from "@nucleum/client/elements/input/TextInput.svelte";
-  import EmptyStatusView from "@nucleum/client/elements/feedback/EmptyStatusView.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import {
     CombinationNavItemType,
     type ICombinationNavItem
@@ -20,7 +20,7 @@
   import CombinationTOC from "@nucleum/features/spaces/combination/CombinationTOC.svelte";
   import { findItemPath, getItemByPath } from "@nucleum/features/spaces/combination/combination.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { acquireDnDPage, appStore } from "@nucleum/client/stores/app.store";
+  import { acquireDnDPage, appStore } from "@nucleum/shared-state/app-context/app.store";
   let {
     id,
     accessMode = AccessMode.INLINE,

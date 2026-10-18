@@ -1,6 +1,6 @@
-import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import { logger } from "@nucleum/client/runtime/logging/logger";
-import { toasts } from "@nucleum/stores/notification.store";
+import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 
 import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 

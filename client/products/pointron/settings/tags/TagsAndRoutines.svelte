@@ -1,5 +1,5 @@
 <script>
-  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import FormControlLabel from "@21n/ui/elements/text/formLabel/FormControlLabel.svelte";
   import TagsList from "@nucleum/products/pointron/settings/tags/TagsList.svelte";
 </script>
 

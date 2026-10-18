@@ -1,23 +1,23 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import LinkboxOnCapture from "@nucleum/features/memory/common/linkbox/LinkboxOnCapture.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import { Size } from "@21n/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { CaptureMethod, type ICaptureLink } from "@nucleum/features/memory/capture/capture.type";
-  import view from "@nucleum/stores/view.store";
-  import Tag from "@21n/elements/text/Tag.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import Divider from "@21n/elements/Divider.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import Tag from "@21n/ui/elements/text/Tag.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import Divider from "@21n/ui/elements/Divider.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { KeyboardKey, ModifierKey } from "@21n/elements/keyboard/keyboard.type";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { KeyboardKey, ModifierKey } from "@21n/ui/elements/keyboard/keyboard.type";
   import CaptureTitle from "@nucleum/features/memory/capture/CaptureTitle.svelte";
   import type { IActiveCaptureStore } from "@nucleum/features/memory/capture/capture.store";
   import { LinkType } from "@nucleum/datafn/link.type";
   import { CollectionType } from "@nucleum/features/collections/collection.type";
   import { tick } from "svelte";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { haptic } from "@nucleum/client/runtime/embed/embed.utils";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 

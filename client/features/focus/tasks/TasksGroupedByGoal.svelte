@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import type { ITaskThumb } from "./task.type";
-  import type { Arrangement } from "@21n/elements/direction.enum";
+  import type { Arrangement } from "@21n/ui/elements/direction.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import TaskThumbnail from "./TaskThumbnail.svelte";
   import TaskThumbnailObjectiveLabel from "./TaskThumbnailGoalLabel.svelte";
   import type { IObjectiveThumb } from "../goals/goal.type";
   import CreateTaskInlineWizard from "./CreateTaskInlineWizard.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { truncateString } from "@21n/shared-utils/text.utils";
 
   let {

@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Product } from "@nucleum/client/config/product.type";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "@21n/elements/switcher/switcher.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  } from "@21n/ui/elements/switcher/switcher.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import CalendarColumnTasksPanel from "@nucleum/features/calendar/column/CalendarColumnTasksPanel.svelte";
   import CalendarColumnEventsPanel from "@nucleum/features/calendar/column/CalendarColumnEventsPanel.svelte";
   import { CalendarColumnLayout } from "@nucleum/features/calendar/calendar.type";
   import DayTimeline from "@nucleum/features/calendar/column/timeline/daytimeline/DayTimeline.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
-  import { TimeScaleUnit } from "@21n/utils/time.type";
-  import BoxButton from "@21n/elements/button/BoxButton.svelte";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import ButtonGroup from "@21n/ui/elements/button/ButtonGroup.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
+  import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
+  import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import { Action } from "@nucleum/client/config/action.enum";

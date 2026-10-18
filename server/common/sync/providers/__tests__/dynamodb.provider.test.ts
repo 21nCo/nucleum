@@ -10,8 +10,8 @@ import {
 } from "vitest";
 import { DynamoDBSyncProvider } from "../dynamodb.provider";
 import { Agent } from "$lib/server/common/account/account.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import { Resource } from "@nucleum/datafn/resource.enum";
+import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import {
   PersistenceActionType,
   IMutationParamsv2

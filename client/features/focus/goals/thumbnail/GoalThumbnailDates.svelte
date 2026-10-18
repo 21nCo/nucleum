@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
 
   let { item }: { item: IObjectiveThumb } = $props();

@@ -1,6 +1,6 @@
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import type { IClip } from "@nucleum/features/memory/node/node.type";
-import type { AlertType } from "@nucleum/stores/notifications/notification.type";
+import type { AlertType } from "@nucleum/shared-state/notifications/notification.type";
 import type { ICollectionItemPropertyValue } from "@nucleum/features/collections/collection.type";
 export interface IWebpageStore {
   url: string;

@@ -10,23 +10,23 @@
     getQuery
   } from "@nucleum/extensions/clipper/contentScripts/getQuery";
   import { onMount } from "svelte";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import {
     type IClipCapture,
     type ITextClip
   } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { ExtensionEvent } from "@nucleum/extensions/extension.type";
-  import { webpage } from "@nucleum/extensions/clipper/contentScripts/store";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import type { IHighlighter } from "@nucleum/features/memory/common/highlighters/highlight.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { highlightStore } from "@nucleum/features/memory/common/highlighters/highlight.store";
 
-  import { activeResourceFilter } from "@21n/utils/utils";
+  import { activeResourceFilter } from "@nucleum/datafn/resource-filters";
   import { isRecordId } from "@nucleum/datafn/resource.utils";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
 
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };

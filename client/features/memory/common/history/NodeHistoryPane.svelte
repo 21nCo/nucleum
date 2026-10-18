@@ -4,11 +4,11 @@
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import HistoryItem from "@nucleum/features/memory/common/history/HistoryItem.svelte";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import type { IAccessLog } from "@nucleum/features/system/accessLogging/accessLog.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import type { IAccessLog } from "@nucleum/shared-state/resources/history/access-log.type";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
 

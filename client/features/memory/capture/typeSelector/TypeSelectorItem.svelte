@@ -1,17 +1,17 @@
 <script lang="ts">
-  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import context from "@nucleum/stores/context.store";
+  import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
-  import type { ISelectItem } from "@21n/elements/select/select.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import type { ISelectItem } from "@21n/ui/elements/select/select.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { fade } from "svelte/transition";
   import { CaptureMethod } from "@nucleum/features/memory/capture/capture.type";
-  import view from "@nucleum/stores/view.store";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState } from "@nucleum/stores/uiState/uiState.type";
+  import view from "@21n/ui/environment/view.store";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import {
     isSameResource,
     removeDuplicatesFilter,

@@ -5,6 +5,18 @@ import {
   getAnyVisibleLocator
 } from "./locator-assertions";
 
+/** Opens root Settings by selecting its exact command result. */
+export async function openRootSettingsFromCommand(page: Page) {
+  await page.getByRole("button", { name: /command bar/i }).click();
+  const input = page.getByTestId("command-bar-input");
+  await expect(input).toBeVisible();
+  await input.fill("Settings");
+  await page
+    .getByRole("button", { name: "Settings action", exact: true })
+    .click();
+  await expect(page.getByTestId("settings-sidebar")).toBeVisible();
+}
+
 export async function assertSettingsShellVisible(page: Page) {
   const sidebar = page.getByTestId("settings-sidebar");
   const modalClose = page.getByTestId("modal-close");

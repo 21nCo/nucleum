@@ -1,17 +1,17 @@
 <script lang="ts">
   import type { IVideoTimestampClip } from "@nucleum/features/memory/node/node.type";
-  import { cn } from "@21n/utils/ui.utils";
-  import FileView from "@nucleum/components/files/FileView.svelte";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { webpage } from "@nucleum/extensions/clipper/contentScripts/store";
+  import { cn } from "@21n/ui/environment/presentation";
+  import FileView from "@21n/ui/compositions/files/FileView.svelte";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
   import { checkIfVideoPaused } from "@nucleum/extensions/clipper/parsers/shared/video.utils";
   import { pauseVideo } from "@nucleum/extensions/clipper/parsers/shared/video.utils";
   import { onMount } from "svelte";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     clip,

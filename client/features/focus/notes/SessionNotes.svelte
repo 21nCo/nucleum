@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Text from "@21n/elements/text/Text.svelte";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "@nucleum/stores/notifications/notification.type";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  } from "@nucleum/shared-state/notifications/notification.type";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { activeSession } from "@nucleum/features/focus/session.store";
   import FocusNotes from "@nucleum/features/focus/notes/FocusNotes.svelte";
   import type { IMarkdown } from "@nucleum/features/memory/markdown/md.type";

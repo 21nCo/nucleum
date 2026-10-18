@@ -1,8 +1,8 @@
 <script lang="ts">
   import dayjs from "dayjs";
   import type { CalendarTimelineEntry } from "@nucleum/features/calendar/calendar.type";
-  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
-  import { resizeListener } from "@nucleum/actions/resize.action";
+  import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
 
   let {
     entry
@@ -45,6 +45,7 @@
   }}
 >
   {#if entry.component}
+    {@const ComponentResolver = requireActionRenderer()}
     <ComponentResolver
       path={entry.component}
       params={{ item: entry.item, height, isOverlapping }}

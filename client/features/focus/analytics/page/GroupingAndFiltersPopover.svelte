@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Text from "@21n/elements/text/Text.svelte";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
 
   let {
     isGroupByTopLevelObjectives = $bindable(false),

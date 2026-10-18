@@ -1,4 +1,4 @@
-import type { IconVariant } from "@21n/elements/icon.type";
+import type { IconVariant } from "@21n/ui/elements/icon.type";
 
 export type DynamicIconProp = {
   name: string;

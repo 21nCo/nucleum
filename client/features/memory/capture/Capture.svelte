@@ -1,48 +1,49 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import Writer from "@nucleum/features/memory/capture/Writer.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import { acquireDnDPage, isInEditMode } from "@nucleum/stores/app.store";
-  import { cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { acquireDnDPage, isInEditMode } from "@nucleum/shared-state/app-context/app.store";
+  import { cn } from "@21n/ui/environment/presentation";
   import TypeSelector from "@nucleum/features/memory/capture/TypeSelector.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { CaptureMethod } from "@nucleum/features/memory/capture/capture.type";
   import FileUploader from "@nucleum/features/memory/capture/FileUploader.svelte";
   import { onDestroy, onMount, setContext } from "svelte";
   import { page } from "$app/stores";
-  import Icon from "@21n/elements/Icon.svelte";
-  import view from "@nucleum/stores/view.store";
-  import context from "@nucleum/stores/context.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { postMessageToParent } from "@nucleum/client/runtime/embed/embed.utils";
   import { EmbedMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
-  import type { IEvent } from "@21n/elements/input/event.type";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
+  import type { IEvent } from "@21n/ui/elements/input/event.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "@nucleum/features/memory/capture/capture.store";
   import CaptureDraftsAction from "@nucleum/features/memory/capture/draftSelector/CaptureDraftsAction.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import { GlobalEvent } from "@nucleum/stores/notifications/event.enum";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import CaptureTopBar from "@nucleum/features/memory/capture/CaptureTopBar.svelte";
   import WebCaptureModal from "@nucleum/features/memory/capture/web/WebCaptureModal.svelte";
   import type { WebArtifact } from "@nucleum/features/memory/capture/web/webCapture.types";
   import { fly } from "svelte/transition";
 
-  import ComponentShortcutListener from "@nucleum/components/keyboard/ComponentShortcutListener.svelte";
+  import ComponentShortcutListener from "@21n/ui/compositions/keyboard/ComponentShortcutListener.svelte";
+  import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 
-  import { Context } from "@nucleum/stores/appStore.type";
-  import EdgeButton from "@21n/elements/button/EdgeButton.svelte";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
+  import EdgeButton from "@21n/ui/elements/button/EdgeButton.svelte";
 
   let {
     captureId = generateResourceId(Resource.capture),
@@ -304,6 +305,7 @@
 />
 
 <ComponentShortcutListener
+  checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
   isAllowFromTextInput={true}
   shortcuts={[
     {

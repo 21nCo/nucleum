@@ -1,8 +1,8 @@
 <script lang="ts">
   import { highlightStore } from "@nucleum/features/memory/common/highlighters/highlight.store";
   import HightlightColorItem from "@nucleum/features/memory/common/highlighters/HightlightColorItem.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     selected = $bindable(null),
     orientation = Orientation.Horizontal,

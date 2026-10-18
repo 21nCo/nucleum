@@ -22,7 +22,7 @@
   "products": {
     "nucleum": {
       "appPath": "apps/nucleus",
-      "workspace": "nucleus-app",
+      "workspace": "@nucleum/app",
       "domain": "nucleum.app",
       "viteProduct": "nucleum",
       "env": {
@@ -39,7 +39,7 @@
     },
     "memotron": {
       "appPath": "apps/memotron",
-      "workspace": "memotron-app",
+      "workspace": "@memotron/app",
       "domain": "memotron.app",
       "viteProduct": "memotron",
       "env": {
@@ -57,7 +57,7 @@
     },
     "pointron": {
       "appPath": "apps/pointron",
-      "workspace": "pointron-app",
+      "workspace": "pointron",
       "domain": "pointron.app",
       "viteProduct": "pointron",
       "env": {

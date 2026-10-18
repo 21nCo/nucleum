@@ -1,6 +1,6 @@
 <script lang="ts">
   import CalendarHistoryPanel from "@nucleum/features/calendar/column/CalendarHistoryPanel.svelte";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { page } from "$app/stores";
   let {
     date = new Date(

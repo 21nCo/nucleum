@@ -1,8 +1,8 @@
 <script lang="ts">
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
-  import { TimeFormat } from "@21n/utils/time.type";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
 
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { activeSession } from "@nucleum/features/focus/session.store";
   import { Product } from "@nucleum/client/config/product.type";
   import { resolveProductConfig } from "@nucleum/products/product.config";

@@ -1,5 +1,5 @@
 import type { IProperty } from "@nucleum/features/collections/properties/property.type";
-import type { IAvatar } from "@21n/elements/avatarPicker/avatar.type";
+import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import type { IResource, IResourceShareable, IResourceStarrable } from "@nucleum/datafn/resource.type";
 
 type TypeBase = IResource & IResourceShareable & Partial<IResourceStarrable> & {

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import view from "@nucleum/stores/view.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import view from "@21n/ui/environment/view.store";
   import { isEmptyArray } from "@21n/shared-utils/obj.utils";
-  import { formatTime } from "@21n/utils/time.utils";
+  import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
   import IntervalBarItem from "@nucleum/features/focus/elements/intervalbar/IntervalBarItem.svelte";
   import type { ISessionInterval } from "@nucleum/features/focus/session.type";
   import MoreBarsInfo from "@nucleum/features/focus/elements/intervalbar/MoreBarsInfo.svelte";

@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { appearance } from "@nucleum/stores/appearance.store";
-  import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { appearance } from "@nucleum/shared-state/appearance/appearance.store";
+  import ThemeLayer from "@nucleum/shell/layers/themeLayer/ThemeLayer.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     id,

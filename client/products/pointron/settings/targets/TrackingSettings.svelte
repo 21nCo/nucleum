@@ -1,14 +1,14 @@
 <script lang="ts">
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
-  import MultiselectDropdown from "@21n/elements/dropdown/MultiselectDropdown.svelte";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { TimeScale } from "@21n/utils/time.type";
+  import MultiselectDropdown from "@21n/ui/elements/dropdown/MultiselectDropdown.svelte";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { TimeScale } from "@21n/shared-utils/datetime/period.type";
   import TargetInput from "@nucleum/products/pointron/settings/targets/TargetInput.svelte";
   import { onMount } from "svelte";
   import { properCase } from "@21n/shared-utils/text.utils";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import type { ISelectValue } from "@21n/elements/select/select.type";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   let timescaleOptions = $userPreferences.timeScales
     ? $userPreferences.timeScales.map((x) => {
         return { label: properCase(x), value: x };

@@ -14,10 +14,10 @@ import {
   isNoneResource,
   resourceInList
 } from "@nucleum/datafn/resource.utils";
-import type { ISelectItem } from "@21n/elements/select/select.type";
+import type { ISelectItem } from "@21n/ui/elements/select/select.type";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { Product } from "@nucleum/client/config/product.type";
-import type { IAvatar } from "@21n/elements/avatarPicker/avatar.type";
+import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import { datafn } from "@nucleum/datafn/datafn.store";
 
 export const UNASSIGNED_VALUE = "unassigned";

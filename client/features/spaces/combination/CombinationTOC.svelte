@@ -7,8 +7,8 @@
     type IActiveNodeStore
   } from "@nucleum/features/memory/node/node.store";
   import { headingNodeTypes } from "@nucleum/features/memory/node/node.type";
-import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { cn } from "@nucleum/client/utils/ui.utils";
+  import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     resourceId = undefined,

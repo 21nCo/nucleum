@@ -1,9 +1,9 @@
 <script lang="ts">
   import LinkItems from "@nucleum/features/memory/common/linkbox/LinkItems.svelte";
   import LinkSearch from "@nucleum/features/memory/common/linkbox/LinkSearch.svelte";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import { AlertType, type IInlineStatus } from "@nucleum/stores/notifications/notification.type";
+  import { AlertType, type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import {
     determineResourceType,
@@ -17,7 +17,7 @@
   } from "@nucleum/features/memory/node/node.type";
   import { LinkType } from "@nucleum/datafn/link.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
   let {

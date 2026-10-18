@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { IAudioMetadata } from "@nucleum/features/memory/node/node.type";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import BasicInfoItem from "@nucleum/features/memory/node/metadata/BasicInfoItem.svelte";
   let {
     metadata,

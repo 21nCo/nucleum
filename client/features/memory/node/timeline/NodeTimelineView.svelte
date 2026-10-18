@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import type {
     INode,
@@ -10,12 +10,12 @@
     isSameResource,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
   import { resolveNodeLabelString } from "@nucleum/features/memory/node/node.utils";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { linkTagLabelMapper } from "@nucleum/features/memory/linking/link.utils";
   import type { ILinkTag } from "@nucleum/datafn/link.type";
   import { datafn } from "@nucleum/datafn/datafn.store";

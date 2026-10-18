@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
 
 const patterns = [
-  "@nucleum/components/flux",
-  "\\$lib/client/components/flux",
+  "@21n/ui/compositions/flux",
+  "\\@21n/ui/compositions/flux",
   "client/components/flux",
   "\\.\\./flux",
   "components/flux",

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
   let {
     label = $bindable<string | undefined>(undefined),
     onSave = undefined

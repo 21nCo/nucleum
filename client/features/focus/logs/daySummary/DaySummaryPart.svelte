@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Divider from "@21n/elements/Divider.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
   import type { DaySummary } from "@nucleum/features/focus/logs/log.type";
   import DaySummaryTotalItem from "@nucleum/features/focus/logs/daySummary/DaySummaryTotalItem.svelte";
 

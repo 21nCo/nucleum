@@ -1,31 +1,32 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { resolveTaskContextMenu } from "./task.store";
   import type { ITaskThumb } from "@nucleum/features/focus/tasks/task.type";
-  import { Arrangement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import {
     AccessMode,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
-  import ResourceThumbnailBase from "@nucleum/components/records/ResourceThumbnailBase.svelte";
-  import { compareDates, parseAndFormatDate } from "@21n/utils/time.utils";
+  import ResourceThumbnailBase from "@nucleum/features/records/ResourceThumbnailBase.svelte";
+  import { compareDates } from "@21n/shared-utils/datetime/date-arithmetic";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
   import TaskCheckbox from "@nucleum/features/focus/tasks/TaskCheckbox.svelte";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import TaskThumbnailObjectiveLabel from "@nucleum/features/focus/tasks/TaskThumbnailGoalLabel.svelte";
 
-  import ResourceThumbnailContextMenu from "@nucleum/components/records/ResourceThumbnailContextMenu.svelte";
-  import view from "@nucleum/stores/view.store";
-  import { popover, tooltip } from "@nucleum/actions/popover.action";
-  import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
-  import { PopoverTriggerMethod } from "@nucleum/actions/popover.type";
+  import ResourceThumbnailContextMenu from "@nucleum/features/records/ResourceThumbnailContextMenu.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import { popover, tooltip } from "@21n/ui/actions/popover.action";
+  import CalendarRangePopover from "@21n/ui/elements/datetime/absolute/CalendarRangePopover.svelte";
+  import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
   import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import FocusItemPickOverlay from "@nucleum/features/focus/elements/focusitem/FocusItemPickOverlay.svelte";
@@ -33,14 +34,14 @@
     activeSession,
     currentFocusItem
   } from "@nucleum/features/focus/session.store";
-  import { movingBorder } from "@nucleum/actions/movingBorder.action";
+  import { movingBorder } from "@21n/ui/actions/movingBorder.action";
 
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { bulkEditStore } from "@nucleum/stores/resources/bulkedit.store";
+  import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { resolveBulkSelectionAccessPointId } from "@nucleum/datafn/resource.utils";
   import Task from "@nucleum/features/focus/tasks/Task.svelte";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { stringify } from "@21n/shared-utils/json.utils";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
@@ -315,7 +316,7 @@
     {#if isShowDatePickerOnCw}
       <div
         use:popover={{
-          content: AbsoluteTimeRangePopoverV2,
+          content: CalendarRangePopover,
           id: "task-date-picker-popover" + instanceId,
           triggerMethod: [PopoverTriggerMethod.SHOW_BY_DEFAULT],
           isRenderAsModalForCW: true,

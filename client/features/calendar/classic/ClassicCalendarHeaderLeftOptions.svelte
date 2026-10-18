@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { Size } from "@21n/elements/size.enum";
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import { TimeScaleUnit } from "@21n/utils/time.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import { OptionSelectorStyle } from "@21n/elements/select/select.type";
-  import view from "@nucleum/stores/view.store";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
+  import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
+  import view from "@21n/ui/environment/view.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Product } from "@nucleum/client/config/product.type";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
 
   let {
     selectedView = $bindable(TimeScaleUnit.MONTH),

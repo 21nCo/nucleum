@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { fileLoaderv2 } from "@nucleum/actions/lazyload.action";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Arrangement } from "@21n/elements/direction.enum";
-  import { cn } from "@21n/utils/ui.utils";
-  import { isValidUrl } from "@21n/shared-utils/utils";
+  import { fileLoaderv2 } from "@21n/ui/actions/lazyload.action";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { isValidUrl } from "@21n/shared-utils/url.utils";
   import { resolveFallbackIconForUrl } from "@nucleum/features/memory/node/node.utils";
   let {
     src,

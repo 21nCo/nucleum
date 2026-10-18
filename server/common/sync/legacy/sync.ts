@@ -2,7 +2,7 @@ import { Agent } from "../../account/account.type";
 import {
   resolveInsertQuery,
   resolveMutationQueryV2
-} from "$lib/shared/utils/surreal.utils";
+} from "$lib/server/common/sync/legacy/surreal-query";
 import {
   ICloneDownBody,
   ICloneDownPaginateBody,

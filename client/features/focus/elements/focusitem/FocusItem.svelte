@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import {
     focusItemsStore,
@@ -8,16 +8,16 @@
   } from "@nucleum/features/focus/session.store";
   import { onMount } from "svelte";
   import AddTodo from "@nucleum/features/focus/elements/focusitem/AddTodo.svelte";
-  import { formatSeconds } from "@21n/utils/time.utils";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { Embed } from "@nucleum/client/runtime/context.type";
-  import context from "@nucleum/stores/context.store";
-  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import context from "@nucleum/client/runtime/context.store";
+  import BreadcrumbMini from "@21n/ui/compositions/navigation/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import { SessionType } from "@nucleum/features/focus/logs/log.type";
   import type {
     IFocusItem,
@@ -34,9 +34,9 @@
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { reorderList } from "@nucleum/actions/rearrange.action";
-  import Icon from "@21n/elements/Icon.svelte";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { reorderList } from "@21n/ui/actions/rearrange.action";
+  import Icon from "@21n/ui/elements/Icon.svelte";
 
   let {
     focusItem,

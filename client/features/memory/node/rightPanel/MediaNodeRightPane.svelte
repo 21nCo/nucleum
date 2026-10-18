@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
+  import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import NodeRightPaneContent from "@nucleum/features/memory/node/rightPanel/NodeRightPaneContent.svelte";
   import NodeDefaultRightPane from "./NodeDefaultRightPane.svelte";
   import { fly } from "svelte/transition";

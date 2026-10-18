@@ -1,25 +1,25 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import Button from "@21n/elements/button/Button.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import InlineFeedbackText from "@nucleum/extensions/clipper/InlineFeedbackText.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import InlineFeedbackText from "@nucleum/shell/notifications/InlineFeedbackText.svelte";
 
   import { Action } from "@nucleum/client/config/action.enum";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { TimeScaleUnit } from "@21n/utils/time.type";
-  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
+  import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import CalendarNotesPanel from "@nucleum/features/calendar/column/CalendarNotesPanel.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "@nucleum/stores/notifications/notification.type";
+  } from "@nucleum/shared-state/notifications/notification.type";
   import { setContext } from "svelte";
-  import { Context } from "@nucleum/stores/appStore.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { debouncer } from "@21n/utils/utils";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { debouncer } from "@21n/shared-utils/debounce";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { resolveCalendarNotesId } from "@nucleum/features/calendar/calendar.utils";
   import { properCase } from "@21n/shared-utils/text.utils";

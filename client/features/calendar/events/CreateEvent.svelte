@@ -1,18 +1,18 @@
 <script lang="ts">
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import TextArea from "@21n/elements/input/TextArea.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import ModalContentPadded from "@21n/elements/modal/ModalContentPadded.svelte";
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
+  import TextArea from "@21n/ui/elements/input/TextArea.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import ModalContentPadded from "@21n/ui/elements/modal/ModalContentPadded.svelte";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 

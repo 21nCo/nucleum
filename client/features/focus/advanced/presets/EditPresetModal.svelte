@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
   import {
     SessionCompositionType,
@@ -7,18 +7,18 @@
     BreakCompositionType
   } from "@nucleum/features/focus/sessionComposition.type";
   import ComposeDuration from "@nucleum/features/focus/advanced/composition/ComposeDuration.svelte";
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { onMount } from "svelte";
   import ComposeTotalsText from "@nucleum/features/focus/advanced/composition/ComposeTotalsText.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import FullScreenCloseButton from "@nucleum/shell/navigation/components/FullScreenCloseButton.svelte";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import PresetObjectivesSelector from "@nucleum/features/focus/advanced/presets/PresetGoalsSelector.svelte";
-  import ModalContentPadded from "@21n/elements/modal/ModalContentPadded.svelte";
+  import ModalContentPadded from "@21n/ui/elements/modal/ModalContentPadded.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
   let { id = "" }: { id?: string } = $props();

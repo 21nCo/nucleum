@@ -6,11 +6,7 @@ import {
   type IAnalyticsConfigStore
 } from "@nucleum/features/focus/analytics/analytics.types";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import {
-  TimePeriodType,
-  TimeScale,
-  type TimePeriod
-} from "@21n/utils/time.type";
+import { TimePeriodType, TimeScale, type TimePeriod } from "@21n/shared-utils/datetime/period.type";
 
 type LegacyAnalyticsCard = Omit<Partial<IAnalyticsCard>, "grouping"> & {
   grouping?: AnalyticsCardGrouping | "TOP_LEVEL_GOALS";

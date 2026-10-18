@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { hoverable } from "@nucleum/actions/hover.action";
+  import { hoverable } from "@21n/ui/actions/hover.action";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import Button from "@21n/elements/button/Button.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import Popover from "@21n/elements/popover/Popover.svelte";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import Tag from "@21n/elements/text/Tag.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import context from "@nucleum/stores/context.store";
-  import { confirmationNotification } from "@nucleum/stores/notification.store";
-  import view from "@nucleum/stores/view.store";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import Popover from "@21n/ui/elements/popover/Popover.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
+  import Tag from "@21n/ui/elements/text/Tag.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import context from "@nucleum/client/runtime/context.store";
+  import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
+  import view from "@21n/ui/environment/view.store";
   import {
     ButtonStyle,
     ButtonVariant,
     type IButtonParams
-  } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { ILinkTagGroup } from "@nucleum/datafn/link.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 

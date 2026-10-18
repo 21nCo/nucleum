@@ -1,5 +1,5 @@
 <script lang="ts">
-  import appearance from "@nucleum/stores/appearance.store";
+  import appearance from "@nucleum/shared-state/appearance/appearance.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { onMount } from "svelte";
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import TimeComposition from "@nucleum/features/focus/advanced/composition/TimeComposition.svelte";
   import IntervalBar from "@nucleum/features/focus/elements/intervalbar/IntervalBar.svelte";
