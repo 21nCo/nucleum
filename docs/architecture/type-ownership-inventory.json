@@ -7361,12 +7361,10 @@
     },
     {
       "path": "client/types/gathery/doc.type.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/features/spaces/doc.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "capability-public",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Gathery space documents retired with the spaces browser; no remaining consumers.",
       "declarations": [
         "DocStore",
         "Doc"
@@ -7375,12 +7373,10 @@
     },
     {
       "path": "client/types/gathery/gatheryEvent.enum.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/features/spaces/gatheryEvent.enum.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "capability-public",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Gathery modal events retired with the spaces browser; GatheryEvent was never persisted and has no remaining consumers.",
       "declarations": [
         "GatheryEvent"
       ],
@@ -9106,12 +9102,10 @@
     },
     {
       "path": "client/types/space.type.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/features/spaces/space.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "capability-public",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Legacy space store types retired with the spaces browser; combination spaces own their own types.",
       "declarations": [
         "SpaceStore",
         "Space"
