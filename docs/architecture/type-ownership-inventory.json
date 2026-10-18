@@ -6614,12 +6614,10 @@
     },
     {
       "path": "client/types/controlpanel.type.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/surfaces/settings/controlpanel.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "implementation-private",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Unused colocated type had no consumers and was deleted.",
       "declarations": [
         "ControlPanelConfiguration"
       ],
