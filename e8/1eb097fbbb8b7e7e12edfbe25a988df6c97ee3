@@ -1,0 +1,21 @@
+docs/architecture/type-ownership.md
+  s_fc1e5ad5b6d4c0::t_6d1c184321f664 41
+server/DEPRECATED.md
+  s_fc1e5ad5b6d4c0::t_6d1c184321f664 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e81eb097fbbb8b7e7e12edfbe25a988df6c97ee3",
+  "prompts": {},
+  "sessions": {
+    "s_fc1e5ad5b6d4c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35f3409b-369e-4783-b998-c6a953fd6b02",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
