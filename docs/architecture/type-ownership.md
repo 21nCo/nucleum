@@ -38,7 +38,7 @@ Those UI contracts do not derive from schema records, DataFn resources, runtime 
 
 `schema/account` owns profile and subscription wire data. Billing presentation fields stay in `client/surfaces/subscription`. `schema/legacy` owns the existing Surreal mutation, query, sync, resource-action, and store-data encodings. Do not derive those legacy shapes from current DataFn records. `schema/datafn.ts` derives resource names from `nucleumDatafnSchema`. Client `Resource` and `Product` compose schema values with the Next overlay; `MetaResource` directly aliases the schema value; backend callers import schema directly.
 
-Generic error codes are schema-owned. The default error message belongs to `client/shared-state/notifications`. Markdown validation belongs to memory. Responsive text truncation belongs to the text primitive. The legacy relay request contract lives in `server/common/relay/relay.type.ts` and imports only schema-owned resource and query contracts.
+Generic error codes are schema-owned. The default error message belongs to `client/shared-state/notifications`. Markdown validation belongs to memory. Responsive text truncation belongs to the text primitive.
 
 Native transcription model identifiers and worker model identifiers are different protocols. Both live in `client/runtime/inference`, in separate modules, with their original enum values.
 
