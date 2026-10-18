@@ -14,15 +14,9 @@ export interface OverlayHost {
 
 let overlayHost: OverlayHost | undefined;
 
-/** Supplies navigation from the composing shell before overlays are used. */
+/** Supplies shell navigation for overlays; overlay state still updates before a shell is configured. */
 export function configureOverlayHost(host: OverlayHost) {
   overlayHost = host;
-}
-
-/** Fails explicitly when an overlay is used without a composing shell. */
-function requireOverlayHost(): OverlayHost {
-  if (!overlayHost) throw new Error("Overlay host has not been configured");
-  return overlayHost;
 }
 
 const defaultModal = {
@@ -50,7 +44,7 @@ function initModalStore(seed: ModalEvent) {
       update((n: ModalEvent) => {
         return { path: action, isShow: false };
       });
-      requireOverlayHost().onDismiss(action);
+      overlayHost?.onDismiss(action);
     },
     notify: (event: ModalEvent) => {
       update((n: ModalEvent) => {
@@ -114,7 +108,7 @@ class FullScreenStore extends ObservableStore<{ path?: string }> {
   show(path: string) {
     logger.log({ at: "fullscreen.show", path });
     this.set({ path });
-    requireOverlayHost().openFullscreen(path);
+    overlayHost?.openFullscreen(path);
   }
 
   /**
@@ -125,13 +119,13 @@ class FullScreenStore extends ObservableStore<{ path?: string }> {
     let fullScreenAction = this.get().path;
     if (!fullScreenAction) return;
     if (fullScreenAction && isShowMiniIfNoPip) {
-      let miniAction = requireOverlayHost().resolvePlayer(fullScreenAction);
+      let miniAction = overlayHost?.resolvePlayer(fullScreenAction);
       if (miniAction) {
         player.showMini(miniAction, true);
       }
     }
     this.set({ path: undefined });
-    requireOverlayHost().closeFullscreen();
+    overlayHost?.closeFullscreen();
   }
 
   restore() {
