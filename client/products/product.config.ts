@@ -22,6 +22,7 @@ import {
 import type { IProductConfigBase as ISharedProductConfigBase } from "@nucleum/schema/product.config";
 
 const isDev = import.meta.env?.DEV || false;
+const isDevDeployment = import.meta.env?.VITE_ENV === "dev";
 
 interface SettingsSection {
   children: (Action | MemotronAction | string)[];
@@ -109,7 +110,7 @@ const resolveClientProductResources = (productName: Product) => {
 
 export const products: Record<string, IAppConfigBase> = {
   [Product.NUCLEUM]: {
-    requiredPlan: PlanType.NUCLEUS,
+    requiredPlan: isDevDeployment ? undefined : PlanType.NUCLEUS,
     ...resolveBaseSharedProductConfig(Product.NUCLEUM),
     appMenu: (isDev && nucleusNav.appMenuDev
       ? nucleusNav.appMenuDev

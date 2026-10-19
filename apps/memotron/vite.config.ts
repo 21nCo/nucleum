@@ -60,7 +60,8 @@ export default defineConfig({
         tryCatchDeoptimization: false,
         moduleSideEffects: (id) =>
           id.includes("@antv/g6") ||
-          id.includes("/client/composition/configure-hosts.ts")
+          id.includes("/client/composition/configure-hosts.ts") ||
+          id.includes("/svelte/src/internal/flags/")
       }
     },
     chunkSizeWarningLimit: 1000
