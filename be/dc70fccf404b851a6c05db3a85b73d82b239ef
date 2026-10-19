@@ -1,0 +1,19 @@
+client/products/product.config.ts
+  s_2ad05f9e34dee0::t_d1ae07248c5e26 25,113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bedc70fccf404b851a6c05db3a85b73d82b239ef",
+  "prompts": {},
+  "sessions": {
+    "s_2ad05f9e34dee0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ad1f412b-3c1b-4353-8d1b-d106410efcc7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
