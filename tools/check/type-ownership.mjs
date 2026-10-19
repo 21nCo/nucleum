@@ -18,7 +18,19 @@ const printer = ts.createPrinter({ removeComments: true });
 const failures = [];
 let enums = 0;
 let retiredEnums = 0;
-const retiredCacheModule = "client/layout/layers/cache/cache.type.ts";
+const retiredEnumContracts = new Map([
+  [
+    "client/layout/layers/cache/cache.type.ts",
+    { name: "CacheKey", retiredPath: "client/shell/layers/cache" }
+  ],
+  [
+    "client/types/gathery/gatheryEvent.enum.ts",
+    {
+      name: "GatheryEvent",
+      retiredPath: "client/features/spaces/gatheryEvent.enum.ts"
+    }
+  ]
+]);
 
 /** Collects runtime enums without comments or formatting differences. */
 function declarations(file, text) {
@@ -57,12 +69,13 @@ for (const module of inventory.modules) {
     { cwd: root, encoding: "utf8" }
   );
   for (const [name, declaration] of declarations(module.path, original)) {
-    if (module.path === retiredCacheModule && name === "CacheKey") {
+    const retired = retiredEnumContracts.get(module.path);
+    if (retired?.name === name) {
       if (
         module.disposition !== "removed" ||
         module.destinations.length !== 0 ||
-        fs.existsSync(path.join(root, "client/shell/layers/cache"))
-      ) failures.push("Retired cache contract must not be restored");
+        fs.existsSync(path.join(root, retired.retiredPath))
+      ) failures.push(`Retired enum ${name} must not be restored`);
       retiredEnums++;
       continue;
     }

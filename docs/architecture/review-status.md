@@ -24,7 +24,7 @@ not a replacement for the ownership contracts or historical migration journals.
 | Area | Evidence and disposition |
 | --- | --- |
 | Shared clipper source | `client/extensions/clipper` remains, but this checkout has no deployable clipper workspace. Confirm external packaging/host ownership before retiring source. |
-| Spaces document/browser code | Gathery retirement is not authority to remove shared Spaces capabilities. Keep `space.store`, `gatheryEvent`, and associated implementations until their product future is decided. |
+| Spaces document/browser code | Retired: the shared Spaces browser, documents, `space.store`, and `GatheryEvent` are no longer needed and have been removed. Combination spaces under `client/features/spaces/combination` remain the live Spaces implementation. |
 | `client/routes/play` | Routes are entrypoints; zero static importers is not evidence of dead code. Preserve pending a product decision. |
 | Old shell/UI renderers, icons and static assets | Public exports, dynamic lookup, external consumers and build asset copying must be included in reachability analysis. No bulk deletion was performed. |
 | `runtime/os.enum.ts`, `runtime/environment/variables.ts`, empty `OpenPreviewMode.svelte`, `apps/fetch-json-data.js` | Audit candidates, not approved deletions. Check runtime enum inventory, deployment consumers and entrypoint use before removal. |
