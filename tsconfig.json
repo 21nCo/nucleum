@@ -372,7 +372,6 @@
     ".plasmo/index.d.ts",
     "client/**/*",
     "apps/**/*",
-    "packages/**/*",
     "shared/**/*"
   ]
 }

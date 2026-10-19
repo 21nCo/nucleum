@@ -29,7 +29,6 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'apps/**'
-      - 'packages/**'
       - 'shared/**'
       - 'server/**'
       - 'deployment/**'
