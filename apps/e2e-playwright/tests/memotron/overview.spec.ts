@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { ensureInAppOnHome } from "../utils/helpers";
+import { ensureInAppOnHome, isCloudAuthModeActive } from "../utils/helpers";
+import { blockExternalAuthRequests } from "../memory/memory-test-helpers";
 
 async function openOverview(page: import("@playwright/test").Page) {
   await ensureInAppOnHome(page);
@@ -18,14 +19,13 @@ async function selectOverviewPanel(
 }
 
 test.describe("memotron - overview panels", () => {
+  test.skip(
+    isCloudAuthModeActive(),
+    "Empty-state assertions need a fresh offline workspace"
+  );
+
   test.beforeEach(async ({ page }) => {
-    await page.route("**/*", (route) => {
-      if (/accounts\.google\.com/i.test(route.request().url())) {
-        void route.abort();
-        return;
-      }
-      void route.continue();
-    });
+    await blockExternalAuthRequests(page);
   });
 
   test("Graph exposes its empty state and orphan filter", async ({ page }) => {
