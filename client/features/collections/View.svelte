@@ -1,12 +1,12 @@
 <script lang="ts">
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import {
     CollectionLayout,
     type ICollectionItem,
     type ICollectionView
   } from "@nucleum/features/collections/collection.type";
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import BoardView from "@nucleum/features/collections/boardView/BoardView.svelte";
   import type { IActiveCollectionStore } from "./collection.store";

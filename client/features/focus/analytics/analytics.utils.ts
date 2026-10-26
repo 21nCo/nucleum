@@ -1,14 +1,6 @@
-import {
-  TimePeriodType,
-  TimeScale,
-  type TimePeriod
-} from "@21n/utils/time.type";
+import { TimePeriodType, TimeScale, type TimePeriod } from "@21n/shared-utils/datetime/period.type";
 import { deepCopy } from "@21n/shared-utils/obj.utils";
-import {
-  determinePreviousTimePeriod,
-  determineTimePeriod,
-  determineTimePeriodv2
-} from "@21n/utils/time.utils";
+import { determinePreviousTimePeriod, determineTimePeriod, determineTimePeriodv2 } from "@21n/shared-utils/datetime/period";
 import { get } from "svelte/store";
 import {
   analyticsConfigStore,

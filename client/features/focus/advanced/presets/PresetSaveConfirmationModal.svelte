@@ -3,17 +3,17 @@
     activeSession,
     focusItemsStore
   } from "@nucleum/features/focus/session.store";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import PresetItem from "@nucleum/features/focus/advanced/presets/PresetItem.svelte";
   import PresetObjectivesSelector from "@nucleum/features/focus/advanced/presets/PresetGoalsSelector.svelte";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import { onMount } from "svelte";
   import type { IFocusItem } from "@nucleum/features/focus/session.type";
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import ModalContentPadded from "@21n/elements/modal/ModalContentPadded.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import ModalContentPadded from "@21n/ui/elements/modal/ModalContentPadded.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { advancedCompositionDraft } from "@nucleum/features/focus/advanced/composition/advancedCompositionDraft.store";
   let selectedObjectives = $state<IObjectiveThumb[]>([]);

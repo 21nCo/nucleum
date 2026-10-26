@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import {
     OptionSelectorStyle,
     type ISelectItem
-  } from "@21n/elements/select/select.type";
+  } from "@21n/ui/elements/select/select.type";
   import { CalendarColumnPanel } from "@nucleum/features/calendar/calendar.type";
-  import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     panels,

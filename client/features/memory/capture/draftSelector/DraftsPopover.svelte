@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Text from "@21n/elements/text/Text.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import type { ICapture } from "@nucleum/features/memory/capture/capture.type";
   import DraftItem from "@nucleum/features/memory/capture/draftSelector/DraftItem.svelte";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
-  import EdgeButton from "@21n/elements/button/EdgeButton.svelte";
+  import EdgeButton from "@21n/ui/elements/button/EdgeButton.svelte";
 
   let {
     drafts: initialDrafts = [],

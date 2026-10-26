@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { LinkType } from "@nucleum/datafn/link.type";
-  import { cn } from "@21n/utils/ui.utils";
-  import { Size } from "@21n/elements/size.enum";
-  import { tooltip } from "@nucleum/actions/popover.action";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { tooltip } from "@21n/ui/actions/popover.action";
   import { resolveLinkTypeConfig } from "@nucleum/features/memory/linking/link.utils";
 
   let {

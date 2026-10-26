@@ -1,16 +1,16 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { isValidString } from "@21n/shared-utils/text.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import HoverableElement from "@21n/elements/HoverableElement.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import HoverableElement from "@21n/ui/elements/HoverableElement.svelte";
   import type { IWebPage } from "@nucleum/features/memory/node/node.type";
-  import FileView from "@nucleum/components/files/FileView.svelte";
+  import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import ImagePreview from "@nucleum/features/memory/node/content/ImagePreview.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { resolveUrlData } from "@nucleum/features/memory/node/url.utils";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
 
   let {
     node,

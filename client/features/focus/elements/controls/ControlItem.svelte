@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Extend from "@21n/icons/Extend.svelte";
+  import Extend from "@21n/ui/icons/Extend.svelte";
   import { Control } from "@nucleum/features/focus/elements/controls/control.enum";
   import { onMount } from "svelte";
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
   import ControlIcon from "@nucleum/features/focus/elements/controls/ControlIcon.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { activeSession } from "@nucleum/features/focus/session.store";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";

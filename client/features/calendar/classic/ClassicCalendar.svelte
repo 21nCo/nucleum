@@ -3,22 +3,22 @@
   import MonthView from "@nucleum/features/calendar/classic/MonthView.svelte";
   import WeekView from "@nucleum/features/calendar/classic/WeekView.svelte";
   import CalendarLayoutView from "@nucleum/features/calendar/CalendarLayout.svelte";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import CalendarColumn from "@nucleum/features/calendar/column/CalendarColumn.svelte";
-  import { TimeScaleUnit } from "@21n/utils/time.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
-  import { resizable } from "@nucleum/actions/resize.action";
-  import { debouncer } from "@21n/utils/utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { resizable } from "@21n/ui/actions/resize.action";
+  import { debouncer } from "@21n/shared-utils/debounce";
+  import { cn } from "@21n/ui/environment/presentation";
   import { MetaResource, Resource } from "@nucleum/datafn/resource.enum";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Product } from "@nucleum/client/config/product.type";
   import MemotronTempCalendarColumn from "@nucleum/features/calendar/column/MemotronTempCalendarColumn.svelte";
   import ClassicCalendarHeaderLeftOptions from "@nucleum/features/calendar/classic/ClassicCalendarHeaderLeftOptions.svelte";
-  import { Display } from "@21n/elements/display.enum";
-  import YearViewV2 from "@nucleum/features/calendar/classic/YearViewV2.svelte";
+  import { Display } from "@21n/ui/elements/display.enum";
+  import YearView from "@nucleum/features/calendar/classic/YearView.svelte";
   import { toSvelteStore } from "@datafn/svelte";
   import {
     areIndicatorDataEqual,
@@ -33,7 +33,7 @@
   let selectedDate = $state(new Date());
   let selectedView = $state<TimeScaleUnit>(resolveSavedScaleSelection());
   let selectedScale = $state<TimeScaleUnit>(TimeScaleUnit.DAY);
-  let yearViewRef = $state<YearViewV2>();
+  let yearViewRef = $state<YearView>();
   let weekViewRef = $state<WeekView>();
   let visibleWeekDates = $state<Date[] | undefined>(undefined);
   let width = $derived(resolveSavedWidthSelection(selectedView));
@@ -249,7 +249,7 @@
         />
       {:else if selectedView === TimeScaleUnit.YEAR}
         {#key yearViewRefreshId}
-          <YearViewV2
+          <YearView
             bind:this={yearViewRef}
             bind:selectedDate
             {selectedScale}

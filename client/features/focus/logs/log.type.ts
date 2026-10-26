@@ -1,7 +1,7 @@
 import type { ISessionInterval } from "@nucleum/features/focus/session.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import type { IMarkdown } from "@nucleum/features/memory/markdown/md.type";
-import type { TimeScale } from "@21n/utils/time.type";
+import type { TimeScale } from "@21n/shared-utils/datetime/period.type";
 import type {
   IResource,
   IResourceShareable

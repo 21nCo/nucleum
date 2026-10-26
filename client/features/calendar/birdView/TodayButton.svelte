@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
   let {
     parentBgIndex = 1,
     onclick = undefined

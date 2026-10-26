@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TextHiglighter from "@nucleum/features/memory/pdfAnnotator/TextHiglighter.svelte";
+  import TextHighlighter from "@nucleum/features/memory/pdfAnnotator/TextHighlighter.svelte";
   import { AnnotationType } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.type";
   import { highlightStore } from "@nucleum/features/memory/common/highlighters/highlight.store";
 
@@ -107,5 +107,5 @@
   {/if}
 </div>
 {#if rects != undefined}
-  <TextHiglighter {highlighter} {annotType} {id} {rects} {onClick} />
+  <TextHighlighter {highlighter} {annotType} {id} {rects} {onClick} />
 {/if}

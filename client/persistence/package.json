@@ -16,11 +16,6 @@
     "svelte": "^5.55.0"
   },
   "peerDependencies": {
-    "@21n/shared-utils": "*",
-    "@21n/utils": "*",
-    "@nucleum/client": "*",
-    "@nucleum/datafn": "*",
-    "@nucleum/features": "*",
-    "@nucleum/stores": "*"
+    "@21n/shared-utils": "*"
   }
 }

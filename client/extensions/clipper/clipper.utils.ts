@@ -2,16 +2,15 @@ import { logger } from "@nucleum/client/runtime/logging/logger";
 import type { OmitForCapture } from "@nucleum/datafn/resource.type";
 import { type INode } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-import {
-  contentTypeMap,
-  fetchYouTubeMetadata
-} from "@nucleum/features/memory/node/url.utils";
-import {
-  generateHash,
-  generateSHA256Hash
-} from "@21n/shared-utils/crypto.utils";
+import { fetchYouTubeMetadata } from "@nucleum/features/memory/node/url.utils";
+import { generateHash } from "@21n/shared-utils/crypto.utils";
 import { enumToString } from "@21n/shared-utils/text.utils";
-import { extractBrowserDetails } from "@nucleum/extensions/clipper/parsers/shared/domUtils";
+import {
+  extractBrowserDetails,
+  resolveContentTypeForUrl,
+  resolveOgData,
+  resolveUrl
+} from "@nucleum/features/memory/capture/browser-tab-data";
 
 export function isYoutubeVideoUrl(url: string) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
@@ -111,63 +110,6 @@ export function createClipPointer() {
   return pointer;
 }
 
-/**
- * Extracts full tab data from the current tab.
- * Note: This function should be called only from the content script.
- * @returns TabData
- */
-export async function extractFullTabData(
-  doc?: Document,
-  params?: {
-    url?: string;
-    docText?: string;
-  }
-): Promise<OmitForCapture<INode>> {
-  doc = doc ?? document;
-  const title = doc.title;
-  const faviconLink = (
-    doc.querySelector("link[rel*='icon']") as HTMLLinkElement
-  )?.href;
-  const appIconLinks = Array.from(
-    doc.querySelectorAll("link[rel='apple-touch-icon']"),
-    (link) => (link as HTMLLinkElement).href
-  );
-  const description = (
-    doc.querySelector("meta[name='description']") as HTMLMetaElement
-  )?.content;
-  const keywords = (
-    doc.querySelector("meta[name='keywords']") as HTMLMetaElement
-  )?.content;
-  const twitterCard = (
-    doc.querySelector("meta[name='twitter:card']") as HTMLMetaElement
-  )?.content;
-  const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData(doc);
-  const browser = extractBrowserDetails();
-  const hash = await generateSHA256Hash(doc.body?.innerHTML ?? params?.docText);
-  const url = params?.url ? resolveUrl(params.url) : resolveUrl();
-  const contentType = resolveContentTypeForUrl(url);
-  return {
-    label: title,
-    contentType,
-    url,
-    body: {
-      hash,
-      description
-    },
-    metadata: {
-      faviconLink,
-      appIconLinks,
-      keywords,
-      ogImage,
-      ogTitle,
-      ogDescription,
-      ogUrl,
-      twitterCard,
-      browser
-    }
-  } as OmitForCapture<INode>;
-}
-
 export function extractMinimalTabData(): OmitForCapture<INode> {
   const title = document.title;
   const hash = generateHash(document.body.innerHTML);
@@ -218,45 +160,8 @@ export async function extractYoutubeVideoData() {
   };
 }
 
-export function resolveUrl(url?: string) {
-  if (!url) url = window.location.href;
-  url = url.split("#")[0];
-  const hostname = new URL(url, window.location.href).hostname.toLowerCase();
-  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
-    return url.split("&")[0];
-  }
-  return url;
-}
-
-function resolveOgData(doc?: Document) {
-  doc = doc ?? document;
-  const ogTitle = (
-    doc.querySelector("meta[property='og:title']") as HTMLMetaElement
-  )?.content;
-  const ogImage = (
-    doc.querySelector("meta[property='og:image']") as HTMLMetaElement
-  )?.content;
-  const ogDescription = (
-    doc.querySelector("meta[property='og:description']") as HTMLMetaElement
-  )?.content;
-  const ogUrl = (
-    doc.querySelector("meta[property='og:url']") as HTMLMetaElement
-  )?.content;
-  const ogSiteName = (
-    doc.querySelector("meta[property='og:site_name']") as HTMLMetaElement
-  )?.content;
-  return { ogTitle, ogImage, ogDescription, ogUrl, ogSiteName };
-}
-
 export function resolveContentTypeString(contentType: NodeType | null) {
   if (!contentType) return "web page";
   else if (contentType === NodeType.WEB_SCREENSHOT) return "screenshot";
   else return enumToString(contentType);
-}
-
-export function resolveContentTypeForUrl(url: string) {
-  return (
-    contentTypeMap.find((item) => item.regex.some((regex) => regex.test(url)))
-      ?.contentType ?? NodeType.WEB_PAGE
-  );
 }

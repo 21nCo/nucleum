@@ -1,32 +1,32 @@
 <script lang="ts">
-  import view from "@nucleum/stores/view.store";
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
-  import Icon from "@21n/elements/Icon.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import view from "@21n/ui/environment/view.store";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import FileItem from "@nucleum/products/memotron/import/FileItem.svelte";
-  import { UploadStatus } from "@nucleum/application/settings/import/uploadStatus.enum";
-  import { convertFileSize } from "@21n/utils/utils";
-  import { FileSizeMeasurement } from "@21n/utils/fileSizeMeasurement.enum";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import { UploadStatus } from "@nucleum/surfaces/settings/import/uploadStatus.enum";
+  import { convertFileSize } from "@21n/shared-utils/files/file-size";
+  import { FileSizeMeasurement } from "@21n/shared-utils/files/file-size-measurement.enum";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import {
     ImportSource,
     StepType,
     type ImportHistoryItem
-  } from "@nucleum/stores/preferences/import.type";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import Divider from "@21n/elements/Divider.svelte";
-  import { Display } from "@21n/elements/display.enum";
+  } from "@nucleum/shared-state/preferences/import.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import { Display } from "@21n/ui/elements/display.enum";
   import { enumToString, properCase } from "@21n/shared-utils/text.utils";
-  import { renderMdAsHtml } from "@21n/elements/markdown/markdown.utils";
+  import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { preferences } from "@nucleum/stores/preferences/preferences.store";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
-  import { Preference } from "@nucleum/stores/preferences/preferences.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Preference } from "@nucleum/shared-state/preferences/preferences.type";
+  import { cn } from "@21n/ui/environment/presentation";
   import FieldMapping from "@nucleum/products/memotron/import/FieldMapping.svelte";
-  import type { FieldMappingConfig } from "@nucleum/stores/preferences/import.type";
+  import type { FieldMappingConfig } from "@nucleum/shared-state/preferences/import.type";
   import { PocketImporter } from "@nucleum/products/memotron/import/pocket.importer";
   import { Action } from "@nucleum/client/config/action.enum";
 

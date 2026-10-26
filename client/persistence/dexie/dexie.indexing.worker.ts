@@ -1,5 +1,5 @@
 import { SearchFn } from "searchfn";
-import { extractSearchFields } from "../../utils/textUtils";
+import { extractSearchFields } from "@nucleum/persistence/dexie/search-fields";
 
 interface IndexingTask {
   userId: string;

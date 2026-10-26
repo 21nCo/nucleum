@@ -21,8 +21,8 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
     isSameResource,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
 
   /**
    * Markdown in node form i.e. each block of the markdown stored as node record and nested under each node

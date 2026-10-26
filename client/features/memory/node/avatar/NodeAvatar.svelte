@@ -1,8 +1,8 @@
 <script lang="ts">
-  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import type { IAvatar } from "@21n/elements/avatarPicker/avatar.type";
-  import { Size } from "@21n/elements/size.enum";
+  import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { type IActiveNode, type INode, webNodeTypeList } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import {
@@ -16,7 +16,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
     CollectionType,
     type ICollectionExpanded
   } from "@nucleum/features/collections/collection.type";
-  import { isValidAvatar } from "@21n/elements/avatarPicker/avatar.utils";
+  import { isValidAvatar } from "@21n/ui/elements/avatarPicker/avatar.utils";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
   type NodeCollectionReference = IRecordId | ICollectionExpanded;

@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { ensureInAppOnHome, runCommand } from "../../utils/helpers";
+import { ensureInAppOnHome } from "../../utils/helpers";
+import { openRootSettingsFromCommand as openSettings } from "../../utils/settings";
 
 /** Pointron-only settings: footer app version. Open/close/navigate and Mode of interaction are in shared/settings. */
 test.describe("pointron - settings (product-specific) @settings", () => {
@@ -10,19 +11,6 @@ test.describe("pointron - settings (product-specific) @settings", () => {
       else route.continue();
     });
   });
-
-  async function openSettings(page: import("@playwright/test").Page) {
-    // Pointron: Settings icon button in top-right nav
-    const settingsIconBtn = page
-      .getByRole("button", { name: /^Settings$/i })
-      .first();
-    const iconVisible = await settingsIconBtn.isVisible().catch(() => false);
-    if (iconVisible) {
-      await settingsIconBtn.click({ timeout: 5_000 });
-      return;
-    }
-    await runCommand(page, "Settings");
-  }
 
   test("Settings footer shows app version (Pointron)", async ({ page }) => {
     test.setTimeout(45_000);

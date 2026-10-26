@@ -1,6 +1,6 @@
 <script lang="ts">
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
+  import TextWithHoverTooltip from "@21n/ui/elements/text/TextWithHoverTooltip.svelte";
   import type { TopNCardDataRecord } from "@nucleum/features/focus/analytics/analytics.types";
 
   let { row }: { row: TopNCardDataRecord } = $props();

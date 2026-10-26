@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import ModalFooter from "@21n/elements/modal/ModalFooter.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import ModalFooter from "@nucleum/shell/modal/ModalFooter.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import {
     spaceInContext,
     spaceStore
   } from "@nucleum/features/spaces/space.store";
 
-  import { Orientation } from "@21n/elements/direction.enum";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import { GatheryEvent } from "@nucleum/features/spaces/gatheryEvent.enum";
-  import { OptionSelectorStyle } from "@21n/elements/select/select.type";
+  import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   spaceStore.refresh();
   let selected = $spaceInContext?.label ?? undefined;

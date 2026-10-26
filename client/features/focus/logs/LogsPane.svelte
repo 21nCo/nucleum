@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { onMount } from "svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import view from "@nucleum/stores/view.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import view from "@21n/ui/environment/view.store";
   import SessionLogPage from "@nucleum/features/focus/logs/logPage/SessionLogPage.svelte";
-  import BackButton from "@21n/elements/button/BackButton.svelte";
+  import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
   import { postMessageToParent } from "@nucleum/client/runtime/embed/embed.utils";
   import { EmbedMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
-  import { LoadingAnimationType } from "@21n/elements/feedback/feedback.type";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
   import LogThumbnailItem from "@nucleum/features/focus/logs/LogThumbnailItem.svelte";
   import DaySummaryPart from "@nucleum/features/focus/logs/daySummary/DaySummaryPart.svelte";
 
-  import ScrollView from "@21n/layout/scrollView/ScrollView.svelte";
+  import ScrollView from "@21n/ui/compositions/scrollView/ScrollView.svelte";
   import type {
     DaySummary,
     ISessionThumb

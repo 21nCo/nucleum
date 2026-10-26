@@ -5,16 +5,16 @@
     type AmazonAccountRegion,
     type NextPageState
   } from "@nucleum/extensions/clipper/contentScripts/KindleHighlights.types";
-  import { syncStore } from "@nucleum/extensions/clipper/contentScripts/store";
+  import { syncStore } from "@nucleum/extensions/clipper/contentScripts/sync.store";
   import {
     type IKindleBook,
     type IKindleHighlight,
     type IKindleHighlightBody
   } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
   import { SyncStatus } from "@nucleum/extensions/clipper/contentScripts/types";
   import type { OmitForCaptureWithId } from "@nucleum/datafn/resource.type";
   import { generateHash } from "@21n/shared-utils/crypto.utils";

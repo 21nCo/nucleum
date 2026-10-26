@@ -1,15 +1,15 @@
 <script lang="ts">
   import { resolveCollectionContextMenu } from "../collection.store";
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { type ICollectionThumb } from "@nucleum/features/collections/collection.type";
-  import ResourceGridThumbnail from "@nucleum/components/records/ResourceGridThumbnail.svelte";
+  import ResourceGridThumbnail from "@nucleum/features/records/ResourceGridThumbnail.svelte";
   import Cover from "@nucleum/features/collections/thumbnail/Cover.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import {
     ResourceAccessPoint,
     ResourceAccessPointState
   } from "@nucleum/datafn/resource.type";
-  import ResourceThumbnailBase from "@nucleum/components/records/ResourceThumbnailBase.svelte";
+  import ResourceThumbnailBase from "@nucleum/features/records/ResourceThumbnailBase.svelte";
   import CollectionThumbnailLabelRow from "@nucleum/features/collections/thumbnail/CollectionThumbnailLabelRow.svelte";
   import CollectionPropertyCount from "@nucleum/features/collections/counts/CollectionPropertyCount.svelte";
   import CollectionItemCount from "@nucleum/features/collections/counts/CollectionItemCount.svelte";

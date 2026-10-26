@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
 
   import PropertiesListView from "@nucleum/features/collections/properties/PropertiesListView.svelte";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import {
     removeDuplicatesFilter,
     resourceAction,
@@ -17,13 +17,13 @@
     type ICollectionExpanded,
     type ICollectionItem
   } from "@nucleum/features/collections/collection.type";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import ResourceStatusBanner from "@nucleum/components/records/RecordStatusBanner.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import ResourceStatusBanner from "@nucleum/features/records/RecordStatusBanner.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
   import type { IActiveObjective } from "@nucleum/features/focus/goals/goal.type";
   import type { IActiveNode } from "@nucleum/features/memory/node/node.type";

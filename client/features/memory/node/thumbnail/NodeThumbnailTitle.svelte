@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import type {
     INode,
     INodeThumb
   } from "@nucleum/features/memory/node/node.type";
   import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import { cn } from "@21n/utils/ui.utils";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import { cn } from "@21n/ui/environment/presentation";
 
-  import { tooltip } from "@nucleum/actions/popover.action";
+  import { tooltip } from "@21n/ui/actions/popover.action";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import view from "@nucleum/stores/view.store";
-  import RecordStarStatusFeedback from "@nucleum/components/records/RecordStarStatusFeedback.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import RecordStarStatusFeedback from "@nucleum/features/records/RecordStarStatusFeedback.svelte";
   let {
     node,
     accessPoint = ResourceAccessPoint.BROWSER,

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
-  import { Size } from "@21n/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { ObjectiveStatus, type IObjective } from "@nucleum/features/focus/goals/goal.type";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { hoverable } from "@nucleum/actions/hover.action";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { hoverable } from "@21n/ui/actions/hover.action";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { resolveObjectiveStatusIcon } from "@nucleum/features/focus/goals/goal.utils";
 

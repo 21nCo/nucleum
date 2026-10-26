@@ -1,0 +1,9 @@
+/** Defines file size measurement. */
+export enum FileSizeMeasurement {
+  BITS = "BITS",
+  BYTES = "BYTES",
+  KILOBYTES = "KILOBYTES",
+  MEGABYTES = "MEGABYTES",
+  GIGABYTES = "GIGABYTES",
+  TERABYTES = "TERABYTES"
+}

@@ -6,11 +6,11 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
     resolvePanelOptions,
     type IActiveNodeStore
   } from "../node.store";
-  import ResourcePanelSwitcher from "@nucleum/components/records/ResourcePanelSwitcher.svelte";
+  import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
   import { derived } from "svelte/store";
-  import { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
+  import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import type { IResourcePageWithPanels } from "@nucleum/datafn/resource.type";
-  import type { ISelectValue } from "@21n/elements/select/select.type";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   let {
     node,
     isConstrainedWidth = false

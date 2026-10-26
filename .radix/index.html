@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Radix</title>
+    <!-- Tailwind compiles what is in this tag. The loader fills it with
+         web/shadcn.css followed by .radix/style.css. -->
+    <style type="text/tailwindcss" id="styles"></style>
+    <script>
+      // Follow the system's appearance. The theme's dark tokens hang off this
+      // class rather than a media query, so it can be overridden later.
+      const dark = matchMedia("(prefers-color-scheme: dark)");
+      const appearance = () => document.documentElement.classList.toggle("dark", dark.matches);
+      dark.addEventListener("change", appearance);
+      appearance();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- The refresh runtime hooks itself into React DevTools' global, which
+         react-dom reads as it loads. It has to go first or refresh does
+         nothing. -->
+    <script src="/react-refresh-runtime.js"></script>
+    <script>
+      ReactRefreshRuntime.injectIntoGlobalHook(window);
+    </script>
+    <script src="/react.js"></script>
+    <script src="/react-dom.js"></script>
+    <script src="/react-refresh-babel.js"></script>
+    <script src="/babel.min.js"></script>
+    <!-- Bundled npm packages the components import. They read React off the
+         page, so they come after it. -->
+    <script src="/base-ui.js"></script>
+    <script src="/ui-utils.js"></script>
+    <script src="/marked.js"></script>
+    <script src="/tailwindcss.js"></script>
+    <script src="/loader.js"></script>
+  </body>
+</html>

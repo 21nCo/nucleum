@@ -1,24 +1,25 @@
 <script lang="ts">
-  import "@nucleum/application/composition/resource-hosts";
+  import "@nucleum/composition/configure-hosts";
   import { onDestroy, onMount as onComponentMount, type Snippet } from "svelte";
-  import { resolveToken } from "@21n/utils/account.utils";
-  import account from "@nucleum/stores/account.store";
+  import { resolveToken } from "@nucleum/client/runtime/account/session-token";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { accountSession } from "@nucleum/surfaces/account/account-session";
   import ExtensionThemeBase from "@nucleum/extensions/ExtensionThemeBase.svelte";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { clientStorage } from "@nucleum/persistence/persistence.utils";
-  import { extractProduct } from "@21n/shared-utils/utils";
+  import { clientStorage } from "@nucleum/persistence/client-storage";
+  import { extractProduct } from "@21n/shared-utils/product-host";
   import {
     cleanExtensionSprites,
     extensionSprites
-  } from "@21n/icons-v2/icon.store";
+  } from "@21n/ui/icons/icon.store";
   //!Below working with dev but not build or package
   // import sprite from "data-text:/assets/icons/sprite.svg";
   // import spritePhBase from "data-text:/assets/icons/sprite-ph-base.svg";
   // import spritePhFill from "data-text:/assets/icons/sprite-ph-fill.svg";
   // import spritePhLight from "data-text:/assets/icons/sprite-ph-light.svg";
   import { resolveIconSvgSheetText } from "@nucleum/extensions/iconSvgSheetTextResolver";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
     isRecordId,
     removeDuplicatesFilter
@@ -132,7 +133,7 @@
 
   async function checkIfSessionExpired(token: string) {
     logger.log({ at: "checkIfSessionExpired" });
-    const isExpired = await account.checkIfSessionExpired();
+    const isExpired = await accountSession.checkIfSessionExpired();
     if (isExpired) {
       await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
       return true;
@@ -150,7 +151,7 @@
 
   async function bootup() {
     try {
-      await account.init();
+      await accountSession.init();
       isLoggedIn = true;
       logger.log({
         at: "ExtensionBaseLayer.svelte bootup",

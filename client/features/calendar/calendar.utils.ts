@@ -1,4 +1,4 @@
-import { TimeScaleUnit } from "@21n/utils/time.type";
+import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { CalendarColumnLayout, CalendarColumnPanel } from "./calendar.type";

@@ -2,11 +2,11 @@
   import { onMount } from "svelte";
   import * as pdfjs from "pdfjs-dist";
   import "@nucleum/features/memory/pdfAnnotator/pdfviewer.css";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { fileEmbedChannel } from "@nucleum/stores/files/fileEmbedChannel.store";
+  import { fileEmbedChannel } from "@nucleum/shared-state/files/fileEmbedChannel.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
-  import { pdfCache } from "@21n/utils/pdfCache.utils";
+  import { pdfCache } from "@nucleum/features/memory/pdfAnnotator/pdf-cache";
 
   let {
     pdfViewer = $bindable(),

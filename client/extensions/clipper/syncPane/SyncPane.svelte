@@ -1,18 +1,18 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { syncStore } from "@nucleum/extensions/clipper/contentScripts/store";
+  import { syncStore } from "@nucleum/extensions/clipper/contentScripts/sync.store";
   import FeedbackPaneBase from "@nucleum/extensions/clipper/feedbackPane/FeedbackPaneBase.svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { SyncStatus } from "@nucleum/extensions/clipper/contentScripts/types";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { formatDatetime } from "@21n/utils/time.utils";
-  import Icon from "@21n/elements/Icon.svelte";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
+  import Icon from "@21n/ui/elements/Icon.svelte";
 
   onMount(() => {
     logger.log({ at: "SyncPane onMount", syncStore: $syncStore });

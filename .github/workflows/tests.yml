@@ -83,15 +83,15 @@ jobs:
       matrix:
         include:
           - product: nucleum
-            workspace: nucleus-app
+            workspace: "@nucleum/app"
             port: 5050
             domain: local.nucleum.app
           - product: pointron
-            workspace: pointron-app
+            workspace: pointron
             port: 5001
             domain: local.pointron.app
           - product: memotron
-            workspace: memotron-app
+            workspace: "@memotron/app"
             port: 5002
             domain: local.memotron.app
     steps:

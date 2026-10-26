@@ -11,43 +11,43 @@
     getMdStore,
     mdContentChangeEvent
   } from "@nucleum/features/memory/markdown/markdown.store";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { isValidAndUniqueArray } from "@21n/shared-utils/obj.utils";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
   import { setContext } from "svelte";
   import { generateMarkdownText } from "@nucleum/features/memory/node/node.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { get } from "svelte/store";
-  import { KeyboardKey } from "@21n/elements/keyboard/keyboard.type";
+  import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import {
     reorderList,
     type DragDropEvent
-  } from "@nucleum/actions/rearrange.action";
+  } from "@21n/ui/actions/rearrange.action";
   import {
     isSameResource,
     resourceInList,
     shiftResourceInArray
   } from "@nucleum/datafn/resource.utils";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import MarkdownkeyboardToolbar from "@nucleum/features/memory/markdown/toolbar/MarkdownkeyboardToolbar.svelte";
-  import { debouncer } from "@21n/utils/utils";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { dragSelection } from "@nucleum/actions/dragSelection.action";
+  import { debouncer } from "@21n/shared-utils/debounce";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { dragSelection } from "@21n/ui/actions/dragSelection.action";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import { bulkEditStore as globalBulkEditStore } from "@nucleum/stores/resources/bulkedit.store";
+  import { bulkEditStore as globalBulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
-  import { ErrorMessage } from "@nucleum/stores/notifications/error.enum";
-  import { resizeListener } from "@nucleum/actions/resize.action";
+  import { ErrorMessage } from "@nucleum/shared-state/notifications/error.enum";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
   import { stringify } from "@21n/shared-utils/json.utils";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
 
   interface $$Events {
     action: CustomEvent<any>;

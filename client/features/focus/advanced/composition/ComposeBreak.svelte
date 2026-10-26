@@ -4,11 +4,11 @@
     BreakCompositionType,
     type SessionComposition
   } from "@nucleum/features/focus/sessionComposition.type";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
-  import { OptionSelectorStyle } from "@21n/elements/select/select.type";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import DurationInput from "@21n/ui/compositions/datetime/durationInput/DurationInput.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
   import { deepCopy } from "@21n/shared-utils/obj.utils";
   let {
     composition = $bindable(),

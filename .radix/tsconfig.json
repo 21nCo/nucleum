@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "paths": {
+      "react": [
+        "./types/react"
+      ],
+      "react-dom": [
+        "./types/react-dom"
+      ],
+      "react-dom/*": [
+        "./types/react-dom/*"
+      ],
+      "csstype": [
+        "./types/csstype"
+      ],
+      "prop-types": [
+        "./types/prop-types"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "types"
+  ]
+}

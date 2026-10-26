@@ -6,7 +6,7 @@ import {
   ICloneUpBody,
   ICloneDownPaginateBody
 } from "@nucleum/schema/legacy/sync.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@nucleum/datafn/resource.enum";
 import { SyncProvider, SyncProviderFactory } from "../providers";
 
 async function waitForClonedRecords(

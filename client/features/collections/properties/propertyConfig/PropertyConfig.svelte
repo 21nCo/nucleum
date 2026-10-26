@@ -1,6 +1,6 @@
 <script lang="ts">
-  import CheckboxInput from "@21n/elements/toggle/CheckboxInput.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import CheckboxInput from "@21n/ui/elements/toggle/CheckboxInput.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import {
     type IProperty,
     PropertyType

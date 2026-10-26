@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import {
     BlockAction,
     type IBlock,
@@ -16,15 +16,15 @@
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { onMount } from "svelte";
 
-  import { Size } from "@21n/elements/size.enum";
-  import { PopoverTriggerMethod } from "@nucleum/actions/popover.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
   import {
     ContextMenuType,
     type IContextMenu,
     type IContextMenuItem
-  } from "@21n/elements/contextMenu/context-menu.type";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import FocusRing from "@nucleum/features/memory/markdown/contextMenu/FocusRing.svelte";
   import BlockBrowser from "@nucleum/features/memory/markdown/blockBrowser/BlockBrowser.svelte";
 
@@ -32,12 +32,12 @@
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 
   import { Action } from "@nucleum/client/config/action.enum";
-  import { MemotronEvent } from "@nucleum/client/config/events/memory-event.enum";
-  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
-  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
-  import { popover, tooltip } from "@nucleum/actions/popover.action";
-  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
-  import { hoverable } from "@nucleum/actions/hover.action";
+  import { MemotronEvent } from "@nucleum/shared-state/events/memory-event.enum";
+  import { dispatchCustomEvent } from "@21n/shared-utils/dom-events";
+  import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
+  import { popover, tooltip } from "@21n/ui/actions/popover.action";
+  import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
+  import { hoverable } from "@21n/ui/actions/hover.action";
   import { downloadNode } from "@nucleum/features/memory/node/node.store";
   import { resolveResourceActionIcon } from "@nucleum/datafn/resource.utils";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";

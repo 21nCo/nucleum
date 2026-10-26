@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { cn } from "@21n/utils/ui.utils";
-  import view from "@nucleum/stores/view.store";
+  import { cn } from "@21n/ui/environment/presentation";
+  import view from "@21n/ui/environment/view.store";
 
   let {
     label,

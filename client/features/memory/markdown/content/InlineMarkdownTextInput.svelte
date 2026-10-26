@@ -9,24 +9,25 @@
     type ComponentType
   } from "svelte";
   import { type IBlock } from "@nucleum/features/memory/markdown/md.type";
-import { InlineType } from "@21n/elements/markdown/inline.type";
-  import { debouncer, generateUID } from "@21n/utils/utils";
-  import { extractInlineMarkdownFromHtml, findInlineStylingPatterns, findSymbolPatterns, inlineLinkPatterns, replaceInlineStylePatterns, replaceSymbolPatterns } from "@21n/elements/markdown/markdown.utils";
+import { InlineType } from "@21n/ui/elements/markdown/inline.type";
+  import { debouncer } from "@21n/shared-utils/debounce";
+import { generateUID } from "@21n/shared-utils/legacy-id";
+  import { extractInlineMarkdownFromHtml, findInlineStylingPatterns, findSymbolPatterns, inlineLinkPatterns, replaceInlineStylePatterns, replaceSymbolPatterns } from "@21n/ui/elements/markdown/markdown.utils";
   import InlineMention from "@nucleum/features/memory/markdown/content/inline/InlineMention.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { scrollIntoViewOnFocus } from "@nucleum/actions/scroll.action";
+  import { scrollIntoViewOnFocus } from "@21n/ui/actions/scroll.action";
   import { isValidString, truncateString } from "@21n/shared-utils/text.utils";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import InlineLink from "@nucleum/features/memory/markdown/content/inline/InlineLink.svelte";
   import { resolvePasteContents } from "@nucleum/features/memory/capture/capture.utils";
-  import { MAX_FILE_SIZE_MB } from "@nucleum/stores/files/file.constants";
+  import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import view from "@nucleum/stores/view.store";
-  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import KeyboardToolbar from "@21n/ui/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   interface $$Events {
     blur: FocusEvent;

@@ -4,21 +4,24 @@ import { get } from "svelte/store";
 import { Product } from "@nucleum/client/config/product.type";
 import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
 import {
-  createDatafnStorage,
-  createNucleumDatafnHttpOptions,
   datafn,
   datafnRuntime,
   nucleumDatafnStatus,
   destroyNucleumDatafn,
-  initializeNucleumDatafn,
-  migrateDatafnNodeMdChildOrder,
+  initializeNucleumDatafn
+} from "./datafn.store";
+import {
   resolveDatafnBackgroundResources,
   resolveDatafnBootResources,
-  resolveDatafnMode,
-  resolveDatafnNamespace,
-  resolveDatafnProductResources,
+  resolveDatafnProductResources
+} from "./resource-selection";
+import {
+  createDatafnStorage,
+  migrateDatafnNodeMdChildOrder,
   resolveDatafnStorageDbName
-} from "./datafn.store";
+} from "./storage-lifecycle";
+import { resolveDatafnMode, resolveDatafnNamespace } from "./runtime-policy";
+import { createNucleumDatafnHttpOptions } from "./remote-transport";
 import { Resource } from "@nucleum/datafn/resource.enum";
 
 describe("datafn.store", () => {

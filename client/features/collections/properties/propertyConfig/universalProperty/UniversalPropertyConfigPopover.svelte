@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
   import type { IUniversalPropertyConfig } from "@nucleum/features/collections/properties/property.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { universalPropertyOptions } from "@nucleum/features/collections/properties/property.store";
   let {
     config,

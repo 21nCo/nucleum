@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
 
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { type INodeThumb } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import NodeThumbnail from "@nucleum/features/memory/node/thumbnail/NodeThumbnail.svelte";
   import { onDestroy, onMount } from "svelte";
 
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
 
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
-  import { hoverable } from "@nucleum/actions/hover.action";
+  import { hoverable } from "@21n/ui/actions/hover.action";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import type { IProperty } from "@nucleum/features/collections/properties/property.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { bulkEditStore } from "@nucleum/stores/resources/bulkedit.store";
-  import { BulkEditor } from "@nucleum/stores/resources/bulk-editor";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
+  import { BulkEditor } from "@nucleum/features/records/bulk-editor";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { resolveFilePreview } from "@nucleum/features/memory/node/node.utils";
 

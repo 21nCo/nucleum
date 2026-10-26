@@ -5,9 +5,9 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import type { MdStoreType } from "@nucleum/features/memory/markdown/markdown.store";
   import type { IListBlockBody } from "@nucleum/features/memory/markdown/md.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import Check from "@21n/icons/Check.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import { Size } from "@21n/elements/size.enum";
+  import Check from "@21n/ui/icons/Check.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { Size } from "@21n/ui/elements/size.enum";
   let {
     id,
     body,

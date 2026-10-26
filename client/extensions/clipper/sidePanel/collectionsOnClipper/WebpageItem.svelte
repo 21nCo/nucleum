@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { CollectionItem } from "@nucleum/extensions/clipper/sidePanel/collectionsOnClipper/types";
   let {
     item,

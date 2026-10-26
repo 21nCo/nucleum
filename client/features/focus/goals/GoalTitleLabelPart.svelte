@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tooltip } from "@nucleum/actions/popover.action";
+  import { tooltip } from "@21n/ui/actions/popover.action";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
 

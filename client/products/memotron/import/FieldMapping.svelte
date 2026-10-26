@@ -1,12 +1,12 @@
 <script lang="ts">
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import type { DropdownItem } from "@21n/elements/dropdown/dropdownItem.type";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
+  import type { DropdownItem } from "@21n/ui/elements/dropdown/dropdownItem.type";
   import type {
     FieldMappingConfig,
     FieldMappingValue,
     FieldMappingField
-  } from "@nucleum/stores/preferences/import.type";
-  import { Size } from "@21n/elements/size.enum";
+  } from "@nucleum/shared-state/preferences/import.type";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     fieldMappingConfig,

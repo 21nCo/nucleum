@@ -4,16 +4,16 @@
     SessionCompositionType,
     type SessionComposition
   } from "@nucleum/features/focus/sessionComposition.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { SelectionItemActiveStyle } from "@21n/elements/switcher/switcher.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { SelectionItemActiveStyle } from "@21n/ui/elements/switcher/switcher.enum";
   import { getTotalsFromComposition } from "@nucleum/features/focus/composition.utils";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import Icon from "@21n/elements/Icon.svelte";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import PresetDurationText from "@nucleum/features/focus/advanced/presets/PresetDurationText.svelte";
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
-  import { abg, cn } from "@21n/utils/ui.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
+  import { abg, cn } from "@21n/ui/environment/presentation";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TextWithHoverTooltip from "@21n/ui/elements/text/TextWithHoverTooltip.svelte";
   let {
     preset,
     isActive = false,

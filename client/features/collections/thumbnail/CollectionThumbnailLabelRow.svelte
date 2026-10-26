@@ -3,13 +3,13 @@
     ResourceAccessPoint,
     ResourceAccessPointState
   } from "@nucleum/datafn/resource.type";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Arrangement } from "@21n/elements/direction.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { type ICollectionThumb } from "@nucleum/features/collections/collection.type";
   import CollectionThumbnailLabel from "@nucleum/features/collections/thumbnail/CollectionThumbnailLabel.svelte";
   import CollectionItemCount from "@nucleum/features/collections/counts/CollectionItemCount.svelte";
-  import RecordStarStatusFeedback from "@nucleum/components/records/RecordStarStatusFeedback.svelte";
+  import RecordStarStatusFeedback from "@nucleum/features/records/RecordStarStatusFeedback.svelte";
   let {
     item,
     arrangement = Arrangement.LIST,

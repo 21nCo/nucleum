@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import { getCorrespoingHorizonFrequencyLabel } from "@21n/utils/time.utils";
+  import { getCorrespoingHorizonFrequencyLabel } from "@21n/shared-utils/datetime/period";
   import Guage from "@nucleum/features/focus/analytics/charts/Guage.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { TimeScale } from "@21n/utils/time.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TimeScale } from "@21n/shared-utils/datetime/period.type";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import Icon from "@21n/elements/Icon.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
 
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 

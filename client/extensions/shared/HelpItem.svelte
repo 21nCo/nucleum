@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { MouseEventHandler } from "svelte/elements";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let {
     label,

@@ -2,23 +2,21 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { onMount } from "svelte";
-  import { webpage } from "@nucleum/extensions/clipper/contentScripts/store";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
-  import { ClipperExtensionEvent } from "@nucleum/client/config/events/clipper-event.type";
-  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
+  import { ClipperExtensionEvent } from "@nucleum/client/runtime/extensions/clipper-event.type";
+  import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
   import {
     seekToTimestamp,
     getVideoPlayData
   } from "@nucleum/extensions/clipper/parsers/shared/video.utils";
-  import {
-    relayToBackgroundScript,
-    resolveAppPath
-  } from "@21n/utils/extension.utils";
-  import { ExtensionEvent } from "@nucleum/extensions/extension.type";
-  import { Size } from "@21n/elements/size.enum";
+  import { relayToBackgroundScript } from "@nucleum/client/runtime/extensions/messaging";
+import { resolveAppPath } from "@nucleum/extensions/navigation";
+  import { ExtensionEvent } from "@nucleum/client/runtime/extensions/extension-event.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import VideoTimelineClipItem from "@nucleum/extensions/clipper/contentScripts/parts/VideoTimelineClipItem.svelte";
 
   let { contentType }: { contentType: NodeType } = $props();

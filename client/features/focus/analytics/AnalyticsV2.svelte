@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import Button from "@21n/elements/button/Button.svelte";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { appStore, isInEditMode } from "@nucleum/stores/app.store";
-  import view from "@nucleum/stores/view.store";
-  import { Size } from "@21n/elements/size.enum";
-  import { PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { appStore, isInEditMode } from "@nucleum/shared-state/app-context/app.store";
+  import view from "@21n/ui/environment/view.store";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { onMount } from "svelte";
   import {
     analyticsConfigStore,
     selectedPageId
   } from "@nucleum/features/focus/analytics/analytics.store";
   import AnalyticsPageView from "@nucleum/features/focus/analytics/page/AnalyticsPageView.svelte";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import {
     onAddPageClicked,
@@ -24,13 +24,13 @@
     onRemovePageClicked,
     onPageRearrange
   } from "@nucleum/features/focus/analytics/analytics.utils";
-  import { confirmationNotification } from "@nucleum/stores/notification.store";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import { bg, cn } from "@21n/utils/ui.utils";
+  import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import { bg, cn } from "@21n/ui/environment/presentation";
   import { Product } from "@nucleum/client/config/product.type";
-  import Switch from "@21n/elements/toggle/Switch.svelte";
+  import Switch from "@21n/ui/elements/toggle/Switch.svelte";
 
   const bgIndex = 2;
   const isNucleusContext = $derived($appStore.product === Product.NUCLEUM);

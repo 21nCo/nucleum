@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import { clientStorage } from "@nucleum/persistence/persistence.utils";
+  import { clientStorage } from "@nucleum/persistence/client-storage";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
   import { parse } from "@21n/shared-utils/json.utils";
   import { authClient } from "@nucleum/client/runtime/account/auth";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
 
-  import NewAccountDebugInfo from "@nucleum/application/settings/account/NewAccountDebugInfo.svelte";
+  import NewAccountDebugInfo from "@nucleum/surfaces/account/setup/NewAccountDebugInfo.svelte";
   async function refresh() {
     const val = await clientStorage.get(ClientStorageKey.USER);
     return parse(val ?? "{}");

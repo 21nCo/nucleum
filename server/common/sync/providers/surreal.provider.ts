@@ -22,7 +22,7 @@ import {
   commonQueryReplacements,
   resolveSelectManyQuery,
   resolveSelectQuery
-} from "$lib/shared/utils/surreal.utils";
+} from "$lib/server/common/sync/legacy/surreal-query";
 
 export class SurrealSyncProvider implements ISyncProvider {
   name: SyncProvider = SyncProvider.SURREAL;

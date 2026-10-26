@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { ICodeBlockBody } from "@nucleum/features/memory/markdown/md.type";
   import type { MdStoreType } from "@nucleum/features/memory/markdown/markdown.store";
-  // import CodeContentUsingMonaco from "@nucleum/components/markdown/content/CodeContentUsingMonaco.svelte";
+  // import CodeContentUsingMonaco from "@21n/ui/compositions/markdown/content/CodeContentUsingMonaco.svelte";
   import CodeContentUsingHighlight from "@nucleum/features/memory/markdown/content/CodeContentUsingHighlight.svelte";
 
   let {

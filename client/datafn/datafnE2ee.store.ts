@@ -1,5 +1,5 @@
 import type { DatafnE2eeProvider } from "@datafn/client";
-import { clientStorage } from "@nucleum/persistence/persistence.utils";
+import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
 import type { NucleumDatafnE2eeSettings, NucleumDatafnE2eeState } from "@nucleum/datafn/e2ee.type";

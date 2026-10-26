@@ -87,7 +87,7 @@ try {
         .find(
           (e) =>
             new URL(e.name).pathname ===
-            `/@fs${root}/client/layout/navigation/navigation.ts`
+            `/@fs${root}/client/shell/navigation/navigation.ts`
         )?.name;
       if (!modulePath) throw new Error("Loaded navigation module not found");
       const { navigation } = await import(modulePath);

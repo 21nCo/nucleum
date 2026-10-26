@@ -1,17 +1,17 @@
 <script lang="ts">
-  import Button from "@21n/elements/button/Button.svelte";
-  import view from "@nucleum/stores/view.store";
-  import { cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import { cn } from "@21n/ui/environment/presentation";
   import PropertyItem from "@nucleum/features/collections/properties/PropertyItem.svelte";
   import {
     resolvePropertiesForCapture,
     resolvePropertiesForNodePage,
     resolveIsMultiSelectProperty
   } from "@nucleum/features/collections/properties/property.utils";
-  import { hoverable } from "@nucleum/actions/hover.action";
-  import { Size } from "@21n/elements/size.enum";
-  import Badge from "@21n/elements/text/Badge.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import type {
     ICollectionExpanded,
     ICollectionItem,

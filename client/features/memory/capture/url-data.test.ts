@@ -7,12 +7,12 @@ const mocks = vi.hoisted(() => ({
   contentScript: false,
   extension: false
 }));
-vi.mock("@21n/utils/network.utils", () => ({ performApiCall: mocks.request }));
-vi.mock("@21n/utils/browser.utils", () => ({
+vi.mock("@nucleum/client/runtime/network/legacy-api", () => ({ performApiCall: mocks.request }));
+vi.mock("@21n/shared-utils/browser-environment", () => ({
   isContentScript: () => mocks.contentScript,
   isExtensionEnvironment: () => mocks.extension
 }));
-vi.mock("@nucleum/extensions/clipper/clipper.utils", () => ({
+vi.mock("@nucleum/features/memory/capture/browser-tab-data", () => ({
   extractFullTabData: mocks.parse
 }));
 

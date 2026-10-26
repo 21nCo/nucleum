@@ -25,41 +25,272 @@ Tracked in [TIDY-477](https://linear.app/21n/issue/TIDY-477/enforce-architectura
 
 `schema` owns resource definitions. `client/datafn` owns the client storage and sync runtime. `client/runtime` owns browser infrastructure such as account transport, network authority, connectivity, and diagnostic logging. `client/features` owns capability implementations. `client/products` composes those capabilities into product experiences. Client product identity composition lives in `client/config/product.type.ts`; cross-layer product identity lives in `schema/product.type.ts`; declarative navigation metadata lives in `client/config`.
 
-`client/elements` contains UI primitives. `client/components` contains shared charts, nested-list controls, and the time selector. `client/application` owns account/settings, library/resource rendering, modal orchestration, command UI, and app-specific integrations. Markdown editing and tags belong to memory; combinations belong to spaces. Shared preferences live in `client/stores/preferences`, and cross-layer billing contracts live in `schema/account`. Keyboard and interaction-mode contracts live in `client/elements/keyboard`; panel and error presentation contracts live in shared resource and element owners. See [type ownership](type-ownership.md) for the complete inventory.
+`client/ui` is the permanent domain-free `@21n/ui` package. `elements` owns atomic controls and UI-only types. `compositions` owns domain-neutral compound UI intended for present or future reuse, including charts, maps, breadcrumbs, nested lists, search controls, file presentation, keyboard listeners, duration inputs, scroll containers, and time selectors. `actions` owns generic DOM behavior, `icons` owns portable icon assets and rendering, `illustrations` owns portable artwork, and `branding` owns pure visual brand assets. Package-wide portable platform state belongs to `environment`, while dependency-inversion contracts shared across controls and compositions belong to `hosts`. A single current consumer does not make a composition feature-owned. `client/shell` (`@nucleum/shell`) owns the concrete product shell: navigation, panels, split views, tabs, trails, overlays, modal chrome, and the extension-support layers. `client/surfaces` (`@nucleum/surfaces`) owns cross-feature product surfaces: account, subscription, onboarding, help, settings, the command surface (`commandBar`, `commands`, `search`), and `library` resource browsing. `client/composition` (`@nucleum/composition`) owns the composition root (`configure-hosts.ts`, `shortcuts.config.ts`), the base/user application layers, shell overlay mounting, chrome integration adapters, and product-aware branding adapters. Markdown editing and tags belong to memory; combinations belong to spaces. Product-independent shared client behavior lives in the `@nucleum/shared-state` workspace under explicit `app-context`, `appearance`, `commands`, `events`, `files`, `notifications`, `preferences`, `product`, `resources`, and `shortcuts` owners. Cross-layer billing contracts live in `schema/account`. Keyboard and interaction-mode contracts live in `client/ui/elements/keyboard`; panel and error presentation contracts live in their capability owners. See [type ownership](type-ownership.md) for the complete inventory.
 
 ## Enforced rules
 
 Run `npm run check:architecture`. CI and the root lint command run the same check. It resolves relative imports, source aliases, dynamic imports, and TypeScript import types in TypeScript and Svelte scripts.
 
-- Features cannot import product implementation files.
-- Shared components cannot directly import features, products, or application composition.
-- DataFn and runtime files cannot directly import features, products, application composition, components, application stores, layouts, elements, or actions.
+- Features cannot import product implementations, surfaces, or application composition; the top-level shell is the only app-level layer features may consume. Surfaces may compose features; features must never import surfaces.
+- Surfaces must not import application composition. Product presentation and action rendering enter surfaces through narrow shared-state hosts installed by application composition.
+- The application shell is acyclic: `client/shell` must not import application, surfaces, or products, directly or transitively. Product navigation config enters only through `@nucleum/shared-state/product/product-config-host`; concrete chrome (brand/logo, account avatar, search input, bulk-edit bar, offline status, capture, profile section) enters through optional Svelte snippet props wired by the application chrome adapters (`client/composition/chrome/`).
+- Portable UI cannot directly or transitively import application state, runtime, the application shell, products, features, DataFn, persistence, schema, or domain state.
+- Compositions may use elements, actions, environment, and hosts; those lower UI layers cannot import compositions.
+- Shared state cannot directly or transitively import application, feature, or product implementations.
+- DataFn and runtime files cannot directly import features, products, application composition or shell, portable UI, or shared client state and services.
 - Composition calculations cannot import the session singleton.
 - A caller outside a capability must use a source file explicitly listed in `tools/check/feature-entrypoints.json`.
 
 The feature entry-point list records the existing public surface, including individual components and type modules; it is not a barrel module. Additions require an explicit contract change. Package exports expose these same paths. Source aliases bypass package exports, which is why the source-level check remains necessary.
 
+## Client dependency DAG
+
+`tools/check/client-dependency-matrix.json` is the authoritative matrix for direct imports between top-level `client/` owners. An owner may also import its own files. `npm run check:architecture` rejects imports outside the matrix, including type-only imports, checks named owner workspace manifest dependencies and peers against the same matrix, and rejects cycles in the allowed matrix itself. The aggregate `client/package.json` is not a matrix owner. Tests and stories are outside the production-source import gate. The existing portability and semantic-owner checks still apply within each owner. In particular, `client/ui` is one package in this matrix, with its separate rule that lower UI layers cannot import `compositions`.
+
+```mermaid
+graph LR
+  extensions --> composition
+  routes --> composition
+  composition --> products
+  products --> surfaces
+  surfaces --> features
+  features --> shell
+  shell --> shared_state[shared-state]
+  shared_state --> datafn
+  datafn --> runtime
+  runtime --> persistence
+  datafn --> config
+  config --> next
+  next --> ui
+  ui --> theme
+```
+
+The arrows show one valid ordering, not every permitted direct import. The full direct-import matrix is:
+
+| Importing owner | May import these client owners |
+| --- | --- |
+| `extensions` | `app.css`, `composition`, `config`, `datafn`, `features`, `persistence`, `runtime`, `shared-state`, `shell`, `surfaces`, `ui` |
+| `routes` | `app.css`, `composition`, `config`, `datafn`, `persistence`, `products`, `runtime`, `shared-state`, `shell`, `surfaces`, `ui` |
+| `composition` | `config`, `datafn`, `features`, `persistence`, `products`, `runtime`, `shared-state`, `shell`, `static`, `surfaces`, `ui` |
+| `products` | `config`, `datafn`, `features`, `next`, `runtime`, `shared-state`, `shell`, `surfaces`, `ui` |
+| `surfaces` | `config`, `datafn`, `features`, `next`, `persistence`, `runtime`, `shared-state`, `shell`, `theme`, `ui` |
+| `features` | `config`, `datafn`, `persistence`, `runtime`, `shared-state`, `shell`, `theme`, `ui` |
+| `shell` | `config`, `datafn`, `runtime`, `shared-state`, `theme`, `ui` |
+| `shared-state` | `config`, `datafn`, `persistence`, `runtime`, `theme`, `ui` |
+| `datafn` | `config`, `next`, `persistence`, `runtime` |
+| `runtime` | `persistence` |
+| `persistence` | no other client owner |
+| `config` | `next` |
+| `next` | `ui` |
+| `ui` | `theme` |
+| `ambient`, `theme`, `static`, `app.css`, `svelte.config.mjs` | no other client owner |
+
+The app entrypoints in `apps/` may assemble composition and products. Extension entrypoints mount application layers; product source cannot import composition. Surfaces receive the fields they need from the explicit `shared-state/product/surface-config-host`, configured by composition. Persistence receives the application logger through `persistence/logging-host`, so storage and migrations do not import runtime. These hosts are permanent narrow contracts at the boundary, with no re-export of implementations.
+
 ## Current architecture contract
 
-Features cannot import application or product implementations. Shared stores, utilities, actions, components and elements cannot transitively load capability or application composition at runtime. Explicit type-only edges are excluded from runtime reachability; legacy persistence adapters can still reference capability types. Cross-capability imports remain permitted through declared public entries, so the complete source graph is not claimed to be acyclic.
+Features cannot import product implementations, surfaces, or application composition. The application shell is the top-level `client/shell` workspace (`@nucleum/shell`), the only app-level layer features may consume. Cross-feature product surfaces live in the top-level `client/surfaces` workspace (`@nucleum/surfaces`); surfaces may compose features, while features never import surfaces. The portable UI foundation is the single `client/ui` workspace, consumed through `@21n/ui/elements`, `@21n/ui/compositions`, `@21n/ui/actions`, `@21n/ui/icons`, `@21n/ui/illustrations`, `@21n/ui/branding`, `@21n/ui/environment`, and `@21n/ui/hosts`. Compositions may use the other UI layers, while elements, actions, icons, illustrations, branding, environment, and hosts never depend on compositions. The entire package remains independent, directly and transitively, from application state, runtime infrastructure, the application shell, products, features, DataFn, persistence, schema, and domain state. Domain-neutral compositions stay in UI when future shared use is intentional, even with one current consumer. Product-connected behavior enters through explicit props or narrow contracts under `client/ui/hosts`, configured from `client/composition/configure-hosts.ts` or supplied by the owning shell or feature adapter. Shared state and utilities cannot transitively load application or feature composition, including through type-only imports. The top-level client owner graph is acyclic under the enforced matrix.
 
-Application and extension shells configure permanent overlay, resource-action, panel, shortcut, recents, record-renderer and action-renderer contracts in `client/application/composition/resource-hosts.ts`. Configuration runs from base, user, and extension shells before presentation or command execution. Shared Markdown display owns portable parsing; memory owns Markdown editing. Shared file state and presentation, resource enums, event contracts and action identifiers no longer depend on capability implementations.
+`client/shared-state` is the single `@nucleum/shared-state` workspace. It groups product-independent Nucleum client behavior by semantic owner without turning `client/` into a list of service folders. Shared command ports and application events are shared state because they are consumed across features, products, extensions, and application composition; concrete command execution remains application-owned. Shared state may consume lower-level runtime, DataFn, persistence, schema, utilities, and portable UI contracts. They may not consume application workflows or shell implementations, user-facing feature implementations, or product composition, directly or transitively. Consumers import named subpaths such as `@nucleum/shared-state/preferences/preferences.store`; there is no root barrel, `shared`, `core`, generic `state`, or nested generic `stores` bucket.
+
+Focus and memory event contracts live under `client/shared-state/events`; clipper
+transport events live under `client/runtime/extensions`. App metadata belongs to
+`client/shared-state/app-context`. Surfaces consume application-selected action
+rendering and product visuals through named shared-state hosts.
+
+Presentation ownership is separate from navigation ownership. Neutral breadcrumbs and scroll containers live in UI. `client/shell/navigation/components/AppBreadcrumbs.svelte` translates application resource and path metadata into structural breadcrumb items and callbacks. Sidebars, tabs, split views, panels, and trails remain in the application shell when they own URL state, resource resolution, product menus, shell events, or other application orchestration. A component moves to UI only when its public contract can be expressed without product or domain vocabulary.
+
+Application and extension shells configure permanent overlay, resource-action, panel, shortcut, recents, record-renderer, action-renderer, portable action, shortcut, file, environment, logging, and haptic contracts in `client/composition/configure-hosts.ts`. Configuration runs from base, user, and extension shells before presentation or command execution. Shell and feature adapters provide view-specific props such as keyboard matching, time scales, and address resolution. Shared Markdown display owns portable parsing; memory owns Markdown editing. Portable file presentation, resource enums, event contracts, and action identifiers no longer depend on capability implementations.
 
 The public feature API is enumerated in `tools/check/feature-entrypoints.json`. Each has a static consumer outside its capability. The checker rejects unused public entries and private external imports. This reduces the previous 154 entries by moving shared contracts and infrastructure to their proper owners without introducing barrels or compatibility paths.
 
-Registered workspaces declare their production source imports. `@nucleum/client` owns the existing config/runtime/next aliases. Source workspaces bundled by an app declare co-hosted workspace requirements as peer dependencies; existing build dependencies remain dependencies. Peers describe the host's source compilation requirements without adding artificial Turbo build cycles. This is not a claim that each source package builds or installs independently. The checker verifies both resolved workspace and external package imports; test and story dependencies are outside this production-source check.
+Registered workspaces declare their production source imports. `@nucleum/client` owns lower-level config and runtime; `@nucleum/shared-state` owns product-independent shared client behavior, application context, command ports, and events; `@nucleum/shell` owns the application shell; `@nucleum/surfaces` owns cross-feature product surfaces; `@21n/ui` owns all portable presentation and visual assets. Source workspaces bundled by an app declare co-hosted workspace requirements as peer dependencies; existing build dependencies remain dependencies. Peers describe the host's source compilation requirements without adding artificial Turbo build cycles. This is not a claim that each source package builds or installs independently. The checker verifies both resolved workspace and external package imports; test and story dependencies are outside this production-source check.
 
 The narrow Library now mounts resource panes only after a resource is selected. A dedicated focus-capability test covers the portrait Library in Nucleum and Pointron; a seeded Recents probe verifies visibility before and after reload without page errors. Broader regression results are recorded below separately from the architecture checks.
 
 ## Application-state ownership follow-up
 
-`client/stores/app.store.ts` retains product state and state mutation. URL/history and resource navigation live in `client/layout/navigation/navigation.ts`. Product command lookup/execution lives in `client/application/commands/action-runner.ts`; shared callers use the permanent `CommandHost` installed from `resource-hosts.ts`. No old methods delegate to the new owners.
+Product and application context lives in `client/shared-state/app-context/app.store.ts`. Browser/embed environment context lives in `client/runtime/context.store.ts`; persistent UI preference state lives in `client/shared-state/preferences/ui-state`; legacy product-key migration belongs to `client/persistence/migrations`. URL/history and resource navigation live in `client/shell/navigation/navigation.ts`. Product command lookup/execution lives in `client/surfaces/commands/action-runner.ts`; the permanent shared `CommandHost` contract lives in `client/shared-state/commands/command-host.ts` and is installed from `client/composition/configure-hosts.ts`. Application-wide events live in `client/shared-state/events`. No old methods delegate to the new owners.
 
-Account session state stays shared. Deletion confirmation and cleanup orchestration live in `client/application/account/account-deletion.ts`; subscription operations live in `client/application/subscription/subscription.ts`; file conversion, thumbnail generation, signing, and local/remote storage live in `client/stores/files/file-upload.ts`. Legacy OAuth initiation belongs to application account composition.
+Reactive account session state lives with the account runtime in `client/runtime/account/account.store.ts`. Authentication persistence, bootstrap, sign-in, sign-out, navigation, and DataFn teardown are coordinated by `client/surfaces/account/account-session.ts`. Deletion confirmation and cleanup orchestration live in `client/surfaces/account/account-deletion.ts`; subscription operations live in `client/surfaces/subscription/subscription.ts`; file conversion, thumbnail generation, signing, and local/remote storage live in `client/shared-state/files/file-upload.ts`. OAuth initiation and callback presentation belong to surfaces/account; legacy code exchange belongs to runtime/account.
 
-Product menu persistence lives beside navigation. Tab and sidebar mutations live beside those layouts; generic UI-state persistence remains shared. Shortcut hints derive from a scoped UI-state observer and update when product or device context changes. Focus owns its scheduled notification queue, and the existing native transport delivers messages. Memory owns its word-count and PDF-overlay DOM actions. The unused Markdown action and empty `@nucleum/cx` workspace are retired, including active aliases and workspace declarations.
+The connected offline-status indicator lives in `client/composition/chrome`; shared elements and the shell do not read account session state. Application composition supplies the indicator to shell chrome.
 
-The remaining shared stores are not certified as universally minimal. Notification presentation stays in `notification.store.ts`; application events have a separate `stores/events` owner. Legacy account session bootstrapping still spans persistence adapters. Further splits must identify concrete ownership and consumer benefits rather than create generic wrapper layers.
+Product menu persistence lives beside navigation. Tab and sidebar mutations live beside the application shell; generic UI-state persistence belongs to the preferences capability. Shortcut persistence, matching, hints, and the host contract live in `client/shared-state/shortcuts`; global shortcut execution lives in `client/shell/shortcuts`, and shortcut settings presentation lives in `client/surfaces/settings/shortcuts`. Headless notification state lives in `client/shared-state/notifications`, while connected notification rendering lives in `client/shell/notifications`. Focus owns its scheduled notification queue, and the existing native transport delivers messages. Memory owns its word-count and PDF-overlay DOM actions. The unused Markdown action and empty `@nucleum/cx` workspace are retired, including active aliases and workspace declarations.
+
+The former `client/stores`, `client/state`, `client/commands`, and `client/events` directories are retired. App context, appearance, commands, events, files, notifications, preferences, resources, and shortcuts have explicit owners under `client/shared-state`. Runtime environment state belongs to runtime, migration state belongs to persistence, the observable-store implementation belongs to DataFn, and overlay state belongs to the application shell. New state follows semantic ownership and must not recreate a catch-all `stores`, `state`, `shared`, or `core` directory; `client/shared-state` is the single approved shared-state workspace and keeps named owners with no root barrel.
+
+Connected record menus and bulk mutations live in `client/features/records`; shared-state/resources retains selection state and the resource action host contract. DataFn resource selection, storage lifecycle, runtime policy and remote transport have named modules; `datafn.store.ts` owns the live client and lifecycle. Persistence separates client storage, device identity, legacy local storage, and the named legacy-backup operations. URL validation and product host parsing have named cross-layer utilities; memory owns its embed sanitizer, and the legacy Surreal query builder lives with server sync.
+
+## Application composition refinement
+
+### Utility workspace retirement (2026-09-22)
+
+`client/utils` and `@21n/utils` are retired, including their workspace and aliases.
+Date arithmetic, parsing, period contracts, timezone lookup, user-date calculation
+and file-size conversion are domain-free named modules under `shared/utils`.
+Duration presentation belongs to UI time controls, chart formatting to chart
+compositions, contextual events to UI environment, and color presentation to
+theme. Focus owns session-item ordering; shell owns the existing touch-navigation
+behavior. Extension transport lives in runtime/extensions, extension navigation
+in client/extensions, PDF previews in shared-state/files, migration tracking in
+persistence/migrations, and Dexie search preparation beside its worker.
+Tests follow those owners; mixed suites are split without changing assertions.
+Do not recreate the workspace or replace it with nested generic utility buckets.
+
+Retirement verification: all 411 client/shared/tooling tests pass across 105
+files. The 15 approved suites retain all 161 cases and 342 assertion expressions;
+68 relocated function bodies match the pre-move snapshot. All four product
+compilers report zero errors (378/301/307/0 warnings). Nucleum and Memotron share
+production builds, architecture/type-ownership checks, fixed-wait enforcement,
+legacy-runtime enforcement and configured lint pass. Negative controls reject
+the old package alias, client alias and relative utility imports. Vite starts,
+but the local HTTPS host is unavailable; browser, native and cloud workflows
+have not been validated by this retirement pass.
+
+### Organization follow-up (2026-09-22)
+
+The former browser/account/network/UI/general utility modules are retired.
+Portable positioning, interaction, color and presentation helpers are owned by
+UI; domain-free browser environment, events, clipboard and scheduling helpers
+are shared utilities. Runtime owns account tokens/cleanup, HTTP transport,
+device identity, geolocation and media codecs. DataFn owns resource filters.
+The old persistence API facade is replaced by separate account, subscription,
+file, address, app-data and Unsplash transports. JSON response validation belongs
+to runtime/network. No compatibility modules remain at the former paths.
+
+Global command definitions live with features, surfaces, shell and products.
+`client/composition/global-commands.ts` preserves their original ordering;
+the command surface no longer owns a registry of every feature implementation.
+Support integration is help-owned. Telemetry SDK mechanics are runtime-owned;
+application layers own consent/lifecycle wiring. DataFn owns visibility sync,
+with overlapping focus/visibility pulls coalesced per runtime.
+
+Clipper webpage, feedback, toolbar, synchronization and record operations have
+separate modules. Library query policy is separate from its reactive pane and
+request-race guards. Focus separates snapshot hydration, session items,
+completion records and notifications from the active-session coordinator.
+Capture separates relation persistence, clipboard interpretation, media
+metadata, location and completion policy from capture orchestration. DataFn
+separates search-provider, encryption-settings and storage-lifecycle mechanics.
+Legacy recovery separates database readers, serialization, identity and record
+conversion while retaining its public recovery operations and data formats.
+
+The disconnected shell cache subtree and its unused CacheKey enum are retired.
+The type checker records this one explicit retirement and still compares the
+other 198 runtime enums to the baseline. The empty legacy workspace and unused
+Zoho widget, duplicate PDF comment implementation and touch-drag shim are gone.
+`server/` and `shared/dbo` are not wholesale deletion candidates: legacy database
+utilities and deployment references remain. Retiring those requires a separate
+runtime/deployment migration, not an organization-only change.
+
+Manual verification after local compiler/test/build checks: exercise account
+sign-in/setup/profile, command lookup and ordering, library search/pagination and
+bulk actions, focus timer transitions and restored sessions, file/web/audio
+capture, PDF cache reuse, clipper toolbar/feedback, and legacy backup/recovery
+using disposable data. Verify immediate visible results and persistence after
+reopening. Native support, telemetry delivery, cloud sync and provider endpoints
+need their own environment-backed checks; static checks do not establish them.
+
+Local verification for this follow-up: 411 client/shared/tooling tests passed
+across 73 files. All four product compilers passed with zero errors and
+378/301/307/0 warnings. Nucleum and Memotron share-extension production builds
+passed. Architecture checked 2,149 source files and 11,357 resolved imports with
+zero violations; all 383 type dispositions, 198 unchanged runtime enums and the
+one audited enum retirement passed. Fixed-wait and legacy-runtime checks passed.
+All 80 command definitions were compared against the pre-refactor snapshot;
+their values and assembly order are unchanged. Browser workflows, native hosts,
+live account/cloud services and deployment were not exercised in this follow-up.
+The repository dev command starts Vite successfully; the local HTTPS product
+host could not be reached because nothing accepted the connection on port 443.
+This startup check does not count as browser workflow verification. Repository
+lint passed its configured checks and static build prerequisite; no package
+lint tasks were present, so this is not repository-wide ESLint coverage.
+
+Account sign-in and sign-up presentation lives in
+`client/surfaces/account/authentication`, initial account setup and region
+selection in `client/surfaces/account/setup`, and connected profile presentation
+in `client/surfaces/account/profile`. Account settings composes these owners;
+authentication is not settings-owned. The Intercom integration belongs to
+`client/surfaces/help/support` and is mounted by application composition.
+PDF cache policy and its test live beside the memory PDF annotator. The
+client-only access-log projection shared by focus and memory lives in
+`client/shared-state/resources/history`. The empty `@nucleum/legacy` workspace
+and its active aliases are retired; legacy storage recovery remains supported.
+
+The application source owners are limited to composition, layers, chrome, branding
+and paint. Root component/workflow files and the retired application directories
+are rejected by the architecture checker. Modal chrome is shell-owned; mixed
+resource presentation and bulk editing are library surfaces. Sharing, account,
+help and settings own their connected workflows. Shipped diagnostics live under
+help/diagnostics; unused experiments and placeholders have been removed, including
+the empty debuglogs and loading-probe test actions. Existing diagnostic action
+identifiers remain unchanged.
+
+Settings and product owners define their action descriptors; application
+composition assembles their established order. The route-driven layout and
+overlay stack live in shell. Application supplies connected navigation snippets,
+registers the action renderer and mounts the overlay layer. The Rhombus action
+is shell-owned, while the hidden application-loading test command is retired.
+
+BaseLayer retains startup ordering and connectivity wiring. Runtime owns browser
+context and service-worker registration; the shell owns navigation and viewport
+handling. UserBaseLayer delegates recovery to settings/data-recovery, headless
+imports to persistence/migrations, metadata and timezone updates to shared-state,
+and native purchase outcomes to subscription. The native transport validates the
+message source before subscription or file handlers receive payloads. AuthGuard
+receives the product's required plan from configuration and delegates session
+hydration and extension handoff to account surfaces.
+
+PointMap, QuickAccessGrid and HoldActionPicker expose domain-free presentation
+contracts. Memory owns NodeMap and its popup content; application chrome owns
+the native capture adapter. Tests move with their implementations without changing
+assertions; there are no compatibility modules at the old paths.
+
+### Refinement verification (2026-09-21)
+
+- Architecture and type ownership pass, including all 199 runtime enum invariants.
+- Negative controls reject root application source and portable UI imports of runtime.
+- All four product compiler checks pass with zero errors; existing warnings are
+  378 for Nucleum, 301 for Memotron, 307 for Pointron and zero for Timear.
+- Client, shared and tooling Vitest projects pass 411 tests across 73 files,
+  including 21 new assertions for session access, native messages/purchases,
+  legacy import integrity and recovery/startup sequencing.
+- Nucleum and Memotron share-extension production builds pass locally. Existing
+  compiler and bundle-size warnings remain; this is not deployment validation.
+- The local app dev server starts, but the required Caddy HTTPS app and account
+  hosts return 404. Browser workflow checks were not run through raw localhost.
+- Native-device purchase/restore, live OAuth/cloud sync, and full cross-product
+  browser validation remain unverified.
+
+Manual follow-up after local HTTPS routing is available:
+
+1. In fresh browser contexts, verify offline startup, authenticated access and
+   extension login for each product; verify product plan gates remain distinct.
+2. Exercise Library selection/bulk editing, sharing, modal dismissal, quick
+   access and Memotron map popups; reload and verify persisted changes.
+3. With disposable legacy data, test successful import and failed-import
+   recovery, backup download and continue, then offline-to-cloud upload retry.
+4. On native hosts, verify capture/haptics, purchase success/failure/restore,
+   file delivery and the visible loading/onboarding outcomes.
+
+## UI asset and shell consolidation
+
+Portable legacy SVG/Rive icons, generated icon mappings, sprite resolution, and spinner components live under `client/ui/icons` and are imported through `@21n/ui/icons/*`. The UI package never imports the product static package; the application supplies asset URL resolution through the UI environment contract. The standalone `@21n/icons` and `@21n/icons-v2` workspaces are retired.
+
+Portable illustrations live under `client/ui/illustrations`, and pure product/provider marks live under `client/ui/branding`. The product-aware `SubAtomLogo` adapter remains under `client/composition/SubAtomLogo.svelte` because it reads product persistence and composes the portable marks. The portable external-logo renderer owns its provider identifiers and accepts integration configuration through props instead of importing account runtime state. The standalone `@21n/illustrations` and `@21n/branding` workspaces and aliases are retired.
+
+The concrete layout package is the top-level `client/shell` workspace. All callers use `@nucleum/shell/*`; the `@21n/layout` package, alias, workspace, and compatibility paths are retired. Features may use the shell's explicit navigation, overlay, and shell-presentation surface when participating in application composition, while imports from surfaces or application composition remain forbidden.
+
+Cross-feature product surfaces (account, subscription, onboarding, help, settings, command, search, and library) live in the top-level `client/surfaces` workspace (`@nucleum/surfaces`). Surfaces may compose features, shell, shared state, and runtime; product fields enter through the narrow surface config host. Features must never import surfaces. The former `client/application` workspace is retired. Its remaining composition responsibilities live in `client/composition`, with explicit root files, `layers/`, and `chrome/`.
+
+### Consolidation verification (2026-09-19)
+
+- Architecture enforcement resolves 2,067 source files and 10,946 imports with zero violations; type ownership validates 383 dispositions and 199 unchanged runtime enums.
+- Nucleum, Memotron, Pointron, and Timear compiler checks complete with zero errors. Their existing warning counts are 379, 302, 308, and 0 respectively. Account-service and Playwright TypeScript checks pass.
+- The client Vitest project passes 342 assertions across 58 files, the shared project passes 41 assertions across 8 files, and alias-enforcement tests pass 3 assertions. The client project explicitly inlines Testing Library's Svelte packages so component and non-component tests use the same canonical harness.
+- Playwright discovers 555 tests in 57 files after source-probe paths are updated. This is collection validation; browser workflows, native packaging, cloud integration, deployment, and the complete Playwright suite were not run for this consolidation.
+- The Memotron share-extension production build, fixed-wait check, legacy-runtime check, and Turbo build-graph dry run pass. Existing Svelte, accessibility, and chunk-size build warnings remain warnings rather than build failures.
 
 ## Verification
 
@@ -97,7 +328,6 @@ The approved test-path updates and explicit-end-time setup adaptation are comple
 
 The public feature list now contains 148 entries after relocating existing public Markdown and combination modules. This is ownership correction, not completion of the separate public-API reduction phase.
 
-
 ### Component ownership validation
 
 - Architecture check: 1,983 source files, 10,489 resolved imports, zero violations. Alias, relative, and dynamic forbidden-import negative controls passed.
@@ -111,7 +341,6 @@ The public feature list now contains 148 entries after relocating existing publi
 
 Changes preserve source behavior and update existing test paths only. Browser coverage is local and focused; no full-suite, cloud, deployment, or push validation is claimed.
 
-
 ## Overlay and reusable resource boundary phase
 
 - [x] Separate overlay state from shell navigation through an explicit host contract.
@@ -122,15 +351,13 @@ Changes preserve source behavior and update existing test paths only. Browser co
 
 This phase removes the shared modal/resource foundation dependencies first. Application-composed record lists, thumbnails with action dispatch, resource panels, and the remaining broader helper cycles retain application ownership until their host interactions can be supplied explicitly. The parent issue remains open for those boundaries, public-API reduction and broader regression coverage.
 
-
 The overlay store now lives in `client/stores/overlays` and owns modal, mini-player and fullscreen state without importing application navigation. `appStore` configures its `OverlayHost` once during module initialization; callbacks preserve dismissal events, fullscreen URL parameters and associated-player selection. This is the permanent shell contract, with an explicit error if a caller uses an overlay without a configured shell. Architecture enforcement rejects transitive overlay dependencies on application, feature or product implementations.
 
-Reusable modal header/footer/padding and popup props live in `client/elements/modal`. Selection and active-resource stores live in `client/stores/resources`; resource grid/star/trash feedback lives in `client/components/records`. Generic resource errors and read-only lookup belong to DataFn; the file capability owns the existing upload limit. Application mutation orchestration and feature-composed record rendering remain in application. All old import paths are removed, and the retired application-path registry prevents their reintroduction.
+At this phase, reusable modal header/footer/padding and popup props moved to `client/elements/modal`, selection and active-resource stores moved to `client/stores/resources`, and resource grid/star/trash feedback moved to the then-shared `client/components/records` owner. The current contract above supersedes that interim location: connected record presentation now lives in `client/features/records`. Generic resource errors and read-only lookup belong to DataFn; the file capability owns the existing upload limit. Application mutation orchestration and feature-composed record rendering remained in application at this phase. The retired-path registry prevents old locations from returning.
 
 Phase validation: all four product compilers passed with zero errors (379/302/308/0 warnings); 285 unit tests passed, 3 skipped, including eight new overlay/resource-query tests. Existing test modifications are import/mock/filesystem-path updates only. Focus start, reload/fullscreen, interval-boundary and delivered-reset probes passed; Markdown visible edit, persisted content and post-reload verification passed. The share extension production build passed. Architecture checks, transitive/retired-path negative controls, unchanged-enum comparison (199 enums), no-fixed-waits, Turbo build graph and Playwright discovery (549 tests, 55 files) passed. Full cross-product Playwright and cloud integration were not run.
 
 Direct feature-to-application imports decreased from 165 to 84. The public feature registry has 156 entries after exposing the shared file limit. Remaining imports include application-composed records/thumbnails, mutation/action dispatch, panel navigation, shortcuts and transcription integration; broader helper/store cycles and public-API reduction remain parent-issue work. This phase does not claim completion of TIDY-477.
-
 
 ## Resource action host phase
 
@@ -155,7 +382,7 @@ Direct feature-to-application imports decreased from 84 to 69. Public feature en
 - [x] Supply shell navigation explicitly, preserving URL keys and panel/focus transitions.
 - [x] Enforce retired paths and dependency direction; verify compiler, unit and browser behavior.
 
-Panel enums, URL resolution and panel state transitions now live in `client/stores/resources`; reusable panel presentation lives in `client/components/records`. ResourcePanelHost supplies shell navigation. Callers pass the current SvelteKit URL explicitly when resolving the panel, keeping the shell store independent of SvelteKit page-store initialization. URL suffixes and values, default/focus toggles, update/event ordering and navigation semantics are preserved. The four previous application paths are retired, and direct application/feature/product or appStore imports are forbidden in these shared panel modules.
+At this phase, panel enums, URL resolution and panel state transitions moved to `client/stores/resources`, while reusable panel presentation moved to the interim `client/components/records` owner. The current contract above supersedes that location: the connected panel presentation now lives in `client/features/records`. ResourcePanelHost supplies shell navigation. Callers pass the current SvelteKit URL explicitly when resolving the panel, keeping the shell store independent of SvelteKit page-store initialization. URL suffixes and values, default/focus toggles, update/event ordering and navigation semantics are preserved. The previous application and component paths are retired.
 
 This phase reduces direct feature-to-application imports from 69 to 48; the feature public surface remains 156 entries. Application action/embed contracts, composed record lists/status rendering, shortcuts, recent-resource tracking, library composition, maps, transcription and modal/capture integrations remain. Broader shared-store cycles, package dependency alignment, API reduction and full product regression remain open under TIDY-477. No complete transitive-isolation claim is made.
 

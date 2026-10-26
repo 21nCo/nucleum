@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { onMount } from "svelte";
   import ResourceSearchBase from "@nucleum/products/memotron/library/search/ResourceSearchBase.svelte";
 
   import { Action } from "@nucleum/client/config/action.enum";
-  import SearchInput from "@nucleum/application/search/SearchInput.svelte";
+  import SearchInput from "@nucleum/surfaces/search/SearchInput.svelte";
 
   let { isInline = false }: { isInline?: boolean } = $props();
   let searchInputRef: SearchInput;

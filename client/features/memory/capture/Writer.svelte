@@ -7,13 +7,13 @@
   import { setContext } from "svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import CameraCapture from "@nucleum/features/memory/capture/CameraCapture.svelte";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import type { IActiveCaptureStore } from "@nucleum/features/memory/capture/capture.store";
   import { fly } from "svelte/transition";
-  import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import PlayerControl from "@21n/ui/elements/player/controls/PlayerControl.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
 
   let {
     captureStore,

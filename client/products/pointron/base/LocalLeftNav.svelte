@@ -6,8 +6,8 @@
     activeSession,
     todayFocusStore
   } from "@nucleum/features/focus/session.store";
-  import LeftNavExpandable from "@21n/layout/leftPanel/LeftNavExpandable.svelte";
-  import ProfileLeftPanelSection from "@nucleum/application/settings/account/ProfileLeftPanelSection.svelte";
+  import LeftNavExpandable from "@nucleum/shell/leftPanel/LeftNavExpandable.svelte";
+  import ProfileLeftPanelSection from "@nucleum/surfaces/account/profile/ProfileLeftPanelSection.svelte";
 
   onMount(() => {
     bootup();

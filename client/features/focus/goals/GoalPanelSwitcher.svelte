@@ -1,19 +1,19 @@
 <script lang="ts">
-  import ResourcePanelSwitcher from "@nucleum/components/records/ResourcePanelSwitcher.svelte";
+  import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
   import {
     resolveObjectiveContextMenu,
     type IActiveObjectiveStore
   } from "@nucleum/features/focus/goals/goal.store";
   import { derived } from "svelte/store";
-  import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
+  import type { IToggleItem } from "@21n/ui/elements/toggle/toggle.type";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import {
     type IResourcePageWithPanels,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
-  import type { ResourcePanelType } from "@nucleum/stores/resources/resource-panel.type";
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
+  import type { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 
   let {
     objective,

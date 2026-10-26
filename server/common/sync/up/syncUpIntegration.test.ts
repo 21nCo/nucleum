@@ -10,10 +10,10 @@ import {
 import { syncUp } from "./index";
 import { cloneUp } from "../cloneup";
 import { cloneDown } from "../clonedown";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@nucleum/datafn/resource.enum";
 import { SyncProviderFactory, SyncProvider } from "../providers";
 import { ISyncUpBody, ICloneUpBody } from "@nucleum/schema/legacy/sync.type";
-import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { PersistenceActionType } from "@nucleum/schema/legacy/data.type";
 import { createMutation } from "$lib/tests/fixtures";
 

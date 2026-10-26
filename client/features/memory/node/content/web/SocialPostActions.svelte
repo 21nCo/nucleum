@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import { type IButtonParams } from "@21n/elements/button/button.type";
-  import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import { type IButtonParams } from "@21n/ui/elements/button/button.type";
+  import ButtonGroup from "@21n/ui/elements/button/ButtonGroup.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   import { type INode } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { resolveContentPreview } from "@nucleum/features/memory/node/node.utils";
   import { properCase } from "@21n/shared-utils/text.utils";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   let { node }: { node: INode } = $props();
   let hasPermanentCopy = $derived(!!resolveContentPreview(node));
 

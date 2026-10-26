@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import Text from "@21n/elements/text/Text.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
   import {
     headingNodeTypes,
     type INodeStructure
   } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import {
     hierarchyFactorLimit,
     type IActiveNodeStore
@@ -19,24 +19,24 @@
     shallowDiff
   } from "@21n/shared-utils/obj.utils";
   import NodularMarkdown from "@nucleum/features/memory/markdown/NodularMarkdown.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { formatDatetime } from "@21n/utils/time.utils";
+  import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
   import { onDestroy, onMount } from "svelte";
 
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { setContext, getContext } from "svelte";
   import { BlockAction } from "@nucleum/features/memory/markdown/md.type";
   import { wordCounter } from "@nucleum/features/memory/node/content/word-counter.action";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import view from "@nucleum/stores/view.store";
-  import context from "@nucleum/stores/context.store";
+  import view from "@21n/ui/environment/view.store";
+  import context from "@nucleum/client/runtime/context.store";
   import {
     generateMarkdownText,
     resolveHeadingParent
@@ -45,8 +45,8 @@
     determineResourceAccessMode,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
-  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
-  import { Context } from "@nucleum/stores/appStore.type";
+  import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
+  import { Context } from "@nucleum/shared-state/app-context/app-store.type";
 
   type BlockCreateInput = {
     id: IRecordId;

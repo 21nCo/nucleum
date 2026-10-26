@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { syncDown } from "./index";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@nucleum/datafn/resource.enum";
 import { ISyncDownBody } from "@nucleum/schema/legacy/sync.type";
 
 describe("syncDown", () => {

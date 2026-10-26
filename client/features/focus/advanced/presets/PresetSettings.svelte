@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import Presets from "@nucleum/features/focus/advanced/presets/Presets.svelte";
 

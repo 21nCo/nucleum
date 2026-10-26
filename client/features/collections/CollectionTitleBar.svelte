@@ -1,42 +1,42 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import type { Snippet } from "svelte";
   import type { IActiveCollectionStore } from "./collection.store";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { resolveCollectionContextMenu } from "./collection.store";
   import {
     AccessMode,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
   import AddResourceAction from "@nucleum/features/collections/AddResourceAction.svelte";
   import { CollectionType } from "@nucleum/features/collections/collection.type";
-  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
+  import Avatar from "@nucleum/features/records/avatar/Avatar.svelte";
   import { objIsEmpty } from "@21n/shared-utils/obj.utils";
 
-  import { resizeListener } from "@nucleum/actions/resize.action";
-  import { Placement } from "@21n/elements/direction.enum";
+  import { resizeListener } from "@21n/ui/actions/resize.action";
+  import { Placement } from "@21n/ui/elements/direction.enum";
 
-  import { popover, tooltip } from "@nucleum/actions/popover.action";
+  import { popover, tooltip } from "@21n/ui/actions/popover.action";
 
-  import Tooltip from "@21n/elements/text/Tooltip.svelte";
+  import Tooltip from "@21n/ui/elements/text/Tooltip.svelte";
 
-  import { PopoverTriggerMethod } from "@nucleum/actions/popover.type";
+  import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
 
-  import { isValidAvatar } from "@21n/elements/avatarPicker/avatar.utils";
+  import { isValidAvatar } from "@21n/ui/elements/avatarPicker/avatar.utils";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import CollectionDescriptionEditPopover from "@nucleum/features/collections/CollectionDescriptionEditPopover.svelte";
-  import RecordStarStatusFeedback from "@nucleum/components/records/RecordStarStatusFeedback.svelte";
-  import BackButton from "@21n/elements/button/BackButton.svelte";
-  import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
+  import RecordStarStatusFeedback from "@nucleum/features/records/RecordStarStatusFeedback.svelte";
+  import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
+  import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
   import type { ICollection } from "@nucleum/features/collections/collection.type";
   import { tick } from "svelte";
 

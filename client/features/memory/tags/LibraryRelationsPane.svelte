@@ -1,13 +1,13 @@
 <script lang="ts">
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-  import Icon from "@21n/elements/Icon.svelte";
-  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
+  import FormLabelTooltip from "@21n/ui/elements/text/formLabel/FormLabelTooltip.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
   import LinkTagsControlPanel from "@nucleum/features/memory/linking/LinkTagsControlPanel.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { Resource } from "@nucleum/datafn/resource.enum";
 
   let {

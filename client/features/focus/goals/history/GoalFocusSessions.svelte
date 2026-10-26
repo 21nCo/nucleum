@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import type {
     ISessionLogThumb,
@@ -8,7 +8,7 @@
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
   import ObjectiveFocusSessionThumbnail from "@nucleum/features/focus/goals/history/GoalFocusSessionThumbnail.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { toSvelteStore } from "@datafn/svelte";
 
   let {

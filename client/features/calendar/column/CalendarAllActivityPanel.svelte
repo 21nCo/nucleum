@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { combineSignals, time } from "@datafn/client";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { type IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { formatSeconds, formatTime } from "@21n/utils/time.utils";
-  import { userPreferences } from "@nucleum/stores/preferences/user-preferences.store";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+import { formatTime } from "@21n/shared-utils/datetime/date-formatting";
+  import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { Product } from "@nucleum/client/config/product.type";
   import {
     determineResourceType,

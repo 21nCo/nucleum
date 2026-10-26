@@ -7,18 +7,18 @@
 - `npm run check:apps`
 - `node tools/check/run-app-checks.mjs --format=json`
 - `node tools/check/run-app-checks.mjs --format=text`
-- `node tools/check/run-app-checks.mjs --workspace=nucleus-app --format=json`
-- `node tools/check/run-app-checks.mjs --workspace=memotron-app --format=json`
-- `node tools/check/run-app-checks.mjs --workspace=pointron-app --format=json`
+- `node tools/check/run-app-checks.mjs --workspace=@nucleum/app --format=json`
+- `node tools/check/run-app-checks.mjs --workspace=@memotron/app --format=json`
+- `node tools/check/run-app-checks.mjs --workspace=pointron --format=json`
 - `node tools/check/run-app-checks.mjs --workspace=timear --format=json`
 
 ## Workspace order
 
 The reporter always evaluates workspaces in this deterministic order:
 
-1. `nucleus-app`
-2. `memotron-app`
-3. `pointron-app`
+1. `@nucleum/app`
+2. `@memotron/app`
+3. `pointron`
 4. `timear`
 
 If `--workspace` is provided, the reporter filters that list without changing the canonical ordering.

@@ -1,15 +1,15 @@
 <script lang="ts">
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
-  import { TimeScale } from "@21n/utils/time.type";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import { TimeScale } from "@21n/shared-utils/datetime/period.type";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
   import TimelineCardAxis from "@nucleum/features/focus/goals/info/TimelineCardAxis.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import TimeSpan from "@21n/elements/datetime/TimeSpan.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import TimeSpan from "@21n/ui/elements/datetime/TimeSpan.svelte";
   import {
     activeScales,
     resolveDefaultSpanScale
-  } from "@21n/elements/datetime/datetime.utils";
+  } from "@21n/ui/elements/datetime/datetime.utils";
 
   let { objective }: { objective: IActiveObjectiveStore } = $props();
 

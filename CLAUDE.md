@@ -37,3 +37,5 @@ Use `@/conduct/AGENTS.md` to learn:
 Keep this managed block so 'conduct init' can refresh the instructions.
 
 <!-- CONDUCT:END -->
+
+@AGENTS.md

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { onDestroy } from "svelte";
   import LinkThumbnailItems from "@nucleum/features/memory/node/links/LinkThumbnailItems.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import InlineTimeoutMessage from "@21n/elements/text/InlineTimeoutMessage.svelte";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import InlineTimeoutMessage from "@21n/ui/elements/text/InlineTimeoutMessage.svelte";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import { type IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import {
     type INode,
@@ -15,7 +15,7 @@
   } from "@nucleum/features/memory/node/node.type";
   import { LinkType } from "@nucleum/datafn/link.type";
   import LinkSearch from "@nucleum/features/memory/common/linkbox/LinkSearch.svelte";
-  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
 
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -26,15 +26,15 @@
     resourceInList,
     isSameResource
   } from "@nucleum/datafn/resource.utils";
-  import { BulkEditor } from "@nucleum/stores/resources/bulk-editor";
+  import { BulkEditor } from "@nucleum/features/records/bulk-editor";
   import { resolveResource } from "@nucleum/datafn/resource-query.utils";
-  import { bulkEditStore } from "@nucleum/stores/resources/bulkedit.store";
-  import { toasts } from "@nucleum/stores/notification.store";
-  import { ErrorMessage } from "@nucleum/stores/notifications/error.enum";
+  import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { ErrorMessage } from "@nucleum/shared-state/notifications/error.enum";
   import { ResourceErrorCode } from "@nucleum/schema/resource-error.enum";
   import { ResourceError } from "@nucleum/datafn/resource-error";
-  import { LoadingAnimationType } from "@21n/elements/feedback/feedback.type";
-  import Tag from "@21n/elements/text/Tag.svelte";
+  import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
+  import Tag from "@21n/ui/elements/text/Tag.svelte";
   import { resolveLinkTypeConfig } from "@nucleum/features/memory/linking/link.utils";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";

@@ -1,5 +1,5 @@
 import type { Product } from "./product.type";
-import type { Resource } from "@nucleum/datafn/resource.enum";
+import type { Resource } from "@nucleum/schema/resource.enum";
 
 let resolveTables: ((product: Product) => readonly Resource[]) | undefined;
 

@@ -1,4 +1,4 @@
-import { isValidUrl } from "$lib/shared/utils/utils";
+import { isValidUrl } from "$lib/shared/utils/url.utils";
 
 export async function performUtilRunAction(body: any, user: any) {
   try {

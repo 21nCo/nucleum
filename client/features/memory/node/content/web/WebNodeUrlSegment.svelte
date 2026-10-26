@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import type { IContextMenu } from "@21n/elements/contextMenu/context-menu.type";
+  import type { IContextMenu } from "@21n/ui/elements/contextMenu/context-menu.type";
 
   let { url }: { url: string } = $props();
   let copyLabel = $state("Copy link");

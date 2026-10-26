@@ -1,5 +1,5 @@
 <script>
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   let feature = "This feature is coming soon!";

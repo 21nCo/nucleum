@@ -1,0 +1,36 @@
+{
+  "name": "@nucleum/composition",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@21n/fonts": "^1.0.1",
+    "@datafn/client": "0.1.0",
+    "@datafn/svelte": "0.1.0",
+    "@nucleum/datafn": "*",
+    "@nucleum/features": "*",
+    "@nucleum/schema": "*",
+    "@superfunctions/http": "0.2.0",
+    "@fontsource-variable/hanken-grotesk": "^5.1.0",
+    "@fontsource-variable/sen": "^5.2.6",
+    "@fontsource-variable/space-grotesk": "^5.2.7",
+    "@fontsource/noto-color-emoji": "^5.1.0",
+    "@sveltejs/kit": "^2.55.0",
+    "svelte": "^5.55.0",
+    "@21n/ui": "*"
+  },
+  "peerDependencies": {
+    "@21n/shared-utils": "*",
+    "@nucleum/shared-state": "*",
+    "@nucleum/client": "*",
+    "@nucleum/persistence": "*",
+    "@nucleum/products": "*",
+    "@nucleum/static": "*",
+    "@nucleum/shell": "*",
+    "@nucleum/surfaces": "*",
+    "posthog-js": "^1.154.0"
+  }
+}

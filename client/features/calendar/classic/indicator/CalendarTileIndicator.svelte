@@ -6,7 +6,7 @@
     ISessionThumb
   } from "@nucleum/features/focus/logs/log.type";
   import { CalendarTileIndicatorDisplayType } from "@nucleum/features/calendar/calendar.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   import YearTileIndicatorDot from "@nucleum/features/calendar/classic/indicator/YearTileIndicatorDot.svelte";
   import MonthTileIndicator from "@nucleum/features/calendar/classic/indicator/MonthTileIndicator.svelte";
   import { resolveIndicatorColor } from "@nucleum/features/calendar/classic/indicator/classicCalendarIndicator.utils";

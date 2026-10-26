@@ -1,11 +1,11 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { onMount } from "svelte";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";

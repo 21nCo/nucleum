@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import VerticalSwitcher from "@21n/elements/switcher/VerticalSwitcher.svelte";
+  import VerticalSwitcher from "@21n/ui/elements/switcher/VerticalSwitcher.svelte";
 
-  import { uiState } from "@nucleum/stores/uiState/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/stores/uiState/uiState.type";
-  import { Placement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { VerticalSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import type { ISelectValue } from "@21n/elements/select/select.type";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { VerticalSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import { OverviewPanel } from "@nucleum/client/config/product.type";
   import { Product } from "@nucleum/client/config/product.type";
   import { resolveProductConfig } from "@nucleum/products/product.config";

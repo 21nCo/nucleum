@@ -1,18 +1,18 @@
 <script lang="ts">
-  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import InlineSearchBar from "@21n/ui/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { cn } from "@21n/ui/environment/presentation";
   import { fly } from "svelte/transition";
-  import { recentsStore } from "@nucleum/stores/resources/recent.store";
-  import Records from "@nucleum/application/record/Records.svelte";
+  import { recentsStore } from "@nucleum/shared-state/resources/recent.store";
+  import Records from "@nucleum/surfaces/library/records/Records.svelte";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import { Size } from "@21n/elements/size.enum";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { onMount, onDestroy } from "svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { resolveProductResources } from "@nucleum/datafn/resource.utils";
 
   let {

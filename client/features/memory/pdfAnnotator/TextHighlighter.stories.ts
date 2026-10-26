@@ -1,13 +1,13 @@
-import TextHiglighter from "@nucleum/features/memory/pdfAnnotator/TextHiglighter.svelte";
+import TextHighlighter from "@nucleum/features/memory/pdfAnnotator/TextHighlighter.svelte";
 export default {
-  component: TextHiglighter,
+  component: TextHighlighter,
   parameters: { layout: "centered" }
 };
 
 export const Default = {};
 
 export const withProps = {
-  Component: TextHiglighter,
+  Component: TextHighlighter,
   args: {
     rects: [
       {

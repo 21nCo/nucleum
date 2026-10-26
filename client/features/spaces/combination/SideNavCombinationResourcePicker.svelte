@@ -1,9 +1,9 @@
 <script lang="ts">
-  import TextSearchInput from "@nucleum/client/elements/input/TextSearchInput.svelte";
+  import TextSearchInput from "@21n/ui/compositions/search/TextSearchInput.svelte";
   import LinkSearchResultItem from "@nucleum/features/memory/common/linkbox/LinkSearchResultItem.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { resolveProductResources } from "@nucleum/datafn/resource.utils";
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
 
   let {
     onSelect = undefined

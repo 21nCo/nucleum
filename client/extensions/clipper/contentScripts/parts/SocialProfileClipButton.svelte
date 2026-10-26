@@ -1,12 +1,10 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import {
-    feedbackPane,
-    webpage
-  } from "@nucleum/extensions/clipper/contentScripts/store";
-  import { AlertType } from "@nucleum/stores/notifications/notification.type";
+  import { feedbackPane } from "@nucleum/extensions/clipper/contentScripts/feedback-pane.store";
+import { webpage } from "@nucleum/extensions/clipper/contentScripts/webpage.store";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import type { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { enumToString } from "@21n/shared-utils/text.utils";
   let {

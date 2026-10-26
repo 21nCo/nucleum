@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TimeScale } from "@21n/utils/time.type";
+  import { TimeScale } from "@21n/shared-utils/datetime/period.type";
 
   let {
     startDate,

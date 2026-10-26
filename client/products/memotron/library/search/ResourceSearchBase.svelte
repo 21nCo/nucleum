@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import type { Snippet } from "svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import { recentsStore } from "@nucleum/stores/resources/recent.store";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import { recentsStore } from "@nucleum/shared-state/resources/recent.store";
   import { onMount, onDestroy } from "svelte";
   import { isValidString, properCase } from "@21n/shared-utils/text.utils";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/elements/button/button.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
+  import SearchResultsPopover from "@21n/ui/compositions/search/SearchResultsPopover.svelte";
   import LinkSearchResultItem from "@nucleum/features/memory/common/linkbox/LinkSearchResultItem.svelte";
   import GroupedSearchResults from "@nucleum/products/memotron/library/search/GroupedSearchResults.svelte";
-  import { appStore } from "@nucleum/stores/app.store";
-  import view from "@nucleum/stores/view.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import view from "@21n/ui/environment/view.store";
   import {
     resolveProductResources,
     resolveResourceIcon
@@ -25,21 +25,22 @@
   import {
     KeyboardKey,
     ModifierKey
-  } from "@21n/elements/keyboard/keyboard.type";
-  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import context from "@nucleum/stores/context.store";
+  } from "@21n/ui/elements/keyboard/keyboard.type";
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { Action } from "@nucleum/client/config/action.enum";
-  import { searchStore } from "@nucleum/application/search/index";
+  import { searchStore } from "@nucleum/surfaces/search/index";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import {
     highlightSearchQuery,
     searchSort
   } from "@nucleum/features/memory/linking/search-results.utils";
   import { contentTypeSort } from "@nucleum/features/memory/node/node.utils";
-  import { activeResourceFilter, debouncer } from "@21n/utils/utils";
+  import { activeResourceFilter } from "@nucleum/datafn/resource-filters";
+import { debouncer } from "@21n/shared-utils/debounce";
 
   let {
     children,

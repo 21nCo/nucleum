@@ -1,7 +1,7 @@
 <script lang="ts">
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
-  import { focusById } from "@nucleum/actions/focusById.action";
+  import { focusById } from "@21n/ui/actions/focusById.action";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
   let { node }: { node: IActiveNodeStore } = $props();

@@ -1,19 +1,19 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { onMount } from "svelte";
 
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
-  import { appEvents } from "@nucleum/stores/events/app-events.store";
-  import type { IEvent } from "@21n/elements/input/event.type";
-  import { PointronEvent } from "@nucleum/client/config/events/focus-event.enum";
+  import { appEvents } from "@nucleum/shared-state/events/app-events.store";
+  import type { IEvent } from "@21n/ui/elements/input/event.type";
+  import { PointronEvent } from "@nucleum/shared-state/events/focus-event.enum";
   import { postNotificationToParent } from "@nucleum/client/runtime/embed/embed.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import context from "@nucleum/stores/context.store";
-  import { GlobalEvent } from "@nucleum/stores/notifications/event.enum";
+  import context from "@nucleum/client/runtime/context.store";
+  import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 
   let src = $state<string | null>(null);
   let body: string = "";

@@ -2,16 +2,16 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { syncUp } from ".";
 import { resolveSyncDownQuery } from "../legacy/sync.utils";
 import { performQueryOnBehalfOfUser } from "../../user/user";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@nucleum/datafn/resource.enum";
 import { ISyncUpBody } from "@nucleum/schema/legacy/sync.type";
 import { mockMutations, mockMutationWithLargeData } from "$tests/fixtures";
-import { resolveMutationQueryV2 } from "$lib/shared/utils/surreal.utils";
+import { resolveMutationQueryV2 } from "$lib/server/common/sync/legacy/surreal-query";
 
 vi.mock("../../user/user", () => ({
   performQueryOnBehalfOfUser: vi.fn()
 }));
 
-vi.mock("$lib/shared/utils/surreal.utils", () => ({
+vi.mock("$lib/server/common/sync/legacy/surreal-query", () => ({
   resolveMutationQueryV2: vi.fn()
 }));
 vi.mock("../sync.utils", () => ({

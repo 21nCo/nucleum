@@ -1,23 +1,23 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import { cn } from "@21n/utils/ui.utils";
-  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { Size } from "@21n/elements/size.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
-  import Badge from "@21n/elements/text/Badge.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
+  import FormLabelTooltip from "@21n/ui/elements/text/formLabel/FormLabelTooltip.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import Badge from "@21n/ui/elements/text/Badge.svelte";
   import type {
     DropdownGroup,
     DropdownItem
-  } from "@21n/elements/dropdown/dropdownItem.type";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
+  } from "@21n/ui/elements/dropdown/dropdownItem.type";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
   import {
     PropertyTypeMode,
     type IPropertyTypeSelectorGroup
   } from "@nucleum/features/collections/properties/propertyTypeSelector/propertyTypeSelector.type";
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import { Placement } from "@21n/elements/direction.enum";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import { Placement } from "@21n/ui/elements/direction.enum";
   let {
     groups,
     options,

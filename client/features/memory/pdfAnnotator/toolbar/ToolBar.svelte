@@ -1,21 +1,21 @@
 <script lang="ts">
   import { AnnotationType } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.type";
-  import ToggleGroup from "@21n/elements/toggle/ToggleGroup.svelte";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import Divider from "@21n/elements/Divider.svelte";
-  import { Orientation } from "@21n/elements/direction.enum";
+  import ToggleGroup from "@21n/ui/elements/toggle/ToggleGroup.svelte";
+  import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
+  import Divider from "@21n/ui/elements/Divider.svelte";
+  import { Orientation } from "@21n/ui/elements/direction.enum";
   import { ColorStrength } from "@21n/theme/appearance.type";
-  import { Size } from "@21n/elements/size.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
   import { resolveAnnotationModes } from "@nucleum/features/memory/pdfAnnotator/pdfAnnotator.utils";
   import HighlightColors from "@nucleum/features/memory/common/highlighters/HighlightColors.svelte";
-  import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
+  import type { IToggleItem } from "@21n/ui/elements/toggle/toggle.type";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { Embed, OperatingSystem } from "@nucleum/client/runtime/context.type";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
 
   let {
     selectedColor = $bindable(""),

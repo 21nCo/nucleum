@@ -5,10 +5,10 @@
   } from "@nucleum/features/focus/session.store";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { TimeFormat } from "@21n/utils/time.type";
-  import { formatSeconds } from "@21n/utils/time.utils";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
+  import { formatSeconds } from "@21n/ui/elements/time/duration-format";
+  import { cn } from "@21n/ui/environment/presentation";
   import SessionStatusLabel from "@nucleum/features/focus/elements/sessionTimeText/SessionStatusLabel.svelte";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";

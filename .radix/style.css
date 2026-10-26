@@ -1,0 +1,408 @@
+/* Radix's theme. Tailwind compiles this in the browser, so there is no build
+   step: the tokens below are the whole design, and editing this file restyles
+   the app on save.
+
+   The utilities and animations the components use come from web/shadcn.css,
+   which the loader puts ahead of this file. */
+
+@import "tailwindcss";
+
+@font-face {
+    font-family: "IBM Plex Sans";
+    src: url("/fonts/IBMPlexSans-Regular.woff2") format("woff2");
+    font-weight: 400;
+}
+@font-face {
+    font-family: "IBM Plex Sans";
+    src: url("/fonts/IBMPlexSans-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+}
+@font-face {
+    font-family: "IBM Plex Mono";
+    src: url("/fonts/IBMPlexMono-Regular.woff2") format("woff2");
+    font-weight: 400;
+}
+
+/* Dark is a class on the document rather than a media query, so the app can
+   follow the system and still be overridden. index.html sets it. */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.45rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+
+    /* The native title bar, which the page draws itself, and the room the
+     system's traffic lights need at the left of it. */
+    --header-height: 52px;
+    --traffic-lights: 80px;
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+@theme inline {
+    --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+
+    html,
+    body,
+    #root {
+        @apply h-full;
+    }
+
+    body {
+        @apply bg-background text-foreground font-sans antialiased;
+    }
+
+    /* Tailwind's preflight gives buttons the default arrow, so put the hand back
+     on anything clickable. */
+    button:not(:disabled),
+    [role="button"]:not(:disabled) {
+        @apply cursor-pointer;
+    }
+
+    /* A workspace is written as plain HTML, so the elements it uses are given a
+     size and a rhythm here rather than a class each. */
+    .page {
+        h1 {
+            @apply mb-4 text-xl font-semibold;
+        }
+
+        h2 {
+            @apply mt-6 mb-2 text-sm font-semibold;
+        }
+
+        p {
+            @apply my-2 text-sm/relaxed;
+        }
+
+        code {
+            @apply rounded bg-muted px-1 py-0.5 font-mono text-xs;
+        }
+
+        section {
+            @apply mb-4;
+        }
+    }
+
+    /* Markdown from a transcript, rendered by components/Markdown.tsx. The
+     elements come out of the parser without classes, so they are given their
+     size and rhythm here, the same way `.page` does it above. The first and
+     last child lose their outer margin so a message sits flush in its row. */
+    .markdown {
+        @apply text-sm/relaxed;
+
+        > :first-child {
+            @apply mt-0;
+        }
+
+        > :last-child {
+            @apply mb-0;
+        }
+
+        p {
+            @apply my-3;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            @apply mt-5 mb-2 font-semibold;
+        }
+
+        h1 {
+            @apply text-base;
+        }
+
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            @apply text-sm;
+        }
+
+        ul,
+        ol {
+            @apply my-3 space-y-1 pl-5;
+        }
+
+        ul {
+            @apply list-disc;
+        }
+
+        ol {
+            @apply list-decimal;
+        }
+
+        li > ul,
+        li > ol {
+            @apply my-1;
+        }
+
+        code {
+            @apply rounded bg-muted px-1 py-0.5 font-mono text-xs;
+        }
+
+        /* A fenced block keeps its own padding, so the code inside it drops the
+         inline pill. */
+        pre {
+            @apply my-3 overflow-x-auto rounded-md bg-muted px-3 py-2;
+
+            code {
+                @apply bg-transparent p-0 text-xs;
+            }
+        }
+
+        blockquote {
+            @apply my-3 border-l-2 border-border pl-3 text-muted-foreground;
+        }
+
+        a {
+            @apply underline underline-offset-2;
+        }
+
+        hr {
+            @apply my-4 border-t border-border;
+        }
+
+        table {
+            @apply my-3 w-full text-xs;
+        }
+
+        th,
+        td {
+            @apply border border-border px-2 py-1 text-left align-top;
+        }
+
+        th {
+            @apply font-semibold;
+        }
+
+        img {
+            @apply my-3 max-w-full rounded-md;
+        }
+    }
+}
+
+/* How a picked element looks. Kept as variables so a workspace can try out
+   other values while it is open. */
+:root {
+    --rx-picked-background: var(--muted);
+    --rx-picked-spread: 6px;
+    --rx-picked-radius: 3px;
+
+    --rx-commenting-background: var(--muted);
+    --rx-commenting-line: color-mix(
+        in oklch,
+        var(--muted-foreground) 40%,
+        transparent
+    );
+    --rx-commenting-line-width: 1px;
+    --rx-commenting-spread: 6px;
+    --rx-commenting-radius: 3px;
+
+    --rx-quote-background: color-mix(
+        in oklch,
+        var(--muted-foreground) 30%,
+        transparent
+    );
+}
+
+/* The element a right-click picked, while its menu is open. Outside the layers
+   so it wins over a component's own background, like Text's transparent one.
+   The shadow widens the grey past the text without moving anything. The
+   preview classes let a workspace show the style without a right-click. */
+[data-rx-picked],
+.rx-preview-picked {
+    background-color: var(--rx-picked-background);
+    box-shadow: 0 0 0 var(--rx-picked-spread) var(--rx-picked-background);
+    border-radius: var(--rx-picked-radius);
+}
+
+/* The element the comment drawer is open on: the same grey as above, with a
+   darker outline drawn just outside it. */
+[data-rx-commenting]:not([data-rx-picked]),
+.rx-preview-commenting {
+    background-color: var(--rx-commenting-background);
+    box-shadow:
+        0 0 0 var(--rx-commenting-spread) var(--rx-commenting-background),
+        0 0 0
+            calc(var(--rx-commenting-spread) + var(--rx-commenting-line-width))
+            var(--rx-commenting-line);
+    border-radius: var(--rx-commenting-radius);
+}
+
+/* The quoted text inside that element, when the comment is on a selection.
+   It is a highlight rather than an element, so the page's markup is left as
+   it is. comments.tsx sets it. */
+::highlight(rx-commenting) {
+    background-color: var(--rx-quote-background);
+}
+
+/* Blocks that changed since the workspace was last left, marked by
+   components/Changes.tsx. A line runs down the left of each one and the words
+   put in are highlighted. The words taken out show below the block on hover.
+
+   WebKit stops drawing highlights in an element whose ::before or ::after
+   holds text in the flow, so the line is a background moved out past the
+   margin, and the words taken out are positioned outside the flow. */
+[data-rx-changed] {
+    margin-left: -0.75rem;
+    padding-left: 0.75rem;
+    background: linear-gradient(var(--color-emerald-500), var(--color-emerald-500)) no-repeat left / 2px 100%;
+}
+
+[data-rx-was] {
+    position: relative;
+}
+
+[data-rx-was]:hover::after {
+    content: attr(data-rx-was);
+    position: absolute;
+    top: 100%;
+    left: 0.75rem;
+    z-index: 10;
+    max-width: 32rem;
+    margin-top: 2px;
+    padding: 0.125rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background-color: var(--popover);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+    font-size: var(--text-xs);
+    color: var(--color-red-700);
+    text-decoration: line-through;
+}
+
+.dark [data-rx-was]:hover::after {
+    color: var(--color-red-400);
+}
+
+/* A plain colour, because the color-mix Tailwind wraps in @supports is not
+   applied to a highlight. */
+:root {
+    --rx-added-background: oklch(0.696 0.17 162.48 / 0.2);
+}
+
+::highlight(rx-added) {
+    background-color: var(--rx-added-background);
+}
+
+/* A block the agent has just changed while the workspace is open. */
+[data-rx-flash] {
+    animation: rx-flash 1.6s ease-out;
+}
+
+@keyframes rx-flash {
+    from {
+        background-color: color-mix(in oklab, var(--color-amber-300) 40%, transparent);
+    }
+}

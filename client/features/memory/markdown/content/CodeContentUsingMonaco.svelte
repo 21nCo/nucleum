@@ -2,14 +2,14 @@
   import { onMount } from "svelte";
   import type { ICodeBlockBody } from "@nucleum/features/memory/markdown/md.type";
   import * as monaco from "monaco-editor";
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import { InputStyle } from "@21n/elements/input/input.type";
-  import { Size } from "@21n/elements/size.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { copyToClipboard } from "@21n/utils/utils";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { copyToClipboard } from "@21n/shared-utils/clipboard";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import type { MdStoreType } from "@nucleum/features/memory/markdown/markdown.store";
-  import { hoverable } from "@nucleum/actions/hover.action";
+  import { hoverable } from "@21n/ui/actions/hover.action";
   let {
     mdStore,
     body,

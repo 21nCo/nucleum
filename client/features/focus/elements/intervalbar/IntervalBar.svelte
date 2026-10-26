@@ -16,7 +16,7 @@
     type ISessionInterval
   } from "@nucleum/features/focus/session.type";
   import TimeLabel from "@nucleum/features/focus/elements/intervalbar/TimeLabel.svelte";
-  import view from "@nucleum/stores/view.store";
+  import view from "@21n/ui/environment/view.store";
   import MoreBarsInfo from "@nucleum/features/focus/elements/intervalbar/MoreBarsInfo.svelte";
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
   let {

@@ -1,18 +1,19 @@
 import { Action } from "@nucleum/client/config/action.enum";
-import { ActionType, type IAction } from "@nucleum/client/config/action.type";
+import { ActionType } from "@nucleum/client/config/action.type";
+import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import { memotronActions } from "@nucleum/products/memotron/memotron.actions";
 import { pointronActions } from "@nucleum/products/pointron/pointron.actions";
 import NucleusLibrary from "@nucleum/products/nucleus/NucleusLibrary.svelte";
 import NucleusOverview from "@nucleum/products/nucleus/overview/NucleusOverview.svelte";
-import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
-import LibraryPanelContentResolver from "@nucleum/application/library/LibraryPanelContentResolver.svelte";
+import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+import LibraryPanelContentResolver from "@nucleum/surfaces/library/LibraryPanelContentResolver.svelte";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import NucleusOverviewPanel from "@nucleum/products/nucleus/overview/NucleusOverviewPanel.svelte";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";
-import ResourceBrowser from "@nucleum/application/library/resourceBrowser/ResourceBrowser.svelte";
+import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
 
 const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
 

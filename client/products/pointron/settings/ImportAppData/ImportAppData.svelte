@@ -1,33 +1,33 @@
 <script lang="ts">
-  import { fileUpload } from "@nucleum/stores/files/file-upload";
+  import { fileUpload } from "@nucleum/shared-state/files/file-upload";
 
-  import view from "@nucleum/stores/view.store";
-  import modalEvent from "@nucleum/stores/overlays/modal.store";
-  import Icon from "@21n/elements/Icon.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import FileItem from "@nucleum/products/pointron/settings/ImportAppData/FileItem.svelte";
-  import { UploadStatus } from "@nucleum/application/settings/import/uploadStatus.enum";
-  import { convertFileSize } from "@21n/utils/utils";
-  import { FileSizeMeasurement } from "@21n/utils/fileSizeMeasurement.enum";
+  import { UploadStatus } from "@nucleum/surfaces/settings/import/uploadStatus.enum";
+  import { convertFileSize } from "@21n/shared-utils/files/file-size";
+  import { FileSizeMeasurement } from "@21n/shared-utils/files/file-size-measurement.enum";
   import { get } from "svelte/store";
-  import account from "@nucleum/stores/account.store";
-  import { detectTimeZone } from "@21n/utils/time.utils";
-  import { toasts } from "@nucleum/stores/notification.store";
+  import account from "@nucleum/client/runtime/account/account.store";
+  import { detectTimeZone } from "@21n/shared-utils/datetime/timezone";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { lastImportTime } from "@nucleum/products/pointron/pointron.store";
-  import CheckboxInput from "@21n/elements/toggle/CheckboxInput.svelte";
-  import { performApiCall } from "@21n/utils/network.utils";
+  import CheckboxInput from "@21n/ui/elements/toggle/CheckboxInput.svelte";
+  import { performApiCall } from "@nucleum/client/runtime/network/legacy-api";
   import {
     ImportSource,
     StepType
   } from "@nucleum/products/pointron/settings/data/data.type";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import Divider from "@21n/elements/Divider.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import Divider from "@21n/ui/elements/Divider.svelte";
 
-  import { Display } from "@21n/elements/display.enum";
+  import { Display } from "@21n/ui/elements/display.enum";
   import { enumToString, properCase } from "@21n/shared-utils/text.utils";
-  import { renderMdAsHtml } from "@21n/elements/markdown/markdown.utils";
+  import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
   import { parse } from "@21n/shared-utils/json.utils";
   import {
     datafn,

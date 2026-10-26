@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { pointronPreferences } from "@nucleum/features/focus/preferences.store";
   import { activeSession } from "@nucleum/features/focus/session.store";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
   import Presets from "@nucleum/features/focus/advanced/presets/Presets.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/elements/button/button.type";
-  import { cn } from "@21n/utils/ui.utils";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { cn } from "@21n/ui/environment/presentation";
 
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   let {

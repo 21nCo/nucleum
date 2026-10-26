@@ -17,6 +17,8 @@ const inventory = JSON.parse(
 const printer = ts.createPrinter({ removeComments: true });
 const failures = [];
 let enums = 0;
+let retiredEnums = 0;
+const retiredCacheModule = "client/layout/layers/cache/cache.type.ts";
 
 /** Collects runtime enums without comments or formatting differences. */
 function declarations(file, text) {
@@ -55,6 +57,15 @@ for (const module of inventory.modules) {
     { cwd: root, encoding: "utf8" }
   );
   for (const [name, declaration] of declarations(module.path, original)) {
+    if (module.path === retiredCacheModule && name === "CacheKey") {
+      if (
+        module.disposition !== "removed" ||
+        module.destinations.length !== 0 ||
+        fs.existsSync(path.join(root, "client/shell/layers/cache"))
+      ) failures.push("Retired cache contract must not be restored");
+      retiredEnums++;
+      continue;
+    }
     enums++;
     if (candidates.get(name) !== declaration)
       failures.push(`Runtime enum changed: ${module.path}:${name}`);
@@ -72,6 +83,6 @@ for (const file of [
 }
 for (const failure of failures) console.error(failure);
 console.log(
-  `Type ownership: ${inventory.modules.length} module dispositions, ${enums} unchanged runtime enums, ${failures.length} failures.`
+  `Type ownership: ${inventory.modules.length} module dispositions, ${enums} unchanged runtime enums, ${retiredEnums} audited retired enums, ${failures.length} failures.`
 );
 process.exitCode = failures.length ? 1 : 0;

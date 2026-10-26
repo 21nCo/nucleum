@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import { TimeScaleUnit } from "@21n/utils/time.type";
+  import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
   import type { INodeThumb } from "@nucleum/features/memory/node/node.type";
-  import Text from "@21n/elements/text/Text.svelte";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import Text from "@21n/ui/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import NodeThumbnail from "@nucleum/features/memory/node/thumbnail/NodeThumbnail.svelte";
-  import { Arrangement } from "@21n/elements/direction.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import MetricCard from "@nucleum/features/calendar/column/overview/MetricCard.svelte";
   import { Action } from "@nucleum/client/config/action.enum";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import { LoadingAnimationType } from "@21n/elements/feedback/feedback.type";
-  import { tzStore } from "@nucleum/stores/preferences/timezone.store";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
+  import { tzStore } from "@nucleum/shared-state/preferences/timezone.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
 
   let {

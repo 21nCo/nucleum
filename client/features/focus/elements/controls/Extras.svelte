@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { activeSession } from "@nucleum/features/focus/session.store";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import { SessionType } from "@nucleum/features/focus/logs/log.type";
-  import Button from "@21n/elements/button/Button.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
 
-  import { Placement } from "@21n/elements/direction.enum";
-  import context from "@nucleum/stores/context.store";
-  import type { IPopoverRenderBaseParams } from "@nucleum/actions/popover.type";
-  import { Size } from "@21n/elements/size.enum";
-  import view from "@nucleum/stores/view.store";
-  import { Display } from "@21n/elements/display.enum";
+  import { Placement } from "@21n/ui/elements/direction.enum";
+  import context from "@nucleum/client/runtime/context.store";
+  import type { IPopoverRenderBaseParams } from "@21n/ui/actions/popover.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import view from "@21n/ui/environment/view.store";
+  import { Display } from "@21n/ui/elements/display.enum";
   import { dispatchFocusPlayerPipRequest } from "@nucleum/features/focus/player/focusPlayer.events";
-  import modalEvent, { fullScreen } from "@nucleum/stores/overlays/modal.store";
+  import modalEvent, { fullScreen } from "@nucleum/shell/overlays/modal.store";
   let {
     isInFullScreen = false,
     parentBgIndex = 1

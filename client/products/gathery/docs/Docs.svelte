@@ -1,17 +1,17 @@
 <script>
-  import { navigation } from "@21n/layout/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import Autocomplete from "@21n/elements/autocomplete/Autocomplete.svelte";
-  import Button from "@21n/elements/button/Button.svelte";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import Text from "@21n/elements/text/Text.svelte";
+  import Autocomplete from "@21n/ui/elements/autocomplete/Autocomplete.svelte";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import Text from "@21n/ui/elements/text/Text.svelte";
   import NodeThumbnail from "@nucleum/features/memory/node/thumbnail/NodeThumbnail.svelte";
 
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import { Size } from "@21n/elements/size.enum";
-  import { PanelSwitcherStyle } from "@21n/elements/switcher/switcher.enum";
-  import { TextStyle } from "@21n/elements/text/text.enum";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { docStore } from "$local/client/products/gathery/docs.store";
   import { GatheryEvent } from "@nucleum/features/spaces/gatheryEvent.enum";

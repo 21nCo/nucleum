@@ -7,7 +7,7 @@ import { describeFuzz, fuzzAssertConfig } from "@tests/utils/fuzz";
 const extractProductMock = vi.fn();
 const databaseProvider = createDatabaseProvider();
 
-vi.mock("$lib/shared/utils/utils", () => ({
+vi.mock("$lib/shared/utils/product-host", () => ({
   extractProduct: extractProductMock
 }));
 

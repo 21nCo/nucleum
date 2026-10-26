@@ -1,0 +1,31 @@
+{
+  "name": "@nucleum/surfaces",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@21n/fonts": "^1.0.1",
+    "@authfn/client": "0.2.0",
+    "@datafn/client": "0.1.0",
+    "@datafn/svelte": "0.1.0",
+    "@nucleum/datafn": "*",
+    "@nucleum/features": "*",
+    "@nucleum/schema": "*",
+    "@nucleum/shared-state": "*",
+    "@nucleum/shell": "*",
+    "@superfunctions/http": "0.2.0",
+    "@21n/ui": "*",
+    "@sveltejs/kit": "^2.55.0",
+    "maplibre-gl": "^4.5.1",
+    "svelte": "^5.55.0"
+  },
+  "peerDependencies": {
+    "@21n/shared-utils": "*",
+    "@21n/theme": "*",
+    "@nucleum/client": "*",
+    "@nucleum/persistence": "*"
+  }
+}

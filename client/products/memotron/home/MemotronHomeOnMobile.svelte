@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { navigation } from "@21n/layout/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/stores/commands/command-host";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import { appStore } from "@nucleum/stores/app.store";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Action } from "@nucleum/client/config/action.enum";
-  import { Size } from "@21n/elements/size.enum";
-  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import Icon from "@21n/elements/Icon.svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
   import Writer from "@nucleum/features/memory/capture/Writer.svelte";
   import { CaptureMethod } from "@nucleum/features/memory/capture/capture.type";
   import {
@@ -22,36 +22,36 @@
   import { haptic } from "@nucleum/client/runtime/embed/embed.utils";
   import TypeSelectorOnMobile from "@nucleum/features/memory/capture/typeSelector/TypeSelectorOnMobile.svelte";
   import { fly } from "svelte/transition";
-  import HomeQuickAccess from "@nucleum/application/home/mobile/HomeQuickAccess.svelte";
-  import type { IQuickAccessItem } from "@nucleum/application/home/home.type";
+  import HomeQuickAccess from "@21n/ui/compositions/navigation/QuickAccessGrid.svelte";
+  import type { IQuickAccessItem } from "@21n/ui/compositions/navigation/quick-access.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import CaptureTopBar from "@nucleum/features/memory/capture/CaptureTopBar.svelte";
-  import context from "@nucleum/stores/context.store";
+  import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import {
     AlertType,
     type InlineToast
-  } from "@nucleum/stores/notifications/notification.type";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonVariant } from "@21n/elements/button/button.type";
-  import { inlineToasts } from "@nucleum/stores/notification.store";
-  import NotificationListener from "@21n/elements/listeners/NotificationListener.svelte";
-  import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
+  } from "@nucleum/shared-state/notifications/notification.type";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import { inlineToasts } from "@nucleum/shared-state/notifications/notification.store";
+  import NotificationListener from "@nucleum/shell/notifications/NotificationListener.svelte";
+  import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import FileUploader from "@nucleum/features/memory/capture/FileUploader.svelte";
-  import { GlobalEvent } from "@nucleum/stores/notifications/event.enum";
-  import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
+  import ComponentEmbedLayer from "@nucleum/shell/layers/ComponentEmbedLayer.svelte";
+  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import { quintOut } from "svelte/easing";
   import ResourceSearchBase from "@nucleum/products/memotron/library/search/ResourceSearchBase.svelte";
-  import account from "@nucleum/stores/account.store";
+  import account from "@nucleum/client/runtime/account/account.store";
   import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
-  import { InfoTextType } from "@21n/elements/text/info.type";
+  import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "@21n/ui/elements/text/info.type";
   import { resolveProductConfig } from "@nucleum/products/product.config";
-  import { AppSearchParam } from "@nucleum/stores/appStore.type";
-  import { searchStore } from "@nucleum/application/search/index";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { searchStore } from "@nucleum/surfaces/search/index";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { rootNodeTypeList } from "@nucleum/features/memory/node/node.type";
   import { resolveCollectionResource } from "@nucleum/features/collections/collection.utils";

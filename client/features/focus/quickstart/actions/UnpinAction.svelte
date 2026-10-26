@@ -1,7 +1,7 @@
 <script>
-  import { tooltip } from "@nucleum/actions/popover.action";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { Size } from "@21n/elements/size.enum";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
 
   let { onclick = undefined } = $props();
 </script>

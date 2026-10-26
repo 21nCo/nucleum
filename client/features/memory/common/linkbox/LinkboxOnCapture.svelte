@@ -7,7 +7,7 @@
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { isSameResource } from "@nucleum/datafn/resource.utils";
   import type { IActiveCaptureStore } from "@nucleum/features/memory/capture/capture.store";
-  import { cn } from "@21n/utils/ui.utils";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     captureStore,
     expand = $bindable(null),

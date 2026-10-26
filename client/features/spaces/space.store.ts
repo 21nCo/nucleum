@@ -2,7 +2,7 @@ import { get, writable } from "svelte/store";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { StoreDataType } from "@nucleum/schema/legacy/store-data-type.enum";
 import type { Space, SpaceStore } from "@nucleum/features/spaces/space.type";
-import { performApiCall } from "@21n/utils/network.utils";
+import { performApiCall } from "@nucleum/client/runtime/network/legacy-api";
 
 const cachedSpaceInContext = null; // TODO: re-enable retrieveLocally(Resource.spaceInContext) once Dexie is integrated
 export const spaceInContext = writable<Space>(cachedSpaceInContext ?? null);

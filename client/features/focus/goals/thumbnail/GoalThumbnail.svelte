@@ -1,14 +1,14 @@
 <script lang="ts">
   import { resolveObjectiveContextMenu } from "@nucleum/features/focus/goals/goal.store";
-  import { Arrangement } from "@21n/elements/direction.enum";
-  import { Size } from "@21n/elements/size.enum";
+  import { Arrangement } from "@21n/ui/elements/direction.enum";
+  import { Size } from "@21n/ui/elements/size.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
-  import ResourceGridThumbnail from "@nucleum/components/records/ResourceGridThumbnail.svelte";
-  import ResourceThumbnailBase from "@nucleum/components/records/ResourceThumbnailBase.svelte";
-  import { cn } from "@21n/utils/ui.utils";
+  import ResourceGridThumbnail from "@nucleum/features/records/ResourceGridThumbnail.svelte";
+  import ResourceThumbnailBase from "@nucleum/features/records/ResourceThumbnailBase.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import { type IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import type { IProperty } from "@nucleum/features/collections/properties/property.type";
-  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
   import {
     activeSession,
     currentFocusItem

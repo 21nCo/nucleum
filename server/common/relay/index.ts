@@ -1,4 +1,4 @@
-import { FluxMethod, IFluxMethod } from "$lib/client/components/flux/flux.type";
+import { FluxMethod, type IFluxMethod } from "./relay.type";
 import { Agent } from "$lib/server/common/account/account.type";
 
 import { ValidationError } from "../errors";
