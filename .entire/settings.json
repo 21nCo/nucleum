@@ -3,7 +3,7 @@
   "strategy_options": {
     "checkpoint_remote": {
       "provider": "github",
-      "repo": "21nCo/entire-checkpoints"
+      "repo": "21nCo/nucleum.private"
     }
   },
   "telemetry": false,
