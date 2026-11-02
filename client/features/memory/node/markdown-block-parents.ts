@@ -1,6 +1,7 @@
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+import { headingNodeTypes } from "@nucleum/features/memory/node/node.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
 const repairBatchSize = 200;
@@ -14,8 +15,16 @@ const repairQueryMetadata = {
 type BlockRecord = {
   id: IRecordId;
   creationContext?: IRecordId;
+  contentType?: string;
   mdChildOrder?: unknown;
 };
+
+function isHeadingBlock(block: BlockRecord | undefined) {
+  return Boolean(
+    block?.contentType &&
+      (headingNodeTypes as readonly string[]).includes(block.contentType)
+  );
+}
 
 function readChildIds(mdChildOrder: unknown): IRecordId[] {
   if (!Array.isArray(mdChildOrder)) return [];
@@ -50,23 +59,30 @@ async function queryInBatches(
 }
 
 /**
- * Collects the ids reachable from a note through `mdChildOrder`, following
- * each block's own `mdChildOrder` for headings and nested blocks.
+ * Walks a note's block tree through `mdChildOrder` (following each block's
+ * own `mdChildOrder` for headings and nested blocks) and returns, for every
+ * reachable id, the heading blocks above it in the tree.
  */
-function collectNoteBlockIds(
+function collectNoteBlockHeadings(
   note: BlockRecord,
   blocksById: Map<IRecordId, BlockRecord>
-): Set<IRecordId> {
-  const reachable = new Set<IRecordId>();
-  const queue = readChildIds(note.mdChildOrder);
-  while (queue.length > 0) {
-    const id = queue.shift() as IRecordId;
-    if (reachable.has(id)) continue;
-    reachable.add(id);
+): Map<IRecordId, IRecordId[]> {
+  const headingsById = new Map<IRecordId, IRecordId[]>();
+  const queue: { id: IRecordId; headings: IRecordId[] }[] = readChildIds(
+    note.mdChildOrder
+  ).map((id) => ({ id, headings: [] }));
+  for (let index = 0; index < queue.length; index += 1) {
+    const { id, headings } = queue[index];
+    if (headingsById.has(id)) continue;
+    headingsById.set(id, headings);
     const block = blocksById.get(id);
-    if (block) queue.push(...readChildIds(block.mdChildOrder));
+    if (!block) continue;
+    const childHeadings = isHeadingBlock(block) ? [...headings, id] : headings;
+    for (const childId of readChildIds(block.mdChildOrder)) {
+      queue.push({ id: childId, headings: childHeadings });
+    }
   }
-  return reachable;
+  return headingsById;
 }
 
 /**
@@ -76,7 +92,9 @@ function collectNoteBlockIds(
  * `creationContext` but no `mdParent`, `parent` or `parentPath`, so trash,
  * archive and inactive propagation and parent-aware search cannot find them.
  * Only nodes that belong to a nodular markdown note's block tree (reachable
- * through `mdChildOrder`) are repaired. Media, links and files embedded in a
+ * through `mdChildOrder`) are repaired. Like the editor, non-heading blocks get
+ * the note as parent and headings get the note followed by the headings above
+ * them. Media, links and files embedded in a
  * note and clipper supplements also carry `creationContext` but are not part
  * of the block tree, so they are left untouched. Writes go through DataFn so
  * they sync, and the repair is idempotent.
@@ -116,16 +134,21 @@ export async function repairMarkdownBlockParents(): Promise<number> {
     const noteBlocks = await queryInBatches(
       notes.map((note) => note.id),
       (batch) => ({ creationContext: { $in: batch } }),
-      ["id", "creationContext", "mdChildOrder"]
+      ["id", "creationContext", "contentType", "mdChildOrder"]
     );
     const blocksById = new Map(noteBlocks.map((block) => [block.id, block]));
     const treeByNote = new Map(
-      notes.map((note) => [note.id, collectNoteBlockIds(note, blocksById)])
+      notes.map((note) => [note.id, collectNoteBlockHeadings(note, blocksById)])
     );
 
-    const blocks = orphans.filter((record) =>
-      treeByNote.get(record.creationContext)?.has(record.id)
-    );
+    const blocks = orphans.flatMap((record) => {
+      const headings = treeByNote.get(record.creationContext)?.get(record.id);
+      if (!headings) return [];
+      const mdParent = isHeadingBlock(blocksById.get(record.id))
+        ? [record.creationContext, ...headings]
+        : [record.creationContext];
+      return [{ id: record.id, mdParent }];
+    });
     for (let index = 0; index < blocks.length; index += repairBatchSize) {
       await datafn.node.mutate(
         blocks.slice(index, index + repairBatchSize).map((block) => ({
@@ -133,9 +156,9 @@ export async function repairMarkdownBlockParents(): Promise<number> {
           id: block.id,
           record: {
             id: block.id,
-            mdParent: [block.creationContext],
-            parent: block.creationContext,
-            parentPath: block.creationContext
+            mdParent: block.mdParent,
+            parent: block.mdParent[block.mdParent.length - 1],
+            parentPath: block.mdParent.join("-")
           }
         }))
       );

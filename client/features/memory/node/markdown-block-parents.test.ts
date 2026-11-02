@@ -35,7 +35,14 @@ describe("repairMarkdownBlockParents", () => {
 
   async function readNode(id: string) {
     const result = await datafn.node.query({
-      select: ["id", "mdParent", "parent", "parentPath", "creationContext"],
+      select: [
+        "id",
+        "mdParent",
+        "parent",
+        "parentPath",
+        "creationContext",
+        "isAncestorInactive"
+      ],
       filters: { id },
       metadata: {
         includeArchived: true,
@@ -162,6 +169,7 @@ describe("repairMarkdownBlockParents", () => {
     });
     for (const id of [embeddedFileId, supplementId]) {
       const record = await readNode(id);
+      expect(record).toBeDefined();
       expect(record?.parent ?? null).toBeNull();
       expect(record?.mdParent ?? []).toEqual([]);
     }
@@ -218,7 +226,61 @@ describe("repairMarkdownBlockParents", () => {
     expect(await repairMarkdownBlockParents()).toBe(1);
     expect(await readNode(orphanId)).toMatchObject({
       mdParent: [noteId],
-      parent: noteId
+      parent: noteId,
+      isAncestorInactive: true
+    });
+  });
+
+  it("gives an orphaned nested heading the headings above it", async () => {
+    await boot();
+    const noteId = "node:heading-note";
+    const headingOneId = "node:heading-one";
+    const headingTwoId = "node:heading-two-orphan";
+    await datafn.node.mutate([
+      {
+        operation: "insert",
+        id: noteId,
+        record: {
+          id: noteId,
+          label: "Note",
+          body: "",
+          contentType: NodeType.NODULAR_MARKDOWN,
+          mdChildOrder: [headingOneId]
+        }
+      },
+      {
+        operation: "insert",
+        id: headingOneId,
+        record: {
+          id: headingOneId,
+          label: "Heading one",
+          body: "",
+          contentType: NodeType.HEADING1,
+          creationContext: noteId,
+          mdParent: [noteId],
+          parent: noteId,
+          parentPath: noteId,
+          mdChildOrder: [headingTwoId]
+        }
+      },
+      {
+        operation: "insert",
+        id: headingTwoId,
+        record: {
+          id: headingTwoId,
+          label: "Heading two",
+          body: "",
+          contentType: NodeType.HEADING2,
+          creationContext: noteId
+        }
+      }
+    ]);
+
+    expect(await repairMarkdownBlockParents()).toBe(1);
+    expect(await readNode(headingTwoId)).toMatchObject({
+      mdParent: [noteId, headingOneId],
+      parent: headingOneId,
+      parentPath: `${noteId}-${headingOneId}`
     });
   });
 });
