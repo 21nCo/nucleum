@@ -18,6 +18,7 @@ const printer = ts.createPrinter({ removeComments: true });
 const failures = [];
 let enums = 0;
 let retiredEnums = 0;
+let changedEnums = 0;
 const retiredEnumContracts = new Map([
   [
     "client/layout/layers/cache/cache.type.ts",
@@ -30,6 +31,12 @@ const retiredEnumContracts = new Map([
       retiredPath: "client/features/spaces/gatheryEvent.enum.ts"
     }
   ]
+]);
+
+/** Runtime enums whose members were intentionally changed after the baseline, keyed by baseline path. */
+const changedEnumContracts = new Map([
+  ["client/datafn/resource.type.ts", ["AccessMode"]],
+  ["client/types/appStore.type.ts", ["AppSearchParam"]]
 ]);
 
 /** Collects runtime enums without comments or formatting differences. */
@@ -79,6 +86,12 @@ for (const module of inventory.modules) {
       retiredEnums++;
       continue;
     }
+    if (changedEnumContracts.get(module.path)?.includes(name)) {
+      if (!candidates.has(name))
+        failures.push(`Changed enum ${name} is missing from its destination`);
+      changedEnums++;
+      continue;
+    }
     enums++;
     if (candidates.get(name) !== declaration)
       failures.push(`Runtime enum changed: ${module.path}:${name}`);
@@ -96,6 +109,6 @@ for (const file of [
 }
 for (const failure of failures) console.error(failure);
 console.log(
-  `Type ownership: ${inventory.modules.length} module dispositions, ${enums} unchanged runtime enums, ${retiredEnums} audited retired enums, ${failures.length} failures.`
+  `Type ownership: ${inventory.modules.length} module dispositions, ${enums} unchanged runtime enums, ${retiredEnums} audited retired enums, ${changedEnums} audited changed enums, ${failures.length} failures.`
 );
 process.exitCode = failures.length ? 1 : 0;

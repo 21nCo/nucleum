@@ -213,7 +213,7 @@
             );
             navigation.closeResource({
               id: captureAction,
-              accessMode: AccessMode.POP
+              accessMode: AccessMode.PAGE
             });
           }}
         />

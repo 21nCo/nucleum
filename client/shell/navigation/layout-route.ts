@@ -8,8 +8,8 @@ import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 /** Decodes shell regions and resource overlays from the current route. */
 export function resolveLayoutRoute(url?: URL) {
   const searchParams = url?.searchParams ?? new URLSearchParams();
-  const rightPanelParam = searchParams.get(AccessMode.RIGHT);
-  const popParam = searchParams.get(AccessMode.POP);
+  const rightPanelParam = searchParams.get(AccessMode.PANEL);
+  const popParam = searchParams.get(AccessMode.PAGE);
   const popAction = popParam
     ? requireCommandHost().resolveAction(popParam.split(":")[0])
     : undefined;
@@ -23,7 +23,7 @@ export function resolveLayoutRoute(url?: URL) {
       popParam && popAction
         ? { id: popParam as IRecordId, action: popAction }
         : undefined,
-    mainPath: searchParams.get(AccessMode.MAIN) ?? undefined
+    mainPath: searchParams.get(AccessMode.OVERLAY) ?? undefined
   };
 }
 /** Identifies the shell home route independently of product page components. */

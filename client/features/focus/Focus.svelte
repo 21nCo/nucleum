@@ -44,7 +44,7 @@
   const MIN_WIDTH_TO_EXPAND = resolveMinWidth(2);
 
   let {
-    accessMode = AccessMode.INLINE,
+    accessMode,
     nonPadded: nonPaddedContent = undefined,
     right: rightContent = undefined
   }: {
@@ -157,7 +157,7 @@
         titleStyle={TextStyle.PANEL_HEADING}
         isProminentDivider={true}
         extraLargeScreenComponent={$activeSession.isSessionRunning ||
-        accessMode === AccessMode.POP
+        accessMode === AccessMode.PAGE
           ? undefined
           : "simpleDigitalClock"}
       >

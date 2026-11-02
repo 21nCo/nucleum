@@ -41,14 +41,11 @@ const recordSpecificSearchParams = [
   /-nodeView$/,
   AppSearchParam.EDIT,
   AppSearchParam.VIEW,
-  AppSearchParam.POP_AT,
-  AppSearchParam.SPLIT_AT,
-  AppSearchParam.FSPLIT_AT,
   AppSearchParam.FULL_AT,
   AppSearchParam.LINK,
   AppSearchParam.DATE,
   AppSearchParam.SETTING,
-  AccessMode.FSPLIT
+  AccessMode.BESIDE_PAGE
 ];
 
 /** Compare navigation targets without treating equivalent query encodings as changes. */
@@ -99,7 +96,7 @@ export const navigation = {
     if (returnToParam) {
       queryParams.returnTo = returnToParam;
     }
-    navigation.openResource(id, AccessMode.POP, {
+    navigation.openResource(id, AccessMode.PAGE, {
       searchParams: { ...queryParams }
     });
   },
@@ -110,7 +107,7 @@ export const navigation = {
       requireCommandHost().runAction(id);
       return;
     }
-    navigation.toggleSearchParam([AccessMode.MAIN]);
+    navigation.toggleSearchParam([AccessMode.OVERLAY]);
     hTrail.select(id);
   },
   /** Navigates to the resource or action selected in the vertical trail. */
@@ -122,7 +119,7 @@ export const navigation = {
     }
     if (!isRecordId(id)) return;
     const parts = id.split("-");
-    navigation.openResource(parts[parts.length - 1], AccessMode.POP, {
+    navigation.openResource(parts[parts.length - 1], AccessMode.PAGE, {
       origin: current.base
     });
     vTrail.select(id);
@@ -333,29 +330,12 @@ export const navigation = {
   isOverlay: (recordId?: IRecordId) => {
     if (recordId) {
       const accessMode = determineResourceAccessMode(recordId);
-      return accessMode === AccessMode.POP || accessMode === AccessMode.FULL;
+      return accessMode === AccessMode.PAGE || accessMode === AccessMode.FULL;
     }
     return (
       new URLSearchParams(window.location.search).get(AccessMode.FULL) ||
-      new URLSearchParams(window.location.search).get(AccessMode.POP)
+      new URLSearchParams(window.location.search).get(AccessMode.PAGE)
     );
-  },
-  determineCurrentResourceAccessMode1: (id: string) => {
-    if (new URLSearchParams(window.location.search).get(AccessMode.POP) === id)
-      return AccessMode.POP;
-    else if (
-      new URLSearchParams(window.location.search).get(AccessMode.FULL) === id
-    )
-      return AccessMode.FULL;
-    else if (
-      new URLSearchParams(window.location.search).get(AccessMode.SPLIT) === id
-    )
-      return AccessMode.SPLIT;
-    else if (
-      new URLSearchParams(window.location.search).get(AccessMode.FSPLIT) === id
-    )
-      return AccessMode.FSPLIT;
-    else return AccessMode.INLINE;
   },
   /**
    *
@@ -369,14 +349,14 @@ export const navigation = {
       return AccessMode.TAB;
     } else if (event.shiftKey) return AccessMode.FULL;
     else if (event.altKey) {
-      return AccessMode.SPLIT;
+      return AccessMode.BESIDE_BASE;
     } else if (event.metaKey) {
       return AccessMode.OPEN_IN_BACKGROUND;
     }
   },
   openResource: (
     id: IRecordId,
-    accessMode: AccessMode = AccessMode.INLINE,
+    accessMode?: AccessMode,
     params?: {
       origin?: Action | IRecordId;
       replaceId?: IRecordId;
@@ -388,9 +368,12 @@ export const navigation = {
     let url = new URL(window.location.href);
     if (accessMode === AccessMode.FULL) {
       url =
-        navigation.toggleSearchParam([AccessMode.POP, AccessMode.FSPLIT], {
-          isPreventRefresh: true
-        }) ?? url;
+        navigation.toggleSearchParam(
+          [AccessMode.PAGE, AccessMode.BESIDE_PAGE],
+          {
+            isPreventRefresh: true
+          }
+        ) ?? url;
     }
     const timestamp = new Date();
     const runtime = get(datafnRuntime);
@@ -418,24 +401,24 @@ export const navigation = {
         isPreventActivation: true
       });
       navigation.toggleSearchParam(
-        { [AccessMode.RIGHT]: Action.NAVIGATOR },
+        { [AccessMode.PANEL]: Action.NAVIGATOR },
         { url }
       );
       return;
-    } else if (accessMode === AccessMode.SPLIT) {
+    } else if (accessMode === AccessMode.BESIDE_BASE) {
       const isFullOrPop = navigation.isOverlay(params?.replaceId);
-      if (isFullOrPop) accessMode = AccessMode.FSPLIT;
-      else accessMode = AccessMode.SPLIT;
+      if (isFullOrPop) accessMode = AccessMode.BESIDE_PAGE;
+      else accessMode = AccessMode.BESIDE_BASE;
     }
     logger.log({ at: "openResource", accessMode });
     let isOpenNavigator = false;
     let isCloseNavigator = false;
-    if (accessMode === AccessMode.POP && params?.origin) {
+    if (accessMode === AccessMode.PAGE && params?.origin) {
       isOpenNavigator = vTrail.add(params.origin, id);
-    } else if (accessMode === AccessMode.POP) {
+    } else if (accessMode === AccessMode.PAGE) {
       vTrail.clear();
       isCloseNavigator =
-        new URL(window.location.href).searchParams.get(AccessMode.RIGHT) ===
+        new URL(window.location.href).searchParams.get(AccessMode.PANEL) ===
         Action.NAVIGATOR;
     }
     url =
@@ -445,11 +428,15 @@ export const navigation = {
       }) ?? url;
     navigation.toggleSearchParam(
       {
-        [accessMode]: id.toString(),
-        [accessMode + "At"]: timestamp.getTime(),
+        ...(accessMode
+          ? {
+              [accessMode]: id.toString(),
+              [accessMode + "At"]: timestamp.getTime()
+            }
+          : { [AppSearchParam.SELECTED]: id.toString() }),
         ...(params?.searchParams ?? {}),
-        ...(isOpenNavigator ? { [AccessMode.RIGHT]: Action.NAVIGATOR } : {}),
-        ...(isCloseNavigator ? { [AccessMode.RIGHT]: null } : {})
+        ...(isOpenNavigator ? { [AccessMode.PANEL]: Action.NAVIGATOR } : {}),
+        ...(isCloseNavigator ? { [AccessMode.PANEL]: null } : {})
       },
       {
         url: url
@@ -473,9 +460,9 @@ export const navigation = {
     }
   ) => {
     const clickAccessMode = navigation.determineClickAccessMode(event);
-    let accessMode = AccessMode.SPLIT;
-    if (clickAccessMode === AccessMode.SPLIT) {
-      accessMode = AccessMode.POP;
+    let accessMode = AccessMode.BESIDE_BASE;
+    if (clickAccessMode === AccessMode.BESIDE_BASE) {
+      accessMode = AccessMode.PAGE;
     } else if (clickAccessMode) {
       accessMode = clickAccessMode;
     }
@@ -524,6 +511,7 @@ export const navigation = {
     params?: {
       origin?: Action | IRecordId;
       defaultTo?: AccessMode;
+      isInPlace?: boolean;
       replaceId?: IRecordId;
       searchParams?: Record<string, string | boolean | number | null>;
     }
@@ -531,11 +519,12 @@ export const navigation = {
     if (!id) return;
     navigation.toggleSearchParam([AppSearchParam.VIEW]);
     let accessMode;
-    const defaultTo =
-      params?.defaultTo ??
-      (params?.replaceId
-        ? determineResourceAccessMode(params.replaceId)
-        : AccessMode.POP);
+    const defaultTo = params?.isInPlace
+      ? undefined
+      : (params?.defaultTo ??
+        (params?.replaceId
+          ? determineResourceAccessMode(params.replaceId)
+          : AccessMode.PAGE));
     if (event) accessMode = navigation.determineClickAccessMode(event);
     if (!accessMode) accessMode = defaultTo;
     logger.log({ at: "resourceClickHandler", accessMode, defaultTo });
@@ -557,11 +546,6 @@ export const navigation = {
     accessMode?: AccessMode;
     isRestrictToModals?: boolean;
   }) => {
-    const restoreInlineResourceIfPrev = () => {
-      const prevMode = url.searchParams.get("prev");
-      if (prevMode === AccessMode.INLINE && props?.id)
-        url.searchParams.set(prevMode, props?.id.toString());
-    };
     appEvents.nav(props?.id?.toString() ?? "");
     const url =
       navigation.toggleSearchParam(recordSpecificSearchParams, {
@@ -569,29 +553,25 @@ export const navigation = {
       }) ?? new URL(window.location.href);
     if (props?.accessMode) {
       navigation.toggleSearchParam([props.accessMode], { url });
-      restoreInlineResourceIfPrev();
       return;
     } else if (props?.id) {
       const accessMode = determineResourceAccessMode(props.id);
       if (accessMode) {
         navigation.toggleSearchParam([accessMode], { url });
-        restoreInlineResourceIfPrev();
       }
       return;
     }
     if (props?.isRestrictToModals) {
-      navigation.toggleSearchParam([AccessMode.FSPLIT, AccessMode.POP], {
+      navigation.toggleSearchParam([AccessMode.BESIDE_PAGE, AccessMode.PAGE], {
         url
       });
       return;
     }
-    restoreInlineResourceIfPrev();
-    removeSearchParam("prev");
-    removeSearchParam(AccessMode.SPLIT);
+    removeSearchParam(AccessMode.BESIDE_BASE);
     removeSearchParam(AccessMode.FULL);
-    removeSearchParam(AccessMode.POP);
-    removeSearchParam(AccessMode.FSPLIT);
-    removeSearchParam(AccessMode.MAIN);
+    removeSearchParam(AccessMode.PAGE);
+    removeSearchParam(AccessMode.BESIDE_PAGE);
+    removeSearchParam(AccessMode.OVERLAY);
     navigation.gotoPath(url.href);
 
     function removeSearchParam(param: string) {
@@ -599,7 +579,10 @@ export const navigation = {
       url.searchParams.delete(param);
     }
   },
-  toggleFullScreen: (currentMode: AccessMode, resourceId: IRecordId) => {
+  toggleFullScreen: (
+    currentMode: AccessMode | undefined,
+    resourceId: IRecordId
+  ) => {
     logger.log({ at: "toggleFullAccessMode", currentMode, resourceId });
     const hasMaxParam = new URLSearchParams(window.location.search).get(
       AppSearchParam.MAX

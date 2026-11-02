@@ -88,7 +88,7 @@ async function ensureNodeSurface(page: Page) {
   await expect
     .poll(
       () => {
-        const resource = new URL(page.url()).searchParams.get("r");
+        const resource = new URL(page.url()).searchParams.get("page");
         return resource?.startsWith("node:") ?? false;
       },
       { message: "ensureNodeSurface: toBe true", timeout: 15_000 }
@@ -505,7 +505,7 @@ test.describe("nodes - markdown flows @record-page", () => {
     await openNodeRecordFromLibrary(page, nodeTitle);
     await ensureNodeSurface(page);
 
-    const nodeId = new URL(page.url()).searchParams.get("r");
+    const nodeId = new URL(page.url()).searchParams.get("page");
     expect(nodeId?.startsWith("node:")).toBeTruthy();
 
     await createHeadingBlock(page, 0, 1, primaryHeading);
@@ -616,7 +616,7 @@ test.describe("nodes - markdown flows @record-page", () => {
     await openNodeRecordFromLibrary(page, nodeTitle);
     await ensureNodeSurface(page);
 
-    const nodeId = new URL(page.url()).searchParams.get("r");
+    const nodeId = new URL(page.url()).searchParams.get("page");
     expect(nodeId?.startsWith("node:")).toBeTruthy();
 
     await createHeadingBlock(page, 0, 1, primaryHeading);
@@ -885,7 +885,7 @@ test.describe("nodes - markdown flows @record-page", () => {
     await openNodeRecordFromLibrary(page, nodeTitle);
     await ensureNodeSurface(page);
 
-    const nodeId = new URL(page.url()).searchParams.get("r");
+    const nodeId = new URL(page.url()).searchParams.get("page");
     expect(nodeId?.startsWith("node:")).toBeTruthy();
 
     await createHeadingBlock(page, 0, 4, headingFour);
@@ -955,7 +955,7 @@ test.describe("nodes - markdown flows @record-page", () => {
     await openNodeRecordFromLibrary(page, nodeTitle);
     await ensureNodeSurface(page);
 
-    const nodeId = new URL(page.url()).searchParams.get("r");
+    const nodeId = new URL(page.url()).searchParams.get("page");
     expect(nodeId?.startsWith("node:")).toBeTruthy();
 
     await createGenericWebEmbed(page, 0, webPageUrl);
@@ -997,7 +997,7 @@ test.describe("nodes - markdown flows @record-page", () => {
     await openNodeRecordFromLibrary(page, nodeTitle);
     await ensureNodeSurface(page);
 
-    const nodeId = new URL(page.url()).searchParams.get("r");
+    const nodeId = new URL(page.url()).searchParams.get("page");
     expect(nodeId?.startsWith("node:")).toBeTruthy();
 
     await createYoutubeEmbed(page, 0, youtubeUrl);

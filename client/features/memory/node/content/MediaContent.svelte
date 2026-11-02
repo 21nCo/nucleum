@@ -29,7 +29,7 @@
   function contextEventListener(event: string, data: any) {
     if (event === "pdf-trace-click" || event === "yt-trace-click") {
       if ($view.isPortrait && isRecordId(data.id)) {
-        navigation.openResource(data.id, AccessMode.POP);
+        navigation.openResource(data.id, AccessMode.PAGE);
       } else {
         contentRef?.onTraceClick(data);
       }
@@ -68,9 +68,7 @@
         "border-r border-brs2":
           $node.panel ||
           (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth),
-        grow:
-          $node.accessMode === AccessMode.POP ||
-          $node.accessMode === AccessMode.INLINE,
+        grow: $node.accessMode === AccessMode.PAGE || !$node.accessMode,
         "mt-16":
           $context.isEmbed &&
           $context.os === OperatingSystem.IOS &&

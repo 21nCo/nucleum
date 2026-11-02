@@ -38,6 +38,6 @@
   {:else if !isReady}
     <EmptyStatusView isLoadingState={true} mainText="Opening public link..." />
   {:else}
-    <ResourceResolver id={recordId} accessMode={AccessMode.INLINE} />
+    <ResourceResolver id={recordId} />
   {/if}
 </div>

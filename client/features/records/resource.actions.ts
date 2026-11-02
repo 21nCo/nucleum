@@ -279,8 +279,8 @@ export class ResourceActions<T extends IActionableResource> {
           requireResourceActionHost().open(
             this.resource.id,
             context === ResourceAccessPoint.BROWSER
-              ? AccessMode.INLINE
-              : AccessMode.POP,
+              ? undefined
+              : AccessMode.PAGE,
             {
               searchParams: {
                 [AppSearchParam.EDIT]: true
@@ -365,7 +365,10 @@ export class ResourceActions<T extends IActionableResource> {
       value: "open-as-split",
       icon: "split-screen",
       callback: async () => {
-        requireResourceActionHost().open(this.resource.id, AccessMode.SPLIT);
+        requireResourceActionHost().open(
+          this.resource.id,
+          AccessMode.BESIDE_BASE
+        );
       }
     };
   }
@@ -374,18 +377,24 @@ export class ResourceActions<T extends IActionableResource> {
     return {
       value: "open-as-split",
       label:
-        currentMode === AccessMode.SPLIT
+        currentMode === AccessMode.BESIDE_BASE
           ? "Close split screen"
           : "Open in split screen",
-      icon: currentMode === AccessMode.SPLIT ? "minus-circle" : "split-screen",
+      icon:
+        currentMode === AccessMode.BESIDE_BASE
+          ? "minus-circle"
+          : "split-screen",
       callback: async () => {
-        if (currentMode === AccessMode.SPLIT) {
+        if (currentMode === AccessMode.BESIDE_BASE) {
           requireResourceActionHost().close({
             id: this.resource.id,
-            accessMode: AccessMode.SPLIT
+            accessMode: AccessMode.BESIDE_BASE
           });
         } else {
-          requireResourceActionHost().open(this.resource.id, AccessMode.SPLIT);
+          requireResourceActionHost().open(
+            this.resource.id,
+            AccessMode.BESIDE_BASE
+          );
         }
       }
     };

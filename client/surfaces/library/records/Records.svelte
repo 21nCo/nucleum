@@ -53,7 +53,8 @@
     data = [],
     resource = Resource.node,
     arrangement = Arrangement.LIST,
-    defaultAccessMode = AccessMode.POP,
+    defaultAccessMode = AccessMode.PAGE,
+    isOpenInPlace = false,
     size = Size.md,
     accessPoint = ResourceAccessPoint.BROWSER,
     accessPointState = ResourceAccessPointState.DEFAULT,
@@ -68,6 +69,7 @@
     resource?: Resource;
     arrangement?: Arrangement;
     defaultAccessMode?: AccessMode;
+    isOpenInPlace?: boolean;
     size?: Size.sm | Size.md;
     accessPoint?: ResourceAccessPoint;
     accessPointState?: ResourceAccessPointState;
@@ -170,6 +172,7 @@
     if (!result) {
       navigation.resourceClickHandler(resolveMouseEvent(e), item.id, {
         defaultTo: defaultAccessMode,
+        isInPlace: isOpenInPlace,
         origin: accessPoint
       });
     }

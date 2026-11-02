@@ -8,7 +8,7 @@
     id,
     accessPoint = ResourceAccessPoint.SELF,
     parentBgIndex = 1,
-    accessMode = AccessMode.POP
+    accessMode
   }: {
     id: any;
     accessPoint?: ResourceAccessPoint;

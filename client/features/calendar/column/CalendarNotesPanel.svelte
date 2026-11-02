@@ -59,7 +59,7 @@
       $nucleumDatafnStatus.status === "starting"
   );
   const isFullScreenActive = $derived(
-    $page.url?.searchParams?.get(AccessMode.POP) ===
+    $page.url?.searchParams?.get(AccessMode.PAGE) ===
       resolveCalendarNotesId(date, scale)
   );
 
@@ -88,7 +88,6 @@
     }
     node = ActiveNodeStore.resolve(id);
     const nodeInitResult = await node.init({
-      accessMode: AccessMode.INLINE,
       accessPoint: ResourceAccessPoint.CALENDAR
     });
     if (nodeInitResult?.error) {

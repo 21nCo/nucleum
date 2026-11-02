@@ -71,7 +71,7 @@
       return;
     navigation.resourceClickHandler(e, labelObject.parent.id, {
       replaceId: accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
-      defaultTo: AccessMode.POP
+      defaultTo: AccessMode.PAGE
     });
   }
 

@@ -127,7 +127,7 @@
     {#if isConstrainedWidth}
       <ResourceInlineCloseButton
         accessMode={$objective.accessMode}
-        additionalAccessModes={[AccessMode.POP]}
+        additionalAccessModes={[AccessMode.PAGE]}
         parentBgIndex={2}
         id={$objective.id}
       />

@@ -311,7 +311,7 @@
         onclick={() => {
           let id = log.resourceId;
           if (!id) return;
-          navigation.openResource(id, AccessMode.POP);
+          navigation.openResource(id, AccessMode.PAGE);
         }}
       >
         <span class="text-b3 text-fgs3 whitespace-nowrap"

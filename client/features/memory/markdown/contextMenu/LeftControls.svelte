@@ -200,7 +200,7 @@
       value: BlockAction.OPEN_AS_SPLIT,
       icon: "split",
       callback: async () => {
-        navigation.openResource(block.id, AccessMode.FSPLIT);
+        navigation.openResource(block.id, AccessMode.BESIDE_PAGE);
       }
     },
     [BlockAction.OPEN_IN_FULL_SCREEN]: {

@@ -17,7 +17,7 @@
     id,
     isFromSplitView = false,
     componentParams = {},
-    accessMode = AccessMode.INLINE
+    accessMode
   }: {
     id: string;
     isFromSplitView?: boolean;

@@ -99,7 +99,7 @@
           class="absolute top-0 h-full rounded-md"
           style="left: {getItemPosition(index)}px; width: {ITEM_WIDTH}px;"
         >
-          <ResourceResolver id={item} accessMode={AccessMode.INLINE} />
+          <ResourceResolver id={item} />
         </div>
       {/if}
     {/each}

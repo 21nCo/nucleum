@@ -46,7 +46,7 @@
   let {
     id,
     accessPoint = ResourceAccessPoint.SELF,
-    accessMode = AccessMode.POP,
+    accessMode,
     accessPointId = undefined
   }: {
     id: IRecordId;
@@ -258,8 +258,8 @@
   class={cn(
     "flex p-4 cw:w-full portrait:w-full cw:h-full otop:pt-12 h-[28rem]",
     {
-      "landscape:w-[32rem]": accessMode !== AccessMode.INLINE,
-      "w-full": accessMode === AccessMode.INLINE,
+      "landscape:w-[32rem]": !!accessMode,
+      "w-full": !accessMode,
       "w-full min-h-[28rem]": accessMode === AccessMode.SHEET
     }
   )}

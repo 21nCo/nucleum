@@ -88,7 +88,7 @@
   }
 
   function handleNodeClick(node: INodeThumb) {
-    navigation.openResource(node.id, AccessMode.POP);
+    navigation.openResource(node.id, AccessMode.PAGE);
   }
 </script>
 
@@ -109,7 +109,7 @@
           value={today.length}
           isAccent={true}
           callback={() => {
-            navigation.openResource(Action.HISTORY, AccessMode.POP, {
+            navigation.openResource(Action.HISTORY, AccessMode.PAGE, {
               searchParams: { [AppSearchParam.DATE]: date.toISOString() }
             });
           }}

@@ -68,7 +68,7 @@
   function openNotesInFullScreen() {
     const id = resolveCalendarNotesId(date, scale);
     if (!id) return;
-    navigation.openResource(id, AccessMode.POP);
+    navigation.openResource(id, AccessMode.PAGE);
   }
 </script>
 
@@ -105,7 +105,7 @@
         icon="history"
         tooltip="History"
         onclick={() => {
-          navigation.openResource(Action.HISTORY, AccessMode.POP, {
+          navigation.openResource(Action.HISTORY, AccessMode.PAGE, {
             searchParams: { [AppSearchParam.DATE]: date.toISOString() }
           });
         }}

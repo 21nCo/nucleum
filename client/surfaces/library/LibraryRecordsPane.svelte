@@ -22,7 +22,6 @@
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
-    AccessMode,
     ResourceAccessPoint,
     ResourceAccessPointState
   } from "@nucleum/datafn/resource.type";
@@ -699,10 +698,8 @@
           {accessPoint}
           {accessPointState}
           {resource}
-          defaultAccessMode={accessPoint === ResourceAccessPoint.LIBRARY ||
-          $view.isConstrainedWidth
-            ? AccessMode.POP
-            : AccessMode.INLINE}
+          isOpenInPlace={accessPoint !== ResourceAccessPoint.LIBRARY &&
+            !$view.isConstrainedWidth}
           size={$view.isConstrainedWidth ||
           accessPoint === ResourceAccessPoint.BROWSER
             ? Size.sm
@@ -748,10 +745,8 @@
           {accessPoint}
           {accessPointState}
           {resource}
-          defaultAccessMode={accessPoint === ResourceAccessPoint.LIBRARY ||
-          $view.isConstrainedWidth
-            ? AccessMode.POP
-            : AccessMode.INLINE}
+          isOpenInPlace={accessPoint !== ResourceAccessPoint.LIBRARY &&
+            !$view.isConstrainedWidth}
           size={$view.isConstrainedWidth ||
           accessPoint === ResourceAccessPoint.BROWSER
             ? Size.sm

@@ -100,7 +100,7 @@ export class ActiveCombinationStore {
     }
   }
 
-  async init(accessMode: AccessMode) {
+  async init(accessMode?: AccessMode) {
     this.update((prev) => ({
       ...(prev ?? {}),
       isPageLoading: true,

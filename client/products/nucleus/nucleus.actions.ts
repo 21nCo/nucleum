@@ -56,7 +56,7 @@ export const nucleusActions: IAction[] = [
     icon: "feed",
     component: ComingSoonView,
     type: ActionType.LIVE,
-    accessMode: AccessMode.RIGHT,
+    accessMode: AccessMode.PANEL,
     liveActionParams: {
       isOpeningBehaviorConfigurable: true
     }

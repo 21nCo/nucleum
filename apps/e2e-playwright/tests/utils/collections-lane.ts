@@ -105,7 +105,7 @@ export async function expectCollectionRecordOpenedFromLane(
   await expect
     .poll(
       () => {
-        const resource = new URL(page.url()).searchParams.get("r");
+        const resource = new URL(page.url()).searchParams.get("page");
         return resource?.startsWith("collection:") ?? false;
       },
       {

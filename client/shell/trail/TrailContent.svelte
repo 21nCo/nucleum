@@ -10,6 +10,6 @@
 
 {#if lastPartId}
   <div class="w-full h-full">
-    <ResourceResolver id={lastPartId} accessMode={AccessMode.INLINE} />
+    <ResourceResolver id={lastPartId} />
   </div>
 {/if}

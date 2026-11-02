@@ -144,7 +144,7 @@
   onMount(async () => {
     releaseDnDPage = acquireDnDPage();
     if (collection && (!$collection || !$collection.label)) {
-      await collection.init(AccessMode.POP);
+      await collection.init(AccessMode.PAGE);
     } else if (collection) {
       await collection.refreshProperties();
       propertyEditorStore.set({
@@ -284,7 +284,7 @@
         callback: async () => {
           await onSave();
           modalEvent.hide(propertiesEditAction);
-          navigation.openResource(id, AccessMode.POP);
+          navigation.openResource(id, AccessMode.PAGE);
           return true;
         }
       }

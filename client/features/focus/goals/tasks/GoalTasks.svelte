@@ -47,7 +47,6 @@
         id={selectedTaskId}
         accessPoint={ResourceAccessPoint.OBJECTIVE}
         accessPointId={id}
-        accessMode={AccessMode.INLINE}
       />
     </div>
   {/if}

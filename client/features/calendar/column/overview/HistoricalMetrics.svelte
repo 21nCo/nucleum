@@ -26,7 +26,7 @@
 <button
   class="flex flex-col items-center h-48 w-48 rounded-xl bg-bgs2 hover:bg-bgs3-striped overflow-hidden flex-1 min-w-48"
   onclick={() => {
-    navigation.openResource(Action.CALENDAR_DAY, AccessMode.POP, {
+    navigation.openResource(Action.CALENDAR_DAY, AccessMode.PAGE, {
       searchParams: { [AppSearchParam.DATE]: date.toISOString() }
     });
   }}

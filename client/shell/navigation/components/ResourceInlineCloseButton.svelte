@@ -14,7 +14,7 @@
     additionalAccessModes = []
   }: {
     id: string;
-    accessMode: AccessMode;
+    accessMode?: AccessMode;
     parentBgIndex?: number;
     additionalAccessModes?: AccessMode[];
   } = $props();
@@ -25,7 +25,7 @@
   );
 </script>
 
-{#if accessMode === AccessMode.SPLIT || accessMode === AccessMode.FULL || accessMode === AccessMode.FSPLIT || accessMode === AccessMode.SHEET || additionalAccessModes.includes(accessMode)}
+{#if accessMode === AccessMode.BESIDE_BASE || accessMode === AccessMode.FULL || accessMode === AccessMode.BESIDE_PAGE || accessMode === AccessMode.SHEET || (accessMode !== undefined && additionalAccessModes.includes(accessMode))}
   <div
     class="flex justify-center items-center"
     id={elementId}

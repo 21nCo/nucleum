@@ -325,13 +325,16 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
   }
 }
 
-export const determineResourceAccessMode = (id: IRecordId): AccessMode => {
+/** Resolves the access mode a resource is open in from the URL; undefined means it renders in place. */
+export const determineResourceAccessMode = (
+  id: IRecordId
+): AccessMode | undefined => {
   const searchParams =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search)
       : new URLSearchParams();
   const mode = (Object.values(AccessMode) as string[]).find(
-    (m) => m !== AccessMode.INLINE && searchParams.get(m) === id.toString()
+    (m) => searchParams.get(m) === id.toString()
   );
-  return (mode as AccessMode) || AccessMode.INLINE;
+  return mode as AccessMode | undefined;
 };

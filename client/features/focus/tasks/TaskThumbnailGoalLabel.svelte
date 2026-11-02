@@ -40,7 +40,7 @@
       !($context.isEmbed && $context.embed === Embed.HANDSET) &&
       accessPoint !== ResourceAccessPoint.OBJECTIVE
     ) {
-      navigation.openResource(objective.id, AccessMode.POP);
+      navigation.openResource(objective.id, AccessMode.PAGE);
       e.stopPropagation();
     }
   }

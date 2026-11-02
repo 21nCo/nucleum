@@ -23,7 +23,7 @@
     resourceStore: Readable<IResourcePageWithPanels>;
     panels: IToggleItem[];
     isConstrainedWidth?: boolean;
-    accessMode: AccessMode;
+    accessMode?: AccessMode;
     onAction?: ((detail: IContextMenuItem["value"]) => void) | undefined;
     contextMenuResolver?:
       | (() =>

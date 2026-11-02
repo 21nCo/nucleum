@@ -26,8 +26,7 @@
       <div
         class={cn("rounded-md border border-brs2 shadow-md", {
           "absolute z-10 bottom-full mb-2 w-[98%]":
-            $node.accessMode === AccessMode.POP ||
-            $node.accessMode === AccessMode.INLINE,
+            $node.accessMode === AccessMode.PAGE || !$node.accessMode,
           "w-full": $node.accessMode === AccessMode.FULL
         })}
       >
@@ -38,7 +37,7 @@
       class={cn(
         "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3 cw:border-b cw:border-b-brs2 cw:border-t-transparent cw:rounded-none cw:bg-bgs2 cw:otop:pt-12 border-t border-t-brs2",
         {
-          "rounded-b-md": $node.accessMode === AccessMode.POP,
+          "rounded-b-md": $node.accessMode === AccessMode.PAGE,
           "w-full": $node.accessMode !== AccessMode.SLIDESHOW,
           "rounded-md shadow-md": $node.accessMode === AccessMode.SLIDESHOW
         }

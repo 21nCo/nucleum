@@ -50,7 +50,7 @@
   let backPath = $derived($page.url.searchParams.get(AppSearchParam.RETURN_TO));
   let hasBack = $derived(onBack !== undefined || backPath !== null);
 
-  let id = $derived($page.url.searchParams.get(AccessMode.INLINE));
+  let id = $derived($page.url.searchParams.get(AppSearchParam.SELECTED));
   let arrangement: Arrangement = resolveArrangement();
   let selectionCount = 0;
   let bulkEditCountUnsub: (() => void) | undefined;
@@ -156,7 +156,7 @@
       {:else}
         {#key id}
           {#if id}
-            <ResourceResolver {id} accessMode={AccessMode.INLINE} />
+            <ResourceResolver {id} />
           {:else}
             <EmptyStatusView
               size={Size.lg}

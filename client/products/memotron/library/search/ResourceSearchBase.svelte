@@ -235,7 +235,7 @@
       navigation.openResource(item.id, AccessMode.FULL);
       return;
     }
-    navigation.toggleSearchParam([AccessMode.MAIN]);
+    navigation.toggleSearchParam([AccessMode.OVERLAY]);
     navigation.resourceClickHandler(e.detail.event, item.id, {
       origin: Action.SEARCH
     });

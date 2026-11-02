@@ -50,7 +50,7 @@
     ) {
       navigation.closeResource({
         id: MemotronAction.CAPTURE_DND,
-        accessMode: AccessMode.POP
+        accessMode: AccessMode.PAGE
       });
     }
   }

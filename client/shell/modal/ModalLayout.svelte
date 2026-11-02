@@ -192,7 +192,7 @@
         aria-label="Close"
         data-testid="modal-close"
         class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
-        onclick={() => handleClose(AccessMode.POP)}
+        onclick={() => handleClose(AccessMode.PAGE)}
         use:popover={{
           content: ButtonTooltip,
           triggerMethod: [PopoverTriggerMethod.HOVER],

@@ -113,7 +113,7 @@
     const isActivePageWithRightPanel =
       resolvedCurrent === item.action &&
       item.type === ActionType.PAGE &&
-      Boolean(new URL(window.location.href).searchParams.get(AccessMode.RIGHT));
+      Boolean(new URL(window.location.href).searchParams.get(AccessMode.PANEL));
     if (
       resolvedCurrent !== item.action ||
       window.location.pathname.includes("/tab") ||

@@ -1006,7 +1006,7 @@ export type IActiveNode = INode &
     parent?: INode;
     file?: IFile;
     mdParent?: IRecordId[];
-    accessMode: AccessMode;
+    accessMode?: AccessMode;
     focusedBlock?: IRecordId;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];

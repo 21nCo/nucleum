@@ -14,7 +14,7 @@
   let {
     resourceId = undefined,
     resourceType = undefined,
-    accessMode = AccessMode.INLINE,
+    accessMode,
     visitedCombinationIds = new Set(),
     parentCombinationId = undefined
   }: {

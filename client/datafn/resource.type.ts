@@ -65,7 +65,7 @@ export interface IMetaResource extends IResourceBase {
 }
 
 export interface IActiveResource extends IResource {
-  accessMode: AccessMode;
+  accessMode?: AccessMode;
   /**
    * All editing features will be turned on if this is true.
    * Example: collection, combination, media node, etc.
@@ -87,20 +87,23 @@ export type IUnlabeledResource<
   T extends IResource & IResourceLabeled = IResource & IResourceLabeled
 > = Omit<T, "label">;
 
+/**
+ * How a resource is opened in the layered layout. The value is also the URL search parameter that holds the opened id.
+ * A resource with no access mode renders in place inside its host view.
+ */
 export enum AccessMode {
-  INLINE = "inline",
   /**
-   * Inline split
+   * Full inline page over the base page.
    */
-  SPLIT = "split",
+  PAGE = "page",
   /**
-   * Split in full screen or pop mode
+   * Resource next to the base page.
    */
-  FSPLIT = "fsplit",
+  BESIDE_BASE = "beside",
   /**
-   * Pop mode
+   * Second resource next to an open resource page.
    */
-  POP = "r",
+  BESIDE_PAGE = "besidePage",
   /**
    * Full screen mode
    */
@@ -109,8 +112,14 @@ export enum AccessMode {
   OPEN_IN_BACKGROUND = "open-in-background",
   SLIDESHOW = "slideshow",
   SHEET = "sheet",
-  RIGHT = "right",
-  MAIN = "m"
+  /**
+   * Right panel for tools such as the navigator, focus and Rhombus.
+   */
+  PANEL = "panel",
+  /**
+   * Full overlay for quick actions such as capture and full-page search.
+   */
+  OVERLAY = "overlay"
 }
 
 /**

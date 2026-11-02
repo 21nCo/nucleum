@@ -31,7 +31,7 @@ describe("tab navigation ownership", () => {
       .mockImplementation(() => undefined);
     navigation.openTab("node:one");
     expect(tabs.get()).toEqual(["node:one"]);
-    expect(open).toHaveBeenCalledWith("node:one", AccessMode.POP, {
+    expect(open).toHaveBeenCalledWith("node:one", AccessMode.PAGE, {
       searchParams: { back: "/library", returnTo: "overview" }
     });
   });
@@ -45,7 +45,7 @@ describe("tab navigation ownership", () => {
       .mockImplementation(() => undefined);
     navigation.replaceTab("node:two", "node:one");
     expect(tabs.get()).toEqual(["node:two"]);
-    expect(open).toHaveBeenCalledWith("node:two", AccessMode.POP, {
+    expect(open).toHaveBeenCalledWith("node:two", AccessMode.PAGE, {
       searchParams: { back: "/focus" }
     });
   });
@@ -58,7 +58,7 @@ describe("tab navigation ownership", () => {
       .spyOn(navigation, "openResource")
       .mockImplementation(() => undefined);
     navigation.activateVerticalTrail("node:one");
-    expect(open).toHaveBeenCalledWith("node:one", AccessMode.POP, {
+    expect(open).toHaveBeenCalledWith("node:one", AccessMode.PAGE, {
       origin: "node:root"
     });
     expect(get(vTrail).activated).toBe("node:one");

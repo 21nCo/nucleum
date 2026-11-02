@@ -504,7 +504,7 @@ export class ActiveNodeStore extends CollectibleStore<
   }
 
   init = async (params: {
-    accessMode: AccessMode;
+    accessMode?: AccessMode;
     accessPoint: ResourceAccessPoint;
     panel?: ResourcePanelType;
   }) => {
@@ -1147,7 +1147,7 @@ export function resolveNodeContextMenu(
     commonGroups = [moreGroup];
   } else if (
     accessPoint === ResourceAccessPoint.SELF &&
-    params?.accessMode !== AccessMode.SPLIT &&
+    params?.accessMode !== AccessMode.BESIDE_BASE &&
     !viewStore.isPortrait
   ) {
     commonGroups = [
@@ -1159,7 +1159,8 @@ export function resolveNodeContextMenu(
     ];
   } else if (
     accessPoint === ResourceAccessPoint.SELF &&
-    params?.accessMode === AccessMode.INLINE &&
+    params !== undefined &&
+    !params.accessMode &&
     viewStore.isPortrait
   ) {
     commonGroups = [

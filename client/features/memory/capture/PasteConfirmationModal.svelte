@@ -79,7 +79,7 @@
 
   function handleOpen({ nodeId }: { nodeId: string | undefined }) {
     if (nodeId) {
-      navigation.openResource(nodeId, AccessMode.POP);
+      navigation.openResource(nodeId, AccessMode.PAGE);
     }
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
   }

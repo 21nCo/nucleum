@@ -23,7 +23,7 @@
   import { acquireDnDPage, appStore } from "@nucleum/shared-state/app-context/app.store";
   let {
     id,
-    accessMode = AccessMode.INLINE,
+    accessMode,
     isEmbedded = false,
     visitedCombinationIds = new Set()
   }: {
@@ -339,7 +339,6 @@
     <CombinationResourceRenderer
       resourceId={selectedResourceId}
       resourceType={selectedResourceType}
-      accessMode={AccessMode.INLINE}
       parentCombinationId={id}
       visitedCombinationIds={visitedForRenderer}
     />

@@ -41,7 +41,7 @@
   let {
     id,
     log = $bindable(),
-    accessMode = AccessMode.POP
+    accessMode
   }: {
     id: string;
     log?: any;
@@ -91,7 +91,7 @@
     >
       <div class="flex gap-4 w-full items-center justify-between">
         <Text content="Session details" style={TextStyle.PANEL_HEADING} />
-        {#if accessMode === AccessMode.SPLIT || accessMode === AccessMode.FSPLIT || $view.isConstrainedWidth}
+        {#if accessMode === AccessMode.BESIDE_BASE || accessMode === AccessMode.BESIDE_PAGE || $view.isConstrainedWidth}
           <Button
             icon="cross"
             style={ButtonStyle.OUTLINED}

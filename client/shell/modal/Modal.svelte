@@ -80,7 +80,7 @@
     logger.log({ at: "Modal.svelte close", id, frontModal });
     confirmationNotification.reset();
     if (frontModal?.id?.includes("-resource")) {
-      requireResourceActionHost().close({ accessMode: AccessMode.POP });
+      requireResourceActionHost().close({ accessMode: AccessMode.PAGE });
     }
     if (!frontModal || id != frontModal?.id) return;
     show = false;

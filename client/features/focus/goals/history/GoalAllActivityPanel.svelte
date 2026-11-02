@@ -213,7 +213,7 @@
           })}
           onclick={() => {
             if (accessLog.type === "focus" && accessLog.session?.id) {
-              navigation.openResource(accessLog.session.id, AccessMode.POP, {
+              navigation.openResource(accessLog.session.id, AccessMode.PAGE, {
                 origin: objectiveId
               });
             }

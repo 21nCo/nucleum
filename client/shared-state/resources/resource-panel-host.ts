@@ -7,7 +7,7 @@ export interface ResourcePanelHost {
   writePanel(id: IRecordId, panel: string): void;
   close(id: IRecordId): void;
   goBack(): void;
-  maximize(mode: AccessMode, id: IRecordId): void;
+  maximize(mode: AccessMode | undefined, id: IRecordId): void;
 }
 
 let host: ResourcePanelHost | undefined;

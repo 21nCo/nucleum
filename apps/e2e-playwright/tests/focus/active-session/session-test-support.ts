@@ -517,7 +517,7 @@ export async function reopenPersistedSession(
   await page.reload({ waitUntil: "domcontentloaded" });
   await ensureInAppOnHome(page);
   await page.goto(
-    `/calendar?rAt=${Date.now()}&r=${encodeURIComponent(sessionId)}`,
+    `/calendar?pageAt=${Date.now()}&page=${encodeURIComponent(sessionId)}`,
     { waitUntil: "domcontentloaded" }
   );
   await expect(page.getByText("Session details", { exact: true })).toBeVisible({

@@ -113,7 +113,7 @@
               class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
               data-testid="resource-record-surface"
             >
-              <ResourceResolver id={popId} accessMode={AccessMode.POP} />
+              <ResourceResolver id={popId} accessMode={AccessMode.PAGE} />
             </div>
           {/if}
           {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}

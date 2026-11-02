@@ -90,10 +90,10 @@
     const queryParams = {
       [AppSearchParam.RESOURCE]: Resource.collection,
       [AppSearchParam.TYPE]: "all",
-      [AccessMode.POP]: e.detail.item.toString(),
-      [`${AccessMode.POP}At`]: new Date().getTime()
+      [AccessMode.PAGE]: e.detail.item.toString(),
+      [`${AccessMode.PAGE}At`]: new Date().getTime()
     };
-    navigation.closeResource({ accessMode: AccessMode.POP });
+    navigation.closeResource({ accessMode: AccessMode.PAGE });
     setTimeout(() => {
       navigation.gotoPath("/library", { queryParams });
     }, 0);

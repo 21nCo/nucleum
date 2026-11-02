@@ -71,7 +71,7 @@
 
   async function toggleSession(e: MouseEvent) {
     if (isInEditMode || e.altKey) {
-      navigation.openResource(item.id, AccessMode.POP);
+      navigation.openResource(item.id, AccessMode.PAGE);
       return;
     }
     if (isActive) {
@@ -102,7 +102,7 @@
 
   function onTitleClick(e: MouseEvent) {
     if (!$context.isEmbed) {
-      navigation.openResource(item.id, AccessMode.POP);
+      navigation.openResource(item.id, AccessMode.PAGE);
       e.stopPropagation();
     }
   }

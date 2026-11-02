@@ -66,7 +66,7 @@
           style={ButtonStyle.OUTLINED}
           parentBgIndex={2}
           onclick={() => {
-            navigation.openResource(item.id, AccessMode.POP);
+            navigation.openResource(item.id, AccessMode.PAGE);
           }}
         />
       {/if}
@@ -115,7 +115,7 @@
     style={ButtonStyle.OUTLINED}
     parentBgIndex={2}
     onclick={() => {
-      navigation.openResource(item.id, AccessMode.POP);
+      navigation.openResource(item.id, AccessMode.PAGE);
     }}
   />
 {/if}
