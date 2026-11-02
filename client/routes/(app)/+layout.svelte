@@ -56,8 +56,9 @@
    * Remounts AuthGuard only when a check resolves a known identity that
    * differs from the previously known one, such as after signing in to another
    * account in a different tab. The first known identity is adopted without a
-   * remount, and checks that cannot tell the identity (cached cloud sessions,
-   * embed token landings) never change it.
+   * remount. Cached cloud sessions report the stored account, so a later live
+   * session for a different account still remounts; checks that cannot tell
+   * the identity (embed token landings) never change it.
    */
   function adoptAuthIdentity(identity: string | undefined) {
     if (!identity) return;
@@ -91,7 +92,12 @@
       };
     }
     if (resolution.status === "cached-cloud") {
-      return { state: "authenticated" };
+      return {
+        state: "authenticated",
+        identity: resolution.storedState.storedCloudActorId
+          ? `cloud:${resolution.storedState.storedCloudActorId}`
+          : undefined
+      };
     }
     if (resolution.status === "expired") return { state: "expired" };
     if (resolution.status === "unavailable") return { state: "unavailable" };
