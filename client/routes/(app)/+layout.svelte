@@ -15,6 +15,7 @@
   import { EmbedMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { onMount } from "svelte";
   import account from "@nucleum/client/runtime/account/account.store";
+  import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
   import AccountDebugInfo from "./AccountDebugInfo.svelte";
   let { children: pageChildren }: { children?: Snippet } = $props();
   let isEmbedTokenPresent = $state(false);
@@ -60,12 +61,16 @@
    * in a different tab. AuthGuard only hydrates the account from a live cloud
    * session, so comparing against the loaded account (not a remembered
    * identity) retries hydration on a later check if a remount failed to load
-   * the new account. Cached cloud, offline-only and token checks never remount.
+   * the new account. A loaded local (offline-only) session has no user id and
+   * is always different from a live cloud account; before any account has
+   * loaded, the first check does not remount. Cached cloud, offline-only and
+   * token checks never remount.
    */
   function isDifferentFromLoadedAccount(liveActorId: string | undefined) {
     if (!liveActorId) return false;
-    const loadedUserId = account.get()?.userId;
-    if (!loadedUserId) return false;
+    const loadedAccount = account.get();
+    const loadedUserId = loadedAccount?.userId;
+    if (!loadedUserId) return loadedAccount?.dataMode === UserDataMode.LOCAL;
     const normalize = (id: string) =>
       id.startsWith("user:") ? id.slice("user:".length) : id;
     return normalize(loadedUserId) !== normalize(liveActorId);
