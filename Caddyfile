@@ -12,19 +12,34 @@
 # 4. Trust the local CA: caddy trust
 #
 # Note: Local ports should match your dev server configuration
+#
+# The Vite dev hosts go through vite_dev. On a cold start Vite is busy compiling
+# and the browser requests hundreds of modules at once, which overflows the dev
+# server's listen queue (128 on macOS) and turns those requests into 502s.
+# Capping upstream connections queues them in Caddy instead, and failed dials
+# are retried for up to 10 seconds.
+
+(vite_dev) {
+	reverse_proxy localhost:{args[0]} {
+		lb_try_duration 10s
+		transport http {
+			max_conns_per_host 32
+		}
+	}
+}
 
 local.nucleum.app {
-	reverse_proxy localhost:5050
+	import vite_dev 5050
 	tls internal
 }
 
 local.pointron.app {
-	reverse_proxy localhost:5001
+	import vite_dev 5001
 	tls internal
 }
 
 local.memotron.app {
-	reverse_proxy localhost:5002
+	import vite_dev 5002
 	tls internal
 }
 
