@@ -116,6 +116,7 @@
     "./memory/node/content/NodeContent.svelte": "./memory/node/content/NodeContent.svelte",
     "./memory/node/content/web/WebClipPreview.svelte": "./memory/node/content/web/WebClipPreview.svelte",
     "./memory/node/content/web/YoutubeVideoPreview.svelte": "./memory/node/content/web/YoutubeVideoPreview.svelte",
+    "./memory/node/markdown-block-parents": "./memory/node/markdown-block-parents.ts",
     "./memory/node/node.store": "./memory/node/node.store.ts",
     "./memory/node/node.type": "./memory/node/node.type.ts",
     "./memory/node/node.utils": "./memory/node/node.utils.ts",

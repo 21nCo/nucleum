@@ -773,7 +773,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     let remainingResources: INodeCapture<INode>[] = [];
     for (const block of structure) {
       const correspondingContent = blocks.find(resourceInList(block));
-      let parent = undefined;
+      let parent: IRecordId[] = [id];
       if (
         correspondingContent?.contentType &&
         headingNodeTypes.includes(correspondingContent.contentType)
@@ -1331,7 +1331,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
         );
-        let parent = undefined;
+        let parent: IRecordId[] = [id];
         if (
           correspondingContent?.contentType &&
           headingNodeTypes.includes(correspondingContent.contentType)
