@@ -29,9 +29,22 @@
 
   const authPath = $derived($page.url.pathname);
   const hasAuthToken = $derived($page.url.searchParams.has("token"));
-  const routeAuth = $derived({
-    path: authPath,
-    session: resolveRouteAuthState(hasAuthToken)
+  let routeAuthState = $state<RouteAuthState | "error" | undefined>();
+
+  $effect(() => {
+    void authPath;
+    let isCurrent = true;
+    resolveRouteAuthState(hasAuthToken).then(
+      (authState) => {
+        if (isCurrent) routeAuthState = authState;
+      },
+      () => {
+        if (isCurrent) routeAuthState = "error";
+      }
+    );
+    return () => {
+      isCurrent = false;
+    };
   });
 
   async function resolveRouteAuthState(
@@ -62,9 +75,20 @@
   }
 </script>
 
-{#await routeAuth.session}
+{#if routeAuthState === undefined}
   <AppLoadingView />
-{:then authState}
+{:else if routeAuthState === "error"}
+  <div class="h-full flex flex-col justify-center items-center">
+    <div class="text-ass1 text-b2 mb-4">Authentication error</div>
+    <Button
+      label="Login/Signup"
+      onclick={() => {
+        navigation.gotoPath("/account/login");
+      }}
+    />
+  </div>
+{:else}
+  {@const authState = routeAuthState}
   {#if authState === "authenticated"}
     {#if dev_isDebugAccountMode}
       <AccountDebugInfo />
@@ -100,14 +124,4 @@
       />
     </div>
   {/if}
-{:catch error}
-  <div class="h-full flex flex-col justify-center items-center">
-    <div class="text-ass1 text-b2 mb-4">Authentication error</div>
-    <Button
-      label="Login/Signup"
-      onclick={() => {
-        navigation.gotoPath("/account/login");
-      }}
-    />
-  </div>
-{/await}
+{/if}
