@@ -36,7 +36,11 @@ describe("repairMarkdownBlockParents", () => {
   async function readNode(id: string) {
     const result = await datafn.node.query({
       select: ["id", "mdParent", "parent", "parentPath", "creationContext"],
-      filters: { id }
+      filters: { id },
+      metadata: {
+        includeArchived: true,
+        includeAncestorInactive: true
+      }
     });
     return result.data?.[0];
   }
@@ -163,5 +167,58 @@ describe("repairMarkdownBlockParents", () => {
     }
 
     expect(await repairMarkdownBlockParents()).toBe(0);
+  });
+  it("repairs orphaned blocks under inactive headings of an archived note", async () => {
+    await boot();
+    const noteId = "node:archived-note";
+    const headingId = "node:archived-heading";
+    const orphanId = "node:archived-orphan";
+    await datafn.node.mutate([
+      {
+        operation: "insert",
+        id: noteId,
+        record: {
+          id: noteId,
+          label: "Archived note",
+          body: "",
+          contentType: NodeType.NODULAR_MARKDOWN,
+          isArchived: true,
+          mdChildOrder: [headingId]
+        }
+      },
+      {
+        operation: "insert",
+        id: headingId,
+        record: {
+          id: headingId,
+          label: "Heading",
+          body: "",
+          contentType: NodeType.HEADING1,
+          creationContext: noteId,
+          mdParent: [noteId],
+          parent: noteId,
+          parentPath: noteId,
+          isAncestorInactive: true,
+          mdChildOrder: [orphanId]
+        }
+      },
+      {
+        operation: "insert",
+        id: orphanId,
+        record: {
+          id: orphanId,
+          label: "",
+          body: "under heading",
+          contentType: NodeType.SIMPLE_TEXT,
+          creationContext: noteId
+        }
+      }
+    ]);
+
+    expect(await repairMarkdownBlockParents()).toBe(1);
+    expect(await readNode(orphanId)).toMatchObject({
+      mdParent: [noteId],
+      parent: noteId
+    });
   });
 });

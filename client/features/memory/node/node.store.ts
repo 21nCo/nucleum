@@ -152,7 +152,8 @@ async function selectNode(
     signal: params?.signal,
     metadata: {
       includeTrashed: true,
-      includeArchived: true
+      includeArchived: true,
+      includeAncestorInactive: true
     }
   })) as Record<string, unknown> | undefined;
   if (!result) return undefined;
@@ -188,7 +189,8 @@ async function expandNodeMdChildOrder(
     },
     metadata: {
       includeTrashed: true,
-      includeArchived: true
+      includeArchived: true,
+      includeAncestorInactive: true
     }
   });
   const childById = new Map(
@@ -336,7 +338,8 @@ async function resolveNodeDependencies(ids: IRecordId[]) {
       },
       metadata: {
         includeTrashed: true,
-        includeArchived: true
+        includeArchived: true,
+        includeAncestorInactive: true
       }
     },
     ...ids.map((id) => ({
@@ -349,7 +352,8 @@ async function resolveNodeDependencies(ids: IRecordId[]) {
       },
       metadata: {
         includeTrashed: true,
-        includeArchived: true
+        includeArchived: true,
+        includeAncestorInactive: true
       }
     }))
   ])) as Array<{ data?: Record<string, unknown>[] }>;

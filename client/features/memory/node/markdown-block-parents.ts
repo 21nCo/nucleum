@@ -7,7 +7,8 @@ const repairBatchSize = 200;
 
 const repairQueryMetadata = {
   includeTrashed: true,
-  includeArchived: true
+  includeArchived: true,
+  includeAncestorInactive: true
 };
 
 type BlockRecord = {
