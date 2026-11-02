@@ -31,7 +31,8 @@
   const hasAuthToken = $derived($page.url.searchParams.has("token"));
   const routeAuthCheck = $derived({ path: authPath, hasToken: hasAuthToken });
   let routeAuthState = $state<RouteAuthState | "error" | undefined>();
-  let routeAuthIdentity = $state<string | undefined>();
+  let knownAuthIdentity: string | undefined;
+  let authGuardEpoch = $state(0);
 
   $effect(() => {
     const { hasToken } = routeAuthCheck;
@@ -39,7 +40,7 @@
     resolveRouteAuthState(hasToken).then(
       (resolved) => {
         if (!isCurrent) return;
-        if (resolved.identity) routeAuthIdentity = resolved.identity;
+        adoptAuthIdentity(resolved.identity);
         routeAuthState = resolved.state;
       },
       () => {
@@ -52,11 +53,23 @@
   });
 
   /**
-   * Resolves the route auth state and, when known, the identity of the
-   * session. The identity keys AuthGuard so the app is re-hydrated when a
-   * navigation finds a different account (for example after signing in to
-   * another account in a different tab), while navigations within the same
-   * account keep the app mounted.
+   * Remounts AuthGuard only when a check resolves a known identity that
+   * differs from the previously known one, such as after signing in to another
+   * account in a different tab. The first known identity is adopted without a
+   * remount, and checks that cannot tell the identity (cached cloud sessions,
+   * embed token landings) never change it.
+   */
+  function adoptAuthIdentity(identity: string | undefined) {
+    if (!identity) return;
+    if (knownAuthIdentity && knownAuthIdentity !== identity) {
+      authGuardEpoch += 1;
+    }
+    knownAuthIdentity = identity;
+  }
+
+  /**
+   * Resolves the route auth state and, when the session reveals it, the
+   * identity of the signed-in account.
    */
   async function resolveRouteAuthState(
     hasToken: boolean
@@ -114,7 +127,7 @@
     {#if dev_isDebugAccountMode}
       <AccountDebugInfo />
     {:else}
-      {#key routeAuthIdentity}
+      {#key authGuardEpoch}
         <AuthGuard>
           {#snippet children(isLoggedIn)}
             {#if isLoggedIn}
