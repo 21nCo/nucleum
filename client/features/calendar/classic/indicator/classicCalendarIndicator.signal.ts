@@ -89,7 +89,6 @@ export function createClassicCalendarIndicatorSignal({
             "updatedAt",
             "trashedAt",
             "isArchived",
-            "isAncestorInactive",
             "startUnix",
             "blocks",
             "start"
