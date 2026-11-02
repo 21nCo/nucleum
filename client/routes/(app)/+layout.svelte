@@ -29,14 +29,18 @@
 
   const authPath = $derived($page.url.pathname);
   const hasAuthToken = $derived($page.url.searchParams.has("token"));
+  const routeAuthCheck = $derived({ path: authPath, hasToken: hasAuthToken });
   let routeAuthState = $state<RouteAuthState | "error" | undefined>();
+  let routeAuthIdentity = $state<string | undefined>();
 
   $effect(() => {
-    void authPath;
+    const { hasToken } = routeAuthCheck;
     let isCurrent = true;
-    resolveRouteAuthState(hasAuthToken).then(
-      (authState) => {
-        if (isCurrent) routeAuthState = authState;
+    resolveRouteAuthState(hasToken).then(
+      (resolved) => {
+        if (!isCurrent) return;
+        if (resolved.identity) routeAuthIdentity = resolved.identity;
+        routeAuthState = resolved.state;
       },
       () => {
         if (isCurrent) routeAuthState = "error";
@@ -47,21 +51,38 @@
     };
   });
 
+  /**
+   * Resolves the route auth state and, when known, the identity of the
+   * session. The identity keys AuthGuard so the app is re-hydrated when a
+   * navigation finds a different account (for example after signing in to
+   * another account in a different tab), while navigations within the same
+   * account keep the app mounted.
+   */
   async function resolveRouteAuthState(
     hasToken: boolean
-  ): Promise<RouteAuthState> {
-    if (hasToken) return "authenticated";
+  ): Promise<{ state: RouteAuthState; identity?: string }> {
+    if (hasToken) return { state: "authenticated" };
     const resolution = await resolveAuthSession();
-    if (
-      resolution.status === "authenticated" ||
-      resolution.status === "offline-only" ||
-      resolution.status === "cached-cloud"
-    ) {
-      return "authenticated";
+    if (resolution.status === "authenticated") {
+      return {
+        state: "authenticated",
+        identity: `cloud:${resolution.session.actorId}`
+      };
     }
-    if (resolution.status === "expired") return "expired";
-    if (resolution.status === "unavailable") return "unavailable";
-    return "signed-out";
+    if (resolution.status === "offline-only") {
+      return {
+        state: "authenticated",
+        identity: resolution.storedState.offlineSessionId
+          ? `offline:${resolution.storedState.offlineSessionId}`
+          : undefined
+      };
+    }
+    if (resolution.status === "cached-cloud") {
+      return { state: "authenticated" };
+    }
+    if (resolution.status === "expired") return { state: "expired" };
+    if (resolution.status === "unavailable") return { state: "unavailable" };
+    return { state: "signed-out" };
   }
 
   function goToAuthRoute(authState: RouteAuthState) {
@@ -93,16 +114,18 @@
     {#if dev_isDebugAccountMode}
       <AccountDebugInfo />
     {:else}
-      <AuthGuard>
-        {#snippet children(isLoggedIn)}
-          {#if isLoggedIn}
-            {@const ProductBase = productData.base}
-            <ProductBase>
-              {@render pageChildren?.()}
-            </ProductBase>
-          {/if}
-        {/snippet}
-      </AuthGuard>
+      {#key routeAuthIdentity}
+        <AuthGuard>
+          {#snippet children(isLoggedIn)}
+            {#if isLoggedIn}
+              {@const ProductBase = productData.base}
+              <ProductBase>
+                {@render pageChildren?.()}
+              </ProductBase>
+            {/if}
+          {/snippet}
+        </AuthGuard>
+      {/key}
     {/if}
   {:else}
     <div class="h-full flex flex-col justify-center items-center">
