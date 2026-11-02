@@ -70,7 +70,7 @@
     "@superfunctions/db": "0.2.0",
     "@superfunctions/http": "0.2.0",
     "@superfunctions/middleware": "0.2.0",
-    "@superfunctions/observability": "0.0.1",
+    "@superfunctions/observability": "0.0.2",
     "authfn": "0.2.0",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.7.10",

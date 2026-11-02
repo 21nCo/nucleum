@@ -103,6 +103,7 @@
   "packageManager": "npm@10.0.0",
   "overrides": {
     "@babel/traverse": "7.29.0",
-    "@parcel/watcher": "2.1.0"
+    "@parcel/watcher": "2.1.0",
+    "@superfunctions/observability": "0.0.2"
   }
 }
