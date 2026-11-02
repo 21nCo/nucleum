@@ -40,7 +40,7 @@
     resolveRouteAuthState(hasToken).then(
       (resolved) => {
         if (!isCurrent) return;
-        adoptAuthIdentity(resolved.identity);
+        adoptAuthIdentity(resolved.identity, resolved.isLiveSession === true);
         routeAuthState = resolved.state;
       },
       () => {
@@ -53,18 +53,27 @@
   });
 
   /**
-   * Remounts AuthGuard only when a check resolves a known identity that
-   * differs from the previously known one, such as after signing in to another
+   * Remounts AuthGuard only when a live cloud session resolves an identity
+   * that differs from the known one, such as after signing in to another
    * account in a different tab. The first known identity is adopted without a
-   * remount. Cached cloud sessions report the stored account, so a later live
-   * session for a different account still remounts; checks that cannot tell
-   * the identity (embed token landings) never change it.
+   * remount. Cached cloud and offline-only sessions may set the first identity
+   * but never change it, because AuthGuard only hydrates the account from a
+   * live cloud session; a later live session for a different account still
+   * remounts and re-hydrates.
+   * Checks that cannot tell the identity (embed token landings) never change
+   * it.
    */
-  function adoptAuthIdentity(identity: string | undefined) {
+  function adoptAuthIdentity(
+    identity: string | undefined,
+    isLiveSession: boolean
+  ) {
     if (!identity) return;
-    if (knownAuthIdentity && knownAuthIdentity !== identity) {
-      authGuardEpoch += 1;
+    if (!knownAuthIdentity) {
+      knownAuthIdentity = identity;
+      return;
     }
+    if (knownAuthIdentity === identity || !isLiveSession) return;
+    authGuardEpoch += 1;
     knownAuthIdentity = identity;
   }
 
@@ -74,13 +83,18 @@
    */
   async function resolveRouteAuthState(
     hasToken: boolean
-  ): Promise<{ state: RouteAuthState; identity?: string }> {
+  ): Promise<{
+    state: RouteAuthState;
+    identity?: string;
+    isLiveSession?: boolean;
+  }> {
     if (hasToken) return { state: "authenticated" };
     const resolution = await resolveAuthSession();
     if (resolution.status === "authenticated") {
       return {
         state: "authenticated",
-        identity: `cloud:${resolution.session.actorId}`
+        identity: `cloud:${resolution.session.actorId}`,
+        isLiveSession: true
       };
     }
     if (resolution.status === "offline-only") {
