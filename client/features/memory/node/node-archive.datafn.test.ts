@@ -12,6 +12,7 @@ import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import {
   onNodeArchive,
+  onNodeTrash,
   onNodeUnarchive
 } from "@nucleum/features/memory/node/node.store";
 
@@ -90,5 +91,80 @@ describe("note archive propagation", () => {
     await datafn.node.mutate({ operation: "unarchive", id: noteId });
     await onNodeUnarchive([noteId]);
     expect(await readBlock(blockId)).toMatchObject({ isAncestorInactive: false });
+  });
+  async function seedHeadingTree() {
+    const noteId = "node:note-tree";
+    const headingId = "node:heading-one";
+    const nestedId = "node:heading-two";
+    await datafn.node.mutate([
+      {
+        operation: "insert",
+        id: noteId,
+        record: {
+          id: noteId,
+          label: "Note",
+          body: "",
+          contentType: NodeType.NODULAR_MARKDOWN,
+          mdChildOrder: [headingId]
+        }
+      },
+      {
+        operation: "insert",
+        id: headingId,
+        record: {
+          id: headingId,
+          label: "Heading one",
+          body: "",
+          contentType: NodeType.HEADING1,
+          creationContext: noteId,
+          mdParent: [noteId],
+          parent: noteId,
+          parentPath: noteId,
+          mdChildOrder: [nestedId]
+        }
+      },
+      {
+        operation: "insert",
+        id: nestedId,
+        record: {
+          id: nestedId,
+          label: "Heading two",
+          body: "",
+          contentType: NodeType.HEADING2,
+          creationContext: noteId,
+          mdParent: [noteId, headingId],
+          parent: headingId,
+          parentPath: `${noteId}-${headingId}`
+        }
+      }
+    ]);
+    return { noteId, headingId, nestedId };
+  }
+
+  it("reactivates nested headings when their note is unarchived", async () => {
+    await boot();
+    const { noteId, headingId, nestedId } = await seedHeadingTree();
+
+    await datafn.node.mutate({ operation: "archive", id: noteId });
+    await onNodeArchive([noteId]);
+    await datafn.node.mutate({ operation: "unarchive", id: noteId });
+    await onNodeUnarchive([noteId]);
+
+    expect(await readBlock(headingId)).toMatchObject({ isAncestorInactive: false });
+    expect(await readBlock(nestedId)).toMatchObject({ isAncestorInactive: false });
+  });
+
+  it("keeps blocks under a trashed heading inactive when the note is unarchived", async () => {
+    await boot();
+    const { noteId, headingId, nestedId } = await seedHeadingTree();
+
+    await datafn.node.mutate({ operation: "trash", id: headingId });
+    await onNodeTrash([headingId]);
+    await datafn.node.mutate({ operation: "archive", id: noteId });
+    await onNodeArchive([noteId]);
+    await datafn.node.mutate({ operation: "unarchive", id: noteId });
+    await onNodeUnarchive([noteId]);
+
+    expect(await readBlock(nestedId)).toMatchObject({ isAncestorInactive: true });
   });
 });
