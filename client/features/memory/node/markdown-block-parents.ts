@@ -97,7 +97,8 @@ function collectNoteBlockHeadings(
  * them. Media, links and files embedded in a
  * note and clipper supplements also carry `creationContext` but are not part
  * of the block tree, so they are left untouched. Writes go through DataFn so
- * they sync, and the repair is idempotent.
+ * they sync and are marked as system changes (like structural block updates),
+ * and the repair is idempotent.
  *
  * @returns The number of blocks repaired.
  */
@@ -159,7 +160,8 @@ export async function repairMarkdownBlockParents(): Promise<number> {
             mdParent: block.mdParent,
             parent: block.mdParent[block.mdParent.length - 1],
             parentPath: block.mdParent.join("-")
-          }
+          },
+          system: true
         }))
       );
     }
