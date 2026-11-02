@@ -24,7 +24,7 @@ const resourceActionId = (resource: string, action: string) =>
 
 const appMenuActionIds = {
   nodeCreate: resourceActionId("node", "create"),
-  spaceBrowse: resourceActionId("combination", "browse")
+  spaceBrowse: resourceActionId("space", "browse")
 } as const;
 
 /** Labels used by app menu actions and derived E2E navigation expectations. */
