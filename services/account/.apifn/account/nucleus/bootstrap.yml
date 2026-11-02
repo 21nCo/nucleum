@@ -17,6 +17,7 @@ runtime:
   scripts:
     - type: pre-request
       code: |
+        req.headers["x-authfn-csrf"] = cookies.get("nucleus.csrf", req.url);
         req.body = JSON.stringify({
           region: "insouth"
         });
