@@ -14,6 +14,7 @@
   import { postMessageToParent } from "@nucleum/client/runtime/embed/embed.utils";
   import { EmbedMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { onMount } from "svelte";
+  import account from "@nucleum/client/runtime/account/account.store";
   import AccountDebugInfo from "./AccountDebugInfo.svelte";
   let { children: pageChildren }: { children?: Snippet } = $props();
   let isEmbedTokenPresent = $state(false);
@@ -31,7 +32,6 @@
   const hasAuthToken = $derived($page.url.searchParams.has("token"));
   const routeAuthCheck = $derived({ path: authPath, hasToken: hasAuthToken });
   let routeAuthState = $state<RouteAuthState | "error" | undefined>();
-  let knownAuthIdentity: string | undefined;
   let authGuardEpoch = $state(0);
 
   $effect(() => {
@@ -40,7 +40,9 @@
     resolveRouteAuthState(hasToken).then(
       (resolved) => {
         if (!isCurrent) return;
-        adoptAuthIdentity(resolved.identity, resolved.isLiveSession === true);
+        if (isDifferentFromLoadedAccount(resolved.liveActorId)) {
+          authGuardEpoch += 1;
+        }
         routeAuthState = resolved.state;
       },
       () => {
@@ -53,65 +55,42 @@
   });
 
   /**
-   * Remounts AuthGuard only when a live cloud session resolves an identity
-   * that differs from the known one, such as after signing in to another
-   * account in a different tab. The first known identity is adopted without a
-   * remount. Cached cloud and offline-only sessions may set the first identity
-   * but never change it, because AuthGuard only hydrates the account from a
-   * live cloud session; a later live session for a different account still
-   * remounts and re-hydrates.
-   * Checks that cannot tell the identity (embed token landings) never change
-   * it.
+   * Reports whether a live cloud session belongs to a different account than
+   * the one AuthGuard has loaded, such as after signing in to another account
+   * in a different tab. AuthGuard only hydrates the account from a live cloud
+   * session, so comparing against the loaded account (not a remembered
+   * identity) retries hydration on a later check if a remount failed to load
+   * the new account. Cached cloud, offline-only and token checks never remount.
    */
-  function adoptAuthIdentity(
-    identity: string | undefined,
-    isLiveSession: boolean
-  ) {
-    if (!identity) return;
-    if (!knownAuthIdentity) {
-      knownAuthIdentity = identity;
-      return;
-    }
-    if (knownAuthIdentity === identity || !isLiveSession) return;
-    authGuardEpoch += 1;
-    knownAuthIdentity = identity;
+  function isDifferentFromLoadedAccount(liveActorId: string | undefined) {
+    if (!liveActorId) return false;
+    const loadedUserId = account.get()?.userId;
+    if (!loadedUserId) return false;
+    const normalize = (id: string) =>
+      id.startsWith("user:") ? id.slice("user:".length) : id;
+    return normalize(loadedUserId) !== normalize(liveActorId);
   }
 
   /**
-   * Resolves the route auth state and, when the session reveals it, the
-   * identity of the signed-in account.
+   * Resolves the route auth state and, for a live cloud session, the actor id
+   * of the signed-in account.
    */
   async function resolveRouteAuthState(
     hasToken: boolean
-  ): Promise<{
-    state: RouteAuthState;
-    identity?: string;
-    isLiveSession?: boolean;
-  }> {
+  ): Promise<{ state: RouteAuthState; liveActorId?: string }> {
     if (hasToken) return { state: "authenticated" };
     const resolution = await resolveAuthSession();
     if (resolution.status === "authenticated") {
       return {
         state: "authenticated",
-        identity: `cloud:${resolution.session.actorId}`,
-        isLiveSession: true
+        liveActorId: String(resolution.session.actorId ?? "") || undefined
       };
     }
-    if (resolution.status === "offline-only") {
-      return {
-        state: "authenticated",
-        identity: resolution.storedState.offlineSessionId
-          ? `offline:${resolution.storedState.offlineSessionId}`
-          : undefined
-      };
-    }
-    if (resolution.status === "cached-cloud") {
-      return {
-        state: "authenticated",
-        identity: resolution.storedState.storedCloudActorId
-          ? `cloud:${resolution.storedState.storedCloudActorId}`
-          : undefined
-      };
+    if (
+      resolution.status === "offline-only" ||
+      resolution.status === "cached-cloud"
+    ) {
+      return { state: "authenticated" };
     }
     if (resolution.status === "expired") return { state: "expired" };
     if (resolution.status === "unavailable") return { state: "unavailable" };

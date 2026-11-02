@@ -222,44 +222,10 @@ export async function resolveStoredAuthSessionState(): Promise<StoredAuthSession
     offlineSessionId: offlineSessionId ?? undefined,
     hasStoredUserInfo,
     hasStoredCloudIdentity,
-    storedCloudActorId: resolveStoredCloudActorId(storedUserInfo, storedUser),
     hasOfflineOnlySession: Boolean(offlineSessionId && !hasStoredCloudIdentity),
     isDatafnOfflinabilityEnabled: datafnOfflinability !== "false",
     isOffline
   };
-}
-
-/**
- * Resolves the AuthFn actor id of the stored cloud account from the stored
- * user info (`user:<actorId>`) or, failing that, the stored session. Returns
- * undefined when neither is available.
- */
-function resolveStoredCloudActorId(
-  storedUserInfo: unknown,
-  storedUser: unknown
-): string | undefined {
-  const userInfo = parseStoredRecord(storedUserInfo);
-  const userInfoId = typeof userInfo?.id === "string" ? userInfo.id : undefined;
-  if (userInfoId) {
-    return userInfoId.startsWith("user:")
-      ? userInfoId.slice("user:".length)
-      : userInfoId;
-  }
-  const session = parseStoredRecord(storedUser);
-  return typeof session?.actorId === "string" && session.actorId
-    ? session.actorId
-    : undefined;
-}
-
-function parseStoredRecord(value: unknown): Record<string, unknown> | undefined {
-  if (value && typeof value === "object") return value as Record<string, unknown>;
-  if (typeof value !== "string" || !value) return undefined;
-  try {
-    const parsed = JSON.parse(value);
-    return parsed && typeof parsed === "object" ? parsed : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 export function canUseStoredCloudSession(

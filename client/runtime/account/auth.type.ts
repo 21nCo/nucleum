@@ -6,7 +6,6 @@ export type StoredAuthSessionState = {
   offlineSessionId?: string;
   hasStoredUserInfo: boolean;
   hasStoredCloudIdentity: boolean;
-  storedCloudActorId?: string;
   hasOfflineOnlySession: boolean;
   isDatafnOfflinabilityEnabled: boolean;
   isOffline: boolean;
