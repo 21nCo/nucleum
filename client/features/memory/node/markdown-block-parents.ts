@@ -5,15 +5,80 @@ import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
 const repairBatchSize = 200;
 
+const repairQueryMetadata = {
+  includeTrashed: true,
+  includeArchived: true
+};
+
+type BlockRecord = {
+  id: IRecordId;
+  creationContext?: IRecordId;
+  mdChildOrder?: unknown;
+};
+
+function readChildIds(mdChildOrder: unknown): IRecordId[] {
+  if (!Array.isArray(mdChildOrder)) return [];
+  return mdChildOrder
+    .map((child) => {
+      if (typeof child === "string") return child;
+      if (child && typeof child === "object" && "id" in child) {
+        return (child as { id?: unknown }).id;
+      }
+      return undefined;
+    })
+    .filter((child): child is IRecordId => typeof child === "string");
+}
+
+async function queryInBatches(
+  ids: IRecordId[],
+  buildFilters: (batch: IRecordId[]) => Record<string, unknown>,
+  select: string[]
+): Promise<BlockRecord[]> {
+  const records: BlockRecord[] = [];
+  for (let index = 0; index < ids.length; index += repairBatchSize) {
+    const result = await datafn.node.query({
+      select,
+      filters: buildFilters(ids.slice(index, index + repairBatchSize)),
+      metadata: repairQueryMetadata
+    });
+    for (const record of result.data ?? []) {
+      if (typeof record?.id === "string") records.push(record as BlockRecord);
+    }
+  }
+  return records;
+}
+
+/**
+ * Collects the ids reachable from a note through `mdChildOrder`, following
+ * each block's own `mdChildOrder` for headings and nested blocks.
+ */
+function collectNoteBlockIds(
+  note: BlockRecord,
+  blocksById: Map<IRecordId, BlockRecord>
+): Set<IRecordId> {
+  const reachable = new Set<IRecordId>();
+  const queue = readChildIds(note.mdChildOrder);
+  while (queue.length > 0) {
+    const id = queue.shift() as IRecordId;
+    if (reachable.has(id)) continue;
+    reachable.add(id);
+    const block = blocksById.get(id);
+    if (block) queue.push(...readChildIds(block.mdChildOrder));
+  }
+  return reachable;
+}
+
 /**
  * Restores the parent chain of markdown blocks that were saved without one.
  *
  * Blocks captured before top-level blocks defaulted to their note have a
  * `creationContext` but no `mdParent`, `parent` or `parentPath`, so trash,
  * archive and inactive propagation and parent-aware search cannot find them.
- * Only blocks whose creation context is a nodular markdown note are repaired;
- * clipper supplements also use `creationContext` and are left untouched.
- * Writes go through DataFn so they sync, and the repair is idempotent.
+ * Only nodes that belong to a nodular markdown note's block tree (reachable
+ * through `mdChildOrder`) are repaired. Media, links and files embedded in a
+ * note and clipper supplements also carry `creationContext` but are not part
+ * of the block tree, so they are left untouched. Writes go through DataFn so
+ * they sync, and the repair is idempotent.
  *
  * @returns The number of blocks repaired.
  */
@@ -25,10 +90,7 @@ export async function repairMarkdownBlockParents(): Promise<number> {
         creationContext: { $is_not_empty: true },
         mdParent: { $is_empty: true }
       },
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
+      metadata: repairQueryMetadata
     });
     const orphans = (orphanResult.data ?? []).filter(
       (record): record is { id: IRecordId; creationContext: IRecordId } =>
@@ -37,26 +99,32 @@ export async function repairMarkdownBlockParents(): Promise<number> {
     );
     if (orphans.length === 0) return 0;
 
-    const contextIds = [...new Set(orphans.map((record) => record.creationContext))];
-    const noteIds = new Set<string>();
-    for (let index = 0; index < contextIds.length; index += repairBatchSize) {
-      const notesResult = await datafn.node.query({
-        select: ["id"],
-        filters: {
-          id: { $in: contextIds.slice(index, index + repairBatchSize) },
-          contentType: NodeType.NODULAR_MARKDOWN
-        },
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      });
-      for (const note of notesResult.data ?? []) {
-        if (typeof note?.id === "string") noteIds.add(note.id);
-      }
-    }
+    const contextIds = [
+      ...new Set(orphans.map((record) => record.creationContext))
+    ];
+    const notes = await queryInBatches(
+      contextIds,
+      (batch) => ({
+        id: { $in: batch },
+        contentType: NodeType.NODULAR_MARKDOWN
+      }),
+      ["id", "mdChildOrder"]
+    );
+    if (notes.length === 0) return 0;
 
-    const blocks = orphans.filter((record) => noteIds.has(record.creationContext));
+    const noteBlocks = await queryInBatches(
+      notes.map((note) => note.id),
+      (batch) => ({ creationContext: { $in: batch } }),
+      ["id", "creationContext", "mdChildOrder"]
+    );
+    const blocksById = new Map(noteBlocks.map((block) => [block.id, block]));
+    const treeByNote = new Map(
+      notes.map((note) => [note.id, collectNoteBlockIds(note, blocksById)])
+    );
+
+    const blocks = orphans.filter((record) =>
+      treeByNote.get(record.creationContext)?.has(record.id)
+    );
     for (let index = 0; index < blocks.length; index += repairBatchSize) {
       await datafn.node.mutate(
         blocks.slice(index, index + repairBatchSize).map((block) => ({
@@ -72,7 +140,10 @@ export async function repairMarkdownBlockParents(): Promise<number> {
       );
     }
     if (blocks.length > 0) {
-      logger.info({ at: "repairMarkdownBlockParents", repaired: blocks.length });
+      logger.info({
+        at: "repairMarkdownBlockParents",
+        repaired: blocks.length
+      });
     }
     return blocks.length;
   } catch (error) {

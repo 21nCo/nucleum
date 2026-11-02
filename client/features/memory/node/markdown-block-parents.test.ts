@@ -41,18 +41,27 @@ describe("repairMarkdownBlockParents", () => {
     return result.data?.[0];
   }
 
-  it("links orphaned markdown blocks to their note and leaves other nodes alone", async () => {
+  it("links orphaned blocks in a note's block tree and leaves other nodes alone", async () => {
     await boot();
     const noteId = "node:note-alpha";
+    const headingId = "node:heading-alpha";
     const orphanId = "node:orphan-block";
+    const nestedOrphanId = "node:nested-orphan-block";
     const linkedId = "node:linked-block";
+    const embeddedFileId = "node:embedded-file";
     const clipId = "node:clip-alpha";
     const supplementId = "node:supplement-alpha";
     await datafn.node.mutate([
       {
         operation: "insert",
         id: noteId,
-        record: { id: noteId, label: "Note", body: "", contentType: NodeType.NODULAR_MARKDOWN }
+        record: {
+          id: noteId,
+          label: "Note",
+          body: "",
+          contentType: NodeType.NODULAR_MARKDOWN,
+          mdChildOrder: [orphanId, headingId]
+        }
       },
       {
         operation: "insert",
@@ -67,6 +76,32 @@ describe("repairMarkdownBlockParents", () => {
       },
       {
         operation: "insert",
+        id: headingId,
+        record: {
+          id: headingId,
+          label: "Heading",
+          body: "",
+          contentType: NodeType.HEADING1,
+          creationContext: noteId,
+          mdParent: [noteId],
+          parent: noteId,
+          parentPath: noteId,
+          mdChildOrder: [nestedOrphanId, linkedId]
+        }
+      },
+      {
+        operation: "insert",
+        id: nestedOrphanId,
+        record: {
+          id: nestedOrphanId,
+          label: "",
+          body: "nested orphan",
+          contentType: NodeType.SIMPLE_TEXT,
+          creationContext: noteId
+        }
+      },
+      {
+        operation: "insert",
         id: linkedId,
         record: {
           id: linkedId,
@@ -74,9 +109,20 @@ describe("repairMarkdownBlockParents", () => {
           body: "linked",
           contentType: NodeType.SIMPLE_TEXT,
           creationContext: noteId,
-          mdParent: [noteId, "node:heading-alpha"],
-          parent: "node:heading-alpha",
-          parentPath: `${noteId}-node:heading-alpha`
+          mdParent: [noteId, headingId],
+          parent: headingId,
+          parentPath: `${noteId}-${headingId}`
+        }
+      },
+      {
+        operation: "insert",
+        id: embeddedFileId,
+        record: {
+          id: embeddedFileId,
+          label: "Embedded file",
+          body: {},
+          contentType: NodeType.FILE,
+          creationContext: noteId
         }
       },
       {
@@ -97,20 +143,24 @@ describe("repairMarkdownBlockParents", () => {
       }
     ]);
 
-    expect(await repairMarkdownBlockParents()).toBe(1);
+    expect(await repairMarkdownBlockParents()).toBe(2);
 
-    expect(await readNode(orphanId)).toMatchObject({
-      mdParent: [noteId],
-      parent: noteId,
-      parentPath: noteId
-    });
+    for (const id of [orphanId, nestedOrphanId]) {
+      expect(await readNode(id)).toMatchObject({
+        mdParent: [noteId],
+        parent: noteId,
+        parentPath: noteId
+      });
+    }
     expect(await readNode(linkedId)).toMatchObject({
-      mdParent: [noteId, "node:heading-alpha"],
-      parent: "node:heading-alpha"
+      mdParent: [noteId, headingId],
+      parent: headingId
     });
-    const supplement = await readNode(supplementId);
-    expect(supplement?.parent ?? null).toBeNull();
-    expect(supplement?.mdParent ?? []).toEqual([]);
+    for (const id of [embeddedFileId, supplementId]) {
+      const record = await readNode(id);
+      expect(record?.parent ?? null).toBeNull();
+      expect(record?.mdParent ?? []).toEqual([]);
+    }
 
     expect(await repairMarkdownBlockParents()).toBe(0);
   });

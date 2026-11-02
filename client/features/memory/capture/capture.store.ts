@@ -1451,7 +1451,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
 
         for (let block of childrenWithStructure) {
           const correspondingContent = blocks.find((b) => b.id === block.id);
-          let parent = undefined;
+          let parent: IRecordId[] = [id];
           if (
             correspondingContent?.contentType &&
             headingNodeTypes.includes(correspondingContent.contentType)
