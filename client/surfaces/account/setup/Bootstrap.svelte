@@ -85,8 +85,13 @@
             label="Sign out"
             style={ButtonStyle.OUTLINED}
             isDisabled={isBootstrapInProgress}
-            onclick={() => {
-              accountSession.signOut();
+            onclick={async () => {
+              try {
+                error = null;
+                await accountSession.signOut();
+              } catch {
+                error = "Could not sign out. Please try again.";
+              }
             }}
           />
           <Button
