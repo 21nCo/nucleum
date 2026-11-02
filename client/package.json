@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@21n/shared-utils": "*",
-    "@authfn/client": "0.2.0",
+    "@authfn/client": "0.2.3",
     "@datafn/client": "0.1.0",
     "@nucleum/schema": "*",
     "@superfunctions/http": "0.2.0",
