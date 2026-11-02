@@ -86,12 +86,36 @@ export async function createNucleumAuthFnTransportAuth(
   return (await authClient()).createTransportAuth(input);
 }
 
-export async function bootstrapNucleusAccount(region: string) {
-  if (!shouldUseAuthFnBearerSession()) {
-    return { kind: "not-authfn" as const };
+/**
+ * Reads the AuthFn CSRF cookie that accompanies a cookie session for the
+ * account region, so cookie-authenticated mutations can echo it in a header.
+ */
+function readAuthFnCsrfToken(region: string): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const name = `${resolveAccountCookiePrefix(region)}.csrf`;
+  for (const entry of document.cookie.split(";")) {
+    const separator = entry.indexOf("=");
+    if (separator < 0) continue;
+    if (entry.slice(0, separator).trim() !== name) continue;
+    const value = decodeURIComponent(entry.slice(separator + 1).trim());
+    return value || undefined;
   }
-  const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
-  if (!token) {
+  return undefined;
+}
+
+/**
+ * Completes Nucleus account setup through the account service. Bearer
+ * sessions (native embed, extension) send the stored token; web cookie
+ * sessions send the session cookie with its CSRF token. Returns `not-authfn`
+ * when no AuthFn session credential is available.
+ */
+export async function bootstrapNucleusAccount(region: string) {
+  const isBearerSession = shouldUseAuthFnBearerSession();
+  const token = isBearerSession
+    ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+    : undefined;
+  const csrfToken = isBearerSession ? undefined : readAuthFnCsrfToken(region);
+  if (isBearerSession ? !token : !csrfToken) {
     return { kind: "not-authfn" as const };
   }
 
@@ -103,7 +127,9 @@ export async function bootstrapNucleusAccount(region: string) {
         credentials: "include",
         headers: {
           "content-type": "application/json",
-          authorization: `Bearer ${token}`
+          ...(token
+            ? { authorization: `Bearer ${token}` }
+            : { "x-authfn-csrf": csrfToken as string })
         },
         body: JSON.stringify({ region })
       }
@@ -119,7 +145,7 @@ export async function bootstrapNucleusAccount(region: string) {
 
     return {
       kind: "success" as const,
-      token,
+      token: token ?? undefined,
       session: result.data.session
     };
   } catch (error) {

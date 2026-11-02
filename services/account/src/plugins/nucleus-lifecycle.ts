@@ -6,7 +6,7 @@ import {
   type AuthFnSession,
   type AuthFnUserRecord
 } from 'authfn';
-import { authenticateRequest } from 'authfn/core/sessions';
+import { assertValidCsrf, authenticateRequest, getCookieSessionState } from 'authfn/core/sessions';
 import { createAuthFnRouteMeta } from 'authfn/http/router';
 import { jsonSuccess } from 'authfn/http/envelopes';
 
@@ -17,7 +17,7 @@ export function nucleusLifecyclePlugin(): AuthFnPlugin {
     name: 'nucleusLifecycle',
     routes: (ctx) => createNucleusLifecycleRoutes(ctx),
     hooks: {
-      beforeUserCreate: async (_ctx, input) => {
+      beforeUserCreate: async (ctx, input) => {
         const allowedDomains = readCsv(process.env.NUCLEUS_ALLOWED_EMAIL_DOMAINS);
         const email = typeof input.primaryEmail === 'string' ? input.primaryEmail : undefined;
         if (allowedDomains.length > 0 && email) {
@@ -28,7 +28,20 @@ export function nucleusLifecyclePlugin(): AuthFnPlugin {
             });
           }
         }
-        return input;
+        const metadata = isRecord(input.metadata) ? input.metadata : {};
+        const regionId = ctx.environment?.regionId;
+        return {
+          ...input,
+          metadata: {
+            ...metadata,
+            nucleus: {
+              ...readNucleusMetadata(metadata),
+              isBootstrapped: true,
+              ...(regionId ? { regionId } : {}),
+              product: 'nucleus'
+            }
+          }
+        };
       },
       afterUserCreate: async (ctx, user) => {
         await ctx.config?.observability?.events.emit({
@@ -77,10 +90,15 @@ function createNucleusLifecycleRoutes(ctx: AuthFnPluginRuntimeContext): NucleusL
       method: 'POST',
       path: '/nucleus/bootstrap',
       meta: createAuthFnRouteMeta('bootstrapNucleusAccount', 'Complete Nucleus account setup', {
-        mode: 'bearer'
+        mode: 'hybrid',
+        csrf: true
       }),
       handler: async (request) => {
-        const session = await authenticateRequest(ctx.config, request);
+        const cookieState = await getCookieSessionState(ctx.config, request);
+        if (cookieState.session) {
+          assertValidCsrf(request, cookieState);
+        }
+        const session = cookieState.session ?? (await authenticateRequest(ctx.config, request));
         if (!session || session.type !== 'session') {
           throw new AuthFnUnauthenticatedError('AuthFn session is required');
         }

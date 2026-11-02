@@ -80,24 +80,34 @@
           />
         </div>
       {:else}
-        <Button
-          label="Complete setup"
-          isLoading={isBootstrapInProgress}
-          type={ButtonVariant.PRIMARY}
-          icon="rocket"
-          onclick={async () => {
-            try {
-              isBootstrapInProgress = true;
-              const result = await accountSession.bootstrap(region);
-              if (!result) {
-                error = "Something went wrong. Please try again later.";
-                return;
+        <div class="flex gap-2 mo:flex-col">
+          <Button
+            label="Sign out"
+            style={ButtonStyle.OUTLINED}
+            isDisabled={isBootstrapInProgress}
+            onclick={() => {
+              accountSession.signOut();
+            }}
+          />
+          <Button
+            label="Complete setup"
+            isLoading={isBootstrapInProgress}
+            type={ButtonVariant.PRIMARY}
+            icon="rocket"
+            onclick={async () => {
+              try {
+                isBootstrapInProgress = true;
+                const result = await accountSession.bootstrap(region);
+                if (!result) {
+                  error = "Something went wrong. Please try again later.";
+                  return;
+                }
+              } finally {
+                isBootstrapInProgress = false;
               }
-            } finally {
-              isBootstrapInProgress = false;
-            }
-          }}
-        />
+            }}
+          />
+        </div>
       {/if}
     </div>
   </div>
