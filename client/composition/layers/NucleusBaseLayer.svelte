@@ -20,6 +20,8 @@
   import MemoryBase from "@nucleum/products/memotron/base/MemoryBase.svelte";
   import TopNavLeftMenuItem from "@nucleum/shell/topNav/TopNavLeftMenuItem.svelte";
   import { Action } from "@nucleum/client/config/action.enum";
+  import { repairMarkdownBlockParents } from "@nucleum/features/memory/node/markdown-block-parents";
+  import { safeRequestIdleCallback } from "@21n/shared-utils/idle-callback";
   let { children }: { children?: Snippet } = $props();
   let isLiteMode = $state($context.isEmbed && $context.isSheet);
 
@@ -45,6 +47,9 @@
     if (isLiteMode) return;
     // TODO
     $appLoadingState.isLocalLoaded = true;
+    safeRequestIdleCallback(() => {
+      void repairMarkdownBlockParents();
+    });
   }
 </script>
 

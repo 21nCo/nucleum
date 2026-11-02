@@ -35,6 +35,14 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
+ * Matches the version-stamped icon sprite sheets such as
+ * `icons/sprite-ph-light-v66.svg`. The icon bundler writes a new file name
+ * whenever `bundleNumber` is bumped, so the dev server lets browsers cache them
+ * instead of refetching a sheet each time an icon switches between sheets.
+ */
+const versionedAssetPattern = /[\\/]icons[\\/]sprite(?:-[a-z0-9-]+)?-v\d+\.svg$/i;
+
+/**
  * @param {StaticPluginOptions} [options={}]
  * @returns {import("vite").Plugin}
  */
@@ -134,6 +142,9 @@ export function staticPlugin(options = {}) {
             res.setHeader("Content-Type", "font/otf");
           }
 
+          if (versionedAssetPattern.test(filePath)) {
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          }
           const stream = fs.createReadStream(filePath);
           stream.on("error", () => {
             res.statusCode = 404;

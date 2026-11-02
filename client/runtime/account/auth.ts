@@ -86,12 +86,42 @@ export async function createNucleumAuthFnTransportAuth(
   return (await authClient()).createTransportAuth(input);
 }
 
-export async function bootstrapNucleusAccount(region: string) {
-  if (!shouldUseAuthFnBearerSession()) {
-    return { kind: "not-authfn" as const };
+/**
+ * Reads the AuthFn CSRF cookie that accompanies a cookie session for the
+ * account region, so cookie-authenticated mutations can echo it in a header.
+ */
+function readAuthFnCsrfToken(region: string): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  const name = `${resolveAccountCookiePrefix(region)}.csrf`;
+  for (const entry of document.cookie.split(";")) {
+    const separator = entry.indexOf("=");
+    if (separator < 0) continue;
+    if (entry.slice(0, separator).trim() !== name) continue;
+    const rawValue = entry.slice(separator + 1).trim();
+    try {
+      return decodeURIComponent(rawValue) || undefined;
+    } catch {
+      continue;
+    }
   }
-  const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
-  if (!token) {
+  return undefined;
+}
+
+/**
+ * Completes Nucleus account setup through the account service. Bearer
+ * sessions (native embed, extension) send only the stored token, without
+ * cookies, so a coexisting cookie session cannot take precedence; web cookie
+ * sessions send the session cookie with its CSRF token. Returns `not-authfn`
+ * when no AuthFn session credential is available, including a leftover CSRF
+ * cookie whose session is gone (401).
+ */
+export async function bootstrapNucleusAccount(region: string) {
+  const isBearerSession = shouldUseAuthFnBearerSession();
+  const token = isBearerSession
+    ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+    : undefined;
+  const csrfToken = isBearerSession ? undefined : readAuthFnCsrfToken(region);
+  if (isBearerSession ? !token : !csrfToken) {
     return { kind: "not-authfn" as const };
   }
 
@@ -100,15 +130,20 @@ export async function bootstrapNucleusAccount(region: string) {
       `${resolveAuthFnBaseUrl(region)}/nucleus/bootstrap`,
       {
         method: "POST",
-        credentials: "include",
+        credentials: token ? "omit" : "include",
         headers: {
           "content-type": "application/json",
-          authorization: `Bearer ${token}`
+          ...(token
+            ? { authorization: `Bearer ${token}` }
+            : { "x-authfn-csrf": csrfToken as string })
         },
         body: JSON.stringify({ region })
       }
     );
     const result = await response.json().catch(() => null);
+    if (!token && response.status === 401) {
+      return { kind: "not-authfn" as const };
+    }
     if (!response.ok || !result?.ok || !result.data?.session) {
       return {
         kind: "failed" as const,
@@ -119,7 +154,7 @@ export async function bootstrapNucleusAccount(region: string) {
 
     return {
       kind: "success" as const,
-      token,
+      token: token ?? undefined,
       session: result.data.session
     };
   } catch (error) {

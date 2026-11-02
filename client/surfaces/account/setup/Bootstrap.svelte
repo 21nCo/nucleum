@@ -7,6 +7,7 @@
   import Button from "@21n/ui/elements/button/Button.svelte";
   import account from "@nucleum/client/runtime/account/account.store";
   import { accountSession } from "@nucleum/surfaces/account/account-session";
+  import { logger } from "@nucleum/client/runtime/logging/logger";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
     ButtonStyle,
@@ -80,24 +81,43 @@
           />
         </div>
       {:else}
-        <Button
-          label="Complete setup"
-          isLoading={isBootstrapInProgress}
-          type={ButtonVariant.PRIMARY}
-          icon="rocket"
-          onclick={async () => {
-            try {
-              isBootstrapInProgress = true;
-              const result = await accountSession.bootstrap(region);
-              if (!result) {
-                error = "Something went wrong. Please try again later.";
-                return;
+        <div class="flex gap-2 mo:flex-col">
+          <Button
+            label="Sign out"
+            style={ButtonStyle.OUTLINED}
+            isDisabled={isBootstrapInProgress}
+            onclick={async () => {
+              try {
+                error = null;
+                await accountSession.signOut();
+              } catch (signOutError) {
+                logger.error({
+                  at: "Bootstrap.signOut",
+                  error: signOutError
+                });
+                error = "Could not sign out. Please try again.";
               }
-            } finally {
-              isBootstrapInProgress = false;
-            }
-          }}
-        />
+            }}
+          />
+          <Button
+            label="Complete setup"
+            isLoading={isBootstrapInProgress}
+            type={ButtonVariant.PRIMARY}
+            icon="rocket"
+            onclick={async () => {
+              try {
+                isBootstrapInProgress = true;
+                const result = await accountSession.bootstrap(region);
+                if (!result) {
+                  error = "Something went wrong. Please try again later.";
+                  return;
+                }
+              } finally {
+                isBootstrapInProgress = false;
+              }
+            }}
+          />
+        </div>
       {/if}
     </div>
   </div>

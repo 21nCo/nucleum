@@ -112,6 +112,7 @@
   "client/features/memory/node/content/NodeContent.svelte",
   "client/features/memory/node/content/web/WebClipPreview.svelte",
   "client/features/memory/node/content/web/YoutubeVideoPreview.svelte",
+  "client/features/memory/node/markdown-block-parents.ts",
   "client/features/memory/node/node.store.ts",
   "client/features/memory/node/node.type.ts",
   "client/features/memory/node/node.utils.ts",
