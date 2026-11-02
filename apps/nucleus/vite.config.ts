@@ -1,5 +1,5 @@
 import { sveltekit } from "@sveltejs/kit/vite";
-import { defineConfig, searchForWorkspaceRoot } from "vite";
+import { defineConfig, loadEnv, searchForWorkspaceRoot } from "vite";
 // import topLevelAwait from "vite-plugin-top-level-await";
 import fetchJsonPlugin from "../fetch-json-data.js";
 // import monacoEditorPlugin from "vite-plugin-monaco-editor";
@@ -7,7 +7,11 @@ import { staticPlugin } from "@nucleum/static/vite-plugin.js";
 import { buildViteAliases, loadAliasMap } from "../../tools/alias-utils.mjs";
 
 const aliasConfig = buildViteAliases(loadAliasMap());
-const devFsAllow = (process.env.VITE_DEV_FS_ALLOW ?? "")
+const devFsAllow = (
+  process.env.VITE_DEV_FS_ALLOW ??
+  loadEnv("development", process.cwd(), "VITE_DEV_").VITE_DEV_FS_ALLOW ??
+  ""
+)
   .split(",")
   .map((entry) => entry.trim())
   .filter(Boolean);

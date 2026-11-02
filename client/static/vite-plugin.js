@@ -35,11 +35,12 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Matches version-stamped asset names such as `sprite-ph-light-v66.svg`. Their
- * name changes whenever the content does, so the dev server lets browsers cache
- * them like the deployed CDN does instead of refetching them on every use.
+ * Matches the version-stamped icon sprite sheets such as
+ * `icons/sprite-ph-light-v66.svg`. The icon bundler writes a new file name
+ * whenever `bundleNumber` is bumped, so the dev server lets browsers cache them
+ * instead of refetching a sheet each time an icon switches between sheets.
  */
-const versionedAssetPattern = /-v\d+\.[a-z0-9]+$/i;
+const versionedAssetPattern = /[\\/]icons[\\/]sprite(?:-[a-z0-9-]+)?-v\d+\.svg$/i;
 
 /**
  * @param {StaticPluginOptions} [options={}]
