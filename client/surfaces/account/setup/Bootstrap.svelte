@@ -7,6 +7,7 @@
   import Button from "@21n/ui/elements/button/Button.svelte";
   import account from "@nucleum/client/runtime/account/account.store";
   import { accountSession } from "@nucleum/surfaces/account/account-session";
+  import { logger } from "@nucleum/client/runtime/logging/logger";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
     ButtonStyle,
@@ -89,7 +90,11 @@
               try {
                 error = null;
                 await accountSession.signOut();
-              } catch {
+              } catch (signOutError) {
+                logger.error({
+                  at: "Bootstrap.signOut",
+                  error: signOutError
+                });
                 error = "Could not sign out. Please try again.";
               }
             }}
