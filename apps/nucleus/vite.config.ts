@@ -1,5 +1,5 @@
 import { sveltekit } from "@sveltejs/kit/vite";
-import { defineConfig } from "vite";
+import { defineConfig, searchForWorkspaceRoot } from "vite";
 // import topLevelAwait from "vite-plugin-top-level-await";
 import fetchJsonPlugin from "../fetch-json-data.js";
 // import monacoEditorPlugin from "vite-plugin-monaco-editor";
@@ -7,6 +7,10 @@ import { staticPlugin } from "@nucleum/static/vite-plugin.js";
 import { buildViteAliases, loadAliasMap } from "../../tools/alias-utils.mjs";
 
 const aliasConfig = buildViteAliases(loadAliasMap());
+const devFsAllow = (process.env.VITE_DEV_FS_ALLOW ?? "")
+  .split(",")
+  .map((entry) => entry.trim())
+  .filter(Boolean);
 process.env.VITE_PRODUCT =
   process.env.VITE_PRODUCT === "nucleus"
     ? "nucleum"
@@ -20,7 +24,14 @@ export default defineConfig({
     format: "es"
   },
   server: {
-    allowedHosts: ["local.nucleum.app", "local.nucleus.to", "nucleum.21n.dev"]
+    allowedHosts: ["local.nucleum.app", "local.nucleus.to", "nucleum.21n.dev"],
+    ...(devFsAllow.length > 0
+      ? {
+          fs: {
+            allow: [searchForWorkspaceRoot(process.cwd()), ...devFsAllow]
+          }
+        }
+      : {})
   },
   build: {
     target: "esnext",

@@ -35,6 +35,13 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
+ * Matches version-stamped asset names such as `sprite-ph-light-v66.svg`. Their
+ * name changes whenever the content does, so the dev server lets browsers cache
+ * them like the deployed CDN does instead of refetching them on every use.
+ */
+const versionedAssetPattern = /-v\d+\.[a-z0-9]+$/i;
+
+/**
  * @param {StaticPluginOptions} [options={}]
  * @returns {import("vite").Plugin}
  */
@@ -134,6 +141,9 @@ export function staticPlugin(options = {}) {
             res.setHeader("Content-Type", "font/otf");
           }
 
+          if (versionedAssetPattern.test(filePath)) {
+            res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+          }
           const stream = fs.createReadStream(filePath);
           stream.on("error", () => {
             res.statusCode = 404;
