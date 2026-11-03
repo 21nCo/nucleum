@@ -18,6 +18,7 @@
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { Placement } from "@21n/ui/elements/direction.enum";
@@ -55,18 +56,34 @@
   const isContextZoneHosted = contextZone.isHosted;
   const entryWidth = contextZone.entryWidth;
   let controlsRef = $state<HTMLDivElement | undefined>(undefined);
+  const TIGHT_GAP_PX = 12;
+  const LOOSE_GAP_PX = 28;
   let fullControlsWidth = $state(0);
+  let controlGroupCount = $state(0);
   const isCompact = $derived(
     fullControlsWidth > 0 &&
       $entryWidth !== undefined &&
       $entryWidth < fullControlsWidth
+  );
+  const isLoose = $derived(
+    !isCompact &&
+      fullControlsWidth > 0 &&
+      $entryWidth !== undefined &&
+      $entryWidth >=
+        fullControlsWidth +
+          Math.max(0, controlGroupCount - 1) * (LOOSE_GAP_PX - TIGHT_GAP_PX)
   );
 
   $effect(() => {
     if (!controlsRef || isCompact) return;
     const element = controlsRef;
     const measure = () => {
-      if (!isCompact) fullControlsWidth = element.scrollWidth;
+      if (isCompact) return;
+      const groups = element.children.length;
+      const gap = parseFloat(getComputedStyle(element).columnGap) || 0;
+      controlGroupCount = groups;
+      fullControlsWidth =
+        element.scrollWidth - Math.max(0, groups - 1) * (gap - TIGHT_GAP_PX);
     };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -194,7 +211,8 @@
   <ContextZoneContent isInlineFallback={false} cycle={cycleLayout}>
     <div
       bind:this={controlsRef}
-      class="flex items-center h-full gap-3"
+      class="flex items-center h-full"
+      style:column-gap={`${isLoose ? LOOSE_GAP_PX : TIGHT_GAP_PX}px`}
       data-testid="calendar-context-controls"
       data-compact={isCompact ? "true" : undefined}
     >
