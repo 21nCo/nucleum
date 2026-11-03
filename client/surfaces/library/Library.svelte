@@ -268,7 +268,7 @@
 </script>
 
 <Panel
-  title="Library"
+  title={$isContextZoneHosted ? undefined : "Library"}
   {floatingButton}
   panelSize={Size.sm}
   isNavActivated={selectedResource !== Resource.unknown &&
