@@ -12,3 +12,19 @@ export function resolveFrequentContext(
     return undefined;
   return pageId;
 }
+
+/** Items each navigator section shows before "Show more". */
+export const NAVIGATOR_SECTION_LIMIT = 5;
+
+/**
+ * Items a navigator section shows: all of them when expanded, otherwise the
+ * first `limit`, with the count left out.
+ */
+export function limitSectionItems<T>(
+  items: T[],
+  isExpanded: boolean,
+  limit = NAVIGATOR_SECTION_LIMIT
+) {
+  const visible = isExpanded ? items : items.slice(0, limit);
+  return { visible, hiddenCount: items.length - visible.length };
+}

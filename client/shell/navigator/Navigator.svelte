@@ -36,7 +36,11 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { cn } from "@21n/ui/environment/presentation";
   import { navigatorSearch } from "@nucleum/shell/navigator/navigator-search";
-  import { resolveFrequentContext } from "@nucleum/shell/navigator/navigator-sections";
+  import {
+    NAVIGATOR_SECTION_LIMIT,
+    limitSectionItems,
+    resolveFrequentContext
+  } from "@nucleum/shell/navigator/navigator-sections";
   import {
     liveResource,
     resolvePlainResourceLabel
@@ -69,6 +73,7 @@
   const currentTrail = $derived($accessTrail.current);
   const recentTrails = $derived($accessTrail.recent);
   let expandedTrails = $state<string[]>([]);
+  let expandedSections = $state<string[]>([]);
 
   const currentPageId = $derived($page.url.searchParams.get(AccessMode.PAGE));
   const frequentItems = $derived(
@@ -182,6 +187,7 @@
       searchResultsQuery = trimmed;
       searchResults = hits.map((hit) => hit.id);
       selectedIndex = 0;
+      expandedSections = expandedSections.filter((key) => key !== "results");
     } catch (error) {
       if (requestId !== searchRequestId) return;
       logger.error({ at: "Navigator.search", error });
@@ -232,6 +238,11 @@
       const step = event.key === "ArrowDown" ? 1 : -1;
       selectedIndex =
         (selectedIndex + step + searchResults.length) % searchResults.length;
+      if (
+        selectedIndex >= NAVIGATOR_SECTION_LIMIT &&
+        !isSectionExpanded("results")
+      )
+        toggleSection("results");
       void revealSelectedResult();
       return true;
     }
@@ -282,6 +293,16 @@
     openFresh(item.id, event);
   }
 
+  function isSectionExpanded(key: string) {
+    return expandedSections.includes(key);
+  }
+
+  function toggleSection(key: string) {
+    expandedSections = isSectionExpanded(key)
+      ? expandedSections.filter((item) => item !== key)
+      : [...expandedSections, key];
+  }
+
   function toggleTrail(key: string) {
     expandedTrails = expandedTrails.includes(key)
       ? expandedTrails.filter((item) => item !== key)
@@ -301,6 +322,27 @@
       />
     {/each}
   </div>
+{/snippet}
+
+{#snippet sectionToggle(key: string, hiddenCount: number)}
+  {#if hiddenCount > 0 || isSectionExpanded(key)}
+    <button
+      type="button"
+      class="self-start px-1.5 h-6 rounded-md text-b3 text-fgs3 hover:bg-bgs3 hover:text-fgs1"
+      aria-expanded={isSectionExpanded(key)}
+      data-testid="navigator-section-toggle"
+      data-section={key}
+      onclick={() => toggleSection(key)}
+    >
+      {isSectionExpanded(key) ? "Show less" : `Show ${hiddenCount} more`}
+    </button>
+  {/if}
+{/snippet}
+
+{#snippet limitedHistoryList(key: string, items: NavigatorHistoryItem[])}
+  {@const limited = limitSectionItems(items, isSectionExpanded(key))}
+  {@render historyList(limited.visible)}
+  {@render sectionToggle(key, limited.hiddenCount)}
 {/snippet}
 
 {#snippet resultList(ids: string[])}
@@ -371,7 +413,12 @@
       >
         <div class="text-b2 text-fgs3">Results</div>
         {#if isSearchResultsCurrent && searchResults.length > 0}
-          {@render resultList(searchResults)}
+          {@const limited = limitSectionItems(
+            searchResults,
+            isSectionExpanded("results")
+          )}
+          {@render resultList(limited.visible)}
+          {@render sectionToggle("results", limited.hiddenCount)}
         {:else if isSearching || !isSearchResultsCurrent}
           <div class="text-b3 text-fgs3">Searching...</div>
         {:else}
@@ -391,13 +438,17 @@
         </section>
       {/if}
       {#if recentTrails.length > 0}
+        {@const limitedTrails = limitSectionItems(
+          recentTrails,
+          isSectionExpanded("trails")
+        )}
         <section
           class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3 first:border-t-0"
           data-testid="navigator-recent-trails"
         >
           <div class="text-b2 text-fgs3">Recent trails</div>
           <div class="flex flex-col gap-1">
-            {#each recentTrails as trail (trail.key)}
+            {#each limitedTrails.visible as trail (trail.key)}
               {@const isExpanded = expandedTrails.includes(trail.key)}
               <div
                 class="flex flex-col gap-1"
@@ -439,6 +490,7 @@
               </div>
             {/each}
           </div>
+          {@render sectionToggle("trails", limitedTrails.hiddenCount)}
         </section>
       {/if}
       <section
@@ -447,7 +499,7 @@
       >
         <div class="text-b2 text-fgs3">Recently accessed</div>
         {#if recentItems.length > 0}
-          {@render historyList(recentItems)}
+          {@render limitedHistoryList("recent", recentItems)}
         {:else}
           <EmptyStatusView size={Size.sm} mainText="No history yet" />
         {/if}
@@ -473,11 +525,11 @@
               <Icon icon="cross" size={Size.xs} />
             </button>
           </div>
-          {@render historyList(fromHereItems)}
+          {@render limitedHistoryList("frequent", fromHereItems)}
         {:else}
           <div class="text-b2 text-fgs3">Frequently accessed</div>
           {#if frequentItems.length > 0}
-            {@render historyList(frequentItems)}
+            {@render limitedHistoryList("frequent", frequentItems)}
           {:else}
             <EmptyStatusView size={Size.sm} mainText="No history yet" />
           {/if}
