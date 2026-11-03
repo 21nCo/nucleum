@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import Records from "@nucleum/surfaces/library/records/Records.svelte";
@@ -33,27 +32,30 @@
   import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
   import { Product } from "@nucleum/client/config/product.type";
   import { isHideCreateAction } from "@nucleum/shared-state/resources/library.utils";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import ComponentShortcutListener from "@21n/ui/compositions/keyboard/ComponentShortcutListener.svelte";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
-  import { isValidEnumValue } from "@21n/shared-utils/text.utils";
+  import {
+    LIBRARY_DEFAULT_SUBTYPE,
+    parseLibraryPath,
+    replaceLibraryPath
+  } from "@nucleum/surfaces/library/library-route";
 
   let { resources = [] }: { resources?: Resource[] } = $props();
 
   let selectedResource = $state<Resource>(Resource.unknown);
   let syncFeedbackRef = $state<InlineSyncingFeedback>();
 
-  function syncSelectedResource(resourceParam?: string | null) {
-    if (resourceParam && isValidEnumValue(resourceParam, Resource)) {
-      selectedResource = resourceParam as Resource;
+  function syncSelectedResource(pathResource?: Resource) {
+    if (pathResource) {
+      selectedResource = pathResource;
       return;
     }
-    if (!resourceParam && $view.isConstrainedWidth) {
+    if ($view.isConstrainedWidth) {
       selectedResource = Resource.unknown;
       return;
     }
-    if (!$view.isConstrainedWidth && selectedResource === Resource.unknown) {
+    if (selectedResource === Resource.unknown) {
       selectedResource = resources[0] ?? Resource.unknown;
     }
   }
@@ -106,13 +108,10 @@
 
   onMount(() => {
     const syncFromWindow = () => {
-      const resourceParam = new URL(window.location.href).searchParams.get(
-        AppSearchParam.RESOURCE
-      );
-      syncSelectedResource(resourceParam);
+      syncSelectedResource(parseLibraryPath(window.location.pathname).resource);
     };
     const pageSub = page.subscribe(async (p) => {
-      syncSelectedResource(p.url.searchParams.get(AppSearchParam.RESOURCE));
+      syncSelectedResource(parseLibraryPath(p.url.pathname).resource);
     });
     window.addEventListener(GlobalEvent.CUSTOM_NAVIGATION, syncFromWindow);
     window.addEventListener("popstate", syncFromWindow);
@@ -198,11 +197,8 @@
       isShowCount={true}
       onSelect={(selectedValue) => {
         selectedResource = selectedValue;
-        navigation.toggleSearchParam({
-          [AppSearchParam.RESOURCE]: selectedValue,
-          [AppSearchParam.TYPE]: "all",
-          [AppSearchParam.STARRED]: null,
-          [AppSearchParam.ARCHIVED]: null
+        replaceLibraryPath(selectedValue, LIBRARY_DEFAULT_SUBTYPE, {
+          isResetFilters: true
         });
         syncFeedbackRef?.refresh(selectedValue);
       }}
@@ -247,7 +243,7 @@
           isPreventCwPadding={true}
           onBack={() => {
             selectedResource = Resource.unknown;
-            navigation.toggleSearchParam([AppSearchParam.RESOURCE]);
+            replaceLibraryPath();
           }}
         />
       </div>
@@ -257,7 +253,13 @@
     {#if selectedResource !== Resource.unknown}
       <div class="flex flex-col gap-4 w-full">
         {#key selectedResource}
-          <LibraryRecordsPane resource={selectedResource} />
+          <LibraryRecordsPane
+            resource={selectedResource}
+            subType={parseLibraryPath($page.url.pathname).subType ??
+              LIBRARY_DEFAULT_SUBTYPE}
+            onSubTypeChange={(subType) =>
+              replaceLibraryPath(selectedResource, subType)}
+          />
         {/key}
       </div>
     {/if}

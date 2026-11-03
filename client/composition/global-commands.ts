@@ -3,7 +3,10 @@ import { helpCommands } from "@nucleum/surfaces/help/global-commands";
 import { accountCommands } from "@nucleum/surfaces/account/global-commands";
 import { shellCommands } from "@nucleum/shell/navigation/global-commands";
 import { commandCommands } from "@nucleum/surfaces/commandBar/global-commands";
-import { calendarCommands } from "@nucleum/features/calendar/global-commands";
+import {
+  calendarCommands,
+  calendarViewCommands
+} from "@nucleum/features/calendar/global-commands";
 import { memoryCommands } from "@nucleum/features/memory/markdown/global-commands";
 import { recordsCommands } from "@nucleum/features/records/global-commands";
 import { collectionsCommands } from "@nucleum/features/collections/global-commands";
@@ -13,6 +16,7 @@ import { subscriptionCommands } from "@nucleum/surfaces/subscription/global-comm
 import { memotronCommands } from "@nucleum/products/memotron/search-commands";
 import { pointronCommands } from "@nucleum/products/pointron/clock-commands";
 import { settingsCommands } from "@nucleum/surfaces/settings/global-commands";
+import type { Product } from "@nucleum/client/config/product.type";
 
 /** Assembles owner-defined commands in their existing lookup and display order. */
 export const globalActions: IAction[] = [
@@ -96,3 +100,8 @@ export const globalActions: IAction[] = [
   calendarCommands.today,
   shellCommands.rhombus
 ];
+
+/** Assembles owner-defined global page sub-view commands for the active product. */
+export function resolveGlobalViewActions(product: Product): IAction[] {
+  return calendarViewCommands(product);
+}

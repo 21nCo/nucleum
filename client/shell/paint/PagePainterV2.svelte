@@ -14,6 +14,8 @@
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import view from "@21n/ui/environment/view.store";
+  import { ActionType } from "@nucleum/client/config/action.type";
+  import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
 
   const ComponentResolver = requireActionRenderer();
   const productConfig = requireProductConfig();
@@ -27,6 +29,13 @@
   } = $props();
 
   let action = $state<IAction | null>(null);
+  let subPath = $state<string[] | undefined>(undefined);
+  let lastRecordedPath: string | undefined;
+  const params = $derived(
+    subPath
+      ? { ...(action?.componentParams ?? {}), subPath }
+      : action?.componentParams
+  );
   let pageSub: any;
   let pendingRefreshes = $state<number[]>([]);
   const fileBasedRoutes = ["cparchived"];
@@ -103,21 +112,55 @@
       return;
     }
 
-    action = appStore.resolveComponentFromPath(path);
+    const route = appStore.resolvePageRoute(path);
+    action = route?.action ?? null;
 
     if (!action) {
+      subPath = undefined;
       if (path === "index.html") navigation.gotoPath("/");
       else navigation.gotoPath("/404", { queryParams: { path } });
       return;
     }
+    const isRoutedPage = !cmdPageLaunch && !$context.isSheet;
+    const nextSubPath = isRoutedPage ? route?.subPath : undefined;
+    if (nextSubPath?.join("/") !== subPath?.join("/")) subPath = nextSubPath;
     $appStore.currentComponent = action;
     $appStore.isMenuHidden = action.isMenuHidden || $context.isSheet;
+    if (isRoutedPage) recordPageVisit(action, path, nextSubPath);
+  }
+
+  function recordPageVisit(
+    pageAction: IAction,
+    path: string,
+    pageSubPath: string[] | undefined
+  ) {
+    const recordedPath = resolveRecordedPagePath(pageAction, path, pageSubPath);
+    if (!recordedPath || recordedPath === lastRecordedPath) return;
+    lastRecordedPath = recordedPath;
+    navigatorHistory.recordPage(recordedPath);
+  }
+
+  function resolveRecordedPagePath(
+    pageAction: IAction,
+    path: string,
+    pageSubPath: string[] | undefined
+  ) {
+    if (pageSubPath) {
+      const subView = $appStore.actions.find(
+        (item) => item.subViewOf === pageAction.action && item.path === path
+      );
+      return subView?.path;
+    }
+    if (
+      pageAction.type !== ActionType.PAGE ||
+      pageAction.isMeta ||
+      !pageAction.label
+    )
+      return;
+    return pageAction.path ?? pageAction.action;
   }
 </script>
 
 {#if action}
-  <ComponentResolver
-    path={action.path ?? action.action}
-    params={action.componentParams}
-  />
+  <ComponentResolver path={action.path ?? action.action} {params} />
 {/if}

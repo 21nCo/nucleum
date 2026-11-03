@@ -1,57 +1,40 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { untrack } from "svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { page } from "$app/stores";
   import view from "@21n/ui/environment/view.store";
   import LibraryRecordsPane from "@nucleum/surfaces/library/LibraryRecordsPane.svelte";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-  import { isValidEnumValue } from "@21n/shared-utils/text.utils";
-  import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
+  import {
+    LIBRARY_DEFAULT_SUBTYPE,
+    parseLibraryResource,
+    parseLibrarySubType,
+    replaceLibraryPath
+  } from "@nucleum/surfaces/library/library-route";
 
-  let { defaultResource = Resource.node }: { defaultResource?: Resource } =
-    $props();
+  let {
+    defaultResource = Resource.node,
+    subPath = undefined
+  }: { defaultResource?: Resource; subPath?: string[] } = $props();
 
-  let selectedResource = $state<Resource>(Resource.unknown);
   let recordsPaneRef = $state<LibraryRecordsPane | undefined>();
 
-  $effect.pre(() => {
-    if (!$view.isConstrainedWidth && selectedResource === Resource.unknown) {
-      selectedResource = defaultResource;
-    }
-  });
+  const pathResource = $derived(parseLibraryResource(subPath?.[0]));
+  const selectedResource = $derived(
+    pathResource ??
+      ($view.isConstrainedWidth ? Resource.unknown : defaultResource)
+  );
+  const selectedSubType = $derived(
+    selectedResource === Resource.unknown
+      ? LIBRARY_DEFAULT_SUBTYPE
+      : (parseLibrarySubType(selectedResource, subPath?.[1]) ??
+          LIBRARY_DEFAULT_SUBTYPE)
+  );
 
-  function syncSelectedResource(resourceParam?: string | null) {
-    if (resourceParam && isValidEnumValue(resourceParam, Resource)) {
-      selectedResource = resourceParam as Resource;
-      return;
-    }
-    if (!resourceParam && $view.isConstrainedWidth) {
-      selectedResource = Resource.unknown;
-      return;
-    }
-    if (!$view.isConstrainedWidth && selectedResource === Resource.unknown) {
-      selectedResource = defaultResource;
-    }
-  }
-
-  onMount(() => {
-    const syncFromWindow = () => {
-      const resourceParam = new URL(window.location.href).searchParams.get(
-        AppSearchParam.RESOURCE
-      );
-      syncSelectedResource(resourceParam);
-    };
-    const pageSub = page.subscribe(async (p) => {
-      syncSelectedResource(p.url.searchParams.get(AppSearchParam.RESOURCE));
-    });
-    window.addEventListener(GlobalEvent.CUSTOM_NAVIGATION, syncFromWindow);
-    window.addEventListener("popstate", syncFromWindow);
-    syncFromWindow();
-    return () => {
-      pageSub();
-      window.removeEventListener(GlobalEvent.CUSTOM_NAVIGATION, syncFromWindow);
-      window.removeEventListener("popstate", syncFromWindow);
-    };
+  $effect(() => {
+    if (!subPath || selectedResource === Resource.unknown) return;
+    if (subPath.join("/") === `${selectedResource}/${selectedSubType}`) return;
+    const resource = selectedResource;
+    const subType = selectedSubType;
+    untrack(() => replaceLibraryPath(resource, subType));
   });
 </script>
 
@@ -60,6 +43,9 @@
     {#key selectedResource}
       <LibraryRecordsPane
         resource={selectedResource}
+        subType={selectedSubType}
+        onSubTypeChange={(subType) =>
+          replaceLibraryPath(selectedResource, subType)}
         bind:this={recordsPaneRef}
       />
     {/key}

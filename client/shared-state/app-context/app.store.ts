@@ -7,6 +7,7 @@ import blankJson from "@nucleum/client/config/blank.json";
 import colorSchemes from "@21n/theme/colorschemes.json";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import type { IAction } from "@nucleum/shared-state/commands/action.type";
+import { resolvePageRoute } from "@nucleum/shared-state/commands/page-view-actions";
 
 import { dispatchCustomEvent } from "@21n/shared-utils/dom-events";
 import { persistLocally } from "@nucleum/persistence/legacy-local-storage";
@@ -149,12 +150,11 @@ export const appStore = {
   set,
   update,
   resolveComponentFromPath: (path: string) => {
-    const actions = get(appStore).actions;
-    let component = actions.find((x) => x.path === path);
-    if (component) return component;
-    component = actions.find((x) => x.action === path);
-    if (component) return component;
-    return null;
+    return appStore.resolvePageRoute(path)?.action ?? null;
+  },
+  /** Resolves a path to its page action and the sub-path passed to that page. */
+  resolvePageRoute: (path: string) => {
+    return resolvePageRoute(get(appStore).actions, path);
   },
   initializeProductInformation: (details: { product: string; env: string }) => {
     update((n: IAppStore) => {

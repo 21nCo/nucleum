@@ -16,11 +16,12 @@
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
 
   let {
-    panel = $bindable(CalendarLayout.Bird)
+    panel = $bindable(CalendarLayout.Bird),
+    scale = $bindable(TimeScaleUnit.DAY)
   }: {
     panel?: CalendarLayout;
+    scale?: TimeScaleUnit;
   } = $props();
-  let scale = $state(TimeScaleUnit.DAY);
   let selectedDate = $state(new Date());
   const isDev = import.meta.env?.DEV;
   let selectedPanel = $state(CalendarColumnPanel.Timeline);

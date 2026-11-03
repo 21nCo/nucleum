@@ -34,6 +34,33 @@ import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { resolveNavigationLinkTarget } from "@nucleum/shell/navigation/link-target";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
+import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
+
+const recordedAccessModes = new Set<AccessMode | undefined>([
+  AccessMode.PAGE,
+  AccessMode.BESIDE_BASE,
+  AccessMode.BESIDE_PAGE,
+  AccessMode.FULL
+]);
+
+/** Records a navigated resource with the record it was opened from. */
+function recordResourceOpen(
+  id: IRecordId,
+  origin: Action | IRecordId | undefined
+) {
+  const currentPage = new URL(window.location.href).searchParams.get(
+    AccessMode.PAGE
+  );
+  const resolvedOrigin =
+    origin && isRecordId(origin) ? origin : (currentPage ?? undefined);
+  navigatorHistory.recordResource(
+    id.toString(),
+    resolvedOrigin && isRecordId(resolvedOrigin)
+      ? resolvedOrigin.toString()
+      : undefined
+  );
+}
+
 const recordSpecificSearchParams = [
   /-type$/,
   /-tab$/,
@@ -184,6 +211,26 @@ export const navigation = {
       return n;
     });
     goto(path, false, props?.replaceState ?? false);
+  },
+  /**
+   * Replaces the URL path with a page's canonical view path without adding a
+   * history entry. Query parameters and the hash are kept unless listed in
+   * `searchParams`, where null removes a parameter.
+   */
+  replacePagePath: (
+    segments: string[],
+    searchParams?: Record<string, string | null>
+  ) => {
+    const url = new URL(window.location.href);
+    url.pathname = "/" + segments.filter(Boolean).join("/");
+    Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+      if (value === null) url.searchParams.delete(key);
+      else url.searchParams.set(key, value);
+    });
+    const current = new URL(window.location.href);
+    current.pathname = current.pathname.replace(/(.)\/+$/, "$1");
+    if (areNavigationUrlsEqual(url, current)) return;
+    navigation.gotoPath(url.href, { replaceState: true });
   },
   gotoErrorPage: (err: any) => {
     logger.log({ at: "gotoErrorPage", err });
@@ -412,6 +459,9 @@ export const navigation = {
       else accessMode = AccessMode.BESIDE_BASE;
     }
     logger.log({ at: "openResource", accessMode });
+    if (recordedAccessModes.has(accessMode)) {
+      recordResourceOpen(id, params?.origin);
+    }
     let isOpenNavigator = false;
     let isCloseNavigator = false;
     if (accessMode === AccessMode.PAGE && params?.origin) {

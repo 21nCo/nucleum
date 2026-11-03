@@ -6,7 +6,7 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { BulkEditor } from "@nucleum/features/records/bulk-editor";
   import {
     TaskDueDateFilter,
@@ -69,13 +69,17 @@
     collectionId = undefined,
     accessPoint = undefined,
     parentBgIndex = 1,
-    isPreventAddNew = false
+    isPreventAddNew = false,
+    subType = undefined,
+    onSubTypeChange = undefined
   }: {
     objectiveId?: IRecordId | undefined;
     collectionId?: IRecordId | undefined;
     accessPoint?: ResourceAccessPoint | undefined;
     parentBgIndex?: number;
     isPreventAddNew?: boolean;
+    subType?: string;
+    onSubTypeChange?: (subType: string) => void;
   } = $props();
 
   const instance = generateMiniRandomId();
@@ -178,9 +182,42 @@
     });
   }
 
+  function selectSubType(value: string) {
+    selectedSubType = (value as SubType) ?? "all";
+    persistSelectedSubTypeState();
+    selectedDate = new Date();
+    viewDate = new Date();
+  }
+
+  function onSearchParamsChange(
+    params: string[] | Record<string, string | boolean | null>
+  ) {
+    if (
+      objectiveId ||
+      Array.isArray(params) ||
+      !(AppSearchParam.TYPE in params)
+    ) {
+      navigation.toggleSearchParam(params);
+      return;
+    }
+    const { [AppSearchParam.TYPE]: nextSubType, ...rest } = params;
+    if (Object.keys(rest).length > 0) navigation.toggleSearchParam(rest);
+    if (typeof nextSubType === "string") onSubTypeChange?.(nextSubType);
+  }
+
+  $effect(() => {
+    if (objectiveId || !subType) return;
+    if (untrack(() => selectedSubType) === subType) return;
+    untrack(() => {
+      selectSubType(subType);
+      refresh();
+    });
+  });
+
   onMount(() => {
     isFiltersExpanded = resolveFiltersExpandedState();
-    selectedSubType = resolveSelectedSubTypeState();
+    selectedSubType = ((!objectiveId && subType) ||
+      resolveSelectedSubTypeState()) as SubType;
 
     bulkEditChangeUnsub = bulkEditStore.count.subscribe((count) => {
       if (count === 0) {
@@ -199,13 +236,10 @@
     const pageSub = page.subscribe(async (p) => {
       const subResourceParam = objectiveId
         ? p.url.searchParams.get(`${instance}-${AppSearchParam.TYPE}`)
-        : p.url.searchParams.get(AppSearchParam.TYPE);
+        : undefined;
       let isRefreshNeeded = false;
       if (subResourceParam && subResourceParam !== selectedSubType) {
-        selectedSubType = (subResourceParam as SubType) ?? "all";
-        persistSelectedSubTypeState();
-        selectedDate = new Date();
-        viewDate = new Date();
+        selectSubType(subResourceParam);
         isRefreshNeeded = true;
       }
 
@@ -544,7 +578,7 @@
 >
   <LibrarySubTypeSwitcher
     options={resolveTaskSubTypesForSwitcher()}
-    onSearchParamsChange={(params) => navigation.toggleSearchParam(params)}
+    {onSearchParamsChange}
     resource={Resource.task}
     accessPoint={resolveAccessPoint()}
     {selectedSubType}

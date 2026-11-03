@@ -25,13 +25,14 @@
     createClassicCalendarIndicatorSignal
   } from "@nucleum/features/calendar/classic/indicator/classicCalendarIndicator.signal";
   let {
-    panel = $bindable(CalendarLayout.Classic)
+    panel = $bindable(CalendarLayout.Classic),
+    selectedView = $bindable(TimeScaleUnit.YEAR)
   }: {
     panel?: CalendarLayout;
+    selectedView?: TimeScaleUnit;
   } = $props();
 
   let selectedDate = $state(new Date());
-  let selectedView = $state<TimeScaleUnit>(resolveSavedScaleSelection());
   let selectedScale = $state<TimeScaleUnit>(TimeScaleUnit.DAY);
   let yearViewRef = $state<YearView>();
   let weekViewRef = $state<WeekView>();
@@ -65,24 +66,6 @@
       ($indicatorStore!.loading || $indicatorStore!.refreshing)
     )
   );
-
-  function resolveSavedScaleSelection() {
-    const scaleState = uiState.getState(UIState.classicCalendarScale, {
-      scope: UIStateScope.DAP
-    });
-    const supportedScales =
-      $appStore.product === Product.MEMOTRON
-        ? [TimeScaleUnit.MONTH, TimeScaleUnit.YEAR]
-        : [
-            TimeScaleUnit.DAY,
-            TimeScaleUnit.WEEK,
-            TimeScaleUnit.MONTH,
-            TimeScaleUnit.YEAR
-          ];
-    return supportedScales.includes(scaleState)
-      ? scaleState
-      : TimeScaleUnit.YEAR;
-  }
 
   function resolveSavedWidthSelection(view: TimeScaleUnit) {
     const widthState = uiState.getState(UIState.classicCalendarColumnWidth, {

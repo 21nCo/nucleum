@@ -17,6 +17,9 @@ import CalendarDayModal from "@nucleum/features/calendar/column/CalendarDayModal
 import HistoryModal from "@nucleum/features/calendar/HistoryModal.svelte";
 import Today from "@nucleum/features/calendar/Today.svelte";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";
+import type { Product } from "@nucleum/client/config/product.type";
+import { createPageViewActions } from "@nucleum/shared-state/commands/page-view-actions";
+import { resolveCalendarViewSegments } from "@nucleum/features/calendar/calendar-route";
 
 /** Commands owned by calendar; assembled in application composition. */
 export const calendarCommands = {
@@ -123,3 +126,11 @@ export const calendarCommands = {
     }
   }
 } satisfies Record<string, IAction | IAction[]>;
+
+/** Openable calendar layout and scale views rendered by the product. */
+export function calendarViewCommands(product: Product): IAction[] {
+  return createPageViewActions(
+    calendarCommands.calendar,
+    resolveCalendarViewSegments(product, Boolean(import.meta.env?.DEV))
+  );
+}

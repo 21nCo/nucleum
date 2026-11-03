@@ -61,6 +61,9 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import NodeLoadingPulse from "@21n/ui/elements/feedback/animations/NodeLoadingPulse.svelte";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";
+import { createLibraryViewActions } from "@nucleum/surfaces/library/library-route";
+import { resolveProductConfig } from "@nucleum/products/product.config";
+import { Product } from "@nucleum/client/config/product.type";
 
 import Task from "@nucleum/features/focus/tasks/Task.svelte";
 import CreateTask from "@nucleum/features/focus/tasks/CreateTask.svelte";
@@ -177,6 +180,35 @@ async function createObjective(params?: {
   });
   return objective;
 }
+
+const pointronLibraryResources = resolveProductConfig(Product.POINTRON)
+  .resources.browse;
+
+const libraryAction: IAction = {
+  action: Action.LIBRARY,
+  label: appMenuActionLabelsByAction[Action.LIBRARY],
+  icon: "library",
+  panel: PointronLibrary,
+  component: LibraryPanelContentResolver,
+  type: ActionType.PAGE,
+  componentParams: {
+    defaultResource: Resource.objective
+  },
+  modalParams: {
+    layout: {
+      size: Size.lg,
+      orientation: Orientation.Horizontal
+    }
+  }
+};
+
+const libraryPortraitAction: IAction = {
+  action: Action.LIBRARY_PORTRAIT,
+  label: appMenuActionLabelsByAction[Action.LIBRARY_PORTRAIT],
+  icon: "library",
+  component: PointronLibrary,
+  type: ActionType.PAGE
+};
 
 export const pointronActions: IAction[] = [
   {
@@ -731,30 +763,12 @@ export const pointronActions: IAction[] = [
       }
     }
   },
-  {
-    action: Action.LIBRARY,
-    label: appMenuActionLabelsByAction[Action.LIBRARY],
-    icon: "library",
-    panel: PointronLibrary,
-    component: LibraryPanelContentResolver,
-    type: ActionType.PAGE,
-    componentParams: {
-      defaultResource: Resource.objective
-    },
-    modalParams: {
-      layout: {
-        size: Size.lg,
-        orientation: Orientation.Horizontal
-      }
-    }
-  },
-  {
-    action: Action.LIBRARY_PORTRAIT,
-    label: appMenuActionLabelsByAction[Action.LIBRARY_PORTRAIT],
-    icon: "library",
-    component: PointronLibrary,
-    type: ActionType.PAGE
-  },
+  libraryAction,
+  ...createLibraryViewActions(libraryAction, pointronLibraryResources),
+  libraryPortraitAction,
+  ...createLibraryViewActions(libraryPortraitAction, pointronLibraryResources, {
+    isMeta: true
+  }),
   {
     action: resourceAction(Resource.objective, ResourceActionType.BROWSE),
     component: ResourceBrowser,

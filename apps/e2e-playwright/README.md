@@ -80,7 +80,7 @@ test("opens an existing objective", async ({ page, seed }) => {
   const objective = await seed.focus.objective({
     label: "Existing objective"
   });
-  await page.goto(`/library?resource=objective&q=${objective.label}`);
+  await page.goto(`/library/objective/all?q=${objective.label}`);
   await expect(page.getByText(objective.label)).toBeVisible();
 });
 ```

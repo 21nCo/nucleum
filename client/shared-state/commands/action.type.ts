@@ -146,6 +146,12 @@ export type IAction = {
   componentParams?: any;
 
   /**
+   * Parent page action of a page sub-view action. The parent renders the view and
+   * receives the path segments after its own path as the `subPath` component param.
+   */
+  subViewOf?: string;
+
+  /**
    * Type of action specific to mobile behavior.
    */
   handsetBehaviorType?: ActionType;

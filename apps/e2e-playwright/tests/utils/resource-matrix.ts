@@ -212,7 +212,7 @@ export async function openResourceBrowser(
   const contract = requireResourceBrowseContract(product, resource);
   const currentPath = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
   if (
-    currentPath === "/library" &&
+    /^\/library(\/|$)/.test(currentPath) &&
     !(await getResourceRecordsContainer(page, contract)
       .isVisible()
       .catch(() => false))

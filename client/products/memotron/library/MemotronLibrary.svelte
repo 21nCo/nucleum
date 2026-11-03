@@ -1,14 +1,8 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { Resource } from "@nucleum/datafn/resource.enum";
   import Library from "@nucleum/surfaces/library/Library.svelte";
-
-  const libraryResources = [
-    Resource.node,
-    Resource.collection,
-    Resource.relation
-  ];
+  import { memotronLibraryResources } from "@nucleum/products/memotron/library/memotron-library";
 </script>
 
-<Library resources={libraryResources} />
+<Library resources={memotronLibraryResources} />

@@ -14,35 +14,57 @@ import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum"
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";
 import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
+import { createPageViewActions } from "@nucleum/shared-state/commands/page-view-actions";
+import { createLibraryViewActions } from "@nucleum/surfaces/library/library-route";
+import { resolveNucleusOverviewViewSegments } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
+import { resolveProductConfig } from "@nucleum/products/product.config";
+import { Product } from "@nucleum/client/config/product.type";
 
-const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
+const actionsToFilterInSub: string[] = [Action.LIBRARY, Action.OVERVIEW];
+
+function isSubProductAction(action: IAction) {
+  return (
+    !actionsToFilterInSub.includes(action.action) &&
+    !actionsToFilterInSub.includes(action.subViewOf ?? "")
+  );
+}
+
+const libraryAction: IAction = {
+  action: Action.LIBRARY,
+  label: appMenuActionLabelsByAction[Action.LIBRARY],
+  icon: "library",
+  component: LibraryPanelContentResolver,
+  panel: NucleusLibrary,
+  type: ActionType.PAGE,
+  componentParams: {
+    defaultResource: Resource.collection
+  }
+};
+
+const overviewAction: IAction = {
+  action: Action.OVERVIEW,
+  label: appMenuActionLabelsByAction[Action.OVERVIEW],
+  icon: "overview",
+  component: NucleusOverview,
+  // panel: NucleusOverviewPanel,
+  type: ActionType.PAGE
+};
 
 export const nucleusActions: IAction[] = [
-  ...memotronActions.filter(
-    (action) => !actionsToFilterInSub.includes(action.action as Action)
+  ...memotronActions.filter(isSubProductAction),
+  ...pointronActions.filter(isSubProductAction),
+  libraryAction,
+  ...createLibraryViewActions(
+    libraryAction,
+    resolveProductConfig(Product.NUCLEUM).resources?.browse ?? [
+      Resource.collection
+    ]
   ),
-  ...pointronActions.filter(
-    (action) => !actionsToFilterInSub.includes(action.action as Action)
+  overviewAction,
+  ...createPageViewActions(
+    overviewAction,
+    resolveNucleusOverviewViewSegments()
   ),
-  {
-    action: Action.LIBRARY,
-    label: appMenuActionLabelsByAction[Action.LIBRARY],
-    icon: "library",
-    component: LibraryPanelContentResolver,
-    panel: NucleusLibrary,
-    type: ActionType.PAGE,
-    componentParams: {
-      defaultResource: Resource.collection
-    }
-  },
-  {
-    action: Action.OVERVIEW,
-    label: appMenuActionLabelsByAction[Action.OVERVIEW],
-    icon: "overview",
-    component: NucleusOverview,
-    // panel: NucleusOverviewPanel,
-    type: ActionType.PAGE
-  },
   {
     action: Action.HOME,
     label: appMenuActionLabelsByAction[Action.HOME],

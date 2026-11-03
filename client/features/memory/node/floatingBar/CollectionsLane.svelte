@@ -97,23 +97,18 @@
 
   function onClick(e: CustomEvent) {
     if (navigation.determineClickAccessMode(e.detail.event)) {
-      navigation.resourceClickHandler(e.detail.event, e.detail.item, {
-        searchParams: {
-          [AppSearchParam.RESOURCE]: Resource.collection,
-          [AppSearchParam.TYPE]: "all"
-        }
-      });
+      navigation.resourceClickHandler(e.detail.event, e.detail.item);
       return;
     }
     const queryParams = {
-      [AppSearchParam.RESOURCE]: Resource.collection,
-      [AppSearchParam.TYPE]: "all",
       [AccessMode.PAGE]: e.detail.item.toString(),
       [`${AccessMode.PAGE}At`]: new Date().getTime()
     };
     navigation.closeResource({ accessMode: AccessMode.PAGE });
     setTimeout(() => {
-      navigation.gotoPath("/library", { queryParams });
+      navigation.gotoPath(`/${Action.LIBRARY}/${Resource.collection}/all`, {
+        queryParams
+      });
     }, 0);
   }
 
