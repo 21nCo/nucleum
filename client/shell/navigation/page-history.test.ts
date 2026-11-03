@@ -120,4 +120,39 @@ describe("page history and access trails", () => {
     expect(node.id).toBe("node:c");
     expect(trail.nodes[resolveAccessTrailParent(trail)!].key).toBe(first);
   });
+
+  it("records the page it came from when the navigator opens a trail node", () => {
+    navigation.openResource("node:a", "page" as never);
+    navigation.openResource("node:b", "page" as never);
+    go(-1);
+    const trail = accessTrail.get().current!;
+    navigation.openTrailNode(
+      trail.nodes.findIndex((node) => node.id === "node:b")
+    );
+    expect(activeNode()?.node.id).toBe("node:b");
+    const length = entries.length;
+    expect(navigation.backInTrail()).toBe(true);
+    expect(historyBack).toHaveBeenCalledTimes(1);
+    expect(entries).toHaveLength(length);
+    expect(activeNode()?.node.id).toBe("node:a");
+  });
+
+  it("selects another occurrence of the open resource from the navigator", () => {
+    navigation.openResource("node:a", "page" as never);
+    const first = activeNode()!.node.key;
+    navigation.openResource("node:b", "page" as never);
+    navigation.openResource("node:a", "page" as never);
+    const length = entries.length;
+    const trail = accessTrail.get().current!;
+    navigation.openTrailNode(
+      trail.nodes.findIndex((node) => node.key === first)
+    );
+    expect(entries).toHaveLength(length + 1);
+    expect(activeNode()?.node.key).toBe(first);
+    navigation.openResource("node:c", "page" as never);
+    const current = activeNode()!;
+    expect(
+      current.trail.nodes[resolveAccessTrailParent(current.trail)!].key
+    ).toBe(first);
+  });
 });

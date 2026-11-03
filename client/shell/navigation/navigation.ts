@@ -193,8 +193,12 @@ export const navigation = {
     const trail = accessTrail.get().current;
     const node = trail?.nodes[index];
     if (!node) return;
+    const from = accessTrail.position();
     accessTrail.select(node.key);
-    navigation.openResource(node.id, AccessMode.PAGE, { trail: "select" });
+    navigation.openResource(node.id, AccessMode.PAGE, {
+      trail: "select",
+      from
+    });
   },
   /**
    * Makes a recent trail current again and opens one of its resources, by
@@ -205,9 +209,13 @@ export const navigation = {
     const nodeIndex = index ?? trail?.active ?? 0;
     const node = trail?.nodes[nodeIndex];
     if (!node) return;
+    const from = accessTrail.position();
     accessTrail.resume(key);
     accessTrail.select(node.key);
-    navigation.openResource(node.id, AccessMode.PAGE, { trail: "select" });
+    navigation.openResource(node.id, AccessMode.PAGE, {
+      trail: "select",
+      from
+    });
   },
   /**
    * Goes back from the open resource page: to the resource it was opened
@@ -435,7 +443,8 @@ export const navigation = {
     return navigation.toggleSearchParam(modified, additional);
   },
   /**
-   * Sets or deletes search params
+   * Sets or deletes search params. A push that carries `historyState` adds a
+   * history entry even when the URL stays the same.
    * @param params Send an object to set params, array of strings to delete
    * @returns
    */
@@ -464,7 +473,8 @@ export const navigation = {
       });
       if (
         !additional?.isPreventRefresh &&
-        !areNavigationUrlsEqual(url, new URL(window.location.href))
+        (!areNavigationUrlsEqual(url, new URL(window.location.href)) ||
+          (additional?.replaceState === false && !!additional.historyState))
       ) {
         navigation.gotoPath(url.href, {
           replaceState: additional?.replaceState ?? true,
@@ -480,7 +490,8 @@ export const navigation = {
     });
     if (
       !additional?.isPreventRefresh &&
-      !areNavigationUrlsEqual(url, new URL(window.location.href))
+      (!areNavigationUrlsEqual(url, new URL(window.location.href)) ||
+        (additional?.replaceState === false && !!additional.historyState))
     ) {
       navigation.gotoPath(url.href, {
         replaceState: additional?.replaceState ?? true,
@@ -521,6 +532,11 @@ export const navigation = {
       /** Turns full screen on for a page. */
       isFullScreen?: boolean;
       trail?: AccessTrailIntent;
+      /**
+       * Trail node of the open page, for callers that change the trail before
+       * opening; otherwise read from the current history entry or the trail.
+       */
+      from?: AccessTrailPosition;
     }
   ) => {
     logger.log({ at: "openResource", id, accessMode, params });
@@ -564,7 +580,13 @@ export const navigation = {
     let historyState: AccessTrailHistoryState | undefined;
     if (accessMode === AccessMode.PAGE) {
       const openPage = url.searchParams.get(AccessMode.PAGE);
-      const openPosition = openPage ? accessTrail.position() : undefined;
+      const entryPosition =
+        currentEntry?.pageId === openPage
+          ? accessTrail.resolve(currentEntry.state?.position)
+          : undefined;
+      const openPosition = openPage
+        ? (entryPosition ?? params?.from ?? accessTrail.position())
+        : undefined;
       const intent = resolveAccessTrailIntent(
         openPage,
         params?.origin,
@@ -583,7 +605,12 @@ export const navigation = {
         accessTrail.extend(id.toString());
       }
       const position = accessTrail.position();
-      if (openPage !== id.toString() && position) {
+      const isOtherEntry =
+        openPage !== id.toString() ||
+        (intent === "select" &&
+          !!openPosition &&
+          !isSameAccessTrailPosition(position, openPosition));
+      if (isOtherEntry && position) {
         if (intent === "start" || intent === "extend") {
           forgetPageScroll(id.toString());
         }
