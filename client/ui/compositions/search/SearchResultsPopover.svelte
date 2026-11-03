@@ -72,6 +72,7 @@
   let currentValue = $state("");
   let isSearchInProgress = $state(false);
   let searchGeneration = 0;
+  const searchTimeouts = new Set<ReturnType<typeof setTimeout>>();
 
   export function reset() {
     resetSearch();
@@ -147,9 +148,15 @@
   }
 
   onMount(() => {
-    if (searchCallback && !isPreventDefaultResults) {
+    if (
+      searchCallback &&
+      isAlwaysShowSearchFeedback &&
+      !isPreventDefaultResults
+    ) {
       isSearchInProgress = true;
       queueSearch(value);
+    } else {
+      isSearchInProgress = !isPreventDefaultResults;
     }
     window.addEventListener(
       "searchresultkeyup",
@@ -160,6 +167,9 @@
       onWindowSearchResultKeydown as EventListener
     );
     return () => {
+      searchGeneration += 1;
+      searchTimeouts.forEach((timer) => clearTimeout(timer));
+      searchTimeouts.clear();
       window.removeEventListener(
         "searchresultkeyup",
         onWindowSearchResultKeyup as EventListener
@@ -312,14 +322,17 @@
   function settleSearch<T>(request: Promise<T> | T): Promise<T> {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(
-        () => reject(new Error("Search timed out")),
-        SEARCH_TIMEOUT_MS
-      );
+      timer = setTimeout(() => {
+        if (timer) searchTimeouts.delete(timer);
+        reject(new Error("Search timed out"));
+      }, SEARCH_TIMEOUT_MS);
+      searchTimeouts.add(timer);
     });
-    return Promise.race([Promise.resolve(request), timeout]).finally(() =>
-      clearTimeout(timer)
-    );
+    return Promise.race([Promise.resolve(request), timeout]).finally(() => {
+      if (!timer) return;
+      clearTimeout(timer);
+      searchTimeouts.delete(timer);
+    });
   }
 
   function show() {

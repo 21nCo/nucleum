@@ -54,4 +54,52 @@ describe("SearchResultsPopover loading state", () => {
     vi.useRealTimers();
     expect(await findByText("Verify page one")).toBeTruthy();
   });
+
+  it("does not search on mount without search feedback", async () => {
+    vi.useFakeTimers();
+    const searchCallback = vi
+      .fn()
+      .mockResolvedValue([{ id: "objective:a", label: "First objective" }]);
+    const onSelect = vi.fn();
+    const onEmptyEnter = vi.fn();
+    const { component } = render(SearchResultsPopover, {
+      searchCallback,
+      onSelect,
+      onEmptyEnter
+    });
+    await vi.advanceTimersByTimeAsync(600);
+    expect(searchCallback).not.toHaveBeenCalled();
+    component.keyup(new KeyboardEvent("keyup", { key: "Enter" }));
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onEmptyEnter).toHaveBeenCalledOnce();
+  });
+
+  it("drops the initial search when unmounted before it runs", async () => {
+    vi.useFakeTimers();
+    const searchCallback = vi.fn().mockResolvedValue([]);
+    const { unmount } = render(SearchResultsPopover, {
+      searchCallback,
+      isAlwaysShowSearchFeedback: true
+    });
+    unmount();
+    await vi.advanceTimersByTimeAsync(600);
+    expect(searchCallback).not.toHaveBeenCalled();
+  });
+
+  it("does not report a search that settles after unmount", async () => {
+    vi.useFakeTimers();
+    const onCount = vi.fn();
+    const searchCallback = vi.fn(() => new Promise(() => {}));
+    const { unmount } = render(SearchResultsPopover, {
+      searchCallback,
+      isAlwaysShowSearchFeedback: true,
+      onCount
+    });
+    await vi.advanceTimersByTimeAsync(600);
+    expect(searchCallback).toHaveBeenCalledOnce();
+    unmount();
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(vi.getTimerCount()).toBe(0);
+    expect(onCount).not.toHaveBeenCalled();
+  });
 });

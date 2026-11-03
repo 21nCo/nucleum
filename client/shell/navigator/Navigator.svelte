@@ -21,7 +21,7 @@
     rankNavigatorHistoryFrom,
     type RankedNavigatorHistoryEntry
   } from "@nucleum/shell/navigator/navigator-history";
-  import { onDestroy, onMount, untrack } from "svelte";
+  import { onDestroy, onMount, untrack, tick } from "svelte";
   import { navigatorFocusRequests } from "@nucleum/shell/navigator/navigator-focus";
   import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
   import { get } from "svelte/store";
@@ -53,6 +53,7 @@
   let searchResultsQuery = $state("");
   const isSearchResultsCurrent = $derived(searchResultsQuery === query.trim());
   let selectedIndex = $state(0);
+  let resultElements = $state<HTMLElement[]>([]);
   let isSearching = $state(false);
   let searchDebounce: ReturnType<typeof setTimeout> | undefined;
   let searchRequestId = 0;
@@ -188,6 +189,7 @@
       const step = event.key === "ArrowDown" ? 1 : -1;
       selectedIndex =
         (selectedIndex + step + searchResults.length) % searchResults.length;
+      void revealSelectedResult();
       return;
     }
     const target = resolveNavigatorSearchTarget(
@@ -200,6 +202,11 @@
       event.stopPropagation();
       openFresh(target, event);
     }
+  }
+
+  async function revealSelectedResult() {
+    await tick();
+    resultElements[selectedIndex]?.scrollIntoView({ block: "nearest" });
   }
 
   /**
@@ -257,6 +264,7 @@
         class={cn("rounded-md", {
           "ring-1 ring-brs4": index === selectedIndex
         })}
+        bind:this={resultElements[index]}
         data-testid="navigator-search-result"
         data-active={index === selectedIndex}
       >

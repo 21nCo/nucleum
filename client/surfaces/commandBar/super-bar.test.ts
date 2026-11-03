@@ -135,6 +135,25 @@ describe("runContextAction", () => {
     expect(onAction).toHaveBeenCalledWith("archive");
   });
 
+  it("reports the value to the page before the callback settles", async () => {
+    const order: string[] = [];
+    const callback = vi.fn(async () => {
+      order.push("callback started");
+      await Promise.resolve();
+      order.push("callback settled");
+    });
+    const onAction = vi.fn(() => order.push("page notified"));
+    const [action] = flattenContextActions([
+      { group: "more", items: [{ value: "star", label: "Star", callback }] }
+    ]);
+    await runContextAction(action, { runCommand: vi.fn(), onAction });
+    expect(order).toEqual([
+      "callback started",
+      "page notified",
+      "callback settled"
+    ]);
+  });
+
   it("toggles a switch without reporting it twice", async () => {
     const callback = vi.fn().mockResolvedValue(undefined);
     const onAction = vi.fn();

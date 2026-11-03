@@ -125,8 +125,9 @@ export function buildSuperBarEntries(params: {
 
 /**
  * Runs a contextual action the way the resource menu does: a switch toggles
- * its value; otherwise the item callback runs, or its command when it has no
- * callback, and the page's action handler then receives the item value.
+ * its value; otherwise the item callback starts, or its command runs when it
+ * has no callback, and the page's action handler receives the item value
+ * before the callback is awaited.
  */
 export async function runContextAction(
   action: ContextActionItem,
@@ -141,9 +142,11 @@ export async function runContextAction(
     return;
   }
   if (item.callback) {
-    await item.callback();
-  } else if (item.action) {
-    handlers.runCommand(item.action);
+    const pending = item.callback();
+    handlers.onAction?.(item.value);
+    await pending;
+    return;
   }
+  if (item.action) handlers.runCommand(item.action);
   handlers.onAction?.(item.value);
 }
