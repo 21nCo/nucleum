@@ -24,11 +24,12 @@
   data-testid="top-bar-close"
   aria-label={label}
   class={cn(
-    "flex items-center justify-center h-full shrink-0 text-fgs2 hover:bg-bgs3-striped hover:text-fgs1 border-r border-brs3 app-framed:border-r-0 app-rounded:h-10 app-rounded:rounded-full",
+    "flex items-center justify-center h-full shrink-0 text-fgs2 hover:bg-bgs3-striped hover:text-fgs1 border-r border-brs3",
+    "app-framed:border-r-0 app-framed:h-10 app-framed:w-10 app-framed:px-0 app-framed:rounded-[var(--app-control-radius)] app-framed:bg-bgs1 app-framed:shadow-sm app-framed:hover:bg-bgs3",
     {
-      "w-[5.5rem]": menuColumn === "labels",
-      "w-[3.5rem]": menuColumn === "icons",
-      "px-4": !menuColumn
+      "w-[5.5rem] app-framed:mx-6": menuColumn === "labels",
+      "w-[3.5rem] app-framed:mx-2": menuColumn === "icons",
+      "px-4 app-framed:ml-[var(--app-shell-gap)] app-framed:mr-2": !menuColumn
     }
   )}
   use:tooltip={{ text: label }}
