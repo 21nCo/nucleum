@@ -234,7 +234,9 @@
         "opacity-50": nav.draggedItemId === item.id,
         "border-t-aps1": dropPosition === "before",
         "border-b-aps1": dropPosition === "after",
-        "bg-aps3/40": dropPosition === "inside"
+        "bg-aps3/40": dropPosition === "inside",
+        "app-framed:mx-2 app-framed:rounded-[var(--app-control-radius)]": true,
+        "app-framed:border-transparent": !dropPosition
       }
     )}
     style:padding-left={`${Math.min(depth * 1, 5) + 0.25}rem`}

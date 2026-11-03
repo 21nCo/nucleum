@@ -233,17 +233,20 @@
     </div>
     <div class="flex items-center gap-1">
       <div
-        class="flex items-center p-0.5 rounded-md bg-bgs2"
+        class="flex items-center p-0.5 rounded-md app-rounded:rounded-full bg-bgs2"
         role="group"
         aria-label="Space view"
       >
         {#each views as option (option.value)}
           <button
             type="button"
-            class={cn("flex items-center gap-1 px-2 py-1 rounded text-b3", {
-              "bg-bgs1 text-fgs1 shadow-sm": view === option.value,
-              "text-fgs2 hover:text-fgs1": view !== option.value
-            })}
+            class={cn(
+              "flex items-center gap-1 px-2 py-1 rounded app-rounded:rounded-full text-b3",
+              {
+                "bg-bgs1 text-fgs1 shadow-sm": view === option.value,
+                "text-fgs2 hover:text-fgs1": view !== option.value
+              }
+            )}
             aria-pressed={view === option.value}
             data-testid={`space-view-${option.value}`}
             onclick={() => onViewChange(option.value)}

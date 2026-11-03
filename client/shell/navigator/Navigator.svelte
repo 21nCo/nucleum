@@ -376,7 +376,7 @@
 
 {#snippet band(label: string, action?: Snippet)}
   <div
-    class="flex items-center justify-between gap-2 h-10 shrink-0 px-4 border-b border-brs3 bg-bgs3"
+    class="flex items-center justify-between gap-2 h-10 shrink-0 px-4 border-b border-brs3 bg-bgs3 app-framed:border-transparent app-framed:bg-transparent"
   >
     <span
       class="truncate text-b4 font-semibold uppercase tracking-wide text-fgs2"
@@ -435,7 +435,7 @@
   <div class="flex flex-col gap-1 -ml-2">
     {#each ids as id, index (id)}
       <div
-        class={cn("rounded-md", {
+        class={cn("rounded-md app-rounded:rounded-xl", {
           "ring-1 ring-brs4": index === selectedIndex
         })}
         bind:this={resultElements[index]}
@@ -481,7 +481,7 @@
         </div>
         {#if row.index === activeIndex}
           <span
-            class="shrink-0 px-1.5 py-0.5 rounded-sm bg-aps1 text-b4 font-semibold text-abg"
+            class="shrink-0 px-1.5 py-0.5 rounded-sm app-rounded:rounded-full bg-aps1 text-b4 font-semibold text-abg"
             >here</span
           >
         {/if}
@@ -545,7 +545,9 @@
             </button>
           {/snippet}
           {@render band(resolveCurrentTrailBandLabel(currentTrail), endTrail)}
-          <div class="flex flex-col px-3 py-2 border-b border-brs3">
+          <div
+            class="flex flex-col px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+          >
             {@render trailTree(
               currentTrail,
               (index) =>
@@ -559,7 +561,9 @@
       {/if}
       <section class="flex flex-col shrink-0" data-testid="navigator-recent">
         {@render band("Recently accessed")}
-        <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+        <div
+          class="flex flex-col gap-2 px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+        >
           {#if recentItems.length > 0}
             {@render limitedHistoryList("recent", recentItems, true)}
           {:else}
@@ -586,12 +590,16 @@
               clearContext
             )}
           </div>
-          <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+          <div
+            class="flex flex-col gap-2 px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+          >
             {@render limitedHistoryList("frequent", fromHereItems)}
           </div>
         {:else}
           {@render band("Frequently accessed")}
-          <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+          <div
+            class="flex flex-col gap-2 px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+          >
             {#if frequentItems.length > 0}
               {@render limitedHistoryList("frequent", frequentItems)}
             {:else}
@@ -610,7 +618,9 @@
           data-testid="navigator-recent-trails"
         >
           {@render band("Recent trails")}
-          <div class="flex flex-col gap-1 px-3 py-2 border-b border-brs3">
+          <div
+            class="flex flex-col gap-1 px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+          >
             {#each limitedTrails.visible as trail (trail.key)}
               {@const isExpanded = expandedTrails.includes(trail.key)}
               <div
@@ -664,7 +674,7 @@
     {/if}
   </div>
   <div
-    class="flex items-center gap-5 shrink-0 h-11 px-4 border-t border-brs3 text-b3 text-fgs3"
+    class="flex items-center gap-5 shrink-0 h-11 px-4 border-t border-brs3 text-b3 text-fgs3 app-framed:border-transparent"
     data-testid="navigator-key-hints"
   >
     {#each keyHints as hint (hint.label)}

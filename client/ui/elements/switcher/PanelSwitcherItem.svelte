@@ -135,7 +135,7 @@
       "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW,
       [$shape.radiusClass]: isFramed,
       [`hover:${bg(parentBgIndex)}`]: isFramed && !isActive,
-      "!bg-ccs3 !border-transparent": isFramed && isActive
+      "!bg-aps3 !border-transparent": isFramed && isActive
     })}
     onclick={handleClick}
     disabled={isDisabled}
