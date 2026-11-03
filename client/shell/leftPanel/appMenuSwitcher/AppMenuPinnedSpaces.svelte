@@ -90,6 +90,12 @@
 </script>
 
 {#if spaces.length > 0}
+  <div
+    role="separator"
+    aria-orientation="horizontal"
+    class="shrink-0 h-px w-full bg-brs3 app-framed:w-8 app-framed:mx-auto app-framed:my-1"
+    data-testid="app-menu-pinned-spaces-divider"
+  ></div>
   <ul
     class={cn("flex flex-col", {
       "gap-2 items-center": layoutContext === LayoutContext.THIN_WITH_LABEL,
@@ -117,8 +123,7 @@
                 isActive && !isShowLabel,
               "border-y border-transparent hover:bg-bgs3-striped hover:border-brs3":
                 !isActive && !isShowLabel,
-              "app-rounded:justify-center app-rounded:border-transparent app-rounded:bg-transparent app-rounded:hover:border-transparent app-rounded:hover:bg-transparent":
-                !isShowLabel
+              "group/appmenu app-framed:!bg-transparent app-framed:!bg-none app-framed:!border-transparent app-framed:justify-center": true
             },
             layoutContext !== LayoutContext.DEFAULT &&
               layoutContext !== LayoutContext.THIN_WITH_LABEL && {
@@ -150,18 +155,21 @@
                 layoutContext === LayoutContext.THIN_WITH_LABEL &&
                 isActive &&
                 isShowLabel,
-              "app-rounded:rounded-2xl":
+              "app-framed:!bg-transparent app-framed:!bg-none app-framed:!border-transparent app-framed:py-1":
                 layoutContext === LayoutContext.THIN_WITH_LABEL,
-              "app-rounded:w-10 app-rounded:h-10 app-rounded:py-0 app-rounded:justify-center app-rounded:rounded-full app-rounded:hover:bg-bgs3":
-                layoutContext === LayoutContext.THIN_WITH_LABEL && !isShowLabel,
-              "app-rounded:bg-aps3":
-                layoutContext === LayoutContext.THIN_WITH_LABEL &&
-                !isShowLabel &&
-                isActive,
               "items-center": layoutContext === LayoutContext.DEFAULT
             })}
           >
-            <span class="flex w-6 h-6 shrink-0 items-center justify-center">
+            <span
+              class={cn("flex w-6 h-6 shrink-0 items-center justify-center", {
+                "app-framed:w-10 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)] app-framed:transition-colors":
+                  layoutContext === LayoutContext.THIN_WITH_LABEL,
+                "app-framed:bg-aps3":
+                  layoutContext === LayoutContext.THIN_WITH_LABEL && isActive,
+                "app-framed:group-hover/appmenu:bg-bgs3":
+                  layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive
+              })}
+            >
               {#if space.avatar}
                 <AvatarRenderer avatar={space.avatar} size={Size.md} />
               {:else}

@@ -218,8 +218,7 @@
         "border-transparent":
           isActive && dev_mixedPanel && $appStore.currentComponent?.panel,
         "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel,
-        "app-rounded:justify-center app-rounded:border-transparent app-rounded:bg-transparent app-rounded:hover:border-transparent app-rounded:hover:bg-transparent":
-          !isShowLabel
+        "group/appmenu app-framed:!bg-transparent app-framed:!bg-none app-framed:!border-transparent app-framed:justify-center": true
       }
     )}
     onclick={(event) => {
@@ -250,19 +249,21 @@
           layoutContext === LayoutContext.THIN_WITH_LABEL &&
           isActive &&
           isShowLabel,
-        "app-rounded:rounded-2xl": layoutContext === LayoutContext.THIN_WITH_LABEL,
-        "app-rounded:w-10 app-rounded:h-10 app-rounded:py-0 app-rounded:justify-center app-rounded:rounded-full app-rounded:hover:bg-bgs3":
-          layoutContext === LayoutContext.THIN_WITH_LABEL && !isShowLabel,
-        "app-rounded:bg-aps3 app-rounded:hover:bg-aps2":
-          layoutContext === LayoutContext.THIN_WITH_LABEL &&
-          !isShowLabel &&
-          isActive
+        "app-framed:!bg-transparent app-framed:!bg-none app-framed:!border-transparent app-framed:py-1":
+          layoutContext === LayoutContext.THIN_WITH_LABEL
       })}
     >
       {#if item.icon}
         <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
         <div
-          class="w-6 flex flex-col gap-1 items-center justify-center"
+          class={cn("w-6 flex flex-col gap-1 items-center justify-center", {
+            "app-framed:w-10 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)] app-framed:transition-colors":
+              layoutContext === LayoutContext.THIN_WITH_LABEL,
+            "app-framed:bg-aps3":
+              layoutContext === LayoutContext.THIN_WITH_LABEL && isActive,
+            "app-framed:group-hover/appmenu:bg-bgs3":
+              layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive
+          })}
           bind:this={buttonRef}
         >
           <Icon
