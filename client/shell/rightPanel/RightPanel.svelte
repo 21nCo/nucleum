@@ -13,9 +13,14 @@
   import { untrack } from "svelte";
   import { writable } from "svelte/store";
   import { provideRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+  import { isReducedMotion } from "@nucleum/shell/topNav/panel-action-motion";
   import { resolveRightPanelWidthClass } from "@nucleum/shell/rightPanel/right-panel-width";
 
   const ComponentResolver = requireActionRenderer();
+
+  function motionDuration(duration: number) {
+    return isReducedMotion() ? 0 : duration;
+  }
 
   let {
     action,
@@ -94,10 +99,10 @@
   use:trapFocusWhile={isSheet && !isSuspended}
   in:fly={isSheet
     ? { y: 40, duration: 150, easing: quadInOut }
-    : { x: 24, duration: 150, easing: quadInOut }}
+    : { x: 24, duration: motionDuration(150), easing: quadInOut }}
   out:fly={isSheet
     ? { duration: 0 }
-    : { x: 24, duration: 120, easing: quadInOut }}
+    : { x: 24, duration: motionDuration(120), easing: quadInOut }}
 >
   {#if isSheet}
     <div class="flex items-center justify-between min-h-12 px-2 otop:pt-12">
@@ -115,7 +120,16 @@
       </button>
     </div>
   {/if}
-  <div class={isSheet ? "flex flex-col flex-1 min-h-0" : "contents"}>
-    <ComponentResolver path={action.path ?? action.action} />
-  </div>
+  {#key action.action}
+    <div
+      class={isSheet
+        ? "flex flex-col flex-1 min-h-0"
+        : "flex justify-center items-center w-full h-full"}
+      in:fly={isSheet
+        ? { duration: 0 }
+        : { x: 16, duration: motionDuration(200), easing: quadInOut }}
+    >
+      <ComponentResolver path={action.path ?? action.action} />
+    </div>
+  {/key}
 </div>

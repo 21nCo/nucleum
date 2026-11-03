@@ -5,6 +5,12 @@
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { resolveRightPanelWidthClass } from "@nucleum/shell/rightPanel/right-panel-width";
   import {
+    PANEL_ACTION_EASING,
+    PANEL_ACTION_TRANSITION_MS,
+    isReducedMotion,
+    resolveFlipKeyframes
+  } from "@nucleum/shell/topNav/panel-action-motion";
+  import {
     resolvePanelActionStates,
     type TopNavPanelAction
   } from "@nucleum/shell/topNav/panel-actions";
@@ -40,9 +46,78 @@
         )
       : undefined
   );
+
+  let groupRef = $state<HTMLDivElement | undefined>(undefined);
+  let restingRects: Map<string, { left: number; width: number }> | undefined;
+  let restingAction: string | undefined;
+
+  function readRects() {
+    const rects = new Map<string, { left: number; width: number }>();
+    if (!groupRef) return rects;
+    const group = groupRef.getBoundingClientRect();
+    rects.set("", { left: group.left, width: group.width });
+    for (const element of groupRef.querySelectorAll<HTMLElement>(
+      "[data-action]"
+    )) {
+      const rect = element.getBoundingClientRect();
+      rects.set(element.dataset.action!, {
+        left: rect.left,
+        width: rect.width
+      });
+    }
+    return rects;
+  }
+
+  $effect(() => {
+    const action = expandedAction;
+    if (!groupRef) return;
+    const previous = restingRects;
+    const isChanged = previous !== undefined && action !== restingAction;
+    const current = readRects();
+    restingRects = current;
+    restingAction = action;
+    if (!isChanged || isReducedMotion()) return;
+    const options = {
+      duration: PANEL_ACTION_TRANSITION_MS,
+      easing: PANEL_ACTION_EASING
+    };
+    const groupFrames = resolveFlipKeyframes(
+      previous.get("")!,
+      current.get("")!
+    );
+    if (groupFrames) groupRef.animate(groupFrames, options);
+    for (const element of groupRef.querySelectorAll<HTMLElement>(
+      "[data-action]"
+    )) {
+      const before = previous.get(element.dataset.action!);
+      const after = current.get(element.dataset.action!);
+      if (!before || !after) continue;
+      const frames = resolveFlipKeyframes(
+        { left: before.left - previous.get("")!.left, width: before.width },
+        { left: after.left - current.get("")!.left, width: after.width }
+      );
+      if (frames) element.animate(frames, options);
+      if (element.dataset.state === "expanded")
+        element.firstElementChild?.animate([{ opacity: 0 }, { opacity: 1 }], {
+          ...options,
+          duration: PANEL_ACTION_TRANSITION_MS * 0.8
+        });
+    }
+  });
+
+  $effect(() => {
+    if (!groupRef) return;
+    const observer = new ResizeObserver(() => {
+      if (groupRef && groupRef.getAnimations().length === 0)
+        restingRects = readRects();
+    });
+    observer.observe(groupRef);
+    return () => observer.disconnect();
+  });
 </script>
 
 <div
+  bind:this={groupRef}
   class={cn(
     "flex shrink-0",
     expandedAction
