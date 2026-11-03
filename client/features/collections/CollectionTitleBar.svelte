@@ -361,7 +361,7 @@
     </span>
   </BackButton>
 
-  {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
+  {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED && !isActionsInContextZone}
     <div class="flex gap-2 justify-center items-center">
       <ContextMenuAction
         testId="resource-record-context-menu"
