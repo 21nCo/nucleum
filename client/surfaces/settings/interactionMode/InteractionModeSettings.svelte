@@ -14,6 +14,11 @@
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import ShortcutSettings from "@nucleum/surfaces/settings/shortcuts/ShortcutSettings.svelte";
   import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
+  import {
+    Preference,
+    PreferencesScope
+  } from "@nucleum/shared-state/preferences/preferences.type";
   const persistedMode = uiState.getState(Action.MODE_OF_INTERACTION, {
     scope: UIStateScope.PRODUCT
   });
@@ -29,6 +34,12 @@
     uiState.getState(UIState.hideShortcutHints, {
       scope: UIStateScope.DEVICE
     }) ?? false
+  );
+  const isCloseNavigatorAfterOpen = $derived(
+    $preferences &&
+      preferences.resolve(Preference.CLOSE_NAVIGATOR_AFTER_OPEN, {
+        scope: PreferencesScope.PRODUCT
+      }) === true
   );
   let isCompletelyHideLeftNavBar = $state(
     uiState.getState(UIState.completelyHideLeftNavBar, {
@@ -99,6 +110,23 @@
           label: "Hide App menu bar on hot key",
           tooltip: {
             body: "The hot key **Q** switches to command-only mode, hiding the app menu bar. When off, **Q** only hides the menu labels."
+          }
+        }}
+        isExpanded={true}
+      />
+    </div>
+    <div data-testid="toggle-close-navigator-after-open">
+      <SwitchInput
+        checked={isCloseNavigatorAfterOpen}
+        onChange={(e) => {
+          preferences.save(Preference.CLOSE_NAVIGATOR_AFTER_OPEN, e.detail, {
+            scope: PreferencesScope.PRODUCT
+          });
+        }}
+        label={{
+          label: "Close navigator after opening an item",
+          tooltip: {
+            body: "When on, opening a page or resource from the navigator closes it. When off, the navigator stays open so you can keep jumping."
           }
         }}
         isExpanded={true}

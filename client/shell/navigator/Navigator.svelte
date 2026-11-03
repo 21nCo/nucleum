@@ -37,6 +37,11 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { cn } from "@21n/ui/environment/presentation";
   import { navigatorSearch } from "@nucleum/shell/navigator/navigator-search";
+  import { preferences } from "@nucleum/shared-state/preferences/preferences.store";
+  import {
+    Preference,
+    PreferencesScope
+  } from "@nucleum/shared-state/preferences/preferences.type";
   import {
     NAVIGATOR_SECTION_LIMIT,
     formatNavigatorAge,
@@ -309,15 +314,27 @@
     });
   }
 
+  const isCloseAfterOpen = $derived(
+    $preferences &&
+      preferences.resolve(Preference.CLOSE_NAVIGATOR_AFTER_OPEN, {
+        scope: PreferencesScope.PRODUCT
+      }) === true
+  );
+
   function handleHistoryClick(
     item: NavigatorHistoryItem,
     event?: MouseEvent | KeyboardEvent
   ) {
     if (item.pageAction) {
-      navigation.gotoPath("/" + item.id);
+      navigation.gotoPath(
+        "/" + item.id,
+        isCloseAfterOpen
+          ? undefined
+          : { queryParams: { [AccessMode.PANEL]: Action.NAVIGATOR } }
+      );
       return;
     }
-    openFresh(item.id, event);
+    openFresh(item.id, event, !isCloseAfterOpen);
   }
 
   function isSectionExpanded(key: string) {

@@ -10,6 +10,7 @@ export interface IPreferencesStore {
   [Preference.CALENDAR_TILE_INDICATORS_MONTH]?: boolean;
   [Preference.CALENDAR_TILE_INDICATORS_YEAR]?: boolean;
   [Preference.HIDE_HIGHLIGHT_COLORS]?: boolean;
+  [Preference.CLOSE_NAVIGATOR_AFTER_OPEN]?: boolean;
   [key: string]: unknown;
 }
 
@@ -22,7 +23,8 @@ export enum Preference {
   IMPORT_HISTORY = "importHistory",
   CALENDAR_TILE_INDICATORS_MONTH = "calendarTileIndicatorsMonth",
   CALENDAR_TILE_INDICATORS_YEAR = "calendarTileIndicatorsYear",
-  HIDE_HIGHLIGHT_COLORS = "hideHighlightColors"
+  HIDE_HIGHLIGHT_COLORS = "hideHighlightColors",
+  CLOSE_NAVIGATOR_AFTER_OPEN = "closeNavigatorAfterOpen"
 }
 
 export enum PreferencesScope {
