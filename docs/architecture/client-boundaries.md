@@ -96,7 +96,7 @@ Lower layers do not import composition to reach product behavior. `installApplic
 | `product-config-host` | Composition | Shell |
 | `surface-config-host` | Composition | Surfaces |
 | Chrome snippets (brand, profile picture, bulk edit, offline status, quick actions, persistent indicators) | `client/composition/chrome/` and the product base layers | Shell, through optional snippet props |
-| Top bar context zone (`client/shell/topNav/contextZone`) | Pages and resources, through `ContextZoneContent` inside the pane scopes that `NavigationLayout` and `RightSplit` set | Shell top bar |
+| Top bar context zone (`client/shell/topNav/contextZone`) | Pages and resources, through `ContextZoneContent` inside the pane scopes that `NavigationLayout` and `RightSplit` set; a page that renders resources in place, such as a space, collects their registrations through a context-zone slot | Shell top bar |
 | `persistence/logging-host` | Composition | Persistence |
 
 Shell and feature adapters pass view-specific props such as keyboard matching, time scales, and address resolution. Do not add a compatibility wrapper or a generic service locator.

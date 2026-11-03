@@ -34,6 +34,18 @@ export const ContextZoneLayer = {
 } as const;
 
 const PANE_CONTEXT_KEY = Symbol("context-zone-pane");
+const TARGET_CONTEXT_KEY = Symbol("context-zone-target");
+
+/**
+ * Receives context-zone registrations in place of the top bar, so a page can
+ * show the controls of content it renders in place inside its own entry.
+ */
+export type ContextZoneTarget = {
+  register(registration: ContextZoneRegistration): () => void;
+};
+
+/** One registration collected by a context-zone slot. */
+export type ContextZoneSlotEntry = ContextZoneRegistration & { key: number };
 
 const entries = writable<ContextZoneEntry[]>([]);
 const panes = writable<{ key: number; pane: ContextZonePane }[]>([]);
@@ -213,3 +225,50 @@ const contextZoneAccessModes = new Set<string>([
 export function isContextZoneAccessMode(accessMode: string | undefined) {
   return !!accessMode && contextZoneAccessModes.has(accessMode);
 }
+
+/**
+ * Sends context-zone registrations below this component to `target` instead
+ * of the top bar. Content that reads the target also shows its controls in
+ * the zone when it is not opened as a page or split.
+ */
+export function setContextZoneTarget(target: ContextZoneTarget) {
+  setContext(TARGET_CONTEXT_KEY, target);
+}
+
+/** Reads the target set by an enclosing page, if any. */
+export function getContextZoneTarget(): ContextZoneTarget | undefined {
+  return getContext<ContextZoneTarget | undefined>(TARGET_CONTEXT_KEY);
+}
+
+/**
+ * Collects the context-zone registrations of content a page renders in place,
+ * so the page can render them inside its own context-zone entry.
+ */
+export function createContextZoneSlot() {
+  const slotEntries = writable<ContextZoneSlotEntry[]>([]);
+  return {
+    entries: { subscribe: slotEntries.subscribe },
+    register(registration: ContextZoneRegistration) {
+      const key = ++nextKey;
+      const entry: ContextZoneSlotEntry = Object.defineProperties(
+        { key } as ContextZoneSlotEntry,
+        {
+          content: { get: () => registration.content, enumerable: true },
+          cycle: { get: () => registration.cycle, enumerable: true }
+        }
+      );
+      slotEntries.update((list) => [...list, entry]);
+      return () =>
+        slotEntries.update((list) => list.filter((x) => x.key !== key));
+    },
+    /** Cycles the newest collected entry; false when none can cycle. */
+    cycle() {
+      const cycle = get(slotEntries).at(-1)?.cycle;
+      cycle?.();
+      return !!cycle;
+    }
+  };
+}
+
+/** A context-zone slot created by `createContextZoneSlot`. */
+export type ContextZoneSlot = ReturnType<typeof createContextZoneSlot>;

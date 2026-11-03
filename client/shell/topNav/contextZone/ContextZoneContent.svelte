@@ -4,7 +4,8 @@
   import type { Snippet } from "svelte";
   import {
     contextZone,
-    getContextZonePane
+    getContextZonePane,
+    getContextZoneTarget
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
@@ -24,18 +25,22 @@
   } = $props();
 
   const pane = getContextZonePane();
+  const target = getContextZoneTarget();
   const isHosted = contextZone.isHosted;
 
   $effect(() => {
     if (!$isHosted) return;
-    return contextZone.register(pane, {
+    const registration = {
       get content() {
         return children;
       },
       get cycle() {
         return cycle;
       }
-    });
+    };
+    return target
+      ? target.register(registration)
+      : contextZone.register(pane, registration);
   });
 </script>
 

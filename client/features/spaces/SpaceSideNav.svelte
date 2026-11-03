@@ -25,6 +25,7 @@
   import SpaceNavItem from "@nucleum/features/spaces/SpaceNavItem.svelte";
   import SpaceAddPanel from "@nucleum/features/spaces/SpaceAddPanel.svelte";
   import SpaceResourceRenderer from "@nucleum/features/spaces/SpaceResourceRenderer.svelte";
+  import type { ContextZoneSlot } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
   import {
     collectResourceItems,
@@ -38,6 +39,7 @@
     focusChain,
     isEmbedded = false,
     header,
+    zoneSlot = undefined,
     onFocusSpace
   }: {
     spaceId: string;
@@ -45,6 +47,8 @@
     focusChain: string[];
     isEmbedded?: boolean;
     header: Snippet;
+    /** Receives the context-zone controls of the open item. */
+    zoneSlot?: ContextZoneSlot;
     onFocusSpace: (spaceId: string) => void;
   } = $props();
 
@@ -407,6 +411,7 @@
     <SpaceResourceRenderer
       resourceId={selectedResource?.resourceId}
       resourceType={selectedResource?.resourceType}
+      {zoneSlot}
     />
   </main>
 </div>

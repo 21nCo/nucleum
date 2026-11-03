@@ -10,6 +10,12 @@
   import SpaceHeader from "@nucleum/features/spaces/SpaceHeader.svelte";
   import SpaceSideNav from "@nucleum/features/spaces/SpaceSideNav.svelte";
   import SpaceWall from "@nucleum/features/spaces/SpaceWall.svelte";
+  import SpaceContextZone from "@nucleum/features/spaces/SpaceContextZone.svelte";
+  import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import {
+    contextZone,
+    createContextZoneSlot
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     spaceId,
@@ -32,6 +38,8 @@
   } = $props();
 
   const store = ActiveSpaceStore.resolve(spaceId);
+  const zoneSlot = createContextZoneSlot();
+  const isContextZoneHosted = contextZone.isHosted;
   const viewStore = $derived(
     ancestors.length ? ActiveSpaceStore.resolve(ancestors[0]) : store
   );
@@ -74,7 +82,31 @@
     if (isPinned) appMenuStore.unpinSpace(spaceId);
     else appMenuStore.pinSpace(spaceId);
   }
+
+  function changeView(next: SpaceView) {
+    viewStore.updateView(next);
+  }
+
+  function cycleZone() {
+    if (zoneSlot.cycle()) return;
+    changeView(view === SpaceView.WALL ? SpaceView.SIDENAV : SpaceView.WALL);
+  }
 </script>
+
+{#if isLoaded && !$store?.isMissing}
+  <ContextZoneContent isInlineFallback={false} cycle={cycleZone}>
+    <SpaceContextZone
+      {store}
+      itemSlot={zoneSlot}
+      {view}
+      {parentLabel}
+      onBack={parentId ? onBack : undefined}
+      {isPinned}
+      onTogglePin={togglePin}
+      onViewChange={changeView}
+    />
+  </ContextZoneContent>
+{/if}
 
 {#snippet header()}
   <SpaceHeader
@@ -83,8 +115,9 @@
     onBack={parentId ? onBack : undefined}
     {view}
     {isPinned}
+    isCompact={$isContextZoneHosted}
     onTogglePin={togglePin}
-    onViewChange={(next) => viewStore.updateView(next)}
+    onViewChange={changeView}
   />
 {/snippet}
 
@@ -114,6 +147,7 @@
     focusChain={ancestors}
     {isEmbedded}
     {header}
+    {zoneSlot}
     {onFocusSpace}
   />
 {/if}
