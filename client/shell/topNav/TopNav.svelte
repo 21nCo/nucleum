@@ -174,9 +174,6 @@
   const isPanelBeside = $derived(
     !$view.isPortrait && !$view.isConstrainedWidth
   );
-  const isNavigatorInline = $derived(
-    openPanel === Action.NAVIGATOR && isPanelBeside
-  );
   const groupedPanelActions = $derived<TopNavPanelAction[]>([
     ...panelActions,
     ...(isDev ? [{ action: Action.RHOMBUS, content: rhombusAction }] : []),
@@ -399,19 +396,17 @@
       />
     {/each}
   </div>
-  {#if isToastMode || !isNavigatorInline}
-    <div
-      class="flex items-center justify-end h-full shrink-0 border-l border-brs3"
-      data-testid="top-bar-actions-zone"
-    >
-      {#if isToastMode}
-        <TopNavToasts />
-      {:else}
-        {@render topnav?.()}
-        <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
-      {/if}
-    </div>
-  {/if}
+  <div
+    class="flex items-center justify-end h-full shrink-0 border-l border-brs3"
+    data-testid="top-bar-actions-zone"
+  >
+    {#if isToastMode}
+      <TopNavToasts />
+    {:else}
+      {@render topnav?.()}
+      <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
+    {/if}
+  </div>
   <div
     class="flex items-center h-full shrink-0 px-1"
     data-testid="top-bar-indicators"
