@@ -18,7 +18,8 @@
   import { resolveRecordedPagePath } from "@nucleum/shared-state/commands/page-view-actions";
   import {
     NOT_FOUND_PATH,
-    resolveNotFound
+    resolveNotFound,
+    trimSlashes
   } from "@nucleum/shell/navigation/not-found";
 
   const ComponentResolver = requireActionRenderer();
@@ -46,6 +47,7 @@
   );
   let pageSub: any;
   let pendingRefreshes = $state<number[]>([]);
+  const hasActions = $derived($appStore.actions.length > 0);
   const fileBasedRoutes = ["cparchived"];
   function resolvePath(pageData?: Page) {
     if (cmdPageLaunch) {
@@ -57,7 +59,7 @@
     let currentPath =
       pageData?.url?.pathname ??
       (typeof window !== "undefined" ? window.location.pathname : "");
-    currentPath = currentPath.replace(/^\/+|\/+$/g, "");
+    currentPath = trimSlashes(currentPath);
     if (prefix) {
       currentPath = prefix + "/" + currentPath;
     }
@@ -79,7 +81,7 @@
   });
 
   $effect(() => {
-    if ($appStore.actions.length > 0 && !action) untrack(() => queueRefresh());
+    if (hasActions && !action) untrack(() => queueRefresh());
   });
 
   onMount(() => {

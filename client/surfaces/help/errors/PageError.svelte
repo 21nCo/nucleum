@@ -53,12 +53,14 @@
       </div>
     {/if}
     <span>
-      {@html renderMdAsHtml(
-        message ??
-          (is404
-            ? `Oops! The page **${erroredPath ?? " "}** you're looking for doesn't exist.`
-            : "We would never want you to see this page. Please chat with us or try again.")
-      )}
+      {#if message}
+        {@html renderMdAsHtml(message)}
+      {:else if is404}
+        Oops! The page <b>{erroredPath ?? " "}</b> you're looking for doesn't exist.
+      {:else}
+        We would never want you to see this page. Please chat with us or try
+        again.
+      {/if}
     </span>
     <div class="flex gap-2">
       {#if actions.length > 0}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isNotFoundPath, resolveNotFound } from "./not-found";
+import { isNotFoundPath, resolveNotFound, trimSlashes } from "./not-found";
 
 const origin = "https://local.nucleum.app";
 
@@ -12,7 +12,7 @@ function settle(startPath: string, pages: Set<string>, maxSteps = 20) {
   let url = new URL(startPath, origin);
   const navigations: string[] = [];
   for (let step = 0; step < maxSteps; step++) {
-    const path = url.pathname.replace(/^\/+|\/+$/g, "");
+    const path = trimSlashes(url.pathname);
     if (pages.has(path)) return { url, navigations, state: "page" as const };
     const result = resolveNotFound(path, { isUrlPath: true, currentUrl: url });
     if (result.kind === "inline") {
@@ -99,5 +99,14 @@ describe("isNotFoundPath", () => {
     expect(isNotFoundPath("/404/")).toBe(true);
     expect(isNotFoundPath("404x")).toBe(false);
     expect(isNotFoundPath("calendar")).toBe(false);
+  });
+});
+
+describe("trimSlashes", () => {
+  it("removes leading and trailing slashes only", () => {
+    expect(trimSlashes("//a/b//")).toBe("a/b");
+    expect(trimSlashes("///")).toBe("");
+    expect(trimSlashes(undefined)).toBe("");
+    expect(trimSlashes(`${"/".repeat(100000)}x`)).toBe("x");
   });
 });

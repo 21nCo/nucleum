@@ -11,13 +11,19 @@ export const NOT_FOUND_PATH_PARAM = "path";
 export type NotFoundResolution =
   { kind: "redirect"; url: string } | { kind: "inline" };
 
-function normalizePath(path: string | null | undefined) {
-  return (path ?? "").replace(/^\/+|\/+$/g, "");
+/** Removes every leading and trailing slash from `path` in linear time. */
+export function trimSlashes(path: string | null | undefined) {
+  const value = path ?? "";
+  let start = 0;
+  let end = value.length;
+  while (start < end && value[start] === "/") start++;
+  while (end > start && value[end - 1] === "/") end--;
+  return value.slice(start, end);
 }
 
 /** Whether `path` is the not-found route itself. */
 export function isNotFoundPath(path: string | null | undefined) {
-  const normalized = normalizePath(path);
+  const normalized = trimSlashes(path);
   return (
     normalized === NOT_FOUND_PATH || normalized.startsWith(`${NOT_FOUND_PATH}/`)
   );
@@ -34,7 +40,7 @@ export function resolveNotFound(
   path: string | null | undefined,
   params: { isUrlPath: boolean; currentUrl: URL }
 ): NotFoundResolution {
-  const normalized = normalizePath(path);
+  const normalized = trimSlashes(path);
   if (!params.isUrlPath || !normalized || isNotFoundPath(normalized)) {
     return { kind: "inline" };
   }
