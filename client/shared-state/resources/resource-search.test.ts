@@ -6,10 +6,17 @@ import {
   type ResourceSearchMatch
 } from "./resource-search";
 
-const mocks = vi.hoisted(() => ({ search: vi.fn() }));
-vi.mock("@nucleum/datafn/datafn.store", () => ({
-  datafn: { search: mocks.search }
+const mocks = vi.hoisted(() => ({
+  search: vi.fn(),
+  runtime: undefined as { mode: string } | undefined
 }));
+vi.mock("@nucleum/datafn/datafn.store", async () => {
+  const { writable } = await import("svelte/store");
+  return {
+    datafn: { search: mocks.search },
+    datafnRuntime: writable(mocks.runtime)
+  };
+});
 
 function match(
   id: string,
