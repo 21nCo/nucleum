@@ -1,4 +1,9 @@
-import type { Resource } from "@nucleum/datafn/resource.enum";
+import { Resource } from "@nucleum/datafn/resource.enum";
+import type { Product } from "@nucleum/client/config/product.type";
+import {
+  determineResourceType,
+  isRecordId
+} from "@nucleum/datafn/resource.utils";
 import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import {
   SpaceNavItemType,
@@ -7,6 +12,7 @@ import {
 import {
   collectPageItems,
   collectResourceItems,
+  isSpaceItemOpenable,
   normalizeSpacePagePath
 } from "@nucleum/features/spaces/space.utils";
 
@@ -124,4 +130,27 @@ export function planPinnedSpaceMenu<
 export function removeMovedTabs<T>(tabIds: T[], movedTabIds: string[]): T[] {
   const moved = new Set(movedTabIds);
   return tabIds.filter((id) => !moved.has(String(id ?? "")));
+}
+
+/**
+ * Splits app tabs into those the migration handles and those it leaves in the tab
+ * bar: record tabs of a type the product cannot open from a space. Handled tabs are
+ * moved into the space, or dropped when their record or page no longer exists.
+ */
+export function partitionPinnedSpaceTabs(params: {
+  tabIds: string[];
+  product: Product;
+}) {
+  const movable: string[] = [];
+  const kept: string[] = [];
+  for (const id of params.tabIds) {
+    const resourceType = isRecordId(id)
+      ? determineResourceType(id)
+      : Resource.unknown;
+    const isKept =
+      resourceType !== Resource.unknown &&
+      !isSpaceItemOpenable(resourceType, params.product);
+    (isKept ? kept : movable).push(id);
+  }
+  return { movable, kept };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Resource } from "@nucleum/datafn/resource.enum";
+import { Product } from "@nucleum/client/config/product.type";
 import {
   SpaceNavItemType,
   type ISpaceNavItem
@@ -7,6 +8,7 @@ import {
 import {
   hasPinnedSpaceSources,
   planPinnedSpaceItems,
+  partitionPinnedSpaceTabs,
   planPinnedSpaceMenu,
   removeMovedTabs,
   type PinnedSpaceRecord
@@ -238,5 +240,33 @@ describe("removeMovedTabs", () => {
         ["node:a", "objective:b"]
       )
     ).toEqual(["node:new"]);
+  });
+});
+
+describe("partitionPinnedSpaceTabs", () => {
+  const tabIds = ["objective:b", "collection:c", "node:a", "calendar"];
+
+  it("leaves record tabs the product cannot open from a space in the tab bar", () => {
+    expect(
+      partitionPinnedSpaceTabs({ tabIds, product: Product.POINTRON })
+    ).toEqual({
+      movable: ["objective:b", "calendar"],
+      kept: ["collection:c", "node:a"]
+    });
+  });
+
+  it("moves every record tab the product can open from a space", () => {
+    expect(
+      partitionPinnedSpaceTabs({ tabIds, product: Product.NUCLEUM })
+    ).toEqual({ movable: tabIds, kept: [] });
+  });
+
+  it("has nothing to move when every tab is unsupported", () => {
+    const { movable } = partitionPinnedSpaceTabs({
+      tabIds: ["collection:c", "node:a"],
+      product: Product.POINTRON
+    });
+    expect(hasPinnedSpaceSources({ tabIds: movable })).toBe(false);
+    expect(removeMovedTabs(tabIds, movable)).toEqual(tabIds);
   });
 });

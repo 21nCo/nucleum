@@ -2,6 +2,7 @@ import { get } from "svelte/store";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import { ActionType } from "@nucleum/client/config/action.type";
+import type { Product } from "@nucleum/client/config/product.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
@@ -26,6 +27,7 @@ import {
 import {
   PINNED_SPACE_LABEL,
   hasPinnedSpaceSources,
+  partitionPinnedSpaceTabs,
   planPinnedSpaceItems,
   planPinnedSpaceMenu,
   removeMovedTabs,
@@ -39,7 +41,7 @@ const inFlight = new Map<string, Promise<void>>();
 /** Maps a pinned resource type to the page it opens, or undefined to drop it. */
 type TypePinPageResolver = (pin: string) => PinnedSpacePage | undefined;
 
-type MigrationScope = { namespace: string; product: string };
+type MigrationScope = { namespace: string; product: Product };
 
 class StaleMigrationError extends Error {}
 
@@ -116,9 +118,12 @@ async function runMigration(
   const [menu, storedTabs] = await Promise.all([readMenu(scope), tabs.read()]);
   assertCurrent(scope);
   const typePins = menu.user ?? [];
-  const tabEntries = menu.tabsMigrated
-    ? []
-    : storedTabs.map((id) => id?.toString()).filter(Boolean);
+  const { movable: tabEntries } = partitionPinnedSpaceTabs({
+    tabIds: menu.tabsMigrated
+      ? []
+      : storedTabs.map((id) => id?.toString()).filter(Boolean),
+    product: scope.product
+  });
   if (!hasPinnedSpaceSources({ tabIds: tabEntries, typePins })) {
     if (!menu.tabsMigrated || menu.pinnedSpacePinPending) {
       const { space } = await loadPinnedSpace(menu.pinnedSpaceId);
@@ -223,7 +228,8 @@ async function runExclusive(key: string, task: () => Promise<void>) {
 /**
  * Moves the current product's resource-type app menu pins, and once its app tabs,
  * into a "Pinned" space pinned to the app menu, then removes the moved entries from
- * their sources. Resource-type pins move on every run that finds any, so it is safe
+ * their sources. Tabs for records the product cannot open from a space stay in the
+ * tab bar. Resource-type pins move on every run that finds any, so it is safe
  * to run on every app load once DataFn has loaded the active account. Runs are
  * serialized per account and product across windows, stop when the active account
  * changes, and keep their sources when a read or write fails. Failures are logged

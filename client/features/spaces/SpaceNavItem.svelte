@@ -116,7 +116,7 @@
     }
     if (isUnavailable) return;
     if (pageItem) {
-      openSpacePage(pageItem);
+      void openSpacePage(pageItem);
       return;
     }
     if (!resourceItem) return;

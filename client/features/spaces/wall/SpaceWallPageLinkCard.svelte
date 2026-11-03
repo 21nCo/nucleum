@@ -24,7 +24,7 @@
 
   function open() {
     if (status) return;
-    openSpacePage(item);
+    void openSpacePage(item);
   }
 </script>
 

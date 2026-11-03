@@ -1,7 +1,6 @@
 import { get } from "svelte/store";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
-import { navigation } from "@nucleum/shell/navigation/navigation";
 import type { ISpacePageNavItem } from "@nucleum/features/spaces/space.type";
 import {
   normalizeSpacePagePath,
@@ -19,7 +18,11 @@ export function resolveOpenableSpacePage(path: string) {
   return requireCommandHost().resolveAction(page) ? route : undefined;
 }
 
-/** Navigates to the page a page link points to. */
-export function openSpacePage(item: ISpacePageNavItem) {
-  navigation.gotoPath(`/${normalizeSpacePagePath(item.path)}`);
+/**
+ * Navigates to the page a page link points to. Shell navigation is loaded on first
+ * use so rendering a space item does not load the shell's tab and UI state stores.
+ */
+export async function openSpacePage(item: ISpacePageNavItem) {
+  const { navigation } = await import("@nucleum/shell/navigation/navigation");
+  await navigation.gotoPath(`/${normalizeSpacePagePath(item.path)}`);
 }
