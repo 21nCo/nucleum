@@ -29,6 +29,7 @@
   import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
   import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
   import PanelActionGroup from "@nucleum/shell/topNav/PanelActionGroup.svelte";
+  import { isToastBesideActions } from "@nucleum/shell/topNav/toast-placement";
   import type {
     TopNavPanelAction,
     TopNavPanelActionState
@@ -177,6 +178,38 @@
   }
 
   const isContextTab = $derived(isBulkMode || !!subject || !!$activeEntry);
+  let zoneRef = $state<HTMLDivElement | undefined>(undefined);
+  let isToastRoomy = $state(false);
+  const isToastInZone = $derived(isToastMode && isToastRoomy);
+
+  function measureToastRoom() {
+    if (!zoneRef || isToastMode) return;
+    const used = [...zoneRef.children].reduce((total, child) => {
+      const element = child as HTMLElement;
+      const inner =
+        element.dataset.testid === "top-bar-context-tab"
+          ? (element.firstElementChild as HTMLElement | null)
+          : null;
+      return total + (inner ? inner.scrollWidth + 1 : element.offsetWidth);
+    }, 0);
+    isToastRoomy = isToastBesideActions(zoneRef.clientWidth, used);
+  }
+
+  $effect(() => {
+    if (!zoneRef) return;
+    const observer = new ResizeObserver(measureToastRoom);
+    observer.observe(zoneRef);
+    const tab = zoneRef.querySelector('[data-testid="top-bar-context-tab"]');
+    if (tab?.firstElementChild) observer.observe(tab.firstElementChild);
+    return () => observer.disconnect();
+  });
+
+  $effect(() => {
+    void $page.url.href;
+    void $activeEntry;
+    void isToastMode;
+    requestAnimationFrame(measureToastRoom);
+  });
   const tabSurface = $derived(
     (!isBulkMode && $activeEntry?.surface) || DEFAULT_CONTEXT_ZONE_SURFACE
   );
@@ -235,6 +268,7 @@
     {/if}
   {/if}
   <div
+    bind:this={zoneRef}
     class="flex flex-1 min-w-0 self-stretch items-stretch"
     data-testid="top-bar-context-zone"
   >
@@ -313,12 +347,20 @@
         onFocus={() => contextZone.activatePane(item.pane.id)}
       />
     {/each}
+    {#if isToastMode && isToastInZone}
+      <div
+        class="flex items-center justify-end min-w-0 max-w-[32rem] ml-auto"
+        data-toast-slot="true"
+      >
+        <TopNavToasts />
+      </div>
+    {/if}
   </div>
   <div
     class="flex items-center justify-end h-full shrink-0"
     data-testid="top-bar-actions-zone"
   >
-    {#if isToastMode}
+    {#if isToastMode && !isToastInZone}
       <TopNavToasts />
     {:else}
       {@render topnav?.()}
