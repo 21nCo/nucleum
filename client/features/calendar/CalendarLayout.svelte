@@ -19,6 +19,8 @@
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
+  import { Placement } from "@21n/ui/elements/direction.enum";
   import {
     contextZone,
     nextCycleValue
@@ -34,7 +36,8 @@
     panel?: CalendarLayout;
     children?: Snippet | undefined;
     header?: Snippet | undefined;
-    headerLeftOptions?: Snippet | undefined;
+    /** Left header controls; receives whether the controls are compact. */
+    headerLeftOptions?: Snippet<[boolean]> | undefined;
     headerRightOptions?: Snippet | undefined;
     onGoToToday?: (() => void) | undefined;
   } = $props();
@@ -50,6 +53,73 @@
   );
   const dev_enableBirdView = import.meta.env?.DEV;
   const isContextZoneHosted = contextZone.isHosted;
+  const entryWidth = contextZone.entryWidth;
+  let controlsRef = $state<HTMLDivElement | undefined>(undefined);
+  let fullControlsWidth = $state(0);
+  const isCompact = $derived(
+    fullControlsWidth > 0 &&
+      $entryWidth !== undefined &&
+      $entryWidth < fullControlsWidth
+  );
+
+  $effect(() => {
+    if (!controlsRef || isCompact) return;
+    const element = controlsRef;
+    const measure = () => {
+      if (!isCompact) fullControlsWidth = element.scrollWidth;
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    measure();
+    return () => observer.disconnect();
+  });
+
+  function openCalendarSettings() {
+    requireCommandHost().runAction(Action.CALENDAR_SETTINGS, {
+      componentParams: {
+        panel
+      }
+    });
+  }
+
+  function resolveOverflowMenu() {
+    const layoutGroup = isLayoutSwitcher
+      ? [
+          {
+            group: "layout",
+            items: panelOptions.map((option) => ({
+              value: option.value,
+              label: `${option.label} view`,
+              icon: option.value === panel ? "check" : "",
+              callback: async () => {
+                panel = option.value as CalendarLayout;
+                onPanelSwitch(new CustomEvent("select", { detail: option.value }));
+              }
+            }))
+          }
+        ]
+      : [];
+    return [
+      ...layoutGroup,
+      {
+        group: "calendar",
+        items: [
+          {
+            value: "today",
+            label: "Go to today",
+            icon: "calendar",
+            callback: async () => onGoToToday?.()
+          },
+          {
+            value: "settings",
+            label: "Calendar settings",
+            icon: "sliders",
+            callback: async () => openCalendarSettings()
+          }
+        ]
+      }
+    ];
+  }
   const isLayoutSwitcher = $derived(
     $appStore.product === Product.NUCLEUM && dev_enableBirdView
   );
@@ -115,13 +185,7 @@
       icon="sliders"
       tooltip="Calendar settings"
       size={Size.sm}
-      onclick={() => {
-        requireCommandHost().runAction(Action.CALENDAR_SETTINGS, {
-          componentParams: {
-            panel
-          }
-        });
-      }}
+      onclick={openCalendarSettings}
     />
   </div>
 {/snippet}
@@ -129,22 +193,39 @@
 {#if $isContextZoneHosted}
   <ContextZoneContent isInlineFallback={false} cycle={cycleLayout}>
     <div
+      bind:this={controlsRef}
       class="flex items-center h-full gap-3"
       data-testid="calendar-context-controls"
+      data-compact={isCompact ? "true" : undefined}
     >
-      {#if isLayoutSwitcher}
+      {#if isLayoutSwitcher && !isCompact}
         {@render layoutSwitcher()}
-      {:else if backPath !== null}
+      {:else if backPath !== null && !isLayoutSwitcher}
         {@render backButton(false)}
       {/if}
-      <div class="flex items-center h-full gap-3">
-        {@render headerLeftOptions?.()}
+      <div class="flex items-center h-full gap-3 shrink-0">
+        {@render headerLeftOptions?.(isCompact)}
       </div>
-      <div class="flex items-center h-full">
+      <div class="flex items-center h-full shrink-0">
         {@render header?.()}
       </div>
-      <div class="flex items-center h-full">
-        {@render trailingControls()}
+      <div class="flex items-center h-full shrink-0">
+        {#if isCompact}
+          {@render headerRightOptions?.()}
+          <ContextMenuAction
+            id="calendarContextZoneMenu"
+            testId="calendar-overflow-menu"
+            menuResolver={resolveOverflowMenu}
+            size={Size.md}
+            isBoxed={true}
+            parentBgIndex={1}
+            class="h-full w-10"
+            icon="more-outline-horizontal"
+            position={Placement.BottomCenter}
+          />
+        {:else}
+          {@render trailingControls()}
+        {/if}
       </div>
     </div>
   </ContextZoneContent>
@@ -163,7 +244,7 @@
           {:else}
             {@render backButton(true)}
           {/if}
-          {@render headerLeftOptions?.()}
+          {@render headerLeftOptions?.(false)}
         </div>
         {@render header?.()}
         <div class="flex gap--2 justify-end items-center h-full w-full">

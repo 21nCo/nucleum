@@ -179,6 +179,36 @@
 
   const isContextTab = $derived(isBulkMode || !!subject || !!$activeEntry);
   let zoneRef = $state<HTMLDivElement | undefined>(undefined);
+  let tabInnerRef = $state<HTMLDivElement | undefined>(undefined);
+  let entryRef = $state<HTMLDivElement | undefined>(undefined);
+
+  function measureEntryWidth() {
+    if (!zoneRef || !tabInnerRef || !entryRef) {
+      contextZone.setEntryWidth(undefined);
+      return;
+    }
+    const others = [...zoneRef.children]
+      .filter(
+        (child) =>
+          (child as HTMLElement).dataset.testid !== "top-bar-context-tab" &&
+          !(child as HTMLElement).dataset.toastSlot
+      )
+      .reduce((total, child) => total + (child as HTMLElement).offsetWidth, 0);
+    const identity = tabInnerRef.scrollWidth - entryRef.scrollWidth;
+    contextZone.setEntryWidth(
+      Math.max(0, Math.floor(zoneRef.clientWidth - others - identity - 1))
+    );
+  }
+
+  $effect(() => {
+    if (!zoneRef) return;
+    const observer = new ResizeObserver(() => measureEntryWidth());
+    observer.observe(zoneRef);
+    if (tabInnerRef) observer.observe(tabInnerRef);
+    if (entryRef) observer.observe(entryRef);
+    measureEntryWidth();
+    return () => observer.disconnect();
+  });
   let isToastRoomy = $state(false);
   const isToastInZone = $derived(isToastMode && isToastRoomy);
 
@@ -287,6 +317,7 @@
         data-testid="top-bar-context-tab"
       >
         <div
+          bind:this={tabInnerRef}
           class="flex items-center h-full min-w-0 overflow-x-auto overflow-y-hidden"
         >
           {#if isPageFullScreen && !isBulkMode}
@@ -330,7 +361,10 @@
             })}
           {:else if $activeEntry}
             {#key $activeEntry.key}
-              <div class="flex items-center h-full min-w-0">
+              <div
+                bind:this={entryRef}
+                class="flex items-center h-full min-w-0"
+              >
                 {@render $activeEntry.content()}
               </div>
             {/key}

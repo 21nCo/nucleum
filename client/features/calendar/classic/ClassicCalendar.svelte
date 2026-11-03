@@ -179,10 +179,11 @@
     }
   }}
 >
-  {#snippet headerLeftOptions()}
+  {#snippet headerLeftOptions(isCompact: boolean)}
     <ClassicCalendarHeaderLeftOptions
       bind:selectedView
       {isRefreshing}
+      isScopeHidden={isCompact}
       onScaleSelection={handleScaleSelection}
     />
   {/snippet}

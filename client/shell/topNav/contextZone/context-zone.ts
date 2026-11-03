@@ -49,6 +49,7 @@ const panes = writable<{ key: number; pane: ContextZonePane }[]>([]);
 const activePaneId = writable<string | undefined>(undefined);
 const visibleLayers = writable<ReadonlySet<number> | undefined>(undefined);
 const hostCount = writable(0);
+const entryWidth = writable<number | undefined>(undefined);
 let nextKey = 0;
 
 /**
@@ -173,6 +174,15 @@ export const contextZone = {
   /** Layers the user can see; undefined means every layer counts. */
   visibleLayers: { subscribe: visibleLayers.subscribe },
   isHosted: derived(hostCount, (count) => count > 0),
+  /**
+   * Width, in pixels, the top bar can give the shown entry's controls without
+   * scrolling; undefined until a top bar measures it.
+   */
+  entryWidth: { subscribe: entryWidth.subscribe },
+  /** Records the width the top bar can give the shown entry's controls. */
+  setEntryWidth(width: number | undefined) {
+    if (get(entryWidth) !== width) entryWidth.set(width);
+  },
   /** Entry shown in the zone: the newest entry of the described pane. */
   active,
   /** Pane whose page the context zone describes. */
