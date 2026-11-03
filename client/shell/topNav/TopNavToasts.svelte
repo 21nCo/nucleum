@@ -87,7 +87,7 @@
   {/if}
   {#if isListOpen}
     <div
-      class="absolute right-0 top-full mt-1 z-50 w-96 max-h-96 overflow-auto flex flex-col gap-1 p-2 rounded-md border border-brs3 bg-bgs1 shadow-lg"
+      class="absolute right-0 top-full mt-1 z-[60] w-96 max-h-96 overflow-auto flex flex-col gap-1 p-2 rounded-md border border-brs3 bg-bgs1 shadow-lg"
       data-testid="top-bar-toast-list"
     >
       {#each [...$toasts].reverse() as toast (toast.id)}

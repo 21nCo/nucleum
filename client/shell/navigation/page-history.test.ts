@@ -55,4 +55,22 @@ describe("closing a page opened from the base page", () => {
     });
     expect(historyBack).toHaveBeenCalledTimes(1);
   });
+
+  it("returns to the trail page after a pushed close and browser back", () => {
+    navigation.openResource("node:a", "page" as never);
+    navigation.syncAccessTrail("node:a");
+    navigation.openResource("node:b", "page" as never);
+    navigation.syncAccessTrail("node:b");
+    navigation.closeResource({
+      accessMode: "page" as never,
+      isHistoryBack: true
+    });
+    expect(historyBack).not.toHaveBeenCalled();
+    navigation.syncAccessTrail(undefined);
+
+    window.history.replaceState({}, "", "/home?page=node%3Ab");
+    navigation.syncAccessTrail("node:b");
+    expect(navigation.backInTrail()).toBe(true);
+    expect(historyBack).toHaveBeenCalledTimes(1);
+  });
 });

@@ -9,6 +9,7 @@
   import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
   import CommandModePage from "@nucleum/surfaces/commandBar/CommandModePage.svelte";
   import NavigationLayout from "@nucleum/shell/navigation/NavigationLayout.svelte";
+  import FullScreenOverlayLayer from "@nucleum/shell/overlays/FullScreenOverlayLayer.svelte";
   import LeftNav from "../chrome/WiredLeftNav.svelte";
   import TopNav from "../chrome/WiredTopNav.svelte";
 
@@ -47,4 +48,5 @@
       {@render children?.()}
     </NavigationLayout>
   {/if}
+  <FullScreenOverlayLayer />
 {/if}

@@ -118,11 +118,16 @@ function clearLayerScopedRecordParams(
   }
 }
 
-/** A resource page this session added to the browser history. */
+/**
+ * A history entry this session added while a page was open or closed: a
+ * resource page, or the base page a pushed close returned to (`BASE_ENTRY`).
+ */
 type PushedPage = {
   id: string;
   position?: AccessTrailPosition;
 };
+
+const BASE_ENTRY = "";
 
 let pushedPages: PushedPage[] = [];
 let forwardPages: PushedPage[] = [];
@@ -220,20 +225,22 @@ export const navigation = {
   },
   /** Keeps the access trail in step with the open page after any navigation. */
   syncAccessTrail(pageId: string | undefined) {
-    if (!pageId) {
-      forwardPages = [...forwardPages, ...pushedPages.slice().reverse()];
-      pushedPages = [];
-      accessTrail.sync(undefined);
-      return;
-    }
-    if (pushedPages.at(-1)?.id !== pageId) {
-      if (pushedPages.at(-2)?.id === pageId) {
+    const entry = pageId ?? BASE_ENTRY;
+    if (pushedPages.at(-1)?.id !== entry) {
+      if (pushedPages.at(-2)?.id === entry) {
         forwardPages = [...forwardPages, ...pushedPages.slice(-1)];
         pushedPages = pushedPages.slice(0, -1);
-      } else if (forwardPages.at(-1)?.id === pageId) {
+      } else if (forwardPages.at(-1)?.id === entry) {
         pushedPages = [...pushedPages, ...forwardPages.slice(-1)];
         forwardPages = forwardPages.slice(0, -1);
+      } else if (!pageId) {
+        forwardPages = [...forwardPages, ...pushedPages.slice().reverse()];
+        pushedPages = [];
       }
+    }
+    if (!pageId) {
+      accessTrail.sync(undefined);
+      return;
     }
     const top = pushedPages.at(-1);
     accessTrail.sync(pageId, top?.id === pageId ? top.position : undefined);
@@ -558,7 +565,10 @@ export const navigation = {
         } else {
           isPushHistory = true;
           forwardPages = [];
-          pushedPages = openPage ? [...pushedPages, pushed] : [pushed];
+          pushedPages =
+            openPage || pushedPages.at(-1)?.id === BASE_ENTRY
+              ? [...pushedPages, pushed]
+              : [pushed];
         }
       }
     }
@@ -754,13 +764,16 @@ export const navigation = {
     const closeMode = (mode: AccessMode) => {
       const openPage = url.searchParams.get(AccessMode.PAGE);
       if (mode === AccessMode.PAGE && openPage) {
-        if (
-          props?.isHistoryBack &&
-          pushedPages.length === 1 &&
-          pushedPages[0].id === openPage
-        ) {
+        const isTracked = pushedPages.at(-1)?.id === openPage;
+        const isFromBase =
+          pushedPages.length === 1 || pushedPages.at(-2)?.id === BASE_ENTRY;
+        if (props?.isHistoryBack && isTracked && isFromBase) {
           window.history.back();
           return;
+        }
+        if (isTracked) {
+          pushedPages = [...pushedPages, { id: BASE_ENTRY }];
+          forwardPages = [];
         }
         navigation.toggleSearchParam(withPageParams(mode), {
           url,

@@ -159,7 +159,7 @@
           {@render leftNav(!!pop || !!mainPath)}
         {/if}
         <div class="min-w-0 flex-grow relative">
-          {#if mainPath}
+          {#if mainPath && !isOverlayFullScreen}
             <div
               class="absolute inset-0 w-full h-full bg-bgs1 z-40"
               data-testid="overlay-layer"
@@ -171,7 +171,7 @@
               >
                 <ComponentResolver
                   path={mainPath}
-                  params={{ isInline: !isOverlayFullScreen }}
+                  params={{ isInline: true }}
                 />
               </ContextZonePaneScope>
             </div>

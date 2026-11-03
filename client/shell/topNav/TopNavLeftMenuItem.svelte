@@ -170,7 +170,7 @@
         role="menu"
         aria-label={`${accessibleLabel} opening`}
         data-testid="quick-action-opening-menu"
-        class="absolute right-0 top-full mt-1 z-50 w-52 flex flex-col p-1 rounded-md border border-brs3 bg-bgs1 shadow-lg"
+        class="absolute right-0 top-full mt-1 z-[60] w-52 flex flex-col p-1 rounded-md border border-brs3 bg-bgs1 shadow-lg"
       >
         {#each openingOptions as option (option.mode)}
           <button
