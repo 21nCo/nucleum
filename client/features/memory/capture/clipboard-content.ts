@@ -35,14 +35,6 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object";
 }
 
-/** Narrows an unknown object to a named string property. */
-export function hasStringProperty<K extends string>(
-  value: unknown,
-  key: K
-): value is Record<K, string> {
-  return isObject(value) && typeof value[key] === "string";
-}
-
 /** Recognizes a Markdown media-grid block with an item array. */
 export function isMediaGridBlock(block: IBlock): block is IBlock & {
   contentType: NodeType.MEDIA_GRID;
