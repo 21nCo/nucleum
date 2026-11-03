@@ -144,11 +144,17 @@
     }
   });
 
+  $effect.pre(() => {
+    const next = subPath;
+    if (isRouted) return;
+    untrack(() => {
+      localSubPath = next;
+      syncSelectedResource(parseLibraryResource(next?.[0]));
+    });
+  });
+
   onMount(() => {
-    if (!isRouted) {
-      syncSelectedResource(parseLibraryResource(localSubPath?.[0]));
-      return;
-    }
+    if (!isRouted) return;
     const syncFromWindow = () => {
       syncSelectedResource(parseLibraryPath(window.location.pathname).resource);
     };
