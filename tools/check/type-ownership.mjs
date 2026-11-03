@@ -45,7 +45,11 @@ const retiredEnumContracts = new Map([
   ]
 ]);
 
-/** Runtime enums renamed after the baseline with unchanged members, keyed by baseline path. */
+/**
+ * Runtime enums renamed after the baseline, keyed by baseline path. Members stay
+ * unchanged unless the baseline name is also listed in `changedEnumContracts`, which
+ * then pins the renamed enum's members.
+ */
 const renamedEnumContracts = new Map([
   [
     "client/features/spaces/combination/combination.type.ts",
@@ -219,6 +223,15 @@ const changedEnumContracts = new Map([
         }
       }
     ]
+  ],
+  [
+    "client/features/spaces/combination/combination.type.ts",
+    [
+      {
+        name: "CombinationNavItemType",
+        members: { SECTION: "section", RESOURCE: "resource", PAGE: "page" }
+      }
+    ]
   ]
 ]);
 
@@ -305,21 +318,25 @@ for (const module of inventory.modules) {
       continue;
     }
     const renamedTo = renamedEnumContracts.get(module.path)?.[name];
+    const changed = changedEnumContracts
+      .get(module.path)
+      ?.find((contract) => contract.name === name);
     if (renamedTo) {
       const expected = declaration.replace(
         `enum ${name} `,
         `enum ${renamedTo} `
       );
+      const isMatching = changed
+        ? candidateMembers.get(renamedTo) === memberSignature(changed.members)
+        : candidates.get(renamedTo) === expected;
       if (candidates.has(name))
         failures.push(`Renamed enum ${name} must not be restored`);
-      else if (candidates.get(renamedTo) !== expected)
+      else if (!isMatching)
         failures.push(`Renamed enum ${name} must match ${renamedTo}`);
       renamedEnums++;
+      if (changed) changedEnums++;
       continue;
     }
-    const changed = changedEnumContracts
-      .get(module.path)
-      ?.find((contract) => contract.name === name);
     if (changed) {
       if (!candidates.has(name))
         failures.push(`Changed enum ${name} is missing from its destination`);

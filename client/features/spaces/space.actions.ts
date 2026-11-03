@@ -95,7 +95,9 @@ export function confirmSpaceItemDelete(params: {
     title: isSection ? "Delete section" : "Remove from space",
     message: isSection
       ? `Delete **${label}**${nested ? ` and the ${nested} item${nested === 1 ? "" : "s"} inside it` : ""} from this space? The records themselves are not deleted.`
-      : `Remove **${label}** from this space? The record itself is not deleted.`,
+      : item.type === SpaceNavItemType.PAGE
+        ? `Remove the link to **${label}** from this space?`
+        : `Remove **${label}** from this space? The record itself is not deleted.`,
     type: AlertType.WARNING,
     confirmAction: {
       label: isSection ? "Delete" : "Remove",

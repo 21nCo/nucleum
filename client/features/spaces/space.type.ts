@@ -17,7 +17,8 @@ export enum SpaceView {
 /** Kind of an entry in a space's item tree. */
 export enum SpaceNavItemType {
   SECTION = "section",
-  RESOURCE = "resource"
+  RESOURCE = "resource",
+  PAGE = "page"
 }
 
 /** Fields shared by every entry in a space's item tree. */
@@ -43,7 +44,21 @@ export interface ISpaceResourceNavItem extends ISpaceNavItemBase {
   resourceType: Resource;
 }
 
-export type ISpaceNavItem = ISpaceSectionNavItem | ISpaceResourceNavItem;
+/**
+ * A link to an app page by its URL path, such as `library/objective/all`. The label
+ * captured when the item was added is shown when the product has no such page.
+ */
+export interface ISpacePageNavItem extends ISpaceNavItemBase {
+  type: SpaceNavItemType.PAGE;
+  /** Page path without leading or trailing slashes. */
+  path: string;
+}
+
+/** An item that opens something: a record or an app page. */
+export type ISpaceLeafNavItem = ISpaceResourceNavItem | ISpacePageNavItem;
+
+export type ISpaceNavItem =
+  ISpaceSectionNavItem | ISpaceResourceNavItem | ISpacePageNavItem;
 
 /** Persisted space record. */
 export type ISpace = IMemotronItemBase &

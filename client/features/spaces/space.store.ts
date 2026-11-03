@@ -307,22 +307,41 @@ export class ActiveSpaceStore {
 }
 
 /**
- * Creates an empty side nav space and opens it as a page with its title ready to
- * rename.
+ * Inserts a space record and returns its id, or undefined when the insert fails.
+ * Spaces start as an empty side nav.
  */
-export async function createSpace() {
+export async function insertSpace(
+  params: { label?: string; view?: SpaceView; items?: ISpaceNavItem[] } = {}
+) {
   const id = generateResourceId(Resource.space);
   try {
     assertDatafnMutationSucceeded(
       await datafn.space.mutate({
         operation: "insert",
         id,
-        record: { id, label: "", view: SpaceView.SIDENAV, items: [] },
+        record: {
+          id,
+          label: params.label ?? "",
+          view: params.view ?? SpaceView.SIDENAV,
+          items: params.items ?? []
+        },
         context: ResourceAccessPoint.SPACE
       })
     );
   } catch (error) {
-    logger.error({ at: "createSpace", error });
+    logger.error({ at: "insertSpace", error });
+    return;
+  }
+  return id;
+}
+
+/**
+ * Creates an empty side nav space and opens it as a page with its title ready to
+ * rename.
+ */
+export async function createSpace() {
+  const id = await insertSpace();
+  if (!id) {
     toasts.error("Failed to create space");
     return;
   }

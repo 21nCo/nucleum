@@ -8,11 +8,9 @@
   import { cn } from "@21n/ui/environment/presentation";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
-  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
   import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
   import { hoverable } from "@21n/ui/actions/hover.action";
   import { popover } from "@21n/ui/actions/popover.action";
@@ -42,23 +40,9 @@
   let isConstrainedWidth = $derived($view.isConstrainedWidth);
 
   function resolveContextMenu() {
-    const isCurrentResourcePinned =
-      $appMenuStore[$appStore.product]?.user?.includes(resource);
-    if (resource === Resource.space) {
+    if (resource === Resource.space || isHideCreateAction(resource)) {
       return [];
     }
-    const pinAction = {
-      label: isCurrentResourcePinned
-        ? "Unpin from App menu"
-        : "Pin to App menu",
-      value: "pin",
-      icon: isCurrentResourcePinned ? "minus-circle" : "pin",
-      callback: async () => {
-        if (!isCurrentResourcePinned) appMenuStore.addUserMenuItem(resource);
-        else appMenuStore.removeUserMenuItem(resource);
-        popRef.dispatchEvent(new CustomEvent("hide"));
-      }
-    };
     const createAction = {
       label: "Create new",
       value: "create",
@@ -70,18 +54,10 @@
         popRef.dispatchEvent(new CustomEvent("hide"));
       }
     };
-    if (isHideCreateAction(resource)) {
-      return [
-        {
-          group: "all",
-          items: [pinAction]
-        }
-      ];
-    }
     return [
       {
         group: "all",
-        items: [pinAction, createAction]
+        items: [createAction]
       }
     ];
   }

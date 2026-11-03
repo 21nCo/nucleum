@@ -11,6 +11,7 @@ import {
 } from "@nucleum/shared-state/commands/page-view-actions";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import { Action } from "@nucleum/client/config/action.enum";
+import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { resolveNodeSubTypesForSwitcher } from "@nucleum/features/memory/node/node.utils";
 import { resolveCollectionSubTypesForSwitcher } from "@nucleum/features/collections/collection.utils";
 import { resolveObjectiveSubTypesForSwitcher } from "@nucleum/features/focus/goals/goal.utils";
@@ -95,6 +96,29 @@ export function resolveLibraryFallbackSubType(resource: Resource): string {
       typeof saved === "string" ? saved : undefined
     ) ?? LIBRARY_DEFAULT_SUBTYPE
   );
+}
+
+/** Path of a library resource view, such as `library/objective/all`. */
+export function resolveLibraryViewPath(
+  resource: Resource,
+  subType: string = LIBRARY_DEFAULT_SUBTYPE
+) {
+  return [Action.LIBRARY, resource, subType].join("/");
+}
+
+/**
+ * Library view path and label of a resource type that was pinned to the app menu,
+ * as a resource or its browse action, or undefined when it is not a resource.
+ */
+export function resolveLibraryPinPage(pin: string) {
+  const resource = parseLibraryResource(
+    pin.replace(new RegExp(`_${ResourceActionType.BROWSE}$`), "")
+  );
+  if (!resource) return undefined;
+  return {
+    path: resolveLibraryViewPath(resource),
+    label: `Library \u203a ${resolveResourceLabel(resource)}`
+  };
 }
 
 /** Reads the library page, resource and subtype from a URL path. */

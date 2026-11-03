@@ -13,6 +13,8 @@
   import { parseNativeMessage } from "@nucleum/client/runtime/embed/native-message";
   import { handleNativeFileMessage } from "@nucleum/shared-state/files/native-file-messages";
   import { initializeUserConfig } from "@nucleum/composition/layers/telemetry/user-identity";
+  import { migratePinnedSpace } from "@nucleum/features/spaces/pinned-space-migration";
+  import { resolveLibraryPinPage } from "@nucleum/surfaces/library/library-route";
 
   import { installApplicationHosts } from "../configure-hosts";
   import type { Snippet } from "svelte";
@@ -179,6 +181,9 @@
     }
     if ($context.isEmbed && $context.isSheet) {
       $appLoadingState.isLocalLoaded = true;
+    }
+    if (!$context.isSheet) {
+      void migratePinnedSpace({ resolveTypePinPage: resolveLibraryPinPage });
     }
     scheduleIdleMaintenance();
   }

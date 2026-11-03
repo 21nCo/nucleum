@@ -168,6 +168,21 @@ export const uiState = {
     }
     return this.get()[key];
   },
+  /**
+   * Reads a synced state value from the active DataFn namespace, including local
+   * changes not yet acknowledged, without waiting for the live signal to load.
+   */
+  async readState(
+    keyParam: Action | UIState | ResourceAccessPoint,
+    params?: IUIStateParams
+  ) {
+    const stored = await datafn.kv.get<IUIStateStore>(Resource.uiState);
+    const current = applyOptimisticKvEntries(
+      migrateLegacyUiStateKeys(stored ?? uiStateSeed),
+      pendingUiStateValues
+    );
+    return current[this.resolveKey(keyParam, params)];
+  },
   getResourceState(
     resource: Resource,
     location: ResourceAccessPoint,

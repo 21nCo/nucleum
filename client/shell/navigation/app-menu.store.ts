@@ -79,6 +79,17 @@ export const appMenuStore = {
   get() {
     return get(appMenuLocal);
   },
+  /**
+   * Reads the stored app menu of the active DataFn namespace, including local
+   * changes not yet acknowledged, without waiting for the live signal to load.
+   */
+  async read(): Promise<IAppMenuStore> {
+    const stored = await datafn.kv.get<IAppMenuStore>(Resource.appMenu);
+    return applyOptimisticKvEntries(
+      migrateLegacyNucleusAppMenu(stored ?? {}),
+      pendingAppMenuValues
+    );
+  },
   setUserMenuItems(items: string[]) {
     const current = this.get();
     const context = get(appStore).product;
@@ -92,32 +103,6 @@ export const appMenuStore = {
     });
   },
 
-  addUserMenuItem(item: string) {
-    const current = this.get();
-    const context = get(appStore).product;
-    logger.log({ context: "adding user app menu item", current });
-    if (current[context]?.user?.includes(item)) return;
-    this.modify({
-      ...current,
-      [context]: {
-        ...current[context],
-        user: [...(current[context]?.user ?? []), item]
-      }
-    });
-  },
-  removeUserMenuItem(item: string) {
-    const current = this.get();
-    const context = get(appStore).product;
-    logger.log({ context: "removing user app menu item", current });
-    if (!current[context]?.user?.includes(item)) return;
-    this.modify({
-      ...current,
-      [context]: {
-        ...current[context],
-        user: current[context]?.user?.filter((x) => x != item)
-      }
-    });
-  },
   /** Space ids pinned to the current product's app menu. */
   pinnedSpaces(menu?: IAppMenuStore): string[] {
     return (menu ?? get(appMenuLocal))[get(appStore).product]?.spaces ?? [];

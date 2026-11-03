@@ -6,10 +6,13 @@ import {
   decodeSpaceSegment,
   encodeSpaceSegment
 } from "@nucleum/client/config/space-route";
+import type { IAction } from "@nucleum/shared-state/commands/action.type";
+import { resolvePageRoute } from "@nucleum/shared-state/commands/page-view-actions";
 import {
   SpaceNavItemType,
   type ISpaceHeading,
   type ISpaceNavItem,
+  type ISpacePageNavItem,
   type ISpaceResourceNavItem,
   type SpaceDropPosition
 } from "@nucleum/features/spaces/space.type";
@@ -295,7 +298,56 @@ export function collectResourceItems(items: ISpaceNavItem[] = []) {
   );
 }
 
-/** Counts sections and record items. */
+/** Lists every page link item in tree order. */
+export function collectPageItems(items: ISpaceNavItem[] = []) {
+  return flattenNavItems(items).filter(
+    (item): item is ISpacePageNavItem => item.type === SpaceNavItemType.PAGE
+  );
+}
+
+/** Trims surrounding slashes from a page path so equal paths compare equal. */
+export function normalizeSpacePagePath(path: string) {
+  return (path ?? "").trim().replace(/^\/+|\/+$/g, "");
+}
+
+/** A page link resolved against the current product's registered pages. */
+export type SpacePageRoute = {
+  /** The registered page or sub-view action that renders the path. */
+  action: IAction;
+  /** Label of a page or sub-view registered for exactly this path. */
+  label?: string;
+};
+
+/**
+ * Resolves a page link to the page that renders it: a page or sub-view registered
+ * for exactly that path, otherwise the page whose sub-path it is. Undefined when
+ * the product has no such page.
+ */
+export function resolveSpacePageRoute(
+  actions: IAction[],
+  path: string
+): SpacePageRoute | undefined {
+  const target = normalizeSpacePagePath(path);
+  if (!target) return undefined;
+  const exact = (actions ?? []).find(
+    (action) =>
+      normalizeSpacePagePath(action.path ?? action.action ?? "") === target
+  );
+  if (exact) return { action: exact, label: exact.label };
+  const route = resolvePageRoute(actions ?? [], target);
+  return route ? { action: route.action } : undefined;
+}
+
+/** Status of a page link: unsupported when the current product has no such page. */
+export function resolveSpacePageStatus(
+  route: SpacePageRoute | undefined
+): SpaceItemStatus | undefined {
+  return route
+    ? undefined
+    : { kind: "unsupported", text: "Not available in this app" };
+}
+
+/** Counts sections and items that open something. */
 export function countNavItems(items: ISpaceNavItem[] = []) {
   let sections = 0;
   let resources = 0;
