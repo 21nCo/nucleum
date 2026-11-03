@@ -35,13 +35,17 @@
   } from "@nucleum/shell/topNav/panel-actions";
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
-  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    ContextZoneLayer,
+    contextZone
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
   import {
     isTwoLineIdentity,
     resolveContextZoneSubject
   } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
   import { resolvePageRoute } from "@nucleum/shared-state/commands/page-view-actions";
   import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
+  import PaneSwitchButton from "@nucleum/shell/topNav/contextZone/PaneSwitchButton.svelte";
   import { samplePageBackground } from "@nucleum/shell/topNav/contextZone/surface-background";
   import {
     closeTopLayer,
@@ -96,6 +100,7 @@
   const bulkEditSubContext = bulkEditStore.subContext;
   const activeEntry = contextZone.active;
   const activePane = contextZone.pane;
+  const visiblePanes = contextZone.visiblePanes;
 
   let isHideMenuLabels = $state(readHideMenuLabels());
   let isHideLeftNavBar = $state(readHideLeftNavBar());
@@ -119,6 +124,27 @@
     )
   );
   const subject = $derived(resolveContextZoneSubject($activePane, $page.url));
+  const otherPanes = $derived(
+    isBulkMode
+      ? []
+      : $visiblePanes
+          .filter((pane) => pane.id !== $activePane?.id)
+          .map((pane) => ({
+            pane,
+            subject: resolveContextZoneSubject(pane, $page.url)
+          }))
+          .filter((item) => !!item.subject)
+  );
+  const panesBefore = $derived(
+    otherPanes.filter(
+      (item) => item.pane.layer < ($activePane?.layer ?? Infinity)
+    )
+  );
+  const panesAfter = $derived(
+    otherPanes.filter(
+      (item) => item.pane.layer >= ($activePane?.layer ?? Infinity)
+    )
+  );
   let windowWidth = $state(window.innerWidth);
   const isSplitOpen = $derived(
     !!searchParams.get(AccessMode.BESIDE_BASE) ||
@@ -186,7 +212,25 @@
 
   function sampleTabBackground() {
     if (!tabRef || !barRef) return;
-    tabBackground = samplePageBackground(tabRef, barRef);
+    const bar = barRef.getBoundingClientRect();
+    const paneId =
+      $activePane?.layer === ContextZoneLayer.BESIDE_BASE ||
+      $activePane?.layer === ContextZoneLayer.BESIDE_PAGE
+        ? $activePane.id
+        : undefined;
+    const pane = paneId
+      ? document.querySelector(
+          `[data-context-zone-pane="${CSS.escape(paneId)}"] > *`
+        )
+      : null;
+    const left = Math.max(
+      tabRef.getBoundingClientRect().left,
+      pane?.getBoundingClientRect().left ?? 0
+    );
+    tabBackground = samplePageBackground(
+      { x: left + 4, y: bar.bottom + 4 },
+      barRef
+    );
   }
 
   function scheduleTabBackground() {
@@ -279,6 +323,12 @@
     class="flex flex-1 min-w-0 self-stretch items-stretch"
     data-testid="top-bar-context-zone"
   >
+    {#each panesBefore as item (item.pane.id)}
+      <PaneSwitchButton
+        subject={item.subject!}
+        onFocus={() => contextZone.activatePane(item.pane.id)}
+      />
+    {/each}
     {#if isContextTab}
       <div
         bind:this={tabRef}
@@ -346,6 +396,12 @@
         </div>
       </div>
     {/if}
+    {#each panesAfter as item (item.pane.id)}
+      <PaneSwitchButton
+        subject={item.subject!}
+        onFocus={() => contextZone.activatePane(item.pane.id)}
+      />
+    {/each}
   </div>
   {#if isToastMode || !isNavigatorInline}
     <div

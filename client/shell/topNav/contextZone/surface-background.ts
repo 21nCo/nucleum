@@ -28,16 +28,15 @@ export function resolveSurfaceBackground(
 }
 
 /**
- * Background of the page just below a top bar element, sampled a few pixels
- * under its bottom-left corner, so a tab joined to the page can take the
- * page's background. Elements inside `ignore` are skipped.
+ * Background painted at a point of the page, so a tab joined to the page can
+ * take the page's background. Elements inside `ignore` are skipped.
  */
-export function samplePageBackground(anchor: Element, ignore: Element) {
-  const rect = anchor.getBoundingClientRect();
-  const x = rect.left + 4;
-  const y = rect.bottom + 4;
+export function samplePageBackground(
+  point: { x: number; y: number },
+  ignore: Element
+) {
   const below = document
-    .elementsFromPoint(x, y)
+    .elementsFromPoint(point.x, point.y)
     .find((element) => !ignore.contains(element));
   return resolveSurfaceBackground(below ?? null);
 }

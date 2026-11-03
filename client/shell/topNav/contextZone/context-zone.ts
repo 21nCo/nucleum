@@ -124,6 +124,22 @@ export function resolveContextZonePaneEntry<
   );
 }
 
+/** Mounted panes on visible layers, one per pane id, in mount order. */
+export function resolveVisiblePanes(
+  mounted: { key: number; pane: ContextZonePane }[],
+  visible?: ReadonlySet<number>
+): ContextZonePane[] {
+  const seen = new Set<string>();
+  return mounted
+    .filter((item) => !visible || visible.has(item.pane.layer))
+    .filter((item) => {
+      if (seen.has(item.pane.id)) return false;
+      seen.add(item.pane.id);
+      return true;
+    })
+    .map((item) => item.pane);
+}
+
 const pane = derived(
   [entries, panes, activePaneId, visibleLayers],
   ([list, mounted, paneId, visible]) =>
@@ -151,6 +167,10 @@ export const contextZone = {
   active,
   /** Pane whose page the context zone describes. */
   pane,
+  /** Mounted panes on visible layers, in mount order, one per pane id. */
+  visiblePanes: derived([panes, visibleLayers], ([list, visible]) =>
+    resolveVisiblePanes(list, visible)
+  ),
   /** Marks a top bar as hosting the zone; returns its release function. */
   host() {
     hostCount.update((count) => count + 1);
