@@ -1,6 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import { topBarDropdown } from "@nucleum/shell/topNav/top-bar-dropdown";
   import { fly } from "svelte/transition";
   import { quadIn } from "svelte/easing";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
@@ -11,7 +12,6 @@
 
   let isListOpen = $state(false);
   let hoverOrigin = $state<{ x: number; y: number } | undefined>(undefined);
-  let containerRef = $state<HTMLDivElement | undefined>(undefined);
 
   const latest = $derived($toasts[$toasts.length - 1]);
 
@@ -33,32 +33,13 @@
     hoverOrigin = undefined;
     toasts.dismiss(latest.id);
   }
-
-  function handleWindowPointerDown(event: PointerEvent) {
-    if (!isListOpen || !containerRef) return;
-    if (event.target instanceof Node && containerRef.contains(event.target))
-      return;
-    isListOpen = false;
-  }
-
-  /** Closes on Escape, and on keys pressed outside it, such as a shortcut that opens a modal. */
-  function handleWindowKeyDown(event: KeyboardEvent) {
-    if (!isListOpen) return;
-    const isInside =
-      !!containerRef &&
-      event.target instanceof Node &&
-      containerRef.contains(event.target);
-    if (event.key === "Escape" || !isInside) isListOpen = false;
-  }
 </script>
 
-<svelte:window
-  onpointerdown={handleWindowPointerDown}
-  onkeydown={handleWindowKeyDown}
-/>
-
 <div
-  bind:this={containerRef}
+  use:topBarDropdown={{
+    isOpen: isListOpen,
+    onDismiss: () => (isListOpen = false)
+  }}
   class="relative flex items-center justify-end gap-2 h-full pr-3 pl-2 text-b2 min-w-0"
   data-testid="top-bar-toasts"
   in:fly={{ duration: 200, y: -10, easing: quadIn }}

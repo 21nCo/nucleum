@@ -70,6 +70,7 @@
   );
   const isOverlayFullScreen = $derived(isMaxParam && !!mainPath);
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
+  const isPanelShown = $derived(!!rightPanel && !isOverlayFullScreen);
 
   let scrollSaveFrame = 0;
 
@@ -223,7 +224,7 @@
             </AppSplitView>
           </div>
         </div>
-        {#if rightPanel && !isOverlayFullScreen}
+        {#if rightPanel && isPanelShown}
           {#if $view.isPortrait}
             <RightPanel action={rightPanel} isSheet={true} />
           {:else if !$view.isConstrainedWidth}
@@ -231,7 +232,7 @@
           {/if}
         {/if}
       </div>
-      {#if $view.isPortrait && $context.embed !== Embed.HANDSET}
+      {#if $view.isPortrait && $context.embed !== Embed.HANDSET && !isPanelShown}
         <PortraitBackControl
           isAppMenuShown={!isBaseCovered && !$appStore.isMenuHidden}
         />

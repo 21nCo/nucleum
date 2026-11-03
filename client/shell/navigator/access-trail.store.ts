@@ -102,6 +102,11 @@ function flushAccessTrails() {
     .catch((error) => logger.error({ at: "accessTrail.flush", error }));
 }
 
+/**
+ * Applies a change now and, while the stored trails are loading, again on top
+ * of them. Changes capture their keys and times up front, so a replay keeps
+ * the trail identities history entries already recorded.
+ */
 function apply(change: TrailChange) {
   ensureLoaded();
   const current = get(trailsLocal);
@@ -131,24 +136,26 @@ export const accessTrail = {
   },
   /** Starts a new trail at `id`, keeping the previous one as a recent trail. */
   start(id: string, origin?: string) {
-    apply((trails) => startAccessTrail(trails, id, { ...stamp(), origin }));
+    const options = { ...stamp(), origin };
+    apply((trails) => startAccessTrail(trails, id, options));
   },
   /** Records `id` as opened from the active resource of the current trail. */
   extend(id: string) {
-    apply((trails) => extendAccessTrail(trails, id, stamp()));
+    const options = stamp();
+    apply((trails) => extendAccessTrail(trails, id, options));
   },
   /** Activates a node of the current trail. */
   select(index: number) {
-    apply((trails) => activateAccessTrailNode(trails, index, Date.now()));
+    const at = Date.now();
+    apply((trails) => activateAccessTrailNode(trails, index, at));
   },
   /**
    * Follows the open page after browser navigation; undefined ends the trail.
    * `position` is the trail node the history entry was opened at, when known.
    */
   sync(pageId: string | undefined, position?: AccessTrailPosition) {
-    apply((trails) =>
-      syncAccessTrailPage(trails, pageId, { ...stamp(), position })
-    );
+    const options = { ...stamp(), position };
+    apply((trails) => syncAccessTrailPage(trails, pageId, options));
   },
   /** Trail node that is active now, if a trail is current. */
   position(): AccessTrailPosition | undefined {
@@ -161,7 +168,8 @@ export const accessTrail = {
   },
   /** Makes a recent trail current again. */
   resume(key: string) {
-    apply((trails) => resumeAccessTrail(trails, key, Date.now()));
+    const at = Date.now();
+    apply((trails) => resumeAccessTrail(trails, key, at));
   },
   /** Removes a recent trail. */
   removeRecent(key: string) {

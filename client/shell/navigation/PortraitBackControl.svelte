@@ -86,7 +86,7 @@
     data-testid="portrait-back"
     aria-label="Back"
     class={cn(
-      "fixed left-0 bottom-0 z-[55] ml-3 flex h-11 w-11 items-center justify-center rounded-full border border-brs3 bg-bgs2 text-fgs1 shadow-md active:bg-bgs3",
+      "fixed left-0 bottom-0 z-50 ml-3 flex h-11 w-11 items-center justify-center rounded-full border border-brs3 bg-bgs2 text-fgs1 shadow-md active:bg-bgs3",
       {
         "mb-[10.5rem]": $player.isMiniOn,
         "mb-24": !$player.isMiniOn && isAppMenuShown,

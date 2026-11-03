@@ -1,6 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import { topBarDropdown } from "@nucleum/shell/topNav/top-bar-dropdown";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { hoverable } from "@21n/ui/actions/hover.action";
@@ -49,7 +50,6 @@
   let isHovered = $state(false);
   let isOpeningMenuOpen = $state(false);
   let openingMode = $state<AccessMode | undefined>(undefined);
-  let containerRef = $state<HTMLDivElement | undefined>(undefined);
   const openingOptions = [
     { mode: AccessMode.OVERLAY, label: "Open as overlay" },
     { mode: AccessMode.PANEL, label: "Open in right panel" }
@@ -84,23 +84,6 @@
     isOpeningMenuOpen = false;
   }
 
-  function handleWindowPointerDown(event: PointerEvent) {
-    if (!isOpeningMenuOpen || !containerRef) return;
-    if (event.target instanceof Node && containerRef.contains(event.target))
-      return;
-    isOpeningMenuOpen = false;
-  }
-
-  /** Closes on Escape, and on keys pressed outside it, such as a shortcut that opens a modal. */
-  function handleWindowKeyDown(event: KeyboardEvent) {
-    if (!isOpeningMenuOpen) return;
-    const isInside =
-      !!containerRef &&
-      event.target instanceof Node &&
-      containerRef.contains(event.target);
-    if (event.key === "Escape" || !isInside) isOpeningMenuOpen = false;
-  }
-
   function handleClick(event: MouseEvent) {
     if (isPreventDefault) {
       onClick?.(event);
@@ -110,16 +93,17 @@
   }
 </script>
 
-<svelte:window
-  onpointerdown={handleWindowPointerDown}
-  onkeydown={handleWindowKeyDown}
-/>
-
 {#if data}
   {@const hasTooltip = data.label || tooltip || label}
   {@const accessibleLabel = ariaLabel ?? tooltip ?? label ?? data.label}
   {@const shortcut = keyboardShortcuts.resolveShortcutForAction(action)}
-  <div class="relative h-full" bind:this={containerRef}>
+  <div
+    class="relative h-full"
+    use:topBarDropdown={{
+      isOpen: isOpeningMenuOpen,
+      onDismiss: () => (isOpeningMenuOpen = false)
+    }}
+  >
     <button
       aria-label={accessibleLabel}
       class={cn(

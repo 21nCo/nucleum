@@ -24,7 +24,7 @@
 
 {#if isSheet}
   <div
-    class="fixed inset-0 z-[60] flex flex-col w-full h-full bg-bgs2"
+    class="fixed inset-0 z-50 flex flex-col w-full h-full bg-bgs2"
     data-testid="right-panel-sheet"
     role="dialog"
     aria-modal="true"
