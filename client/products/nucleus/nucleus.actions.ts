@@ -20,8 +20,13 @@ import { resolveLibrarySwitcherResources } from "@nucleum/surfaces/library/resou
 import { resolveNucleusOverviewViewSegments } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
 import { resolveProductConfig } from "@nucleum/products/product.config";
 import { Product } from "@nucleum/client/config/product.type";
+import NucleusHomeOnMobile from "@nucleum/products/nucleus/home/NucleusHomeOnMobile.svelte";
 
-const actionsToFilterInSub: string[] = [Action.LIBRARY, Action.OVERVIEW];
+const actionsToFilterInSub: string[] = [
+  Action.LIBRARY,
+  Action.OVERVIEW,
+  Action.MOBILEHOME
+];
 
 function isSubProductAction(action: IAction) {
   return (
@@ -55,7 +60,10 @@ const overviewAction: IAction = {
 };
 
 export const nucleusActions: IAction[] = [
-  ...memotronActions.filter(isSubProductAction),
+  ...memotronActions.filter(
+    (action) =>
+      isSubProductAction(action) && action.action !== Action.LIBRARY_PORTRAIT
+  ),
   ...pointronActions.filter(isSubProductAction),
   libraryAction,
   ...createLibraryViewActions(
@@ -70,6 +78,13 @@ export const nucleusActions: IAction[] = [
     overviewAction,
     resolveNucleusOverviewViewSegments()
   ),
+  {
+    action: Action.MOBILEHOME,
+    component: NucleusHomeOnMobile,
+    type: ActionType.PAGE,
+    isMeta: true,
+    isMenuHidden: true
+  },
   {
     action: Action.HOME,
     label: appMenuActionLabelsByAction[Action.HOME],

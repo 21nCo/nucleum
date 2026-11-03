@@ -31,7 +31,6 @@
   import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
   import { isRightPanelCovered } from "@nucleum/shell/navigation/top-layer";
   import { setRightPanelSheetShown } from "@nucleum/shell/rightPanel/right-panel-visibility";
-  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
   import {
     ContextZoneLayer,
@@ -232,10 +231,8 @@
           />
         {/if}
       </div>
-      {#if $view.isPortrait && $context.embed !== Embed.HANDSET && !isPanelSheetShown}
-        <PortraitBackControl
-          isAppMenuShown={!isBaseCovered && !$appStore.isMenuHidden}
-        />
+      {#if $view.isPortrait && !isPanelSheetShown}
+        <PortraitBackControl />
       {/if}
     </div>
   </div>

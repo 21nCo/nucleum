@@ -80,8 +80,7 @@
   }
 
   let isShowLabel = $derived(
-    layoutContext === LayoutContext.PORTRAIT ||
-      layoutContext === LayoutContext.DEFAULT ||
+    layoutContext === LayoutContext.DEFAULT ||
       (layoutContext === LayoutContext.THIN_WITH_LABEL && !hideMenuLabels)
   );
   let buttonRef = $state<HTMLElement>();
@@ -114,10 +113,7 @@
   }
 
   function resolveIconSize(layoutContext: LayoutContext) {
-    if (
-      layoutContext === LayoutContext.PORTRAIT ||
-      layoutContext === LayoutContext.THIN_WITH_LABEL
-    ) {
+    if (layoutContext === LayoutContext.THIN_WITH_LABEL) {
       return Size.lg;
     }
     if (layoutContext === LayoutContext.THIN) {
@@ -208,8 +204,6 @@
         "border border-transparent": !isActive && isOutlineStyle
       },
       {
-        "w-12 flex-col gap-1 rounded-lg":
-          isShowLabel && layoutContext === LayoutContext.PORTRAIT,
         "gap-2 rounded-lg p-2 h-9": layoutContext === LayoutContext.DEFAULT,
         "px-2 py-1": !isShowLabel,
         "justify-between": isShowHotKeyHint
@@ -240,7 +234,6 @@
     <div
       class={cn("flex gap-1", {
         "flex-col items-center":
-          layoutContext === LayoutContext.PORTRAIT ||
           layoutContext === LayoutContext.THIN_WITH_LABEL,
         "w-full py-2 rounded-md":
           layoutContext === LayoutContext.THIN_WITH_LABEL,
@@ -276,14 +269,12 @@
                 "fill-aps1": isActive && isOutlineStyle,
                 "fill-abg": isActive && !isOutlineStyle
               },
-              (layoutContext === LayoutContext.PORTRAIT ||
-                layoutContext === LayoutContext.THIN ||
+              (layoutContext === LayoutContext.THIN ||
                 layoutContext === LayoutContext.THIN_WITH_LABEL) && {
                 "fill-aps1": isActive,
                 "fill-fgs2":
                   !isActive &&
-                  (layoutContext === LayoutContext.THIN_WITH_LABEL ||
-                    layoutContext === LayoutContext.PORTRAIT) &&
+                  layoutContext === LayoutContext.THIN_WITH_LABEL &&
                   !isHovering,
                 "text-fgs3":
                   !isActive &&
@@ -308,11 +299,8 @@
             "text-b2": layoutContext === LayoutContext.DEFAULT,
             "text-b4 w-18 truncate":
               layoutContext === LayoutContext.THIN_WITH_LABEL,
-            "text-b4": layoutContext === LayoutContext.PORTRAIT,
             "text-aps1":
-              (layoutContext === LayoutContext.THIN_WITH_LABEL ||
-                layoutContext === LayoutContext.PORTRAIT) &&
-              isActive,
+              layoutContext === LayoutContext.THIN_WITH_LABEL && isActive,
             "text-fgs2":
               layoutContext === LayoutContext.THIN_WITH_LABEL &&
               !isActive &&

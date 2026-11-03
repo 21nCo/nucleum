@@ -78,6 +78,7 @@ import {
 import { updateObjectiveParent } from "@nucleum/features/focus/goals/goal.utils";
 import LibraryPanelContentResolver from "@nucleum/surfaces/library/LibraryPanelContentResolver.svelte";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
+import PointronHomeOnMobile from "@nucleum/products/pointron/home/PointronHomeOnMobile.svelte";
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
@@ -212,6 +213,13 @@ const libraryPortraitAction: IAction = {
 };
 
 export const pointronActions: IAction[] = [
+  {
+    action: Action.MOBILEHOME,
+    component: PointronHomeOnMobile,
+    type: ActionType.PAGE,
+    isMeta: true,
+    isMenuHidden: true
+  },
   {
     action: PointronAction.ANALYTICS_VIEWS_PAGE_EDIT_MOBILE,
     component: AnalyticsViewsPageEditMobile,

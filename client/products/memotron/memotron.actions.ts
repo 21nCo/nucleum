@@ -56,6 +56,14 @@ const libraryAction: IAction = {
   }
 };
 
+const libraryPortraitAction: IAction = {
+  action: Action.LIBRARY_PORTRAIT,
+  label: appMenuActionLabelsByAction[Action.LIBRARY_PORTRAIT],
+  icon: "library",
+  component: MemotronLibrary,
+  type: ActionType.PAGE
+};
+
 const overviewAction: IAction = {
   action: Action.OVERVIEW,
   type: ActionType.PAGE,
@@ -189,6 +197,7 @@ export const memotronActions: IAction[] = [
     }
   },
   libraryAction,
+  libraryPortraitAction,
   ...createLibraryViewActions(libraryAction, memotronLibraryResources),
   {
     action: "serendipity",

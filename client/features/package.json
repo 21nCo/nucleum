@@ -60,6 +60,7 @@
     "./focus/player/FocusTopNavWidget.svelte": "./focus/player/FocusTopNavWidget.svelte",
     "./focus/pointronConstants.type": "./focus/pointronConstants.type.ts",
     "./focus/preferences.store": "./focus/preferences.store.ts",
+    "./focus/quickstart/QuickFocusCard.svelte": "./focus/quickstart/QuickFocusCard.svelte",
     "./focus/session.store": "./focus/session.store.ts",
     "./focus/session.type": "./focus/session.type.ts",
     "./focus/session.utils": "./focus/session.utils.ts",

@@ -8,7 +8,8 @@ shared state into product-level experiences.
 
 `account` (identity workflows), `subscription` (billing and native purchases), `onboarding`, `help` (docs, support, error recovery and shipped diagnostics),
 `settings` (including data recovery), `sharing`, `commandBar` + `commands` + `search` (command surface), `library`
-(resource browsing and rendering).
+(resource browsing and rendering), `home` (the phone home hub frame; each product
+supplies its bottom slot).
 Settings defines its action descriptors; product-specific settings define theirs
 under the owning product. Application composes the final registry order.
 

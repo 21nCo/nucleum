@@ -17,7 +17,7 @@ Diagrams and the direct-import matrix live in [client dependency map](client-dep
 | `client/shared-state` | Product-independent client behavior under the named owners below. No root barrel. |
 | `client/shell` | Navigation, panels, split views, tabs, trails, overlays, modal chrome, connected notification rendering, and global shortcut execution (`@nucleum/shell`). |
 | `client/features` | Capability implementations. Memory owns Markdown editing and tags. Spaces owns spaces: their item trees, views, sub space focus, and moving former app menu resource pins and app tabs into the Pinned space, which composition runs after DataFn loads. Records owns connected record menus and bulk mutations. Focus owns its scheduled notification queue. |
-| `client/surfaces` | Cross-feature product surfaces: account, subscription, onboarding, help, settings, the command surface, search, sharing, and library (`@nucleum/surfaces`). |
+| `client/surfaces` | Cross-feature product surfaces: account, subscription, onboarding, help, settings, the command surface, search, sharing, library, and the phone home hub (`@nucleum/surfaces`). |
 | `client/products` | Product experiences composed from those capabilities. Product source does not import composition. |
 | `client/composition` | The composition root, `layers/`, and `chrome/`: host installation, base and user layers, command-registry assembly, and product-aware branding adapters (`@nucleum/composition`). |
 | `client/routes` | The shared SvelteKit route tree for Nucleum, Memotron, and Pointron. |
@@ -93,7 +93,7 @@ Lower layers do not import composition to reach product behavior. `installApplic
 | Invalid-session recovery (`runtime/account/session-recovery-host`) | Composition | HTTP transport; account surface owns redirect/reload policy |
 | `product-config-host` | Composition | Shell |
 | `surface-config-host` | Composition | Surfaces |
-| Chrome snippets (brand, profile picture, bulk edit, offline status, capture, quick actions, persistent indicators) | `client/composition/chrome/` and the product base layers | Shell, through optional snippet props |
+| Chrome snippets (brand, profile picture, bulk edit, offline status, quick actions, persistent indicators) | `client/composition/chrome/` and the product base layers | Shell, through optional snippet props |
 | Top bar context zone (`client/shell/topNav/contextZone`) | Pages and resources, through `ContextZoneContent` inside the pane scopes that `NavigationLayout` and `RightSplit` set | Shell top bar |
 | `persistence/logging-host` | Composition | Persistence |
 

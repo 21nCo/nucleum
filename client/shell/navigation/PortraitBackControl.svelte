@@ -1,10 +1,10 @@
 <!--
   @component
   Phone back control: a swipe from the left screen edge, plus a back button at
-  the left end of the bottom bar on base pages and overlays. An open resource
-  shows its own back button in its floating bar, which follows the same trail.
-  On an open resource back goes to the previous trail item or the base page;
-  on any other base page it returns to the product's phone home page.
+  the left end of the bottom floating bar on base pages and overlays. An open
+  resource shows its own back button in its floating bar, which follows the
+  same trail. On an open resource back goes to the previous trail item or the
+  base page; on any other base page it returns to the product's phone home.
 -->
 <svelte:options runes={true} />
 
@@ -17,12 +17,10 @@
   import { resolveModalOnFront } from "@21n/ui/actions/interaction-dom";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
-  import { player } from "@nucleum/shell/overlays/modal.store";
+  import { isPortraitMiniPlayerDocked } from "@nucleum/shell/overlays/portrait-dock";
   import { cn } from "@21n/ui/environment/presentation";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
-
-  let { isAppMenuShown = false }: { isAppMenuShown?: boolean } = $props();
 
   const EDGE_WIDTH = 24;
   const SWIPE_DISTANCE = 72;
@@ -92,9 +90,8 @@
     class={cn(
       "fixed left-0 bottom-0 z-50 ml-3 flex h-11 w-11 items-center justify-center rounded-full border border-brs3 bg-bgs2 text-fgs1 shadow-md active:bg-bgs3",
       {
-        "mb-[10.5rem]": $player.isMiniOn,
-        "mb-24": !$player.isMiniOn && isAppMenuShown,
-        "mb-8": !$player.isMiniOn && !isAppMenuShown
+        "mb-8": !$isPortraitMiniPlayerDocked,
+        "mb-[6.5rem]": $isPortraitMiniPlayerDocked
       }
     )}
     onclick={back}

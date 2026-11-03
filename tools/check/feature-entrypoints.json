@@ -55,6 +55,7 @@
   "client/features/focus/player/FocusTopNavWidget.svelte",
   "client/features/focus/pointronConstants.type.ts",
   "client/features/focus/preferences.store.ts",
+  "client/features/focus/quickstart/QuickFocusCard.svelte",
   "client/features/focus/session.store.ts",
   "client/features/focus/session.type.ts",
   "client/features/focus/session.utils.ts",
