@@ -38,6 +38,7 @@
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { resolveContextZoneSubject } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
   import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
+  import { samplePageBackground } from "@nucleum/shell/topNav/contextZone/surface-background";
   import {
     closeTopLayer,
     resolveCloseControlLabel
@@ -153,6 +154,47 @@
     return !!uiState.getState(UIState.isHideLeftNavBar);
   }
 
+  let barRef = $state<HTMLDivElement | undefined>(undefined);
+  let tabRef = $state<HTMLDivElement | undefined>(undefined);
+  let tabBackground = $state<string | undefined>(undefined);
+  let sampleTimer: ReturnType<typeof setTimeout> | undefined;
+  const isContextTab = $derived(isBulkMode || !!subject || !!$activeEntry);
+
+  function sampleTabBackground() {
+    if (!tabRef || !barRef) return;
+    tabBackground = samplePageBackground(tabRef, barRef);
+  }
+
+  function scheduleTabBackground() {
+    clearTimeout(sampleTimer);
+    requestAnimationFrame(sampleTabBackground);
+    sampleTimer = setTimeout(sampleTabBackground, 400);
+  }
+
+  $effect(() => {
+    void $page.url.href;
+    void $activePane;
+    void tabRef;
+    scheduleTabBackground();
+  });
+
+  onMount(() => {
+    const themeObserver = new MutationObserver(scheduleTabBackground);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "style", "data-theme"]
+    });
+    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    colorScheme.addEventListener("change", scheduleTabBackground);
+    window.addEventListener("resize", scheduleTabBackground);
+    return () => {
+      clearTimeout(sampleTimer);
+      themeObserver.disconnect();
+      colorScheme.removeEventListener("change", scheduleTabBackground);
+      window.removeEventListener("resize", scheduleTabBackground);
+    };
+  });
+
   onMount(() => {
     const release = contextZone.host();
     const unsubscribe = uiState.subscribe(() => {
@@ -182,6 +224,7 @@
 
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
+  bind:this={barRef}
   class={cn(
     "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata",
     {
@@ -207,62 +250,78 @@
     {/if}
   {/if}
   <div
-    class="flex flex-1 min-w-0 h-full items-center justify-start overflow-x-auto"
+    class="flex flex-1 min-w-0 self-stretch items-stretch"
     data-testid="top-bar-context-zone"
   >
-    {#if isPageFullScreen && !isBulkMode}
-      <div class="flex items-center h-full shrink-0 pl-1">
-        <button
-          type="button"
-          data-testid="top-bar-exit-full-screen"
-          aria-label="Exit full screen"
-          class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-          use:tooltip={{ text: "Exit full screen" }}
-          onclick={() => navigation.exitFullScreen()}
-        >
-          <Icon icon="exitfullscreen" size={Size.md} />
-        </button>
-      </div>
-    {/if}
-    {#if subject && !isBulkMode}
-      <PageIdentity
-        {subject}
-        backId={subjectBack?.id}
-        onBack={() => navigation.backInTrail()}
-      />
-      {#if $activeEntry}
+    {#if isContextTab}
+      <div
+        bind:this={tabRef}
+        class={cn(
+          "relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-brs3",
+          { "bg-bgs1": !tabBackground }
+        )}
+        style:background-color={tabBackground}
+        data-testid="top-bar-context-tab"
+      >
         <div
-          class="shrink-0 w-px h-5 mx-1 bg-brs3"
-          aria-hidden="true"
-          data-testid="top-bar-identity-divider"
-        ></div>
-      {/if}
-    {/if}
-    {#if isBulkMode}
-      {@render bulkEditBar?.({
-        count: $bulkEditCount,
-        context: $bulkEditContext,
-        subContext: $bulkEditSubContext,
-        onAction: (detail: { action: string; data?: any }) =>
-          bulkEditStore.onAction(detail.action, detail.data),
-        onSelectAll: () => bulkEditStore.onSelectAll(),
-        onClear: () => bulkEditStore.reset()
-      })}
-    {:else if $activeEntry}
-      {#key $activeEntry.key}
-        <div class="flex items-center h-full min-w-0">
-          {@render $activeEntry.content()}
+          class="flex items-center h-full min-w-0 overflow-x-auto overflow-y-hidden"
+        >
+          {#if isPageFullScreen && !isBulkMode}
+            <div class="flex items-center h-full shrink-0 pl-1">
+              <button
+                type="button"
+                data-testid="top-bar-exit-full-screen"
+                aria-label="Exit full screen"
+                class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+                use:tooltip={{ text: "Exit full screen" }}
+                onclick={() => navigation.exitFullScreen()}
+              >
+                <Icon icon="exitfullscreen" size={Size.md} />
+              </button>
+            </div>
+          {/if}
+          {#if subject && !isBulkMode}
+            <PageIdentity
+              {subject}
+              backId={subjectBack?.id}
+              onBack={() => navigation.backInTrail()}
+            />
+            {#if $activeEntry}
+              <div
+                class="shrink-0 w-px h-5 mx-1 bg-brs3"
+                aria-hidden="true"
+                data-testid="top-bar-identity-divider"
+              ></div>
+            {/if}
+          {/if}
+          {#if isBulkMode}
+            {@render bulkEditBar?.({
+              count: $bulkEditCount,
+              context: $bulkEditContext,
+              subContext: $bulkEditSubContext,
+              onAction: (detail: { action: string; data?: any }) =>
+                bulkEditStore.onAction(detail.action, detail.data),
+              onSelectAll: () => bulkEditStore.onSelectAll(),
+              onClear: () => bulkEditStore.reset()
+            })}
+          {:else if $activeEntry}
+            {#key $activeEntry.key}
+              <div class="flex items-center h-full min-w-0">
+                {@render $activeEntry.content()}
+              </div>
+            {/key}
+          {:else if isHomePage}
+            <div class="pl-2 h-full">
+              <TopNavDateTime />
+            </div>
+          {/if}
         </div>
-      {/key}
-    {:else if isHomePage}
-      <div class="pl-2 h-full">
-        <TopNavDateTime />
       </div>
     {/if}
   </div>
   {#if isToastMode || !isNavigatorInline}
     <div
-      class="flex items-center justify-end h-full shrink-0 border-l border-brs3"
+      class="flex items-center justify-end h-full shrink-0"
       data-testid="top-bar-actions-zone"
     >
       {#if isToastMode}
