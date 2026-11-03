@@ -38,40 +38,48 @@
   <button
     type="button"
     data-testid="navigator-pill"
-    aria-label="Open navigator"
-    class="flex items-center justify-center h-full px-3.5 text-fgs2 hover:bg-bgs3-striped hover:text-fgs3"
+    aria-label={trailCount > 0
+      ? `Search or jump to, ${trailCount} items in trail`
+      : "Search or jump to"}
+    class="flex items-center justify-center h-full min-w-12 px-3.5 border-l border-brs3 text-fgs2 hover:bg-bgs3 hover:text-fgs1"
     use:tooltip={{ text: "Search or jump to" }}
     onclick={() => requireCommandHost().runAction(Action.NAVIGATOR)}
   >
     <Icon icon="search" size={Size.md} />
   </button>
 {:else}
-  <div class="flex items-center h-full pl-1 pr-2">
-    <button
-      type="button"
-      data-testid="navigator-pill"
-      aria-label={trailCount > 0
-        ? `Jump to, ${trailCount} items in trail`
-        : "Jump to"}
-      aria-pressed={isActive}
-      class={cn(
-        "flex items-center gap-2 h-8 pl-2.5 pr-1.5 rounded-full border text-b3 transition-colors",
-        {
-          "border-brs3 text-fgs3 hover:bg-bgs3 hover:text-fgs2": !isActive,
-          "border-aps2 bg-aps3 text-aps1": isActive
-        }
-      )}
-      onclick={() => requireCommandHost().runAction(Action.NAVIGATOR)}
-    >
+  <button
+    type="button"
+    data-testid="navigator-pill"
+    aria-label={trailCount > 0
+      ? `Search or jump to, ${trailCount} items in trail`
+      : "Search or jump to"}
+    aria-pressed={isActive}
+    class={cn(
+      "flex items-center justify-between gap-3 h-full w-64 px-3.5 border-l border-brs3 bg-bgs1 text-b2 transition-colors",
+      {
+        "text-fgs3 hover:text-fgs1": !isActive,
+        "text-aps1": isActive
+      }
+    )}
+    onclick={() => requireCommandHost().runAction(Action.NAVIGATOR)}
+  >
+    <span class="flex items-center gap-2 min-w-0">
       <Icon icon="search" size={Size.sm} />
-      <span class="whitespace-nowrap">Search or jump to&hellip;</span>
+      <span class="truncate">Search or jump to&hellip;</span>
+    </span>
+    <span class="flex items-center gap-1 shrink-0">
       <span
         aria-hidden="true"
-        class="flex items-center gap-1 px-1.5 h-5 rounded-full bg-bgs3 text-fgs3 font-mono"
-        data-testid="navigator-pill-hint"
+        class="px-1.5 py-0.5 rounded-sm bg-bgs3 text-b4 font-semibold text-fgs2"
+        data-testid="navigator-pill-hint">/</span
       >
-        /{#if trailCount > 0}<span>&middot; {trailCount}</span>{/if}
-      </span>
-    </button>
-  </div>
+      {#if trailCount > 0}
+        <span
+          class="px-1.5 py-0.5 rounded-sm bg-aps3 text-b4 font-semibold text-aps1"
+          aria-hidden="true">{trailCount}</span
+        >
+      {/if}
+    </span>
+  </button>
 {/if}

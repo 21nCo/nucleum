@@ -395,7 +395,10 @@
   </div>
 {/snippet}
 
-<div class="flex flex-col h-full w-full min-h-0" data-testid="navigator">
+<div
+  class="flex flex-col h-full w-full min-h-0 bg-bgs1"
+  data-testid="navigator"
+>
   {#if !$isInlineSearch}
     <div class="w-full shrink-0 pt-3 pb-2 px-3 flex items-center">
       <div class="flex-1">

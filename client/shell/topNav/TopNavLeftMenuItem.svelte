@@ -20,7 +20,6 @@
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
-  import context from "@nucleum/client/runtime/context.store";
   import {
     isLiveActionAccessConfigurable,
     resolveLiveActionAccessMode,
@@ -29,8 +28,6 @@
 
   let {
     action,
-    isLastItem = false,
-    isFirstItem = false,
     label = undefined,
     icon = undefined,
     tooltip = undefined,
@@ -41,8 +38,6 @@
     onClick
   }: {
     action: Action | string;
-    isLastItem?: boolean;
-    isFirstItem?: boolean;
     label?: string;
     icon?: string;
     tooltip?: string;
@@ -114,20 +109,12 @@
     <button
       aria-label={accessibleLabel}
       aria-pressed={isExpanded ? true : undefined}
-      class={cn(
-        "flex items-center gap-1 h-full px-3.5 transition-colors",
-        {
-          "justify-center": !isExpanded,
-          "w-full justify-start gap-2 px-4 text-fgs1 hover:bg-bgs3": isExpanded,
-          "hover:border-brs3 hover:bg-bgs3-striped hover:text-fgs3 text-fgs2":
-            !isActive,
-          "bg-aps3 text-aps1 border-aps2": isActive && !isExpanded,
-          "border-l": isLastItem && !$context.experiments?.isEnableRoundedMain,
-          "border-x": !isLastItem && !isFirstItem,
-          "border-r": isFirstItem && !$context.experiments?.isEnableRoundedMain
-        },
-        !isActive && "border-transparent"
-      )}
+      class={cn("flex items-center gap-1 h-full transition-colors", {
+        "justify-center min-w-12 px-3.5 border-l border-brs3": !isExpanded,
+        "w-full justify-start gap-2 px-4 text-fgs1": isExpanded,
+        "hover:bg-bgs3 hover:text-fgs1 text-fgs2": !isActive,
+        "bg-aps3 text-aps1": isActive && !isExpanded
+      })}
       use:hoverable={{
         onHover: (val) => {
           queueMicrotask(() => {

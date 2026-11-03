@@ -134,7 +134,11 @@
   const groupedPanelActions = $derived<TopNavPanelAction[]>([
     ...panelActions,
     ...(isDev ? [{ action: Action.RHOMBUS, content: rhombusAction }] : []),
-    { action: Action.NAVIGATOR, content: navigatorAction }
+    {
+      action: Action.NAVIGATOR,
+      content: navigatorAction,
+      surfaceClass: "bg-bgs1"
+    }
   ]);
   const isToastMode = $derived($toasts.length > 0);
   const isAppMenuColumnVisible = $derived(

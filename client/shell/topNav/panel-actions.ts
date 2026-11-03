@@ -11,6 +11,11 @@ export type TopNavPanelActionState = "idle" | "compact" | "expanded";
 export type TopNavPanelAction = {
   action: string;
   content: Snippet<[TopNavPanelActionState]>;
+  /**
+   * Background class of the expanded tab, matching the panel it joins.
+   * Defaults to the right panel background.
+   */
+  surfaceClass?: string;
 };
 
 /**
