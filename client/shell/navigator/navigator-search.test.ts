@@ -1,5 +1,35 @@
-import { describe, expect, it } from "vitest";
-import { resolveNavigatorSearchTarget } from "./navigator-search";
+import { get } from "svelte/store";
+import { describe, expect, it, vi } from "vitest";
+import {
+  navigatorSearch,
+  resolveNavigatorSearchTarget
+} from "./navigator-search";
+
+describe("navigatorSearch", () => {
+  it("counts the inline hosts", () => {
+    const release = navigatorSearch.hostInline();
+    expect(get(navigatorSearch.isInline)).toBe(true);
+    release();
+    expect(get(navigatorSearch.isInline)).toBe(false);
+  });
+
+  it("passes keys to the registered handler until it is released", () => {
+    const handler = vi.fn();
+    const release = navigatorSearch.handleKeys(handler);
+    const event = new KeyboardEvent("keydown", { key: "ArrowDown" });
+    navigatorSearch.keydown(event);
+    expect(handler).toHaveBeenCalledWith(event);
+    release();
+    navigatorSearch.keydown(event);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("clears the query", () => {
+    navigatorSearch.query.set("alpha");
+    navigatorSearch.reset();
+    expect(get(navigatorSearch.query)).toBe("");
+  });
+});
 
 describe("resolveNavigatorSearchTarget", () => {
   it("opens only results of the current non-empty query", () => {

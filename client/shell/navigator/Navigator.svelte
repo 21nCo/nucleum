@@ -35,6 +35,7 @@
   } from "@nucleum/shell/navigator/access-trail";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { cn } from "@21n/ui/environment/presentation";
+  import { navigatorSearch } from "@nucleum/shell/navigator/navigator-search";
 
   type NavigatorHistoryItem = {
     id: string;
@@ -48,17 +49,18 @@
   const SEARCH_DEBOUNCE_MS = 200;
 
   let searchInputRef = $state<TextInput | undefined>(undefined);
-  let query = $state("");
+  const query = navigatorSearch.query;
+  const isInlineSearch = navigatorSearch.isInline;
   let searchResults = $state<string[]>([]);
   let searchResultsQuery = $state("");
-  const isSearchResultsCurrent = $derived(searchResultsQuery === query.trim());
+  const isSearchResultsCurrent = $derived(searchResultsQuery === $query.trim());
   let selectedIndex = $state(0);
   let resultElements = $state<HTMLElement[]>([]);
   let isSearching = $state(false);
   let searchDebounce: ReturnType<typeof setTimeout> | undefined;
   let searchRequestId = 0;
   let searchController: AbortController | undefined;
-  const isSearchMode = $derived(query.trim().length > 0);
+  const isSearchMode = $derived($query.trim().length > 0);
   const currentTrail = $derived($accessTrail.current);
   const recentTrails = $derived($accessTrail.recent);
   let expandedTrails = $state<string[]>([]);
@@ -112,17 +114,26 @@
   }
 
   onMount(() => {
-    setTimeout(() => searchInputRef?.focus(), 50);
+    if (!$isInlineSearch) setTimeout(() => searchInputRef?.focus(), 50);
+    return navigatorSearch.handleKeys(handleSearchKey);
   });
 
   $effect(() => {
     if ($navigatorFocusRequests === 0) return;
-    untrack(() => searchInputRef?.focus());
+    untrack(() => {
+      if (!$isInlineSearch) searchInputRef?.focus();
+    });
   });
 
   onDestroy(() => {
     clearTimeout(searchDebounce);
     searchController?.abort();
+    navigatorSearch.reset();
+  });
+
+  $effect(() => {
+    const value = $query;
+    untrack(() => scheduleSearch(value));
   });
 
   async function search(value: string) {
@@ -166,23 +177,26 @@
     searchRequestId += 1;
     searchController?.abort();
     searchController = undefined;
-    query = "";
+    navigatorSearch.reset();
     searchResults = [];
     searchResultsQuery = "";
     isSearching = false;
   }
 
-  function handleSearchInput() {
+  function scheduleSearch(value: string) {
     clearTimeout(searchDebounce);
-    searchDebounce = setTimeout(() => search(query), SEARCH_DEBOUNCE_MS);
+    if (!value.trim()) {
+      void search(value);
+      return;
+    }
+    searchDebounce = setTimeout(() => search(value), SEARCH_DEBOUNCE_MS);
   }
 
-  function handleSearchKeydown(keydown: CustomEvent<KeyboardEvent>) {
-    const event = keydown.detail;
+  function handleSearchKey(event: KeyboardEvent) {
     if (event.isComposing || event.keyCode === 229) return;
     if (event.key === "Escape") {
       event.preventDefault();
-      if (query) {
+      if ($query) {
         clearSearch();
         return;
       }
@@ -203,7 +217,7 @@
       return;
     }
     const target = resolveNavigatorSearchTarget(
-      query,
+      $query,
       { query: searchResultsQuery, ids: searchResults },
       selectedIndex
     );
@@ -310,19 +324,21 @@
 {/snippet}
 
 <div class="flex flex-col h-full w-full min-h-0" data-testid="navigator">
-  <div class="w-full shrink-0 pt-3 pb-2 px-3 flex items-center">
-    <div class="flex-1">
-      <TextInput
-        bind:this={searchInputRef}
-        bind:value={query}
-        placeholder="Search..."
-        size={Size.sm}
-        testId="navigator-search-input"
-        onInput={handleSearchInput}
-        onKeydown={handleSearchKeydown}
-      />
+  {#if !$isInlineSearch}
+    <div class="w-full shrink-0 pt-3 pb-2 px-3 flex items-center">
+      <div class="flex-1">
+        <TextInput
+          bind:this={searchInputRef}
+          bind:value={$query}
+          placeholder="Search..."
+          size={Size.sm}
+          testId="navigator-search-input"
+          onKeydown={(keydown: CustomEvent<KeyboardEvent>) =>
+            handleSearchKey(keydown.detail)}
+        />
+      </div>
     </div>
-  </div>
+  {/if}
   <div class="flex flex-col flex-1 min-h-0 w-full overflow-y-auto">
     {#if isSearchMode}
       <section

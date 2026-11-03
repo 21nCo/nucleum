@@ -13,6 +13,7 @@
   import { untrack } from "svelte";
   import { writable } from "svelte/store";
   import { provideRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+  import { resolveRightPanelWidthClass } from "@nucleum/shell/rightPanel/right-panel-width";
 
   const ComponentResolver = requireActionRenderer();
 
@@ -82,16 +83,8 @@
     ? "fixed inset-0 z-50 flex flex-col w-full h-full bg-bgs2 outline-none"
     : cn(
         "flex justify-center items-center h-full bg-bgs2 transition-all duration-300",
+        resolveRightPanelWidthClass(action.liveActionParams?.size),
         {
-          "min-w-96 w-96 2k:min-w-128 2k:w-128":
-            action.liveActionParams?.size === Size.sm,
-          "min-w-[32rem] w-[32rem] 2k:min-w-1/2 2k:w-1/2":
-            !action.liveActionParams?.size ||
-            action.liveActionParams?.size === Size.md,
-          "min-w-[36rem] w-[36rem] 2k:min-w-1/2 2k:w-1/2":
-            action.liveActionParams?.size === Size.lg,
-          "min-w-1/2 w-1/2 2k:min-w-1/2 2k:w-1/2":
-            action.liveActionParams?.size === Size.xl,
           "border-r border-brs3": !$context.experiments?.isEnableRoundedMain
         }
       )}

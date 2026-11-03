@@ -19,6 +19,7 @@
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { cn } from "@21n/ui/environment/presentation";
+  import view from "@21n/ui/environment/view.store";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { tooltip } from "@21n/ui/actions/popover.action";
@@ -111,6 +112,11 @@
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
   );
   const isHomePage = $derived(isHomeRoute($page.url));
+  const isNavigatorInline = $derived(
+    searchParams.get(AccessMode.PANEL) === Action.NAVIGATOR &&
+      !$view.isPortrait &&
+      !$view.isConstrainedWidth
+  );
   const isToastMode = $derived($toasts.length > 0);
   const isAppMenuColumnVisible = $derived(
     !isPageFullScreen &&
@@ -219,24 +225,26 @@
       </div>
     {/if}
   </div>
-  <div
-    class="flex items-center justify-end h-full shrink-0 border-l border-brs3"
-    data-testid="top-bar-actions-zone"
-  >
-    {#if isToastMode}
-      <TopNavToasts />
-    {:else}
-      {@render topnav?.()}
-      <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
-      {#if isDev}
-        <TopNavLeftMenuItem
-          action={Action.RHOMBUS}
-          label="Rhombus"
-          tooltip="Rhombus on the side"
-        />
+  {#if isToastMode || !isNavigatorInline}
+    <div
+      class="flex items-center justify-end h-full shrink-0 border-l border-brs3"
+      data-testid="top-bar-actions-zone"
+    >
+      {#if isToastMode}
+        <TopNavToasts />
+      {:else}
+        {@render topnav?.()}
+        <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
+        {#if isDev}
+          <TopNavLeftMenuItem
+            action={Action.RHOMBUS}
+            label="Rhombus"
+            tooltip="Rhombus on the side"
+          />
+        {/if}
       {/if}
-    {/if}
-  </div>
+    </div>
+  {/if}
   <div
     class="flex items-center h-full shrink-0 px-1"
     data-testid="top-bar-indicators"
@@ -250,5 +258,5 @@
     />
     {@render indicators?.()}
   </div>
-  <NavigatorPill />
+  <NavigatorPill isExpanded={isNavigatorInline} />
 </div>
