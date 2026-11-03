@@ -130,7 +130,9 @@
 {#snippet viewTabs()}
   <div class="flex items-center h-full" data-testid="resource-context-tabs">
     {#if $resourceStore.isInEditMode}
-      <EditModeDone onDone={() => $resourceStore.closeEditMode()} />
+      <div class="flex items-center h-full pr-3 mr-3 border-r border-brs3">
+        <EditModeDone onDone={() => $resourceStore.closeEditMode()} />
+      </div>
     {/if}
     {#if $resourceStore.isInFocusMode}
       <BoxButton
