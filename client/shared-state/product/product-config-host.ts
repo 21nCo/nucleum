@@ -9,8 +9,8 @@ export type ProductNavConfig = {
   appMenuPt: string[];
   homePath: string;
   homePathPt: string;
-  /** Record types the navigator searches. */
-  navigatorResources?: string[];
+  /** Record types the super bar and the navigator search. */
+  searchResources?: string[];
 };
 
 let productConfig: ProductNavConfig | undefined;

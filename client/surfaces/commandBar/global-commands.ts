@@ -4,6 +4,7 @@ import CommandBar from "@nucleum/surfaces/commandBar/CommandBar.svelte";
 import { Placement } from "@21n/ui/elements/direction.enum";
 import { Action } from "@nucleum/client/config/action.enum";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
+import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
 /** Commands owned by command; assembled in application composition. */
 export const commandCommands = {
@@ -21,6 +22,17 @@ export const commandCommands = {
         isDynamicSize: true,
         alignment: Placement.TopCenter
       }
+    }
+  },
+  search: {
+    action: Action.SEARCH,
+    label: "Search",
+    icon: "search",
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      requireCommandHost().runAction(Action.CMD, {
+        componentParams: { scope: "search" }
+      });
     }
   },
   activate_search_box: {

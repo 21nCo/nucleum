@@ -1035,7 +1035,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
 
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     const newCombo = `${modifier}+Shift+Alt+KeyO`;
-    const defaultCombo = `${modifier}+Shift+KeyP`;
+    const defaultCombo = `${modifier}+KeyK`;
 
     await openModeOfInteraction(page);
     await changeShortcutAndClose(page, panel, "Command bar", newCombo);
@@ -1063,7 +1063,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     const panel = page.getByTestId("mode-of-interaction-settings");
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     const newCombo = `${modifier}+Shift+Alt+KeyK`;
-    const defaultCombo = `${modifier}+KeyK`;
+    const defaultCombo = `${modifier}+Shift+KeyK`;
 
     await openModeOfInteraction(page);
     await changeShortcutAndClose(page, panel, "Search", newCombo);

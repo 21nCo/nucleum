@@ -133,6 +133,39 @@ export function rankNavigatorHistoryFrom(
   return limit === undefined ? ranked : ranked.slice(0, limit);
 }
 
+export const NAVIGATOR_SEARCH_FREQUENCY_WEIGHT = 1;
+export const NAVIGATOR_SEARCH_RECENCY_WEIGHT = 0.5;
+export const NAVIGATOR_SEARCH_FREQUENCY_CAP = 10;
+export const NAVIGATOR_SEARCH_RECENCY_HALF_LIFE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Search boost for the navigator: frequency in the ranking window (capped)
+ * plus a recency term that halves every week. Records never opened get 0.
+ */
+export function navigatorSearchBoost(
+  history: NavigatorHistory,
+  now: number
+): (id: string) => number {
+  return (id) => {
+    const entry = history.entries[id];
+    if (!entry) return 0;
+    const frequency =
+      Math.min(
+        navigatorHistoryScore(entry, now),
+        NAVIGATOR_SEARCH_FREQUENCY_CAP
+      ) / NAVIGATOR_SEARCH_FREQUENCY_CAP;
+    const age = Math.max(0, now - entry.lastOpenedAt);
+    const recency =
+      entry.lastOpenedAt > 0
+        ? Math.pow(0.5, age / NAVIGATOR_SEARCH_RECENCY_HALF_LIFE_MS)
+        : 0;
+    return (
+      frequency * NAVIGATOR_SEARCH_FREQUENCY_WEIGHT +
+      recency * NAVIGATOR_SEARCH_RECENCY_WEIGHT
+    );
+  };
+}
+
 /**
  * Drops expired opens and origins, empty entries and, over the caps, the
  * lowest-ranked entries and origins. The most recently opened entries and origins

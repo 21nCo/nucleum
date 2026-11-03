@@ -15,6 +15,7 @@
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
   import {
+    navigatorSearchBoost,
     rankNavigatorHistory,
     rankNavigatorHistoryByRecency,
     rankNavigatorHistoryFrom,
@@ -23,9 +24,9 @@
   import { onDestroy, onMount, untrack } from "svelte";
   import { navigatorFocusRequests } from "@nucleum/shell/navigator/navigator-focus";
   import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
-  import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
+  import { get } from "svelte/store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
+  import { searchResources } from "@nucleum/shared-state/resources/resource-search";
   import { Action } from "@nucleum/client/config/action.enum";
   import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
   import {
@@ -46,12 +47,12 @@
   const SEARCH_LIMIT = 30;
   const SEARCH_DEBOUNCE_MS = 200;
 
-  const searchResources = requireProductConfig().navigatorResources ?? [];
   let searchInputRef = $state<TextInput | undefined>(undefined);
   let query = $state("");
   let searchResults = $state<string[]>([]);
   let searchResultsQuery = $state("");
   const isSearchResultsCurrent = $derived(searchResultsQuery === query.trim());
+  let selectedIndex = $state(0);
   let isSearching = $state(false);
   let searchDebounce: ReturnType<typeof setTimeout> | undefined;
   let searchRequestId = 0;
@@ -122,28 +123,24 @@
   async function search(value: string) {
     const trimmed = value.trim();
     const requestId = ++searchRequestId;
-    if (!trimmed || searchResources.length === 0) {
+    if (!trimmed) {
       searchResults = [];
       searchResultsQuery = trimmed;
+      selectedIndex = 0;
       isSearching = false;
       return;
     }
     isSearching = true;
     try {
-      const result = (await datafn.search({
+      const hits = await searchResources({
         query: trimmed,
-        resources: searchResources,
         limit: SEARCH_LIMIT,
-        limitPerResource: SEARCH_LIMIT,
-        source: $datafnRuntime?.mode === "sync-direct" ? "remote" : "local",
-        prefix: true,
-        fuzzy: 0.2
-      })) as { results?: { data?: { id?: unknown } }[] };
+        boost: navigatorSearchBoost(get(navigatorHistory), Date.now())
+      });
       if (requestId !== searchRequestId) return;
       searchResultsQuery = trimmed;
-      searchResults = (result.results ?? [])
-        .map((entry) => entry.data?.id?.toString())
-        .filter((id): id is string => !!id && isRecordId(id));
+      searchResults = hits.map((hit) => hit.id);
+      selectedIndex = 0;
     } catch (error) {
       logger.error({ at: "Navigator.search", error });
       if (requestId === searchRequestId) {
@@ -183,29 +180,54 @@
       ]);
       return;
     }
-    const target = resolveNavigatorSearchTarget(query, {
-      query: searchResultsQuery,
-      ids: searchResults
-    });
+    if (
+      (event.key === "ArrowDown" || event.key === "ArrowUp") &&
+      searchResults.length > 0
+    ) {
+      event.preventDefault();
+      const step = event.key === "ArrowDown" ? 1 : -1;
+      selectedIndex =
+        (selectedIndex + step + searchResults.length) % searchResults.length;
+      return;
+    }
+    const target = resolveNavigatorSearchTarget(
+      query,
+      { query: searchResultsQuery, ids: searchResults },
+      selectedIndex
+    );
     if (event.key === "Enter" && target) {
       event.preventDefault();
-      openFresh(target);
+      event.stopPropagation();
+      openFresh(target, event);
     }
   }
 
-  function openFresh(id: string) {
+  /**
+   * Opens a resource as a fresh page that starts a trail; Cmd or Ctrl opens
+   * it beside the base page, or beside the open page.
+   */
+  function openFresh(id: string, event?: MouseEvent | KeyboardEvent) {
+    if (event && navigation.determineClickAccessMode(event)) {
+      navigation.resourceClickHandler(event, id, {
+        origin: Action.NAVIGATOR
+      });
+      return;
+    }
     navigation.openResource(id, AccessMode.PAGE, {
       origin: Action.NAVIGATOR,
       trail: "start"
     });
   }
 
-  function handleHistoryClick(item: NavigatorHistoryItem) {
+  function handleHistoryClick(
+    item: NavigatorHistoryItem,
+    event?: MouseEvent | KeyboardEvent
+  ) {
     if (item.pageAction) {
       navigation.gotoPath("/" + item.id);
       return;
     }
-    openFresh(item.id);
+    openFresh(item.id, event);
   }
 
   function toggleTrail(key: string) {
@@ -222,7 +244,7 @@
         item={item.pageAction?.action ?? item.id}
         isInterimTab={true}
         isTrail
-        onClick={() => handleHistoryClick(item)}
+        onClick={(event) => handleHistoryClick(item, event)}
       />
     {/each}
   </div>
@@ -230,13 +252,21 @@
 
 {#snippet resultList(ids: string[])}
   <div class="flex flex-col gap-1 -ml-2">
-    {#each ids as id (id)}
-      <TopBarResourceItem
-        item={id}
-        isInterimTab={true}
-        isTrail
-        onClick={() => openFresh(id)}
-      />
+    {#each ids as id, index (id)}
+      <div
+        class={cn("rounded-md", {
+          "ring-1 ring-brs4": index === selectedIndex
+        })}
+        data-testid="navigator-search-result"
+        data-active={index === selectedIndex}
+      >
+        <TopBarResourceItem
+          item={id}
+          isInterimTab={true}
+          isTrail
+          onClick={(event) => openFresh(id, event)}
+        />
+      </div>
     {/each}
   </div>
 {/snippet}

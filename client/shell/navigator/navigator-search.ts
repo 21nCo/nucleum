@@ -5,14 +5,15 @@ export type NavigatorSearchResults = {
 };
 
 /**
- * Resource that Enter opens from the navigator search: the first result, only when
- * the results belong to the current non-empty query.
+ * Resource that Enter opens from the navigator search: the selected result (the
+ * first by default), only when the results belong to the current non-empty query.
  */
 export function resolveNavigatorSearchTarget(
   query: string,
-  results: NavigatorSearchResults
+  results: NavigatorSearchResults,
+  selectedIndex = 0
 ) {
   const trimmed = query.trim();
   if (!trimmed || results.query !== trimmed) return undefined;
-  return results.ids[0];
+  return results.ids[selectedIndex];
 }

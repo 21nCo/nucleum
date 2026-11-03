@@ -132,7 +132,7 @@ export function installApplicationHosts() {
     configureSurfaceProductConfig(resolveProductConfig);
     configureProductConfigHost({
       ...resolveProductConfig(),
-      navigatorResources: resolveNavigatorResources()
+      searchResources: resolveSearchResources()
     });
     configureElementActionHost({
       navigate: goto,
@@ -190,8 +190,8 @@ export function installApplicationHosts() {
   };
 }
 
-/** Record types the navigator searches: every enabled library resource type. */
-function resolveNavigatorResources(): string[] {
+/** Record types the super bar and navigator search: every enabled library resource type. */
+function resolveSearchResources(): string[] {
   return [
     ...new Set(
       resolveLibrarySwitcherSections(

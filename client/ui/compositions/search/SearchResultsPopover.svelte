@@ -12,6 +12,8 @@
   import { KeyboardKey, ModifierKey } from "@21n/ui/elements/keyboard/keyboard.type";
   type SearchItem = Record<string, any>;
 
+  const SEARCH_TIMEOUT_MS = 10_000;
+
   let {
     searchCallback = undefined,
     searchStoreId = undefined,
@@ -145,7 +147,10 @@
   }
 
   onMount(() => {
-    isSearchInProgress = !isPreventDefaultResults;
+    if (searchCallback && !isPreventDefaultResults) {
+      isSearchInProgress = true;
+      queueSearch(value);
+    }
     window.addEventListener(
       "searchresultkeyup",
       onWindowSearchResultKeyup as EventListener
@@ -259,7 +264,7 @@
     }
     if (searchCallback) {
       try {
-        const result = await searchCallback(val);
+        const result = await settleSearch(searchCallback(val));
         if (generation !== searchGeneration) return;
         if (result) results = result;
         if (results.length > 0) {
@@ -298,6 +303,23 @@
     if (typeof onCount === "function") {
       onCount(countEvent);
     }
+  }
+
+  /**
+   * Bounds a search callback so a request that never settles ends in the
+   * empty state instead of an endless loading indicator.
+   */
+  function settleSearch<T>(request: Promise<T> | T): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error("Search timed out")),
+        SEARCH_TIMEOUT_MS
+      );
+    });
+    return Promise.race([Promise.resolve(request), timeout]).finally(() =>
+      clearTimeout(timer)
+    );
   }
 
   function show() {
