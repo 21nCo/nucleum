@@ -182,9 +182,12 @@
 
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
-  class={cn("flex w-full h-12 max-h-12 min-h-11 bg-bgs2 userdata", {
-    "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
-  })}
+  class={cn(
+    "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata",
+    {
+      "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
+    }
+  )}
   data-testid="top-bar"
 >
   {#if $context.embed !== Embed.HANDSET}
