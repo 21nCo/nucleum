@@ -39,11 +39,7 @@
     ContextZoneLayer,
     contextZone
   } from "@nucleum/shell/topNav/contextZone/context-zone";
-  import {
-    isTwoLineIdentity,
-    resolveContextZoneSubject
-  } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
-  import { resolvePageRoute } from "@nucleum/shared-state/commands/page-view-actions";
+  import { resolveContextZoneSubject } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
   import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
   import PaneSwitchButton from "@nucleum/shell/topNav/contextZone/PaneSwitchButton.svelte";
   import { samplePageBackground } from "@nucleum/shell/topNav/contextZone/surface-background";
@@ -145,22 +141,6 @@
       (item) => item.pane.layer >= ($activePane?.layer ?? Infinity)
     )
   );
-  let windowWidth = $state(window.innerWidth);
-  const isSplitOpen = $derived(
-    !!searchParams.get(AccessMode.BESIDE_BASE) ||
-      !!searchParams.get(AccessMode.BESIDE_PAGE)
-  );
-  const subjectLocation = $derived.by(() => {
-    if (subject?.kind !== "resource") return undefined;
-    if (subject.accessMode === AccessMode.PAGE) {
-      return resolvePageRoute(
-        $appStore.actions,
-        $page.url.pathname.replace(/^\/+|\/+$/g, "")
-      )?.action.label;
-    }
-    if (subject.accessMode) return "Split";
-    return undefined;
-  });
   const subjectBack = $derived(
     subject?.kind === "resource" && subject.accessMode === AccessMode.PAGE
       ? trailBack
@@ -269,8 +249,6 @@
   });
 </script>
 
-<svelte:window bind:innerWidth={windowWidth} />
-
 {#snippet rhombusAction(state: TopNavPanelActionState)}
   <TopNavLeftMenuItem
     action={Action.RHOMBUS}
@@ -353,8 +331,6 @@
             <PageIdentity
               {subject}
               backId={subjectBack?.id}
-              location={subjectLocation}
-              isTwoLine={isTwoLineIdentity(windowWidth, isSplitOpen)}
               onBack={() => navigation.backInTrail()}
             />
             {#if $activeEntry}

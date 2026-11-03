@@ -53,28 +53,3 @@ export function resolveContextZoneSubject(
     ? { kind: "resource", id: value, accessMode }
     : { kind: "path", path: value };
 }
-
-/**
- * Small line above a record's title in the context tab: its type, followed
- * by where it is open, such as "Node · Library".
- */
-export function resolveIdentityTypeLine(
-  resourceType: string,
-  location: string | undefined
-) {
-  const type = resourceType
-    ? resourceType.charAt(0).toUpperCase() + resourceType.slice(1)
-    : "";
-  return [type, location].filter(Boolean).join(" · ");
-}
-
-/** Width below which the context tab keeps the identity to one line. */
-export const IDENTITY_TWO_LINE_MIN_WIDTH = 1400;
-
-/**
- * Whether the context tab shows the two-line identity: only with room for
- * it, so not in split view or in narrow windows.
- */
-export function isTwoLineIdentity(windowWidth: number, isSplit: boolean) {
-  return !isSplit && windowWidth >= IDENTITY_TWO_LINE_MIN_WIDTH;
-}

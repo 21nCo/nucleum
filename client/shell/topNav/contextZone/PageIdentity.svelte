@@ -10,26 +10,17 @@
   import { resolvePageRoute } from "@nucleum/shared-state/commands/page-view-actions";
   import { liveResource } from "@nucleum/shell/topNav/tabs/live-resource";
   import ResourceLabel from "@nucleum/shell/topNav/tabs/ResourceLabel.svelte";
-  import {
-    resolveIdentityTypeLine,
-    type ContextZoneSubject
-  } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
+  import type { ContextZoneSubject } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
 
   let {
     subject,
     backId = undefined,
-    location = undefined,
-    isTwoLine = false,
     onBack = undefined
   }: {
     /** Record or page path the visible page shows. */
     subject: ContextZoneSubject;
     /** Record the page was opened from; shows a back button to it. */
     backId?: string;
-    /** Where the record is open, such as the page it covers. */
-    location?: string;
-    /** Shows the type and location line above a record's title. */
-    isTwoLine?: boolean;
     onBack?: () => void;
   } = $props();
 
@@ -55,9 +46,6 @@
           ? "Untitled"
           : ""
       : (pageAction?.label ?? "")
-  );
-  const typeLine = $derived(
-    $live ? resolveIdentityTypeLine($live.resourceType, location) : ""
   );
   const parentTitle = $derived(
     isValidString($parent?.resource?.label)
@@ -87,16 +75,10 @@
     {/if}
     {#key title}
       <div
-        class="flex flex-col justify-center min-w-0 px-1 gap-0.5"
+        class="flex items-center min-w-0 px-1"
         data-testid="top-bar-page-title"
         use:tooltip={{ text: title }}
       >
-        {#if live && isTwoLine && typeLine}
-          <span
-            class="truncate text-b4 leading-none text-fgs3"
-            data-testid="top-bar-page-type">{typeLine}</span
-          >
-        {/if}
         <span class="flex items-center min-w-0 text-base font-medium text-fgs1">
           {#if live}
             <span class="truncate min-w-0">
