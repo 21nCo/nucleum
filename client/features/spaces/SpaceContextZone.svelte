@@ -90,7 +90,7 @@
       items={views}
       value={view}
       size={Size.sm}
-      parentBgIndex={2}
+      parentBgIndex={0}
       isPreventTabShortcut={true}
       activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
       onSwitch={(event) => onViewChange(event.detail as SpaceView)}
