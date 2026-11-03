@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
 
   let {
@@ -18,23 +18,30 @@
     objective.toggleEditMode(true);
   }
 
+  const isEditing = $derived($objective.isInEditMode);
+
   $effect(() => {
-    if (!$objective.isInEditMode) return;
-    draft = $objective.label ?? "";
-    isCancelled = false;
-    void tick().then(() => {
-      inputRef?.focus();
-      inputRef?.select();
+    if (!isEditing) return;
+    untrack(() => {
+      draft = $objective.label ?? "";
+      isCancelled = false;
+      void tick().then(() => {
+        inputRef?.focus();
+        inputRef?.select();
+      });
     });
   });
 
-  async function save() {
+  async function saveLabel() {
     if (isCancelled || !$objective.isInEditMode) return;
     const next = draft.trim();
-    if (next !== ($objective.label ?? "")) {
-      $objective.label = next;
-      await objective.modify({ label: next });
-    }
+    if (next === ($objective.label ?? "")) return;
+    $objective.label = next;
+    await objective.modify({ label: next });
+  }
+
+  async function finish() {
+    await saveLabel();
     objective.toggleEditMode(false);
   }
 
@@ -47,7 +54,7 @@
     event.stopPropagation();
     if (event.key === "Enter") {
       event.preventDefault();
-      void save();
+      void finish();
     } else if (event.key === "Escape") {
       event.preventDefault();
       cancel();
@@ -64,7 +71,7 @@
     aria-label="Objective name"
     data-testid="objective-context-title-input"
     onkeydown={onKeydown}
-    onblur={() => void save()}
+    onblur={() => void saveLabel()}
   />
 {:else}
   <button

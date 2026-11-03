@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
 
   let {
@@ -13,23 +13,30 @@
   let isCancelled = false;
   const label = $derived($node.label || "Untitled");
 
+  const isEditing = $derived($node.isInEditMode);
+
   $effect(() => {
-    if (!$node.isInEditMode) return;
-    draft = $node.label ?? "";
-    isCancelled = false;
-    void tick().then(() => {
-      inputRef?.focus();
-      inputRef?.select();
+    if (!isEditing) return;
+    untrack(() => {
+      draft = $node.label ?? "";
+      isCancelled = false;
+      void tick().then(() => {
+        inputRef?.focus();
+        inputRef?.select();
+      });
     });
   });
 
-  async function save() {
+  async function saveLabel() {
     if (isCancelled || !$node.isInEditMode) return;
     const next = draft.trim();
-    if (next !== ($node.label ?? "")) {
-      $node.label = next;
-      await node.modify({ label: next });
-    }
+    if (next === ($node.label ?? "")) return;
+    $node.label = next;
+    await node.modify({ label: next });
+  }
+
+  async function finish() {
+    await saveLabel();
     node.toggleEditMode(false);
   }
 
@@ -42,7 +49,7 @@
     event.stopPropagation();
     if (event.key === "Enter") {
       event.preventDefault();
-      void save();
+      void finish();
     } else if (event.key === "Escape") {
       event.preventDefault();
       cancel();
@@ -59,7 +66,7 @@
     aria-label="Title"
     data-testid="node-context-title-input"
     onkeydown={onKeydown}
-    onblur={() => void save()}
+    onblur={() => void saveLabel()}
   />
 {:else}
   <button
