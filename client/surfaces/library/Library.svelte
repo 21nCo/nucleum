@@ -45,6 +45,16 @@
   let { resources = [] }: { resources?: Resource[] } = $props();
 
   let selectedResource = $state<Resource>(Resource.unknown);
+  const subType = $derived(
+    selectedResource === Resource.unknown
+      ? undefined
+      : (parseLibraryPath($page.url.pathname).subType ??
+          resolveLibraryFallbackSubType(selectedResource))
+  );
+
+  function selectSubType(nextSubType: string) {
+    replaceLibraryPath(selectedResource, nextSubType);
+  }
   let syncFeedbackRef = $state<InlineSyncingFeedback>();
 
   function syncSelectedResource(pathResource?: Resource) {
@@ -241,6 +251,8 @@
       <div class="flex flex-grow">
         <ResourceBrowser
           resource={selectedResource}
+          {subType}
+          onSubTypeChange={selectSubType}
           isPreventCwPadding={true}
           onBack={() => {
             selectedResource = Resource.unknown;
@@ -256,10 +268,8 @@
         {#key selectedResource}
           <LibraryRecordsPane
             resource={selectedResource}
-            subType={parseLibraryPath($page.url.pathname).subType ??
-              resolveLibraryFallbackSubType(selectedResource)}
-            onSubTypeChange={(subType) =>
-              replaceLibraryPath(selectedResource, subType)}
+            {subType}
+            onSubTypeChange={selectSubType}
           />
         {/key}
       </div>

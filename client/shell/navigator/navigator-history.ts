@@ -150,7 +150,8 @@ export function pruneNavigatorHistory(
 
 /**
  * Records a visit and prunes the result. Returns the same history object when the
- * visit repeats the latest open of that id within the duplicate window.
+ * visit repeats the latest open of that id within the duplicate window, or when its
+ * open time is already recorded, so replaying a persisted visit never counts twice.
  */
 export function recordNavigatorVisit(
   history: NavigatorHistory,
@@ -160,7 +161,9 @@ export function recordNavigatorVisit(
   const existing = history.entries[visit.id];
   if (
     existing &&
-    Math.abs(visit.at - existing.lastOpenedAt) < NAVIGATOR_HISTORY_DUPLICATE_MS
+    (Math.abs(visit.at - existing.lastOpenedAt) <
+      NAVIGATOR_HISTORY_DUPLICATE_MS ||
+      existing.opens.includes(visit.at))
   ) {
     return history;
   }

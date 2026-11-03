@@ -4,7 +4,8 @@ import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import {
   combinePageViewSegments,
   createPageViewActions,
-  resolvePageRoute
+  resolvePageRoute,
+  resolveRecordedPagePath
 } from "./page-view-actions";
 
 const PageComponent = () => null;
@@ -99,5 +100,25 @@ describe("resolvePageRoute", () => {
     expect(resolvePageRoute(actions, "cp/alerts")).toEqual({ action: alerts });
     expect(resolvePageRoute(actions, "settings/extra")).toBeNull();
     expect(resolvePageRoute(actions, "missing")).toBeNull();
+  });
+});
+
+describe("resolveRecordedPagePath", () => {
+  it("records a command-launched sub-view id by its canonical path", () => {
+    const route = resolvePageRoute(actions, "calendar.classic.year");
+    expect(
+      resolveRecordedPagePath(actions, route!.action, route!.subPath)
+    ).toBe("calendar/classic/year");
+  });
+
+  it("skips sub-paths without a registered view and records plain pages", () => {
+    expect(resolveRecordedPagePath(actions, calendar, [])).toBeUndefined();
+    expect(
+      resolveRecordedPagePath(actions, calendar, ["classic", "decade"])
+    ).toBeUndefined();
+    expect(resolveRecordedPagePath(actions, settings, undefined)).toBe(
+      "settings"
+    );
+    expect(resolveRecordedPagePath(actions, alerts, undefined)).toBeUndefined();
   });
 });

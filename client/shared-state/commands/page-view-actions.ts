@@ -98,3 +98,31 @@ export function resolvePageRoute(
   }
   return null;
 }
+
+/**
+ * Path recorded in navigator history for a rendered page: the registered sub-view
+ * matching the page path plus its sub-path, or the page path for a labelled,
+ * non-meta page without sub-views. Undefined when the view should not be recorded.
+ */
+export function resolveRecordedPagePath(
+  actions: IAction[],
+  pageAction: IAction,
+  subPath: string[] | undefined
+): string | undefined {
+  const pagePath = pageAction.path ?? pageAction.action;
+  if (subPath) {
+    const canonicalPath = [pagePath, ...subPath].join("/");
+    return actions.find(
+      (action) =>
+        action.subViewOf === pageAction.action && action.path === canonicalPath
+    )?.path;
+  }
+  if (
+    pageAction.type !== ActionType.PAGE ||
+    pageAction.isMeta ||
+    !pageAction.label
+  ) {
+    return;
+  }
+  return pagePath;
+}

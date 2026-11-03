@@ -14,8 +14,8 @@
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import view from "@21n/ui/environment/view.store";
-  import { ActionType } from "@nucleum/client/config/action.type";
   import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
+  import { resolveRecordedPagePath } from "@nucleum/shared-state/commands/page-view-actions";
 
   const ComponentResolver = requireActionRenderer();
   const productConfig = requireProductConfig();
@@ -128,38 +128,21 @@
     if (nextSubPath?.join("/") !== subPath?.join("/")) subPath = nextSubPath;
     $appStore.currentComponent = action;
     $appStore.isMenuHidden = action.isMenuHidden || $context.isSheet;
-    if (isRoutedPage) recordPageVisit(action, path, nextSubPath);
+    if (!$context.isSheet) recordPageVisit(action, nextSubPath);
   }
 
   function recordPageVisit(
     pageAction: IAction,
-    path: string,
     pageSubPath: string[] | undefined
   ) {
-    const recordedPath = resolveRecordedPagePath(pageAction, path, pageSubPath);
+    const recordedPath = resolveRecordedPagePath(
+      $appStore.actions,
+      pageAction,
+      pageSubPath
+    );
     if (!recordedPath || recordedPath === lastRecordedPath) return;
     lastRecordedPath = recordedPath;
     navigatorHistory.recordPage(recordedPath);
-  }
-
-  function resolveRecordedPagePath(
-    pageAction: IAction,
-    path: string,
-    pageSubPath: string[] | undefined
-  ) {
-    if (pageSubPath) {
-      const subView = $appStore.actions.find(
-        (item) => item.subViewOf === pageAction.action && item.path === path
-      );
-      return subView?.path;
-    }
-    if (
-      pageAction.type !== ActionType.PAGE ||
-      pageAction.isMeta ||
-      !pageAction.label
-    )
-      return;
-    return pageAction.path ?? pageAction.action;
   }
 </script>
 

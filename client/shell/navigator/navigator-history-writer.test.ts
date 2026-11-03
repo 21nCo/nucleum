@@ -10,12 +10,18 @@ const now = Date.UTC(2026, 10, 3);
 
 function createStorage(initial: NavigatorHistory) {
   let stored: unknown = initial;
+  let namespace: string | null = "user-a";
+  let onRead: (() => void) | undefined;
   const writes: Array<() => void> = [];
   let isDeferred = false;
   let isFailing = false;
   return {
     storage: {
-      read: async () => stored,
+      namespace: () => namespace,
+      read: async () => {
+        onRead?.();
+        return stored;
+      },
       write: (history: NavigatorHistory) => {
         if (isFailing) return Promise.resolve(false);
         return new Promise<boolean>((resolve) => {
@@ -30,6 +36,15 @@ function createStorage(initial: NavigatorHistory) {
       now: () => now
     },
     stored: () => stored as NavigatorHistory,
+    setStored: (value: NavigatorHistory) => {
+      stored = value;
+    },
+    switchNamespace: (value: string | null) => {
+      namespace = value;
+    },
+    onRead: (callback: (() => void) | undefined) => {
+      onRead = callback;
+    },
     defer: (value: boolean) => {
       isDeferred = value;
     },
@@ -100,6 +115,85 @@ describe("createNavigatorHistoryWriter", () => {
     await writer.flush();
 
     expect(Object.keys(store.stored().entries)).toEqual(["node:a"]);
+    expect(writer.pendingCount()).toBe(0);
+  });
+
+  it("drops visits recorded in another namespace", async () => {
+    const store = createStorage(createNavigatorHistory());
+    const writer = createNavigatorHistoryWriter(store.storage);
+    store.fail(true);
+    writer.add({ id: "node:a", kind: "resource", at: now - 10_000 });
+    await writer.flush();
+
+    store.switchNamespace("user-b");
+    store.setStored(createNavigatorHistory());
+    store.fail(false);
+    expect(
+      writer.applyPending(createNavigatorHistory()).entries["node:a"]
+    ).toBeUndefined();
+    writer.add({ id: "node:b", kind: "resource", at: now });
+    await writer.flush();
+
+    expect(Object.keys(store.stored().entries)).toEqual(["node:b"]);
+    expect(writer.pendingCount()).toBe(0);
+  });
+
+  it("waits for a namespace and adopts visits recorded before one was active", async () => {
+    const store = createStorage(createNavigatorHistory());
+    store.switchNamespace(null);
+    const writer = createNavigatorHistoryWriter(store.storage);
+    writer.add({ id: "node:a", kind: "resource", at: now });
+
+    expect(await writer.flush()).toBeUndefined();
+    expect(writer.pendingCount()).toBe(1);
+
+    store.switchNamespace("user-a");
+    await writer.flush();
+
+    expect(Object.keys(store.stored().entries)).toEqual(["node:a"]);
+    expect(writer.pendingCount()).toBe(0);
+  });
+
+  it("does not write when the namespace changes during a flush", async () => {
+    const store = createStorage(createNavigatorHistory());
+    const writer = createNavigatorHistoryWriter(store.storage);
+    writer.add({ id: "node:a", kind: "resource", at: now });
+    store.onRead(() => store.switchNamespace("user-b"));
+
+    expect(await writer.flush()).toBeUndefined();
+    expect(store.stored().entries).toEqual({});
+
+    store.onRead(undefined);
+    await writer.flush();
+
+    expect(store.stored().entries).toEqual({});
+    expect(writer.pendingCount()).toBe(0);
+  });
+
+  it("does not double count visits replayed after an unacknowledged write", async () => {
+    const store = createStorage(createNavigatorHistory());
+    const writer = createNavigatorHistoryWriter(store.storage);
+    let isAcknowledged = false;
+    const write = store.storage.write;
+    store.storage.write = async (history) => {
+      await write(history);
+      return isAcknowledged;
+    };
+    writer.add({
+      id: "node:b",
+      kind: "resource",
+      at: now - 5_000,
+      origin: "node:a"
+    });
+    writer.add({ id: "node:b", kind: "resource", at: now, origin: "node:a" });
+    await writer.flush();
+    isAcknowledged = true;
+    await writer.flush();
+
+    expect(store.stored().entries["node:b"].opens).toEqual([now - 5_000, now]);
+    expect(store.stored().entries["node:b"].from).toEqual({
+      "node:a": [now - 5_000, now]
+    });
     expect(writer.pendingCount()).toBe(0);
   });
 });

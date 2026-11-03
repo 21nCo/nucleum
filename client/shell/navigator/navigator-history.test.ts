@@ -75,6 +75,26 @@ describe("recordNavigatorVisit", () => {
     expect(repeat.entries["calendar/classic/year"].opens).toHaveLength(1);
   });
 
+  it("ignores a replayed visit whose open time is already recorded", () => {
+    let history = createNavigatorHistory();
+    const first = {
+      id: "node:b",
+      kind: "resource" as const,
+      at: now - 5_000,
+      origin: "node:a"
+    };
+    const second = { ...first, at: now };
+    history = recordNavigatorVisit(history, first);
+    history = recordNavigatorVisit(history, second);
+    const replayed = [first, second].reduce(recordNavigatorVisit, history);
+
+    expect(replayed).toBe(history);
+    expect(replayed.entries["node:b"].opens).toEqual([now - 5_000, now]);
+    expect(replayed.entries["node:b"].from).toEqual({
+      "node:a": [now - 5_000, now]
+    });
+  });
+
   it("does not count a record as its own origin", () => {
     const history = recordNavigatorVisit(createNavigatorHistory(), {
       id: "node:a",

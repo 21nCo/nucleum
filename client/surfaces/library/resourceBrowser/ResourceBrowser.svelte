@@ -39,12 +39,16 @@
     resource,
     onBack = undefined,
     isPreventCwPadding = false,
-    right: rightSnippet = undefined
+    right: rightSnippet = undefined,
+    subType = undefined,
+    onSubTypeChange = undefined
   }: {
     resource: Resource;
     onBack?: (() => void) | undefined;
     isPreventCwPadding?: boolean;
     right?: Snippet | undefined;
+    subType?: string;
+    onSubTypeChange?: (subType: string) => void;
   } = $props();
   let backPath = $derived($page.url.searchParams.get(AppSearchParam.RETURN_TO));
   let hasBack = $derived(onBack !== undefined || backPath !== null);
@@ -146,6 +150,8 @@
           accessPoint={ResourceAccessPoint.BROWSER}
           accessPointState={state}
           isConstrainedWidth={true}
+          {subType}
+          {onSubTypeChange}
         />
       </div>
     {/snippet}

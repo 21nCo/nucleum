@@ -1,6 +1,6 @@
 import { get, writable } from "svelte/store";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import { datafn } from "@nucleum/datafn/datafn.store";
+import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
   createNavigatorHistory,
@@ -20,6 +20,7 @@ let historySignal: HistorySignal | undefined;
 let flushTimer: ReturnType<typeof setTimeout> | undefined;
 
 const writer = createNavigatorHistoryWriter({
+  namespace: () => get(datafnRuntime)?.namespace ?? null,
   read: () => datafn.kv.get(Resource.navigatorHistory),
   write: async (history) => {
     const result = await datafn.kv.set(Resource.navigatorHistory, history);
@@ -40,6 +41,14 @@ function ensureSignal() {
   historySignal.subscribe((value) => {
     historyLocal.set(writer.applyPending(normalizeNavigatorHistory(value)));
   });
+  let namespace = get(datafnRuntime)?.namespace ?? null;
+  datafnRuntime.subscribe((runtime) => {
+    const nextNamespace = runtime?.namespace ?? null;
+    if (nextNamespace === namespace) return;
+    namespace = nextNamespace;
+    writer.retainCurrentNamespace();
+    if (writer.pendingCount() > 0) scheduleFlush();
+  });
   if (typeof window !== "undefined") {
     window.addEventListener("pagehide", flushNavigatorHistory);
   }
@@ -51,18 +60,11 @@ function scheduleFlush() {
   flushTimer = setTimeout(flushNavigatorHistory, FLUSH_DELAY_MS);
 }
 
-/**
- * Writes batched visits on top of the stored history once the stored record has
- * loaded, so a flush never replaces history that has not been read yet.
- */
+/** Writes batched visits on top of the stored history read from DataFn KV. */
 function flushNavigatorHistory() {
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = undefined;
   if (writer.pendingCount() === 0 || !historySignal) return;
-  if (historySignal.loading) {
-    scheduleFlush();
-    return;
-  }
   void writer
     .flush()
     .then((next) => {
