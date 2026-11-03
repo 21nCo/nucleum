@@ -359,22 +359,20 @@
         {/if}
       </section>
     {:else}
-      <section
-        class="flex flex-col gap-2 px-3 py-2 shrink-0"
-        data-testid="navigator-current-trail"
-      >
-        <div class="text-b2 text-fgs3">Currently opened</div>
-        {#if currentTrail}
+      {#if currentTrail}
+        <section
+          class="flex flex-col gap-2 px-3 py-2 shrink-0"
+          data-testid="navigator-current-trail"
+        >
+          <div class="text-b2 text-fgs3">Currently opened</div>
           {@render trailTree(currentTrail, (index) =>
             navigation.openTrailNode(index)
           )}
-        {:else}
-          <EmptyStatusView size={Size.sm} mainText="No items opened" />
-        {/if}
-      </section>
+        </section>
+      {/if}
       {#if recentTrails.length > 0}
         <section
-          class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3"
+          class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3 first:border-t-0"
           data-testid="navigator-recent-trails"
         >
           <div class="text-b2 text-fgs3">Recent trails</div>
@@ -424,7 +422,7 @@
         </section>
       {/if}
       <section
-        class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3"
+        class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3 first:border-t-0"
         data-testid="navigator-recent"
       >
         <div class="text-b2 text-fgs3">Recently accessed</div>
@@ -435,7 +433,7 @@
         {/if}
       </section>
       <section
-        class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3"
+        class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3 first:border-t-0"
       >
         {#if fromHereItems.length > 0}
           <div class="text-b2 text-fgs3">Frequently opened from here</div>
