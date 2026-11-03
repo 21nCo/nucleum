@@ -116,12 +116,7 @@
           "border-x": !isLastItem && !isFirstItem,
           "border-r": isFirstItem && !$context.experiments?.isEnableRoundedMain
         },
-        !isActive && {
-          "border-brs3":
-            action === Action.RHOMBUS || action === Action.NAVIGATOR,
-          "border-transparent":
-            action !== Action.RHOMBUS && action !== Action.NAVIGATOR
-        }
+        !isActive && "border-transparent"
       )}
       use:hoverable={{
         onHover: (val) => {
