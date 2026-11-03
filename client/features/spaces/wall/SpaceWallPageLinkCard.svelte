@@ -80,7 +80,7 @@
         wall.onDelete(item, label);
       }}
     >
-      <Icon icon="trash" size={Size.sm} class="stroke-err" />
+      <Icon icon="trash" size={Size.sm} class="stroke-ars1" />
     </button>
   {/if}
 </li>
