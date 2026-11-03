@@ -36,6 +36,7 @@ import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
 import {
+  isSameAccessTrailPosition,
   resolveAccessTrailParent,
   type AccessTrailPosition
 } from "@nucleum/shell/navigator/access-trail";
@@ -119,18 +120,38 @@ function clearLayerScopedRecordParams(
 }
 
 /**
- * A history entry this session added while a page was open or closed: a
- * resource page, or the base page a pushed close returned to (`BASE_ENTRY`).
+ * Access-trail state kept in a resource page's browser history entry: the
+ * trail node the entry shows, and the node of the entry it was pushed from,
+ * which is null when it was pushed from the base page.
  */
-type PushedPage = {
-  id: string;
-  position?: AccessTrailPosition;
+export type AccessTrailHistoryState = {
+  position: AccessTrailPosition;
+  from?: AccessTrailPosition | null;
 };
 
-const BASE_ENTRY = "";
+const ACCESS_TRAIL_STATE_KEY = "accessTrail";
 
-let pushedPages: PushedPage[] = [];
-let forwardPages: PushedPage[] = [];
+/** Reads the access-trail state of a history entry, if it has one. */
+export function readAccessTrailHistoryState(
+  state: unknown
+): AccessTrailHistoryState | undefined {
+  const value =
+    state && typeof state === "object"
+      ? (state as Record<string, unknown>)[ACCESS_TRAIL_STATE_KEY]
+      : undefined;
+  if (!value || typeof value !== "object") return undefined;
+  const entry = value as Partial<AccessTrailHistoryState>;
+  if (
+    typeof entry.position?.trail !== "string" ||
+    typeof entry.position?.node !== "string"
+  ) {
+    return undefined;
+  }
+  return entry as AccessTrailHistoryState;
+}
+
+let currentEntry:
+  { pageId: string; state?: AccessTrailHistoryState } | undefined;
 
 /** Whether `id` is the open page and that page is in full screen. */
 export function isFullScreenPage(
@@ -172,7 +193,7 @@ export const navigation = {
     const trail = accessTrail.get().current;
     const node = trail?.nodes[index];
     if (!node) return;
-    accessTrail.select(index);
+    accessTrail.select(node.key);
     navigation.openResource(node.id, AccessMode.PAGE, { trail: "select" });
   },
   /**
@@ -185,7 +206,7 @@ export const navigation = {
     const node = trail?.nodes[nodeIndex];
     if (!node) return;
     accessTrail.resume(key);
-    accessTrail.select(nodeIndex);
+    accessTrail.select(node.key);
     navigation.openResource(node.id, AccessMode.PAGE, { trail: "select" });
   },
   /**
@@ -199,7 +220,6 @@ export const navigation = {
     if (!openPage) return false;
     const trail = accessTrail.get().current;
     const parent = resolveAccessTrailParent(trail);
-    const isTopPushed = pushedPages.at(-1)?.id === openPage;
     if (parent === undefined || !trail) {
       navigation.closeResource({
         accessMode: AccessMode.PAGE,
@@ -207,43 +227,36 @@ export const navigation = {
       });
       return true;
     }
-    const parentId = trail.nodes[parent].id;
-    const previous = pushedPages.at(-2);
+    const parentNode = trail.nodes[parent];
+    const from =
+      currentEntry?.pageId === openPage ? currentEntry.state?.from : undefined;
     if (
-      isTopPushed &&
-      previous?.id === parentId &&
-      (!previous.position ||
-        (previous.position.trail === trail.key &&
-          previous.position.node === parent))
+      isSameAccessTrailPosition(accessTrail.resolve(from ?? undefined), {
+        trail: trail.key,
+        node: parentNode.key
+      })
     ) {
       window.history.back();
       return true;
     }
-    accessTrail.select(parent);
-    navigation.openResource(parentId, AccessMode.PAGE, { trail: "back" });
+    accessTrail.select(parentNode.key);
+    navigation.openResource(parentNode.id, AccessMode.PAGE, { trail: "back" });
     return true;
   },
-  /** Keeps the access trail in step with the open page after any navigation. */
-  syncAccessTrail(pageId: string | undefined) {
-    const entry = pageId ?? BASE_ENTRY;
-    if (pushedPages.at(-1)?.id !== entry) {
-      if (pushedPages.at(-2)?.id === entry) {
-        forwardPages = [...forwardPages, ...pushedPages.slice(-1)];
-        pushedPages = pushedPages.slice(0, -1);
-      } else if (forwardPages.at(-1)?.id === entry) {
-        pushedPages = [...pushedPages, ...forwardPages.slice(-1)];
-        forwardPages = forwardPages.slice(0, -1);
-      } else if (!pageId) {
-        forwardPages = [...forwardPages, ...pushedPages.slice().reverse()];
-        pushedPages = [];
-      }
-    }
+  /**
+   * Keeps the access trail in step with the open page after any navigation.
+   * `historyState` is the state of the history entry now shown; its recorded
+   * trail position selects the exact node, also for repeated resources.
+   */
+  syncAccessTrail(pageId: string | undefined, historyState?: unknown) {
     if (!pageId) {
+      currentEntry = undefined;
       accessTrail.sync(undefined);
       return;
     }
-    const top = pushedPages.at(-1);
-    accessTrail.sync(pageId, top?.id === pageId ? top.position : undefined);
+    const state = readAccessTrailHistoryState(historyState);
+    currentEntry = { pageId, state };
+    accessTrail.sync(pageId, state?.position);
   },
 
   /**
@@ -281,6 +294,8 @@ export const navigation = {
     props?: {
       queryParams?: any;
       replaceState?: boolean;
+      /** Access-trail state stored in the history entry. */
+      historyState?: AccessTrailHistoryState;
     }
   ) => {
     logger.log({ method: "gotoPath", path });
@@ -303,7 +318,14 @@ export const navigation = {
       };
       return n;
     });
-    goto(path, false, props?.replaceState ?? false);
+    goto(
+      path,
+      false,
+      props?.replaceState ?? false,
+      props?.historyState
+        ? { [ACCESS_TRAIL_STATE_KEY]: props.historyState }
+        : undefined
+    );
   },
   /**
    * Replaces the URL path with a page's canonical view path without adding a
@@ -424,6 +446,7 @@ export const navigation = {
       isPreventRefresh?: boolean;
       url?: URL;
       replaceState?: boolean;
+      historyState?: AccessTrailHistoryState;
     }
   ) => {
     if (!params) return;
@@ -444,7 +467,8 @@ export const navigation = {
         !areNavigationUrlsEqual(url, new URL(window.location.href))
       ) {
         navigation.gotoPath(url.href, {
-          replaceState: additional?.replaceState ?? true
+          replaceState: additional?.replaceState ?? true,
+          historyState: additional?.historyState
         });
       }
       return url;
@@ -459,7 +483,8 @@ export const navigation = {
       !areNavigationUrlsEqual(url, new URL(window.location.href))
     ) {
       navigation.gotoPath(url.href, {
-        replaceState: additional?.replaceState ?? true
+        replaceState: additional?.replaceState ?? true,
+        historyState: additional?.historyState
       });
     }
     return url;
@@ -536,8 +561,10 @@ export const navigation = {
     }
     let isCloseNavigator = false;
     let isPushHistory = false;
+    let historyState: AccessTrailHistoryState | undefined;
     if (accessMode === AccessMode.PAGE) {
       const openPage = url.searchParams.get(AccessMode.PAGE);
+      const openPosition = openPage ? accessTrail.position() : undefined;
       const intent = resolveAccessTrailIntent(
         openPage,
         params?.origin,
@@ -555,20 +582,22 @@ export const navigation = {
       } else if (intent === "extend") {
         accessTrail.extend(id.toString());
       }
-      if (openPage !== id.toString()) {
-        const pushed = { id: id.toString(), position: accessTrail.position() };
+      const position = accessTrail.position();
+      if (openPage !== id.toString() && position) {
         if (intent === "start" || intent === "extend") {
           forgetPageScroll(id.toString());
         }
         if (intent === "back") {
-          pushedPages = [...pushedPages.slice(0, -1), pushed];
+          historyState = {
+            position,
+            from:
+              currentEntry?.pageId === openPage
+                ? currentEntry.state?.from
+                : undefined
+          };
         } else {
           isPushHistory = true;
-          forwardPages = [];
-          pushedPages =
-            openPage || pushedPages.at(-1)?.id === BASE_ENTRY
-              ? [...pushedPages, pushed]
-              : [pushed];
+          historyState = { position, from: openPage ? openPosition : null };
         }
       }
     }
@@ -603,7 +632,8 @@ export const navigation = {
       },
       {
         url: url,
-        replaceState: !isPushHistory
+        replaceState: !isPushHistory,
+        historyState
       }
     );
   },
@@ -764,16 +794,12 @@ export const navigation = {
     const closeMode = (mode: AccessMode) => {
       const openPage = url.searchParams.get(AccessMode.PAGE);
       if (mode === AccessMode.PAGE && openPage) {
-        const isTracked = pushedPages.at(-1)?.id === openPage;
-        const isFromBase =
-          pushedPages.length === 1 || pushedPages.at(-2)?.id === BASE_ENTRY;
-        if (props?.isHistoryBack && isTracked && isFromBase) {
+        const isPushedFromBase =
+          currentEntry?.pageId === openPage &&
+          currentEntry.state?.from === null;
+        if (props?.isHistoryBack && isPushedFromBase) {
           window.history.back();
           return;
-        }
-        if (isTracked) {
-          pushedPages = [...pushedPages, { id: BASE_ENTRY }];
-          forwardPages = [];
         }
         navigation.toggleSearchParam(withPageParams(mode), {
           url,

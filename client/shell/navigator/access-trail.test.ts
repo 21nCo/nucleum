@@ -14,7 +14,11 @@ import {
 } from "./access-trail";
 
 let keyCount = 0;
-const opts = () => ({ key: `t${++keyCount}`, at: keyCount });
+const opts = () => ({
+  key: `t${++keyCount}`,
+  nodeKey: `n${keyCount}`,
+  at: keyCount
+});
 
 function activeId(trails: AccessTrails) {
   return trails.current?.nodes[trails.current.active]?.id;
@@ -157,15 +161,16 @@ describe("access trail", () => {
     trails = extendAccessTrail(trails, "node:b", opts());
     trails = extendAccessTrail(trails, "node:a", opts());
     const key = trails.current!.key;
+    const nodes = trails.current!.nodes.map((node) => node.key);
     expect(trails.current!.active).toBe(2);
     trails = syncAccessTrailPage(trails, "node:b", {
       ...opts(),
-      position: { trail: key, node: 1 }
+      position: { trail: key, node: nodes[1] }
     });
     expect(trails.current!.active).toBe(1);
     trails = syncAccessTrailPage(trails, "node:a", {
       ...opts(),
-      position: { trail: key, node: 2 }
+      position: { trail: key, node: nodes[2] }
     });
     expect(trails.current!.active).toBe(2);
     expect(resolveAccessTrailParent(trails.current)).toBe(1);
@@ -175,18 +180,55 @@ describe("access trail", () => {
     let trails = startAccessTrail(createAccessTrails(), "node:a", opts());
     trails = extendAccessTrail(trails, "node:b", opts());
     const key = trails.current!.key;
+    const nodes = trails.current!.nodes.map((node) => node.key);
     trails = syncAccessTrailPage(trails, undefined, opts());
     expect(trails.current).toBeUndefined();
     trails = syncAccessTrailPage(trails, "node:a", {
       ...opts(),
-      position: { trail: key, node: 0 }
+      position: { trail: key, node: nodes[0] }
     });
     trails = syncAccessTrailPage(trails, "node:b", {
       ...opts(),
-      position: { trail: key, node: 1 }
+      position: { trail: key, node: nodes[1] }
     });
     expect(trails.current?.key).toBe(key);
     expect(resolveAccessTrailParent(trails.current)).toBe(0);
     expect(trails.recent.some((item) => item.key === key)).toBe(false);
+  });
+
+  it("selects the earlier occurrence a history jump names", () => {
+    let trails = startAccessTrail(createAccessTrails(), "node:a", opts());
+    trails = extendAccessTrail(trails, "node:b", opts());
+    trails = extendAccessTrail(trails, "node:a", opts());
+    const key = trails.current!.key;
+    const first = trails.current!.nodes[0].key;
+    trails = syncAccessTrailPage(trails, "node:a", {
+      ...opts(),
+      position: { trail: key, node: first }
+    });
+    expect(trails.current!.active).toBe(0);
+    trails = extendAccessTrail(trails, "node:c", opts());
+    expect(trails.current!.nodes.at(-1)).toMatchObject({
+      id: "node:c",
+      parent: 0
+    });
+  });
+
+  it("gives stored nodes without keys a key of their own", () => {
+    const stored = normalizeAccessTrails({
+      version: 1,
+      current: {
+        key: "k",
+        nodes: [
+          { id: "node:a", parent: -1 },
+          { id: "node:b", parent: 0 }
+        ]
+      },
+      recent: []
+    });
+    expect(stored.current?.nodes.map((node) => node.key)).toEqual([
+      "k:0",
+      "k:1"
+    ]);
   });
 });

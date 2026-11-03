@@ -119,7 +119,8 @@
       besidePage =
         p?.url?.searchParams.get(AccessMode.BESIDE_PAGE) ?? undefined;
       navigation.syncAccessTrail(
-        p?.url?.searchParams.get(AccessMode.PAGE) ?? undefined
+        p?.url?.searchParams.get(AccessMode.PAGE) ?? undefined,
+        p?.state
       );
     });
     const appEventSub = appEvents.subscribe((x) => {

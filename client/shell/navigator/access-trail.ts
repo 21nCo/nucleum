@@ -1,7 +1,19 @@
-/** One resource opened in a trail; `parent` is the index of the node it was opened from, or -1 for the root. */
+/**
+ * One resource opened in a trail; `key` identifies the node itself, which stays
+ * stable while the trail is kept, and `parent` is the index of the node it was
+ * opened from, or -1 for the root.
+ */
 export type AccessTrailNode = {
   id: string;
+  key: string;
   parent: number;
+};
+
+/** Keys a trail change uses for a trail or node it creates. */
+export type AccessTrailStamp = {
+  key: string;
+  nodeKey: string;
+  at: number;
 };
 
 /** Resources opened from one fresh open, kept as a tree of followed links. */
@@ -57,7 +69,7 @@ export function normalizeAccessTrails(value: unknown): AccessTrails {
 export function startAccessTrail(
   trails: AccessTrails,
   id: string,
-  options: { key: string; at: number; origin?: string }
+  options: AccessTrailStamp & { origin?: string }
 ): AccessTrails {
   const archived = endAccessTrail(trails);
   return {
@@ -65,7 +77,7 @@ export function startAccessTrail(
     current: {
       key: options.key,
       ...(options.origin ? { origin: options.origin } : {}),
-      nodes: [{ id, parent: -1 }],
+      nodes: [{ id, key: options.nodeKey, parent: -1 }],
       active: 0,
       startedAt: options.at,
       updatedAt: options.at
@@ -81,7 +93,7 @@ export function startAccessTrail(
 export function extendAccessTrail(
   trails: AccessTrails,
   id: string,
-  options: { key: string; at: number }
+  options: AccessTrailStamp
 ): AccessTrails {
   const trail = trails.current;
   if (!trail) return startAccessTrail(trails, id, options);
@@ -99,7 +111,10 @@ export function extendAccessTrail(
     ...trails,
     current: {
       ...trail,
-      nodes: [...trail.nodes, { id, parent: trail.active }],
+      nodes: [
+        ...trail.nodes,
+        { id, key: options.nodeKey, parent: trail.active }
+      ],
       active: trail.nodes.length,
       updatedAt: options.at
     }
@@ -124,49 +139,62 @@ export function resolveAccessTrailParent(trail: AccessTrail | undefined) {
   return parent !== undefined && parent > -1 ? parent : undefined;
 }
 
-/** Trail node a history entry was opened at. */
+/** Trail node a history entry shows: the trail key and the node's own key. */
 export type AccessTrailPosition = {
   trail: string;
-  node: number;
+  node: string;
 };
+
+/** Position of the active node of the current trail, if any. */
+export function resolveAccessTrailPosition(
+  trails: AccessTrails
+): AccessTrailPosition | undefined {
+  const trail = trails.current;
+  const node = trail?.nodes[trail.active];
+  return trail && node ? { trail: trail.key, node: node.key } : undefined;
+}
+
+/** Whether two positions name the same trail node. */
+export function isSameAccessTrailPosition(
+  a: AccessTrailPosition | undefined,
+  b: AccessTrailPosition | undefined
+) {
+  return !!a && !!b && a.trail === b.trail && a.node === b.node;
+}
 
 /**
  * Follows the open page after a navigation the trail did not start itself,
- * such as browser back and forward. A known `position` of the history entry
- * selects that exact node, resuming its trail when that trail was archived
- * meanwhile. Closing the page archives the trail; a page outside
- * the current trail starts a new one.
+ * such as browser back and forward. The `position` recorded in the history
+ * entry selects that exact node, resuming its trail when it was archived.
+ * Entries without a position, such as the first page after a reload, follow
+ * the page by its resource. Closing the page archives the trail; a page
+ * outside the trails starts a new one.
  */
 export function syncAccessTrailPage(
   trails: AccessTrails,
   pageId: string | undefined,
-  options: { key: string; at: number; position?: AccessTrailPosition }
+  options: AccessTrailStamp & { position?: AccessTrailPosition }
 ): AccessTrails {
   if (!pageId) return endAccessTrail(trails);
   const position = options.position;
-  const archived = position
-    ? trails.recent.find((item) => item.key === position.trail)
-    : undefined;
-  if (
-    position &&
-    archived?.nodes[position.node]?.id === pageId &&
-    trails.current?.key !== position.trail
-  ) {
-    return activateAccessTrailNode(
-      resumeAccessTrail(trails, position.trail, options.at),
-      position.node,
-      options.at
-    );
+  if (position) {
+    const isCurrent = trails.current?.key === position.trail;
+    const owner = isCurrent
+      ? trails.current
+      : trails.recent.find((item) => item.key === position.trail);
+    const index =
+      owner?.nodes.findIndex(
+        (node) => node.key === position.node && node.id === pageId
+      ) ?? -1;
+    if (index > -1) {
+      const resumed = isCurrent
+        ? trails
+        : resumeAccessTrail(trails, position.trail, options.at);
+      return activateAccessTrailNode(resumed, index, options.at);
+    }
   }
   const trail = trails.current;
   if (!trail) return startAccessTrail(trails, pageId, options);
-  if (
-    position &&
-    position.trail === trail.key &&
-    trail.nodes[position.node]?.id === pageId
-  ) {
-    return activateAccessTrailNode(trails, position.node, options.at);
-  }
   if (trail.nodes[trail.active]?.id === pageId) return trails;
   const parent = resolveAccessTrailParent(trail);
   if (parent !== undefined && trail.nodes[parent].id === pageId) {
@@ -266,7 +294,14 @@ function normalizeTrail(value: unknown): AccessTrail | undefined {
     if (parent >= nodes.length || (nodes.length > 0 && parent < 0)) {
       return undefined;
     }
-    nodes.push({ id: node.id, parent: nodes.length === 0 ? -1 : parent });
+    nodes.push({
+      id: node.id,
+      key:
+        typeof node.key === "string" && node.key
+          ? node.key
+          : `${value.key}:${nodes.length}`,
+      parent: nodes.length === 0 ? -1 : parent
+    });
   }
   if (nodes.length === 0) return undefined;
   const active =

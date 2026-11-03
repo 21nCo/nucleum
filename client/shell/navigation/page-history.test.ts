@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { navigation } from "./navigation";
+import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
+import { resolveAccessTrailParent } from "@nucleum/shell/navigator/access-trail";
 
 vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
   uiState: { getState: () => [], setState: () => undefined }
@@ -21,34 +23,66 @@ vi.mock("@nucleum/datafn/datafn.store", async () => {
   };
 });
 
-let gotoPath: ReturnType<typeof vi.spyOn>;
+type Entry = { url: string; state?: unknown };
+
+let entries: Entry[] = [];
+let index = 0;
 let historyBack: ReturnType<typeof vi.spyOn>;
 
+function show() {
+  const entry = entries[index];
+  window.history.replaceState({}, "", entry.url);
+  navigation.syncAccessTrail(
+    new URL(entry.url, window.location.origin).searchParams.get("page") ??
+      undefined,
+    entry.state
+  );
+}
+
+function go(delta: number) {
+  index += delta;
+  show();
+}
+
+function activeNode() {
+  const trail = accessTrail.get().current;
+  return trail ? { trail, node: trail.nodes[trail.active] } : undefined;
+}
+
 beforeEach(() => {
-  window.history.replaceState({}, "", "/home");
-  navigation.syncAccessTrail(undefined);
-  gotoPath = vi
-    .spyOn(navigation, "gotoPath")
-    .mockImplementation(async (path: string) => {
-      window.history.pushState({}, "", path);
-    });
+  entries = [{ url: "/home" }];
+  index = 0;
+  show();
+  vi.spyOn(navigation, "gotoPath").mockImplementation(
+    async (path: string, props) => {
+      const url = new URL(path, window.location.origin);
+      const href = url.pathname + url.search;
+      const state = props?.historyState
+        ? { accessTrail: props.historyState }
+        : undefined;
+      if (props?.replaceState) {
+        entries[index] = { url: href, state: state ?? entries[index].state };
+      } else {
+        entries = [...entries.slice(0, index + 1), { url: href, state }];
+        index += 1;
+      }
+      show();
+    }
+  );
   historyBack = vi
     .spyOn(window.history, "back")
-    .mockImplementation(() => undefined);
+    .mockImplementation(() => go(-1));
 });
 afterEach(() => vi.restoreAllMocks());
 
-describe("closing a page opened from the base page", () => {
+describe("page history and access trails", () => {
   it("goes back in history only when the close asks for it", () => {
     navigation.openResource("node:one", "page" as never);
-    navigation.syncAccessTrail("node:one");
     navigation.closeResource({ accessMode: "page" as never });
     expect(historyBack).not.toHaveBeenCalled();
     expect(new URL(window.location.href).searchParams.has("page")).toBe(false);
 
-    navigation.syncAccessTrail(undefined);
     navigation.openResource("node:one", "page" as never);
-    navigation.syncAccessTrail("node:one");
     navigation.closeResource({
       accessMode: "page" as never,
       isHistoryBack: true
@@ -58,19 +92,32 @@ describe("closing a page opened from the base page", () => {
 
   it("returns to the trail page after a pushed close and browser back", () => {
     navigation.openResource("node:a", "page" as never);
-    navigation.syncAccessTrail("node:a");
     navigation.openResource("node:b", "page" as never);
-    navigation.syncAccessTrail("node:b");
     navigation.closeResource({
       accessMode: "page" as never,
       isHistoryBack: true
     });
     expect(historyBack).not.toHaveBeenCalled();
-    navigation.syncAccessTrail(undefined);
 
-    window.history.replaceState({}, "", "/home?page=node%3Ab");
-    navigation.syncAccessTrail("node:b");
+    go(-1);
+    expect(activeNode()?.node.id).toBe("node:b");
     expect(navigation.backInTrail()).toBe(true);
     expect(historyBack).toHaveBeenCalledTimes(1);
+    expect(activeNode()?.node.id).toBe("node:a");
+  });
+
+  it("follows a history jump to an earlier occurrence of a resource", () => {
+    navigation.openResource("node:a", "page" as never);
+    const first = activeNode()!.node.key;
+    navigation.openResource("node:b", "page" as never);
+    navigation.openResource("node:a", "page" as never);
+    expect(activeNode()?.node.key).not.toBe(first);
+
+    go(-2);
+    expect(activeNode()?.node.key).toBe(first);
+    navigation.openResource("node:c", "page" as never);
+    const { trail, node } = activeNode()!;
+    expect(node.id).toBe("node:c");
+    expect(trail.nodes[resolveAccessTrailParent(trail)!].key).toBe(first);
   });
 });

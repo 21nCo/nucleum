@@ -10,6 +10,7 @@ import {
   extendAccessTrail,
   normalizeAccessTrails,
   removeRecentAccessTrail,
+  resolveAccessTrailPosition,
   resumeAccessTrail,
   startAccessTrail,
   syncAccessTrailPage,
@@ -21,9 +22,16 @@ const FLUSH_DELAY_MS = 1000;
 
 type TrailChange = (trails: AccessTrails) => AccessTrails;
 
+/** A change made before the stored trails loaded, with the node it made active. */
+type QueuedChange = {
+  change: TrailChange;
+  position?: AccessTrailPosition;
+};
+
 const trailsLocal = writable<AccessTrails>(createAccessTrails());
 let loadState: "idle" | "loading" | "loaded" = "idle";
-let queued: TrailChange[] = [];
+let queued: QueuedChange[] = [];
+const aliases = new Map<string, AccessTrailPosition>();
 let isDirty = false;
 let flushTimer: ReturnType<typeof setTimeout> | undefined;
 let loadGeneration = 0;
@@ -48,6 +56,7 @@ function watchRuntime() {
     flushTimer = undefined;
     isDirty = false;
     queued = [];
+    aliases.clear();
     loadState = "idle";
     trailsLocal.set(createAccessTrails());
     ensureLoaded();
@@ -72,7 +81,19 @@ function ensureLoaded() {
     .then((stored) => {
       if (generation !== loadGeneration) return;
       const base = normalizeAccessTrails(stored);
-      const next = queued.reduce((trails, change) => change(trails), base);
+      const next = queued.reduce((trails, item) => {
+        const replayed = item.change(trails);
+        const position = resolveAccessTrailPosition(replayed);
+        if (
+          item.position &&
+          position &&
+          (item.position.trail !== position.trail ||
+            item.position.node !== position.node)
+        ) {
+          aliases.set(item.position.node, position);
+        }
+        return replayed;
+      }, base);
       queued = [];
       loadState = "loaded";
       trailsLocal.set(next);
@@ -111,14 +132,20 @@ function apply(change: TrailChange) {
   ensureLoaded();
   const current = get(trailsLocal);
   const next = change(current);
-  if (loadState !== "loaded") queued.push(change);
+  if (loadState !== "loaded") {
+    queued.push({ change, position: resolveAccessTrailPosition(next) });
+  }
   if (next === current) return;
   trailsLocal.set(next);
   if (loadState === "loaded") scheduleFlush();
 }
 
 function stamp() {
-  return { key: generateSimpleRandomId(), at: Date.now() };
+  return {
+    key: generateSimpleRandomId(),
+    nodeKey: generateSimpleRandomId(),
+    at: Date.now()
+  };
 }
 
 /**
@@ -144,23 +171,47 @@ export const accessTrail = {
     const options = stamp();
     apply((trails) => extendAccessTrail(trails, id, options));
   },
-  /** Activates a node of the current trail. */
-  select(index: number) {
+  /** Activates the node with key `nodeKey` in the current trail. */
+  select(nodeKey: string) {
     const at = Date.now();
-    apply((trails) => activateAccessTrailNode(trails, index, at));
+    apply((trails) =>
+      activateAccessTrailNode(
+        trails,
+        trails.current?.nodes.findIndex((node) => node.key === nodeKey) ?? -1,
+        at
+      )
+    );
   },
   /**
    * Follows the open page after browser navigation; undefined ends the trail.
    * `position` is the trail node the history entry was opened at, when known.
    */
   sync(pageId: string | undefined, position?: AccessTrailPosition) {
-    const options = { ...stamp(), position };
-    apply((trails) => syncAccessTrailPage(trails, pageId, options));
+    const options = stamp();
+    apply((trails) =>
+      syncAccessTrailPage(trails, pageId, {
+        ...options,
+        position: accessTrail.resolve(position)
+      })
+    );
   },
   /** Trail node that is active now, if a trail is current. */
   position(): AccessTrailPosition | undefined {
-    const trail = accessTrail.get().current;
-    return trail ? { trail: trail.key, node: trail.active } : undefined;
+    return resolveAccessTrailPosition(accessTrail.get());
+  },
+  /**
+   * Resolves a position recorded in a history entry to the node it names now.
+   * Nodes made while the stored trails loaded may have been merged into the
+   * stored trail; their recorded positions follow them.
+   */
+  resolve(position: AccessTrailPosition | undefined) {
+    let resolved = position;
+    for (let hop = 0; resolved && hop < 10; hop++) {
+      const alias = aliases.get(resolved.node);
+      if (!alias) break;
+      resolved = alias;
+    }
+    return resolved;
   },
   /** Keeps the current trail as a recent trail. */
   end() {
