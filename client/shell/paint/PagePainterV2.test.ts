@@ -1,5 +1,6 @@
 import { render, waitFor } from "@testing-library/svelte";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { tick } from "svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
   const { writable: createStore, get } = require("svelte/store");
@@ -56,9 +57,21 @@ describe("PagePainterV2", () => {
     window.history.replaceState(null, "", "/calendar");
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Runs every scheduled page refresh and lets Svelte apply the results. */
+  async function flushRefreshes() {
+    await tick();
+    await vi.runAllTimersAsync();
+    await tick();
+  }
+
   it("waits for actions to load before resolving the URL page", async () => {
-    const { queryByTestId, findByTestId } = render(PagePainterV2);
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    vi.useFakeTimers();
+    const { queryByTestId, getByTestId } = render(PagePainterV2);
+    await flushRefreshes();
     expect(queryByTestId("action-renderer")).toBeNull();
     expect(mocks.gotoPath).not.toHaveBeenCalled();
 
@@ -70,9 +83,11 @@ describe("PagePainterV2", () => {
       ]
     }));
 
-    const rendered = await findByTestId("action-renderer");
-    expect(rendered).toHaveAttribute("data-path", "calendar");
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await flushRefreshes();
+    expect(getByTestId("action-renderer")).toHaveAttribute(
+      "data-path",
+      "calendar"
+    );
     expect(mocks.gotoPath).not.toHaveBeenCalled();
   });
 
