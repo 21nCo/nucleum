@@ -169,12 +169,11 @@
       {/if}
       {#if isExpanded}
         <span
-          class="absolute inset-0 flex items-center justify-center rounded-[inherit] bg-bgs2 text-b3 font-medium text-fgs1 opacity-0 hover:opacity-100 transition-opacity"
+          class="absolute inset-0 flex items-center justify-end pr-4 rounded-[inherit] bg-bgs3-striped text-b4 text-fgs3 opacity-0 hover:opacity-100 transition-opacity"
           data-testid="panel-action-close-hint"
           aria-hidden="true"
         >
-          <span class="absolute inset-0 rounded-[inherit] bg-bgs3-striped"></span>
-          <span class="relative">Click to close</span>
+          Click to close
         </span>
       {/if}
     </button>
