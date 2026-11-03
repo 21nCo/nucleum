@@ -304,7 +304,7 @@
       <div
         bind:this={tabRef}
         class={cn(
-          "relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-brs3",
+          "relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
           { "bg-bgs1": !tabBackground }
         )}
         style:background-color={tabBackground}
