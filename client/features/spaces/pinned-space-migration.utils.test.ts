@@ -191,6 +191,38 @@ describe("planPinnedSpaceMenu", () => {
     });
   });
 
+  it("finishes pinning a space an earlier run created", () => {
+    expect(
+      planPinnedSpaceMenu({
+        menu: {
+          user: ["objective"],
+          spaces: ["space:other"],
+          pinnedSpaceId: "space:p",
+          tabsMigrated: true,
+          pinnedSpacePinPending: true
+        },
+        movedPins: ["objective"],
+        spaceId: "space:p",
+        isPinning: false
+      })
+    ).toEqual({
+      user: [],
+      spaces: ["space:other", "space:p"],
+      pinnedSpaceId: "space:p",
+      tabsMigrated: true
+    });
+  });
+
+  it("clears a pending pin without pinning when the space is gone", () => {
+    expect(
+      planPinnedSpaceMenu({
+        menu: { pinnedSpaceId: "space:p", pinnedSpacePinPending: true },
+        movedPins: [],
+        isPinning: false
+      })
+    ).toEqual({ user: [], pinnedSpaceId: "space:p", tabsMigrated: true });
+  });
+
   it("marks tabs as moved without a space when nothing was added", () => {
     expect(
       planPinnedSpaceMenu({ menu: {}, movedPins: [], isPinning: false })

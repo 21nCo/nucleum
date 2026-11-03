@@ -120,12 +120,14 @@ async function runMigration(
     ? []
     : storedTabs.map((id) => id?.toString()).filter(Boolean);
   if (!hasPinnedSpaceSources({ tabIds: tabEntries, typePins })) {
-    if (!menu.tabsMigrated) {
+    if (!menu.tabsMigrated || menu.pinnedSpacePinPending) {
+      const { space } = await loadPinnedSpace(menu.pinnedSpaceId);
       await writeMenu(
         scope,
         planPinnedSpaceMenu({
           menu: await readMenu(scope),
           movedPins: [],
+          spaceId: space?.id?.toString(),
           isPinning: false
         })
       );
@@ -160,10 +162,11 @@ async function runMigration(
   const isCreating = !space && added.length > 0;
   if (isCreating) {
     spaceId = pinned.id ?? generateResourceId(Resource.space).toString();
-    if (spaceId !== menu.pinnedSpaceId) {
+    if (spaceId !== menu.pinnedSpaceId || !menu.pinnedSpacePinPending) {
       await writeMenu(scope, {
         ...(await readMenu(scope)),
-        pinnedSpaceId: spaceId
+        pinnedSpaceId: spaceId,
+        pinnedSpacePinPending: true
       });
     }
     assertCurrent(scope);
@@ -187,6 +190,13 @@ async function runMigration(
     assertDatafnMutationSucceeded(result);
   }
 
+  if (tabEntries.length > 0) {
+    const currentTabs = await tabs.read();
+    assertCurrent(scope);
+    assertDatafnMutationSucceeded(
+      await tabs.rearrange(removeMovedTabs(currentTabs, tabEntries))
+    );
+  }
   await writeMenu(
     scope,
     planPinnedSpaceMenu({
@@ -196,11 +206,6 @@ async function runMigration(
       isPinning: isCreating || !menu.tabsMigrated
     })
   );
-  if (tabEntries.length > 0) {
-    const currentTabs = await tabs.read();
-    assertCurrent(scope);
-    await tabs.rearrange(removeMovedTabs(currentTabs, tabEntries));
-  }
   logger.log({
     at: "migratePinnedSpace",
     product: scope.product,

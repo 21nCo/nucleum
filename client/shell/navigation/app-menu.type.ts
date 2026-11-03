@@ -15,4 +15,6 @@ export type IAppMenu = {
   pinnedSpaceId?: string;
   /** Whether app tabs were moved into the pinned space. They move only once. */
   tabsMigrated?: boolean;
+  /** Whether the pinned space was created but not yet pinned to the app menu. */
+  pinnedSpacePinPending?: boolean;
 };

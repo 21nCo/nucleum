@@ -88,7 +88,8 @@ export function hasPinnedSpaceSources(params: {
  * The product's app menu entry after a migration run, built from the entry read just
  * before writing so changes made while the run was in progress are kept. Removes
  * only the resource-type pins the run moved, records the pinned space, marks app
- * tabs as moved, and pins the space only when `isPinning` is set.
+ * tabs as moved, and pins the space when `isPinning` is set or an earlier run
+ * created it without finishing the pin. Clears that pending pin.
  */
 export function planPinnedSpaceMenu<
   T extends {
@@ -96,6 +97,7 @@ export function planPinnedSpaceMenu<
     spaces?: string[];
     pinnedSpaceId?: string;
     tabsMigrated?: boolean;
+    pinnedSpacePinPending?: boolean;
   }
 >(params: {
   menu: T;
@@ -103,10 +105,12 @@ export function planPinnedSpaceMenu<
   spaceId?: string;
   isPinning: boolean;
 }): T {
-  const { menu, movedPins, spaceId, isPinning } = params;
+  const { menu, movedPins, spaceId } = params;
+  const { pinnedSpacePinPending, ...rest } = menu;
+  const isPinning = params.isPinning || Boolean(pinnedSpacePinPending);
   const spaces = menu.spaces ?? [];
   return {
-    ...menu,
+    ...(rest as T),
     user: (menu.user ?? []).filter((pin) => !movedPins.includes(pin)),
     tabsMigrated: true,
     ...(spaceId ? { pinnedSpaceId: spaceId } : {}),

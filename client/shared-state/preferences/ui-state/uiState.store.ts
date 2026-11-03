@@ -120,6 +120,10 @@ export const uiState = {
     }
     return key;
   },
+  /**
+   * Saves a state value. Returns the synced DataFn write, or undefined for state
+   * kept only on this device.
+   */
   setState(
     keyParam: Action | UIState | ResourceAccessPoint,
     value: any,
@@ -143,8 +147,8 @@ export const uiState = {
         });
       }
     } else {
-      this.modify({ [key]: value });
       logger.log({ context: "uiState.store - setState", key, value });
+      return this.modify({ [key]: value });
     }
   },
   getState(
