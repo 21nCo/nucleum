@@ -82,7 +82,7 @@
     {/if}
     {#if titleContent}
       <div
-        class="flex items-center min-w-0 px-1 text-base font-medium text-fgs1"
+        class="flex items-center min-w-0 px-1 text-base font-medium text-fgs1 app-framed:text-h3 app-framed:px-2"
         data-testid="top-bar-page-title"
       >
         {@render titleContent()}
@@ -95,7 +95,7 @@
           use:tooltip={{ text: title, isPlainText: true }}
         >
           <span
-            class="flex items-center min-w-0 text-base font-medium text-fgs1"
+            class="flex items-center min-w-0 text-base font-medium text-fgs1 app-framed:text-h3"
           >
             {#if live}
               <span class="truncate min-w-0">

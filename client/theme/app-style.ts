@@ -30,13 +30,13 @@ const tokensByStyle: Record<AppStyle, AppStyleTokens> = {
     "--app-control-radius": "0.375rem",
     "--app-panel-radius": "0.75rem",
     "--app-tab-radius": "0.75rem",
-    "--app-shell-gap": "0.5rem"
+    "--app-shell-gap": "0.75rem"
   },
   [AppStyle.Rounded]: {
     "--app-control-radius": "9999px",
     "--app-panel-radius": "1.75rem",
     "--app-tab-radius": "1.75rem",
-    "--app-shell-gap": "0.5rem"
+    "--app-shell-gap": "0.75rem"
   }
 };
 

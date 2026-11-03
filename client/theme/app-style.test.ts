@@ -59,7 +59,7 @@ describe("resolveAppStyleTokens", () => {
     const first = resolveAppStyleTokens(AppStyle.Semi);
     first["--app-shell-gap"] = "4px";
     expect(resolveAppStyleTokens(AppStyle.Semi)["--app-shell-gap"]).toBe(
-      "0.5rem"
+      "0.75rem"
     );
   });
 });

@@ -96,7 +96,9 @@
   }
 
   const isRounded = $derived($shape.isRounded);
-  const isFramed = $derived($shape.isFramed);
+  const isFramed = $derived(
+    $shape.isFramed && barStyle !== BarStyle.DOT && barStyle !== BarStyle.UNDER
+  );
 
   function handleClick() {
     if (item.value === "$add") {

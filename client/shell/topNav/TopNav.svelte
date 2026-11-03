@@ -287,7 +287,7 @@
 <div
   class={cn(
     "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata border-b border-brs3",
-    "app-framed:border-b-0 app-framed:h-[calc(2.5rem+2*var(--app-shell-gap))] app-framed:min-h-[calc(2.5rem+2*var(--app-shell-gap))] app-framed:max-h-[calc(2.5rem+2*var(--app-shell-gap))]"
+    "app-framed:border-b-0 app-framed:h-[calc(3rem+2*var(--app-shell-gap))] app-framed:min-h-[calc(3rem+2*var(--app-shell-gap))] app-framed:max-h-[calc(3rem+2*var(--app-shell-gap))]"
   )}
   data-testid="top-bar"
 >
