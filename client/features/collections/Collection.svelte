@@ -723,6 +723,7 @@
           })}
         >
           <CollectionTitleBar
+            onCloseEditMode={closeEditMode}
             {collection}
             {accessMode}
             {accessPoint}

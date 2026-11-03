@@ -45,6 +45,7 @@
     isContextZoneAccessMode
   } from "@nucleum/shell/topNav/contextZone/context-zone";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import EditModeDone from "@21n/ui/elements/button/EditModeDoneButton.svelte";
   import view from "@21n/ui/environment/view.store";
 
   let {
@@ -57,6 +58,7 @@
     isConstrainedWidth = false,
     onSearch = undefined,
     onAdd = undefined,
+    onCloseEditMode = undefined,
     additionalContent = undefined
   }: {
     searchQuery?: string;
@@ -69,6 +71,8 @@
     isConstrainedWidth?: boolean;
     onSearch?: ((event?: CustomEvent<{ value: any }>) => void) | undefined;
     onAdd?: ((event: CustomEvent<string>) => void) | undefined;
+    /** Saves and leaves edit mode; offered in the context zone. */
+    onCloseEditMode?: () => void;
     additionalContent?: Snippet | undefined;
   } = $props();
   const isContextZoneHosted = contextZone.isHosted;
@@ -190,6 +194,9 @@
       class="flex items-center h-full gap-3 px-2"
       data-testid="collection-context-actions"
     >
+      {#if $collection.isInEditMode && onCloseEditMode}
+        <EditModeDone onDone={onCloseEditMode} />
+      {/if}
       {@render collectionActions(false)}
     </div>
   </ContextZoneContent>

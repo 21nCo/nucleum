@@ -19,6 +19,7 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { isInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
+  import EditModeDone from "@21n/ui/elements/button/EditModeDoneButton.svelte";
 
   interface Props {
     resourceStore: Readable<IResourcePageWithPanels>;
@@ -128,6 +129,9 @@
 
 {#snippet viewTabs()}
   <div class="flex items-center h-full" data-testid="resource-context-tabs">
+    {#if $resourceStore.isInEditMode}
+      <EditModeDone onDone={() => $resourceStore.closeEditMode()} />
+    {/if}
     {#if $resourceStore.isInFocusMode}
       <BoxButton
         icon="cross"
