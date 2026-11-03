@@ -290,6 +290,13 @@ blockquote {
     height: 1.125rem;
   }
 
+  :is([data-app-style="semi"], [data-app-style="rounded"])
+    [data-chrome-icons]
+    [data-icon-size="lg"] {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
   .bg-aps2-striped, .bg-aps3-striped {
     background: repeating-linear-gradient(
       /* to top left, */
