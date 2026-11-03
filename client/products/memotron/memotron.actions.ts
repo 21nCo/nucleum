@@ -198,6 +198,9 @@ export const memotronActions: IAction[] = [
   },
   libraryAction,
   libraryPortraitAction,
+  ...createLibraryViewActions(libraryPortraitAction, memotronLibraryResources, {
+    isMeta: true
+  }),
   ...createLibraryViewActions(libraryAction, memotronLibraryResources),
   {
     action: "serendipity",

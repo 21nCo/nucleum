@@ -31,6 +31,7 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
+  import view from "@21n/ui/environment/view.store";
 
   let {
     slot = undefined,
@@ -75,7 +76,7 @@
   );
 
   $effect(() => {
-    isPlayerShownInPage.set(isPlayerInSlot && !isCovered);
+    isPlayerShownInPage.set(isPlayerInSlot && !isCovered && $view.isPortrait);
     return () => isPlayerShownInPage.set(false);
   });
 

@@ -62,7 +62,9 @@ const overviewAction: IAction = {
 export const nucleusActions: IAction[] = [
   ...memotronActions.filter(
     (action) =>
-      isSubProductAction(action) && action.action !== Action.LIBRARY_PORTRAIT
+      isSubProductAction(action) &&
+      action.action !== Action.LIBRARY_PORTRAIT &&
+      action.subViewOf !== Action.LIBRARY_PORTRAIT
   ),
   ...pointronActions.filter(isSubProductAction),
   libraryAction,

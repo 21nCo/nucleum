@@ -34,7 +34,10 @@
   import { cn } from "@21n/ui/environment/presentation";
   import ConfirmationNotification from "@nucleum/shell/notifications/ConfirmationNotification.svelte";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
-  import { isPortraitMiniPlayerDocked } from "@nucleum/shell/overlays/portrait-dock";
+  import {
+    isPlayerShownInPage,
+    isPortraitMiniPlayerDocked
+  } from "@nucleum/shell/overlays/portrait-dock";
   const ComponentResolver = requireActionRenderer();
   let modals = $state<ModalEvent[]>([]);
   let isShowAppearancePreview = $state(false);
@@ -155,8 +158,8 @@
     class={cn(
       "fixed bottom-0 left-0 mx-6 flex flex-col justify-center w-full gap-4 z-[100]",
       {
-        "mb-8": !$isPortraitMiniPlayerDocked,
-        "mb-[6.5rem]": $isPortraitMiniPlayerDocked
+        "mb-8": !$isPortraitMiniPlayerDocked && !$isPlayerShownInPage,
+        "mb-[6.5rem]": $isPortraitMiniPlayerDocked || $isPlayerShownInPage
       }
     )}
     transition:slide={{ duration: 200, axis: "x" }}
