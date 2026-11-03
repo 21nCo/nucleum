@@ -202,7 +202,7 @@
             {#if isConstrainedWidth}
               <div
                 class={cn(
-                  "relative flex flex-col w-full overflow-auto gap-3 cw:bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3",
+                  "relative flex flex-col w-full overflow-auto gap-3 cw:bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3 app-framed:border-transparent app-framed:!bg-transparent",
                   {
                     "bg-bgs2 py-2": isConstrainedWidth
                   }

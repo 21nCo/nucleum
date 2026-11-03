@@ -132,7 +132,7 @@
           },
           $shape.isFramed && {
             [`h-8 ${$shape.radiusClass}`]: true,
-            "text-fgs3 hover:text-fgs1": !isSelected,
+            "text-fgs3 hover:text-fgs1 hover:bg-bgs2-striped": !isSelected,
             "bg-bgs1 shadow-sm": isSelected,
             "text-fgs1": isSelected && !isAccentColor,
             "text-aps1": isSelected && isAccentColor
@@ -170,7 +170,7 @@
 {/snippet}
 
 {#if $shape.isFramed}
-  <div class="flex items-center h-full">
+  <div class="flex items-center h-full shrink-0">
     {@render track()}
   </div>
 {:else}

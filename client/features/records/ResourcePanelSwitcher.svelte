@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
   import { fly, slide } from "svelte/transition";
@@ -159,7 +160,7 @@
         }}
       />
     {:else}
-      {@render panelSwitcher(Size.md, false)}
+      {@render panelSwitcher(Size.md, $shape.isFramed && isConstrainedWidth)}
       <div class="flex items-center h-full ml-2">
         {@render maximizeButton()}
         {@render actionsMenu(1)}

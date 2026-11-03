@@ -111,7 +111,7 @@
     <button
       aria-label={accessibleLabel}
       aria-pressed={isExpanded ? true : undefined}
-      class={cn("flex items-center gap-1 h-full transition-colors", {
+      class={cn("relative flex items-center gap-1 h-full transition-colors", {
         "justify-center min-w-12 px-3.5 border-x border-transparent hover:border-brs3":
           !isExpanded,
         "app-framed:h-10 app-framed:border-transparent app-framed:hover:border-transparent app-framed:rounded-[var(--app-control-radius)]":
@@ -157,7 +157,7 @@
         isFilled={isHovered}
         class={cn({
           "text-fgs3": isHovered && !isActive,
-          "text-aps1": isActive
+          "text-aps1": isActive && !isExpanded
         })}
         size={label ? Size.sm : Size.md}
       />
@@ -166,6 +166,16 @@
       {/if}
       {#if trailing}
         <span class="flex items-center ml-auto">{@render trailing()}</span>
+      {/if}
+      {#if isExpanded}
+        <span
+          class="absolute inset-0 flex items-center justify-center rounded-[inherit] bg-bgs2 text-b3 font-medium text-fgs1 opacity-0 hover:opacity-100 transition-opacity"
+          data-testid="panel-action-close-hint"
+          aria-hidden="true"
+        >
+          <span class="absolute inset-0 rounded-[inherit] bg-bgs3-striped"></span>
+          <span class="relative">Click to close</span>
+        </span>
       {/if}
     </button>
     {#if isOpeningMenuOpen}
