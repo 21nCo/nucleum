@@ -192,18 +192,17 @@
     searchDebounce = setTimeout(() => search(value), SEARCH_DEBOUNCE_MS);
   }
 
-  function handleSearchKey(event: KeyboardEvent) {
-    if (event.isComposing || event.keyCode === 229) return;
+  function handleSearchKey(event: KeyboardEvent): boolean {
+    if (event.isComposing || event.keyCode === 229) return true;
     if (event.key === "Escape") {
       event.preventDefault();
-      if ($query) {
-        clearSearch();
-        return;
-      }
-      navigation.toggleSearchParam([
-        resolveNavigatorLayer(new URL(window.location.href)) ?? AccessMode.PANEL
-      ]);
-      return;
+      if ($query) clearSearch();
+      else
+        navigation.toggleSearchParam([
+          resolveNavigatorLayer(new URL(window.location.href)) ??
+            AccessMode.PANEL
+        ]);
+      return true;
     }
     if (
       (event.key === "ArrowDown" || event.key === "ArrowUp") &&
@@ -214,7 +213,7 @@
       selectedIndex =
         (selectedIndex + step + searchResults.length) % searchResults.length;
       void revealSelectedResult();
-      return;
+      return true;
     }
     const target = resolveNavigatorSearchTarget(
       $query,
@@ -225,7 +224,9 @@
       event.preventDefault();
       event.stopPropagation();
       openFresh(target, event);
+      return true;
     }
+    return false;
   }
 
   async function revealSelectedResult() {

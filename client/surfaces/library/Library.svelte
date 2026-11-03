@@ -68,9 +68,10 @@
   const isContextZoneHosted = contextZone.isHosted;
   let selectedResource = $state<Resource>(Resource.unknown);
   const isSwitcherInTopBar = $derived(
-    $isContextZoneHosted &&
-      !$view.isConstrainedWidth &&
-      isLibrarySwitcherInTopBar($appStore.product, resources.length)
+    isLibrarySwitcherInTopBar($appStore.product, resources.length, {
+      isContextZoneHosted: $isContextZoneHosted,
+      isConstrainedWidth: $view.isConstrainedWidth
+    })
   );
   let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
   const subType = $derived(

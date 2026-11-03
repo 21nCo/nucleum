@@ -14,7 +14,10 @@
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
-  import { nextCycleValue } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    contextZone,
+    nextCycleValue
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { isLibrarySwitcherInTopBar } from "@nucleum/surfaces/library/library-switcher-placement";
 
   let {
@@ -38,6 +41,14 @@
     )
       .flatMap((section) => section.items)
       .filter((item) => !item.isDisabled)
+  );
+
+  const isContextZoneHosted = contextZone.isHosted;
+  const isSwitcherInTopBar = $derived(
+    isLibrarySwitcherInTopBar($appStore.product, resources.length, {
+      isContextZoneHosted: $isContextZoneHosted,
+      isConstrainedWidth: $view.isConstrainedWidth
+    })
   );
 
   function selectResource(resource: Resource) {
@@ -90,7 +101,7 @@
   });
 </script>
 
-{#if isLibrarySwitcherInTopBar($appStore.product, resources.length)}
+{#if isSwitcherInTopBar}
   <ContextZoneContent isInlineFallback={false} cycle={cycleResource}>
     <div class="h-full" data-testid="library-resource-tabs">
       <BoxSwitcher

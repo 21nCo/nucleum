@@ -22,10 +22,12 @@
   const icon = $derived(resource?.icon ?? fallbackIcon);
 </script>
 
-{#if !resource && !source.isResolved}
+{#if !resource && source.isResolved}
+  <span class="truncate text-fgs3">Not found</span>
+{:else if !resource}
   <span class="block h-3 w-28 rounded bg-bgs3 animate-pulse" aria-hidden="true"
   ></span>
-{:else if action?.resourceLabelRenderer && resource}
+{:else if action?.resourceLabelRenderer}
   {@const ResourceLabelRenderer = action.resourceLabelRenderer}
   <ResourceLabelRenderer
     item={resource}

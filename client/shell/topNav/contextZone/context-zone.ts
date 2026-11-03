@@ -92,24 +92,61 @@ export function nextCycleValue<T>(values: T[], current: T | undefined) {
 }
 
 /**
- * Picks the pane the context zone describes: the pane of the shown entry,
- * otherwise the pane the user worked in last, otherwise the newest pane of the
- * topmost visible layer.
+ * Picks the pane the context zone describes: the visible mounted pane the user
+ * worked in last, otherwise the pane of the entry the zone would show,
+ * otherwise the newest pane of the topmost visible layer.
  */
 export function resolveContextZonePane(
-  entry: { pane: ContextZonePane } | undefined,
+  registered: { key: number; pane: ContextZonePane }[],
   mounted: { key: number; pane: ContextZonePane }[],
   activePane: string | undefined,
   visible?: ReadonlySet<number>
 ): ContextZonePane | undefined {
+  const active = activePane
+    ? mounted.find(
+        (item) =>
+          item.pane.id === activePane &&
+          (!visible || visible.has(item.pane.layer))
+      )
+    : undefined;
   return (
-    entry?.pane ?? resolveContextZoneEntry(mounted, activePane, visible)?.pane
+    active?.pane ??
+    resolveContextZoneEntry(registered, activePane, visible)?.pane ??
+    resolveContextZoneEntry(mounted, activePane, visible)?.pane
   );
 }
 
+/**
+ * Picks the entry shown for `pane`: its newest entry, or nothing when the
+ * pane registered none. Without a pane it falls back to
+ * `resolveContextZoneEntry`.
+ */
+export function resolveContextZonePaneEntry<
+  T extends { key: number; pane: ContextZonePane }
+>(
+  registered: T[],
+  pane: ContextZonePane | undefined,
+  activePane: string | undefined,
+  visible?: ReadonlySet<number>
+): T | undefined {
+  if (!pane) return resolveContextZoneEntry(registered, activePane, visible);
+  return resolveContextZoneEntry(
+    registered.filter((item) => item.pane.id === pane.id),
+    pane.id,
+    visible
+  );
+}
+
+const pane = derived(
+  [entries, panes, activePaneId, visibleLayers],
+  ([list, mounted, paneId, visible]) =>
+    resolveContextZonePane(list, mounted, paneId, visible)
+);
+
 const active = derived(
-  [entries, activePaneId, visibleLayers],
-  ([list, pane, visible]) => resolveContextZoneEntry(list, pane, visible)
+  [entries, pane, activePaneId, visibleLayers],
+  ([list, shown, paneId, visible]) =>
+    resolveContextZonePaneEntry(list, shown, paneId, visible)
 );
 
 /**
@@ -123,13 +160,10 @@ export const contextZone = {
   /** Layers the user can see; undefined means every layer counts. */
   visibleLayers: { subscribe: visibleLayers.subscribe },
   isHosted: derived(hostCount, (count) => count > 0),
+  /** Entry shown in the zone: the newest entry of the described pane. */
   active,
   /** Pane whose page the context zone describes. */
-  pane: derived(
-    [active, panes, activePaneId, visibleLayers],
-    ([entry, list, paneId, visible]) =>
-      resolveContextZonePane(entry, list, paneId, visible)
-  ),
+  pane,
   /** Marks a top bar as hosting the zone; returns its release function. */
   host() {
     hostCount.update((count) => count + 1);

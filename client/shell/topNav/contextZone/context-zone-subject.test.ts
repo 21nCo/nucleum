@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { resolveContextZoneSubject } from "./context-zone-subject";
-import { ContextZoneLayer, resolveContextZonePane } from "./context-zone";
+import {
+  ContextZoneLayer,
+  resolveContextZonePane,
+  resolveContextZonePaneEntry
+} from "./context-zone";
 
 const url = (value: string) => new URL(value, "https://local.nucleum.app");
 
@@ -65,29 +69,74 @@ describe("resolveContextZoneSubject", () => {
 
 describe("resolveContextZonePane", () => {
   const base = { id: "base", layer: ContextZoneLayer.BASE };
+  const beside = { id: "beside", layer: ContextZoneLayer.BESIDE_BASE };
   const page = { id: "page", layer: ContextZoneLayer.PAGE };
   const mounted = [
     { key: 1, pane: base },
-    { key: 2, pane: page }
+    { key: 2, pane: beside }
   ];
+  const baseVisible = new Set([
+    ContextZoneLayer.BASE,
+    ContextZoneLayer.BESIDE_BASE
+  ]);
 
-  it("prefers the pane of the shown entry", () => {
-    expect(resolveContextZonePane({ pane: base }, mounted, "page")).toBe(base);
+  it("follows the pane the user worked in last even without its own entry", () => {
+    const registered = [{ key: 3, pane: beside }];
+    expect(
+      resolveContextZonePane(registered, mounted, "base", baseVisible)
+    ).toBe(base);
   });
 
-  it("falls back to the pane the user worked in last", () => {
-    expect(resolveContextZonePane(undefined, mounted, "base")).toBe(base);
+  it("falls back to the pane of the entry the zone would show", () => {
+    const registered = [{ key: 3, pane: base }];
+    expect(
+      resolveContextZonePane(registered, mounted, undefined, baseVisible)
+    ).toBe(base);
   });
 
-  it("falls back to the topmost visible pane", () => {
-    expect(resolveContextZonePane(undefined, mounted, undefined)).toBe(page);
+  it("falls back to the newest pane of the topmost visible layer", () => {
+    expect(resolveContextZonePane([], mounted, undefined, baseVisible)).toBe(
+      beside
+    );
+  });
+
+  it("ignores an active pane on a hidden layer", () => {
+    const covered = [...mounted, { key: 4, pane: page }];
     expect(
       resolveContextZonePane(
-        undefined,
-        mounted,
-        "page",
-        new Set([ContextZoneLayer.BASE])
+        [],
+        covered,
+        "base",
+        new Set([ContextZoneLayer.PAGE])
       )
-    ).toBe(base);
+    ).toBe(page);
+  });
+});
+
+describe("resolveContextZonePaneEntry", () => {
+  const base = { id: "base", layer: ContextZoneLayer.BASE };
+  const beside = { id: "beside", layer: ContextZoneLayer.BESIDE_BASE };
+
+  it("shows no entry for a pane that registered none", () => {
+    const registered = [{ key: 1, pane: beside }];
+    expect(
+      resolveContextZonePaneEntry(registered, base, "base")
+    ).toBeUndefined();
+  });
+
+  it("shows the newest entry of the pane", () => {
+    const registered = [
+      { key: 1, pane: base },
+      { key: 2, pane: beside },
+      { key: 3, pane: base }
+    ];
+    expect(resolveContextZonePaneEntry(registered, base, "base")?.key).toBe(3);
+  });
+
+  it("falls back to the usual entry without a pane", () => {
+    const registered = [{ key: 1, pane: beside }];
+    expect(
+      resolveContextZonePaneEntry(registered, undefined, undefined)?.key
+    ).toBe(1);
   });
 });

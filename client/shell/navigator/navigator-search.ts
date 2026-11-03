@@ -1,6 +1,6 @@
 import { derived, writable } from "svelte/store";
 
-type KeyHandler = (event: KeyboardEvent) => void;
+type KeyHandler = (event: KeyboardEvent) => boolean;
 
 const query = writable("");
 const inlineCount = writable(0);
@@ -19,16 +19,22 @@ export const navigatorSearch = {
     inlineCount.update((count) => count + 1);
     return () => inlineCount.update((count) => Math.max(0, count - 1));
   },
-  /** Sets the navigator's handler for keys typed in the search input; returns its release function. */
+  /**
+   * Sets the navigator's handler for keys typed in the search input; it
+   * returns whether it handled the key. Returns its release function.
+   */
   handleKeys(handler: KeyHandler) {
     keyHandler = handler;
     return () => {
       if (keyHandler === handler) keyHandler = undefined;
     };
   },
-  /** Passes a key typed in the search input to the navigator. */
+  /**
+   * Passes a key typed in the search input to the navigator; returns whether
+   * the navigator handled it, so unhandled keys can reach global shortcuts.
+   */
   keydown(event: KeyboardEvent) {
-    keyHandler?.(event);
+    return keyHandler?.(event) ?? false;
   },
   /** Clears the query. */
   reset() {

@@ -24,15 +24,20 @@
     onBack?: () => void;
   } = $props();
 
-  const live = $derived(
-    subject.kind === "resource" ? liveResource(subject.id) : undefined
+  const subjectId = $derived(
+    subject.kind === "resource" ? subject.id : undefined
   );
+  const subjectPath = $derived(
+    subject.kind === "path" ? subject.path : undefined
+  );
+  const live = $derived(subjectId ? liveResource(subjectId) : undefined);
   const parent = $derived(backId ? liveResource(backId) : undefined);
   const pageAction = $derived(
-    subject.kind === "path"
-      ? resolvePageRoute($appStore.actions, subject.path)?.action
+    subjectPath
+      ? resolvePageRoute($appStore.actions, subjectPath)?.action
       : undefined
   );
+  const isMissing = $derived(!!$live?.isResolved && !$live.resource);
   const title = $derived(
     live
       ? isValidString($live?.resource?.label)
@@ -49,7 +54,7 @@
   );
 </script>
 
-{#if live || pageAction}
+{#if (live && !isMissing) || pageAction}
   <div
     class="flex items-center h-full min-w-0 max-w-[24rem] shrink-0 pl-3 pr-1 gap-1"
     data-testid="top-bar-page-identity"

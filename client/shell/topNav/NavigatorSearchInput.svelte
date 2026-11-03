@@ -40,8 +40,7 @@
     data-testid="navigator-search-input"
     class="flex-1 min-w-0 h-full bg-transparent outline-none text-fgs1 placeholder:text-fgs3"
     onkeydown={(event) => {
-      event.stopPropagation();
-      navigatorSearch.keydown(event);
+      if (navigatorSearch.keydown(event)) event.stopPropagation();
     }}
   />
   <button

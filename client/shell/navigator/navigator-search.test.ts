@@ -14,7 +14,7 @@ describe("navigatorSearch", () => {
   });
 
   it("passes keys to the registered handler until it is released", () => {
-    const handler = vi.fn();
+    const handler = vi.fn(() => true);
     const release = navigatorSearch.handleKeys(handler);
     const event = new KeyboardEvent("keydown", { key: "ArrowDown" });
     navigatorSearch.keydown(event);
@@ -22,6 +22,28 @@ describe("navigatorSearch", () => {
     release();
     navigatorSearch.keydown(event);
     expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports whether the navigator handled a key", () => {
+    const release = navigatorSearch.handleKeys(
+      (event) => event.key === "ArrowDown"
+    );
+    expect(
+      navigatorSearch.keydown(
+        new KeyboardEvent("keydown", { key: "ArrowDown" })
+      )
+    ).toBe(true);
+    expect(
+      navigatorSearch.keydown(
+        new KeyboardEvent("keydown", { key: "k", metaKey: true })
+      )
+    ).toBe(false);
+    release();
+    expect(
+      navigatorSearch.keydown(
+        new KeyboardEvent("keydown", { key: "ArrowDown" })
+      )
+    ).toBe(false);
   });
 
   it("clears the query", () => {
