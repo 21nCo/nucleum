@@ -5,8 +5,7 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { onMount } from "svelte";
   import { tooltip } from "@21n/ui/actions/popover.action";
-  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
-  import { AppStyle } from "@21n/theme/app-style";
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
 
   let {
     options,
@@ -34,8 +33,6 @@
   $effect(() => {
     if (selected === undefined) selected = options[0]?.value;
   });
-
-  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
 
   let containerWidth = $state(0);
   let containerEl = $state<HTMLDivElement | undefined>();
@@ -80,7 +77,8 @@
   role={isTablist ? "tablist" : undefined}
   bind:this={containerEl}
   class={cn("grid grid-flow-col h-full", {
-    "auto-cols-max w-full": !isExpandOnActiveForIcon || isIconOnlyMode
+    "auto-cols-max w-full": !isExpandOnActiveForIcon || isIconOnlyMode,
+    "items-center gap-1 px-1": $shape.isFramed
   })}
   style:width={!isIconOnlyMode && isExpandOnActiveForIcon && containerWidth > 0
     ? `${containerWidth}px`
@@ -97,17 +95,19 @@
       aria-selected={isTablist ? isSelected : undefined}
       aria-label={option.label}
       class={cn(
-        "flex items-center justify-center gap-1 h-full text-b2 transition-all duration-300",
+        "flex items-center justify-center gap-1 text-b2 transition-all duration-300",
         {
-          "border-t": isActiveIndicatorOnTop,
-          "border-b": !isActiveIndicatorOnTop,
+          "h-full": !$shape.isFramed,
+          [`h-10 ${$shape.radiusClass}`]: $shape.isFramed,
+          "border-t": isActiveIndicatorOnTop && !$shape.isFramed,
+          "border-b": !isActiveIndicatorOnTop && !$shape.isFramed,
           "px-3": size === Size.sm,
           "px-4": size === Size.md,
           "border-transparent hover:border-brs3 text-fgs3": !isSelected,
           "border-fgs2": isSelected && !isAccentColor,
           "border-aps1 text-aps1": isSelected && isAccentColor,
-          "rounded-full !border-transparent": isRounded,
-          [`${bg(parentBgIndex)}`]: isSelected,
+          [`${bg(parentBgIndex)}`]: isSelected && !$shape.isFramed,
+          "bg-aps3 text-aps1": isSelected && $shape.isFramed,
           [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
         }
       )}
@@ -126,8 +126,8 @@
           {size}
           isFilled={isSelected}
           class={cn({
-            "text-fgs1": isSelected && !isAccentColor,
-            "text-aps1": isSelected && isAccentColor,
+            "text-fgs1": isSelected && !isAccentColor && !$shape.isFramed,
+            "text-aps1": isSelected && (isAccentColor || $shape.isFramed),
             "text-fgs2": !isSelected
           })}
         />

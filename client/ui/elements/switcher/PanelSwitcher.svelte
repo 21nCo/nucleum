@@ -8,6 +8,7 @@
 </script>
 
 <script lang="ts">
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   import type { Snippet } from "svelte";
   import {
     BarStyle,
@@ -231,6 +232,7 @@
           "inline-block": !isExpandToFullWidth
         },
         style === PanelSwitcherStyle.BAR && {
+          "!border-transparent": $shape.isFramed,
           "overflow-x-auto": !isRenderAsDropdown,
           "h-12": !isExpandToFullWidth,
           "border-b border-brs3":
@@ -293,6 +295,8 @@
         role="tablist"
         class={cn("flex items-center", bg(parentBgIndex - 1), {
           "h-full": style === PanelSwitcherStyle.BAR,
+          "gap-1 px-1 !border-transparent":
+            style === PanelSwitcherStyle.BAR && $shape.isFramed,
           "overflow-x-auto mr-auto": isExpandToFullWidth,
           "min-w-fit": !isExpandToFullWidth,
           "border-b border-brs3":

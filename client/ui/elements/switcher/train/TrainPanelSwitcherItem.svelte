@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
-  import { AppStyle } from "@21n/theme/app-style";
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   import view from "@21n/ui/environment/view.store";
   import { Size } from "@21n/ui/elements/size.enum";
   import {
@@ -60,7 +59,7 @@
     onDebouncedChange?.(debouncedChangeEvent);
   }
 
-  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
+  const isRounded = $derived($shape.isRounded);
 </script>
 
 <button

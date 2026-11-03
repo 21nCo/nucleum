@@ -11,8 +11,7 @@
   import PanelSwitcherItemLabel from "@21n/ui/elements/switcher/PanelSwitcherItemLabel.svelte";
   import { rearrangeOnAxis } from "@21n/ui/actions/rearrange.action";
   import { scrollIntoViewOnFocus } from "@21n/ui/actions/scroll.action";
-  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
-  import { AppStyle } from "@21n/theme/app-style";
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   let {
     item,
     size = Size.md,
@@ -96,7 +95,8 @@
     onDebouncedChange?.(debouncedChangeEvent);
   }
 
-  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
+  const isRounded = $derived($shape.isRounded);
+  const isFramed = $derived($shape.isFramed);
 
   function handleClick() {
     if (item.value === "$add") {
@@ -118,7 +118,9 @@
   <button
     role="tab"
     aria-selected={isActive}
-    class={cn("relative group flex bg-transparent h-full", {
+    class={cn("relative group flex bg-transparent", {
+      "h-full": !isFramed,
+      "h-10 self-center items-center": isFramed,
       "px-4":
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&
@@ -131,8 +133,9 @@
       "border-b-2": barStyle === BarStyle.OVERFLOW,
       "border-ccs1": isActive && barStyle === BarStyle.OVERFLOW,
       "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW,
-      "rounded-full": isRounded,
-      "!bg-ccs3 !border-transparent": isRounded && isActive
+      [$shape.radiusClass]: isFramed,
+      [`hover:${bg(parentBgIndex)}`]: isFramed && !isActive,
+      "!bg-ccs3 !border-transparent": isFramed && isActive
     })}
     onclick={handleClick}
     disabled={isDisabled}
@@ -158,7 +161,7 @@
         "border-t-2": barStyle === BarStyle.EXACT && isInversePlacement,
         "border-ccs1": isActive && barStyle === BarStyle.EXACT,
         "border-transparent": !isActive && barStyle === BarStyle.EXACT,
-        "!border-transparent": isRounded
+        "!border-transparent": isFramed
       })}
     >
       <PanelSwitcherItemLabel
@@ -176,7 +179,7 @@
         onDebouncedChange={(event) => emitDebouncedChange(event.detail)}
       />
     </div>
-    {#if isActive && !isRounded && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
+    {#if isActive && !isFramed && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
       <div
         class={cn("absolute", {
           "bottom-1 bg-ccs1 left-1/2 w-1 h-1 rounded-full":
