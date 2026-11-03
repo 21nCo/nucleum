@@ -11,6 +11,7 @@
     resolveFlipKeyframes
   } from "@nucleum/shell/topNav/panel-action-motion";
   import {
+    resolveExpandedBorderClass,
     resolvePanelActionStates,
     type TopNavPanelAction
   } from "@nucleum/shell/topNav/panel-actions";
@@ -122,7 +123,7 @@
     "flex shrink-0",
     expandedAction
       ? [
-          "relative z-10 self-start h-[calc(100%+1px)] -mb-px border-l border-brs3 bg-bgs2",
+          "relative z-10 self-start h-[calc(100%+1px)] -mb-px border-l border-b border-brs3 bg-bgs2",
           widthClass
         ]
       : "items-stretch self-stretch"
@@ -130,11 +131,16 @@
   data-testid="top-bar-panel-actions"
   data-expanded={expandedAction}
 >
-  {#each actions as item (item.action)}
+  {#each actions as item, index (item.action)}
     <div
       class={cn(
         "flex items-center h-full",
-        states[item.action] === "expanded" ? "flex-1 min-w-0" : "shrink-0"
+        states[item.action] === "expanded"
+          ? [
+              "flex-1 min-w-0 border-brs3",
+              resolveExpandedBorderClass(index, actions.length)
+            ]
+          : "shrink-0"
       )}
       data-testid="top-bar-panel-action"
       data-action={item.action}

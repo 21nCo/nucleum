@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolvePanelActionStates } from "./panel-actions";
+import {
+  resolveExpandedBorderClass,
+  resolvePanelActionStates
+} from "./panel-actions";
 
 const actions = ["focus", "rhombus", "navigator"];
 
@@ -31,5 +34,14 @@ describe("resolvePanelActionStates", () => {
       rhombus: "idle",
       navigator: "idle"
     });
+  });
+});
+
+describe("resolveExpandedBorderClass", () => {
+  it("borders the expanded action on the sides that face other actions", () => {
+    expect(resolveExpandedBorderClass(0, 3)).toBe("border-r");
+    expect(resolveExpandedBorderClass(1, 3)).toBe("border-x");
+    expect(resolveExpandedBorderClass(2, 3)).toBe("border-l");
+    expect(resolveExpandedBorderClass(0, 1)).toBe("");
   });
 });

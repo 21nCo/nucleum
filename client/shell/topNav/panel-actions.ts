@@ -34,3 +34,15 @@ export function resolvePanelActionStates(
     ])
   );
 }
+
+/**
+ * Side borders of the expanded action, by its position in the group: a right
+ * border for the first, both sides for a middle one, a left border for the
+ * last.
+ */
+export function resolveExpandedBorderClass(index: number, count: number) {
+  if (count <= 1) return "";
+  if (index === 0) return "border-r";
+  if (index === count - 1) return "border-l";
+  return "border-x";
+}
