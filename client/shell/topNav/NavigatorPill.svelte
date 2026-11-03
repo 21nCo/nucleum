@@ -29,7 +29,7 @@
 
 {#if state === "expanded"}
   <div
-    class="flex items-center w-full h-full px-3"
+    class="flex items-center w-full h-full"
     data-testid="navigator-inline-search"
   >
     <NavigatorSearchInput />
