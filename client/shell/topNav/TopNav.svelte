@@ -30,6 +30,8 @@
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { resolveContextZoneSubject } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
+  import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
   import {
     closeTopLayer,
     resolveCloseControlLabel
@@ -76,6 +78,7 @@
   const bulkEditContext = bulkEditStore.context;
   const bulkEditSubContext = bulkEditStore.subContext;
   const activeEntry = contextZone.active;
+  const activePane = contextZone.pane;
 
   let isHideMenuLabels = $state(readHideMenuLabels());
   let isHideLeftNavBar = $state(readHideLeftNavBar());
@@ -97,6 +100,12 @@
       $accessTrail.current,
       searchParams.get(AccessMode.PAGE)
     )
+  );
+  const subject = $derived(resolveContextZoneSubject($activePane, $page.url));
+  const subjectBack = $derived(
+    subject?.kind === "resource" && subject.accessMode === AccessMode.PAGE
+      ? trailBack
+      : undefined
   );
   const isPageFullScreen = $derived(
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
@@ -160,33 +169,33 @@
     class="flex flex-1 min-w-0 h-full items-center justify-start overflow-x-auto"
     data-testid="top-bar-context-zone"
   >
-    {#if isPageOpen && !isBulkMode && (trailBack || isPageFullScreen)}
-      <div class="flex items-center h-full shrink-0 pl-1 pr-1 gap-0.5">
-        {#if trailBack}
-          <button
-            type="button"
-            data-testid="top-bar-back"
-            aria-label="Back"
-            class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-            use:tooltip={{ text: "Back" }}
-            onclick={() => navigation.backInTrail()}
-          >
-            <Icon icon="chevron-left" size={Size.md} />
-          </button>
-        {/if}
-        {#if isPageFullScreen}
-          <button
-            type="button"
-            data-testid="top-bar-exit-full-screen"
-            aria-label="Exit full screen"
-            class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-            use:tooltip={{ text: "Exit full screen" }}
-            onclick={() => navigation.exitFullScreen()}
-          >
-            <Icon icon="exitfullscreen" size={Size.md} />
-          </button>
-        {/if}
+    {#if isPageFullScreen && !isBulkMode}
+      <div class="flex items-center h-full shrink-0 pl-1">
+        <button
+          type="button"
+          data-testid="top-bar-exit-full-screen"
+          aria-label="Exit full screen"
+          class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+          use:tooltip={{ text: "Exit full screen" }}
+          onclick={() => navigation.exitFullScreen()}
+        >
+          <Icon icon="exitfullscreen" size={Size.md} />
+        </button>
       </div>
+    {/if}
+    {#if subject && !isBulkMode}
+      <PageIdentity
+        {subject}
+        backId={subjectBack?.id}
+        onBack={() => navigation.backInTrail()}
+      />
+      {#if $activeEntry}
+        <div
+          class="shrink-0 w-px h-5 mx-1 bg-brs3"
+          aria-hidden="true"
+          data-testid="top-bar-identity-divider"
+        ></div>
+      {/if}
     {/if}
     {#if isBulkMode}
       {@render bulkEditBar?.({

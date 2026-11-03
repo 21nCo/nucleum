@@ -1,46 +1,34 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { logger } from "@nucleum/client/runtime/logging/logger";
   import {
     isFullScreenPage,
     navigation
   } from "@nucleum/shell/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { tabState } from "@nucleum/shell/topNav/tabs/tab-state";
+  import { liveResource } from "@nucleum/shell/topNav/tabs/live-resource";
+  import ResourceLabel from "@nucleum/shell/topNav/tabs/ResourceLabel.svelte";
 
   import { page } from "$app/stores";
   import { hoverable } from "@21n/ui/actions/hover.action";
   import { popover, tooltip } from "@21n/ui/actions/popover.action";
-  import {
-    AccessMode,
-    ResourceAccessPoint
-  } from "@nucleum/datafn/resource.type";
+  import { AccessMode } from "@nucleum/datafn/resource.type";
   import {
     determineResourceAccessMode,
-    determineResourceType,
-    isRecordId,
     isTrashedResource
   } from "@nucleum/datafn/resource.utils";
   import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
-  import { resolveResource } from "@nucleum/datafn/resource-query.utils";
 
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { Placement } from "@21n/ui/elements/direction.enum";
   import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
   import { abg, cn } from "@21n/ui/environment/presentation";
-  import { onMount, untrack } from "svelte";
-  import { get } from "svelte/store";
   import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
-  import { Resource } from "@nucleum/datafn/resource.enum";
   import { rearrangeOnAxis } from "@21n/ui/actions/rearrange.action";
-  import { isValidString } from "@21n/shared-utils/text.utils";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import context from "@nucleum/client/runtime/context.store";
-  import { datafn } from "@nucleum/datafn/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
   let {
     item,
     isInterimTab = false,
@@ -58,16 +46,15 @@
     onRearrange?: (displacement: number) => void;
     onRearranged?: (displacement: number) => void;
   } = $props();
-  let resource = $state<any>(undefined);
-  let isResolved = $state(false);
+  const live = $derived(liveResource(item));
+  const resource = $derived($live.resource);
+  const isResolved = $derived($live.isResolved);
   const isShown = $derived(
     !isResolved ||
       !isTrail ||
       (!!resource && !(resource.id && isTrashedResource(resource)))
   );
-  let action = $state<any>(undefined);
   let isHovering = $state(false);
-  let resourceType = $state<Resource>(Resource.unknown);
   const dev_isFullHeightTabStyle = true;
   const contextMenu = $derived(
     isTrail
@@ -89,56 +76,6 @@
   let isActive = $derived(
     item.toString() === $page.url?.searchParams?.get(AccessMode.PAGE)
   );
-  const recordStore = $derived.by(() => {
-    if (!isRecordId(item) || resourceType === Resource.unknown)
-      return undefined;
-    return toSvelteStore<unknown[]>(
-      datafn.table(resourceType).signal({
-        filters: { id: item },
-        limit: 1,
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true
-        }
-      }),
-      { initialData: [] }
-    );
-  });
-
-  $effect(() => {
-    if (!recordStore) return;
-    const record = get(recordStore).data[0];
-    if (record && typeof record === "object") {
-      resource = { ...untrack(() => resource), ...record };
-      isResolved = true;
-    }
-  });
-
-  onMount(() => {
-    void initialize();
-
-    async function initialize() {
-      if (isRecordId(item)) {
-        resourceType = determineResourceType(item);
-        action = requireCommandHost().resolveAction(resourceType);
-        const resolved = await resolveResource(item).catch((error) => {
-          logger.error({ at: "TopBarResourceItem.initialize", item, error });
-          return undefined;
-        });
-        if (resolved) resource = { ...resolved, ...(resource ?? {}) };
-      } else {
-        action = requireCommandHost().resolveAction(item);
-        if (action) {
-          resource = {
-            label: action.label,
-            icon: action.icon
-          };
-        }
-      }
-      isResolved = true;
-    }
-  });
-
   function resolveContextMenu() {
     if (!resource?.id) return contextMenu;
     const currentMode = determineResourceAccessMode(resource.id);
@@ -257,26 +194,7 @@
       onkeydown={handleTabKeyDown}
     >
       <div class="truncate text-b3">
-        {#if !resource && !isResolved}
-          <span
-            class="block h-3 w-28 rounded bg-bgs3 animate-pulse"
-            aria-hidden="true"
-          ></span>
-        {:else if action?.resourceLabelRenderer && resource}
-          {@const ResourceLabelRenderer = action.resourceLabelRenderer}
-          <ResourceLabelRenderer
-            item={resource}
-            accessPoint={ResourceAccessPoint.TABS}
-            isShowFallbackIcons={true}
-          />
-        {:else}
-          <span class="flex items-center gap-1">
-            {#if resource?.icon}
-              <Icon icon={resource.icon} size={Size.sm} />
-            {/if}
-            {isValidString(resource?.label) ? resource?.label : "Untitled"}
-          </span>
-        {/if}
+        <ResourceLabel source={$live} />
       </div>
       {#if isInterimTab && !isTrail}
         <div class="flex items-center">

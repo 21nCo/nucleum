@@ -22,10 +22,13 @@
   } = $props();
 
   const paneId = untrack(() => id);
-  setContextZonePane({ id: paneId, layer: untrack(() => layer) });
+  const pane = { id: paneId, layer: untrack(() => layer) };
+  setContextZonePane(pane);
 
   onMount(() => {
+    const release = contextZone.registerPane(pane);
     if (isActivateOnMount) contextZone.activatePane(paneId);
+    return release;
   });
 
   onDestroy(() => {

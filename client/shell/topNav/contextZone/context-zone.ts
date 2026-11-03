@@ -36,6 +36,7 @@ export const ContextZoneLayer = {
 const PANE_CONTEXT_KEY = Symbol("context-zone-pane");
 
 const entries = writable<ContextZoneEntry[]>([]);
+const panes = writable<{ key: number; pane: ContextZonePane }[]>([]);
 const activePaneId = writable<string | undefined>(undefined);
 const visibleLayers = writable<ReadonlySet<number> | undefined>(undefined);
 const hostCount = writable(0);
@@ -79,6 +80,27 @@ export function nextCycleValue<T>(values: T[], current: T | undefined) {
 }
 
 /**
+ * Picks the pane the context zone describes: the pane of the shown entry,
+ * otherwise the pane the user worked in last, otherwise the newest pane of the
+ * topmost visible layer.
+ */
+export function resolveContextZonePane(
+  entry: { pane: ContextZonePane } | undefined,
+  mounted: { key: number; pane: ContextZonePane }[],
+  activePane: string | undefined,
+  visible?: ReadonlySet<number>
+): ContextZonePane | undefined {
+  return (
+    entry?.pane ?? resolveContextZoneEntry(mounted, activePane, visible)?.pane
+  );
+}
+
+const active = derived(
+  [entries, activePaneId, visibleLayers],
+  ([list, pane, visible]) => resolveContextZoneEntry(list, pane, visible)
+);
+
+/**
  * Shell-owned registry for the top bar context zone. Pages and resources
  * register a snippet for the pane they render in; the top bar renders the
  * entry of the pane the user is working in.
@@ -89,9 +111,12 @@ export const contextZone = {
   /** Layers the user can see; undefined means every layer counts. */
   visibleLayers: { subscribe: visibleLayers.subscribe },
   isHosted: derived(hostCount, (count) => count > 0),
-  active: derived(
-    [entries, activePaneId, visibleLayers],
-    ([list, pane, visible]) => resolveContextZoneEntry(list, pane, visible)
+  active,
+  /** Pane whose page the context zone describes. */
+  pane: derived(
+    [active, panes, activePaneId, visibleLayers],
+    ([entry, list, paneId, visible]) =>
+      resolveContextZonePane(entry, list, paneId, visible)
   ),
   /** Marks a top bar as hosting the zone; returns its release function. */
   host() {
@@ -110,6 +135,12 @@ export const contextZone = {
     );
     entries.update((list) => [...list, entry]);
     return () => entries.update((list) => list.filter((x) => x.key !== key));
+  },
+  /** Records a mounted pane; returns its release function. */
+  registerPane(pane: ContextZonePane) {
+    const key = ++nextKey;
+    panes.update((list) => [...list, { key, pane }]);
+    return () => panes.update((list) => list.filter((x) => x.key !== key));
   },
   /**
    * Sets the layers the user can see; entries of other layers stay hidden.
