@@ -28,7 +28,7 @@
 </script>
 
 <div
-  class="flex items-center w-full h-full gap-2 pl-3 pr-2 bg-bgs1 text-b3 focus-within:shadow-[inset_0_-2px_0_0_rgb(var(--colors-aps1))]"
+  class="flex items-center w-full h-full gap-2 pl-3 pr-2 text-b3 focus-within:shadow-[inset_0_-2px_0_0_rgb(var(--colors-aps1))]"
 >
   <Icon icon="search" size={Size.sm} class="shrink-0 stroke-fgs3" />
   <input

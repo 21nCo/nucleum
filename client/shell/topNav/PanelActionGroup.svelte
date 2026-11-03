@@ -58,7 +58,7 @@
         states[item.action] === "expanded"
           ? [
               "relative z-10 h-[calc(100%+1px)] -mb-px border-l border-brs3",
-              item.surfaceClass ?? "bg-bgs2",
+              "bg-bgs2",
               widthClass
             ]
           : "h-full shrink-0"

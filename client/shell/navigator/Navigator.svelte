@@ -328,7 +328,7 @@
 
 {#snippet band(label: string, action?: Snippet)}
   <div
-    class="flex items-center justify-between gap-2 h-10 shrink-0 px-4 border-b border-brs3 bg-bgs2"
+    class="flex items-center justify-between gap-2 h-10 shrink-0 px-4 border-b border-brs3 bg-bgs3"
   >
     <span
       class="truncate text-b4 font-semibold uppercase tracking-wide text-fgs2"
@@ -447,10 +447,7 @@
   </div>
 {/snippet}
 
-<div
-  class="flex flex-col h-full w-full min-h-0 bg-bgs1"
-  data-testid="navigator"
->
+<div class="flex flex-col h-full w-full min-h-0" data-testid="navigator">
   {#if !$isInlineSearch}
     <div class="w-full shrink-0 pt-3 pb-2 px-3 flex items-center">
       <div class="flex-1">
