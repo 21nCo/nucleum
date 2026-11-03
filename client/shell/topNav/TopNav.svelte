@@ -315,7 +315,7 @@
     {/each}
   </div>
   <div
-    class="flex items-center justify-end h-full shrink-0 border-l border-brs3"
+    class="flex items-center justify-end h-full shrink-0"
     data-testid="top-bar-actions-zone"
   >
     {#if isToastMode}
