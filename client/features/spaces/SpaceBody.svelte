@@ -93,8 +93,6 @@
     <SpaceContextZone
       {store}
       {view}
-      {parentLabel}
-      onBack={parentId ? onBack : undefined}
       {isPinned}
       onTogglePin={togglePin}
       onViewChange={changeView}

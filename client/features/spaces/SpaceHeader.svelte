@@ -115,8 +115,25 @@
         />
       </div>
     {/if}
-    <div class="flex items-center gap-1">
-      <span class="flex-1 px-1 text-b3 text-fgs3">Items</span>
+    <div class="flex items-center gap-1 min-w-0">
+      {#if onBack && parentLabel !== undefined}
+        <button
+          type="button"
+          class="flex items-center justify-center h-7 w-7 shrink-0 rounded-md text-fgs3 hover:bg-bgs2-striped hover:text-fgs1"
+          aria-label={`Back to ${parentLabel || "Untitled space"}`}
+          title={`Back to ${parentLabel || "Untitled space"}`}
+          data-testid="space-back"
+          onclick={onBack}
+        >
+          <Icon icon="chevron-left" size={Size.sm} class="stroke-current" />
+        </button>
+        <span
+          class="flex-1 min-w-0 truncate px-1 text-b2 font-medium text-fgs1"
+          data-testid="space-focused-title">{title}</span
+        >
+      {:else}
+        <span class="flex-1 px-1 text-b3 text-fgs3">Items</span>
+      {/if}
       {@render editButton()}
     </div>
   </header>
