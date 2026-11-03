@@ -110,7 +110,8 @@
       aria-label={accessibleLabel}
       aria-pressed={isExpanded ? true : undefined}
       class={cn("flex items-center gap-1 h-full transition-colors", {
-        "justify-center min-w-12 px-3.5 border-l border-brs3": !isExpanded,
+        "justify-center min-w-12 px-3.5 border-x border-transparent hover:border-brs3":
+          !isExpanded,
         "w-full justify-start gap-2 px-4 text-fgs1": isExpanded,
         "hover:bg-bgs3 hover:text-fgs1 text-fgs2": !isActive,
         "bg-aps3 text-aps1": isActive && !isExpanded

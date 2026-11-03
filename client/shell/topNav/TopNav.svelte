@@ -401,7 +401,7 @@
   </div>
   {#if isToastMode || !isNavigatorInline}
     <div
-      class="flex items-center justify-end h-full shrink-0"
+      class="flex items-center justify-end h-full shrink-0 border-l border-brs3"
       data-testid="top-bar-actions-zone"
     >
       {#if isToastMode}
