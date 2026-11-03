@@ -330,6 +330,12 @@ export default {
       // offset on top (otop) - for iphone and ipad - as edges default padding is ignored on SwiftUI
       addVariant("otop", ".device-portrait.embed.os-ios &");
       addVariant("otopl", ".device-landscape.embed.os-ios &");
+      addVariant(
+        "app-framed",
+        ':is([data-app-style="semi"], [data-app-style="rounded"]) &'
+      );
+      addVariant("app-semi", '[data-app-style="semi"] &');
+      addVariant("app-rounded", '[data-app-style="rounded"] &');
     }
     // require("@iconify/tailwind").addIconSelectors({
     //   prefixes: ["ph"]
