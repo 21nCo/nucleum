@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatNavigatorAge,
+  isNavigatorKeptOpen,
   isNavigatorListedItem,
   limitSectionItems,
   resolveFrequentContext
@@ -85,5 +86,44 @@ describe("isNavigatorListedItem", () => {
       false
     );
     expect(isNavigatorListedItem({ isRecord: false })).toBe(false);
+  });
+});
+
+describe("isNavigatorKeptOpen", () => {
+  const wide = {
+    isCloseAfterOpen: false,
+    isPortrait: false,
+    isConstrainedWidth: false,
+    isInlineSearch: false
+  };
+
+  it("keeps the side panel open beside the content", () => {
+    expect(isNavigatorKeptOpen(wide)).toBe(true);
+  });
+
+  it("closes when the user asks to close after opening", () => {
+    expect(isNavigatorKeptOpen({ ...wide, isCloseAfterOpen: true })).toBe(
+      false
+    );
+  });
+
+  it("closes the full-screen sheet on portrait screens", () => {
+    expect(isNavigatorKeptOpen({ ...wide, isPortrait: true })).toBe(false);
+    expect(
+      isNavigatorKeptOpen({ ...wide, isPortrait: true, isInlineSearch: true })
+    ).toBe(false);
+  });
+
+  it("keeps it open at constrained widths only as the top bar search", () => {
+    expect(isNavigatorKeptOpen({ ...wide, isConstrainedWidth: true })).toBe(
+      false
+    );
+    expect(
+      isNavigatorKeptOpen({
+        ...wide,
+        isConstrainedWidth: true,
+        isInlineSearch: true
+      })
+    ).toBe(true);
   });
 });

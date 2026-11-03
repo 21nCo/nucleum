@@ -59,3 +59,20 @@ export function isNavigatorListedItem(item: {
   if (item.pageAction) return !!item.pageAction.subViewOf;
   return item.isRecord;
 }
+
+/**
+ * Whether opening an item from the navigator keeps it open: only when the
+ * user has not asked to close it and it sits beside the content, either as
+ * the side panel of a wide landscape layout or as the top bar search input.
+ * On phones, portrait screens and constrained widths it would cover or
+ * replace the opened page, so it closes.
+ */
+export function isNavigatorKeptOpen(layout: {
+  isCloseAfterOpen: boolean;
+  isPortrait: boolean;
+  isConstrainedWidth: boolean;
+  isInlineSearch: boolean;
+}) {
+  if (layout.isCloseAfterOpen || layout.isPortrait) return false;
+  return !layout.isConstrainedWidth || layout.isInlineSearch;
+}

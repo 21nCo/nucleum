@@ -45,6 +45,7 @@
   import {
     NAVIGATOR_SECTION_LIMIT,
     formatNavigatorAge,
+    isNavigatorKeptOpen,
     isNavigatorListedItem,
     limitSectionItems,
     resolveFrequentContext
@@ -54,6 +55,7 @@
     resolvePlainResourceLabel
   } from "@nucleum/shell/topNav/tabs/live-resource";
   import { tooltip } from "@21n/ui/actions/popover.action";
+  import view from "@21n/ui/environment/view.store";
 
   type NavigatorHistoryItem = {
     id: string;
@@ -280,7 +282,7 @@
     if (event.key === "Enter" && target) {
       event.preventDefault();
       event.stopPropagation();
-      openFresh(target, event, !isCloseAfterOpen);
+      openFresh(target, event, isKeepOpen);
       return true;
     }
     return false;
@@ -320,6 +322,14 @@
         scope: PreferencesScope.PRODUCT
       }) === true
   );
+  const isKeepOpen = $derived(
+    isNavigatorKeptOpen({
+      isCloseAfterOpen,
+      isPortrait: $view.isPortrait,
+      isConstrainedWidth: $view.isConstrainedWidth,
+      isInlineSearch: $isInlineSearch
+    })
+  );
 
   function handleHistoryClick(
     item: NavigatorHistoryItem,
@@ -328,13 +338,13 @@
     if (item.pageAction) {
       navigation.gotoPath(
         "/" + item.id,
-        isCloseAfterOpen
-          ? undefined
-          : { queryParams: { [AccessMode.PANEL]: Action.NAVIGATOR } }
+        isKeepOpen
+          ? { queryParams: { [AccessMode.PANEL]: Action.NAVIGATOR } }
+          : undefined
       );
       return;
     }
-    openFresh(item.id, event, !isCloseAfterOpen);
+    openFresh(item.id, event, isKeepOpen);
   }
 
   function isSectionExpanded(key: string) {
@@ -427,7 +437,7 @@
           isInterimTab={true}
           isTrail
           isTypeIcon
-          onClick={(event) => openFresh(id, event, !isCloseAfterOpen)}
+          onClick={(event) => openFresh(id, event, isKeepOpen)}
         />
       </div>
     {/each}
