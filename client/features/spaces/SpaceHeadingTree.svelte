@@ -14,13 +14,24 @@
     nodeId,
     depth = 1,
     activeHeadingId = undefined,
+    maxLevels = undefined,
+    isCompact = false,
     onSelect
   }: {
     nodeId: string;
     depth?: number;
     activeHeadingId?: string;
+    /** Number of nesting levels shown; every level when absent. */
+    maxLevels?: number;
+    /** Indents from the left edge instead of aligning with side nav rows. */
+    isCompact?: boolean;
     onSelect: (headingId: string) => void;
   } = $props();
+
+  function resolveIndent(level: number) {
+    if (isCompact) return `${(level - depth) * 0.75 + 0.5}rem`;
+    return `${Math.min(level, 6) + 1.75}rem`;
+  }
 
   type BlockRecord = {
     id: string;
@@ -99,14 +110,14 @@
               "text-fgs2": activeHeadingId !== heading.id
             }
           )}
-          style:padding-left={`${Math.min(level, 6) + 1.75}rem`}
+          style:padding-left={resolveIndent(level)}
           data-testid="space-heading-item"
           data-heading-id={heading.id}
           onclick={() => onSelect(heading.id)}
         >
           <span class="truncate">{heading.label}</span>
         </button>
-        {#if heading.children.length > 0}
+        {#if heading.children.length > 0 && (maxLevels === undefined || level - depth + 1 < maxLevels)}
           {@render headingList(heading.children, level + 1)}
         {/if}
       </li>
@@ -119,7 +130,7 @@
 {:else if !isLoading}
   <p
     class="py-1 text-b4 text-fgs3"
-    style:padding-left={`${Math.min(depth, 6) + 1.75}rem`}
+    style:padding-left={resolveIndent(depth)}
   >
     No headings
   </p>

@@ -498,3 +498,45 @@ export function resolveTargetLabel(record: {
   }
   return undefined;
 }
+
+/** Why a space item is shown greyed out, and the hint shown with it. */
+export type SpaceItemStatus = {
+  kind: "unsupported" | "loop" | "missing" | "trashed" | "archived";
+  text: string;
+};
+
+/**
+ * Status of a record item for the current product. Archived items keep opening;
+ * every other status blocks the item.
+ */
+export function resolveSpaceItemStatus(params: {
+  item: ISpaceResourceNavItem;
+  product: Product;
+  target?: { isArchived?: boolean; trashedAt?: unknown };
+  isTargetsLoaded: boolean;
+  loopIds: Set<string>;
+}): SpaceItemStatus | undefined {
+  const { item, product, target, isTargetsLoaded, loopIds } = params;
+  if (!isSpaceItemOpenable(item.resourceType, product)) {
+    const opener = resolveOpeningProductName(item.resourceType, product);
+    return {
+      kind: "unsupported",
+      text: opener ? `Opens in ${opener}` : "Not available in this app"
+    };
+  }
+  if (
+    item.resourceType === Resource.space &&
+    loopIds.has(item.resourceId.toString())
+  )
+    return { kind: "loop", text: "Already open above" };
+  if (isTargetsLoaded && !target)
+    return { kind: "missing", text: "Not available" };
+  if (target?.trashedAt) return { kind: "trashed", text: "In trash" };
+  if (target?.isArchived) return { kind: "archived", text: "Archived" };
+  return undefined;
+}
+
+/** Whether a status keeps an item from opening. */
+export function isSpaceItemBlocked(status: SpaceItemStatus | undefined) {
+  return Boolean(status && status.kind !== "archived");
+}

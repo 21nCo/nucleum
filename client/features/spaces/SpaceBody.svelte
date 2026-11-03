@@ -32,6 +32,9 @@
   } = $props();
 
   const store = ActiveSpaceStore.resolve(spaceId);
+  const viewStore = $derived(
+    ancestors.length ? ActiveSpaceStore.resolve(ancestors[0]) : store
+  );
   const parentStore = $derived.by(() =>
     parentId
       ? toSvelteStore<{ id: string; label?: string }[]>(
@@ -45,7 +48,7 @@
       : undefined
   );
   let isLoaded = $state(false);
-  const view = $derived($store?.view ?? SpaceView.SIDENAV);
+  const view = $derived($viewStore?.view ?? SpaceView.SIDENAV);
   const isPinned = $derived(appMenuStore.isSpacePinned(spaceId, $appMenuStore));
   const parentLabel = $derived(
     parentStore ? ($parentStore?.data?.[0]?.label ?? "") : undefined
@@ -55,7 +58,10 @@
   );
 
   onMount(() => {
-    store.init(accessMode).then(() => (isLoaded = true));
+    Promise.all([
+      store.init(accessMode),
+      viewStore === store ? undefined : viewStore.init()
+    ]).then(() => (isLoaded = true));
     return () => {
       if ($store?.isInEditMode) store.setEditMode(false);
       if ($store?.isTitleEditing) store.setTitleEditing(false);
@@ -73,13 +79,10 @@
     {store}
     {parentLabel}
     onBack={parentId ? onBack : undefined}
+    {view}
     {isPinned}
-    isEditable={view === SpaceView.SIDENAV}
     onTogglePin={togglePin}
-    onViewChange={(next) => {
-      if (next !== SpaceView.SIDENAV) store.setEditMode(false);
-      store.updateView(next);
-    }}
+    onViewChange={(next) => viewStore.updateView(next)}
   />
 {/snippet}
 
@@ -102,7 +105,7 @@
     onclick={parentId ? onBack : undefined}
   />
 {:else if view === SpaceView.WALL}
-  <SpaceWall {spaceId} {header} />
+  <SpaceWall {spaceId} focusChain={ancestors} {header} {onFocusSpace} />
 {:else}
   <SpaceSideNav
     {spaceId}

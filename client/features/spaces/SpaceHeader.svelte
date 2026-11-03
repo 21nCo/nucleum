@@ -10,8 +10,8 @@
   let {
     store,
     parentLabel = undefined,
+    view,
     isPinned = false,
-    isEditable = true,
     onBack = undefined,
     onTogglePin,
     onViewChange
@@ -19,9 +19,9 @@
     store: ActiveSpaceStore;
     /** Name of the space one level up; shows the back button when set. */
     parentLabel?: string;
+    /** Layout shown for this space, which can come from the space it is focused in. */
+    view: SpaceView;
     isPinned?: boolean;
-    /** Whether the items can be edited in this view. */
-    isEditable?: boolean;
     onBack?: () => void;
     onTogglePin: () => void;
     onViewChange: (view: SpaceView) => void;
@@ -36,7 +36,6 @@
   let draftTitle = $state("");
   const space = $derived($store);
   const title = $derived(space?.label || "Untitled space");
-  const view = $derived(space?.view ?? SpaceView.SIDENAV);
   const isEditMode = $derived(Boolean(space?.isInEditMode));
   const isTitleEditing = $derived(Boolean(space?.isTitleEditing));
 
@@ -152,25 +151,23 @@
         class="stroke-fgs2"
       />
     </button>
-    {#if isEditable}
-      <button
-        type="button"
-        class={cn("p-1.5 rounded-md", {
-          "bg-aps3 text-aps1": isEditMode,
-          "hover:bg-bgs2-striped": !isEditMode
-        })}
-        aria-pressed={isEditMode}
-        aria-label="Edit items"
-        title={isEditMode ? "Done" : "Edit items"}
-        data-testid="space-edit"
-        onclick={() => store.setEditMode(!isEditMode)}
-      >
-        <Icon
-          icon={isEditMode ? "check" : "edit"}
-          size={Size.sm}
-          class="stroke-fgs2"
-        />
-      </button>
-    {/if}
+    <button
+      type="button"
+      class={cn("p-1.5 rounded-md", {
+        "bg-aps3 text-aps1": isEditMode,
+        "hover:bg-bgs2-striped": !isEditMode
+      })}
+      aria-pressed={isEditMode}
+      aria-label="Edit items"
+      title={isEditMode ? "Done" : "Edit items"}
+      data-testid="space-edit"
+      onclick={() => store.setEditMode(!isEditMode)}
+    >
+      <Icon
+        icon={isEditMode ? "check" : "edit"}
+        size={Size.sm}
+        class="stroke-fgs2"
+      />
+    </button>
   </div>
 </header>
