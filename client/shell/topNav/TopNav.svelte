@@ -403,7 +403,7 @@
     {/if}
   </div>
   <div
-    class="flex items-center h-full shrink-0 px-1"
+    class="flex items-center h-full shrink-0 [&>*]:mx-1"
     data-testid="top-bar-indicators"
   >
     <TrailLeftIndicator />
