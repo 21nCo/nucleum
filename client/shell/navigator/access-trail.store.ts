@@ -10,6 +10,7 @@ import {
   extendAccessTrail,
   normalizeAccessTrails,
   removeRecentAccessTrail,
+  hasAccessTrailPosition,
   resolveAccessTrailPosition,
   resumeAccessTrail,
   startAccessTrail,
@@ -198,6 +199,13 @@ export const accessTrail = {
   /** Trail node that is active now, if a trail is current. */
   position(): AccessTrailPosition | undefined {
     return resolveAccessTrailPosition(accessTrail.get());
+  },
+  /** Whether a position, after resolving it, names a node that still exists. */
+  has(position: AccessTrailPosition | undefined) {
+    return hasAccessTrailPosition(
+      accessTrail.get(),
+      accessTrail.resolve(position)
+    );
   },
   /**
    * Resolves a position recorded in a history entry to the node it names now.

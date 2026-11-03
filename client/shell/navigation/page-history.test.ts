@@ -155,4 +155,30 @@ describe("page history and access trails", () => {
       current.trail.nodes[resolveAccessTrailParent(current.trail)!].key
     ).toBe(first);
   });
+
+  it("records the recreated node when forward reopens a discarded trail", () => {
+    navigation.openResource("node:a", "page" as never);
+    const discarded = activeNode()!.node.key;
+    navigation.closeResource({
+      accessMode: "page" as never,
+      isHistoryBack: true
+    });
+    expect(historyBack).toHaveBeenCalledTimes(1);
+    expect(accessTrail.get().current).toBeUndefined();
+
+    go(1);
+    const recreated = activeNode()!.node.key;
+    expect(recreated).not.toBe(discarded);
+    expect(
+      (entries[index].state as { accessTrail: { position: { node: string } } })
+        .accessTrail.position.node
+    ).toBe(recreated);
+
+    navigation.openResource("node:b", "page" as never);
+    const length = entries.length;
+    expect(navigation.backInTrail()).toBe(true);
+    expect(historyBack).toHaveBeenCalledTimes(2);
+    expect(entries).toHaveLength(length);
+    expect(activeNode()?.node.key).toBe(recreated);
+  });
 });

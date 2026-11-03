@@ -254,7 +254,9 @@ export const navigation = {
   /**
    * Keeps the access trail in step with the open page after any navigation.
    * `historyState` is the state of the history entry now shown; its recorded
-   * trail position selects the exact node, also for repeated resources.
+   * trail position selects the exact node, also for repeated resources. When
+   * that node no longer exists and the trail selects or recreates another,
+   * the entry's state is rewritten to name it.
    */
   syncAccessTrail(pageId: string | undefined, historyState?: unknown) {
     if (!pageId) {
@@ -265,6 +267,19 @@ export const navigation = {
     const state = readAccessTrailHistoryState(historyState);
     currentEntry = { pageId, state };
     accessTrail.sync(pageId, state?.position);
+    const position = accessTrail.position();
+    if (
+      state &&
+      position &&
+      !isSameAccessTrailPosition(accessTrail.resolve(state.position), position)
+    ) {
+      const rewritten = { position, from: state.from };
+      currentEntry = { pageId, state: rewritten };
+      navigation.gotoPath(window.location.href, {
+        replaceState: true,
+        historyState: rewritten
+      });
+    }
   },
 
   /**
@@ -580,10 +595,12 @@ export const navigation = {
     let historyState: AccessTrailHistoryState | undefined;
     if (accessMode === AccessMode.PAGE) {
       const openPage = url.searchParams.get(AccessMode.PAGE);
-      const entryPosition =
+      const recorded =
         currentEntry?.pageId === openPage
           ? accessTrail.resolve(currentEntry.state?.position)
           : undefined;
+      const entryPosition =
+        recorded && accessTrail.has(recorded) ? recorded : undefined;
       const openPosition = openPage
         ? (entryPosition ?? params?.from ?? accessTrail.position())
         : undefined;

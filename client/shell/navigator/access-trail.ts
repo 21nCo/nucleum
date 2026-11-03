@@ -154,6 +154,18 @@ export function resolveAccessTrailPosition(
   return trail && node ? { trail: trail.key, node: node.key } : undefined;
 }
 
+/** Whether a position names a node of the current or a recent trail. */
+export function hasAccessTrailPosition(
+  trails: AccessTrails,
+  position: AccessTrailPosition | undefined
+) {
+  if (!position) return false;
+  const trail = [trails.current, ...trails.recent].find(
+    (item) => item?.key === position.trail
+  );
+  return !!trail?.nodes.some((node) => node.key === position.node);
+}
+
 /** Whether two positions name the same trail node. */
 export function isSameAccessTrailPosition(
   a: AccessTrailPosition | undefined,
