@@ -36,7 +36,11 @@
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
-  import { resolveContextZoneSubject } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
+  import {
+    isTwoLineIdentity,
+    resolveContextZoneSubject
+  } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
+  import { resolvePageRoute } from "@nucleum/shared-state/commands/page-view-actions";
   import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
   import { samplePageBackground } from "@nucleum/shell/topNav/contextZone/surface-background";
   import {
@@ -115,6 +119,22 @@
     )
   );
   const subject = $derived(resolveContextZoneSubject($activePane, $page.url));
+  let windowWidth = $state(window.innerWidth);
+  const isSplitOpen = $derived(
+    !!searchParams.get(AccessMode.BESIDE_BASE) ||
+      !!searchParams.get(AccessMode.BESIDE_PAGE)
+  );
+  const subjectLocation = $derived.by(() => {
+    if (subject?.kind !== "resource") return undefined;
+    if (subject.accessMode === AccessMode.PAGE) {
+      return resolvePageRoute(
+        $appStore.actions,
+        $page.url.pathname.replace(/^\/+|\/+$/g, "")
+      )?.action.label;
+    }
+    if (subject.accessMode) return "Split";
+    return undefined;
+  });
   const subjectBack = $derived(
     subject?.kind === "resource" && subject.accessMode === AccessMode.PAGE
       ? trailBack
@@ -212,6 +232,8 @@
   });
 </script>
 
+<svelte:window bind:innerWidth={windowWidth} />
+
 {#snippet rhombusAction(state: TopNavPanelActionState)}
   <TopNavLeftMenuItem
     action={Action.RHOMBUS}
@@ -288,6 +310,8 @@
             <PageIdentity
               {subject}
               backId={subjectBack?.id}
+              location={subjectLocation}
+              isTwoLine={isTwoLineIdentity(windowWidth, isSplitOpen)}
               onBack={() => navigation.backInTrail()}
             />
             {#if $activeEntry}
