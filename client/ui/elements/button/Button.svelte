@@ -14,7 +14,8 @@
   import type { IKeyboardShortcut } from "@21n/ui/elements/keyboard/shortcut.type";
   import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
   import ButtonTooltip from "@21n/ui/elements/button/ButtonTooltip.svelte";
-  import { elementPlatform as context } from "@21n/ui/environment/element-environment.store";
+  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
+  import { AppStyle } from "@21n/theme/app-style";
 
   let {
     parentBgIndex = 1,
@@ -141,8 +142,9 @@
       "gap-1 text-b4 dp:text-b3": size === Size.xs,
       "p-1.5 rounded-md": isIconOnlyButton && !isBoxed,
       "w-full h-full": isBoxed,
-      "rounded-md": !isBoxed && !$context.experiments?.isEnableRoundedMain,
-      "rounded-full": !isBoxed && $context.experiments?.isEnableRoundedMain,
+      "rounded-md": !isBoxed && $elementAppearance.appStyle !== AppStyle.Rounded,
+      "rounded-full":
+        !isBoxed && $elementAppearance.appStyle === AppStyle.Rounded,
       [bg(parentBgIndex)]:
         isHovering && isIconOnlyButton && style !== ButtonStyle.PLAIN,
       "underline-dotted hover:underline-dotted-primary":

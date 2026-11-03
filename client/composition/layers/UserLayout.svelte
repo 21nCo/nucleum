@@ -27,7 +27,6 @@
   } from "@nucleum/shell/navigation/top-layer";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
-  import { cn } from "@21n/ui/environment/presentation";
   import type { TopNavPanelAction } from "@nucleum/shell/topNav/panel-actions";
 
   let {
@@ -97,11 +96,7 @@
 {/snippet}
 
 {#snippet topNav()}
-  <TopNav
-    topnav={topnavContent}
-    indicators={topnavIndicators}
-    {panelActions}
-  />
+  <TopNav topnav={topnavContent} indicators={topnavIndicators} {panelActions} />
 {/snippet}
 
 {#if isLoaded}
@@ -121,9 +116,7 @@
         data-full-screen="true"
       >
         <div
-          class={cn("flex shrink-0 w-full h-12 max-h-12 min-h-11 bg-bgs2", {
-            "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
-          })}
+          class="flex shrink-0 w-full h-12 max-h-12 min-h-11 bg-bgs2 border-b border-brs3 app-framed:border-b-0"
           data-testid="command-mode-page-bar"
         >
           <TopBarCloseButton

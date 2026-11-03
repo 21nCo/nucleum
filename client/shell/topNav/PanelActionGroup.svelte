@@ -127,6 +127,7 @@
     expandedAction
       ? [
           "relative z-10 self-start h-[calc(100%+1px)] -mb-px border-l border-b border-brs3 bg-bgs2",
+          "app-framed:self-end app-framed:h-[calc(100%-var(--app-tab-inset))] app-framed:mb-0 app-framed:mr-[var(--app-shell-gap)] app-framed:border-0 app-framed:bg-bgs1 app-framed:overflow-hidden app-framed:rounded-t-[var(--app-tab-radius)]",
           widthClass
         ]
       : "items-stretch self-stretch"

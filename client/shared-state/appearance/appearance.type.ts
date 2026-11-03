@@ -1,4 +1,5 @@
 import type { AppSkin, Theme, ColorScheme } from "@21n/theme/appearance.type";
+import type { AppStyle } from "@21n/theme/app-style";
 
 import type { IStore } from "@nucleum/datafn/observable-store.type";
 
@@ -15,6 +16,8 @@ export type AppearanceStore = Omit<IStore, "get"> & {
   userThemeSetting: Theme;
   isSyncWithSystem: boolean;
   systemTheme: Theme;
+  /** Shape of the application chrome; boxed when absent. */
+  appStyle?: AppStyle;
   /**
    * @deprecated Use userPreferences.appearance?.typeface directly instead
    */

@@ -3,7 +3,6 @@
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { Size } from "@21n/ui/elements/size.enum";
-  import context from "@nucleum/client/runtime/context.store";
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
   import Icon from "@21n/ui/elements/Icon.svelte";
@@ -87,11 +86,9 @@
   class={isSheet
     ? "fixed inset-0 z-50 flex flex-col w-full h-full bg-bgs2 outline-none"
     : cn(
-        "flex justify-center items-center h-full bg-bgs2 transition-all duration-300 motion-reduce:transition-none",
-        resolveRightPanelWidthClass(action.liveActionParams?.size),
-        {
-          "border-l border-brs3": !$context.experiments?.isEnableRoundedMain
-        }
+        "flex justify-center items-center h-full bg-bgs2 transition-all duration-300 motion-reduce:transition-none border-l border-brs3",
+        "app-framed:border-l-0 app-framed:bg-bgs1 app-framed:overflow-hidden app-framed:mr-[var(--app-shell-gap)] app-framed:mb-[var(--app-shell-gap)] app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:rounded-b-[var(--app-panel-radius)]",
+        resolveRightPanelWidthClass(action.liveActionParams?.size)
       )}
   {...sheetAttributes}
   hidden={isSuspended || undefined}

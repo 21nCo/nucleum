@@ -16,7 +16,6 @@
   import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { onMount } from "svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
-  import context from "@nucleum/client/runtime/context.store";
 
   let {
     isRounded = false,
@@ -78,8 +77,7 @@
       "flex items-center justify-center h-full w-full bg-bgs2",
       $appStore.currentComponent?.panel && {
         "rounded-lg border-none": isRounded,
-        "border-r border-bgs4":
-          !isRounded && !$context.experiments?.isEnableRoundedMain
+        "border-r border-bgs4 app-framed:border-r-0": !isRounded
       }
     )}
   >
@@ -94,8 +92,7 @@
         },
         (!dev_mixedPanel || !$appStore.currentComponent?.panel) && {
           "rounded-lg border-none": isRounded,
-          "border-r border-bgs4":
-            !isRounded && !$context.experiments?.isEnableRoundedMain
+          "border-r border-bgs4 app-framed:border-r-0": !isRounded
         }
       )}
       role="button"
