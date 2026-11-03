@@ -62,6 +62,7 @@
 </script>
 
 <div
+  data-chrome-icons
   class={cn(
     "leftnav flex justify-center items-center h-full",
     !$appStore.currentComponent?.panel && {

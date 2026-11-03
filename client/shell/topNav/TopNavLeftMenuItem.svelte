@@ -169,7 +169,7 @@
       {/if}
       {#if isExpanded}
         <span
-          class="absolute inset-0 flex items-center justify-end pr-4 rounded-[inherit] bg-bgs3-striped text-b4 text-fgs3 opacity-0 hover:opacity-100 transition-opacity"
+          class="absolute inset-0 flex items-center justify-end pr-4 rounded-[inherit] bg-bgs3-striped text-b4 text-fgs3 opacity-0 hover:opacity-100 transition-opacity [mask-image:linear-gradient(to_left,black_30%,transparent_80%)] [-webkit-mask-image:linear-gradient(to_left,black_30%,transparent_80%)]"
           data-testid="panel-action-close-hint"
           aria-hidden="true"
         >
