@@ -280,7 +280,7 @@
     if (event.key === "Enter" && target) {
       event.preventDefault();
       event.stopPropagation();
-      openFresh(target, event, true);
+      openFresh(target, event, !isCloseAfterOpen);
       return true;
     }
     return false;
@@ -293,8 +293,8 @@
 
   /**
    * Opens a resource as a fresh page that starts a trail; Cmd or Ctrl opens
-   * it beside the base page, or beside the open page. Search results keep the
-   * navigator open so the user can hop between them.
+   * it beside the base page, or beside the open page. `isKeepNavigator` keeps
+   * the navigator open so the user can hop between items.
    */
   function openFresh(
     id: string,
@@ -427,7 +427,7 @@
           isInterimTab={true}
           isTrail
           isTypeIcon
-          onClick={(event) => openFresh(id, event, true)}
+          onClick={(event) => openFresh(id, event, !isCloseAfterOpen)}
         />
       </div>
     {/each}
