@@ -254,7 +254,7 @@
     if (event.key === "Enter" && target) {
       event.preventDefault();
       event.stopPropagation();
-      openFresh(target, event);
+      openFresh(target, event, true);
       return true;
     }
     return false;
@@ -267,9 +267,14 @@
 
   /**
    * Opens a resource as a fresh page that starts a trail; Cmd or Ctrl opens
-   * it beside the base page, or beside the open page.
+   * it beside the base page, or beside the open page. Search results keep the
+   * navigator open so the user can hop between them.
    */
-  function openFresh(id: string, event?: MouseEvent | KeyboardEvent) {
+  function openFresh(
+    id: string,
+    event?: MouseEvent | KeyboardEvent,
+    isKeepNavigator = false
+  ) {
     if (event && navigation.determineClickAccessMode(event)) {
       navigation.resourceClickHandler(event, id, {
         origin: Action.NAVIGATOR
@@ -278,7 +283,8 @@
     }
     navigation.openResource(id, AccessMode.PAGE, {
       origin: Action.NAVIGATOR,
-      trail: "start"
+      trail: "start",
+      isKeepNavigator
     });
   }
 
@@ -361,7 +367,7 @@
           isInterimTab={true}
           isTrail
           isTypeIcon
-          onClick={(event) => openFresh(id, event)}
+          onClick={(event) => openFresh(id, event, true)}
         />
       </div>
     {/each}

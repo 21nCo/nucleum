@@ -642,6 +642,8 @@ export const navigation = {
        * opening; otherwise read from the current history entry or the trail.
        */
       from?: AccessTrailPosition;
+      /** Keeps the navigator open when the page starts a trail from it. */
+      isKeepNavigator?: boolean;
     }
   ) => {
     logger.log({ at: "openResource", id, accessMode, params });
@@ -715,7 +717,7 @@ export const navigation = {
               : undefined
           );
         }
-        isCloseNavigator = isNavigatorOpen;
+        isCloseNavigator = !params?.isKeepNavigator && isNavigatorOpen;
       } else if (intent === "select") {
         isCloseNavigator = isNavigatorCoveringPage(navigatorLayer);
       } else if (intent === "extend") {
