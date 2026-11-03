@@ -6,22 +6,30 @@
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
 
   import { Action } from "@nucleum/client/config/action.enum";
-  let {
-    isInThinMode = false,
-    isRounded = false
-  }: {
-    isInThinMode?: boolean;
-    isRounded?: boolean;
-  } = $props();
-  void isInThinMode;
-  void isRounded;
 </script>
 
-<div class="w-full h-12">
-  <BoxButton
-    icon="question"
-    tooltip="Help"
-    parentBgIndex={2}
-    onclick={async () => requireCommandHost().runAction(Action.HELP)}
-  />
+<div class="w-full flex flex-col" data-testid="left-bottom-bar">
+  <div class="w-full h-12">
+    <BoxButton
+      icon="settings"
+      tooltip="Settings"
+      testId="app-menu-settings"
+      parentBgIndex={2}
+      onclick={(event) => {
+        event.stopPropagation();
+        requireCommandHost().runAction(Action.SETTINGS);
+      }}
+    />
+  </div>
+  <div class="w-full h-12">
+    <BoxButton
+      icon="question"
+      tooltip="Help"
+      parentBgIndex={2}
+      onclick={(event) => {
+        event.stopPropagation();
+        requireCommandHost().runAction(Action.HELP);
+      }}
+    />
+  </div>
 </div>

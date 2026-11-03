@@ -19,6 +19,7 @@ import { createLibraryViewActions } from "@nucleum/surfaces/library/library-rout
 import { resolveLibrarySwitcherResources } from "@nucleum/surfaces/library/resource-switcher.utils";
 import { resolveNucleusOverviewViewSegments } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
 import { resolveProductConfig } from "@nucleum/products/product.config";
+import { Product } from "@nucleum/client/config/product.type";
 
 const actionsToFilterInSub: string[] = [Action.LIBRARY, Action.OVERVIEW];
 
@@ -37,7 +38,10 @@ const libraryAction: IAction = {
   panel: NucleusLibrary,
   type: ActionType.PAGE,
   componentParams: {
-    defaultResource: Resource.collection
+    defaultResource: Resource.collection,
+    resources: resolveProductConfig(Product.NUCLEUM).resources?.browse ?? [
+      Resource.collection
+    ]
   }
 };
 

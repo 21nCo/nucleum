@@ -197,9 +197,7 @@ export async function expectSavedNodeRecordVisible(
 /** Close the active resource record before reopening it through Library. */
 export async function closeNodeRecord(page: Page) {
   const recordSurface = page.getByTestId("resource-record-surface");
-  const closeButton = recordSurface
-    .getByRole("button", { name: /^Close$/i })
-    .first();
+  const closeButton = page.getByTestId("top-bar-close");
   await expect(closeButton).toBeVisible({ timeout: 10_000 });
   await closeButton.click({ timeout: 5_000 });
   await expect(recordSurface).toBeHidden({ timeout: 10_000 });

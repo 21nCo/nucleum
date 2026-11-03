@@ -4,7 +4,14 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import { isTextElement } from "@21n/ui/actions/interaction-dom";
+  import {
+    isTextElement,
+    resolveDialogOnFront,
+    resolveModalOnFront
+  } from "@21n/ui/actions/interaction-dom";
+  import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
+  import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
+  import { get } from "svelte/store";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { appEvents } from "@nucleum/shared-state/events/app-events.store";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
@@ -70,6 +77,56 @@
     event.stopPropagation();
     event.preventDefault();
   };
+
+  function hasOpenPopover() {
+    return Array.from(document.querySelectorAll(".popover")).some(
+      (element) =>
+        !element.classList.contains("pointer-events-none") &&
+        element.getClientRects().length > 0 &&
+        getComputedStyle(element).visibility !== "hidden"
+    );
+  }
+
+  function isFormField(target: EventTarget | null) {
+    return (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement
+    );
+  }
+
+  let escapeBulkCount: number | undefined;
+
+  const escapeCaptureListener = (event: KeyboardEvent) => {
+    if (event.key !== KeyboardKey.ESCAPE) return;
+    escapeBulkCount = get(bulkEditStore.count);
+  };
+
+  /**
+   * Closes the top layer on a plain Escape: overlay, then right panel, then
+   * bulk selection, then the resource page. Runs after the event bubbles so
+   * editors, modals, dialogs and popovers that handle Escape stop it first;
+   * the selection size is read in the capture phase, before selection
+   * handlers clear it.
+   */
+  const escapeListener = (event: KeyboardEvent) => {
+    if (event.key !== KeyboardKey.ESCAPE) return;
+    const bulkCount = escapeBulkCount;
+    escapeBulkCount = undefined;
+    if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
+      return;
+    if ($context.embed === Embed.HANDSET || event.defaultPrevented) return;
+    if (isFormField(event.target)) return;
+    if (resolveModalOnFront() || resolveDialogOnFront() || hasOpenPopover())
+      return;
+    closeTopLayer({ bulkCount });
+  };
 </script>
 
-<svelte:window onkeydown={shortcutListener} />
+<svelte:window
+  onkeydown={(event) => {
+    shortcutListener(event);
+    escapeListener(event);
+  }}
+  onkeydowncapture={escapeCaptureListener}
+/>

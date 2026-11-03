@@ -9,7 +9,6 @@
   import { Product } from "@nucleum/client/config/product.type";
   import { requireSurfaceProductConfig } from "@nucleum/shared-state/product/surface-config-host";
   import {
-    resolveLibrarySwitcherSectionResources,
     resolveLibrarySwitcherSections,
     resolveResourceSwitcher
   } from "@nucleum/surfaces/library/resource-switcher.utils";
@@ -46,23 +45,22 @@
     })
   );
 
-  let sections = resolveLibrarySwitcherSections();
-  $effect(() => {
-    selectedValue = selected ?? (options[0]?.value as Resource | undefined);
-  });
+  const librarySections = resolveLibrarySwitcherSections(
+    Product.NUCLEUM,
+    [],
+    isDev
+  );
+  let sections = librarySections.map((entry) => entry.section);
   function resolveResourcesForSection(section: Product): IResourceSwitchItem[] {
-    return resolveLibrarySwitcherSectionResources(
-      section,
-      (product) => requireSurfaceProductConfig(product).resources.browse,
-      isDev
-    )
-      .map((x) => resourceList.find((y) => y.value === x))
-      .filter((x) => x !== undefined);
+    return (
+      librarySections.find((entry) => entry.section === section)?.items ?? []
+    );
   }
 
   function resolveSectionLabel(section: Product) {
     return (
-      requireSurfaceProductConfig(section).librarySectionLabel ?? properCase(section)
+      requireSurfaceProductConfig(section).librarySectionLabel ??
+      properCase(section)
     );
   }
 

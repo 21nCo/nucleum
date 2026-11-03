@@ -3,6 +3,8 @@
   import { fly } from "svelte/transition";
   import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";
   import { AccessMode } from "@nucleum/datafn/resource.type";
+  import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
+  import { ContextZoneLayer } from "@nucleum/shell/topNav/contextZone/context-zone";
   let {
     split,
     accessMode = AccessMode.BESIDE_BASE
@@ -18,6 +20,13 @@
 >
   <div class="w-1 bg-bgs2-striped border-x border-brs2"></div>
   {#key split}
-    <ResourceResolver id={split} isFromSplitView={true} {accessMode} />
+    <ContextZonePaneScope
+      id={accessMode}
+      layer={accessMode === AccessMode.BESIDE_PAGE
+        ? ContextZoneLayer.BESIDE_PAGE
+        : ContextZoneLayer.BESIDE_BASE}
+    >
+      <ResourceResolver id={split} isFromSplitView={true} {accessMode} />
+    </ContextZonePaneScope>
   {/key}
 </div>

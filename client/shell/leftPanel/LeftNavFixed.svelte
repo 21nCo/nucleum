@@ -1,8 +1,6 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
-
   import type { Snippet } from "svelte";
   import AppMenuSwitcher from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
   import { LayoutContext } from "@nucleum/shell/layout-mode.type";
@@ -19,11 +17,6 @@
   import { onMount } from "svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import context from "@nucleum/client/runtime/context.store";
-  import { Action } from "@nucleum/client/config/action.enum";
-  import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { page } from "$app/stores";
-  import AppMenuSwitcherItem from "./appMenuSwitcher/AppMenuSwitcherItem.svelte";
 
   let {
     isRounded = false,
@@ -43,12 +36,6 @@
   );
   const isEnableAppMenuCustomization = false;
 
-  let currentSearchParams = $state(new URLSearchParams(window.location.search));
-
-  let isNavigatorActive = $derived(
-    Action.NAVIGATOR === currentSearchParams.get(AccessMode.PANEL)
-  );
-
   onMount(() => {
     const unsubscribe = uiState.subscribe(() => {
       isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
@@ -56,13 +43,8 @@
       });
     });
 
-    const unsubscribePage = page.subscribe((p) => {
-      currentSearchParams = p?.url?.searchParams ?? new URLSearchParams();
-    });
-
     return () => {
       unsubscribe?.();
-      unsubscribePage?.();
     };
   });
 
@@ -135,35 +117,12 @@
           handleToggleMenuLabels();
         }}
       ></button>
-      <div class="w-full flex flex-col gap-8 overflow-auto">
-        <div
-          class="w-full flex justify-center transition-opacity duration-200 py--2"
-        >
-          <!--  -->
-          <div class="w-full h-16 {isNavigatorActive ? 'bg-bgs3' : ''}">
-            <BoxButton
-              icon={isNavigatorActive ? "cross" : "heroicons:slash"}
-              size={Size.md}
-              onclick={(e) => {
-                e.stopPropagation();
-                requireCommandHost().runAction(Action.NAVIGATOR);
-              }}
-            />
-            <!-- <AppMenuSwitcherItem
-              parentBackgroundIndex={2}
-              onClick={() => {
-                requireCommandHost().runAction(Action.NAVIGATOR);
-              }}
-              item={() => requireCommandHost().resolveAction(Action.NAVIGATOR)}
-            /> -->
-          </div>
-        </div>
+      <div class="w-full flex flex-col gap-8 overflow-auto pt-3">
         <div
           class={cn(
             "flex flex-col gap-3 items-center w-full overflow-auto cursor-default transition-all duration-300",
             {
-              "p-2": !isHideMenuLabels,
-              "opacity-60": isNavigatorActive
+              "p-2": !isHideMenuLabels
             }
           )}
           role="group"
@@ -206,8 +165,7 @@
       </div>
       <div class="w-full flex flex-col gap-2 items-center">
         {@render offlineStatus?.({ isIconOnly: true })}
-        <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
-        <LeftBottomBar {isRounded} />
+        <LeftBottomBar />
       </div>
     </div>
     {@render panel?.()}

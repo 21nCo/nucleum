@@ -68,6 +68,9 @@
       <FocusTopNavWidget />
     </div>
   {/snippet}
+  {#snippet topnavIndicators()}
+    <FocusTopNavWidget mode="indicator" />
+  {/snippet}
   {@render children?.()}
   <SessionTitle ctx={Product.POINTRON} />
   <Notifications />

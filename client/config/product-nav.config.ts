@@ -10,8 +10,6 @@ import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 export interface IProductNavConfig {
   /** App menu action IDs for landscape (used by app). */
   appMenu: readonly string[];
-  /** App menu for landscape in dev (Nucleum only; optional "home"). */
-  appMenuDev?: readonly string[];
   /** App menu action IDs for portrait (used by app). */
   appMenuPt: readonly string[];
   homePath: string;
@@ -66,12 +64,10 @@ const resolveAppMenuNavLabels = (
 
 const productNavConfig = {
   [Product.NUCLEUM]: {
-    appMenu: [Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
-    appMenuDev: [
+    appMenu: [
       Action.HOME,
       Action.CALENDAR,
       Action.OVERVIEW,
-      appMenuActionIds.spaceBrowse,
       Action.LIBRARY
     ] as const,
     appMenuPt: [
@@ -84,24 +80,14 @@ const productNavConfig = {
     librarySectionLabel: "Nucleum"
   },
   [Product.MEMOTRON]: {
-    appMenu: [
-      appMenuActionIds.nodeCreate,
-      Action.CALENDAR,
-      Action.OVERVIEW,
-      Action.LIBRARY
-    ] as const,
+    appMenu: [Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
     appMenuPt: [] as const,
     homePath: Action.CALENDAR,
     homePathPt: Action.MOBILEHOME,
     librarySectionLabel: "Memory"
   },
   [Product.POINTRON]: {
-    appMenu: [
-      PointronAction.FOCUS,
-      Action.CALENDAR,
-      Action.OVERVIEW,
-      Action.LIBRARY
-    ] as const,
+    appMenu: [Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
     appMenuPt: [
       Action.OVERVIEW,
       Action.CALENDAR,

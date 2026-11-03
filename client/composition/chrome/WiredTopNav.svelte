@@ -8,16 +8,15 @@
   import ProfilePicture from "@nucleum/surfaces/account/profile/ProfilePicture.svelte";
   import OfflineStatusIndicator from "@nucleum/surfaces/settings/sync/OfflineStatusIndicator.svelte";
   import BulkEditBar from "@nucleum/surfaces/library/bulk-edit/BulkEditBar.svelte";
-  import SearchInput from "@nucleum/surfaces/search/SearchInput.svelte";
-  import { searchStore } from "@nucleum/surfaces/search/search.store";
   import account from "@nucleum/client/runtime/account/account.store";
   import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
   import { determineIfActiveSubscriber } from "@nucleum/client/runtime/account/plan.utils";
-  import { Action } from "@nucleum/client/config/action.enum";
   import { Size } from "@21n/ui/elements/size.enum";
-  import type { InputStyle } from "@21n/ui/elements/input/input.type";
 
-  let { topnav = undefined }: { topnav?: Snippet } = $props();
+  let {
+    topnav = undefined,
+    indicators = undefined
+  }: { topnav?: Snippet; indicators?: Snippet } = $props();
   const isSubscriber = $derived(
     $account?.plan && $account?.dataMode === UserDataMode.CLOUD
       ? determineIfActiveSubscriber($account.plan)
@@ -35,20 +34,10 @@
 {/snippet}
 {#snippet leftLogo()}
   <TopNavLeftLogo
-    action={Action.SETTINGS}
     logo={subAtomLogo}
     {profilePicture}
     {isSubscriber}
   />
-{/snippet}
-{#snippet searchInput({
-  style,
-  isAutoFocus
-}: {
-  style: InputStyle;
-  isAutoFocus: boolean;
-})}
-  <SearchInput {style} {isAutoFocus} />
 {/snippet}
 {#snippet bulkEditBar({
   count,
@@ -78,11 +67,4 @@
   <OfflineStatusIndicator {isIconOnly} />
 {/snippet}
 
-<TopNav
-  {topnav}
-  {leftLogo}
-  {searchInput}
-  {bulkEditBar}
-  {offlineStatus}
-  onCloseSearch={() => searchStore.reset()}
-/>
+<TopNav {topnav} {indicators} {leftLogo} {bulkEditBar} {offlineStatus} />

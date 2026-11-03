@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
+  import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
   import {
     resolveObjectiveContextMenu,
     type IActiveObjectiveStore
@@ -55,7 +55,7 @@
   }
 </script>
 
-<ResourcePanelSwitcher
+<ResourceViewSwitcher
   resourceStore={adaptedStore}
   {panels}
   accessMode={$objective.accessMode}

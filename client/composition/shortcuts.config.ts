@@ -31,6 +31,16 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
   [Action.TOGGLE_SIDEBAR]: {
     key: "q"
   },
+  [Action.NAVIGATOR]: {
+    key: "/"
+  },
+  [Action.OPEN_NAVIGATOR]: {
+    key: "/",
+    modifiers: [ModifierKey.META]
+  },
+  [Action.CYCLE_CONTEXT_VIEW]: {
+    key: "v"
+  },
   [Action.CMD]: {
     key: "p",
     modifiers: [ModifierKey.META, ModifierKey.SHIFT]

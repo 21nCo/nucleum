@@ -23,6 +23,7 @@ import account from "@nucleum/client/runtime/account/account.store";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
+import { resolveLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
 
 /** Executes the product command registry supplied by application composition. */
 export const actionRunner = {
@@ -114,9 +115,7 @@ export const actionRunner = {
         navigation.toggleSearchParam(params.searchParams);
       }
     } else if (action.type === ActionType.LIVE) {
-      if (action.liveActionParams?.isOpeningBehaviorConfigurable) {
-      }
-      const mode = action.accessMode ?? AccessMode.PANEL;
+      const mode = resolveLiveActionAccessMode(action);
       const paramPresent = new URLSearchParams(window.location.search).get(
         mode
       );
@@ -129,6 +128,17 @@ export const actionRunner = {
                 [AccessMode.PAGE]: null,
                 [AccessMode.BESIDE_PAGE]: null
               }
+            : {}),
+          ...(mode === AccessMode.PANEL &&
+          new URLSearchParams(window.location.search).get(
+            AccessMode.OVERLAY
+          ) === slug
+            ? { [AccessMode.OVERLAY]: null }
+            : {}),
+          ...(mode === AccessMode.OVERLAY &&
+          new URLSearchParams(window.location.search).get(AccessMode.PANEL) ===
+            slug
+            ? { [AccessMode.PANEL]: null }
             : {}),
           [mode]: slug
         });

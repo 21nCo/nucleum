@@ -131,7 +131,7 @@
     "./records/RecordStatusBanner.svelte": "./records/RecordStatusBanner.svelte",
     "./records/RecordTrashBanner.svelte": "./records/RecordTrashBanner.svelte",
     "./records/ResourceGridThumbnail.svelte": "./records/ResourceGridThumbnail.svelte",
-    "./records/ResourcePanelSwitcher.svelte": "./records/ResourcePanelSwitcher.svelte",
+    "./records/ResourceViewSwitcher.svelte": "./records/ResourceViewSwitcher.svelte",
     "./records/ResourceSubtypeSwitcher.svelte": "./records/ResourceSubtypeSwitcher.svelte",
     "./records/ResourceThumbnailBase.svelte": "./records/ResourceThumbnailBase.svelte",
     "./records/ResourceThumbnailContextMenu.svelte": "./records/ResourceThumbnailContextMenu.svelte",

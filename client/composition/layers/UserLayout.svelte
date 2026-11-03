@@ -15,10 +15,12 @@
   let {
     children,
     topnav: topnavContent,
+    topnavIndicators = undefined,
     main
   }: {
     children?: Snippet;
     topnav?: Snippet;
+    topnavIndicators?: Snippet;
     main?: Snippet;
   } = $props();
 
@@ -28,11 +30,11 @@
 </script>
 
 {#snippet leftNav(isHidePanel: boolean)}
-  <LeftNav variant="fixed" {isHidePanel} />
+  <LeftNav {isHidePanel} />
 {/snippet}
 
 {#snippet topNav()}
-  <TopNav topnav={topnavContent} />
+  <TopNav topnav={topnavContent} indicators={topnavIndicators} />
 {/snippet}
 
 {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}

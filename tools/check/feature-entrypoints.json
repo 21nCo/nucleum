@@ -127,7 +127,7 @@
   "client/features/records/RecordStatusBanner.svelte",
   "client/features/records/RecordTrashBanner.svelte",
   "client/features/records/ResourceGridThumbnail.svelte",
-  "client/features/records/ResourcePanelSwitcher.svelte",
+  "client/features/records/ResourceViewSwitcher.svelte",
   "client/features/records/ResourceSubtypeSwitcher.svelte",
   "client/features/records/ResourceThumbnailBase.svelte",
   "client/features/records/ResourceThumbnailContextMenu.svelte",

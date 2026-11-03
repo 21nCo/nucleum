@@ -71,10 +71,13 @@
   let {
     children,
     topnav: topnavContent,
+    topnavIndicators = undefined,
     onReady
   }: {
     children?: Snippet;
     topnav?: Snippet;
+    /** Persistent top bar indicators, such as a running focus session. */
+    topnavIndicators?: Snippet;
     onReady?: () => void | Promise<void>;
   } = $props();
   const loadingMessages = {
@@ -391,7 +394,7 @@
       percentage={loadingMessage.percentage}
     />
   {:else}
-    <UserLayout topnav={topnavContent}>
+    <UserLayout topnav={topnavContent} {topnavIndicators}>
       {@render children?.()}
     </UserLayout>
   {/if}

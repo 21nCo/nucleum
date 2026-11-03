@@ -1,7 +1,12 @@
-import { resolveResourceLabel, resolveResourceIcon, availableResources } from "@nucleum/datafn/resource.utils";
+import {
+  resolveResourceLabel,
+  resolveResourceIcon,
+  availableResources
+} from "@nucleum/datafn/resource.utils";
 
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { Product } from "@nucleum/client/config/product.type";
+import { requireSurfaceProductConfig } from "@nucleum/shared-state/product/surface-config-host";
 import {
   nextProductSectionsPre,
   nextProductSectionsPost
@@ -19,11 +24,17 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
   }));
 }
 
+/** One product section of the library resource switcher. */
+export type LibrarySwitcherSection = {
+  section: Product;
+  items: IResourceSwitchItem[];
+};
+
 const isProductSection = (value: string): value is Product =>
   Object.values(Product).includes(value as Product);
 
 /** Product sections of the Nucleum library switcher in display order. */
-export function resolveLibrarySwitcherSections(): Product[] {
+export function resolveLibrarySwitcherProducts(): Product[] {
   return [
     Product.NUCLEUM,
     Product.POINTRON,
@@ -59,7 +70,7 @@ export function resolveLibrarySwitcherResources(
 ): Resource[] {
   return [
     ...new Set(
-      resolveLibrarySwitcherSections().flatMap((section) =>
+      resolveLibrarySwitcherProducts().flatMap((section) =>
         resolveLibrarySwitcherSectionResources(
           section,
           resolveBrowseResources,
@@ -68,4 +79,35 @@ export function resolveLibrarySwitcherResources(
       )
     )
   ];
+}
+
+/**
+ * Groups the library resource types into product sections. Nucleum lists every
+ * product's types once, under the first product that browses them; other
+ * products list their own types as a single section.
+ */
+export function resolveLibrarySwitcherSections(
+  product: Product,
+  resources: Resource[],
+  isDev: boolean
+): LibrarySwitcherSection[] {
+  const resourceList = resolveResourceSwitcher();
+  const toItem = (resource: Resource): IResourceSwitchItem =>
+    resourceList.find((item) => item.value === resource) ?? {
+      label: resource,
+      value: resource,
+      icon: "circle"
+    };
+  if (product !== Product.NUCLEUM) {
+    return [{ section: product, items: resources.map(toItem) }];
+  }
+  return resolveLibrarySwitcherProducts().map((section) => ({
+    section,
+    items: resolveLibrarySwitcherSectionResources(
+      section,
+      (sectionProduct) =>
+        requireSurfaceProductConfig(sectionProduct).resources.browse,
+      isDev
+    ).map(toItem)
+  }));
 }

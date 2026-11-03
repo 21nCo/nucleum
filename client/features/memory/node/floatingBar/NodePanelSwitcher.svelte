@@ -6,17 +6,20 @@
     resolvePanelOptions,
     type IActiveNodeStore
   } from "../node.store";
-  import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
+  import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
   import { derived } from "svelte/store";
   import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import type { IResourcePageWithPanels } from "@nucleum/datafn/resource.type";
   import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   let {
     node,
-    isConstrainedWidth = false
+    isConstrainedWidth = false,
+    isFloatingHidden = false
   }: {
     node: IActiveNodeStore;
     isConstrainedWidth?: boolean;
+    /** Hides the floating bar while the node content scrolls down. */
+    isFloatingHidden?: boolean;
   } = $props();
 
   let isReadOnlyMode = $derived(
@@ -69,10 +72,11 @@
   let panels = $derived(resolvePanelOptions($node));
 </script>
 
-<ResourcePanelSwitcher
+<ResourceViewSwitcher
   resourceStore={adaptedStore}
   {panels}
   {isConstrainedWidth}
+  {isFloatingHidden}
   accessMode={$node.accessMode}
   contextMenuResolver={() =>
     resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {

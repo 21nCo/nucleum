@@ -30,6 +30,8 @@
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { cn } from "@21n/ui/environment/presentation";
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
+  import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
+  import { ContextZoneLayer } from "@nucleum/shell/topNav/contextZone/context-zone";
   const ComponentResolver = requireActionRenderer();
   let {
     children,
@@ -106,7 +108,15 @@
         <div class="min-w-0 flex-grow relative">
           {#if mainPath}
             <div class="absolute inset-0 w-full h-full bg-bgs1 z-40">
-              <ComponentResolver path={mainPath} params={{ isInline: true }} />
+              <ContextZonePaneScope
+                id="overlay"
+                layer={ContextZoneLayer.OVERLAY}
+              >
+                <ComponentResolver
+                  path={mainPath}
+                  params={{ isInline: true }}
+                />
+              </ContextZonePaneScope>
             </div>
           {/if}
           {#if popId}
@@ -115,17 +125,25 @@
               data-testid="resource-record-surface"
               {...pageLayerAttributes}
             >
-              <ResourceResolver id={popId} accessMode={AccessMode.PAGE} />
+              <ContextZonePaneScope id="page" layer={ContextZoneLayer.PAGE}>
+                <ResourceResolver id={popId} accessMode={AccessMode.PAGE} />
+              </ContextZonePaneScope>
             </div>
           {/if}
           {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}
             <Trail />
           {:else}
             <AppSplitView>
-              {@render main?.()}
-              {#if !main}
-                {@render children?.()}
-              {/if}
+              <ContextZonePaneScope
+                id="base"
+                layer={ContextZoneLayer.BASE}
+                isActivateOnMount={false}
+              >
+                {@render main?.()}
+                {#if !main}
+                  {@render children?.()}
+                {/if}
+              </ContextZonePaneScope>
             </AppSplitView>
           {/if}
         </div>

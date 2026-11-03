@@ -60,6 +60,8 @@ export enum Action {
   IMPORT_FROM_OTHER_APPS = "import-from-other-apps",
   OFFLINE_STATUS = "offline-status",
   NAVIGATOR = "navigator",
+  OPEN_NAVIGATOR = "open-navigator",
+  CYCLE_CONTEXT_VIEW = "cycle-context-view",
   RHOMBUS = "rhombus",
   TODAY = "today",
   FEED = "feed"

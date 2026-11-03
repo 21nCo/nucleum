@@ -114,6 +114,10 @@ function initToastStore() {
     },
     closeProgress,
     setProgress,
+    /** Removes one toast, such as when the user hovers it away. */
+    dismiss: (id: string) => {
+      update((n: Toast[]) => n.filter((x) => x.id !== id));
+    },
     trigger: trigger
   };
 }

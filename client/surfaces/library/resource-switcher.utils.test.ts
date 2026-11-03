@@ -5,7 +5,7 @@ import { availableResources } from "@nucleum/datafn/resource.utils";
 import {
   resolveLibrarySwitcherResources,
   resolveLibrarySwitcherSectionResources,
-  resolveLibrarySwitcherSections
+  resolveLibrarySwitcherProducts
 } from "./resource-switcher.utils";
 
 const browse: Partial<Record<Product, Resource[]>> = {
@@ -22,7 +22,7 @@ const resolveBrowse = (product: Product) => browse[product] ?? [];
 
 describe("library switcher resources", () => {
   it("lists Nucleum, Pointron and Memotron sections in order", () => {
-    expect(resolveLibrarySwitcherSections()).toEqual([
+    expect(resolveLibrarySwitcherProducts()).toEqual([
       Product.NUCLEUM,
       Product.POINTRON,
       Product.MEMOTRON

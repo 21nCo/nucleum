@@ -10,6 +10,8 @@ export type ProductNavConfig = {
   homePath: string;
   homePathPt: string;
   isShowCaptureOnMobile?: boolean;
+  /** Record types the navigator searches. */
+  navigatorResources?: string[];
 };
 
 let productConfig: ProductNavConfig | undefined;

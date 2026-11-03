@@ -564,9 +564,7 @@ test("from library - Open as tab adds objective to tab bar @context-menu", async
 
   const recordSurface = getResourceRecordSurface(page);
   await expect(recordSurface).toBeVisible({ timeout: 10_000 });
-  const closeBtn = recordSurface
-    .getByRole("button", { name: /^Close$/i })
-    .first();
+  const closeBtn = page.getByTestId("top-bar-close");
   await expect(closeBtn).toBeVisible({ timeout: 10_000 });
   await closeBtn.click({ timeout: 5_000 });
   await expect(recordSurface).toBeHidden({ timeout: 10_000 });

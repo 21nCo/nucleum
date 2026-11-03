@@ -65,6 +65,9 @@
       {/if} -->
     </div>
   {/snippet}
+  {#snippet topnavIndicators()}
+    <FocusTopNavWidget mode="indicator" />
+  {/snippet}
   {@render children?.()}
   <PointronNotifications />
   <MemotronNotifications />

@@ -192,7 +192,8 @@ const libraryAction: IAction = {
   component: LibraryPanelContentResolver,
   type: ActionType.PAGE,
   componentParams: {
-    defaultResource: Resource.objective
+    defaultResource: Resource.objective,
+    resources: pointronLibraryResources
   },
   modalParams: {
     layout: {

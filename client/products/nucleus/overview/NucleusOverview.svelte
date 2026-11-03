@@ -13,6 +13,8 @@
   import { parseMemotronOverviewPanel } from "@nucleum/products/memotron/overview/memotron-overview-views";
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import { resolveNucleusOverviewItems } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
+  import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import { nextCycleValue } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     subPath = undefined,
@@ -64,6 +66,18 @@
         scope: UIStateScope.DEVICE
       });
     }
+  }
+
+  function cyclePanel() {
+    const panel = parsePanel(
+      nextCycleValue(
+        items.map((item) => String(item.value)),
+        selectedPanel
+      )
+    );
+    if (!panel) return;
+    selectedPanel = panel;
+    savePanel(panel);
   }
 
   function onPanelSelect(event: CustomEvent) {
@@ -118,13 +132,23 @@
 </script>
 
 <div class="w-full h-full flex flex-col">
-  <div class="h-12 min-h-12 border-b border-brs3 pl-3">
+  {#snippet overviewTabs()}
     <BoxSwitcher
       options={items}
       bind:selected={selectedPanel}
       onSelect={onPanelSelect}
     />
-  </div>
+  {/snippet}
+  <ContextZoneContent cycle={cyclePanel}>
+    <div class="h-full" data-testid="overview-tabs">
+      {@render overviewTabs()}
+    </div>
+    {#snippet fallback()}
+      <div class="h-12 min-h-12 border-b border-brs3 pl-3">
+        {@render overviewTabs()}
+      </div>
+    {/snippet}
+  </ContextZoneContent>
   {#if selectedPanel === OverviewPanel.DASHBOARD}
     <div class="w-full h-full flex">
       <div class="w-80 h-full text-fgs3 text-b2 p-3 border-r border-brs3">
