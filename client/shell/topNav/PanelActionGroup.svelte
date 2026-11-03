@@ -127,7 +127,7 @@
     expandedAction
       ? [
           "relative z-10 self-start h-[calc(100%+1px)] -mb-px border-l border-b border-brs3 bg-bgs2",
-          "app-framed:self-end app-framed:ml-[var(--app-shell-gap)] app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:px-1 app-framed:gap-1 app-framed:mb-0 app-framed:border-0 app-framed:bg-bgs1 app-framed:overflow-hidden app-framed:rounded-t-[var(--app-tab-radius)]",
+          "app-framed:self-end app-framed:ml-[var(--app-shell-gap)] app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:px-[calc((0.5rem+var(--app-shell-gap))/2)] app-framed:gap-1 app-framed:mb-0 app-framed:border-0 app-framed:bg-bgs1 app-framed:overflow-hidden app-framed:rounded-t-[var(--app-tab-radius)]",
           widthClass
         ]
       : "items-stretch self-stretch app-framed:items-center app-framed:self-center app-framed:gap-2"

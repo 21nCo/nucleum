@@ -189,7 +189,8 @@
       <div
         class={cn("flex cw:flex-row-reverse  overflow-hidden", {
           "h-8 bg-bgs3": $resourceStore.isInFocusMode,
-          "h-[50px] bg-bgs2": !$resourceStore.isInFocusMode,
+          "h-[50px] bg-bgs2 app-framed:h-12 app-framed:px-1":
+            !$resourceStore.isInFocusMode,
           "rounded--md": !$resourceStore.isInEditMode,
           "rounded-t--md": $resourceStore.isInEditMode
         })}
