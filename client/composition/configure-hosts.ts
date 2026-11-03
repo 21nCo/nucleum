@@ -15,7 +15,6 @@ import { get } from "svelte/store";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import { appEvents } from "@nucleum/shared-state/events/app-events.store";
-import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import {
   determineResourceType,
@@ -68,10 +67,13 @@ export function installApplicationHosts() {
       onDismiss: (action) => appEvents.nav(action),
       openFullscreen: (path) =>
         navigation.toggleSearchParam({
-          [AccessMode.FULL]: path,
-          [AccessMode.PAGE]: null
+          [AccessMode.OVERLAY]: path,
+          [AppSearchParam.MAX]: true,
+          [AccessMode.PAGE]: null,
+          [AccessMode.BESIDE_PAGE]: null
         }),
-      closeFullscreen: () => navigation.toggleSearchParam([AccessMode.FULL]),
+      closeFullscreen: () =>
+        navigation.toggleSearchParam([AccessMode.OVERLAY, AppSearchParam.MAX]),
       resolvePlayer: (path) =>
         appStore.resolveComponentFromPath(path)?.associatedPlayer
     });
@@ -98,7 +100,9 @@ export function installApplicationHosts() {
           [AppSearchParam.PANEL]: panel
         }),
       close: (id) => navigation.closeResource({ id }),
-      goBack: () => navigation.goBack(),
+      goBack: () => {
+        if (!navigation.backInTrail()) navigation.goBack();
+      },
       maximize: (mode, id) => navigation.toggleFullScreen(mode, id)
     });
 
@@ -107,8 +111,6 @@ export function installApplicationHosts() {
       open: (id, mode, options) => navigation.openResource(id, mode, options),
       close: (options) => navigation.closeResource(options),
       maximize: (mode, id) => navigation.toggleFullScreen(mode, id),
-      openTab: (id) => navigation.openTab(id),
-      removeTab: (id) => tabs.remove(id),
       requestLink: (options) =>
         requireCommandHost().runAction(Action.BULK_LINK, {
           componentParams: options

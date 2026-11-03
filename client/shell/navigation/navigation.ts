@@ -1,5 +1,4 @@
-import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
-import { resourceInList, isRecordId } from "@nucleum/datafn/resource.utils";
+import { isRecordId } from "@nucleum/datafn/resource.utils";
 import { get } from "svelte/store";
 
 import {
@@ -27,7 +26,6 @@ import { logger } from "@nucleum/client/runtime/logging/logger";
 
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
-import { tabs, vTrail, hTrail } from "@nucleum/shell/topNav/tabs/tabs.store";
 import { determineResourceAccessMode } from "@nucleum/datafn/resource.utils";
 
 import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
@@ -36,12 +34,20 @@ import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { resolveNavigationLinkTarget } from "@nucleum/shell/navigation/link-target";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
+import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
+import { resolveAccessTrailParent } from "@nucleum/shell/navigator/access-trail";
+
+/**
+ * How a page open changes the access trail: start a new trail, extend the
+ * current one from its active resource, or follow a node the trail already
+ * selected (`select` adds a history entry, `back` replaces the current one).
+ */
+export type AccessTrailIntent = "start" | "extend" | "select" | "back";
 
 const recordedAccessModes = new Set<AccessMode | undefined>([
   AccessMode.PAGE,
   AccessMode.BESIDE_BASE,
-  AccessMode.BESIDE_PAGE,
-  AccessMode.FULL
+  AccessMode.BESIDE_PAGE
 ]);
 
 /**
@@ -71,10 +77,10 @@ const recordSpecificSearchParams = [
   /-tab$/,
   /-task$/,
   /-nodeView$/,
+  /-panel$/,
   AppSearchParam.EDIT,
   AppSearchParam.VIEW,
   AppSearchParam.BESIDE_PAGE_AT,
-  AppSearchParam.FULL_AT,
   AppSearchParam.LINK,
   AppSearchParam.DATE,
   AppSearchParam.SETTING,
@@ -85,7 +91,6 @@ const layerScopedRecordParams = [SPACE_FOCUS_PARAM];
 
 const closableLayerModes = [
   AccessMode.BESIDE_BASE,
-  AccessMode.FULL,
   AccessMode.PAGE,
   AccessMode.BESIDE_PAGE,
   AccessMode.OVERLAY
@@ -109,6 +114,19 @@ function clearLayerScopedRecordParams(
   }
 }
 
+let pushedPages: string[] = [];
+
+/** Resolves whether a page open starts a trail or extends the current one. */
+function resolveAccessTrailIntent(
+  openPage: string | null,
+  origin: Action | IRecordId | undefined,
+  intent: AccessTrailIntent | undefined
+): AccessTrailIntent {
+  if (intent) return intent;
+  if (origin && !isRecordId(origin)) return "start";
+  return openPage ? "extend" : "start";
+}
+
 /** Compare navigation targets without treating equivalent query encodings as changes. */
 function areNavigationUrlsEqual(left: URL, right: URL) {
   return (
@@ -121,69 +139,58 @@ function areNavigationUrlsEqual(left: URL, right: URL) {
 
 /** URL, history, and resource navigation owned by the application layout. */
 export const navigation = {
-  /** Opens and activates a persisted resource tab. */
-  openTab(id: IRecordId, backParam?: string) {
-    if (!id) return;
-    tabs.addInBackground(id);
-    navigation.activateTab(id, backParam);
+  /** Opens a node of the current access trail. */
+  openTrailNode(index: number) {
+    const trail = accessTrail.get().current;
+    const node = trail?.nodes[index];
+    if (!node) return;
+    accessTrail.select(index);
+    navigation.openResource(node.id, AccessMode.PAGE, { trail: "select" });
   },
-  /** Replaces a persisted tab while retaining the existing activation behavior. */
-  replaceTab(id: IRecordId, replaceId: IRecordId) {
-    if (!id || !replaceId) return;
-    if (tabs.get()?.some(resourceInList(replaceId))) {
-      tabs.remove(replaceId);
-      tabs.addInBackground(id);
-    }
-    navigation.activateTab(id);
+  /**
+   * Makes a recent trail current again and opens one of its resources, by
+   * default the one that was active when the trail was left.
+   */
+  resumeTrail(key: string, index?: number) {
+    const trail = accessTrail.get().recent.find((item) => item.key === key);
+    const nodeIndex = index ?? trail?.active ?? 0;
+    const node = trail?.nodes[nodeIndex];
+    if (!node) return;
+    accessTrail.resume(key);
+    accessTrail.select(nodeIndex);
+    navigation.openResource(node.id, AccessMode.PAGE, { trail: "select" });
   },
-  /** Applies tab return-path parameters and opens its resource. */
-  activateTab(id: IRecordId, backParam?: string) {
-    if (!id) return;
-    const currentParams = new URLSearchParams(window.location.search);
-    const tabParam = currentParams.get("tab");
-    if (tabParam === id) return;
-
-    const existingBack = currentParams.get("back");
-    const resolvedBack = tabParam
-      ? (existingBack ?? undefined)
-      : (backParam ?? window.location.pathname);
-    const returnToParam = currentParams.get("returnTo");
-
-    navigation.closeResource({ isRestrictToModals: true });
-    const queryParams: Record<string, IRecordId | string> = {};
-    if (resolvedBack !== undefined && resolvedBack !== null) {
-      queryParams.back = resolvedBack;
+  /**
+   * Goes back from the open resource page: to the resource it was opened
+   * from in the access trail, otherwise to the base page.
+   */
+  backInTrail() {
+    const openPage = new URLSearchParams(window.location.search).get(
+      AccessMode.PAGE
+    );
+    if (!openPage) return false;
+    const trail = accessTrail.get().current;
+    const parent = resolveAccessTrailParent(trail);
+    const isTopPushed = pushedPages.at(-1) === openPage;
+    if (parent === undefined || !trail) {
+      if (isTopPushed && pushedPages.length === 1) window.history.back();
+      else navigation.closeResource({ accessMode: AccessMode.PAGE });
+      return true;
     }
-    if (returnToParam) {
-      queryParams.returnTo = returnToParam;
+    const parentId = trail.nodes[parent].id;
+    if (isTopPushed && pushedPages.at(-2) === parentId) {
+      window.history.back();
+      return true;
     }
-    navigation.openResource(id, AccessMode.PAGE, {
-      searchParams: { ...queryParams }
-    });
+    accessTrail.select(parent);
+    navigation.openResource(parentId, AccessMode.PAGE, { trail: "back" });
+    return true;
   },
-  /** Navigates to the selected horizontal trail item. */
-  activateHorizontalTrail(id: IRecordId | Action) {
-    const current = get(hTrail);
-    if (current.isBaseNonRecord && id === current.path[0]) {
-      requireCommandHost().runAction(id);
-      return;
-    }
-    navigation.toggleSearchParam([AccessMode.OVERLAY]);
-    hTrail.select(id);
-  },
-  /** Navigates to the resource or action selected in the vertical trail. */
-  activateVerticalTrail(id: IRecordId | Action) {
-    const current = get(vTrail);
-    if (!isRecordId(current.base) && id === current.base) {
-      requireCommandHost().runAction(id);
-      return;
-    }
-    if (!isRecordId(id)) return;
-    const parts = id.split("-");
-    navigation.openResource(parts[parts.length - 1], AccessMode.PAGE, {
-      origin: current.base
-    });
-    vTrail.select(id);
+  /** Keeps the access trail in step with the open page after any navigation. */
+  syncAccessTrail(pageId: string | undefined) {
+    if (!pageId) pushedPages = [];
+    else if (pushedPages.at(-2) === pageId) pushedPages.pop();
+    accessTrail.sync(pageId);
   },
 
   /**
@@ -411,30 +418,21 @@ export const navigation = {
   isOverlay: (recordId?: IRecordId) => {
     if (recordId) {
       const accessMode = determineResourceAccessMode(recordId);
-      return accessMode === AccessMode.PAGE || accessMode === AccessMode.FULL;
+      return accessMode === AccessMode.PAGE;
     }
-    return (
-      new URLSearchParams(window.location.search).get(AccessMode.FULL) ||
-      new URLSearchParams(window.location.search).get(AccessMode.PAGE)
-    );
+    return new URLSearchParams(window.location.search).get(AccessMode.PAGE);
   },
   /**
-   *
-   * TODO - shortcuts from user settings
-   *
-   * @param event
-   * @returns
+   * Access mode for a modified click: Cmd (or Ctrl) opens beside the base page
+   * or beside the open page, Shift opens a page in full screen.
    */
   determineClickAccessMode: (event: MouseEvent) => {
-    if (event.altKey && event.metaKey) {
-      return AccessMode.TAB;
-    } else if (event.shiftKey) return AccessMode.FULL;
-    else if (event.altKey) {
-      return AccessMode.BESIDE_BASE;
-    } else if (event.metaKey) {
-      return AccessMode.OPEN_IN_BACKGROUND;
-    }
+    if (event.metaKey || event.ctrlKey) return AccessMode.BESIDE_BASE;
+    if (event.shiftKey) return AccessMode.PAGE;
   },
+  /** Whether a click asks for the page to open in full screen. */
+  isFullScreenClick: (event: MouseEvent | undefined) =>
+    !!event?.shiftKey && !event.metaKey && !event.ctrlKey,
   openResource: (
     id: IRecordId,
     accessMode?: AccessMode,
@@ -442,20 +440,14 @@ export const navigation = {
       origin?: Action | IRecordId;
       replaceId?: IRecordId;
       searchParams?: Record<string, string | boolean | number | null>;
+      /** Turns full screen on for a page. */
+      isFullScreen?: boolean;
+      trail?: AccessTrailIntent;
     }
   ) => {
     logger.log({ at: "openResource", id, accessMode, params });
     if (!id) return;
     let url = new URL(window.location.href);
-    if (accessMode === AccessMode.FULL) {
-      url =
-        navigation.toggleSearchParam(
-          [AccessMode.PAGE, AppSearchParam.PAGE_AT, AccessMode.BESIDE_PAGE],
-          {
-            isPreventRefresh: true
-          }
-        ) ?? url;
-    }
     const timestamp = new Date();
     const runtime = get(datafnRuntime);
     if (runtime?.remoteUrl)
@@ -473,43 +465,56 @@ export const navigation = {
         .catch((error) =>
           logger.error({ at: "openResource.accessLog", error })
         );
-    if (accessMode === AccessMode.TAB) {
-      if (params?.replaceId) navigation.replaceTab(id, params.replaceId);
-      else navigation.openTab(id);
-      return;
-    } else if (accessMode === AccessMode.OPEN_IN_BACKGROUND && params?.origin) {
-      vTrail.add(params.origin, id, {
-        isPreventActivation: true
-      });
-      navigation.toggleSearchParam(
-        { [AccessMode.PANEL]: Action.NAVIGATOR },
-        { url }
-      );
-      return;
-    } else if (accessMode === AccessMode.BESIDE_BASE) {
+    if (accessMode === AccessMode.BESIDE_BASE) {
       const isFullOrPop = navigation.isOverlay(params?.replaceId);
       if (isFullOrPop) accessMode = AccessMode.BESIDE_PAGE;
       else accessMode = AccessMode.BESIDE_BASE;
+    }
+    if (
+      get(view).isPortrait &&
+      (accessMode === AccessMode.BESIDE_BASE ||
+        accessMode === AccessMode.BESIDE_PAGE)
+    ) {
+      accessMode = AccessMode.PAGE;
     }
     logger.log({ at: "openResource", accessMode });
     if (recordedAccessModes.has(accessMode)) {
       recordResourceOpen(id, params?.origin);
     }
-    let isOpenNavigator = false;
     let isCloseNavigator = false;
-    if (accessMode === AccessMode.PAGE && params?.origin) {
-      isOpenNavigator = vTrail.add(params.origin, id);
-    } else if (accessMode === AccessMode.PAGE) {
-      vTrail.clear();
-      isCloseNavigator =
-        new URL(window.location.href).searchParams.get(AccessMode.PANEL) ===
-        Action.NAVIGATOR;
+    let isPushHistory = false;
+    if (accessMode === AccessMode.PAGE) {
+      const openPage = url.searchParams.get(AccessMode.PAGE);
+      const intent = resolveAccessTrailIntent(
+        openPage,
+        params?.origin,
+        params?.trail
+      );
+      if (intent === "start" && openPage !== id.toString()) {
+        accessTrail.start(
+          id.toString(),
+          params?.origin && !isRecordId(params.origin)
+            ? params.origin
+            : undefined
+        );
+        isCloseNavigator =
+          url.searchParams.get(AccessMode.PANEL) === Action.NAVIGATOR;
+      } else if (intent === "extend") {
+        accessTrail.extend(id.toString());
+      }
+      if (openPage !== id.toString()) {
+        if (intent === "back") {
+          pushedPages = [...pushedPages.slice(0, -1), id.toString()];
+        } else {
+          isPushHistory = true;
+          pushedPages = openPage
+            ? [...pushedPages, id.toString()]
+            : [id.toString()];
+        }
+      }
     }
     const currentUrl = new URL(window.location.href);
-    const replacedModes =
-      accessMode === AccessMode.FULL
-        ? [AccessMode.FULL, AccessMode.PAGE, AccessMode.BESIDE_PAGE]
-        : [accessMode ?? AppSearchParam.SELECTED];
+    const replacedModes = [accessMode ?? AppSearchParam.SELECTED];
     clearLayerScopedRecordParams(url, [
       id,
       ...replacedModes.map((mode) => currentUrl.searchParams.get(mode)),
@@ -531,12 +536,15 @@ export const navigation = {
               [AppSearchParam.SELECTED]: id.toString(),
               [`${AppSearchParam.SELECTED}At`]: timestamp.getTime()
             }),
+        ...(accessMode === AccessMode.PAGE && params?.isFullScreen
+          ? { [AppSearchParam.MAX]: true }
+          : {}),
         ...(params?.searchParams ?? {}),
-        ...(isOpenNavigator ? { [AccessMode.PANEL]: Action.NAVIGATOR } : {}),
         ...(isCloseNavigator ? { [AccessMode.PANEL]: null } : {})
       },
       {
-        url: url
+        url: url,
+        replaceState: !isPushHistory
       }
     );
   },
@@ -564,7 +572,8 @@ export const navigation = {
       accessMode = clickAccessMode;
     }
     navigation.openResource(id, accessMode, {
-      replaceId: params?.replaceId
+      replaceId: params?.replaceId,
+      isFullScreen: navigation.isFullScreenClick(event)
     });
   },
   goBack: (resource?: IRecordId) => {
@@ -628,7 +637,8 @@ export const navigation = {
     navigation.openResource(id, accessMode, {
       replaceId: params?.replaceId,
       searchParams: params?.searchParams,
-      origin: params?.origin
+      origin: params?.origin,
+      isFullScreen: navigation.isFullScreenClick(event)
     });
     logger.log({
       at: "resourceClickHandler",
@@ -680,17 +690,22 @@ export const navigation = {
         ? undefined
         : currentUrl.searchParams.get(AccessMode.BESIDE_PAGE)
     ]);
+    const withPageParams = (mode: AccessMode) =>
+      mode === AccessMode.PAGE
+        ? [
+            AccessMode.PAGE,
+            `${AccessMode.PAGE}At`,
+            AccessMode.BESIDE_PAGE,
+            `${AccessMode.BESIDE_PAGE}At`,
+            AppSearchParam.MAX
+          ]
+        : [mode, `${mode}At`];
     if (props?.accessMode) {
-      navigation.toggleSearchParam(
-        [props.accessMode, `${props.accessMode}At`],
-        { url }
-      );
+      navigation.toggleSearchParam(withPageParams(props.accessMode), { url });
       return;
     }
     if (resolvedMode) {
-      navigation.toggleSearchParam([resolvedMode, `${resolvedMode}At`], {
-        url
-      });
+      navigation.toggleSearchParam(withPageParams(resolvedMode), { url });
       return;
     }
     if (props?.id) {
@@ -705,22 +720,19 @@ export const navigation = {
       return;
     }
     if (props?.isRestrictToModals) {
-      navigation.toggleSearchParam(
-        [AccessMode.BESIDE_PAGE, AccessMode.PAGE, AppSearchParam.PAGE_AT],
-        { url }
-      );
+      navigation.toggleSearchParam(withPageParams(AccessMode.PAGE), { url });
       return;
     }
-    for (const mode of [
+    [
       AccessMode.BESIDE_BASE,
-      AccessMode.FULL,
       AccessMode.PAGE,
       AccessMode.BESIDE_PAGE,
       AccessMode.OVERLAY
-    ]) {
+    ].forEach((mode) => {
       removeSearchParam(mode);
       removeSearchParam(`${mode}At`);
-    }
+    });
+    removeSearchParam(AppSearchParam.MAX);
     navigation.gotoPath(url.href);
 
     function removeSearchParam(param: string) {
@@ -728,19 +740,35 @@ export const navigation = {
       url.searchParams.delete(param);
     }
   },
+  /**
+   * Toggles full screen, which hides the app menu around the resource page.
+   * A resource that is not the open page is opened as the page first.
+   */
   toggleFullScreen: (
     currentMode: AccessMode | undefined,
     resourceId: IRecordId
   ) => {
-    logger.log({ at: "toggleFullAccessMode", currentMode, resourceId });
-    const hasMaxParam = new URLSearchParams(window.location.search).get(
-      AppSearchParam.MAX
-    );
-    if (hasMaxParam) {
-      navigation.toggleSearchParam({ [AppSearchParam.MAX]: null });
-    } else {
-      navigation.toggleSearchParam({ [AppSearchParam.MAX]: true });
+    logger.log({ at: "toggleFullScreen", currentMode, resourceId });
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get(AppSearchParam.MAX)) {
+      navigation.exitFullScreen();
+      return;
     }
+    if (searchParams.get(AccessMode.PAGE) === resourceId?.toString()) {
+      navigation.toggleSearchParam({ [AppSearchParam.MAX]: true });
+      return;
+    }
+    navigation.openResource(resourceId, AccessMode.PAGE, {
+      isFullScreen: true,
+      searchParams:
+        currentMode && currentMode !== AccessMode.PAGE
+          ? { [currentMode]: null }
+          : undefined
+    });
+  },
+  /** Turns full screen off without closing the page. */
+  exitFullScreen: () => {
+    navigation.toggleSearchParam([AppSearchParam.MAX]);
   },
   setCurrentPath: (path: string) => {
     appStore.update((n: IAppStore) => {

@@ -64,7 +64,6 @@
   {#if !(isConstrainedWidth && $node.panel && $node.panel !== ResourcePanelType.DEFAULT && $node.panel !== ResourcePanelType.NONE)}
     <main
       class={cn("relative flex justify-center min-w-96 flex-1", {
-        "h-full": $node.accessMode === AccessMode.FULL,
         "border-r border-brs2":
           $node.panel ||
           (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth),

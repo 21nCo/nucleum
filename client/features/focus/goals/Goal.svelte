@@ -18,7 +18,6 @@
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
   import { Size } from "@21n/ui/elements/size.enum";
-  import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
   import ObjectivePanelSwitcher from "./GoalPanelSwitcher.svelte";
   import { resolvePanelParam } from "@nucleum/shared-state/resources/panelParam.mixin";
   import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
@@ -83,8 +82,7 @@
   });
 
   onDestroy(() => {
-    const latestAccessMode = $objective?.accessMode ?? accessMode;
-    ActiveObjectiveStore.destroy(id, latestAccessMode);
+    ActiveObjectiveStore.destroy(id);
   });
 
   function resolvePreviouslySelectedView() {
@@ -219,19 +217,7 @@
                       onSwitch={(e) => {
                         objective.switchPanel(e.detail);
                       }}
-                    >
-                      {#snippet right()}
-                        <div>
-                          {#if $objective.accessMode === AccessMode.FULL && !isConstrainedWidth}
-                            <ResourceInlineCloseButton
-                              accessMode={$objective.accessMode}
-                              parentBgIndex={2}
-                              id={$objective.id}
-                            />
-                          {/if}
-                        </div>
-                      {/snippet}
-                    </PanelSwitcher>
+                    ></PanelSwitcher>
                     {#if isConstrainedWidth}
                       <div
                         class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"

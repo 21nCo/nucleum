@@ -3,6 +3,7 @@ import { writable } from "svelte/store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { ObservableStore } from "@nucleum/datafn/observable-store";
 import { AccessMode } from "@nucleum/datafn/resource.type";
+import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
 /** Shell operations required by reusable overlay state. */
 export interface OverlayHost {
@@ -128,10 +129,12 @@ class FullScreenStore extends ObservableStore<{ path?: string }> {
     overlayHost?.closeFullscreen();
   }
 
+  /** Restores a full screen overlay, kept as the overlay with full screen on, after a reload. */
   restore() {
-    const fullSearchParam = new URLSearchParams(window.location.search).get(
-      AccessMode.FULL
-    );
+    const searchParams = new URLSearchParams(window.location.search);
+    const fullSearchParam = searchParams.get(AppSearchParam.MAX)
+      ? searchParams.get(AccessMode.OVERLAY)
+      : undefined;
     if (fullSearchParam) {
       this.show(fullSearchParam);
       return true;

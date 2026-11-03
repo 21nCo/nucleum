@@ -2,7 +2,11 @@
   import { hoverable } from "@21n/ui/actions/hover.action";
   import { tooltip } from "@21n/ui/actions/popover.action";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
+  import {
+    AccessMode,
+    ResourceAccessPoint
+  } from "@nucleum/datafn/resource.type";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
   import { resolveResource } from "@nucleum/datafn/resource-query.utils";
   import NodeAvatar from "@nucleum/features/memory/node/avatar/NodeAvatar.svelte";
   import { webNodeTypeList } from "@nucleum/features/memory/node/node.type";
@@ -42,8 +46,13 @@
   class="inline-mention px-1 bg-bgs2 notouch:hover:bg-bgs3 active:bg-bgs3 rounded-md max-w-48 truncate"
   data-record-id={id}
   data-label={label}
-  href={`${window.location.pathname}${window.location.search}${window.location.search ? "&" : "?"}pop=${id}`}
+  href={`${window.location.pathname}${window.location.search}${window.location.search ? "&" : "?"}${AccessMode.PAGE}=${id}`}
   contenteditable="false"
+  onclick={(event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    navigation.resourceClickHandler(event, id);
+  }}
   use:hoverable={{
     onHover: (val) => {
       isHovering = val;

@@ -5,11 +5,13 @@ fills it. Pure "where things go and how you move", never "what a screen does".
 
 ## Owners
 
-`navigation` (URL/history, resource navigation), `topNav`, `bottomNav`,
-`leftPanel`, `rightPanel`, `trail`, `layers` (theme, metadata, embed),
-`overlays`, `modal`, `paint` (page and
-resource resolvers fed through the shared-state action renderer), `split views`,
-`tabs`, `interaction`, `navigator`, `shortcuts`, `sync` and `notifications` chrome.
+`navigation` (URL/history, resource navigation, the layer 0 base page and
+layer 1 resource page, full screen and phone back), `topNav`, `leftPanel`,
+`rightPanel`, `layers` (theme, metadata, embed), `overlays`, `modal`, `paint`
+(page and resource resolvers fed through the shared-state action renderer),
+`split views`, retired app `tabs`, `interaction`, `navigator` (search, history
+and the access trail tree with recent trails), `shortcuts`, `sync` and
+`notifications` chrome.
 
 `navigation/NavigationLayout.svelte` owns route-driven arrangement and receives
 connected nav snippets from application. `overlays/ModalLayer.svelte` owns the

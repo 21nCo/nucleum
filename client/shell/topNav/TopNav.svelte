@@ -31,6 +31,8 @@
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   let {
     topnav = undefined,
@@ -80,10 +82,15 @@
       !!searchParams.get(AccessMode.BESIDE_BASE)
   );
   const isCloseMode = $derived(isBulkMode || isResourceOpen);
+  const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
+  const isPageFullScreen = $derived(
+    isPageOpen && !!searchParams.get(AppSearchParam.MAX)
+  );
   const isHomePage = $derived(isHomeRoute($page.url));
   const isToastMode = $derived($toasts.length > 0);
   const isAppMenuColumnVisible = $derived(
-    !isHideLeftNavBar &&
+    !isPageFullScreen &&
+      !isHideLeftNavBar &&
       !$appStore.isMenuHidden &&
       productConfig.appMenu.length > 0
   );
@@ -134,7 +141,8 @@
           }
         )}
         use:tooltip={{ text: isBulkMode ? "Clear selection" : "Close" }}
-        onclick={() => closeTopLayer({ isIncludePanel: false })}
+        onclick={() =>
+          closeTopLayer({ isIncludePanel: false, isIncludeFullScreen: false })}
       >
         <Icon icon="cross" size={Size.md} />
       </button>
@@ -146,6 +154,32 @@
     class="flex flex-1 min-w-0 h-full items-center justify-start overflow-x-auto"
     data-testid="top-bar-context-zone"
   >
+    {#if isPageOpen && !isBulkMode}
+      <div class="flex items-center h-full shrink-0 pl-1 pr-1 gap-0.5">
+        <button
+          type="button"
+          data-testid="top-bar-back"
+          aria-label="Back"
+          class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+          use:tooltip={{ text: "Back" }}
+          onclick={() => navigation.backInTrail()}
+        >
+          <Icon icon="chevron-left" size={Size.md} />
+        </button>
+        {#if isPageFullScreen}
+          <button
+            type="button"
+            data-testid="top-bar-exit-full-screen"
+            aria-label="Exit full screen"
+            class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+            use:tooltip={{ text: "Exit full screen" }}
+            onclick={() => navigation.exitFullScreen()}
+          >
+            <Icon icon="exitfullscreen" size={Size.md} />
+          </button>
+        {/if}
+      </div>
+    {/if}
     {#if isBulkMode}
       {@render bulkEditBar?.({
         count: $bulkEditCount,

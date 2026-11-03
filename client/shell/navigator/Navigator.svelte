@@ -3,9 +3,7 @@
 <script lang="ts">
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
-  import { vTrail } from "../topNav/tabs/tabs.store";
   import TopBarResourceItem from "../topNav/tabs/TopBarResourceItem.svelte";
-  import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { isRecordId } from "@nucleum/datafn/resource.utils";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -25,6 +23,14 @@
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
+  import { Action } from "@nucleum/client/config/action.enum";
+  import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
+  import {
+    flattenAccessTrail,
+    type AccessTrail
+  } from "@nucleum/shell/navigator/access-trail";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
 
   type NavigatorHistoryItem = {
     id: string;
@@ -45,6 +51,12 @@
   let searchDebounce: ReturnType<typeof setTimeout> | undefined;
   let searchRequestId = 0;
   const isSearchMode = $derived(query.trim().length > 0);
+  const currentTrail = $derived($accessTrail.current);
+  const currentTrailRows = $derived(
+    currentTrail ? flattenAccessTrail(currentTrail) : []
+  );
+  const recentTrails = $derived($accessTrail.recent);
+  let expandedTrails = $state<string[]>([]);
 
   const currentPageId = $derived($page.url.searchParams.get(AccessMode.PAGE));
   const frequentItems = $derived(
@@ -150,12 +162,15 @@
     }
     if (event.key === "Enter" && searchResults[0]) {
       event.preventDefault();
-      navigation.openResource(searchResults[0], AccessMode.PAGE);
+      openFresh(searchResults[0]);
     }
   }
 
-  function handleClick(item: IRecordId) {
-    navigation.activateVerticalTrail(item);
+  function openFresh(id: string) {
+    navigation.openResource(id, AccessMode.PAGE, {
+      origin: Action.NAVIGATOR,
+      trail: "start"
+    });
   }
 
   function handleHistoryClick(item: NavigatorHistoryItem) {
@@ -163,7 +178,17 @@
       navigation.gotoPath("/" + item.id);
       return;
     }
-    navigation.openResource(item.id, AccessMode.PAGE);
+    openFresh(item.id);
+  }
+
+  function toggleTrail(key: string) {
+    expandedTrails = expandedTrails.includes(key)
+      ? expandedTrails.filter((item) => item !== key)
+      : [...expandedTrails, key];
+  }
+
+  function resolveTrailLength(trail: AccessTrail) {
+    return trail.nodes.length;
   }
 </script>
 
@@ -187,14 +212,34 @@
         item={id}
         isInterimTab={true}
         isTrail
-        onClick={() => navigation.openResource(id, AccessMode.PAGE)}
+        onClick={() => openFresh(id)}
       />
     {/each}
   </div>
 {/snippet}
 
-<div class="flex flex-col h-full w-full gap-2" data-testid="navigator">
-  <div class="w-full pt-3 px-3 flex items-center">
+{#snippet trailTree(trail: AccessTrail, onSelect: (index: number) => void)}
+  <div class="trail relative flex flex-col gap-1 -ml-2">
+    {#each flattenAccessTrail(trail) as row (row.index)}
+      <div
+        class={cn("relative", { "trail-item": row.depth > 0 })}
+        style={`padding-left: ${row.depth * 14}px;`}
+        data-testid="navigator-trail-item"
+        data-trail-depth={row.depth}
+      >
+        <TopBarResourceItem
+          item={row.id}
+          isInterimTab={true}
+          isTrail
+          onClick={() => onSelect(row.index)}
+        />
+      </div>
+    {/each}
+  </div>
+{/snippet}
+
+<div class="flex flex-col h-full w-full min-h-0" data-testid="navigator">
+  <div class="w-full shrink-0 pt-3 pb-2 px-3 flex items-center">
     <div class="flex-1">
       <TextInput
         bind:this={searchInputRef}
@@ -207,65 +252,87 @@
       />
     </div>
   </div>
-  {#if isSearchMode}
-    <div
-      class="flex flex-col gap-2 px-3 py-1 overflow-y-auto grow"
-      data-testid="navigator-search-results"
-    >
-      <div class="text-b2 text-fgs3">Results</div>
-      {#if searchResults.length > 0}
-        {@render resultList(searchResults)}
-      {:else if isSearching}
-        <div class="text-b3 text-fgs3">Searching...</div>
-      {:else}
-        <EmptyStatusView size={Size.sm} mainText="No results found" />
-      {/if}
-    </div>
-  {:else}
-    <div class="flex flex-col grow w-full overflow-y-auto">
-      <div class="flex flex-col gap-2 w-full truncate pb-2">
-        <div class="text-b2 text-fgs3 w-full bg-bgs2 px-3">
-          Currently opened
-        </div>
-        {#if $vTrail.items.length > 0 && $vTrail.base}
-          <div class="pl-3 pr-2 trail relative flex flex-col gap-2">
-            {#if isRecordId($vTrail.base) && $vTrail.base}
-              <div class="-ml-2">
-                <TopBarResourceItem
-                  item={$vTrail.base}
-                  isInterimTab={true}
-                  onClick={() => {
-                    if (!$vTrail.base) return;
-                    handleClick($vTrail.base);
-                  }}
-                  isTrail
-                />
-              </div>
-            {/if}
-            {#each $vTrail.items as item (item)}
-              {@const parts = item.split("-")}
-              <div
-                class="relative trail-item"
-                style={`padding-left: ${parts.length * 5}px;`}
-              >
-                <TopBarResourceItem
-                  item={parts[parts.length - 1]}
-                  onClick={() => handleClick(item)}
-                  isInterimTab={true}
-                  isTrail
-                  onClose={() => {
-                    vTrail.remove(item);
-                  }}
-                />
-              </div>
-            {/each}
-          </div>
+  <div class="flex flex-col flex-1 min-h-0 w-full overflow-y-auto">
+    {#if isSearchMode}
+      <section
+        class="flex flex-col gap-2 px-3 py-2 shrink-0"
+        data-testid="navigator-search-results"
+      >
+        <div class="text-b2 text-fgs3">Results</div>
+        {#if searchResults.length > 0}
+          {@render resultList(searchResults)}
+        {:else if isSearching}
+          <div class="text-b3 text-fgs3">Searching...</div>
+        {:else}
+          <EmptyStatusView size={Size.sm} mainText="No results found" />
+        {/if}
+      </section>
+    {:else}
+      <section
+        class="flex flex-col gap-2 px-3 py-2 shrink-0"
+        data-testid="navigator-current-trail"
+      >
+        <div class="text-b2 text-fgs3">Currently opened</div>
+        {#if currentTrail && currentTrailRows.length > 0}
+          {@render trailTree(currentTrail, (index) =>
+            navigation.openTrailNode(index)
+          )}
         {:else}
           <EmptyStatusView size={Size.sm} mainText="No items opened" />
         {/if}
-      </div>
-      <div
-        class="flex flex-col gap-2 px-3 border-t border-brs3 py-2"
+      </section>
+      {#if recentTrails.length > 0}
+        <section
+          class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3"
+          data-testid="navigator-recent-trails"
+        >
+          <div class="text-b2 text-fgs3">Recent trails</div>
+          <div class="flex flex-col gap-1">
+            {#each recentTrails as trail (trail.key)}
+              {@const isExpanded = expandedTrails.includes(trail.key)}
+              <div
+                class="flex flex-col gap-1"
+                data-testid="navigator-recent-trail"
+              >
+                <div class="flex items-center gap-1 -ml-2">
+                  <div class="flex-1 min-w-0">
+                    <TopBarResourceItem
+                      item={trail.nodes[0].id}
+                      isInterimTab={true}
+                      isTrail
+                      onClick={() => navigation.resumeTrail(trail.key, 0)}
+                    />
+                  </div>
+                  {#if resolveTrailLength(trail) > 1}
+                    <button
+                      type="button"
+                      class="flex items-center gap-1 h-6 px-1.5 rounded-md text-b3 text-fgs3 hover:bg-bgs3 hover:text-fgs2 shrink-0"
+                      aria-expanded={isExpanded}
+                      aria-label={`${resolveTrailLength(trail)} items in trail`}
+                      onclick={() => toggleTrail(trail.key)}
+                    >
+                      {resolveTrailLength(trail)}
+                      <Icon
+                        icon={isExpanded ? "chevron-up" : "chevron-down"}
+                        size={Size.xs}
+                      />
+                    </button>
+                  {/if}
+                </div>
+                {#if isExpanded}
+                  <div class="pl-3">
+                    {@render trailTree(trail, (index) =>
+                      navigation.resumeTrail(trail.key, index)
+                    )}
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </section>
+      {/if}
+      <section
+        class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3"
         data-testid="navigator-recent"
       >
         <div class="text-b2 text-fgs3">Recently accessed</div>
@@ -274,8 +341,10 @@
         {:else}
           <EmptyStatusView size={Size.sm} mainText="No history yet" />
         {/if}
-      </div>
-      <div class="flex flex-col gap-2 px-3 border-t border-brs3 py-2">
+      </section>
+      <section
+        class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3"
+      >
         {#if fromHereItems.length > 0}
           <div class="text-b2 text-fgs3">Frequently opened from here</div>
           {@render historyList(fromHereItems)}
@@ -286,9 +355,9 @@
         {:else}
           <EmptyStatusView size={Size.sm} mainText="No history yet" />
         {/if}
-      </div>
-    </div>
-  {/if}
+      </section>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -308,9 +377,9 @@
     content: "";
     position: absolute;
     top: 0;
-    left: 0;
+    left: 10px;
     height: 50%;
-    width: 100%;
+    width: calc(100% - 10px);
     z-index: 0;
     opacity: 0.7;
     border-bottom: 1px dashed rgb(var(--colors-fgs4));

@@ -12,6 +12,7 @@ import { confirmationNotification } from "@nucleum/shared-state/notifications/no
 import { appEvents } from "@nucleum/shared-state/events/app-events.store";
 import { Embed } from "@nucleum/client/runtime/context.type";
 import { AccessMode } from "@nucleum/datafn/resource.type";
+import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
 import { Action } from "@nucleum/client/config/action.enum";
@@ -153,7 +154,9 @@ export const actionRunner = {
         store.interactionMode === InteractionMode.AGENT &&
         ctx.embed !== Embed.HANDSET
       ) {
-        navigation.toggleSearchParam({ tab: "page:" + action.action });
+        navigation.toggleSearchParam({
+          [AppSearchParam.TAB]: "page:" + action.action
+        });
       } else {
         navigation.gotoPath("/" + (action.path ?? action.action), {
           queryParams: params?.searchParams

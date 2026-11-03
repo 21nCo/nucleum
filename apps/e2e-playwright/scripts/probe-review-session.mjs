@@ -129,7 +129,7 @@ try {
     ).toBeVisible();
     await exitFullscreen.click();
     await expect(fullscreen).toBeHidden();
-    await expect(page).not.toHaveURL(/full=FULL_SCREEN_FOCUS/);
+    await expect(page).not.toHaveURL(/overlay=FULL_SCREEN_FOCUS/);
   });
 
   await step("interval-boundary", async () => {

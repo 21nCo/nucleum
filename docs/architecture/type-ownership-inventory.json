@@ -5065,12 +5065,10 @@
     },
     {
       "path": "client/layout/topNav/tabs/tabs.type.ts",
-      "disposition": "retained",
-      "destinations": [
-        "client/shell/topNav/tabs/tabs.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "implementation-private",
-      "rationale": "Implementation-local or cohesive frontend owner; no independent domain abstraction is needed.",
+      "rationale": "Horizontal and vertical trail types removed when the access trail moved to the navigator (TIDY-484); no runtime enum declarations.",
       "declarations": [
         "HorizontalTrail",
         "VerticalTrail"

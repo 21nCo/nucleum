@@ -19,8 +19,8 @@
   import AppMenuSwitcherItemGroup from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItemGroup.svelte";
   import AppMenuPinnedSpaces from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuPinnedSpaces.svelte";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
-  import { hTrail, vTrail } from "@nucleum/shell/topNav/tabs/tabs.store";
   import { AccessMode } from "@nucleum/datafn/resource.type";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
   let {
     layoutContext = LayoutContext.DEFAULT,
     parentBackgroundIndex,
@@ -85,23 +85,27 @@
       toasts.reset();
     }
     isInEditMode.set(false);
-    hTrail.clear();
-    vTrail.clear();
     const currentPath = window.location.pathname.replace("/", "");
     const resolvedCurrent =
       allPages.find((pageItem) =>
         currentPath.includes(pageItem.path ?? pageItem.action)
       )?.action ?? "";
+    const searchParams = new URL(window.location.href).searchParams;
+    const isActivePage =
+      resolvedCurrent === item.action && item.type === ActionType.PAGE;
     const isActivePageWithRightPanel =
-      resolvedCurrent === item.action &&
-      item.type === ActionType.PAGE &&
-      Boolean(new URL(window.location.href).searchParams.get(AccessMode.PANEL));
-    if (
-      resolvedCurrent !== item.action ||
-      window.location.pathname.includes("/tab") ||
-      item.type !== ActionType.PAGE ||
-      isActivePageWithRightPanel
-    ) {
+      isActivePage && Boolean(searchParams.get(AccessMode.PANEL));
+    const isActivePageCovered =
+      isActivePage &&
+      [
+        AccessMode.PAGE,
+        AccessMode.BESIDE_PAGE,
+        AccessMode.BESIDE_BASE,
+        AccessMode.OVERLAY
+      ].some((mode) => searchParams.get(mode));
+    if (isActivePageCovered && !isActivePageWithRightPanel) {
+      navigation.closeResource();
+    } else if (!isActivePage || isActivePageWithRightPanel) {
       requireCommandHost().runAction(item.action);
     }
     current = item.action;

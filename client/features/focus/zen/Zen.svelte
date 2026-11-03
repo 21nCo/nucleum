@@ -38,7 +38,7 @@
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
   let fullScreenFocusIsEnabled = $derived(
-    $page?.url?.searchParams?.get(AccessMode.FULL) ===
+    $page?.url?.searchParams?.get(AccessMode.OVERLAY) ===
       PointronAction.FULL_SCREEN_FOCUS
   );
   let isExtraLargeScreen = $derived(

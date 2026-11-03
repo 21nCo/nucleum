@@ -20,12 +20,9 @@
   } = $props();
   const elementIdSuffix = generateSimpleRandomId();
   const elementId = $derived(`${id}-closeButton-${elementIdSuffix}`);
-  const tooltip = $derived(
-    accessMode === AccessMode.FULL ? "Close full screen" : "Close"
-  );
 </script>
 
-{#if accessMode === AccessMode.BESIDE_BASE || accessMode === AccessMode.FULL || accessMode === AccessMode.BESIDE_PAGE || accessMode === AccessMode.SHEET || (accessMode !== undefined && additionalAccessModes.includes(accessMode))}
+{#if accessMode === AccessMode.BESIDE_BASE || accessMode === AccessMode.BESIDE_PAGE || accessMode === AccessMode.SHEET || (accessMode !== undefined && additionalAccessModes.includes(accessMode))}
   <div
     class="flex justify-center items-center"
     id={elementId}
@@ -34,17 +31,13 @@
     <Button
       icon="cross"
       ariaLabel="Close"
-      {tooltip}
+      tooltip="Close"
       style={ButtonStyle.OUTLINED}
       type={ButtonVariant.DANGER}
       {parentBgIndex}
       size={Size.sm}
       onclick={() => {
-        if (accessMode === AccessMode.FULL) {
-          navigation.toggleFullScreen(accessMode, id);
-        } else {
-          navigation.closeResource({ id, accessMode });
-        }
+        navigation.closeResource({ id, accessMode });
       }}
     />
   </div>

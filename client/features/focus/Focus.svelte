@@ -55,7 +55,7 @@
   let mode = $state(0);
   let isInlineEnabled = $state(true);
   let fullScreenFocusIsEnabled = $derived(
-    $page?.url?.searchParams?.get(AccessMode.FULL) ===
+    $page?.url?.searchParams?.get(AccessMode.OVERLAY) ===
       PointronAction.FULL_SCREEN_FOCUS
   );
   const manualLogHotKey = {

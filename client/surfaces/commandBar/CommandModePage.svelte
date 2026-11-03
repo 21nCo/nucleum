@@ -22,45 +22,38 @@
   import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
   import CommandBar from "@nucleum/surfaces/commandBar/CommandBar.svelte";
   import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
-  import Tabs from "@nucleum/shell/topNav/tabs/Tabs.svelte";
   import { page } from "$app/stores";
   import PagePainterV2 from "@nucleum/shell/paint/PagePainterV2.svelte";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { onMount } from "svelte";
-  import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
-  import type { IRecordId } from "@nucleum/schema/legacy/data.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   const ComponentResolver = requireActionRenderer();
   let { children }: { children?: Snippet } = $props();
   let isInFocusMode = false;
-  let pinnedItems = $state<IRecordId[]>(tabs.get() ?? []);
 
   function handleFocusMode(e: CustomEvent<boolean>) {
     if (typeof e.detail === "boolean") {
       isInFocusMode = e.detail;
     }
   }
-  onMount(() => {
-    const unsubscribe = uiState.subscribe((x) => {
-      pinnedItems = tabs.get() ?? [];
-    });
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  });
   let isCmdHome = $state(true);
-  let activeTab = $derived($page.url.searchParams.get(AccessMode.TAB));
+  let activeTab = $derived($page.url.searchParams.get(AppSearchParam.TAB));
 </script>
 
 <div class="flex flex-col w-full h-full">
-  <div>
-    <Tabs
-      {pinnedItems}
-      isShowHome={true}
-      {activeTab}
-      onHome={(value) => {
-        isCmdHome = value;
-        if (isCmdHome) navigation.toggleSearchParam([AccessMode.TAB]);
+  <div
+    class={cn("flex justify-center items-center px-2 w-fit", {
+      "bg-bgs1": !activeTab
+    })}
+  >
+    <Button
+      icon="ph:house"
+      ariaLabel="Command home"
+      style={ButtonStyle.PLAIN}
+      onclick={() => {
+        isCmdHome = true;
+        navigation.toggleSearchParam([AppSearchParam.TAB]);
       }}
     />
   </div>

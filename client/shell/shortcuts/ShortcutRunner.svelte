@@ -20,7 +20,7 @@
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { Action } from "@nucleum/client/config/action.enum";
   import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
@@ -69,7 +69,7 @@
       interactionMode === InteractionMode.AGENT &&
       shortcut.action === Action.CMD
     ) {
-      navigation.toggleSearchParam([AccessMode.TAB]);
+      navigation.toggleSearchParam([AppSearchParam.TAB]);
       event.preventDefault();
       return;
     }

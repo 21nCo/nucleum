@@ -37,8 +37,7 @@ export function resolveSpaceContextMenu(
               origin: params?.accessPointId
             });
           }
-        },
-        resourceActions.openAsTab()
+        }
       ]
     },
     {

@@ -15,7 +15,6 @@ import {
   type IResourceStarrable
 } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
 import {
   determineResourceAccessMode,
   determineResourceType,
@@ -33,7 +32,6 @@ import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 import { BulkEditor } from "@nucleum/features/records/bulk-editor";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 import { datafn } from "@nucleum/datafn/datafn.store";
@@ -348,23 +346,6 @@ export class ResourceActions<T extends IActionableResource> {
         await this.merge({
           isLocked: checked
         } as Partial<T>);
-      }
-    };
-  }
-  openAsTab(): IContextMenuItem {
-    const tabData = uiState.getState(ResourceAccessPoint.TABS, {
-      scope: UIStateScope.PRODUCT
-    });
-    const isAlreadyPinned = tabData?.some(resourceInList(this.resource.id));
-    return {
-      value: isAlreadyPinned ? "Remove from tabs" : "Open as tab",
-      icon: isAlreadyPinned ? "minus-circle" : "tabs",
-      callback: async () => {
-        if (isAlreadyPinned) {
-          requireResourceActionHost().removeTab(this.resource.id);
-        } else {
-          requireResourceActionHost().openTab(this.resource.id);
-        }
       }
     };
   }

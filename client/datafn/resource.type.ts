@@ -104,12 +104,6 @@ export enum AccessMode {
    * Second resource next to an open resource page.
    */
   BESIDE_PAGE = "besidePage",
-  /**
-   * Full screen mode
-   */
-  FULL = "full",
-  TAB = "tab",
-  OPEN_IN_BACKGROUND = "open-in-background",
   SLIDESHOW = "slideshow",
   SHEET = "sheet",
   /**

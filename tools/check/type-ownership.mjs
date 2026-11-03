@@ -68,9 +68,6 @@ const changedEnumContracts = new Map([
           PAGE: "page",
           BESIDE_BASE: "beside",
           BESIDE_PAGE: "besidePage",
-          FULL: "full",
-          TAB: "tab",
-          OPEN_IN_BACKGROUND: "open-in-background",
           SLIDESHOW: "slideshow",
           SHEET: "sheet",
           PANEL: "panel",
@@ -139,7 +136,6 @@ const changedEnumContracts = new Map([
           PAGE_AT: "pageAt",
           BESIDE_PAGE_AT: "besidePageAt",
           BESIDE_AT: "besideAt",
-          FULL_AT: "fullAt",
           SELECTED: "selected",
           DEPTH: "depth",
           TRAVERSE: "traverse",
@@ -294,6 +290,7 @@ const changedEnumContracts = new Map([
           accessLog: "accessLog",
           uiState: "uiState",
           navigatorHistory: "navigatorHistory",
+          accessTrails: "accessTrails",
           keyboardShortcuts: "keyboardShortcuts",
           mutation: "mutation",
           event: "event",
@@ -342,6 +339,44 @@ const changedEnumContracts = new Map([
           highlight: "highlight",
           clipperToolbarState: "clipperToolbarState",
           clipperSync: "clipperSync"
+        }
+      }
+    ]
+  ],
+  [
+    "client/features/memory/markdown/md.type.ts",
+    [
+      {
+        name: "BlockAction",
+        members: {
+          CONVERT: "convert",
+          INSERT: "insert",
+          INSERT_MANY: "insert_many",
+          MENTION: "mention",
+          DELETE: "delete",
+          DELETE_MANY: "delete_many",
+          MOVEUP: "moveup",
+          MOVEDOWN: "movedown",
+          LINK: "link",
+          DUPLICATE: "duplicate",
+          COPY_LINK: "COPY_LINK",
+          INSERT_ABOVE: "INSERT_ABOVE",
+          INSERT_BELOW: "INSERT_BELOW",
+          COPY_BLOCK_TEXT: "COPY_BLOCK_TEXT",
+          GO_TO_EXTERNAL_LINK: "GO_TO_EXTERNAL_LINK",
+          FOCUS: "FOCUS",
+          OPEN_AS_SPLIT: "OPEN_AS_SPLIT",
+          OPEN_IN_FULL_SCREEN: "OPEN_IN_FULL_SCREEN",
+          COLOR: "COLOR",
+          CALLOUT_SETTINGS: "CALLOUT_SETTINGS",
+          SHORTCUTS: "SHORTCUTS",
+          DOWNLOAD: "DOWNLOAD",
+          EMBED_PREVIEW_TOGGLE: "EMBED_PREVIEW_TOGGLE",
+          CHANGE: "change",
+          TAB: "tab",
+          SHIFT_TAB: "shifttab",
+          BACKSPACE_WITH_CONTENT: "BACKSPACE_WITH_CONTENT",
+          PASTE: "paste"
         }
       }
     ]

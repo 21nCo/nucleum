@@ -12,7 +12,7 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   let {
     path = undefined,
-    accessMode = AccessMode.FULL,
+    accessMode = undefined,
     isFloat = false,
     style = ButtonVariant.SECONDARY
   }: {
@@ -41,7 +41,7 @@
   use:tooltip={{ text: "Close", direction: Placement.Left }}
   onclick={() => {
     if ($view.isConstrainedWidth && !path) navigation.goBack();
-    navigation.closeResource({ accessMode });
+    if (accessMode) navigation.closeResource({ accessMode });
     if (path) modalEvent.hide(path, "ModalCloseButton.svelte");
   }}
 >

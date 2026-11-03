@@ -1,15 +1,11 @@
 import { get, writable } from "svelte/store";
 import { type IRecordId } from "@nucleum/schema/legacy/data.type";
 import {
-  AccessMode,
   type IActiveResource,
   type IResource,
   type IResourceStarrable
 } from "@nucleum/datafn/resource.type";
-import {
-  determineResourceAccessMode,
-  determineResourceType
-} from "@nucleum/datafn/resource.utils";
+import { determineResourceType } from "@nucleum/datafn/resource.utils";
 import { resolveCurrentUserId } from "@nucleum/client/runtime/account/session-token";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
@@ -200,20 +196,7 @@ export class ActiveResourceStore<
     return activeResources.get(idStr)! as TActive;
   }
 
-  static destroy(id: IRecordId, accessMode?: AccessMode) {
-    if (accessMode === AccessMode.FULL) {
-      const resolvedAccessMode = determineResourceAccessMode(id);
-      if (resolvedAccessMode !== AccessMode.FULL) {
-        const resource = activeResources.get(id.toString());
-        if (resource) {
-          resource.update((prev) => ({
-            ...prev,
-            accessMode: resolvedAccessMode
-          }));
-        }
-        return;
-      }
-    }
+  static destroy(id: IRecordId) {
     activeResources.delete(id.toString());
   }
 }

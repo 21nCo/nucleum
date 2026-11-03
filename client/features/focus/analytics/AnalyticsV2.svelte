@@ -26,6 +26,8 @@
   import { bg, cn } from "@21n/ui/environment/presentation";
   import { Product } from "@nucleum/client/config/product.type";
   import Switch from "@21n/ui/elements/toggle/Switch.svelte";
+  import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import { nextCycleValue } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   const bgIndex = 2;
   const isNucleusContext = $derived($appStore.product === Product.NUCLEUM);
@@ -93,6 +95,18 @@
     return pagesList[0]?.id ?? undefined;
   }
 
+  function cyclePage() {
+    const next = nextCycleValue(
+      pages.map((page) => page.value),
+      $selectedPageId
+    );
+    if (!next) return;
+    $selectedPageId = next;
+    uiState.setState(UIState.analyticsPage, next, {
+      scope: UIStateScope.DEVICE
+    });
+  }
+
   function setAnalyticsEditMode(nextValue: boolean) {
     isAnalyticsEditMode = nextValue;
     isInEditMode.toggle(nextValue);
@@ -146,63 +160,81 @@
           </div>
         </div>
       {:else}
-        <div class="flex overflow-hidden w-full">
-          <div class="overflow-x-auto w-full">
-            <PanelSwitcher
-              title={isNucleusContext ? "" : "Overview"}
-              items={pages}
-              style={PanelSwitcherStyle.BAR}
-              isExpandToFullWidth={true}
-              isEnableAnimationForTitle={false}
-              isInEditMode={isAnalyticsEditMode}
-              parentBgIndex={bgIndex}
-              tempTitleWithActionDisabled={true}
-              bind:value={$selectedPageId}
-              onSwitch={onPageSwitch}
-              onAdd={onAddPageClicked}
-              onChange={onPagelabelChange}
-              onRemove={onRemovePageClicked}
-              onDebouncedChange={onPagelabelChange}
-              onRearrange={onPageRearrange}
-            >
-              {#snippet right()}
-                <div class="flex items-center gap-2 mr-3">
-                  {#if isAnalyticsEditMode}
-                    <Button
-                      icon="sync"
-                      label="reset"
-                      isPreventMinWidth={true}
-                      size={Size.xs}
-                      onclick={() => {
-                        confirmationNotification.notify({
-                          title: "Reset analytics",
-                          message:
-                            "Are you sure you want to reset analytics? This will remove all pages and cards.",
-                          confirmAction: {
-                            label: "Reset",
-                            variant: ButtonVariant.DANGER,
-                            callback: async () => {
-                              await analyticsConfigStore.reset();
-                              return true;
-                            }
+        {#snippet pagesBar(isContextZone: boolean)}
+          <PanelSwitcher
+            title={isNucleusContext || isContextZone ? "" : "Overview"}
+            items={pages}
+            style={PanelSwitcherStyle.BAR}
+            isExpandToFullWidth={!isContextZone}
+            isEnableAnimationForTitle={false}
+            isInEditMode={isAnalyticsEditMode}
+            parentBgIndex={bgIndex}
+            tempTitleWithActionDisabled={true}
+            bind:value={$selectedPageId}
+            onSwitch={onPageSwitch}
+            onAdd={onAddPageClicked}
+            onChange={onPagelabelChange}
+            onRemove={onRemovePageClicked}
+            onDebouncedChange={onPagelabelChange}
+            onRearrange={onPageRearrange}
+          >
+            {#snippet right()}
+              <div class="flex items-center gap-2 mr-3">
+                {#if isAnalyticsEditMode}
+                  <Button
+                    icon="sync"
+                    label="reset"
+                    isPreventMinWidth={true}
+                    size={Size.xs}
+                    onclick={() => {
+                      confirmationNotification.notify({
+                        title: "Reset analytics",
+                        message:
+                          "Are you sure you want to reset analytics? This will remove all pages and cards.",
+                        confirmAction: {
+                          label: "Reset",
+                          variant: ButtonVariant.DANGER,
+                          callback: async () => {
+                            await analyticsConfigStore.reset();
+                            return true;
                           }
-                        });
-                      }}
-                    />
-                  {/if}
-                  <div class="rounded-full flex items-center gap-2 px-3 py-1">
-                    <span class="text-fgs3 text-b2"> edit: </span>
-                    <Switch
-                      on={isAnalyticsEditMode}
-                      size={Size.sm}
-                      onChange={(event) => setAnalyticsEditMode(event.detail)}
-                    />
-                  </div>
+                        }
+                      });
+                    }}
+                  />
+                {/if}
+                <div class="rounded-full flex items-center gap-2 px-3 py-1">
+                  <span class="text-fgs3 text-b2"> edit: </span>
+                  <Switch
+                    on={isAnalyticsEditMode}
+                    size={Size.sm}
+                    onChange={(event) => setAnalyticsEditMode(event.detail)}
+                  />
                 </div>
-              {/snippet}
-            </PanelSwitcher>
+              </div>
+            {/snippet}
+          </PanelSwitcher>
+        {/snippet}
+        {#if isNucleusContext}
+          <div class="flex overflow-hidden w-full">
+            <div class="overflow-x-auto w-full">
+              {@render pagesBar(false)}
+            </div>
           </div>
-        </div>
+        {:else}
+          <ContextZoneContent cycle={cyclePage}>
+            <div class="h-full flex items-center" data-testid="overview-tabs">
+              {@render pagesBar(true)}
+            </div>
+            {#snippet fallback()}
+              <div class="flex overflow-hidden w-full">
+                <div class="overflow-x-auto w-full">
+                  {@render pagesBar(false)}
+                </div>
+              </div>
+            {/snippet}
+          </ContextZoneContent>
+        {/if}
       {/if}
     </div>
   </div>

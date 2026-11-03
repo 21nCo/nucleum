@@ -8,10 +8,7 @@
   import { InputStyle } from "@21n/ui/elements/input/input.type";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { resolveCollectionContextMenu } from "./collection.store";
-  import {
-    AccessMode,
-    ResourceAccessPoint
-  } from "@nucleum/datafn/resource.type";
+  import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { cn } from "@21n/ui/environment/presentation";
@@ -146,8 +143,7 @@
     isEnabled={!$collection.isInEditMode &&
       isConstrainedWidth &&
       accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED &&
-      !!$collection.accessMode &&
-      $collection.accessMode !== AccessMode.FULL}
+      !!$collection.accessMode}
     accessMode={$collection.accessMode}
     class="truncate"
   >

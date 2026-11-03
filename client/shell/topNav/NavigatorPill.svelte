@@ -5,7 +5,7 @@
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { Action } from "@nucleum/client/config/action.enum";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { vTrail } from "@nucleum/shell/topNav/tabs/tabs.store";
+  import { accessTrailCount } from "@nucleum/shell/navigator/access-trail.store";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
@@ -13,7 +13,7 @@
   const isActive = $derived(
     $page.url.searchParams.get(AccessMode.PANEL) === Action.NAVIGATOR
   );
-  const trailCount = $derived($vTrail.items.length);
+  const trailCount = $derived($accessTrailCount);
 </script>
 
 <div class="flex items-center h-full pl-1 pr-2">

@@ -253,7 +253,7 @@
 
   onDestroy(() => {
     releaseDnDPage?.();
-    ActiveCollectionStore.destroy(id, accessMode);
+    ActiveCollectionStore.destroy(id);
   });
 
   async function initialize() {

@@ -203,14 +203,7 @@
                 width="px-3"
                 parentBgIndex={2}
                 onclick={() => {
-                  if (accessMode === AccessMode.FULL) {
-                    requireResourcePanelHost().maximize(
-                      accessMode,
-                      $resourceStore.id
-                    );
-                  } else {
-                    requireResourcePanelHost().goBack();
-                  }
+                  requireResourcePanelHost().goBack();
                 }}
               />
             {:else}

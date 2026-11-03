@@ -514,7 +514,7 @@ export function resolveCollectionContextMenu(
     commonGroups = [
       {
         group: "open",
-        items: [resourceActions.openAsTab(), resourceActions.maximize()]
+        items: [resourceActions.maximize()]
       },
       moreGroup
     ];

@@ -119,7 +119,7 @@
 
   onDestroy(() => {
     releaseDnDPage?.();
-    ActiveNodeStore.destroy(id, accessMode);
+    ActiveNodeStore.destroy(id);
   });
 
   const debouncedInitialize = debouncer(initialize, 1500);

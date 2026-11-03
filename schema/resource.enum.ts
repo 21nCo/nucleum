@@ -14,6 +14,7 @@ enum ResourceBase {
   accessLog = "accessLog",
   uiState = "uiState",
   navigatorHistory = "navigatorHistory",
+  accessTrails = "accessTrails",
   keyboardShortcuts = "keyboardShortcuts",
   mutation = "mutation",
   event = "event",

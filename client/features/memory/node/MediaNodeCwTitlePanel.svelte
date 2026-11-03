@@ -26,8 +26,7 @@
       <div
         class={cn("rounded-md border border-brs2 shadow-md", {
           "absolute z-10 bottom-full mb-2 w-[98%]":
-            $node.accessMode === AccessMode.PAGE || !$node.accessMode,
-          "w-full": $node.accessMode === AccessMode.FULL
+            $node.accessMode === AccessMode.PAGE || !$node.accessMode
         })}
       >
         <ResourceStatusBanner resource={node} />

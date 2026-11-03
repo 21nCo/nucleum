@@ -1,8 +1,8 @@
 <!--
   @component
   Retired app-level tabs strip that used to sit in the top bar: pinned tabs plus
-  the interim tab of the resource opened through the `tab` search param.
-  TIDY-484 retired app tabs and TIDY-487 moved existing tabs into the Pinned
+  the interim tab of the open resource page. TIDY-484 retired app tabs and the
+  `tab` opening mode and TIDY-487 moved existing tabs into the Pinned
   space, so nothing renders this component. It is kept for a future Nucleum
   ecosystem app that may bring tabs back.
 -->
@@ -20,7 +20,7 @@
   import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
 
   let pinnedItems = $state<IRecordId[]>(tabs.get() ?? []);
-  const currentTab = $derived($page.url.searchParams.get(AccessMode.TAB));
+  const currentTab = $derived($page.url.searchParams.get(AccessMode.PAGE));
   const isInterimTab = $derived(
     !!currentTab && !pinnedItems.some((x) => x.toString() === currentTab)
   );
@@ -47,7 +47,7 @@
         onClick={() => {}}
         isInterimTab
         onClose={() => {
-          navigation.goBack();
+          navigation.closeResource({ accessMode: AccessMode.PAGE });
         }}
       />
     {/key}

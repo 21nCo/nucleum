@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { AccessMode } from "@nucleum/datafn/resource.type";
 
   import TopBarResourceItem from "@nucleum/shell/topNav/tabs/TopBarResourceItem.svelte";
   import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
@@ -48,7 +49,7 @@
       {item}
       onClick={() => {
         onHome?.(false);
-        navigation.activateTab(item);
+        navigation.openResource(item, AccessMode.PAGE);
       }}
       onRearrange={(displacement) => {
         pinnedItems = moveItemInArray(

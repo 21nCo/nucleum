@@ -126,8 +126,7 @@ export function getContextZonePane(): ContextZonePane {
 const contextZoneAccessModes = new Set<string>([
   AccessMode.PAGE,
   AccessMode.BESIDE_BASE,
-  AccessMode.BESIDE_PAGE,
-  AccessMode.FULL
+  AccessMode.BESIDE_PAGE
 ]);
 
 /**

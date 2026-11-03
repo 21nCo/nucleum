@@ -1,10 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import {
-    resolveLayoutRoute,
-    isHomeRoute
-  } from "@nucleum/shell/navigation/layout-route";
+  import { resolveLayoutRoute } from "@nucleum/shell/navigation/layout-route";
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import type { Snippet } from "svelte";
@@ -19,9 +16,12 @@
   import RightPanel from "@nucleum/shell/rightPanel/RightPanel.svelte";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { page } from "$app/stores";
-  import BottomNav from "@nucleum/shell/bottomNav/BottomNav.svelte";
-  import { hTrail } from "@nucleum/shell/topNav/tabs/tabs.store";
-  import Trail from "@nucleum/shell/trail/Trail.svelte";
+  import RightSplit from "@nucleum/shell/RightSplit.svelte";
+  import PortraitBackControl from "@nucleum/shell/navigation/PortraitBackControl.svelte";
+  import {
+    restorePageScroll,
+    savePageScroll
+  } from "@nucleum/shell/navigation/page-scroll";
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
@@ -30,6 +30,7 @@
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { cn } from "@21n/ui/environment/presentation";
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
   import { ContextZoneLayer } from "@nucleum/shell/topNav/contextZone/context-zone";
   const ComponentResolver = requireActionRenderer();
@@ -46,17 +47,47 @@
   } = $props();
   let isHideLeftNavBar = $state(refreshSidebarState());
 
-  let isMaxMode = $state(
+  let isMaxParam = $state(
     new URLSearchParams(window.location.search).get(AppSearchParam.MAX) ===
       "true"
   );
-  let isHomePage = $state(isHomeRoute(new URL(window.location.href)));
+  let besidePage = $state<string | undefined>(undefined);
+  let pageLayerRef = $state<HTMLElement | undefined>(undefined);
+  let renderedPageId: string | undefined;
   let rightPanel = $state<IAction | undefined>(undefined);
   let pop = $state<{ id: IRecordId; action: IAction } | undefined>(undefined);
   let mainPath = $state<string | undefined>(undefined);
   let popId = $derived.by(() => {
     if (!pop || typeof pop !== "object") return undefined;
     return typeof pop.id === "string" && pop.id.length > 0 ? pop.id : undefined;
+  });
+  const isBaseCovered = $derived(!!popId || !!mainPath);
+  const isPageFullScreen = $derived(
+    isMaxParam && !!popId && !mainPath && !$view.isPortrait
+  );
+  const isOverlayFullScreen = $derived(isMaxParam && !!mainPath);
+  const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
+
+  let scrollSaveFrame = 0;
+
+  function onPageScroll() {
+    cancelAnimationFrame(scrollSaveFrame);
+    const id = renderedPageId;
+    const root = pageLayerRef;
+    if (!id || id !== popId) return;
+    scrollSaveFrame = requestAnimationFrame(() => savePageScroll(root, id));
+  }
+
+  $effect(() => {
+    const next = popId;
+    const root = pageLayerRef;
+    if (!next || next === renderedPageId) return;
+    renderedPageId = next;
+    return restorePageScroll(root, next);
+  });
+
+  $effect(() => {
+    if (!popId) renderedPageId = undefined;
   });
 
   onMount(() => {
@@ -65,11 +96,15 @@
     });
     const pageSub = page.subscribe((p) => {
       const route = resolveLayoutRoute(p?.url);
-      isMaxMode = route.isMaxMode;
-      isHomePage = route.isHomePage;
+      isMaxParam = route.isMaxMode;
       rightPanel = route.rightPanel;
       pop = route.pop;
       mainPath = route.mainPath;
+      besidePage =
+        p?.url?.searchParams.get(AccessMode.BESIDE_PAGE) ?? undefined;
+      navigation.syncAccessTrail(
+        p?.url?.searchParams.get(AccessMode.PAGE) ?? undefined
+      );
     });
     const appEventSub = appEvents.subscribe((x) => {
       if (x.event === GlobalEvent.ESCAPE) {
@@ -98,7 +133,7 @@
       {@render leftNav(false)}
     {/if}
     <div class="flex flex-col h-full w-full">
-      {#if !$view.isPortrait && !isMaxMode}
+      {#if !$view.isPortrait && !isOverlayFullScreen}
         {@render topNav()}
       {/if}
       <div class="flex w-full flex-grow">
@@ -107,32 +142,55 @@
         {/if}
         <div class="min-w-0 flex-grow relative">
           {#if mainPath}
-            <div class="absolute inset-0 w-full h-full bg-bgs1 z-40">
+            <div
+              class="absolute inset-0 w-full h-full bg-bgs1 z-40"
+              data-testid="overlay-layer"
+              data-overlay={mainPath}
+            >
               <ContextZonePaneScope
                 id="overlay"
                 layer={ContextZoneLayer.OVERLAY}
               >
                 <ComponentResolver
                   path={mainPath}
-                  params={{ isInline: true }}
+                  params={{ isInline: !isOverlayFullScreen }}
                 />
               </ContextZonePaneScope>
             </div>
           {/if}
           {#if popId}
             <div
-              class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
+              class="absolute inset-0 flex w-full h-full bg-bgs1 z-50"
               data-testid="resource-record-surface"
-              {...pageLayerAttributes}
+              data-full-screen={isPageFullScreen ? "true" : undefined}
             >
-              <ContextZonePaneScope id="page" layer={ContextZoneLayer.PAGE}>
-                <ResourceResolver id={popId} accessMode={AccessMode.PAGE} />
-              </ContextZonePaneScope>
+              <div
+                bind:this={pageLayerRef}
+                onscrollcapture={onPageScroll}
+                {...pageLayerAttributes}
+                class={cn("flex justify-center h-full min-w-0", {
+                  "w-1/2 min-w-1/2 shrink-0": !!besidePage && !$view.isPortrait,
+                  "w-full": !besidePage || $view.isPortrait
+                })}
+              >
+                <ContextZonePaneScope id="page" layer={ContextZoneLayer.PAGE}>
+                  <ResourceResolver id={popId} accessMode={AccessMode.PAGE} />
+                </ContextZonePaneScope>
+              </div>
+              {#if besidePage && !$view.isPortrait}
+                <RightSplit
+                  split={besidePage}
+                  accessMode={AccessMode.BESIDE_PAGE}
+                />
+              {/if}
             </div>
           {/if}
-          {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}
-            <Trail />
-          {:else}
+          <div
+            class="w-full h-full"
+            inert={isBaseCovered}
+            aria-hidden={isBaseCovered ? "true" : undefined}
+            data-testid="base-page-layer"
+          >
             <AppSplitView>
               <ContextZonePaneScope
                 id="base"
@@ -145,14 +203,18 @@
                 {/if}
               </ContextZonePaneScope>
             </AppSplitView>
-          {/if}
+          </div>
         </div>
-        {#if !$view.isConstrainedWidth && rightPanel}
+        {#if rightPanel && $view.isPortrait}
+          <RightPanel action={rightPanel} isSheet={true} />
+        {:else if !$view.isConstrainedWidth && rightPanel}
           <RightPanel action={rightPanel} />
         {/if}
       </div>
-      {#if $hTrail.path.length > 0 && !isHomePage}
-        <BottomNav />
+      {#if $view.isPortrait && $context.embed !== Embed.HANDSET}
+        <PortraitBackControl
+          isAppMenuShown={!isBaseCovered && !$appStore.isMenuHidden}
+        />
       {/if}
     </div>
   </div>
