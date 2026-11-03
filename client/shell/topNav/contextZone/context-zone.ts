@@ -37,17 +37,24 @@ const PANE_CONTEXT_KEY = Symbol("context-zone-pane");
 
 const entries = writable<ContextZoneEntry[]>([]);
 const activePaneId = writable<string | undefined>(undefined);
+const visibleLayers = writable<ReadonlySet<number> | undefined>(undefined);
 const hostCount = writable(0);
 let nextKey = 0;
 
 /**
  * Picks the entry shown in the context zone: the newest entry of the pane the
- * user worked in last, otherwise the newest entry of the topmost pane.
+ * user worked in last, otherwise the newest entry of the topmost pane. Entries
+ * of layers outside `visible`, such as a base page covered by a resource page,
+ * are ignored.
  */
 export function resolveContextZoneEntry(
-  list: ContextZoneEntry[],
-  activePane: string | undefined
+  entries: ContextZoneEntry[],
+  activePane: string | undefined,
+  visible?: ReadonlySet<number>
 ): ContextZoneEntry | undefined {
+  const list = visible
+    ? entries.filter((item) => visible.has(item.pane.layer))
+    : entries;
   if (list.length === 0) return undefined;
   const newest = (items: ContextZoneEntry[]) =>
     items.reduce((latest, item) => (item.key > latest.key ? item : latest));
@@ -75,8 +82,9 @@ export const contextZone = {
   entries: { subscribe: entries.subscribe },
   activePaneId: { subscribe: activePaneId.subscribe },
   isHosted: derived(hostCount, (count) => count > 0),
-  active: derived([entries, activePaneId], ([list, pane]) =>
-    resolveContextZoneEntry(list, pane)
+  active: derived(
+    [entries, activePaneId, visibleLayers],
+    ([list, pane, visible]) => resolveContextZoneEntry(list, pane, visible)
   ),
   /** Marks a top bar as hosting the zone; returns its release function. */
   host() {
@@ -95,6 +103,19 @@ export const contextZone = {
     );
     entries.update((list) => [...list, entry]);
     return () => entries.update((list) => list.filter((x) => x.key !== key));
+  },
+  /**
+   * Sets the layers the user can see; entries of other layers stay hidden.
+   * Undefined shows every layer.
+   */
+  setVisibleLayers(layers: number[] | undefined) {
+    const current = get(visibleLayers);
+    if (
+      current?.size === layers?.length &&
+      (layers ?? []).every((layer) => current?.has(layer))
+    )
+      return;
+    visibleLayers.set(layers ? new Set(layers) : undefined);
   },
   /** Records the pane the user last pointed at or focused. */
   activatePane(paneId: string) {

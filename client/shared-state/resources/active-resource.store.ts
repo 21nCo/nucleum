@@ -12,6 +12,7 @@ import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { datafn } from "@nucleum/datafn/datafn.store";
 
 const activeResources = new Map<string, ActiveResourceStore<any, any>>();
+const activeResourceOwners = new Map<string, number>();
 
 export function updateActiveResource(
   id: IRecordId,
@@ -196,7 +197,25 @@ export class ActiveResourceStore<
     return activeResources.get(idStr)! as TActive;
   }
 
-  static destroy(id: IRecordId) {
-    activeResources.delete(id.toString());
+  /**
+   * Marks the store of `id` as used by a mounted view, such as a resource
+   * shown both on the base page and on the page covering it. The returned
+   * function releases it; the store is dropped after its last owner releases.
+   */
+  static retain(id: IRecordId) {
+    const idStr = id.toString();
+    activeResourceOwners.set(idStr, (activeResourceOwners.get(idStr) ?? 0) + 1);
+    let isReleased = false;
+    return () => {
+      if (isReleased) return;
+      isReleased = true;
+      const owners = (activeResourceOwners.get(idStr) ?? 1) - 1;
+      if (owners > 0) {
+        activeResourceOwners.set(idStr, owners);
+        return;
+      }
+      activeResourceOwners.delete(idStr);
+      activeResources.delete(idStr);
+    };
   }
 }

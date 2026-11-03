@@ -35,7 +35,11 @@ import { resolveNavigationLinkTarget } from "@nucleum/shell/navigation/link-targ
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
-import { resolveAccessTrailParent } from "@nucleum/shell/navigator/access-trail";
+import {
+  resolveAccessTrailParent,
+  type AccessTrailPosition
+} from "@nucleum/shell/navigator/access-trail";
+import { forgetPageScroll } from "@nucleum/shell/navigation/page-scroll";
 
 /**
  * How a page open changes the access trail: start a new trail, extend the
@@ -114,7 +118,27 @@ function clearLayerScopedRecordParams(
   }
 }
 
-let pushedPages: string[] = [];
+
+/** A resource page this session added to the browser history. */
+type PushedPage = {
+  id: string;
+  position?: AccessTrailPosition;
+};
+
+let pushedPages: PushedPage[] = [];
+let forwardPages: PushedPage[] = [];
+
+/** Whether `id` is the open page and that page is in full screen. */
+export function isFullScreenPage(
+  id: IRecordId | undefined,
+  searchParams: URLSearchParams = new URLSearchParams(window.location.search)
+) {
+  return (
+    !!id &&
+    !!searchParams.get(AppSearchParam.MAX) &&
+    searchParams.get(AccessMode.PAGE) === id.toString()
+  );
+}
 
 /** Resolves whether a page open starts a trail or extends the current one. */
 function resolveAccessTrailIntent(
@@ -171,14 +195,20 @@ export const navigation = {
     if (!openPage) return false;
     const trail = accessTrail.get().current;
     const parent = resolveAccessTrailParent(trail);
-    const isTopPushed = pushedPages.at(-1) === openPage;
+    const isTopPushed = pushedPages.at(-1)?.id === openPage;
     if (parent === undefined || !trail) {
-      if (isTopPushed && pushedPages.length === 1) window.history.back();
-      else navigation.closeResource({ accessMode: AccessMode.PAGE });
+      navigation.closeResource({ accessMode: AccessMode.PAGE });
       return true;
     }
     const parentId = trail.nodes[parent].id;
-    if (isTopPushed && pushedPages.at(-2) === parentId) {
+    const previous = pushedPages.at(-2);
+    if (
+      isTopPushed &&
+      previous?.id === parentId &&
+      (!previous.position ||
+        (previous.position.trail === trail.key &&
+          previous.position.node === parent))
+    ) {
       window.history.back();
       return true;
     }
@@ -188,9 +218,23 @@ export const navigation = {
   },
   /** Keeps the access trail in step with the open page after any navigation. */
   syncAccessTrail(pageId: string | undefined) {
-    if (!pageId) pushedPages = [];
-    else if (pushedPages.at(-2) === pageId) pushedPages.pop();
-    accessTrail.sync(pageId);
+    if (!pageId) {
+      pushedPages = [];
+      forwardPages = [];
+      accessTrail.sync(undefined);
+      return;
+    }
+    if (pushedPages.at(-1)?.id !== pageId) {
+      if (pushedPages.at(-2)?.id === pageId) {
+        forwardPages = [...forwardPages, ...pushedPages.slice(-1)];
+        pushedPages = pushedPages.slice(0, -1);
+      } else if (forwardPages.at(-1)?.id === pageId) {
+        pushedPages = [...pushedPages, ...forwardPages.slice(-1)];
+        forwardPages = forwardPages.slice(0, -1);
+      }
+    }
+    const top = pushedPages.at(-1);
+    accessTrail.sync(pageId, top?.id === pageId ? top.position : undefined);
   },
 
   /**
@@ -503,13 +547,16 @@ export const navigation = {
         accessTrail.extend(id.toString());
       }
       if (openPage !== id.toString()) {
+        const pushed = { id: id.toString(), position: accessTrail.position() };
+        if (intent === "start" || intent === "extend") {
+          forgetPageScroll(id.toString());
+        }
         if (intent === "back") {
-          pushedPages = [...pushedPages.slice(0, -1), id.toString()];
+          pushedPages = [...pushedPages.slice(0, -1), pushed];
         } else {
           isPushHistory = true;
-          pushedPages = openPage
-            ? [...pushedPages, id.toString()]
-            : [id.toString()];
+          forwardPages = [];
+          pushedPages = openPage ? [...pushedPages, pushed] : [pushed];
         }
       }
     }
@@ -700,12 +747,27 @@ export const navigation = {
             AppSearchParam.MAX
           ]
         : [mode, `${mode}At`];
+    const closeMode = (mode: AccessMode) => {
+      const openPage = url.searchParams.get(AccessMode.PAGE);
+      if (mode === AccessMode.PAGE && openPage) {
+        if (pushedPages.length === 1 && pushedPages[0].id === openPage) {
+          window.history.back();
+          return;
+        }
+        navigation.toggleSearchParam(withPageParams(mode), {
+          url,
+          replaceState: false
+        });
+        return;
+      }
+      navigation.toggleSearchParam(withPageParams(mode), { url });
+    };
     if (props?.accessMode) {
-      navigation.toggleSearchParam(withPageParams(props.accessMode), { url });
+      closeMode(props.accessMode);
       return;
     }
     if (resolvedMode) {
-      navigation.toggleSearchParam(withPageParams(resolvedMode), { url });
+      closeMode(resolvedMode);
       return;
     }
     if (props?.id) {
@@ -720,7 +782,7 @@ export const navigation = {
       return;
     }
     if (props?.isRestrictToModals) {
-      navigation.toggleSearchParam(withPageParams(AccessMode.PAGE), { url });
+      closeMode(AccessMode.PAGE);
       return;
     }
     [
@@ -750,7 +812,7 @@ export const navigation = {
   ) => {
     logger.log({ at: "toggleFullScreen", currentMode, resourceId });
     const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get(AppSearchParam.MAX)) {
+    if (isFullScreenPage(resourceId, searchParams)) {
       navigation.exitFullScreen();
       return;
     }

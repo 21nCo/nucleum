@@ -32,7 +32,10 @@
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
-  import { ContextZoneLayer } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    ContextZoneLayer,
+    contextZone
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
   const ComponentResolver = requireActionRenderer();
   let {
     children,
@@ -69,6 +72,18 @@
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
 
   let scrollSaveFrame = 0;
+
+  $effect(() => {
+    contextZone.setVisibleLayers(
+      popId
+        ? [ContextZoneLayer.PAGE, ContextZoneLayer.BESIDE_PAGE]
+        : mainPath
+          ? [ContextZoneLayer.OVERLAY]
+          : [ContextZoneLayer.BASE, ContextZoneLayer.BESIDE_BASE]
+    );
+  });
+
+  $effect(() => () => contextZone.setVisibleLayers(undefined));
 
   function onPageScroll() {
     cancelAnimationFrame(scrollSaveFrame);
@@ -205,10 +220,12 @@
             </AppSplitView>
           </div>
         </div>
-        {#if rightPanel && $view.isPortrait}
-          <RightPanel action={rightPanel} isSheet={true} />
-        {:else if !$view.isConstrainedWidth && rightPanel}
-          <RightPanel action={rightPanel} />
+        {#if rightPanel && !isOverlayFullScreen}
+          {#if $view.isPortrait}
+            <RightPanel action={rightPanel} isSheet={true} />
+          {:else if !$view.isConstrainedWidth}
+            <RightPanel action={rightPanel} />
+          {/if}
         {/if}
       </div>
       {#if $view.isPortrait && $context.embed !== Embed.HANDSET}

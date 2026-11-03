@@ -1,7 +1,10 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import {
+    isFullScreenPage,
+    navigation
+  } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { tabState } from "@nucleum/shell/topNav/tabs/tab-state";
 
@@ -34,7 +37,6 @@
   import { rearrangeOnAxis } from "@21n/ui/actions/rearrange.action";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import Button from "@21n/ui/elements/button/Button.svelte";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import context from "@nucleum/client/runtime/context.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
@@ -135,9 +137,7 @@
   function resolveContextMenu() {
     if (!resource?.id) return contextMenu;
     const currentMode = determineResourceAccessMode(resource.id);
-    const maxSearchParam = new URLSearchParams(window.location.search).get(
-      AppSearchParam.MAX
-    );
+    const maxSearchParam = isFullScreenPage(resource.id);
     return [
       ...contextMenu,
       {

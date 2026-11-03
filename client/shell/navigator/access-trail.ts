@@ -124,19 +124,34 @@ export function resolveAccessTrailParent(trail: AccessTrail | undefined) {
   return parent !== undefined && parent > -1 ? parent : undefined;
 }
 
+/** Trail node a history entry was opened at. */
+export type AccessTrailPosition = {
+  trail: string;
+  node: number;
+};
+
 /**
  * Follows the open page after a navigation the trail did not start itself,
- * such as browser back and forward. Closing the page archives the trail; a
- * page outside the current trail starts a new one.
+ * such as browser back and forward. A known `position` of the history entry
+ * selects that exact node. Closing the page archives the trail; a page outside
+ * the current trail starts a new one.
  */
 export function syncAccessTrailPage(
   trails: AccessTrails,
   pageId: string | undefined,
-  options: { key: string; at: number }
+  options: { key: string; at: number; position?: AccessTrailPosition }
 ): AccessTrails {
   if (!pageId) return endAccessTrail(trails);
   const trail = trails.current;
   if (!trail) return startAccessTrail(trails, pageId, options);
+  const position = options.position;
+  if (
+    position &&
+    position.trail === trail.key &&
+    trail.nodes[position.node]?.id === pageId
+  ) {
+    return activateAccessTrailNode(trails, position.node, options.at);
+  }
   if (trail.nodes[trail.active]?.id === pageId) return trails;
   const parent = resolveAccessTrailParent(trail);
   if (parent !== undefined && trail.nodes[parent].id === pageId) {

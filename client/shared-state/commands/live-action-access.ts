@@ -33,6 +33,13 @@ export function resolveLiveActionAccessMode(action: IAction): AccessMode {
   return action.accessMode ?? AccessMode.PANEL;
 }
 
+/** Mode the live action `action` is open in now, read from `url`. */
+export function resolveOpenLiveActionAccessMode(action: string, url: URL) {
+  return liveActionAccessModes.find(
+    (mode) => url.searchParams.get(mode) === action
+  );
+}
+
 /** Saves where a configurable live action opens. */
 export function saveLiveActionAccessMode(action: string, mode: AccessMode) {
   uiState.setState(UIState.liveActionAccessMode, mode, stateParams(action));

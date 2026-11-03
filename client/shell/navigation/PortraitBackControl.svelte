@@ -11,6 +11,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { AccessMode } from "@nucleum/datafn/resource.type";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
@@ -43,7 +44,11 @@
 
   function back() {
     if (searchParams.get(AccessMode.OVERLAY)) {
-      navigation.toggleSearchParam([AccessMode.OVERLAY]);
+      navigation.toggleSearchParam(
+        isPageOpen
+          ? [AccessMode.OVERLAY]
+          : [AccessMode.OVERLAY, AppSearchParam.MAX]
+      );
       return;
     }
     if (navigation.backInTrail()) return;

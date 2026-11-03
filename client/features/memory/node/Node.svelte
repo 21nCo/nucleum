@@ -119,8 +119,9 @@
 
   onDestroy(() => {
     releaseDnDPage?.();
-    ActiveNodeStore.destroy(id);
   });
+
+  $effect(() => ActiveNodeStore.retain(id));
 
   const debouncedInitialize = debouncer(initialize, 1500);
   let hasReceivedInitialPropertySignal = false;

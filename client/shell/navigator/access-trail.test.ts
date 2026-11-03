@@ -151,4 +151,23 @@ describe("access trail", () => {
     expect(stored.current?.active).toBe(0);
     expect(stored.recent).toEqual([]);
   });
+
+  it("follows the history entry's own node when a resource repeats", () => {
+    let trails = startAccessTrail(createAccessTrails(), "node:a", opts());
+    trails = extendAccessTrail(trails, "node:b", opts());
+    trails = extendAccessTrail(trails, "node:a", opts());
+    const key = trails.current!.key;
+    expect(trails.current!.active).toBe(2);
+    trails = syncAccessTrailPage(trails, "node:b", {
+      ...opts(),
+      position: { trail: key, node: 1 }
+    });
+    expect(trails.current!.active).toBe(1);
+    trails = syncAccessTrailPage(trails, "node:a", {
+      ...opts(),
+      position: { trail: key, node: 2 }
+    });
+    expect(trails.current!.active).toBe(2);
+    expect(resolveAccessTrailParent(trails.current)).toBe(1);
+  });
 });

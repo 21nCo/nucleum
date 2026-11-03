@@ -51,6 +51,9 @@
     isDev
   );
   let sections = librarySections.map((entry) => entry.section);
+  $effect(() => {
+    selectedValue = selected ?? (options[0]?.value as Resource | undefined);
+  });
   function resolveResourcesForSection(section: Product): IResourceSwitchItem[] {
     return (
       librarySections.find((entry) => entry.section === section)?.items ?? []

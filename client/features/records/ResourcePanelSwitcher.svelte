@@ -54,7 +54,8 @@
     contextMenuResolver = undefined
   }: Props = $props();
   const isMaximized = $derived(
-    $page.url.searchParams.get(AppSearchParam.MAX) === "true"
+    $page.url.searchParams.get(AppSearchParam.MAX) === "true" &&
+      $page.url.searchParams.get(AccessMode.PAGE) === $resourceStore.id
   );
 
   function resolveContextMenu() {

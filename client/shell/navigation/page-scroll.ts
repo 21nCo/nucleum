@@ -48,6 +48,11 @@ export function savePageScroll(root: Element | undefined, id: string) {
   else savedScrolls.delete(id);
 }
 
+/** Forgets the scroll position of `id`, so its next open starts at the top. */
+export function forgetPageScroll(id: string) {
+  savedScrolls.delete(id);
+}
+
 /**
  * Restores the remembered scroll position of `id` while the resource renders
  * from local data. Content that re-renders during the first moments gets the

@@ -11,7 +11,7 @@
   } from "@nucleum/datafn/resource.type";
   import ObjectiveTitleRow from "@nucleum/features/focus/goals/info/GoalTitleRow.svelte";
   import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
-  import { onDestroy, untrack } from "svelte";
+  import { untrack } from "svelte";
   import { page } from "$app/stores";
   import { cn } from "@21n/ui/environment/presentation";
   import appearance from "@nucleum/shared-state/appearance/appearance.store";
@@ -81,9 +81,7 @@
     }
   });
 
-  onDestroy(() => {
-    ActiveObjectiveStore.destroy(id);
-  });
+  $effect(() => ActiveObjectiveStore.retain(id));
 
   function resolvePreviouslySelectedView() {
     const panelState = uiState.getState(UIState.objectivePanelSelection, {

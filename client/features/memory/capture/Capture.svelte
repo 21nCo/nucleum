@@ -44,6 +44,9 @@
 
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import EdgeButton from "@21n/ui/elements/button/EdgeButton.svelte";
+  import { resolveOpenLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
+  import { resourceAction } from "@nucleum/datafn/resource.utils";
+  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 
   let {
     captureId = generateResourceId(Resource.capture),
@@ -57,6 +60,7 @@
   };
 
   setContext(Context.CAPTURE, captureContext);
+  const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
   let captureStore = $state<IActiveCaptureStore>(
     ActiveCaptureStore.resolve(captureId)
   );
@@ -285,7 +289,13 @@
               tooltip="Close capture"
               label="Close"
               onclick={() => {
-                navigation.closeResource({ accessMode: AccessMode.OVERLAY });
+                navigation.closeResource({
+                  accessMode:
+                    resolveOpenLiveActionAccessMode(
+                      captureAction,
+                      new URL(window.location.href)
+                    ) ?? AccessMode.OVERLAY
+                });
               }}
             />
           </div>

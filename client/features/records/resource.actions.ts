@@ -392,9 +392,10 @@ export class ResourceActions<T extends IActionableResource> {
     };
   }
   maximize(): IContextMenuItem {
-    const maxSearchParam = new URLSearchParams(window.location.search).get(
-      AppSearchParam.MAX
-    );
+    const searchParams = new URLSearchParams(window.location.search);
+    const maxSearchParam =
+      !!searchParams.get(AppSearchParam.MAX) &&
+      searchParams.get(AccessMode.PAGE) === this.resource.id.toString();
     const currentMode = determineResourceAccessMode(this.resource.id);
     return {
       value: "open-in-full-screen",

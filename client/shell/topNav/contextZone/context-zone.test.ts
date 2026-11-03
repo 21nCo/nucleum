@@ -36,6 +36,19 @@ describe("resolveContextZoneEntry", () => {
   });
 });
 
+describe("resolveContextZoneEntry with covered layers", () => {
+  it("ignores entries of layers the user cannot see", () => {
+    const base = entry(1, "base", ContextZoneLayer.BASE);
+    const visible = new Set<number>([
+      ContextZoneLayer.PAGE,
+      ContextZoneLayer.BESIDE_PAGE
+    ]);
+    expect(resolveContextZoneEntry([base], "base", visible)).toBeUndefined();
+    const page = entry(2, "page", ContextZoneLayer.PAGE);
+    expect(resolveContextZoneEntry([base, page], "base", visible)).toBe(page);
+  });
+});
+
 describe("nextCycleValue", () => {
   it("wraps around and starts at the first value when nothing is selected", () => {
     expect(nextCycleValue(["a", "b", "c"], "b")).toBe("c");

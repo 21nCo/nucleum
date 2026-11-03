@@ -127,7 +127,8 @@ export const actionRunner = {
           ...(mode === AccessMode.OVERLAY
             ? {
                 [AccessMode.PAGE]: null,
-                [AccessMode.BESIDE_PAGE]: null
+                [AccessMode.BESIDE_PAGE]: null,
+                [AppSearchParam.MAX]: null
               }
             : {}),
           ...(mode === AccessMode.PANEL &&

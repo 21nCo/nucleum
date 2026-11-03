@@ -1,6 +1,6 @@
 import { derived, get, writable } from "svelte/store";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import { datafn } from "@nucleum/datafn/datafn.store";
+import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import {
@@ -13,6 +13,7 @@ import {
   resumeAccessTrail,
   startAccessTrail,
   syncAccessTrailPage,
+  type AccessTrailPosition,
   type AccessTrails
 } from "@nucleum/shell/navigator/access-trail";
 
@@ -25,10 +26,40 @@ let loadState: "idle" | "loading" | "loaded" = "idle";
 let queued: TrailChange[] = [];
 let isDirty = false;
 let flushTimer: ReturnType<typeof setTimeout> | undefined;
+let loadGeneration = 0;
+let loadedNamespace: string | null = null;
+let isWatchingRuntime = false;
+
+function resolveNamespace() {
+  return get(datafnRuntime)?.namespace ?? null;
+}
+
+/**
+ * Reloads the trails when the DataFn namespace changes, such as after
+ * switching accounts, so one account's trails never reach another's record.
+ */
+function watchRuntime() {
+  if (isWatchingRuntime) return;
+  isWatchingRuntime = true;
+  datafnRuntime.subscribe((runtime) => {
+    const namespace = runtime?.namespace ?? null;
+    if (loadState === "idle" || namespace === loadedNamespace) return;
+    if (flushTimer) clearTimeout(flushTimer);
+    flushTimer = undefined;
+    isDirty = false;
+    queued = [];
+    loadState = "idle";
+    trailsLocal.set(createAccessTrails());
+    ensureLoaded();
+  });
+}
 
 function ensureLoaded() {
   if (loadState !== "idle") return;
   loadState = "loading";
+  loadedNamespace = resolveNamespace();
+  const generation = ++loadGeneration;
+  watchRuntime();
   if (typeof window !== "undefined") {
     window.addEventListener("pagehide", flushAccessTrails);
   }
@@ -39,6 +70,7 @@ function ensureLoaded() {
       return null;
     })
     .then((stored) => {
+      if (generation !== loadGeneration) return;
       const base = normalizeAccessTrails(stored);
       const next = queued.reduce((trails, change) => change(trails), base);
       queued = [];
@@ -58,6 +90,7 @@ function flushAccessTrails() {
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = undefined;
   if (!isDirty || loadState !== "loaded") return;
+  if (resolveNamespace() !== loadedNamespace) return;
   isDirty = false;
   void datafn.kv
     .set(Resource.accessTrails, get(trailsLocal))
@@ -108,9 +141,19 @@ export const accessTrail = {
   select(index: number) {
     apply((trails) => activateAccessTrailNode(trails, index, Date.now()));
   },
-  /** Follows the open page after browser navigation; undefined ends the trail. */
-  sync(pageId: string | undefined) {
-    apply((trails) => syncAccessTrailPage(trails, pageId, stamp()));
+  /**
+   * Follows the open page after browser navigation; undefined ends the trail.
+   * `position` is the trail node the history entry was opened at, when known.
+   */
+  sync(pageId: string | undefined, position?: AccessTrailPosition) {
+    apply((trails) =>
+      syncAccessTrailPage(trails, pageId, { ...stamp(), position })
+    );
+  },
+  /** Trail node that is active now, if a trail is current. */
+  position(): AccessTrailPosition | undefined {
+    const trail = accessTrail.get().current;
+    return trail ? { trail: trail.key, node: trail.active } : undefined;
   },
   /** Keeps the current trail as a recent trail. */
   end() {

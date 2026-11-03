@@ -253,8 +253,9 @@
 
   onDestroy(() => {
     releaseDnDPage?.();
-    ActiveCollectionStore.destroy(id);
   });
+
+  $effect(() => ActiveCollectionStore.retain(id));
 
   async function initialize() {
     if (!id || isInitializing) return;
