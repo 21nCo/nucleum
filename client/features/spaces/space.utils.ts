@@ -320,8 +320,8 @@ export type SpacePageRoute = {
 
 /**
  * Resolves a page link to the page that renders it: a page or sub-view registered
- * for exactly that path, otherwise the page whose sub-path it is. Undefined when
- * the product has no such page.
+ * for exactly that path, otherwise a page that accepts any sub-path and whose
+ * sub-path it is. Undefined when the product has no such page or sub-view.
  */
 export function resolveSpacePageRoute(
   actions: IAction[],
@@ -335,7 +335,7 @@ export function resolveSpacePageRoute(
   );
   if (exact) return { action: exact, label: exact.label };
   const route = resolvePageRoute(actions ?? [], target);
-  return route ? { action: route.action } : undefined;
+  return route?.action.isSubPathOpen ? { action: route.action } : undefined;
 }
 
 /** Status of a page link: unsupported when the current product has no such page. */

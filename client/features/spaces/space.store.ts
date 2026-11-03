@@ -26,9 +26,9 @@ import {
 } from "@nucleum/features/spaces/space.utils";
 import { determineResourceType } from "@nucleum/datafn/resource.utils";
 import { datafn } from "@nucleum/datafn/datafn.store";
+import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { navigation } from "@nucleum/shell/navigation/navigation";
-import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 
 const activeSpaceStores = new Map<string, ActiveSpaceStore>();
@@ -307,13 +307,18 @@ export class ActiveSpaceStore {
 }
 
 /**
- * Inserts a space record and returns its id, or undefined when the insert fails.
- * Spaces start as an empty side nav.
+ * Inserts a space record, under `id` when given, and returns its id, or undefined
+ * when the insert fails. Spaces start as an empty side nav.
  */
 export async function insertSpace(
-  params: { label?: string; view?: SpaceView; items?: ISpaceNavItem[] } = {}
+  params: {
+    id?: string;
+    label?: string;
+    view?: SpaceView;
+    items?: ISpaceNavItem[];
+  } = {}
 ) {
-  const id = generateResourceId(Resource.space);
+  const id = params.id ?? generateResourceId(Resource.space);
   try {
     assertDatafnMutationSucceeded(
       await datafn.space.mutate({

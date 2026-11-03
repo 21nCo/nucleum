@@ -7,6 +7,8 @@ import {
 import {
   hasPinnedSpaceSources,
   planPinnedSpaceItems,
+  planPinnedSpaceMenu,
+  removeMovedTabs,
   type PinnedSpaceRecord
 } from "@nucleum/features/spaces/pinned-space-migration.utils";
 
@@ -148,5 +150,61 @@ describe("hasPinnedSpaceSources", () => {
     expect(hasPinnedSpaceSources({ tabIds: [], typePins: [] })).toBe(false);
     expect(hasPinnedSpaceSources({ tabIds: ["node:a"] })).toBe(true);
     expect(hasPinnedSpaceSources({ typePins: ["objective"] })).toBe(true);
+  });
+});
+
+describe("planPinnedSpaceMenu", () => {
+  it("keeps pins and spaces added while the run was in progress", () => {
+    expect(
+      planPinnedSpaceMenu({
+        menu: {
+          default: ["home"],
+          user: ["objective", "node", "collection"],
+          spaces: ["space:other"]
+        },
+        movedPins: ["objective", "node"],
+        spaceId: "space:pinned",
+        isPinning: true
+      })
+    ).toEqual({
+      default: ["home"],
+      user: ["collection"],
+      spaces: ["space:other", "space:pinned"],
+      pinnedSpaceId: "space:pinned",
+      tabsMigrated: true
+    });
+  });
+
+  it("does not pin the space again when the user unpinned it", () => {
+    expect(
+      planPinnedSpaceMenu({
+        menu: { user: ["objective"], spaces: [], pinnedSpaceId: "space:p" },
+        movedPins: ["objective"],
+        spaceId: "space:p",
+        isPinning: false
+      })
+    ).toEqual({
+      user: [],
+      spaces: [],
+      pinnedSpaceId: "space:p",
+      tabsMigrated: true
+    });
+  });
+
+  it("marks tabs as moved without a space when nothing was added", () => {
+    expect(
+      planPinnedSpaceMenu({ menu: {}, movedPins: [], isPinning: false })
+    ).toEqual({ user: [], tabsMigrated: true });
+  });
+});
+
+describe("removeMovedTabs", () => {
+  it("keeps tabs opened while the run was in progress", () => {
+    expect(
+      removeMovedTabs(
+        ["node:a", "node:new", "objective:b"],
+        ["node:a", "objective:b"]
+      )
+    ).toEqual(["node:new"]);
   });
 });

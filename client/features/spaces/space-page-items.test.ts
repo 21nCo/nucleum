@@ -122,7 +122,13 @@ describe("space page routes", () => {
     subViewOf: "library"
   };
   const calendar = action("calendar", "Calendar");
-  const actions = [library, collections, calendar];
+  const spaces: IAction = {
+    action: "spaces",
+    label: "Spaces",
+    type: ActionType.PAGE,
+    isSubPathOpen: true
+  };
+  const actions = [library, collections, calendar, spaces];
 
   it("normalizes surrounding slashes", () => {
     expect(normalizeSpacePagePath("/library/objective/all/")).toBe(
@@ -142,10 +148,16 @@ describe("space page routes", () => {
     });
   });
 
-  it("falls back to the page whose sub-path the link is, without its label", () => {
-    expect(resolveSpacePageRoute(actions, "library/objective/all")).toEqual({
-      action: library
+  it("falls back only to a page that accepts any sub-path, without its label", () => {
+    expect(resolveSpacePageRoute(actions, "spaces/work/notes")).toEqual({
+      action: spaces
     });
+  });
+
+  it("does not open sub-views the product has not registered", () => {
+    expect(
+      resolveSpacePageRoute(actions, "library/objective/all")
+    ).toBeUndefined();
   });
 
   it("marks links to pages the product lacks as unsupported", () => {

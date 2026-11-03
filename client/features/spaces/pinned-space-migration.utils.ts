@@ -83,3 +83,41 @@ export function hasPinnedSpaceSources(params: {
 }) {
   return (params.tabIds?.length ?? 0) > 0 || (params.typePins?.length ?? 0) > 0;
 }
+
+/**
+ * The product's app menu entry after a migration run, built from the entry read just
+ * before writing so changes made while the run was in progress are kept. Removes
+ * only the resource-type pins the run moved, records the pinned space, marks app
+ * tabs as moved, and pins the space only when `isPinning` is set.
+ */
+export function planPinnedSpaceMenu<
+  T extends {
+    user?: string[];
+    spaces?: string[];
+    pinnedSpaceId?: string;
+    tabsMigrated?: boolean;
+  }
+>(params: {
+  menu: T;
+  movedPins: string[];
+  spaceId?: string;
+  isPinning: boolean;
+}): T {
+  const { menu, movedPins, spaceId, isPinning } = params;
+  const spaces = menu.spaces ?? [];
+  return {
+    ...menu,
+    user: (menu.user ?? []).filter((pin) => !movedPins.includes(pin)),
+    tabsMigrated: true,
+    ...(spaceId ? { pinnedSpaceId: spaceId } : {}),
+    ...(spaceId && isPinning && !spaces.includes(spaceId)
+      ? { spaces: [...spaces, spaceId] }
+      : {})
+  };
+}
+
+/** Tab ids left after removing the tabs a migration run moved. */
+export function removeMovedTabs<T>(tabIds: T[], movedTabIds: string[]): T[] {
+  const moved = new Set(movedTabIds);
+  return tabIds.filter((id) => !moved.has(String(id ?? "")));
+}
