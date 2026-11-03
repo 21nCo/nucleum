@@ -40,6 +40,7 @@
   import {
     NAVIGATOR_SECTION_LIMIT,
     formatNavigatorAge,
+    isNavigatorListedItem,
     limitSectionItems,
     resolveFrequentContext
   } from "@nucleum/shell/navigator/navigator-sections";
@@ -144,7 +145,12 @@
           ? { id, pageAction: resolvePageAction(id), at: entry.lastOpenedAt }
           : { id, at: entry.lastOpenedAt }
       )
-      .filter((item) => item.pageAction || isRecordId(item.id))
+      .filter((item) =>
+        isNavigatorListedItem({
+          isRecord: isRecordId(item.id),
+          pageAction: item.pageAction
+        })
+      )
       .slice(0, limit);
   }
 

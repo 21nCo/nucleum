@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatNavigatorAge,
+  isNavigatorListedItem,
   limitSectionItems,
   resolveFrequentContext
 } from "./navigator-sections";
@@ -65,5 +66,24 @@ describe("formatNavigatorAge", () => {
 
   it("treats future times as now", () => {
     expect(formatNavigatorAge(now + 1000, now)).toBe("now");
+  });
+});
+
+describe("isNavigatorListedItem", () => {
+  it("lists resources and nested pages", () => {
+    expect(isNavigatorListedItem({ isRecord: true })).toBe(true);
+    expect(
+      isNavigatorListedItem({
+        isRecord: false,
+        pageAction: { subViewOf: "calendar" }
+      })
+    ).toBe(true);
+  });
+
+  it("leaves out top-level pages and unknown entries", () => {
+    expect(isNavigatorListedItem({ isRecord: false, pageAction: {} })).toBe(
+      false
+    );
+    expect(isNavigatorListedItem({ isRecord: false })).toBe(false);
   });
 });

@@ -46,3 +46,16 @@ export function formatNavigatorAge(at: number, now: number) {
   if (age < 7 * DAY_MS) return `${Math.floor(age / DAY_MS)}d`;
   return `${Math.floor(age / (7 * DAY_MS))}w`;
 }
+
+/**
+ * Whether a navigator history entry is listed: resources, and pages that are
+ * nested views of an app menu page, such as a calendar layout. Top-level app
+ * menu pages, which the app menu already offers, are left out.
+ */
+export function isNavigatorListedItem(item: {
+  isRecord: boolean;
+  pageAction?: { subViewOf?: string };
+}) {
+  if (item.pageAction) return !!item.pageAction.subViewOf;
+  return item.isRecord;
+}
