@@ -1,6 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import {
     isFullScreenPage,
     navigation
@@ -34,6 +35,7 @@
     isInterimTab = false,
     isTrail = false,
     isTypeIcon = false,
+    trailing = undefined,
     onClick,
     onClose,
     onRearrange,
@@ -44,6 +46,8 @@
     isTrail?: boolean;
     /** Labels the item with its type icon and plain label, as in the navigator. */
     isTypeIcon?: boolean;
+    /** Content at the right end of the row, such as a visit time. */
+    trailing?: Snippet;
     onClick?: (event?: MouseEvent | KeyboardEvent) => void;
     onClose?: () => void;
     onRearrange?: (displacement: number) => void;
@@ -170,21 +174,21 @@
       class={cn(
         "relative z-20 flex items-center text-b2 gap-2 truncate",
         // abg(isActive, 1),
-        {
-          "rounded-md": !dev_isFullHeightTabStyle || isInterimTab,
-          "px-4 py-1.5": !isInterimTab && !isTrail,
-          "px-2 py-1 border": isInterimTab,
-          "border-transparent hover:border-dashed hover:border-brs3":
-            isInterimTab && !isActive,
-          "border-dashed border-brs4 bg-bgs3": isActive && isInterimTab,
-          "w-full": isTrail,
-          "bg-bgs2": isTrail && !isActive,
-          "max-w-48 min-w-24": !isTrail,
-          "px-1 py-1.5": !isInterimTab && isTrail,
-          "hover:bg-bgs3 text-fgs2 hover:text-fgs1": !isActive,
-          "bg-bgs1": !isInterimTab && isActive
-        },
-        !isInterimTab &&
+        isTrail
+          ? "w-full rounded-md px-2 py-1.5 text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+          : {
+              "rounded-md": !dev_isFullHeightTabStyle || isInterimTab,
+              "px-4 py-1.5": !isInterimTab,
+              "px-2 py-1 border": isInterimTab,
+              "border-transparent hover:border-dashed hover:border-brs3":
+                isInterimTab && !isActive,
+              "border-dashed border-brs4 bg-bgs3": isActive && isInterimTab,
+              "max-w-48 min-w-24": true,
+              "hover:bg-bgs3 text-fgs2 hover:text-fgs1": !isActive,
+              "bg-bgs1": !isInterimTab && isActive
+            },
+        !isTrail &&
+          !isInterimTab &&
           dev_isFullHeightTabStyle && {
             "h-full border-b": true,
             "border-transparent": !isActive,
@@ -196,9 +200,14 @@
       onclick={handleTabClick}
       onkeydown={handleTabKeyDown}
     >
-      <div class="truncate text-b3">
+      <div class="truncate text-b3 min-w-0">
         <ResourceLabel source={$live} {isTypeIcon} />
       </div>
+      {#if trailing}
+        <span class="ml-auto shrink-0 text-b3 text-fgs3"
+          >{@render trailing()}</span
+        >
+      {/if}
       {#if isInterimTab && !isTrail}
         <div class="flex items-center">
           <Button

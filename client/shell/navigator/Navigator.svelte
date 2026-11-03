@@ -341,24 +341,19 @@
 {#snippet historyList(items: NavigatorHistoryItem[], isShowAge = false)}
   <div class="flex flex-col gap-1 -ml-2">
     {#each items as item (item.id)}
-      <div class="flex items-center gap-2 min-w-0">
-        <div class="flex-1 min-w-0">
-          <TopBarResourceItem
-            item={item.pageAction?.action ?? item.id}
-            isInterimTab={true}
-            isTrail
-            isTypeIcon
-            onClick={(event) => handleHistoryClick(item, event)}
-          />
-        </div>
-        {#if isShowAge && item.at > 0}
-          <span
-            class="shrink-0 text-b3 text-fgs3"
-            data-testid="navigator-item-age"
-            >{formatNavigatorAge(item.at, now)}</span
-          >
-        {/if}
-      </div>
+      {#snippet age()}
+        <span data-testid="navigator-item-age"
+          >{formatNavigatorAge(item.at, now)}</span
+        >
+      {/snippet}
+      <TopBarResourceItem
+        item={item.pageAction?.action ?? item.id}
+        isInterimTab={true}
+        isTrail
+        isTypeIcon
+        trailing={isShowAge && item.at > 0 ? age : undefined}
+        onClick={(event) => handleHistoryClick(item, event)}
+      />
     {/each}
   </div>
 {/snippet}
@@ -422,7 +417,7 @@
         class={cn("relative flex items-center gap-2", {
           "trail-item": row.depth > 0
         })}
-        style={`padding-left: ${row.depth * 14}px;`}
+        style={`padding-left: ${row.depth * 14}px; --trail-indent: ${row.depth * 14}px;`}
         data-testid="navigator-trail-item"
         data-trail-depth={row.depth}
         data-here={row.index === activeIndex ? "true" : undefined}
@@ -645,7 +640,7 @@
     content: "";
     position: absolute;
     top: 0;
-    left: 10px;
+    left: 2px;
     height: 100%;
     width: 0%;
     z-index: 0;
@@ -657,9 +652,9 @@
     content: "";
     position: absolute;
     top: 0;
-    left: 10px;
+    left: 2px;
     height: 50%;
-    width: calc(100% - 10px);
+    width: calc(var(--trail-indent, 14px) + 4px);
     z-index: 0;
     opacity: 0.7;
     border-bottom: 1px dashed rgb(var(--colors-fgs4));
