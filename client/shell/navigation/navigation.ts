@@ -190,6 +190,23 @@ function isFullScreenOverlayOpen(searchParams: URLSearchParams) {
   return !!overlay && overlay === fullScreen.get().path;
 }
 
+let endedEntry: { pageId: string; position?: AccessTrailPosition } | undefined;
+
+/**
+ * Whether the page now shown is the history entry whose trail the user ended,
+ * reached again only by a navigation that changed other query params, or
+ * dropped the entry's trail state, such as opening or closing the navigator.
+ */
+function isEndedEntry(pageId: string, state?: AccessTrailHistoryState) {
+  if (!endedEntry || endedEntry.pageId !== pageId) return false;
+  if (!state) return true;
+  if (!endedEntry.position) return false;
+  return isSameAccessTrailPosition(
+    accessTrail.resolve(state.position),
+    accessTrail.resolve(endedEntry.position)
+  );
+}
+
 /** Whether `id` is the open page and that page is in full screen. */
 export function isFullScreenPage(
   id: IRecordId | undefined,
@@ -301,6 +318,26 @@ export const navigation = {
     return true;
   },
   /**
+   * Ends the current access trail, keeping it as a recent trail. The open
+   * page stays outside any trail until a resource navigation, so navigations
+   * that only change other query params do not resume or restart it.
+   */
+  endAccessTrail() {
+    const pageId = new URL(window.location.href).searchParams.get(
+      AccessMode.PAGE
+    );
+    endedEntry = pageId
+      ? {
+          pageId,
+          position:
+            currentEntry?.pageId === pageId
+              ? currentEntry.state?.position
+              : undefined
+        }
+      : undefined;
+    accessTrail.end();
+  },
+  /**
    * Keeps the access trail in step with the open page after any navigation.
    * `historyState` is the state of the history entry now shown; its recorded
    * trail position selects the exact node, also for repeated resources. When
@@ -310,11 +347,14 @@ export const navigation = {
   syncAccessTrail(pageId: string | undefined, historyState?: unknown) {
     if (!pageId) {
       currentEntry = undefined;
+      endedEntry = undefined;
       accessTrail.sync(undefined);
       return;
     }
     const state = readAccessTrailHistoryState(historyState);
     currentEntry = { pageId, state };
+    if (isEndedEntry(pageId, state)) return;
+    endedEntry = undefined;
     accessTrail.sync(pageId, state?.position);
     const position = accessTrail.position();
     if (
@@ -691,6 +731,7 @@ export const navigation = {
     let isPushHistory = false;
     let historyState: AccessTrailHistoryState | undefined;
     if (accessMode === AccessMode.PAGE) {
+      endedEntry = undefined;
       const openPage = url.searchParams.get(AccessMode.PAGE);
       const recorded =
         currentEntry?.pageId === openPage

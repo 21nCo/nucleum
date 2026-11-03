@@ -529,7 +529,7 @@
               type="button"
               class="shrink-0 text-b3 font-medium text-aps1 hover:underline"
               data-testid="navigator-end-trail"
-              onclick={() => accessTrail.end()}
+              onclick={() => navigation.endAccessTrail()}
             >
               End trail
             </button>
