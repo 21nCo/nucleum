@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   AppStyle,
-  formatAppStyleTokens,
   isFramedAppStyle,
   resolveAppStyle,
   resolveAppStyleTokens
@@ -64,10 +63,3 @@ describe("resolveAppStyleTokens", () => {
   });
 });
 
-describe("formatAppStyleTokens", () => {
-  it("serialises tokens as an inline style", () => {
-    expect(formatAppStyleTokens(resolveAppStyleTokens(AppStyle.Boxed))).toBe(
-      "--app-control-radius: 0.375rem; --app-panel-radius: 0px; --app-tab-radius: 0px; --app-shell-gap: 0px"
-    );
-  });
-});

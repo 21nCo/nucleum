@@ -8,7 +8,6 @@
   import view from "@21n/ui/environment/view.store";
   import { AppSkin } from "@21n/theme/appearance.type";
   import {
-    formatAppStyleTokens,
     resolveAppStyle,
     resolveAppStyleTokens
   } from "@21n/theme/app-style";
@@ -53,7 +52,7 @@
   );
   const appStyle = $derived(resolveAppStyle($appearance?.appStyle));
   const appStyleTokens = $derived(
-    formatAppStyleTokens(resolveAppStyleTokens(appStyle, $view.isPortrait))
+    resolveAppStyleTokens(appStyle, $view.isPortrait)
   );
 
   onMount(() => {
@@ -279,7 +278,10 @@
     dark: $appearance?.colorScheme?.isDark
   })}
   data-app-style={appStyle}
-  style={appStyleTokens}
+  style:--app-control-radius={appStyleTokens["--app-control-radius"]}
+  style:--app-panel-radius={appStyleTokens["--app-panel-radius"]}
+  style:--app-tab-radius={appStyleTokens["--app-tab-radius"]}
+  style:--app-shell-gap={appStyleTokens["--app-shell-gap"]}
   style:--number-typeface={resolveNumberTypeface(typeface)}
   style:--number-grid-size={resolveNumberGridSize(typeface)}
   style:--number-grid-typeface={resolveNumberGridTypeface(typeface)}

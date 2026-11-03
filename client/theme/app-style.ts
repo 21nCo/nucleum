@@ -64,9 +64,3 @@ export function resolveAppStyleTokens(
   return isPortrait ? { ...tokens, "--app-shell-gap": "0px" } : { ...tokens };
 }
 
-/** Serialises app style tokens into an inline style declaration. */
-export function formatAppStyleTokens(tokens: AppStyleTokens) {
-  return Object.entries(tokens)
-    .map(([name, value]) => `${name}: ${value}`)
-    .join("; ");
-}
