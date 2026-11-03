@@ -1,0 +1,452 @@
+import { Resource } from "@nucleum/datafn/resource.enum";
+import { Product } from "@nucleum/client/config/product.type";
+import { productRegistry } from "@nucleum/schema/product.config";
+import {
+  decodeSpaceSegment,
+  encodeSpaceSegment
+} from "@nucleum/client/config/space-route";
+import {
+  SpaceNavItemType,
+  type ISpaceHeading,
+  type ISpaceNavItem,
+  type ISpaceResourceNavItem,
+  type SpaceDropPosition
+} from "@nucleum/features/spaces/space.type";
+
+const SPACE_ID_PREFIX = `${Resource.space}:`;
+
+function clone<T>(items: T[]): T[] {
+  if (typeof structuredClone === "function") {
+    return structuredClone(items ?? []);
+  }
+  return JSON.parse(JSON.stringify(items ?? []));
+}
+
+/** Deep-copies an item tree so callers can mutate the copy. */
+export function cloneNavItems(items: ISpaceNavItem[] = []) {
+  return clone(items);
+}
+
+/** Returns the index path of an item, or null when it is not in the tree. */
+export function findItemPath(
+  items: ISpaceNavItem[],
+  id: string,
+  currentPath: number[] = []
+): number[] | null {
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index];
+    const path = [...currentPath, index];
+    if (item.id === id) return path;
+    if (item.children && item.children.length > 0) {
+      const childPath = findItemPath(item.children, id, path);
+      if (childPath) return childPath;
+    }
+  }
+  return null;
+}
+
+/** Returns the item at an index path without modifying the tree. */
+export function getItemByPath(
+  items: ISpaceNavItem[],
+  path: number[]
+): ISpaceNavItem | undefined {
+  if (path.length === 0) return undefined;
+  let level: ISpaceNavItem[] | undefined = items;
+  let current: ISpaceNavItem | undefined;
+  for (const index of path) {
+    current = level?.[index];
+    if (!current) return undefined;
+    level = current.children;
+  }
+  return current;
+}
+
+/** Finds an item anywhere in the tree. */
+export function findItem(items: ISpaceNavItem[], id: string) {
+  const path = findItemPath(items, id);
+  return path ? getItemByPath(items, path) : undefined;
+}
+
+/** Returns the id of the section holding an item, or undefined at the root. */
+export function findParentId(items: ISpaceNavItem[], id: string) {
+  const path = findItemPath(items, id);
+  if (!path || path.length < 2) return undefined;
+  return getItemByPath(items, path.slice(0, -1))?.id;
+}
+
+function childrenAt(items: ISpaceNavItem[], parentPath: number[]) {
+  if (parentPath.length === 0) return items;
+  const parent = getItemByPath(items, parentPath);
+  if (!parent) return undefined;
+  parent.children = parent.children ?? [];
+  return parent.children;
+}
+
+function isSection(item: ISpaceNavItem | undefined) {
+  return item?.type === SpaceNavItemType.SECTION;
+}
+
+function containsId(item: ISpaceNavItem, id: string): boolean {
+  if (item.id === id) return true;
+  return (item.children ?? []).some((child) => containsId(child, id));
+}
+
+function insertAt(
+  list: ISpaceNavItem[],
+  item: ISpaceNavItem,
+  index: number | undefined
+) {
+  const target =
+    index === undefined || index < 0 || index > list.length
+      ? list.length
+      : index;
+  list.splice(target, 0, item);
+}
+
+/**
+ * Inserts an item at the root or inside a section. Returns the tree unchanged
+ * when the parent is missing or is not a section.
+ */
+export function insertItem(
+  items: ISpaceNavItem[],
+  item: ISpaceNavItem,
+  params: { parentId?: string; index?: number } = {}
+) {
+  const cloned = cloneNavItems(items);
+  if (!params.parentId) {
+    insertAt(cloned, item, params.index);
+    return cloned;
+  }
+  const parentPath = findItemPath(cloned, params.parentId);
+  if (!parentPath) return cloned;
+  const parent = getItemByPath(cloned, parentPath);
+  if (!isSection(parent)) return cloned;
+  const list = childrenAt(cloned, parentPath);
+  if (list) insertAt(list, item, params.index);
+  return cloned;
+}
+
+/** Removes an item and its descendants. */
+export function removeItemById(items: ISpaceNavItem[], id: string) {
+  const cloned = cloneNavItems(items);
+  const path = findItemPath(cloned, id);
+  if (!path) return cloned;
+  childrenAt(cloned, path.slice(0, -1))?.splice(path[path.length - 1], 1);
+  return cloned;
+}
+
+function detach(items: ISpaceNavItem[], id: string) {
+  const cloned = cloneNavItems(items);
+  const path = findItemPath(cloned, id);
+  if (!path) return { items: cloned, item: undefined };
+  const [item] =
+    childrenAt(cloned, path.slice(0, -1))?.splice(path[path.length - 1], 1) ??
+    [];
+  return { items: cloned, item };
+}
+
+/**
+ * Moves an item before, after or inside a target. `inside` appends to a section and
+ * falls back to `after` for other targets. Moving an item into itself or one of its
+ * descendants leaves the tree unchanged.
+ */
+export function moveItemToPosition(
+  items: ISpaceNavItem[],
+  itemId: string,
+  targetId: string,
+  position: SpaceDropPosition
+) {
+  if (itemId === targetId) return items;
+  const moving = findItem(items, itemId);
+  if (!moving || containsId(moving, targetId)) return items;
+  const { items: detached, item } = detach(items, itemId);
+  if (!item) return items;
+  const targetPath = findItemPath(detached, targetId);
+  if (!targetPath) return items;
+  const target = getItemByPath(detached, targetPath);
+  if (position === "inside" && isSection(target)) {
+    childrenAt(detached, targetPath)?.push(item);
+    return detached;
+  }
+  const parentPath = targetPath.slice(0, -1);
+  const targetIndex = targetPath[targetPath.length - 1];
+  const insertIndex = position === "before" ? targetIndex : targetIndex + 1;
+  childrenAt(detached, parentPath)?.splice(insertIndex, 0, item);
+  return detached;
+}
+
+/**
+ * Moves an item to the root or into a section at an index of the destination list
+ * after the item has been taken out. A missing index appends.
+ */
+export function moveItemToParent(
+  items: ISpaceNavItem[],
+  itemId: string,
+  parentId: string | undefined,
+  index?: number
+) {
+  const moving = findItem(items, itemId);
+  if (!moving) return items;
+  if (parentId && containsId(moving, parentId)) return items;
+  const { items: detached, item } = detach(items, itemId);
+  if (!item) return items;
+  if (!parentId) {
+    insertAt(detached, item, index);
+    return detached;
+  }
+  const parentPath = findItemPath(detached, parentId);
+  if (!parentPath || !isSection(getItemByPath(detached, parentPath)))
+    return items;
+  const list = childrenAt(detached, parentPath);
+  if (!list) return items;
+  insertAt(list, item, index);
+  return detached;
+}
+
+/** Swaps an item with a sibling `offset` places away. */
+export function moveItem(items: ISpaceNavItem[], id: string, offset: number) {
+  if (!offset) return items;
+  const cloned = cloneNavItems(items);
+  const path = findItemPath(cloned, id);
+  if (!path) return cloned;
+  const list = childrenAt(cloned, path.slice(0, -1));
+  if (!list) return cloned;
+  const index = path[path.length - 1];
+  const next = index + offset;
+  if (next < 0 || next >= list.length) return cloned;
+  const [item] = list.splice(index, 1);
+  list.splice(next, 0, item);
+  return cloned;
+}
+
+/** Moves an item to the end of the section directly above it. */
+export function indentItem(items: ISpaceNavItem[], id: string) {
+  const cloned = cloneNavItems(items);
+  const path = findItemPath(cloned, id);
+  if (!path) return cloned;
+  const list = childrenAt(cloned, path.slice(0, -1));
+  const index = path[path.length - 1];
+  const previous = list?.[index - 1];
+  if (!list || index <= 0 || !isSection(previous)) return cloned;
+  const [item] = list.splice(index, 1);
+  previous!.children = [...(previous!.children ?? []), item];
+  return cloned;
+}
+
+/** Moves an item out of its section to just after that section. */
+export function outdentItem(items: ISpaceNavItem[], id: string) {
+  const cloned = cloneNavItems(items);
+  const path = findItemPath(cloned, id);
+  if (!path || path.length < 2) return cloned;
+  const parentPath = path.slice(0, -1);
+  const list = childrenAt(cloned, parentPath);
+  const grandParent = childrenAt(cloned, parentPath.slice(0, -1));
+  if (!list || !grandParent) return cloned;
+  const [item] = list.splice(path[path.length - 1], 1);
+  grandParent.splice(parentPath[parentPath.length - 1] + 1, 0, item);
+  return cloned;
+}
+
+/** Renames an item. */
+export function updateItemLabel(
+  items: ISpaceNavItem[],
+  id: string,
+  label: string
+) {
+  const cloned = cloneNavItems(items);
+  const path = findItemPath(cloned, id);
+  const item = path ? getItemByPath(cloned, path) : undefined;
+  if (item) item.label = label;
+  return cloned;
+}
+
+/** Lists every item in tree order. */
+export function flattenNavItems(items: ISpaceNavItem[] = []): ISpaceNavItem[] {
+  const result: ISpaceNavItem[] = [];
+  for (const item of items ?? []) {
+    result.push(item);
+    if (item.children?.length) result.push(...flattenNavItems(item.children));
+  }
+  return result;
+}
+
+/** Lists every record item in tree order. */
+export function collectResourceItems(items: ISpaceNavItem[] = []) {
+  return flattenNavItems(items).filter(
+    (item): item is ISpaceResourceNavItem =>
+      item.type === SpaceNavItemType.RESOURCE
+  );
+}
+
+/** Counts sections and record items. */
+export function countNavItems(items: ISpaceNavItem[] = []) {
+  let sections = 0;
+  let resources = 0;
+  for (const item of flattenNavItems(items)) {
+    if (item.type === SpaceNavItemType.SECTION) sections += 1;
+    else resources += 1;
+  }
+  return { sections, resources };
+}
+
+/** Ids of the spaces placed directly in an item tree, at any section depth. */
+export function collectChildSpaceIds(items: ISpaceNavItem[] = []) {
+  return collectResourceItems(items)
+    .filter((item) => item.resourceType === Resource.space)
+    .map((item) => item.resourceId.toString());
+}
+
+/**
+ * Returns true when `fromSpaceId` reaches `targetSpaceId` through nested spaces,
+ * including when both are the same space.
+ */
+export function spaceReaches(
+  fromSpaceId: string,
+  targetSpaceId: string,
+  childSpaceIds: (spaceId: string) => string[]
+) {
+  const visited = new Set<string>();
+  const queue = [fromSpaceId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (current === targetSpaceId) return true;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    queue.push(...childSpaceIds(current));
+  }
+  return false;
+}
+
+/** Why a record cannot be added to a space, or undefined when it can. */
+export function resolveAddBlockReason(params: {
+  candidateId: string;
+  currentSpaceId: string;
+  focusChain: string[];
+  items: ISpaceNavItem[];
+  childSpaceIds: (spaceId: string) => string[];
+}): string | undefined {
+  const { candidateId, currentSpaceId, focusChain, items, childSpaceIds } =
+    params;
+  if (candidateId === currentSpaceId) return "This is the current space";
+  if (
+    collectResourceItems(items).some(
+      (item) => item.resourceId.toString() === candidateId
+    )
+  )
+    return "Already in this space";
+  if (!candidateId.startsWith(SPACE_ID_PREFIX)) return undefined;
+  if (focusChain.includes(candidateId))
+    return "Contains this space, adding it would create a loop";
+  if (spaceReaches(candidateId, currentSpaceId, childSpaceIds))
+    return "Contains this space, adding it would create a loop";
+  return undefined;
+}
+
+const spaceItemResourcesByProduct: Record<string, Resource[]> = {
+  [Product.MEMOTRON]: [Resource.node, Resource.collection, Resource.space],
+  [Product.NUCLEUM]: [
+    Resource.node,
+    Resource.collection,
+    Resource.objective,
+    Resource.space
+  ],
+  [Product.POINTRON]: [Resource.objective, Resource.space]
+};
+
+const openingProductPreference = [
+  Product.MEMOTRON,
+  Product.POINTRON,
+  Product.NUCLEUM
+];
+
+/** Record types a product can add to and open from a space. */
+export function resolveSpaceItemResources(product: Product): Resource[] {
+  return spaceItemResourcesByProduct[product] ?? [Resource.space];
+}
+
+/** Whether a product can open a space item of this record type. */
+export function isSpaceItemOpenable(resource: Resource, product: Product) {
+  return resolveSpaceItemResources(product).includes(resource);
+}
+
+/** Name of another product that opens a record type, for unsupported items. */
+export function resolveOpeningProductName(
+  resource: Resource,
+  product: Product
+): string | undefined {
+  const opener = openingProductPreference.find(
+    (candidate) =>
+      candidate !== product &&
+      resolveSpaceItemResources(candidate).includes(resource)
+  );
+  return opener ? productRegistry[opener]?.displayName : undefined;
+}
+
+/** Arranges headings into a tree where each heading holds the deeper ones after it. */
+export function buildHeadingTree(
+  headings: { id: string; label: string; level: number }[]
+): ISpaceHeading[] {
+  const roots: ISpaceHeading[] = [];
+  const stack: ISpaceHeading[] = [];
+  for (const heading of headings) {
+    const node: ISpaceHeading = { ...heading, children: [] };
+    while (stack.length > 0 && stack[stack.length - 1].level >= node.level) {
+      stack.pop();
+    }
+    const parent = stack[stack.length - 1];
+    if (parent) parent.children.push(node);
+    else roots.push(node);
+    stack.push(node);
+  }
+  return roots;
+}
+
+/** Parses a comma-separated focus parameter into space ids. */
+export function parseFocusParam(value: string | null | undefined) {
+  return (value ?? "")
+    .split(",")
+    .map(decodeSpaceSegment)
+    .filter((id): id is string => Boolean(id));
+}
+
+/** Serializes a focus path for a search parameter, or null when empty. */
+export function formatFocusParam(path: string[]) {
+  return path.length > 0 ? path.map(encodeSpaceSegment).join(",") : null;
+}
+
+/**
+ * Cuts a focus path at the first space that is already open above it, so a looped
+ * path never renders.
+ */
+export function sanitizeFocusPath(rootId: string, path: string[]) {
+  const seen = new Set([rootId]);
+  const result: string[] = [];
+  for (const id of path) {
+    if (seen.has(id)) break;
+    seen.add(id);
+    result.push(id);
+  }
+  return result;
+}
+
+/**
+ * Display label of an item's target record. Untitled pages fall back to their first
+ * line of text so they stay recognizable in the side nav.
+ */
+export function resolveTargetLabel(record: {
+  label?: unknown;
+  name?: unknown;
+  text?: unknown;
+}) {
+  for (const value of [record.label, record.name]) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  if (typeof record.text === "string") {
+    const line = record.text
+      .split("\n")
+      .map((entry) => entry.trim())
+      .find(Boolean);
+    if (line) return line.length > 80 ? `${line.slice(0, 80)}...` : line;
+  }
+  return undefined;
+}

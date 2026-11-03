@@ -152,6 +152,12 @@ export type IAction = {
   subViewOf?: string;
 
   /**
+   * Page that accepts any path segments after its own path, such as record ids, and
+   * receives them as the `subPath` component param without registered sub-views.
+   */
+  isSubPathOpen?: boolean;
+
+  /**
    * Type of action specific to mobile behavior.
    */
   handsetBehaviorType?: ActionType;

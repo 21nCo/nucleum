@@ -4901,12 +4901,12 @@
     },
     {
       "path": "client/features/spaces/combination/combination.type.ts",
-      "disposition": "retained",
+      "disposition": "renamed",
       "destinations": [
-        "client/features/spaces/combination/combination.type.ts"
+        "client/features/spaces/space.type.ts"
       ],
       "ownership": "capability-public",
-      "rationale": "Capability-owned contract retained beside implementation; external production imports are declared in the feature entrypoint registry.",
+      "rationale": "Combinations became spaces (TIDY-485): CombinationNavItemType was renamed to SpaceNavItemType with unchanged members, the other combination types were renamed to Space types, and CombinationType was retired because a space stores its view (sidenav or wall) instead of a layout type.",
       "declarations": [
         "CombinationNavItemType",
         "ICombinationNavItemBase",
@@ -4931,12 +4931,12 @@
     },
     {
       "path": "client/features/spaces/combination/combination.utils.ts",
-      "disposition": "retained",
+      "disposition": "renamed",
       "destinations": [
-        "client/features/spaces/combination/combination.utils.ts"
+        "client/features/spaces/space.utils.ts"
       ],
       "ownership": "capability-public",
-      "rationale": "Capability-owned contract retained beside implementation; external production imports are declared in the feature entrypoint registry.",
+      "rationale": "Combination tree utilities renamed to space utilities (TIDY-485); RemovedNavItem was folded into a private helper.",
       "declarations": [
         "RemovedNavItem"
       ],
@@ -13433,7 +13433,7 @@
     {
       "path": "client/features/memory/markdown/markdown.utils.ts",
       "name": "symbolPatterns",
-      "initializer": "[\n  { regex: /\u2190&gt;/g, replacement: \"\u2194\" },\n  { regex: /-&gt;/g, replacement: \"\u2192\" },\n  { regex: /&lt;-/g, replacement: \"\u2190\" },\n  { regex: /&lt;=/g, replacement: \"\u2264\" },\n  { regex: /&g",
+      "initializer": "[\n  { regex: /←&gt;/g, replacement: \"↔\" },\n  { regex: /-&gt;/g, replacement: \"→\" },\n  { regex: /&lt;-/g, replacement: \"←\" },\n  { regex: /&lt;=/g, replacement: \"≤\" },\n  { regex: /&g",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },
@@ -14133,7 +14133,7 @@
     {
       "path": "client/static/build.js",
       "name": "copyAssetsTo",
-      "initializer": "(targetDir) => {\n  console.log(`\ud83d\udcc2 Copying assets to ${targetDir}`);\n  \n  // Validate target directory path\n  const validatedTargetDir = validatePath(targetDir, process.cwd());\n  \n",
+      "initializer": "(targetDir) => {\n  console.log(`📂 Copying assets to ${targetDir}`);\n  \n  // Validate target directory path\n  const validatedTargetDir = validatePath(targetDir, process.cwd());\n  \n",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },

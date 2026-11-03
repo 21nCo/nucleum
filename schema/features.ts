@@ -103,13 +103,13 @@ const space = {
   fields: [
     idField,
     labelField,
-    stringField("type", true),
+    stringField("view", true, false, "sidenav"),
     stringField("description"),
     objectField("avatar"),
     booleanField("isStarred", false, false),
     arrayField("items", true, [])
   ],
-  indices: { base: ["type"], search: ["label"] }
+  indices: { search: ["label"] }
 } as const satisfies DatafnResourceDefinition;
 
 const event = {
@@ -493,25 +493,7 @@ export const features = {
   },
   spaces: {
     resources: [space],
-    relations: [
-      {
-        from: "space",
-        to: ["node", "objective", "task", "collection", "file", "event"],
-        type: "many-many",
-        relation: "items",
-        inverse: "spaces",
-        joinTable: "space_items",
-        joinColumns: { from: "spaceId", to: "itemId" },
-        metadata: [
-          { name: "itemType", type: "string" },
-          { name: "label", type: "string" },
-          { name: "description", type: "string" },
-          { name: "sortOrder", type: "number" },
-          { name: "parentId", type: "string" }
-        ],
-        capabilities: ["timestamps", "audit"]
-      }
-    ]
+    relations: []
   },
   calendar: {
     resources: [event],
@@ -605,8 +587,8 @@ export const productFeatures: Record<
   readonly FeatureId[]
 > = {
   [Product.NUCLEUM]: allFeatureIds,
-  [Product.MEMOTRON]: ["system", "memory", "collections", "files"],
-  [Product.POINTRON]: ["system", "focus", "calendar", "collections"]
+  [Product.MEMOTRON]: ["system", "memory", "collections", "spaces", "files"],
+  [Product.POINTRON]: ["system", "focus", "calendar", "collections", "spaces"]
 };
 
 function uniqueFeatureIds(

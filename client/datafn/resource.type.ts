@@ -68,7 +68,7 @@ export interface IActiveResource extends IResource {
   accessMode?: AccessMode;
   /**
    * All editing features will be turned on if this is true.
-   * Example: collection, combination, media node, etc.
+   * Example: collection, space, media node, etc.
    */
   isInEditMode?: boolean;
   /**
@@ -177,9 +177,9 @@ export enum ResourceAccessPoint {
 
   MARKDOWN = "markdown",
   /**
-   * The resource is being accessed from the combination
+   * The resource is being accessed from a space
    */
-  COMBINATION = "combination",
+  SPACE = "space",
   CAPTURE = "capture",
   CLIPPER = "clipper",
   /**

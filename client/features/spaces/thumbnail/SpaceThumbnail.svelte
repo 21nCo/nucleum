@@ -10,8 +10,9 @@
   import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
-  import { countNavItems } from "@nucleum/features/spaces/combination/combination.utils";
-  import type { ISideNavCombination } from "@nucleum/features/spaces/combination/combination.type";
+  import { countNavItems } from "@nucleum/features/spaces/space.utils";
+  import type { ISpace } from "@nucleum/features/spaces/space.type";
+  import { resolveSpaceContextMenu } from "@nucleum/features/spaces/space.actions";
 
   let {
     item = $bindable(),
@@ -21,7 +22,7 @@
     accessPointState = ResourceAccessPointState.DEFAULT,
     onClick = undefined
   }: {
-    item: ISideNavCombination;
+    item: ISpace;
     arrangement?: Arrangement;
     size?: Size.sm | Size.md;
     accessPoint?: ResourceAccessPoint;
@@ -37,7 +38,7 @@
 </script>
 
 <ResourceThumbnailBase
-  menuResolver={() => []}
+  menuResolver={resolveSpaceContextMenu}
   {item}
   {accessPoint}
   {arrangement}

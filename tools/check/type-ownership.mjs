@@ -19,17 +19,37 @@ const failures = [];
 let enums = 0;
 let retiredEnums = 0;
 let changedEnums = 0;
+let renamedEnums = 0;
+/**
+ * Runtime enums retired after the baseline, keyed by baseline path. A contract with
+ * `retiredPath` retires its whole module; one without it retires only that enum from
+ * a module whose other declarations are kept.
+ */
 const retiredEnumContracts = new Map([
   [
     "client/layout/layers/cache/cache.type.ts",
-    { name: "CacheKey", retiredPath: "client/shell/layers/cache" }
+    [{ name: "CacheKey", retiredPath: "client/shell/layers/cache" }]
   ],
   [
     "client/types/gathery/gatheryEvent.enum.ts",
-    {
-      name: "GatheryEvent",
-      retiredPath: "client/features/spaces/gatheryEvent.enum.ts"
-    }
+    [
+      {
+        name: "GatheryEvent",
+        retiredPath: "client/features/spaces/gatheryEvent.enum.ts"
+      }
+    ]
+  ],
+  [
+    "client/features/spaces/combination/combination.type.ts",
+    [{ name: "CombinationType" }]
+  ]
+]);
+
+/** Runtime enums renamed after the baseline with unchanged members, keyed by baseline path. */
+const renamedEnumContracts = new Map([
+  [
+    "client/features/spaces/combination/combination.type.ts",
+    { CombinationNavItemType: "SpaceNavItemType" }
   ]
 ]);
 
@@ -37,132 +57,168 @@ const retiredEnumContracts = new Map([
 const changedEnumContracts = new Map([
   [
     "client/datafn/resource.type.ts",
-    {
-      name: "AccessMode",
-      members: {
-        PAGE: "page",
-        BESIDE_BASE: "beside",
-        BESIDE_PAGE: "besidePage",
-        FULL: "full",
-        TAB: "tab",
-        OPEN_IN_BACKGROUND: "open-in-background",
-        SLIDESHOW: "slideshow",
-        SHEET: "sheet",
-        PANEL: "panel",
-        OVERLAY: "overlay"
+    [
+      {
+        name: "AccessMode",
+        members: {
+          PAGE: "page",
+          BESIDE_BASE: "beside",
+          BESIDE_PAGE: "besidePage",
+          FULL: "full",
+          TAB: "tab",
+          OPEN_IN_BACKGROUND: "open-in-background",
+          SLIDESHOW: "slideshow",
+          SHEET: "sheet",
+          PANEL: "panel",
+          OVERLAY: "overlay"
+        }
+      },
+      {
+        name: "ResourceAccessPoint",
+        members: {
+          BROWSER: "browser",
+          LIBRARY: "library",
+          JOURNAL: "journal",
+          TABS: "tabs",
+          SELF: "self",
+          OTHER: "other",
+          NODE: "node",
+          NODE_LINKS: "nodelinks",
+          DEFAULT_RIGHT_PANE_LINKS: "defaultrightpanelinks",
+          NODE_TRACES: "nodetraces",
+          COLLECTION: "collection",
+          SEARCH_RESULT: "searchresult",
+          MARKDOWN_EMBED: "markdownembed",
+          MARKDOWN_MENTION: "markdownmention",
+          MARKDOWN: "markdown",
+          SPACE: "space",
+          CAPTURE: "capture",
+          CLIPPER: "clipper",
+          PICKER: "picker",
+          FORM: "form",
+          OBJECTIVE: "objective",
+          FOCUS: "focus",
+          CALENDAR: "calendar",
+          ANALYTICS: "analytics",
+          MAP: "map"
+        }
       }
-    }
+    ]
   ],
   [
     "client/types/appStore.type.ts",
-    {
-      name: "AppSearchParam",
-      members: {
-        RETURN_TO: "returnTo",
-        BACK: "back",
-        EDIT: "edit",
-        TYPE: "type",
-        TAB: "tab",
-        PANEL: "panel",
-        VIEW: "view",
-        LINK: "link",
-        BULK: "bulk",
-        MODE: "mode",
-        CLIPBOARD: "clipboard",
-        STARRED: "starred",
-        ARCHIVED: "archived",
-        DATE: "date",
-        SETTING: "setting",
-        CODE: "code",
-        TOKEN: "token",
-        MSG: "msg",
-        EXT: "ext",
-        PROVIDER: "provider",
-        GUEST: "guest",
-        PAGE_AT: "pageAt",
-        BESIDE_PAGE_AT: "besidePageAt",
-        BESIDE_AT: "besideAt",
-        FULL_AT: "fullAt",
-        SELECTED: "selected",
-        DEPTH: "depth",
-        TRAVERSE: "traverse",
-        NODE_VIEW: "nodeView",
-        SEARCH: "search",
-        RIGHT: "right",
-        MAX: "max"
+    [
+      {
+        name: "AppSearchParam",
+        members: {
+          RETURN_TO: "returnTo",
+          BACK: "back",
+          EDIT: "edit",
+          TYPE: "type",
+          TAB: "tab",
+          PANEL: "panel",
+          VIEW: "view",
+          LINK: "link",
+          BULK: "bulk",
+          MODE: "mode",
+          CLIPBOARD: "clipboard",
+          STARRED: "starred",
+          ARCHIVED: "archived",
+          DATE: "date",
+          SETTING: "setting",
+          CODE: "code",
+          TOKEN: "token",
+          MSG: "msg",
+          EXT: "ext",
+          PROVIDER: "provider",
+          GUEST: "guest",
+          PAGE_AT: "pageAt",
+          BESIDE_PAGE_AT: "besidePageAt",
+          BESIDE_AT: "besideAt",
+          FULL_AT: "fullAt",
+          SELECTED: "selected",
+          DEPTH: "depth",
+          TRAVERSE: "traverse",
+          NODE_VIEW: "nodeView",
+          SEARCH: "search",
+          RIGHT: "right",
+          MAX: "max"
+        }
       }
-    }
+    ]
   ],
   [
     "schema/resource.enum.ts",
-    {
-      name: "ResourceBase",
-      members: {
-        ALL: "ALL",
-        unknown: "unknown",
-        everything: "everything",
-        globalPreferences: "globalPreferences",
-        preferences: "preferences",
-        TailwindTheme: "TailwindTheme",
-        appData: "appData",
-        space: "space",
-        spaceInContext: "spaceInContext",
-        appearance: "appearance",
-        kv: "kv",
-        appMenu: "appMenu",
-        accessLog: "accessLog",
-        uiState: "uiState",
-        navigatorHistory: "navigatorHistory",
-        keyboardShortcuts: "keyboardShortcuts",
-        mutation: "mutation",
-        event: "event",
-        tag: "tag",
-        import: "import",
-        todo: "todo",
-        pointronPreferences: "pointronPreferences",
-        SessionStore: "SessionStore",
-        SessionStoreV2: "SessionStoreV2",
-        pointSessionSnapshot: "pointSessionSnapshot",
-        pointSessionFocusItems: "pointSessionFocusItems",
-        pointSessionSnapshotv2: "pointSessionSnapshotv2",
-        pointSessionFocusItemsv2: "pointSessionFocusItemsv2",
-        PointSession: "PointSession",
-        PointTask: "PointTask",
-        PointTag: "PointTag",
-        PointLog: "PointLog",
-        PointTimer: "PointTimer",
-        PointGoal: "PointGoal",
-        objective: "objective",
-        logsPane: "logsPane",
-        targetsPane: "targetsPane",
-        focusHeatmap: "focusHeatmap",
-        pointAnalyticsConfig: "pointAnalyticsConfig",
-        quickFocusItems: "quickFocusItems",
-        task: "task",
-        session: "session",
-        sessionLog: "sessionLog",
-        sessionFocusItems: "sessionFocusItems",
-        collection: "collection",
-        property: "property",
-        view: "view",
-        file: "file",
-        place: "place",
-        input: "input",
-        curation: "curation",
-        nodelinks: "nodelinks",
-        capture: "capture",
-        type: "type",
-        vector: "vector",
-        node: "node",
-        relation: "relation",
-        link: "link",
-        linkTag: "linkTag",
-        markdownSettings: "markdownSettings",
-        highlight: "highlight",
-        clipperToolbarState: "clipperToolbarState",
-        clipperSync: "clipperSync"
+    [
+      {
+        name: "ResourceBase",
+        members: {
+          ALL: "ALL",
+          unknown: "unknown",
+          everything: "everything",
+          globalPreferences: "globalPreferences",
+          preferences: "preferences",
+          TailwindTheme: "TailwindTheme",
+          appData: "appData",
+          space: "space",
+          spaceInContext: "spaceInContext",
+          appearance: "appearance",
+          kv: "kv",
+          appMenu: "appMenu",
+          accessLog: "accessLog",
+          uiState: "uiState",
+          navigatorHistory: "navigatorHistory",
+          keyboardShortcuts: "keyboardShortcuts",
+          mutation: "mutation",
+          event: "event",
+          tag: "tag",
+          import: "import",
+          todo: "todo",
+          pointronPreferences: "pointronPreferences",
+          SessionStore: "SessionStore",
+          SessionStoreV2: "SessionStoreV2",
+          pointSessionSnapshot: "pointSessionSnapshot",
+          pointSessionFocusItems: "pointSessionFocusItems",
+          pointSessionSnapshotv2: "pointSessionSnapshotv2",
+          pointSessionFocusItemsv2: "pointSessionFocusItemsv2",
+          PointSession: "PointSession",
+          PointTask: "PointTask",
+          PointTag: "PointTag",
+          PointLog: "PointLog",
+          PointTimer: "PointTimer",
+          PointGoal: "PointGoal",
+          objective: "objective",
+          logsPane: "logsPane",
+          targetsPane: "targetsPane",
+          focusHeatmap: "focusHeatmap",
+          pointAnalyticsConfig: "pointAnalyticsConfig",
+          quickFocusItems: "quickFocusItems",
+          task: "task",
+          session: "session",
+          sessionLog: "sessionLog",
+          sessionFocusItems: "sessionFocusItems",
+          collection: "collection",
+          property: "property",
+          view: "view",
+          file: "file",
+          place: "place",
+          input: "input",
+          curation: "curation",
+          nodelinks: "nodelinks",
+          capture: "capture",
+          type: "type",
+          vector: "vector",
+          node: "node",
+          relation: "relation",
+          link: "link",
+          linkTag: "linkTag",
+          markdownSettings: "markdownSettings",
+          highlight: "highlight",
+          clipperToolbarState: "clipperToolbarState",
+          clipperSync: "clipperSync"
+        }
       }
-    }
+    ]
   ]
 ]);
 
@@ -234,19 +290,35 @@ for (const module of inventory.modules) {
     { cwd: root, encoding: "utf8" }
   );
   for (const [name, declaration] of declarations(module.path, original)) {
-    const retired = retiredEnumContracts.get(module.path);
-    if (retired?.name === name) {
-      if (
-        module.disposition !== "removed" ||
-        module.destinations.length !== 0 ||
-        fs.existsSync(path.join(root, retired.retiredPath))
-      )
+    const retired = retiredEnumContracts
+      .get(module.path)
+      ?.find((contract) => contract.name === name);
+    if (retired) {
+      const isRestored = retired.retiredPath
+        ? module.disposition !== "removed" ||
+          module.destinations.length !== 0 ||
+          fs.existsSync(path.join(root, retired.retiredPath))
+        : candidates.has(name);
+      if (isRestored)
         failures.push(`Retired enum ${name} must not be restored`);
       retiredEnums++;
       continue;
     }
-    const changed = changedEnumContracts.get(module.path);
-    if (changed?.name === name) {
+    const renamedTo = renamedEnumContracts.get(module.path)?.[name];
+    if (renamedTo) {
+      const expected = declaration.replace(
+        `enum ${name} `,
+        `enum ${renamedTo} `
+      );
+      if (candidates.has(name) || candidates.get(renamedTo) !== expected)
+        failures.push(`Renamed enum ${name} must match ${renamedTo}`);
+      renamedEnums++;
+      continue;
+    }
+    const changed = changedEnumContracts
+      .get(module.path)
+      ?.find((contract) => contract.name === name);
+    if (changed) {
       if (!candidates.has(name))
         failures.push(`Changed enum ${name} is missing from its destination`);
       else if (candidateMembers.get(name) !== memberSignature(changed.members))
@@ -271,6 +343,6 @@ for (const file of [
 }
 for (const failure of failures) console.error(failure);
 console.log(
-  `Type ownership: ${inventory.modules.length} module dispositions, ${enums} unchanged runtime enums, ${retiredEnums} audited retired enums, ${changedEnums} audited changed enums, ${failures.length} failures.`
+  `Type ownership: ${inventory.modules.length} module dispositions, ${enums} unchanged runtime enums, ${retiredEnums} audited retired enums, ${changedEnums} audited changed enums, ${renamedEnums} audited renamed enums, ${failures.length} failures.`
 );
 process.exitCode = failures.length ? 1 : 0;

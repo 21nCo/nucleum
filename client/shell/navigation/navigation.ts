@@ -70,6 +70,7 @@ const recordSpecificSearchParams = [
   /-tab$/,
   /-task$/,
   /-nodeView$/,
+  /-focus$/,
   AppSearchParam.EDIT,
   AppSearchParam.VIEW,
   AppSearchParam.BESIDE_PAGE_AT,
