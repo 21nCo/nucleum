@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { isNodeSidePanelOpen } from "@nucleum/features/memory/node/node-layout";
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
@@ -331,16 +332,18 @@
             <NodeRightPaneContent {node} {mdId} />
           {/if}
 
-          {#if !$node.isInFocusMode && $node.panel && $node.panel !== ResourcePanelType.CONTENT && $node.panel !== ResourcePanelType.DEFAULT}
-            <NodeRightPane {node} {mdId} />
-          {:else}
-            <div class="flex max-w-sm px-1">
-              <TableOfContents
-                {mdId}
-                isHideEmptyPlaceholder={true}
-                isExpandOnHover={isConstrainedWidth}
-              />
-            </div>
+          {#if !isConstrainedWidth || !isNodeSidePanelOpen($node.panel, $node.isInFocusMode)}
+            {#if !$node.isInFocusMode && $node.panel && $node.panel !== ResourcePanelType.CONTENT && $node.panel !== ResourcePanelType.DEFAULT}
+              <NodeRightPane {node} {mdId} />
+            {:else}
+              <div class="flex max-w-sm px-1">
+                <TableOfContents
+                  {mdId}
+                  isHideEmptyPlaceholder={true}
+                  isExpandOnHover={isConstrainedWidth}
+                />
+              </div>
+            {/if}
           {/if}
         </div>
       {/key}

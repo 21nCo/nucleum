@@ -517,7 +517,8 @@ export class ActiveNodeStore extends CollectibleStore<
         };
       }
       const defaultPanel =
-        node.contentType === NodeType.NODULAR_MARKDOWN
+        node.contentType === NodeType.NODULAR_MARKDOWN ||
+        headingNodeTypes.includes(node.contentType)
           ? ResourcePanelType.CONTENT
           : ResourcePanelType.OVERVIEW;
       this.set({
