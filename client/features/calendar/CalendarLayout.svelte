@@ -239,7 +239,7 @@
             size={Size.md}
             isBoxed={true}
             parentBgIndex={1}
-            class="h-full w-10"
+            class="h-full w-10 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)]"
             icon="more-outline-horizontal"
             position={Placement.BottomCenter}
           />

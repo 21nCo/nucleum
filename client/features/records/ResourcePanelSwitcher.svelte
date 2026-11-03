@@ -112,7 +112,7 @@
         size={Size.lg}
         isBoxed={true}
         {parentBgIndex}
-        class="h-full w-10"
+        class="h-full w-10 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)]"
         id="resourcePanelContextMenu"
         icon="more-outline-horizontal"
         heading="Actions"
