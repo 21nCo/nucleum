@@ -58,7 +58,7 @@ export const actionRunner = {
     let action = actionRunner.resolveAction(slug);
     logger.log({ at: "runAction", action, slug, params });
     if (!action) {
-      navigation.gotoPath("404");
+      navigation.gotoPath("/404");
       return;
     }
     const store = get(appStore);

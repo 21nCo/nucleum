@@ -10,12 +10,16 @@
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import context from "@nucleum/client/runtime/context.store";
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import view from "@21n/ui/environment/view.store";
   import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
   import { resolveRecordedPagePath } from "@nucleum/shared-state/commands/page-view-actions";
+  import {
+    NOT_FOUND_PATH,
+    resolveNotFound
+  } from "@nucleum/shell/navigation/not-found";
 
   const ComponentResolver = requireActionRenderer();
   const productConfig = requireProductConfig();
@@ -71,6 +75,10 @@
     queueRefresh();
   });
 
+  $effect(() => {
+    if ($appStore.actions.length > 0 && !action) untrack(() => queueRefresh());
+  });
+
   onMount(() => {
     const refreshFromWindow = () => {
       queueRefresh();
@@ -108,20 +116,25 @@
         : productConfig.homePath;
       navigation.gotoPath(homePath + window.location.search);
       return;
-    } else if (!path) {
-      navigation.gotoPath("/404");
-      return;
     }
+    if ($appStore.actions.length === 0) return;
 
-    const route = appStore.resolvePageRoute(path);
+    const route = path ? appStore.resolvePageRoute(path) : null;
     action = route?.action ?? null;
 
     if (!action) {
       subPath = undefined;
       lastRecordedPath = undefined;
-      if (path === "index.html") navigation.gotoPath("/");
-      else navigation.gotoPath("/404", { queryParams: { path } });
-      return;
+      const notFound = resolveNotFound(path, {
+        isUrlPath: !cmdPageLaunch && !$context.isSheet,
+        currentUrl: pageData?.url ?? new URL(window.location.href)
+      });
+      if (notFound.kind === "redirect") {
+        navigation.gotoPath(notFound.url);
+        return;
+      }
+      action = appStore.resolveComponentFromPath(NOT_FOUND_PATH);
+      if (!action) return;
     }
     const isRoutedPage = !cmdPageLaunch && !$context.isSheet;
     const nextSubPath = route?.subPath;
