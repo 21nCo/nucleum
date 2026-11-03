@@ -32,16 +32,18 @@
   } = $props();
 
   const store = ActiveSpaceStore.resolve(spaceId);
-  const parentStore = parentId
-    ? toSvelteStore<{ id: string; label?: string }[]>(
-        datafn.space.signal({
-          filters: { id: parentId },
-          select: ["id", "label"],
-          metadata: { includeTrashed: true, includeArchived: true }
-        }),
-        { initialData: [] }
-      )
-    : undefined;
+  const parentStore = $derived.by(() =>
+    parentId
+      ? toSvelteStore<{ id: string; label?: string }[]>(
+          datafn.space.signal({
+            filters: { id: parentId },
+            select: ["id", "label"],
+            metadata: { includeTrashed: true, includeArchived: true }
+          }),
+          { initialData: [] }
+        )
+      : undefined
+  );
   let isLoaded = $state(false);
   const view = $derived($store?.view ?? SpaceView.SIDENAV);
   const isPinned = $derived(appMenuStore.isSpacePinned(spaceId, $appMenuStore));
