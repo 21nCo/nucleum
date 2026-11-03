@@ -67,7 +67,7 @@ describe("resolveAppStyleTokens", () => {
 describe("formatAppStyleTokens", () => {
   it("serialises tokens as an inline style", () => {
     expect(formatAppStyleTokens(resolveAppStyleTokens(AppStyle.Boxed))).toBe(
-      "--app-control-radius: 0.375rem; --app-panel-radius: 0px; --app-tab-radius: 0px; --app-shell-gap: 0px; --app-tab-inset: 0px"
+      "--app-control-radius: 0.375rem; --app-panel-radius: 0px; --app-tab-radius: 0px; --app-shell-gap: 0px"
     );
   });
 });

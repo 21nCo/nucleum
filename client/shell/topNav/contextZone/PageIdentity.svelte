@@ -72,7 +72,7 @@
           type="button"
           data-testid="top-bar-back"
           aria-label={backLabel}
-          class="flex items-center justify-center h-8 w-8 shrink-0 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+          class="flex items-center justify-center h-8 w-8 shrink-0 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1 app-framed:h-10 app-framed:w-10 app-framed:rounded-[var(--app-control-radius)]"
           use:tooltip={{ text: backLabel, isPlainText: true }}
           onclick={onBack}
         >

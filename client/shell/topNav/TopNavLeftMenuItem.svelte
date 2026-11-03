@@ -100,7 +100,9 @@
   {@const accessibleLabel = ariaLabel ?? tooltip ?? label ?? data.label}
   {@const shortcut = keyboardShortcuts.resolveShortcutForAction(action)}
   <div
-    class={cn("relative h-full", { "flex-1 min-w-0": isExpanded })}
+    class={cn("relative h-full app-framed:flex app-framed:items-center", {
+      "flex-1 min-w-0": isExpanded
+    })}
     use:topBarDropdown={{
       isOpen: isOpeningMenuOpen,
       onDismiss: () => (isOpeningMenuOpen = false)
@@ -112,8 +114,10 @@
       class={cn("flex items-center gap-1 h-full transition-colors", {
         "justify-center min-w-12 px-3.5 border-x border-transparent hover:border-brs3":
           !isExpanded,
-        "app-rounded:h-10 app-rounded:mt-1 app-rounded:rounded-full app-rounded:border-transparent app-rounded:hover:border-transparent":
+        "app-framed:h-10 app-framed:border-transparent app-framed:hover:border-transparent app-framed:rounded-[var(--app-control-radius)]":
           !isExpanded,
+        "app-framed:w-10 app-framed:min-w-10 app-framed:px-0":
+          !isExpanded && !label,
         "w-full justify-start gap-2 px-4 text-fgs1": isExpanded,
         "hover:bg-bgs3 hover:text-fgs1": !isActive,
         "text-fgs2": !isActive && !isExpanded,

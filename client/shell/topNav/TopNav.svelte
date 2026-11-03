@@ -286,7 +286,8 @@
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
   class={cn(
-    "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata border-b border-brs3 app-framed:border-b-0"
+    "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata border-b border-brs3",
+    "app-framed:border-b-0 app-framed:h-[calc(2.5rem+2*var(--app-shell-gap))] app-framed:min-h-[calc(2.5rem+2*var(--app-shell-gap))] app-framed:max-h-[calc(2.5rem+2*var(--app-shell-gap))]"
   )}
   data-testid="top-bar"
 >
@@ -321,7 +322,7 @@
       <div
         class={cn(
           "context-tab relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
-          "app-framed:self-end app-framed:h-[calc(100%-var(--app-tab-inset))] app-framed:mb-0 app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
+          "app-framed:self-end app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:pb-[var(--app-shell-gap)] app-framed:mb-0 app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
           tabSurface
         )}
         data-testid="top-bar-context-tab"
@@ -354,7 +355,7 @@
             />
             {#if $activeEntry}
               <div
-                class="shrink-0 w-px h-5 mx-3 bg-brs3"
+                class="shrink-0 w-px h-5 mx-3 bg-brs3 app-framed:bg-transparent"
                 aria-hidden="true"
                 data-testid="top-bar-identity-divider"
               ></div>
@@ -403,7 +404,7 @@
     {/if}
   </div>
   <div
-    class="flex items-center justify-end h-full shrink-0"
+    class="flex items-center justify-end h-full shrink-0 app-framed:gap-1 app-framed:px-1"
     data-testid="top-bar-actions-zone"
   >
     {#if isToastMode && !isToastInZone}

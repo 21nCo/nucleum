@@ -51,7 +51,7 @@
 {#if label}
   <button
     type="button"
-    class="flex items-center gap-2 h-full min-w-0 max-w-[16rem] shrink px-4 text-b2 text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+    class="flex items-center gap-2 h-full min-w-0 max-w-[16rem] shrink px-4 text-b2 text-fgs2 hover:bg-bgs3 hover:text-fgs1 app-framed:h-10 app-framed:self-center app-framed:rounded-[var(--app-control-radius)]"
     aria-label={`Focus pane: ${label}`}
     data-testid="top-bar-pane-switch"
     onclick={onFocus}

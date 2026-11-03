@@ -15,7 +15,6 @@ export type AppStyleTokens = {
   "--app-panel-radius": string;
   "--app-tab-radius": string;
   "--app-shell-gap": string;
-  "--app-tab-inset": string;
 };
 
 const appStyles = new Set<string>(Object.values(AppStyle));
@@ -25,22 +24,19 @@ const tokensByStyle: Record<AppStyle, AppStyleTokens> = {
     "--app-control-radius": "0.375rem",
     "--app-panel-radius": "0px",
     "--app-tab-radius": "0px",
-    "--app-shell-gap": "0px",
-    "--app-tab-inset": "0px"
+    "--app-shell-gap": "0px"
   },
   [AppStyle.Semi]: {
     "--app-control-radius": "0.375rem",
     "--app-panel-radius": "0.75rem",
     "--app-tab-radius": "0.75rem",
-    "--app-shell-gap": "0.5rem",
-    "--app-tab-inset": "0.375rem"
+    "--app-shell-gap": "0.5rem"
   },
   [AppStyle.Rounded]: {
     "--app-control-radius": "9999px",
     "--app-panel-radius": "1.75rem",
     "--app-tab-radius": "1.75rem",
-    "--app-shell-gap": "0.5rem",
-    "--app-tab-inset": "0.25rem"
+    "--app-shell-gap": "0.5rem"
   }
 };
 
