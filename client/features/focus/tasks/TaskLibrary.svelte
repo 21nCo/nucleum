@@ -202,7 +202,13 @@
     }
     const { [AppSearchParam.TYPE]: nextSubType, ...rest } = params;
     if (Object.keys(rest).length > 0) navigation.toggleSearchParam(rest);
-    if (typeof nextSubType === "string") onSubTypeChange?.(nextSubType);
+    if (typeof nextSubType !== "string") return;
+    if (onSubTypeChange) {
+      onSubTypeChange(nextSubType);
+      return;
+    }
+    selectSubType(nextSubType);
+    refresh();
   }
 
   $effect(() => {

@@ -43,16 +43,20 @@ const recordedAccessModes = new Set<AccessMode | undefined>([
   AccessMode.FULL
 ]);
 
-/** Records a navigated resource with the record it was opened from. */
+/**
+ * Records a navigated resource with the record it was opened from. Without an
+ * explicit origin the record open as the page counts as the origin; an origin that
+ * is an action or access point records no origin.
+ */
 function recordResourceOpen(
   id: IRecordId,
   origin: Action | IRecordId | undefined
 ) {
-  const currentPage = new URL(window.location.href).searchParams.get(
-    AccessMode.PAGE
-  );
   const resolvedOrigin =
-    origin && isRecordId(origin) ? origin : (currentPage ?? undefined);
+    origin === undefined
+      ? (new URL(window.location.href).searchParams.get(AccessMode.PAGE) ??
+        undefined)
+      : origin;
   navigatorHistory.recordResource(
     id.toString(),
     resolvedOrigin && isRecordId(resolvedOrigin)

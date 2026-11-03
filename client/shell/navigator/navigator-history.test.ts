@@ -3,6 +3,7 @@ import {
   NAVIGATOR_HISTORY_DUPLICATE_MS,
   NAVIGATOR_HISTORY_MAX_ENTRIES,
   NAVIGATOR_HISTORY_MAX_OPENS,
+  NAVIGATOR_HISTORY_MAX_ORIGINS,
   NAVIGATOR_HISTORY_WINDOW_MS,
   createNavigatorHistory,
   normalizeNavigatorHistory,
@@ -54,7 +55,7 @@ describe("recordNavigatorVisit", () => {
       kind: "resource",
       opens: [now - 10_000, now],
       lastOpenedAt: now,
-      from: { "node:a": 2 }
+      from: { "node:a": [now - 10_000, now] }
     });
   });
 
@@ -242,7 +243,7 @@ describe("normalizeNavigatorHistory", () => {
           kind: "resource",
           opens: [now, "x"],
           lastOpenedAt: now,
-          from: { "node:b": 2, "node:c": -1 }
+          from: { "node:b": [now], "node:c": ["x"] }
         },
         "node:b": { kind: "other", opens: [now] },
         "node:c": null
@@ -254,8 +255,83 @@ describe("normalizeNavigatorHistory", () => {
         kind: "resource",
         opens: [now],
         lastOpenedAt: now,
-        from: { "node:b": 2 }
+        from: { "node:b": [now] }
       }
     });
+  });
+});
+
+describe("navigator history caps", () => {
+  it("keeps a newly opened entry when the history is full of frequent entries", () => {
+    let history = createNavigatorHistory();
+    for (let index = 0; index < NAVIGATOR_HISTORY_MAX_ENTRIES; index++) {
+      history = visitMany(history, `node:${index}`, [
+        now - 3 * day - index * 10_000,
+        now - 2 * day - index * 10_000
+      ]);
+    }
+    history = visitMany(history, "node:new", [now - day]);
+    expect(history.entries["node:new"]).toBeDefined();
+    expect(Object.keys(history.entries)).toHaveLength(
+      NAVIGATOR_HISTORY_MAX_ENTRIES
+    );
+
+    history = visitMany(history, "node:new", [now]);
+    expect(history.entries["node:new"].opens).toEqual([now - day, now]);
+  });
+
+  it("keeps a new origin when an entry already has the maximum origins", () => {
+    let history = createNavigatorHistory();
+    for (let index = 0; index < NAVIGATOR_HISTORY_MAX_ORIGINS; index++) {
+      history = visitMany(
+        history,
+        "node:b",
+        [now - 3 * day - index * 10_000, now - 2 * day - index * 10_000],
+        `node:origin${index}`
+      );
+    }
+    history = visitMany(history, "node:b", [now], "node:new");
+
+    expect(history.entries["node:b"].from["node:new"]).toEqual([now]);
+    expect(Object.keys(history.entries["node:b"].from)).toHaveLength(
+      NAVIGATOR_HISTORY_MAX_ORIGINS
+    );
+    expect(
+      rankNavigatorHistoryFrom(history, "node:new", now).map((item) => item.id)
+    ).toEqual(["node:b"]);
+  });
+
+  it("expires origin opens with the ranking window", () => {
+    let history = visitMany(
+      createNavigatorHistory(),
+      "node:b",
+      [now],
+      "node:a"
+    );
+    const later = now + NAVIGATOR_HISTORY_WINDOW_MS + day;
+    history = visitMany(history, "node:b", [later], "node:x");
+
+    expect(history.entries["node:b"].from).toEqual({ "node:x": [later] });
+    expect(rankNavigatorHistoryFrom(history, "node:a", later)).toEqual([]);
+    expect(
+      rankNavigatorHistoryFrom(history, "node:x", later).map((item) => item.id)
+    ).toEqual(["node:b"]);
+  });
+
+  it("does not rank origin opens that left the window before pruning", () => {
+    const history = visitMany(
+      createNavigatorHistory(),
+      "node:b",
+      [now],
+      "node:a"
+    );
+
+    expect(
+      rankNavigatorHistoryFrom(
+        history,
+        "node:a",
+        now + NAVIGATOR_HISTORY_WINDOW_MS + 1
+      )
+    ).toEqual([]);
   });
 });

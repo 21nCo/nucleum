@@ -14,7 +14,10 @@
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import { resolveNucleusOverviewItems } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
 
-  let { subPath = undefined }: { subPath?: string[] } = $props();
+  let {
+    subPath = undefined,
+    isRouted = false
+  }: { subPath?: string[]; isRouted?: boolean } = $props();
 
   const items = resolveNucleusOverviewItems();
   let selectedPanel = $state<OverviewPanel>(resolveInitialPanel());
@@ -95,7 +98,7 @@
   });
 
   $effect(() => {
-    if (!subPath || subPath.join("/") === selectedPanel) return;
+    if (!isRouted || !subPath || subPath.join("/") === selectedPanel) return;
     const panel = selectedPanel;
     untrack(() => navigation.replacePagePath([Action.OVERVIEW, panel]));
   });

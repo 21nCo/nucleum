@@ -10,7 +10,10 @@
   import { parseMemotronOverviewPanel } from "@nucleum/products/memotron/overview/memotron-overview-views";
   import { Action } from "@nucleum/client/config/action.enum";
 
-  let { subPath = undefined }: { subPath?: string[] } = $props();
+  let {
+    subPath = undefined,
+    isRouted = false
+  }: { subPath?: string[]; isRouted?: boolean } = $props();
 
   let selectedPanel = $state<MemotronOverviewPanel>(resolveInitialPanel());
   let appliedSubPath = untrack(() => subPath?.join("/"));
@@ -54,7 +57,7 @@
   });
 
   $effect(() => {
-    if (!subPath || subPath.join("/") === selectedPanel) return;
+    if (!isRouted || !subPath || subPath.join("/") === selectedPanel) return;
     const panel = selectedPanel;
     untrack(() => navigation.replacePagePath([Action.OVERVIEW, panel]));
   });

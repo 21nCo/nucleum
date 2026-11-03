@@ -82,7 +82,7 @@
     accessPointState = ResourceAccessPointState.DEFAULT,
     arrangement: arrangementProp = null,
     isConstrainedWidth = $view.isConstrainedWidth,
-    subType = LIBRARY_DEFAULT_SUBTYPE,
+    subType = undefined,
     onSubTypeChange = undefined
   }: {
     resource: Resource;
@@ -102,7 +102,9 @@
   let starredData = $state<any[]>([]);
   let recordLimit = $state(50);
   let searchType = $state<SearchType>(SearchType.FULL_TEXT);
-  let selectedSubType = $state<SubType>(untrack(() => subType) as SubType);
+  let selectedSubType = $state<SubType>(
+    untrack(() => subType ?? LIBRARY_DEFAULT_SUBTYPE) as SubType
+  );
   let isRefreshing = $state(true);
   let totalCountAfterFilter = $state(0);
   let isRefreshingTotalCount = $state(false);
@@ -561,6 +563,7 @@
   const debouncedSearch = debouncer(refresh, 500);
 
   $effect(() => {
+    if (!subType) return;
     const nextSubType = subType as SubType;
     if (untrack(() => selectedSubType) === nextSubType) return;
     selectedSubType = nextSubType;
@@ -576,7 +579,13 @@
     }
     const { [AppSearchParam.TYPE]: nextSubType, ...rest } = params;
     if (Object.keys(rest).length > 0) navigation.toggleSearchParam(rest);
-    if (typeof nextSubType === "string") onSubTypeChange?.(nextSubType);
+    if (typeof nextSubType !== "string") return;
+    if (onSubTypeChange) {
+      onSubTypeChange(nextSubType);
+      return;
+    }
+    selectedSubType = nextSubType as SubType;
+    refresh();
   }
 
 </script>

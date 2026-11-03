@@ -19,7 +19,10 @@
     type CalendarScale
   } from "@nucleum/features/calendar/calendar-route";
 
-  let { subPath = undefined }: { subPath?: string[] } = $props();
+  let {
+    subPath = undefined,
+    isRouted = false
+  }: { subPath?: string[]; isRouted?: boolean } = $props();
 
   const product = $appStore.product;
   const isDev = Boolean(import.meta.env?.DEV);
@@ -111,7 +114,7 @@
   });
 
   $effect(() => {
-    if (!subPath) return;
+    if (!isRouted || !subPath) return;
     const canonical = calendarViewSubPath({ layout: panel, scale });
     if (canonical.join("/") === subPath.join("/")) return;
     untrack(() => navigation.replacePagePath([Action.CALENDAR, ...canonical]));

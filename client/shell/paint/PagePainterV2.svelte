@@ -30,10 +30,11 @@
 
   let action = $state<IAction | null>(null);
   let subPath = $state<string[] | undefined>(undefined);
+  let isRouted = $state(false);
   let lastRecordedPath: string | undefined;
   const params = $derived(
     subPath
-      ? { ...(action?.componentParams ?? {}), subPath }
+      ? { ...(action?.componentParams ?? {}), subPath, isRouted }
       : action?.componentParams
   );
   let pageSub: any;
@@ -122,7 +123,8 @@
       return;
     }
     const isRoutedPage = !cmdPageLaunch && !$context.isSheet;
-    const nextSubPath = isRoutedPage ? route?.subPath : undefined;
+    const nextSubPath = route?.subPath;
+    isRouted = isRoutedPage;
     if (nextSubPath?.join("/") !== subPath?.join("/")) subPath = nextSubPath;
     $appStore.currentComponent = action;
     $appStore.isMenuHidden = action.isMenuHidden || $context.isSheet;

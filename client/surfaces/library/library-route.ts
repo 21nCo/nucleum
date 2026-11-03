@@ -14,6 +14,11 @@ import { resolveNodeSubTypesForSwitcher } from "@nucleum/features/memory/node/no
 import { resolveCollectionSubTypesForSwitcher } from "@nucleum/features/collections/collection.utils";
 import { resolveObjectiveSubTypesForSwitcher } from "@nucleum/features/focus/goals/goal.utils";
 import { resolveTaskSubTypesForSwitcher } from "@nucleum/features/focus/tasks/task.utils";
+import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+import {
+  UIState,
+  UIStateScope
+} from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 
 /** Subtype shown when a library path does not name one. */
 export const LIBRARY_DEFAULT_SUBTYPE = "all";
@@ -72,6 +77,23 @@ export function parseLibrarySubType(
   return resolveLibrarySubTypes(resource).includes(subType)
     ? subType
     : undefined;
+}
+
+/**
+ * Subtype shown when a library path names a resource without a valid subtype:
+ * the saved task library subtype for tasks, otherwise "all".
+ */
+export function resolveLibraryFallbackSubType(resource: Resource): string {
+  if (resource !== Resource.task) return LIBRARY_DEFAULT_SUBTYPE;
+  const saved = uiState.getState(UIState.taskLibrarySelectedSubType, {
+    scope: UIStateScope.DAP
+  });
+  return (
+    parseLibrarySubType(
+      resource,
+      typeof saved === "string" ? saved : undefined
+    ) ?? LIBRARY_DEFAULT_SUBTYPE
+  );
 }
 
 /** Reads the library page, resource and subtype from a URL path. */

@@ -38,7 +38,8 @@
   import {
     LIBRARY_DEFAULT_SUBTYPE,
     parseLibraryPath,
-    replaceLibraryPath
+    replaceLibraryPath,
+    resolveLibraryFallbackSubType
   } from "@nucleum/surfaces/library/library-route";
 
   let { resources = [] }: { resources?: Resource[] } = $props();
@@ -256,7 +257,7 @@
           <LibraryRecordsPane
             resource={selectedResource}
             subType={parseLibraryPath($page.url.pathname).subType ??
-              LIBRARY_DEFAULT_SUBTYPE}
+              resolveLibraryFallbackSubType(selectedResource)}
             onSubTypeChange={(subType) =>
               replaceLibraryPath(selectedResource, subType)}
           />

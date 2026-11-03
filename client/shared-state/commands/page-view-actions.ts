@@ -63,12 +63,20 @@ export type PageRoute = {
 /**
  * Resolves a path to its page action. Exact matches win; otherwise the longest path
  * prefix that belongs to a page with registered sub-views is used, and the remaining
- * segments become its sub-path. Sub-view actions themselves never resolve as pages.
+ * segments become its sub-path. Sub-view actions never resolve as pages themselves:
+ * a sub-view action id, as launched from a command, resolves through its parent
+ * page with the sub-view's path segments.
  */
 export function resolvePageRoute(
   actions: IAction[],
   path: string
 ): PageRoute | null {
+  const subView = actions.find(
+    (action) => action.subViewOf && action.action === path
+  );
+  if (subView?.path && subView.path !== path) {
+    return resolvePageRoute(actions, subView.path);
+  }
   const pages = actions.filter((action) => !action.subViewOf);
   const parents = new Set(
     actions.map((action) => action.subViewOf).filter(Boolean)

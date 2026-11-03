@@ -87,6 +87,13 @@ describe("resolvePageRoute", () => {
     });
   });
 
+  it("resolves a sub-view action id through its parent page", () => {
+    expect(resolvePageRoute(actions, "calendar.classic.year")).toEqual({
+      action: calendar,
+      subPath: ["classic", "year"]
+    });
+  });
+
   it("keeps exact matching for pages without sub-views", () => {
     expect(resolvePageRoute(actions, "settings")).toEqual({ action: settings });
     expect(resolvePageRoute(actions, "cp/alerts")).toEqual({ action: alerts });

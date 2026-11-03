@@ -4,33 +4,49 @@
   import view from "@21n/ui/environment/view.store";
   import LibraryRecordsPane from "@nucleum/surfaces/library/LibraryRecordsPane.svelte";
   import {
-    LIBRARY_DEFAULT_SUBTYPE,
     parseLibraryResource,
     parseLibrarySubType,
-    replaceLibraryPath
+    replaceLibraryPath,
+    resolveLibraryFallbackSubType
   } from "@nucleum/surfaces/library/library-route";
 
   let {
     defaultResource = Resource.node,
-    subPath = undefined
-  }: { defaultResource?: Resource; subPath?: string[] } = $props();
+    subPath = undefined,
+    isRouted = false
+  }: {
+    defaultResource?: Resource;
+    subPath?: string[];
+    isRouted?: boolean;
+  } = $props();
 
   let recordsPaneRef = $state<LibraryRecordsPane | undefined>();
+  let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
 
-  const pathResource = $derived(parseLibraryResource(subPath?.[0]));
+  $effect.pre(() => {
+    localSubPath = subPath;
+  });
+
+  const viewPath = $derived(isRouted ? subPath : localSubPath);
+  const pathResource = $derived(parseLibraryResource(viewPath?.[0]));
   const selectedResource = $derived(
     pathResource ??
       ($view.isConstrainedWidth ? Resource.unknown : defaultResource)
   );
   const selectedSubType = $derived(
     selectedResource === Resource.unknown
-      ? LIBRARY_DEFAULT_SUBTYPE
-      : (parseLibrarySubType(selectedResource, subPath?.[1]) ??
-          LIBRARY_DEFAULT_SUBTYPE)
+      ? undefined
+      : (parseLibrarySubType(selectedResource, viewPath?.[1]) ??
+          resolveLibraryFallbackSubType(selectedResource))
   );
 
+  function selectSubType(subType: string) {
+    if (isRouted) replaceLibraryPath(selectedResource, subType);
+    else localSubPath = [selectedResource, subType];
+  }
+
   $effect(() => {
-    if (!subPath || selectedResource === Resource.unknown) return;
+    if (!isRouted || !subPath || selectedResource === Resource.unknown) return;
     if (subPath.join("/") === `${selectedResource}/${selectedSubType}`) return;
     const resource = selectedResource;
     const subType = selectedSubType;
@@ -44,8 +60,7 @@
       <LibraryRecordsPane
         resource={selectedResource}
         subType={selectedSubType}
-        onSubTypeChange={(subType) =>
-          replaceLibraryPath(selectedResource, subType)}
+        onSubTypeChange={selectSubType}
         bind:this={recordsPaneRef}
       />
     {/key}

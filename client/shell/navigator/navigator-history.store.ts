@@ -5,11 +5,11 @@ import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
   createNavigatorHistory,
   normalizeNavigatorHistory,
-  pruneNavigatorHistory,
   recordNavigatorVisit,
   type NavigatorHistory,
   type NavigatorHistoryVisit
 } from "@nucleum/shell/navigator/navigator-history";
+import { createNavigatorHistoryWriter } from "@nucleum/shell/navigator/navigator-history-writer";
 
 const FLUSH_DELAY_MS = 1500;
 
@@ -17,12 +17,19 @@ type HistorySignal = ReturnType<typeof datafn.kv.signal<NavigatorHistory>>;
 
 const historyLocal = writable<NavigatorHistory>(createNavigatorHistory());
 let historySignal: HistorySignal | undefined;
-let pendingVisits: NavigatorHistoryVisit[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | undefined;
 
-function applyPendingVisits(base: NavigatorHistory) {
-  return pendingVisits.reduce(recordNavigatorVisit, base);
-}
+const writer = createNavigatorHistoryWriter({
+  read: () => datafn.kv.get(Resource.navigatorHistory),
+  write: async (history) => {
+    const result = await datafn.kv.set(Resource.navigatorHistory, history);
+    if (!result.ok) {
+      logger.error({ at: "navigatorHistory.flush", error: result.error });
+    }
+    return result.ok;
+  },
+  now: () => Date.now()
+});
 
 function ensureSignal() {
   if (historySignal) return historySignal;
@@ -31,7 +38,7 @@ function ensureSignal() {
     { defaultValue: createNavigatorHistory() }
   );
   historySignal.subscribe((value) => {
-    historyLocal.set(applyPendingVisits(normalizeNavigatorHistory(value)));
+    historyLocal.set(writer.applyPending(normalizeNavigatorHistory(value)));
   });
   if (typeof window !== "undefined") {
     window.addEventListener("pagehide", flushNavigatorHistory);
@@ -44,21 +51,22 @@ function scheduleFlush() {
   flushTimer = setTimeout(flushNavigatorHistory, FLUSH_DELAY_MS);
 }
 
-/** Writes batched visits on top of the latest stored history. */
+/**
+ * Writes batched visits on top of the stored history once the stored record has
+ * loaded, so a flush never replaces history that has not been read yet.
+ */
 function flushNavigatorHistory() {
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = undefined;
-  if (pendingVisits.length === 0 || !historySignal) return;
-  const base = normalizeNavigatorHistory(historySignal.get());
-  const next = pruneNavigatorHistory(applyPendingVisits(base), Date.now());
-  pendingVisits = [];
-  historyLocal.set(next);
-  void datafn.kv
-    .set(Resource.navigatorHistory, next)
-    .then((result) => {
-      if (!result.ok) {
-        logger.error({ at: "navigatorHistory.flush", error: result.error });
-      }
+  if (writer.pendingCount() === 0 || !historySignal) return;
+  if (historySignal.loading) {
+    scheduleFlush();
+    return;
+  }
+  void writer
+    .flush()
+    .then((next) => {
+      if (next) historyLocal.set(writer.applyPending(next));
     })
     .catch((error) => logger.error({ at: "navigatorHistory.flush", error }));
 }
@@ -89,7 +97,7 @@ export const navigatorHistory = {
     const current = get(historyLocal);
     const next = recordNavigatorVisit(current, visit);
     if (next === current) return;
-    pendingVisits = [...pendingVisits, visit];
+    writer.add(visit);
     historyLocal.set(next);
     scheduleFlush();
   }
