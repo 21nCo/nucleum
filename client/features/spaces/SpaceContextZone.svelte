@@ -1,5 +1,9 @@
 <script lang="ts">
-  import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
+  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
+  import {
+    PanelSwitcherActiveItemStrength,
+    PanelSwitcherStyle
+  } from "@21n/ui/elements/switcher/switcher.enum";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -77,13 +81,19 @@
       >
     </div>
   {/if}
-  <div class="h-full shrink-0" data-testid="space-view-switcher">
-    <BoxSwitcher
-      isTablist={true}
-      options={views}
-      selected={view}
-      size={Size.md}
-      onSelect={(event) => onViewChange(event.detail as SpaceView)}
+  <div
+    class="flex items-center h-full shrink-0 px-2"
+    data-testid="space-view-switcher"
+  >
+    <PanelSwitcher
+      style={PanelSwitcherStyle.TRAIN}
+      items={views}
+      value={view}
+      size={Size.sm}
+      parentBgIndex={2}
+      isPreventTabShortcut={true}
+      activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
+      onSwitch={(event) => onViewChange(event.detail as SpaceView)}
     />
   </div>
   <div class="flex items-center h-full shrink-0">
