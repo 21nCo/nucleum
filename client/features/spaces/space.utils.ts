@@ -317,13 +317,16 @@ export function spaceReaches(
   return false;
 }
 
-/** Why a record cannot be added to a space, or undefined when it can. */
+/**
+ * Why a record cannot be added to a space, or undefined when it can. Without
+ * `childSpaceIds` the space graph is unknown, so every other space is blocked.
+ */
 export function resolveAddBlockReason(params: {
   candidateId: string;
   currentSpaceId: string;
   focusChain: string[];
   items: ISpaceNavItem[];
-  childSpaceIds: (spaceId: string) => string[];
+  childSpaceIds: ((spaceId: string) => string[]) | undefined;
 }): string | undefined {
   const { candidateId, currentSpaceId, focusChain, items, childSpaceIds } =
     params;
@@ -337,6 +340,7 @@ export function resolveAddBlockReason(params: {
   if (!candidateId.startsWith(SPACE_ID_PREFIX)) return undefined;
   if (focusChain.includes(candidateId))
     return "Contains this space, adding it would create a loop";
+  if (!childSpaceIds) return "Could not check this space for loops";
   if (spaceReaches(candidateId, currentSpaceId, childSpaceIds))
     return "Contains this space, adding it would create a loop";
   return undefined;

@@ -31,7 +31,7 @@
   } = $props();
 
   let counts = $derived(countNavItems(item?.items ?? []));
-  let title = $derived(item?.label ?? "Untitled space");
+  let title = $derived(item?.label?.trim() || "Untitled space");
 
   const pluralize = (count: number, noun: string) =>
     `${count} ${noun}${count === 1 ? "" : "s"}`;

@@ -48,7 +48,7 @@
   const listId = `space-picker-${currentSpaceId.slice(-5)}`;
   let query = $state("");
   let results = $state<PickerResult[]>([]);
-  let spaceGraph = $state<Map<string, string[]>>(new Map());
+  let spaceGraph = $state<Map<string, string[]> | undefined>(undefined);
   let isSearching = $state(false);
   let debounce: ReturnType<typeof setTimeout> | undefined;
   let requestId = 0;
@@ -62,7 +62,9 @@
       currentSpaceId,
       focusChain,
       items,
-      childSpaceIds: (spaceId) => spaceGraph.get(spaceId) ?? []
+      childSpaceIds: spaceGraph
+        ? (spaceId) => spaceGraph?.get(spaceId) ?? []
+        : undefined
     });
   }
 
@@ -80,6 +82,7 @@
         rows.map((row) => [row.id, collectChildSpaceIds(row.items ?? [])])
       );
     } catch (error) {
+      spaceGraph = undefined;
       logger.error({ at: "SpaceItemPicker.loadSpaceGraph", error });
     }
   }

@@ -131,6 +131,7 @@
   }
 
   function saveLabel() {
+    if (!isEditing) return;
     const trimmed = editLabel.trim();
     if (trimmed && trimmed !== item.label) nav.onRename(item.id, trimmed);
     else nav.onCancelEdit();

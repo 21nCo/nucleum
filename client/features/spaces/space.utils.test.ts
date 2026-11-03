@@ -209,6 +209,21 @@ describe("space loops", () => {
     ).toBeUndefined();
   });
 
+  it("blocks other spaces while the space graph is unknown", () => {
+    const base = {
+      currentSpaceId: "space:grand",
+      focusChain: [],
+      items: [],
+      childSpaceIds: undefined
+    };
+    expect(
+      resolveAddBlockReason({ ...base, candidateId: "space:other" })
+    ).toMatch(/loops/);
+    expect(
+      resolveAddBlockReason({ ...base, candidateId: "node:n" })
+    ).toBeUndefined();
+  });
+
   it("cuts looped focus paths", () => {
     expect(
       sanitizeFocusPath("space:a", ["space:b", "space:a", "space:c"])

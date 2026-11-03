@@ -31,6 +31,7 @@
   import {
     collectResourceItems,
     findItem,
+    findParentId,
     flattenNavItems,
     isSpaceItemOpenable
   } from "@nucleum/features/spaces/space.utils";
@@ -243,8 +244,7 @@
       collapsedIds = next;
     }
     const added = findItem(store.readItems(), newId) as
-      | ISpaceResourceNavItem
-      | undefined;
+      ISpaceResourceNavItem | undefined;
     if (
       added &&
       added.resourceType !== Resource.space &&
@@ -255,8 +255,15 @@
 
   async function keyboardMove(id: string, move: SpaceKeyboardMove) {
     if (move === "up" || move === "down") await store.moveNavItem(id, move);
-    else if (move === "indent") await store.indentNavItem(id);
-    else await store.outdentNavItem(id);
+    else if (move === "indent") {
+      await store.indentNavItem(id);
+      const parentId = findParentId(store.readItems(), id);
+      if (parentId && collapsedIds.has(parentId)) {
+        const next = new Set(collapsedIds);
+        next.delete(parentId);
+        collapsedIds = next;
+      }
+    } else await store.outdentNavItem(id);
     await tick();
     document
       .querySelector<HTMLElement>(
@@ -402,14 +409,17 @@
           type="button"
           class="flex items-center gap-2 px-2 py-1.5 rounded-md text-b2 text-fgs2 hover:bg-bgs2-striped"
           data-testid="space-add-section"
-          onclick={() => addSection(targetSection ? targetSectionId! : undefined)}
+          onclick={() =>
+            addSection(targetSection ? targetSectionId! : undefined)}
         >
           <Icon icon="plus" size={Size.sm} class="stroke-fgs2" />
-          {targetSection ? `Add section in ${targetSection.label}` : "Add section"}
+          {targetSection
+            ? `Add section in ${targetSection.label}`
+            : "Add section"}
         </button>
         <p class="text-b4 text-fgs3">
-          Drag rows to rearrange. With a row focused, Alt and the arrow keys move
-          it.
+          Drag rows to rearrange. With a row focused, Alt and the arrow keys
+          move it.
         </p>
       </section>
     {/if}
