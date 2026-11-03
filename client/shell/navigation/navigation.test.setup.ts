@@ -23,9 +23,22 @@ export function navigatorHistoryStoreStub() {
   return { navigatorHistory: { recordResource: () => undefined } };
 }
 
+/** Access trail store that records nothing. */
+export function accessTrailStoreStub() {
+  return {
+    accessTrail: {
+      get: () => ({ current: undefined, recent: [] }),
+      start: () => undefined,
+      extend: () => undefined,
+      position: () => undefined,
+      sync: () => undefined
+    }
+  };
+}
+
 /**
- * Loads navigation with UI state, DataFn and navigator history stubbed and
- * returns it.
+ * Loads navigation with UI state, DataFn, navigator history and the access
+ * trail stubbed and returns it.
  */
 export async function loadStubbedNavigation() {
   vi.doMock(
@@ -36,6 +49,10 @@ export async function loadStubbedNavigation() {
   vi.doMock(
     "@nucleum/shell/navigator/navigator-history.store",
     navigatorHistoryStoreStub
+  );
+  vi.doMock(
+    "@nucleum/shell/navigator/access-trail.store",
+    accessTrailStoreStub
   );
   return (await import("@nucleum/shell/navigation/navigation")).navigation;
 }
