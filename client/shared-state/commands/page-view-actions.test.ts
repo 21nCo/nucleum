@@ -107,18 +107,32 @@ describe("resolveRecordedPagePath", () => {
   it("records a command-launched sub-view id by its canonical path", () => {
     const route = resolvePageRoute(actions, "calendar.classic.year");
     expect(
-      resolveRecordedPagePath(actions, route!.action, route!.subPath)
+      resolveRecordedPagePath(actions, route!.action, route!.subPath, false)
     ).toBe("calendar/classic/year");
   });
 
-  it("skips sub-paths without a registered view and records plain pages", () => {
-    expect(resolveRecordedPagePath(actions, calendar, [])).toBeUndefined();
+  it("skips routed sub-paths without a registered view and records plain pages", () => {
     expect(
-      resolveRecordedPagePath(actions, calendar, ["classic", "decade"])
+      resolveRecordedPagePath(actions, calendar, [], true)
     ).toBeUndefined();
-    expect(resolveRecordedPagePath(actions, settings, undefined)).toBe(
+    expect(
+      resolveRecordedPagePath(actions, calendar, ["classic", "decade"], true)
+    ).toBeUndefined();
+    expect(resolveRecordedPagePath(actions, settings, undefined, true)).toBe(
       "settings"
     );
-    expect(resolveRecordedPagePath(actions, alerts, undefined)).toBeUndefined();
+    expect(
+      resolveRecordedPagePath(actions, alerts, undefined, true)
+    ).toBeUndefined();
+  });
+
+  it("records a command-launched parent page by its page path", () => {
+    const route = resolvePageRoute(actions, "calendar");
+    expect(
+      resolveRecordedPagePath(actions, route!.action, route!.subPath, false)
+    ).toBe("calendar");
+    expect(
+      resolveRecordedPagePath(actions, { ...calendar, isMeta: true }, [], false)
+    ).toBeUndefined();
   });
 });

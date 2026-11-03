@@ -19,8 +19,12 @@ const historyLocal = writable<NavigatorHistory>(createNavigatorHistory());
 let historySignal: HistorySignal | undefined;
 let flushTimer: ReturnType<typeof setTimeout> | undefined;
 
+function currentNamespace() {
+  return get(datafnRuntime)?.namespace ?? null;
+}
+
 const writer = createNavigatorHistoryWriter({
-  namespace: () => get(datafnRuntime)?.namespace ?? null,
+  namespace: currentNamespace,
   read: () => datafn.kv.get(Resource.navigatorHistory),
   write: async (history) => {
     const result = await datafn.kv.set(Resource.navigatorHistory, history);
@@ -41,7 +45,7 @@ function ensureSignal() {
   historySignal.subscribe((value) => {
     historyLocal.set(writer.applyPending(normalizeNavigatorHistory(value)));
   });
-  let namespace = get(datafnRuntime)?.namespace ?? null;
+  let namespace = currentNamespace();
   datafnRuntime.subscribe((runtime) => {
     const nextNamespace = runtime?.namespace ?? null;
     if (nextNamespace === namespace) return;
@@ -67,8 +71,9 @@ function flushNavigatorHistory() {
   if (writer.pendingCount() === 0 || !historySignal) return;
   void writer
     .flush()
-    .then((next) => {
-      if (next) historyLocal.set(writer.applyPending(next));
+    .then((result) => {
+      if (!result || result.namespace !== currentNamespace()) return;
+      historyLocal.set(writer.applyPending(result.history));
     })
     .catch((error) => logger.error({ at: "navigatorHistory.flush", error }));
 }

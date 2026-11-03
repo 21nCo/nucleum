@@ -102,20 +102,26 @@ export function resolvePageRoute(
 /**
  * Path recorded in navigator history for a rendered page: the registered sub-view
  * matching the page path plus its sub-path, or the page path for a labelled,
- * non-meta page without sub-views. Undefined when the view should not be recorded.
+ * non-meta page. A URL-routed page whose sub-path matches no sub-view is not
+ * recorded, because it rewrites its URL to a canonical sub-view that is recorded
+ * instead; a page that is not routed, such as a command tab, never rewrites and is
+ * recorded by its page path. Undefined when the view should not be recorded.
  */
 export function resolveRecordedPagePath(
   actions: IAction[],
   pageAction: IAction,
-  subPath: string[] | undefined
+  subPath: string[] | undefined,
+  isRouted: boolean
 ): string | undefined {
   const pagePath = pageAction.path ?? pageAction.action;
   if (subPath) {
     const canonicalPath = [pagePath, ...subPath].join("/");
-    return actions.find(
+    const subView = actions.find(
       (action) =>
         action.subViewOf === pageAction.action && action.path === canonicalPath
-    )?.path;
+    );
+    if (subView?.path) return subView.path;
+    if (isRouted) return;
   }
   if (
     pageAction.type !== ActionType.PAGE ||

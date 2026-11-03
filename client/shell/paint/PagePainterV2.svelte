@@ -138,7 +138,8 @@
     const recordedPath = resolveRecordedPagePath(
       $appStore.actions,
       pageAction,
-      pageSubPath
+      pageSubPath,
+      isRouted
     );
     if (!recordedPath || recordedPath === lastRecordedPath) return;
     lastRecordedPath = recordedPath;

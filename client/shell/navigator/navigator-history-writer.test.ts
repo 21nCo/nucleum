@@ -196,4 +196,49 @@ describe("createNavigatorHistoryWriter", () => {
     });
     expect(writer.pendingCount()).toBe(0);
   });
+
+  it("returns no result when the namespace changes while a write is pending", async () => {
+    const store = createStorage(createNavigatorHistory());
+    const writer = createNavigatorHistoryWriter(store.storage);
+    store.defer(true);
+    writer.add({ id: "node:a", kind: "resource", at: now });
+    const flushed = writer.flush();
+    await vi.waitFor(() => expect(store.pendingWrites()).toBe(1));
+    store.switchNamespace("user-b");
+    store.releaseWrites();
+
+    expect(await flushed).toBeUndefined();
+    expect(writer.pendingCount()).toBe(0);
+  });
+
+  it("returns the written history with its namespace", async () => {
+    const store = createStorage(createNavigatorHistory());
+    const writer = createNavigatorHistoryWriter(store.storage);
+    writer.add({ id: "node:a", kind: "resource", at: now });
+
+    const result = await writer.flush();
+
+    expect(result?.namespace).toBe("user-a");
+    expect(Object.keys(result?.history.entries ?? {})).toEqual(["node:a"]);
+  });
+
+  it("binds visits recorded before any namespace to the first active one", async () => {
+    const store = createStorage(createNavigatorHistory());
+    store.switchNamespace(null);
+    const writer = createNavigatorHistoryWriter(store.storage);
+    writer.add({ id: "node:a", kind: "resource", at: now });
+
+    store.switchNamespace("user-a");
+    store.fail(true);
+    await writer.flush();
+    expect(writer.pendingCount()).toBe(1);
+
+    store.switchNamespace("user-b");
+    store.fail(false);
+    writer.retainCurrentNamespace();
+    expect(writer.pendingCount()).toBe(0);
+    await writer.flush();
+
+    expect(store.stored().entries).toEqual({});
+  });
 });

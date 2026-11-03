@@ -2,7 +2,7 @@
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import Records from "@nucleum/surfaces/library/records/Records.svelte";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
@@ -38,22 +38,49 @@
   import {
     LIBRARY_DEFAULT_SUBTYPE,
     parseLibraryPath,
+    parseLibraryResource,
+    parseLibrarySubType,
     replaceLibraryPath,
     resolveLibraryFallbackSubType
   } from "@nucleum/surfaces/library/library-route";
 
-  let { resources = [] }: { resources?: Resource[] } = $props();
+  let {
+    resources = [],
+    subPath = undefined,
+    isRouted = true
+  }: {
+    resources?: Resource[];
+    subPath?: string[];
+    isRouted?: boolean;
+  } = $props();
 
   let selectedResource = $state<Resource>(Resource.unknown);
+  let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
   const subType = $derived(
     selectedResource === Resource.unknown
       ? undefined
-      : (parseLibraryPath($page.url.pathname).subType ??
+      : ((isRouted
+          ? parseLibraryPath($page.url.pathname).subType
+          : parseLibrarySubType(selectedResource, localSubPath?.[1])) ??
           resolveLibraryFallbackSubType(selectedResource))
   );
 
+  function selectView(
+    resource?: Resource,
+    nextSubType?: string,
+    options?: { isResetFilters?: boolean }
+  ) {
+    if (isRouted) {
+      replaceLibraryPath(resource, nextSubType, options);
+      return;
+    }
+    localSubPath = resource
+      ? [resource, nextSubType ?? LIBRARY_DEFAULT_SUBTYPE]
+      : undefined;
+  }
+
   function selectSubType(nextSubType: string) {
-    replaceLibraryPath(selectedResource, nextSubType);
+    selectView(selectedResource, nextSubType);
   }
   let syncFeedbackRef = $state<InlineSyncingFeedback>();
 
@@ -118,6 +145,10 @@
   });
 
   onMount(() => {
+    if (!isRouted) {
+      syncSelectedResource(parseLibraryResource(localSubPath?.[0]));
+      return;
+    }
     const syncFromWindow = () => {
       syncSelectedResource(parseLibraryPath(window.location.pathname).resource);
     };
@@ -208,7 +239,7 @@
       isShowCount={true}
       onSelect={(selectedValue) => {
         selectedResource = selectedValue;
-        replaceLibraryPath(selectedValue, LIBRARY_DEFAULT_SUBTYPE, {
+        selectView(selectedValue, LIBRARY_DEFAULT_SUBTYPE, {
           isResetFilters: true
         });
         syncFeedbackRef?.refresh(selectedValue);
@@ -256,7 +287,7 @@
           isPreventCwPadding={true}
           onBack={() => {
             selectedResource = Resource.unknown;
-            replaceLibraryPath();
+            selectView();
           }}
         />
       </div>
