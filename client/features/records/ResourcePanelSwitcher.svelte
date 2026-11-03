@@ -132,7 +132,9 @@
 {#snippet viewTabs()}
   <div class="flex items-center h-full" data-testid="resource-context-tabs">
     {#if $resourceStore.isInEditMode}
-      <div class="flex items-center h-full pr-3 mr-3 border-r border-brs3">
+      <div
+        class="flex items-center h-full pr-3 mr-3 border-r border-brs3 app-framed:border-transparent"
+      >
         <EditModeDone
           onDone={() =>
             finishEditMode($resourceStore.id.toString(), () =>
@@ -175,7 +177,7 @@
   <div class="absolute bottom-0 inset-x-0 mx-auto w-fit z-10">
     <div
       class={cn(
-        "flex flex-col border- border-t border-x border-brs2 border-t--bgs1 shadow-sm rounded-t-md overflow-hidden"
+        "flex flex-col border- border-t border-x border-brs2 border-t--bgs1 shadow-sm rounded-t-md overflow-hidden app-framed:rounded-t-[var(--app-panel-radius)]"
       )}
     >
       <div
@@ -188,7 +190,7 @@
       >
         {#if $resourceStore.isInFocusMode}
           <div
-            class="flex h-full border-t border-brs2"
+            class="flex h-full border-t border-brs2 app-framed:border-transparent app-framed:items-center"
             in:slide={{ duration: 300, axis: "x" }}
           >
             <BoxButton
@@ -204,7 +206,7 @@
         {:else}
           {#if !isInPlace}
             <div
-              class="flex cw:border-l border-r border--t border-brs2 text-fgs2 mr-3"
+              class="flex cw:border-l border-r border--t border-brs2 text-fgs2 mr-3 app-framed:border-transparent app-framed:items-center"
             >
               <BoxButton
                 label="Close"
@@ -224,7 +226,7 @@
             $view.isConstrainedWidth
           )}
           <div
-            class="flex items-center h-full cw:border-r border-l border-brs2 ml-3"
+            class="flex items-center h-full cw:border-r border-l border-brs2 ml-3 app-framed:border-transparent app-framed:gap-1 app-framed:pr-1"
           >
             {#if isConstrainedWidth && !isInPlace}
               <BoxButton
