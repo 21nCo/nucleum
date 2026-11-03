@@ -13,7 +13,15 @@ export type ContextZonePane = {
 export type ContextZoneRegistration = {
   content: Snippet;
   cycle?: () => void;
+  /**
+   * Background class of the context tab while this entry shows, matching the
+   * page or pane below, such as "bg-bgs2". Defaults to the page background.
+   */
+  surface?: string;
 };
+
+/** Background class of the context tab when no entry declares one. */
+export const DEFAULT_CONTEXT_ZONE_SURFACE = "bg-bgs1";
 
 /** One registered context-zone entry. */
 export type ContextZoneEntry = ContextZoneRegistration & {
@@ -183,7 +191,8 @@ export const contextZone = {
       { key, pane } as ContextZoneEntry,
       {
         content: { get: () => registration.content, enumerable: true },
-        cycle: { get: () => registration.cycle, enumerable: true }
+        cycle: { get: () => registration.cycle, enumerable: true },
+        surface: { get: () => registration.surface, enumerable: true }
       }
     );
     entries.update((list) => [...list, entry]);

@@ -36,13 +36,12 @@
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import {
-    ContextZoneLayer,
+    DEFAULT_CONTEXT_ZONE_SURFACE,
     contextZone
   } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { resolveContextZoneSubject } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
   import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
   import PaneSwitchButton from "@nucleum/shell/topNav/contextZone/PaneSwitchButton.svelte";
-  import { samplePageBackground } from "@nucleum/shell/topNav/contextZone/surface-background";
   import {
     closeTopLayer,
     resolveCloseControlLabel
@@ -177,64 +176,10 @@
     return !!uiState.getState(UIState.isHideLeftNavBar);
   }
 
-  let barRef = $state<HTMLDivElement | undefined>(undefined);
-  let tabRef = $state<HTMLDivElement | undefined>(undefined);
-  let tabBackground = $state<string | undefined>(undefined);
-  let sampleTimer: ReturnType<typeof setTimeout> | undefined;
   const isContextTab = $derived(isBulkMode || !!subject || !!$activeEntry);
-
-  function sampleTabBackground() {
-    if (!tabRef || !barRef) return;
-    const bar = barRef.getBoundingClientRect();
-    const paneId =
-      $activePane?.layer === ContextZoneLayer.BESIDE_BASE ||
-      $activePane?.layer === ContextZoneLayer.BESIDE_PAGE
-        ? $activePane.id
-        : undefined;
-    const pane = paneId
-      ? document.querySelector(
-          `[data-context-zone-pane="${CSS.escape(paneId)}"] > *`
-        )
-      : null;
-    const left = Math.max(
-      tabRef.getBoundingClientRect().left,
-      pane?.getBoundingClientRect().left ?? 0
-    );
-    tabBackground = samplePageBackground(
-      { x: left + 4, y: bar.bottom + 4 },
-      barRef
-    );
-  }
-
-  function scheduleTabBackground() {
-    clearTimeout(sampleTimer);
-    requestAnimationFrame(sampleTabBackground);
-    sampleTimer = setTimeout(sampleTabBackground, 400);
-  }
-
-  $effect(() => {
-    void $page.url.href;
-    void $activePane;
-    void tabRef;
-    scheduleTabBackground();
-  });
-
-  onMount(() => {
-    const themeObserver = new MutationObserver(scheduleTabBackground);
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "style", "data-theme"]
-    });
-    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
-    colorScheme.addEventListener("change", scheduleTabBackground);
-    window.addEventListener("resize", scheduleTabBackground);
-    return () => {
-      clearTimeout(sampleTimer);
-      themeObserver.disconnect();
-      colorScheme.removeEventListener("change", scheduleTabBackground);
-      window.removeEventListener("resize", scheduleTabBackground);
-    };
-  });
+  const tabSurface = $derived(
+    (!isBulkMode && $activeEntry?.surface) || DEFAULT_CONTEXT_ZONE_SURFACE
+  );
 
   onMount(() => {
     const release = contextZone.host();
@@ -265,7 +210,6 @@
 
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
-  bind:this={barRef}
   class={cn(
     "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata",
     {
@@ -302,12 +246,10 @@
     {/each}
     {#if isContextTab}
       <div
-        bind:this={tabRef}
         class={cn(
           "relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
-          { "bg-bgs1": !tabBackground }
+          tabSurface
         )}
-        style:background-color={tabBackground}
         data-testid="top-bar-context-tab"
       >
         <div

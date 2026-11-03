@@ -10,6 +10,7 @@
   let {
     children,
     cycle = undefined,
+    surface = undefined,
     fallback = undefined,
     isInlineFallback = true
   }: {
@@ -17,6 +18,8 @@
     children: Snippet;
     /** Selects the next tab or view of this entry. */
     cycle?: () => void;
+    /** Background class of the context tab, matching the page below. */
+    surface?: string;
     /** Renders in place of `children` when no top bar hosts the zone. */
     fallback?: Snippet;
     /** Renders the controls in place when no top bar hosts the zone. */
@@ -34,6 +37,9 @@
       },
       get cycle() {
         return cycle;
+      },
+      get surface() {
+        return surface;
       }
     });
   });
