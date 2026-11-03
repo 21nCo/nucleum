@@ -21,6 +21,7 @@
     rankNavigatorHistoryFrom,
     type RankedNavigatorHistoryEntry
   } from "@nucleum/shell/navigator/navigator-history";
+  import type { Snippet } from "svelte";
   import { onDestroy, onMount, untrack, tick } from "svelte";
   import { navigatorFocusRequests } from "@nucleum/shell/navigator/navigator-focus";
   import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
@@ -38,6 +39,7 @@
   import { navigatorSearch } from "@nucleum/shell/navigator/navigator-search";
   import {
     NAVIGATOR_SECTION_LIMIT,
+    formatNavigatorAge,
     limitSectionItems,
     resolveFrequentContext
   } from "@nucleum/shell/navigator/navigator-sections";
@@ -50,6 +52,8 @@
   type NavigatorHistoryItem = {
     id: string;
     pageAction?: IAction;
+    /** Time of the last open. */
+    at: number;
   };
 
   const FREQUENT_LIMIT = 10;
@@ -89,6 +93,7 @@
     )
   );
   let clearedFrequentContext = $state<string | undefined>(undefined);
+  let now = $state(Date.now());
   const fromHereItems = $derived(
     currentPageId && isRecordId(currentPageId)
       ? resolveHistoryItems(
@@ -131,12 +136,17 @@
     return ranked
       .map(({ id, entry }) =>
         entry.kind === "page"
-          ? { id, pageAction: resolvePageAction(id) }
-          : { id }
+          ? { id, pageAction: resolvePageAction(id), at: entry.lastOpenedAt }
+          : { id, at: entry.lastOpenedAt }
       )
       .filter((item) => item.pageAction || isRecordId(item.id))
       .slice(0, limit);
   }
+
+  onMount(() => {
+    const clock = setInterval(() => (now = Date.now()), 60 * 1000);
+    return () => clearInterval(clock);
+  });
 
   onMount(() => {
     if (!$isInlineSearch) setTimeout(() => searchInputRef?.focus(), 50);
@@ -316,16 +326,39 @@
   }
 </script>
 
-{#snippet historyList(items: NavigatorHistoryItem[])}
+{#snippet band(label: string, action?: Snippet)}
+  <div
+    class="flex items-center justify-between gap-2 h-10 shrink-0 px-4 border-b border-brs3 bg-bgs2"
+  >
+    <span
+      class="truncate text-b4 font-semibold uppercase tracking-wide text-fgs2"
+      >{label}</span
+    >
+    {@render action?.()}
+  </div>
+{/snippet}
+
+{#snippet historyList(items: NavigatorHistoryItem[], isShowAge = false)}
   <div class="flex flex-col gap-1 -ml-2">
     {#each items as item (item.id)}
-      <TopBarResourceItem
-        item={item.pageAction?.action ?? item.id}
-        isInterimTab={true}
-        isTrail
-        isTypeIcon
-        onClick={(event) => handleHistoryClick(item, event)}
-      />
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="flex-1 min-w-0">
+          <TopBarResourceItem
+            item={item.pageAction?.action ?? item.id}
+            isInterimTab={true}
+            isTrail
+            isTypeIcon
+            onClick={(event) => handleHistoryClick(item, event)}
+          />
+        </div>
+        {#if isShowAge && item.at > 0}
+          <span
+            class="shrink-0 text-b3 text-fgs3"
+            data-testid="navigator-item-age"
+            >{formatNavigatorAge(item.at, now)}</span
+          >
+        {/if}
+      </div>
     {/each}
   </div>
 {/snippet}
@@ -345,9 +378,13 @@
   {/if}
 {/snippet}
 
-{#snippet limitedHistoryList(key: string, items: NavigatorHistoryItem[])}
+{#snippet limitedHistoryList(
+  key: string,
+  items: NavigatorHistoryItem[],
+  isShowAge = false
+)}
   {@const limited = limitSectionItems(items, isSectionExpanded(key))}
-  {@render historyList(limited.visible)}
+  {@render historyList(limited.visible, isShowAge)}
   {@render sectionToggle(key, limited.hiddenCount)}
 {/snippet}
 
@@ -374,22 +411,37 @@
   </div>
 {/snippet}
 
-{#snippet trailTree(trail: AccessTrail, onSelect: (index: number) => void)}
+{#snippet trailTree(
+  trail: AccessTrail,
+  onSelect: (index: number) => void,
+  activeIndex: number | undefined = undefined
+)}
   <div class="trail relative flex flex-col gap-1 -ml-2">
     {#each flattenAccessTrail(trail) as row (row.index)}
       <div
-        class={cn("relative", { "trail-item": row.depth > 0 })}
+        class={cn("relative flex items-center gap-2", {
+          "trail-item": row.depth > 0
+        })}
         style={`padding-left: ${row.depth * 14}px;`}
         data-testid="navigator-trail-item"
         data-trail-depth={row.depth}
+        data-here={row.index === activeIndex ? "true" : undefined}
       >
-        <TopBarResourceItem
-          item={row.id}
-          isInterimTab={true}
-          isTrail
-          isTypeIcon
-          onClick={() => onSelect(row.index)}
-        />
+        <div class="flex-1 min-w-0">
+          <TopBarResourceItem
+            item={row.id}
+            isInterimTab={true}
+            isTrail
+            isTypeIcon
+            onClick={() => onSelect(row.index)}
+          />
+        </div>
+        {#if row.index === activeIndex}
+          <span
+            class="shrink-0 px-1.5 py-0.5 rounded-sm bg-aps1 text-b4 font-semibold text-abg"
+            >here</span
+          >
+        {/if}
       </div>
     {/each}
   </div>
@@ -417,46 +469,108 @@
   <div class="flex flex-col flex-1 min-h-0 w-full overflow-y-auto">
     {#if isSearchMode}
       <section
-        class="flex flex-col gap-2 px-3 py-2 shrink-0"
+        class="flex flex-col shrink-0"
         data-testid="navigator-search-results"
       >
-        <div class="text-b2 text-fgs3">Results</div>
-        {#if isSearchResultsCurrent && searchResults.length > 0}
-          {@const limited = limitSectionItems(
-            searchResults,
-            isSectionExpanded("results")
-          )}
-          {@render resultList(limited.visible)}
-          {@render sectionToggle("results", limited.hiddenCount)}
-        {:else if isSearching || !isSearchResultsCurrent}
-          <div class="text-b3 text-fgs3">Searching...</div>
-        {:else}
-          <EmptyStatusView size={Size.sm} mainText="No results found" />
-        {/if}
+        {@render band("Results")}
+        <div class="flex flex-col gap-2 px-3 py-2">
+          {#if isSearchResultsCurrent && searchResults.length > 0}
+            {@const limited = limitSectionItems(
+              searchResults,
+              isSectionExpanded("results")
+            )}
+            {@render resultList(limited.visible)}
+            {@render sectionToggle("results", limited.hiddenCount)}
+          {:else if isSearching || !isSearchResultsCurrent}
+            <div class="text-b3 text-fgs3">Searching...</div>
+          {:else}
+            <EmptyStatusView size={Size.sm} mainText="No results found" />
+          {/if}
+        </div>
       </section>
     {:else}
       {#if currentTrail}
         <section
-          class="flex flex-col gap-2 px-3 py-2 shrink-0"
+          class="flex flex-col shrink-0"
           data-testid="navigator-current-trail"
         >
-          <div class="text-b2 text-fgs3">Currently opened</div>
-          {@render trailTree(currentTrail, (index) =>
-            navigation.openTrailNode(index)
+          {#snippet endTrail()}
+            <button
+              type="button"
+              class="shrink-0 text-b3 font-medium text-aps1 hover:underline"
+              data-testid="navigator-end-trail"
+              onclick={() => accessTrail.end()}
+            >
+              End trail
+            </button>
+          {/snippet}
+          {@render band(
+            `Current trail \u00b7 ${currentTrailRows.length}`,
+            endTrail
           )}
+          <div class="flex flex-col px-3 py-2 border-b border-brs3">
+            {@render trailTree(
+              currentTrail,
+              (index) => navigation.openTrailNode(index),
+              currentPageId ? currentTrail.active : undefined
+            )}
+          </div>
         </section>
       {/if}
+      <section class="flex flex-col shrink-0" data-testid="navigator-recent">
+        {@render band("Recently accessed")}
+        <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+          {#if recentItems.length > 0}
+            {@render limitedHistoryList("recent", recentItems, true)}
+          {:else}
+            <EmptyStatusView size={Size.sm} mainText="No history yet" />
+          {/if}
+        </div>
+      </section>
+      <section class="flex flex-col shrink-0" data-testid="navigator-frequent">
+        {#if frequentContext}
+          {#snippet clearContext()}
+            <button
+              type="button"
+              aria-label="Show frequently accessed everywhere"
+              class="flex items-center justify-center h-6 w-6 shrink-0 rounded-md text-fgs3 hover:bg-bgs3 hover:text-fgs1"
+              use:tooltip={{ text: "Clear context" }}
+              onclick={() => (clearedFrequentContext = frequentContext)}
+            >
+              <Icon icon="cross" size={Size.xs} />
+            </button>
+          {/snippet}
+          <div data-testid="navigator-frequent-context">
+            {@render band(
+              `Frequently accessed from ${frequentContextLabel}`,
+              clearContext
+            )}
+          </div>
+          <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+            {@render limitedHistoryList("frequent", fromHereItems)}
+          </div>
+        {:else}
+          {@render band("Frequently accessed")}
+          <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+            {#if frequentItems.length > 0}
+              {@render limitedHistoryList("frequent", frequentItems)}
+            {:else}
+              <EmptyStatusView size={Size.sm} mainText="No history yet" />
+            {/if}
+          </div>
+        {/if}
+      </section>
       {#if recentTrails.length > 0}
         {@const limitedTrails = limitSectionItems(
           recentTrails,
           isSectionExpanded("trails")
         )}
         <section
-          class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3 first:border-t-0"
+          class="flex flex-col shrink-0"
           data-testid="navigator-recent-trails"
         >
-          <div class="text-b2 text-fgs3">Recent trails</div>
-          <div class="flex flex-col gap-1">
+          {@render band("Recent trails")}
+          <div class="flex flex-col gap-1 px-3 py-2 border-b border-brs3">
             {#each limitedTrails.visible as trail (trail.key)}
               {@const isExpanded = expandedTrails.includes(trail.key)}
               <div
@@ -498,53 +612,34 @@
                 {/if}
               </div>
             {/each}
+            {@render sectionToggle("trails", limitedTrails.hiddenCount)}
           </div>
-          {@render sectionToggle("trails", limitedTrails.hiddenCount)}
         </section>
       {/if}
-      <section
-        class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3 first:border-t-0"
-        data-testid="navigator-recent"
-      >
-        <div class="text-b2 text-fgs3">Recently accessed</div>
-        {#if recentItems.length > 0}
-          {@render limitedHistoryList("recent", recentItems)}
-        {:else}
-          <EmptyStatusView size={Size.sm} mainText="No history yet" />
-        {/if}
-      </section>
-      <section
-        class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3 first:border-t-0"
-      >
-        {#if frequentContext}
-          <div
-            class="flex items-center gap-1 min-w-0 text-b2 text-fgs3"
-            data-testid="navigator-frequent-context"
-          >
-            <span class="truncate">
-              Frequently accessed from {frequentContextLabel}
-            </span>
-            <button
-              type="button"
-              aria-label="Show frequently accessed everywhere"
-              class="flex items-center justify-center h-6 w-6 shrink-0 rounded-md text-fgs3 hover:bg-bgs3 hover:text-fgs1"
-              use:tooltip={{ text: "Clear context" }}
-              onclick={() => (clearedFrequentContext = frequentContext)}
-            >
-              <Icon icon="cross" size={Size.xs} />
-            </button>
-          </div>
-          {@render limitedHistoryList("frequent", fromHereItems)}
-        {:else}
-          <div class="text-b2 text-fgs3">Frequently accessed</div>
-          {#if frequentItems.length > 0}
-            {@render limitedHistoryList("frequent", frequentItems)}
-          {:else}
-            <EmptyStatusView size={Size.sm} mainText="No history yet" />
-          {/if}
-        {/if}
-      </section>
     {/if}
+  </div>
+  <div
+    class="flex items-center gap-4 shrink-0 px-4 py-2.5 border-t border-brs3 text-b3 text-fgs3"
+    data-testid="navigator-key-hints"
+  >
+    <span class="flex items-center gap-1"
+      ><kbd
+        class="px-1.5 py-0.5 rounded-sm bg-bgs3 text-b4 font-semibold text-fgs2"
+        >&#8629;</kbd
+      > open</span
+    >
+    <span class="flex items-center gap-1"
+      ><kbd
+        class="px-1.5 py-0.5 rounded-sm bg-bgs3 text-b4 font-semibold text-fgs2"
+        >&#8984;&#8629;</kbd
+      > split</span
+    >
+    <span class="flex items-center gap-1"
+      ><kbd
+        class="px-1.5 py-0.5 rounded-sm bg-bgs3 text-b4 font-semibold text-fgs2"
+        >&#8984;K</kbd
+      > super bar</span
+    >
   </div>
 </div>
 

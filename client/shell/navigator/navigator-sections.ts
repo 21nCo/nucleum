@@ -28,3 +28,21 @@ export function limitSectionItems<T>(
   const visible = isExpanded ? items : items.slice(0, limit);
   return { visible, hiddenCount: items.length - visible.length };
 }
+
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+/**
+ * Short age of a visit for the navigator lists: "now", minutes, hours,
+ * "Yesterday", days, then weeks.
+ */
+export function formatNavigatorAge(at: number, now: number) {
+  const age = Math.max(0, now - at);
+  if (age < MINUTE_MS) return "now";
+  if (age < HOUR_MS) return `${Math.floor(age / MINUTE_MS)}m`;
+  if (age < DAY_MS) return `${Math.floor(age / HOUR_MS)}h`;
+  if (age < 2 * DAY_MS) return "Yesterday";
+  if (age < 7 * DAY_MS) return `${Math.floor(age / DAY_MS)}d`;
+  return `${Math.floor(age / (7 * DAY_MS))}w`;
+}

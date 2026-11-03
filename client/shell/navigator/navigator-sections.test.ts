@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatNavigatorAge,
   limitSectionItems,
   resolveFrequentContext
 } from "./navigator-sections";
@@ -42,5 +43,27 @@ describe("limitSectionItems", () => {
       visible: [1, 2],
       hiddenCount: 0
     });
+  });
+});
+
+describe("formatNavigatorAge", () => {
+  const now = 10 * 24 * 60 * 60 * 1000;
+  const minutes = (value: number) => now - value * 60 * 1000;
+
+  it("formats recent visits in minutes and hours", () => {
+    expect(formatNavigatorAge(now - 5000, now)).toBe("now");
+    expect(formatNavigatorAge(minutes(2), now)).toBe("2m");
+    expect(formatNavigatorAge(minutes(18), now)).toBe("18m");
+    expect(formatNavigatorAge(minutes(65), now)).toBe("1h");
+  });
+
+  it("formats older visits in days and weeks", () => {
+    expect(formatNavigatorAge(minutes(30 * 60), now)).toBe("Yesterday");
+    expect(formatNavigatorAge(minutes(3 * 24 * 60), now)).toBe("3d");
+    expect(formatNavigatorAge(minutes(9 * 24 * 60), now)).toBe("1w");
+  });
+
+  it("treats future times as now", () => {
+    expect(formatNavigatorAge(now + 1000, now)).toBe("now");
   });
 });
