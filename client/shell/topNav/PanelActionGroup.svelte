@@ -14,7 +14,7 @@
     openPanel,
     isPanelBeside
   }: {
-    /** Quick actions that open in the right panel, in display order; the expanded one moves to the end, above its panel. */
+    /** Quick actions that open in the right panel, in display order. */
     actions: TopNavPanelAction[];
     /** Action whose panel is open, from the URL. */
     openPanel: string | null;
@@ -32,10 +32,6 @@
   const expandedAction = $derived(
     actions.find((item) => states[item.action] === "expanded")?.action
   );
-  const orderedActions = $derived([
-    ...actions.filter((item) => item.action !== expandedAction),
-    ...actions.filter((item) => item.action === expandedAction)
-  ]);
   const widthClass = $derived(
     expandedAction
       ? resolveRightPanelWidthClass(
@@ -47,21 +43,23 @@
 </script>
 
 <div
-  class="flex items-stretch self-stretch shrink-0"
+  class={cn(
+    "flex shrink-0",
+    expandedAction
+      ? [
+          "relative z-10 self-start h-[calc(100%+1px)] -mb-px border-l border-brs3 bg-bgs2",
+          widthClass
+        ]
+      : "items-stretch self-stretch"
+  )}
   data-testid="top-bar-panel-actions"
   data-expanded={expandedAction}
 >
-  {#each orderedActions as item (item.action)}
+  {#each actions as item (item.action)}
     <div
       class={cn(
-        "flex items-center",
-        states[item.action] === "expanded"
-          ? [
-              "relative z-10 h-[calc(100%+1px)] -mb-px border-l border-brs3",
-              "bg-bgs2",
-              widthClass
-            ]
-          : "h-full shrink-0"
+        "flex items-center h-full",
+        states[item.action] === "expanded" ? "flex-1 min-w-0" : "shrink-0"
       )}
       data-testid="top-bar-panel-action"
       data-action={item.action}
