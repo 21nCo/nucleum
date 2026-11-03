@@ -94,6 +94,11 @@
   );
   let clearedFrequentContext = $state<string | undefined>(undefined);
   let now = $state(Date.now());
+  const keyHints = [
+    { keys: "\u21b5", label: "open" },
+    { keys: "\u2318\u21b5", label: "split" },
+    { keys: "\u2318K", label: "super bar" }
+  ];
   const fromHereItems = $derived(
     currentPageId && isRecordId(currentPageId)
       ? resolveHistoryItems(
@@ -611,27 +616,18 @@
     {/if}
   </div>
   <div
-    class="flex items-center gap-4 shrink-0 px-4 py-2.5 border-t border-brs3 text-b3 text-fgs3"
+    class="flex items-center gap-5 shrink-0 h-11 px-4 border-t border-brs3 text-b3 text-fgs3"
     data-testid="navigator-key-hints"
   >
-    <span class="flex items-center gap-1"
-      ><kbd
-        class="px-1.5 py-0.5 rounded-sm bg-bgs3 text-b4 font-semibold text-fgs2"
-        >&#8629;</kbd
-      > open</span
-    >
-    <span class="flex items-center gap-1"
-      ><kbd
-        class="px-1.5 py-0.5 rounded-sm bg-bgs3 text-b4 font-semibold text-fgs2"
-        >&#8984;&#8629;</kbd
-      > split</span
-    >
-    <span class="flex items-center gap-1"
-      ><kbd
-        class="px-1.5 py-0.5 rounded-sm bg-bgs3 text-b4 font-semibold text-fgs2"
-        >&#8984;K</kbd
-      > super bar</span
-    >
+    {#each keyHints as hint (hint.label)}
+      <span class="flex items-center gap-1.5 leading-none">
+        <kbd
+          class="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded border border-brs3 bg-bgs1 font-sans text-b3 font-medium leading-none text-fgs2 shadow-sm"
+          >{hint.keys}</kbd
+        >
+        <span>{hint.label}</span>
+      </span>
+    {/each}
   </div>
 </div>
 
