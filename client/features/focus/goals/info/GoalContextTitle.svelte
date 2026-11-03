@@ -51,12 +51,13 @@
   }
 
   function onKeydown(event: KeyboardEvent) {
-    event.stopPropagation();
     if (event.key === "Enter") {
       event.preventDefault();
+      event.stopPropagation();
       void finish();
     } else if (event.key === "Escape") {
       event.preventDefault();
+      event.stopPropagation();
       cancel();
     }
   }
