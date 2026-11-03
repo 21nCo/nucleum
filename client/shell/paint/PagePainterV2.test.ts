@@ -2,9 +2,16 @@ import { render, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+/** Minimal action shape the page painter resolves paths against. */
+type TestAction = { action: string; path?: string };
+
+/** Minimal app store state the page painter reads. */
+type TestAppState = { actions: TestAction[]; sheetPath: string };
+
 const mocks = vi.hoisted(() => {
-  const { writable: createStore, get } = require("svelte/store");
-  const appState = createStore({ actions: [] as any[], sheetPath: "" });
+  const { writable: createStore, get } =
+    require("svelte/store") as typeof import("svelte/store");
+  const appState = createStore<TestAppState>({ actions: [], sheetPath: "" });
   return {
     gotoPath: vi.fn(),
     appState,
@@ -14,8 +21,8 @@ const mocks = vi.hoisted(() => {
     resolveComponentFromPath(path: string) {
       const actions = get(appState).actions;
       return (
-        actions.find((x: any) => x.path === path) ??
-        actions.find((x: any) => x.action === path) ??
+        actions.find((x) => x.path === path) ??
+        actions.find((x) => x.action === path) ??
         null
       );
     }
@@ -75,7 +82,7 @@ describe("PagePainterV2", () => {
     expect(queryByTestId("action-renderer")).toBeNull();
     expect(mocks.gotoPath).not.toHaveBeenCalled();
 
-    mocks.appState.update((state: any) => ({
+    mocks.appState.update((state) => ({
       ...state,
       actions: [
         { action: "calendar", path: "calendar" },
