@@ -115,7 +115,7 @@
       class="flex items-center justify-between border-b h-10 min-h-10 border-brs3 app-framed:h-16 app-framed:min-h-16 app-framed:px-2"
     >
       <div
-        class="flex items-center gap-2 hover:bg-bgs2-striped h-full app-framed:hover:bg-transparent"
+        class="flex items-center gap-2 hover:bg-bgs2-striped h-full app-framed:hover:bg-none"
       >
         {#if isCwContext && backPath}
           <Icon
