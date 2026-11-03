@@ -269,6 +269,26 @@ const changedEnumContracts = new Map([
     ]
   ],
   [
+    "client/stores/preferences/preferences.type.ts",
+    [
+      {
+        name: "Preference",
+        members: {
+          TRANSCRIPTION_METHOD: "transcriptionMethod",
+          TRANSCRIPTION_MODEL: "transcriptionModel",
+          AUTO_TRANSCRIBE: "autoTranscribe",
+          TRANSCRIPTION_LANGUAGE: "transcriptionLanguage",
+          NOTES_TEMPLATE: "notesTemplate",
+          IMPORT_HISTORY: "importHistory",
+          CALENDAR_TILE_INDICATORS_MONTH: "calendarTileIndicatorsMonth",
+          CALENDAR_TILE_INDICATORS_YEAR: "calendarTileIndicatorsYear",
+          HIDE_HIGHLIGHT_COLORS: "hideHighlightColors",
+          CLOSE_NAVIGATOR_AFTER_OPEN: "closeNavigatorAfterOpen"
+        }
+      }
+    ]
+  ],
+  [
     "client/types/layout.type.ts",
     [
       {
