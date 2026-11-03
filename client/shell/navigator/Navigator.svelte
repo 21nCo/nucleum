@@ -36,6 +36,12 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { cn } from "@21n/ui/environment/presentation";
   import { navigatorSearch } from "@nucleum/shell/navigator/navigator-search";
+  import { resolveFrequentContext } from "@nucleum/shell/navigator/navigator-sections";
+  import {
+    liveResource,
+    resolvePlainResourceLabel
+  } from "@nucleum/shell/topNav/tabs/live-resource";
+  import { tooltip } from "@21n/ui/actions/popover.action";
 
   type NavigatorHistoryItem = {
     id: string;
@@ -43,7 +49,6 @@
   };
 
   const FREQUENT_LIMIT = 10;
-  const FROM_HERE_LIMIT = 5;
   const RECENT_LIMIT = 10;
   const SEARCH_LIMIT = 30;
   const SEARCH_DEBOUNCE_MS = 200;
@@ -78,6 +83,7 @@
       RECENT_LIMIT
     )
   );
+  let clearedFrequentContext = $state<string | undefined>(undefined);
   const fromHereItems = $derived(
     currentPageId && isRecordId(currentPageId)
       ? resolveHistoryItems(
@@ -86,9 +92,23 @@
             currentPageId,
             Date.now()
           ),
-          FROM_HERE_LIMIT
+          FREQUENT_LIMIT
         )
       : []
+  );
+
+  const frequentContext = $derived(
+    resolveFrequentContext(
+      currentPageId,
+      fromHereItems.length,
+      clearedFrequentContext
+    )
+  );
+  const frequentContextLive = $derived(
+    frequentContext ? liveResource(frequentContext) : undefined
+  );
+  const frequentContextLabel = $derived(
+    resolvePlainResourceLabel($frequentContextLive?.resource)
   );
 
   function resolvePageAction(path: string) {
@@ -435,15 +455,32 @@
       <section
         class="flex flex-col gap-2 px-3 py-2 shrink-0 border-t border-brs3 first:border-t-0"
       >
-        {#if fromHereItems.length > 0}
-          <div class="text-b2 text-fgs3">Frequently opened from here</div>
+        {#if frequentContext}
+          <div
+            class="flex items-center gap-1 min-w-0 text-b2 text-fgs3"
+            data-testid="navigator-frequent-context"
+          >
+            <span class="truncate">
+              Frequently accessed from {frequentContextLabel}
+            </span>
+            <button
+              type="button"
+              aria-label="Show frequently accessed everywhere"
+              class="flex items-center justify-center h-6 w-6 shrink-0 rounded-md text-fgs3 hover:bg-bgs3 hover:text-fgs1"
+              use:tooltip={{ text: "Clear context" }}
+              onclick={() => (clearedFrequentContext = frequentContext)}
+            >
+              <Icon icon="cross" size={Size.xs} />
+            </button>
+          </div>
           {@render historyList(fromHereItems)}
-        {/if}
-        <div class="text-b2 text-fgs3">Frequently accessed</div>
-        {#if frequentItems.length > 0}
-          {@render historyList(frequentItems)}
         {:else}
-          <EmptyStatusView size={Size.sm} mainText="No history yet" />
+          <div class="text-b2 text-fgs3">Frequently accessed</div>
+          {#if frequentItems.length > 0}
+            {@render historyList(frequentItems)}
+          {:else}
+            <EmptyStatusView size={Size.sm} mainText="No history yet" />
+          {/if}
         {/if}
       </section>
     {/if}
