@@ -85,7 +85,7 @@
         "flex justify-center items-center h-full bg-bgs2 transition-all duration-300",
         resolveRightPanelWidthClass(action.liveActionParams?.size),
         {
-          "border-r border-brs3": !$context.experiments?.isEnableRoundedMain
+          "border-l border-brs3": !$context.experiments?.isEnableRoundedMain
         }
       )}
   {...sheetAttributes}
@@ -94,7 +94,10 @@
   use:trapFocusWhile={isSheet && !isSuspended}
   in:fly={isSheet
     ? { y: 40, duration: 150, easing: quadInOut }
-    : { x: -10, duration: 100, easing: quadInOut }}
+    : { x: 24, duration: 150, easing: quadInOut }}
+  out:fly={isSheet
+    ? { duration: 0 }
+    : { x: 24, duration: 120, easing: quadInOut }}
 >
   {#if isSheet}
     <div class="flex items-center justify-between min-h-12 px-2 otop:pt-12">
