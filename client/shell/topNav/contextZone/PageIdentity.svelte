@@ -1,6 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { tooltip } from "@21n/ui/actions/popover.action";
@@ -15,12 +16,15 @@
   let {
     subject,
     backId = undefined,
+    titleContent = undefined,
     onBack = undefined
   }: {
     /** Record or page path the visible page shows. */
     subject: ContextZoneSubject;
     /** Record the page was opened from; shows a back button to it. */
     backId?: string;
+    /** Renders in place of the title, such as an editable title. */
+    titleContent?: Snippet;
     onBack?: () => void;
   } = $props();
 
@@ -73,25 +77,36 @@
         </button>
       {/key}
     {/if}
-    {#key title}
+    {#if titleContent}
       <div
-        class="flex items-center min-w-0 px-1"
+        class="flex items-center min-w-0 px-1 text-base font-medium text-fgs1"
         data-testid="top-bar-page-title"
-        use:tooltip={{ text: title }}
       >
-        <span class="flex items-center min-w-0 text-base font-medium text-fgs1">
-          {#if live}
-            <span class="truncate min-w-0">
-              <ResourceLabel
-                source={$live!}
-                fallbackIcon={resolveResourceIcon($live!.resourceType)}
-              />
-            </span>
-          {:else if pageAction}
-            <span class="truncate">{pageAction.label}</span>
-          {/if}
-        </span>
+        {@render titleContent()}
       </div>
-    {/key}
+    {:else}
+      {#key title}
+        <div
+          class="flex items-center min-w-0 px-1"
+          data-testid="top-bar-page-title"
+          use:tooltip={{ text: title }}
+        >
+          <span
+            class="flex items-center min-w-0 text-base font-medium text-fgs1"
+          >
+            {#if live}
+              <span class="truncate min-w-0">
+                <ResourceLabel
+                  source={$live!}
+                  fallbackIcon={resolveResourceIcon($live!.resourceType)}
+                />
+              </span>
+            {:else if pageAction}
+              <span class="truncate">{pageAction.label}</span>
+            {/if}
+          </span>
+        </div>
+      {/key}
+    {/if}
   </div>
 {/if}

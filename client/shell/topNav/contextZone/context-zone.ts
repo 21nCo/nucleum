@@ -18,6 +18,8 @@ export type ContextZoneRegistration = {
    * page or pane below, such as "bg-bgs2". Defaults to the page background.
    */
   surface?: string;
+  /** Replaces the page identity's title, such as an editable title. */
+  title?: Snippet;
 };
 
 /** Background class of the context tab when no entry declares one. */
@@ -192,7 +194,8 @@ export const contextZone = {
       {
         content: { get: () => registration.content, enumerable: true },
         cycle: { get: () => registration.cycle, enumerable: true },
-        surface: { get: () => registration.surface, enumerable: true }
+        surface: { get: () => registration.surface, enumerable: true },
+        title: { get: () => registration.title, enumerable: true }
       }
     );
     entries.update((list) => [...list, entry]);

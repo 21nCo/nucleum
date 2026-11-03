@@ -307,6 +307,7 @@
             <PageIdentity
               {subject}
               backId={subjectBack?.id}
+              titleContent={$activeEntry?.title}
               onBack={() => navigation.backInTrail()}
             />
             {#if $activeEntry}

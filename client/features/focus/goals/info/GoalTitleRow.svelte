@@ -8,6 +8,11 @@
   import RecordStarStatusFeedback from "@nucleum/features/records/RecordStarStatusFeedback.svelte";
   import { AlertType, type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
   import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import {
+    contextZone,
+    isContextZoneAccessMode
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     objective,
@@ -19,6 +24,13 @@
     status?: IInlineStatus | undefined;
   } = $props();
 
+  const isContextZoneHosted = contextZone.isHosted;
+  const isTitleInContextZone = $derived(
+    $isContextZoneHosted &&
+      !$view.isPortrait &&
+      !$view.isConstrainedWidth &&
+      isContextZoneAccessMode($objective.accessMode)
+  );
   let labelEditVal = $state($objective.label);
   let inputRef = $state<TextInput | undefined>(undefined);
 
@@ -70,6 +82,7 @@
   }
 </script>
 
+{#if !isTitleInContextZone}
 <div
   class={cn("flex flex-col items-center gap-1 userdata", {
     "px-3 lp:px-6 pt-2": isConstrainedWidth
@@ -134,3 +147,4 @@
     {/if}
   </div>
 </div>
+{/if}

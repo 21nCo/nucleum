@@ -1,5 +1,6 @@
 <script lang="ts">
   import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
+  import GoalContextTitle from "@nucleum/features/focus/goals/info/GoalContextTitle.svelte";
   import {
     resolveObjectiveContextMenu,
     type IActiveObjectiveStore
@@ -59,7 +60,12 @@
   }
 </script>
 
+{#snippet contextTitle()}
+  <GoalContextTitle {objective} />
+{/snippet}
+
 <ResourceViewSwitcher
+  title={contextTitle}
   resourceStore={adaptedStore}
   {panels}
   {accessMode}
