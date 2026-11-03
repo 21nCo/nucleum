@@ -318,7 +318,7 @@
       >
         <div
           bind:this={tabInnerRef}
-          class="flex items-center h-full min-w-0 overflow-x-auto overflow-y-hidden"
+          class="flex items-center h-full min-w-0 overflow-x-auto overflow-y-hidden pl-2 pr-4"
         >
           {#if isPageFullScreen && !isBulkMode}
             <div class="flex items-center h-full shrink-0 pl-1">
