@@ -6,31 +6,24 @@
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-  import { setContext, untrack } from "svelte";
+  import { setContext } from "svelte";
   import { writable, type Writable } from "svelte/store";
   import { resizeListener } from "@21n/ui/actions/resize.action";
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import type { IContainer } from "@nucleum/shell/layout.type";
-  import {
-    setContextZoneTarget,
-    type ContextZoneSlot
-  } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { setInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
 
   let {
     resourceId = undefined,
-    resourceType = undefined,
-    zoneSlot = undefined
+    resourceType = undefined
   }: {
     resourceId?: IRecordId | undefined;
     resourceType?: Resource | undefined;
-    /** Shows the item's view controls in the space's context-zone entry. */
-    zoneSlot?: ContextZoneSlot;
   } = $props();
 
   const container = writable<IContainer | undefined>(undefined);
   setContext<Writable<IContainer | undefined>>(Context.CONTAINER, container);
-  const slot = untrack(() => zoneSlot);
-  if (slot) setContextZoneTarget(slot);
+  setInPlaceResource();
 </script>
 
 <div

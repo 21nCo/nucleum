@@ -13,7 +13,6 @@
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import {
     contextZone,
-    getContextZoneTarget,
     isContextZoneAccessMode,
     nextCycleValue
   } from "@nucleum/shell/topNav/contextZone/context-zone";
@@ -45,15 +44,11 @@
   } = $props();
 
   const isContextZoneHosted = contextZone.isHosted;
-  const isInPlaceInContextZone = !!getContextZoneTarget();
-  const isZoneAccess = $derived(
-    isContextZoneAccessMode(accessMode) || isInPlaceInContextZone
-  );
   const isInContextZone = $derived(
     $isContextZoneHosted &&
       !$view.isConstrainedWidth &&
       !$view.isPortrait &&
-      isZoneAccess
+      isContextZoneAccessMode(accessMode)
   );
 
   function cyclePanel() {
@@ -71,7 +66,7 @@
     resource={determineResourceType($resourceStore.id)}
     resolve={() => contextMenuResolver?.() ?? []}
     {onAction}
-    isEnabled={isZoneAccess}
+    isEnabled={isContextZoneAccessMode(accessMode)}
   />
 {/if}
 {#if isInContextZone}

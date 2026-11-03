@@ -18,6 +18,7 @@
   import { page } from "$app/stores";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { isInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
 
   interface Props {
     resourceStore: Readable<IResourcePageWithPanels>;
@@ -53,6 +54,7 @@
     variant = "floating",
     contextMenuResolver = undefined
   }: Props = $props();
+  const isInPlace = isInPlaceResource();
   const isMaximized = $derived(
     $page.url.searchParams.get(AppSearchParam.MAX) === "true" &&
       $page.url.searchParams.get(AccessMode.PAGE) === $resourceStore.id
@@ -187,21 +189,23 @@
             />
           </div>
         {:else}
-          <div
-            class="flex cw:border-l border-r border--t border-brs2 text-fgs2 mr-3"
-          >
-            <BoxButton
-              label="Close"
-              icon="cross"
-              width="px-3"
-              size={Size.sm}
-              type={ButtonVariant.DANGER}
-              parentBgIndex={2}
-              onclick={() => {
-                requireResourcePanelHost().close($resourceStore.id);
-              }}
-            />
-          </div>
+          {#if !isInPlace}
+            <div
+              class="flex cw:border-l border-r border--t border-brs2 text-fgs2 mr-3"
+            >
+              <BoxButton
+                label="Close"
+                icon="cross"
+                width="px-3"
+                size={Size.sm}
+                type={ButtonVariant.DANGER}
+                parentBgIndex={2}
+                onclick={() => {
+                  requireResourcePanelHost().close($resourceStore.id);
+                }}
+              />
+            </div>
+          {/if}
           {@render panelSwitcher(
             $view.isConstrainedWidth ? Size.sm : Size.md,
             $view.isConstrainedWidth
@@ -209,7 +213,7 @@
           <div
             class="flex items-center h-full cw:border-r border-l border-brs2 ml-3"
           >
-            {#if isConstrainedWidth}
+            {#if isConstrainedWidth && !isInPlace}
               <BoxButton
                 icon="chevron-left"
                 tooltip="Go back"

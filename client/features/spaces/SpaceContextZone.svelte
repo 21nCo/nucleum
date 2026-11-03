@@ -4,13 +4,11 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { tooltip } from "@21n/ui/actions/popover.action";
-  import type { ContextZoneSlot } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { SpaceView } from "@nucleum/features/spaces/space.type";
   import type { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
 
   let {
     store,
-    itemSlot,
     view,
     parentLabel = undefined,
     isPinned = false,
@@ -19,8 +17,6 @@
     onViewChange
   }: {
     store: ActiveSpaceStore;
-    /** Context-zone controls of the item rendered inside the space. */
-    itemSlot: ContextZoneSlot;
     view: SpaceView;
     /** Name of the space one level up, when this space is focused inside another. */
     parentLabel?: string;
@@ -34,7 +30,6 @@
     { value: SpaceView.SIDENAV, label: "Side nav", icon: "sidebar" },
     { value: SpaceView.WALL, label: "Wall", icon: "widget" }
   ];
-  const itemEntries = itemSlot.entries;
   const title = $derived($store?.label || "Untitled space");
   const backLabel = $derived(parentLabel || "Untitled space");
 
@@ -105,14 +100,4 @@
       tooltip="Space actions"
     />
   </div>
-  {#each $itemEntries as entry (entry.key)}
-    <div
-      class="shrink-0 w-px h-5 mx-1 bg-brs3"
-      aria-hidden="true"
-      data-testid="space-item-divider"
-    ></div>
-    <div class="flex items-center h-full min-w-0" data-testid="space-item-tabs">
-      {@render entry.content()}
-    </div>
-  {/each}
 </div>
