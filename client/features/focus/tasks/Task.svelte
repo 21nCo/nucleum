@@ -248,7 +248,8 @@
         navigation.toggleSearchParamRecordSpecific(accessPointId, ["task"]);
     } else {
       navigation.closeResource({
-        accessMode: accessMode
+        id,
+        accessMode
       });
     }
   }
@@ -382,7 +383,8 @@
                 context: accessPoint
               });
               navigation.closeResource({
-                accessMode: accessMode
+                id,
+                accessMode
               });
             }}
           />

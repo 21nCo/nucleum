@@ -433,7 +433,10 @@ export const navigation = {
               [accessMode]: id.toString(),
               [accessMode + "At"]: timestamp.getTime()
             }
-          : { [AppSearchParam.SELECTED]: id.toString() }),
+          : {
+              [AppSearchParam.SELECTED]: id.toString(),
+              [`${AppSearchParam.SELECTED}At`]: timestamp.getTime()
+            }),
         ...(params?.searchParams ?? {}),
         ...(isOpenNavigator ? { [AccessMode.PANEL]: Action.NAVIGATOR } : {}),
         ...(isCloseNavigator ? { [AccessMode.PANEL]: null } : {})
@@ -541,6 +544,11 @@ export const navigation = {
       event
     });
   },
+  /**
+   * Closes a resource: by explicit access mode, by the mode the id is open in, or, for an id
+   * rendered in place, by clearing the library selection when it is selected. With no props it
+   * closes every opened layer.
+   */
   closeResource: (props?: {
     id?: IRecordId;
     accessMode?: AccessMode;
@@ -554,11 +562,23 @@ export const navigation = {
     if (props?.accessMode) {
       navigation.toggleSearchParam([props.accessMode], { url });
       return;
-    } else if (props?.id) {
-      const accessMode = determineResourceAccessMode(props.id);
-      if (accessMode) {
-        navigation.toggleSearchParam([accessMode], { url });
-      }
+    }
+    const resolvedMode = props?.id
+      ? determineResourceAccessMode(props.id)
+      : undefined;
+    if (resolvedMode) {
+      navigation.toggleSearchParam([resolvedMode], { url });
+      return;
+    }
+    if (props?.id) {
+      const isSelected =
+        url.searchParams.get(AppSearchParam.SELECTED) === props.id.toString();
+      navigation.toggleSearchParam(
+        isSelected
+          ? [AppSearchParam.SELECTED, `${AppSearchParam.SELECTED}At`]
+          : [],
+        { url }
+      );
       return;
     }
     if (props?.isRestrictToModals) {

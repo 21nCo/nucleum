@@ -96,7 +96,7 @@
             icon="cross"
             style={ButtonStyle.OUTLINED}
             tooltip="Close"
-            onclick={() => navigation.closeResource({ accessMode })}
+            onclick={() => navigation.closeResource({ id, accessMode })}
           />
         {/if}
       </div>
@@ -197,7 +197,7 @@
       secondaryAction={{
         label: "Close",
         icon: "cross",
-        callback: async () => navigation.closeResource({ accessMode })
+        callback: async () => navigation.closeResource({ id, accessMode })
       }}
     />
   </div>

@@ -13,6 +13,7 @@
   import type { DatafnDateValue } from "@nucleum/datafn/resource.type";
   import type { IAccessLog } from "@nucleum/shared-state/resources/history/access-log.type";
   import { page } from "$app/stores";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import AudioMetadata from "@nucleum/features/memory/node/metadata/AudioMetadata.svelte";
   import ImageMetadata from "@nucleum/features/memory/node/metadata/ImageMetadata.svelte";
   import LocationProperty from "@nucleum/features/collections/properties/locationProperty/LocationProperty.svelte";
@@ -49,7 +50,7 @@
   );
   const lastAccessLog = $derived.by(() => {
     if (viewLogs.length === 0) return undefined;
-    const currentAccess = $node.accessMode + "At";
+    const currentAccess = `${$node.accessMode ?? AppSearchParam.SELECTED}At`;
     const currentAccessId = $page.url.searchParams.get(currentAccess);
     if (
       currentAccessId &&
