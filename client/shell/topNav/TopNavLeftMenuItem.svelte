@@ -91,6 +91,16 @@
     isOpeningMenuOpen = false;
   }
 
+  /** Closes on Escape, and on keys pressed outside it, such as a shortcut that opens a modal. */
+  function handleWindowKeyDown(event: KeyboardEvent) {
+    if (!isOpeningMenuOpen) return;
+    const isInside =
+      !!containerRef &&
+      event.target instanceof Node &&
+      containerRef.contains(event.target);
+    if (event.key === "Escape" || !isInside) isOpeningMenuOpen = false;
+  }
+
   function handleClick(event: MouseEvent) {
     if (isPreventDefault) {
       onClick?.(event);
@@ -100,7 +110,10 @@
   }
 </script>
 
-<svelte:window onpointerdown={handleWindowPointerDown} />
+<svelte:window
+  onpointerdown={handleWindowPointerDown}
+  onkeydown={handleWindowKeyDown}
+/>
 
 {#if data}
   {@const hasTooltip = data.label || tooltip || label}

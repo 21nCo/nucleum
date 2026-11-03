@@ -40,9 +40,22 @@
       return;
     isListOpen = false;
   }
+
+  /** Closes on Escape, and on keys pressed outside it, such as a shortcut that opens a modal. */
+  function handleWindowKeyDown(event: KeyboardEvent) {
+    if (!isListOpen) return;
+    const isInside =
+      !!containerRef &&
+      event.target instanceof Node &&
+      containerRef.contains(event.target);
+    if (event.key === "Escape" || !isInside) isListOpen = false;
+  }
 </script>
 
-<svelte:window onpointerdown={handleWindowPointerDown} />
+<svelte:window
+  onpointerdown={handleWindowPointerDown}
+  onkeydown={handleWindowKeyDown}
+/>
 
 <div
   bind:this={containerRef}
