@@ -334,7 +334,7 @@
         <TextInput
           bind:this={searchInputRef}
           bind:value={$query}
-          placeholder="Search..."
+          placeholder="Search or jump to..."
           size={Size.sm}
           testId="navigator-search-input"
           onKeydown={(keydown: CustomEvent<KeyboardEvent>) =>

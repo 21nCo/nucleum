@@ -17,7 +17,7 @@
     state = "idle"
   }: {
     /**
-     * `idle` shows the "Jump to" pill, `compact` an icon beside another open
+     * `idle` shows the "Search or jump to" pill, `compact` an icon beside another open
      * panel action, and `expanded` the navigator search input.
      */
     state?: TopNavPanelActionState;
@@ -40,7 +40,7 @@
     data-testid="navigator-pill"
     aria-label="Open navigator"
     class="flex items-center justify-center h-full px-3.5 text-fgs2 hover:bg-bgs3-striped hover:text-fgs3"
-    use:tooltip={{ text: "Jump to" }}
+    use:tooltip={{ text: "Search or jump to" }}
     onclick={() => requireCommandHost().runAction(Action.NAVIGATOR)}
   >
     <Icon icon="search" size={Size.md} />
@@ -64,7 +64,7 @@
       onclick={() => requireCommandHost().runAction(Action.NAVIGATOR)}
     >
       <Icon icon="search" size={Size.sm} />
-      <span class="whitespace-nowrap">Jump to&hellip;</span>
+      <span class="whitespace-nowrap">Search or jump to&hellip;</span>
       <span
         aria-hidden="true"
         class="flex items-center gap-1 px-1.5 h-5 rounded-full bg-bgs3 text-fgs3 font-mono"

@@ -35,7 +35,7 @@
     bind:this={inputRef}
     bind:value={$query}
     type="text"
-    placeholder="Jump to..."
+    placeholder="Search or jump to..."
     aria-label="Search the navigator"
     data-testid="navigator-search-input"
     class="flex-1 min-w-0 h-full bg-transparent outline-none text-fgs1 placeholder:text-fgs3"
