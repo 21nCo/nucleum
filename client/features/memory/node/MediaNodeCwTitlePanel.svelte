@@ -6,7 +6,12 @@
   import ResourceStatusBanner from "@nucleum/features/records/RecordStatusBanner.svelte";
   import CollectionsLane from "@nucleum/features/memory/node/floatingBar/CollectionsLane.svelte";
   import { isShowStatusBanner } from "@nucleum/datafn/resource.utils";
+  import { nodeTitleInContextZone } from "@nucleum/features/memory/node/title/node-title-placement";
+  import { derived } from "svelte/store";
   let { node }: { node: IActiveNodeStore } = $props();
+  const isTitleInContextZone = nodeTitleInContextZone(
+    derived(node, ($value) => $value?.accessMode)
+  );
 </script>
 
 <div
@@ -42,20 +47,22 @@
         }
       )}
     >
-      <div class="flex gap-3 justify-between items-center w-full">
-        <span class="flex items-center gap-4 flex-1 min-w-0">
-          <NodeTitle
-            node={$node}
-            onLabelChange={() => {
-              if ($node.label !== undefined)
-                node.modify({ label: $node.label });
-            }}
-            onEditModeChange={(value) => {
-              node.toggleEditMode(value);
-            }}
-          />
-        </span>
-      </div>
+      {#if !$isTitleInContextZone}
+        <div class="flex gap-3 justify-between items-center w-full">
+          <span class="flex items-center gap-4 flex-1 min-w-0">
+            <NodeTitle
+              node={$node}
+              onLabelChange={() => {
+                if ($node.label !== undefined)
+                  node.modify({ label: $node.label });
+              }}
+              onEditModeChange={(value) => {
+                node.toggleEditMode(value);
+              }}
+            />
+          </span>
+        </div>
+      {/if}
       <div class="flex w-full justify-between">
         <CollectionsLane {node} />
       </div>

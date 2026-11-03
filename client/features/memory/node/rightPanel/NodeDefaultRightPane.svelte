@@ -23,6 +23,8 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import WebNodeUrlSegment from "../content/web/WebNodeUrlSegment.svelte";
   import SocialPostActions from "../content/web/SocialPostActions.svelte";
+  import { nodeTitleInContextZone } from "@nucleum/features/memory/node/title/node-title-placement";
+  import { derived } from "svelte/store";
   let { node }: { node: IActiveNodeStore } = $props();
   let _notes = $state($node.notes ?? "");
   const notesInputId = generateSimpleRandomId();
@@ -33,21 +35,26 @@
   }
 
   let _label = $derived(resolveNodeLabel($node));
+  const isTitleInContextZone = nodeTitleInContextZone(
+    derived(node, ($value) => $value?.accessMode)
+  );
 </script>
 
 <div class="flex flex-col w-full h-full bg-bgs2">
   <section class="flex flex-col cw:px-2 px-3 pb-6">
-    <div class="flex w-full justify-between py-2">
-      <NodeTitle
-        node={$node}
-        onLabelChange={() => {
-          if ($node.label !== undefined) node.modify({ label: $node.label });
-        }}
-        onEditModeChange={(value) => {
-          node.toggleEditMode(value);
-        }}
-      />
-    </div>
+    {#if !$isTitleInContextZone}
+      <div class="flex w-full justify-between py-2">
+        <NodeTitle
+          node={$node}
+          onLabelChange={() => {
+            if ($node.label !== undefined) node.modify({ label: $node.label });
+          }}
+          onEditModeChange={(value) => {
+            node.toggleEditMode(value);
+          }}
+        />
+      </div>
+    {/if}
     <div class="flex w-full justify-between">
       <CollectionsLane {node} />
     </div>
