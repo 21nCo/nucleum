@@ -266,8 +266,7 @@
                 },
                 isEnableTitleActionResolved && {
                   "text-aps1 bg-aps3": value === titleValue,
-                  [`text-fgs2 hover:${bg(parentBgIndex)}`]:
-                    value !== titleValue
+                  [`text-fgs2 hover:${bg(parentBgIndex)}`]: value !== titleValue
                 }
               )}
               onclick={() => {
@@ -294,9 +293,14 @@
         bind:this={child}
         role="tablist"
         class={cn("flex items-center", bg(parentBgIndex - 1), {
-          "h-full": style === PanelSwitcherStyle.BAR,
-          "gap-1 px-1 !border-transparent":
+          "h-full": style === PanelSwitcherStyle.BAR && !$shape.isFramed,
+          [`self-center gap-1 p-1 !border-transparent ${bg(parentBgIndex + 1)}`]:
             style === PanelSwitcherStyle.BAR && $shape.isFramed,
+          "rounded-full": style === PanelSwitcherStyle.BAR && $shape.isRounded,
+          "rounded-lg":
+            style === PanelSwitcherStyle.BAR &&
+            $shape.isFramed &&
+            !$shape.isRounded,
           "overflow-x-auto mr-auto": isExpandToFullWidth,
           "min-w-fit": !isExpandToFullWidth,
           "border-b border-brs3":

@@ -114,13 +114,14 @@
     emitRearranged(displacement);
   }
 </script>
+
 {#if style === PanelSwitcherStyle.BAR}
   <button
     role="tab"
     aria-selected={isActive}
     class={cn("relative group flex bg-transparent", {
       "h-full": !isFramed,
-      "h-10 self-center items-center": isFramed,
+      "h-6 self-center items-center": isFramed,
       "px-4":
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&
@@ -135,7 +136,7 @@
       "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW,
       [$shape.radiusClass]: isFramed,
       [`hover:${bg(parentBgIndex)}`]: isFramed && !isActive,
-      "!bg-aps3 !border-transparent": isFramed && isActive
+      "!bg-bgs1 shadow-sm !border-transparent": isFramed && isActive
     })}
     onclick={handleClick}
     disabled={isDisabled}
@@ -161,7 +162,8 @@
         "border-t-2": barStyle === BarStyle.EXACT && isInversePlacement,
         "border-ccs1": isActive && barStyle === BarStyle.EXACT,
         "border-transparent": !isActive && barStyle === BarStyle.EXACT,
-        "!border-transparent": isFramed
+        "!border-0 !pt-0 text-b2": isFramed,
+        "text-fgs1": isFramed && isActive && !isInEditMode
       })}
     >
       <PanelSwitcherItemLabel
