@@ -17,18 +17,23 @@
   let {
     message = undefined,
     actions = [],
-    isNotFoundPage = false
+    isNotFoundPage = false,
+    notFoundPath = undefined
   }: {
     message?: string | undefined;
     actions?: IButtonParams[];
     isNotFoundPage?: boolean;
+    /** Missing path shown when the page renders in place, without a ?path= URL. */
+    notFoundPath?: string;
   } = $props();
   const is404 = $derived(
     isNotFoundPage ||
       $page?.url.pathname === "/404" ||
       $page?.url.pathname === "/404/"
   );
-  const erroredPath = $derived($page?.url?.searchParams?.get("path"));
+  const erroredPath = $derived(
+    notFoundPath ?? $page?.url?.searchParams?.get("path")
+  );
   const errorParam = $derived($page?.url?.searchParams?.get("error"));
   const titles = ["Yikes", "Uh-oh", "Oops", "Oh no", "Whoops", "Dang", "Shoot"];
 </script>

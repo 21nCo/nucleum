@@ -35,11 +35,14 @@
   let action = $state<IAction | null>(null);
   let subPath = $state<string[] | undefined>(undefined);
   let isRouted = $state(false);
+  let inlineNotFoundPath = $state<string | undefined>(undefined);
   let lastRecordedPath: string | undefined;
   const params = $derived(
-    subPath
-      ? { ...(action?.componentParams ?? {}), subPath, isRouted }
-      : action?.componentParams
+    inlineNotFoundPath
+      ? { ...(action?.componentParams ?? {}), notFoundPath: inlineNotFoundPath }
+      : subPath
+        ? { ...(action?.componentParams ?? {}), subPath, isRouted }
+        : action?.componentParams
   );
   let pageSub: any;
   let pendingRefreshes = $state<number[]>([]);
@@ -121,6 +124,7 @@
 
     const route = path ? appStore.resolvePageRoute(path) : null;
     action = route?.action ?? null;
+    inlineNotFoundPath = undefined;
 
     if (!action) {
       subPath = undefined;
@@ -135,6 +139,7 @@
       }
       action = appStore.resolveComponentFromPath(NOT_FOUND_PATH);
       if (!action) return;
+      inlineNotFoundPath = path || undefined;
     }
     const isRoutedPage = !cmdPageLaunch && !$context.isSheet;
     const nextSubPath = route?.subPath;
