@@ -5,6 +5,7 @@
 
   import TopBarResourceItem from "../topNav/tabs/TopBarResourceItem.svelte";
   import { isRecordId } from "@nucleum/datafn/resource.utils";
+  import { resolveNavigatorSearchTarget } from "@nucleum/shell/navigator/navigator-search";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import TextInput from "@21n/ui/elements/input/TextInput.svelte";
@@ -47,6 +48,7 @@
   let searchInputRef = $state<TextInput | undefined>(undefined);
   let query = $state("");
   let searchResults = $state<string[]>([]);
+  let searchResultsQuery = $state("");
   let isSearching = $state(false);
   let searchDebounce: ReturnType<typeof setTimeout> | undefined;
   let searchRequestId = 0;
@@ -117,6 +119,7 @@
     const requestId = ++searchRequestId;
     if (!trimmed || searchResources.length === 0) {
       searchResults = [];
+      searchResultsQuery = trimmed;
       isSearching = false;
       return;
     }
@@ -132,15 +135,28 @@
         fuzzy: 0.2
       } as any)) as { results?: { data?: { id?: unknown } }[] };
       if (requestId !== searchRequestId) return;
+      searchResultsQuery = trimmed;
       searchResults = (result.results ?? [])
         .map((entry) => entry.data?.id?.toString())
         .filter((id): id is string => !!id && isRecordId(id));
     } catch (error) {
       logger.error({ at: "Navigator.search", error });
-      if (requestId === searchRequestId) searchResults = [];
+      if (requestId === searchRequestId) {
+        searchResults = [];
+        searchResultsQuery = trimmed;
+      }
     } finally {
       if (requestId === searchRequestId) isSearching = false;
     }
+  }
+
+  function clearSearch() {
+    clearTimeout(searchDebounce);
+    searchRequestId += 1;
+    query = "";
+    searchResults = [];
+    searchResultsQuery = "";
+    isSearching = false;
   }
 
   function handleSearchInput() {
@@ -153,16 +169,19 @@
     if (event.key === "Escape") {
       event.preventDefault();
       if (query) {
-        query = "";
-        searchResults = [];
+        clearSearch();
         return;
       }
       navigation.toggleSearchParam([AccessMode.PANEL]);
       return;
     }
-    if (event.key === "Enter" && searchResults[0]) {
+    const target = resolveNavigatorSearchTarget(query, {
+      query: searchResultsQuery,
+      ids: searchResults
+    });
+    if (event.key === "Enter" && target) {
       event.preventDefault();
-      openFresh(searchResults[0]);
+      openFresh(target);
     }
   }
 
