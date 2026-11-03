@@ -148,7 +148,7 @@
       {@render panelSwitcher(Size.md, false)}
       <div class="flex items-center h-full ml-2">
         {@render maximizeButton()}
-        {@render actionsMenu(2)}
+        {@render actionsMenu(1)}
       </div>
     {/if}
   </div>

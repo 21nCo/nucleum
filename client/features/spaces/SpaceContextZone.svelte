@@ -103,7 +103,7 @@
       menuResolver={resolveMenu}
       size={Size.md}
       isBoxed={true}
-      parentBgIndex={2}
+      parentBgIndex={1}
       class="h-full w-10"
       icon="more-outline-horizontal"
       heading="Space"
