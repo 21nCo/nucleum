@@ -36,6 +36,8 @@
   } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
   import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
+  import { resolveAccessTrailBack } from "@nucleum/shell/navigator/access-trail";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   let {
@@ -90,6 +92,12 @@
     resolveCloseControlLabel(searchParams, $bulkEditCount)
   );
   const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
+  const trailBack = $derived(
+    resolveAccessTrailBack(
+      $accessTrail.current,
+      searchParams.get(AccessMode.PAGE)
+    )
+  );
   const isPageFullScreen = $derived(
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
   );
@@ -152,18 +160,20 @@
     class="flex flex-1 min-w-0 h-full items-center justify-start overflow-x-auto"
     data-testid="top-bar-context-zone"
   >
-    {#if isPageOpen && !isBulkMode}
+    {#if isPageOpen && !isBulkMode && (trailBack || isPageFullScreen)}
       <div class="flex items-center h-full shrink-0 pl-1 pr-1 gap-0.5">
-        <button
-          type="button"
-          data-testid="top-bar-back"
-          aria-label="Back"
-          class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-          use:tooltip={{ text: "Back" }}
-          onclick={() => navigation.backInTrail()}
-        >
-          <Icon icon="chevron-left" size={Size.md} />
-        </button>
+        {#if trailBack}
+          <button
+            type="button"
+            data-testid="top-bar-back"
+            aria-label="Back"
+            class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+            use:tooltip={{ text: "Back" }}
+            onclick={() => navigation.backInTrail()}
+          >
+            <Icon icon="chevron-left" size={Size.md} />
+          </button>
+        {/if}
         {#if isPageFullScreen}
           <button
             type="button"
