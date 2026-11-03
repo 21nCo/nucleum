@@ -17,6 +17,7 @@
     isIconOnlyMode = false,
     isExpandOnActiveForIcon = false,
     parentBgIndex = 1,
+    isTrackFilled = true,
     isAccentColor = false,
     size = Size.sm,
     isActiveIndicatorOnTop = false,
@@ -28,6 +29,7 @@
     isIconOnlyMode?: boolean;
     isExpandOnActiveForIcon?: boolean;
     parentBgIndex?: number;
+    isTrackFilled?: boolean;
     isAccentColor?: boolean;
     size?: Size.sm | Size.md;
     isActiveIndicatorOnTop?: boolean;
@@ -89,7 +91,8 @@
         !$shape.isFramed && (!isExpandOnActiveForIcon || isIconOnlyMode),
       "auto-cols-max":
         $shape.isFramed && (!isExpandOnActiveForIcon || isIconOnlyMode),
-      [`items-center gap-1 p-1 ${bg(parentBgIndex + 1)}`]: $shape.isFramed,
+      "items-center gap-1 p-1": $shape.isFramed,
+      [bg(parentBgIndex + 1)]: $shape.isFramed && isTrackFilled,
       "rounded-full": $shape.isRounded,
       "rounded-lg": $shape.isFramed && !$shape.isRounded
     })}

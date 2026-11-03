@@ -29,6 +29,12 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { searchResources } from "@nucleum/shared-state/resources/resource-search";
   import { Action } from "@nucleum/client/config/action.enum";
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
+  import type { IKeyboardShortcut } from "@21n/ui/elements/keyboard/shortcut.type";
+  import {
+    KeyboardKey,
+    ModifierKey
+  } from "@21n/ui/elements/keyboard/keyboard.type";
   import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
   import {
     flattenAccessTrail,
@@ -103,10 +109,13 @@
   );
   let clearedFrequentContext = $state<string | undefined>(undefined);
   let now = $state(Date.now());
-  const keyHints = [
-    { keys: "\u21b5", label: "open" },
-    { keys: "\u2318\u21b5", label: "split" },
-    { keys: "\u2318K", label: "super bar" }
+  const keyHints: { shortcut: string | IKeyboardShortcut; label: string }[] = [
+    { shortcut: { key: KeyboardKey.ENTER }, label: "open" },
+    {
+      shortcut: { key: KeyboardKey.ENTER, modifiers: [ModifierKey.META] },
+      label: "split"
+    },
+    { shortcut: Action.CMD, label: "super bar" }
   ];
   const fromHereItems = $derived(
     currentPageId && isRecordId(currentPageId)
@@ -679,10 +688,11 @@
   >
     {#each keyHints as hint (hint.label)}
       <span class="flex items-center gap-1.5 leading-none">
-        <kbd
-          class="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded border border-brs3 bg-bgs1 font-sans text-b3 font-medium leading-none text-fgs2 shadow-sm"
-          >{hint.keys}</kbd
-        >
+        <ShortcutText
+          shortcut={hint.shortcut}
+          parentBgIndex={1}
+          isAlwaysShown={true}
+        />
         <span>{hint.label}</span>
       </span>
     {/each}

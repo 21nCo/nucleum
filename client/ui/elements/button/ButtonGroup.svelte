@@ -46,7 +46,7 @@
         class={cn(
           "w-full h-full",
           {
-            "border-t": isFooter
+            "border-t app-framed:border-transparent": isFooter
           },
           isFooter && {
             "border-brs2": parentBgIndex === 1,

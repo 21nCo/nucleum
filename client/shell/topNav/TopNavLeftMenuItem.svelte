@@ -118,7 +118,10 @@
           !isExpanded,
         "app-framed:w-10 app-framed:min-w-10 app-framed:px-0":
           !isExpanded && !label,
-        "w-full justify-start gap-2 px-4 text-fgs1": isExpanded,
+        "w-full justify-start gap-2 px-4 text-fgs1 shadow-[inset_0_-2px_0_0_rgb(var(--colors-aps1))]":
+          isExpanded,
+        "app-framed:h-10 app-framed:shadow-none app-framed:bg-bgs3 app-framed:rounded-[var(--app-control-radius)]":
+          isExpanded,
         "hover:bg-bgs3 hover:text-fgs1": !isActive,
         "text-fgs2": !isActive && !isExpanded,
         "bg-aps3 text-aps1": isActive && !isExpanded

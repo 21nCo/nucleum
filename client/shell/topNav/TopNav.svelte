@@ -404,7 +404,7 @@
     {/if}
   </div>
   <div
-    class="flex items-center justify-end h-full shrink-0 app-framed:gap-1 app-framed:px-1"
+    class="flex items-center justify-end h-full shrink-0 app-framed:gap-2 app-framed:px-1"
     data-testid="top-bar-actions-zone"
   >
     {#if isToastMode && !isToastInZone}

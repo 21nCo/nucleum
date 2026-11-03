@@ -71,7 +71,11 @@
   }
 </script>
 
-{#snippet panelSwitcher(size: Size.sm | Size.md, isIconOnlyMode: boolean)}
+{#snippet panelSwitcher(
+  size: Size.sm | Size.md,
+  isIconOnlyMode: boolean,
+  isTrackFilled?: boolean
+)}
   <BoxSwitcher
     isTablist={true}
     isExpandOnActiveForIcon={true}
@@ -79,6 +83,7 @@
     {size}
     isAccentColor={true}
     isActiveIndicatorOnTop={false}
+    {isTrackFilled}
     selected={$resourceStore.panel}
     onSelect={(e) => $resourceStore.switchPanel(e.detail)}
     {isIconOnlyMode}
@@ -223,7 +228,8 @@
           {/if}
           {@render panelSwitcher(
             $view.isConstrainedWidth ? Size.sm : Size.md,
-            $view.isConstrainedWidth
+            $view.isConstrainedWidth,
+            false
           )}
           <div
             class="flex items-center h-full cw:border-r border-l border-brs2 ml-3 app-framed:border-transparent app-framed:gap-1 app-framed:pr-1"

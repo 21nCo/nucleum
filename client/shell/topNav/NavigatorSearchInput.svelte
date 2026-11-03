@@ -29,7 +29,7 @@
 </script>
 
 <div
-  class="flex items-center w-full h-full gap-2 pl-3 pr-2 text-b3 focus-within:shadow-[inset_0_-2px_0_0_rgb(var(--colors-aps1))]"
+  class="flex items-center w-full h-full gap-2 pl-3 pr-2 text-b3 focus-within:shadow-[inset_0_-2px_0_0_rgb(var(--colors-aps1))] app-framed:h-10 app-framed:pr-1 app-framed:bg-bgs3 app-framed:rounded-[var(--app-control-radius)] app-framed:focus-within:shadow-none"
 >
   <Icon icon="search" size={Size.sm} class="shrink-0 stroke-fgs3" />
   <input
@@ -48,7 +48,7 @@
     type="button"
     aria-label="Close navigator"
     data-testid="navigator-inline-close"
-    class="flex items-center justify-center h-6 w-6 shrink-0 rounded-full text-fgs3 hover:bg-bgs3 hover:text-fgs1"
+    class="flex items-center justify-center h-6 w-6 shrink-0 rounded-full text-fgs3 hover:bg-bgs3 hover:text-fgs1 app-framed:h-8 app-framed:w-8 app-framed:rounded-[var(--app-control-radius)] app-framed:bg-bgs1 app-framed:hover:bg-bgs2"
     use:tooltip={{ text: "Close (Esc)" }}
     onclick={() =>
       navigation.toggleSearchParam([
