@@ -33,11 +33,13 @@ let nextKey = 0;
 /**
  * Shell-owned registry of the context menu actions of open resource pages.
  * The super bar shows the actions of the pane the user worked in last,
- * otherwise those of the topmost pane, using the context zone's pane order.
+ * otherwise those of the topmost pane, using the context zone's pane order and
+ * ignoring layers the user cannot see.
  */
 export const contextActions = {
-  active: derived([entries, contextZone.activePaneId], ([list, pane]) =>
-    resolveContextZoneEntry(list, pane)
+  active: derived(
+    [entries, contextZone.activePaneId, contextZone.visibleLayers],
+    ([list, pane, visible]) => resolveContextZoneEntry(list, pane, visible)
   ),
   /** Registers a resource's actions for a pane; returns its unregister function. */
   register(pane: ContextZonePane, registration: ContextActionsRegistration) {

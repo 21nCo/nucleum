@@ -86,6 +86,8 @@ export function nextCycleValue<T>(values: T[], current: T | undefined) {
 export const contextZone = {
   entries: { subscribe: entries.subscribe },
   activePaneId: { subscribe: activePaneId.subscribe },
+  /** Layers the user can see; undefined means every layer counts. */
+  visibleLayers: { subscribe: visibleLayers.subscribe },
   isHosted: derived(hostCount, (count) => count > 0),
   active: derived(
     [entries, activePaneId, visibleLayers],
