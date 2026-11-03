@@ -170,4 +170,23 @@ describe("access trail", () => {
     expect(trails.current!.active).toBe(2);
     expect(resolveAccessTrailParent(trails.current)).toBe(1);
   });
+
+  it("resumes an archived trail when history returns to one of its pages", () => {
+    let trails = startAccessTrail(createAccessTrails(), "node:a", opts());
+    trails = extendAccessTrail(trails, "node:b", opts());
+    const key = trails.current!.key;
+    trails = syncAccessTrailPage(trails, undefined, opts());
+    expect(trails.current).toBeUndefined();
+    trails = syncAccessTrailPage(trails, "node:a", {
+      ...opts(),
+      position: { trail: key, node: 0 }
+    });
+    trails = syncAccessTrailPage(trails, "node:b", {
+      ...opts(),
+      position: { trail: key, node: 1 }
+    });
+    expect(trails.current?.key).toBe(key);
+    expect(resolveAccessTrailParent(trails.current)).toBe(0);
+    expect(trails.recent.some((item) => item.key === key)).toBe(false);
+  });
 });

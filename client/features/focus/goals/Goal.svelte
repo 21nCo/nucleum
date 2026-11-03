@@ -81,7 +81,7 @@
     }
   });
 
-  $effect(() => ActiveObjectiveStore.retain(id));
+  $effect(() => ActiveObjectiveStore.retain(id, untrack(() => accessMode)));
 
   function resolvePreviouslySelectedView() {
     const panelState = uiState.getState(UIState.objectivePanelSelection, {
@@ -186,6 +186,7 @@
           <ObjectivePanelSwitcher
             panels={tabs}
             {objective}
+            {accessMode}
             {isConstrainedWidth}
             {isThreeColumned}
           />

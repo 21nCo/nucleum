@@ -133,7 +133,8 @@ export type AccessTrailPosition = {
 /**
  * Follows the open page after a navigation the trail did not start itself,
  * such as browser back and forward. A known `position` of the history entry
- * selects that exact node. Closing the page archives the trail; a page outside
+ * selects that exact node, resuming its trail when that trail was archived
+ * meanwhile. Closing the page archives the trail; a page outside
  * the current trail starts a new one.
  */
 export function syncAccessTrailPage(
@@ -142,9 +143,23 @@ export function syncAccessTrailPage(
   options: { key: string; at: number; position?: AccessTrailPosition }
 ): AccessTrails {
   if (!pageId) return endAccessTrail(trails);
+  const position = options.position;
+  const archived = position
+    ? trails.recent.find((item) => item.key === position.trail)
+    : undefined;
+  if (
+    position &&
+    archived?.nodes[position.node]?.id === pageId &&
+    trails.current?.key !== position.trail
+  ) {
+    return activateAccessTrailNode(
+      resumeAccessTrail(trails, position.trail, options.at),
+      position.node,
+      options.at
+    );
+  }
   const trail = trails.current;
   if (!trail) return startAccessTrail(trails, pageId, options);
-  const position = options.position;
   if (
     position &&
     position.trail === trail.key &&

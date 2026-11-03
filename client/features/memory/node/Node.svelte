@@ -121,7 +121,12 @@
     releaseDnDPage?.();
   });
 
-  $effect(() => ActiveNodeStore.retain(id));
+  $effect(() =>
+    ActiveNodeStore.retain(
+      id,
+      untrack(() => accessMode)
+    )
+  );
 
   const debouncedInitialize = debouncer(initialize, 1500);
   let hasReceivedInitialPropertySignal = false;
@@ -165,6 +170,7 @@
     {/if}
     <NodePanelSwitcher
       {node}
+      {accessMode}
       {isConstrainedWidth}
       isFloatingHidden={!isShowFloatingBar}
     />

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
+  import {
+    type AccessMode,
+    ResourceAccessPoint
+  } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import {
     resolveNodeContextMenu,
@@ -13,10 +16,13 @@
   import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   let {
     node,
+    accessMode = undefined,
     isConstrainedWidth = false,
     isFloatingHidden = false
   }: {
     node: IActiveNodeStore;
+    /** Mode this view of the node is open in; views share one node store. */
+    accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
     /** Hides the floating bar while the node content scrolls down. */
     isFloatingHidden?: boolean;
@@ -77,10 +83,10 @@
   {panels}
   {isConstrainedWidth}
   {isFloatingHidden}
-  accessMode={$node.accessMode}
+  {accessMode}
   contextMenuResolver={() =>
     resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
-      accessMode: $node.accessMode,
+      accessMode,
       isConstrainedWidth
     })}
   onAction={onContextMenuAction}

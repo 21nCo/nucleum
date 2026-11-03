@@ -118,7 +118,6 @@ function clearLayerScopedRecordParams(
   }
 }
 
-
 /** A resource page this session added to the browser history. */
 type PushedPage = {
   id: string;
@@ -197,7 +196,10 @@ export const navigation = {
     const parent = resolveAccessTrailParent(trail);
     const isTopPushed = pushedPages.at(-1)?.id === openPage;
     if (parent === undefined || !trail) {
-      navigation.closeResource({ accessMode: AccessMode.PAGE });
+      navigation.closeResource({
+        accessMode: AccessMode.PAGE,
+        isHistoryBack: true
+      });
       return true;
     }
     const parentId = trail.nodes[parent].id;
@@ -219,8 +221,8 @@ export const navigation = {
   /** Keeps the access trail in step with the open page after any navigation. */
   syncAccessTrail(pageId: string | undefined) {
     if (!pageId) {
+      forwardPages = [...forwardPages, ...pushedPages.slice().reverse()];
       pushedPages = [];
-      forwardPages = [];
       accessTrail.sync(undefined);
       return;
     }
@@ -698,12 +700,14 @@ export const navigation = {
   /**
    * Closes a resource: by explicit access mode, by the mode the id is open in, or, for an id
    * rendered in place, by clearing the library selection when it is selected. With no props it
-   * closes every opened layer.
+   * closes every opened layer. `isHistoryBack` closes a page the user opened from the base page
+   * by going back in history; callers that navigate right after closing leave it off.
    */
   closeResource: (props?: {
     id?: IRecordId;
     accessMode?: AccessMode;
     isRestrictToModals?: boolean;
+    isHistoryBack?: boolean;
   }) => {
     appEvents.nav(props?.id?.toString() ?? "");
     const resolvedMode =
@@ -750,7 +754,11 @@ export const navigation = {
     const closeMode = (mode: AccessMode) => {
       const openPage = url.searchParams.get(AccessMode.PAGE);
       if (mode === AccessMode.PAGE && openPage) {
-        if (pushedPages.length === 1 && pushedPages[0].id === openPage) {
+        if (
+          props?.isHistoryBack &&
+          pushedPages.length === 1 &&
+          pushedPages[0].id === openPage
+        ) {
           window.history.back();
           return;
         }

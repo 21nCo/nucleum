@@ -1,6 +1,7 @@
 import { get, writable } from "svelte/store";
 import { type IRecordId } from "@nucleum/schema/legacy/data.type";
 import {
+  type AccessMode,
   type IActiveResource,
   type IResource,
   type IResourceStarrable
@@ -12,7 +13,10 @@ import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { datafn } from "@nucleum/datafn/datafn.store";
 
 const activeResources = new Map<string, ActiveResourceStore<any, any>>();
-const activeResourceOwners = new Map<string, number>();
+const activeResourceOwners = new Map<
+  string,
+  { accessMode: AccessMode | undefined }[]
+>();
 
 export function updateActiveResource(
   id: IRecordId,
@@ -198,20 +202,29 @@ export class ActiveResourceStore<
   }
 
   /**
-   * Marks the store of `id` as used by a mounted view, such as a resource
-   * shown both on the base page and on the page covering it. The returned
-   * function releases it; the store is dropped after its last owner releases.
+   * Marks the store of `id` as used by a mounted view open in `accessMode`,
+   * such as a resource shown both on the base page and on the page covering
+   * it. The returned function releases it: the store takes back the access
+   * mode of the newest view still mounted, and is dropped after its last
+   * owner releases.
    */
-  static retain(id: IRecordId) {
+  static retain(id: IRecordId, accessMode?: AccessMode) {
     const idStr = id.toString();
-    activeResourceOwners.set(idStr, (activeResourceOwners.get(idStr) ?? 0) + 1);
-    let isReleased = false;
+    const owner = { accessMode };
+    activeResourceOwners.set(idStr, [
+      ...(activeResourceOwners.get(idStr) ?? []),
+      owner
+    ]);
     return () => {
-      if (isReleased) return;
-      isReleased = true;
-      const owners = (activeResourceOwners.get(idStr) ?? 1) - 1;
-      if (owners > 0) {
-        activeResourceOwners.set(idStr, owners);
+      const owners = activeResourceOwners.get(idStr) ?? [];
+      if (!owners.includes(owner)) return;
+      const remaining = owners.filter((item) => item !== owner);
+      if (remaining.length > 0) {
+        activeResourceOwners.set(idStr, remaining);
+        const mode = remaining[remaining.length - 1].accessMode;
+        activeResources
+          .get(idStr)
+          ?.update((prev) => (prev ? { ...prev, accessMode: mode } : prev));
         return;
       }
       activeResourceOwners.delete(idStr);

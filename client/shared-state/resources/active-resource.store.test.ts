@@ -25,4 +25,16 @@ describe("ActiveResourceStore.retain", () => {
     releaseBase();
     expect(ActiveResourceStore.resolve(id)).not.toBe(store);
   });
+
+  it("gives the store back the access mode of the view still mounted", () => {
+    const id = "node:modes";
+    const store = ActiveResourceStore.resolve(id);
+    store.set({ accessMode: undefined } as never);
+    const releaseBase = ActiveResourceStore.retain(id, undefined);
+    const releasePage = ActiveResourceStore.retain(id, "page" as never);
+    store.update((prev) => ({ ...prev, accessMode: "page" }) as never);
+    releasePage();
+    expect(store.get().accessMode).toBeUndefined();
+    releaseBase();
+  });
 });

@@ -85,7 +85,7 @@ export function closeTopLayer(options?: {
   if (layer === "overlay" || layer === "panel") {
     navigation.toggleSearchParam([param]);
   } else {
-    navigation.closeResource({ accessMode: param });
+    navigation.closeResource({ accessMode: param, isHistoryBack: true });
   }
   return layer;
 }

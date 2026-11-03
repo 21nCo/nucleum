@@ -20,7 +20,7 @@
     type RankedNavigatorHistoryEntry
   } from "@nucleum/shell/navigator/navigator-history";
   import { onDestroy, onMount } from "svelte";
-  import { datafn } from "@nucleum/datafn/datafn.store";
+  import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { Action } from "@nucleum/client/config/action.enum";
@@ -127,7 +127,7 @@
         resources: searchResources,
         limit: SEARCH_LIMIT,
         limitPerResource: SEARCH_LIMIT,
-        source: "local",
+        source: $datafnRuntime?.mode === "sync-direct" ? "remote" : "local",
         prefix: true,
         fuzzy: 0.2
       } as any)) as { results?: { data?: { id?: unknown } }[] };

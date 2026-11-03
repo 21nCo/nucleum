@@ -123,7 +123,10 @@
     });
     const appEventSub = appEvents.subscribe((x) => {
       if (x.event === GlobalEvent.ESCAPE) {
-        navigation.closeResource({ isRestrictToModals: true });
+        navigation.closeResource({
+          isRestrictToModals: true,
+          isHistoryBack: true
+        });
       }
     });
     return () => {
