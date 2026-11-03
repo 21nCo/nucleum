@@ -97,7 +97,7 @@
             data-testid="top-bar-page-type">{typeLine}</span
           >
         {/if}
-        <span class="flex items-center min-w-0 text-b2 font-medium text-fgs1">
+        <span class="flex items-center min-w-0 text-base font-medium text-fgs1">
           {#if live}
             <span class="truncate min-w-0">
               <ResourceLabel
