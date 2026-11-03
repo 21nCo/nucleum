@@ -66,6 +66,7 @@
         selectByResource: {
           [Resource.node]: [
             "*",
+            "parent.*",
             "file.*",
             "collections.type",
             "collections.avatar",

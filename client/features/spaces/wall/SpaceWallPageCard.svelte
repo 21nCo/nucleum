@@ -3,6 +3,7 @@
   import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
   import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
   import { Size } from "@21n/ui/elements/size.enum";
+  import { intersection } from "@21n/ui/actions/intersection.action";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";
   import SpaceHeadingTree from "@nucleum/features/spaces/SpaceHeadingTree.svelte";
@@ -20,6 +21,8 @@
     onOpen: () => void;
     onOpenHeading: (headingId: string) => void;
   } = $props();
+
+  let isInView = $state(false);
 </script>
 
 <div
@@ -35,17 +38,23 @@
   ></button>
   <div
     class="relative flex-1 min-h-0 overflow-auto px-1 py-2 pointer-events-none"
+    use:intersection={{
+      rootMargin: "200px",
+      callback: () => (isInView = true)
+    }}
   >
     <p class="px-2 pb-1 text-b4 text-fgs3">Contents</p>
-    <div class="pointer-events-auto">
-      <SpaceHeadingTree
-        {nodeId}
-        depth={1}
-        maxLevels={2}
-        isCompact={true}
-        onSelect={onOpenHeading}
-      />
-    </div>
+    {#if isInView}
+      <div class="pointer-events-auto">
+        <SpaceHeadingTree
+          {nodeId}
+          depth={1}
+          maxLevels={2}
+          isCompact={true}
+          onSelect={onOpenHeading}
+        />
+      </div>
+    {/if}
   </div>
   <div
     class="relative flex items-center gap-2 px-3 py-2 border-t border-brs2 rounded-b-md bg-bgs2 pointer-events-none"

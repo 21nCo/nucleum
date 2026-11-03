@@ -148,7 +148,7 @@
           title="Delete section"
           onclick={() => wall.onDelete(section, label)}
         >
-          <Icon icon="trash" size={Size.sm} class="stroke-err" />
+          <Icon icon="trash" size={Size.sm} class="stroke-ars1" />
         </button>
       </div>
     {/if}
