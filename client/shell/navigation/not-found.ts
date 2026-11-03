@@ -38,7 +38,7 @@ export function resolveNotFound(
   if (!params.isUrlPath || !normalized || isNotFoundPath(normalized)) {
     return { kind: "inline" };
   }
-  const target = new URL(`/${NOT_FOUND_PATH}`, params.currentUrl.origin);
+  const target = new URL(`/${NOT_FOUND_PATH}`, params.currentUrl);
   target.searchParams.set(NOT_FOUND_PATH_PARAM, normalized);
   if (
     target.pathname === params.currentUrl.pathname &&

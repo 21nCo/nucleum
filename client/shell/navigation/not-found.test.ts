@@ -82,6 +82,17 @@ describe("resolveNotFound", () => {
   });
 });
 
+describe("resolveNotFound in the native app", () => {
+  it("redirects on a custom-scheme origin", () => {
+    expect(
+      resolveNotFound("unknown-route", {
+        isUrlPath: true,
+        currentUrl: new URL("tauri://localhost/unknown-route")
+      })
+    ).toEqual({ kind: "redirect", url: "/404?path=unknown-route" });
+  });
+});
+
 describe("isNotFoundPath", () => {
   it("matches the not-found route with or without slashes", () => {
     expect(isNotFoundPath("404")).toBe(true);
