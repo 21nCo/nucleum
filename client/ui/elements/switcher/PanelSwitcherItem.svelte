@@ -123,7 +123,7 @@
     aria-selected={isActive}
     class={cn("relative group flex bg-transparent", {
       "h-full": !isFramed,
-      "h-6 self-center items-center": isFramed,
+      "h-8 self-center items-center": isFramed,
       "px-4":
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&

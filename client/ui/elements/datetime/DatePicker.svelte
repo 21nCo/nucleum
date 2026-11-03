@@ -141,7 +141,8 @@
         "p-1": variant === "icon-only" && size === Size.sm,
         "p-1.5": variant === "icon-only" && size !== Size.sm,
         "underline-dotted": variant === "inline",
-        "h-full px-3": variant === "inline-with-icon"
+        "h-full px-3 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)] app-framed:hover:bg-bgs3":
+          variant === "inline-with-icon"
       }
     )}
     bind:this={ref}

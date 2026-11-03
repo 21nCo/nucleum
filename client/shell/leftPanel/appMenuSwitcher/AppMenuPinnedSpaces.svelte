@@ -162,7 +162,7 @@
           >
             <span
               class={cn("flex w-6 h-6 shrink-0 items-center justify-center", {
-                "app-framed:w-10 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)] app-framed:transition-colors":
+                "app-framed:w-12 app-framed:h-12 app-framed:rounded-[var(--app-control-radius)] app-framed:transition-colors":
                   layoutContext === LayoutContext.THIN_WITH_LABEL,
                 "app-framed:bg-aps3":
                   layoutContext === LayoutContext.THIN_WITH_LABEL && isActive,

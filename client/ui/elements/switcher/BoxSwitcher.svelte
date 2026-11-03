@@ -128,7 +128,7 @@
             [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
           },
           $shape.isFramed && {
-            [`h-6 ${$shape.radiusClass}`]: true,
+            [`h-8 ${$shape.radiusClass}`]: true,
             "text-fgs3 hover:text-fgs1": !isSelected,
             "bg-bgs1 shadow-sm": isSelected,
             "text-fgs1": isSelected && !isAccentColor,

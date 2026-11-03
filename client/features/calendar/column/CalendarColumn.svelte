@@ -112,9 +112,11 @@
 >
   {#if layout === CalendarColumnLayout.TABS}
     <div
-      class="flex items-center justify-between border-b h-10 min-h-10 border-brs3"
+      class="flex items-center justify-between border-b h-10 min-h-10 border-brs3 app-framed:h-16 app-framed:min-h-16 app-framed:px-2"
     >
-      <div class="flex items-center gap-2 hover:bg-bgs2-striped h-full">
+      <div
+        class="flex items-center gap-2 hover:bg-bgs2-striped h-full app-framed:hover:bg-transparent"
+      >
         {#if isCwContext && backPath}
           <Icon
             icon="ph:caret-left"
@@ -125,7 +127,7 @@
             }}
           />
         {/if}
-        <div class="flex text-fgs2 h-full">
+        <div class="flex items-center text-fgs2 h-full">
           <!-- {formatDate(date)} -->
           <DatePicker
             bind:date

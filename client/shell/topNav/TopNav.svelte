@@ -322,7 +322,7 @@
       <div
         class={cn(
           "context-tab relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
-          "app-framed:self-end app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:pb-[var(--app-shell-gap)] app-framed:mb-0 app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
+          "app-framed:self-end app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:mb-0 app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
           tabSurface
         )}
         data-testid="top-bar-context-tab"

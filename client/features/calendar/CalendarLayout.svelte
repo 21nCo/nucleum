@@ -185,7 +185,7 @@
 {/snippet}
 
 {#snippet trailingControls()}
-  <div class="text-fgs3 h-full">
+  <div class="flex items-center text-fgs3 h-full">
     <BoxButton
       size={Size.sm}
       label="GO TO TODAY"
@@ -196,7 +196,7 @@
     />
   </div>
   {@render headerRightOptions?.()}
-  <div class="h-full w-10">
+  <div class="flex items-center h-full w-10">
     <BoxButton
       icon="sliders"
       tooltip="Calendar settings"
