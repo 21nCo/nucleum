@@ -7,7 +7,6 @@ import {
 import { resolveLocation } from "./capture-location";
 import { navigation } from "@nucleum/shell/navigation/navigation";
 import { fileUpload } from "@nucleum/shared-state/files/file-upload";
-import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
 import { get, writable } from "svelte/store";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { LinkType } from "@nucleum/datafn/link.type";
@@ -100,7 +99,6 @@ import { openPasteConfirmationModalFromClipboard } from "@nucleum/features/memor
 import { datafn } from "@nucleum/datafn/datafn.store";
 import {
   resolveClipboardBlockType,
-  hasStringProperty,
   isMediaGridBlock
 } from "@nucleum/features/memory/capture/clipboard-content";
 import {
@@ -1096,9 +1094,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (urlData?.convertToEmbedUrl) {
       text = urlData.convertToEmbedUrl(text);
     }
-    let contentType = params?.contentType ?? NodeType.WEB_PAGE;
+    const contentType = params?.contentType ?? NodeType.WEB_PAGE;
     let label = resolveWebpageLabel(text);
-    let url = text;
+    const url = text;
     const creationContext = params?.isEmbedContext
       ? (params?.creationContext ?? this.get().nodeId)
       : undefined;
@@ -1120,24 +1118,6 @@ export class ActiveCaptureStore extends ActiveResourceStore<
             authorName: youtubeMetadata.author_name,
             authorUrl: youtubeMetadata.author_url,
             thumbnailUrl: youtubeMetadata.thumbnail_url
-          };
-        }
-      } else if (!params?.isEmbedContext) {
-        const data = await retrieveUrlData(text);
-        if (data?.parsedData) {
-          const parsedData = data.parsedData;
-          label = parsedData.label ?? label;
-          url = parsedData.url ?? url;
-          contentType =
-            params?.contentType ?? parsedData.contentType ?? contentType;
-          if (hasStringProperty(parsedData.body, "description")) {
-            body.description = parsedData.body.description;
-          }
-          if (hasStringProperty(parsedData.body, "hash")) {
-            body.hash = parsedData.body.hash;
-          }
-          metadata = {
-            ...parsedData.metadata
           };
         }
       }
