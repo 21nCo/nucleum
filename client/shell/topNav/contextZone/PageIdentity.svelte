@@ -98,12 +98,7 @@
             />
           </span>
         {:else if pageAction}
-          <span class="flex items-center gap-1 min-w-0">
-            {#if pageAction.icon}
-              <Icon icon={pageAction.icon} size={Size.sm} class="shrink-0" />
-            {/if}
-            <span class="truncate">{pageAction.label}</span>
-          </span>
+          <span class="truncate">{pageAction.label}</span>
         {/if}
       </div>
     {/key}
