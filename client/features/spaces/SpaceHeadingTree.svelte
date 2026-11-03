@@ -5,7 +5,10 @@
   import type { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { cn } from "@21n/ui/environment/presentation";
   import type { ISpaceHeading } from "@nucleum/features/spaces/space.type";
-  import { buildHeadingTree } from "@nucleum/features/spaces/space.utils";
+  import {
+    buildHeadingTree,
+    resolveSpaceHeadingQueries
+  } from "@nucleum/features/spaces/space.utils";
 
   let {
     nodeId,
@@ -27,25 +30,16 @@
     mdChildOrder?: string[];
   };
 
+  const queries = $derived(resolveSpaceHeadingQueries(nodeId));
   const pageStore = $derived(
-    toSvelteStore<BlockRecord[]>(
-      datafn.node.signal({
-        filters: { id: nodeId },
-        select: ["id", "mdChildOrder"]
-      }),
-      { initialData: [] }
-    )
+    toSvelteStore<BlockRecord[]>(datafn.node.signal(queries.page), {
+      initialData: []
+    })
   );
   const blockStore = $derived(
-    toSvelteStore<BlockRecord[]>(
-      datafn.node.signal({
-        filters: {
-          $or: [{ parent: nodeId }, { parentPath: { $startsWith: nodeId } }]
-        },
-        select: ["id", "label", "body", "contentType", "mdChildOrder"]
-      }),
-      { initialData: [] }
-    )
+    toSvelteStore<BlockRecord[]>(datafn.node.signal(queries.blocks), {
+      initialData: []
+    })
   );
   const headings = $derived(
     buildHeadingTree(

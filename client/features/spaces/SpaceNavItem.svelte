@@ -50,9 +50,6 @@
       target?.contentType === NodeType.NODULAR_MARKDOWN
   );
   const isSubSpace = $derived(resourceItem?.resourceType === Resource.space);
-  const isExpandable = $derived(
-    (isSection && (item.children?.length ?? 0) > 0) || isMarkdownPage
-  );
   const isExpanded = $derived(
     isSection ? !nav.collapsedIds.has(item.id) : nav.expandedIds.has(item.id)
   );
@@ -71,6 +68,10 @@
   const avatar = $derived(target?.avatar ?? item.avatar);
   const status = $derived(resolveStatus());
   const isUnavailable = $derived(Boolean(status && status.kind !== "archived"));
+  const hasHeadings = $derived(isMarkdownPage && !isUnavailable);
+  const isExpandable = $derived(
+    (isSection && (item.children?.length ?? 0) > 0) || hasHeadings
+  );
 
   $effect(() => {
     if (isEditing) {
@@ -357,7 +358,7 @@
         <SpaceNavItem item={child} depth={depth + 1} {nav} />
       {/each}
     </ul>
-  {:else if isMarkdownPage && isExpanded && resourceItem}
+  {:else if hasHeadings && isExpanded && resourceItem}
     <SpaceHeadingTree
       nodeId={resourceItem.resourceId.toString()}
       depth={depth + 1}

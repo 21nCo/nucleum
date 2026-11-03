@@ -386,6 +386,33 @@ export function resolveOpeningProductName(
   return opener ? productRegistry[opener]?.displayName : undefined;
 }
 
+const headingQueryMetadata = {
+  includeArchived: true,
+  includeAncestorInactive: true
+};
+
+/**
+ * DataFn queries for a Markdown page and its blocks in a space heading tree.
+ * Archived pages stay openable from a space, so both queries include archived
+ * records and blocks made inactive by an archived ancestor.
+ */
+export function resolveSpaceHeadingQueries(nodeId: string) {
+  return {
+    page: {
+      filters: { id: nodeId },
+      select: ["id", "mdChildOrder"],
+      metadata: headingQueryMetadata
+    },
+    blocks: {
+      filters: {
+        $or: [{ parent: nodeId }, { parentPath: { $startsWith: nodeId } }]
+      },
+      select: ["id", "label", "body", "contentType", "mdChildOrder"],
+      metadata: headingQueryMetadata
+    }
+  };
+}
+
 /** Arranges headings into a tree where each heading holds the deeper ones after it. */
 export function buildHeadingTree(
   headings: { id: string; label: string; level: number }[]
