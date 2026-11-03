@@ -10,7 +10,11 @@
   } from "@21n/ui/elements/select/select.type";
   import { cn } from "@21n/ui/environment/presentation";
   import type { InputLabel } from "@21n/ui/elements/input/input.type";
-  import { elementPlatform as context } from "@21n/ui/environment/element-environment.store";
+  import {
+    elementAppearance,
+    elementPlatform as context
+  } from "@21n/ui/environment/element-environment.store";
+  import { AppStyle } from "@21n/theme/app-style";
   let {
     options,
     labelProps = undefined,
@@ -36,6 +40,7 @@
     isExpandOnActiveForIcon?: boolean;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
+  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
   const classList = "flex w-full";
   $effect(() => {
     if (selected === undefined) selected = options[0]?.value;
@@ -59,9 +64,17 @@
   >
     <div
       class={cn(classList, {
-        "border border-brs3 rounded-lg":
+        "border border-brs3":
           style === OptionSelectorStyle.TRAIN ||
           style === OptionSelectorStyle.ICON,
+        "rounded-lg":
+          (style === OptionSelectorStyle.TRAIN ||
+            style === OptionSelectorStyle.ICON) &&
+          !isRounded,
+        "rounded-full":
+          (style === OptionSelectorStyle.TRAIN ||
+            style === OptionSelectorStyle.ICON) &&
+          isRounded,
         "flex-wrap overflow-y-auto":
           style === OptionSelectorStyle.OUTLINE && !isPreventWrap,
         "overflow-x-auto": isPreventWrap,

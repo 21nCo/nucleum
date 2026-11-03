@@ -7,6 +7,8 @@
   } from "@21n/ui/elements/select/select.type";
   import TrainPanelSwitcherItem from "@21n/ui/elements/switcher/train/TrainPanelSwitcherItem.svelte";
   import { PanelSwitcherActiveItemStrength } from "@21n/ui/elements/switcher/switcher.enum";
+  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
+  import { AppStyle } from "@21n/theme/app-style";
   let {
     items,
     value = $bindable(),
@@ -32,6 +34,8 @@
         : parentBgIndex - 1
   );
 
+  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
+
   function emitSwitch(nextValue: ISelectValue) {
     const switchEvent = new CustomEvent<ISelectValue>("switch", {
       detail: nextValue
@@ -50,8 +54,8 @@
       "border border-brs3 p-0.5":
         activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE,
       "p-1": activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE,
-      "rounded-full": size === Size.lg,
-      "rounded-md": size !== Size.lg
+      "rounded-full": size === Size.lg || isRounded,
+      "rounded-md": size !== Size.lg && !isRounded
     })}
   >
     {#each items as item, index (item.value)}

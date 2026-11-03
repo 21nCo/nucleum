@@ -116,7 +116,9 @@
               "bg-aps3 border-y border-aps2 text-aps1":
                 isActive && !isShowLabel,
               "border-y border-transparent hover:bg-bgs3-striped hover:border-brs3":
-                !isActive && !isShowLabel
+                !isActive && !isShowLabel,
+              "app-rounded:justify-center app-rounded:border-transparent app-rounded:bg-transparent app-rounded:hover:border-transparent app-rounded:hover:bg-transparent":
+                !isShowLabel
             },
             layoutContext !== LayoutContext.DEFAULT &&
               layoutContext !== LayoutContext.THIN_WITH_LABEL && {
@@ -148,6 +150,14 @@
                 layoutContext === LayoutContext.THIN_WITH_LABEL &&
                 isActive &&
                 isShowLabel,
+              "app-rounded:rounded-2xl":
+                layoutContext === LayoutContext.THIN_WITH_LABEL,
+              "app-rounded:w-10 app-rounded:h-10 app-rounded:py-0 app-rounded:justify-center app-rounded:rounded-full app-rounded:hover:bg-bgs3":
+                layoutContext === LayoutContext.THIN_WITH_LABEL && !isShowLabel,
+              "app-rounded:bg-aps3":
+                layoutContext === LayoutContext.THIN_WITH_LABEL &&
+                !isShowLabel &&
+                isActive,
               "items-center": layoutContext === LayoutContext.DEFAULT
             })}
           >

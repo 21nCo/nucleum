@@ -11,6 +11,8 @@
   import PanelSwitcherItemLabel from "@21n/ui/elements/switcher/PanelSwitcherItemLabel.svelte";
   import { rearrangeOnAxis } from "@21n/ui/actions/rearrange.action";
   import { scrollIntoViewOnFocus } from "@21n/ui/actions/scroll.action";
+  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
+  import { AppStyle } from "@21n/theme/app-style";
   let {
     item,
     size = Size.md,
@@ -94,6 +96,8 @@
     onDebouncedChange?.(debouncedChangeEvent);
   }
 
+  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
+
   function handleClick() {
     if (item.value === "$add") {
       emitAdd();
@@ -126,7 +130,9 @@
       "py-2": barStyle != BarStyle.EXACT,
       "border-b-2": barStyle === BarStyle.OVERFLOW,
       "border-ccs1": isActive && barStyle === BarStyle.OVERFLOW,
-      "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW
+      "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW,
+      "rounded-full": isRounded,
+      "!bg-ccs3 !border-transparent": isRounded && isActive
     })}
     onclick={handleClick}
     disabled={isDisabled}
@@ -151,7 +157,8 @@
         "border-b-2 pt-1": barStyle === BarStyle.EXACT && !isInversePlacement,
         "border-t-2": barStyle === BarStyle.EXACT && isInversePlacement,
         "border-ccs1": isActive && barStyle === BarStyle.EXACT,
-        "border-transparent": !isActive && barStyle === BarStyle.EXACT
+        "border-transparent": !isActive && barStyle === BarStyle.EXACT,
+        "!border-transparent": isRounded
       })}
     >
       <PanelSwitcherItemLabel
@@ -169,7 +176,7 @@
         onDebouncedChange={(event) => emitDebouncedChange(event.detail)}
       />
     </div>
-    {#if isActive && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
+    {#if isActive && !isRounded && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
       <div
         class={cn("absolute", {
           "bottom-1 bg-ccs1 left-1/2 w-1 h-1 rounded-full":
@@ -187,7 +194,9 @@
     class={cn("relative group flex items-center gap-1 py-2", {
       "px-6": item.icon,
       "px-4": !item.icon,
-      "border border-brs3 rounded-t-md text-fgs1": isActive,
+      "border border-brs3 text-fgs1": isActive,
+      "rounded-t-md": isActive && !isRounded,
+      "rounded-t-2xl": isActive && isRounded,
       "border-ccs1- text-ccs1": isActive && !isInEditMode,
       "border border-transparent text-fgs3": !isActive
     })}

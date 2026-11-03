@@ -24,7 +24,7 @@
   data-testid="top-bar-close"
   aria-label={label}
   class={cn(
-    "flex items-center justify-center h-full shrink-0 text-fgs2 hover:bg-bgs3-striped hover:text-fgs1 border-r border-brs3 app-framed:border-r-0",
+    "flex items-center justify-center h-full shrink-0 text-fgs2 hover:bg-bgs3-striped hover:text-fgs1 border-r border-brs3 app-framed:border-r-0 app-rounded:h-10 app-rounded:rounded-full",
     {
       "w-[5.5rem]": menuColumn === "labels",
       "w-[3.5rem]": menuColumn === "icons",

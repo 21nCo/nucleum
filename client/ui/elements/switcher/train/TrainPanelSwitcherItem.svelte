@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
+  import { AppStyle } from "@21n/theme/app-style";
   import view from "@21n/ui/environment/view.store";
   import { Size } from "@21n/ui/elements/size.enum";
   import {
@@ -57,6 +59,8 @@
     });
     onDebouncedChange?.(debouncedChangeEvent);
   }
+
+  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
 </script>
 
 <button
@@ -64,8 +68,10 @@
     "relative min-w-fit w-fit group",
     {
       "rounded-full px-6 py-2": size === Size.lg,
-      "rounded-[5px] px-3 py-1 w-24": size === Size.md,
-      "rounded-[5px] px-3 py-1 w-16": size === Size.sm,
+      "px-3 py-1 w-24": size === Size.md,
+      "px-3 py-1 w-16": size === Size.sm,
+      "rounded-[5px]": size !== Size.lg && !isRounded,
+      "rounded-full": size !== Size.lg && isRounded,
       "bg-ccs3 text-ccs1":
         isActive &&
         activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,

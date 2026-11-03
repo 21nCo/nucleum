@@ -217,7 +217,9 @@
           isActive && (!dev_mixedPanel || !$appStore.currentComponent?.panel),
         "border-transparent":
           isActive && dev_mixedPanel && $appStore.currentComponent?.panel,
-        "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel
+        "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel,
+        "app-rounded:justify-center app-rounded:border-transparent app-rounded:bg-transparent app-rounded:hover:border-transparent app-rounded:hover:bg-transparent":
+          !isShowLabel
       }
     )}
     onclick={(event) => {
@@ -247,7 +249,14 @@
         "bg-bgs3 border-brs3":
           layoutContext === LayoutContext.THIN_WITH_LABEL &&
           isActive &&
-          isShowLabel
+          isShowLabel,
+        "app-rounded:rounded-2xl": layoutContext === LayoutContext.THIN_WITH_LABEL,
+        "app-rounded:w-10 app-rounded:h-10 app-rounded:py-0 app-rounded:justify-center app-rounded:rounded-full app-rounded:hover:bg-bgs3":
+          layoutContext === LayoutContext.THIN_WITH_LABEL && !isShowLabel,
+        "app-rounded:bg-aps3 app-rounded:hover:bg-aps2":
+          layoutContext === LayoutContext.THIN_WITH_LABEL &&
+          !isShowLabel &&
+          isActive
       })}
     >
       {#if item.icon}

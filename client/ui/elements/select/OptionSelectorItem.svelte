@@ -15,6 +15,8 @@
   import Badge from "@21n/ui/elements/text/Badge.svelte";
   import { tooltip } from "@21n/ui/actions/popover.action";
   import { backOut } from "svelte/easing";
+  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
+  import { AppStyle } from "@21n/theme/app-style";
   let {
     item,
     size = Size.md,
@@ -36,6 +38,7 @@
     parentBgIndex?: number;
     onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
   } = $props();
+  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
 </script>
 
 {#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE || style === OptionSelectorStyle.ICON}
@@ -43,10 +46,12 @@
   <button
     data-option-value={item.value}
     class={cn(
-      "relative rounded-md min-w-fit whitespace-nowrap border",
+      "relative min-w-fit whitespace-nowrap border",
       {
-        "flex justify-center items-center rounded-[5.5px]":
-          style === OptionSelectorStyle.ICON,
+        "rounded-md": !isRounded,
+        "rounded-full": isRounded,
+        "flex justify-center items-center": style === OptionSelectorStyle.ICON,
+        "rounded-[5.5px]": style === OptionSelectorStyle.ICON && !isRounded,
         "flex grow justify-center":
           style === OptionSelectorStyle.TRAIN ||
           style === OptionSelectorStyle.ICON,

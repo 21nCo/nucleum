@@ -112,6 +112,8 @@
       class={cn("flex items-center gap-1 h-full transition-colors", {
         "justify-center min-w-12 px-3.5 border-x border-transparent hover:border-brs3":
           !isExpanded,
+        "app-rounded:h-10 app-rounded:mt-1 app-rounded:rounded-full app-rounded:border-transparent app-rounded:hover:border-transparent":
+          !isExpanded,
         "w-full justify-start gap-2 px-4 text-fgs1": isExpanded,
         "hover:bg-bgs3 hover:text-fgs1": !isActive,
         "text-fgs2": !isActive && !isExpanded,

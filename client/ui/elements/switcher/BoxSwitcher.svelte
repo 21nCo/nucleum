@@ -5,6 +5,8 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { onMount } from "svelte";
   import { tooltip } from "@21n/ui/actions/popover.action";
+  import { elementAppearance } from "@21n/ui/environment/element-environment.store";
+  import { AppStyle } from "@21n/theme/app-style";
 
   let {
     options,
@@ -32,6 +34,8 @@
   $effect(() => {
     if (selected === undefined) selected = options[0]?.value;
   });
+
+  const isRounded = $derived($elementAppearance.appStyle === AppStyle.Rounded);
 
   let containerWidth = $state(0);
   let containerEl = $state<HTMLDivElement | undefined>();
@@ -102,6 +106,7 @@
           "border-transparent hover:border-brs3 text-fgs3": !isSelected,
           "border-fgs2": isSelected && !isAccentColor,
           "border-aps1 text-aps1": isSelected && isAccentColor,
+          "rounded-full !border-transparent": isRounded,
           [`${bg(parentBgIndex)}`]: isSelected,
           [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
         }

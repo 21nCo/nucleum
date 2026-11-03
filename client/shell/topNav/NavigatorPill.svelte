@@ -62,7 +62,7 @@
     aria-label={trailCount > 0
       ? `Search or jump to, ${trailCount} items in trail`
       : "Search or jump to"}
-    class="flex items-center justify-center h-full min-w-12 px-3.5 border-x border-transparent text-fgs2 hover:border-brs3 hover:bg-bgs3 hover:text-fgs1"
+    class="flex items-center justify-center h-full min-w-12 px-3.5 border-x border-transparent text-fgs2 hover:border-brs3 hover:bg-bgs3 hover:text-fgs1 app-rounded:h-10 app-rounded:mt-1 app-rounded:rounded-full app-rounded:border-transparent app-rounded:hover:border-transparent"
     use:tooltip={{ text: "Search or jump to" }}
     onclick={() => requireCommandHost().runAction(Action.NAVIGATOR)}
   >
@@ -79,6 +79,7 @@
     aria-pressed={isActive}
     class={cn(
       "flex items-center justify-between gap-3 h-full w-64 px-3.5 border-x border-transparent hover:border-brs3 hover:bg-bgs3 text-b2 transition-colors",
+      "app-rounded:h-10 app-rounded:mt-1 app-rounded:mr-1 app-rounded:rounded-full app-rounded:border app-rounded:border-brs3 app-rounded:bg-bgs1 app-rounded:hover:bg-bgs3",
       {
         "text-fgs3 hover:text-fgs1": !isActive,
         "text-aps1": isActive
