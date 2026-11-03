@@ -16,6 +16,7 @@
   import { page } from "$app/stores";
   import { onMount } from "svelte";
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { Snippet } from "svelte";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
@@ -35,6 +36,8 @@
     tooltip = undefined,
     ariaLabel = undefined,
     isPreventDefault = false,
+    isExpanded = false,
+    trailing = undefined,
     onClick
   }: {
     action: Action | string;
@@ -45,6 +48,10 @@
     tooltip?: string;
     ariaLabel?: string;
     isPreventDefault?: boolean;
+    /** Fills the width it is given, as the open action of the panel group. */
+    isExpanded?: boolean;
+    /** Content shown after the label, such as a running timer. */
+    trailing?: Snippet;
     onClick?: (event: MouseEvent) => void;
   } = $props();
   let isHovered = $state(false);
@@ -98,7 +105,7 @@
   {@const accessibleLabel = ariaLabel ?? tooltip ?? label ?? data.label}
   {@const shortcut = keyboardShortcuts.resolveShortcutForAction(action)}
   <div
-    class="relative h-full"
+    class={cn("relative h-full", { "flex-1 min-w-0": isExpanded })}
     use:topBarDropdown={{
       isOpen: isOpeningMenuOpen,
       onDismiss: () => (isOpeningMenuOpen = false)
@@ -106,12 +113,15 @@
   >
     <button
       aria-label={accessibleLabel}
+      aria-pressed={isExpanded ? true : undefined}
       class={cn(
-        "flex items-center justify-center gap-1 h-full px-3.5 transition-colors",
+        "flex items-center gap-1 h-full px-3.5 transition-colors",
         {
+          "justify-center": !isExpanded,
+          "w-full justify-start gap-2 px-4 text-fgs1 hover:bg-bgs3": isExpanded,
           "hover:border-brs3 hover:bg-bgs3-striped hover:text-fgs3 text-fgs2":
             !isActive,
-          "bg-aps3 text-aps1 border-aps2": isActive,
+          "bg-aps3 text-aps1 border-aps2": isActive && !isExpanded,
           "border-l": isLastItem && !$context.experiments?.isEnableRoundedMain,
           "border-x": !isLastItem && !isFirstItem,
           "border-r": isFirstItem && !$context.experiments?.isEnableRoundedMain
@@ -155,6 +165,9 @@
       />
       {#if label}
         <span class="text-b3"> {label} </span>
+      {/if}
+      {#if trailing}
+        <span class="flex items-center ml-auto">{@render trailing()}</span>
       {/if}
     </button>
     {#if isOpeningMenuOpen}

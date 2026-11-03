@@ -22,6 +22,7 @@
   import { SessionState } from "@nucleum/features/focus/sessionState.enum";
   import { PointronEvent } from "@nucleum/shared-state/events/focus-event.enum";
   import FocusTopNavWidget from "@nucleum/features/focus/player/FocusTopNavWidget.svelte";
+  import type { TopNavPanelActionState } from "@nucleum/shell/topNav/panel-actions";
   import { Product } from "@nucleum/client/config/product.type";
   let { children }: { children?: Snippet } = $props();
   let isLiteMode = $state($context.isEmbed && $context.isSheet);
@@ -62,12 +63,14 @@
   }
 </script>
 
-<UserBaseLayer {onReady}>
-  {#snippet topnav()}
-    <div class="flex gap-1 items-center h-full">
-      <FocusTopNavWidget />
-    </div>
-  {/snippet}
+{#snippet focusPanelAction(state: TopNavPanelActionState)}
+  <FocusTopNavWidget {state} />
+{/snippet}
+
+<UserBaseLayer
+  {onReady}
+  panelActions={[{ action: PointronAction.FOCUS, content: focusPanelAction }]}
+>
   {#snippet topnavIndicators()}
     <FocusTopNavWidget mode="indicator" />
   {/snippet}

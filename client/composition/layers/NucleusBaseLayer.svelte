@@ -20,6 +20,8 @@
   import MemoryBase from "@nucleum/products/memotron/base/MemoryBase.svelte";
   import TopNavLeftMenuItem from "@nucleum/shell/topNav/TopNavLeftMenuItem.svelte";
   import { Action } from "@nucleum/client/config/action.enum";
+  import { PointronAction } from "@nucleum/client/config/focus-action.enum";
+  import type { TopNavPanelActionState } from "@nucleum/shell/topNav/panel-actions";
   import { repairMarkdownBlockParents } from "@nucleum/features/memory/node/markdown-block-parents";
   import { safeRequestIdleCallback } from "@21n/shared-utils/idle-callback";
   let { children }: { children?: Snippet } = $props();
@@ -53,13 +55,19 @@
   }
 </script>
 
-<UserBaseLayer {onReady}>
+{#snippet focusPanelAction(state: TopNavPanelActionState)}
+  <FocusTopNavWidget {state} />
+{/snippet}
+
+<UserBaseLayer
+  {onReady}
+  panelActions={[{ action: PointronAction.FOCUS, content: focusPanelAction }]}
+>
   {#snippet topnav()}
     <div class="flex items-center h-full">
       <TopNavLeftMenuItem
         action={resourceAction(Resource.node, ResourceActionType.CREATE)}
       />
-      <FocusTopNavWidget />
       <!-- {#if isDebug}
         <TopNavLeftMenuItem action={Action.FEED} />
       {/if} -->

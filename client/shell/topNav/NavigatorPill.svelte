@@ -9,36 +9,42 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
-  import { resolveRightPanelWidthClass } from "@nucleum/shell/rightPanel/right-panel-width";
+  import { tooltip } from "@21n/ui/actions/popover.action";
   import NavigatorSearchInput from "@nucleum/shell/topNav/NavigatorSearchInput.svelte";
+  import type { TopNavPanelActionState } from "@nucleum/shell/topNav/panel-actions";
 
   let {
-    isExpanded = false
+    state = "idle"
   }: {
-    /** Shows the navigator search input in place of the pill, as wide as the navigator panel. */
-    isExpanded?: boolean;
+    /**
+     * `idle` shows the "Jump to" pill, `compact` an icon beside another open
+     * panel action, and `expanded` the navigator search input.
+     */
+    state?: TopNavPanelActionState;
   } = $props();
 
   const isActive = $derived(!!resolveNavigatorLayer($page.url));
   const trailCount = $derived($accessTrailCount);
-  const panelWidthClass = $derived(
-    resolveRightPanelWidthClass(
-      requireCommandHost().resolveAction(Action.NAVIGATOR)?.liveActionParams
-        ?.size
-    )
-  );
 </script>
 
-{#if isExpanded}
+{#if state === "expanded"}
   <div
-    class={cn(
-      "relative z-10 flex items-center self-stretch -mb-px px-3 bg-bgs2 border-l border-brs3",
-      panelWidthClass
-    )}
+    class="flex items-center w-full h-full px-3"
     data-testid="navigator-inline-search"
   >
     <NavigatorSearchInput />
   </div>
+{:else if state === "compact"}
+  <button
+    type="button"
+    data-testid="navigator-pill"
+    aria-label="Open navigator"
+    class="flex items-center justify-center h-full px-3.5 text-fgs2 hover:bg-bgs3-striped hover:text-fgs3"
+    use:tooltip={{ text: "Jump to" }}
+    onclick={() => requireCommandHost().runAction(Action.NAVIGATOR)}
+  >
+    <Icon icon="search" size={Size.md} />
+  </button>
 {:else}
   <div class="flex items-center h-full pl-1 pr-2">
     <button

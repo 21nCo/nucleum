@@ -28,6 +28,11 @@
   import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
   import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
   import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
+  import PanelActionGroup from "@nucleum/shell/topNav/PanelActionGroup.svelte";
+  import type {
+    TopNavPanelAction,
+    TopNavPanelActionState
+  } from "@nucleum/shell/topNav/panel-actions";
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
@@ -48,7 +53,8 @@
     indicators = undefined,
     leftLogo = undefined,
     bulkEditBar = undefined,
-    offlineStatus = undefined
+    offlineStatus = undefined,
+    panelActions = []
   }: {
     /** Quick actions rendered in the actions zone. */
     topnav?: Snippet;
@@ -71,6 +77,11 @@
     >;
     /** Sync/offline status slot rendered with the persistent indicators. */
     offlineStatus?: Snippet<[{ isIconOnly?: boolean }]>;
+    /**
+     * Product quick actions that open in the right panel, such as Focus;
+     * grouped with Rhombus and the navigator.
+     */
+    panelActions?: TopNavPanelAction[];
   } = $props();
 
   const isDev = import.meta.env.DEV;
@@ -112,11 +123,18 @@
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
   );
   const isHomePage = $derived(isHomeRoute($page.url));
-  const isNavigatorInline = $derived(
-    searchParams.get(AccessMode.PANEL) === Action.NAVIGATOR &&
-      !$view.isPortrait &&
-      !$view.isConstrainedWidth
+  const openPanel = $derived(searchParams.get(AccessMode.PANEL));
+  const isPanelBeside = $derived(
+    !$view.isPortrait && !$view.isConstrainedWidth
   );
+  const isNavigatorInline = $derived(
+    openPanel === Action.NAVIGATOR && isPanelBeside
+  );
+  const groupedPanelActions = $derived<TopNavPanelAction[]>([
+    ...panelActions,
+    ...(isDev ? [{ action: Action.RHOMBUS, content: rhombusAction }] : []),
+    { action: Action.NAVIGATOR, content: navigatorAction }
+  ]);
   const isToastMode = $derived($toasts.length > 0);
   const isAppMenuColumnVisible = $derived(
     !isPageFullScreen &&
@@ -147,6 +165,20 @@
     };
   });
 </script>
+
+{#snippet rhombusAction(state: TopNavPanelActionState)}
+  <TopNavLeftMenuItem
+    action={Action.RHOMBUS}
+    label={state === "expanded" ? "Rhombus" : undefined}
+    tooltip="Rhombus on the side"
+    ariaLabel="Rhombus"
+    isExpanded={state === "expanded"}
+  />
+{/snippet}
+
+{#snippet navigatorAction(state: TopNavPanelActionState)}
+  <NavigatorPill {state} />
+{/snippet}
 
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
@@ -235,13 +267,6 @@
       {:else}
         {@render topnav?.()}
         <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
-        {#if isDev}
-          <TopNavLeftMenuItem
-            action={Action.RHOMBUS}
-            label="Rhombus"
-            tooltip="Rhombus on the side"
-          />
-        {/if}
       {/if}
     </div>
   {/if}
@@ -258,5 +283,5 @@
     />
     {@render indicators?.()}
   </div>
-  <NavigatorPill isExpanded={isNavigatorInline} />
+  <PanelActionGroup actions={groupedPanelActions} {openPanel} {isPanelBeside} />
 </div>
