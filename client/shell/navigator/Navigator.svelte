@@ -276,6 +276,7 @@
         item={item.pageAction?.action ?? item.id}
         isInterimTab={true}
         isTrail
+        isTypeIcon
         onClick={(event) => handleHistoryClick(item, event)}
       />
     {/each}
@@ -297,6 +298,7 @@
           item={id}
           isInterimTab={true}
           isTrail
+          isTypeIcon
           onClick={(event) => openFresh(id, event)}
         />
       </div>
@@ -317,6 +319,7 @@
           item={row.id}
           isInterimTab={true}
           isTrail
+          isTypeIcon
           onClick={() => onSelect(row.index)}
         />
       </div>
@@ -388,6 +391,7 @@
                       item={trail.nodes[0].id}
                       isInterimTab={true}
                       isTrail
+                      isTypeIcon
                       onClick={() => navigation.resumeTrail(trail.key, 0)}
                     />
                   </div>

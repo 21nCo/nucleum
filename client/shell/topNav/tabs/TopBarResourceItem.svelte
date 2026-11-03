@@ -33,6 +33,7 @@
     item,
     isInterimTab = false,
     isTrail = false,
+    isTypeIcon = false,
     onClick,
     onClose,
     onRearrange,
@@ -41,6 +42,8 @@
     item: IRecordId;
     isInterimTab?: boolean;
     isTrail?: boolean;
+    /** Labels the item with its type icon and plain label, as in the navigator. */
+    isTypeIcon?: boolean;
     onClick?: (event?: MouseEvent | KeyboardEvent) => void;
     onClose?: () => void;
     onRearrange?: (displacement: number) => void;
@@ -194,7 +197,7 @@
       onkeydown={handleTabKeyDown}
     >
       <div class="truncate text-b3">
-        <ResourceLabel source={$live} />
+        <ResourceLabel source={$live} {isTypeIcon} />
       </div>
       {#if isInterimTab && !isTrail}
         <div class="flex items-center">

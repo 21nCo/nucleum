@@ -93,3 +93,41 @@ export function liveResource(item: IRecordId | string): Readable<LiveResource> {
     };
   });
 }
+
+/** Icon every generic page shares in type-icon lists such as the navigator. */
+export const PAGE_TYPE_ICON = "file";
+
+const markdownLinePrefix = /^(#{1,6}\s+|>\s+|[-*+]\s+|\d+\.\s+|\[[ xX]\]\s+)/;
+
+/**
+ * Plain label of a record or page: its label, otherwise the first line of a
+ * record's text without Markdown markers, otherwise "Untitled".
+ */
+export function resolvePlainResourceLabel(
+  resource: { label?: unknown; text?: unknown } | undefined
+) {
+  if (typeof resource?.label === "string" && resource.label.trim()) {
+    return resource.label.trim();
+  }
+  if (typeof resource?.text === "string") {
+    const line = resource.text
+      .split("\n")
+      .map((value) => value.trim().replace(markdownLinePrefix, "").trim())
+      .find((value) => value.length > 0);
+    if (line) return line;
+  }
+  return "Untitled";
+}
+
+/**
+ * Type icon of a live record or page: the resource type's icon for records,
+ * the shared page icon for generic pages.
+ */
+export function resolveResourceTypeIcon(
+  source: Pick<LiveResource, "resourceType">,
+  resolveIcon: (resource: Resource) => string
+) {
+  return source.resourceType === Resource.unknown
+    ? PAGE_TYPE_ICON
+    : resolveIcon(source.resourceType);
+}

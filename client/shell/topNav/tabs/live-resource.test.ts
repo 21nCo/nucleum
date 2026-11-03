@@ -55,3 +55,28 @@ describe("liveResource", () => {
     expect(value.resource).toBeUndefined();
   });
 });
+
+describe("navigator labels", async () => {
+  const { resolvePlainResourceLabel, resolveResourceTypeIcon, PAGE_TYPE_ICON } =
+    await import("./live-resource");
+  const { Resource } = await import("@nucleum/datafn/resource.enum");
+
+  it("prefers the label, then the first text line, then Untitled", () => {
+    expect(resolvePlainResourceLabel({ label: " Alpha " })).toBe("Alpha");
+    expect(
+      resolvePlainResourceLabel({ label: "", text: "\n# Heading one\nbody" })
+    ).toBe("Heading one");
+    expect(resolvePlainResourceLabel({ text: "  " })).toBe("Untitled");
+    expect(resolvePlainResourceLabel(undefined)).toBe("Untitled");
+  });
+
+  it("uses the type icon for records and the page icon for pages", () => {
+    const resolveIcon = (resource: string) => `icon-${resource}`;
+    expect(
+      resolveResourceTypeIcon({ resourceType: Resource.node }, resolveIcon)
+    ).toBe("icon-node");
+    expect(
+      resolveResourceTypeIcon({ resourceType: Resource.unknown }, resolveIcon)
+    ).toBe(PAGE_TYPE_ICON);
+  });
+});
