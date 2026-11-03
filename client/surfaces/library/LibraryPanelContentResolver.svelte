@@ -15,6 +15,7 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import { nextCycleValue } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { isLibrarySwitcherInTopBar } from "@nucleum/surfaces/library/library-switcher-placement";
 
   let {
     defaultResource = Resource.node,
@@ -89,7 +90,7 @@
   });
 </script>
 
-{#if resources.length > 0}
+{#if isLibrarySwitcherInTopBar($appStore.product, resources.length)}
   <ContextZoneContent isInlineFallback={false} cycle={cycleResource}>
     <div class="h-full" data-testid="library-resource-tabs">
       <BoxSwitcher

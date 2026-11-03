@@ -35,6 +35,8 @@
   import ComponentShortcutListener from "@21n/ui/compositions/keyboard/ComponentShortcutListener.svelte";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
+  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { isLibrarySwitcherInTopBar } from "@nucleum/surfaces/library/library-switcher-placement";
   import {
     LIBRARY_DEFAULT_SUBTYPE,
     parseLibraryPath,
@@ -63,7 +65,13 @@
         $page.url.pathname
       )
   );
+  const isContextZoneHosted = contextZone.isHosted;
   let selectedResource = $state<Resource>(Resource.unknown);
+  const isSwitcherInTopBar = $derived(
+    $isContextZoneHosted &&
+      !$view.isConstrainedWidth &&
+      isLibrarySwitcherInTopBar($appStore.product, resources.length)
+  );
   let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
   const subType = $derived(
     selectedResource === Resource.unknown
@@ -272,20 +280,22 @@
       resource={selectedResource}
     />
   {/if}
-  <div class="flex mo:py-3 py-5 w-full h-fit shrink-0">
-    <ResourceSwitcher
-      {resources}
-      selected={selectedResource}
-      isShowCount={true}
-      onSelect={(selectedValue) => {
-        selectedResource = selectedValue;
-        selectView(selectedValue, LIBRARY_DEFAULT_SUBTYPE, {
-          isResetFilters: true
-        });
-        syncFeedbackRef?.refresh(selectedValue);
-      }}
-    />
-  </div>
+  {#if !isSwitcherInTopBar}
+    <div class="flex mo:py-3 py-5 w-full h-fit shrink-0">
+      <ResourceSwitcher
+        {resources}
+        selected={selectedResource}
+        isShowCount={true}
+        onSelect={(selectedValue) => {
+          selectedResource = selectedValue;
+          selectView(selectedValue, LIBRARY_DEFAULT_SUBTYPE, {
+            isResetFilters: true
+          });
+          syncFeedbackRef?.refresh(selectedValue);
+        }}
+      />
+    </div>
+  {/if}
   {#if $view.isConstrainedWidth}
     <div class="flex flex-col gap-2 w-full flex-grow">
       <Text content="Recents" style={TextStyle.SECTION_HEADING} />
