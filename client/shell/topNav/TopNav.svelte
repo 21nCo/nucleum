@@ -343,7 +343,7 @@
             />
             {#if $activeEntry}
               <div
-                class="shrink-0 w-px h-5 mx-1 bg-brs3"
+                class="shrink-0 w-px h-5 mx-3 bg-brs3"
                 aria-hidden="true"
                 data-testid="top-bar-identity-divider"
               ></div>
