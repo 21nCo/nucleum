@@ -62,7 +62,11 @@
   let requestId = 0;
   const resources = $derived(resolveSpaceItemResources(product));
 
-  onDestroy(() => clearTimeout(debounce));
+  let isDestroyed = false;
+  onDestroy(() => {
+    isDestroyed = true;
+    clearTimeout(debounce);
+  });
 
   function blockReason(id: string) {
     return resolveAddBlockReason({
@@ -154,7 +158,7 @@
       spaceGraphLoad = loadSpaceGraph();
       await spaceGraphLoad;
     }
-    if (blockReason(result.id)) return;
+    if (isDestroyed || blockReason(result.id)) return;
     onSelect(
       { id: result.id, label: result.label, avatar: result.avatar },
       destination
