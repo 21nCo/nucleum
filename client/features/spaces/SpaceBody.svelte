@@ -60,7 +60,9 @@
   onMount(() => {
     Promise.all([
       store.init(accessMode),
-      viewStore === store ? undefined : viewStore.init()
+      viewStore === store
+        ? undefined
+        : viewStore.init(undefined, { isRecordedInRecents: false })
     ]).then(() => (isLoaded = true));
     return () => {
       if ($store?.isInEditMode) store.setEditMode(false);

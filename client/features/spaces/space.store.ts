@@ -103,14 +103,22 @@ export class ActiveSpaceStore {
    * view edited while the record loads are kept, since they are newer than the
    * loaded copy. A load overtaken by a later one is dropped and settles when the
    * latest load has been applied, so no caller proceeds without loaded items.
+   * Pass `isRecordedInRecents: false` when the space is loaded only to read its
+   * settings, so it does not move to the top of recents.
    */
-  init(accessMode?: AccessMode) {
-    const load = this.load(accessMode);
+  init(
+    accessMode?: AccessMode,
+    options: { isRecordedInRecents?: boolean } = {}
+  ) {
+    const load = this.load(accessMode, options);
     this.latestLoad = load;
     return load;
   }
 
-  private async load(accessMode?: AccessMode): Promise<void> {
+  private async load(
+    accessMode: AccessMode | undefined,
+    options: { isRecordedInRecents?: boolean }
+  ): Promise<void> {
     const load = ++this.loadSequence;
     const itemsRevisionAtStart = this.itemsRevision;
     const labelRevisionAtStart = this.labelRevision;
@@ -179,6 +187,7 @@ export class ActiveSpaceStore {
       isMissing: false,
       isLoadFailed: false
     }));
+    if (options.isRecordedInRecents === false) return;
     appStore.addToRecents({
       record,
       type: Resource.space,
