@@ -30,12 +30,6 @@
       webNodeTypeList.includes(resource?.contentType)
   );
 
-  function resolveMentionHref() {
-    const url = new URL(window.location.href);
-    url.searchParams.set(AccessMode.PAGE, id);
-    return `${url.pathname}${url.search}${url.hash}`;
-  }
-
   onMount(async () => {
     try {
       isLoading = true;
@@ -52,7 +46,7 @@
   class="inline-mention px-1 bg-bgs2 notouch:hover:bg-bgs3 active:bg-bgs3 rounded-md max-w-48 truncate"
   data-record-id={id}
   data-label={label}
-  href={resolveMentionHref()}
+  href={navigation.resolveResourceHref(id, AccessMode.PAGE)}
   contenteditable="false"
   onclick={(event) => {
     if (event.button !== 0) return;

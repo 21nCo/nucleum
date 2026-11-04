@@ -125,6 +125,24 @@ function clearLayerScopedRecordParams(
 }
 
 /**
+ * Removes the record-specific state of the records an open in `mode` replaces,
+ * as opening `id` there would, and returns the cleaned URL.
+ */
+function clearOpenedRecordParams(url: URL, id: IRecordId, mode: string) {
+  clearLayerScopedRecordParams(url, [
+    id,
+    url.searchParams.get(mode),
+    url.searchParams.get(AccessMode.BESIDE_PAGE)
+  ]);
+  return (
+    navigation.toggleSearchParam(recordSpecificSearchParams, {
+      isPreventRefresh: true,
+      url
+    }) ?? url
+  );
+}
+
+/**
  * Access-trail state kept in a resource page's browser history entry: the
  * trail node the entry shows, and the node of the entry it was pushed from,
  * which is null when it was pushed from the base page.
@@ -539,6 +557,19 @@ export const navigation = {
     if (event.metaKey || event.ctrlKey) return AccessMode.BESIDE_BASE;
     if (event.shiftKey) return AccessMode.PAGE;
   },
+  /**
+   * Link target that opens `id` in `accessMode` from the current URL, with the
+   * same record state cleared as opening it through `openResource`.
+   */
+  resolveResourceHref(id: IRecordId, accessMode: AccessMode) {
+    const url = clearOpenedRecordParams(
+      new URL(window.location.href),
+      id,
+      accessMode
+    );
+    url.searchParams.set(accessMode, id.toString());
+    return `${url.pathname}${url.search}${url.hash}`;
+  },
   /** Whether a click asks for the page to open in full screen. */
   isFullScreenClick: (event: MouseEvent | undefined) =>
     !!event?.shiftKey && !event.metaKey && !event.ctrlKey,
@@ -653,18 +684,11 @@ export const navigation = {
         }
       }
     }
-    const currentUrl = new URL(window.location.href);
-    const replacedModes = [accessMode ?? AppSearchParam.SELECTED];
-    clearLayerScopedRecordParams(url, [
+    url = clearOpenedRecordParams(
+      url,
       id,
-      ...replacedModes.map((mode) => currentUrl.searchParams.get(mode)),
-      currentUrl.searchParams.get(AccessMode.BESIDE_PAGE)
-    ]);
-    url =
-      navigation.toggleSearchParam(recordSpecificSearchParams, {
-        isPreventRefresh: true,
-        url
-      }) ?? url;
+      accessMode ?? AppSearchParam.SELECTED
+    );
     navigation.toggleSearchParam(
       {
         ...(accessMode
