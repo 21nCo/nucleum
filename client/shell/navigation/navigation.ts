@@ -41,6 +41,9 @@ const recordSpecificSearchParams = [
   /-nodeView$/,
   AppSearchParam.EDIT,
   AppSearchParam.VIEW,
+  AppSearchParam.PAGE_AT,
+  AppSearchParam.BESIDE_AT,
+  AppSearchParam.BESIDE_PAGE_AT,
   AppSearchParam.FULL_AT,
   AppSearchParam.LINK,
   AppSearchParam.DATE,
@@ -564,7 +567,9 @@ export const navigation = {
       navigation.toggleSearchParam(
         isInPlace
           ? recordSpecificSearchParams.filter(
-              (param) => param !== AccessMode.BESIDE_PAGE
+              (param) =>
+                param !== AccessMode.BESIDE_PAGE &&
+                param !== AppSearchParam.BESIDE_PAGE_AT
             )
           : recordSpecificSearchParams,
         { isPreventRefresh: true }

@@ -132,6 +132,9 @@ export enum AppSearchParam {
   EXT = "ext",
   PROVIDER = "provider",
   GUEST = "guest",
+  PAGE_AT = "pageAt",
+  BESIDE_PAGE_AT = "besidePageAt",
+  BESIDE_AT = "besideAt",
   FULL_AT = "fullAt",
   /**
    * Resource selected in the library resource browser and rendered in place beside the list.
