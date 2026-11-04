@@ -39,7 +39,7 @@
   }
 
   function handleOpenInAppClick() {
-    openAppPath(`library?pop=${selectedCollection.id}`);
+    openAppPath(`library?page=${selectedCollection.id}`);
   }
 </script>
 
