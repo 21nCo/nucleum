@@ -92,22 +92,22 @@ export function resolveLibrarySwitcherSections(
   isDev: boolean
 ): LibrarySwitcherSection[] {
   const resourceList = resolveResourceSwitcher();
-  const toItem = (resource: Resource): IResourceSwitchItem =>
-    resourceList.find((item) => item.value === resource) ?? {
-      label: resource,
-      value: resource,
-      icon: "circle"
-    };
+  const toItems = (list: Resource[]): IResourceSwitchItem[] =>
+    list.flatMap(
+      (resource) => resourceList.find((item) => item.value === resource) ?? []
+    );
   if (product !== Product.NUCLEUM) {
-    return [{ section: product, items: resources.map(toItem) }];
+    return [{ section: product, items: toItems(resources) }];
   }
   return resolveLibrarySwitcherProducts().map((section) => ({
     section,
-    items: resolveLibrarySwitcherSectionResources(
-      section,
-      (sectionProduct) =>
-        requireSurfaceProductConfig(sectionProduct).resources.browse,
-      isDev
-    ).map(toItem)
+    items: toItems(
+      resolveLibrarySwitcherSectionResources(
+        section,
+        (sectionProduct) =>
+          requireSurfaceProductConfig(sectionProduct).resources.browse,
+        isDev
+      )
+    )
   }));
 }
