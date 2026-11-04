@@ -10,12 +10,14 @@
   import type { Snippet } from "svelte";
   import { page } from "$app/stores";
   import { Action } from "@nucleum/client/config/action.enum";
+  import { ActionType } from "@nucleum/client/config/action.type";
   import { resolveSpacePath } from "@nucleum/client/config/space-route";
   import { haptic } from "@nucleum/client/runtime/embed/embed.utils";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import { isInEditMode } from "@nucleum/shared-state/app-context/app.store";
   import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import {
@@ -80,11 +82,13 @@
     return () => isPlayerShownInPage.set(false);
   });
 
+  const returnHomeParams = {
+    searchParams: { [AppSearchParam.RETURN_TO]: productConfig.homePathPt }
+  };
+
   function openSettings() {
     haptic();
-    requireCommandHost().runAction(Action.SETTINGS, {
-      searchParams: { [AppSearchParam.RETURN_TO]: productConfig.homePathPt }
-    });
+    requireCommandHost().runAction(Action.SETTINGS, returnHomeParams);
   }
 
   function openNavigator() {
@@ -94,7 +98,10 @@
 
   function openDestination(item: IQuickAccessItem) {
     haptic();
-    requireCommandHost().runAction(item.id);
+    isInEditMode.set(false);
+    const commandHost = requireCommandHost();
+    const isPage = commandHost.resolveAction(item.id)?.type === ActionType.PAGE;
+    commandHost.runAction(item.id, isPage ? returnHomeParams : undefined);
   }
 
   function openSpace(space: PinnedSpace) {
@@ -116,7 +123,6 @@
         <button
           type="button"
           data-testid="phone-home-navigator"
-          aria-label="Open navigator"
           class="flex items-center gap-2 w-full h-11 px-3 rounded-lg border border-brs2 bg-bgs1 text-fgs3 text-b2 active:bg-bgs3"
           onclick={openNavigator}
         >
