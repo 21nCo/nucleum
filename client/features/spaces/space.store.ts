@@ -108,9 +108,10 @@ export class ActiveSpaceStore {
    * the complete list. A failed save is reloaded over only when no later
    * change is waiting, since that change saves the shown items again. A save
    * queued for one account is dropped when another account is active by the
-   * time it runs.
+   * time it runs, and items still loaded from another account are not saved.
    */
   private async persistItems(items: ISpaceNavItem[]) {
+    if (!this.isItemsCurrent()) return false;
     const revision = ++this.itemsRevision;
     const namespace = datafn.currentNamespace();
     this.itemsNamespace = namespace;
@@ -131,9 +132,17 @@ export class ActiveSpaceStore {
     return write;
   }
 
-  /** Whether the open state holds the space's items, loaded at least once. */
+  /** Whether the shown items were loaded or edited in the active account. */
+  private isItemsCurrent() {
+    return this.itemsNamespace === datafn.currentNamespace();
+  }
+
+  /** Whether the open state holds the space's items, loaded in the active account. */
   hasLoadedItems() {
-    return !!(get(this.subject) as IActiveSpace | undefined)?.items;
+    return (
+      !!(get(this.subject) as IActiveSpace | undefined)?.items &&
+      this.isItemsCurrent()
+    );
   }
 
   /** Appends items after the current ones and returns whether they were saved. */

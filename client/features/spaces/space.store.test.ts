@@ -274,4 +274,52 @@ describe("space writes", () => {
       "From account B"
     ]);
   });
+
+  it("appends to the saved record when the open space holds another account's items", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const store = ActiveSpaceStore.resolve("space:shared-append");
+    const section = (id: string) => ({
+      id,
+      type: "section",
+      label: id,
+      children: []
+    });
+    mocks.select.mockResolvedValueOnce({
+      id: "space:shared-append",
+      items: [section("from-a")]
+    });
+    await store.init();
+    mocks.namespace = "account-b";
+    mocks.select.mockResolvedValueOnce({
+      id: "space:shared-append",
+      items: [section("from-b"), section("link")]
+    });
+    await expect(
+      appendSpaceItems(
+        "space:shared-append",
+        [section("link") as never],
+        [section("from-b") as never]
+      )
+    ).resolves.toBe(true);
+    const saved = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
+      id: string;
+    }[];
+    expect(saved.map((item) => item.id)).toEqual(["from-b", "link"]);
+    expect(store.readItems().map((item) => item.id)).toEqual([
+      "from-b",
+      "link"
+    ]);
+  });
+
+  it("does not save edits to items still loaded from another account", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const store = ActiveSpaceStore.resolve("space:stale-edit");
+    mocks.select.mockResolvedValueOnce({ id: "space:stale-edit", items: [] });
+    await store.init();
+    mocks.namespace = "account-b";
+    await expect(
+      store.addSection({ label: "Edited after switching" })
+    ).resolves.toBeUndefined();
+    expect(mocks.mutate).not.toHaveBeenCalled();
+  });
 });
