@@ -23,7 +23,10 @@
   } from "@nucleum/shell/navigator/navigator-history";
   import { onDestroy, onMount, untrack, tick } from "svelte";
   import { navigatorFocusRequests } from "@nucleum/shell/navigator/navigator-focus";
-  import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
+  import {
+    resolveNavigatorLayer,
+    resolveNavigatorOverlayCloseParams
+  } from "@nucleum/shell/navigator/navigator-layer";
   import { get } from "svelte/store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { searchResources } from "@nucleum/shared-state/resources/resource-search";
@@ -221,12 +224,16 @@
 
   /**
    * Opens a resource as a fresh page that starts a trail; Cmd or Ctrl opens
-   * it beside the base page, or beside the open page.
+   * it beside the base page, or beside the open page. Opened from the
+   * navigator overlay, that overlay closes so the resource is not covered.
    */
   function openFresh(id: string, event?: MouseEvent | KeyboardEvent) {
     if (event && navigation.determineClickAccessMode(event)) {
       navigation.resourceClickHandler(event, id, {
-        origin: Action.NAVIGATOR
+        origin: Action.NAVIGATOR,
+        searchParams: resolveNavigatorOverlayCloseParams(
+          new URL(window.location.href)
+        )
       });
       return;
     }
