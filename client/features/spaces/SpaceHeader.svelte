@@ -59,7 +59,8 @@
   }
 
   function onTitleKeydown(event: KeyboardEvent) {
-    if (event.key === "Enter" && !event.isComposing) {
+    if (event.isComposing || event.keyCode === 229) return;
+    if (event.key === "Enter") {
       event.preventDefault();
       saveTitle();
     } else if (event.key === "Escape") {
