@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { tick, untrack } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import { get } from "svelte/store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { registerEditModeFinisher } from "@nucleum/shared-state/resources/edit-mode-finish";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import { resolveNodeLabelString } from "@nucleum/features/memory/node/node.utils";
 
@@ -16,6 +17,7 @@
   let inputRef = $state<HTMLInputElement | undefined>(undefined);
   let isCancelled = false;
   let isDirty = false;
+  let pendingSave: Promise<void> | undefined;
   const label = $derived(resolveNodeLabelString($node));
 
   const isEditing = $derived($node.isInEditMode);
@@ -33,23 +35,31 @@
     });
   });
 
-  async function saveLabel() {
-    if (isCancelled || !isDirty || !$node.isInEditMode) return;
+  function saveLabel() {
+    if (isCancelled || !isDirty || !$node.isInEditMode)
+      return pendingSave ?? Promise.resolve();
     const next = draft.trim();
-    if (next === ($node.label ?? "")) return;
-    await node.modify({ label: next });
+    if (next === ($node.label ?? "")) return pendingSave ?? Promise.resolve();
+    const save = node.modify({ label: next });
+    pendingSave = save;
+    save.catch(reportSaveFailure).finally(() => {
+      if (pendingSave === save) pendingSave = undefined;
+    });
+    return save;
   }
 
   async function finish() {
     try {
       await saveLabel();
-    } catch (error) {
-      reportSaveFailure(error);
+    } catch {
       inputRef?.focus();
-      return;
+      return false;
     }
     node.toggleEditMode(false);
+    return true;
   }
+
+  onMount(() => registerEditModeFinisher(node.id.toString(), finish));
 
   function reportSaveFailure(error: unknown) {
     logger.error({ at: "NodeContextTitle.save", error });
@@ -97,7 +107,7 @@
     use:saveOnRemoval
     oninput={() => (isDirty = true)}
     onkeydown={onKeydown}
-    onblur={() => saveLabel().catch(reportSaveFailure)}
+    onblur={() => saveLabel().catch(() => undefined)}
   />
 {:else}
   <button

@@ -20,6 +20,7 @@
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { isInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
   import EditModeDone from "@21n/ui/elements/button/EditModeDoneButton.svelte";
+  import { finishEditMode } from "@nucleum/shared-state/resources/edit-mode-finish";
 
   interface Props {
     resourceStore: Readable<IResourcePageWithPanels>;
@@ -118,9 +119,10 @@
 {#snippet closeEditModeButton(className: string)}
   <button
     class={className}
-    onclick={() => {
-      $resourceStore.closeEditMode();
-    }}
+    onclick={() =>
+      finishEditMode($resourceStore.id.toString(), () =>
+        $resourceStore.closeEditMode()
+      )}
   >
     <Icon icon="cross" size={Size.sm} class="text-abg" />
     <span> Close edit mode </span>
@@ -131,7 +133,12 @@
   <div class="flex items-center h-full" data-testid="resource-context-tabs">
     {#if $resourceStore.isInEditMode}
       <div class="flex items-center h-full pr-3 mr-3 border-r border-brs3">
-        <EditModeDone onDone={() => $resourceStore.closeEditMode()} />
+        <EditModeDone
+          onDone={() =>
+            finishEditMode($resourceStore.id.toString(), () =>
+              $resourceStore.closeEditMode()
+            )}
+        />
       </div>
     {/if}
     {#if $resourceStore.isInFocusMode}

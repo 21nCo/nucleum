@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { tick, untrack } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import { get } from "svelte/store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { registerEditModeFinisher } from "@nucleum/shared-state/resources/edit-mode-finish";
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
 
   let {
@@ -15,6 +16,7 @@
   let inputRef = $state<HTMLInputElement | undefined>(undefined);
   let isCancelled = false;
   let isDirty = false;
+  let pendingSave: Promise<void> | undefined;
   const label = $derived($objective.label || "Untitled");
 
   async function startEditing() {
@@ -37,23 +39,32 @@
     });
   });
 
-  async function saveLabel() {
-    if (isCancelled || !isDirty || !$objective.isInEditMode) return;
+  function saveLabel() {
+    if (isCancelled || !isDirty || !$objective.isInEditMode)
+      return pendingSave ?? Promise.resolve();
     const next = draft.trim();
-    if (next === ($objective.label ?? "")) return;
-    await objective.modify({ label: next });
+    if (next === ($objective.label ?? ""))
+      return pendingSave ?? Promise.resolve();
+    const save = objective.modify({ label: next });
+    pendingSave = save;
+    save.catch(reportSaveFailure).finally(() => {
+      if (pendingSave === save) pendingSave = undefined;
+    });
+    return save;
   }
 
   async function finish() {
     try {
       await saveLabel();
-    } catch (error) {
-      reportSaveFailure(error);
+    } catch {
       inputRef?.focus();
-      return;
+      return false;
     }
     objective.toggleEditMode(false);
+    return true;
   }
+
+  onMount(() => registerEditModeFinisher(objective.id.toString(), finish));
 
   function reportSaveFailure(error: unknown) {
     logger.error({ at: "GoalContextTitle.save", error });
@@ -101,7 +112,7 @@
     use:saveOnRemoval
     oninput={() => (isDirty = true)}
     onkeydown={onKeydown}
-    onblur={() => saveLabel().catch(reportSaveFailure)}
+    onblur={() => saveLabel().catch(() => undefined)}
   />
 {:else}
   <button
