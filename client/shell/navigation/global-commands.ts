@@ -75,6 +75,10 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
+      const panel = new URLSearchParams(window.location.search).get(
+        AccessMode.PANEL
+      );
+      if (panel === Action.NAVIGATOR) return;
       requireCommandHost().runAction(Action.NAVIGATOR);
     }
   },
