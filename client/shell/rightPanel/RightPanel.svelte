@@ -31,9 +31,7 @@
     aria-label={action.label ?? action.action}
     in:fly={{ y: 40, duration: 150, easing: quadInOut }}
   >
-    <div
-      class="flex items-center justify-between h-12 min-h-12 px-2 otop:pt-12"
-    >
+    <div class="flex items-center justify-between min-h-12 px-2 otop:pt-12">
       <div class="px-2 text-b1 text-fgs1 truncate">
         {action.label ?? ""}
       </div>
