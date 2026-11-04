@@ -67,7 +67,7 @@
   }
 </script>
 
-{#snippet panelSwitcher(size: Size, isIconOnlyMode: boolean)}
+{#snippet panelSwitcher(size: Size.sm | Size.md, isIconOnlyMode: boolean)}
   <BoxSwitcher
     isTablist={true}
     isExpandOnActiveForIcon={true}
