@@ -1,6 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import { logger } from "@nucleum/client/runtime/logging/logger";
   import {
     isFullScreenPage,
     navigation
@@ -61,7 +62,8 @@
   let isResolved = $state(false);
   const isShown = $derived(
     !isResolved ||
-      (!!resource && !(isTrail && resource.id && isTrashedResource(resource)))
+      !isTrail ||
+      (!!resource && !(resource.id && isTrashedResource(resource)))
   );
   let action = $state<any>(undefined);
   let isHovering = $state(false);
@@ -119,7 +121,10 @@
       if (isRecordId(item)) {
         resourceType = determineResourceType(item);
         action = requireCommandHost().resolveAction(resourceType);
-        const resolved = await resolveResource(item).catch(() => undefined);
+        const resolved = await resolveResource(item).catch((error) => {
+          logger.error({ at: "TopBarResourceItem.initialize", item, error });
+          return undefined;
+        });
         if (resolved) resource = { ...resolved, ...(resource ?? {}) };
       } else {
         action = requireCommandHost().resolveAction(item);
@@ -253,7 +258,7 @@
       onkeydown={handleTabKeyDown}
     >
       <div class="truncate text-b3">
-        {#if !resource}
+        {#if !resource && !isResolved}
           <span
             class="block h-3 w-28 rounded bg-bgs3 animate-pulse"
             aria-hidden="true"
@@ -267,7 +272,7 @@
           />
         {:else}
           <span class="flex items-center gap-1">
-            {#if resource.icon}
+            {#if resource?.icon}
               <Icon icon={resource.icon} size={Size.sm} />
             {/if}
             {isValidString(resource?.label) ? resource?.label : "Untitled"}
