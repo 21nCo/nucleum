@@ -83,7 +83,7 @@
   });
 
   const returnHomeParams = {
-    searchParams: { [AppSearchParam.RETURN_TO]: productConfig.homePathPt }
+    searchParams: { [AppSearchParam.RETURN_TO]: `/${productConfig.homePathPt}` }
   };
 
   function openSettings() {
