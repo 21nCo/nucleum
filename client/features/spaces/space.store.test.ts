@@ -34,6 +34,27 @@ import {
 } from "@nucleum/features/spaces/space.store";
 import { SpaceView } from "@nucleum/features/spaces/space.type";
 
+function nestedRecordItems() {
+  return [
+    {
+      id: "page",
+      label: "Page",
+      type: "resource",
+      resourceId: "node:page",
+      resourceType: "node",
+      children: [
+        {
+          id: "child",
+          label: "Child",
+          type: "resource",
+          resourceId: "node:child",
+          resourceType: "node"
+        }
+      ]
+    }
+  ];
+}
+
 describe("space writes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -154,29 +175,35 @@ describe("space writes", () => {
     const store = ActiveSpaceStore.resolve("space:nested-records");
     mocks.select.mockResolvedValueOnce({
       id: "space:nested-records",
-      items: [
-        {
-          id: "page",
-          label: "Page",
-          type: "resource",
-          resourceId: "node:page",
-          resourceType: "node",
-          children: [
-            {
-              id: "child",
-              label: "Child",
-              type: "resource",
-              resourceId: "node:child",
-              resourceType: "node"
-            }
-          ]
-        }
-      ]
+      items: nestedRecordItems()
     });
     await store.init();
     const items = store.readItems();
     expect(items.map((item) => item.id)).toEqual(["page", "child"]);
     expect(items[0].children).toBeUndefined();
+  });
+
+  it("appends to a saved record holding items under a record item as rows", async () => {
+    const store = ActiveSpaceStore.resolve("space:nested-append");
+    const saved = { id: "space:nested-append", items: nestedRecordItems() };
+    mocks.select.mockResolvedValue(saved);
+    mocks.mutate.mockResolvedValue({ ok: true });
+    await store.init();
+    const link = {
+      id: "link",
+      type: "resource",
+      label: "Link",
+      resourceId: "node:a",
+      resourceType: "node"
+    } as never;
+    await expect(appendSpaceItems("space:nested-append", [link])).resolves.toBe(
+      true
+    );
+    expect(store.readItems().map((item) => item.id)).toEqual([
+      "page",
+      "child",
+      "link"
+    ]);
   });
 
   it("saves items appended to an open space in order with the user's edits", async () => {

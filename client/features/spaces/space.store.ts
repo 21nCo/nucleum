@@ -184,7 +184,10 @@ export class ActiveSpaceStore {
         metadata: recordMetadata
       })) as ISpace | undefined;
       if (!saved || isTrashedResource(saved) || !isCurrent()) return false;
-      const next = appendMissingItems(saved.items ?? [], items);
+      const next = appendMissingItems(
+        normalizeNavItems(saved.items ?? []),
+        items
+      );
       if (!(await this.mutate({ items: next }, async () => undefined))) {
         return false;
       }
