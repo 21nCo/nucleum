@@ -173,6 +173,7 @@
 
   function handleSearchKeydown(keydown: CustomEvent<KeyboardEvent>) {
     const event = keydown.detail;
+    if (event.isComposing || event.keyCode === 229) return;
     if (event.key === "Escape") {
       event.preventDefault();
       if (query) {
