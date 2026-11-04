@@ -88,4 +88,28 @@ describe("layer-scoped record params", () => {
     expect(url.searchParams.has(AccessMode.BESIDE_PAGE)).toBe(false);
     expect(url.searchParams.has(pageFocusKey)).toBe(false);
   });
+
+  it("clears the focus of a beside-page space closed with its page", () => {
+    window.history.replaceState(
+      {},
+      "",
+      `/tab?page=node%3Amain&besidePage=space%3Apage1&${pageFocusKey}=space%3Achild`
+    );
+    navigation.closeResource({ accessMode: AccessMode.PAGE });
+    const url = lastUrl();
+    expect(url.searchParams.has(AccessMode.BESIDE_PAGE)).toBe(false);
+    expect(url.searchParams.has(pageFocusKey)).toBe(false);
+  });
+
+  it("clears the focus of a beside-page space removed by opening another page", () => {
+    window.history.replaceState(
+      {},
+      "",
+      `/tab?page=node%3Amain&besidePage=space%3Apage1&${pageFocusKey}=space%3Achild`
+    );
+    navigation.openResource("node:card", AccessMode.PAGE);
+    const url = lastUrl();
+    expect(url.searchParams.has(AccessMode.BESIDE_PAGE)).toBe(false);
+    expect(url.searchParams.has(pageFocusKey)).toBe(false);
+  });
 });

@@ -512,7 +512,8 @@ export const navigation = {
         : [accessMode ?? AppSearchParam.SELECTED];
     clearLayerScopedRecordParams(url, [
       id,
-      ...replacedModes.map((mode) => currentUrl.searchParams.get(mode))
+      ...replacedModes.map((mode) => currentUrl.searchParams.get(mode)),
+      currentUrl.searchParams.get(AccessMode.BESIDE_PAGE)
     ]);
     url =
       navigation.toggleSearchParam(recordSpecificSearchParams, {
@@ -674,7 +675,10 @@ export const navigation = {
           : closableLayerModes;
     clearLayerScopedRecordParams(url, [
       props?.id,
-      ...closedModes.map((mode) => currentUrl.searchParams.get(mode))
+      ...closedModes.map((mode) => currentUrl.searchParams.get(mode)),
+      isInPlace
+        ? undefined
+        : currentUrl.searchParams.get(AccessMode.BESIDE_PAGE)
     ]);
     if (props?.accessMode) {
       navigation.toggleSearchParam(
