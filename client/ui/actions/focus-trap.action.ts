@@ -52,7 +52,15 @@ export function focusTrap(node: HTMLElement) {
   return {
     destroy() {
       node.removeEventListener("keydown", handleKeydown);
-      if (opener?.isConnected) opener.focus();
+      queueMicrotask(() => {
+        const active = document.activeElement;
+        const isFocusElsewhere =
+          active instanceof HTMLElement &&
+          active !== document.body &&
+          active !== opener &&
+          !node.contains(active);
+        if (opener?.isConnected && !isFocusElsewhere) opener.focus();
+      });
     }
   };
 }

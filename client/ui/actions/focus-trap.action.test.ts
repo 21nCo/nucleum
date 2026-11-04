@@ -57,9 +57,10 @@ describe("client/ui/actions/focus-trap.action", () => {
     expect(document.activeElement?.id).toBe("first");
   });
 
-  it("returns focus to the opener when it is removed", () => {
+  it("returns focus to the opener when it is removed", async () => {
     const { opener, trap } = setup();
     trap.destroy();
+    await Promise.resolve();
     expect(document.activeElement).toBe(opener);
   });
 
@@ -70,5 +71,38 @@ describe("client/ui/actions/focus-trap.action", () => {
     last.addEventListener("keydown", (event) => event.preventDefault());
     tab(last);
     expect(document.activeElement).toBe(last);
+  });
+
+  it("returns focus to an opener that stops being inert after the trap is removed", async () => {
+    document.body.innerHTML = `
+      <div id="covered"><button id="opener">Open</button></div>
+      <div id="sheet" tabindex="-1"><button id="close">Close</button></div>
+    `;
+    const opener = document.getElementById("opener") as HTMLElement;
+    const covered = document.getElementById("covered") as HTMLElement;
+    const sheet = document.getElementById("sheet") as HTMLElement;
+    const focus = HTMLElement.prototype.focus;
+    opener.focus = function (this: HTMLElement) {
+      if (!this.closest("[inert]")) focus.call(this);
+    };
+    opener.focus();
+    covered.setAttribute("inert", "");
+    const trap = focusTrap(sheet);
+    (document.getElementById("close") as HTMLElement).focus();
+    sheet.remove();
+    trap.destroy();
+    covered.removeAttribute("inert");
+    await Promise.resolve();
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it("keeps focus that moved elsewhere after the trap is removed", async () => {
+    const { trap } = setup();
+    const other = document.createElement("button");
+    document.body.append(other);
+    trap.destroy();
+    other.focus();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(other);
   });
 });
