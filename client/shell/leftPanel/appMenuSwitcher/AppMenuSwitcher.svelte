@@ -55,16 +55,14 @@
     if ($view.isConstrainedWidth || $view.isPortrait) {
       defaultMenu = productConfig.appMenuPt;
     }
-    const contextualMenu = [...defaultMenu];
-    // console.log({ defaultMenu, contextualMenu });
     if (layoutContext === LayoutContext.PORTRAIT) {
-      items = contextualMenu.slice(
+      items = defaultMenu.slice(
         0,
         productConfig.isShowCaptureOnMobile ? 3 : 4
       );
       items.push("cp");
     } else {
-      items = contextualMenu.filter((item) => item !== "cp");
+      items = defaultMenu.filter((item) => item !== "cp");
     }
     items.forEach((action: string) => {
       const currentPage = requireCommandHost().resolveAction(action);
