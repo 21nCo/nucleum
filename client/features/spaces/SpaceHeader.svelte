@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
+  import { get } from "svelte/store";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -56,23 +57,45 @@
     isTitleEditing && editedStore === store
   );
 
+  let draftTarget: ActiveSpaceStore | undefined;
+  let isDraftFresh = false;
+
   $effect(() => {
-    if (isTitleEditing && titleInput) {
-      const input = titleInput;
-      draftTitle = untrack(() => editedSpace?.label ?? "");
-      tick().then(() => {
-        input.focus();
-        input.select();
-      });
-    }
+    const target = editedStore;
+    const isEditing = isTitleEditing;
+    untrack(() => {
+      if (draftTarget && draftTarget !== target) commitDraft(draftTarget);
+      if (!isEditing) {
+        draftTarget = undefined;
+        return;
+      }
+      if (draftTarget === target) return;
+      draftTarget = target;
+      draftTitle = get(target)?.label ?? "";
+      isDraftFresh = true;
+    });
   });
+
+  $effect(() => {
+    if (!isTitleEditing || !titleInput) return;
+    const input = titleInput;
+    tick().then(() => {
+      input.focus();
+      if (!isDraftFresh) return;
+      isDraftFresh = false;
+      input.select();
+    });
+  });
+
+  function commitDraft(target: ActiveSpaceStore) {
+    const trimmed = draftTitle.trim();
+    target.setTitleEditing(false);
+    if (trimmed !== (get(target)?.label ?? "")) target.updateLabel(trimmed);
+  }
 
   function saveTitle() {
     if (!isTitleEditing) return;
-    const target = editedStore;
-    const trimmed = draftTitle.trim();
-    target.setTitleEditing(false);
-    if (trimmed !== (editedSpace?.label ?? "")) target.updateLabel(trimmed);
+    commitDraft(editedStore);
   }
 
   function onTitleKeydown(event: KeyboardEvent) {
