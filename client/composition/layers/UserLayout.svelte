@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { appLoadingState, appStore } from "@nucleum/shared-state/app-context/app.store";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
@@ -12,6 +12,7 @@
   import FullScreenOverlayLayer from "@nucleum/shell/overlays/FullScreenOverlayLayer.svelte";
   import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";
   import { resolveLayoutRoute } from "@nucleum/shell/navigation/layout-route";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { page } from "$app/stores";
   import LeftNav from "../chrome/WiredLeftNav.svelte";
@@ -31,8 +32,17 @@
 
   const commandModePageId = $derived(resolveLayoutRoute($page.url).pop?.id);
 
+  const isLoaded = $derived(
+    $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded
+  );
+
   onMount(() => {
     $appLoadingState.isLocalLoaded = true;
+  });
+
+  $effect(() => {
+    if (!isLoaded) return;
+    return untrack(() => navigation.watchAccessTrail(page));
   });
 </script>
 
@@ -44,7 +54,7 @@
   <TopNav topnav={topnavContent} indicators={topnavIndicators} />
 {/snippet}
 
-{#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
+{#if isLoaded}
   {#if $appStore.interactionMode === InteractionMode.AGENT && $context.embed !== Embed.HANDSET}
     <CommandModePage />
     {#if commandModePageId}

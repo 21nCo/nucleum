@@ -1,5 +1,5 @@
 import { isRecordId } from "@nucleum/datafn/resource.utils";
-import { get } from "svelte/store";
+import { get, type Readable } from "svelte/store";
 
 import {
   AppSearchParam,
@@ -313,6 +313,22 @@ export const navigation = {
         historyState: rewritten
       });
     }
+  },
+
+  /**
+   * Keeps the access trail in step with the page shown by each navigation,
+   * including browser history moves, for as long as the returned
+   * unsubscribe is not called.
+   */
+  watchAccessTrail(
+    pages: Readable<{ url?: URL; state?: unknown } | undefined>
+  ) {
+    return pages.subscribe((current) =>
+      navigation.syncAccessTrail(
+        current?.url?.searchParams.get(AccessMode.PAGE) ?? undefined,
+        current?.state
+      )
+    );
   },
 
   /**
