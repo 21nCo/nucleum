@@ -380,7 +380,7 @@ export function resolveObjectiveContextMenu(
     ];
   } else {
     primaryItems = [
-      resourceActions.select(accessPoint, params?.accessPointId),
+      ...resourceActions.selectIfSupported(accessPoint, params?.accessPointId),
       resourceActions.star(),
       resourceActions.addToCollection(),
       resourceActions.edit(accessPoint),

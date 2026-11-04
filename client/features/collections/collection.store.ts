@@ -525,7 +525,7 @@ export function resolveCollectionContextMenu(
         group: "all",
         items: [
           resourceActions.star(),
-          resourceActions.select(accessPoint),
+          ...resourceActions.selectIfSupported(accessPoint),
 
           resourceActions.copyLink()
         ]

@@ -66,7 +66,10 @@ export function resolveSpaceContextMenu(
       group: "all",
       items: [
         resourceActions.star(),
-        resourceActions.select(accessPoint, params?.accessPointId),
+        ...resourceActions.selectIfSupported(
+          accessPoint,
+          params?.accessPointId
+        ),
         resourceActions.copyLink()
       ]
     },
