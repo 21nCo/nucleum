@@ -76,4 +76,16 @@ describe("layer-scoped record params", () => {
     navigation.closeResource({ accessMode: AccessMode.PAGE });
     expect(lastUrl().searchParams.has(pageFocusKey)).toBe(false);
   });
+
+  it("clears the focus of a closed beside-page space", () => {
+    window.history.replaceState(
+      {},
+      "",
+      `/tab?page=node%3Acard&besidePage=space%3Apage1&${pageFocusKey}=space%3Achild`
+    );
+    navigation.closeResource({ accessMode: AccessMode.BESIDE_PAGE });
+    const url = lastUrl();
+    expect(url.searchParams.has(AccessMode.BESIDE_PAGE)).toBe(false);
+    expect(url.searchParams.has(pageFocusKey)).toBe(false);
+  });
 });

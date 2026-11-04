@@ -653,6 +653,7 @@ export const navigation = {
         ? determineResourceAccessMode(props.id)
         : undefined;
     const isInPlace = !!props?.id && !props?.accessMode && !resolvedMode;
+    const currentUrl = new URL(window.location.href);
     const url =
       navigation.toggleSearchParam(
         isInPlace
@@ -673,7 +674,7 @@ export const navigation = {
           : closableLayerModes;
     clearLayerScopedRecordParams(url, [
       props?.id,
-      ...closedModes.map((mode) => url.searchParams.get(mode))
+      ...closedModes.map((mode) => currentUrl.searchParams.get(mode))
     ]);
     if (props?.accessMode) {
       navigation.toggleSearchParam(
