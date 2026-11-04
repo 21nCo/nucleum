@@ -250,4 +250,28 @@ describe("space writes", () => {
     expect(lastItems.map((item) => item.id)).toContain(secondId);
     expect(lastItems.map((item) => item.id)).toContain(thirdId);
   });
+
+  it("replaces another account's pending items when the space loads", async () => {
+    const store = ActiveSpaceStore.resolve("space:shared-id");
+    mocks.select.mockResolvedValueOnce({ id: "space:shared-id", items: [] });
+    await store.init();
+    mocks.mutate.mockReturnValueOnce(new Promise(() => undefined));
+    void store.addSection({ label: "From account A" });
+    await vi.waitFor(() => expect(mocks.mutate).toHaveBeenCalledTimes(1));
+    mocks.namespace = "account-b";
+    const sectionB = {
+      id: "b",
+      type: "section",
+      label: "From account B",
+      children: []
+    };
+    mocks.select.mockResolvedValueOnce({
+      id: "space:shared-id",
+      items: [sectionB]
+    });
+    await store.init();
+    expect(store.readItems().map((item) => item.label)).toEqual([
+      "From account B"
+    ]);
+  });
 });

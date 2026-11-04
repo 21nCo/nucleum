@@ -44,6 +44,7 @@ export class ActiveSpaceStore {
   private labelRevision = 0;
   private viewRevision = 0;
   private settledItemsRevision = 0;
+  private itemsNamespace: string | null | undefined;
   private itemsWrites: Promise<unknown> = Promise.resolve();
   private loadSequence = 0;
   private latestLoad: Promise<void> = Promise.resolve();
@@ -112,6 +113,7 @@ export class ActiveSpaceStore {
   private async persistItems(items: ISpaceNavItem[]) {
     const revision = ++this.itemsRevision;
     const namespace = datafn.currentNamespace();
+    this.itemsNamespace = namespace;
     this.update((prev) => (prev ? { ...prev, items } : prev));
     const isCurrent = () => datafn.currentNamespace() === namespace;
     const write = this.itemsWrites.then(async () => {
@@ -140,11 +142,12 @@ export class ActiveSpaceStore {
   }
 
   /**
-   * Loads the record, keeping open-state flags across reloads. Items, title and
-   * view edited while the record loads are kept, since they are newer than the
-   * loaded copy. A load overtaken by a later one is dropped and settles when the
-   * latest load has been applied, so no caller proceeds without loaded items.
-   * Pass `isRecordedInRecents: false` when the space is loaded only to read its
+   * Loads the record, keeping open-state flags across reloads. Items edited in
+   * the same account, and the title and view, edited while the record loads are
+   * kept, since they are newer than the loaded copy, and items left from another
+   * account are replaced. A load overtaken by a later one is dropped and settles
+   * when the latest load has been applied, so no caller proceeds without loaded
+   * items. Pass `isRecordedInRecents: false` when the space is loaded only to read its
    * settings, so it does not move to the top of recents.
    */
   init(
@@ -164,6 +167,7 @@ export class ActiveSpaceStore {
     const itemsRevisionAtStart = this.itemsRevision;
     const labelRevisionAtStart = this.labelRevision;
     const viewRevisionAtStart = this.viewRevision;
+    const namespace = datafn.currentNamespace();
     this.update(
       (prev) =>
         ({
@@ -219,6 +223,7 @@ export class ActiveSpaceStore {
           : (record.view ?? SpaceView.SIDENAV),
       items:
         prev?.items &&
+        this.itemsNamespace === namespace &&
         (this.itemsRevision !== itemsRevisionAtStart ||
           this.itemsRevision !== this.settledItemsRevision)
           ? prev.items
@@ -230,6 +235,7 @@ export class ActiveSpaceStore {
       isMissing: false,
       isLoadFailed: false
     }));
+    this.itemsNamespace = namespace;
     if (options.isRecordedInRecents === false) return;
     appStore.addToRecents({
       record,
