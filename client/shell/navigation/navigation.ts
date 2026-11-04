@@ -695,13 +695,15 @@ export const navigation = {
       );
       navigatorLayer = resolveNavigatorLayer(url);
       const isNavigatorOpen = !!navigatorLayer;
-      if (intent === "start" && openPage !== id.toString()) {
-        accessTrail.start(
-          id.toString(),
-          params?.origin && !isRecordId(params.origin)
-            ? params.origin
-            : undefined
-        );
+      if (intent === "start") {
+        if (openPage !== id.toString()) {
+          accessTrail.start(
+            id.toString(),
+            params?.origin && !isRecordId(params.origin)
+              ? params.origin
+              : undefined
+          );
+        }
         isCloseNavigator = isNavigatorOpen;
       } else if (intent === "select") {
         isCloseNavigator =

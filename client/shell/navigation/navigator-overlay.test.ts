@@ -110,6 +110,20 @@ describe("navigator opened as an overlay", () => {
     expect(overlay()).toBeNull();
   });
 
+  it("closes the navigator overlay when it reopens the open page", () => {
+    view.refresh(800, 600);
+    navigation.openResource("node:a", "page" as never);
+    openNavigatorOverlay();
+    navigation.openResource("node:a", "page" as never, {
+      origin: "navigator" as never,
+      trail: "start"
+    });
+    expect(new URL(window.location.href).searchParams.get("page")).toBe(
+      "node:a"
+    );
+    expect(overlay()).toBeNull();
+  });
+
   it("leaves other overlays open", () => {
     view.refresh(800, 600);
     const url = new URL(window.location.href);
