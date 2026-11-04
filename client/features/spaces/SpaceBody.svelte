@@ -107,7 +107,13 @@
     onclick={parentId ? onBack : undefined}
   />
 {:else if view === SpaceView.WALL}
-  <SpaceWall {spaceId} focusChain={ancestors} {header} {onFocusSpace} />
+  <SpaceWall
+    {spaceId}
+    focusChain={ancestors}
+    {accessMode}
+    {header}
+    {onFocusSpace}
+  />
 {:else}
   <SpaceSideNav
     {spaceId}
