@@ -25,17 +25,38 @@
 
   const isActive = $derived(!!resolveNavigatorLayer($page.url));
   const trailCount = $derived($accessTrailCount);
+  let pillRef = $state<HTMLButtonElement | undefined>(undefined);
+  let searchRef = $state<HTMLDivElement | undefined>(undefined);
+  let previousState: TopNavPanelActionState | undefined;
+  let isRestoreFocus = false;
+
+  $effect.pre(() => {
+    const next = state;
+    if (previousState === "expanded" && next !== "expanded") {
+      isRestoreFocus = !!searchRef?.contains(document.activeElement);
+    }
+    previousState = next;
+  });
+
+  $effect(() => {
+    void state;
+    if (!isRestoreFocus || !pillRef) return;
+    isRestoreFocus = false;
+    pillRef.focus();
+  });
 </script>
 
 {#if state === "expanded"}
   <div
     class="flex items-center w-full h-full"
     data-testid="navigator-inline-search"
+    bind:this={searchRef}
   >
     <NavigatorSearchInput />
   </div>
 {:else if state === "compact"}
   <button
+    bind:this={pillRef}
     type="button"
     data-testid="navigator-pill"
     aria-label={trailCount > 0
@@ -49,6 +70,7 @@
   </button>
 {:else}
   <button
+    bind:this={pillRef}
     type="button"
     data-testid="navigator-pill"
     aria-label={trailCount > 0
