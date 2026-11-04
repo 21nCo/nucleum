@@ -17,4 +17,12 @@ describe("resolveFullScreenOverlayPath", () => {
       )
     ).toBeUndefined();
   });
+
+  it("leaves full screen to a resource page opened over the overlay", () => {
+    expect(
+      resolveFullScreenOverlayPath(
+        new URLSearchParams("overlay=focus&page=objective%3Aa&max=true")
+      )
+    ).toBeUndefined();
+  });
 });

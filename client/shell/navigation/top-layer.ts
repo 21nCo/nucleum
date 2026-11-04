@@ -18,25 +18,29 @@ export type TopLayer =
 /**
  * Resolves the topmost closable layer: overlay, then right panel, then bulk
  * selection, then the split beside the resource page, then full screen, then
- * the resource page, then the split next to the base page.
+ * the resource page, then the split next to the base page. A resource page
+ * opened from an overlay covers it, so that overlay comes after the page.
  */
 export function resolveTopLayer(
   searchParams: URLSearchParams,
   bulkCount: number,
   options?: { isIncludePanel?: boolean; isIncludeFullScreen?: boolean }
 ): TopLayer | undefined {
-  if (searchParams.get(AccessMode.OVERLAY)) return "overlay";
+  const isPageOpen = !!searchParams.get(AccessMode.PAGE);
+  const isOverlayOpen = !!searchParams.get(AccessMode.OVERLAY);
+  if (isOverlayOpen && !isPageOpen) return "overlay";
   if (options?.isIncludePanel !== false && searchParams.get(AccessMode.PANEL))
     return "panel";
   if (bulkCount > 0) return "bulk";
   if (searchParams.get(AccessMode.BESIDE_PAGE)) return "beside-page";
   if (
     options?.isIncludeFullScreen !== false &&
-    searchParams.get(AccessMode.PAGE) &&
+    isPageOpen &&
     searchParams.get(AppSearchParam.MAX)
   )
     return "full-screen";
-  if (searchParams.get(AccessMode.PAGE)) return "page";
+  if (isPageOpen) return "page";
+  if (isOverlayOpen) return "overlay";
   if (searchParams.get(AccessMode.BESIDE_BASE)) return "beside-base";
   return undefined;
 }

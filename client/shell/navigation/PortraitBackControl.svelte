@@ -44,7 +44,7 @@
   let swipeStart: { x: number; y: number } | undefined;
 
   function back() {
-    if (searchParams.get(AccessMode.OVERLAY)) {
+    if (searchParams.get(AccessMode.OVERLAY) && !isPageOpen) {
       closeTopLayer({ isIncludePanel: false });
       return;
     }

@@ -65,10 +65,8 @@
     return typeof pop.id === "string" && pop.id.length > 0 ? pop.id : undefined;
   });
   const isBaseCovered = $derived(!!popId || !!mainPath);
-  const isPageFullScreen = $derived(
-    isMaxParam && !!popId && !mainPath && !$view.isPortrait
-  );
-  const isOverlayFullScreen = $derived(isMaxParam && !!mainPath);
+  const isPageFullScreen = $derived(isMaxParam && !!popId && !$view.isPortrait);
+  const isOverlayFullScreen = $derived(isMaxParam && !!mainPath && !popId);
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
   const isPanelShown = $derived(!!rightPanel && !isOverlayFullScreen);
   const isPanelSheetShown = $derived(isPanelShown && $view.isPortrait);
