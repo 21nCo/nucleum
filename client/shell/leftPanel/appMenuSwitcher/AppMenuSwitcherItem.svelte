@@ -149,7 +149,8 @@
   }
 
   function resolvePopover() {
-    if (!item?.componentParams?.resource) {
+    const resource = item?.componentParams?.resource;
+    if (!resource || isHideCreateAction(resource)) {
       return {
         content: "",
         triggerMethod: []

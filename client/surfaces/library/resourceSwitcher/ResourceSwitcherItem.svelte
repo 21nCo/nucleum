@@ -38,11 +38,12 @@
   let popRef: HTMLButtonElement;
   let resource = $derived(item.value as Resource);
   let isConstrainedWidth = $derived($view.isConstrainedWidth);
+  let hasContextMenu = $derived(
+    resource !== Resource.space && !isHideCreateAction(resource)
+  );
 
   function resolveContextMenu() {
-    if (resource === Resource.space || isHideCreateAction(resource)) {
-      return [];
-    }
+    if (!hasContextMenu) return [];
     const createAction = {
       label: "Create new",
       value: "create",
@@ -71,7 +72,7 @@
   use:popover={{
     placement: Placement.BottomCenter,
     content: ContextMenu,
-    triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
+    triggerMethod: hasContextMenu ? [PopoverTriggerMethod.RIGHT_CLICK] : [],
     componentProps: { menuResolver: resolveContextMenu },
     id: "resourceSwitcherContextMenu",
     groupId: "resourceSwitcherContextMenuGroup"
