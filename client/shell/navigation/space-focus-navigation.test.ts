@@ -2,16 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import { navigation } from "./navigation";
 
-vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
-  uiState: { getState: () => [], setState: () => undefined }
-}));
-vi.mock("@nucleum/datafn/datafn.store", async () => {
-  const { writable } = await import("svelte/store");
-  return { datafn: {}, datafnRuntime: writable(undefined) };
-});
-vi.mock("@nucleum/shell/navigator/navigator-history.store", () => ({
-  navigatorHistory: { recordResource: () => undefined }
-}));
+vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", async () =>
+  (await import("./navigation.test.setup")).uiStateStoreStub()
+);
+vi.mock("@nucleum/datafn/datafn.store", async () =>
+  (await import("./navigation.test.setup")).emptyDatafnStoreStub()
+);
+vi.mock("@nucleum/shell/navigator/navigator-history.store", async () =>
+  (await import("./navigation.test.setup")).navigatorHistoryStoreStub()
+);
 
 const spaceId = "space:abcdefghij";
 const focusKey = navigation.resolveRecordSpecificSearchParam(spaceId, "focus");
