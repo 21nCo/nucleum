@@ -29,7 +29,8 @@
     {
       "w-[5.5rem] app-framed:mx-6": menuColumn === "labels",
       "w-[3.5rem] app-framed:mx-2": menuColumn === "icons",
-      "px-4 app-framed:ml-[var(--app-shell-gap)] app-framed:mr-2": !menuColumn
+      "px-4 app-framed:ml-[max(var(--app-shell-gap),0.5rem)] app-framed:mr-2":
+        !menuColumn
     }
   )}
   use:tooltip={{ text: label }}
