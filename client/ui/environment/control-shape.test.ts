@@ -2,7 +2,7 @@ import { get } from "svelte/store";
 import { afterEach, describe, expect, it } from "vitest";
 
 import colorSchemes from "@21n/theme/colorschemes.json";
-import { AppStyle } from "@21n/theme/app-style";
+import { AppStyle, resolveAppStyleTokens } from "@21n/theme/app-style";
 import type { ColorScheme } from "@21n/theme/appearance.type";
 import {
   elementControlShape,
@@ -40,6 +40,18 @@ describe("resolveControlShape", () => {
 
   it("treats unknown styles as boxed", () => {
     expect(resolveControlShape("pill").isFramed).toBe(false);
+  });
+
+  it("matches the control radius token of every app style", () => {
+    const radiusByClass = {
+      "rounded-md": "0.375rem",
+      "rounded-full": "9999px"
+    };
+    for (const style of Object.values(AppStyle)) {
+      expect(radiusByClass[resolveControlShape(style).radiusClass]).toBe(
+        resolveAppStyleTokens(style)["--app-control-radius"]
+      );
+    }
   });
 });
 
