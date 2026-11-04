@@ -73,7 +73,10 @@
     {isPinned}
     isEditable={view === SpaceView.SIDENAV}
     onTogglePin={togglePin}
-    onViewChange={(next) => store.updateView(next)}
+    onViewChange={(next) => {
+      if (next !== SpaceView.SIDENAV) store.setEditMode(false);
+      store.updateView(next);
+    }}
   />
 {/snippet}
 

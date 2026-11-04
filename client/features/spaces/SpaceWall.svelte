@@ -48,7 +48,6 @@
     {@render header()}
   </div>
   <section class="flex flex-col gap-3 p-6">
-    <h2 class="text-h3 font-semibold">{$store?.label || "Untitled space"}</h2>
     {#if items.length > 0}
       {@render itemList(items)}
     {:else}

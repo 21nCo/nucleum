@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { tick, untrack } from "svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -42,9 +42,12 @@
 
   $effect(() => {
     if (isTitleEditing && titleInput) {
+      const input = titleInput;
       draftTitle = untrack(() => space?.label ?? "");
-      titleInput.focus();
-      titleInput.select();
+      tick().then(() => {
+        input.focus();
+        input.select();
+      });
     }
   });
 
@@ -56,7 +59,7 @@
   }
 
   function onTitleKeydown(event: KeyboardEvent) {
-    if (event.key === "Enter") {
+    if (event.key === "Enter" && !event.isComposing) {
       event.preventDefault();
       saveTitle();
     } else if (event.key === "Escape") {
@@ -137,7 +140,7 @@
       type="button"
       class="p-1.5 rounded-md hover:bg-bgs2-striped"
       aria-pressed={isPinned}
-      aria-label={isPinned ? "Unpin from app menu" : "Pin to app menu"}
+      aria-label="Pin to app menu"
       title={isPinned ? "Unpin from app menu" : "Pin to app menu"}
       data-testid="space-pin"
       onclick={onTogglePin}
@@ -156,7 +159,7 @@
           "hover:bg-bgs2-striped": !isEditMode
         })}
         aria-pressed={isEditMode}
-        aria-label={isEditMode ? "Done editing" : "Edit items"}
+        aria-label="Edit items"
         title={isEditMode ? "Done" : "Edit items"}
         data-testid="space-edit"
         onclick={() => store.setEditMode(!isEditMode)}
