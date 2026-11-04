@@ -95,6 +95,7 @@
         data-testid="resource-record-surface"
         data-full-screen="true"
         use:pageScroll={commandModePageId}
+        data-page-layer
       >
         {#key commandModePageId}
           <ResourceResolver
