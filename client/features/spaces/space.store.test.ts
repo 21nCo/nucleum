@@ -81,21 +81,21 @@ describe("space writes", () => {
     });
     let resolveFirst: (value: unknown) => void = () => undefined;
     let resolveSecond: (value: unknown) => void = () => undefined;
+    const firstRead = new Promise((resolve) => (resolveFirst = resolve));
     mocks.select
-      .mockReturnValueOnce(new Promise((resolve) => (resolveFirst = resolve)))
+      .mockReturnValueOnce(firstRead)
       .mockReturnValueOnce(new Promise((resolve) => (resolveSecond = resolve)));
-    let isFirstSettled = false;
-    const first = store.init().then(() => (isFirstSettled = true));
-    const second = store.init();
+    const settled: string[] = [];
+    const first = store.init().then(() => settled.push("first"));
+    const second = store.init().then(() => settled.push("second"));
     resolveFirst({ id: "space:overlapping", items: [section("a")] });
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(isFirstSettled).toBe(false);
+    await firstRead;
     resolveSecond({
       id: "space:overlapping",
       items: [section("a"), section("b")]
     });
     await Promise.all([first, second]);
-    expect(isFirstSettled).toBe(true);
+    expect(settled).toEqual(["second", "first"]);
     expect(store.readItems().map((item) => item.id)).toEqual(["a", "b"]);
   });
 
@@ -110,13 +110,14 @@ describe("space writes", () => {
     };
     let resolveFirst: (value: unknown) => void = () => undefined;
     let resolveSecond: (value: unknown) => void = () => undefined;
+    const firstRead = new Promise((resolve) => (resolveFirst = resolve));
     mocks.select
-      .mockReturnValueOnce(new Promise((resolve) => (resolveFirst = resolve)))
+      .mockReturnValueOnce(firstRead)
       .mockReturnValueOnce(new Promise((resolve) => (resolveSecond = resolve)));
     const added = store.init().then(() => store.addSection({ label: "Added" }));
     const second = store.init();
     resolveFirst({ id: "space:overtaken", items: [saved] });
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await firstRead;
     resolveSecond({ id: "space:overtaken", items: [saved] });
     const [id] = await Promise.all([added, second]);
     expect(store.readItems().map((item) => item.id)).toEqual(["saved", id]);
