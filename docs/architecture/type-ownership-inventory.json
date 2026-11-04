@@ -12289,7 +12289,7 @@
       "path": "client/surfaces/search/search.store.ts",
       "name": "searchStore",
       "initializer": "createSearchStore()",
-      "disposition": "retained with owning implementation; no runtime initializer changes",
+      "disposition": "removed with the standalone search overlay; the super bar and navigator share client/shared-state/resources/resource-search.ts",
       "ownership": "implementation-private"
     },
     {
