@@ -164,7 +164,7 @@
 {:else if $node && !isLoading}
   <div class="w-full h-full relative">
     {#if [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)}
-      <MediaNode {node} nodeView={view} {isConstrainedWidth} />
+      <MediaNode {node} {accessMode} nodeView={view} {isConstrainedWidth} />
     {:else}
       <NonMediaNode
         {node}

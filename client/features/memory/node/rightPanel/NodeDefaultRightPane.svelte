@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { AccessMode } from "@nucleum/datafn/resource.type";
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import InlineMarkdownTextInput from "@nucleum/features/memory/markdown/content/InlineMarkdownTextInput.svelte";
@@ -23,9 +24,17 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import WebNodeUrlSegment from "../content/web/WebNodeUrlSegment.svelte";
   import SocialPostActions from "../content/web/SocialPostActions.svelte";
-  import { nodeTitleInContextZone } from "@nucleum/features/memory/node/title/node-title-placement";
-  import { derived } from "svelte/store";
-  let { node }: { node: IActiveNodeStore } = $props();
+  import { isNodeTitleInContextZone } from "@nucleum/features/memory/node/title/node-title-placement";
+  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import view from "@21n/ui/environment/view.store";
+  let {
+    node,
+    accessMode = undefined
+  }: {
+    node: IActiveNodeStore;
+    /** Mode this view of the node is open in; views share one store. */
+    accessMode?: AccessMode;
+  } = $props();
   let _notes = $state($node.notes ?? "");
   const notesInputId = generateSimpleRandomId();
 
@@ -35,14 +44,15 @@
   }
 
   let _label = $derived(resolveNodeLabel($node));
-  const isTitleInContextZone = nodeTitleInContextZone(
-    derived(node, ($value) => $value?.accessMode)
+  const isContextZoneHosted = contextZone.isHosted;
+  const isTitleInContextZone = $derived(
+    isNodeTitleInContextZone($isContextZoneHosted, $view, accessMode)
   );
 </script>
 
 <div class="flex flex-col w-full h-full bg-bgs2">
   <section class="flex flex-col cw:px-2 px-3 pb-6">
-    {#if !$isTitleInContextZone}
+    {#if !isTitleInContextZone}
       <div class="flex w-full justify-between py-2">
         <NodeTitle
           node={$node}

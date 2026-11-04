@@ -16,10 +16,13 @@
 
   let {
     objective,
+    accessMode = undefined,
     isConstrainedWidth = false,
     status = $bindable()
   }: {
     objective: IActiveObjectiveStore;
+    /** Mode this view of the objective is open in; views share one store. */
+    accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
     status?: IInlineStatus | undefined;
   } = $props();
@@ -29,7 +32,7 @@
     $isContextZoneHosted &&
       !$view.isPortrait &&
       !$view.isConstrainedWidth &&
-      isContextZoneAccessMode($objective.accessMode)
+      isContextZoneAccessMode(accessMode)
   );
   let labelEditVal = $state($objective.label);
   let inputRef = $state<TextInput | undefined>(undefined);

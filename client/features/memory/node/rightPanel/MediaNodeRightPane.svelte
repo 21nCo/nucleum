@@ -2,6 +2,7 @@
   import { cn } from "@21n/ui/environment/presentation";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import type { AccessMode } from "@nucleum/datafn/resource.type";
   import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import NodeRightPaneContent from "@nucleum/features/memory/node/rightPanel/NodeRightPaneContent.svelte";
   import NodeDefaultRightPane from "./NodeDefaultRightPane.svelte";
@@ -9,10 +10,13 @@
   import { quadInOut } from "svelte/easing";
   let {
     node,
+    accessMode = undefined,
     renderingDetails = undefined,
     isConstrainedWidth = false
   }: {
     node: IActiveNodeStore;
+    /** Mode this view of the node is open in; views share one store. */
+    accessMode?: AccessMode;
     renderingDetails?: any;
     isConstrainedWidth?: boolean;
   } = $props();
@@ -53,6 +57,6 @@
   {#if $node.panel && $node.panel !== ResourcePanelType.OVERVIEW}
     <NodeRightPaneContent {node} {renderingDetails} />
   {:else}
-    <NodeDefaultRightPane {node} />
+    <NodeDefaultRightPane {node} {accessMode} />
   {/if}
 </aside>
