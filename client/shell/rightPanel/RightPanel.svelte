@@ -87,7 +87,7 @@
   class={isSheet
     ? "fixed inset-0 z-50 flex flex-col w-full h-full bg-bgs2 outline-none"
     : cn(
-        "flex justify-center items-center h-full bg-bgs2 transition-all duration-300",
+        "flex justify-center items-center h-full bg-bgs2 transition-all duration-300 motion-reduce:transition-none",
         resolveRightPanelWidthClass(action.liveActionParams?.size),
         {
           "border-l border-brs3": !$context.experiments?.isEnableRoundedMain
