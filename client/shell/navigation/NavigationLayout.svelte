@@ -113,6 +113,21 @@
   }
 </script>
 
+{#snippet overlayLayer(path: string)}
+  <div
+    class={cn("absolute inset-0 w-full h-full bg-bgs1", {
+      "z-40": !isPageCovered,
+      "z-50": isPageCovered
+    })}
+    data-testid="overlay-layer"
+    data-overlay={path}
+  >
+    <ContextZonePaneScope id="overlay" layer={ContextZoneLayer.OVERLAY}>
+      <ComponentResolver {path} params={{ isInline: true }} />
+    </ContextZonePaneScope>
+  </div>
+{/snippet}
+
 <div class="flex flex-col w-full h-full">
   <div
     class={cn("flex w-full flex-grow", {
@@ -139,25 +154,8 @@
           inert={isPanelSheetShown}
           aria-hidden={isPanelSheetShown ? "true" : undefined}
         >
-          {#if mainPath && !isOverlayFullScreen}
-            <div
-              class={cn("absolute inset-0 w-full h-full bg-bgs1", {
-                "z-40": !isPageCovered,
-                "z-[60]": isPageCovered
-              })}
-              data-testid="overlay-layer"
-              data-overlay={mainPath}
-            >
-              <ContextZonePaneScope
-                id="overlay"
-                layer={ContextZoneLayer.OVERLAY}
-              >
-                <ComponentResolver
-                  path={mainPath}
-                  params={{ isInline: true }}
-                />
-              </ContextZonePaneScope>
-            </div>
+          {#if mainPath && !isOverlayFullScreen && !isPageCovered}
+            {@render overlayLayer(mainPath)}
           {/if}
           {#if popId}
             <div
@@ -186,6 +184,9 @@
                 />
               {/if}
             </div>
+          {/if}
+          {#if mainPath && !isOverlayFullScreen && isPageCovered}
+            {@render overlayLayer(mainPath)}
           {/if}
           <div
             class="w-full h-full"
