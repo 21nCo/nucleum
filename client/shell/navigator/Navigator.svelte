@@ -57,9 +57,6 @@
   let searchRequestId = 0;
   const isSearchMode = $derived(query.trim().length > 0);
   const currentTrail = $derived($accessTrail.current);
-  const currentTrailRows = $derived(
-    currentTrail ? flattenAccessTrail(currentTrail) : []
-  );
   const recentTrails = $derived($accessTrail.recent);
   let expandedTrails = $state<string[]>([]);
 
@@ -216,10 +213,6 @@
       ? expandedTrails.filter((item) => item !== key)
       : [...expandedTrails, key];
   }
-
-  function resolveTrailLength(trail: AccessTrail) {
-    return trail.nodes.length;
-  }
 </script>
 
 {#snippet historyList(items: NavigatorHistoryItem[])}
@@ -303,7 +296,7 @@
         data-testid="navigator-current-trail"
       >
         <div class="text-b2 text-fgs3">Currently opened</div>
-        {#if currentTrail && currentTrailRows.length > 0}
+        {#if currentTrail}
           {@render trailTree(currentTrail, (index) =>
             navigation.openTrailNode(index)
           )}
@@ -333,15 +326,15 @@
                       onClick={() => navigation.resumeTrail(trail.key, 0)}
                     />
                   </div>
-                  {#if resolveTrailLength(trail) > 1}
+                  {#if trail.nodes.length > 1}
                     <button
                       type="button"
                       class="flex items-center gap-1 h-6 px-1.5 rounded-md text-b3 text-fgs3 hover:bg-bgs3 hover:text-fgs2 shrink-0"
                       aria-expanded={isExpanded}
-                      aria-label={`${resolveTrailLength(trail)} items in trail`}
+                      aria-label={`${trail.nodes.length} items in trail`}
                       onclick={() => toggleTrail(trail.key)}
                     >
-                      {resolveTrailLength(trail)}
+                      {trail.nodes.length}
                       <Icon
                         icon={isExpanded ? "chevron-up" : "chevron-down"}
                         size={Size.xs}
