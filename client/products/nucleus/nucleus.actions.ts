@@ -16,9 +16,9 @@ import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.
 import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
 import { createPageViewActions } from "@nucleum/shared-state/commands/page-view-actions";
 import { createLibraryViewActions } from "@nucleum/surfaces/library/library-route";
+import { resolveLibrarySwitcherResources } from "@nucleum/surfaces/library/resource-switcher.utils";
 import { resolveNucleusOverviewViewSegments } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
 import { resolveProductConfig } from "@nucleum/products/product.config";
-import { Product } from "@nucleum/client/config/product.type";
 
 const actionsToFilterInSub: string[] = [Action.LIBRARY, Action.OVERVIEW];
 
@@ -56,9 +56,10 @@ export const nucleusActions: IAction[] = [
   libraryAction,
   ...createLibraryViewActions(
     libraryAction,
-    resolveProductConfig(Product.NUCLEUM).resources?.browse ?? [
-      Resource.collection
-    ]
+    resolveLibrarySwitcherResources(
+      (product) => resolveProductConfig(product).resources?.browse ?? [],
+      import.meta.env?.DEV || false
+    )
   ),
   overviewAction,
   ...createPageViewActions(

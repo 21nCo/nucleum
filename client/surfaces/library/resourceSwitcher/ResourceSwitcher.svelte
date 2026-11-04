@@ -8,13 +8,13 @@
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Product } from "@nucleum/client/config/product.type";
   import { requireSurfaceProductConfig } from "@nucleum/shared-state/product/surface-config-host";
-  import { resolveResourceSwitcher } from "@nucleum/surfaces/library/resource-switcher.utils";
+  import {
+    resolveLibrarySwitcherSectionResources,
+    resolveLibrarySwitcherSections,
+    resolveResourceSwitcher
+  } from "@nucleum/surfaces/library/resource-switcher.utils";
   import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { properCase } from "@21n/shared-utils/text.utils";
-  import {
-    nextProductSectionsPre,
-    nextProductSectionsPost
-  } from "@nucleum/next/product.config";
   import { rootNodeTypeList } from "@nucleum/features/memory/node/node.type";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteDataStore } from "@datafn/svelte";
@@ -46,31 +46,17 @@
     })
   );
 
-  const isProductSection = (value: string): value is Product =>
-    Object.values(Product).includes(value as Product);
-
-  let sections = [
-    Product.NUCLEUM,
-    Product.POINTRON,
-    ...nextProductSectionsPre,
-    Product.MEMOTRON,
-    ...nextProductSectionsPost
-  ].filter(isProductSection);
+  let sections = resolveLibrarySwitcherSections();
   $effect(() => {
     selectedValue = selected ?? (options[0]?.value as Resource | undefined);
   });
-  const nucleusResources = requireSurfaceProductConfig(Product.NUCLEUM).resources
-    .browse;
   function resolveResourcesForSection(section: Product): IResourceSwitchItem[] {
-    const resources = requireSurfaceProductConfig(section).resources.browse;
-    return resources
+    return resolveLibrarySwitcherSectionResources(
+      section,
+      (product) => requireSurfaceProductConfig(product).resources.browse,
+      isDev
+    )
       .map((x) => resourceList.find((y) => y.value === x))
-      .filter((x) => isDev || !x?.isDisabled)
-      .filter(
-        (x) =>
-          section === Product.NUCLEUM ||
-          !nucleusResources.includes(x?.value as Resource)
-      )
       .filter((x) => x !== undefined);
   }
 
