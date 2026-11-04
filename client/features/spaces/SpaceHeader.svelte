@@ -107,6 +107,7 @@
       saveTitle();
     } else if (event.key === "Escape") {
       event.preventDefault();
+      draftTarget = undefined;
       editedStore.setTitleEditing(false);
     }
   }
