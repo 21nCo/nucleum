@@ -50,7 +50,7 @@
     `hover:${bg(parentBgIndex)}-striped`,
     {
       "h-full w-full": !$shape.isFramed,
-      [`h-10 shrink-0 ${$shape.radiusClass}`]: $shape.isFramed,
+      [`h-10 max-h-full shrink-0 ${$shape.radiusClass}`]: $shape.isFramed,
       "w-10": $shape.isFramed && !label,
       "px-3": $shape.isFramed && !!label,
       "text-b2": size === Size.md,
