@@ -118,6 +118,7 @@
 
     if (!action) {
       subPath = undefined;
+      lastRecordedPath = undefined;
       if (path === "index.html") navigation.gotoPath("/");
       else navigation.gotoPath("/404", { queryParams: { path } });
       return;
@@ -141,7 +142,11 @@
       pageSubPath,
       isRouted
     );
-    if (!recordedPath || recordedPath === lastRecordedPath) return;
+    if (!recordedPath) {
+      lastRecordedPath = undefined;
+      return;
+    }
+    if (recordedPath === lastRecordedPath) return;
     lastRecordedPath = recordedPath;
     navigatorHistory.recordPage(recordedPath);
   }

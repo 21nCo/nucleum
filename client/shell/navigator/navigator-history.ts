@@ -150,8 +150,9 @@ export function pruneNavigatorHistory(
 
 /**
  * Records a visit and prunes the result. Returns the same history object when the
- * visit repeats the latest open of that id within the duplicate window, or when its
- * open time is already recorded, so replaying a persisted visit never counts twice.
+ * visit repeats an open of that id from the same origin within the duplicate window,
+ * or when its open time is already recorded, so replaying a persisted visit never
+ * counts twice. A visit without an origin repeats any open of that id in the window.
  */
 export function recordNavigatorVisit(
   history: NavigatorHistory,
@@ -159,14 +160,7 @@ export function recordNavigatorVisit(
 ): NavigatorHistory {
   if (!visit.id) return history;
   const existing = history.entries[visit.id];
-  if (
-    existing &&
-    (Math.abs(visit.at - existing.lastOpenedAt) <
-      NAVIGATOR_HISTORY_DUPLICATE_MS ||
-      existing.opens.includes(visit.at))
-  ) {
-    return history;
-  }
+  if (existing && isDuplicateVisit(existing, visit)) return history;
   const from = { ...(existing?.from ?? {}) };
   if (visit.origin && visit.origin !== visit.id) {
     from[visit.origin] = [...(from[visit.origin] ?? []), visit.at].sort(
@@ -182,6 +176,19 @@ export function recordNavigatorVisit(
   return pruneNavigatorHistory(
     { ...history, entries: { ...history.entries, [visit.id]: entry } },
     visit.at
+  );
+}
+
+function isDuplicateVisit(
+  entry: NavigatorHistoryEntry,
+  visit: NavigatorHistoryVisit
+) {
+  if (entry.opens.includes(visit.at)) return true;
+  const origin =
+    visit.origin && visit.origin !== visit.id ? visit.origin : undefined;
+  const times = origin ? (entry.from[origin] ?? []) : [entry.lastOpenedAt];
+  return times.some(
+    (at) => Math.abs(visit.at - at) < NAVIGATOR_HISTORY_DUPLICATE_MS
   );
 }
 

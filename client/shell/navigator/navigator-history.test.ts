@@ -75,6 +75,23 @@ describe("recordNavigatorVisit", () => {
     expect(repeat.entries["calendar/classic/year"].opens).toHaveLength(1);
   });
 
+  it("counts a quick reopen from another origin but not from the same one", () => {
+    let history = visitMany(
+      createNavigatorHistory(),
+      "node:c",
+      [now],
+      "node:a"
+    );
+    history = visitMany(history, "node:c", [now + 500], "node:b");
+    history = visitMany(history, "node:c", [now + 1_000], "node:b");
+
+    expect(history.entries["node:c"].opens).toEqual([now, now + 500]);
+    expect(history.entries["node:c"].from).toEqual({
+      "node:a": [now],
+      "node:b": [now + 500]
+    });
+  });
+
   it("ignores a replayed visit whose open time is already recorded", () => {
     let history = createNavigatorHistory();
     const first = {
