@@ -93,8 +93,7 @@ describe("isNavigatorKeptOpen", () => {
   const wide = {
     isCloseAfterOpen: false,
     isPortrait: false,
-    isConstrainedWidth: false,
-    isInlineSearch: false
+    isConstrainedWidth: false
   };
 
   it("keeps the side panel open beside the content", () => {
@@ -109,21 +108,11 @@ describe("isNavigatorKeptOpen", () => {
 
   it("closes the full-screen sheet on portrait screens", () => {
     expect(isNavigatorKeptOpen({ ...wide, isPortrait: true })).toBe(false);
-    expect(
-      isNavigatorKeptOpen({ ...wide, isPortrait: true, isInlineSearch: true })
-    ).toBe(false);
   });
 
-  it("keeps it open at constrained widths only as the top bar search", () => {
+  it("closes at constrained widths, where it covers the content", () => {
     expect(isNavigatorKeptOpen({ ...wide, isConstrainedWidth: true })).toBe(
       false
     );
-    expect(
-      isNavigatorKeptOpen({
-        ...wide,
-        isConstrainedWidth: true,
-        isInlineSearch: true
-      })
-    ).toBe(true);
   });
 });

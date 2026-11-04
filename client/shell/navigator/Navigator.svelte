@@ -326,8 +326,7 @@
     isNavigatorKeptOpen({
       isCloseAfterOpen,
       isPortrait: $view.isPortrait,
-      isConstrainedWidth: $view.isConstrainedWidth,
-      isInlineSearch: $isInlineSearch
+      isConstrainedWidth: $view.isConstrainedWidth
     })
   );
 
@@ -352,9 +351,16 @@
   }
 
   function toggleSection(key: string) {
-    expandedSections = isSectionExpanded(key)
+    const isCollapsing = isSectionExpanded(key);
+    expandedSections = isCollapsing
       ? expandedSections.filter((item) => item !== key)
       : [...expandedSections, key];
+    if (
+      isCollapsing &&
+      key === "results" &&
+      selectedIndex >= NAVIGATOR_SECTION_LIMIT
+    )
+      selectedIndex = 0;
   }
 
   function toggleTrail(key: string) {
