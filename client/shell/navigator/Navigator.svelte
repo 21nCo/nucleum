@@ -338,7 +338,12 @@
       navigation.gotoPath(
         "/" + item.id,
         isKeepOpen
-          ? { queryParams: { [AccessMode.PANEL]: Action.NAVIGATOR } }
+          ? {
+              queryParams: {
+                [resolveNavigatorLayer(new URL(window.location.href)) ??
+                AccessMode.PANEL]: Action.NAVIGATOR
+              }
+            }
           : undefined
       );
       return;

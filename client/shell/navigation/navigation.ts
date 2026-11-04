@@ -780,7 +780,9 @@ export const navigation = {
       if (params?.isKeepNavigator !== undefined) {
         isCloseNavigator = !params.isKeepNavigator;
       }
-      isCloseNavigator = isCloseNavigator && isNavigatorOpen;
+      isCloseNavigator =
+        (isCloseNavigator || navigatorLayer === AccessMode.OVERLAY) &&
+        isNavigatorOpen;
       const position = accessTrail.position();
       const isOtherEntry =
         openPage !== id.toString() ||

@@ -10,6 +10,7 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { navigatorSearch } from "@nucleum/shell/navigator/navigator-search";
   import { navigatorFocusRequests } from "@nucleum/shell/navigator/navigator-focus";
+  import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
 
   const query = navigatorSearch.query;
   let inputRef = $state<HTMLInputElement | undefined>(undefined);
@@ -49,7 +50,10 @@
     data-testid="navigator-inline-close"
     class="flex items-center justify-center h-6 w-6 shrink-0 rounded-full text-fgs3 hover:bg-bgs3 hover:text-fgs1"
     use:tooltip={{ text: "Close (Esc)" }}
-    onclick={() => navigation.toggleSearchParam([AccessMode.PANEL])}
+    onclick={() =>
+      navigation.toggleSearchParam([
+        resolveNavigatorLayer(new URL(window.location.href)) ?? AccessMode.PANEL
+      ])}
   >
     <Icon icon="cross" size={Size.xs} />
   </button>
