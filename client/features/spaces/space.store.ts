@@ -43,6 +43,7 @@ export class ActiveSpaceStore {
   private itemsRevision = 0;
   private labelRevision = 0;
   private viewRevision = 0;
+  private settledItemsRevision = 0;
   private itemsWrites: Promise<unknown> = Promise.resolve();
   private loadSequence = 0;
   private latestLoad: Promise<void> = Promise.resolve();
@@ -74,7 +75,14 @@ export class ActiveSpaceStore {
     return (get(this.subject) as IActiveSpace | undefined)?.items ?? [];
   }
 
-  private async mutate(record: Partial<ISpace>) {
+  /**
+   * Saves `record`. On failure the open state is reloaded from the saved
+   * record, or `onFailure` runs instead.
+   */
+  private async mutate(
+    record: Partial<ISpace>,
+    onFailure: () => Promise<void> = () => this.init()
+  ) {
     try {
       assertDatafnMutationSucceeded(
         await datafn.space.mutate({
@@ -87,7 +95,7 @@ export class ActiveSpaceStore {
     } catch (error) {
       logger.error({ at: "ActiveSpaceStore.mutate", error, id: this.id });
       toasts.error("Failed to save space");
-      await this.init();
+      await onFailure();
       return false;
     }
     return true;
@@ -96,12 +104,27 @@ export class ActiveSpaceStore {
   /**
    * Shows `items` and saves them. Saves run one after another in call order,
    * and each carries every earlier local change, so the last one wins with
-   * the complete list.
+   * the complete list. A failed save is reloaded over only when no later
+   * change is waiting, since that change saves the shown items again. A save
+   * queued for one account is dropped when another account is active by the
+   * time it runs.
    */
   private async persistItems(items: ISpaceNavItem[]) {
-    this.itemsRevision++;
+    const revision = ++this.itemsRevision;
+    const namespace = datafn.currentNamespace();
     this.update((prev) => (prev ? { ...prev, items } : prev));
-    const write = this.itemsWrites.then(() => this.mutate({ items }));
+    const isCurrent = () => datafn.currentNamespace() === namespace;
+    const write = this.itemsWrites.then(async () => {
+      try {
+        if (!isCurrent()) return false;
+        return await this.mutate({ items }, async () => {
+          this.settledItemsRevision = revision;
+          if (revision === this.itemsRevision && isCurrent()) await this.init();
+        });
+      } finally {
+        this.settledItemsRevision = revision;
+      }
+    });
     this.itemsWrites = write.catch(() => undefined);
     return write;
   }
@@ -195,7 +218,9 @@ export class ActiveSpaceStore {
           ? prev.view
           : (record.view ?? SpaceView.SIDENAV),
       items:
-        prev?.items && this.itemsRevision !== itemsRevisionAtStart
+        prev?.items &&
+        (this.itemsRevision !== itemsRevisionAtStart ||
+          this.itemsRevision !== this.settledItemsRevision)
           ? prev.items
           : normalizeNavItems(record.items ?? []),
       accessMode: accessMode ?? prev?.accessMode,

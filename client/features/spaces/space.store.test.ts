@@ -3,13 +3,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   mutate: vi.fn(),
   select: vi.fn(),
+  namespace: "account-a",
   toastError: vi.fn()
 }));
 
 vi.mock("@nucleum/datafn/datafn.store", async () => {
   const { writable } = await import("svelte/store");
   return {
-    datafn: { space: { mutate: mocks.mutate, select: mocks.select } },
+    datafn: {
+      currentNamespace: () => mocks.namespace,
+      space: { mutate: mocks.mutate, select: mocks.select }
+    },
     datafnRuntime: writable(undefined)
   };
 });
@@ -33,6 +37,7 @@ import { SpaceView } from "@nucleum/features/spaces/space.type";
 describe("space writes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.namespace = "account-a";
     mocks.select.mockResolvedValue({
       id: "space:failing",
       label: "Saved",
@@ -204,5 +209,45 @@ describe("space writes", () => {
       "link",
       sectionId
     ]);
+  });
+
+  it("drops a queued write once another account is active", async () => {
+    const store = ActiveSpaceStore.resolve("space:switching");
+    mocks.select.mockResolvedValueOnce({ id: "space:switching", items: [] });
+    await store.init();
+    let finishFirst: (value: unknown) => void = () => undefined;
+    mocks.mutate
+      .mockReturnValueOnce(new Promise((resolve) => (finishFirst = resolve)))
+      .mockResolvedValue({ ok: true });
+    const first = store.addSection({ label: "First" });
+    const second = store.addSection({ label: "Second" });
+    await vi.waitFor(() => expect(mocks.mutate).toHaveBeenCalledTimes(1));
+    mocks.namespace = "account-b";
+    finishFirst({ ok: true });
+    await first;
+    await expect(second).resolves.toBeUndefined();
+    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps later edits shown when an earlier write fails", async () => {
+    const store = ActiveSpaceStore.resolve("space:recovering");
+    mocks.select.mockResolvedValueOnce({ id: "space:recovering", items: [] });
+    await store.init();
+    let failFirst: (error: Error) => void = () => undefined;
+    mocks.mutate
+      .mockReturnValueOnce(new Promise((_, reject) => (failFirst = reject)))
+      .mockResolvedValue({ ok: true });
+    const first = store.addSection({ label: "A" });
+    const second = store.addSection({ label: "B" });
+    failFirst(new Error("offline"));
+    await first;
+    const secondId = await second;
+    expect(store.readItems().map((item) => item.label)).toEqual(["A", "B"]);
+    const thirdId = await store.addSection({ label: "C" });
+    const lastItems = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
+      id: string;
+    }[];
+    expect(lastItems.map((item) => item.id)).toContain(secondId);
+    expect(lastItems.map((item) => item.id)).toContain(thirdId);
   });
 });
