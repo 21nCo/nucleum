@@ -52,6 +52,8 @@
   let isCancelled = false;
   let isDirty = false;
   let pendingSave: Promise<unknown> | undefined;
+  let saves: Promise<unknown> = Promise.resolve();
+  let submittedLabel: string | undefined;
 
   const isEditing = $derived($store.isInEditMode);
 
@@ -61,6 +63,7 @@
       draft = $store.label ?? "";
       isCancelled = false;
       isDirty = false;
+      submittedLabel = undefined;
       void tick().then(() => {
         inputRef?.focus();
         inputRef?.select();
@@ -73,7 +76,7 @@
       return pendingSave ?? Promise.resolve();
     const next = draft.trim();
     if (next === ($store.label ?? "")) return pendingSave ?? Promise.resolve();
-    const save = store.modify({ label: next });
+    const save = submitLabel(next);
     pendingSave = save;
     save
       .then(() => {
@@ -82,6 +85,13 @@
       .finally(() => {
         if (pendingSave === save) pendingSave = undefined;
       });
+    return save;
+  }
+
+  function submitLabel(next: string) {
+    submittedLabel = next;
+    const save = saves.then(() => store.modify({ label: next }));
+    saves = save.catch(() => undefined);
     return save;
   }
 
@@ -108,8 +118,10 @@
       destroy() {
         if (isCancelled || !isDirty) return;
         const next = draft.trim();
-        if (next === (get(store).label ?? "")) return;
-        store.modify({ label: next }).catch(reportSaveFailure);
+        if (next === submittedLabel || next === (get(store).label ?? "")) {
+          return;
+        }
+        submitLabel(next).catch(reportSaveFailure);
       }
     };
   }
