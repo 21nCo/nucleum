@@ -33,10 +33,41 @@ export type ResourceSearchParams = {
   limit?: number;
   resources?: string[];
   boost?: ResourceSearchBoost;
+  /** Aborts the search, for example when its query is superseded. */
+  signal?: AbortSignal;
 };
 
 const DEFAULT_LIMIT = 20;
 const CANDIDATE_FACTOR = 3;
+
+/** How long a search may run before it fails with a timeout. */
+export const RESOURCE_SEARCH_TIMEOUT_MS = 10_000;
+
+/** Raised when a resource search does not settle in time. */
+export class ResourceSearchTimeoutError extends Error {
+  constructor() {
+    super("Resource search timed out");
+    this.name = "ResourceSearchTimeoutError";
+  }
+}
+
+function abortReason(signal: AbortSignal) {
+  return signal.reason ?? new DOMException("Search aborted", "AbortError");
+}
+
+function untilAborted<T>(request: Promise<T>, signal: AbortSignal) {
+  return new Promise<T>((resolve, reject) => {
+    if (signal.aborted) {
+      reject(abortReason(signal));
+      return;
+    }
+    const onAbort = () => reject(abortReason(signal));
+    signal.addEventListener("abort", onAbort, { once: true });
+    request.then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", onAbort);
+    });
+  });
+}
 
 function resolveRecordLabel(record: Record<string, unknown>) {
   const label = record.label ?? record.event ?? record.name;
@@ -105,6 +136,8 @@ export function rankResourceSearchMatches(
  * remotely when offline storage is off (sync-direct). The
  * super bar ranks by text relevance; the navigator passes a history boost.
  * Resolves to an empty list for an empty query or when nothing matches.
+ * Rejects when the caller aborts it, or with `ResourceSearchTimeoutError`
+ * when it does not settle within `RESOURCE_SEARCH_TIMEOUT_MS`.
  */
 export async function searchResources(
   params: ResourceSearchParams
@@ -115,15 +148,36 @@ export async function searchResources(
   if (!query || resources.length === 0) return [];
   const limit = params.limit ?? DEFAULT_LIMIT;
   const candidateLimit = limit * CANDIDATE_FACTOR;
-  const result = await datafn.search({
-    query,
-    resources,
-    limit: candidateLimit,
-    limitPerResource: candidateLimit,
-    source: get(datafnRuntime)?.mode === "sync-direct" ? "remote" : "local",
-    prefix: true,
-    fuzzy: 0.2
-  });
+  const controller = new AbortController();
+  const forwardAbort = () => controller.abort(params.signal?.reason);
+  if (params.signal?.aborted) forwardAbort();
+  params.signal?.addEventListener("abort", forwardAbort, { once: true });
+  const timer = setTimeout(
+    () => controller.abort(new ResourceSearchTimeoutError()),
+    RESOURCE_SEARCH_TIMEOUT_MS
+  );
+  let result: Awaited<ReturnType<typeof datafn.search>>;
+  try {
+    result = await untilAborted(
+      Promise.resolve().then(() =>
+        datafn.search({
+          query,
+          resources,
+          limit: candidateLimit,
+          limitPerResource: candidateLimit,
+          source:
+            get(datafnRuntime)?.mode === "sync-direct" ? "remote" : "local",
+          prefix: true,
+          fuzzy: 0.2,
+          signal: controller.signal
+        })
+      ),
+      controller.signal
+    );
+  } finally {
+    clearTimeout(timer);
+    params.signal?.removeEventListener("abort", forwardAbort);
+  }
   return rankResourceSearchMatches(
     (result.results ?? []) as ResourceSearchMatch[],
     query,

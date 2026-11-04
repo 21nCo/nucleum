@@ -19,6 +19,7 @@
     buildSuperBarEntries,
     flattenContextActions,
     runContextAction,
+    toSuperBarSearchHit,
     type SuperBarEntry,
     type SuperBarScope
   } from "@nucleum/surfaces/commandBar/super-bar";
@@ -29,7 +30,6 @@
   import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { highlightSearchQuery } from "@nucleum/features/memory/linking/search-results.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -42,10 +42,13 @@
     search = "",
     scope = "all",
     onClose = void 0,
-    onSearchAction = void 0
+    onSearchAction = void 0,
+    selectedKind = $bindable(undefined)
   }: {
     search?: string;
     scope?: SuperBarScope;
+    /** Kind of the selected row, so the bar can hint what Enter does. */
+    selectedKind?: SuperBarEntry["kind"] | undefined;
     onClose?: () => void;
     onSearchAction?: (action: ICommandAction) => void;
   } = $props();
@@ -55,8 +58,10 @@
   let results = $state<ResourceSearchHit[]>([]);
   let resultsQuery = $state("");
   let isSearching = $state(false);
+  let isSearchFailed = $state(false);
   let searchTimer: ReturnType<typeof setTimeout> | undefined;
   let searchRequest = 0;
+  let searchController: AbortController | undefined;
 
   const query = $derived(search.trim());
   const allActions = $derived.by(() => loadAllActions($appStore.actions));
@@ -92,6 +97,9 @@
   const selectedEntry = $derived(
     entries.find((entry) => entry.key === selectedKey) ?? entries[0]
   );
+  $effect(() => {
+    selectedKind = selectedEntry?.kind;
+  });
   const hasPendingSearch = $derived(
     !!query && (isSearching || resultsQuery !== query)
   );
@@ -99,34 +107,49 @@
   $effect(() => {
     const value = query;
     selectedKey = null;
-    clearTimeout(searchTimer);
+    cancelSearch();
     if (!value) {
-      searchRequest++;
       results = [];
       resultsQuery = "";
       isSearching = false;
+      isSearchFailed = false;
       return;
     }
     isSearching = true;
     searchTimer = setTimeout(() => runSearch(value), SEARCH_DEBOUNCE_MS);
   });
 
-  onDestroy(() => clearTimeout(searchTimer));
+  onDestroy(cancelSearch);
+
+  function cancelSearch() {
+    clearTimeout(searchTimer);
+    searchRequest++;
+    searchController?.abort();
+    searchController = undefined;
+  }
 
   async function runSearch(value: string) {
     const request = ++searchRequest;
+    const controller = new AbortController();
+    searchController = controller;
     let hits: ResourceSearchHit[] = [];
+    let isFailed = false;
     try {
-      hits = await searchResources({ query: value, limit: SEARCH_LIMIT });
+      hits = await searchResources({
+        query: value,
+        limit: SEARCH_LIMIT,
+        signal: controller.signal
+      });
     } catch (error) {
+      if (request !== searchRequest) return;
       logger.error({ at: "CmdResults.runSearch", error });
+      isFailed = true;
     }
     if (request !== searchRequest) return;
-    results = hits.map((hit) => ({
-      ...hit,
-      record: highlightSearchQuery([hit.record], value)[0]
-    }));
+    searchController = undefined;
+    results = hits.map((hit) => toSuperBarSearchHit(hit, value));
     resultsQuery = value;
+    isSearchFailed = isFailed;
     isSearching = false;
   }
 
@@ -366,6 +389,12 @@
     <Icon icon="svg-spinners:3-dots-fade" />
     Searching...
   </div>
+{:else if query && !hasPendingSearch && isSearchFailed && !entries.some((entry) => entry.kind === "result")}
+  <EmptyStatusView
+    size={Size.sm}
+    mainText="Search failed"
+    subText="Edit the query to try again"
+  />
 {:else if query && !hasPendingSearch && entries.length === 0}
   <EmptyStatusView size={Size.sm} mainText="No results found" />
 {:else if !query && scope === "search"}

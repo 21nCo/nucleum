@@ -35,6 +35,14 @@ describe("navigatorSearchBoost", () => {
     expect(boost("node:once")).toBeGreaterThan(0);
   });
 
+  it("boosts the more recently opened of two equally frequent records", () => {
+    let history = createNavigatorHistory();
+    history = visit(history, "node:recent", now - day);
+    history = visit(history, "node:stale", now - 30 * day);
+    const boost = navigatorSearchBoost(history, now);
+    expect(boost("node:recent")).toBeGreaterThan(boost("node:stale"));
+  });
+
   it("reorders equally relevant search results by navigator history", () => {
     const history = visit(createNavigatorHistory(), "node:b", now - day);
     const matches = [

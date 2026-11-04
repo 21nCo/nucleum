@@ -1,6 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configureProductConfigHost } from "@nucleum/shared-state/product/product-config-host";
 import {
+  RESOURCE_SEARCH_TIMEOUT_MS,
+  ResourceSearchTimeoutError,
   rankResourceSearchMatches,
   searchResources,
   type ResourceSearchMatch
@@ -107,5 +109,48 @@ describe("searchResources", () => {
   it("resolves to no hits for an empty query without searching", async () => {
     expect(await searchResources({ query: "  " })).toEqual([]);
     expect(mocks.search).not.toHaveBeenCalled();
+  });
+
+  describe("when the request does not settle", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("fails with a timeout and aborts the DataFn request", async () => {
+      vi.useFakeTimers();
+      let requestSignal: AbortSignal | undefined;
+      mocks.search.mockImplementation((params: { signal?: AbortSignal }) => {
+        requestSignal = params.signal;
+        return new Promise(() => {});
+      });
+      const pending = searchResources({ query: "alp" });
+      const assertion = expect(pending).rejects.toBeInstanceOf(
+        ResourceSearchTimeoutError
+      );
+      await vi.advanceTimersByTimeAsync(RESOURCE_SEARCH_TIMEOUT_MS);
+      await assertion;
+      expect(requestSignal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it("rejects and aborts the DataFn request when the caller aborts", async () => {
+      vi.useFakeTimers();
+      let requestSignal: AbortSignal | undefined;
+      mocks.search.mockImplementation((params: { signal?: AbortSignal }) => {
+        requestSignal = params.signal;
+        return new Promise(() => {});
+      });
+      const controller = new AbortController();
+      const pending = searchResources({
+        query: "alp",
+        signal: controller.signal
+      });
+      const assertion = expect(pending).rejects.toBeDefined();
+      await vi.advanceTimersByTimeAsync(0);
+      controller.abort();
+      await assertion;
+      expect(requestSignal?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    });
   });
 });

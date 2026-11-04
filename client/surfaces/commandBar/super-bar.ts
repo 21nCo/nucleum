@@ -5,6 +5,7 @@ import {
   type IContextMenuItem
 } from "@21n/ui/elements/contextMenu/context-menu.type";
 import type { ResourceSearchHit } from "@nucleum/shared-state/resources/resource-search";
+import { highlightSearchQuery } from "@nucleum/features/memory/linking/search-results.utils";
 import type { ICommandAction } from "@nucleum/surfaces/commandBar/cmd.type";
 
 /** What the super bar shows: commands with search results, or results only. */
@@ -16,6 +17,7 @@ export type ContextActionItem = {
   label: string;
   icon?: string;
   item: IContextMenuItem;
+  isToggleGroup?: boolean;
 };
 
 /** One row of the super bar list, in display and keyboard order. */
@@ -51,7 +53,8 @@ export function flattenContextActions(menu: IContextMenu): ContextActionItem[] {
         key: `${group.group}:${String(item.value)}`,
         label: resolveContextItemLabel(item),
         icon: typeof item.icon === "string" ? item.icon : undefined,
-        item
+        item,
+        isToggleGroup: Boolean(group.isToggleGroup)
       }))
       .filter((action) => {
         if (!action.label || seen.has(action.key)) return false;
@@ -71,6 +74,46 @@ export function filterContextActions(
   return actions.filter((action) =>
     action.label.toLowerCase().includes(normalized)
   );
+}
+
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#x27;"
+};
+
+function escapeHtml(text: string) {
+  return text.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char);
+}
+
+/**
+ * Prepares a search hit for its super bar row: the label falls back to the
+ * event title or name, and the highlighted body excerpt is HTML-escaped
+ * because the row renders it as Markdown HTML.
+ */
+export function toSuperBarSearchHit(
+  hit: ResourceSearchHit,
+  query: string
+): ResourceSearchHit {
+  const label = [hit.record.label, hit.record.event, hit.record.name].find(
+    (value): value is string => typeof value === "string" && value.length > 0
+  );
+  const [record] = highlightSearchQuery(
+    [label === undefined ? hit.record : { ...hit.record, label }],
+    query
+  );
+  return {
+    ...hit,
+    record: {
+      ...record,
+      bodySearch:
+        typeof record.bodySearch === "string"
+          ? escapeHtml(record.bodySearch)
+          : record.bodySearch
+    }
+  };
 }
 
 /**
@@ -125,9 +168,10 @@ export function buildSuperBarEntries(params: {
 
 /**
  * Runs a contextual action the way the resource menu does: a switch toggles
- * its value; otherwise the item callback starts, or its command runs when it
- * has no callback, and the page's action handler receives the item value
- * before the callback is awaited.
+ * its value, and a switch from a toggle group also notifies the page's action
+ * handler; otherwise the item callback starts, or its command runs when it has
+ * no callback, and the page's action handler receives the item value before
+ * the callback is awaited.
  */
 export async function runContextAction(
   action: ContextActionItem,
@@ -138,7 +182,9 @@ export async function runContextAction(
 ) {
   const { item } = action;
   if (item.type === ContextMenuType.SWITCH) {
-    await item.callback?.(!item.initialValue);
+    const pending = item.callback?.(!item.initialValue);
+    if (action.isToggleGroup) handlers.onAction?.(item.value);
+    await pending;
     return;
   }
   if (item.callback) {

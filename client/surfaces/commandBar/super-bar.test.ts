@@ -9,7 +9,8 @@ import {
   SUPER_BAR_COMMAND_LIMIT,
   buildSuperBarEntries,
   flattenContextActions,
-  runContextAction
+  runContextAction,
+  toSuperBarSearchHit
 } from "./super-bar";
 
 const menu: IContextMenu = [
@@ -107,6 +108,11 @@ describe("buildSuperBarEntries", () => {
       "result",
       "result"
     ]);
+    expect(
+      entries.flatMap((entry) =>
+        entry.kind === "context" ? [entry.action.label] : []
+      )
+    ).toEqual(["Archive"]);
   });
 
   it("shows only results in the search scope", () => {
@@ -175,6 +181,28 @@ describe("runContextAction", () => {
     expect(onAction).not.toHaveBeenCalled();
   });
 
+  it("reports a toggle group switch to the page", async () => {
+    const callback = vi.fn().mockResolvedValue(undefined);
+    const onAction = vi.fn();
+    const [action] = flattenContextActions([
+      {
+        group: "editModes",
+        isToggleGroup: true,
+        items: [
+          {
+            value: "star",
+            type: ContextMenuType.SWITCH,
+            initialValue: false,
+            callback
+          }
+        ]
+      }
+    ]);
+    await runContextAction(action, { runCommand: vi.fn(), onAction });
+    expect(callback).toHaveBeenCalledWith(true);
+    expect(onAction).toHaveBeenCalledWith("star");
+  });
+
   it("runs the item's command when it has no callback", async () => {
     const runCommand = vi.fn();
     const [action] = flattenContextActions([
@@ -182,5 +210,41 @@ describe("runContextAction", () => {
     ]);
     await runContextAction(action, { runCommand });
     expect(runCommand).toHaveBeenCalledWith("cmd-x");
+  });
+});
+
+describe("toSuperBarSearchHit", () => {
+  it("labels an event by its title when it has no label", () => {
+    const prepared = toSuperBarSearchHit(
+      {
+        id: "event:a",
+        resource: "event",
+        record: { id: "event:a", event: "Team sync" },
+        relevance: 1,
+        score: 1
+      },
+      "sync"
+    );
+    expect(prepared.record.label).toBe("Team sync");
+  });
+
+  it("escapes HTML in the highlighted body excerpt", () => {
+    const prepared = toSuperBarSearchHit(
+      {
+        id: "node:a",
+        resource: "node",
+        record: {
+          id: "node:a",
+          label: "Clip",
+          text: "plan <img src=x onerror=alert(1)>"
+        },
+        relevance: 1,
+        score: 1
+      },
+      "plan"
+    );
+    expect(prepared.record.bodySearch).toBe(
+      "**plan** &lt;img src=x onerror=alert(1)&gt;"
+    );
   });
 });

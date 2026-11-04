@@ -57,6 +57,7 @@
   let isSearching = $state(false);
   let searchDebounce: ReturnType<typeof setTimeout> | undefined;
   let searchRequestId = 0;
+  let searchController: AbortController | undefined;
   const isSearchMode = $derived(query.trim().length > 0);
   const currentTrail = $derived($accessTrail.current);
   const recentTrails = $derived($accessTrail.recent);
@@ -119,11 +120,16 @@
     untrack(() => searchInputRef?.focus());
   });
 
-  onDestroy(() => clearTimeout(searchDebounce));
+  onDestroy(() => {
+    clearTimeout(searchDebounce);
+    searchController?.abort();
+  });
 
   async function search(value: string) {
     const trimmed = value.trim();
     const requestId = ++searchRequestId;
+    searchController?.abort();
+    searchController = undefined;
     if (!trimmed) {
       searchResults = [];
       searchResultsQuery = trimmed;
@@ -132,22 +138,24 @@
       return;
     }
     isSearching = true;
+    const controller = new AbortController();
+    searchController = controller;
     try {
       const hits = await searchResources({
         query: trimmed,
         limit: SEARCH_LIMIT,
-        boost: navigatorSearchBoost(get(navigatorHistory), Date.now())
+        boost: navigatorSearchBoost(get(navigatorHistory), Date.now()),
+        signal: controller.signal
       });
       if (requestId !== searchRequestId) return;
       searchResultsQuery = trimmed;
       searchResults = hits.map((hit) => hit.id);
       selectedIndex = 0;
     } catch (error) {
+      if (requestId !== searchRequestId) return;
       logger.error({ at: "Navigator.search", error });
-      if (requestId === searchRequestId) {
-        searchResults = [];
-        searchResultsQuery = trimmed;
-      }
+      searchResults = [];
+      searchResultsQuery = trimmed;
     } finally {
       if (requestId === searchRequestId) isSearching = false;
     }
@@ -156,6 +164,8 @@
   function clearSearch() {
     clearTimeout(searchDebounce);
     searchRequestId += 1;
+    searchController?.abort();
+    searchController = undefined;
     query = "";
     searchResults = [];
     searchResultsQuery = "";

@@ -26,7 +26,10 @@
   import KeyboardToolbar from "@21n/ui/elements/keyboardToolbar/KeyboardToolbar.svelte";
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
-  import type { SuperBarScope } from "@nucleum/surfaces/commandBar/super-bar";
+  import type {
+    SuperBarEntry,
+    SuperBarScope
+  } from "@nucleum/surfaces/commandBar/super-bar";
 
   let {
     command = undefined,
@@ -48,6 +51,7 @@
   let isPerformingSearchAction = $state(false);
   let searchAction = $state<IAction | null>(null);
   let isFocusing = $state(false);
+  let selectedKind = $state<SuperBarEntry["kind"] | undefined>(undefined);
   const defaultPlaceholder = $derived(
     scope === "search"
       ? "Start typing to search"
@@ -229,10 +233,12 @@
             }
           )}
         >
-          {#if value}
-            <b>Enter</b> to run,
+          {#if value && !isPerformingSearchAction && selectedKind === "result"}
+            <b>Enter</b> to open,
             <b>{$context.os === OperatingSystem.MACOS ? "Cmd" : "Ctrl"} Enter</b
             > to open beside
+          {:else if value}
+            Press <b>Enter</b> to run
           {:else if isFullPageContext && !isFocusing}
             <!-- {resolveShortcutText({
               key: "Space",
@@ -270,6 +276,7 @@
         search={value}
         {scope}
         bind:this={resultsRef}
+        bind:selectedKind
         {onSearchAction}
         onClose={close}
       />
