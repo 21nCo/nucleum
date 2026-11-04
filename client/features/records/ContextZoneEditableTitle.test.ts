@@ -16,14 +16,26 @@ vi.mock("@nucleum/shared-state/resources/edit-mode-finish", () => ({
 
 function createStore(label: string) {
   const state = writable({ label, isInEditMode: true });
-  const pending: { label: string; resolve: () => void }[] = [];
+  const pending: {
+    label: string;
+    resolve: () => void;
+    reject: (error: Error) => void;
+  }[] = [];
   const store = {
     subscribe: state.subscribe,
     id: "node:1",
     modify: vi.fn(({ label: next }: { label: string }) => {
+      const previous = get(state).label;
       state.update((value) => ({ ...value, label: next }));
-      return new Promise<void>((resolve) =>
-        pending.push({ label: next, resolve })
+      return new Promise<void>((resolve, reject) =>
+        pending.push({
+          label: next,
+          resolve,
+          reject: (error) => {
+            state.update((value) => ({ ...value, label: previous }));
+            reject(error);
+          }
+        })
       );
     }),
     toggleEditMode: (value: boolean) =>
@@ -95,5 +107,46 @@ describe("ContextZoneEditableTitle", () => {
     await fireEvent.keyDown(input, { key: "Enter" });
     await settle();
     expect(store.modify).toHaveBeenCalledTimes(1);
+  });
+
+  it("saves a confirmed title again when its latest save fails", async () => {
+    const { store, state, pending } = createStore("Original");
+    const { getByTestId } = render(ContextZoneEditableTitle, {
+      props: {
+        store,
+        label: "Original",
+        placeholder: "Untitled",
+        inputLabel: "Title",
+        renameLabel: "Rename",
+        testId: "title"
+      }
+    });
+    await settle();
+    const input = getByTestId("title-input") as HTMLInputElement;
+    await type(input, "X");
+    await fireEvent.blur(input);
+    await type(input, "Y");
+    await fireEvent.blur(input);
+    await type(input, "X");
+    await fireEvent.keyDown(input, { key: "Enter" });
+    pending.shift()!.resolve();
+    await settle();
+    pending.shift()!.resolve();
+    await settle();
+    pending.shift()!.reject(new Error("offline"));
+    await settle();
+    expect(get(state)).toEqual({ label: "Y", isInEditMode: true });
+
+    await fireEvent.keyDown(input, { key: "Enter" });
+    await settle();
+    pending.shift()!.resolve();
+    await settle();
+    expect(store.modify.mock.calls.map(([value]) => value.label)).toEqual([
+      "X",
+      "Y",
+      "X",
+      "X"
+    ]);
+    expect(get(state)).toEqual({ label: "X", isInEditMode: false });
   });
 });

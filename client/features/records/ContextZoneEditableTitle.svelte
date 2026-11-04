@@ -54,6 +54,7 @@
   let pendingSave: Promise<unknown> | undefined;
   let saves: Promise<unknown> = Promise.resolve();
   let queuedSaves = 0;
+  let saveSequence = 0;
   let submittedLabel: string | undefined;
 
   const isEditing = $derived($store.isInEditMode);
@@ -78,10 +79,11 @@
     const next = draft.trim();
     if (next === resolveLatestLabel()) return pendingSave ?? Promise.resolve();
     const save = submitLabel(next);
+    const sequence = saveSequence;
     pendingSave = save;
     save
       .then(() => {
-        if (draft.trim() === next && submittedLabel === next) isDirty = false;
+        if (sequence === saveSequence && draft.trim() === next) isDirty = false;
       }, reportSaveFailure)
       .finally(() => {
         if (pendingSave === save) pendingSave = undefined;
@@ -98,10 +100,18 @@
     return queuedSaves > 0 ? submittedLabel : (get(store).label ?? "");
   }
 
+  /**
+   * Queues a save of `next` after the earlier ones. When it is the latest save
+   * and fails, the title no longer counts as submitted, so it is saved again.
+   */
   function submitLabel(next: string) {
+    const sequence = ++saveSequence;
     submittedLabel = next;
     queuedSaves += 1;
     const save = saves.then(() => store.modify({ label: next }));
+    save.catch(() => {
+      if (sequence === saveSequence) submittedLabel = undefined;
+    });
     saves = save
       .catch(() => undefined)
       .finally(() => {
