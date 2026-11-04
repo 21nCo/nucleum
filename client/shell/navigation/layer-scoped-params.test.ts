@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MockInstance } from "vitest";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import { loadStubbedNavigation } from "./navigation.test.setup";
 
@@ -13,7 +14,7 @@ const pageFocusKey = navigation.resolveRecordSpecificSearchParam(
   "focus"
 );
 
-let gotoPath: ReturnType<typeof vi.spyOn>;
+let gotoPath: MockInstance<typeof navigation.gotoPath>;
 
 function showUrl(url: string) {
   window.history.replaceState({}, "", url);
