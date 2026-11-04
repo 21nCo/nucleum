@@ -14,7 +14,7 @@
   import type { TopNavPanelActionState } from "@nucleum/shell/topNav/panel-actions";
 
   let {
-    state = "idle"
+    state: actionState = "idle"
   }: {
     /**
      * `idle` shows the "Search or jump to" pill, `compact` an icon beside another open
@@ -31,7 +31,7 @@
   let isRestoreFocus = false;
 
   $effect.pre(() => {
-    const next = state;
+    const next = actionState;
     if (previousState === "expanded" && next !== "expanded") {
       isRestoreFocus = !!searchRef?.contains(document.activeElement);
     }
@@ -39,14 +39,14 @@
   });
 
   $effect(() => {
-    void state;
+    void actionState;
     if (!isRestoreFocus || !pillRef) return;
     isRestoreFocus = false;
     pillRef.focus();
   });
 </script>
 
-{#if state === "expanded"}
+{#if actionState === "expanded"}
   <div
     class="flex items-center w-full h-full"
     data-testid="navigator-inline-search"
@@ -54,7 +54,7 @@
   >
     <NavigatorSearchInput />
   </div>
-{:else if state === "compact"}
+{:else if actionState === "compact"}
   <button
     bind:this={pillRef}
     type="button"
