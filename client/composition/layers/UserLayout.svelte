@@ -27,6 +27,7 @@
   } from "@nucleum/shell/navigation/top-layer";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   import type { TopNavPanelAction } from "@nucleum/shell/topNav/panel-actions";
 
   let {
@@ -116,8 +117,12 @@
         data-full-screen="true"
       >
         <div
-          class="flex shrink-0 w-full h-12 max-h-12 min-h-11 bg-bgs2 border-b border-brs3 app-framed:border-b-0"
+          class={cn(
+            "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 border-b border-brs3",
+            "app-framed:border-b-0 app-framed:h-[calc(3rem+2*var(--app-shell-gap))] app-framed:min-h-[calc(3rem+2*var(--app-shell-gap))] app-framed:max-h-[calc(3rem+2*var(--app-shell-gap))]"
+          )}
           data-testid="command-mode-page-bar"
+          data-chrome-icons
         >
           <TopBarCloseButton
             label={resolveCloseControlLabel(
