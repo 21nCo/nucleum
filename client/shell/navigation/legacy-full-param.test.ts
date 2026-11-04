@@ -21,6 +21,18 @@ describe("resolveLegacyFullParamUrl", () => {
     expect(rewrite("?full=focus")).toEqual({ overlay: "focus", max: "true" });
   });
 
+  it("closes the page and its split under a full screen path", () => {
+    expect(
+      rewrite(
+        "?page=objective%3A1&pageAt=2&besidePage=node%3A3&besidePageAt=4&full=FULL_SCREEN_FOCUS&selected=node%3A5"
+      )
+    ).toEqual({
+      overlay: "FULL_SCREEN_FOCUS",
+      max: "true",
+      selected: "node:5"
+    });
+  });
+
   it("drops a stray full mode timestamp", () => {
     expect(rewrite("?page=node%3A1&fullAt=5")).toEqual({ page: "node:1" });
   });
