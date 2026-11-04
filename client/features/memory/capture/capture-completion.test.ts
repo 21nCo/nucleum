@@ -9,6 +9,10 @@ vi.mock("@nucleum/shell/navigation/navigation", () => ({ navigation }));
 vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
   uiState: { getState: vi.fn(), setState: vi.fn() }
 }));
+vi.mock("@nucleum/shared-state/notifications/notification.store", () => ({
+  toasts: { success: vi.fn() },
+  inlineToasts: { success: vi.fn() }
+}));
 vi.mock("@nucleum/client/runtime/logging/logger", () => ({
   logger: { log: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() }
 }));
@@ -17,7 +21,10 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-import { closeCaptureAfterSave } from "./capture-completion";
+import {
+  closeCaptureAfterSave,
+  handleSingleNodePostSave
+} from "./capture-completion";
 
 const capture = resourceAction(Resource.node, ResourceActionType.CREATE);
 
@@ -27,6 +34,7 @@ function visit(search: string) {
 
 afterEach(() => {
   navigation.closeResource.mockReset();
+  navigation.openResource.mockReset();
   visit("");
 });
 
@@ -54,5 +62,49 @@ describe("closeCaptureAfterSave", () => {
     visit(`?${AccessMode.OVERLAY}=${capture}`);
     closeCaptureAfterSave(true);
     expect(navigation.closeResource).not.toHaveBeenCalled();
+  });
+});
+
+describe("handleSingleNodePostSave", () => {
+  const node = { id: "node:saved" as const };
+
+  function save(overrides: { linkedCollectionId?: "collection:linked" } = {}) {
+    handleSingleNodePostSave({
+      node,
+      isConstrainedWidth: false,
+      shouldOpenUponSave: true,
+      linkedCollectionId: overrides.linkedCollectionId,
+      shouldReturnToLinkedCollection: !!overrides.linkedCollectionId
+    });
+  }
+
+  it("closes a panel capture and keeps an unrelated overlay when opening the saved node", () => {
+    visit(`?${AccessMode.PANEL}=${capture}&${AccessMode.OVERLAY}=search`);
+    save();
+    expect(navigation.openResource).toHaveBeenCalledWith(
+      node.id,
+      AccessMode.PAGE,
+      { searchParams: { [AccessMode.PANEL]: null } }
+    );
+  });
+
+  it("closes an overlay capture when opening the saved node", () => {
+    visit(`?${AccessMode.OVERLAY}=${capture}`);
+    save();
+    expect(navigation.openResource).toHaveBeenCalledWith(
+      node.id,
+      AccessMode.PAGE,
+      { searchParams: { [AccessMode.OVERLAY]: null } }
+    );
+  });
+
+  it("closes a panel capture when returning to the linked collection", () => {
+    visit(`?${AccessMode.PANEL}=${capture}&${AccessMode.OVERLAY}=search`);
+    save({ linkedCollectionId: "collection:linked" });
+    expect(navigation.openResource).toHaveBeenCalledWith(
+      "collection:linked",
+      AccessMode.PAGE,
+      { searchParams: { [AccessMode.PANEL]: null } }
+    );
   });
 });

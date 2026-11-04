@@ -54,39 +54,48 @@ export function handleSingleNodePostSave(params: {
     return;
   }
 
+  const searchParams = Object.fromEntries(
+    resolveOpenCaptureLayers(new URL(window.location.href)).map(
+      ({ accessMode }) => [accessMode, null]
+    )
+  );
+
   if (params.shouldReturnToLinkedCollection && params.linkedCollectionId) {
     navigation.openResource(params.linkedCollectionId, AccessMode.PAGE, {
-      searchParams: {
-        [AccessMode.OVERLAY]: null
-      }
+      searchParams
     });
     return;
   }
 
   if (params.shouldOpenUponSave) {
     navigation.openResource(params.node.id, AccessMode.PAGE, {
-      searchParams: {
-        [AccessMode.OVERLAY]: null
-      }
+      searchParams
     });
   }
+}
+
+/** Capture surfaces open in `url` with the layer each one is open in. */
+export function resolveOpenCaptureLayers(url: URL) {
+  return [
+    resourceAction(Resource.node, ResourceActionType.CREATE),
+    MemotronAction.CAPTURE_DND,
+    MemotronAction.CAPTURE_SECONDARY
+  ].flatMap((id) => {
+    const accessMode = resolveOpenLiveActionAccessMode(id, url);
+    return accessMode ? [{ id, accessMode }] : [];
+  });
 }
 
 /**
  * Closes the capture surface after completion in the layer it is open in, so
  * a capture opened in the panel closes and an unrelated overlay stays open.
+ * Skipped when opening the saved node already replaced the capture.
  */
-export function closeCaptureAfterSave(shouldOpenUponSave: boolean) {
-  if (shouldOpenUponSave) {
+export function closeCaptureAfterSave(isReplacedByOpenedNode: boolean) {
+  if (isReplacedByOpenedNode) {
     return;
   }
-  const url = new URL(window.location.href);
-  [
-    resourceAction(Resource.node, ResourceActionType.CREATE),
-    MemotronAction.CAPTURE_DND,
-    MemotronAction.CAPTURE_SECONDARY
-  ].forEach((id) => {
-    const accessMode = resolveOpenLiveActionAccessMode(id, url);
-    if (accessMode) navigation.closeResource({ id, accessMode });
-  });
+  resolveOpenCaptureLayers(new URL(window.location.href)).forEach(
+    ({ id, accessMode }) => navigation.closeResource({ id, accessMode })
+  );
 }

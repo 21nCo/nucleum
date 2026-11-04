@@ -1190,7 +1190,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       toasts.success(`${result.length} nodes saved successfully!`);
     }
     if (params?.isEmbedContext) return;
-    closeCaptureAfterSave(shouldOpenUponSave);
+    closeCaptureAfterSave(
+      result.length === 1 &&
+        (shouldOpenUponSave || shouldReturnToLinkedCollection)
+    );
     this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));
     await this.deletePermanently();
   }
