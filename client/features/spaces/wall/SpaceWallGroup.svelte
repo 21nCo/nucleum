@@ -55,6 +55,7 @@
   }
 
   function onRenameKeydown(event: KeyboardEvent) {
+    if (event.isComposing || event.keyCode === 229) return;
     if (event.key === "Enter") {
       event.preventDefault();
       saveLabel();
