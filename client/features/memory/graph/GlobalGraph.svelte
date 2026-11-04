@@ -11,7 +11,10 @@
   import GlobalGraphUsingG6 from "@nucleum/features/memory/graph/GlobalGraphUsingG6.svelte";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import { rootNodeTypeList } from "@nucleum/features/memory/node/node.type";
-  import { removeDuplicatesFilter } from "@nucleum/datafn/resource.utils";
+  import {
+    determineResourceAccessMode,
+    removeDuplicatesFilter
+  } from "@nucleum/datafn/resource.utils";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { resolveNodeLabelString } from "@nucleum/features/memory/node/node.utils";
@@ -210,7 +213,15 @@
   }
 
   function onCanvasClick() {
-    navigation.closeResource({ accessMode: AccessMode.BESIDE_BASE });
+    const splitMode = splitResource
+      ? determineResourceAccessMode(splitResource)
+      : undefined;
+    navigation.closeResource({
+      accessMode:
+        splitMode === AccessMode.BESIDE_PAGE
+          ? AccessMode.BESIDE_PAGE
+          : AccessMode.BESIDE_BASE
+    });
     splitResource = undefined;
   }
 </script>
