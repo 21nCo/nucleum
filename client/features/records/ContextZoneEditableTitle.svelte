@@ -53,6 +53,7 @@
   let isDirty = false;
   let pendingSave: Promise<unknown> | undefined;
   let saves: Promise<unknown> = Promise.resolve();
+  let queuedSaves = 0;
   let submittedLabel: string | undefined;
 
   const isEditing = $derived($store.isInEditMode);
@@ -75,12 +76,12 @@
     if (isCancelled || !isDirty || !$store.isInEditMode)
       return pendingSave ?? Promise.resolve();
     const next = draft.trim();
-    if (next === ($store.label ?? "")) return pendingSave ?? Promise.resolve();
+    if (next === resolveLatestLabel()) return pendingSave ?? Promise.resolve();
     const save = submitLabel(next);
     pendingSave = save;
     save
       .then(() => {
-        if (draft.trim() === next) isDirty = false;
+        if (draft.trim() === next && submittedLabel === next) isDirty = false;
       }, reportSaveFailure)
       .finally(() => {
         if (pendingSave === save) pendingSave = undefined;
@@ -88,10 +89,24 @@
     return save;
   }
 
+  /**
+   * Title the saves leave behind: the last submitted one while saves are
+   * queued, since the store shows an earlier one until they finish, and the
+   * stored title otherwise.
+   */
+  function resolveLatestLabel() {
+    return queuedSaves > 0 ? submittedLabel : (get(store).label ?? "");
+  }
+
   function submitLabel(next: string) {
     submittedLabel = next;
+    queuedSaves += 1;
     const save = saves.then(() => store.modify({ label: next }));
-    saves = save.catch(() => undefined);
+    saves = save
+      .catch(() => undefined)
+      .finally(() => {
+        queuedSaves -= 1;
+      });
     return save;
   }
 
@@ -118,9 +133,7 @@
       destroy() {
         if (isCancelled || !isDirty) return;
         const next = draft.trim();
-        if (next === submittedLabel || next === (get(store).label ?? "")) {
-          return;
-        }
+        if (next === submittedLabel || next === resolveLatestLabel()) return;
         submitLabel(next).catch(reportSaveFailure);
       }
     };
