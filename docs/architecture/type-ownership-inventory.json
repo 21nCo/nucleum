@@ -13859,14 +13859,14 @@
       "path": "client/layout/topNav/tabs/tabs.store.ts",
       "name": "hTrail",
       "initializer": "createHorizontalTrailStore()",
-      "disposition": "retained with owning implementation; no runtime initializer changes",
+      "disposition": "removed; the access trail moved to the navigator (TIDY-484)",
       "ownership": "implementation-private"
     },
     {
       "path": "client/layout/topNav/tabs/tabs.store.ts",
       "name": "vTrail",
       "initializer": "createVTrailStore()",
-      "disposition": "retained with owning implementation; no runtime initializer changes",
+      "disposition": "removed; the access trail moved to the navigator (TIDY-484)",
       "ownership": "implementation-private"
     },
     {

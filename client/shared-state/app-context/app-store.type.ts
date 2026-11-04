@@ -111,10 +111,7 @@ export enum AppSearchParam {
   BACK = "back",
   EDIT = "edit",
   TYPE = "type",
-  /**
-   * Selected tab: a record's own tab when prefixed with its record id, or the
-   * page launched in the agent command mode page.
-   */
+  /** Page launched in the agent command mode page, as `page:<action>`. */
   TAB = "tab",
   PANEL = "panel",
   VIEW = "view",

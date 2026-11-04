@@ -43,7 +43,8 @@ Shell is acyclic: it must not import `composition/`, `surfaces/`, or
 `@nucleum/shared-state/product/product-config-host`; concrete chrome
 (brand/logo, account avatar, bulk-edit bar, offline status, capture, quick
 actions, persistent indicators) enters through optional Svelte snippet props
-provided by the application chrome adapters (`client/composition/chrome/`).
+provided by the application chrome adapters (`client/composition/chrome/`),
+with product base layers supplying quick actions and persistent indicators.
 Pages and resources register their view controls for the top bar context zone
 with `topNav/contextZone/ContextZoneContent.svelte`; the zone follows the pane
 (`ContextZonePaneScope`) the user worked in last.
