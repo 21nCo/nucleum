@@ -210,6 +210,32 @@ describe("migratePinnedSpace", () => {
     expect(menu().user).toEqual(["collection"]);
   });
 
+  it("clears pins when the space already links their pages under other items", async () => {
+    await migrate();
+    const { id } = onlySpace();
+    state.menus[Product.NUCLEUM].user = ["collection"];
+    appendSpaceItems.mockImplementationOnce(async () => {
+      const saved = (state.spaces.get(id!)?.items ?? []) as unknown[];
+      state.spaces.set(id!, {
+        ...state.spaces.get(id!),
+        items: [
+          ...saved,
+          {
+            id: "added-by-editor",
+            type: "page",
+            label: "Collections",
+            path: "/library/collection/all"
+          }
+        ]
+      });
+      return true;
+    });
+
+    await migrate();
+
+    expect(menu().user).toEqual([]);
+  });
+
   it("keeps pins while the recorded pinned space has not reached this device", async () => {
     state.menus = {
       [Product.NUCLEUM]: {

@@ -310,6 +310,30 @@ export function normalizeSpacePagePath(path: string) {
   return (path ?? "").trim().replace(/^\/+|\/+$/g, "");
 }
 
+/**
+ * Whether `items` already hold `item` anywhere: the same item, or another link
+ * to the same record or to the same page path.
+ */
+export function hasEquivalentNavItem(
+  items: ISpaceNavItem[],
+  item: ISpaceNavItem
+) {
+  if (findItem(items, item.id)) return true;
+  if (item.type === SpaceNavItemType.RESOURCE) {
+    const resourceId = item.resourceId.toString();
+    return collectResourceItems(items).some(
+      (existing) => existing.resourceId.toString() === resourceId
+    );
+  }
+  if (item.type === SpaceNavItemType.PAGE) {
+    const path = normalizeSpacePagePath(item.path);
+    return collectPageItems(items).some(
+      (existing) => normalizeSpacePagePath(existing.path) === path
+    );
+  }
+  return false;
+}
+
 /** A page link resolved against the current product's registered pages. */
 export type SpacePageRoute = {
   /** The registered page or sub-view action that renders the path. */

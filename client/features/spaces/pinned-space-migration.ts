@@ -27,7 +27,7 @@ import {
   reloadActiveSpace
 } from "@nucleum/features/spaces/space.store";
 import {
-  findItem,
+  hasEquivalentNavItem,
   resolveSpacePageRoute,
   resolveTargetLabel
 } from "@nucleum/features/spaces/space.utils";
@@ -97,7 +97,7 @@ async function hasSavedItems(spaceId: string, items: ISpaceNavItem[]) {
     metadata: recordMetadata
   })) as ISpace | undefined;
   const savedItems = saved?.items ?? [];
-  return items.every((item) => !!findItem(savedItems, item.id));
+  return items.every((item) => hasEquivalentNavItem(savedItems, item));
 }
 
 async function loadTabRecord(

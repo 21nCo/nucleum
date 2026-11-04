@@ -392,4 +392,79 @@ describe("space writes", () => {
       "link"
     ]);
   });
+
+  it("stops a direct append when another account becomes active while it reads", async () => {
+    let finishRead: (value: unknown) => void = () => undefined;
+    mocks.select.mockReturnValueOnce(
+      new Promise((resolve) => (finishRead = resolve))
+    );
+    const appended = appendSpaceItems("space:unopened", [
+      { id: "link", type: "section", label: "Link", children: [] } as never
+    ]);
+    mocks.namespace = "account-b";
+    finishRead({ id: "space:unopened", items: [] });
+    await expect(appended).resolves.toBe(false);
+    expect(mocks.mutate).not.toHaveBeenCalled();
+  });
+
+  it("stops a queued append when another account becomes active while it reads", async () => {
+    const store = ActiveSpaceStore.resolve("space:queued-switch");
+    mocks.select.mockResolvedValueOnce({
+      id: "space:queued-switch",
+      items: []
+    });
+    await store.init();
+    let finishRead: (value: unknown) => void = () => undefined;
+    mocks.select.mockReturnValueOnce(
+      new Promise((resolve) => (finishRead = resolve))
+    );
+    const appended = appendSpaceItems("space:queued-switch", [
+      { id: "link", type: "section", label: "Link", children: [] } as never
+    ]);
+    await vi.waitFor(() => expect(mocks.select).toHaveBeenCalledTimes(2));
+    mocks.namespace = "account-b";
+    finishRead({ id: "space:queued-switch", items: [] });
+    await expect(appended).resolves.toBe(false);
+    expect(mocks.mutate).not.toHaveBeenCalled();
+  });
+
+  it("does not append a second link to a record or page already in the space", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const existing = [
+      {
+        id: "added-by-editor",
+        type: "resource",
+        label: "A",
+        resourceId: "node:a",
+        resourceType: "node"
+      },
+      { id: "page-by-editor", type: "page", label: "P", path: "library/x/all" }
+    ];
+    mocks.select.mockResolvedValueOnce({
+      id: "space:duplicate",
+      items: existing
+    });
+    await appendSpaceItems("space:duplicate", [
+      {
+        id: "migrated",
+        type: "resource",
+        label: "A",
+        resourceId: "node:a",
+        resourceType: "node"
+      } as never,
+      {
+        id: "migrated-page",
+        type: "page",
+        label: "P",
+        path: "/library/x/all/"
+      } as never
+    ]);
+    const saved = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
+      id: string;
+    }[];
+    expect(saved.map((item) => item.id)).toEqual([
+      "added-by-editor",
+      "page-by-editor"
+    ]);
+  });
 });

@@ -15,7 +15,7 @@ import {
 } from "@nucleum/features/spaces/space.type";
 import {
   cloneNavItems,
-  findItem,
+  hasEquivalentNavItem,
   indentItem,
   insertItem,
   moveItem,
@@ -36,11 +36,14 @@ import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 const activeSpaceStores = new Map<string, ActiveSpaceStore>();
 const recordMetadata = { includeTrashed: true, includeArchived: true };
 
-/** `items` followed by those of `added` it does not hold anywhere yet. */
+/**
+ * `items` followed by those of `added` they do not hold anywhere yet, by item
+ * or by the record or page it links to.
+ */
 function appendMissingItems(items: ISpaceNavItem[], added: ISpaceNavItem[]) {
   return [
     ...items,
-    ...cloneNavItems(added.filter((item) => !findItem(items, item.id)))
+    ...cloneNavItems(added.filter((item) => !hasEquivalentNavItem(items, item)))
   ];
 }
 
@@ -416,15 +419,18 @@ export class ActiveSpaceStore {
  * Appends the items a saved space does not hold yet and returns whether they
  * were saved. While a view of the space has its items open, the append runs in
  * that view's save queue, in order with the user's edits. Otherwise the record
- * is read and written directly, and an open view reloads.
+ * is read and written directly, and an open view reloads. Either way it stops
+ * without writing when another account becomes active meanwhile.
  */
 export async function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
   const store = activeSpaceStores.get(id.toString());
   if (store?.hasLoadedItems()) return store.appendItems(items);
+  const namespace = datafn.currentNamespace();
+  const isCurrent = () => datafn.currentNamespace() === namespace;
   const saved = (await datafn.space.select(id.toString(), {
     metadata: recordMetadata
   })) as ISpace | undefined;
-  if (!saved) return false;
+  if (!saved || !isCurrent()) return false;
   assertDatafnMutationSucceeded(
     await datafn.space.mutate({
       operation: "merge",
@@ -433,6 +439,7 @@ export async function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
       context: ResourceAccessPoint.SPACE
     })
   );
+  if (!isCurrent()) return false;
   await reloadActiveSpace(id);
   return true;
 }
