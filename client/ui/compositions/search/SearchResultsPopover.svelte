@@ -72,7 +72,7 @@
   let currentValue = $state("");
   let isSearchInProgress = $state(false);
   let searchGeneration = 0;
-  const searchTimeouts = new Set<ReturnType<typeof setTimeout>>();
+  const pendingSearchCancels = new Set<() => void>();
 
   export function reset() {
     resetSearch();
@@ -168,8 +168,8 @@
     );
     return () => {
       searchGeneration += 1;
-      searchTimeouts.forEach((timer) => clearTimeout(timer));
-      searchTimeouts.clear();
+      pendingSearchCancels.forEach((cancel) => cancel());
+      pendingSearchCancels.clear();
       window.removeEventListener(
         "searchresultkeyup",
         onWindowSearchResultKeyup as EventListener
@@ -317,21 +317,25 @@
 
   /**
    * Bounds a search callback so a request that never settles ends in the
-   * empty state instead of an endless loading indicator.
+   * empty state instead of an endless loading indicator. Unmounting rejects
+   * the pending bound so a hung request does not keep the search alive.
    */
   function settleSearch<T>(request: Promise<T> | T): Promise<T> {
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancel = () => {};
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => {
-        if (timer) searchTimeouts.delete(timer);
+      const timer = setTimeout(() => {
+        pendingSearchCancels.delete(cancel);
         reject(new Error("Search timed out"));
       }, SEARCH_TIMEOUT_MS);
-      searchTimeouts.add(timer);
+      cancel = () => {
+        clearTimeout(timer);
+        reject(new Error("Search cancelled"));
+      };
+      pendingSearchCancels.add(cancel);
     });
     return Promise.race([Promise.resolve(request), timeout]).finally(() => {
-      if (!timer) return;
-      clearTimeout(timer);
-      searchTimeouts.delete(timer);
+      cancel();
+      pendingSearchCancels.delete(cancel);
     });
   }
 

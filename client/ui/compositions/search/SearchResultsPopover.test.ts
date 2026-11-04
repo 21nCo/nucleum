@@ -89,7 +89,13 @@ describe("SearchResultsPopover loading state", () => {
   it("does not report a search that settles after unmount", async () => {
     vi.useFakeTimers();
     const onCount = vi.fn();
-    const searchCallback = vi.fn(() => new Promise(() => {}));
+    let resolveSearch: (value: unknown[]) => void = () => {};
+    const searchCallback = vi.fn(
+      () =>
+        new Promise<unknown[]>((resolve) => {
+          resolveSearch = resolve;
+        })
+    );
     const { unmount } = render(SearchResultsPopover, {
       searchCallback,
       isAlwaysShowSearchFeedback: true,
@@ -97,6 +103,23 @@ describe("SearchResultsPopover loading state", () => {
     });
     await vi.advanceTimersByTimeAsync(600);
     expect(searchCallback).toHaveBeenCalledOnce();
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
+    resolveSearch([{ id: "node:a", label: "Late result" }]);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onCount).not.toHaveBeenCalled();
+  });
+
+  it("does not report a search that never settles after unmount", async () => {
+    vi.useFakeTimers();
+    const onCount = vi.fn();
+    const searchCallback = vi.fn(() => new Promise(() => {}));
+    const { unmount } = render(SearchResultsPopover, {
+      searchCallback,
+      isAlwaysShowSearchFeedback: true,
+      onCount
+    });
+    await vi.advanceTimersByTimeAsync(600);
     unmount();
     await vi.advanceTimersByTimeAsync(10_000);
     expect(vi.getTimerCount()).toBe(0);
