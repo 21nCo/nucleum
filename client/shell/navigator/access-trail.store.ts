@@ -139,26 +139,44 @@ function scheduleFlush() {
 /**
  * Saves the trails. The stored record is read again first and merged in, so
  * trails another window of the account saved meanwhile are kept and listed
- * here, while this window keeps its own current trail.
+ * here, while this window keeps its own current trail. Where the browser
+ * supports Web Locks, the read, merge and write hold a lock per account, so
+ * windows saving at the same time take turns and each reads what the other
+ * wrote. The trails stay dirty until the write starts, so hiding the page
+ * meanwhile still saves them.
  */
 function flushAccessTrails() {
   const generation = beginFlush();
   if (generation === undefined) return;
-  void Promise.resolve()
-    .then(() => datafn.kv.get<AccessTrails>(Resource.accessTrails))
-    .then((stored) => {
-      if (generation !== loadGeneration) return undefined;
-      storedSnapshot = normalizeAccessTrails(stored);
-      return writeMerged();
-    })
+  void withTrailsLock(async () => {
+    const stored = await datafn.kv.get<AccessTrails>(Resource.accessTrails);
+    if (generation !== loadGeneration) return undefined;
+    storedSnapshot = normalizeAccessTrails(stored);
+    if (!isDirty) {
+      trailsLocal.set(mergeAccessTrails(get(trailsLocal), storedSnapshot));
+      return undefined;
+    }
+    return await writeMerged();
+  })
     .then((result) => settleFlush(generation, result))
     .catch((error) => retryFlush(generation, error));
 }
 
 /**
+ * Runs `task` holding the account's access trail lock when the browser
+ * supports Web Locks, and directly otherwise.
+ */
+async function withTrailsLock<T>(task: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator === "undefined" ? undefined : navigator.locks;
+  if (!locks?.request) return await task();
+  return await locks.request(`access-trails:${loadedNamespace ?? ""}`, task);
+}
+
+/**
  * Saves the trails as the page is hidden or unloaded, without reading the
- * stored record first, so the write starts before the page goes away. The
- * trails are merged with the stored record as last read instead.
+ * stored record first or waiting for the lock, so the write starts before the
+ * page goes away. The trails are merged with the stored record as last read
+ * instead.
  */
 function flushOnPageHide() {
   const generation = beginFlush();
@@ -181,15 +199,18 @@ function beginFlush() {
   flushTimer = undefined;
   if (!isDirty || loadState !== "loaded") return undefined;
   if (resolveNamespace() !== loadedNamespace) return undefined;
-  isDirty = false;
   return loadGeneration;
 }
 
-/** Merges the trails with the stored record as last read and writes them. */
+/**
+ * Merges the trails with the stored record as last read and writes them,
+ * marking them saved as the write starts.
+ */
 function writeMerged() {
   const merged = mergeAccessTrails(get(trailsLocal), storedSnapshot);
   trailsLocal.set(merged);
   storedSnapshot = merged;
+  isDirty = false;
   return datafn.kv.set(Resource.accessTrails, merged);
 }
 
