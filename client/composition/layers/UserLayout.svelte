@@ -5,8 +5,6 @@
   import { onMount, untrack } from "svelte";
   import { appLoadingState, appStore } from "@nucleum/shared-state/app-context/app.store";
   import context from "@nucleum/client/runtime/context.store";
-  import { Embed } from "@nucleum/client/runtime/context.type";
-  import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
   import CommandModePage from "@nucleum/surfaces/commandBar/CommandModePage.svelte";
   import NavigationLayout from "@nucleum/shell/navigation/NavigationLayout.svelte";
   import FullScreenOverlayLayer from "@nucleum/shell/overlays/FullScreenOverlayLayer.svelte";
@@ -14,6 +12,7 @@
   import { resolveLayoutRoute } from "@nucleum/shell/navigation/layout-route";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { pageScroll } from "@nucleum/shell/navigation/page-scroll";
+  import { isCommandModeLayout } from "@nucleum/shell/navigation/command-mode-layout";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { page } from "$app/stores";
   import LeftNav from "../chrome/WiredLeftNav.svelte";
@@ -80,7 +79,7 @@
 {/snippet}
 
 {#if isLoaded}
-  {#if $appStore.interactionMode === InteractionMode.AGENT && $context.embed !== Embed.HANDSET}
+  {#if isCommandModeLayout($appStore.interactionMode, $context.embed)}
     <div
       class="contents"
       bind:this={commandHomeRef}
