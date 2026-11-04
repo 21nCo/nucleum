@@ -14,6 +14,8 @@ import {
   type SpaceDropPosition
 } from "@nucleum/features/spaces/space.type";
 import {
+  cloneNavItems,
+  findItem,
   indentItem,
   insertItem,
   moveItem,
@@ -32,6 +34,15 @@ import { navigation } from "@nucleum/shell/navigation/navigation";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 
 const activeSpaceStores = new Map<string, ActiveSpaceStore>();
+const recordMetadata = { includeTrashed: true, includeArchived: true };
+
+/** `items` followed by those of `added` it does not hold anywhere yet. */
+function appendMissingItems(items: ISpaceNavItem[], added: ISpaceNavItem[]) {
+  return [
+    ...items,
+    ...cloneNavItems(added.filter((item) => !findItem(items, item.id)))
+  ];
+}
 
 /** Open state and mutations of one space, shared by every view of it. */
 export class ActiveSpaceStore {
@@ -109,6 +120,8 @@ export class ActiveSpaceStore {
    * change is waiting, since that change saves the shown items again. A save
    * queued for one account is dropped when another account is active by the
    * time it runs, and items still loaded from another account are not saved.
+   * Each save writes the items shown when it runs, so a change made to them
+   * by a queued task in between is kept.
    */
   private async persistItems(items: ISpaceNavItem[]) {
     if (!this.isItemsCurrent()) return false;
@@ -119,8 +132,8 @@ export class ActiveSpaceStore {
     const isCurrent = () => datafn.currentNamespace() === namespace;
     const write = this.itemsWrites.then(async () => {
       try {
-        if (!isCurrent()) return false;
-        return await this.mutate({ items }, async () => {
+        if (!isCurrent() || !this.isItemsCurrent()) return false;
+        return await this.mutate({ items: this.readItems() }, async () => {
           this.settledItemsRevision = revision;
           if (revision === this.itemsRevision && isCurrent()) await this.init();
         });
@@ -145,9 +158,44 @@ export class ActiveSpaceStore {
     );
   }
 
-  /** Appends items after the current ones and returns whether they were saved. */
+  /**
+   * Appends items to the saved space and returns whether they were saved. It
+   * runs in the save queue, after every earlier local change is saved, and
+   * appends the items missing from the record as saved then, so it keeps
+   * changes saved elsewhere and items the user removed stay removed. The shown
+   * items become that result, or, when the user changed them in the meantime,
+   * gain the appended items, which the user's queued saves then carry.
+   */
   async appendItems(items: ISpaceNavItem[]) {
-    return this.persistItems([...this.readItems(), ...items]);
+    const namespace = datafn.currentNamespace();
+    const revision = this.itemsRevision;
+    const isCurrent = () => datafn.currentNamespace() === namespace;
+    const task = this.itemsWrites.then(async () => {
+      if (!isCurrent()) return false;
+      const saved = (await datafn.space.select(this.id.toString(), {
+        metadata: recordMetadata
+      })) as ISpace | undefined;
+      if (!saved || !isCurrent()) return false;
+      const next = appendMissingItems(saved.items ?? [], items);
+      if (!(await this.mutate({ items: next }, async () => undefined))) {
+        return false;
+      }
+      if (!isCurrent()) return true;
+      if (this.itemsRevision === revision) {
+        this.itemsRevision++;
+        this.settledItemsRevision = this.itemsRevision;
+        this.update((prev) => (prev ? { ...prev, items: next } : prev));
+      } else {
+        this.update((prev) =>
+          prev
+            ? { ...prev, items: appendMissingItems(prev.items ?? [], items) }
+            : prev
+        );
+      }
+      return true;
+    });
+    this.itemsWrites = task.catch(() => undefined);
+    return task;
   }
 
   /**
@@ -365,23 +413,23 @@ export class ActiveSpaceStore {
 }
 
 /**
- * Appends items to a saved space and returns whether they were saved. While a
- * view of the space has its items open, the write goes through that view's
- * store, in order with the user's edits, so neither overwrites the other.
- * Otherwise the record is merged with `savedItems`, its saved items.
+ * Appends the items a saved space does not hold yet and returns whether they
+ * were saved. While a view of the space has its items open, the append runs in
+ * that view's save queue, in order with the user's edits. Otherwise the record
+ * is read and written directly, and an open view reloads.
  */
-export async function appendSpaceItems(
-  id: IRecordId,
-  items: ISpaceNavItem[],
-  savedItems: ISpaceNavItem[]
-) {
+export async function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
   const store = activeSpaceStores.get(id.toString());
   if (store?.hasLoadedItems()) return store.appendItems(items);
+  const saved = (await datafn.space.select(id.toString(), {
+    metadata: recordMetadata
+  })) as ISpace | undefined;
+  if (!saved) return false;
   assertDatafnMutationSucceeded(
     await datafn.space.mutate({
       operation: "merge",
       id: id.toString(),
-      record: { items: [...savedItems, ...items] },
+      record: { items: appendMissingItems(saved.items ?? [], items) },
       context: ResourceAccessPoint.SPACE
     })
   );

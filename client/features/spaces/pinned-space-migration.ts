@@ -244,7 +244,7 @@ async function runMigration(
     await reloadActiveSpace(spaceId);
   } else if (space && added.length > 0) {
     assertCurrent(scope);
-    if (!(await appendSpaceItems(space.id, added, space.items ?? []))) return;
+    if (!(await appendSpaceItems(space.id, added))) return;
   }
   if (spaceId && added.length > 0) {
     const isSaved = await hasSavedItems(spaceId, added);

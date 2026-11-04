@@ -64,10 +64,11 @@ vi.mock("@nucleum/shell/topNav/tabs/tabs.store", () => ({
   }
 }));
 const appendSpaceItems = vi.hoisted(() =>
-  vi.fn(async (id: string, items: unknown[], savedItems: unknown[]) => {
+  vi.fn(async (id: string, items: unknown[]) => {
+    const saved = (state.spaces.get(id)?.items ?? []) as unknown[];
     state.spaces.set(id, {
       ...state.spaces.get(id),
-      items: [...savedItems, ...items]
+      items: [...saved, ...items]
     });
     return true;
   })

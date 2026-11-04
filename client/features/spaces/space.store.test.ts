@@ -194,20 +194,21 @@ describe("space writes", () => {
       resourceId: "node:a",
       resourceType: "node"
     } as never;
-    const appended = appendSpaceItems("space:appending", [link], []);
+    mocks.select.mockResolvedValueOnce({ id: "space:appending", items: [] });
+    const appended = appendSpaceItems("space:appending", [link]);
     const added = store.addSection({ label: "Added meanwhile" });
-    await Promise.resolve();
-    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => expect(mocks.mutate).toHaveBeenCalledTimes(1));
     finishFirst({ ok: true });
     await expect(appended).resolves.toBe(true);
     const sectionId = await added;
+    expect(mocks.mutate).toHaveBeenCalledTimes(2);
     const lastItems = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
       id: string;
     }[];
-    expect(lastItems.map((item) => item.id)).toEqual(["link", sectionId]);
+    expect(lastItems.map((item) => item.id)).toEqual([sectionId, "link"]);
     expect(store.readItems().map((item) => item.id)).toEqual([
-      "link",
-      sectionId
+      sectionId,
+      "link"
     ]);
   });
 
@@ -290,16 +291,17 @@ describe("space writes", () => {
     });
     await store.init();
     mocks.namespace = "account-b";
-    mocks.select.mockResolvedValueOnce({
-      id: "space:shared-append",
-      items: [section("from-b"), section("link")]
-    });
+    mocks.select
+      .mockResolvedValueOnce({
+        id: "space:shared-append",
+        items: [section("from-b")]
+      })
+      .mockResolvedValueOnce({
+        id: "space:shared-append",
+        items: [section("from-b"), section("link")]
+      });
     await expect(
-      appendSpaceItems(
-        "space:shared-append",
-        [section("link") as never],
-        [section("from-b") as never]
-      )
+      appendSpaceItems("space:shared-append", [section("link") as never])
     ).resolves.toBe(true);
     const saved = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
       id: string;
@@ -321,5 +323,73 @@ describe("space writes", () => {
       store.addSection({ label: "Edited after switching" })
     ).resolves.toBeUndefined();
     expect(mocks.mutate).not.toHaveBeenCalled();
+  });
+
+  it("keeps a root item deleted while its save is pending when links are appended", async () => {
+    const store = ActiveSpaceStore.resolve("space:deleted-root");
+    const section = (id: string) =>
+      ({ id, type: "section", label: id, children: [] }) as never;
+    mocks.select.mockResolvedValueOnce({
+      id: "space:deleted-root",
+      items: [section("a"), section("b")]
+    });
+    await store.init();
+    const saved = new Map<string, unknown>();
+    mocks.mutate.mockImplementation(
+      async (params: { record: { items: unknown } }) => {
+        saved.set("items", params.record.items);
+        return { ok: true };
+      }
+    );
+    mocks.select.mockImplementation(async () => ({
+      id: "space:deleted-root",
+      items: saved.get("items") ?? [section("a"), section("b")]
+    }));
+    const removed = store.deleteNavItem("a");
+    const appended = appendSpaceItems("space:deleted-root", [section("link")]);
+    await removed;
+    await appended;
+    const ids = (saved.get("items") as { id: string }[]).map((item) => item.id);
+    expect(ids).toEqual(["b", "link"]);
+    expect(store.readItems().map((item) => item.id)).toEqual(["b", "link"]);
+  });
+
+  it("keeps a child saved elsewhere inside an untouched section when links are appended", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const store = ActiveSpaceStore.resolve("space:remote-child");
+    const child = {
+      id: "x",
+      type: "resource",
+      label: "X",
+      resourceId: "node:x",
+      resourceType: "node"
+    };
+    mocks.select.mockResolvedValueOnce({
+      id: "space:remote-child",
+      items: [{ id: "s", type: "section", label: "S", children: [] }]
+    });
+    await store.init();
+    await store.addSection({ label: "Local" });
+    const localItems = store.readItems();
+    mocks.select.mockResolvedValueOnce({
+      id: "space:remote-child",
+      items: [
+        { id: "s", type: "section", label: "S", children: [child] },
+        localItems[1]
+      ]
+    });
+    await appendSpaceItems("space:remote-child", [
+      { id: "link", type: "section", label: "Link", children: [] } as never
+    ]);
+    const lastItems = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
+      id: string;
+      children?: { id: string }[];
+    }[];
+    expect(lastItems[0].children?.map((item) => item.id)).toEqual(["x"]);
+    expect(lastItems.map((item) => item.id)).toEqual([
+      "s",
+      localItems[1].id,
+      "link"
+    ]);
   });
 });
