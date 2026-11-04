@@ -60,7 +60,7 @@ beforeEach(() => {
         ? { accessTrail: props.historyState }
         : undefined;
       if (props?.replaceState) {
-        entries[index] = { url: href, state };
+        entries[index] = { url: href, state: state ?? entries[index].state };
       } else {
         entries = [...entries.slice(0, index + 1), { url: href, state }];
         index += 1;
@@ -83,9 +83,10 @@ describe("ending an access trail while its page stays open", () => {
     navigation.toggleSearchParam(["panel"]);
     navigation.toggleSearchParam({ panel: "navigator" });
     expect(accessTrail.get().current).toBeUndefined();
-    expect(accessTrail.get().recent[0]?.nodes.map((node) => node.id)).toEqual(
-      ["node:a", "node:b"]
-    );
+    expect(accessTrail.get().recent[0]?.nodes.map((node) => node.id)).toEqual([
+      "node:a",
+      "node:b"
+    ]);
   });
 
   it("stays ended when a query change keeps the entry's trail state", () => {
@@ -116,6 +117,24 @@ describe("ending an access trail while its page stays open", () => {
     expect(
       accessTrail.get().current?.nodes[accessTrail.get().current!.active].id
     ).toBe("node:a");
+  });
+
+  it("starts a fresh trail when the ended page is reopened from the navigator", () => {
+    navigation.openResource("node:a", "page" as never);
+    navigation.openResource("node:b", "page" as never);
+    navigation.endAccessTrail();
+
+    navigation.openResource("node:b", "page" as never, {
+      origin: "navigator" as never,
+      trail: "start"
+    });
+    expect(currentIds()).toEqual(["node:b"]);
+    navigation.syncAccessTrail("node:b", entries[index].state);
+    expect(currentIds()).toEqual(["node:b"]);
+    expect(accessTrail.get().recent[0]?.nodes.map((node) => node.id)).toEqual([
+      "node:a",
+      "node:b"
+    ]);
   });
 
   it("follows the page again after it closes and reopens", () => {

@@ -616,7 +616,7 @@ export const navigation = {
       if (
         !additional?.isPreventRefresh &&
         (!areNavigationUrlsEqual(url, new URL(window.location.href)) ||
-          (additional?.replaceState === false && !!additional.historyState))
+          !!additional?.historyState)
       ) {
         navigation.gotoPath(url.href, {
           replaceState: additional?.replaceState ?? true,
@@ -633,7 +633,7 @@ export const navigation = {
     if (
       !additional?.isPreventRefresh &&
       (!areNavigationUrlsEqual(url, new URL(window.location.href)) ||
-        (additional?.replaceState === false && !!additional.historyState))
+        !!additional?.historyState)
     ) {
       navigation.gotoPath(url.href, {
         replaceState: additional?.replaceState ?? true,
@@ -744,8 +744,13 @@ export const navigation = {
     let isPushHistory = false;
     let historyState: AccessTrailHistoryState | undefined;
     if (accessMode === AccessMode.PAGE) {
-      endedEntry = undefined;
       const openPage = url.searchParams.get(AccessMode.PAGE);
+      const isOpenPageTrailEnded =
+        !!openPage &&
+        openPage === id.toString() &&
+        !!endedEntry &&
+        endedEntry.pageId === openPage;
+      endedEntry = undefined;
       const recorded =
         currentEntry?.pageId === openPage
           ? accessTrail.resolve(currentEntry.state?.position)
@@ -762,8 +767,9 @@ export const navigation = {
       );
       navigatorLayer = resolveNavigatorLayer(url);
       const isNavigatorOpen = !!navigatorLayer;
+      const isTrailRestarted = intent === "start" && isOpenPageTrailEnded;
       if (intent === "start") {
-        if (openPage !== id.toString()) {
+        if (openPage !== id.toString() || isTrailRestarted) {
           accessTrail.start(
             id.toString(),
             params?.origin && !isRecordId(params.origin)
@@ -786,11 +792,12 @@ export const navigation = {
       const position = accessTrail.position();
       const isOtherEntry =
         openPage !== id.toString() ||
+        isTrailRestarted ||
         (intent === "select" &&
           !!openPosition &&
           !isSameAccessTrailPosition(position, openPosition));
       if (isOtherEntry && position) {
-        if (intent === "start" || intent === "extend") {
+        if ((intent === "start" && !isTrailRestarted) || intent === "extend") {
           forgetPageScroll(id.toString());
         }
         if (intent === "back") {
@@ -801,6 +808,8 @@ export const navigation = {
                 ? currentEntry.state?.from
                 : undefined
           };
+        } else if (isTrailRestarted) {
+          historyState = { position, from: null };
         } else {
           isPushHistory = true;
           historyState = { position, from: openPage ? openPosition : null };
