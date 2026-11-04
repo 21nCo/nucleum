@@ -130,4 +130,21 @@ describe("ContextZoneEditableTitle", () => {
     ]);
     expect(get(state)).toEqual({ label: "X", isInEditMode: false });
   });
+
+  it("keeps editing open until a title saved after confirming is saved", async () => {
+    const { store, state, pending } = createStore("Original");
+    const input = await renderTitle(store);
+    await type(input, "X");
+    await fireEvent.keyDown(input, { key: "Enter" });
+    await type(input, "Y");
+    await fireEvent.blur(input);
+    pending.shift()!.resolve();
+    await settle();
+    expect(get(state)).toEqual({ label: "Y", isInEditMode: true });
+
+    pending.shift()!.reject(new Error("offline"));
+    await settle();
+    expect(get(state)).toEqual({ label: "X", isInEditMode: true });
+    expect(input.value).toBe("Y");
+  });
 });

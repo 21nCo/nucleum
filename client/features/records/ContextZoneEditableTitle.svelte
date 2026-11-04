@@ -120,9 +120,20 @@
     return save;
   }
 
+  /**
+   * Saves the draft and leaves edit mode once the latest title is saved. While
+   * a save is awaited the input stays editable, so after each one the draft is
+   * checked again and a newer save is awaited before editing closes.
+   */
   async function finish() {
     try {
-      await saveLabel();
+      let save = saveLabel();
+      for (;;) {
+        await save;
+        const next = saveLabel();
+        if (next === save || next !== pendingSave) break;
+        save = next;
+      }
     } catch {
       inputRef?.focus();
       return false;
