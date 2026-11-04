@@ -63,7 +63,10 @@
     if (isCommandHomeCovered) return;
     const target = commandHomeFocus;
     commandHomeFocus = undefined;
-    if (target?.isConnected) target.focus();
+    const active = document.activeElement;
+    const isFocusLost =
+      !active || active === document.body || !active.isConnected;
+    if (isFocusLost && target?.isConnected) target.focus();
   });
 </script>
 
