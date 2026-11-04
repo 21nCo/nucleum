@@ -56,7 +56,7 @@ describe("accessTrail when the stored trails cannot be read", () => {
     expect(kv.set).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(5000);
-    expect(kv.get).toHaveBeenCalledTimes(2);
+    expect(kv.get).toHaveBeenCalledTimes(3);
     expect(kv.set).toHaveBeenCalledTimes(1);
     const written = kv.set.mock.calls[0][1] as typeof stored;
     expect(written.current.nodes.map((node) => node.id)).toEqual(["node:a"]);

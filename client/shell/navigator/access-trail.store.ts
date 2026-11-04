@@ -7,6 +7,7 @@ import {
   activateAccessTrailNode,
   createAccessTrails,
   extendAccessTrail,
+  mergeAccessTrails,
   normalizeAccessTrails,
   hasAccessTrailPosition,
   resolveAccessTrailPosition,
@@ -132,6 +133,11 @@ function scheduleFlush() {
   flushTimer = setTimeout(flushAccessTrails, FLUSH_DELAY_MS);
 }
 
+/**
+ * Saves the trails. The stored record is read again first and merged in, so
+ * trails another window of the account saved meanwhile are kept and listed
+ * here, while this window keeps its own current trail.
+ */
 function flushAccessTrails() {
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = undefined;
@@ -139,9 +145,19 @@ function flushAccessTrails() {
   if (resolveNamespace() !== loadedNamespace) return;
   const generation = loadGeneration;
   isDirty = false;
-  void datafn.kv
-    .set(Resource.accessTrails, get(trailsLocal))
+  void Promise.resolve()
+    .then(() => datafn.kv.get<AccessTrails>(Resource.accessTrails))
+    .then((stored) => {
+      if (generation !== loadGeneration) return undefined;
+      const merged = mergeAccessTrails(
+        get(trailsLocal),
+        normalizeAccessTrails(stored)
+      );
+      trailsLocal.set(merged);
+      return datafn.kv.set(Resource.accessTrails, merged);
+    })
     .then((result) => {
+      if (!result) return;
       if (result.ok) {
         if (generation === loadGeneration) failedFlushes = 0;
         return;

@@ -255,6 +255,39 @@ export function addRecentAccessTrail(
   return [trail, ...others].slice(0, ACCESS_TRAIL_RECENT_LIMIT);
 }
 
+/**
+ * Merges trails saved by another window into this window's trails, matching
+ * trails by key and keeping the most recently updated copy of each. This
+ * window keeps its own current trail; every other trail, including the other
+ * window's current one, is listed under the recent trails, newest first. A
+ * trail this window resumed is current here, so a stale copy of it saved
+ * elsewhere does not list it as recent again.
+ */
+export function mergeAccessTrails(
+  local: AccessTrails,
+  stored: AccessTrails
+): AccessTrails {
+  const currentKey = local.current?.key;
+  const newest = new Map<string, AccessTrail>();
+  for (const trail of [
+    ...local.recent,
+    ...(stored.current ? [stored.current] : []),
+    ...stored.recent
+  ]) {
+    if (trail.key === currentKey) continue;
+    const kept = newest.get(trail.key);
+    if (!kept || trail.updatedAt > kept.updatedAt) newest.set(trail.key, trail);
+  }
+  const recent = [...newest.values()]
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .reduceRight(addRecentAccessTrail, [] as AccessTrail[]);
+  return {
+    version: ACCESS_TRAILS_VERSION,
+    ...(local.current ? { current: local.current } : {}),
+    recent
+  };
+}
+
 /** Makes a recent trail current again, archiving the trail it replaces. */
 export function resumeAccessTrail(
   trails: AccessTrails,
