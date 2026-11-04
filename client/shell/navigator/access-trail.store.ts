@@ -22,6 +22,8 @@ import {
 const FLUSH_DELAY_MS = 1000;
 const LOAD_RETRY_BASE_MS = 1000;
 const LOAD_RETRY_MAX_MS = 30000;
+const FLUSH_RETRY_BASE_MS = 2000;
+const FLUSH_RETRY_MAX_MS = 60000;
 
 type TrailChange = (trails: AccessTrails) => AccessTrails;
 
@@ -37,6 +39,7 @@ let queued: QueuedChange[] = [];
 const aliases = new Map<string, AccessTrailPosition>();
 let isDirty = false;
 let flushTimer: ReturnType<typeof setTimeout> | undefined;
+let failedFlushes = 0;
 let loadGeneration = 0;
 let loadedNamespace: string | null = null;
 let isWatchingRuntime = false;
@@ -58,6 +61,7 @@ function watchRuntime() {
     if (flushTimer) clearTimeout(flushTimer);
     flushTimer = undefined;
     isDirty = false;
+    failedFlushes = 0;
     queued = [];
     aliases.clear();
     loadState = "idle";
@@ -135,15 +139,34 @@ function flushAccessTrails() {
   flushTimer = undefined;
   if (!isDirty || loadState !== "loaded") return;
   if (resolveNamespace() !== loadedNamespace) return;
+  const generation = loadGeneration;
   isDirty = false;
   void datafn.kv
     .set(Resource.accessTrails, get(trailsLocal))
     .then((result) => {
-      if (!result.ok) {
-        logger.error({ at: "accessTrail.flush", error: result.error });
+      if (result.ok) {
+        if (generation === loadGeneration) failedFlushes = 0;
+        return;
       }
+      retryFlush(generation, result.error);
     })
-    .catch((error) => logger.error({ at: "accessTrail.flush", error }));
+    .catch((error) => retryFlush(generation, error));
+}
+
+/**
+ * Keeps trails whose write failed dirty and schedules another write with a
+ * capped backoff, unless the account changed since the write started.
+ */
+function retryFlush(generation: number, error: unknown) {
+  logger.error({ at: "accessTrail.flush", error });
+  if (generation !== loadGeneration) return;
+  failedFlushes += 1;
+  isDirty = true;
+  if (flushTimer) clearTimeout(flushTimer);
+  flushTimer = setTimeout(
+    flushAccessTrails,
+    Math.min(FLUSH_RETRY_BASE_MS * 2 ** (failedFlushes - 1), FLUSH_RETRY_MAX_MS)
+  );
 }
 
 /**
