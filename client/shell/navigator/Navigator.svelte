@@ -20,7 +20,8 @@
     rankNavigatorHistoryFrom,
     type RankedNavigatorHistoryEntry
   } from "@nucleum/shell/navigator/navigator-history";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
+  import { navigatorFocusRequests } from "@nucleum/shell/navigator/navigator-focus";
   import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
@@ -111,6 +112,11 @@
 
   onMount(() => {
     setTimeout(() => searchInputRef?.focus(), 50);
+  });
+
+  $effect(() => {
+    if ($navigatorFocusRequests === 0) return;
+    untrack(() => searchInputRef?.focus());
   });
 
   onDestroy(() => clearTimeout(searchDebounce));
