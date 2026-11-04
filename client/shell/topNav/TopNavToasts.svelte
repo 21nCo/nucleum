@@ -5,6 +5,7 @@
   import { fly } from "svelte/transition";
   import { quadIn } from "svelte/easing";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import ToastNotificationContent from "@nucleum/shell/notifications/ToastNotificationContent.svelte";
   import { cn } from "@21n/ui/environment/presentation";
 
@@ -20,7 +21,13 @@
   });
 
   function handlePointerMove(event: PointerEvent) {
-    if (isListOpen || !latest || event.pointerType === "touch") return;
+    if (
+      isListOpen ||
+      !latest ||
+      latest.type === AlertType.PROGRESS ||
+      event.pointerType === "touch"
+    )
+      return;
     if (!hoverOrigin) {
       hoverOrigin = { x: event.clientX, y: event.clientY };
       return;
@@ -61,24 +68,25 @@
       {$toasts.length}
     </button>
   {/if}
-  {#if latest}
-    {#key latest.id}
-      <button
-        type="button"
-        aria-live="polite"
-        class="flex items-center min-w-0 truncate cursor-default text-left"
-        onpointerleave={() => {
-          hoverOrigin = undefined;
-        }}
-        onpointermove={handlePointerMove}
-        onclick={() => {
-          if ($toasts.length > 1) isListOpen = !isListOpen;
-        }}
-      >
-        <ToastNotificationContent notification={latest} />
-      </button>
-    {/key}
-  {/if}
+  <div aria-live="polite" class="flex items-center min-w-0">
+    {#if latest}
+      {#key latest.id}
+        <button
+          type="button"
+          class="flex items-center min-w-0 truncate cursor-default text-left"
+          onpointerleave={() => {
+            hoverOrigin = undefined;
+          }}
+          onpointermove={handlePointerMove}
+          onclick={() => {
+            if ($toasts.length > 1) isListOpen = !isListOpen;
+          }}
+        >
+          <ToastNotificationContent notification={latest} />
+        </button>
+      {/key}
+    {/if}
+  </div>
   {#if isListOpen}
     <div
       class="absolute right-0 top-full mt-1 z-[60] w-96 max-h-96 overflow-auto flex flex-col gap-1 p-2 rounded-md border border-brs3 bg-bgs1 shadow-lg"
