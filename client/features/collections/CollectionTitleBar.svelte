@@ -140,9 +140,9 @@
       resolveCollectionContextMenu(
         resolveCollectionForContextMenu(),
         ResourceAccessPoint.SELF,
-        { accessMode: $collection.accessMode }
+        { accessMode }
       )}
-    isEnabled={isContextZoneAccessMode($collection.accessMode)}
+    isEnabled={isContextZoneAccessMode(accessMode)}
   />
 {/if}
 <div
