@@ -49,6 +49,7 @@
   let query = $state("");
   let searchResults = $state<string[]>([]);
   let searchResultsQuery = $state("");
+  const isSearchResultsCurrent = $derived(searchResultsQuery === query.trim());
   let isSearching = $state(false);
   let searchDebounce: ReturnType<typeof setTimeout> | undefined;
   let searchRequestId = 0;
@@ -133,7 +134,7 @@
         source: $datafnRuntime?.mode === "sync-direct" ? "remote" : "local",
         prefix: true,
         fuzzy: 0.2
-      } as any)) as { results?: { data?: { id?: unknown } }[] };
+      })) as { results?: { data?: { id?: unknown } }[] };
       if (requestId !== searchRequestId) return;
       searchResultsQuery = trimmed;
       searchResults = (result.results ?? [])
@@ -278,9 +279,9 @@
         data-testid="navigator-search-results"
       >
         <div class="text-b2 text-fgs3">Results</div>
-        {#if searchResults.length > 0}
+        {#if isSearchResultsCurrent && searchResults.length > 0}
           {@render resultList(searchResults)}
-        {:else if isSearching}
+        {:else if isSearching || !isSearchResultsCurrent}
           <div class="text-b3 text-fgs3">Searching...</div>
         {:else}
           <EmptyStatusView size={Size.sm} mainText="No results found" />
