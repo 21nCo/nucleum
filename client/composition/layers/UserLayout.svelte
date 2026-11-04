@@ -44,6 +44,27 @@
     if (!isLoaded) return;
     return untrack(() => navigation.watchAccessTrail(page));
   });
+
+  let commandHomeRef = $state<HTMLElement | undefined>(undefined);
+  let commandHomeFocus: HTMLElement | undefined;
+
+  const isCommandHomeCovered = $derived(!!commandModePageId);
+
+  $effect.pre(() => {
+    if (!isCommandHomeCovered) return;
+    untrack(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && commandHomeRef?.contains(active))
+        commandHomeFocus = active;
+    });
+  });
+
+  $effect(() => {
+    if (isCommandHomeCovered) return;
+    const target = commandHomeFocus;
+    commandHomeFocus = undefined;
+    if (target?.isConnected) target.focus();
+  });
 </script>
 
 {#snippet leftNav(isHidePanel: boolean)}
@@ -56,7 +77,14 @@
 
 {#if isLoaded}
   {#if $appStore.interactionMode === InteractionMode.AGENT && $context.embed !== Embed.HANDSET}
-    <CommandModePage />
+    <div
+      class="contents"
+      bind:this={commandHomeRef}
+      inert={isCommandHomeCovered}
+      aria-hidden={isCommandHomeCovered ? "true" : undefined}
+    >
+      <CommandModePage />
+    </div>
     {#if commandModePageId}
       <div
         class="fixed inset-0 w-full h-full bg-bgs1 z-40"
