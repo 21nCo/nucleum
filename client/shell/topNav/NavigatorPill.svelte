@@ -20,7 +20,9 @@
   <button
     type="button"
     data-testid="navigator-pill"
-    aria-label="Open navigator"
+    aria-label={trailCount > 0
+      ? `Jump to, ${trailCount} items in trail`
+      : "Jump to"}
     aria-pressed={isActive}
     class={cn(
       "flex items-center gap-2 h-8 pl-2.5 pr-1.5 rounded-full border text-b3 transition-colors",
@@ -34,12 +36,11 @@
     <Icon icon="search" size={Size.sm} />
     <span class="whitespace-nowrap">Jump to&hellip;</span>
     <span
+      aria-hidden="true"
       class="flex items-center gap-1 px-1.5 h-5 rounded-full bg-bgs3 text-fgs3 font-mono"
       data-testid="navigator-pill-hint"
     >
-      /{#if trailCount > 0}<span aria-label={`${trailCount} items in trail`}
-          >&middot; {trailCount}</span
-        >{/if}
+      /{#if trailCount > 0}<span>&middot; {trailCount}</span>{/if}
     </span>
   </button>
 </div>
