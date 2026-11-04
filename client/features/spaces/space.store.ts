@@ -170,7 +170,9 @@ export class ActiveSpaceStore {
    * appends the items missing from the record as saved then, so it keeps
    * changes saved elsewhere and items the user removed stay removed. The shown
    * items become that result, or, when the user changed them in the meantime,
-   * gain the appended items, which the user's queued saves then carry.
+   * gain the appended items, which the user's queued saves then carry. When the
+   * view has not loaded items of the active account yet, it loads them after
+   * the write instead.
    */
   async appendItems(items: ISpaceNavItem[]) {
     const namespace = datafn.currentNamespace();
@@ -187,6 +189,10 @@ export class ActiveSpaceStore {
         return false;
       }
       if (!isCurrent()) return true;
+      if (!this.hasLoadedItems()) {
+        await this.init(undefined, { isRecordedInRecents: false });
+        return true;
+      }
       if (this.itemsRevision === revision) {
         this.itemsRevision++;
         this.settledItemsRevision = this.itemsRevision;
@@ -420,15 +426,16 @@ export class ActiveSpaceStore {
 
 /**
  * Appends the items a saved space does not hold yet and returns whether they
- * were saved. While a view of the space has its items open, the append runs in
- * that view's save queue, in order with the user's edits. Otherwise the record
- * is read and written directly, and an open view reloads. Either way it stops
+ * were saved. While a view of the space exists, including one still loading,
+ * the append runs in that view's save queue, in order with the user's edits.
+ * Otherwise the record is read and written directly, and a view opened
+ * meanwhile reloads. Either way it stops
  * without writing when the space is in the trash or another account becomes
  * active meanwhile.
  */
 export async function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
   const store = activeSpaceStores.get(id.toString());
-  if (store?.hasLoadedItems()) return store.appendItems(items);
+  if (store) return store.appendItems(items);
   const namespace = datafn.currentNamespace();
   const isCurrent = () => datafn.currentNamespace() === namespace;
   const saved = (await datafn.space.select(id.toString(), {

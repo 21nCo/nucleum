@@ -393,6 +393,41 @@ describe("space writes", () => {
     ]);
   });
 
+  it("appends to a space whose view is still loading in order with the user's edits", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const store = ActiveSpaceStore.resolve("space:loading-append");
+    const section = (id: string) => ({
+      id,
+      type: "section",
+      label: id,
+      children: []
+    });
+    let finishLoad: (value: unknown) => void = () => undefined;
+    let finishRead: (value: unknown) => void = () => undefined;
+    mocks.select
+      .mockReturnValueOnce(new Promise((resolve) => (finishLoad = resolve)))
+      .mockReturnValueOnce(new Promise((resolve) => (finishRead = resolve)));
+    const loading = store.init();
+    const appended = appendSpaceItems("space:loading-append", [
+      section("link") as never
+    ]);
+    finishLoad({ id: "space:loading-append", items: [section("saved")] });
+    await loading;
+    const edited = store.addSection({ label: "Edit" });
+    finishRead({ id: "space:loading-append", items: [section("saved")] });
+    await expect(appended).resolves.toBe(true);
+    const editId = await edited;
+    const saved = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
+      id: string;
+    }[];
+    expect(saved.map((item) => item.id)).toEqual(["saved", editId, "link"]);
+    expect(store.readItems().map((item) => item.id)).toEqual([
+      "saved",
+      editId,
+      "link"
+    ]);
+  });
+
   it("stops a direct append when another account becomes active while it reads", async () => {
     let finishRead: (value: unknown) => void = () => undefined;
     mocks.select.mockReturnValueOnce(
