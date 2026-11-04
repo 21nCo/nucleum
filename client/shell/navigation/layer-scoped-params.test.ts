@@ -1,16 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccessMode } from "@nucleum/datafn/resource.type";
-import { navigation } from "./navigation";
+import { loadStubbedNavigation } from "./navigation.test.setup";
 
-vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", async () =>
-  (await import("./navigation.test.setup")).uiStateStoreStub()
-);
-vi.mock("@nucleum/datafn/datafn.store", async () =>
-  (await import("./navigation.test.setup")).emptyDatafnStoreStub()
-);
-vi.mock("@nucleum/shell/navigator/navigator-history.store", async () =>
-  (await import("./navigation.test.setup")).navigatorHistoryStoreStub()
-);
+const navigation = await loadStubbedNavigation();
 
 const hostFocusKey = navigation.resolveRecordSpecificSearchParam(
   "space:host1",
