@@ -1,6 +1,7 @@
 <script lang="ts">
   import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
   import ContextZoneEditableTitle from "@nucleum/features/records/ContextZoneEditableTitle.svelte";
+  import AppBreadcrumbs from "@nucleum/shell/navigation/components/AppBreadcrumbs.svelte";
   import {
     resolveObjectiveContextMenu,
     type IActiveObjectiveStore
@@ -15,7 +16,10 @@
   } from "@nucleum/datafn/resource.type";
   import type { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 
   let {
     objective,
@@ -55,12 +59,32 @@
     })
   );
 
+  const parentBreadcrumbs = $derived(
+    ($objective.parent ?? []).map((parent) => ({
+      label: parent.label ?? "",
+      resourceId: parent.id?.toString()
+    }))
+  );
+
   function resolveObjectiveThumb() {
     return $objective as unknown as IObjectiveThumb;
   }
 </script>
 
 {#snippet contextTitle()}
+  {#if parentBreadcrumbs.length > 0 && !$objective.isInEditMode}
+    <div
+      class="flex min-w-0 shrink items-center font-normal text-fgs2"
+      data-testid="objective-context-breadcrumbs"
+    >
+      <AppBreadcrumbs
+        items={parentBreadcrumbs}
+        limit={1}
+        isLeading={true}
+        replaceId={$objective.id}
+      />
+    </div>
+  {/if}
   <ContextZoneEditableTitle
     store={objective}
     label={$objective.label || "Untitled"}
