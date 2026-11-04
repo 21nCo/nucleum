@@ -50,6 +50,9 @@
   const parentLabel = $derived(
     parentStore ? ($parentStore?.data?.[0]?.label ?? "") : undefined
   );
+  const backActionText = $derived(
+    parentId ? `Back to ${parentLabel || "Untitled space"}` : undefined
+  );
 
   onMount(() => {
     store.init(accessMode).then(() => (isLoaded = true));
@@ -87,12 +90,16 @@
     mainText="Could not load this space"
     subText="Reopen it to try again"
     isSearchContext={false}
+    actionText={backActionText}
+    onclick={parentId ? onBack : undefined}
   />
 {:else if $store?.isMissing}
   <EmptyStatusView
     mainText="Space not found"
     subText="It may have been deleted or not synced to this device yet"
     isSearchContext={false}
+    actionText={backActionText}
+    onclick={parentId ? onBack : undefined}
   />
 {:else if view === SpaceView.WALL}
   <SpaceWall {spaceId} {header} />
