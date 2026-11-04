@@ -49,6 +49,23 @@ export function resolveTopLayer(
   return undefined;
 }
 
+/**
+ * Accessible name of the top bar close control, which skips the right panel
+ * and full screen: "Clear selection" while a bulk selection is the layer it
+ * closes, otherwise "Close".
+ */
+export function resolveCloseControlLabel(
+  searchParams: URLSearchParams,
+  bulkCount: number
+) {
+  return resolveTopLayer(searchParams, bulkCount, {
+    isIncludePanel: false,
+    isIncludeFullScreen: false
+  }) === "bulk"
+    ? "Clear selection"
+    : "Close";
+}
+
 const layerParams: Partial<Record<TopLayer, AccessMode>> = {
   overlay: AccessMode.OVERLAY,
   panel: AccessMode.PANEL,

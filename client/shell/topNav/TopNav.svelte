@@ -32,7 +32,7 @@
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
   import {
     closeTopLayer,
-    resolveTopLayer
+    resolveCloseControlLabel
   } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
   import { navigation } from "@nucleum/shell/navigation/navigation";
@@ -86,11 +86,8 @@
       !!searchParams.get(AccessMode.BESIDE_BASE)
   );
   const isCloseMode = $derived(isBulkMode || isResourceOpen);
-  const isClosingSelection = $derived(
-    resolveTopLayer(searchParams, $bulkEditCount, {
-      isIncludePanel: false,
-      isIncludeFullScreen: false
-    }) === "bulk"
+  const closeLabel = $derived(
+    resolveCloseControlLabel(searchParams, $bulkEditCount)
   );
   const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
   const isPageFullScreen = $derived(
@@ -138,7 +135,7 @@
   {#if $context.embed !== Embed.HANDSET}
     {#if isCloseMode}
       <TopBarCloseButton
-        label={isClosingSelection ? "Clear selection" : "Close"}
+        label={closeLabel}
         menuColumn={isAppMenuColumnVisible
           ? isHideMenuLabels
             ? "icons"

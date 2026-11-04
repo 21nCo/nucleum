@@ -21,7 +21,11 @@
   import LeftNav from "../chrome/WiredLeftNav.svelte";
   import TopNav from "../chrome/WiredTopNav.svelte";
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
-  import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
+  import {
+    closeTopLayer,
+    resolveCloseControlLabel
+  } from "@nucleum/shell/navigation/top-layer";
+  import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
   import { cn } from "@21n/ui/environment/presentation";
 
@@ -37,6 +41,7 @@
     main?: Snippet;
   } = $props();
 
+  const bulkEditCount = bulkEditStore.count;
   const commandModePageId = $derived(resolveLayoutRoute($page.url).pop?.id);
 
   const isLoaded = $derived(
@@ -115,6 +120,10 @@
           data-testid="command-mode-page-bar"
         >
           <TopBarCloseButton
+            label={resolveCloseControlLabel(
+              $page.url.searchParams,
+              $bulkEditCount
+            )}
             onclick={() =>
               closeTopLayer({
                 isIncludePanel: false,

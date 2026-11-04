@@ -27,7 +27,7 @@ vi.mock("@nucleum/shell/overlays/modal.store", () => ({
   }
 }));
 
-const { closeTopLayer } = await import("./top-layer");
+const { closeTopLayer, resolveCloseControlLabel } = await import("./top-layer");
 
 function visit(search: string) {
   window.history.replaceState(null, "", `/${search}`);
@@ -125,5 +125,13 @@ describe("closeTopLayer", () => {
       accessMode: "beside",
       isHistoryBack: true
     });
+  });
+});
+
+describe("resolveCloseControlLabel", () => {
+  it("names the bulk selection the close control clears before the page", () => {
+    const searchParams = new URLSearchParams("page=node:a");
+    expect(resolveCloseControlLabel(searchParams, 2)).toBe("Clear selection");
+    expect(resolveCloseControlLabel(searchParams, 0)).toBe("Close");
   });
 });
