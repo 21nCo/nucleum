@@ -121,12 +121,7 @@
     releaseDnDPage?.();
   });
 
-  $effect(() =>
-    ActiveNodeStore.retain(
-      id,
-      untrack(() => accessMode)
-    )
-  );
+  $effect(() => ActiveNodeStore.retain(id, () => accessMode));
 
   const debouncedInitialize = debouncer(initialize, 1500);
   let hasReceivedInitialPropertySignal = false;

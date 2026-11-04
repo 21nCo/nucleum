@@ -255,7 +255,7 @@
     releaseDnDPage?.();
   });
 
-  $effect(() => ActiveCollectionStore.retain(id, untrack(() => accessMode)));
+  $effect(() => ActiveCollectionStore.retain(id, () => accessMode));
 
   async function initialize() {
     if (!id || isInitializing) return;

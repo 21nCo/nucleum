@@ -15,7 +15,7 @@ import { datafn } from "@nucleum/datafn/datafn.store";
 const activeResources = new Map<string, ActiveResourceStore<any, any>>();
 const activeResourceOwners = new Map<
   string,
-  { accessMode: AccessMode | undefined }[]
+  { accessMode: () => AccessMode | undefined }[]
 >();
 
 export function updateActiveResource(
@@ -206,11 +206,18 @@ export class ActiveResourceStore<
    * such as a resource shown both on the base page and on the page covering
    * it. The returned function releases it: the store takes back the access
    * mode of the newest view still mounted, and is dropped after its last
-   * owner releases.
+   * owner releases. Pass a getter when the view's mode can change while it
+   * stays mounted, so a release hands back the mode it has then.
    */
-  static retain(id: IRecordId, accessMode?: AccessMode) {
+  static retain(
+    id: IRecordId,
+    accessMode?: AccessMode | (() => AccessMode | undefined)
+  ) {
     const idStr = id.toString();
-    const owner = { accessMode };
+    const owner = {
+      accessMode:
+        typeof accessMode === "function" ? accessMode : () => accessMode
+    };
     activeResourceOwners.set(idStr, [
       ...(activeResourceOwners.get(idStr) ?? []),
       owner
@@ -221,7 +228,7 @@ export class ActiveResourceStore<
       const remaining = owners.filter((item) => item !== owner);
       if (remaining.length > 0) {
         activeResourceOwners.set(idStr, remaining);
-        const mode = remaining[remaining.length - 1].accessMode;
+        const mode = remaining[remaining.length - 1].accessMode();
         activeResources
           .get(idStr)
           ?.update((prev) => (prev ? { ...prev, accessMode: mode } : prev));

@@ -81,7 +81,7 @@
     }
   });
 
-  $effect(() => ActiveObjectiveStore.retain(id, untrack(() => accessMode)));
+  $effect(() => ActiveObjectiveStore.retain(id, () => accessMode));
 
   function resolvePreviouslySelectedView() {
     const panelState = uiState.getState(UIState.objectivePanelSelection, {

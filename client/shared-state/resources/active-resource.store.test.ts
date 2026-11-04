@@ -37,4 +37,17 @@ describe("ActiveResourceStore.retain", () => {
     expect(store.get().accessMode).toBeUndefined();
     releaseBase();
   });
+
+  it("gives back the mode a remaining view has when the other releases", () => {
+    const id = "node:moved";
+    const store = ActiveResourceStore.resolve(id);
+    store.set({ accessMode: "page" } as never);
+    let baseMode: string | undefined = "beside";
+    const releaseBase = ActiveResourceStore.retain(id, () => baseMode as never);
+    const releasePage = ActiveResourceStore.retain(id, "page" as never);
+    baseMode = undefined;
+    releasePage();
+    expect(store.get().accessMode).toBeUndefined();
+    releaseBase();
+  });
 });
