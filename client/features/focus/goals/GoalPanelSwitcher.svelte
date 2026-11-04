@@ -74,7 +74,7 @@
 {#snippet contextTitle()}
   {#if parentBreadcrumbs.length > 0 && !$objective.isInEditMode}
     <div
-      class="flex min-w-0 shrink items-center font-normal text-fgs2 text-b2 app-framed:text-base app-framed:[&_button]:text-base"
+      class="flex min-w-0 shrink items-center font-normal text-fgs2 app-framed:text-base app-framed:[&_button]:text-base"
       data-testid="objective-context-breadcrumbs"
     >
       <AppBreadcrumbs
