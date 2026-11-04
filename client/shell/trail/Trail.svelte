@@ -2,7 +2,6 @@
   import { onMount, tick } from "svelte";
   import { hTrail } from "../topNav/tabs/tabs.store";
   import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import type { Action } from "@nucleum/client/config/action.enum";
   import { isRecordId } from "@nucleum/datafn/resource.utils";

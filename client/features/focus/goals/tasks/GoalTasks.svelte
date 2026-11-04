@@ -3,10 +3,7 @@
 
   import { page } from "$app/stores";
   import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
-  import {
-    AccessMode,
-    ResourceAccessPoint
-  } from "@nucleum/datafn/resource.type";
+  import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import TaskLibrary from "@nucleum/features/focus/tasks/TaskLibrary.svelte";
   import Task from "@nucleum/features/focus/tasks/Task.svelte";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";

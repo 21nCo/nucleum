@@ -14,7 +14,6 @@
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import {
     ResourceAccessPoint,
-    AccessMode,
     ResourceAccessPointState
   } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
