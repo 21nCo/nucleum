@@ -1,13 +1,26 @@
 import { vi } from "vitest";
 import { navigation } from "@nucleum/shell/navigation/navigation";
+import { datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
 
 /** Entry of the in-memory browser history. */
 export type TestHistoryEntry = { url: string; state?: unknown };
 
+let session = 0;
+
+/**
+ * Starts the access trails empty, as switching accounts does, so no trail of
+ * an earlier test is current or recent.
+ */
+function resetAccessTrails() {
+  accessTrail.get();
+  datafnRuntime.set({ namespace: `test-history-${++session}` } as never);
+}
+
 /**
  * In-memory browser history for navigation tests. `entries` is kept in place,
- * so a test can hold it. `install` starts the history at `/home`, routes
+ * so a test can hold it. `install` empties the access trails, starts the
+ * history at `/home`, routes
  * `navigation.gotoPath` into it and returns the spy on `window.history.back`,
  * which goes back one entry.
  */
@@ -46,6 +59,7 @@ export function createTestHistory() {
   }
 
   function install() {
+    resetAccessTrails();
     entries.splice(0, entries.length, { url: "/home" });
     index = 0;
     show();

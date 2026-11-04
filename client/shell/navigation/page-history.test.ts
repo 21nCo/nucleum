@@ -158,6 +158,7 @@ describe("page history and access trails", () => {
   it("closes the portrait navigator sheet after it resumes a recent trail", () => {
     view.refresh(390, 844);
     navigation.openResource("node:a", "page" as never);
+    navigation.openResource("node:b", "page" as never);
     navigation.closeResource({ accessMode: "page" as never });
     navigation.openResource("node:b", "page" as never);
     const recent = accessTrail
