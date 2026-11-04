@@ -244,12 +244,14 @@
     editingItemId = id;
   }
 
-  async function addRecord(record: {
-    id: string;
-    label: string;
-    avatar?: IAvatar;
-  }) {
-    const parentId = targetSection ? targetSectionId! : undefined;
+  async function addRecord(
+    record: {
+      id: string;
+      label: string;
+      avatar?: IAvatar;
+    },
+    parentId: string | undefined
+  ) {
     const newId = await store.addResource({
       resourceId: record.id,
       label: record.label,
@@ -422,6 +424,7 @@
           {focusChain}
           {items}
           targetLabel={targetSection?.label}
+          targetId={targetSection?.id}
           onSelect={addRecord}
         />
         <button

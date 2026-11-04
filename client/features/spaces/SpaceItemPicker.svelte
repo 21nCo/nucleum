@@ -27,6 +27,7 @@
     focusChain,
     items,
     targetLabel = undefined,
+    targetId = undefined,
     onSelect
   }: {
     product: Product;
@@ -35,7 +36,13 @@
     items: ISpaceNavItem[];
     /** Name of the section new items are added to, when not the root. */
     targetLabel?: string;
-    onSelect: (record: { id: string; label: string; avatar?: IAvatar }) => void;
+    /** Id of the section new items are added to, when not the root. */
+    targetId?: string;
+    /** Receives the picked record and the section it was picked for. */
+    onSelect: (
+      record: { id: string; label: string; avatar?: IAvatar },
+      targetId: string | undefined
+    ) => void;
   } = $props();
 
   type PickerResult = {
@@ -142,12 +149,16 @@
   }
 
   async function select(result: PickerResult) {
+    const destination = targetId;
     if (result.resource === Resource.space) {
       spaceGraphLoad = loadSpaceGraph();
       await spaceGraphLoad;
     }
     if (blockReason(result.id)) return;
-    onSelect({ id: result.id, label: result.label, avatar: result.avatar });
+    onSelect(
+      { id: result.id, label: result.label, avatar: result.avatar },
+      destination
+    );
     query = "";
     results = [];
   }
