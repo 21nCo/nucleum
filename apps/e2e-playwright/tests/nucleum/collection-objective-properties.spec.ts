@@ -16,7 +16,7 @@ async function openSeededCollection(
   await page.goto(
     `/collection_browse?selected=${encodeURIComponent(
       fixture.collectionId
-    )}&inlineAt=${Date.now()}`,
+    )}&selectedAt=${Date.now()}`,
     { waitUntil: "domcontentloaded" }
   );
   await expect(
