@@ -40,13 +40,18 @@
     $page.url.pathname.split("/").filter(Boolean)[0] === homePath
   );
   const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
+  const isPageCovered = $derived(
+    isPageOpen && isOverlayAbovePage(searchParams.get(AccessMode.OVERLAY))
+  );
   const isShown = $derived(isResourceOpen || !isOnHome);
 
   let swipeStart: { x: number; y: number } | undefined;
 
   function back() {
-    const overlay = searchParams.get(AccessMode.OVERLAY);
-    if (overlay && (!isPageOpen || isOverlayAbovePage(overlay))) {
+    if (
+      searchParams.get(AccessMode.OVERLAY) &&
+      (!isPageOpen || isPageCovered)
+    ) {
       closeTopLayer({ isIncludePanel: false });
       return;
     }
@@ -79,7 +84,7 @@
   ontouchcancel={() => (swipeStart = undefined)}
 />
 
-{#if isShown && !isPageOpen}
+{#if isShown && (!isPageOpen || isPageCovered)}
   <button
     type="button"
     data-testid="portrait-back"
