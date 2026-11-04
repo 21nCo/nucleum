@@ -736,6 +736,11 @@ export const navigation = {
         }
       }
     }
+    const isBesideOpen =
+      accessMode === AccessMode.BESIDE_BASE ||
+      accessMode === AccessMode.BESIDE_PAGE;
+    const isCloseNavigatorOverlay =
+      isBesideOpen && resolveNavigatorLayer(url) === AccessMode.OVERLAY;
     url = clearOpenedRecordParams(
       url,
       id,
@@ -756,6 +761,7 @@ export const navigation = {
           ? { [AppSearchParam.MAX]: true }
           : {}),
         ...(params?.searchParams ?? {}),
+        ...(isCloseNavigatorOverlay ? { [AccessMode.OVERLAY]: null } : {}),
         ...(isCloseNavigator && navigatorLayer
           ? { [navigatorLayer]: null }
           : {})

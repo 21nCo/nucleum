@@ -67,6 +67,23 @@ describe("navigator opened as an overlay", () => {
     expect(overlay()).toBeNull();
   });
 
+  it("closes the navigator overlay when a resource opens beside the base page", () => {
+    view.refresh(800, 600);
+    openNavigatorOverlay();
+    navigation.openResource("node:a", "beside" as never);
+    const params = new URL(window.location.href).searchParams;
+    expect(params.get("beside")).toBe("node:a");
+    expect(overlay()).toBeNull();
+  });
+
+  it("keeps the navigator panel open when a resource opens beside the base page", () => {
+    history.setSearchParam("panel", "navigator");
+    navigation.openResource("node:a", "beside" as never);
+    const params = new URL(window.location.href).searchParams;
+    expect(params.get("beside")).toBe("node:a");
+    expect(params.get("panel")).toBe("navigator");
+  });
+
   it("leaves other overlays open", () => {
     view.refresh(800, 600);
     history.setSearchParam("overlay", "search");
