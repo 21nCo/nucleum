@@ -22,12 +22,12 @@ export type ISpaceWallLevel = {
  * Splits one level of a space's item tree into the records shown as a card grid
  * and the sections shown as titled groups, recursing into every section.
  */
-export function groupWallItems(items: ISpaceNavItem[] = []): ISpaceWallLevel {
+export function groupWallItems(items?: ISpaceNavItem[]): ISpaceWallLevel {
   const resources: ISpaceResourceNavItem[] = [];
   const groups: ISpaceWallGroup[] = [];
   for (const item of items ?? []) {
     if (item.type === SpaceNavItemType.SECTION) {
-      groups.push({ section: item, ...groupWallItems(item.children ?? []) });
+      groups.push({ section: item, ...groupWallItems(item.children) });
     } else {
       resources.push(item);
     }
