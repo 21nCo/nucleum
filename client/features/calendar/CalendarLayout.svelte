@@ -18,7 +18,6 @@
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
-  import { cn } from "@21n/ui/environment/presentation";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { Placement } from "@21n/ui/elements/direction.enum";
@@ -208,7 +207,10 @@
 {/snippet}
 
 {#if $isContextZoneHosted}
-  <ContextZoneContent isInlineFallback={false} cycle={cycleLayout}>
+  <ContextZoneContent
+    isInlineFallback={false}
+    cycle={isLayoutSwitcher ? cycleLayout : undefined}
+  >
     <div
       bind:this={controlsRef}
       class="flex items-center h-full"
