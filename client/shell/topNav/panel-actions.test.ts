@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isTopNavPanelBeside,
   resolveExpandedBorderClass,
   resolvePanelActionStates
 } from "./panel-actions";
@@ -43,5 +44,19 @@ describe("resolveExpandedBorderClass", () => {
     expect(resolveExpandedBorderClass(1, 3)).toBe("border-x");
     expect(resolveExpandedBorderClass(2, 3)).toBe("border-l");
     expect(resolveExpandedBorderClass(0, 1)).toBe("");
+  });
+});
+
+describe("isTopNavPanelBeside", () => {
+  it("opens the panel beside the content only on wide landscape layouts", () => {
+    expect(
+      isTopNavPanelBeside({ isPortrait: false, isConstrainedWidth: false })
+    ).toBe(true);
+    expect(
+      isTopNavPanelBeside({ isPortrait: true, isConstrainedWidth: false })
+    ).toBe(false);
+    expect(
+      isTopNavPanelBeside({ isPortrait: false, isConstrainedWidth: true })
+    ).toBe(false);
   });
 });

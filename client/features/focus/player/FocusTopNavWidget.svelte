@@ -17,7 +17,10 @@
   import { page } from "$app/stores";
   import view from "@21n/ui/environment/view.store";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import type { TopNavPanelActionState } from "@nucleum/shell/topNav/panel-actions";
+  import {
+    isTopNavPanelBeside,
+    type TopNavPanelActionState
+  } from "@nucleum/shell/topNav/panel-actions";
   let {
     mode = "action",
     state = "idle"
@@ -34,8 +37,7 @@
   const action = PointronAction.FOCUS;
   const isPanelExpanded = $derived(
     $page.url.searchParams.get(AccessMode.PANEL) === action &&
-      !$view.isPortrait &&
-      !$view.isConstrainedWidth
+      isTopNavPanelBeside($view)
   );
 </script>
 

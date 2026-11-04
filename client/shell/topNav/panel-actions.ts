@@ -14,6 +14,18 @@ export type TopNavPanelAction = {
 };
 
 /**
+ * Whether the right panel opens beside the content, where an open grouped
+ * panel action expands in the top bar. Portrait screens and constrained
+ * widths show the panel as a sheet over the content instead.
+ */
+export function isTopNavPanelBeside(layout: {
+  isPortrait: boolean;
+  isConstrainedWidth: boolean;
+}) {
+  return !layout.isPortrait && !layout.isConstrainedWidth;
+}
+
+/**
  * Resolves the state of each grouped panel action: the action whose panel is
  * open expands when the right panel shows beside the content; the others turn
  * compact beside it. Without an expanded action every action stays idle.

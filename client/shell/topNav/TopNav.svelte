@@ -30,9 +30,10 @@
   import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
   import PanelActionGroup from "@nucleum/shell/topNav/PanelActionGroup.svelte";
   import { isToastBesideActions } from "@nucleum/shell/topNav/toast-placement";
-  import type {
-    TopNavPanelAction,
-    TopNavPanelActionState
+  import {
+    isTopNavPanelBeside,
+    type TopNavPanelAction,
+    type TopNavPanelActionState
   } from "@nucleum/shell/topNav/panel-actions";
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
@@ -154,9 +155,7 @@
   );
   const isHomePage = $derived(isHomeRoute($page.url));
   const openPanel = $derived(searchParams.get(AccessMode.PANEL));
-  const isPanelBeside = $derived(
-    !$view.isPortrait && !$view.isConstrainedWidth
-  );
+  const isPanelBeside = $derived(isTopNavPanelBeside($view));
   const groupedPanelActions = $derived<TopNavPanelAction[]>([
     ...panelActions,
     ...(isDev ? [{ action: Action.RHOMBUS, content: rhombusAction }] : []),
@@ -384,7 +383,7 @@
         onFocus={() => contextZone.activatePane(item.pane.id)}
       />
     {/each}
-    {#if isToastMode && isToastInZone}
+    {#if isToastInZone}
       <div
         class="flex items-center justify-end min-w-0 max-w-[32rem] ml-auto"
         data-toast-slot="true"
