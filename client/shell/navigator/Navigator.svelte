@@ -48,6 +48,7 @@
     isNavigatorKeptOpen,
     isNavigatorListedItem,
     limitSectionItems,
+    resolveCurrentTrailBandLabel,
     resolveFrequentContext
   } from "@nucleum/shell/navigator/navigator-sections";
   import {
@@ -543,10 +544,7 @@
               End trail
             </button>
           {/snippet}
-          {@render band(
-            `Current trail \u00b7 ${currentTrailRows.length}`,
-            endTrail
-          )}
+          {@render band(resolveCurrentTrailBandLabel(currentTrail), endTrail)}
           <div class="flex flex-col px-3 py-2 border-b border-brs3">
             {@render trailTree(
               currentTrail,

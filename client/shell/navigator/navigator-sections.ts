@@ -1,3 +1,5 @@
+import type { AccessTrail } from "@nucleum/shell/navigator/access-trail";
+
 /**
  * Record whose "opened from here" history the frequently accessed section
  * shows: the open record page, unless it has no such history or the user
@@ -11,6 +13,11 @@ export function resolveFrequentContext(
   if (!pageId || fromHereCount === 0 || clearedContext === pageId)
     return undefined;
   return pageId;
+}
+
+/** Heading of the navigator's current trail band, with the trail's node count. */
+export function resolveCurrentTrailBandLabel(trail: AccessTrail) {
+  return `Current trail \u00b7 ${trail.nodes.length}`;
 }
 
 /** Items each navigator section shows before "Show more". */
