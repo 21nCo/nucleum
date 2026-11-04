@@ -15,6 +15,7 @@
   import {
     contextZone,
     isContextZoneAccessMode,
+    isResourceInContextZone,
     nextCycleValue
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
@@ -49,10 +50,7 @@
 
   const isContextZoneHosted = contextZone.isHosted;
   const isInContextZone = $derived(
-    $isContextZoneHosted &&
-      !$view.isConstrainedWidth &&
-      !$view.isPortrait &&
-      isContextZoneAccessMode(accessMode)
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
 
   function cyclePanel() {

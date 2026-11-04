@@ -288,3 +288,21 @@ const contextZoneAccessModes = new Set<string>([
 export function isContextZoneAccessMode(accessMode: string | undefined) {
   return !!accessMode && contextZoneAccessModes.has(accessMode);
 }
+
+/**
+ * Whether a resource view shows its title, view tabs and actions in the top
+ * bar context zone instead of its page body and floating bar: a top bar hosts
+ * the zone at full width, and the resource is open as a page or split.
+ */
+export function isResourceInContextZone(
+  isHosted: boolean,
+  layout: { isPortrait: boolean; isConstrainedWidth: boolean },
+  accessMode: string | undefined
+) {
+  return (
+    isHosted &&
+    !layout.isPortrait &&
+    !layout.isConstrainedWidth &&
+    isContextZoneAccessMode(accessMode)
+  );
+}

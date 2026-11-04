@@ -11,7 +11,7 @@
   import view from "@21n/ui/environment/view.store";
   import {
     contextZone,
-    isContextZoneAccessMode
+    isResourceInContextZone
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
@@ -29,10 +29,7 @@
 
   const isContextZoneHosted = contextZone.isHosted;
   const isTitleInContextZone = $derived(
-    $isContextZoneHosted &&
-      !$view.isPortrait &&
-      !$view.isConstrainedWidth &&
-      isContextZoneAccessMode(accessMode)
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
   let labelEditVal = $state($objective.label);
   let inputRef = $state<TextInput | undefined>(undefined);

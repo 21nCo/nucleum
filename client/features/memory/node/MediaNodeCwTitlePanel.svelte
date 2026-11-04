@@ -6,8 +6,10 @@
   import ResourceStatusBanner from "@nucleum/features/records/RecordStatusBanner.svelte";
   import CollectionsLane from "@nucleum/features/memory/node/floatingBar/CollectionsLane.svelte";
   import { isShowStatusBanner } from "@nucleum/datafn/resource.utils";
-  import { isNodeTitleInContextZone } from "@nucleum/features/memory/node/title/node-title-placement";
-  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    contextZone,
+    isResourceInContextZone
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
   import view from "@21n/ui/environment/view.store";
   let {
     node,
@@ -19,7 +21,7 @@
   } = $props();
   const isContextZoneHosted = contextZone.isHosted;
   const isTitleInContextZone = $derived(
-    isNodeTitleInContextZone($isContextZoneHosted, $view, accessMode)
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
 </script>
 

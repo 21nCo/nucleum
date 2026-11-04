@@ -42,7 +42,8 @@
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import {
     contextZone,
-    isContextZoneAccessMode
+    isContextZoneAccessMode,
+    isResourceInContextZone
   } from "@nucleum/shell/topNav/contextZone/context-zone";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import EditModeDone from "@21n/ui/elements/button/EditModeDoneButton.svelte";
@@ -77,10 +78,7 @@
   } = $props();
   const isContextZoneHosted = contextZone.isHosted;
   const isActionsInContextZone = $derived(
-    $isContextZoneHosted &&
-      !$view.isPortrait &&
-      !$view.isConstrainedWidth &&
-      isContextZoneAccessMode(accessMode)
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
   let dev_isEnableMetaViewsToggle: boolean = false;
 

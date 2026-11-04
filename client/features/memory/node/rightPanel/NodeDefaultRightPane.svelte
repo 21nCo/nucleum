@@ -24,8 +24,10 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import WebNodeUrlSegment from "../content/web/WebNodeUrlSegment.svelte";
   import SocialPostActions from "../content/web/SocialPostActions.svelte";
-  import { isNodeTitleInContextZone } from "@nucleum/features/memory/node/title/node-title-placement";
-  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    contextZone,
+    isResourceInContextZone
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
   import view from "@21n/ui/environment/view.store";
   let {
     node,
@@ -46,7 +48,7 @@
   let _label = $derived(resolveNodeLabel($node));
   const isContextZoneHosted = contextZone.isHosted;
   const isTitleInContextZone = $derived(
-    isNodeTitleInContextZone($isContextZoneHosted, $view, accessMode)
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
 </script>
 
