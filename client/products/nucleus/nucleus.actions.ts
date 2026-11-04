@@ -28,10 +28,27 @@ const actionsToFilterInSub: string[] = [
   Action.MOBILEHOME
 ];
 
+const memotronActionsToFilterInSub: string[] = [
+  ...actionsToFilterInSub,
+  Action.LIBRARY_PORTRAIT
+];
+
 function isSubProductAction(action: IAction) {
+  return isNotFilteredBy(actionsToFilterInSub, action);
+}
+
+/**
+ * Memotron and Pointron both register the phone Library page; Nucleum keeps
+ * Pointron's, so Memotron's page and its views are left out.
+ */
+function isMemotronSubProductAction(action: IAction) {
+  return isNotFilteredBy(memotronActionsToFilterInSub, action);
+}
+
+function isNotFilteredBy(filtered: string[], action: IAction) {
   return (
-    !actionsToFilterInSub.includes(action.action) &&
-    !actionsToFilterInSub.includes(action.subViewOf ?? "")
+    !filtered.includes(action.action) &&
+    !filtered.includes(action.subViewOf ?? "")
   );
 }
 
@@ -60,12 +77,7 @@ const overviewAction: IAction = {
 };
 
 export const nucleusActions: IAction[] = [
-  ...memotronActions.filter(
-    (action) =>
-      isSubProductAction(action) &&
-      action.action !== Action.LIBRARY_PORTRAIT &&
-      action.subViewOf !== Action.LIBRARY_PORTRAIT
-  ),
+  ...memotronActions.filter(isMemotronSubProductAction),
   ...pointronActions.filter(isSubProductAction),
   libraryAction,
   ...createLibraryViewActions(
