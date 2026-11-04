@@ -90,8 +90,8 @@ function escapeHtml(text: string) {
 
 /**
  * Prepares a search hit for its super bar row: the label falls back to the
- * event title or name, and the highlighted body excerpt is HTML-escaped
- * because the row renders it as Markdown HTML.
+ * event title or name, and the highlighted title and body excerpt are
+ * HTML-escaped because the row renders them as Markdown HTML.
  */
 export function toSuperBarSearchHit(
   hit: ResourceSearchHit,
@@ -108,6 +108,10 @@ export function toSuperBarSearchHit(
     ...hit,
     record: {
       ...record,
+      labelSearch:
+        typeof record.labelSearch === "string"
+          ? escapeHtml(record.labelSearch)
+          : record.labelSearch,
       bodySearch:
         typeof record.bodySearch === "string"
           ? escapeHtml(record.bodySearch)

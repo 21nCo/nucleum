@@ -247,4 +247,23 @@ describe("toSuperBarSearchHit", () => {
       "**plan** &lt;img src=x onerror=alert(1)&gt;"
     );
   });
+
+  it("escapes HTML in the highlighted title", () => {
+    const prepared = toSuperBarSearchHit(
+      {
+        id: "node:a",
+        resource: "node",
+        record: {
+          id: "node:a",
+          label: "<img src=x onerror=alert(1)> & notes"
+        },
+        relevance: 1,
+        score: 1
+      },
+      "img"
+    );
+    expect(prepared.record.labelSearch).toBe(
+      "&lt;**img** src=x onerror=alert(1)&gt; &amp; notes"
+    );
+  });
 });
