@@ -138,7 +138,11 @@
     debounce = setTimeout(() => search(query), 200);
   }
 
-  function select(result: PickerResult) {
+  async function select(result: PickerResult) {
+    if (result.resource === Resource.space) {
+      spaceGraphLoad = loadSpaceGraph();
+      await spaceGraphLoad;
+    }
     if (blockReason(result.id)) return;
     onSelect({ id: result.id, label: result.label, avatar: result.avatar });
     query = "";
