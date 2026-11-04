@@ -211,6 +211,7 @@
 
   function onCanvasClick() {
     navigation.closeResource({ accessMode: AccessMode.BESIDE_BASE });
+    splitResource = undefined;
   }
 </script>
 
