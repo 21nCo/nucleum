@@ -42,7 +42,14 @@
 
   $effect(() => {
     if (!isLoaded) return;
-    return untrack(() => navigation.watchAccessTrail(page));
+    return untrack(() => {
+      const stopLegacyUrls = navigation.watchLegacyUrls(page);
+      const stopAccessTrail = navigation.watchAccessTrail(page);
+      return () => {
+        stopLegacyUrls();
+        stopAccessTrail();
+      };
+    });
   });
 
   let commandHomeRef = $state<HTMLElement | undefined>(undefined);
