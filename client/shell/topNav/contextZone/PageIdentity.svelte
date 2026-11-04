@@ -54,8 +54,11 @@
   const parentTitle = $derived(
     isValidString($parent?.resource?.label)
       ? ($parent?.resource?.label as string)
-      : "Untitled"
+      : $parent?.resource
+        ? "Untitled"
+        : ""
   );
+  const backLabel = $derived(parentTitle ? `Back to ${parentTitle}` : "Back");
 </script>
 
 {#if (live && !isMissing) || pageAction}
@@ -64,13 +67,13 @@
     data-testid="top-bar-page-identity"
   >
     {#if parent && onBack}
-      {#key parentTitle}
+      {#key backLabel}
         <button
           type="button"
           data-testid="top-bar-back"
-          aria-label={`Back to ${parentTitle}`}
+          aria-label={backLabel}
           class="flex items-center justify-center h-8 w-8 shrink-0 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-          use:tooltip={{ text: `Back to ${parentTitle}` }}
+          use:tooltip={{ text: backLabel, isPlainText: true }}
           onclick={onBack}
         >
           <Icon icon="chevron-left" size={Size.md} />
@@ -89,7 +92,7 @@
         <div
           class="flex items-center min-w-0 px-1"
           data-testid="top-bar-page-title"
-          use:tooltip={{ text: title }}
+          use:tooltip={{ text: title, isPlainText: true }}
         >
           <span
             class="flex items-center min-w-0 text-base font-medium text-fgs1"

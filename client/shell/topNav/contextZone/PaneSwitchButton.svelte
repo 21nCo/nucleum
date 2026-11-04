@@ -33,7 +33,11 @@
   );
   const label = $derived(
     live
-      ? resolvePlainResourceLabel($live?.resource)
+      ? $live?.resource
+        ? resolvePlainResourceLabel($live.resource)
+        : $live?.isResolved
+          ? "Not found"
+          : ""
       : [route?.action.label, ...(route?.subPath ?? []).slice(0, 1)]
           .filter(Boolean)
           .map((part) => part!.charAt(0).toUpperCase() + part!.slice(1))

@@ -97,7 +97,19 @@ export function liveResource(item: IRecordId | string): Readable<LiveResource> {
 /** Icon every generic page shares in type-icon lists such as the navigator. */
 export const PAGE_TYPE_ICON = "file";
 
-const markdownLinePrefix = /^(#{1,6}\s+|>\s+|[-*+]\s+|\d+\.\s+|\[[ xX]\]\s+)/;
+const markdownLinePrefix = /^(#{1,6}|>|[-*+]|\d+\.|\[[ xX]\])(\s+|$)/;
+const markdownRule = /^([-*_])(\s*\1){2,}$/;
+
+function stripMarkdownLine(line: string) {
+  let value = line.trim();
+  if (markdownRule.test(value)) return "";
+  let next = value.replace(markdownLinePrefix, "").trim();
+  while (next !== value) {
+    value = next;
+    next = value.replace(markdownLinePrefix, "").trim();
+  }
+  return value;
+}
 
 /**
  * Plain label of a record or page: its label, otherwise the first line of a
@@ -112,7 +124,7 @@ export function resolvePlainResourceLabel(
   if (typeof resource?.text === "string") {
     const line = resource.text
       .split("\n")
-      .map((value) => value.trim().replace(markdownLinePrefix, "").trim())
+      .map(stripMarkdownLine)
       .find((value) => value.length > 0);
     if (line) return line;
   }

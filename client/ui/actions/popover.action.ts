@@ -29,6 +29,11 @@ interface TooltipParams {
   isEnableOnlyOnTruncate?: boolean;
   isLarger?: boolean;
   isAllowTextWrap?: boolean;
+  /**
+   * Shows the text as plain text instead of rendering it as Markdown; use it
+   * for user-provided text such as record names.
+   */
+  isPlainText?: boolean;
 }
 
 interface TooltipReturn {
@@ -78,7 +83,8 @@ export function tooltip(
     disabled = false,
     isEnableOnlyOnTruncate = false,
     isLarger = false,
-    isAllowTextWrap = false
+    isAllowTextWrap = false,
+    isPlainText = false
   } = params;
   let direction = normalizeTooltipPlacement(params.direction ?? Placement.Bottom);
   let baseClassList =
@@ -99,7 +105,11 @@ export function tooltip(
     if (!text || disabled) return;
     if (isEnableOnlyOnTruncate && node.scrollWidth <= node.clientWidth) return;
     tooltipElement = document.createElement("div");
-    tooltipElement.innerHTML = renderMdAsHtml(text);
+    if (isPlainText) {
+      tooltipElement.textContent = text;
+    } else {
+      tooltipElement.innerHTML = renderMdAsHtml(text);
+    }
     tooltipElement.className = `${baseClassList} ${classList}`;
     if (tooltipsContainer) {
       tooltipsContainer.appendChild(tooltipElement);
@@ -261,7 +271,8 @@ export function tooltip(
         offsetInPx: nextOffsetInPx = 10,
         delay: nextDelay = 300,
         disabled: nextDisabled = false,
-        isLarger: nextIsLarger = false
+        isLarger: nextIsLarger = false,
+        isPlainText: nextIsPlainText = false
       } = newParams;
       text = nextText;
       classList = nextClassList;
@@ -270,6 +281,7 @@ export function tooltip(
       delay = nextDelay;
       disabled = nextDisabled;
       isLarger = nextIsLarger;
+      isPlainText = nextIsPlainText;
       if (disabled) {
         removeAllTraces();
         return;
