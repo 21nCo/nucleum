@@ -7,6 +7,7 @@ import {
 import { resolveLocation } from "./capture-location";
 import { navigation } from "@nucleum/shell/navigation/navigation";
 import { fileUpload } from "@nucleum/shared-state/files/file-upload";
+import { resolveUrl } from "@nucleum/features/memory/capture/browser-tab-data";
 import { get, writable } from "svelte/store";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { LinkType } from "@nucleum/datafn/link.type";
@@ -1096,7 +1097,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     }
     const contentType = params?.contentType ?? NodeType.WEB_PAGE;
     let label = resolveWebpageLabel(text);
-    const url = text;
+    let url = text;
     const creationContext = params?.isEmbedContext
       ? (params?.creationContext ?? this.get().nodeId)
       : undefined;
@@ -1120,6 +1121,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
             thumbnailUrl: youtubeMetadata.thumbnail_url
           };
         }
+      } else if (!params?.isEmbedContext) {
+        url = resolveUrl(text);
       }
     }
     const node = {
