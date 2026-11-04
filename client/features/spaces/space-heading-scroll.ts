@@ -51,3 +51,21 @@ export function scrollToHeading(
   attempt();
   return cancel;
 }
+
+let cancelPageHeadingScroll: (() => void) | undefined;
+
+/**
+ * Scrolls the document to a heading of a page being opened. The scroll is not
+ * tied to the component that started it, since opening the page can replace
+ * that component; starting another one stops the previous one.
+ */
+export function scrollOpenedPageToHeading(headingId: string) {
+  stopOpenedPageHeadingScroll();
+  cancelPageHeadingScroll = scrollToHeading(() => document, headingId);
+}
+
+/** Stops a pending heading scroll started by `scrollOpenedPageToHeading`. */
+export function stopOpenedPageHeadingScroll() {
+  cancelPageHeadingScroll?.();
+  cancelPageHeadingScroll = undefined;
+}

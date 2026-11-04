@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, type Snippet } from "svelte";
+  import type { Snippet } from "svelte";
   import { toSvelteDataStore, toSvelteStore } from "@datafn/svelte";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
@@ -20,7 +20,10 @@
     collectResourceItems,
     findItem
   } from "@nucleum/features/spaces/space.utils";
-  import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
+  import {
+    scrollOpenedPageToHeading,
+    stopOpenedPageHeadingScroll
+  } from "@nucleum/features/spaces/space-heading-scroll";
   import SpaceAddPanel from "@nucleum/features/spaces/SpaceAddPanel.svelte";
   import type { ISpaceWallContext } from "@nucleum/features/spaces/wall/space-wall.type";
   import { groupWallItems } from "@nucleum/features/spaces/wall/space-wall.utils";
@@ -48,9 +51,6 @@
 
   let targetSectionId = $state<string | null>(null);
   let editingSectionId = $state<string | null>(null);
-  let cancelScroll: (() => void) | undefined;
-
-  onDestroy(() => cancelScroll?.());
 
   const resourceIds = $derived(
     [
@@ -121,15 +121,14 @@
   });
 
   function openItem(item: ISpaceResourceNavItem) {
-    cancelScroll?.();
-    cancelScroll = undefined;
+    stopOpenedPageHeadingScroll();
     navigation.openResource(item.resourceId, AccessMode.PAGE);
   }
 
   /** Opens a page over the space and scrolls it to a heading once it renders. */
   function openHeading(item: ISpaceResourceNavItem, headingId: string) {
     openItem(item);
-    cancelScroll = scrollToHeading(() => document, headingId);
+    scrollOpenedPageToHeading(headingId);
   }
 
   function selectSection(id: string) {
