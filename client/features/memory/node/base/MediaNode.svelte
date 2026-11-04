@@ -30,8 +30,8 @@
     {#if isConstrainedWidth}
       <MediaNodeCwTitlePanel {node} {accessMode} />
     {/if}
-    {#if ($node.accessMode === AccessMode.BESIDE_BASE || $node.accessMode === AccessMode.BESIDE_PAGE) && !$node.panel}
-      <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
+    {#if (accessMode === AccessMode.BESIDE_BASE || accessMode === AccessMode.BESIDE_PAGE) && !$node.panel}
+      <FullScreenCloseButton {accessMode} isFloat={true} />
     {/if}
   </div>
 {/if}

@@ -142,7 +142,7 @@
     </div>
     {#if isConstrainedWidth}
       <ResourceInlineCloseButton
-        accessMode={$objective.accessMode}
+        {accessMode}
         additionalAccessModes={[AccessMode.PAGE]}
         parentBgIndex={2}
         id={$objective.id}
