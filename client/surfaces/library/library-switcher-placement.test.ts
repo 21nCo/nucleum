@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Product } from "@nucleum/client/config/product.type";
-import { isLibrarySwitcherInTopBar } from "./library-switcher-placement";
+import { get } from "svelte/store";
+import {
+  isLibrarySwitcherInTopBar,
+  libraryTopBarTabs
+} from "./library-switcher-placement";
 
 const wide = { isContextZoneHosted: true, isConstrainedWidth: false };
 
@@ -38,5 +42,17 @@ describe("isLibrarySwitcherInTopBar", () => {
         isConstrainedWidth: false
       })
     ).toBe(false);
+  });
+});
+
+describe("libraryTopBarTabs", () => {
+  it("reports the tabs as hosted until every host releases them", () => {
+    const releaseFirst = libraryTopBarTabs.host();
+    const releaseSecond = libraryTopBarTabs.host();
+    expect(get(libraryTopBarTabs.isHosted)).toBe(true);
+    releaseFirst();
+    expect(get(libraryTopBarTabs.isHosted)).toBe(true);
+    releaseSecond();
+    expect(get(libraryTopBarTabs.isHosted)).toBe(false);
   });
 });

@@ -36,7 +36,10 @@
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
-  import { isLibrarySwitcherInTopBar } from "@nucleum/surfaces/library/library-switcher-placement";
+  import {
+    isLibrarySwitcherInTopBar,
+    libraryTopBarTabs
+  } from "@nucleum/surfaces/library/library-switcher-placement";
   import {
     LIBRARY_DEFAULT_SUBTYPE,
     parseLibraryPath,
@@ -66,12 +69,14 @@
       )
   );
   const isContextZoneHosted = contextZone.isHosted;
+  const isTopBarTabsHosted = libraryTopBarTabs.isHosted;
   let selectedResource = $state<Resource>(Resource.unknown);
   const isSwitcherInTopBar = $derived(
-    isLibrarySwitcherInTopBar($appStore.product, resources.length, {
-      isContextZoneHosted: $isContextZoneHosted,
-      isConstrainedWidth: $view.isConstrainedWidth
-    })
+    $isTopBarTabsHosted &&
+      isLibrarySwitcherInTopBar($appStore.product, resources.length, {
+        isContextZoneHosted: $isContextZoneHosted,
+        isConstrainedWidth: $view.isConstrainedWidth
+      })
   );
   let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
   const subType = $derived(

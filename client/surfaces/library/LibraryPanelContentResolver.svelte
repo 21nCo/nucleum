@@ -18,7 +18,10 @@
     contextZone,
     nextCycleValue
   } from "@nucleum/shell/topNav/contextZone/context-zone";
-  import { isLibrarySwitcherInTopBar } from "@nucleum/surfaces/library/library-switcher-placement";
+  import {
+    isLibrarySwitcherInTopBar,
+    libraryTopBarTabs
+  } from "@nucleum/surfaces/library/library-switcher-placement";
 
   let {
     defaultResource = Resource.node,
@@ -50,6 +53,11 @@
       isConstrainedWidth: $view.isConstrainedWidth
     })
   );
+
+  $effect(() => {
+    if (!isSwitcherInTopBar) return;
+    return libraryTopBarTabs.host();
+  });
 
   function selectResource(resource: Resource) {
     const subType = resolveLibraryFallbackSubType(resource);

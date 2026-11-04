@@ -1,3 +1,4 @@
+import { derived, writable } from "svelte/store";
 import { Product } from "@nucleum/client/config/product.type";
 
 /** Most library resource types the top bar switcher lists. */
@@ -30,3 +31,20 @@ export function isLibrarySwitcherInTopBar(
     resourceCount <= LIBRARY_TOP_BAR_SWITCHER_LIMIT
   );
 }
+
+const hostedTabsCount = writable(0);
+
+/**
+ * Library resource tabs the library page shows in the top bar. The left panel
+ * hides its own switcher only while these tabs are hosted, so a library page
+ * rendered without them, such as the standalone portrait route, keeps it.
+ */
+export const libraryTopBarTabs = {
+  /** Whether a library page currently shows its resource tabs in the top bar. */
+  isHosted: derived(hostedTabsCount, (count) => count > 0),
+  /** Marks the tabs as shown in the top bar; returns its release function. */
+  host() {
+    hostedTabsCount.update((count) => count + 1);
+    return () => hostedTabsCount.update((count) => Math.max(0, count - 1));
+  }
+};
