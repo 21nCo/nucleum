@@ -10,7 +10,7 @@ const FOCUSABLE_SELECTOR = [
 
 function focusableElements(node: HTMLElement) {
   return [...node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
-    (element) => !element.closest("[inert], [hidden]")
+    (element) => element.tabIndex >= 0 && !element.closest("[inert], [hidden]")
   );
 }
 

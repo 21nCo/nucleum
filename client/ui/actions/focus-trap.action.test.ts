@@ -105,4 +105,21 @@ describe("client/ui/actions/focus-trap.action", () => {
     await Promise.resolve();
     expect(document.activeElement).toBe(other);
   });
+
+  it("wraps from the last control that Tab can reach", () => {
+    document.body.innerHTML = `
+      <div id="sheet" tabindex="-1">
+        <button id="first">Close</button>
+        <button id="reachable">Movies</button>
+        <button id="skipped" tabindex="-1">Articles</button>
+      </div>
+    `;
+    const sheet = document.getElementById("sheet") as HTMLElement;
+    focusTrap(sheet);
+    const reachable = document.getElementById("reachable") as HTMLElement;
+    reachable.focus();
+    const event = tab(reachable);
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.activeElement?.id).toBe("first");
+  });
 });
