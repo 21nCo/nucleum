@@ -52,4 +52,19 @@ describe("space writes", () => {
     await expect(store.updateLabel("Renamed")).resolves.toBe(false);
     expect(mocks.toastError).toHaveBeenCalledWith("Failed to save space");
   });
+
+  it("keeps items edited while an open space reloads", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const store = ActiveSpaceStore.resolve("space:reloading");
+    await store.init();
+    let resolveSelect: (value: unknown) => void = () => undefined;
+    mocks.select.mockReturnValueOnce(
+      new Promise((resolve) => (resolveSelect = resolve))
+    );
+    const reload = store.init();
+    const id = await store.addSection({ label: "Added while loading" });
+    resolveSelect({ id: "space:reloading", label: "Saved", items: [] });
+    await reload;
+    expect(store.readItems().map((item) => item.id)).toEqual([id]);
+  });
 });

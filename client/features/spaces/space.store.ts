@@ -92,8 +92,12 @@ export class ActiveSpaceStore {
     return this.mutate({ items });
   }
 
-  /** Loads the record, keeping open-state flags across reloads. */
+  /**
+   * Loads the record, keeping open-state flags across reloads. Items edited
+   * while the record loads are kept, since they are newer than the loaded copy.
+   */
   async init(accessMode?: AccessMode) {
+    const itemsAtStart = (get(this.subject) as IActiveSpace | undefined)?.items;
     this.update(
       (prev) =>
         ({
@@ -138,7 +142,10 @@ export class ActiveSpaceStore {
     this.update((prev) => ({
       ...record,
       view: record.view ?? SpaceView.SIDENAV,
-      items: cloneNavItems(record.items ?? []),
+      items:
+        prev?.items && prev.items !== itemsAtStart
+          ? prev.items
+          : cloneNavItems(record.items ?? []),
       accessMode: accessMode ?? prev?.accessMode,
       isInEditMode: prev?.isInEditMode,
       isTitleEditing: prev?.isTitleEditing,
