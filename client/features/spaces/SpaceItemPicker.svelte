@@ -47,10 +47,11 @@
 
   const listId = `space-picker-${currentSpaceId.slice(-5)}`;
   let query = $state("");
-  let results = $state<PickerResult[]>([]);
+  let results = $state.raw<PickerResult[]>([]);
   let spaceGraph = $state<Map<string, string[]> | undefined>(undefined);
   let isSearching = $state(false);
   let debounce: ReturnType<typeof setTimeout> | undefined;
+  let spaceGraphLoad: Promise<void> | undefined;
   let requestId = 0;
   const resources = $derived(resolveSpaceItemResources(product));
 
@@ -83,6 +84,7 @@
       );
     } catch (error) {
       spaceGraph = undefined;
+      spaceGraphLoad = undefined;
       logger.error({ at: "SpaceItemPicker.loadSpaceGraph", error });
     }
   }
@@ -107,7 +109,7 @@
           prefix: true,
           fuzzy: 0.2
         }),
-        loadSpaceGraph()
+        (spaceGraphLoad ??= loadSpaceGraph())
       ]);
       if (current !== requestId) return;
       results = (
