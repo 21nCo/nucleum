@@ -77,6 +77,14 @@ describe("closeTopLayer", () => {
     ]);
   });
 
+  it("hides the full screen host of an overlay whose page left full screen", () => {
+    mocks.fullScreen.path = "focus";
+    visit("?overlay=focus");
+    expect(closeTopLayer()).toBe("overlay");
+    expect(mocks.fullScreen.hide).toHaveBeenCalledTimes(1);
+    expect(mocks.navigation.toggleSearchParam).not.toHaveBeenCalled();
+  });
+
   it("clears an overlay and the panel by their parameters", () => {
     visit("?overlay=search&panel=navigator");
     expect(closeTopLayer()).toBe("overlay");

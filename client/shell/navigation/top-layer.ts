@@ -79,10 +79,20 @@ export function closeTopLayer(options?: {
     navigation.exitFullScreen();
     return layer;
   }
-  if (layer === "overlay" && searchParams.get(AppSearchParam.MAX)) {
-    if (fullScreen.get().path) fullScreen.hide();
-    else navigation.toggleSearchParam([AccessMode.OVERLAY, AppSearchParam.MAX]);
-    return layer;
+  if (layer === "overlay") {
+    const fullScreenPath = fullScreen.get().path;
+    const isMax = !!searchParams.get(AppSearchParam.MAX);
+    if (
+      fullScreenPath &&
+      (isMax || fullScreenPath === searchParams.get(AccessMode.OVERLAY))
+    ) {
+      fullScreen.hide();
+      return layer;
+    }
+    if (isMax) {
+      navigation.toggleSearchParam([AccessMode.OVERLAY, AppSearchParam.MAX]);
+      return layer;
+    }
   }
   const param = layerParams[layer];
   if (!param) return undefined;

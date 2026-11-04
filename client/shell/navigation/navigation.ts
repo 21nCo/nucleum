@@ -41,6 +41,7 @@ import {
   type AccessTrailPosition
 } from "@nucleum/shell/navigator/access-trail";
 import { forgetPageScroll } from "@nucleum/shell/navigation/page-scroll";
+import { fullScreen } from "@nucleum/shell/overlays/modal.store";
 
 /**
  * How a page open changes the access trail: start a new trail, extend the
@@ -175,6 +176,15 @@ export function readAccessTrailHistoryState(
 
 let currentEntry:
   { pageId: string; state?: AccessTrailHistoryState } | undefined;
+
+/**
+ * Whether the overlay in `searchParams` is the one shown in full screen. A
+ * page opened over it inherits its `max`, which stays with the overlay.
+ */
+function isFullScreenOverlayOpen(searchParams: URLSearchParams) {
+  const overlay = searchParams.get(AccessMode.OVERLAY);
+  return !!overlay && overlay === fullScreen.get().path;
+}
 
 /** Whether `id` is the open page and that page is in full screen. */
 export function isFullScreenPage(
@@ -864,7 +874,9 @@ export const navigation = {
             `${AccessMode.PAGE}At`,
             AccessMode.BESIDE_PAGE,
             `${AccessMode.BESIDE_PAGE}At`,
-            AppSearchParam.MAX
+            ...(isFullScreenOverlayOpen(url.searchParams)
+              ? []
+              : [AppSearchParam.MAX])
           ]
         : [mode, `${mode}At`];
     const closeMode = (mode: AccessMode) => {
@@ -946,8 +958,15 @@ export const navigation = {
           : undefined
     });
   },
-  /** Turns full screen off without closing the page. */
+  /**
+   * Turns full screen off without closing the page. Over a full screen
+   * overlay, that overlay leaves full screen too and hands over to its player.
+   */
   exitFullScreen: () => {
+    if (isFullScreenOverlayOpen(new URLSearchParams(window.location.search))) {
+      fullScreen.hide();
+      return;
+    }
     navigation.toggleSearchParam([AppSearchParam.MAX]);
   },
   setCurrentPath: (path: string) => {
