@@ -160,10 +160,11 @@
   }
 
   async function addSection(parentId?: string) {
-    editingSectionId = await store.addSection({
-      label: "New section",
-      parentId
-    });
+    editingSectionId =
+      (await store.addSection({
+        label: "New section",
+        parentId
+      })) ?? null;
   }
 
   async function addRecord(
