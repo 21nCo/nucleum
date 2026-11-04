@@ -81,7 +81,7 @@
     onSearchAction({ detail: action });
   });
   function handleKeyDown(event: KeyboardEvent) {
-    if (event.isComposing) return;
+    if (event.isComposing || event.keyCode === 229) return;
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       resultsRef?.moveSelection(event.key === "ArrowDown" ? "down" : "up");
