@@ -176,13 +176,15 @@
       size={Size.full}
     >
       <ModalLayout path={fullscreen} params={{ layout: { size: Size.full } }}>
-        <SplitView
-          id={fullscreen}
-          componentParams={{
-            isModal: true,
-            accessMode: AccessMode.FULL
-          }}
-        />
+        <div class="contents" data-page-layer>
+          <SplitView
+            id={fullscreen}
+            componentParams={{
+              isModal: true,
+              accessMode: AccessMode.FULL
+            }}
+          />
+        </div>
       </ModalLayout>
     </Modal>
   {/if}

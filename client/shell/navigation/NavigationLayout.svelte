@@ -112,6 +112,7 @@
             <div
               class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
               data-testid="resource-record-surface"
+              data-page-layer
             >
               <ResourceResolver id={popId} accessMode={AccessMode.PAGE} />
             </div>

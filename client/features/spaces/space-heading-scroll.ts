@@ -1,3 +1,5 @@
+import { resolvePageLayer } from "@nucleum/shell/navigation/page-layer";
+
 const SCROLL_DEADLINE_MS = 5000;
 const STABLE_PASSES = 2;
 const POSITION_TOLERANCE_PX = 1;
@@ -55,13 +57,18 @@ export function scrollToHeading(
 let cancelPageHeadingScroll: (() => void) | undefined;
 
 /**
- * Scrolls the document to a heading of a page being opened. The scroll is not
+ * Scrolls to a heading of a page being opened, looking for it only in the
+ * opened page layer, so a copy of the same page shown beneath it, such as in
+ * the space's side navigation, is not scrolled instead. The scroll is not
  * tied to the component that started it, since opening the page can replace
  * that component; starting another one stops the previous one.
  */
 export function scrollOpenedPageToHeading(headingId: string) {
   stopOpenedPageHeadingScroll();
-  cancelPageHeadingScroll = scrollToHeading(() => document, headingId);
+  cancelPageHeadingScroll = scrollToHeading(
+    () => resolvePageLayer(),
+    headingId
+  );
 }
 
 /** Stops a pending heading scroll started by `scrollOpenedPageToHeading`. */
