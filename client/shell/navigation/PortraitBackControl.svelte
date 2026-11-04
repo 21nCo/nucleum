@@ -11,8 +11,9 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
+  import { resolveModalOnFront } from "@21n/ui/actions/interaction-dom";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { player } from "@nucleum/shell/overlays/modal.store";
@@ -44,11 +45,7 @@
 
   function back() {
     if (searchParams.get(AccessMode.OVERLAY)) {
-      navigation.toggleSearchParam(
-        isPageOpen
-          ? [AccessMode.OVERLAY]
-          : [AccessMode.OVERLAY, AppSearchParam.MAX]
-      );
+      closeTopLayer({ isIncludePanel: false });
       return;
     }
     if (navigation.backInTrail()) return;
@@ -58,7 +55,7 @@
   function onTouchStart(event: TouchEvent) {
     const touch = event.touches[0];
     swipeStart =
-      isShown && touch && touch.clientX <= EDGE_WIDTH
+      isShown && touch && touch.clientX <= EDGE_WIDTH && !resolveModalOnFront()
         ? { x: touch.clientX, y: touch.clientY }
         : undefined;
   }
@@ -67,7 +64,7 @@
     const touch = event.changedTouches[0];
     const start = swipeStart;
     swipeStart = undefined;
-    if (!start || !touch) return;
+    if (!start || !touch || resolveModalOnFront()) return;
     const dx = touch.clientX - start.x;
     const dy = Math.abs(touch.clientY - start.y);
     if (dx >= SWIPE_DISTANCE && dy < dx / 2) back();
