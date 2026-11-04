@@ -1,4 +1,5 @@
 import { Resource } from "@nucleum/datafn/resource.enum";
+import { determineResourceType } from "@nucleum/datafn/resource.utils";
 import { Product } from "@nucleum/client/config/product.type";
 import { productRegistry } from "@nucleum/schema/product.config";
 import {
@@ -12,8 +13,6 @@ import {
   type ISpaceResourceNavItem,
   type SpaceDropPosition
 } from "@nucleum/features/spaces/space.type";
-
-const SPACE_ID_PREFIX = `${Resource.space}:`;
 
 function clone<T>(items: T[]): T[] {
   if (typeof structuredClone === "function") {
@@ -337,7 +336,7 @@ export function resolveAddBlockReason(params: {
     )
   )
     return "Already in this space";
-  if (!candidateId.startsWith(SPACE_ID_PREFIX)) return undefined;
+  if (determineResourceType(candidateId) !== Resource.space) return undefined;
   if (focusChain.includes(candidateId))
     return "Contains this space, adding it would create a loop";
   if (!childSpaceIds) return "Could not check this space for loops";
