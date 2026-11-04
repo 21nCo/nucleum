@@ -135,6 +135,9 @@
 
   function onInput() {
     clearTimeout(debounce);
+    requestId++;
+    results = [];
+    isSearching = Boolean(query.trim());
     debounce = setTimeout(() => search(query), 200);
   }
 
