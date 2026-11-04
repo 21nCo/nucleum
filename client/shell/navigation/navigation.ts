@@ -311,7 +311,7 @@ export const navigation = {
     ) {
       const rewritten = { position, from: state.from };
       currentEntry = { pageId, state: rewritten };
-      navigation.gotoPath(window.location.href, {
+      void navigation.gotoPath(window.location.href, {
         replaceState: true,
         historyState: rewritten
       });
@@ -342,7 +342,7 @@ export const navigation = {
     return pages.subscribe((current) => {
       const path = current?.url && resolveLegacyFullParamPath(current.url);
       if (!path) return;
-      navigation.gotoPath(path, { replaceState: true });
+      void navigation.gotoPath(path, { replaceState: true });
     });
   },
 

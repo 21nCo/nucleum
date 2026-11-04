@@ -60,7 +60,11 @@ export function normalizeAccessTrails(value: unknown): AccessTrails {
     ? value.recent
         .map(normalizeTrail)
         .filter((trail): trail is AccessTrail => !!trail)
-        .reduceRight(addRecentAccessTrail, [] as AccessTrail[])
+        .reduceRight(
+          (list: AccessTrail[], trail: AccessTrail) =>
+            addRecentAccessTrail(list, trail),
+          []
+        )
     : [];
   return { ...trails, ...(current ? { current } : {}), recent };
 }
@@ -280,7 +284,11 @@ export function mergeAccessTrails(
   }
   const recent = [...newest.values()]
     .sort((a, b) => b.updatedAt - a.updatedAt)
-    .reduceRight(addRecentAccessTrail, [] as AccessTrail[]);
+    .reduceRight(
+      (list: AccessTrail[], trail: AccessTrail) =>
+        addRecentAccessTrail(list, trail),
+      []
+    );
   return {
     version: ACCESS_TRAILS_VERSION,
     ...(local.current ? { current: local.current } : {}),

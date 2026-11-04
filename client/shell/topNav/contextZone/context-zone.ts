@@ -57,7 +57,10 @@ export function resolveContextZoneEntry(
     : entries;
   if (list.length === 0) return undefined;
   const newest = (items: ContextZoneEntry[]) =>
-    items.reduce((latest, item) => (item.key > latest.key ? item : latest));
+    items.reduce(
+      (latest, item) => (item.key > latest.key ? item : latest),
+      items[0]
+    );
   const fromActive = activePane
     ? list.filter((item) => item.pane.id === activePane)
     : [];
