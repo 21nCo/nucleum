@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { navigation } from "./navigation";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
 import { resolveAccessTrailParent } from "@nucleum/shell/navigator/access-trail";
+import view from "@21n/ui/environment/view.store";
 
 vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
   uiState: { getState: () => [], setState: () => undefined }
@@ -73,7 +74,21 @@ beforeEach(() => {
     .spyOn(window.history, "back")
     .mockImplementation(() => go(-1));
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  view.refresh(1280, 800);
+});
+
+function openNavigator() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("panel", "navigator");
+  entries[index] = { ...entries[index], url: url.pathname + url.search };
+  show();
+}
+
+function panel() {
+  return new URL(window.location.href).searchParams.get("panel");
+}
 
 describe("page history and access trails", () => {
   it("goes back in history only when the close asks for it", () => {
@@ -180,5 +195,45 @@ describe("page history and access trails", () => {
     expect(historyBack).toHaveBeenCalledTimes(2);
     expect(entries).toHaveLength(length);
     expect(activeNode()?.node.key).toBe(recreated);
+  });
+
+  it("closes the portrait navigator sheet after it opens a trail node", () => {
+    view.refresh(390, 844);
+    navigation.openResource("node:a", "page" as never);
+    navigation.openResource("node:b", "page" as never);
+    openNavigator();
+    const trail = accessTrail.get().current!;
+    navigation.openTrailNode(
+      trail.nodes.findIndex((node) => node.id === "node:a")
+    );
+    expect(activeNode()?.node.id).toBe("node:a");
+    expect(panel()).toBeNull();
+  });
+
+  it("closes the portrait navigator sheet after it resumes a recent trail", () => {
+    view.refresh(390, 844);
+    navigation.openResource("node:a", "page" as never);
+    navigation.closeResource({ accessMode: "page" as never });
+    navigation.openResource("node:b", "page" as never);
+    const recent = accessTrail
+      .get()
+      .recent.find((trail) => trail.nodes[0].id === "node:a")!;
+    openNavigator();
+    navigation.resumeTrail(recent.key, 0);
+    expect(activeNode()?.node.id).toBe("node:a");
+    expect(panel()).toBeNull();
+  });
+
+  it("keeps the desktop navigator panel open after it opens a trail node", () => {
+    view.refresh(1280, 800);
+    navigation.openResource("node:a", "page" as never);
+    navigation.openResource("node:b", "page" as never);
+    openNavigator();
+    const trail = accessTrail.get().current!;
+    navigation.openTrailNode(
+      trail.nodes.findIndex((node) => node.id === "node:a")
+    );
+    expect(activeNode()?.node.id).toBe("node:a");
+    expect(panel()).toBe("navigator");
   });
 });

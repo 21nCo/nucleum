@@ -614,6 +614,8 @@ export const navigation = {
         params?.origin,
         params?.trail
       );
+      const isNavigatorOpen =
+        url.searchParams.get(AccessMode.PANEL) === Action.NAVIGATOR;
       if (intent === "start" && openPage !== id.toString()) {
         accessTrail.start(
           id.toString(),
@@ -621,8 +623,9 @@ export const navigation = {
             ? params.origin
             : undefined
         );
-        isCloseNavigator =
-          url.searchParams.get(AccessMode.PANEL) === Action.NAVIGATOR;
+        isCloseNavigator = isNavigatorOpen;
+      } else if (intent === "select") {
+        isCloseNavigator = isNavigatorOpen && get(view).isPortrait;
       } else if (intent === "extend") {
         accessTrail.extend(id.toString());
       }
