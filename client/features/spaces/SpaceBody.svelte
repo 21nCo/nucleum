@@ -79,6 +79,12 @@
 
 {#if !isLoaded}
   <div class="w-full h-full" data-testid="space-loading"></div>
+{:else if $store?.isLoadFailed}
+  <EmptyStatusView
+    mainText="Could not load this space"
+    subText="Reopen it to try again"
+    isSearchContext={false}
+  />
 {:else if $store?.isMissing}
   <EmptyStatusView
     mainText="Space not found"

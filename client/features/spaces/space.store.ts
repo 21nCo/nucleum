@@ -31,6 +31,8 @@ import { determineResourceType } from "@nucleum/datafn/resource.utils";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { navigation } from "@nucleum/shell/navigation/navigation";
+import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
+import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 
 const activeSpaceStores = new Map<string, ActiveSpaceStore>();
 
@@ -71,12 +73,14 @@ export class ActiveSpaceStore {
 
   private async mutate(record: Partial<ISpace>) {
     try {
-      await datafn.space.mutate({
-        operation: "merge",
-        id: this.id.toString(),
-        record,
-        context: ResourceAccessPoint.SPACE
-      });
+      assertDatafnMutationSucceeded(
+        await datafn.space.mutate({
+          operation: "merge",
+          id: this.id.toString(),
+          record,
+          context: ResourceAccessPoint.SPACE
+        })
+      );
     } catch (error) {
       logger.error({ at: "ActiveSpaceStore.mutate", error, id: this.id });
       await this.init();
@@ -108,6 +112,15 @@ export class ActiveSpaceStore {
       })) as ISpace | undefined;
     } catch (error) {
       logger.error({ at: "ActiveSpaceStore.init", error, id: this.id });
+      this.update(
+        (prev) =>
+          ({
+            ...(prev ?? {}),
+            isPageLoading: false,
+            isLoadFailed: true
+          }) as IActiveSpace
+      );
+      return;
     }
     if (!result) {
       this.update(
@@ -115,7 +128,8 @@ export class ActiveSpaceStore {
           ({
             ...(prev ?? {}),
             isPageLoading: false,
-            isMissing: true
+            isMissing: true,
+            isLoadFailed: false
           }) as IActiveSpace
       );
       return;
@@ -129,7 +143,8 @@ export class ActiveSpaceStore {
       isInEditMode: prev?.isInEditMode,
       isTitleEditing: prev?.isTitleEditing,
       isPageLoading: false,
-      isMissing: false
+      isMissing: false,
+      isLoadFailed: false
     }));
     appStore.addToRecents({
       record,
@@ -250,14 +265,17 @@ export class ActiveSpaceStore {
 export async function createSpace() {
   const id = generateResourceId(Resource.space);
   try {
-    await datafn.space.mutate({
-      operation: "insert",
-      id,
-      record: { id, label: "", view: SpaceView.SIDENAV, items: [] },
-      context: ResourceAccessPoint.SPACE
-    });
+    assertDatafnMutationSucceeded(
+      await datafn.space.mutate({
+        operation: "insert",
+        id,
+        record: { id, label: "", view: SpaceView.SIDENAV, items: [] },
+        context: ResourceAccessPoint.SPACE
+      })
+    );
   } catch (error) {
     logger.error({ at: "createSpace", error });
+    toasts.error("Failed to create space");
     return;
   }
   const store = ActiveSpaceStore.resolve(id);

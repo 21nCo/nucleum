@@ -60,6 +60,8 @@ export interface IActiveSpace extends IActiveResource, ISpace {
   isPageLoading?: boolean;
   /** True when the record could not be found locally. */
   isMissing?: boolean;
+  /** True when reading the record failed, so it is unknown whether it exists. */
+  isLoadFailed?: boolean;
   /** True while the title is being renamed in the header. */
   isTitleEditing?: boolean;
 }
