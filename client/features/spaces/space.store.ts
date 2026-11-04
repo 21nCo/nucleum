@@ -41,7 +41,10 @@ export class ActiveSpaceStore {
   set = this.subject.set;
   update = this.subject.update;
   private itemsRevision = 0;
+  private labelRevision = 0;
+  private viewRevision = 0;
   private loadSequence = 0;
+  private latestLoad: Promise<void> = Promise.resolve();
 
   constructor(spaceId: IRecordId) {
     this.id = spaceId;
@@ -96,13 +99,22 @@ export class ActiveSpaceStore {
   }
 
   /**
-   * Loads the record, keeping open-state flags across reloads. Items edited
-   * while the record loads are kept, since they are newer than the loaded copy,
-   * and a load overtaken by a later one is dropped.
+   * Loads the record, keeping open-state flags across reloads. Items, title and
+   * view edited while the record loads are kept, since they are newer than the
+   * loaded copy. A load overtaken by a later one is dropped and settles when the
+   * latest load has been applied, so no caller proceeds without loaded items.
    */
-  async init(accessMode?: AccessMode) {
+  init(accessMode?: AccessMode) {
+    const load = this.load(accessMode);
+    this.latestLoad = load;
+    return load;
+  }
+
+  private async load(accessMode?: AccessMode): Promise<void> {
     const load = ++this.loadSequence;
     const itemsRevisionAtStart = this.itemsRevision;
+    const labelRevisionAtStart = this.labelRevision;
+    const viewRevisionAtStart = this.viewRevision;
     this.update(
       (prev) =>
         ({
@@ -121,7 +133,7 @@ export class ActiveSpaceStore {
       })) as ISpace | undefined;
     } catch (error) {
       logger.error({ at: "ActiveSpaceStore.init", error, id: this.id });
-      if (load !== this.loadSequence) return;
+      if (load !== this.loadSequence) return this.latestLoad;
       this.update(
         (prev) =>
           ({
@@ -132,7 +144,7 @@ export class ActiveSpaceStore {
       );
       return;
     }
-    if (load !== this.loadSequence) return;
+    if (load !== this.loadSequence) return this.latestLoad;
     if (!result) {
       this.update(
         (prev) =>
@@ -148,7 +160,14 @@ export class ActiveSpaceStore {
     const record = result;
     this.update((prev) => ({
       ...record,
-      view: record.view ?? SpaceView.SIDENAV,
+      label:
+        prev && this.labelRevision !== labelRevisionAtStart
+          ? prev.label
+          : record.label,
+      view:
+        prev && this.viewRevision !== viewRevisionAtStart
+          ? prev.view
+          : (record.view ?? SpaceView.SIDENAV),
       items:
         prev?.items && this.itemsRevision !== itemsRevisionAtStart
           ? prev.items
@@ -168,11 +187,13 @@ export class ActiveSpaceStore {
   }
 
   async updateLabel(label: string) {
+    this.labelRevision++;
     this.update((prev) => (prev ? { ...prev, label } : prev));
     return this.mutate({ label });
   }
 
   async updateView(view: SpaceView) {
+    this.viewRevision++;
     this.update((prev) => (prev ? { ...prev, view } : prev));
     return this.mutate({ view });
   }

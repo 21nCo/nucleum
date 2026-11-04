@@ -23,7 +23,9 @@ vi.mock("@nucleum/shell/navigation/navigation", () => ({
   navigation: { openResource: vi.fn() }
 }));
 
+import { get } from "svelte/store";
 import { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
+import { SpaceView } from "@nucleum/features/spaces/space.type";
 
 describe("space writes", () => {
   beforeEach(() => {
@@ -82,15 +84,60 @@ describe("space writes", () => {
     mocks.select
       .mockReturnValueOnce(new Promise((resolve) => (resolveFirst = resolve)))
       .mockReturnValueOnce(new Promise((resolve) => (resolveSecond = resolve)));
-    const first = store.init();
+    let isFirstSettled = false;
+    const first = store.init().then(() => (isFirstSettled = true));
     const second = store.init();
     resolveFirst({ id: "space:overlapping", items: [section("a")] });
-    await first;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(isFirstSettled).toBe(false);
     resolveSecond({
       id: "space:overlapping",
       items: [section("a"), section("b")]
     });
-    await second;
+    await Promise.all([first, second]);
+    expect(isFirstSettled).toBe(true);
     expect(store.readItems().map((item) => item.id)).toEqual(["a", "b"]);
+  });
+
+  it("keeps an earlier section added after an overtaken load settles", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const store = ActiveSpaceStore.resolve("space:overtaken");
+    const saved = {
+      id: "saved",
+      type: "section",
+      label: "Saved",
+      children: []
+    };
+    let resolveFirst: (value: unknown) => void = () => undefined;
+    let resolveSecond: (value: unknown) => void = () => undefined;
+    mocks.select
+      .mockReturnValueOnce(new Promise((resolve) => (resolveFirst = resolve)))
+      .mockReturnValueOnce(new Promise((resolve) => (resolveSecond = resolve)));
+    const added = store.init().then(() => store.addSection({ label: "Added" }));
+    const second = store.init();
+    resolveFirst({ id: "space:overtaken", items: [saved] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    resolveSecond({ id: "space:overtaken", items: [saved] });
+    const [id] = await Promise.all([added, second]);
+    expect(store.readItems().map((item) => item.id)).toEqual(["saved", id]);
+  });
+
+  it("keeps a title and view changed while an open space reloads", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const store = ActiveSpaceStore.resolve("space:renaming");
+    await store.init();
+    let resolveSelect: (value: unknown) => void = () => undefined;
+    mocks.select.mockReturnValueOnce(
+      new Promise((resolve) => (resolveSelect = resolve))
+    );
+    const reload = store.init();
+    await store.updateLabel("Renamed");
+    await store.updateView(SpaceView.WALL);
+    resolveSelect({ id: "space:renaming", label: "Saved", items: [] });
+    await reload;
+    expect(get(store)).toMatchObject({
+      label: "Renamed",
+      view: SpaceView.WALL
+    });
   });
 });
