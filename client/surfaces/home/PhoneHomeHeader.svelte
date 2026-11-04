@@ -28,32 +28,37 @@
       "User"
   );
 
-  function resolveGreeting() {
-    const hour = new Date().getHours();
-    if (hour < 12) return "morning";
-    if (hour < 18) return "afternoon";
-    return "evening";
-  }
+  let hour = $state(new Date().getHours());
+  const greeting = $derived(
+    hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening"
+  );
+
+  $effect(() => {
+    const interval = setInterval(() => {
+      hour = new Date().getHours();
+    }, 60_000);
+    return () => clearInterval(interval);
+  });
 </script>
 
 <div class="flex items-center justify-between gap-2 p-4">
-  <button
-    type="button"
-    class="flex items-center gap-3 min-w-0"
-    onclick={onSettings}
-  >
+  <div class="flex items-center gap-3 min-w-0">
     <span class="shrink-0">
-      <ProfilePicture context="mobile-topbar" />
+      <ProfilePicture context="mobile-topbar" onclick={onSettings} />
     </span>
-    <div class="flex flex-col items-start min-w-0">
+    <button
+      type="button"
+      class="flex flex-col items-start min-w-0"
+      onclick={onSettings}
+    >
       <span class="text-fgs3 text-b3 whitespace-nowrap">
-        Good {resolveGreeting()}
+        Good {greeting}
       </span>
       <span class="text-fgs1 text-h4 font-medium truncate max-w-full">
         {displayName}
       </span>
-    </div>
-  </button>
+    </button>
+  </div>
   <div
     class="flex items-center gap-1 shrink-0"
     data-testid="phone-home-indicators"
