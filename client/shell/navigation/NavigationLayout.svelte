@@ -242,7 +242,7 @@
 </div>
 
 <style>
-  .shell-frame:has(:global([data-testid="top-bar-context-tab"][data-leading]))
+  .shell-frame:has(:global(.context-tab[data-leading]))
     .shell-main {
     border-top-left-radius: 0;
   }

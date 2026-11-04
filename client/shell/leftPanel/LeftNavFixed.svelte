@@ -62,7 +62,6 @@
 </script>
 
 <div
-  data-chrome-icons
   class={cn(
     "leftnav flex justify-center items-center h-full",
     !$appStore.currentComponent?.panel && {
@@ -83,6 +82,7 @@
     )}
   >
     <div
+      data-chrome-icons
       data-testid="leftnav-sidebar-toggle"
       aria-label="Toggle sidebar width"
       class={cn(
