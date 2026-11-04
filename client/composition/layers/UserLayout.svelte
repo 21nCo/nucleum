@@ -3,7 +3,10 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { onMount, untrack } from "svelte";
-  import { appLoadingState, appStore } from "@nucleum/shared-state/app-context/app.store";
+  import {
+    appLoadingState,
+    appStore
+  } from "@nucleum/shared-state/app-context/app.store";
   import context from "@nucleum/client/runtime/context.store";
   import CommandModePage from "@nucleum/surfaces/commandBar/CommandModePage.svelte";
   import NavigationLayout from "@nucleum/shell/navigation/NavigationLayout.svelte";
@@ -18,6 +21,9 @@
   import LeftNav from "../chrome/WiredLeftNav.svelte";
   import TopNav from "../chrome/WiredTopNav.svelte";
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
+  import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
+  import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
 
   let {
     children,
@@ -98,18 +104,36 @@
     </div>
     {#if commandModePageId}
       <div
-        class="fixed inset-0 w-full h-full bg-bgs1 z-40"
+        class="fixed inset-0 flex flex-col w-full h-full bg-bgs1 z-40"
         data-testid="resource-record-surface"
         data-full-screen="true"
-        use:pageScroll={commandModePageId}
-        {...pageLayerAttributes}
       >
-        {#key commandModePageId}
-          <ResourceResolver
-            id={commandModePageId}
-            accessMode={AccessMode.PAGE}
+        <div
+          class={cn("flex shrink-0 w-full h-12 max-h-12 min-h-11 bg-bgs2", {
+            "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
+          })}
+          data-testid="command-mode-page-bar"
+        >
+          <TopBarCloseButton
+            onclick={() =>
+              closeTopLayer({
+                isIncludePanel: false,
+                isIncludeFullScreen: false
+              })}
           />
-        {/key}
+        </div>
+        <div
+          class="flex-1 min-h-0 w-full"
+          use:pageScroll={commandModePageId}
+          {...pageLayerAttributes}
+        >
+          {#key commandModePageId}
+            <ResourceResolver
+              id={commandModePageId}
+              accessMode={AccessMode.PAGE}
+            />
+          {/key}
+        </div>
       </div>
     {/if}
   {:else}

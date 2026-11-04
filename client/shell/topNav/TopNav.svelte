@@ -25,6 +25,7 @@
   import TopNavLeftMenuItem from "@nucleum/shell/topNav/TopNavLeftMenuItem.svelte";
   import TopNavDateTime from "@nucleum/shell/topNav/TopNavDateTime.svelte";
   import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
+  import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
   import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
@@ -136,25 +137,16 @@
 >
   {#if $context.embed !== Embed.HANDSET}
     {#if isCloseMode}
-      <button
-        type="button"
-        data-testid="top-bar-close"
-        aria-label={isClosingSelection ? "Clear selection" : "Close"}
-        class={cn(
-          "flex items-center justify-center h-full shrink-0 text-fgs2 hover:bg-bgs3-striped hover:text-fgs1",
-          {
-            "border-r border-brs3": !$context.experiments?.isEnableRoundedMain,
-            "w-[5.5rem]": isAppMenuColumnVisible && !isHideMenuLabels,
-            "w-[3.5rem]": isAppMenuColumnVisible && isHideMenuLabels,
-            "px-4": !isAppMenuColumnVisible
-          }
-        )}
-        use:tooltip={{ text: isClosingSelection ? "Clear selection" : "Close" }}
+      <TopBarCloseButton
+        label={isClosingSelection ? "Clear selection" : "Close"}
+        menuColumn={isAppMenuColumnVisible
+          ? isHideMenuLabels
+            ? "icons"
+            : "labels"
+          : undefined}
         onclick={() =>
           closeTopLayer({ isIncludePanel: false, isIncludeFullScreen: false })}
-      >
-        <Icon icon="cross" size={Size.md} />
-      </button>
+      />
     {:else}
       {@render leftLogo?.()}
     {/if}
