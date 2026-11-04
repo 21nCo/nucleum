@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Snippet } from "svelte";
+  import { onDestroy, type Snippet } from "svelte";
   import { toSvelteDataStore, toSvelteStore } from "@datafn/svelte";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
@@ -49,6 +49,8 @@
   let targetSectionId = $state<string | null>(null);
   let editingSectionId = $state<string | null>(null);
   let cancelScroll: (() => void) | undefined;
+
+  onDestroy(() => cancelScroll?.());
 
   const resourceIds = $derived(
     [
