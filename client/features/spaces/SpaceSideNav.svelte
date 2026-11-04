@@ -67,6 +67,7 @@
   let isRootDragOver = $state(false);
   let contentElement = $state<HTMLElement>();
   let scrollRequest = 0;
+  let headingScrollTimer: ReturnType<typeof setTimeout> | undefined;
   let releaseDnDPage: (() => void) | undefined;
 
   const resourceIds = $derived(
@@ -114,6 +115,8 @@
 
   onDestroy(() => {
     releaseDnDPage?.();
+    scrollRequest++;
+    clearTimeout(headingScrollTimer);
   });
 
   $effect(() => {
@@ -180,7 +183,8 @@
         settledPasses += 1;
         if (settledPasses >= 10) return;
       }
-      if (Date.now() < deadline) setTimeout(attempt, element ? 250 : 100);
+      if (Date.now() < deadline)
+        headingScrollTimer = setTimeout(attempt, element ? 250 : 100);
     };
     attempt();
   }
