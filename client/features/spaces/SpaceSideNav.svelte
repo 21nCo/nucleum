@@ -235,6 +235,7 @@
 
   async function addSection(parentId?: string) {
     const id = await store.addSection({ label: "New section", parentId });
+    if (!id) return;
     if (parentId) {
       const next = new Set(collapsedIds);
       next.delete(parentId);
@@ -255,6 +256,7 @@
       avatar: record.avatar,
       parentId
     });
+    if (!newId) return;
     if (parentId) {
       const next = new Set(collapsedIds);
       next.delete(parentId);

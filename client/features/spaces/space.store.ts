@@ -1,9 +1,6 @@
 import { get, writable } from "svelte/store";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import {
-  AccessMode,
-  ResourceAccessPoint
-} from "@nucleum/datafn/resource.type";
+import { AccessMode, ResourceAccessPoint } from "@nucleum/datafn/resource.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
@@ -83,13 +80,16 @@ export class ActiveSpaceStore {
       );
     } catch (error) {
       logger.error({ at: "ActiveSpaceStore.mutate", error, id: this.id });
+      toasts.error("Failed to save space");
       await this.init();
+      return false;
     }
+    return true;
   }
 
   private async persistItems(items: ISpaceNavItem[]) {
     this.update((prev) => (prev ? { ...prev, items } : prev));
-    await this.mutate({ items });
+    return this.mutate({ items });
   }
 
   /** Loads the record, keeping open-state flags across reloads. */
@@ -155,32 +155,36 @@ export class ActiveSpaceStore {
 
   async updateLabel(label: string) {
     this.update((prev) => (prev ? { ...prev, label } : prev));
-    await this.mutate({ label });
+    return this.mutate({ label });
   }
 
   async updateView(view: SpaceView) {
     this.update((prev) => (prev ? { ...prev, view } : prev));
-    await this.mutate({ view });
+    return this.mutate({ view });
   }
 
-  /** Adds a section at the root or inside another section and returns its id. */
-  async addSection(params: { label: string; parentId?: string; index?: number }) {
+  /** Adds a section at the root or inside another section and returns its id, or undefined when saving fails. */
+  async addSection(params: {
+    label: string;
+    parentId?: string;
+    index?: number;
+  }) {
     const section: ISpaceNavItem = {
       id: generateSimpleRandomId(),
       type: SpaceNavItemType.SECTION,
       label: params.label,
       children: []
     };
-    await this.persistItems(
+    const isSaved = await this.persistItems(
       insertItem(this.readItems(), section, {
         parentId: params.parentId,
         index: params.index
       })
     );
-    return section.id;
+    return isSaved ? section.id : undefined;
   }
 
-  /** Adds a record, capturing its label and avatar as a fallback, and returns the item id. */
+  /** Adds a record, capturing its label and avatar as a fallback, and returns the item id, or undefined when saving fails. */
   async addResource(params: {
     resourceId: IRecordId;
     label?: string;
@@ -196,35 +200,35 @@ export class ActiveSpaceStore {
       resourceId: params.resourceId,
       resourceType: determineResourceType(params.resourceId)
     };
-    await this.persistItems(
+    const isSaved = await this.persistItems(
       insertItem(this.readItems(), item, {
         parentId: params.parentId,
         index: params.index
       })
     );
-    return item.id;
+    return isSaved ? item.id : undefined;
   }
 
   async updateNavItemLabel(itemId: string, label: string) {
-    await this.persistItems(updateItemLabel(this.readItems(), itemId, label));
+    return this.persistItems(updateItemLabel(this.readItems(), itemId, label));
   }
 
   async deleteNavItem(itemId: string) {
-    await this.persistItems(removeItemById(this.readItems(), itemId));
+    return this.persistItems(removeItemById(this.readItems(), itemId));
   }
 
   async moveNavItem(itemId: string, direction: "up" | "down") {
-    await this.persistItems(
+    return this.persistItems(
       moveItem(this.readItems(), itemId, direction === "up" ? -1 : 1)
     );
   }
 
   async indentNavItem(itemId: string) {
-    await this.persistItems(indentItem(this.readItems(), itemId));
+    return this.persistItems(indentItem(this.readItems(), itemId));
   }
 
   async outdentNavItem(itemId: string) {
-    await this.persistItems(outdentItem(this.readItems(), itemId));
+    return this.persistItems(outdentItem(this.readItems(), itemId));
   }
 
   async moveNavItemRelative(params: {
@@ -232,7 +236,7 @@ export class ActiveSpaceStore {
     targetId: string;
     position: SpaceDropPosition;
   }) {
-    await this.persistItems(
+    return this.persistItems(
       moveItemToPosition(
         this.readItems(),
         params.itemId,
@@ -247,7 +251,7 @@ export class ActiveSpaceStore {
     parentId?: string;
     index?: number;
   }) {
-    await this.persistItems(
+    return this.persistItems(
       moveItemToParent(
         this.readItems(),
         params.itemId,
