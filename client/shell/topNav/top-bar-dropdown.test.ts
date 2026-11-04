@@ -58,4 +58,24 @@ describe("topBarDropdown", () => {
     action.destroy();
     modalEvent.reset();
   });
+
+  it("closes on a pointer down outside and stays open on one inside", () => {
+    const { inside, onDismiss, action } = mountDropdown();
+    inside.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(onDismiss).not.toHaveBeenCalled();
+    document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    action.destroy();
+  });
+
+  it("ignores outside events once updated to closed", () => {
+    const { onDismiss, action } = mountDropdown();
+    action.update({ isOpen: false, onDismiss });
+    document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+    );
+    expect(onDismiss).not.toHaveBeenCalled();
+    action.destroy();
+  });
 });

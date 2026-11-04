@@ -60,6 +60,7 @@ describe("accessTrail adopting the stored trail", () => {
     accessTrail.sync("node:a", recorded);
     const trail = accessTrail.get().current!;
     expect(activeNode()?.key).not.toBe("a");
+    expect(activeNode()?.key).toBe(recorded?.node);
     expect(trail.nodes[resolveAccessTrailParent(trail)!].key).toBe("b");
   });
 });
