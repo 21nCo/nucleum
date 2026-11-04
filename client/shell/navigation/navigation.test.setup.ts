@@ -36,6 +36,23 @@ export function accessTrailStoreStub() {
   };
 }
 
+/** DataFn store whose KV store keeps nothing, without a runtime. */
+export function kvDatafnStoreStub() {
+  return {
+    datafn: {
+      kv: {
+        get: async () => null,
+        set: async () => ({ ok: true }),
+        signal: () => ({
+          subscribe: () => () => undefined,
+          get: () => undefined
+        })
+      }
+    },
+    datafnRuntime: writable(undefined)
+  };
+}
+
 /**
  * Loads navigation with UI state, DataFn, navigator history and the access
  * trail stubbed and returns it.

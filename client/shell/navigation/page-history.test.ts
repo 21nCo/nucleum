@@ -1,78 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { navigation } from "./navigation";
+import { activeNode, createTestHistory } from "./navigation-history.test.setup";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
 import { resolveAccessTrailParent } from "@nucleum/shell/navigator/access-trail";
 import view from "@21n/ui/environment/view.store";
 
-vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
-  uiState: { getState: () => [], setState: () => undefined }
-}));
-vi.mock("@nucleum/datafn/datafn.store", async () => {
-  const { writable } = await import("svelte/store");
-  return {
-    datafn: {
-      kv: {
-        get: async () => null,
-        set: async () => ({ ok: true }),
-        signal: () => ({
-          subscribe: () => () => undefined,
-          get: () => undefined
-        })
-      }
-    },
-    datafnRuntime: writable(undefined)
-  };
-});
+vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", async () =>
+  (await import("./navigation.test.setup")).uiStateStoreStub()
+);
+vi.mock("@nucleum/datafn/datafn.store", async () =>
+  (await import("./navigation.test.setup")).kvDatafnStoreStub()
+);
 
-type Entry = { url: string; state?: unknown };
-
-let entries: Entry[] = [];
-let index = 0;
+const history = createTestHistory();
+const entries = history.entries;
 let historyBack: ReturnType<typeof vi.spyOn>;
 
-function show() {
-  const entry = entries[index];
-  window.history.replaceState({}, "", entry.url);
-  navigation.syncAccessTrail(
-    new URL(entry.url, window.location.origin).searchParams.get("page") ??
-      undefined,
-    entry.state
-  );
-}
-
-function go(delta: number) {
-  index += delta;
-  show();
-}
-
-function activeNode() {
-  const trail = accessTrail.get().current;
-  return trail ? { trail, node: trail.nodes[trail.active] } : undefined;
-}
-
 beforeEach(() => {
-  entries = [{ url: "/home" }];
-  index = 0;
-  show();
-  vi.spyOn(navigation, "gotoPath").mockImplementation(
-    async (path: string, props) => {
-      const url = new URL(path, window.location.origin);
-      const href = url.pathname + url.search;
-      const state = props?.historyState
-        ? { accessTrail: props.historyState }
-        : undefined;
-      if (props?.replaceState) {
-        entries[index] = { url: href, state: state ?? entries[index].state };
-      } else {
-        entries = [...entries.slice(0, index + 1), { url: href, state }];
-        index += 1;
-      }
-      show();
-    }
-  );
-  historyBack = vi
-    .spyOn(window.history, "back")
-    .mockImplementation(() => go(-1));
+  historyBack = history.install();
 });
 afterEach(() => {
   vi.restoreAllMocks();
@@ -80,10 +25,7 @@ afterEach(() => {
 });
 
 function openNavigator() {
-  const url = new URL(window.location.href);
-  url.searchParams.set("panel", "navigator");
-  entries[index] = { ...entries[index], url: url.pathname + url.search };
-  show();
+  history.setSearchParam("panel", "navigator");
 }
 
 function panel() {
@@ -114,7 +56,7 @@ describe("page history and access trails", () => {
     });
     expect(historyBack).not.toHaveBeenCalled();
 
-    go(-1);
+    history.go(-1);
     expect(activeNode()?.node.id).toBe("node:b");
     expect(navigation.backInTrail()).toBe(true);
     expect(historyBack).toHaveBeenCalledTimes(1);
@@ -128,7 +70,7 @@ describe("page history and access trails", () => {
     navigation.openResource("node:a", "page" as never);
     expect(activeNode()?.node.key).not.toBe(first);
 
-    go(-2);
+    history.go(-2);
     expect(activeNode()?.node.key).toBe(first);
     navigation.openResource("node:c", "page" as never);
     const { trail, node } = activeNode()!;
@@ -139,7 +81,7 @@ describe("page history and access trails", () => {
   it("records the page it came from when the navigator opens a trail node", () => {
     navigation.openResource("node:a", "page" as never);
     navigation.openResource("node:b", "page" as never);
-    go(-1);
+    history.go(-1);
     const trail = accessTrail.get().current!;
     navigation.openTrailNode(
       trail.nodes.findIndex((node) => node.id === "node:b")
@@ -181,12 +123,15 @@ describe("page history and access trails", () => {
     expect(historyBack).toHaveBeenCalledTimes(1);
     expect(accessTrail.get().current).toBeUndefined();
 
-    go(1);
+    history.go(1);
     const recreated = activeNode()!.node.key;
     expect(recreated).not.toBe(discarded);
     expect(
-      (entries[index].state as { accessTrail: { position: { node: string } } })
-        .accessTrail.position.node
+      (
+        history.current().state as {
+          accessTrail: { position: { node: string } };
+        }
+      ).accessTrail.position.node
     ).toBe(recreated);
 
     navigation.openResource("node:b", "page" as never);

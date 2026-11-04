@@ -1,21 +1,20 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AccessTrails } from "./access-trail";
 
-const kv = vi.hoisted(() => ({
-  get: vi.fn(),
-  set: vi.fn(async () => ({ ok: true }))
-}));
+const kv = await vi.hoisted(async () =>
+  (await import("./access-trail-store.test.setup")).createKvMock()
+);
 
-vi.mock("@nucleum/datafn/datafn.store", async () => {
-  const { writable } = await import("svelte/store");
-  return {
-    datafn: { kv },
-    datafnRuntime: writable({ namespace: "account" })
-  };
-});
-vi.mock("@nucleum/client/runtime/logging/logger", () => ({
-  logger: { log: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() }
-}));
+vi.mock("@nucleum/datafn/datafn.store", async () =>
+  (await import("./access-trail-store.test.setup")).datafnStoreWithKv(
+    kv,
+    "account"
+  )
+);
+
+vi.mock("@nucleum/client/runtime/logging/logger", async () =>
+  (await import("./access-trail-store.test.setup")).loggerStub()
+);
 
 import { accessTrail } from "./access-trail.store";
 

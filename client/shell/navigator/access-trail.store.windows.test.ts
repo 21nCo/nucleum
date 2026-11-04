@@ -20,16 +20,16 @@ const storage = vi.hoisted(() => {
   };
 });
 
-vi.mock("@nucleum/datafn/datafn.store", async () => {
-  const { writable } = await import("svelte/store");
-  return {
-    datafn: { kv: storage.kv },
-    datafnRuntime: writable({ namespace: "account" })
-  };
-});
-vi.mock("@nucleum/client/runtime/logging/logger", () => ({
-  logger: { log: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() }
-}));
+vi.mock("@nucleum/datafn/datafn.store", async () =>
+  (await import("./access-trail-store.test.setup")).datafnStoreWithKv(
+    storage.kv,
+    "account"
+  )
+);
+
+vi.mock("@nucleum/client/runtime/logging/logger", async () =>
+  (await import("./access-trail-store.test.setup")).loggerStub()
+);
 
 const held = new Map<string, Promise<unknown>>();
 const locks = {

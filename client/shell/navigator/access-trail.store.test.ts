@@ -1,28 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 
-const load = vi.hoisted(() => {
-  let resolve: (value: unknown) => void = () => undefined;
-  const promise = new Promise((done) => {
-    resolve = done;
-  });
-  return { promise, resolve: (value: unknown) => resolve(value) };
-});
+const load = await vi.hoisted(async () =>
+  (await import("./access-trail-store.test.setup")).createPendingLoad()
+);
 
-vi.mock("@nucleum/datafn/datafn.store", async () => {
-  const { writable } = await import("svelte/store");
-  return {
-    datafn: {
-      kv: {
-        get: () => load.promise,
-        set: async () => ({ ok: true })
-      }
-    },
-    datafnRuntime: writable(undefined)
-  };
-});
-vi.mock("@nucleum/client/runtime/logging/logger", () => ({
-  logger: { log: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() }
-}));
+vi.mock("@nucleum/datafn/datafn.store", async () =>
+  (await import("./access-trail-store.test.setup")).datafnStoreWithKv({
+    get: () => load.promise,
+    set: async () => ({ ok: true })
+  })
+);
+
+vi.mock("@nucleum/client/runtime/logging/logger", async () =>
+  (await import("./access-trail-store.test.setup")).loggerStub()
+);
 
 import { accessTrail } from "./access-trail.store";
 
