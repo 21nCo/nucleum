@@ -42,6 +42,7 @@ let failedFlushes = 0;
 let loadGeneration = 0;
 let loadedNamespace: string | null = null;
 let isWatchingRuntime = false;
+let storedSnapshot: AccessTrails = createAccessTrails();
 
 function resolveNamespace() {
   return get(datafnRuntime)?.namespace ?? null;
@@ -64,6 +65,7 @@ function watchRuntime() {
     queued = [];
     aliases.clear();
     loadState = "idle";
+    storedSnapshot = createAccessTrails();
     trailsLocal.set(createAccessTrails());
     ensureLoaded();
   });
@@ -76,7 +78,7 @@ function ensureLoaded() {
   const generation = ++loadGeneration;
   watchRuntime();
   if (typeof window !== "undefined") {
-    window.addEventListener("pagehide", flushAccessTrails);
+    window.addEventListener("pagehide", flushOnPageHide);
   }
   loadStored(generation, 0);
 }
@@ -108,6 +110,7 @@ function loadStored(generation: number, attempt: number) {
 
 function adoptStored(stored: AccessTrails | null | undefined) {
   const base = normalizeAccessTrails(stored);
+  storedSnapshot = base;
   const next = queued.reduce((trails, item) => {
     const replayed = item.change(trails);
     const position = resolveAccessTrailPosition(replayed);
@@ -139,32 +142,67 @@ function scheduleFlush() {
  * here, while this window keeps its own current trail.
  */
 function flushAccessTrails() {
-  if (flushTimer) clearTimeout(flushTimer);
-  flushTimer = undefined;
-  if (!isDirty || loadState !== "loaded") return;
-  if (resolveNamespace() !== loadedNamespace) return;
-  const generation = loadGeneration;
-  isDirty = false;
+  const generation = beginFlush();
+  if (generation === undefined) return;
   void Promise.resolve()
     .then(() => datafn.kv.get<AccessTrails>(Resource.accessTrails))
     .then((stored) => {
       if (generation !== loadGeneration) return undefined;
-      const merged = mergeAccessTrails(
-        get(trailsLocal),
-        normalizeAccessTrails(stored)
-      );
-      trailsLocal.set(merged);
-      return datafn.kv.set(Resource.accessTrails, merged);
+      storedSnapshot = normalizeAccessTrails(stored);
+      return writeMerged();
     })
-    .then((result) => {
-      if (!result) return;
-      if (result.ok) {
-        if (generation === loadGeneration) failedFlushes = 0;
-        return;
-      }
-      retryFlush(generation, result.error);
-    })
+    .then((result) => settleFlush(generation, result))
     .catch((error) => retryFlush(generation, error));
+}
+
+/**
+ * Saves the trails as the page is hidden or unloaded, without reading the
+ * stored record first, so the write starts before the page goes away. The
+ * trails are merged with the stored record as last read instead.
+ */
+function flushOnPageHide() {
+  const generation = beginFlush();
+  if (generation === undefined) return;
+  let write: ReturnType<typeof writeMerged>;
+  try {
+    write = writeMerged();
+  } catch (error) {
+    retryFlush(generation, error);
+    return;
+  }
+  void Promise.resolve(write)
+    .then((result) => settleFlush(generation, result))
+    .catch((error) => retryFlush(generation, error));
+}
+
+/** Starts a save when one is due and returns the load generation it belongs to. */
+function beginFlush() {
+  if (flushTimer) clearTimeout(flushTimer);
+  flushTimer = undefined;
+  if (!isDirty || loadState !== "loaded") return undefined;
+  if (resolveNamespace() !== loadedNamespace) return undefined;
+  isDirty = false;
+  return loadGeneration;
+}
+
+/** Merges the trails with the stored record as last read and writes them. */
+function writeMerged() {
+  const merged = mergeAccessTrails(get(trailsLocal), storedSnapshot);
+  trailsLocal.set(merged);
+  storedSnapshot = merged;
+  return datafn.kv.set(Resource.accessTrails, merged);
+}
+
+function settleFlush(
+  generation: number,
+  result: Awaited<ReturnType<typeof writeMerged>> | undefined
+) {
+  if (!result) return;
+  if (result.ok) {
+    if (generation === loadGeneration) failedFlushes = 0;
+    return;
+  }
+  retryFlush(generation, result.error);
 }
 
 /**
