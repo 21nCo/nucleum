@@ -6,6 +6,7 @@ import type { ISelectItem } from "@21n/ui/elements/select/select.type";
 import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import {
   createPageViewActions,
+  resolvePageRoute,
   type PageViewSegment
 } from "@nucleum/shared-state/commands/page-view-actions";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
@@ -107,6 +108,24 @@ export function parseLibraryPath(pathname: string): LibraryRoute {
     resource,
     subType: resource ? parseLibrarySubType(resource, subTypeSlug) : undefined
   };
+}
+
+/**
+ * Whether a library rendered for the current page follows and rewrites the address
+ * bar: true only when the URL path resolves to that page. A library page painted
+ * while the address bar shows another page, such as in a command tab, keeps its
+ * view locally.
+ */
+export function isLibraryPathRouted(
+  actions: IAction[],
+  currentPage: IAction | null | undefined,
+  pathname: string
+): boolean {
+  if (!currentPage) return false;
+  const route = resolvePageRoute(actions, pathname.replace(/^\/+|\/+$/g, ""));
+  return (
+    route?.action.action === currentPage.action && route.subPath !== undefined
+  );
 }
 
 /**

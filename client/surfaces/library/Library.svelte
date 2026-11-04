@@ -40,6 +40,7 @@
     parseLibraryPath,
     parseLibraryResource,
     parseLibrarySubType,
+    isLibraryPathRouted,
     replaceLibraryPath,
     resolveLibraryFallbackSubType
   } from "@nucleum/surfaces/library/library-route";
@@ -47,19 +48,27 @@
   let {
     resources = [],
     subPath = undefined,
-    isRouted = true
+    isRouted = undefined
   }: {
     resources?: Resource[];
     subPath?: string[];
     isRouted?: boolean;
   } = $props();
 
+  const routed = $derived(
+    isRouted ??
+      isLibraryPathRouted(
+        $appStore.actions,
+        $appStore.currentComponent,
+        $page.url.pathname
+      )
+  );
   let selectedResource = $state<Resource>(Resource.unknown);
   let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
   const subType = $derived(
     selectedResource === Resource.unknown
       ? undefined
-      : ((isRouted
+      : ((routed
           ? parseLibraryPath($page.url.pathname).subType
           : parseLibrarySubType(selectedResource, localSubPath?.[1])) ??
           resolveLibraryFallbackSubType(selectedResource))
@@ -70,7 +79,7 @@
     nextSubType?: string,
     options?: { isResetFilters?: boolean }
   ) {
-    if (isRouted) {
+    if (routed) {
       replaceLibraryPath(resource, nextSubType, options);
       return;
     }
@@ -146,7 +155,7 @@
 
   $effect.pre(() => {
     const next = subPath;
-    if (isRouted) return;
+    if (routed) return;
     untrack(() => {
       localSubPath = next;
       syncSelectedResource(parseLibraryResource(next?.[0]));
@@ -154,7 +163,7 @@
   });
 
   $effect(() => {
-    if (!isRouted || !subPath) return;
+    if (!routed || !subPath) return;
     const segments = subPath;
     untrack(() => canonicalizeRoutedPath(segments));
   });
@@ -178,11 +187,12 @@
   }
 
   onMount(() => {
-    if (!isRouted) return;
     const syncFromWindow = () => {
+      if (!routed) return;
       syncSelectedResource(parseLibraryPath(window.location.pathname).resource);
     };
     const pageSub = page.subscribe(async (p) => {
+      if (!routed) return;
       syncSelectedResource(parseLibraryPath(p.url.pathname).resource);
     });
     window.addEventListener(GlobalEvent.CUSTOM_NAVIGATION, syncFromWindow);

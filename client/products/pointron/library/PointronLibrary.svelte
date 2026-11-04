@@ -7,7 +7,7 @@
 
   let {
     subPath = undefined,
-    isRouted = true
+    isRouted = undefined
   }: { subPath?: string[]; isRouted?: boolean } = $props();
 
   const libraryResources = resolveProductConfig(Product.POINTRON).resources
