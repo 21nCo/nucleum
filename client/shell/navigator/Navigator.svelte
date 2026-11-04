@@ -541,7 +541,10 @@
           <div class="flex flex-col px-3 py-2 border-b border-brs3">
             {@render trailTree(
               currentTrail,
-              (index) => navigation.openTrailNode(index),
+              (index) =>
+                navigation.openTrailNode(index, {
+                  isKeepNavigator: isKeepOpen
+                }),
               currentPageId ? currentTrail.active : undefined
             )}
           </div>
@@ -614,7 +617,10 @@
                       isInterimTab={true}
                       isTrail
                       isTypeIcon
-                      onClick={() => navigation.resumeTrail(trail.key, 0)}
+                      onClick={() =>
+                        navigation.resumeTrail(trail.key, 0, {
+                          isKeepNavigator: isKeepOpen
+                        })}
                     />
                   </div>
                   {#if trail.nodes.length > 1}
@@ -636,7 +642,9 @@
                 {#if isExpanded}
                   <div class="pl-3">
                     {@render trailTree(trail, (index) =>
-                      navigation.resumeTrail(trail.key, index)
+                      navigation.resumeTrail(trail.key, index, {
+                        isKeepNavigator: isKeepOpen
+                      })
                     )}
                   </div>
                 {/if}

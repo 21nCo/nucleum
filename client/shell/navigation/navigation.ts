@@ -254,8 +254,11 @@ function areNavigationUrlsEqual(left: URL, right: URL) {
 
 /** URL, history, and resource navigation owned by the application layout. */
 export const navigation = {
-  /** Opens a node of the current access trail. */
-  openTrailNode(index: number) {
+  /**
+   * Opens a node of the current access trail. `isKeepNavigator` decides
+   * whether an open navigator stays open after the node opens.
+   */
+  openTrailNode(index: number, params?: { isKeepNavigator?: boolean }) {
     const trail = accessTrail.get().current;
     const node = trail?.nodes[index];
     if (!node) return;
@@ -263,14 +266,20 @@ export const navigation = {
     accessTrail.select(node.key);
     navigation.openResource(node.id, AccessMode.PAGE, {
       trail: "select",
-      from
+      from,
+      isKeepNavigator: params?.isKeepNavigator
     });
   },
   /**
    * Makes a recent trail current again and opens one of its resources, by
    * default the one that was active when the trail was left.
+   * `isKeepNavigator` decides whether an open navigator stays open.
    */
-  resumeTrail(key: string, index?: number) {
+  resumeTrail(
+    key: string,
+    index?: number,
+    params?: { isKeepNavigator?: boolean }
+  ) {
     const trail = accessTrail.get().recent.find((item) => item.key === key);
     const nodeIndex = index ?? trail?.active ?? 0;
     const node = trail?.nodes[nodeIndex];
@@ -280,7 +289,8 @@ export const navigation = {
     accessTrail.select(node.key);
     navigation.openResource(node.id, AccessMode.PAGE, {
       trail: "select",
-      from
+      from,
+      isKeepNavigator: params?.isKeepNavigator
     });
   },
   /**
@@ -682,7 +692,10 @@ export const navigation = {
        * opening; otherwise read from the current history entry or the trail.
        */
       from?: AccessTrailPosition;
-      /** Keeps the navigator open when the page starts a trail from it. */
+      /**
+       * Whether an open navigator stays open after the page opens. When left
+       * out, the navigator closes only when the page starts a new trail.
+       */
       isKeepNavigator?: boolean;
     }
   ) => {
@@ -758,12 +771,16 @@ export const navigation = {
               : undefined
           );
         }
-        isCloseNavigator = !params?.isKeepNavigator && isNavigatorOpen;
+        isCloseNavigator = params?.isKeepNavigator === undefined;
       } else if (intent === "select") {
         isCloseNavigator = isNavigatorCoveringPage(navigatorLayer);
       } else if (intent === "extend") {
         accessTrail.extend(id.toString());
       }
+      if (params?.isKeepNavigator !== undefined) {
+        isCloseNavigator = !params.isKeepNavigator;
+      }
+      isCloseNavigator = isCloseNavigator && isNavigatorOpen;
       const position = accessTrail.position();
       const isOtherEntry =
         openPage !== id.toString() ||
