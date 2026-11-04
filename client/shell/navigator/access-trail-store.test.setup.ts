@@ -2,9 +2,8 @@ import { vi } from "vitest";
 import { writable } from "svelte/store";
 
 /**
- * Stubs for the access trail store tests. `vi.mock` factories and `vi.hoisted`
- * blocks import this module asynchronously, and it imports nothing the tests
- * mock.
+ * Stubs for the access trail store tests. It imports nothing the tests mock,
+ * so the store it loads reads the stubs.
  */
 
 /** KV store mock whose reads return nothing until a test sets them and whose writes succeed. */
@@ -37,4 +36,17 @@ export function loggerStub() {
   return {
     logger: { log: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() }
   };
+}
+
+/**
+ * Loads the access trail store with its DataFn store backed by `kv` and a
+ * silent logger, and returns the store.
+ */
+export async function loadAccessTrailStore(kv: unknown, namespace?: string) {
+  vi.doMock("@nucleum/datafn/datafn.store", () =>
+    datafnStoreWithKv(kv, namespace)
+  );
+  vi.doMock("@nucleum/client/runtime/logging/logger", loggerStub);
+  return (await import("@nucleum/shell/navigator/access-trail.store"))
+    .accessTrail;
 }

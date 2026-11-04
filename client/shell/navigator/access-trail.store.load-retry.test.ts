@@ -1,21 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  createKvMock,
+  loadAccessTrailStore
+} from "./access-trail-store.test.setup";
 
-const kv = await vi.hoisted(async () =>
-  (await import("./access-trail-store.test.setup")).createKvMock()
-);
-
-vi.mock("@nucleum/datafn/datafn.store", async () =>
-  (await import("./access-trail-store.test.setup")).datafnStoreWithKv(
-    kv,
-    "account"
-  )
-);
-
-vi.mock("@nucleum/client/runtime/logging/logger", async () =>
-  (await import("./access-trail-store.test.setup")).loggerStub()
-);
-
-import { accessTrail } from "./access-trail.store";
+const kv = createKvMock();
+const accessTrail = await loadAccessTrailStore(kv, "account");
 
 const stored = {
   version: 1,

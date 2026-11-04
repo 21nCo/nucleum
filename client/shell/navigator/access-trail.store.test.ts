@@ -1,21 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import {
+  createPendingLoad,
+  loadAccessTrailStore
+} from "./access-trail-store.test.setup";
 
-const load = await vi.hoisted(async () =>
-  (await import("./access-trail-store.test.setup")).createPendingLoad()
-);
-
-vi.mock("@nucleum/datafn/datafn.store", async () =>
-  (await import("./access-trail-store.test.setup")).datafnStoreWithKv({
-    get: () => load.promise,
-    set: async () => ({ ok: true })
-  })
-);
-
-vi.mock("@nucleum/client/runtime/logging/logger", async () =>
-  (await import("./access-trail-store.test.setup")).loggerStub()
-);
-
-import { accessTrail } from "./access-trail.store";
+const load = createPendingLoad();
+const accessTrail = await loadAccessTrailStore({
+  get: () => load.promise,
+  set: async () => ({ ok: true })
+});
 
 describe("accessTrail while stored trails load", () => {
   it("keeps the trail key recorded before the load finishes", async () => {

@@ -1,22 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { loadAccessTrailStore } from "./access-trail-store.test.setup";
 
-const kv = vi.hoisted(() => ({
+const kv = {
   get: vi.fn(async () => null),
   set: vi.fn()
-}));
-
-vi.mock("@nucleum/datafn/datafn.store", async () =>
-  (await import("./access-trail-store.test.setup")).datafnStoreWithKv(
-    kv,
-    "account"
-  )
-);
-
-vi.mock("@nucleum/client/runtime/logging/logger", async () =>
-  (await import("./access-trail-store.test.setup")).loggerStub()
-);
-
-import { accessTrail } from "./access-trail.store";
+};
+const accessTrail = await loadAccessTrailStore(kv, "account");
 
 afterEach(() => {
   vi.useRealTimers();

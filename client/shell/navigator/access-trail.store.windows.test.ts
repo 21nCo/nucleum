@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { loadAccessTrailStore } from "./access-trail-store.test.setup";
 import type { AccessTrails } from "./access-trail";
 
-const storage = vi.hoisted(() => {
+const storage = (() => {
   const state: { value: unknown } = { value: null };
   const pause = () => new Promise((resolve) => setTimeout(resolve, 10));
   return {
@@ -18,18 +19,7 @@ const storage = vi.hoisted(() => {
       }
     }
   };
-});
-
-vi.mock("@nucleum/datafn/datafn.store", async () =>
-  (await import("./access-trail-store.test.setup")).datafnStoreWithKv(
-    storage.kv,
-    "account"
-  )
-);
-
-vi.mock("@nucleum/client/runtime/logging/logger", async () =>
-  (await import("./access-trail-store.test.setup")).loggerStub()
-);
+})();
 
 const held = new Map<string, Promise<unknown>>();
 const locks = {
@@ -45,7 +35,7 @@ const locks = {
 
 async function openWindow() {
   vi.resetModules();
-  return (await import("./access-trail.store")).accessTrail;
+  return loadAccessTrailStore(storage.kv, "account");
 }
 
 beforeEach(() => {
