@@ -70,7 +70,6 @@ const recordSpecificSearchParams = [
   /-tab$/,
   /-task$/,
   /-nodeView$/,
-  /-focus$/,
   AppSearchParam.EDIT,
   AppSearchParam.VIEW,
   AppSearchParam.BESIDE_PAGE_AT,
@@ -80,6 +79,33 @@ const recordSpecificSearchParams = [
   AppSearchParam.SETTING,
   AccessMode.BESIDE_PAGE
 ];
+
+const FOCUS_SEARCH_PARAM_SUFFIX = "-focus";
+
+/**
+ * Lists the focus params of records that will no longer be open once the
+ * record in `replacedParam` changes, so records that stay open keep their focus.
+ */
+function resolveClosedFocusParams(url: URL, replacedParam: string) {
+  const openPrefixes = new Set<string>();
+  url.searchParams.forEach((value, key) => {
+    if (key !== replacedParam && isRecordId(value)) {
+      openPrefixes.add(
+        navigation.resolveRecordSpecificSearchParamPrefix(value)
+      );
+    }
+  });
+  const closed: string[] = [];
+  url.searchParams.forEach((_, key) => {
+    if (
+      key.endsWith(FOCUS_SEARCH_PARAM_SUFFIX) &&
+      !openPrefixes.has(key.slice(0, -FOCUS_SEARCH_PARAM_SUFFIX.length))
+    ) {
+      closed.push(key);
+    }
+  });
+  return closed;
+}
 
 /** Compare navigation targets without treating equivalent query encodings as changes. */
 function areNavigationUrlsEqual(left: URL, right: URL) {
@@ -482,6 +508,11 @@ export const navigation = {
         isPreventRefresh: true,
         url
       }) ?? url;
+    url =
+      navigation.toggleSearchParam(
+        resolveClosedFocusParams(url, accessMode ?? AppSearchParam.SELECTED),
+        { isPreventRefresh: true, url }
+      ) ?? url;
     navigation.toggleSearchParam(
       {
         ...(accessMode
