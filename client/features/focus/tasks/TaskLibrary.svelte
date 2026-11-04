@@ -54,6 +54,10 @@
   import { intersection } from "@21n/ui/actions/intersection.action";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import {
+    routeSubTypeSwitcherParams,
+    type SubTypeSwitcherParams
+  } from "@nucleum/features/records/subtype-switcher-params";
   import { dragSelection } from "@21n/ui/actions/dragSelection.action";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
@@ -189,26 +193,23 @@
     viewDate = new Date();
   }
 
-  function onSearchParamsChange(
-    params: string[] | Record<string, string | boolean | null>
-  ) {
-    if (
-      objectiveId ||
-      Array.isArray(params) ||
-      !(AppSearchParam.TYPE in params)
-    ) {
+  function onSearchParamsChange(params: SubTypeSwitcherParams) {
+    if (objectiveId) {
       navigation.toggleSearchParam(params);
       return;
     }
-    const { [AppSearchParam.TYPE]: nextSubType, ...rest } = params;
-    if (Object.keys(rest).length > 0) navigation.toggleSearchParam(rest);
-    if (typeof nextSubType !== "string") return;
-    if (onSubTypeChange) {
-      onSubTypeChange(nextSubType);
-      return;
-    }
-    selectSubType(nextSubType);
-    refresh();
+    routeSubTypeSwitcherParams(
+      params,
+      (nextSubType) => {
+        if (onSubTypeChange) {
+          onSubTypeChange(nextSubType);
+          return;
+        }
+        selectSubType(nextSubType);
+        refresh();
+      },
+      (rest) => navigation.toggleSearchParam(rest)
+    );
   }
 
   $effect(() => {

@@ -69,6 +69,10 @@
   import { isCustomLibrary } from "@nucleum/shared-state/resources/library.utils";
   import LinkTagsControlPanel from "@nucleum/features/memory/linking/LinkTagsControlPanel.svelte";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import {
+    routeSubTypeSwitcherParams,
+    type SubTypeSwitcherParams
+  } from "@nucleum/features/records/subtype-switcher-params";
   import Text from "@21n/ui/elements/text/Text.svelte";
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { dragSelection } from "@21n/ui/actions/dragSelection.action";
@@ -570,22 +574,19 @@
     if (!isCustom) untrack(() => refresh());
   });
 
-  function onSearchParamsChange(
-    params: string[] | Record<string, string | boolean | null>
-  ) {
-    if (Array.isArray(params) || !(AppSearchParam.TYPE in params)) {
-      navigation.toggleSearchParam(params);
-      return;
-    }
-    const { [AppSearchParam.TYPE]: nextSubType, ...rest } = params;
-    if (Object.keys(rest).length > 0) navigation.toggleSearchParam(rest);
-    if (typeof nextSubType !== "string") return;
-    if (onSubTypeChange) {
-      onSubTypeChange(nextSubType);
-      return;
-    }
-    selectedSubType = nextSubType as SubType;
-    refresh();
+  function onSearchParamsChange(params: SubTypeSwitcherParams) {
+    routeSubTypeSwitcherParams(
+      params,
+      (nextSubType) => {
+        if (onSubTypeChange) {
+          onSubTypeChange(nextSubType);
+          return;
+        }
+        selectedSubType = nextSubType as SubType;
+        refresh();
+      },
+      (rest) => navigation.toggleSearchParam(rest)
+    );
   }
 
 </script>
