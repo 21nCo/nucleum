@@ -67,6 +67,63 @@
   }
 </script>
 
+{#snippet panelSwitcher(size: Size, isIconOnlyMode: boolean)}
+  <BoxSwitcher
+    isTablist={true}
+    isExpandOnActiveForIcon={true}
+    options={panels}
+    {size}
+    isAccentColor={true}
+    isActiveIndicatorOnTop={false}
+    selected={$resourceStore.panel}
+    onSelect={(e) => $resourceStore.switchPanel(e.detail)}
+    {isIconOnlyMode}
+  />
+{/snippet}
+
+{#snippet maximizeButton()}
+  <BoxButton
+    icon={isMaximized ? "exitfullscreen" : "fullscreen"}
+    tooltip={isMaximized ? "Minimize" : "Maximize"}
+    width="px-3"
+    parentBgIndex={2}
+    onclick={() => {
+      requireResourcePanelHost().maximize(accessMode, $resourceStore.id);
+    }}
+  />
+{/snippet}
+
+{#snippet actionsMenu(parentBgIndex: number)}
+  {#if contextMenuResolver !== undefined}
+    <div class="flex items-center h-full">
+      <ContextMenuAction
+        testId="resource-record-context-menu"
+        menuResolver={resolveContextMenu}
+        size={Size.lg}
+        isBoxed={true}
+        {parentBgIndex}
+        class="h-full w-10"
+        id="resourcePanelContextMenu"
+        icon="more-outline-horizontal"
+        heading="Actions"
+        onAction={handleContextMenuAction}
+      />
+    </div>
+  {/if}
+{/snippet}
+
+{#snippet closeEditModeButton(className: string)}
+  <button
+    class={className}
+    onclick={() => {
+      $resourceStore.closeEditMode();
+    }}
+  >
+    <Icon icon="cross" size={Size.sm} class="text-abg" />
+    <span> Close edit mode </span>
+  </button>
+{/snippet}
+
 {#snippet viewTabs()}
   <div class="flex items-center h-full" data-testid="resource-context-tabs">
     {#if $resourceStore.isInFocusMode}
@@ -80,42 +137,10 @@
         }}
       />
     {:else}
-      <BoxSwitcher
-        isTablist={true}
-        isExpandOnActiveForIcon={true}
-        options={panels}
-        size={Size.md}
-        isAccentColor={true}
-        isActiveIndicatorOnTop={false}
-        selected={$resourceStore.panel}
-        onSelect={(e) => $resourceStore.switchPanel(e.detail)}
-      />
+      {@render panelSwitcher(Size.md, false)}
       <div class="flex items-center h-full ml-2">
-        <BoxButton
-          icon={isMaximized ? "exitfullscreen" : "fullscreen"}
-          tooltip={isMaximized ? "Minimize" : "Maximize"}
-          width="px-3"
-          parentBgIndex={2}
-          onclick={() => {
-            requireResourcePanelHost().maximize(accessMode, $resourceStore.id);
-          }}
-        />
-        {#if contextMenuResolver !== undefined}
-          <div class="flex items-center h-full">
-            <ContextMenuAction
-              testId="resource-record-context-menu"
-              menuResolver={resolveContextMenu}
-              size={Size.lg}
-              isBoxed={true}
-              parentBgIndex={2}
-              class="h-full w-10"
-              id="resourcePanelContextMenu"
-              icon="more-outline-horizontal"
-              heading="Actions"
-              onAction={handleContextMenuAction}
-            />
-          </div>
-        {/if}
+        {@render maximizeButton()}
+        {@render actionsMenu(2)}
       </div>
     {/if}
   </div>
@@ -126,15 +151,9 @@
 {:else if variant === "edit-bar"}
   {#if $resourceStore.isInEditMode}
     <div class="absolute bottom-0 inset-x-0 mx-auto w-fit z-10">
-      <button
-        class="flex gap-1 px-6 h-11 min-h-11 bg-ass1 text-abg items-center justify-center rounded-t-md hover:brightness-110"
-        onclick={() => {
-          $resourceStore.closeEditMode();
-        }}
-      >
-        <Icon icon="cross" size={Size.sm} class="text-abg" />
-        <span> Close edit mode </span>
-      </button>
+      {@render closeEditModeButton(
+        "flex gap-1 px-6 h-11 min-h-11 bg-ass1 text-abg items-center justify-center rounded-t-md hover:brightness-110"
+      )}
     </div>
   {/if}
 {:else if !isFloatingHidden}
@@ -183,17 +202,10 @@
               }}
             />
           </div>
-          <BoxSwitcher
-            isTablist={true}
-            isExpandOnActiveForIcon={true}
-            options={panels}
-            size={$view.isConstrainedWidth ? Size.sm : Size.md}
-            isAccentColor={true}
-            isActiveIndicatorOnTop={false}
-            selected={$resourceStore.panel}
-            onSelect={(e) => $resourceStore.switchPanel(e.detail)}
-            isIconOnlyMode={$view.isConstrainedWidth}
-          />
+          {@render panelSwitcher(
+            $view.isConstrainedWidth ? Size.sm : Size.md,
+            $view.isConstrainedWidth
+          )}
           <div
             class="flex items-center h-full cw:border-r border-l border-brs2 ml-3"
           >
@@ -211,49 +223,17 @@
               <div
                 class="flex items-center bg--bgs3 border--t border-brs2 h-full"
               >
-                <BoxButton
-                  icon={isMaximized ? "exitfullscreen" : "fullscreen"}
-                  tooltip={isMaximized ? "Minimize" : "Maximize"}
-                  width="px-3"
-                  parentBgIndex={2}
-                  onclick={() => {
-                    requireResourcePanelHost().maximize(
-                      accessMode,
-                      $resourceStore.id
-                    );
-                  }}
-                />
-                {#if contextMenuResolver !== undefined}
-                  <div class="flex items-center h-full">
-                    <ContextMenuAction
-                      testId="resource-record-context-menu"
-                      menuResolver={resolveContextMenu}
-                      size={Size.lg}
-                      isBoxed={true}
-                      parentBgIndex={1}
-                      class="h-full w-10"
-                      id="resourcePanelContextMenu"
-                      icon="more-outline-horizontal"
-                      heading="Actions"
-                      onAction={handleContextMenuAction}
-                    />
-                  </div>
-                {/if}
+                {@render maximizeButton()}
+                {@render actionsMenu(1)}
               </div>
             {/if}
           </div>
         {/if}
       </div>
       {#if $resourceStore.isInEditMode}
-        <button
-          class="flex gap-1 w-full h-11 min-h-11 bg-ass1 text-abg items-center justify-center rounded-b-md hover:brightness-110"
-          onclick={() => {
-            $resourceStore.closeEditMode();
-          }}
-        >
-          <Icon icon="cross" size={Size.sm} class="text-abg" />
-          <span> Close edit mode </span>
-        </button>
+        {@render closeEditModeButton(
+          "flex gap-1 w-full h-11 min-h-11 bg-ass1 text-abg items-center justify-center rounded-b-md hover:brightness-110"
+        )}
       {/if}
     </div>
   </div>
