@@ -64,6 +64,14 @@
   );
 
   let id = $derived($page.url.searchParams.get(AppSearchParam.SELECTED));
+
+  /** Keeps the subtype chosen in a standalone browser in its URL, so a reload restores it. */
+  function syncSubTypeQuery(nextSubType: string) {
+    navigation.toggleSearchParam(
+      { [AppSearchParam.TYPE]: nextSubType },
+      { replaceState: true }
+    );
+  }
   let arrangement: Arrangement = resolveArrangement();
   let selectionCount = 0;
   let bulkEditCountUnsub: (() => void) | undefined;
@@ -161,7 +169,7 @@
           accessPointState={state}
           isConstrainedWidth={true}
           subType={viewSubType}
-          {onSubTypeChange}
+          onSubTypeChange={onSubTypeChange ?? syncSubTypeQuery}
         />
       </div>
     {/snippet}
