@@ -1,6 +1,8 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
   import { get } from "svelte/store";
+  import { logger } from "@nucleum/client/runtime/logging/logger";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
 
   let {
@@ -45,9 +47,17 @@
   async function finish() {
     try {
       await saveLabel();
-    } finally {
-      objective.toggleEditMode(false);
+    } catch (error) {
+      reportSaveFailure(error);
+      inputRef?.focus();
+      return;
     }
+    objective.toggleEditMode(false);
+  }
+
+  function reportSaveFailure(error: unknown) {
+    logger.error({ at: "GoalContextTitle.save", error });
+    toasts.error("Could not save the title");
   }
 
   function saveOnRemoval(_input: HTMLInputElement) {
@@ -56,7 +66,7 @@
         if (isCancelled || !isDirty) return;
         const next = draft.trim();
         if (next === (get(objective).label ?? "")) return;
-        void objective.modify({ label: next });
+        objective.modify({ label: next }).catch(reportSaveFailure);
       }
     };
   }
@@ -90,7 +100,7 @@
     use:saveOnRemoval
     oninput={() => (isDirty = true)}
     onkeydown={onKeydown}
-    onblur={() => void saveLabel()}
+    onblur={() => saveLabel().catch(reportSaveFailure)}
   />
 {:else}
   <button
