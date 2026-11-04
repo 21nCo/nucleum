@@ -1,5 +1,9 @@
 import { derived } from "svelte/store";
-import { AppStyle, resolveAppStyle } from "@21n/theme/app-style";
+import {
+  AppStyle,
+  isFramedAppStyle,
+  resolveAppStyle
+} from "@21n/theme/app-style";
 import { elementAppearance } from "@21n/ui/environment/element-environment.store";
 
 /**
@@ -18,7 +22,7 @@ export function resolveControlShape(style: unknown): ControlShape {
   const appStyle = resolveAppStyle(style);
   const isRounded = appStyle === AppStyle.Rounded;
   return {
-    isFramed: appStyle !== AppStyle.Boxed,
+    isFramed: isFramedAppStyle(appStyle),
     isRounded,
     radiusClass: isRounded ? "rounded-full" : "rounded-md"
   };

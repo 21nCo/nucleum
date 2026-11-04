@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AppStyle } from "@21n/theme/app-style";
+  import { AppStyle, isFramedAppStyle } from "@21n/theme/app-style";
   import { cn } from "@21n/ui/environment/presentation";
   import { Size } from "@21n/ui/elements/size.enum";
 
@@ -17,7 +17,7 @@
     onclick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
 
-  const isFramed = $derived(style !== AppStyle.Boxed);
+  const isFramed = $derived(isFramedAppStyle(style));
   const isRounded = $derived(style === AppStyle.Rounded);
 </script>
 
@@ -59,8 +59,8 @@
       <div
         class={cn("h-full w-6 bg-bgs1", {
           "border-r border-brs3": !isFramed,
-          "h-2.5 rounded-t-sm": isFramed && !isRounded,
-          "h-2.5 rounded-t-md": isRounded
+          "rounded-t-sm": isFramed && !isRounded,
+          "rounded-t-md": isRounded
         })}
       ></div>
       <div class="flex justify-end items-center flex-1 h-full pr-1">
@@ -81,13 +81,13 @@
         <div
           class={cn("w-2 h-1.5 bg-bgs4", {
             "rounded-sm": !isRounded,
-            "rounded-full w-1.5": isRounded
+            "rounded-full": isRounded
           })}
         ></div>
         <div
           class={cn("w-2 h-1.5 bg-bgs4", {
             "rounded-sm": !isRounded,
-            "rounded-full w-1.5": isRounded
+            "rounded-full": isRounded
           })}
         ></div>
       </div>

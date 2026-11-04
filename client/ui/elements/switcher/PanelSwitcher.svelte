@@ -302,7 +302,8 @@
       <div
         bind:this={child}
         role="tablist"
-        class={cn("flex items-center", bg(parentBgIndex - 1), {
+        class={cn("flex items-center", {
+          [bg(parentBgIndex - 1)]: !(style === PanelSwitcherStyle.BAR && isTrack),
           "h-full": style === PanelSwitcherStyle.BAR && !isTrack,
           [`self-center gap-1 p-1 !border-transparent ${bg(parentBgIndex + 1)}`]:
             style === PanelSwitcherStyle.BAR && isTrack,

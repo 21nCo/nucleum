@@ -33,7 +33,6 @@
         : parentBgIndex - 1
   );
 
-  const isRounded = $derived($shape.isRounded);
   const isFramed = $derived($shape.isFramed);
 
   function emitSwitch(nextValue: ISelectValue) {
@@ -55,8 +54,8 @@
         activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE,
       "!border-transparent gap-1": isFramed,
       "p-1": activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE,
-      "rounded-full": size === Size.lg || isRounded,
-      "rounded-md": size !== Size.lg && !isRounded
+      "rounded-full": size === Size.lg,
+      [$shape.radiusClass]: size !== Size.lg
     })}
   >
     {#each items as item, index (item.value)}

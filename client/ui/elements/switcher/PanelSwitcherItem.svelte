@@ -158,7 +158,7 @@
         "text-b2": (size === Size.sm && $view.isPortrait) || size === Size.xs,
         "text-h4": size === Size.lg,
         "text-fgs3": !isActive,
-        "text-ccs1": isActive && !isInEditMode,
+        "text-ccs1": isActive && !isInEditMode && !isFramed,
         "h-full": barStyle === BarStyle.EXACT,
         "border-b-2 pt-1": barStyle === BarStyle.EXACT && !isInversePlacement,
         "border-t-2": barStyle === BarStyle.EXACT && isInversePlacement,

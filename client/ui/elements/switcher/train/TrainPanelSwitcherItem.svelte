@@ -69,8 +69,8 @@
       "rounded-full px-6 py-2": size === Size.lg,
       "px-3 py-1 w-24": size === Size.md,
       "px-3 py-1 w-16": size === Size.sm,
-      "rounded-[5px]": size !== Size.lg && !isRounded,
-      "rounded-full": size !== Size.lg && isRounded,
+      "rounded-[5px]": (size === Size.md || size === Size.sm) && !isRounded,
+      "rounded-full": (size === Size.md || size === Size.sm) && isRounded,
       "bg-ccs3 text-ccs1":
         isActive &&
         activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,
