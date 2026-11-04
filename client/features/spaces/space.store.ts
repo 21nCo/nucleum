@@ -40,6 +40,8 @@ export class ActiveSpaceStore {
   subscribe = this.subject.subscribe;
   set = this.subject.set;
   update = this.subject.update;
+  private itemsRevision = 0;
+  private loadSequence = 0;
 
   constructor(spaceId: IRecordId) {
     this.id = spaceId;
@@ -88,16 +90,19 @@ export class ActiveSpaceStore {
   }
 
   private async persistItems(items: ISpaceNavItem[]) {
+    this.itemsRevision++;
     this.update((prev) => (prev ? { ...prev, items } : prev));
     return this.mutate({ items });
   }
 
   /**
    * Loads the record, keeping open-state flags across reloads. Items edited
-   * while the record loads are kept, since they are newer than the loaded copy.
+   * while the record loads are kept, since they are newer than the loaded copy,
+   * and a load overtaken by a later one is dropped.
    */
   async init(accessMode?: AccessMode) {
-    const itemsAtStart = (get(this.subject) as IActiveSpace | undefined)?.items;
+    const load = ++this.loadSequence;
+    const itemsRevisionAtStart = this.itemsRevision;
     this.update(
       (prev) =>
         ({
@@ -116,6 +121,7 @@ export class ActiveSpaceStore {
       })) as ISpace | undefined;
     } catch (error) {
       logger.error({ at: "ActiveSpaceStore.init", error, id: this.id });
+      if (load !== this.loadSequence) return;
       this.update(
         (prev) =>
           ({
@@ -126,6 +132,7 @@ export class ActiveSpaceStore {
       );
       return;
     }
+    if (load !== this.loadSequence) return;
     if (!result) {
       this.update(
         (prev) =>
@@ -143,7 +150,7 @@ export class ActiveSpaceStore {
       ...record,
       view: record.view ?? SpaceView.SIDENAV,
       items:
-        prev?.items && prev.items !== itemsAtStart
+        prev?.items && this.itemsRevision !== itemsRevisionAtStart
           ? prev.items
           : cloneNavItems(record.items ?? []),
       accessMode: accessMode ?? prev?.accessMode,
