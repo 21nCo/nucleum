@@ -54,6 +54,10 @@
   let isLoaded = $state(false);
   const view = $derived($viewStore?.view ?? SpaceView.SIDENAV);
   const isPinned = $derived(appMenuStore.isSpacePinned(spaceId, $appMenuStore));
+  const rootId = $derived(ancestors[0] ?? spaceId);
+  const isRootPinned = $derived(
+    appMenuStore.isSpacePinned(rootId, $appMenuStore)
+  );
   const parentLabel = $derived(
     parentStore ? ($parentStore?.data?.[0]?.label ?? "") : undefined
   );
@@ -71,12 +75,20 @@
     return () => {
       if ($store?.isInEditMode) store.setEditMode(false);
       if ($store?.isTitleEditing) store.setTitleEditing(false);
+      if (viewStore !== store && $viewStore?.isTitleEditing) {
+        viewStore.setTitleEditing(false);
+      }
     };
   });
 
   function togglePin() {
     if (isPinned) appMenuStore.unpinSpace(spaceId);
     else appMenuStore.pinSpace(spaceId);
+  }
+
+  function toggleRootPin() {
+    if (isRootPinned) appMenuStore.unpinSpace(rootId);
+    else appMenuStore.pinSpace(rootId);
   }
 
   function changeView(next: SpaceView) {
@@ -91,10 +103,10 @@
 {#if isLoaded && !$store?.isMissing}
   <ContextZoneContent isInlineFallback={false} cycle={cycleZone}>
     <SpaceContextZone
-      {store}
+      store={viewStore}
       {view}
-      {isPinned}
-      onTogglePin={togglePin}
+      isPinned={isRootPinned}
+      onTogglePin={toggleRootPin}
       onViewChange={changeView}
     />
   </ContextZoneContent>
@@ -103,6 +115,7 @@
 {#snippet header()}
   <SpaceHeader
     {store}
+    titleStore={viewStore}
     {parentLabel}
     onBack={parentId ? onBack : undefined}
     {view}

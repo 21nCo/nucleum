@@ -9,6 +9,7 @@
 
   let {
     store,
+    titleStore = undefined,
     parentLabel = undefined,
     view,
     isPinned = false,
@@ -18,6 +19,11 @@
     onViewChange
   }: {
     store: ActiveSpaceStore;
+    /**
+     * Space the compact rename input edits: the space the context zone names,
+     * which is the root space while a sub space is focused. Defaults to `store`.
+     */
+    titleStore?: ActiveSpaceStore;
     /** Name of the space one level up; shows the back button when set. */
     parentLabel?: string;
     /** Layout shown for this space; inside a focus chain it comes from the root space. */
@@ -41,14 +47,19 @@
   let titleInput = $state<HTMLInputElement>();
   let draftTitle = $state("");
   const space = $derived($store);
+  const editedStore = $derived(isCompact && titleStore ? titleStore : store);
+  const editedSpace = $derived($editedStore);
   const title = $derived(space?.label || "Untitled space");
   const isEditMode = $derived(Boolean(space?.isInEditMode));
-  const isTitleEditing = $derived(Boolean(space?.isTitleEditing));
+  const isTitleEditing = $derived(Boolean(editedSpace?.isTitleEditing));
+  const isFocusedTitleEditing = $derived(
+    isTitleEditing && editedStore === store
+  );
 
   $effect(() => {
     if (isTitleEditing && titleInput) {
       const input = titleInput;
-      draftTitle = untrack(() => space?.label ?? "");
+      draftTitle = untrack(() => editedSpace?.label ?? "");
       tick().then(() => {
         input.focus();
         input.select();
@@ -58,9 +69,10 @@
 
   function saveTitle() {
     if (!isTitleEditing) return;
+    const target = editedStore;
     const trimmed = draftTitle.trim();
-    store.setTitleEditing(false);
-    if (trimmed !== (space?.label ?? "")) store.updateLabel(trimmed);
+    target.setTitleEditing(false);
+    if (trimmed !== (editedSpace?.label ?? "")) target.updateLabel(trimmed);
   }
 
   function onTitleKeydown(event: KeyboardEvent) {
@@ -70,7 +82,7 @@
       saveTitle();
     } else if (event.key === "Escape") {
       event.preventDefault();
-      store.setTitleEditing(false);
+      editedStore.setTitleEditing(false);
     }
   }
 </script>
@@ -127,10 +139,14 @@
         >
           <Icon icon="chevron-left" size={Size.sm} class="stroke-current" />
         </button>
-        <span
-          class="flex-1 min-w-0 truncate px-1 text-b2 font-medium text-fgs1"
-          data-testid="space-focused-title">{title}</span
-        >
+        {#if !isFocusedTitleEditing}
+          <span
+            class="flex-1 min-w-0 truncate px-1 text-b2 font-medium text-fgs1"
+            data-testid="space-focused-title">{title}</span
+          >
+        {:else}
+          <span class="flex-1"></span>
+        {/if}
       {:else}
         <span class="flex-1 px-1 text-b3 text-fgs3">Items</span>
       {/if}
