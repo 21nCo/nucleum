@@ -17,10 +17,18 @@ describe("isNodeTitleInContextZone", () => {
     expect(
       isNodeTitleInContextZone(
         true,
-        { isPortrait: true, isConstrainedWidth: true },
+        { isPortrait: true, isConstrainedWidth: false },
+        "page"
+      )
+    ).toBe(false);
+    expect(
+      isNodeTitleInContextZone(
+        true,
+        { isPortrait: false, isConstrainedWidth: true },
         "page"
       )
     ).toBe(false);
     expect(isNodeTitleInContextZone(true, wide, undefined)).toBe(false);
+    expect(isNodeTitleInContextZone(true, wide, "sheet")).toBe(false);
   });
 });

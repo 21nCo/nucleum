@@ -13,6 +13,15 @@ describe("navigatorSearch", () => {
     expect(get(navigatorSearch.isInline)).toBe(false);
   });
 
+  it("stays inline until every inline host is released", () => {
+    const releaseFirst = navigatorSearch.hostInline();
+    const releaseSecond = navigatorSearch.hostInline();
+    releaseFirst();
+    expect(get(navigatorSearch.isInline)).toBe(true);
+    releaseSecond();
+    expect(get(navigatorSearch.isInline)).toBe(false);
+  });
+
   it("passes keys to the registered handler until it is released", () => {
     const handler = vi.fn(() => true);
     const release = navigatorSearch.handleKeys(handler);
