@@ -72,12 +72,15 @@
   $effect(() => {
     const action = expandedAction;
     if (!groupRef) return;
-    const previous = restingRects;
-    const isChanged = previous !== undefined && action !== restingAction;
+    const running = groupRef.getAnimations({ subtree: true });
+    const shown = running.length > 0 ? readRects() : restingRects;
+    for (const animation of running) animation.cancel();
+    const isChanged = restingRects !== undefined && action !== restingAction;
     const current = readRects();
     restingRects = current;
     restingAction = action;
-    if (!isChanged || isReducedMotion()) return;
+    const previous = shown;
+    if (!isChanged || !previous || isReducedMotion()) return;
     const options = {
       duration: PANEL_ACTION_TRANSITION_MS,
       easing: PANEL_ACTION_EASING
@@ -109,7 +112,7 @@
   $effect(() => {
     if (!groupRef) return;
     const observer = new ResizeObserver(() => {
-      if (groupRef && groupRef.getAnimations().length === 0)
+      if (groupRef && groupRef.getAnimations({ subtree: true }).length === 0)
         restingRects = readRects();
     });
     observer.observe(groupRef);
