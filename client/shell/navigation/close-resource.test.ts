@@ -47,6 +47,31 @@ describe("closeResource for in-place resources", () => {
     expect(url.searchParams.has("abcde-task")).toBe(false);
   });
 
+  it("keeps the page-side resource when closing an in-place task", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/calendar?page=objective%3Agoal&besidePage=node%3Aside&abcde-task=task%3Aone"
+    );
+    navigation.closeResource({ id: "task:one", accessMode: undefined });
+    const url = lastUrl();
+    expect(url.searchParams.get("page")).toBe("objective:goal");
+    expect(url.searchParams.get("besidePage")).toBe("node:side");
+    expect(url.searchParams.has("abcde-task")).toBe(false);
+  });
+
+  it("still clears the page-side resource when closing a page", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/calendar?page=node%3Aone&besidePage=node%3Aside"
+    );
+    navigation.closeResource({ id: "node:one" });
+    const url = lastUrl();
+    expect(url.searchParams.has("page")).toBe(false);
+    expect(url.searchParams.has("besidePage")).toBe(false);
+  });
+
   it("keeps another record's selection", () => {
     window.history.replaceState(
       {},

@@ -555,17 +555,24 @@ export const navigation = {
     isRestrictToModals?: boolean;
   }) => {
     appEvents.nav(props?.id?.toString() ?? "");
+    const resolvedMode =
+      !props?.accessMode && props?.id
+        ? determineResourceAccessMode(props.id)
+        : undefined;
+    const isInPlace = !!props?.id && !props?.accessMode && !resolvedMode;
     const url =
-      navigation.toggleSearchParam(recordSpecificSearchParams, {
-        isPreventRefresh: true
-      }) ?? new URL(window.location.href);
+      navigation.toggleSearchParam(
+        isInPlace
+          ? recordSpecificSearchParams.filter(
+              (param) => param !== AccessMode.BESIDE_PAGE
+            )
+          : recordSpecificSearchParams,
+        { isPreventRefresh: true }
+      ) ?? new URL(window.location.href);
     if (props?.accessMode) {
       navigation.toggleSearchParam([props.accessMode], { url });
       return;
     }
-    const resolvedMode = props?.id
-      ? determineResourceAccessMode(props.id)
-      : undefined;
     if (resolvedMode) {
       navigation.toggleSearchParam([resolvedMode], { url });
       return;
