@@ -93,7 +93,8 @@ const closableLayerModes = [
 
 /**
  * Removes record-specific state, such as a space's focused sub space, only for the records that
- * leave the view, so a record that stays open beneath an overlay keeps it.
+ * leave the view, so a record that stays open beneath an overlay keeps it. The record being opened
+ * is cleared too, so opening a space always starts at its root.
  */
 function clearLayerScopedRecordParams(
   url: URL,
