@@ -5,11 +5,22 @@ import { datafn } from "@nucleum/datafn/datafn.store";
 /** A space pinned to the app menu, as shown in the menu and on the phone home. */
 export type PinnedSpace = { id: string; label?: string; avatar?: IAvatar };
 
-/** Live records of the pinned spaces, in no particular order. */
-export function createPinnedSpacesStore(ids: string[]) {
+/**
+ * Key of the pinned space ids. Derive the store from this string, not from the
+ * id array, so it is rebuilt only when the pinned ids actually change.
+ */
+export function toPinnedSpacesKey(ids: string[]): string {
+  return ids.join(",");
+}
+
+/**
+ * Live records of the pinned spaces named by a key from `toPinnedSpacesKey`,
+ * in no particular order.
+ */
+export function createPinnedSpacesStore(key: string) {
   return toSvelteStore<PinnedSpace[]>(
     datafn.space.signal({
-      filters: { id: { $in: ids } },
+      filters: { id: { $in: key ? key.split(",") : [] } },
       select: ["id", "label", "avatar"]
     }),
     { initialData: [] }

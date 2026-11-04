@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { orderPinnedSpaces } from "./pinned-spaces";
+import { orderPinnedSpaces, toPinnedSpacesKey } from "./pinned-spaces";
 
 vi.mock("@nucleum/datafn/datafn.store", () => ({ datafn: {} }));
 
@@ -19,5 +19,14 @@ describe("orderPinnedSpaces", () => {
 
   it("returns nothing before the records load", () => {
     expect(orderPinnedSpaces(["space:a"], undefined)).toEqual([]);
+  });
+});
+
+describe("toPinnedSpacesKey", () => {
+  it("keeps the same key for the same pinned ids", () => {
+    expect(toPinnedSpacesKey(["space:a", "space:b"])).toBe(
+      toPinnedSpacesKey(["space:a", "space:b"])
+    );
+    expect(toPinnedSpacesKey([])).toBe("");
   });
 });

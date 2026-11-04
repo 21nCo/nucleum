@@ -13,6 +13,7 @@
   import {
     createPinnedSpacesStore,
     orderPinnedSpaces,
+    toPinnedSpacesKey,
     type PinnedSpace
   } from "@nucleum/shell/navigation/pinned-spaces";
   import { LayoutContext } from "@nucleum/shell/layout-mode.type";
@@ -36,10 +37,8 @@
   } = $props();
 
   const pinnedIds = $derived(appMenuStore.pinnedSpaces($appMenuStore));
-  const pinnedKey = $derived(pinnedIds.join(","));
-  const spacesStore = $derived(
-    createPinnedSpacesStore(pinnedKey ? pinnedKey.split(",") : [])
-  );
+  const pinnedKey = $derived(toPinnedSpacesKey(pinnedIds));
+  const spacesStore = $derived(createPinnedSpacesStore(pinnedKey));
   const spaces = $derived(orderPinnedSpaces(pinnedIds, $spacesStore.data));
   const activeSpaceId = $derived.by(() => {
     const segments = $page.url.pathname.split("/").filter(Boolean);

@@ -23,6 +23,7 @@
   import {
     createPinnedSpacesStore,
     orderPinnedSpaces,
+    toPinnedSpacesKey,
     type PinnedSpace
   } from "@nucleum/shell/navigation/pinned-spaces";
   import { isPlayerShownInPage } from "@nucleum/shell/overlays/portrait-dock";
@@ -67,10 +68,8 @@
     })
   );
   const pinnedIds = $derived(appMenuStore.pinnedSpaces($appMenuStore));
-  const pinnedKey = $derived(pinnedIds.join(","));
-  const spacesStore = $derived(
-    createPinnedSpacesStore(pinnedKey ? pinnedKey.split(",") : [])
-  );
+  const pinnedKey = $derived(toPinnedSpacesKey(pinnedIds));
+  const spacesStore = $derived(createPinnedSpacesStore(pinnedKey));
   const spaces = $derived(orderPinnedSpaces(pinnedIds, $spacesStore.data));
   const isCovered = $derived(
     !!$page.url.searchParams.get(AccessMode.PAGE) ||
