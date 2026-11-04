@@ -102,3 +102,34 @@ export function restorePageScroll(root: Element | undefined, id: string) {
   frame = requestAnimationFrame(step);
   return stop;
 }
+
+/**
+ * Svelte action for the element that renders the resource page `id`: saves
+ * the scroll of anything scrolled inside it and restores the remembered
+ * position whenever another page renders there, so going back to a page
+ * returns to where it was read.
+ */
+export function pageScroll(node: HTMLElement, id: string | undefined) {
+  let renderedId: string | undefined;
+  let stopRestore = () => {};
+  const onScroll = (event: Event) => {
+    if (!renderedId) return;
+    savePageScroll(node, renderedId, event.target);
+  };
+  const render = (next: string | undefined) => {
+    if (next === renderedId) return;
+    stopRestore();
+    stopRestore = () => {};
+    renderedId = next;
+    if (next) stopRestore = restorePageScroll(node, next);
+  };
+  node.addEventListener("scroll", onScroll, { capture: true, passive: true });
+  render(id);
+  return {
+    update: render,
+    destroy() {
+      stopRestore();
+      node.removeEventListener("scroll", onScroll, { capture: true });
+    }
+  };
+}

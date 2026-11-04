@@ -13,6 +13,7 @@
   import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";
   import { resolveLayoutRoute } from "@nucleum/shell/navigation/layout-route";
   import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { pageScroll } from "@nucleum/shell/navigation/page-scroll";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { page } from "$app/stores";
   import LeftNav from "../chrome/WiredLeftNav.svelte";
@@ -93,6 +94,7 @@
         class="fixed inset-0 w-full h-full bg-bgs1 z-40"
         data-testid="resource-record-surface"
         data-full-screen="true"
+        use:pageScroll={commandModePageId}
       >
         {#key commandModePageId}
           <ResourceResolver

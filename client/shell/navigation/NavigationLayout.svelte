@@ -18,10 +18,7 @@
   import { page } from "$app/stores";
   import RightSplit from "@nucleum/shell/RightSplit.svelte";
   import PortraitBackControl from "@nucleum/shell/navigation/PortraitBackControl.svelte";
-  import {
-    restorePageScroll,
-    savePageScroll
-  } from "@nucleum/shell/navigation/page-scroll";
+  import { pageScroll } from "@nucleum/shell/navigation/page-scroll";
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
@@ -55,8 +52,6 @@
       "true"
   );
   let besidePage = $state<string | undefined>(undefined);
-  let pageLayerRef = $state<HTMLElement | undefined>(undefined);
-  let renderedPageId: string | undefined;
   let rightPanel = $state<IAction | undefined>(undefined);
   let pop = $state<{ id: IRecordId; action: IAction } | undefined>(undefined);
   let mainPath = $state<string | undefined>(undefined);
@@ -82,24 +77,6 @@
   });
 
   $effect(() => () => contextZone.setVisibleLayers(undefined));
-
-  function onPageScroll(event: Event) {
-    const id = renderedPageId;
-    if (!id || id !== popId) return;
-    savePageScroll(pageLayerRef, id, event.target);
-  }
-
-  $effect(() => {
-    const next = popId;
-    const root = pageLayerRef;
-    if (!next || next === renderedPageId) return;
-    renderedPageId = next;
-    return restorePageScroll(root, next);
-  });
-
-  $effect(() => {
-    if (!popId) renderedPageId = undefined;
-  });
 
   onMount(() => {
     const uiStateSub = uiState.subscribe(() => {
@@ -184,8 +161,7 @@
               data-full-screen={isPageFullScreen ? "true" : undefined}
             >
               <div
-                bind:this={pageLayerRef}
-                onscrollcapture={onPageScroll}
+                use:pageScroll={popId}
                 {...pageLayerAttributes}
                 class={cn("flex justify-center h-full min-w-0", {
                   "w-1/2 min-w-1/2 shrink-0": !!besidePage && !$view.isPortrait,
