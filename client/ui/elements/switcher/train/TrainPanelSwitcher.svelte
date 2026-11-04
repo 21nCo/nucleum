@@ -49,14 +49,17 @@
   )}
 >
   <div
-    class={cn("flex items-center min-w-fit", bg(effectiveParentBgIndex), {
-      "border border-brs3 p-0.5":
-        activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE,
-      "!border-transparent gap-1": isFramed,
-      "p-1": activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE,
-      "rounded-full": size === Size.lg,
-      [$shape.radiusClass]: size !== Size.lg
-    })}
+    class={cn(
+      "flex items-center min-w-fit",
+      bg(effectiveParentBgIndex),
+      size === Size.lg ? "rounded-full" : $shape.radiusClass,
+      {
+        "border border-brs3 p-0.5":
+          activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE,
+        "!border-transparent gap-1": isFramed,
+        "p-1": activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE
+      }
+    )}
   >
     {#each items as item, index (item.value)}
       <TrainPanelSwitcherItem
