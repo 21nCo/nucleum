@@ -49,7 +49,7 @@
       return;
     }
     if (navigation.backInTrail()) return;
-    if (!isOnHome) requireCommandHost().runAction(homeAction);
+    if (!isOnHome) navigation.gotoPath(`/${homeAction}`);
   }
 
   function onTouchStart(event: TouchEvent) {
