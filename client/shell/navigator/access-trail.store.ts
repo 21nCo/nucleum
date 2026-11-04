@@ -6,10 +6,8 @@ import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import {
   activateAccessTrailNode,
   createAccessTrails,
-  endAccessTrail,
   extendAccessTrail,
   normalizeAccessTrails,
-  removeRecentAccessTrail,
   hasAccessTrailPosition,
   resolveAccessTrailPosition,
   resumeAccessTrail,
@@ -266,18 +264,10 @@ export const accessTrail = {
     }
     return resolved;
   },
-  /** Keeps the current trail as a recent trail. */
-  end() {
-    apply(endAccessTrail);
-  },
   /** Makes a recent trail current again. */
   resume(key: string) {
     const at = Date.now();
     apply((trails) => resumeAccessTrail(trails, key, at));
-  },
-  /** Removes a recent trail. */
-  removeRecent(key: string) {
-    apply((trails) => removeRecentAccessTrail(trails, key));
   }
 };
 

@@ -271,17 +271,6 @@ export function resumeAccessTrail(
   };
 }
 
-/** Removes a recent trail. */
-export function removeRecentAccessTrail(
-  trails: AccessTrails,
-  key: string
-): AccessTrails {
-  return {
-    ...trails,
-    recent: trails.recent.filter((item) => item.key !== key)
-  };
-}
-
 /** Lists trail nodes depth first, children in the order they were opened. */
 export function flattenAccessTrail(trail: AccessTrail): AccessTrailRow[] {
   const rows: AccessTrailRow[] = [];
