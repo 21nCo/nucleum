@@ -229,8 +229,7 @@
     if (!zoneRef) return;
     const observer = new ResizeObserver(measureToastRoom);
     observer.observe(zoneRef);
-    const tab = zoneRef.querySelector('[data-testid="top-bar-context-tab"]');
-    if (tab?.firstElementChild) observer.observe(tab.firstElementChild);
+    if (tabInnerRef) observer.observe(tabInnerRef);
     return () => observer.disconnect();
   });
 
