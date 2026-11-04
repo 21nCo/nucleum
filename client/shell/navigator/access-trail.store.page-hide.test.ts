@@ -41,7 +41,7 @@ describe("accessTrail when the page is hidden", () => {
 
     expect(kv.get).toHaveBeenCalledTimes(1);
     expect(kv.set).toHaveBeenCalledTimes(1);
-    const written = kv.set.mock.calls[0][1] as AccessTrails;
+    const written = (kv.set.mock.calls[0] as unknown[])[1] as AccessTrails;
     expect(written.current?.nodes.map((node) => node.id)).toEqual([
       "node:a",
       "node:b"

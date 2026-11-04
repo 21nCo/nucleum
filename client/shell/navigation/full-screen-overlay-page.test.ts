@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MockInstance } from "vitest";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 
 const mocks = vi.hoisted(() => ({
@@ -21,7 +22,7 @@ vi.mock("@nucleum/shell/overlays/modal.store", () => ({
 
 const { navigation } = await import("./navigation");
 
-let gotoPath: ReturnType<typeof vi.spyOn>;
+let gotoPath: MockInstance<typeof navigation.gotoPath>;
 
 function visit(search: string) {
   window.history.replaceState(null, "", `/calendar${search}`);
