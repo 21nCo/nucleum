@@ -779,7 +779,7 @@ export const navigation = {
         }
         isCloseNavigator = params?.isKeepNavigator === undefined;
       } else if (intent === "select") {
-        isCloseNavigator = isNavigatorCoveringPage(navigatorLayer);
+        isCloseNavigator = isRightPanelSheet(get(view));
       } else if (intent === "extend") {
         accessTrail.extend(id.toString());
       }
