@@ -1,5 +1,6 @@
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import type { IAction } from "@nucleum/shared-state/commands/action.type";
+import type { IViewStore } from "@21n/ui/environment/view.type";
 import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
 import {
   UIState,
@@ -31,6 +32,30 @@ export function resolveLiveActionAccessMode(action: IAction): AccessMode {
     if (liveActionAccessModes.includes(saved)) return saved as AccessMode;
   }
   return action.accessMode ?? AccessMode.PANEL;
+}
+
+/**
+ * Whether the right panel can render in `view`: as a sheet in portrait, or
+ * beside the page when the width is not constrained.
+ */
+export function canRenderRightPanel(
+  view: Pick<IViewStore, "isPortrait" | "isConstrainedWidth">
+) {
+  return view.isPortrait || !view.isConstrainedWidth;
+}
+
+/**
+ * Resolves where a live action opens in `view`: where it is set to open, or
+ * the overlay when that is the right panel and the panel cannot render there.
+ */
+export function resolveEffectiveLiveActionAccessMode(
+  action: IAction,
+  view: Pick<IViewStore, "isPortrait" | "isConstrainedWidth">
+): AccessMode {
+  const mode = resolveLiveActionAccessMode(action);
+  return mode === AccessMode.PANEL && !canRenderRightPanel(view)
+    ? AccessMode.OVERLAY
+    : mode;
 }
 
 /** Mode the live action `action` is open in now, read from `url`. */

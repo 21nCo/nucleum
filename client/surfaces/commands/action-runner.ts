@@ -24,7 +24,7 @@ import account from "@nucleum/client/runtime/account/account.store";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
-import { resolveLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
+import { resolveEffectiveLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
 
 /** Executes the product command registry supplied by application composition. */
 export const actionRunner = {
@@ -116,7 +116,7 @@ export const actionRunner = {
         navigation.toggleSearchParam(params.searchParams);
       }
     } else if (action.type === ActionType.LIVE) {
-      const mode = resolveLiveActionAccessMode(action);
+      const mode = resolveEffectiveLiveActionAccessMode(action, viewData);
       const paramPresent = new URLSearchParams(window.location.search).get(
         mode
       );
