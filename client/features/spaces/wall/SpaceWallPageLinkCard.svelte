@@ -2,6 +2,7 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import type { ISpacePageNavItem } from "@nucleum/features/spaces/space.type";
   import { resolveSpacePageStatus } from "@nucleum/features/spaces/space.utils";
   import {
@@ -18,7 +19,9 @@
     wall: ISpaceWallContext;
   } = $props();
 
-  const route = $derived(resolveOpenableSpacePage(item.path));
+  const route = $derived(
+    resolveOpenableSpacePage($appStore.actions, item.path)
+  );
   const status = $derived(resolveSpacePageStatus(route));
   const label = $derived(route?.label || item.label || item.path);
 

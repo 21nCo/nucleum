@@ -1,5 +1,4 @@
-import { get } from "svelte/store";
-import { appStore } from "@nucleum/shared-state/app-context/app.store";
+import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import type { ISpacePageNavItem } from "@nucleum/features/spaces/space.type";
 import {
@@ -8,11 +7,15 @@ import {
 } from "@nucleum/features/spaces/space.utils";
 
 /**
- * Page a page link opens in the current product, or undefined when the product has
- * no such page or hides it in the current context.
+ * Page a page link opens among the current product's actions, or undefined when the
+ * product has no such page or hides it in the current context. Callers pass the
+ * actions from a reactive source so the result follows changes to them.
  */
-export function resolveOpenableSpacePage(path: string) {
-  const route = resolveSpacePageRoute(get(appStore).actions ?? [], path);
+export function resolveOpenableSpacePage(
+  actions: IAction[] | undefined,
+  path: string
+) {
+  const route = resolveSpacePageRoute(actions ?? [], path);
   if (!route) return undefined;
   const page = route.action.subViewOf ?? route.action.action;
   return requireCommandHost().resolveAction(page) ? route : undefined;

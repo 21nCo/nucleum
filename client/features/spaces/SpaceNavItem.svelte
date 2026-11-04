@@ -7,6 +7,7 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import SpaceNavItem from "@nucleum/features/spaces/SpaceNavItem.svelte";
   import SpaceHeadingTree from "@nucleum/features/spaces/SpaceHeadingTree.svelte";
   import {
@@ -54,7 +55,9 @@
       : undefined
   );
   const pageRoute = $derived(
-    pageItem ? resolveOpenableSpacePage(pageItem.path) : undefined
+    pageItem
+      ? resolveOpenableSpacePage($appStore.actions, pageItem.path)
+      : undefined
   );
   const target = $derived(
     resourceItem ? nav.targets[resourceItem.resourceId.toString()] : undefined
