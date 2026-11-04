@@ -233,7 +233,8 @@
     }
     if ($view.isPortrait) {
       navigation.openResource(item.id, AccessMode.PAGE, {
-        origin: Action.SEARCH
+        origin: Action.SEARCH,
+        searchParams: { [AccessMode.OVERLAY]: null }
       });
       return;
     }
