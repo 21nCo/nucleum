@@ -10,7 +10,8 @@
     type IActiveNodeStore
   } from "../node.store";
   import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
-  import NodeContextTitle from "@nucleum/features/memory/node/title/NodeContextTitle.svelte";
+  import ContextZoneEditableTitle from "@nucleum/features/records/ContextZoneEditableTitle.svelte";
+  import { resolveNodeLabelString } from "@nucleum/features/memory/node/node.utils";
   import {
     mediaNodeTypeList,
     webNodeTypeList
@@ -87,7 +88,15 @@
 </script>
 
 {#snippet contextTitle()}
-  <NodeContextTitle {node} />
+  <ContextZoneEditableTitle
+    store={node}
+    label={resolveNodeLabelString($node)}
+    placeholder="Enter title"
+    inputLabel="Title"
+    renameLabel="Rename"
+    testId="node-context-title"
+    class="max-w-[20rem]"
+  />
 {/snippet}
 
 <ResourceViewSwitcher

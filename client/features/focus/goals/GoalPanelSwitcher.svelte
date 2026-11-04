@@ -1,6 +1,6 @@
 <script lang="ts">
   import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
-  import GoalContextTitle from "@nucleum/features/focus/goals/info/GoalContextTitle.svelte";
+  import ContextZoneEditableTitle from "@nucleum/features/records/ContextZoneEditableTitle.svelte";
   import {
     resolveObjectiveContextMenu,
     type IActiveObjectiveStore
@@ -61,7 +61,14 @@
 </script>
 
 {#snippet contextTitle()}
-  <GoalContextTitle {objective} />
+  <ContextZoneEditableTitle
+    store={objective}
+    label={$objective.label || "Untitled"}
+    placeholder="Enter objective name"
+    inputLabel="Objective name"
+    renameLabel="Rename objective"
+    testId="objective-context-title"
+  />
 {/snippet}
 
 <ResourceViewSwitcher
