@@ -20,6 +20,8 @@ import {
 } from "@nucleum/shell/navigator/access-trail";
 
 const FLUSH_DELAY_MS = 1000;
+const LOAD_RETRY_BASE_MS = 1000;
+const LOAD_RETRY_MAX_MS = 30000;
 
 type TrailChange = (trails: AccessTrails) => AccessTrails;
 
@@ -73,33 +75,53 @@ function ensureLoaded() {
   if (typeof window !== "undefined") {
     window.addEventListener("pagehide", flushAccessTrails);
   }
-  void datafn.kv
-    .get<AccessTrails>(Resource.accessTrails)
-    .catch((error) => {
-      logger.error({ at: "accessTrail.load", error });
-      return null;
-    })
-    .then((stored) => {
+  loadStored(generation, 0);
+}
+
+/**
+ * Reads the stored trails and adopts them. A failed read is retried rather
+ * than treated as an empty record, so a later flush never replaces trails it
+ * could not read.
+ */
+function loadStored(generation: number, attempt: number) {
+  void datafn.kv.get<AccessTrails>(Resource.accessTrails).then(
+    (stored) => {
       if (generation !== loadGeneration) return;
-      const base = normalizeAccessTrails(stored);
-      const next = queued.reduce((trails, item) => {
-        const replayed = item.change(trails);
-        const position = resolveAccessTrailPosition(replayed);
-        if (
-          item.position &&
-          position &&
-          (item.position.trail !== position.trail ||
-            item.position.node !== position.node)
-        ) {
-          aliases.set(item.position.node, position);
-        }
-        return replayed;
-      }, base);
-      queued = [];
-      loadState = "loaded";
-      trailsLocal.set(next);
-      if (next !== base) scheduleFlush();
-    });
+      adoptStored(stored);
+    },
+    (error) => {
+      if (generation !== loadGeneration) return;
+      logger.error({ at: "accessTrail.load", error });
+      setTimeout(
+        () => {
+          if (generation === loadGeneration)
+            loadStored(generation, attempt + 1);
+        },
+        Math.min(LOAD_RETRY_BASE_MS * 2 ** attempt, LOAD_RETRY_MAX_MS)
+      );
+    }
+  );
+}
+
+function adoptStored(stored: AccessTrails | null | undefined) {
+  const base = normalizeAccessTrails(stored);
+  const next = queued.reduce((trails, item) => {
+    const replayed = item.change(trails);
+    const position = resolveAccessTrailPosition(replayed);
+    if (
+      item.position &&
+      position &&
+      (item.position.trail !== position.trail ||
+        item.position.node !== position.node)
+    ) {
+      aliases.set(item.position.node, position);
+    }
+    return replayed;
+  }, base);
+  queued = [];
+  loadState = "loaded";
+  trailsLocal.set(next);
+  if (next !== base) scheduleFlush();
 }
 
 function scheduleFlush() {
