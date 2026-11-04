@@ -135,7 +135,7 @@ export const actionRunner = {
           new URLSearchParams(window.location.search).get(
             AccessMode.OVERLAY
           ) === slug
-            ? { [AccessMode.OVERLAY]: null }
+            ? { [AccessMode.OVERLAY]: null, [AppSearchParam.MAX]: null }
             : {}),
           ...(mode === AccessMode.OVERLAY &&
           new URLSearchParams(window.location.search).get(AccessMode.PANEL) ===
