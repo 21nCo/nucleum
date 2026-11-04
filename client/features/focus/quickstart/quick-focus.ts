@@ -27,15 +27,22 @@ export function createPinnedQuickFocusStore() {
   );
 }
 
-/** Live session logs that started today. */
-export function createTodayFocusLogStore() {
+/** Live session logs that started on the local day of `day`. */
+export function createTodayFocusLogStore(day: Date = new Date()) {
   return toSvelteStore<ISessionLog[]>(
     datafn.sessionLog.signal({
       select: ["id", "objectiveId", "focus", "breakTime", "startUnix"],
-      temporal: time.day("startUnix", new Date())
+      temporal: time.day("startUnix", day)
     }),
     { initialData: [] }
   );
+}
+
+/** Milliseconds from `now` until the next local midnight. */
+export function msUntilNextDay(now: Date = new Date()) {
+  const next = new Date(now);
+  next.setHours(24, 0, 0, 0);
+  return next.getTime() - now.getTime();
 }
 
 /** Total focus seconds across the given session logs. */

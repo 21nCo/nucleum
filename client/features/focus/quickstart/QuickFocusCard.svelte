@@ -14,6 +14,7 @@
   import {
     createPinnedQuickFocusStore,
     createTodayFocusLogStore,
+    msUntilNextDay,
     resolveQuickFocusItems,
     sumFocus
   } from "@nucleum/features/focus/quickstart/quick-focus";
@@ -27,7 +28,18 @@
   import { formatSeconds } from "@21n/ui/elements/time/duration-format";
 
   const pinnedObjectiveStore = createPinnedQuickFocusStore();
-  const todayLogStore = createTodayFocusLogStore();
+  let today = $state(new Date());
+  const todayLogStore = $derived(createTodayFocusLogStore(today));
+
+  $effect(() => {
+    const timeout = setTimeout(
+      () => {
+        today = new Date();
+      },
+      msUntilNextDay(today) + 1000
+    );
+    return () => clearTimeout(timeout);
+  });
   const items = $derived(
     resolveQuickFocusItems($pinnedObjectiveStore.data, $todayLogStore.data)
   );
@@ -41,11 +53,15 @@
 >
   <div class="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
     <div class="flex flex-col">
-      <span class="text-fgs1 text-h4 font-medium">Start focus</span>
+      <h2 class="text-fgs1 text-h4 font-medium">Start focus</h2>
       <span class="text-fgs3 text-b3" data-testid="quick-focus-today-total">
-        {todayTotal > 0
-          ? `Today: ${formatSeconds(todayTotal)}`
-          : "Not focused today"}
+        {#if $todayLogStore.loading}
+          &nbsp;
+        {:else}
+          {todayTotal > 0
+            ? `Today: ${formatSeconds(todayTotal)}`
+            : "Not focused today"}
+        {/if}
       </span>
     </div>
     <Button
