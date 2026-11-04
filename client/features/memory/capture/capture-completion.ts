@@ -10,6 +10,7 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { isValidString } from "@21n/shared-utils/text.utils";
+import { resolveOpenLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
 
 /** Resolves the collection selected by capture links. */
 export function resolveLinkedCollectionId(captureState: {
@@ -71,21 +72,21 @@ export function handleSingleNodePostSave(params: {
   }
 }
 
-/** Closes the owning capture surface after completion. */
+/**
+ * Closes the capture surface after completion in the layer it is open in, so
+ * a capture opened in the panel closes and an unrelated overlay stays open.
+ */
 export function closeCaptureAfterSave(shouldOpenUponSave: boolean) {
   if (shouldOpenUponSave) {
     return;
   }
-  navigation.closeResource({
-    id: resourceAction(Resource.node, ResourceActionType.CREATE),
-    accessMode: AccessMode.OVERLAY
-  });
-  navigation.closeResource({
-    id: MemotronAction.CAPTURE_DND,
-    accessMode: AccessMode.OVERLAY
-  });
-  navigation.closeResource({
-    id: MemotronAction.CAPTURE_SECONDARY,
-    accessMode: AccessMode.OVERLAY
+  const url = new URL(window.location.href);
+  [
+    resourceAction(Resource.node, ResourceActionType.CREATE),
+    MemotronAction.CAPTURE_DND,
+    MemotronAction.CAPTURE_SECONDARY
+  ].forEach((id) => {
+    const accessMode = resolveOpenLiveActionAccessMode(id, url);
+    if (accessMode) navigation.closeResource({ id, accessMode });
   });
 }
