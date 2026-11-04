@@ -35,6 +35,7 @@
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import { Action } from "@nucleum/client/config/action.enum";
+  import { parseLibrarySubType } from "@nucleum/surfaces/library/library-route";
   let {
     resource,
     onBack = undefined,
@@ -52,6 +53,15 @@
   } = $props();
   let backPath = $derived($page.url.searchParams.get(AppSearchParam.RETURN_TO));
   let hasBack = $derived(onBack !== undefined || backPath !== null);
+  let viewSubType = $derived(
+    subType ??
+      (onSubTypeChange
+        ? undefined
+        : parseLibrarySubType(
+            resource,
+            $page.url.searchParams.get(AppSearchParam.TYPE) ?? undefined
+          ))
+  );
 
   let id = $derived($page.url.searchParams.get(AppSearchParam.SELECTED));
   let arrangement: Arrangement = resolveArrangement();
@@ -150,7 +160,7 @@
           accessPoint={ResourceAccessPoint.BROWSER}
           accessPointState={state}
           isConstrainedWidth={true}
-          {subType}
+          subType={viewSubType}
           {onSubTypeChange}
         />
       </div>

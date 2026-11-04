@@ -107,12 +107,9 @@
     class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
     onclick={() => {
       navigation.closeResource();
-      navigation.gotoPath("/library", {
-        queryParams: {
-          resource: Resource.objective,
-          type: $objective.type?.toLowerCase()
-        }
-      });
+      navigation.gotoPath(
+        `/${Action.LIBRARY}/${Resource.objective}/${$objective.type?.toLowerCase() ?? "all"}`
+      );
     }}
     use:tooltip={{
       text: `See all **${enumToString($objective.type)}** objectives`,

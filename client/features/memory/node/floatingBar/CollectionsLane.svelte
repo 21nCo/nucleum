@@ -126,13 +126,13 @@
       class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
       onclick={() => {
         navigation.closeResource();
+        const subType = $node.contentType.toLowerCase();
         const path = $view.isPortrait
           ? resourceAction(Resource.node, ResourceActionType.BROWSE)
-          : Action.LIBRARY;
+          : `${Action.LIBRARY}/${Resource.node}/${subType}`;
         navigation.gotoPath(`/${path}`, {
           queryParams: {
-            resource: Resource.node,
-            type: $node.contentType.toLowerCase(),
+            ...($view.isPortrait ? { [AppSearchParam.TYPE]: subType } : {}),
             [AppSearchParam.RETURN_TO]:
               productNavigation?.homePathPt ??
               getProductNavConfig($appStore.product).homePathPt
