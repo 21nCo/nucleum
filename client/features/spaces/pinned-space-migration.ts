@@ -91,12 +91,13 @@ async function loadPinnedSpace(spaceId: string | undefined) {
   return { id: spaceId, space, isUnavailable: false };
 }
 
-/** Whether the saved space holds every one of `items`, wherever they were moved. */
+/** Whether the saved space is live and holds every one of `items`, wherever they were moved. */
 async function hasSavedItems(spaceId: string, items: ISpaceNavItem[]) {
   const saved = (await datafn.space.select(spaceId, {
     metadata: recordMetadata
   })) as ISpace | undefined;
-  const savedItems = saved?.items ?? [];
+  if (!saved || isTrashedResource(saved)) return false;
+  const savedItems = saved.items ?? [];
   return items.every((item) => hasEquivalentNavItem(savedItems, item));
 }
 

@@ -467,4 +467,31 @@ describe("space writes", () => {
       "page-by-editor"
     ]);
   });
+
+  it("does not append to a space in the trash", async () => {
+    mocks.select.mockResolvedValueOnce({
+      id: "space:trashed",
+      items: [],
+      trashedAt: 1
+    });
+    await expect(
+      appendSpaceItems("space:trashed", [
+        { id: "link", type: "section", label: "Link", children: [] } as never
+      ])
+    ).resolves.toBe(false);
+    const store = ActiveSpaceStore.resolve("space:trashed-open");
+    mocks.select.mockResolvedValueOnce({ id: "space:trashed-open", items: [] });
+    await store.init();
+    mocks.select.mockResolvedValueOnce({
+      id: "space:trashed-open",
+      items: [],
+      trashedAt: 1
+    });
+    await expect(
+      appendSpaceItems("space:trashed-open", [
+        { id: "link", type: "section", label: "Link", children: [] } as never
+      ])
+    ).resolves.toBe(false);
+    expect(mocks.mutate).not.toHaveBeenCalled();
+  });
 });

@@ -236,6 +236,25 @@ describe("migratePinnedSpace", () => {
     expect(menu().user).toEqual([]);
   });
 
+  it("keeps pins when the space is moved to the trash during the run", async () => {
+    await migrate();
+    const { id } = onlySpace();
+    state.menus[Product.NUCLEUM].user = ["collection"];
+    appendSpaceItems.mockImplementationOnce(async (_id, items) => {
+      const saved = (state.spaces.get(id!)?.items ?? []) as unknown[];
+      state.spaces.set(id!, {
+        ...state.spaces.get(id!),
+        items: [...saved, ...items],
+        trashedAt: 1
+      });
+      return true;
+    });
+
+    await migrate();
+
+    expect(menu().user).toEqual(["collection"]);
+  });
+
   it("keeps pins while the recorded pinned space has not reached this device", async () => {
     state.menus = {
       [Product.NUCLEUM]: {

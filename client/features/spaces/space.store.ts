@@ -26,7 +26,10 @@ import {
   removeItemById,
   updateItemLabel
 } from "@nucleum/features/spaces/space.utils";
-import { determineResourceType } from "@nucleum/datafn/resource.utils";
+import {
+  determineResourceType,
+  isTrashedResource
+} from "@nucleum/datafn/resource.utils";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
@@ -178,7 +181,7 @@ export class ActiveSpaceStore {
       const saved = (await datafn.space.select(this.id.toString(), {
         metadata: recordMetadata
       })) as ISpace | undefined;
-      if (!saved || !isCurrent()) return false;
+      if (!saved || isTrashedResource(saved) || !isCurrent()) return false;
       const next = appendMissingItems(saved.items ?? [], items);
       if (!(await this.mutate({ items: next }, async () => undefined))) {
         return false;
@@ -420,7 +423,8 @@ export class ActiveSpaceStore {
  * were saved. While a view of the space has its items open, the append runs in
  * that view's save queue, in order with the user's edits. Otherwise the record
  * is read and written directly, and an open view reloads. Either way it stops
- * without writing when another account becomes active meanwhile.
+ * without writing when the space is in the trash or another account becomes
+ * active meanwhile.
  */
 export async function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
   const store = activeSpaceStores.get(id.toString());
@@ -430,7 +434,7 @@ export async function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
   const saved = (await datafn.space.select(id.toString(), {
     metadata: recordMetadata
   })) as ISpace | undefined;
-  if (!saved || !isCurrent()) return false;
+  if (!saved || isTrashedResource(saved) || !isCurrent()) return false;
   assertDatafnMutationSucceeded(
     await datafn.space.mutate({
       operation: "merge",
