@@ -334,7 +334,6 @@ export default {
         "app-framed",
         ':is([data-app-style="semi"], [data-app-style="rounded"]) &'
       );
-      addVariant("app-semi", '[data-app-style="semi"] &');
       addVariant("app-rounded", '[data-app-style="rounded"] &');
     }
     // require("@iconify/tailwind").addIconSelectors({
