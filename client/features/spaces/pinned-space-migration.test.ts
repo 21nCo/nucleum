@@ -210,6 +210,29 @@ describe("migratePinnedSpace", () => {
     expect(menu().user).toEqual(["collection"]);
   });
 
+  it("keeps pins when a link the space already held is removed during the run", async () => {
+    await migrate();
+    const { id } = onlySpace();
+    state.menus[Product.NUCLEUM].user = ["objective", "collection"];
+    appendSpaceItems.mockImplementationOnce(async (_id, items) => {
+      const saved = (state.spaces.get(id!)?.items ?? []) as {
+        path?: string;
+      }[];
+      state.spaces.set(id!, {
+        ...state.spaces.get(id!),
+        items: [
+          ...saved.filter((item) => item.path !== "library/objective/all"),
+          ...items
+        ]
+      });
+      return true;
+    });
+
+    await migrate();
+
+    expect(menu().user).toEqual(["objective", "collection"]);
+  });
+
   it("clears pins when the space already links their pages under other items", async () => {
     await migrate();
     const { id } = onlySpace();

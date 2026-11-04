@@ -211,15 +211,18 @@ async function runMigration(
   assertCurrent(scope);
   if (pinned.isUnavailable && !menu.pinnedSpacePinPending) return;
   const { space } = pinned;
-  const added = planPinnedSpaceItems({
-    items: space?.items ?? [],
-    spaceId: space?.id?.toString(),
-    tabIds: tabEntries,
-    records,
-    tabPages,
-    pages,
-    createId: generateSimpleRandomId
-  });
+  const planItems = (items: ISpaceNavItem[]) =>
+    planPinnedSpaceItems({
+      items,
+      spaceId: space?.id?.toString(),
+      tabIds: tabEntries,
+      records,
+      tabPages,
+      pages,
+      createId: generateSimpleRandomId
+    });
+  const added = planItems(space?.items ?? []);
+  const destinations = planItems([]);
 
   let spaceId = space?.id?.toString();
   const isCreating = !space && added.length > 0;
@@ -247,8 +250,8 @@ async function runMigration(
     assertCurrent(scope);
     if (!(await appendSpaceItems(space.id, added))) return;
   }
-  if (spaceId && added.length > 0) {
-    const isSaved = await hasSavedItems(spaceId, added);
+  if (spaceId && destinations.length > 0) {
+    const isSaved = await hasSavedItems(spaceId, destinations);
     assertCurrent(scope);
     if (!isSaved) return;
   }
