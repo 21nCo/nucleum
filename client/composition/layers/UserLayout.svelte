@@ -17,6 +17,7 @@
   import { page } from "$app/stores";
   import LeftNav from "../chrome/WiredLeftNav.svelte";
   import TopNav from "../chrome/WiredTopNav.svelte";
+  import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
 
   let {
     children,
@@ -101,7 +102,7 @@
         data-testid="resource-record-surface"
         data-full-screen="true"
         use:pageScroll={commandModePageId}
-        data-page-layer
+        {...pageLayerAttributes}
       >
         {#key commandModePageId}
           <ResourceResolver
