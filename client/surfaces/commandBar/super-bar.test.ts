@@ -71,6 +71,37 @@ describe("flattenContextActions", () => {
     ]);
     expect(action.label).toBe("Star: on");
   });
+
+  it("keeps items the page handles by value when it has an action handler", () => {
+    expect(
+      flattenContextActions(menu, { hasActionHandler: true }).map(
+        (action) => action.label
+      )
+    ).toEqual(["Maximize", "Archive", "Links"]);
+  });
+
+  it("drops a switch without a callback outside a toggle group", () => {
+    expect(
+      flattenContextActions(
+        [
+          {
+            group: "view",
+            items: [
+              { value: "wide", label: "Wide", type: ContextMenuType.SWITCH }
+            ]
+          },
+          {
+            group: "mode",
+            isToggleGroup: true,
+            items: [
+              { value: "edit", label: "Edit", type: ContextMenuType.SWITCH }
+            ]
+          }
+        ],
+        { hasActionHandler: true }
+      ).map((action) => action.label)
+    ).toEqual(["Edit: off"]);
+  });
 });
 
 describe("buildSuperBarEntries", () => {

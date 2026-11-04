@@ -76,7 +76,9 @@
   const contextItems = $derived.by(() => {
     if (scope !== "all" || !$activeContextActions) return [];
     try {
-      return flattenContextActions($activeContextActions.resolve());
+      return flattenContextActions($activeContextActions.resolve(), {
+        hasActionHandler: Boolean($activeContextActions.onAction)
+      });
     } catch (error) {
       logger.error({ at: "CmdResults.contextItems", error });
       return [];

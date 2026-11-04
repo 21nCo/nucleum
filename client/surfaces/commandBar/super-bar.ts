@@ -41,14 +41,25 @@ function resolveContextItemLabel(item: IContextMenuItem) {
 /**
  * Flattens a resource context menu into the items the super bar can run
  * directly. Items that need a second-step picker or are disabled are left to
- * the menu itself.
+ * the menu itself. Items with neither a callback nor a command are kept only
+ * when the page handles item values itself, except switches outside a toggle
+ * group, which the menu never reports to the page.
  */
-export function flattenContextActions(menu: IContextMenu): ContextActionItem[] {
+export function flattenContextActions(
+  menu: IContextMenu,
+  options: { hasActionHandler?: boolean } = {}
+): ContextActionItem[] {
   const seen = new Set<string>();
   return menu.flatMap((group) =>
     group.items
       .filter((item) => !item.isDisabled && !item.secondStepComponent)
-      .filter((item) => item.callback || item.action)
+      .filter(
+        (item) =>
+          item.callback ||
+          item.action ||
+          (options.hasActionHandler &&
+            (item.type !== ContextMenuType.SWITCH || group.isToggleGroup))
+      )
       .map((item) => ({
         key: `${group.group}:${String(item.value)}`,
         label: resolveContextItemLabel(item),
