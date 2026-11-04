@@ -190,18 +190,25 @@ export function installApplicationHosts() {
   };
 }
 
-/** Record types the super bar and navigator search: every enabled library resource type. */
+/**
+ * Record types the super bar and navigator search: the product's searchable
+ * types, such as spaces, plus every enabled library resource type.
+ */
 function resolveSearchResources(): string[] {
   return [
     ...new Set(
-      resolveLibrarySwitcherSections(
-        configuredProduct as Product,
-        resolveProductConfig().resources.browse,
-        import.meta.env?.DEV ?? false
-      )
-        .flatMap((section) => section.items)
-        .filter((item) => !item.isDisabled)
-        .map((item) => String(item.value))
+      [
+        ...(resolveProductResources(configuredProduct as Product, "search") ??
+          []),
+        ...resolveLibrarySwitcherSections(
+          configuredProduct as Product,
+          resolveProductConfig().resources.browse,
+          import.meta.env?.DEV ?? false
+        )
+          .flatMap((section) => section.items)
+          .filter((item) => !item.isDisabled)
+          .map((item) => String(item.value))
+      ].map(String)
     )
   ];
 }
