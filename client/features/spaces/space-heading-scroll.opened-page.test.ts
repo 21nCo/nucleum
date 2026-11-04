@@ -3,6 +3,7 @@ import {
   scrollOpenedPageToHeading,
   stopOpenedPageHeadingScroll
 } from "@nucleum/features/spaces/space-heading-scroll";
+import { PAGE_LAYER_ATTRIBUTE } from "@nucleum/shell/navigation/page-layer";
 
 function heading(id: string) {
   const element = document.createElement("h2");
@@ -14,7 +15,7 @@ function heading(id: string) {
 
 function pageLayer(...children: HTMLElement[]) {
   const layer = document.createElement("div");
-  layer.setAttribute("data-page-layer", "");
+  layer.setAttribute(PAGE_LAYER_ATTRIBUTE, "");
   layer.append(...children);
   return layer;
 }
@@ -33,14 +34,8 @@ describe("scrollOpenedPageToHeading", () => {
   it("keeps one pending scroll, replacing an earlier one", () => {
     scrollOpenedPageToHeading("heading-a");
     scrollOpenedPageToHeading("heading-b");
-    const first = document.createElement("h2");
-    first.id = "heading-a";
-    first.scrollIntoView = vi.fn();
-    first.getBoundingClientRect = () => ({ top: 0 }) as DOMRect;
-    const second = document.createElement("h2");
-    second.id = "heading-b";
-    second.scrollIntoView = vi.fn();
-    second.getBoundingClientRect = () => ({ top: 0 }) as DOMRect;
+    const first = heading("heading-a");
+    const second = heading("heading-b");
     document.body.append(pageLayer(first, second));
     vi.advanceTimersByTime(200);
     expect(first.scrollIntoView).not.toHaveBeenCalled();

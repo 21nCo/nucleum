@@ -37,6 +37,7 @@
   import { cn } from "@21n/ui/environment/presentation";
   import ConfirmationNotification from "@nucleum/shell/notifications/ConfirmationNotification.svelte";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
+  import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
   const ComponentResolver = requireActionRenderer();
   let modals = $state<ModalEvent[]>([]);
   let isShowAppearancePreview = $state(false);
@@ -176,7 +177,7 @@
       size={Size.full}
     >
       <ModalLayout path={fullscreen} params={{ layout: { size: Size.full } }}>
-        <div class="contents" data-page-layer>
+        <div class="contents" {...pageLayerAttributes}>
           <SplitView
             id={fullscreen}
             componentParams={{

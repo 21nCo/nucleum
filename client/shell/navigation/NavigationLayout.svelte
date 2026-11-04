@@ -29,6 +29,7 @@
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { cn } from "@21n/ui/environment/presentation";
+  import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
   const ComponentResolver = requireActionRenderer();
   let {
     children,
@@ -112,7 +113,7 @@
             <div
               class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
               data-testid="resource-record-surface"
-              data-page-layer
+              {...pageLayerAttributes}
             >
               <ResourceResolver id={popId} accessMode={AccessMode.PAGE} />
             </div>
