@@ -62,4 +62,13 @@ describe("client/ui/actions/focus-trap.action", () => {
     trap.destroy();
     expect(document.activeElement).toBe(opener);
   });
+
+  it("leaves a Tab that a control inside already handled alone", () => {
+    setup();
+    const last = document.getElementById("last") as HTMLElement;
+    last.focus();
+    last.addEventListener("keydown", (event) => event.preventDefault());
+    tab(last);
+    expect(document.activeElement).toBe(last);
+  });
 });
