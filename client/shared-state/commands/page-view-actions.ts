@@ -54,8 +54,8 @@ export function combinePageViewSegments(
 export type PageRoute = {
   action: IAction;
   /**
-   * Segments after the page path when the page has registered sub-views; undefined
-   * for pages without sub-views.
+   * Segments after the page path when the page has registered sub-views or accepts
+   * any sub-path; undefined for other pages.
    */
   subPath?: string[];
 };

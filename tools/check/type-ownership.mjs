@@ -310,7 +310,9 @@ for (const module of inventory.modules) {
         `enum ${name} `,
         `enum ${renamedTo} `
       );
-      if (candidates.has(name) || candidates.get(renamedTo) !== expected)
+      if (candidates.has(name))
+        failures.push(`Renamed enum ${name} must not be restored`);
+      else if (candidates.get(renamedTo) !== expected)
         failures.push(`Renamed enum ${name} must match ${renamedTo}`);
       renamedEnums++;
       continue;

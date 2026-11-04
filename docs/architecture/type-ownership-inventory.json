@@ -13433,7 +13433,7 @@
     {
       "path": "client/features/memory/markdown/markdown.utils.ts",
       "name": "symbolPatterns",
-      "initializer": "[\n  { regex: /←&gt;/g, replacement: \"↔\" },\n  { regex: /-&gt;/g, replacement: \"→\" },\n  { regex: /&lt;-/g, replacement: \"←\" },\n  { regex: /&lt;=/g, replacement: \"≤\" },\n  { regex: /&g",
+      "initializer": "[\n  { regex: /\u2190&gt;/g, replacement: \"\u2194\" },\n  { regex: /-&gt;/g, replacement: \"\u2192\" },\n  { regex: /&lt;-/g, replacement: \"\u2190\" },\n  { regex: /&lt;=/g, replacement: \"\u2264\" },\n  { regex: /&g",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },
@@ -14133,7 +14133,7 @@
     {
       "path": "client/static/build.js",
       "name": "copyAssetsTo",
-      "initializer": "(targetDir) => {\n  console.log(`📂 Copying assets to ${targetDir}`);\n  \n  // Validate target directory path\n  const validatedTargetDir = validatePath(targetDir, process.cwd());\n  \n",
+      "initializer": "(targetDir) => {\n  console.log(`\ud83d\udcc2 Copying assets to ${targetDir}`);\n  \n  // Validate target directory path\n  const validatedTargetDir = validatePath(targetDir, process.cwd());\n  \n",
       "disposition": "retained with owning implementation; no runtime initializer changes",
       "ownership": "implementation-private"
     },
