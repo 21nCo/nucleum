@@ -26,6 +26,24 @@ export function cloneNavItems(items: ISpaceNavItem[] = []) {
   return clone(items);
 }
 
+function hoistRecordChildren(item: ISpaceNavItem): ISpaceNavItem[] {
+  if (!item.children) return [item];
+  const children = item.children.flatMap(hoistRecordChildren);
+  if (item.type === SpaceNavItemType.SECTION) return [{ ...item, children }];
+  const record = { ...item };
+  delete record.children;
+  return [record, ...children];
+}
+
+/**
+ * Copies a saved item tree into the hierarchy spaces show, where only sections
+ * hold children. Items nested under a record item, as combinations allowed,
+ * follow that item as its siblings, so each of them keeps a row.
+ */
+export function normalizeNavItems(items: ISpaceNavItem[] = []) {
+  return cloneNavItems(items).flatMap(hoistRecordChildren);
+}
+
 /** Returns the index path of an item, or null when it is not in the tree. */
 export function findItemPath(
   items: ISpaceNavItem[],

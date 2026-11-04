@@ -141,4 +141,33 @@ describe("space writes", () => {
       view: SpaceView.WALL
     });
   });
+
+  it("shows items saved under a record item as rows after it", async () => {
+    const store = ActiveSpaceStore.resolve("space:nested-records");
+    mocks.select.mockResolvedValueOnce({
+      id: "space:nested-records",
+      items: [
+        {
+          id: "page",
+          label: "Page",
+          type: "resource",
+          resourceId: "node:page",
+          resourceType: "node",
+          children: [
+            {
+              id: "child",
+              label: "Child",
+              type: "resource",
+              resourceId: "node:child",
+              resourceType: "node"
+            }
+          ]
+        }
+      ]
+    });
+    await store.init();
+    const items = store.readItems();
+    expect(items.map((item) => item.id)).toEqual(["page", "child"]);
+    expect(items[0].children).toBeUndefined();
+  });
 });

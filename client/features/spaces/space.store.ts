@@ -14,12 +14,12 @@ import {
   type SpaceDropPosition
 } from "@nucleum/features/spaces/space.type";
 import {
-  cloneNavItems,
   indentItem,
   insertItem,
   moveItem,
   moveItemToParent,
   moveItemToPosition,
+  normalizeNavItems,
   outdentItem,
   removeItemById,
   updateItemLabel
@@ -171,7 +171,7 @@ export class ActiveSpaceStore {
       items:
         prev?.items && this.itemsRevision !== itemsRevisionAtStart
           ? prev.items
-          : cloneNavItems(record.items ?? []),
+          : normalizeNavItems(record.items ?? []),
       accessMode: accessMode ?? prev?.accessMode,
       isInEditMode: prev?.isInEditMode,
       isTitleEditing: prev?.isTitleEditing,

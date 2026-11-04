@@ -15,6 +15,7 @@ import {
   moveItem,
   moveItemToParent,
   moveItemToPosition,
+  normalizeNavItems,
   outdentItem,
   parseFocusParam,
   removeItemById,
@@ -154,6 +155,20 @@ describe("space item tree", () => {
     expect(ids(indentItem(indented, "b"))).toEqual([{ s: ["a", "b"] }]);
     expect(ids(indentItem(flat(), "b"))).toEqual(["a", "b", "c"]);
     expect(ids(outdentItem(indented, "a"))).toEqual([{ s: [] }, "a", "b"]);
+  });
+
+  it("moves items saved under a record item to follow it", () => {
+    const record = { ...resource("a"), children: [resource("b", "node:b")] };
+    record.children[0].children = [resource("c")];
+    const saved = [section("s", [record]), resource("d")];
+    const normalized = normalizeNavItems(saved);
+    expect(ids(normalized)).toEqual([{ s: ["a", "b", "c"] }, "d"]);
+    expect(
+      normalized[0].children?.every((item) => item.children === undefined)
+    ).toBe(true);
+    expect(saved[0].children?.[0].children?.map((item) => item.id)).toEqual([
+      "b"
+    ]);
   });
 });
 
