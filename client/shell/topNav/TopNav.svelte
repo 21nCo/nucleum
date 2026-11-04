@@ -29,7 +29,10 @@
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
-  import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
+  import {
+    closeTopLayer,
+    resolveTopLayer
+  } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
@@ -82,6 +85,12 @@
       !!searchParams.get(AccessMode.BESIDE_BASE)
   );
   const isCloseMode = $derived(isBulkMode || isResourceOpen);
+  const isClosingSelection = $derived(
+    resolveTopLayer(searchParams, $bulkEditCount, {
+      isIncludePanel: false,
+      isIncludeFullScreen: false
+    }) === "bulk"
+  );
   const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
   const isPageFullScreen = $derived(
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
@@ -130,7 +139,7 @@
       <button
         type="button"
         data-testid="top-bar-close"
-        aria-label={isBulkMode ? "Clear selection" : "Close"}
+        aria-label={isClosingSelection ? "Clear selection" : "Close"}
         class={cn(
           "flex items-center justify-center h-full shrink-0 text-fgs2 hover:bg-bgs3-striped hover:text-fgs1",
           {
@@ -140,7 +149,7 @@
             "px-4": !isAppMenuColumnVisible
           }
         )}
-        use:tooltip={{ text: isBulkMode ? "Clear selection" : "Close" }}
+        use:tooltip={{ text: isClosingSelection ? "Clear selection" : "Close" }}
         onclick={() =>
           closeTopLayer({ isIncludePanel: false, isIncludeFullScreen: false })}
       >
