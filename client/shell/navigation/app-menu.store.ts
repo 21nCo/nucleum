@@ -1,7 +1,6 @@
-import {
-  APP_MENU_VERSION,
-  type IAppMenu,
-  type IAppMenuStore
+import type {
+  IAppMenu,
+  IAppMenuStore
 } from "@nucleum/shell/navigation/app-menu.type";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
@@ -142,8 +141,7 @@ export const appMenuStore = {
       ...current,
       [context]: {
         ...current[context],
-        spaces: uniqueStrings(spaceIds) ?? [],
-        version: APP_MENU_VERSION
+        spaces: uniqueStrings(spaceIds) ?? []
       }
     });
   },

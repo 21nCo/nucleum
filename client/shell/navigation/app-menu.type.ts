@@ -1,6 +1,3 @@
-/** Current shape version of a product's app menu entry. */
-export const APP_MENU_VERSION = 2;
-
 /** App menu settings stored per product in the appMenu DataFn KV record. */
 export type IAppMenuStore = {
   [product: string]: IAppMenu;
@@ -14,5 +11,4 @@ export type IAppMenu = {
   user?: string[];
   /** Space ids pinned below the product's destinations, in pin order. */
   spaces?: string[];
-  version?: number;
 };
