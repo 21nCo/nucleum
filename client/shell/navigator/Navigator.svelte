@@ -29,6 +29,11 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { searchResources } from "@nucleum/shared-state/resources/resource-search";
   import { Action } from "@nucleum/client/config/action.enum";
+  import context from "@nucleum/client/runtime/context.store";
+  import {
+    Embed,
+    OperatingSystem
+  } from "@nucleum/client/runtime/context.type";
   import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
   import type { IKeyboardShortcut } from "@21n/ui/elements/keyboard/shortcut.type";
   import {
@@ -109,14 +114,23 @@
   );
   let clearedFrequentContext = $state<string | undefined>(undefined);
   let now = $state(Date.now());
-  const keyHints: { shortcut: string | IKeyboardShortcut; label: string }[] = [
-    { shortcut: { key: KeyboardKey.ENTER }, label: "open" },
-    {
-      shortcut: { key: KeyboardKey.ENTER, modifiers: [ModifierKey.META] },
-      label: "split"
-    },
-    { shortcut: Action.CMD, label: "super bar" }
-  ];
+  const splitModifier = $derived(
+    $context.os === OperatingSystem.MACOS || $context.os === OperatingSystem.IOS
+      ? ModifierKey.META
+      : ModifierKey.CTRL
+  );
+  const isKeyHintsShown = $derived(
+    $context.embed !== Embed.HANDSET && $context.embed !== Embed.TABLET
+  );
+  const keyHints: { shortcut: string | IKeyboardShortcut; label: string }[] =
+    $derived([
+      { shortcut: { key: KeyboardKey.ENTER }, label: "open" },
+      {
+        shortcut: { key: KeyboardKey.ENTER, modifiers: [splitModifier] },
+        label: "split"
+      },
+      { shortcut: Action.CMD, label: "super bar" }
+    ]);
   const fromHereItems = $derived(
     currentPageId && isRecordId(currentPageId)
       ? resolveHistoryItems(
@@ -682,21 +696,23 @@
       {/if}
     {/if}
   </div>
-  <div
-    class="flex items-center gap-5 shrink-0 h-11 px-4 border-t border-brs3 text-b3 text-fgs3 app-framed:border-transparent"
-    data-testid="navigator-key-hints"
-  >
-    {#each keyHints as hint (hint.label)}
-      <span class="flex items-center gap-1.5 leading-none">
-        <ShortcutText
-          shortcut={hint.shortcut}
-          parentBgIndex={1}
-          isAlwaysShown={true}
-        />
-        <span>{hint.label}</span>
-      </span>
-    {/each}
-  </div>
+  {#if isKeyHintsShown}
+    <div
+      class="flex items-center gap-5 shrink-0 h-11 px-4 border-t border-brs3 text-b3 text-fgs3 app-framed:border-transparent"
+      data-testid="navigator-key-hints"
+    >
+      {#each keyHints as hint (hint.label)}
+        <span class="flex items-center gap-1.5 leading-none">
+          <ShortcutText
+            shortcut={hint.shortcut}
+            parentBgIndex={1}
+            isAlwaysShown={true}
+          />
+          <span>{hint.label}</span>
+        </span>
+      {/each}
+    </div>
+  {/if}
 </div>
 
 <style>
