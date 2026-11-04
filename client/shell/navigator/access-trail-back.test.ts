@@ -8,7 +8,11 @@ import {
 } from "./access-trail";
 
 let keyCount = 0;
-const opts = () => ({ key: `t${++keyCount}`, at: keyCount });
+const opts = () => ({
+  key: `t${++keyCount}`,
+  nodeKey: `n${keyCount}`,
+  at: keyCount
+});
 
 describe("resolveAccessTrailBack", () => {
   it("returns nothing without a trail or an open page", () => {
