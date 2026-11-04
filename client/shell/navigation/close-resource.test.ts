@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { navigation } from "./navigation";
+import { AccessMode } from "@nucleum/datafn/resource.type";
 
 vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
   uiState: { getState: () => [], setState: () => undefined }
@@ -102,12 +103,28 @@ describe("closeResource for in-place resources", () => {
     window.history.replaceState(
       {},
       "",
-      "/calendar?page=objective%3Agoal&besidePage=node%3Aside&besidePageAt=3&abcde-task=task%3Aone"
+      "/calendar?page=objective%3Agoal&pageAt=1&besidePage=node%3Aside&besidePageAt=3&abcde-task=task%3Aone"
     );
     navigation.closeResource({ id: "task:one" });
     const url = lastUrl();
+    expect(url.searchParams.get("page")).toBe("objective:goal");
+    expect(url.searchParams.get("pageAt")).toBe("1");
     expect(url.searchParams.get("besidePage")).toBe("node:side");
     expect(url.searchParams.get("besidePageAt")).toBe("3");
+  });
+
+  it("keeps the page timestamp when closing the resource beside the base", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/calendar?page=node%3Aone&pageAt=1&beside=node%3Atwo&besideAt=2"
+    );
+    navigation.closeResource({ accessMode: AccessMode.BESIDE_BASE });
+    const url = lastUrl();
+    expect(url.searchParams.get("page")).toBe("node:one");
+    expect(url.searchParams.get("pageAt")).toBe("1");
+    expect(url.searchParams.has("beside")).toBe(false);
+    expect(url.searchParams.has("besideAt")).toBe(false);
   });
 
   it("still closes a page by its id", () => {

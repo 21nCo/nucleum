@@ -41,8 +41,6 @@ const recordSpecificSearchParams = [
   /-nodeView$/,
   AppSearchParam.EDIT,
   AppSearchParam.VIEW,
-  AppSearchParam.PAGE_AT,
-  AppSearchParam.BESIDE_AT,
   AppSearchParam.BESIDE_PAGE_AT,
   AppSearchParam.FULL_AT,
   AppSearchParam.LINK,
@@ -372,7 +370,7 @@ export const navigation = {
     if (accessMode === AccessMode.FULL) {
       url =
         navigation.toggleSearchParam(
-          [AccessMode.PAGE, AccessMode.BESIDE_PAGE],
+          [AccessMode.PAGE, AppSearchParam.PAGE_AT, AccessMode.BESIDE_PAGE],
           {
             isPreventRefresh: true
           }
@@ -575,11 +573,16 @@ export const navigation = {
         { isPreventRefresh: true }
       ) ?? new URL(window.location.href);
     if (props?.accessMode) {
-      navigation.toggleSearchParam([props.accessMode], { url });
+      navigation.toggleSearchParam(
+        [props.accessMode, `${props.accessMode}At`],
+        { url }
+      );
       return;
     }
     if (resolvedMode) {
-      navigation.toggleSearchParam([resolvedMode], { url });
+      navigation.toggleSearchParam([resolvedMode, `${resolvedMode}At`], {
+        url
+      });
       return;
     }
     if (props?.id) {
@@ -594,16 +597,22 @@ export const navigation = {
       return;
     }
     if (props?.isRestrictToModals) {
-      navigation.toggleSearchParam([AccessMode.BESIDE_PAGE, AccessMode.PAGE], {
-        url
-      });
+      navigation.toggleSearchParam(
+        [AccessMode.BESIDE_PAGE, AccessMode.PAGE, AppSearchParam.PAGE_AT],
+        { url }
+      );
       return;
     }
-    removeSearchParam(AccessMode.BESIDE_BASE);
-    removeSearchParam(AccessMode.FULL);
-    removeSearchParam(AccessMode.PAGE);
-    removeSearchParam(AccessMode.BESIDE_PAGE);
-    removeSearchParam(AccessMode.OVERLAY);
+    for (const mode of [
+      AccessMode.BESIDE_BASE,
+      AccessMode.FULL,
+      AccessMode.PAGE,
+      AccessMode.BESIDE_PAGE,
+      AccessMode.OVERLAY
+    ]) {
+      removeSearchParam(mode);
+      removeSearchParam(`${mode}At`);
+    }
     navigation.gotoPath(url.href);
 
     function removeSearchParam(param: string) {
