@@ -4,6 +4,7 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
+  import { escapeMarkdownText } from "@21n/ui/elements/markdown/markdown.utils";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
@@ -124,23 +125,38 @@
   });
 
   $effect(() => {
-    if (selectedItemId && findItem(items, selectedItemId)) return;
+    if (!isTargetsLoaded) return;
+    const current = selectedItemId
+      ? findItem(items, selectedItemId)
+      : undefined;
+    if (
+      current?.type === SpaceNavItemType.RESOURCE &&
+      isAutoOpenable(current as ISpaceResourceNavItem)
+    )
+      return;
     selectedItemId = findFirstOpenable(items)?.id ?? null;
     activeHeadingId = undefined;
+    scrollRequest++;
   });
 
-  function findFirstOpenable(list: ISpaceNavItem[]) {
-    return collectResourceItems(list).find(
-      (item) =>
-        item.resourceType !== Resource.space &&
-        isSpaceItemOpenable(item.resourceType, product) &&
-        !targets[item.resourceId.toString()]?.trashedAt
+  function isAutoOpenable(item: ISpaceResourceNavItem) {
+    const target = targets[item.resourceId.toString()];
+    return (
+      item.resourceType !== Resource.space &&
+      isSpaceItemOpenable(item.resourceType, product) &&
+      !!target &&
+      !target.trashedAt
     );
+  }
+
+  function findFirstOpenable(list: ISpaceNavItem[]) {
+    return collectResourceItems(list).find(isAutoOpenable);
   }
 
   function openItem(item: ISpaceResourceNavItem) {
     selectedItemId = item.id;
     activeHeadingId = undefined;
+    scrollRequest++;
   }
 
   /**
@@ -197,7 +213,8 @@
     await store.updateNavItemLabel(id, label);
   }
 
-  function confirmDelete(item: ISpaceNavItem, label: string) {
+  function confirmDelete(item: ISpaceNavItem, rawLabel: string) {
+    const label = escapeMarkdownText(rawLabel);
     const isSection = item.type === SpaceNavItemType.SECTION;
     const nested = flattenNavItems(item.children ?? []).length;
     confirmationNotification.notify({
