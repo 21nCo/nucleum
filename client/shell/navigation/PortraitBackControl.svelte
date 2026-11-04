@@ -13,6 +13,7 @@
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
+  import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
   import { resolveModalOnFront } from "@21n/ui/actions/interaction-dom";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
@@ -44,7 +45,8 @@
   let swipeStart: { x: number; y: number } | undefined;
 
   function back() {
-    if (searchParams.get(AccessMode.OVERLAY) && !isPageOpen) {
+    const overlay = searchParams.get(AccessMode.OVERLAY);
+    if (overlay && (!isPageOpen || isOverlayAbovePage(overlay))) {
       closeTopLayer({ isIncludePanel: false });
       return;
     }

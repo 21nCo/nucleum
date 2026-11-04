@@ -4,6 +4,7 @@ import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
 import { navigation } from "@nucleum/shell/navigation/navigation";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import { fullScreen } from "@nucleum/shell/overlays/modal.store";
+import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
 
 /** Layers the shell can close, from the top of the stack down. */
 export type TopLayer =
@@ -19,7 +20,8 @@ export type TopLayer =
  * Resolves the topmost closable layer: overlay, then right panel, then bulk
  * selection, then the split beside the resource page, then full screen, then
  * the resource page, then the split next to the base page. A resource page
- * opened from an overlay covers it, so that overlay comes after the page.
+ * opened from an overlay covers it, so that overlay comes after the page,
+ * except an overlay drawn above the page, such as the navigator.
  */
 export function resolveTopLayer(
   searchParams: URLSearchParams,
@@ -27,8 +29,10 @@ export function resolveTopLayer(
   options?: { isIncludePanel?: boolean; isIncludeFullScreen?: boolean }
 ): TopLayer | undefined {
   const isPageOpen = !!searchParams.get(AccessMode.PAGE);
-  const isOverlayOpen = !!searchParams.get(AccessMode.OVERLAY);
-  if (isOverlayOpen && !isPageOpen) return "overlay";
+  const overlay = searchParams.get(AccessMode.OVERLAY);
+  const isOverlayOpen = !!overlay;
+  if (isOverlayOpen && (!isPageOpen || isOverlayAbovePage(overlay)))
+    return "overlay";
   if (options?.isIncludePanel !== false && searchParams.get(AccessMode.PANEL))
     return "panel";
   if (bulkCount > 0) return "bulk";

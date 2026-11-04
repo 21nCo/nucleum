@@ -98,6 +98,20 @@ describe("closeTopLayer", () => {
     ]);
   });
 
+  it("closes the navigator overlay drawn above an open page before the page", () => {
+    visit("?page=node:a&overlay=navigator");
+    expect(closeTopLayer()).toBe("overlay");
+    expect(mocks.navigation.toggleSearchParam).toHaveBeenLastCalledWith([
+      "overlay"
+    ]);
+    expect(mocks.navigation.closeResource).not.toHaveBeenCalled();
+  });
+
+  it("closes a page opened over another overlay before that overlay", () => {
+    visit("?page=node:a&overlay=search");
+    expect(closeTopLayer()).toBe("page");
+  });
+
   it("closes the page and the split beside the base through closeResource", () => {
     visit("?page=node:a");
     expect(closeTopLayer()).toBe("page");

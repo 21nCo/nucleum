@@ -27,6 +27,7 @@
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { cn } from "@21n/ui/environment/presentation";
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
+  import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
   import {
@@ -60,6 +61,7 @@
     return typeof pop.id === "string" && pop.id.length > 0 ? pop.id : undefined;
   });
   const isBaseCovered = $derived(!!popId || !!mainPath);
+  const isPageCovered = $derived(!!popId && isOverlayAbovePage(mainPath));
   const isPageFullScreen = $derived(isMaxParam && !!popId && !$view.isPortrait);
   const isOverlayFullScreen = $derived(isMaxParam && !!mainPath && !popId);
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
@@ -68,7 +70,7 @@
 
   $effect(() => {
     contextZone.setVisibleLayers(
-      popId
+      popId && !isPageCovered
         ? [ContextZoneLayer.PAGE, ContextZoneLayer.BESIDE_PAGE]
         : mainPath
           ? [ContextZoneLayer.OVERLAY]
@@ -139,7 +141,10 @@
         >
           {#if mainPath && !isOverlayFullScreen}
             <div
-              class="absolute inset-0 w-full h-full bg-bgs1 z-40"
+              class={cn("absolute inset-0 w-full h-full bg-bgs1", {
+                "z-40": !isPageCovered,
+                "z-[60]": isPageCovered
+              })}
               data-testid="overlay-layer"
               data-overlay={mainPath}
             >
@@ -159,6 +164,8 @@
               class="absolute inset-0 flex w-full h-full bg-bgs1 z-50"
               data-testid="resource-record-surface"
               data-full-screen={isPageFullScreen ? "true" : undefined}
+              inert={isPageCovered}
+              aria-hidden={isPageCovered ? "true" : undefined}
             >
               <div
                 use:pageScroll={popId}

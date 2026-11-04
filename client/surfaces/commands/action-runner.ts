@@ -25,6 +25,7 @@ import { resourceAction } from "@nucleum/datafn/resource.utils";
 
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { resolveEffectiveLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
+import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
 
 /** Executes the product command registry supplied by application composition. */
 export const actionRunner = {
@@ -124,7 +125,7 @@ export const actionRunner = {
         navigation.toggleSearchParam([mode]);
       } else {
         navigation.toggleSearchParam({
-          ...(mode === AccessMode.OVERLAY
+          ...(mode === AccessMode.OVERLAY && !isOverlayAbovePage(slug)
             ? {
                 [AccessMode.PAGE]: null,
                 [AccessMode.BESIDE_PAGE]: null,
