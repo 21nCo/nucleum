@@ -307,6 +307,16 @@ export class ActiveSpaceStore {
 }
 
 /**
+ * Reloads the open state of a space from its record when a view of it already
+ * exists, so items written outside the store are shown and kept by later edits.
+ */
+export async function reloadActiveSpace(id: IRecordId) {
+  const store = activeSpaceStores.get(id.toString());
+  if (!store) return;
+  await store.init(undefined, { isRecordedInRecents: false });
+}
+
+/**
  * Inserts a space record, under `id` when given, and returns its id, or undefined
  * when the insert fails. Spaces start as an empty side nav.
  */

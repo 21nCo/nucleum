@@ -19,7 +19,10 @@ import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
 import type { IAppMenu } from "@nucleum/shell/navigation/app-menu.type";
 import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
 import type { ISpace } from "@nucleum/features/spaces/space.type";
-import { insertSpace } from "@nucleum/features/spaces/space.store";
+import {
+  insertSpace,
+  reloadActiveSpace
+} from "@nucleum/features/spaces/space.store";
 import {
   resolveSpacePageRoute,
   resolveTargetLabel
@@ -66,14 +69,22 @@ async function writeMenu(scope: MigrationScope, menu: IAppMenu) {
   assertDatafnMutationSucceeded(result);
 }
 
+/**
+ * Loads the recorded pinned space. `isUnavailable` is set when the space is recorded
+ * but its record is not on this device, which happens while it has not synced yet.
+ */
 async function loadPinnedSpace(spaceId: string | undefined) {
-  if (!spaceId) return { id: undefined, space: undefined };
+  if (!spaceId) {
+    return { id: undefined, space: undefined, isUnavailable: false };
+  }
   const space = (await datafn.space.select(spaceId, {
     metadata: recordMetadata
   })) as ISpace | undefined;
-  if (!space) return { id: spaceId, space: undefined };
-  if (isTrashedResource(space)) return { id: undefined, space: undefined };
-  return { id: spaceId, space };
+  if (!space) return { id: spaceId, space: undefined, isUnavailable: true };
+  if (isTrashedResource(space)) {
+    return { id: undefined, space: undefined, isUnavailable: false };
+  }
+  return { id: spaceId, space, isUnavailable: false };
 }
 
 async function loadTabRecord(
@@ -131,7 +142,18 @@ async function runMigration(
   });
   if (!hasPinnedSpaceSources({ tabIds: tabEntries, typePins })) {
     if (!menu.tabsMigrated || menu.pinnedSpacePinPending) {
-      const { space } = await loadPinnedSpace(menu.pinnedSpaceId);
+      const { space, isUnavailable } = await loadPinnedSpace(
+        menu.pinnedSpaceId
+      );
+      if (isUnavailable) {
+        if (!menu.tabsMigrated) {
+          await writeMenu(scope, {
+            ...(await readMenu(scope)),
+            tabsMigrated: true
+          });
+        }
+        return;
+      }
       await writeMenu(
         scope,
         planPinnedSpaceMenu({
@@ -173,6 +195,7 @@ async function runMigration(
 
   const pinned = await loadPinnedSpace(menu.pinnedSpaceId);
   assertCurrent(scope);
+  if (pinned.isUnavailable && !menu.pinnedSpacePinPending) return;
   const { space } = pinned;
   const added = planPinnedSpaceItems({
     items: space?.items ?? [],
@@ -205,6 +228,7 @@ async function runMigration(
     ) {
       return;
     }
+    await reloadActiveSpace(spaceId);
   } else if (space && added.length > 0) {
     assertCurrent(scope);
     const result = await datafn.space.mutate({
@@ -214,6 +238,7 @@ async function runMigration(
       context: ResourceAccessPoint.SPACE
     });
     assertDatafnMutationSucceeded(result);
+    await reloadActiveSpace(space.id);
   }
 
   if (movedTabs.length > 0) {
@@ -253,7 +278,8 @@ async function runExclusive(key: string, task: () => Promise<void>) {
  * whose record or page cannot be found, stay in the tab bar. Resource-type pins move on every run that finds any, so it is safe
  * to run on every app load once DataFn has loaded the active account. Runs are
  * serialized per account and product across windows, stop when the active account
- * changes, and keep their sources when a read or write fails. Failures are logged
+ * changes, and keep their sources when a read or write fails or when the recorded
+ * space has not reached this device yet. Failures are logged
  * and never thrown. `resolveTypePinPage` maps a pinned resource type to the page it
  * opens, with a label used when the product has no such page.
  */
