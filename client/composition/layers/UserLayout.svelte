@@ -10,6 +10,10 @@
   import CommandModePage from "@nucleum/surfaces/commandBar/CommandModePage.svelte";
   import NavigationLayout from "@nucleum/shell/navigation/NavigationLayout.svelte";
   import FullScreenOverlayLayer from "@nucleum/shell/overlays/FullScreenOverlayLayer.svelte";
+  import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";
+  import { resolveLayoutRoute } from "@nucleum/shell/navigation/layout-route";
+  import { AccessMode } from "@nucleum/datafn/resource.type";
+  import { page } from "$app/stores";
   import LeftNav from "../chrome/WiredLeftNav.svelte";
   import TopNav from "../chrome/WiredTopNav.svelte";
 
@@ -24,6 +28,8 @@
     topnavIndicators?: Snippet;
     main?: Snippet;
   } = $props();
+
+  const commandModePageId = $derived(resolveLayoutRoute($page.url).pop?.id);
 
   onMount(() => {
     $appLoadingState.isLocalLoaded = true;
@@ -41,6 +47,20 @@
 {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
   {#if $appStore.interactionMode === InteractionMode.AGENT && $context.embed !== Embed.HANDSET}
     <CommandModePage />
+    {#if commandModePageId}
+      <div
+        class="fixed inset-0 w-full h-full bg-bgs1 z-40"
+        data-testid="resource-record-surface"
+        data-full-screen="true"
+      >
+        {#key commandModePageId}
+          <ResourceResolver
+            id={commandModePageId}
+            accessMode={AccessMode.PAGE}
+          />
+        {/key}
+      </div>
+    {/if}
   {:else}
     <NavigationLayout {leftNav} {topNav} {main}>
       {@render children?.()}
