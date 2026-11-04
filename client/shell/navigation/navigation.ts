@@ -234,7 +234,7 @@ export const navigation = {
     const current = new URL(window.location.href);
     current.pathname = current.pathname.replace(/(.)\/+$/, "$1");
     if (areNavigationUrlsEqual(url, current)) return;
-    navigation.gotoPath(url.href, { replaceState: true });
+    void navigation.gotoPath(url.href, { replaceState: true });
   },
   gotoErrorPage: (err: any) => {
     logger.log({ at: "gotoErrorPage", err });

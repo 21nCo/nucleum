@@ -68,7 +68,10 @@ export function createNavigatorHistoryWriter(
     item.namespace === null || item.namespace === namespace;
 
   const applyVisits = (base: NavigatorHistory, items: PendingVisit[]) =>
-    items.map((item) => item.visit).reduce(recordNavigatorVisit, base);
+    items.reduce(
+      (history, item) => recordNavigatorVisit(history, item.visit),
+      base
+    );
 
   function retainCurrentNamespace() {
     const namespace = storage.namespace();
