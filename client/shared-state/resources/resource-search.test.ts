@@ -153,4 +153,13 @@ describe("searchResources", () => {
       expect(vi.getTimerCount()).toBe(0);
     });
   });
+
+  it("rejects an already aborted search without starting a DataFn request", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      searchResources({ query: "plan", signal: controller.signal })
+    ).rejects.toBeDefined();
+    expect(mocks.search).not.toHaveBeenCalled();
+  });
 });

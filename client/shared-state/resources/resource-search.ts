@@ -58,6 +58,7 @@ function abortReason(signal: AbortSignal) {
 function untilAborted<T>(request: Promise<T>, signal: AbortSignal) {
   return new Promise<T>((resolve, reject) => {
     if (signal.aborted) {
+      request.catch(() => undefined);
       reject(abortReason(signal));
       return;
     }
@@ -146,11 +147,11 @@ export async function searchResources(
   const resources =
     params.resources ?? requireProductConfig().searchResources ?? [];
   if (!query || resources.length === 0) return [];
+  if (params.signal?.aborted) throw abortReason(params.signal);
   const limit = params.limit ?? DEFAULT_LIMIT;
   const candidateLimit = limit * CANDIDATE_FACTOR;
   const controller = new AbortController();
   const forwardAbort = () => controller.abort(params.signal?.reason);
-  if (params.signal?.aborted) forwardAbort();
   params.signal?.addEventListener("abort", forwardAbort, { once: true });
   const timer = setTimeout(
     () => controller.abort(new ResourceSearchTimeoutError()),
