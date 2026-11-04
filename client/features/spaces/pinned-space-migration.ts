@@ -31,6 +31,7 @@ import {
   planPinnedSpaceItems,
   planPinnedSpaceMenu,
   removeMovedTabs,
+  resolveMovedTabs,
   type PinnedSpacePage,
   type PinnedSpaceRecord
 } from "@nucleum/features/spaces/pinned-space-migration.utils";
@@ -77,17 +78,21 @@ async function loadPinnedSpace(spaceId: string | undefined) {
 
 async function loadTabRecord(
   id: string
-): Promise<PinnedSpaceRecord | undefined> {
+): Promise<{ record?: PinnedSpaceRecord; isTrashed: boolean }> {
   const resourceType = determineResourceType(id);
-  if (resourceType === Resource.unknown) return undefined;
+  if (resourceType === Resource.unknown) return { isTrashed: false };
   const record = (await datafn.table(resourceType).select(id, {
     metadata: recordMetadata
   })) as Record<string, unknown> | undefined;
-  if (!record || isTrashedResource(record)) return undefined;
+  if (!record) return { isTrashed: false };
+  if (isTrashedResource(record)) return { isTrashed: true };
   return {
-    resourceType,
-    label: resolveTargetLabel(record),
-    avatar: record.avatar as IAvatar | undefined
+    record: {
+      resourceType,
+      label: resolveTargetLabel(record),
+      avatar: record.avatar as IAvatar | undefined
+    },
+    isTrashed: false
   };
 }
 
@@ -140,16 +145,31 @@ async function runMigration(
     return;
   }
 
-  const recordIds = tabEntries.filter((id) => isRecordId(id));
-  const records = Object.fromEntries(
-    await Promise.all(
-      recordIds.map(async (id) => [id, await loadTabRecord(id)] as const)
-    )
+  const loaded = await Promise.all(
+    tabEntries
+      .filter((id) => isRecordId(id))
+      .map(async (id) => [id, await loadTabRecord(id)] as const)
   );
-  const pages = [
-    ...tabEntries.filter((id) => !isRecordId(id)).map(resolveTabPage),
-    ...typePins.map((pin) => resolvePinPage(pin, resolveTypePinPage))
-  ].filter((page): page is PinnedSpacePage => Boolean(page));
+  const records = Object.fromEntries(
+    loaded.map(([id, result]) => [id, result.record])
+  );
+  const trashedIds = new Set(
+    loaded.filter(([, result]) => result.isTrashed).map(([id]) => id)
+  );
+  const tabPages = Object.fromEntries(
+    tabEntries
+      .filter((id) => !isRecordId(id))
+      .map((id) => [id, resolveTabPage(id)])
+  );
+  const pages = typePins
+    .map((pin) => resolvePinPage(pin, resolveTypePinPage))
+    .filter((page): page is PinnedSpacePage => Boolean(page));
+  const movedTabs = resolveMovedTabs({
+    tabIds: tabEntries,
+    records,
+    tabPages,
+    trashedIds
+  });
 
   const pinned = await loadPinnedSpace(menu.pinnedSpaceId);
   assertCurrent(scope);
@@ -157,8 +177,9 @@ async function runMigration(
   const added = planPinnedSpaceItems({
     items: space?.items ?? [],
     spaceId: space?.id?.toString(),
-    tabIds: recordIds,
+    tabIds: tabEntries,
     records,
+    tabPages,
     pages,
     createId: generateSimpleRandomId
   });
@@ -195,11 +216,11 @@ async function runMigration(
     assertDatafnMutationSucceeded(result);
   }
 
-  if (tabEntries.length > 0) {
+  if (movedTabs.length > 0) {
     const currentTabs = await tabs.read();
     assertCurrent(scope);
     assertDatafnMutationSucceeded(
-      await tabs.rearrange(removeMovedTabs(currentTabs, tabEntries))
+      await tabs.rearrange(removeMovedTabs(currentTabs, movedTabs))
     );
   }
   await writeMenu(
@@ -228,8 +249,8 @@ async function runExclusive(key: string, task: () => Promise<void>) {
 /**
  * Moves the current product's resource-type app menu pins, and once its app tabs,
  * into a "Pinned" space pinned to the app menu, then removes the moved entries from
- * their sources. Tabs for records the product cannot open from a space stay in the
- * tab bar. Resource-type pins move on every run that finds any, so it is safe
+ * their sources. Tabs for records the product cannot open from a space, and tabs
+ * whose record or page cannot be found, stay in the tab bar. Resource-type pins move on every run that finds any, so it is safe
  * to run on every app load once DataFn has loaded the active account. Runs are
  * serialized per account and product across windows, stop when the active account
  * changes, and keep their sources when a read or write fails. Failures are logged

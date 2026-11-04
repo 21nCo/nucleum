@@ -11,6 +11,7 @@ import {
   partitionPinnedSpaceTabs,
   planPinnedSpaceMenu,
   removeMovedTabs,
+  resolveMovedTabs,
   type PinnedSpaceRecord
 } from "@nucleum/features/spaces/pinned-space-migration.utils";
 
@@ -77,6 +78,25 @@ describe("planPinnedSpaceItems", () => {
         path: "library/node/all"
       }
     ]);
+  });
+
+  it("keeps record and page tabs in tab order before resource-type pins", () => {
+    const planned = planPinnedSpaceItems({
+      items: [],
+      tabIds: ["calendar", "objective:b", "missing-page"],
+      records,
+      tabPages: {
+        calendar: { path: "calendar", label: "Calendar" },
+        "missing-page": undefined
+      },
+      pages: [pages[1]],
+      createId: counter()
+    });
+    expect(
+      planned.map((item) =>
+        item.type === SpaceNavItemType.PAGE ? item.path : item.label
+      )
+    ).toEqual(["calendar", "Goal B", "library/node/all"]);
   });
 
   it("skips missing records, the space itself and duplicate sources", () => {
@@ -243,6 +263,28 @@ describe("removeMovedTabs", () => {
   });
 });
 
+describe("resolveMovedTabs", () => {
+  it("removes moved and trashed tabs and keeps tabs whose target is not found", () => {
+    expect(
+      resolveMovedTabs({
+        tabIds: [
+          "node:a",
+          "node:gone",
+          "node:unsynced",
+          "calendar",
+          "old-page"
+        ],
+        records: { "node:a": records["node:a"] },
+        tabPages: {
+          calendar: { path: "calendar", label: "Calendar" },
+          "old-page": undefined
+        },
+        trashedIds: new Set(["node:gone"])
+      })
+    ).toEqual(["node:a", "node:gone", "calendar"]);
+  });
+});
+
 describe("partitionPinnedSpaceTabs", () => {
   const tabIds = ["objective:b", "collection:c", "node:a", "calendar"];
 
@@ -267,6 +309,9 @@ describe("partitionPinnedSpaceTabs", () => {
       product: Product.POINTRON
     });
     expect(hasPinnedSpaceSources({ tabIds: movable })).toBe(false);
-    expect(removeMovedTabs(tabIds, movable)).toEqual(tabIds);
+    expect(removeMovedTabs(["collection:c", "node:a"], movable)).toEqual([
+      "collection:c",
+      "node:a"
+    ]);
   });
 });

@@ -33,20 +33,22 @@ export type PinnedSpacePage = {
 };
 
 /**
- * Items to append to the pinned space: app tabs as record items in tab order, then
- * former resource-type pins as page links in pin order. Skips tabs whose records are
- * missing, the space itself, and anything already in the space or earlier in the
- * list, so planning again after the items were added returns nothing.
+ * Items to append to the pinned space: app tabs in tab order, as record items or as
+ * page links for page tabs, then former resource-type pins as page links in pin
+ * order. Skips tabs whose record or page is missing, the space itself, and anything
+ * already in the space or earlier in the list, so planning again after the items
+ * were added returns nothing.
  */
 export function planPinnedSpaceItems(params: {
   items: ISpaceNavItem[];
   spaceId?: string;
   tabIds: string[];
   records: Record<string, PinnedSpaceRecord | undefined>;
+  tabPages?: Record<string, PinnedSpacePage | undefined>;
   pages: PinnedSpacePage[];
   createId: () => string;
 }): ISpaceNavItem[] {
-  const { items, spaceId, tabIds, records, pages, createId } = params;
+  const { items, spaceId, tabIds, records, tabPages, pages, createId } = params;
   const resourceIds = new Set(
     collectResourceItems(items).map((item) => item.resourceId.toString())
   );
@@ -54,10 +56,27 @@ export function planPinnedSpaceItems(params: {
     collectPageItems(items).map((item) => normalizeSpacePagePath(item.path))
   );
   const planned: ISpaceNavItem[] = [];
+  const addPage = (page: PinnedSpacePage) => {
+    const path = normalizeSpacePagePath(page.path);
+    if (!path || paths.has(path)) return;
+    paths.add(path);
+    planned.push({
+      id: createId(),
+      type: SpaceNavItemType.PAGE,
+      label: page.label,
+      path
+    });
+  };
   for (const tabId of tabIds ?? []) {
     const id = tabId?.toString();
-    const record = id ? records[id] : undefined;
-    if (!id || !record || id === spaceId || resourceIds.has(id)) continue;
+    if (!id) continue;
+    const record = records[id];
+    if (!record) {
+      const page = tabPages?.[id];
+      if (page) addPage(page);
+      continue;
+    }
+    if (id === spaceId || resourceIds.has(id)) continue;
     resourceIds.add(id);
     planned.push({
       id: createId(),
@@ -68,17 +87,7 @@ export function planPinnedSpaceItems(params: {
       resourceType: record.resourceType
     });
   }
-  for (const page of pages ?? []) {
-    const path = normalizeSpacePagePath(page.path);
-    if (!path || paths.has(path)) continue;
-    paths.add(path);
-    planned.push({
-      id: createId(),
-      type: SpaceNavItemType.PAGE,
-      label: page.label,
-      path
-    });
-  }
+  for (const page of pages ?? []) addPage(page);
   return planned;
 }
 
@@ -126,6 +135,24 @@ export function planPinnedSpaceMenu<
   };
 }
 
+/**
+ * Tabs a migration run may remove from the tab bar: tabs whose record or page is
+ * now in the space, and tabs whose record is known to be trashed. Tabs whose record
+ * or page could not be found stay in the tab bar, since the record may not have
+ * reached this device yet.
+ */
+export function resolveMovedTabs(params: {
+  tabIds: string[];
+  records: Record<string, PinnedSpaceRecord | undefined>;
+  tabPages: Record<string, PinnedSpacePage | undefined>;
+  trashedIds: Set<string>;
+}) {
+  const { tabIds, records, tabPages, trashedIds } = params;
+  return tabIds.filter(
+    (id) => Boolean(records[id] || tabPages[id]) || trashedIds.has(id)
+  );
+}
+
 /** Tab ids left after removing the tabs a migration run moved. */
 export function removeMovedTabs<T>(tabIds: T[], movedTabIds: string[]): T[] {
   const moved = new Set(movedTabIds);
@@ -135,7 +162,7 @@ export function removeMovedTabs<T>(tabIds: T[], movedTabIds: string[]): T[] {
 /**
  * Splits app tabs into those the migration handles and those it leaves in the tab
  * bar: record tabs of a type the product cannot open from a space. Handled tabs are
- * moved into the space, or dropped when their record or page no longer exists.
+ * moved into the space, or dropped when their record is trashed.
  */
 export function partitionPinnedSpaceTabs(params: {
   tabIds: string[];
