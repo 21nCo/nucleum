@@ -20,6 +20,7 @@ import {
   removeItemById,
   resolveAddBlockReason,
   resolveOpeningProductName,
+  resolveSpaceHeadingQueries,
   resolveSpaceItemResources,
   sanitizeFocusPath,
   spaceReaches,
@@ -295,6 +296,15 @@ describe("heading tree", () => {
         node.children.length ? { [node.id]: shape(node.children) } : node.id
       );
     expect(shape(tree)).toEqual([{ a: [{ b: ["c"] }, "d"] }, { e: ["f"] }]);
+  });
+
+  it("limits nested blocks to the page's own ancestry", () => {
+    expect(resolveSpaceHeadingQueries("node:page").blocks.filters).toEqual({
+      $or: [
+        { parent: "node:page" },
+        { parentPath: { $startsWith: "node:page-" } }
+      ]
+    });
   });
 });
 

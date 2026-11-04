@@ -405,7 +405,7 @@ export function resolveSpaceHeadingQueries(nodeId: string) {
     },
     blocks: {
       filters: {
-        $or: [{ parent: nodeId }, { parentPath: { $startsWith: nodeId } }]
+        $or: [{ parent: nodeId }, { parentPath: { $startsWith: `${nodeId}-` } }]
       },
       select: ["id", "label", "body", "contentType", "mdChildOrder"],
       metadata: headingQueryMetadata
