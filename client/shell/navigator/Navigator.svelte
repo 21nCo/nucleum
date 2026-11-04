@@ -335,15 +335,13 @@
     event?: MouseEvent | KeyboardEvent
   ) {
     if (item.pageAction) {
+      const layer =
+        resolveNavigatorLayer(new URL(window.location.href)) ??
+        AccessMode.PANEL;
       navigation.gotoPath(
         "/" + item.id,
-        isKeepOpen
-          ? {
-              queryParams: {
-                [resolveNavigatorLayer(new URL(window.location.href)) ??
-                AccessMode.PANEL]: Action.NAVIGATOR
-              }
-            }
+        isKeepOpen && layer !== AccessMode.OVERLAY
+          ? { queryParams: { [layer]: Action.NAVIGATOR } }
           : undefined
       );
       return;
