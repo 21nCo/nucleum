@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
+  import { get } from "svelte/store";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
 
   let {
@@ -11,6 +12,7 @@
   let draft = $state("");
   let inputRef = $state<HTMLInputElement | undefined>(undefined);
   let isCancelled = false;
+  let isDirty = false;
   const label = $derived($node.label || "Untitled");
 
   const isEditing = $derived($node.isInEditMode);
@@ -20,6 +22,7 @@
     untrack(() => {
       draft = $node.label ?? "";
       isCancelled = false;
+      isDirty = false;
       void tick().then(() => {
         inputRef?.focus();
         inputRef?.select();
@@ -38,6 +41,17 @@
   async function finish() {
     await saveLabel();
     node.toggleEditMode(false);
+  }
+
+  function saveOnRemoval(_input: HTMLInputElement) {
+    return {
+      destroy() {
+        if (isCancelled || !isDirty) return;
+        const next = draft.trim();
+        if (next === (get(node).label ?? "")) return;
+        void node.modify({ label: next });
+      }
+    };
   }
 
   function cancel() {
@@ -66,6 +80,8 @@
     placeholder="Enter title"
     aria-label="Title"
     data-testid="node-context-title-input"
+    use:saveOnRemoval
+    oninput={() => (isDirty = true)}
     onkeydown={onKeydown}
     onblur={() => void saveLabel()}
   />

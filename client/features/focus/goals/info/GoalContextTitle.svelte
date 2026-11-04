@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
+  import { get } from "svelte/store";
   import type { IActiveObjectiveStore } from "@nucleum/features/focus/goals/goal.store";
 
   let {
@@ -11,6 +12,7 @@
   let draft = $state("");
   let inputRef = $state<HTMLInputElement | undefined>(undefined);
   let isCancelled = false;
+  let isDirty = false;
   const label = $derived($objective.label || "Untitled");
 
   async function startEditing() {
@@ -25,6 +27,7 @@
     untrack(() => {
       draft = $objective.label ?? "";
       isCancelled = false;
+      isDirty = false;
       void tick().then(() => {
         inputRef?.focus();
         inputRef?.select();
@@ -43,6 +46,17 @@
   async function finish() {
     await saveLabel();
     objective.toggleEditMode(false);
+  }
+
+  function saveOnRemoval(_input: HTMLInputElement) {
+    return {
+      destroy() {
+        if (isCancelled || !isDirty) return;
+        const next = draft.trim();
+        if (next === (get(objective).label ?? "")) return;
+        void objective.modify({ label: next });
+      }
+    };
   }
 
   function cancel() {
@@ -71,6 +85,8 @@
     placeholder="Enter objective name"
     aria-label="Objective name"
     data-testid="objective-context-title-input"
+    use:saveOnRemoval
+    oninput={() => (isDirty = true)}
     onkeydown={onKeydown}
     onblur={() => void saveLabel()}
   />
