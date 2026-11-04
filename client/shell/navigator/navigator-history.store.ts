@@ -12,12 +12,17 @@ import {
 import { createNavigatorHistoryWriter } from "@nucleum/shell/navigator/navigator-history-writer";
 
 const FLUSH_DELAY_MS = 1500;
+const FLUSH_MAX_WAIT_MS = 10000;
+const RETRY_BASE_DELAY_MS = 2000;
+const RETRY_MAX_DELAY_MS = 60000;
 
 type HistorySignal = ReturnType<typeof datafn.kv.signal<NavigatorHistory>>;
 
 const historyLocal = writable<NavigatorHistory>(createNavigatorHistory());
 let historySignal: HistorySignal | undefined;
 let flushTimer: ReturnType<typeof setTimeout> | undefined;
+let firstQueuedAt: number | undefined;
+let failedFlushes = 0;
 
 function currentNamespace() {
   return get(datafnRuntime)?.namespace ?? null;
@@ -55,27 +60,61 @@ function ensureSignal() {
   });
   if (typeof window !== "undefined") {
     window.addEventListener("pagehide", flushNavigatorHistory);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") flushNavigatorHistory();
+    });
   }
   return historySignal;
 }
 
-function scheduleFlush() {
+function setFlushTimer(delay: number) {
   if (flushTimer) clearTimeout(flushTimer);
-  flushTimer = setTimeout(flushNavigatorHistory, FLUSH_DELAY_MS);
+  flushTimer = setTimeout(flushNavigatorHistory, delay);
 }
 
-/** Writes batched visits on top of the stored history read from DataFn KV. */
+function scheduleFlush() {
+  const now = Date.now();
+  firstQueuedAt ??= now;
+  setFlushTimer(
+    Math.max(
+      0,
+      Math.min(FLUSH_DELAY_MS, firstQueuedAt + FLUSH_MAX_WAIT_MS - now)
+    )
+  );
+}
+
+function scheduleRetry() {
+  if (writer.pendingCount() === 0 || currentNamespace() === null) return;
+  failedFlushes++;
+  setFlushTimer(
+    Math.min(RETRY_MAX_DELAY_MS, RETRY_BASE_DELAY_MS * 2 ** (failedFlushes - 1))
+  );
+}
+
+/**
+ * Writes batched visits on top of the stored history read from DataFn KV. A failed
+ * write is retried with a growing delay while visits remain queued.
+ */
 function flushNavigatorHistory() {
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = undefined;
+  firstQueuedAt = undefined;
   if (writer.pendingCount() === 0 || !historySignal) return;
   void writer
     .flush()
     .then((result) => {
-      if (!result || result.namespace !== currentNamespace()) return;
+      if (!result) {
+        scheduleRetry();
+        return;
+      }
+      failedFlushes = 0;
+      if (result.namespace !== currentNamespace()) return;
       historyLocal.set(writer.applyPending(result.history));
     })
-    .catch((error) => logger.error({ at: "navigatorHistory.flush", error }));
+    .catch((error) => {
+      logger.error({ at: "navigatorHistory.flush", error });
+      scheduleRetry();
+    });
 }
 
 /**
