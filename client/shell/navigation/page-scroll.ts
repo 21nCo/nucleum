@@ -5,6 +5,7 @@ export type SavedScroll = {
 };
 
 const RESTORE_TIMEOUT_MS = 4000;
+const SAVED_PAGE_LIMIT = 50;
 const userEvents = ["wheel", "touchstart", "keydown", "pointerdown"];
 const savedScrolls = new Map<string, SavedScroll[]>();
 
@@ -29,23 +30,34 @@ function resolvePath(root: Element, path: number[]) {
   return node;
 }
 
-/** Reads the scroll offsets of every scrolled element below `root`. */
-export function readScrolls(root: Element): SavedScroll[] {
-  const scrolls: SavedScroll[] = [];
-  root.querySelectorAll("*").forEach((element) => {
-    if (element.scrollTop <= 0) return;
-    const path = pathFrom(root, element);
-    if (path) scrolls.push({ path, top: element.scrollTop });
-  });
-  return scrolls;
-}
-
-/** Remembers the scroll position of the resource page rendered in `root`. */
-export function savePageScroll(root: Element | undefined, id: string) {
-  if (!root) return;
-  const scrolls = readScrolls(root);
-  if (scrolls.length > 0) savedScrolls.set(id, scrolls);
-  else savedScrolls.delete(id);
+/**
+ * Remembers the scroll offset of `element`, scrolled inside the resource page
+ * of `id` rendered in `root`. Only the scrolled element is read, at the time
+ * of its scroll event. The most recently scrolled pages are kept.
+ */
+export function savePageScroll(
+  root: Element | undefined,
+  id: string,
+  element: EventTarget | null
+) {
+  if (!root || !(element instanceof Element)) return;
+  const path = pathFrom(root, element);
+  if (!path) return;
+  const key = path.join("/");
+  const others = (savedScrolls.get(id) ?? []).filter(
+    (scroll) => scroll.path.join("/") !== key
+  );
+  const scrolls =
+    element.scrollTop > 0
+      ? [...others, { path, top: element.scrollTop }]
+      : others;
+  savedScrolls.delete(id);
+  if (scrolls.length === 0) return;
+  savedScrolls.set(id, scrolls);
+  if (savedScrolls.size > SAVED_PAGE_LIMIT) {
+    const oldest = savedScrolls.keys().next().value;
+    if (oldest !== undefined) savedScrolls.delete(oldest);
+  }
 }
 
 /** Forgets the scroll position of `id`, so its next open starts at the top. */

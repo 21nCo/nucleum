@@ -72,8 +72,6 @@
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
   const isPanelShown = $derived(!!rightPanel && !isOverlayFullScreen);
 
-  let scrollSaveFrame = 0;
-
   $effect(() => {
     contextZone.setVisibleLayers(
       popId
@@ -86,12 +84,10 @@
 
   $effect(() => () => contextZone.setVisibleLayers(undefined));
 
-  function onPageScroll() {
-    cancelAnimationFrame(scrollSaveFrame);
+  function onPageScroll(event: Event) {
     const id = renderedPageId;
-    const root = pageLayerRef;
     if (!id || id !== popId) return;
-    scrollSaveFrame = requestAnimationFrame(() => savePageScroll(root, id));
+    savePageScroll(pageLayerRef, id, event.target);
   }
 
   $effect(() => {
