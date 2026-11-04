@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolveFullScreenOverlayPath } from "@nucleum/shell/overlays/full-screen-overlay";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import type { Snippet } from "svelte";
@@ -55,8 +56,9 @@
   let mode = $state(0);
   let isInlineEnabled = $state(true);
   let fullScreenFocusIsEnabled = $derived(
-    $page?.url?.searchParams?.get(AccessMode.OVERLAY) ===
-      PointronAction.FULL_SCREEN_FOCUS
+    !!$page?.url?.searchParams &&
+      resolveFullScreenOverlayPath($page.url.searchParams) ===
+        PointronAction.FULL_SCREEN_FOCUS
   );
   const manualLogHotKey = {
     key: "m"
