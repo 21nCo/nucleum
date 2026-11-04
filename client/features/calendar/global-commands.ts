@@ -20,6 +20,8 @@ import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.
 import type { Product } from "@nucleum/client/config/product.type";
 import { createPageViewActions } from "@nucleum/shared-state/commands/page-view-actions";
 import { resolveCalendarViewSegments } from "@nucleum/features/calendar/calendar-route";
+import { get } from "svelte/store";
+import view from "@21n/ui/environment/view.store";
 
 /** Commands owned by calendar; assembled in application composition. */
 export const calendarCommands = {
@@ -127,10 +129,16 @@ export const calendarCommands = {
   }
 } satisfies Record<string, IAction | IAction[]>;
 
-/** Openable calendar layout and scale views rendered by the product. */
+/**
+ * Openable calendar layout and scale views rendered by the product. They are offered
+ * only where those views render: a constrained width always shows the day column.
+ */
 export function calendarViewCommands(product: Product): IAction[] {
   return createPageViewActions(
     calendarCommands.calendar,
     resolveCalendarViewSegments(product, Boolean(import.meta.env?.DEV))
-  );
+  ).map((action) => ({
+    ...action,
+    preCondition: () => !get(view).isConstrainedWidth
+  }));
 }
