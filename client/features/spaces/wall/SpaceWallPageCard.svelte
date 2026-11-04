@@ -23,6 +23,11 @@
   } = $props();
 
   let isInView = $state(false);
+
+  function openFromContents(event: MouseEvent) {
+    if ((event.target as Element).closest("button")) return;
+    onOpen();
+  }
 </script>
 
 <div
@@ -37,23 +42,23 @@
     onclick={onOpen}
   ></button>
   <div
-    class="relative flex-1 min-h-0 overflow-auto px-1 py-2 pointer-events-none"
+    class="relative flex-1 min-h-0 overflow-auto px-1 py-2"
+    role="presentation"
     use:intersection={{
       rootMargin: "200px",
       callback: () => (isInView = true)
     }}
+    onclick={openFromContents}
   >
     <p class="px-2 pb-1 text-b4 text-fgs3">Contents</p>
     {#if isInView}
-      <div class="pointer-events-auto">
-        <SpaceHeadingTree
-          {nodeId}
-          depth={1}
-          maxLevels={2}
-          isCompact={true}
-          onSelect={onOpenHeading}
-        />
-      </div>
+      <SpaceHeadingTree
+        {nodeId}
+        depth={1}
+        maxLevels={2}
+        isCompact={true}
+        onSelect={onOpenHeading}
+      />
     {/if}
   </div>
   <div
