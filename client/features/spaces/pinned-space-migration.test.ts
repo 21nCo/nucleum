@@ -103,7 +103,7 @@ function menu() {
 
 function onlySpace() {
   const [entry] = [...state.spaces.entries()];
-  return { id: entry?.[0], space: entry?.[1] as ISpace | undefined };
+  return { id: entry?.[0], space: entry?.[1] as unknown as ISpace | undefined };
 }
 
 beforeEach(() => {
@@ -126,7 +126,11 @@ describe("migratePinnedSpace", () => {
     expect(space?.label).toBe("Pinned");
     expect(
       space?.items?.map((item) =>
-        "resourceId" in item ? item.resourceId : item.path
+        "resourceId" in item
+          ? item.resourceId
+          : "path" in item
+            ? item.path
+            : undefined
       )
     ).toEqual(["node:a", "library/objective/all"]);
     expect(state.tabs).toEqual(["node:missing"]);
@@ -188,7 +192,11 @@ describe("migratePinnedSpace", () => {
 
     expect(
       onlySpace().space?.items?.map((item) =>
-        "resourceId" in item ? item.resourceId : item.path
+        "resourceId" in item
+          ? item.resourceId
+          : "path" in item
+            ? item.path
+            : undefined
       )
     ).toEqual(["node:a", "library/objective/all", "library/collection/all"]);
     expect(reloadActiveSpace).toHaveBeenLastCalledWith(id);
