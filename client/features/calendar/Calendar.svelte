@@ -10,12 +10,13 @@
   import CalendarCw from "@nucleum/features/calendar/CalendarCW.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Action } from "@nucleum/client/config/action.enum";
-  import { Product } from "@nucleum/client/config/product.type";
   import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
   import {
+    CALENDAR_HEATMAP_SCALE,
     calendarViewSubPath,
     parseCalendarLayout,
     parseCalendarScale,
+    resolveCalendarScales,
     type CalendarScale
   } from "@nucleum/features/calendar/calendar-route";
 
@@ -47,15 +48,11 @@
     const scaleState = uiState.getState(UIState.classicCalendarScale, {
       scope: UIStateScope.DAP
     });
-    const supportedScales =
-      product === Product.MEMOTRON
-        ? [TimeScaleUnit.MONTH, TimeScaleUnit.YEAR]
-        : [
-            TimeScaleUnit.DAY,
-            TimeScaleUnit.WEEK,
-            TimeScaleUnit.MONTH,
-            TimeScaleUnit.YEAR
-          ];
+    const supportedScales = resolveCalendarScales(
+      product,
+      CalendarLayout.Classic,
+      isDev
+    ).filter((option) => option !== CALENDAR_HEATMAP_SCALE);
     return supportedScales.includes(scaleState)
       ? scaleState
       : TimeScaleUnit.YEAR;

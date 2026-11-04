@@ -8,8 +8,13 @@
   import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
   import view from "@21n/ui/environment/view.store";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
-  import { Product } from "@nucleum/client/config/product.type";
   import Button from "@21n/ui/elements/button/Button.svelte";
+  import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
+  import {
+    CALENDAR_HEATMAP_SCALE,
+    resolveCalendarScales,
+    type CalendarScale
+  } from "@nucleum/features/calendar/calendar-route";
 
   let {
     selectedView = $bindable(TimeScaleUnit.MONTH),
@@ -51,16 +56,22 @@
     icon: "text:E",
     value: "heatmap"
   };
-  const switchOptions =
-    $appStore.product === Product.MEMOTRON
-      ? [monthOption, yearOption]
-      : [
-          dayOption,
-          isDev && weekOption,
-          monthOption,
-          yearOption,
-          isDev && heatmapOption
-        ].filter(Boolean);
+  const optionsByScale: Partial<
+    Record<CalendarScale, { label: string; icon: string; value: string }>
+  > = {
+    [TimeScaleUnit.DAY]: dayOption,
+    [TimeScaleUnit.WEEK]: weekOption,
+    [TimeScaleUnit.MONTH]: monthOption,
+    [TimeScaleUnit.YEAR]: yearOption,
+    [CALENDAR_HEATMAP_SCALE]: heatmapOption
+  };
+  const switchOptions = resolveCalendarScales(
+    $appStore.product,
+    CalendarLayout.Classic,
+    Boolean(isDev)
+  )
+    .map((scale) => optionsByScale[scale])
+    .filter(Boolean);
 
   function handleScaleSelection(e: CustomEvent<TimeScaleUnit>) {
     if (!e.detail) return;

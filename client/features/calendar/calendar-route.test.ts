@@ -61,6 +61,17 @@ describe("calendar route", () => {
       resolveCalendarViewSegments(Product.NUCLEUM, true).map((segments) =>
         segments.map((segment) => segment.slug).join("/")
       )
-    ).toContain("columns/part");
+    ).toEqual([
+      "columns/part",
+      "columns/day",
+      "columns/week",
+      "columns/month",
+      "columns/year",
+      "classic/day",
+      "classic/week",
+      "classic/month",
+      "classic/year",
+      "classic/heatmap"
+    ]);
   });
 });
