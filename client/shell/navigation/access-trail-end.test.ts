@@ -137,6 +137,22 @@ describe("ending an access trail while its page stays open", () => {
     ]);
   });
 
+  it("closes a page whose trail restarted instead of going back to the page before it", () => {
+    navigation.openResource("node:a", "page" as never);
+    navigation.openResource("node:b", "page" as never);
+    navigation.endAccessTrail();
+    navigation.openResource("node:b", "page" as never, {
+      origin: "navigator" as never,
+      trail: "start"
+    });
+
+    navigation.closeResource({
+      accessMode: "page" as never,
+      isHistoryBack: true
+    });
+    expect(new URL(window.location.href).searchParams.get("page")).toBeNull();
+  });
+
   it("follows the page again after it closes and reopens", () => {
     navigation.openResource("node:a", "page" as never);
     navigation.endAccessTrail();

@@ -800,7 +800,7 @@ export const navigation = {
         if ((intent === "start" && !isTrailRestarted) || intent === "extend") {
           forgetPageScroll(id.toString());
         }
-        if (intent === "back") {
+        if (intent === "back" || isTrailRestarted) {
           historyState = {
             position,
             from:
@@ -808,8 +808,6 @@ export const navigation = {
                 ? currentEntry.state?.from
                 : undefined
           };
-        } else if (isTrailRestarted) {
-          historyState = { position, from: null };
         } else {
           isPushHistory = true;
           historyState = { position, from: openPage ? openPosition : null };
