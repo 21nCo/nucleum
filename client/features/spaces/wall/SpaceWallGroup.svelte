@@ -47,6 +47,7 @@
   });
 
   function saveLabel() {
+    if (!isEditing) return;
     const trimmed = editLabel.trim();
     if (trimmed && trimmed !== section.label)
       wall.onRename(section.id, trimmed);
@@ -91,22 +92,24 @@
         onblur={saveLabel}
       />
     {:else if wall.isEditMode}
-      <button
-        type="button"
-        class={cn(
-          "min-w-0 px-1 -mx-1 rounded-md text-left truncate hover:bg-bgs2-striped",
-          {
-            "text-h4 font-semibold": depth === 0,
-            "text-b1 font-medium": depth > 0
-          }
-        )}
-        aria-pressed={isAddTarget}
-        title={isAddTarget ? "Adding new items here" : "Add new items here"}
-        data-testid="space-wall-section-title"
-        onclick={() => wall.onSelectSection(section.id)}
-      >
-        {label}
-      </button>
+      <h3 class="flex min-w-0">
+        <button
+          type="button"
+          class={cn(
+            "min-w-0 px-1 -mx-1 rounded-md text-left truncate hover:bg-bgs2-striped",
+            {
+              "text-h4 font-semibold": depth === 0,
+              "text-b1 font-medium": depth > 0
+            }
+          )}
+          aria-pressed={isAddTarget}
+          title={isAddTarget ? "Adding new items here" : "Add new items here"}
+          data-testid="space-wall-section-title"
+          onclick={() => wall.onSelectSection(section.id)}
+        >
+          {label}
+        </button>
+      </h3>
     {:else}
       <h3
         class={cn("min-w-0 truncate", {

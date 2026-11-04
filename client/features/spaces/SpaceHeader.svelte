@@ -19,7 +19,7 @@
     store: ActiveSpaceStore;
     /** Name of the space one level up; shows the back button when set. */
     parentLabel?: string;
-    /** Layout shown for this space, which can come from the space it is focused in. */
+    /** Layout shown for this space; inside a focus chain it comes from the root space. */
     view: SpaceView;
     isPinned?: boolean;
     onBack?: () => void;
