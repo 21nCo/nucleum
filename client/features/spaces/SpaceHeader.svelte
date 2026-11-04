@@ -48,7 +48,9 @@
   let titleInput = $state<HTMLInputElement>();
   let draftTitle = $state("");
   const space = $derived($store);
-  const editedStore = $derived(isCompact && titleStore ? titleStore : store);
+  const editedStore = $derived(
+    isCompact && titleStore && !$store?.isTitleEditing ? titleStore : store
+  );
   const editedSpace = $derived($editedStore);
   const title = $derived(space?.label || "Untitled space");
   const isEditMode = $derived(Boolean(space?.isInEditMode));
@@ -163,9 +165,13 @@
           <Icon icon="chevron-left" size={Size.sm} class="stroke-current" />
         </button>
         {#if !isFocusedTitleEditing}
-          <span
-            class="flex-1 min-w-0 truncate px-1 text-b2 font-medium text-fgs1"
-            data-testid="space-focused-title">{title}</span
+          <button
+            type="button"
+            class="flex-1 min-w-0 truncate px-1 text-left text-b2 font-medium text-fgs1"
+            title="Rename"
+            aria-label={`Rename ${title}`}
+            data-testid="space-focused-title"
+            onclick={() => store.setTitleEditing(true)}>{title}</button
           >
         {:else}
           <span class="flex-1"></span>
