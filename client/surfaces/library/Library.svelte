@@ -153,6 +153,30 @@
     });
   });
 
+  $effect(() => {
+    if (!isRouted || !subPath) return;
+    const segments = subPath;
+    untrack(() => canonicalizeRoutedPath(segments));
+  });
+
+  function canonicalizeRoutedPath(segments: string[]) {
+    const pathResource = parseLibraryResource(segments[0]);
+    const resource =
+      pathResource ??
+      ($view.isConstrainedWidth
+        ? undefined
+        : selectedResource !== Resource.unknown
+          ? selectedResource
+          : resources[0]);
+    const viewSubType = resource
+      ? ((pathResource && parseLibrarySubType(resource, segments[1])) ??
+        resolveLibraryFallbackSubType(resource))
+      : undefined;
+    const canonical = resource ? [resource, viewSubType] : [];
+    if (segments.join("/") === canonical.join("/")) return;
+    replaceLibraryPath(resource, viewSubType);
+  }
+
   onMount(() => {
     if (!isRouted) return;
     const syncFromWindow = () => {

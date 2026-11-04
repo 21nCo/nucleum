@@ -224,6 +224,7 @@
     isFiltersExpanded = resolveFiltersExpandedState();
     selectedSubType = ((!objectiveId && subType) ||
       resolveSelectedSubTypeState()) as SubType;
+    if (!objectiveId && subType) persistSelectedSubTypeState();
 
     bulkEditChangeUnsub = bulkEditStore.count.subscribe((count) => {
       if (count === 0) {

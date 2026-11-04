@@ -46,10 +46,12 @@
   }
 
   $effect(() => {
-    if (!isRouted || !subPath || selectedResource === Resource.unknown) return;
-    if (subPath.join("/") === `${selectedResource}/${selectedSubType}`) return;
-    const resource = selectedResource;
+    if (!isRouted || !subPath) return;
+    const resource =
+      selectedResource === Resource.unknown ? undefined : selectedResource;
     const subType = selectedSubType;
+    const canonical = resource ? [resource, subType] : [];
+    if (subPath.join("/") === canonical.join("/")) return;
     untrack(() => replaceLibraryPath(resource, subType));
   });
 </script>
