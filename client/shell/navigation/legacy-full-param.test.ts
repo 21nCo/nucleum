@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveLegacyFullParamUrl } from "./legacy-full-param";
+import {
+  resolveLegacyFullParamPath,
+  resolveLegacyFullParamUrl
+} from "./legacy-full-param";
 
 function rewrite(search: string) {
   const next = resolveLegacyFullParamUrl(
@@ -39,5 +42,31 @@ describe("resolveLegacyFullParamUrl", () => {
 
   it("leaves other URLs unchanged", () => {
     expect(rewrite("?page=node%3A1&max=true")).toBeUndefined();
+  });
+});
+
+describe("resolveLegacyFullParamPath", () => {
+  it("returns the rewritten in-app path", () => {
+    expect(
+      resolveLegacyFullParamPath(
+        new URL("https://app.test/library?full=node%3A1#top")
+      )
+    ).toBe("/library?page=node%3A1&max=true#top");
+  });
+
+  it("keeps a path with repeated leading slashes on this origin", () => {
+    const path = resolveLegacyFullParamPath(
+      new URL("https://app.test//other.example/?full=x&q=http")
+    );
+    expect(path).toBe("/other.example/?q=http&overlay=x&max=true");
+    expect(new URL(path!, "https://app.test").origin).toBe("https://app.test");
+  });
+
+  it("leaves other URLs unchanged", () => {
+    expect(
+      resolveLegacyFullParamPath(
+        new URL("https://app.test/library?page=node%3A1")
+      )
+    ).toBeUndefined();
   });
 });

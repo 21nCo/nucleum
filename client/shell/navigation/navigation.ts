@@ -34,7 +34,7 @@ import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { resolveNavigationLinkTarget } from "@nucleum/shell/navigation/link-target";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { isCommandModeLayout } from "@nucleum/shell/navigation/command-mode-layout";
-import { resolveLegacyFullParamUrl } from "@nucleum/shell/navigation/legacy-full-param";
+import { resolveLegacyFullParamPath } from "@nucleum/shell/navigation/legacy-full-param";
 import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
 import {
@@ -340,11 +340,9 @@ export const navigation = {
    */
   watchLegacyUrls(pages: Readable<{ url?: URL } | undefined>) {
     return pages.subscribe((current) => {
-      const next = current?.url && resolveLegacyFullParamUrl(current.url);
-      if (!next) return;
-      navigation.gotoPath(`${next.pathname}${next.search}${next.hash}`, {
-        replaceState: true
-      });
+      const path = current?.url && resolveLegacyFullParamPath(current.url);
+      if (!path) return;
+      navigation.gotoPath(path, { replaceState: true });
     });
   },
 

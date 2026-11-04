@@ -30,3 +30,15 @@ export function resolveLegacyFullParamUrl(url: URL): URL | undefined {
   if (full) next.searchParams.set(AppSearchParam.MAX, "true");
   return next;
 }
+
+/**
+ * In-app path of the rewritten URL from `resolveLegacyFullParamUrl`, or
+ * undefined when nothing changes. Leading slashes collapse to one, so a path
+ * such as `//other.example/` stays on this origin instead of becoming a
+ * protocol-relative URL.
+ */
+export function resolveLegacyFullParamPath(url: URL): string | undefined {
+  const next = resolveLegacyFullParamUrl(url);
+  if (!next) return undefined;
+  return `${next.pathname.replace(/^\/+/, "/")}${next.search}${next.hash}`;
+}
