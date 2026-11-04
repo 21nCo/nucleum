@@ -63,12 +63,15 @@ function migrateLegacyNucleusAppMenu(data: IAppMenuStore): IAppMenuStore {
   );
 }
 
-appMenuSignal.subscribe((value) => {
+function scopePendingAppMenuValues() {
   const namespace = datafn.currentNamespace();
-  if (namespace !== appMenuNamespace) {
-    pendingAppMenuValues.clear();
-    appMenuNamespace = namespace;
-  }
+  if (namespace === appMenuNamespace) return;
+  pendingAppMenuValues.clear();
+  appMenuNamespace = namespace;
+}
+
+appMenuSignal.subscribe((value) => {
+  scopePendingAppMenuValues();
   const migrated = migrateLegacyNucleusAppMenu(value ?? {});
   acknowledgeOptimisticKvEntries(pendingAppMenuValues, migrated);
   appMenuLocal.set(applyOptimisticKvEntries(migrated, pendingAppMenuValues));
@@ -85,6 +88,7 @@ export const appMenuStore = {
    */
   async read(): Promise<IAppMenuStore> {
     const stored = await datafn.kv.get<IAppMenuStore>(Resource.appMenu);
+    scopePendingAppMenuValues();
     return applyOptimisticKvEntries(
       migrateLegacyNucleusAppMenu(stored ?? {}),
       pendingAppMenuValues
@@ -131,6 +135,7 @@ export const appMenuStore = {
     });
   },
   modify(n: Partial<IAppMenuStore>) {
+    scopePendingAppMenuValues();
     const mutationTokens = addOptimisticKvEntries(pendingAppMenuValues, n);
     appMenuLocal.update((current) => ({ ...current, ...n }) as IAppMenuStore);
     const mutation = datafn.kv.merge(Resource.appMenu, n);

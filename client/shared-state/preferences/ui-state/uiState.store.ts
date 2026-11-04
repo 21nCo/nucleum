@@ -33,6 +33,7 @@ const uiStateSignal = datafn.kv.signal<IUIStateStore>(Resource.uiState, {
 });
 const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
 const pendingUiStateValues: OptimisticKvEntries = new Map();
+let pendingUiStateNamespace = datafn.currentNamespace();
 const legacyUiStateKeys = new Map([
   ["manualLogRecentGoals", UIState.manualLogRecentObjectives],
   ["goalPanelSelection", UIState.objectivePanelSelection]
@@ -68,6 +69,13 @@ function resolveStoredLocalState(): IUIStateStore["$local"] {
   }
 }
 
+function scopePendingUiStateValues() {
+  const namespace = datafn.currentNamespace();
+  if (namespace === pendingUiStateNamespace) return;
+  pendingUiStateValues.clear();
+  pendingUiStateNamespace = namespace;
+}
+
 function refreshUiStateLocal() {
   const migrated = migrateLegacyUiStateKeys(uiStateSignal.get() ?? uiStateSeed);
   const optimistic = applyOptimisticKvEntries(migrated, pendingUiStateValues);
@@ -79,6 +87,7 @@ function refreshUiStateLocal() {
 }
 
 uiStateSignal.subscribe((value) => {
+  scopePendingUiStateValues();
   acknowledgeOptimisticKvEntries(
     pendingUiStateValues,
     migrateLegacyUiStateKeys(value ?? uiStateSeed)
@@ -181,6 +190,7 @@ export const uiState = {
     params?: IUIStateParams
   ) {
     const stored = await datafn.kv.get<IUIStateStore>(Resource.uiState);
+    scopePendingUiStateValues();
     const current = applyOptimisticKvEntries(
       migrateLegacyUiStateKeys(stored ?? uiStateSeed),
       pendingUiStateValues
@@ -206,6 +216,7 @@ export const uiState = {
     logger.log({ context: "uiState.store - setResourceState", key, value });
   },
   modify(n: Partial<IUIStateStore>) {
+    scopePendingUiStateValues();
     const mutationTokens = addOptimisticKvEntries(pendingUiStateValues, n);
     uiStateLocal.update((current) => ({ ...current, ...n }));
     const mutation = datafn.kv.merge(Resource.uiState, n);
