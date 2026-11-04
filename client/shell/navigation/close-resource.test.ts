@@ -79,10 +79,35 @@ describe("closeResource for in-place resources", () => {
       "/collection_browse?selected=node%3Atwo"
     );
     navigation.closeResource({ id: "node:one" });
-    const url = gotoPath.mock.calls.length
-      ? lastUrl()
-      : new URL(window.location.href);
-    expect(url.searchParams.get("selected")).toBe("node:two");
+    expect(gotoPath).not.toHaveBeenCalled();
+    expect(new URL(window.location.href).searchParams.get("selected")).toBe(
+      "node:two"
+    );
+  });
+
+  it("clears the opening timestamps of the layers it closes", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/calendar?page=node%3Aone&pageAt=1&beside=node%3Atwo&besideAt=2&besidePage=node%3Athree&besidePageAt=3"
+    );
+    navigation.closeResource();
+    const url = lastUrl();
+    expect(url.searchParams.has("pageAt")).toBe(false);
+    expect(url.searchParams.has("besideAt")).toBe(false);
+    expect(url.searchParams.has("besidePageAt")).toBe(false);
+  });
+
+  it("keeps the page-side timestamp when closing an in-place task", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/calendar?page=objective%3Agoal&besidePage=node%3Aside&besidePageAt=3&abcde-task=task%3Aone"
+    );
+    navigation.closeResource({ id: "task:one" });
+    const url = lastUrl();
+    expect(url.searchParams.get("besidePage")).toBe("node:side");
+    expect(url.searchParams.get("besidePageAt")).toBe("3");
   });
 
   it("still closes a page by its id", () => {
