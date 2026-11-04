@@ -40,9 +40,7 @@
 
 {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
   {#if $appStore.interactionMode === InteractionMode.AGENT && $context.embed !== Embed.HANDSET}
-    <CommandModePage>
-      {@render children?.()}
-    </CommandModePage>
+    <CommandModePage />
   {:else}
     <NavigationLayout {leftNav} {topNav} {main}>
       {@render children?.()}

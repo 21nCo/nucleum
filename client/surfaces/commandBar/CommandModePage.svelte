@@ -2,7 +2,6 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import type { Snippet } from "svelte";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import Divider from "@21n/ui/elements/Divider.svelte";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
@@ -29,7 +28,6 @@
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   const ComponentResolver = requireActionRenderer();
-  let { children }: { children?: Snippet } = $props();
   let isInFocusMode = false;
 
   function handleFocusMode(e: CustomEvent<boolean>) {
@@ -37,7 +35,6 @@
       isInFocusMode = e.detail;
     }
   }
-  let isCmdHome = $state(true);
   let activeTab = $derived($page.url.searchParams.get(AppSearchParam.TAB));
 </script>
 
@@ -52,7 +49,6 @@
       ariaLabel="Command home"
       style={ButtonStyle.PLAIN}
       onclick={() => {
-        isCmdHome = true;
         navigation.toggleSearchParam([AppSearchParam.TAB]);
       }}
     />
@@ -61,7 +57,7 @@
     <div class="w-full min-h-0 flex-1">
       <PagePainterV2 cmdPageLaunch={activeTab.split("page:")[1]} />
     </div>
-  {:else if isCmdHome}
+  {:else}
     <div
       class="flex flex-col dp:flex-row gap-6 w-full flex-1 min-h-0 justify-center items-center p-4 tp:p-8 dp:p-16"
     >
@@ -129,7 +125,5 @@
         />
       </div>
     </footer>
-  {:else}
-    {@render children?.()}
   {/if}
 </div>
