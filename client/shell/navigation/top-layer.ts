@@ -100,6 +100,14 @@ export function closeTopLayer(options?: {
     navigation.exitFullScreen();
     return layer;
   }
+  if (
+    layer === "overlay" &&
+    searchParams.get(AccessMode.PAGE) &&
+    isOverlayAbovePage(searchParams.get(AccessMode.OVERLAY))
+  ) {
+    navigation.toggleSearchParam([AccessMode.OVERLAY]);
+    return layer;
+  }
   if (layer === "overlay") {
     const fullScreenPath = fullScreen.get().path;
     const isMax = !!searchParams.get(AppSearchParam.MAX);

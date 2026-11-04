@@ -107,6 +107,16 @@ describe("closeTopLayer", () => {
     expect(mocks.navigation.closeResource).not.toHaveBeenCalled();
   });
 
+  it("keeps the covered page in full screen when the navigator overlay closes", () => {
+    mocks.fullScreen.path = "focus";
+    visit("?page=node:a&max=true&overlay=navigator");
+    expect(closeTopLayer()).toBe("overlay");
+    expect(mocks.navigation.toggleSearchParam).toHaveBeenLastCalledWith([
+      "overlay"
+    ]);
+    expect(mocks.fullScreen.hide).not.toHaveBeenCalled();
+  });
+
   it("closes a page opened over another overlay before that overlay", () => {
     visit("?page=node:a&overlay=search");
     expect(closeTopLayer()).toBe("page");
