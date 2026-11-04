@@ -71,6 +71,7 @@
   const isOverlayFullScreen = $derived(isMaxParam && !!mainPath);
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
   const isPanelShown = $derived(!!rightPanel && !isOverlayFullScreen);
+  const isPanelSheetShown = $derived(isPanelShown && $view.isPortrait);
 
   $effect(() => {
     contextZone.setVisibleLayers(
@@ -146,7 +147,9 @@
     })}
   >
     {#if $context.embed === Embed.HANDSET}
-      {@render leftNav(false)}
+      <div class="contents" inert={isPanelSheetShown}>
+        {@render leftNav(false)}
+      </div>
     {/if}
     <div class="flex flex-col h-full w-full">
       {#if !$view.isPortrait && !isOverlayFullScreen}
@@ -154,9 +157,15 @@
       {/if}
       <div class="flex w-full flex-grow">
         {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
-          {@render leftNav(!!pop || !!mainPath)}
+          <div class="contents" inert={isPanelSheetShown}>
+            {@render leftNav(!!pop || !!mainPath)}
+          </div>
         {/if}
-        <div class="min-w-0 flex-grow relative">
+        <div
+          class="min-w-0 flex-grow relative"
+          inert={isPanelSheetShown}
+          aria-hidden={isPanelSheetShown ? "true" : undefined}
+        >
           {#if mainPath && !isOverlayFullScreen}
             <div
               class="absolute inset-0 w-full h-full bg-bgs1 z-40"

@@ -7,6 +7,7 @@
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
   import Icon from "@21n/ui/elements/Icon.svelte";
+  import { focusTrap } from "@21n/ui/actions/focus-trap.action";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
@@ -24,11 +25,13 @@
 
 {#if isSheet}
   <div
-    class="fixed inset-0 z-50 flex flex-col w-full h-full bg-bgs2"
+    class="fixed inset-0 z-50 flex flex-col w-full h-full bg-bgs2 outline-none"
     data-testid="right-panel-sheet"
     role="dialog"
     aria-modal="true"
     aria-label={action.label ?? action.action}
+    tabindex="-1"
+    use:focusTrap
     in:fly={{ y: 40, duration: 150, easing: quadInOut }}
   >
     <div class="flex items-center justify-between min-h-12 px-2 otop:pt-12">
