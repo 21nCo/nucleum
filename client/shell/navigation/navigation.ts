@@ -41,6 +41,7 @@ import {
   type AccessTrailPosition
 } from "@nucleum/shell/navigator/access-trail";
 import { forgetPageScroll } from "@nucleum/shell/navigation/page-scroll";
+import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
 import { fullScreen } from "@nucleum/shell/overlays/modal.store";
 
 /**
@@ -653,6 +654,7 @@ export const navigation = {
       recordResourceOpen(id, params?.origin);
     }
     let isCloseNavigator = false;
+    let navigatorLayer: AccessMode | undefined;
     let isPushHistory = false;
     let historyState: AccessTrailHistoryState | undefined;
     if (accessMode === AccessMode.PAGE) {
@@ -671,8 +673,8 @@ export const navigation = {
         params?.origin,
         params?.trail
       );
-      const isNavigatorOpen =
-        url.searchParams.get(AccessMode.PANEL) === Action.NAVIGATOR;
+      navigatorLayer = resolveNavigatorLayer(url);
+      const isNavigatorOpen = !!navigatorLayer;
       if (intent === "start" && openPage !== id.toString()) {
         accessTrail.start(
           id.toString(),
@@ -682,7 +684,9 @@ export const navigation = {
         );
         isCloseNavigator = isNavigatorOpen;
       } else if (intent === "select") {
-        isCloseNavigator = isNavigatorOpen && get(view).isPortrait;
+        isCloseNavigator =
+          isNavigatorOpen &&
+          (get(view).isPortrait || navigatorLayer === AccessMode.OVERLAY);
       } else if (intent === "extend") {
         accessTrail.extend(id.toString());
       }
@@ -730,7 +734,9 @@ export const navigation = {
           ? { [AppSearchParam.MAX]: true }
           : {}),
         ...(params?.searchParams ?? {}),
-        ...(isCloseNavigator ? { [AccessMode.PANEL]: null } : {})
+        ...(isCloseNavigator && navigatorLayer
+          ? { [navigatorLayer]: null }
+          : {})
       },
       {
         url: url,

@@ -22,6 +22,7 @@
   } from "@nucleum/shell/navigator/navigator-history";
   import { onDestroy, onMount, untrack } from "svelte";
   import { navigatorFocusRequests } from "@nucleum/shell/navigator/navigator-focus";
+  import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
   import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
@@ -180,7 +181,9 @@
         clearSearch();
         return;
       }
-      navigation.toggleSearchParam([AccessMode.PANEL]);
+      navigation.toggleSearchParam([
+        resolveNavigatorLayer(new URL(window.location.href)) ?? AccessMode.PANEL
+      ]);
       return;
     }
     const target = resolveNavigatorSearchTarget(query, {
