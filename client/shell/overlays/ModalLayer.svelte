@@ -158,8 +158,9 @@
     class={cn(
       "fixed bottom-0 left-0 mx-6 flex flex-col justify-center w-full gap-4 z-[100]",
       {
-        "mb-8": !$isPortraitMiniPlayerDocked && !$isPlayerShownInPage,
-        "mb-[6.5rem]": $isPortraitMiniPlayerDocked || $isPlayerShownInPage
+        "mb-24": !$isPortraitMiniPlayerDocked && !$isPlayerShownInPage,
+        "mb-[6.5rem]": $isPlayerShownInPage,
+        "mb-[10.5rem]": $isPortraitMiniPlayerDocked
       }
     )}
     transition:slide={{ duration: 200, axis: "x" }}
