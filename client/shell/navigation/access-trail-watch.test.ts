@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { writable } from "svelte/store";
-import { navigation } from "./navigation";
+import { navigation, type AccessTrailHistoryState } from "./navigation";
 
 vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
   uiState: { getState: () => [], setState: () => undefined }
@@ -17,7 +17,10 @@ describe("navigation.watchAccessTrail", () => {
     const sync = vi
       .spyOn(navigation, "syncAccessTrail")
       .mockImplementation(() => undefined);
-    const state = { position: { trailId: "t", index: 0 } };
+    const accessTrail: AccessTrailHistoryState = {
+      position: { trail: "t", node: "t:0" }
+    };
+    const state = { accessTrail };
     const pages = writable<{ url?: URL; state?: unknown }>({
       url: new URL("https://app.test/home?page=node%3Aa"),
       state
