@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MockInstance } from "vitest";
 import { navigation } from "./navigation";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 
@@ -10,7 +11,7 @@ vi.mock("@nucleum/datafn/datafn.store", async () => {
   return { datafn: {}, datafnRuntime: writable(undefined) };
 });
 
-let gotoPath: ReturnType<typeof vi.spyOn>;
+let gotoPath: MockInstance<typeof navigation.gotoPath>;
 
 function lastUrl() {
   const path = gotoPath.mock.calls.at(-1)?.[0] as string;
