@@ -2,6 +2,7 @@
   import { tick, untrack } from "svelte";
   import { get } from "svelte/store";
   import type { IActiveNodeStore } from "@nucleum/features/memory/node/node.store";
+  import { resolveNodeLabelString } from "@nucleum/features/memory/node/node.utils";
 
   let {
     node
@@ -13,7 +14,7 @@
   let inputRef = $state<HTMLInputElement | undefined>(undefined);
   let isCancelled = false;
   let isDirty = false;
-  const label = $derived($node.label || "Untitled");
+  const label = $derived(resolveNodeLabelString($node));
 
   const isEditing = $derived($node.isInEditMode);
 
@@ -31,16 +32,18 @@
   });
 
   async function saveLabel() {
-    if (isCancelled || !$node.isInEditMode) return;
+    if (isCancelled || !isDirty || !$node.isInEditMode) return;
     const next = draft.trim();
     if (next === ($node.label ?? "")) return;
-    $node.label = next;
     await node.modify({ label: next });
   }
 
   async function finish() {
-    await saveLabel();
-    node.toggleEditMode(false);
+    try {
+      await saveLabel();
+    } finally {
+      node.toggleEditMode(false);
+    }
   }
 
   function saveOnRemoval(_input: HTMLInputElement) {

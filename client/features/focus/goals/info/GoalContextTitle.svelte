@@ -36,16 +36,18 @@
   });
 
   async function saveLabel() {
-    if (isCancelled || !$objective.isInEditMode) return;
+    if (isCancelled || !isDirty || !$objective.isInEditMode) return;
     const next = draft.trim();
     if (next === ($objective.label ?? "")) return;
-    $objective.label = next;
     await objective.modify({ label: next });
   }
 
   async function finish() {
-    await saveLabel();
-    objective.toggleEditMode(false);
+    try {
+      await saveLabel();
+    } finally {
+      objective.toggleEditMode(false);
+    }
   }
 
   function saveOnRemoval(_input: HTMLInputElement) {
