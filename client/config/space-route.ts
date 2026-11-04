@@ -1,6 +1,9 @@
 /** Page action and base path that renders a space. */
 export const SPACE_PAGE_ACTION = "space";
 
+/** Record-specific search parameter holding the sub spaces focused inside a space. */
+export const SPACE_FOCUS_PARAM = "focus";
+
 const SPACE_ID_PREFIX = `${SPACE_PAGE_ACTION}:`;
 
 /** Shortens a space id for use in a URL path or search parameter. */

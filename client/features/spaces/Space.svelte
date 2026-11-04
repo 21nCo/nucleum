@@ -6,6 +6,7 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import {
+    SPACE_FOCUS_PARAM,
     decodeSpaceSegment,
     resolveSpacePathSegments
   } from "@nucleum/client/config/space-route";
@@ -30,7 +31,6 @@
     isFromSplitView?: boolean;
   } = $props();
 
-  const FOCUS_PARAM = "focus";
   const rootId = $derived(
     id
       ? id.toString()
@@ -41,7 +41,7 @@
   const isRouted = $derived(!id);
   const focusParamKey = $derived(
     rootId
-      ? navigation.resolveRecordSpecificSearchParam(rootId, FOCUS_PARAM)
+      ? navigation.resolveRecordSpecificSearchParam(rootId, SPACE_FOCUS_PARAM)
       : undefined
   );
   const focusPath = $derived.by(() => {
@@ -67,7 +67,7 @@
       return;
     }
     navigation.toggleSearchParamRecordSpecific(rootId, {
-      [FOCUS_PARAM]: formatFocusParam(path)
+      [SPACE_FOCUS_PARAM]: formatFocusParam(path)
     });
   }
 
