@@ -1,34 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { navigation } from "./navigation";
+import { createTestHistory } from "./navigation-history.test.setup";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
 
-vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
-  uiState: { getState: () => [], setState: () => undefined }
-}));
-vi.mock("@nucleum/datafn/datafn.store", async () => {
-  const { writable } = await import("svelte/store");
-  return {
-    datafn: {
-      kv: {
-        get: async () => null,
-        set: async () => ({ ok: true }),
-        signal: () => ({
-          subscribe: () => () => undefined,
-          get: () => undefined
-        })
-      }
-    },
-    datafnRuntime: writable(undefined)
-  };
-});
+vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", async () =>
+  (await import("./navigation.test.setup")).uiStateStoreStub()
+);
+vi.mock("@nucleum/datafn/datafn.store", async () =>
+  (await import("./navigation.test.setup")).kvDatafnStoreStub()
+);
 
-function show(url: string, state?: unknown) {
-  window.history.replaceState({}, "", url);
-  navigation.syncAccessTrail(
-    new URL(url, window.location.origin).searchParams.get("page") ?? undefined,
-    state
-  );
-}
+const history = createTestHistory();
 
 function isNavigatorOpen() {
   return (
@@ -37,22 +19,19 @@ function isNavigatorOpen() {
 }
 
 function openNavigator() {
-  const url = new URL(window.location.href);
-  url.searchParams.set("panel", "navigator");
-  show(url.pathname + url.search);
+  history.setSearchParam("panel", "navigator");
+}
+
+function openTrailPageA(options: { isKeepNavigator: boolean }) {
+  const trail = accessTrail.get().current!;
+  navigation.openTrailNode(
+    trail.nodes.findIndex((node) => node.id === "node:a"),
+    options
+  );
 }
 
 beforeEach(() => {
-  show("/home");
-  vi.spyOn(navigation, "gotoPath").mockImplementation(
-    async (path: string, props) => {
-      const url = new URL(path, window.location.origin);
-      show(
-        url.pathname + url.search,
-        props?.historyState ? { accessTrail: props.historyState } : undefined
-      );
-    }
-  );
+  history.install();
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -61,11 +40,7 @@ describe("navigator after opening a trail item", () => {
     navigation.openResource("node:a", "page" as never);
     navigation.openResource("node:b", "page" as never);
     openNavigator();
-    const trail = accessTrail.get().current!;
-    navigation.openTrailNode(
-      trail.nodes.findIndex((node) => node.id === "node:a"),
-      { isKeepNavigator: false }
-    );
+    openTrailPageA({ isKeepNavigator: false });
     expect(new URL(window.location.href).searchParams.get("page")).toBe(
       "node:a"
     );
@@ -76,11 +51,7 @@ describe("navigator after opening a trail item", () => {
     navigation.openResource("node:a", "page" as never);
     navigation.openResource("node:b", "page" as never);
     openNavigator();
-    const trail = accessTrail.get().current!;
-    navigation.openTrailNode(
-      trail.nodes.findIndex((node) => node.id === "node:a"),
-      { isKeepNavigator: true }
-    );
+    openTrailPageA({ isKeepNavigator: true });
     expect(isNavigatorOpen()).toBe(true);
   });
 

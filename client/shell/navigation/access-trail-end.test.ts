@@ -1,74 +1,38 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { navigation } from "./navigation";
+import { createTestHistory } from "./navigation-history.test.setup";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
 
-vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
-  uiState: { getState: () => [], setState: () => undefined }
-}));
-vi.mock("@nucleum/datafn/datafn.store", async () => {
-  const { writable } = await import("svelte/store");
-  return {
-    datafn: {
-      kv: {
-        get: async () => null,
-        set: async () => ({ ok: true }),
-        signal: () => ({
-          subscribe: () => () => undefined,
-          get: () => undefined
-        })
-      }
-    },
-    datafnRuntime: writable(undefined)
-  };
-});
+vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", async () =>
+  (await import("./navigation.test.setup")).uiStateStoreStub()
+);
+vi.mock("@nucleum/datafn/datafn.store", async () =>
+  (await import("./navigation.test.setup")).kvDatafnStoreStub()
+);
 
-type Entry = { url: string; state?: unknown };
-
-let entries: Entry[] = [];
-let index = 0;
-
-function show() {
-  const entry = entries[index];
-  window.history.replaceState({}, "", entry.url);
-  navigation.syncAccessTrail(
-    new URL(entry.url, window.location.origin).searchParams.get("page") ??
-      undefined,
-    entry.state
-  );
-}
-
-function go(delta: number) {
-  index += delta;
-  show();
-}
+const history = createTestHistory();
 
 function currentIds() {
   return accessTrail.get().current?.nodes.map((node) => node.id);
 }
 
+function openTwoPagesAndEndTrail() {
+  navigation.openResource("node:a", "page" as never);
+  navigation.openResource("node:b", "page" as never);
+  navigation.endAccessTrail();
+}
+
+function reopenFromNavigator(id: string) {
+  navigation.openResource(id, "page" as never, {
+    origin: "navigator" as never,
+    trail: "start"
+  });
+}
+
 beforeEach(() => {
   navigation.syncAccessTrail(undefined);
   accessTrail.end();
-  entries = [{ url: "/home" }];
-  index = 0;
-  show();
-  vi.spyOn(navigation, "gotoPath").mockImplementation(
-    async (path: string, props) => {
-      const url = new URL(path, window.location.origin);
-      const href = url.pathname + url.search;
-      const state = props?.historyState
-        ? { accessTrail: props.historyState }
-        : undefined;
-      if (props?.replaceState) {
-        entries[index] = { url: href, state: state ?? entries[index].state };
-      } else {
-        entries = [...entries.slice(0, index + 1), { url: href, state }];
-        index += 1;
-      }
-      show();
-    }
-  );
-  vi.spyOn(window.history, "back").mockImplementation(() => go(-1));
+  history.install();
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -90,29 +54,23 @@ describe("ending an access trail while its page stays open", () => {
   });
 
   it("stays ended when a query change keeps the entry's trail state", () => {
-    navigation.openResource("node:a", "page" as never);
-    navigation.openResource("node:b", "page" as never);
-    navigation.endAccessTrail();
+    openTwoPagesAndEndTrail();
 
-    navigation.syncAccessTrail("node:b", entries[index].state);
+    navigation.syncAccessTrail("node:b", history.current().state);
     expect(accessTrail.get().current).toBeUndefined();
   });
 
   it("starts a new trail on the next resource navigation", () => {
-    navigation.openResource("node:a", "page" as never);
-    navigation.openResource("node:b", "page" as never);
-    navigation.endAccessTrail();
+    openTwoPagesAndEndTrail();
 
     navigation.openResource("node:c", "page" as never);
     expect(currentIds()).toEqual(["node:c"]);
   });
 
   it("follows browser back to another page after ending", () => {
-    navigation.openResource("node:a", "page" as never);
-    navigation.openResource("node:b", "page" as never);
-    navigation.endAccessTrail();
+    openTwoPagesAndEndTrail();
 
-    go(-1);
+    history.go(-1);
     expect(currentIds()).toEqual(["node:a", "node:b"]);
     expect(
       accessTrail.get().current?.nodes[accessTrail.get().current!.active].id
@@ -120,16 +78,11 @@ describe("ending an access trail while its page stays open", () => {
   });
 
   it("starts a fresh trail when the ended page is reopened from the navigator", () => {
-    navigation.openResource("node:a", "page" as never);
-    navigation.openResource("node:b", "page" as never);
-    navigation.endAccessTrail();
+    openTwoPagesAndEndTrail();
 
-    navigation.openResource("node:b", "page" as never, {
-      origin: "navigator" as never,
-      trail: "start"
-    });
+    reopenFromNavigator("node:b");
     expect(currentIds()).toEqual(["node:b"]);
-    navigation.syncAccessTrail("node:b", entries[index].state);
+    navigation.syncAccessTrail("node:b", history.current().state);
     expect(currentIds()).toEqual(["node:b"]);
     expect(accessTrail.get().recent[0]?.nodes.map((node) => node.id)).toEqual([
       "node:a",
@@ -138,13 +91,8 @@ describe("ending an access trail while its page stays open", () => {
   });
 
   it("closes a page whose trail restarted instead of going back to the page before it", () => {
-    navigation.openResource("node:a", "page" as never);
-    navigation.openResource("node:b", "page" as never);
-    navigation.endAccessTrail();
-    navigation.openResource("node:b", "page" as never, {
-      origin: "navigator" as never,
-      trail: "start"
-    });
+    openTwoPagesAndEndTrail();
+    reopenFromNavigator("node:b");
 
     navigation.closeResource({
       accessMode: "page" as never,

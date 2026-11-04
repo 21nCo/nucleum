@@ -52,27 +52,35 @@ async function type(input: HTMLInputElement, value: string) {
   await fireEvent.input(input, { target: { value } });
 }
 
+async function renderTitle(store: ReturnType<typeof createStore>["store"]) {
+  const { getByTestId } = render(ContextZoneEditableTitle, {
+    props: {
+      store,
+      label: "Original",
+      placeholder: "Untitled",
+      inputLabel: "Title",
+      renameLabel: "Rename",
+      testId: "title"
+    }
+  });
+  await settle();
+  return getByTestId("title-input") as HTMLInputElement;
+}
+
+async function queueXThenYThenConfirmX(input: HTMLInputElement) {
+  await type(input, "X");
+  await fireEvent.blur(input);
+  await type(input, "Y");
+  await fireEvent.blur(input);
+  await type(input, "X");
+  await fireEvent.keyDown(input, { key: "Enter" });
+}
+
 describe("ContextZoneEditableTitle", () => {
   it("keeps a confirmed title that matches a save still in flight", async () => {
     const { store, state, pending } = createStore("Original");
-    const { getByTestId } = render(ContextZoneEditableTitle, {
-      props: {
-        store,
-        label: "Original",
-        placeholder: "Untitled",
-        inputLabel: "Title",
-        renameLabel: "Rename",
-        testId: "title"
-      }
-    });
-    await settle();
-    const input = getByTestId("title-input") as HTMLInputElement;
-    await type(input, "X");
-    await fireEvent.blur(input);
-    await type(input, "Y");
-    await fireEvent.blur(input);
-    await type(input, "X");
-    await fireEvent.keyDown(input, { key: "Enter" });
+    const input = await renderTitle(store);
+    await queueXThenYThenConfirmX(input);
     while (pending.length) {
       pending.shift()!.resolve();
       await settle();
@@ -87,18 +95,7 @@ describe("ContextZoneEditableTitle", () => {
 
   it("does not save a title again when it matches the stored title", async () => {
     const { store, pending } = createStore("Original");
-    const { getByTestId } = render(ContextZoneEditableTitle, {
-      props: {
-        store,
-        label: "Original",
-        placeholder: "Untitled",
-        inputLabel: "Title",
-        renameLabel: "Rename",
-        testId: "title"
-      }
-    });
-    await settle();
-    const input = getByTestId("title-input") as HTMLInputElement;
+    const input = await renderTitle(store);
     await type(input, "X");
     await fireEvent.blur(input);
     pending.shift()!.resolve();
@@ -111,24 +108,8 @@ describe("ContextZoneEditableTitle", () => {
 
   it("saves a confirmed title again when its latest save fails", async () => {
     const { store, state, pending } = createStore("Original");
-    const { getByTestId } = render(ContextZoneEditableTitle, {
-      props: {
-        store,
-        label: "Original",
-        placeholder: "Untitled",
-        inputLabel: "Title",
-        renameLabel: "Rename",
-        testId: "title"
-      }
-    });
-    await settle();
-    const input = getByTestId("title-input") as HTMLInputElement;
-    await type(input, "X");
-    await fireEvent.blur(input);
-    await type(input, "Y");
-    await fireEvent.blur(input);
-    await type(input, "X");
-    await fireEvent.keyDown(input, { key: "Enter" });
+    const input = await renderTitle(store);
+    await queueXThenYThenConfirmX(input);
     pending.shift()!.resolve();
     await settle();
     pending.shift()!.resolve();
