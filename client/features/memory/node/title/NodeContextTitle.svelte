@@ -42,9 +42,13 @@
     if (next === ($node.label ?? "")) return pendingSave ?? Promise.resolve();
     const save = node.modify({ label: next });
     pendingSave = save;
-    save.catch(reportSaveFailure).finally(() => {
-      if (pendingSave === save) pendingSave = undefined;
-    });
+    save
+      .then(() => {
+        if (draft.trim() === next) isDirty = false;
+      }, reportSaveFailure)
+      .finally(() => {
+        if (pendingSave === save) pendingSave = undefined;
+      });
     return save;
   }
 
