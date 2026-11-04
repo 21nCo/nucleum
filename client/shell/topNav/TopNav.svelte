@@ -40,7 +40,10 @@
     DEFAULT_CONTEXT_ZONE_SURFACE,
     contextZone
   } from "@nucleum/shell/topNav/contextZone/context-zone";
-  import { resolveContextZoneSubject } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
+  import {
+    resolveContextZoneSubject,
+    resolveSpaceBaseBack
+  } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
   import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
   import PaneSwitchButton from "@nucleum/shell/topNav/contextZone/PaneSwitchButton.svelte";
   import {
@@ -143,7 +146,7 @@
   );
   const subjectBack = $derived(
     subject?.kind === "resource" && subject.accessMode === AccessMode.PAGE
-      ? trailBack
+      ? resolveSpaceBaseBack($page.url, trailBack)
       : undefined
   );
   const isPageFullScreen = $derived(

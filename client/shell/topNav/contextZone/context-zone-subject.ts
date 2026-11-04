@@ -20,6 +20,28 @@ const layerAccessModes: Record<number, AccessMode> = {
   [ContextZoneLayer.BESIDE_PAGE]: AccessMode.BESIDE_PAGE
 };
 
+/** Root space a `/space/<id>` base page shows, if the base page is a space. */
+export function resolveBaseSpaceId(url: URL): string | undefined {
+  const path = url.pathname.replace(/^\/+|\/+$/g, "");
+  const [page, rootSegment] = path.split("/");
+  return page === SPACE_PAGE_ACTION && rootSegment
+    ? decodeSpaceSegment(rootSegment)
+    : undefined;
+}
+
+/**
+ * Back target of a page opened over a space base page with no trail parent:
+ * the space, so the page can return to it.
+ */
+export function resolveSpaceBaseBack(
+  url: URL,
+  trailBack: { id: string } | undefined
+): { id: string } | undefined {
+  if (trailBack || !url.searchParams.get(AccessMode.PAGE)) return trailBack;
+  const spaceId = resolveBaseSpaceId(url);
+  return spaceId ? { id: spaceId } : undefined;
+}
+
 /**
  * Resolves what the page of `pane` shows from the URL: the base page path,
  * the overlay path, or the record or page opened as a page or split. A space
@@ -32,11 +54,7 @@ export function resolveContextZoneSubject(
   if (!pane) return undefined;
   if (pane.layer === ContextZoneLayer.BASE) {
     const path = url.pathname.replace(/^\/+|\/+$/g, "");
-    const [page, rootSegment] = path.split("/");
-    const spaceId =
-      page === SPACE_PAGE_ACTION && rootSegment
-        ? decodeSpaceSegment(rootSegment)
-        : undefined;
+    const spaceId = resolveBaseSpaceId(url);
     if (spaceId) {
       return { kind: "resource", id: spaceId };
     }
