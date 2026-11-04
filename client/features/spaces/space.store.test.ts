@@ -428,7 +428,39 @@ describe("space writes", () => {
     ]);
   });
 
-  it("stops a direct append when another account becomes active while it reads", async () => {
+  it("queues an append to a space without a view ahead of edits from a view opened meanwhile", async () => {
+    mocks.mutate.mockResolvedValue({ ok: true });
+    const id = "space:opened-during-append";
+    const link = {
+      id: "link",
+      type: "section",
+      label: "Link",
+      children: []
+    } as never;
+    let finishRead: (value: unknown) => void = () => undefined;
+    mocks.select
+      .mockReturnValueOnce(new Promise((resolve) => (finishRead = resolve)))
+      .mockResolvedValueOnce({ id, items: [] });
+    const appended = appendSpaceItems(id, [link]);
+    await Promise.resolve();
+    expect(mocks.select).toHaveBeenCalledTimes(1);
+    const store = ActiveSpaceStore.resolve(id);
+    await store.init();
+    const added = store.addSection({ label: "Section" });
+    finishRead({ id, items: [] });
+    await expect(appended).resolves.toBe(true);
+    const sectionId = await added;
+    const saved = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
+      id: string;
+    }[];
+    expect(saved.map((item) => item.id)).toEqual([sectionId, "link"]);
+    expect(store.readItems().map((item) => item.id)).toEqual([
+      sectionId,
+      "link"
+    ]);
+  });
+
+  it("stops an append to a space without a view when another account becomes active while it reads", async () => {
     let finishRead: (value: unknown) => void = () => undefined;
     mocks.select.mockReturnValueOnce(
       new Promise((resolve) => (finishRead = resolve))

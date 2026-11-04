@@ -170,9 +170,9 @@ export class ActiveSpaceStore {
    * appends the items missing from the record as saved then, so it keeps
    * changes saved elsewhere and items the user removed stay removed. The shown
    * items become that result, or, when the user changed them in the meantime,
-   * gain the appended items, which the user's queued saves then carry. When the
+   * gain the appended items, which the user's queued saves then carry. When a
    * view has not loaded items of the active account yet, it loads them after
-   * the write instead.
+   * the write instead; with no view yet, the first view loads them when it opens.
    */
   async appendItems(items: ISpaceNavItem[]) {
     const namespace = datafn.currentNamespace();
@@ -190,7 +190,9 @@ export class ActiveSpaceStore {
       }
       if (!isCurrent()) return true;
       if (!this.hasLoadedItems()) {
-        await this.init(undefined, { isRecordedInRecents: false });
+        if (get(this.subject)) {
+          await this.init(undefined, { isRecordedInRecents: false });
+        }
         return true;
       }
       if (this.itemsRevision === revision) {
@@ -426,33 +428,14 @@ export class ActiveSpaceStore {
 
 /**
  * Appends the items a saved space does not hold yet and returns whether they
- * were saved. While a view of the space exists, including one still loading,
- * the append runs in that view's save queue, in order with the user's edits.
- * Otherwise the record is read and written directly, and a view opened
- * meanwhile reloads. Either way it stops
- * without writing when the space is in the trash or another account becomes
- * active meanwhile.
+ * were saved. The append always runs in the space's shared save queue, created
+ * when no view of the space exists yet, so a view opened meanwhile loads after
+ * it and the user's edits are saved after it, in order. It stops without
+ * writing when the space is in the trash or another account becomes active
+ * meanwhile.
  */
-export async function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
-  const store = activeSpaceStores.get(id.toString());
-  if (store) return store.appendItems(items);
-  const namespace = datafn.currentNamespace();
-  const isCurrent = () => datafn.currentNamespace() === namespace;
-  const saved = (await datafn.space.select(id.toString(), {
-    metadata: recordMetadata
-  })) as ISpace | undefined;
-  if (!saved || isTrashedResource(saved) || !isCurrent()) return false;
-  assertDatafnMutationSucceeded(
-    await datafn.space.mutate({
-      operation: "merge",
-      id: id.toString(),
-      record: { items: appendMissingItems(saved.items ?? [], items) },
-      context: ResourceAccessPoint.SPACE
-    })
-  );
-  if (!isCurrent()) return false;
-  await reloadActiveSpace(id);
-  return true;
+export function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
+  return ActiveSpaceStore.resolve(id).appendItems(items);
 }
 
 /**
