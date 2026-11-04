@@ -9,7 +9,10 @@
   import AppMenuSwitcherItem from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte";
   import { ActionType } from "@nucleum/client/config/action.type";
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
-  import { appStore, isInEditMode } from "@nucleum/shared-state/app-context/app.store";
+  import {
+    appStore,
+    isInEditMode
+  } from "@nucleum/shared-state/app-context/app.store";
   import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { appEvents } from "@nucleum/shared-state/events/app-events.store";
@@ -20,7 +23,10 @@
   import AppMenuPinnedSpaces from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuPinnedSpaces.svelte";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import {
+    hasClosableLayer,
+    navigation
+  } from "@nucleum/shell/navigation/navigation";
   let {
     layoutContext = LayoutContext.DEFAULT,
     parentBackgroundIndex,
@@ -95,14 +101,7 @@
       resolvedCurrent === item.action && item.type === ActionType.PAGE;
     const isActivePageWithRightPanel =
       isActivePage && Boolean(searchParams.get(AccessMode.PANEL));
-    const isActivePageCovered =
-      isActivePage &&
-      [
-        AccessMode.PAGE,
-        AccessMode.BESIDE_PAGE,
-        AccessMode.BESIDE_BASE,
-        AccessMode.OVERLAY
-      ].some((mode) => searchParams.get(mode));
+    const isActivePageCovered = isActivePage && hasClosableLayer(searchParams);
     if (isActivePageCovered && !isActivePageWithRightPanel) {
       navigation.closeResource();
     } else if (!isActivePage || isActivePageWithRightPanel) {

@@ -101,6 +101,11 @@ const closableLayerModes = [
   AccessMode.OVERLAY
 ];
 
+/** Whether a layer that closing every opened resource would close is open. */
+export function hasClosableLayer(searchParams: URLSearchParams) {
+  return closableLayerModes.some((mode) => searchParams.get(mode));
+}
+
 /**
  * Removes record-specific state, such as a space's focused sub space, only for the records that
  * leave the view, so a record that stays open beneath an overlay keeps it. The record being opened
@@ -876,12 +881,7 @@ export const navigation = {
       closeMode(AccessMode.PAGE);
       return;
     }
-    [
-      AccessMode.BESIDE_BASE,
-      AccessMode.PAGE,
-      AccessMode.BESIDE_PAGE,
-      AccessMode.OVERLAY
-    ].forEach((mode) => {
+    closableLayerModes.forEach((mode) => {
       removeSearchParam(mode);
       removeSearchParam(`${mode}At`);
     });
