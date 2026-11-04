@@ -2,16 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import { navigation } from "./navigation";
 
-vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
-  uiState: { getState: () => [], setState: () => undefined }
-}));
-vi.mock("@nucleum/datafn/datafn.store", async () => {
-  const { writable } = await import("svelte/store");
-  return { datafn: {}, datafnRuntime: writable(undefined) };
-});
-vi.mock("@nucleum/shell/navigator/navigator-history.store", () => ({
-  navigatorHistory: { recordResource: () => undefined }
-}));
+vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", async () =>
+  (await import("./navigation.test.setup")).uiStateStoreStub()
+);
+vi.mock("@nucleum/datafn/datafn.store", async () =>
+  (await import("./navigation.test.setup")).emptyDatafnStoreStub()
+);
+vi.mock("@nucleum/shell/navigator/navigator-history.store", async () =>
+  (await import("./navigation.test.setup")).navigatorHistoryStoreStub()
+);
 
 const hostFocusKey = navigation.resolveRecordSpecificSearchParam(
   "space:host1",
@@ -23,6 +22,10 @@ const pageFocusKey = navigation.resolveRecordSpecificSearchParam(
 );
 
 let gotoPath: ReturnType<typeof vi.spyOn>;
+
+function showUrl(url: string) {
+  window.history.replaceState({}, "", url);
+}
 
 function lastUrl() {
   const path = gotoPath.mock.calls.at(-1)?.[0] as string;
@@ -38,7 +41,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("layer-scoped record params", () => {
   it("keeps the focus of a space beneath a page opened over it", () => {
-    window.history.replaceState({}, "", `/tab?${hostFocusKey}=space%3Achild`);
+    showUrl(`/tab?${hostFocusKey}=space%3Achild`);
     navigation.openResource("node:card", AccessMode.PAGE);
     const url = lastUrl();
     expect(url.searchParams.get(AccessMode.PAGE)).toBe("node:card");
@@ -46,21 +49,13 @@ describe("layer-scoped record params", () => {
   });
 
   it("clears the focus of a space replaced by the opened page", () => {
-    window.history.replaceState(
-      {},
-      "",
-      `/tab?page=space%3Apage1&${pageFocusKey}=space%3Achild`
-    );
+    showUrl(`/tab?page=space%3Apage1&${pageFocusKey}=space%3Achild`);
     navigation.openResource("node:card", AccessMode.PAGE);
     expect(lastUrl().searchParams.has(pageFocusKey)).toBe(false);
   });
 
   it("keeps the host focus when the page over it closes", () => {
-    window.history.replaceState(
-      {},
-      "",
-      `/tab?page=node%3Acard&${hostFocusKey}=space%3Achild`
-    );
+    showUrl(`/tab?page=node%3Acard&${hostFocusKey}=space%3Achild`);
     navigation.closeResource({ accessMode: AccessMode.PAGE });
     const url = lastUrl();
     expect(url.searchParams.has(AccessMode.PAGE)).toBe(false);
@@ -68,19 +63,13 @@ describe("layer-scoped record params", () => {
   });
 
   it("clears the focus of a closed space page", () => {
-    window.history.replaceState(
-      {},
-      "",
-      `/tab?page=space%3Apage1&${pageFocusKey}=space%3Achild`
-    );
+    showUrl(`/tab?page=space%3Apage1&${pageFocusKey}=space%3Achild`);
     navigation.closeResource({ accessMode: AccessMode.PAGE });
     expect(lastUrl().searchParams.has(pageFocusKey)).toBe(false);
   });
 
   it("clears the focus of a closed beside-page space", () => {
-    window.history.replaceState(
-      {},
-      "",
+    showUrl(
       `/tab?page=node%3Acard&besidePage=space%3Apage1&${pageFocusKey}=space%3Achild`
     );
     navigation.closeResource({ accessMode: AccessMode.BESIDE_PAGE });
@@ -90,9 +79,7 @@ describe("layer-scoped record params", () => {
   });
 
   it("clears the focus of a beside-page space closed with its page", () => {
-    window.history.replaceState(
-      {},
-      "",
+    showUrl(
       `/tab?page=node%3Amain&besidePage=space%3Apage1&${pageFocusKey}=space%3Achild`
     );
     navigation.closeResource({ accessMode: AccessMode.PAGE });
@@ -102,9 +89,7 @@ describe("layer-scoped record params", () => {
   });
 
   it("clears the focus of a beside-page space removed by opening another page", () => {
-    window.history.replaceState(
-      {},
-      "",
+    showUrl(
       `/tab?page=node%3Amain&besidePage=space%3Apage1&${pageFocusKey}=space%3Achild`
     );
     navigation.openResource("node:card", AccessMode.PAGE);
