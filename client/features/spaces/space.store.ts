@@ -43,6 +43,7 @@ export class ActiveSpaceStore {
   private itemsRevision = 0;
   private labelRevision = 0;
   private viewRevision = 0;
+  private itemsWrites: Promise<unknown> = Promise.resolve();
   private loadSequence = 0;
   private latestLoad: Promise<void> = Promise.resolve();
 
@@ -92,10 +93,27 @@ export class ActiveSpaceStore {
     return true;
   }
 
+  /**
+   * Shows `items` and saves them. Saves run one after another in call order,
+   * and each carries every earlier local change, so the last one wins with
+   * the complete list.
+   */
   private async persistItems(items: ISpaceNavItem[]) {
     this.itemsRevision++;
     this.update((prev) => (prev ? { ...prev, items } : prev));
-    return this.mutate({ items });
+    const write = this.itemsWrites.then(() => this.mutate({ items }));
+    this.itemsWrites = write.catch(() => undefined);
+    return write;
+  }
+
+  /** Whether the open state holds the space's items, loaded at least once. */
+  hasLoadedItems() {
+    return !!(get(this.subject) as IActiveSpace | undefined)?.items;
+  }
+
+  /** Appends items after the current ones and returns whether they were saved. */
+  async appendItems(items: ISpaceNavItem[]) {
+    return this.persistItems([...this.readItems(), ...items]);
   }
 
   /**
@@ -304,6 +322,31 @@ export class ActiveSpaceStore {
       )
     );
   }
+}
+
+/**
+ * Appends items to a saved space and returns whether they were saved. While a
+ * view of the space has its items open, the write goes through that view's
+ * store, in order with the user's edits, so neither overwrites the other.
+ * Otherwise the record is merged with `savedItems`, its saved items.
+ */
+export async function appendSpaceItems(
+  id: IRecordId,
+  items: ISpaceNavItem[],
+  savedItems: ISpaceNavItem[]
+) {
+  const store = activeSpaceStores.get(id.toString());
+  if (store?.hasLoadedItems()) return store.appendItems(items);
+  assertDatafnMutationSucceeded(
+    await datafn.space.mutate({
+      operation: "merge",
+      id: id.toString(),
+      record: { items: [...savedItems, ...items] },
+      context: ResourceAccessPoint.SPACE
+    })
+  );
+  await reloadActiveSpace(id);
+  return true;
 }
 
 /**

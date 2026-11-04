@@ -21,15 +21,13 @@ const insertSpace = vi.hoisted(() =>
 );
 const reloadActiveSpace = vi.hoisted(() => vi.fn(async () => undefined));
 const spaceMutate = vi.hoisted(() =>
-  vi.fn(
-    async (params: { id: string; record: Record<string, unknown> }) => {
-      state.spaces.set(params.id, {
-        ...state.spaces.get(params.id),
-        ...params.record
-      });
-      return { ok: true };
-    }
-  )
+  vi.fn(async (params: { id: string; record: Record<string, unknown> }) => {
+    state.spaces.set(params.id, {
+      ...state.spaces.get(params.id),
+      ...params.record
+    });
+    return { ok: true };
+  })
 );
 
 vi.mock("@nucleum/client/runtime/logging/logger", () => ({
@@ -65,7 +63,17 @@ vi.mock("@nucleum/shell/topNav/tabs/tabs.store", () => ({
     }
   }
 }));
+const appendSpaceItems = vi.hoisted(() =>
+  vi.fn(async (id: string, items: unknown[], savedItems: unknown[]) => {
+    state.spaces.set(id, {
+      ...state.spaces.get(id),
+      items: [...savedItems, ...items]
+    });
+    return true;
+  })
+);
 vi.mock("@nucleum/features/spaces/space.store", () => ({
+  appendSpaceItems,
   insertSpace,
   reloadActiveSpace
 }));
@@ -76,9 +84,8 @@ vi.mock("@nucleum/shared-state/app-context/app.store", async () => {
   };
 });
 
-const { migratePinnedSpace } = await import(
-  "@nucleum/features/spaces/pinned-space-migration"
-);
+const { migratePinnedSpace } =
+  await import("@nucleum/features/spaces/pinned-space-migration");
 
 const resolveTypePinPage = (pin: string) => ({
   path: `library/${pin}/all`,
@@ -185,6 +192,21 @@ describe("migratePinnedSpace", () => {
     ).toEqual(["node:a", "library/objective/all", "library/collection/all"]);
     expect(reloadActiveSpace).toHaveBeenLastCalledWith(id);
     expect(menu().user).toEqual([]);
+  });
+
+  it("keeps pins when the appended links are not in the saved space", async () => {
+    await migrate();
+    const { id } = onlySpace();
+    const savedItems = onlySpace().space?.items;
+    state.menus[Product.NUCLEUM].user = ["collection"];
+    appendSpaceItems.mockImplementationOnce(async () => {
+      state.spaces.set(id!, { ...state.spaces.get(id!), items: savedItems });
+      return true;
+    });
+
+    await migrate();
+
+    expect(menu().user).toEqual(["collection"]);
   });
 
   it("keeps pins while the recorded pinned space has not reached this device", async () => {

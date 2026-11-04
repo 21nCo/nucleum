@@ -24,7 +24,10 @@ vi.mock("@nucleum/shell/navigation/navigation", () => ({
 }));
 
 import { get } from "svelte/store";
-import { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
+import {
+  ActiveSpaceStore,
+  appendSpaceItems
+} from "@nucleum/features/spaces/space.store";
 import { SpaceView } from "@nucleum/features/spaces/space.type";
 
 describe("space writes", () => {
@@ -169,5 +172,37 @@ describe("space writes", () => {
     const items = store.readItems();
     expect(items.map((item) => item.id)).toEqual(["page", "child"]);
     expect(items[0].children).toBeUndefined();
+  });
+
+  it("saves items appended to an open space in order with the user's edits", async () => {
+    const store = ActiveSpaceStore.resolve("space:appending");
+    mocks.select.mockResolvedValueOnce({ id: "space:appending", items: [] });
+    await store.init();
+    let finishFirst: (value: unknown) => void = () => undefined;
+    mocks.mutate
+      .mockReturnValueOnce(new Promise((resolve) => (finishFirst = resolve)))
+      .mockResolvedValue({ ok: true });
+    const link = {
+      id: "link",
+      type: "resource",
+      label: "Link",
+      resourceId: "node:a",
+      resourceType: "node"
+    } as never;
+    const appended = appendSpaceItems("space:appending", [link], []);
+    const added = store.addSection({ label: "Added meanwhile" });
+    await Promise.resolve();
+    expect(mocks.mutate).toHaveBeenCalledTimes(1);
+    finishFirst({ ok: true });
+    await expect(appended).resolves.toBe(true);
+    const sectionId = await added;
+    const lastItems = mocks.mutate.mock.calls.at(-1)?.[0].record.items as {
+      id: string;
+    }[];
+    expect(lastItems.map((item) => item.id)).toEqual(["link", sectionId]);
+    expect(store.readItems().map((item) => item.id)).toEqual([
+      "link",
+      sectionId
+    ]);
   });
 });

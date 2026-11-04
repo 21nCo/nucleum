@@ -8,7 +8,6 @@ import { datafn } from "@nucleum/datafn/datafn.store";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
 import {
   determineResourceType,
   isRecordId,
@@ -18,12 +17,17 @@ import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
 import type { IAppMenu } from "@nucleum/shell/navigation/app-menu.type";
 import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
-import type { ISpace } from "@nucleum/features/spaces/space.type";
+import type {
+  ISpace,
+  ISpaceNavItem
+} from "@nucleum/features/spaces/space.type";
 import {
+  appendSpaceItems,
   insertSpace,
   reloadActiveSpace
 } from "@nucleum/features/spaces/space.store";
 import {
+  findItem,
   resolveSpacePageRoute,
   resolveTargetLabel
 } from "@nucleum/features/spaces/space.utils";
@@ -85,6 +89,15 @@ async function loadPinnedSpace(spaceId: string | undefined) {
     return { id: undefined, space: undefined, isUnavailable: false };
   }
   return { id: spaceId, space, isUnavailable: false };
+}
+
+/** Whether the saved space holds every one of `items`, wherever they were moved. */
+async function hasSavedItems(spaceId: string, items: ISpaceNavItem[]) {
+  const saved = (await datafn.space.select(spaceId, {
+    metadata: recordMetadata
+  })) as ISpace | undefined;
+  const savedItems = saved?.items ?? [];
+  return items.every((item) => !!findItem(savedItems, item.id));
 }
 
 async function loadTabRecord(
@@ -231,14 +244,12 @@ async function runMigration(
     await reloadActiveSpace(spaceId);
   } else if (space && added.length > 0) {
     assertCurrent(scope);
-    const result = await datafn.space.mutate({
-      operation: "merge",
-      id: space.id.toString(),
-      record: { items: [...(space.items ?? []), ...added] },
-      context: ResourceAccessPoint.SPACE
-    });
-    assertDatafnMutationSucceeded(result);
-    await reloadActiveSpace(space.id);
+    if (!(await appendSpaceItems(space.id, added, space.items ?? []))) return;
+  }
+  if (spaceId && added.length > 0) {
+    const isSaved = await hasSavedItems(spaceId, added);
+    assertCurrent(scope);
+    if (!isSaved) return;
   }
 
   if (movedTabs.length > 0) {
