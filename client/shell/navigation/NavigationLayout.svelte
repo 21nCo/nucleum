@@ -209,10 +209,8 @@
           </div>
         </div>
         {#if rightPanel && isPanelShown}
-          {#if $view.isPortrait}
-            <RightPanel action={rightPanel} isSheet={true} />
-          {:else if !$view.isConstrainedWidth}
-            <RightPanel action={rightPanel} />
+          {#if $view.isPortrait || !$view.isConstrainedWidth}
+            <RightPanel action={rightPanel} isSheet={$view.isPortrait} />
           {/if}
         {/if}
       </div>
