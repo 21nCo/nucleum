@@ -767,7 +767,8 @@ export const navigation = {
       );
       navigatorLayer = resolveNavigatorLayer(url);
       const isNavigatorOpen = !!navigatorLayer;
-      const isTrailRestarted = intent === "start" && isOpenPageTrailEnded;
+      const isTrailRestarted =
+        (intent === "start" || intent === "extend") && isOpenPageTrailEnded;
       if (intent === "start") {
         if (openPage !== id.toString() || isTrailRestarted) {
           accessTrail.start(
@@ -781,7 +782,8 @@ export const navigation = {
       } else if (intent === "select") {
         isCloseNavigator = isRightPanelSheet(get(view));
       } else if (intent === "extend") {
-        accessTrail.extend(id.toString());
+        if (isTrailRestarted) accessTrail.start(id.toString());
+        else accessTrail.extend(id.toString());
       }
       if (params?.isKeepNavigator !== undefined) {
         isCloseNavigator = !params.isKeepNavigator;
@@ -797,7 +799,7 @@ export const navigation = {
           !!openPosition &&
           !isSameAccessTrailPosition(position, openPosition));
       if (isOtherEntry && position) {
-        if ((intent === "start" && !isTrailRestarted) || intent === "extend") {
+        if (!isTrailRestarted && (intent === "start" || intent === "extend")) {
           forgetPageScroll(id.toString());
         }
         if (intent === "back" || isTrailRestarted) {

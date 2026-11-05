@@ -90,6 +90,27 @@ describe("ending an access trail while its page stays open", () => {
     ]);
   });
 
+  it("starts a fresh trail when the ended page is reopened by a default open", () => {
+    openTwoPagesAndEndTrail();
+    const entries = history.entries.length;
+
+    navigation.openResource("node:b", "page" as never);
+    expect(currentIds()).toEqual(["node:b"]);
+    expect(history.entries.length).toBe(entries);
+    navigation.syncAccessTrail("node:b", history.current().state);
+    expect(currentIds()).toEqual(["node:b"]);
+    expect(accessTrail.get().recent[0]?.nodes.map((node) => node.id)).toEqual([
+      "node:a",
+      "node:b"
+    ]);
+
+    navigation.closeResource({
+      accessMode: "page" as never,
+      isHistoryBack: true
+    });
+    expect(new URL(window.location.href).searchParams.get("page")).toBeNull();
+  });
+
   it("closes a page whose trail restarted instead of going back to the page before it", () => {
     openTwoPagesAndEndTrail();
     reopenFromNavigator("node:b");
