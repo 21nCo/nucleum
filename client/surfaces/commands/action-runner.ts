@@ -26,6 +26,7 @@ import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { resolveEffectiveLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
 import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
+import { NOT_FOUND_PATH } from "@nucleum/shell/navigation/not-found";
 
 /** Executes the product command registry supplied by application composition. */
 export const actionRunner = {
@@ -58,7 +59,7 @@ export const actionRunner = {
     let action = actionRunner.resolveAction(slug);
     logger.log({ at: "runAction", action, slug, params });
     if (!action) {
-      navigation.gotoPath("404");
+      void navigation.gotoPath(`/${NOT_FOUND_PATH}`);
       return;
     }
     const store = get(appStore);

@@ -2,6 +2,7 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
+  import { isNotFoundPath } from "@nucleum/shell/navigation/not-found";
   import { page } from "$app/stores";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import PageNotFoundIllustration from "@21n/ui/illustrations/PageNotFoundIllustration.svelte";
@@ -17,18 +18,19 @@
   let {
     message = undefined,
     actions = [],
-    isNotFoundPage = false
+    isNotFoundPage = false,
+    notFoundPath = undefined
   }: {
     message?: string | undefined;
     actions?: IButtonParams[];
     isNotFoundPage?: boolean;
+    /** Missing path shown when the page renders in place, without a ?path= URL. */
+    notFoundPath?: string;
   } = $props();
-  const is404 = $derived(
-    isNotFoundPage ||
-      $page?.url.pathname === "/404" ||
-      $page?.url.pathname === "/404/"
+  const is404 = $derived(isNotFoundPage || isNotFoundPath($page?.url.pathname));
+  const erroredPath = $derived(
+    notFoundPath ?? $page?.url?.searchParams?.get("path")
   );
-  const erroredPath = $derived($page?.url?.searchParams?.get("path"));
   const errorParam = $derived($page?.url?.searchParams?.get("error"));
   const titles = ["Yikes", "Uh-oh", "Oops", "Oh no", "Whoops", "Dang", "Shoot"];
 </script>
@@ -48,12 +50,14 @@
       </div>
     {/if}
     <span>
-      {@html renderMdAsHtml(
-        message ??
-          (is404
-            ? `Oops! The page **${erroredPath ?? " "}** you're looking for doesn't exist.`
-            : "We would never want you to see this page. Please chat with us or try again.")
-      )}
+      {#if message}
+        {@html renderMdAsHtml(message)}
+      {:else if is404}
+        Oops! The page <b>{erroredPath ?? " "}</b> you're looking for doesn't exist.
+      {:else}
+        We would never want you to see this page. Please chat with us or try
+        again.
+      {/if}
     </span>
     <div class="flex gap-2">
       {#if actions.length > 0}
