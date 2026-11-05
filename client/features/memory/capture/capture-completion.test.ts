@@ -23,6 +23,7 @@ import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import {
   closeCaptureAfterSave,
+  closeCapturePageAfterReset,
   handleSingleNodePostSave
 } from "./capture-completion";
 
@@ -106,5 +107,23 @@ describe("handleSingleNodePostSave", () => {
       AccessMode.PAGE,
       { searchParams: { [AccessMode.PANEL]: null } }
     );
+  });
+});
+
+describe("closeCapturePageAfterReset", () => {
+  it("closes a capture open as the page", () => {
+    visit(`?${AccessMode.PAGE}=${capture}`);
+    closeCapturePageAfterReset();
+    expect(navigation.closeResource).toHaveBeenCalledWith({
+      accessMode: AccessMode.PAGE
+    });
+  });
+
+  it("keeps the page under a capture open in the panel or the overlay", () => {
+    for (const mode of [AccessMode.PANEL, AccessMode.OVERLAY]) {
+      visit(`?${AccessMode.PAGE}=node%3Aopen&${mode}=${capture}`);
+      closeCapturePageAfterReset();
+    }
+    expect(navigation.closeResource).not.toHaveBeenCalled();
   });
 });

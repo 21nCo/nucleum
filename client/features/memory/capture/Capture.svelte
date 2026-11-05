@@ -47,6 +47,7 @@
   import { resolveOpenLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
+  import { closeCapturePageAfterReset } from "@nucleum/features/memory/capture/capture-completion";
 
   let {
     captureId = generateResourceId(Resource.capture),
@@ -135,9 +136,7 @@
 
   function reset() {
     captureStore.reset();
-    if ($view.isConstrainedWidth) {
-      navigation.closeResource({ accessMode: AccessMode.PAGE });
-    }
+    if ($view.isConstrainedWidth) closeCapturePageAfterReset();
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
   }
 

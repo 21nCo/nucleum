@@ -99,3 +99,19 @@ export function closeCaptureAfterSave(isReplacedByOpenedNode: boolean) {
     ({ id, accessMode }) => navigation.closeResource({ id, accessMode })
   );
 }
+
+/**
+ * Closes a capture that is open as the page after it is cleared or saved on a
+ * constrained width, as a phone page capture does. A capture open in the
+ * overlay or the right panel stays open, and the page under it is kept.
+ */
+export function closeCapturePageAfterReset() {
+  const url = new URL(window.location.href);
+  if (
+    url.searchParams.get(AccessMode.PAGE) !==
+    resourceAction(Resource.node, ResourceActionType.CREATE)
+  ) {
+    return;
+  }
+  navigation.closeResource({ accessMode: AccessMode.PAGE });
+}
