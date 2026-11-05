@@ -147,4 +147,27 @@ describe("ContextZoneEditableTitle", () => {
     expect(get(state)).toEqual({ label: "X", isInEditMode: true });
     expect(input.value).toBe("Y");
   });
+
+  it("leaves a reopened editor alone when an earlier confirm finishes after a cancel", async () => {
+    const { store, state, pending } = createStore("Original");
+    const input = await renderTitle(store);
+    await type(input, "X");
+    await fireEvent.keyDown(input, { key: "Enter" });
+    await fireEvent.keyDown(input, { key: "Escape" });
+    await settle();
+    store.toggleEditMode(true);
+    await settle();
+    const reopened = document.querySelector(
+      '[data-testid="title-input"]'
+    ) as HTMLInputElement;
+    await type(reopened, "Y");
+
+    pending.shift()!.resolve();
+    await settle();
+    expect(store.modify.mock.calls.map(([value]) => value.label)).toEqual([
+      "X"
+    ]);
+    expect(get(state).isInEditMode).toBe(true);
+    expect(reopened.value).toBe("Y");
+  });
 });

@@ -56,10 +56,12 @@
   let queuedSaves = 0;
   let saveSequence = 0;
   let submittedLabel: string | undefined;
+  let editSession = 0;
 
   const isEditing = $derived($store.isInEditMode);
 
   $effect(() => {
+    editSession += 1;
     if (!isEditing) return;
     untrack(() => {
       draft = $store.label ?? "";
@@ -123,19 +125,23 @@
   /**
    * Saves the draft and leaves edit mode once the latest title is saved. While
    * a save is awaited the input stays editable, so after each one the draft is
-   * checked again and a newer save is awaited before editing closes.
+   * checked again and a newer save is awaited before editing closes. A finish
+   * outlived by its editing session, which was cancelled, closed or reopened
+   * while a save was awaited, stops without saving or closing the new one.
    */
   async function finish() {
+    const session = editSession;
     try {
       let save = saveLabel();
       for (;;) {
         await save;
+        if (session !== editSession) return false;
         const next = saveLabel();
         if (next === save || next !== pendingSave) break;
         save = next;
       }
     } catch {
-      inputRef?.focus();
+      if (session === editSession) inputRef?.focus();
       return false;
     }
     store.toggleEditMode(false);
@@ -162,6 +168,7 @@
 
   function cancel() {
     isCancelled = true;
+    editSession += 1;
     store.toggleEditMode(false);
   }
 
