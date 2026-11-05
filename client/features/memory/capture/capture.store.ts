@@ -1080,7 +1080,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     ) {
       return result2;
     }
-    this.postSave(result2, { source: params?.source });
+    void this.postSave(result2, { source: params?.source });
   }
 
   async saveWebpage(
@@ -1390,7 +1390,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       context: captureAction
     });
     await this.saveLinks(id);
-    this.postSave(result.slice(0, 1), { source: params?.source });
+    void this.postSave(result.slice(0, 1), { source: params?.source });
     return result;
   }
 
