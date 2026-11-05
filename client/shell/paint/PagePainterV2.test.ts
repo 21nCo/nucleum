@@ -18,13 +18,12 @@ const mocks = vi.hoisted(() => {
     page: createStore({ url: new URL("https://local.nucleum.app/calendar") }),
     context: createStore({ isSheet: false }),
     view: createStore({ isPortrait: false }),
-    resolveComponentFromPath(path: string) {
+    resolvePageRoute(path: string) {
       const actions = get(appState).actions;
-      return (
+      const action =
         actions.find((x) => x.path === path) ??
-        actions.find((x) => x.action === path) ??
-        null
-      );
+        actions.find((x) => x.action === path);
+      return action ? { action } : null;
     }
   };
 });
@@ -39,7 +38,9 @@ vi.mock("@nucleum/shared-state/app-context/app.store", () => ({
     subscribe: mocks.appState.subscribe,
     set: mocks.appState.set,
     update: mocks.appState.update,
-    resolveComponentFromPath: mocks.resolveComponentFromPath
+    resolvePageRoute: mocks.resolvePageRoute,
+    resolveComponentFromPath: (path: string) =>
+      mocks.resolvePageRoute(path)?.action ?? null
   }
 }));
 vi.mock("@nucleum/client/runtime/context.store", () => ({
