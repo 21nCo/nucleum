@@ -47,7 +47,8 @@
   import {
     closeCapturePageAfterReset,
     closeCaptureLayer,
-    isCaptureSaveShortcut
+    isCaptureSaveShortcut,
+    resetCaptureAfterSave
   } from "@nucleum/features/memory/capture/capture-completion";
   import {
     registerCaptureInstance,
@@ -179,8 +180,9 @@
   }
 
   async function onSave() {
-    await captureStore.save({ source: captureSource });
-    reset();
+    const source = captureSource;
+    await captureStore.save({ source });
+    resetCaptureAfterSave(source, reset);
   }
 
   function handleWebArtifactAdd({

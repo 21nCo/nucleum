@@ -127,6 +127,18 @@ export function closeCaptureAfterSave(
 }
 
 /**
+ * Runs a Capture's reset once a save from `source` has finished, only while
+ * that same Capture is still mounted in its layer, so a reset that would
+ * close the page never closes a Capture that replaced the saving one.
+ */
+export function resetCaptureAfterSave(
+  source: CaptureSaveSource,
+  reset: () => void
+) {
+  if (isCaptureSourceMounted(source)) reset();
+}
+
+/**
  * Closes the layer a Capture is rendered in, from that Capture's own Close
  * control, leaving Captures open in other layers as they are.
  */

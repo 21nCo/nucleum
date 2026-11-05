@@ -26,6 +26,7 @@ import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 import {
   closeCaptureAfterSave,
   closeCaptureLayer,
+  resetCaptureAfterSave,
   closeCapturePageAfterReset,
   handleSingleNodePostSave,
   isCaptureSaveShortcut
@@ -223,6 +224,30 @@ describe("several Captures open at once", () => {
     expect(navigation.closeResource).toHaveBeenCalledTimes(1);
     expect(navigation.closeResource).toHaveBeenCalledWith({
       id: MemotronAction.CAPTURE_SECONDARY,
+      accessMode: AccessMode.PAGE
+    });
+  });
+
+  it("keeps a replacement Capture page open when the replaced page's save finishes", () => {
+    const saving = mountCapture(AccessMode.PAGE);
+    unmountCaptures();
+    mountCapture(AccessMode.PAGE);
+    visit(`?${AccessMode.PAGE}=${MemotronAction.CAPTURE_SECONDARY}`);
+
+    resetCaptureAfterSave(saving, () =>
+      closeCapturePageAfterReset(AccessMode.PAGE)
+    );
+    expect(navigation.closeResource).not.toHaveBeenCalled();
+  });
+
+  it("resets the Capture after its save while it is still mounted", () => {
+    const saving = mountCapture(AccessMode.PAGE);
+    visit(`?${AccessMode.PAGE}=${MemotronAction.CAPTURE_SECONDARY}`);
+
+    resetCaptureAfterSave(saving, () =>
+      closeCapturePageAfterReset(AccessMode.PAGE)
+    );
+    expect(navigation.closeResource).toHaveBeenCalledWith({
       accessMode: AccessMode.PAGE
     });
   });
