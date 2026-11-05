@@ -30,6 +30,7 @@
   import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
   import PanelActionGroup from "@nucleum/shell/topNav/PanelActionGroup.svelte";
   import { isToastBesideActions } from "@nucleum/shell/topNav/toast-placement";
+  import { isContextTabShown } from "@nucleum/shell/topNav/context-tab";
   import {
     isTopNavPanelBeside,
     type TopNavPanelAction,
@@ -179,7 +180,14 @@
     return !!uiState.getState(UIState.isHideLeftNavBar);
   }
 
-  const isContextTab = $derived(isBulkMode || !!subject || !!$activeEntry);
+  const isContextTab = $derived(
+    isContextTabShown({
+      isBulkMode,
+      hasSubject: !!subject,
+      hasActiveEntry: !!$activeEntry,
+      isHomePage
+    })
+  );
   let zoneRef = $state<HTMLDivElement | undefined>(undefined);
   let tabInnerRef = $state<HTMLDivElement | undefined>(undefined);
   let entryRef = $state<HTMLDivElement | undefined>(undefined);
