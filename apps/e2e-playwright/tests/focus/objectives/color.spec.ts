@@ -26,10 +26,9 @@ async function openObjectiveFromLibrary(
   await openResourceRecord(page, test.info().project.name, "objective", {
     id: objective.id
   });
-  await expect(page.getByTestId("objective-context-title")).toHaveText(
-    objective.label,
-    { timeout: 15_000 }
-  );
+  const objectiveTitle = page.getByTestId("objective-context-title");
+  await expect(objectiveTitle).toBeVisible({ timeout: 15_000 });
+  await expect(objectiveTitle).toHaveText(objective.label);
 }
 
 async function readCustomColor(locator: Locator) {
@@ -61,6 +60,7 @@ test("objective color persists and is reused on detail, Quick Focus, and analyti
   await openObjectiveFromLibrary(page, objective);
 
   const objectiveTitle = page.getByTestId("objective-context-title");
+  await expect(objectiveTitle).toBeVisible();
   await expect(objectiveTitle).toHaveText(objectiveName);
   await objectiveTitle.click();
   await expect(page.getByTestId("objective-context-title-input")).toBeVisible({

@@ -60,10 +60,9 @@ async function runPointronSmokeFlow(page: Page) {
 
   const objectiveRecord = page.getByTestId("resource-record-surface");
   await expect(objectiveRecord).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByTestId("objective-context-title")).toHaveText(
-    objectiveName,
-    { timeout: 15_000 }
-  );
+  const objectiveTitle = page.getByTestId("objective-context-title");
+  await expect(objectiveTitle).toBeVisible({ timeout: 15_000 });
+  await expect(objectiveTitle).toHaveText(objectiveName);
 
   await page.getByTestId("top-bar-close").click({ timeout: 5_000 });
   await openLibraryAndTab(page, LibraryTab.Objectives);
