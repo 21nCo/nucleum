@@ -6,7 +6,10 @@ import {
   ContextZoneLayer,
   contextZone
 } from "@nucleum/shell/topNav/contextZone/context-zone";
-import { resolveHostVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+import {
+  resolveHostVisibility,
+  setRightPanelSheetShown
+} from "@nucleum/shell/rightPanel/right-panel-visibility";
 
 function renderInLayer(layer: number) {
   let visibility: Readable<boolean> | undefined;
@@ -17,7 +20,10 @@ function renderInLayer(layer: number) {
   return visibility!;
 }
 
-afterEach(() => contextZone.setVisibleLayers(undefined));
+afterEach(() => {
+  contextZone.setVisibleLayers(undefined);
+  setRightPanelSheetShown(false);
+});
 
 describe("resolveHostVisibility", () => {
   it("hides a page tool while an overlay is drawn over the page", () => {
@@ -46,5 +52,18 @@ describe("resolveHostVisibility", () => {
 
   it("counts every layer as visible when no layout reports visible layers", () => {
     expect(get(renderInLayer(ContextZoneLayer.PAGE))).toBe(true);
+  });
+
+  it("hides a page tool while a right panel sheet covers the main region", () => {
+    const visibility = renderInLayer(ContextZoneLayer.PAGE);
+    contextZone.setVisibleLayers([
+      ContextZoneLayer.PAGE,
+      ContextZoneLayer.BESIDE_PAGE
+    ]);
+    setRightPanelSheetShown(true);
+    expect(get(visibility)).toBe(false);
+
+    setRightPanelSheetShown(false);
+    expect(get(visibility)).toBe(true);
   });
 });

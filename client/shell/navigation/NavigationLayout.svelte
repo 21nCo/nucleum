@@ -30,6 +30,7 @@
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
   import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
   import { isRightPanelCovered } from "@nucleum/shell/navigation/top-layer";
+  import { setRightPanelSheetShown } from "@nucleum/shell/rightPanel/right-panel-visibility";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
   import {
@@ -90,6 +91,10 @@
   });
 
   $effect(() => () => contextZone.setVisibleLayers(undefined));
+
+  $effect(() => setRightPanelSheetShown(isPanelSheetShown));
+
+  $effect(() => () => setRightPanelSheetShown(false));
 
   onMount(() => {
     const uiStateSub = uiState.subscribe(() => {
