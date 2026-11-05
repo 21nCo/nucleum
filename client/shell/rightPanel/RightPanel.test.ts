@@ -119,4 +119,16 @@ describe("RightPanel", () => {
     await tick();
     expect(get(visibility!)).toBe(true);
   });
+
+  it("tells a tool mounted under a covering layer that it is hidden", () => {
+    let isVisible: boolean | undefined;
+    resolver.mockImplementationOnce(() => {
+      isVisible = get(resolveHostVisibility());
+    });
+    const action = { action: "capture", label: "Capture" } as never;
+    render(RightPanel, {
+      props: { action, isSheet: false, isSuspended: true }
+    });
+    expect(isVisible).toBe(false);
+  });
 });

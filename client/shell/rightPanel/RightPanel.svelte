@@ -10,6 +10,7 @@
   import { focusTrap } from "@21n/ui/actions/focus-trap.action";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { untrack } from "svelte";
   import { writable } from "svelte/store";
   import { provideRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
 
@@ -30,7 +31,7 @@
     isSuspended?: boolean;
   } = $props();
 
-  const visibility = writable(true);
+  const visibility = writable(untrack(() => !isSuspended));
   provideRightPanelVisibility(visibility);
   $effect(() => visibility.set(!isSuspended));
 
