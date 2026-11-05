@@ -17,7 +17,7 @@ Diagrams and the direct-import matrix live in [client dependency map](client-dep
 | `client/shared-state` | Product-independent client behavior under the named owners below. No root barrel. |
 | `client/shell` | Navigation, panels, split views, tabs, trails, overlays, modal chrome, connected notification rendering, and global shortcut execution (`@nucleum/shell`). |
 | `client/features` | Capability implementations. Memory owns Markdown editing and tags. Spaces owns spaces: their item trees, views, sub space focus, and moving former app menu resource pins and app tabs into the Pinned space, which composition runs after DataFn loads. Records owns connected record menus and bulk mutations. Focus owns its scheduled notification queue. |
-| `client/surfaces` | Cross-feature product surfaces: account, subscription, onboarding, help, settings, the command surface, search, sharing, library, and the phone home hub (`@nucleum/surfaces`). |
+| `client/surfaces` | Cross-feature product surfaces: account, subscription, onboarding, help, settings, the command surface and super bar (commands, contextual resource actions, and search), sharing, library, and the phone home hub (`@nucleum/surfaces`). |
 | `client/products` | Product experiences composed from those capabilities. Product source does not import composition. |
 | `client/composition` | The composition root, `layers/`, and `chrome/`: host installation, base and user layers, command-registry assembly, and product-aware branding adapters (`@nucleum/composition`). |
 | `client/routes` | The shared SvelteKit route tree for Nucleum, Memotron, and Pointron. |
@@ -54,6 +54,8 @@ State that looks shared but has a narrower owner:
 | File workflow orchestration | `client/shared-state/files`; conversion primitives live in `runtime/media`, transport in `runtime/files`, and legacy storage mechanics in persistence. |
 | URL and resource navigation | `client/shell/navigation/navigation.ts` |
 | Command lookup and execution | `client/surfaces/commands/action-runner.ts` |
+| Resource search engine shared by the super bar and the navigator | `client/shared-state/resources/resource-search.ts`; the navigator supplies its history boost from `client/shell/navigator/navigator-history.ts` |
+| Contextual actions of the open resource page | `client/shell/topNav/contextZone/context-actions.ts`, registered by resource pages and read by the super bar |
 | Command definitions | The feature, surface, shell, or product that owns the action. `client/composition/global-commands.ts` only preserves assembly order. |
 | Headless notifications | `client/shared-state/notifications` |
 | Connected notification rendering | `client/shell/notifications` |

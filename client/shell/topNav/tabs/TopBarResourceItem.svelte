@@ -53,7 +53,7 @@
     item: IRecordId;
     isInterimTab?: boolean;
     isTrail?: boolean;
-    onClick?: () => void;
+    onClick?: (event?: MouseEvent | KeyboardEvent) => void;
     onClose?: () => void;
     onRearrange?: (displacement: number) => void;
     onRearranged?: (displacement: number) => void;
@@ -190,15 +190,14 @@
     onRearranged?.(displacement);
   }
 
-  function handleTabClick(event?: Event) {
-    onClick?.();
-    void event;
+  function handleTabClick(event?: MouseEvent | KeyboardEvent) {
+    onClick?.(event);
   }
 
   function handleTabKeyDown(event: KeyboardEvent) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      handleTabClick();
+      handleTabClick(event);
     }
   }
 </script>

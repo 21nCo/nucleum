@@ -9,6 +9,8 @@
   import view from "@21n/ui/environment/view.store";
   import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
+  import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import {
     contextZone,
     isContextZoneAccessMode,
@@ -58,6 +60,15 @@
   }
 </script>
 
+{#if contextMenuResolver && $resourceStore.id}
+  <ContextActions
+    id={$resourceStore.id.toString()}
+    resource={determineResourceType($resourceStore.id)}
+    resolve={() => contextMenuResolver?.() ?? []}
+    {onAction}
+    isEnabled={isContextZoneAccessMode(accessMode)}
+  />
+{/if}
 {#if isInContextZone}
   <ContextZoneContent isInlineFallback={false} cycle={cyclePanel}>
     <ResourcePanelSwitcher

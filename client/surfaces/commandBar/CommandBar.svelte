@@ -18,7 +18,7 @@
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
   import context from "@nucleum/client/runtime/context.store";
-  import { Embed } from "@nucleum/client/runtime/context.type";
+  import { Embed, OperatingSystem } from "@nucleum/client/runtime/context.type";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
   import { resolveShortcutText } from "@21n/ui/elements/keyboard/shortcut.utils";
@@ -26,17 +26,24 @@
   import KeyboardToolbar from "@21n/ui/elements/keyboardToolbar/KeyboardToolbar.svelte";
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
+  import type {
+    SuperBarEntry,
+    SuperBarScope
+  } from "@nucleum/surfaces/commandBar/super-bar";
 
   let {
     command = undefined,
     commandType = undefined,
     componentParams = undefined,
-    isFullPageContext = false
+    isFullPageContext = false,
+    scope = "all"
   }: {
     command?: string | undefined;
     commandType?: ActionType | undefined;
     componentParams?: any;
     isFullPageContext?: boolean;
+    /** `search` opens the super bar on search results only. */
+    scope?: SuperBarScope;
   } = $props();
   let value = $state("");
   let inputRef = $state<HTMLInputElement | undefined>();
@@ -44,10 +51,13 @@
   let isPerformingSearchAction = $state(false);
   let searchAction = $state<IAction | null>(null);
   let isFocusing = $state(false);
+  let selectedKind = $state<SuperBarEntry["kind"] | undefined>(undefined);
   const defaultPlaceholder = $derived(
-    isFullPageContext
-      ? "Search for a command"
-      : "Search anything, run a command or ask Rhombus"
+    scope === "search"
+      ? "Start typing to search"
+      : isFullPageContext
+        ? "Search for a command"
+        : "Search anything, run a command or ask Rhombus"
   );
   let placeholder = $state("");
   $effect(() => {
@@ -70,17 +80,19 @@
     if (!action) return;
     onSearchAction({ detail: action });
   });
-  function handleKeyUp(event: any) {
-    if (event.key === "ArrowDown") {
-      resultsRef.moveSelection("down");
-    } else if (event.key === "ArrowUp") {
-      resultsRef.moveSelection("up");
-    } else if (event.key === "Enter") {
-      resultsRef.select();
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.isComposing || event.keyCode === 229) return;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      resultsRef?.moveSelection(event.key === "ArrowDown" ? "down" : "up");
+      return;
     }
-  }
-
-  function handleKeyDown(event: any) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
+      resultsRef?.select(event);
+      return;
+    }
     if (event.key === "Backspace" && !$view.isConstrainedWidth) {
       if (value == "" && isPerformingSearchAction) {
         resetContext();
@@ -204,7 +216,6 @@
       bind:this={inputRef}
       type="text"
       bind:value
-      onkeyup={handleKeyUp}
       onkeydown={handleKeyDown}
       onfocus={() => {
         isFocusing = true;
@@ -222,7 +233,11 @@
             }
           )}
         >
-          {#if value}
+          {#if value && !isPerformingSearchAction && selectedKind === "result"}
+            <b>Enter</b> to open,
+            <b>{$context.os === OperatingSystem.MACOS ? "Cmd" : "Ctrl"} Enter</b
+            > to open beside
+          {:else if value}
             Press <b>Enter</b> to run
           {:else if isFullPageContext && !isFocusing}
             <!-- {resolveShortcutText({
@@ -259,7 +274,9 @@
     {:else if !isFullPageContext || (isFullPageContext && isFocusing)}
       <CmdResults
         search={value}
+        {scope}
         bind:this={resultsRef}
+        bind:selectedKind
         {onSearchAction}
         onClose={close}
       />

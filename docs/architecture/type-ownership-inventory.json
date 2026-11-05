@@ -1103,12 +1103,10 @@
     },
     {
       "path": "client/application/search/search.store.ts",
-      "disposition": "retained",
-      "destinations": [
-        "client/surfaces/search/search.store.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "implementation-private",
-      "rationale": "Implementation-local or cohesive frontend owner; no independent domain abstraction is needed.",
+      "rationale": "Removed with the standalone search overlay (TIDY-486); the super bar and navigator share the resource search engine in client/shared-state/resources/resource-search.ts.",
       "declarations": [
         "SearchState",
         "KeyboardEventHandler"
@@ -12291,7 +12289,7 @@
       "path": "client/surfaces/search/search.store.ts",
       "name": "searchStore",
       "initializer": "createSearchStore()",
-      "disposition": "retained with owning implementation; no runtime initializer changes",
+      "disposition": "removed with the standalone search overlay; the super bar and navigator share client/shared-state/resources/resource-search.ts",
       "ownership": "implementation-private"
     },
     {

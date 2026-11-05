@@ -67,6 +67,23 @@ describe("navigator opened as an overlay", () => {
     expect(overlay()).toBeNull();
   });
 
+  it("closes the navigator overlay when a resource opens beside the base page", () => {
+    view.refresh(800, 600);
+    openNavigatorOverlay();
+    navigation.openResource("node:a", "beside" as never);
+    const params = new URL(window.location.href).searchParams;
+    expect(params.get("beside")).toBe("node:a");
+    expect(overlay()).toBeNull();
+  });
+
+  it("keeps the navigator panel open when a resource opens beside the base page", () => {
+    history.setSearchParam("panel", "navigator");
+    navigation.openResource("node:a", "beside" as never);
+    const params = new URL(window.location.href).searchParams;
+    expect(params.get("beside")).toBe("node:a");
+    expect(params.get("panel")).toBe("navigator");
+  });
+
   it("leaves other overlays open", () => {
     view.refresh(800, 600);
     history.setSearchParam("overlay", "search");
@@ -87,5 +104,15 @@ describe("navigator panel shown as a sheet on a constrained landscape view", () 
     );
     expect(activeNode()?.node.id).toBe("node:a");
     expect(new URL(window.location.href).searchParams.get("panel")).toBeNull();
+  });
+
+  it("closes the navigator sheet when a resource opens beside the page", () => {
+    view.refresh(800, 600);
+    navigation.openResource("node:a", "page" as never);
+    history.setSearchParam("panel", "navigator");
+    navigation.openResource("node:b", "besidePage" as never);
+    const params = new URL(window.location.href).searchParams;
+    expect(params.get("besidePage")).toBe("node:b");
+    expect(params.get("panel")).toBeNull();
   });
 });

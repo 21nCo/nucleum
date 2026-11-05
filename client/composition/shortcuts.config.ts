@@ -42,8 +42,8 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
     key: "v"
   },
   [Action.CMD]: {
-    key: "p",
-    modifiers: [ModifierKey.META, ModifierKey.SHIFT]
+    key: "k",
+    modifiers: [ModifierKey.META]
   },
   [Action.EDIT_MODE]: {
     key: "e",
@@ -64,7 +64,7 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
   },
   [Action.SEARCH]: {
     key: "k",
-    modifiers: [ModifierKey.META]
+    modifiers: [ModifierKey.META, ModifierKey.SHIFT]
   },
   [Action.GO_BACK]: {
     key: "b",

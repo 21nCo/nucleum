@@ -202,6 +202,18 @@ export function isFullScreenPage(
   );
 }
 
+/**
+ * Whether the navigator open in `layer` covers the page: as an overlay, or as
+ * a right panel shown as a full-screen sheet, as in portrait. A resource it
+ * opens there would stay hidden under it, so the open closes the navigator.
+ */
+function isNavigatorCoveringPage(layer: AccessMode | undefined) {
+  return (
+    layer === AccessMode.OVERLAY ||
+    (layer === AccessMode.PANEL && isRightPanelSheet(get(view)))
+  );
+}
+
 /** Resolves whether a page open starts a trail or extends the current one. */
 function resolveAccessTrailIntent(
   openPage: string | null,
@@ -592,10 +604,10 @@ export const navigation = {
     return new URLSearchParams(window.location.search).get(AccessMode.PAGE);
   },
   /**
-   * Access mode for a modified click: Cmd (or Ctrl) opens beside the base page
-   * or beside the open page, Shift opens a page in full screen.
+   * Access mode for a modified click or Enter: Cmd (or Ctrl) opens beside the
+   * base page or beside the open page, Shift opens a page in full screen.
    */
-  determineClickAccessMode: (event: MouseEvent) => {
+  determineClickAccessMode: (event: MouseEvent | KeyboardEvent) => {
     if (event.metaKey || event.ctrlKey) return AccessMode.BESIDE_BASE;
     if (event.shiftKey) return AccessMode.PAGE;
   },
@@ -613,7 +625,7 @@ export const navigation = {
     return `${url.pathname}${url.search}${url.hash}`;
   },
   /** Whether a click asks for the page to open in full screen. */
-  isFullScreenClick: (event: MouseEvent | undefined) =>
+  isFullScreenClick: (event: MouseEvent | KeyboardEvent | undefined) =>
     !!event?.shiftKey && !event.metaKey && !event.ctrlKey,
   openResource: (
     id: IRecordId,
@@ -705,10 +717,7 @@ export const navigation = {
         }
         isCloseNavigator = isNavigatorOpen;
       } else if (intent === "select") {
-        isCloseNavigator =
-          isNavigatorOpen &&
-          (isRightPanelSheet(get(view)) ||
-            navigatorLayer === AccessMode.OVERLAY);
+        isCloseNavigator = isNavigatorCoveringPage(navigatorLayer);
       } else if (intent === "extend") {
         accessTrail.extend(id.toString());
       }
@@ -736,6 +745,14 @@ export const navigation = {
         }
       }
     }
+    const isBesideOpen =
+      accessMode === AccessMode.BESIDE_BASE ||
+      accessMode === AccessMode.BESIDE_PAGE;
+    const besideNavigatorLayer = isBesideOpen
+      ? resolveNavigatorLayer(url)
+      : undefined;
+    const isCloseBesideNavigator =
+      isNavigatorCoveringPage(besideNavigatorLayer);
     url = clearOpenedRecordParams(
       url,
       id,
@@ -756,6 +773,9 @@ export const navigation = {
           ? { [AppSearchParam.MAX]: true }
           : {}),
         ...(params?.searchParams ?? {}),
+        ...(isCloseBesideNavigator && besideNavigatorLayer
+          ? { [besideNavigatorLayer]: null }
+          : {}),
         ...(isCloseNavigator && navigatorLayer
           ? { [navigatorLayer]: null }
           : {})
@@ -831,7 +851,7 @@ export const navigation = {
    * @returns
    */
   resourceClickHandler: (
-    event: MouseEvent | undefined,
+    event: MouseEvent | KeyboardEvent | undefined,
     id: IRecordId,
     params?: {
       origin?: Action | IRecordId;

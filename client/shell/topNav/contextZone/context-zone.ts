@@ -47,16 +47,18 @@ let nextKey = 0;
  * of layers outside `visible`, such as a base page covered by a resource page,
  * are ignored.
  */
-export function resolveContextZoneEntry(
-  entries: ContextZoneEntry[],
+export function resolveContextZoneEntry<
+  T extends { key: number; pane: ContextZonePane }
+>(
+  entries: T[],
   activePane: string | undefined,
   visible?: ReadonlySet<number>
-): ContextZoneEntry | undefined {
+): T | undefined {
   const list = visible
     ? entries.filter((item) => visible.has(item.pane.layer))
     : entries;
   if (list.length === 0) return undefined;
-  const newest = (items: ContextZoneEntry[]) =>
+  const newest = (items: T[]) =>
     items.reduce(
       (latest, item) => (item.key > latest.key ? item : latest),
       items[0]
@@ -84,6 +86,8 @@ export function nextCycleValue<T>(values: T[], current: T | undefined) {
 export const contextZone = {
   entries: { subscribe: entries.subscribe },
   activePaneId: { subscribe: activePaneId.subscribe },
+  /** Layers the user can see; undefined means every layer counts. */
+  visibleLayers: { subscribe: visibleLayers.subscribe },
   isHosted: derived(hostCount, (count) => count > 0),
   active: derived(
     [entries, activePaneId, visibleLayers],

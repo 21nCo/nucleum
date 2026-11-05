@@ -39,6 +39,8 @@
   import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
   import type { ICollection } from "@nucleum/features/collections/collection.type";
   import { tick } from "svelte";
+  import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
+  import { isContextZoneAccessMode } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     searchQuery = $bindable(""),
@@ -130,6 +132,19 @@
   }
 </script>
 
+{#if accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED && $collection.id}
+  <ContextActions
+    id={$collection.id.toString()}
+    resource={Resource.collection}
+    resolve={() =>
+      resolveCollectionContextMenu(
+        resolveCollectionForContextMenu(),
+        ResourceAccessPoint.SELF,
+        { accessMode }
+      )}
+    isEnabled={isContextZoneAccessMode(accessMode)}
+  />
+{/if}
 <div
   class={cn(
     "min-w-0 flex-1 gap-2 items-center sticky- top--0 py--6",

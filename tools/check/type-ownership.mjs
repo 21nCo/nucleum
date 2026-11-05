@@ -180,7 +180,6 @@ const changedEnumContracts = new Map([
           TERMS_OF_SERVICE: "tos",
           TERMS_OF_SERVICE_APPLE: "tosapple",
           SEARCH: "search",
-          GLOBAL_SEARCH_MODAL: "global-search-modal",
           EXTENSTION_LOGIN: "ext_login",
           EXTENSTION_UNINSTALL: "EXTENSTION_UNINSTALL",
           MARKDOWN_SHORTCUTS: "MARKDOWN_SHORTCUTS",

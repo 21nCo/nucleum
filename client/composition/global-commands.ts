@@ -13,7 +13,6 @@ import { collectionsCommands } from "@nucleum/features/collections/global-comman
 import { spacesCommands } from "@nucleum/features/spaces/global-commands";
 import { libraryCommands } from "@nucleum/surfaces/library/global-commands";
 import { subscriptionCommands } from "@nucleum/surfaces/subscription/global-commands";
-import { memotronCommands } from "@nucleum/products/memotron/search-commands";
 import { pointronCommands } from "@nucleum/products/pointron/clock-commands";
 import { settingsCommands } from "@nucleum/surfaces/settings/global-commands";
 import type { Product } from "@nucleum/client/config/product.type";
@@ -86,8 +85,7 @@ export const globalActions: IAction[] = [
   subscriptionCommands.user_billing,
   subscriptionCommands.user_plan_cancelation,
   libraryCommands.bulk_link,
-  memotronCommands.global_search_modal,
-  memotronCommands.search,
+  commandCommands.search,
   pointronCommands.simpledigitalclock,
   calendarCommands.samplecalendaritemthumbnail,
   calendarCommands.focustimelineentry,

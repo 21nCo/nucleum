@@ -12,6 +12,8 @@
   import { KeyboardKey, ModifierKey } from "@21n/ui/elements/keyboard/keyboard.type";
   type SearchItem = Record<string, any>;
 
+  const SEARCH_TIMEOUT_MS = 10_000;
+
   let {
     searchCallback = undefined,
     searchStoreId = undefined,
@@ -70,6 +72,7 @@
   let currentValue = $state("");
   let isSearchInProgress = $state(false);
   let searchGeneration = 0;
+  const pendingSearchCancels = new Set<() => void>();
 
   export function reset() {
     resetSearch();
@@ -145,7 +148,16 @@
   }
 
   onMount(() => {
-    isSearchInProgress = !isPreventDefaultResults;
+    if (
+      searchCallback &&
+      isAlwaysShowSearchFeedback &&
+      !isPreventDefaultResults
+    ) {
+      isSearchInProgress = true;
+      queueSearch(value);
+    } else {
+      isSearchInProgress = !isPreventDefaultResults;
+    }
     window.addEventListener(
       "searchresultkeyup",
       onWindowSearchResultKeyup as EventListener
@@ -155,6 +167,9 @@
       onWindowSearchResultKeydown as EventListener
     );
     return () => {
+      searchGeneration += 1;
+      pendingSearchCancels.forEach((cancel) => cancel());
+      pendingSearchCancels.clear();
       window.removeEventListener(
         "searchresultkeyup",
         onWindowSearchResultKeyup as EventListener
@@ -259,7 +274,7 @@
     }
     if (searchCallback) {
       try {
-        const result = await searchCallback(val);
+        const result = await settleSearch(searchCallback(val));
         if (generation !== searchGeneration) return;
         if (result) results = result;
         if (results.length > 0) {
@@ -298,6 +313,30 @@
     if (typeof onCount === "function") {
       onCount(countEvent);
     }
+  }
+
+  /**
+   * Bounds a search callback so a request that never settles ends in the
+   * empty state instead of an endless loading indicator. Unmounting rejects
+   * the pending bound so a hung request does not keep the search alive.
+   */
+  function settleSearch<T>(request: Promise<T> | T): Promise<T> {
+    let cancel = () => {};
+    const timeout = new Promise<never>((_, reject) => {
+      const timer = setTimeout(() => {
+        pendingSearchCancels.delete(cancel);
+        reject(new Error("Search timed out"));
+      }, SEARCH_TIMEOUT_MS);
+      cancel = () => {
+        clearTimeout(timer);
+        reject(new Error("Search cancelled"));
+      };
+      pendingSearchCancels.add(cancel);
+    });
+    return Promise.race([Promise.resolve(request), timeout]).finally(() => {
+      cancel();
+      pendingSearchCancels.delete(cancel);
+    });
   }
 
   function show() {
