@@ -211,4 +211,24 @@ describe("ContextZoneEditableTitle", () => {
     ]);
     expect(get(state)).toEqual({ label: "Y", isInEditMode: false });
   });
+
+  it("keeps a replacement editor open when the save of the same title fails", async () => {
+    const { store, state, pending } = createStore("Original");
+    const input = await renderTitle(store);
+    await type(input, "X");
+    await fireEvent.keyDown(input, { key: "Enter" });
+    cleanup();
+    const replacement = await renderTitle(store);
+    await type(replacement, "X");
+    await fireEvent.keyDown(replacement, { key: "Enter" });
+    await settle();
+    expect(get(state).isInEditMode).toBe(true);
+
+    pending.shift()!.reject(new Error("offline"));
+    await settle();
+    expect(store.modify).toHaveBeenCalledTimes(1);
+    expect(get(state)).toEqual({ label: "Original", isInEditMode: true });
+    expect(replacement.isConnected).toBe(true);
+    expect(replacement.value).toBe("X");
+  });
 });

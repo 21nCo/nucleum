@@ -75,7 +75,9 @@
     if (isCancelled || !isDirty || !$store.isInEditMode)
       return pendingSave ?? Promise.resolve();
     const next = draft.trim();
-    if (next === resolveLatestLabel()) return pendingSave ?? Promise.resolve();
+    if (next === resolveLatestLabel()) {
+      return pendingSave ?? queue.resolveLatestSave() ?? Promise.resolve();
+    }
     const { save, sequence } = submitLabel(next);
     pendingSave = save;
     save

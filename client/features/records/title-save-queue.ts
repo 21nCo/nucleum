@@ -22,6 +22,12 @@ export type TitleSaveQueue = {
    * `storedLabel` otherwise.
    */
   resolveLatestLabel(storedLabel: string): string | undefined;
+  /**
+   * The save of the last submitted title while it is queued or running, so
+   * an editor that asks for the same title waits for that save, including
+   * its failure, instead of submitting it again.
+   */
+  resolveLatestSave(): Promise<unknown> | undefined;
   /** Current editing session, which `endSession` replaces. */
   readonly session: number;
   /** Ends the current editing session, when editing starts, stops or an editor is removed. */
@@ -35,6 +41,7 @@ function createTitleSaveQueue(): TitleSaveQueue {
   let queued = 0;
   let sequence = 0;
   let submitted: string | undefined;
+  let latestSave: Promise<unknown> | undefined;
   let session = 0;
   return {
     submit(next, save) {
@@ -42,6 +49,7 @@ function createTitleSaveQueue(): TitleSaveQueue {
       submitted = next;
       queued += 1;
       const pending = saves.then(() => save(next));
+      latestSave = pending;
       pending.catch(() => {
         if (position === sequence) submitted = undefined;
       });
@@ -57,6 +65,9 @@ function createTitleSaveQueue(): TitleSaveQueue {
     },
     resolveLatestLabel(storedLabel) {
       return queued > 0 ? submitted : storedLabel;
+    },
+    resolveLatestSave() {
+      return queued > 0 ? latestSave : undefined;
     },
     get session() {
       return session;
