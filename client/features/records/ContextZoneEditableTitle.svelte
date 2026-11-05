@@ -23,6 +23,7 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { registerEditModeFinisher } from "@nucleum/shared-state/resources/edit-mode-finish";
+  import { resolveTitleSaveQueue } from "@nucleum/features/records/title-save-queue";
 
   let {
     store,
@@ -52,22 +53,17 @@
   let isCancelled = false;
   let isDirty = false;
   let pendingSave: Promise<unknown> | undefined;
-  let saves: Promise<unknown> = Promise.resolve();
-  let queuedSaves = 0;
-  let saveSequence = 0;
-  let submittedLabel: string | undefined;
-  let editSession = 0;
 
+  const queue = resolveTitleSaveQueue(untrack(() => store.id.toString()));
   const isEditing = $derived($store.isInEditMode);
 
   $effect(() => {
-    editSession += 1;
+    queue.endSession();
     if (!isEditing) return;
     untrack(() => {
       draft = $store.label ?? "";
       isCancelled = false;
       isDirty = false;
-      submittedLabel = undefined;
       void tick().then(() => {
         inputRef?.focus();
         inputRef?.select();
@@ -80,12 +76,11 @@
       return pendingSave ?? Promise.resolve();
     const next = draft.trim();
     if (next === resolveLatestLabel()) return pendingSave ?? Promise.resolve();
-    const save = submitLabel(next);
-    const sequence = saveSequence;
+    const { save, sequence } = submitLabel(next);
     pendingSave = save;
     save
       .then(() => {
-        if (sequence === saveSequence && draft.trim() === next) isDirty = false;
+        if (queue.isLatest(sequence) && draft.trim() === next) isDirty = false;
       }, reportSaveFailure)
       .finally(() => {
         if (pendingSave === save) pendingSave = undefined;
@@ -93,33 +88,12 @@
     return save;
   }
 
-  /**
-   * Title the saves leave behind: the last submitted one while saves are
-   * queued, since the store shows an earlier one until they finish, and the
-   * stored title otherwise.
-   */
   function resolveLatestLabel() {
-    return queuedSaves > 0 ? submittedLabel : (get(store).label ?? "");
+    return queue.resolveLatestLabel(get(store).label ?? "");
   }
 
-  /**
-   * Queues a save of `next` after the earlier ones. When it is the latest save
-   * and fails, the title no longer counts as submitted, so it is saved again.
-   */
   function submitLabel(next: string) {
-    const sequence = ++saveSequence;
-    submittedLabel = next;
-    queuedSaves += 1;
-    const save = saves.then(() => store.modify({ label: next }));
-    save.catch(() => {
-      if (sequence === saveSequence) submittedLabel = undefined;
-    });
-    saves = save
-      .catch(() => undefined)
-      .finally(() => {
-        queuedSaves -= 1;
-      });
-    return save;
+    return queue.submit(next, (label) => store.modify({ label }));
   }
 
   /**
@@ -127,22 +101,22 @@
    * a save is awaited the input stays editable, so after each one the draft is
    * checked again and a newer save is awaited before editing closes. A finish
    * outlived by its editing session, which was cancelled, closed, reopened or
-   * whose editor was removed while a save was awaited, stops without saving
-   * or closing the new one.
+   * whose editor was removed or replaced while a save was awaited, stops
+   * without saving or closing the new one.
    */
   async function finish() {
-    const session = editSession;
+    const session = queue.session;
     try {
       let save = saveLabel();
       for (;;) {
         await save;
-        if (session !== editSession) return false;
+        if (session !== queue.session) return false;
         const next = saveLabel();
         if (next === save || next !== pendingSave) break;
         save = next;
       }
     } catch {
-      if (session === editSession) inputRef?.focus();
+      if (session === queue.session) inputRef?.focus();
       return false;
     }
     store.toggleEditMode(false);
@@ -152,7 +126,7 @@
   onMount(() => {
     const unregister = registerEditModeFinisher(store.id.toString(), finish);
     return () => {
-      editSession += 1;
+      queue.endSession();
       unregister();
     };
   });
@@ -167,15 +141,15 @@
       destroy() {
         if (isCancelled || !isDirty) return;
         const next = draft.trim();
-        if (next === submittedLabel || next === resolveLatestLabel()) return;
-        submitLabel(next).catch(reportSaveFailure);
+        if (next === resolveLatestLabel()) return;
+        submitLabel(next).save.catch(reportSaveFailure);
       }
     };
   }
 
   function cancel() {
     isCancelled = true;
-    editSession += 1;
+    queue.endSession();
     store.toggleEditMode(false);
   }
 

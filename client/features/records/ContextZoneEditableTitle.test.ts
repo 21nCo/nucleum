@@ -14,6 +14,8 @@ vi.mock("@nucleum/shared-state/resources/edit-mode-finish", () => ({
   registerEditModeFinisher: () => () => undefined
 }));
 
+let storeCount = 0;
+
 function createStore(label: string) {
   const state = writable({ label, isInEditMode: true });
   const pending: {
@@ -23,7 +25,7 @@ function createStore(label: string) {
   }[] = [];
   const store = {
     subscribe: state.subscribe,
-    id: "node:1",
+    id: `node:${++storeCount}`,
     modify: vi.fn(({ label: next }: { label: string }) => {
       const previous = get(state).label;
       state.update((value) => ({ ...value, label: next }));
@@ -185,5 +187,28 @@ describe("ContextZoneEditableTitle", () => {
     expect(get(state).isInEditMode).toBe(true);
     expect(replacement.isConnected).toBe(true);
     expect(replacement.value).toBe("Y");
+  });
+
+  it("saves a replacement editor's title after the removed editor's save", async () => {
+    const { store, state, pending } = createStore("Original");
+    const input = await renderTitle(store);
+    await type(input, "X");
+    await fireEvent.keyDown(input, { key: "Enter" });
+    cleanup();
+    const replacement = await renderTitle(store);
+    await type(replacement, "Y");
+    await fireEvent.keyDown(replacement, { key: "Enter" });
+    await settle();
+    expect(store.modify).toHaveBeenCalledTimes(1);
+
+    pending.shift()!.resolve();
+    await settle();
+    pending.shift()!.resolve();
+    await settle();
+    expect(store.modify.mock.calls.map(([value]) => value.label)).toEqual([
+      "X",
+      "Y"
+    ]);
+    expect(get(state)).toEqual({ label: "Y", isInEditMode: false });
   });
 });
