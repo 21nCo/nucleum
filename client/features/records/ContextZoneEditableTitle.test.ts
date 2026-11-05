@@ -231,4 +231,38 @@ describe("ContextZoneEditableTitle", () => {
     expect(replacement.isConnected).toBe(true);
     expect(replacement.value).toBe("X");
   });
+
+  it.each([
+    ["an untouched draft", undefined],
+    ["the same title typed again", "X"]
+  ])(
+    "keeps a replacement editor with %s open when the inherited save fails",
+    async (_, typed) => {
+      const { store, state, pending } = createStore("Original");
+      const input = await renderTitle(store);
+      await type(input, "X");
+      await fireEvent.keyDown(input, { key: "Enter" });
+      cleanup();
+      const replacement = await renderTitle(store);
+      if (typed) await type(replacement, typed);
+      await fireEvent.keyDown(replacement, { key: "Enter" });
+      await settle();
+      expect(get(state).isInEditMode).toBe(true);
+
+      pending.shift()!.reject(new Error("offline"));
+      await settle();
+      expect(get(state)).toEqual({ label: "Original", isInEditMode: true });
+      expect(replacement.value).toBe("X");
+
+      await fireEvent.keyDown(replacement, { key: "Enter" });
+      await settle();
+      pending.shift()!.resolve();
+      await settle();
+      expect(store.modify.mock.calls.map(([value]) => value.label)).toEqual([
+        "X",
+        "X"
+      ]);
+      expect(get(state)).toEqual({ label: "X", isInEditMode: false });
+    }
+  );
 });

@@ -71,15 +71,20 @@
     });
   });
 
-  function saveLabel() {
-    if (isCancelled || !isDirty || !$store.isInEditMode)
-      return pendingSave ?? Promise.resolve();
+  const noSave: Promise<unknown> = Promise.resolve();
+  let pendingLabel: string | undefined;
+
+  /**
+   * Submits the draft when it is a new title: not cancelled, edited, and
+   * different from the latest submitted or stored title.
+   */
+  function submitDraft() {
+    if (isCancelled || !isDirty || !$store.isInEditMode) return;
     const next = draft.trim();
-    if (next === resolveLatestLabel()) {
-      return pendingSave ?? queue.resolveLatestSave() ?? Promise.resolve();
-    }
+    if (next === resolveLatestLabel()) return;
     const { save, sequence } = submitLabel(next);
     pendingSave = save;
+    pendingLabel = next;
     save
       .then(() => {
         if (queue.isLatest(sequence) && draft.trim() === next) isDirty = false;
@@ -87,42 +92,68 @@
       .finally(() => {
         if (pendingSave === save) pendingSave = undefined;
       });
-    return save;
   }
 
-  function resolveLatestLabel() {
-    return queue.resolveLatestLabel(get(store).label ?? "");
+  /**
+   * The save this editor has to see succeed before it closes, with its title:
+   * its own latest save, or else the queued save of the latest submitted
+   * title, which an editor it replaced may have started.
+   */
+  function resolveExitSave() {
+    if (pendingSave) return { save: pendingSave, label: pendingLabel };
+    const inherited = queue.resolveLatestSave();
+    return inherited
+      ? { save: inherited, label: resolveLatestLabel() }
+      : { save: noSave, label: undefined };
+  }
+
+  /** Submits a new title and returns the save the editor waits for. */
+  function saveLabel() {
+    submitDraft();
+    return resolveExitSave().save;
   }
 
   function submitLabel(next: string) {
     return queue.submit(next, (label) => store.modify({ label }));
   }
 
+  function resolveLatestLabel() {
+    return queue.resolveLatestLabel(get(store).label ?? "");
+  }
+
   /**
-   * Saves the draft and leaves edit mode once the latest title is saved. While
-   * a save is awaited the input stays editable, so after each one the draft is
-   * checked again and a newer save is awaited before editing closes. A finish
-   * outlived by its editing session, which was cancelled, closed, reopened or
-   * whose editor was removed or replaced while a save was awaited, stops
-   * without saving or closing the new one.
+   * Leaves edit mode through one path for a clean, an unchanged or a changed
+   * draft: it submits a new title, then waits for the save that decides the
+   * title, the editor's own or one it inherited, and closes only once that
+   * save succeeds while the editing session is still current. A newer save
+   * started meanwhile is awaited too. When the save fails, the editor stays
+   * open with the failed title as an edited draft, so confirming again
+   * retries it. A finish outlived by its session, cancelled, closed, reopened
+   * or replaced, stops without saving or closing the new one.
    */
   async function finish() {
     const session = queue.session;
-    try {
-      let save = saveLabel();
-      for (;;) {
+    for (;;) {
+      submitDraft();
+      const { save, label } = resolveExitSave();
+      try {
         await save;
-        if (session !== queue.session) return false;
-        const next = saveLabel();
-        if (next === save || next !== pendingSave) break;
-        save = next;
+      } catch {
+        if (session === queue.session) keepFailedTitle(label);
+        return false;
       }
-    } catch {
-      if (session === queue.session) inputRef?.focus();
-      return false;
+      if (session !== queue.session) return false;
+      submitDraft();
+      if (resolveExitSave().save === save) break;
     }
     store.toggleEditMode(false);
     return true;
+  }
+
+  function keepFailedTitle(label: string | undefined) {
+    if (!isDirty && label !== undefined) draft = label;
+    isDirty = true;
+    inputRef?.focus();
   }
 
   onMount(() => {
