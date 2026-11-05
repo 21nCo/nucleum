@@ -2,6 +2,7 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
+  import { isNotFoundPath } from "@nucleum/shell/navigation/not-found";
   import { page } from "$app/stores";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import PageNotFoundIllustration from "@21n/ui/illustrations/PageNotFoundIllustration.svelte";
@@ -26,11 +27,7 @@
     /** Missing path shown when the page renders in place, without a ?path= URL. */
     notFoundPath?: string;
   } = $props();
-  const is404 = $derived(
-    isNotFoundPage ||
-      $page?.url.pathname === "/404" ||
-      $page?.url.pathname === "/404/"
-  );
+  const is404 = $derived(isNotFoundPage || isNotFoundPath($page?.url.pathname));
   const erroredPath = $derived(
     notFoundPath ?? $page?.url?.searchParams?.get("path")
   );

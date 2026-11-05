@@ -81,7 +81,10 @@
   });
 
   $effect(() => {
-    if (hasActions && !action) untrack(() => queueRefresh());
+    if (!hasActions) return;
+    untrack(() => {
+      if (!action) queueRefresh();
+    });
   });
 
   onMount(() => {
