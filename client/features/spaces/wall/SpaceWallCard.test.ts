@@ -19,8 +19,10 @@ vi.mock("@nucleum/features/focus/goals/thumbnail/GoalThumbnail.svelte", () => ({
 vi.mock("@nucleum/features/spaces/thumbnail/SpaceThumbnail.svelte", () => ({
   default: () => {}
 }));
+const nodeThumbnail = vi.hoisted(() => vi.fn());
+
 vi.mock("@nucleum/features/memory/node/thumbnail/NodeThumbnail.svelte", () => ({
-  default: () => {}
+  default: nodeThumbnail
 }));
 vi.mock("@nucleum/features/spaces/wall/SpaceWallPageCard.svelte", () => ({
   default: () => {}
@@ -42,6 +44,10 @@ describe("SpaceWallCard status", () => {
       props: { item, wall: wallWith({ isArchived: true }) }
     });
     expect(queryByText("Archived")).toBe(null);
+    expect(nodeThumbnail).toHaveBeenCalledTimes(1);
+    expect(nodeThumbnail.mock.calls[0][1]).toMatchObject({
+      item: { id: pageId, isArchived: true }
+    });
   });
 
   it("shows a record in the trash as a disabled status card", () => {
