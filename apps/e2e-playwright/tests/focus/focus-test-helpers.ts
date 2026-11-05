@@ -480,7 +480,7 @@ export async function createObjectiveViaCommand(
 ) {
   const label = resolveLabel(options, "E2E objective");
   await runCommand(page, "Create a new objective");
-  const input = page.getByTestId("objective-name-input");
+  const input = page.getByTestId("objective-context-title-input");
   await input.waitFor({ state: "visible", timeout: 15_000 });
   await input.fill(label);
   await page.keyboard.press("Enter");

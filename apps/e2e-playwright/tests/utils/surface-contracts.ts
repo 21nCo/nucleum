@@ -51,6 +51,14 @@ export function getSurfaceContract(
   return contract;
 }
 
+/**
+ * Whether a normalized path is the route itself or one of its sub-paths, such as
+ * `/library/collection/all` for `/library`.
+ */
+function isPathWithinRoute(path: string, route: string): boolean {
+  return path === route || path.startsWith(`${route}/`);
+}
+
 export async function expectSurfaceVisible(
   page: Page,
   projectName: E2EProduct,
@@ -62,7 +70,11 @@ export async function expectSurfaceVisible(
       const expectedPath =
         new URL(contract.route, page.url()).pathname.replace(/\/+$/, "") || "/";
       await page.waitForURL(
-        (url) => (url.pathname.replace(/\/+$/, "") || "/") === expectedPath,
+        (url) =>
+          isPathWithinRoute(
+            url.pathname.replace(/\/+$/, "") || "/",
+            expectedPath
+          ),
         { timeout: 15_000 }
       );
     }
@@ -122,11 +134,14 @@ async function getTriggerLocator(
       .first();
     trigger = (await buttonLike.count()) ? buttonLike : textLocator;
   } else if (contract.triggerRole) {
-    trigger = contract.triggerName
-      ? page
-          .getByRole(contract.triggerRole, { name: contract.triggerName })
-          .first()
-      : page.getByRole(contract.triggerRole).first();
+    const roles = [contract.triggerRole].flat();
+    const name = contract.triggerName;
+    trigger = roles
+      .map((role) =>
+        name ? page.getByRole(role, { name }) : page.getByRole(role)
+      )
+      .reduce((combined, locator) => combined.or(locator))
+      .first();
   }
   if (!trigger) return null;
   return trigger;
@@ -140,7 +155,7 @@ async function getSurfaceVisibility(
     const currentPath = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     const expectedPath =
       new URL(contract.route, page.url()).pathname.replace(/\/+$/, "") || "/";
-    if (currentPath !== expectedPath) return false;
+    if (!isPathWithinRoute(currentPath, expectedPath)) return false;
   }
   const anchors = getAnchorLocators(page, contract);
   for (const anchor of anchors) {

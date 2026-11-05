@@ -50,7 +50,7 @@ async function runPointronSmokeFlow(page: Page) {
   const objectiveName = `E2E smoke objective ${Date.now()}`;
 
   await runCommand(page, "Create a new objective");
-  const objectiveNameInput = page.getByTestId("objective-name-input");
+  const objectiveNameInput = page.getByTestId("objective-context-title-input");
   await objectiveNameInput.waitFor({ state: "visible", timeout: 15_000 });
   await objectiveNameInput.fill(objectiveName);
   await page.keyboard.press("Enter");
@@ -60,9 +60,9 @@ async function runPointronSmokeFlow(page: Page) {
 
   const objectiveRecord = page.getByTestId("resource-record-surface");
   await expect(objectiveRecord).toBeVisible({ timeout: 15_000 });
-  await expect(
-    objectiveRecord.getByText(objectiveName, { exact: true }).first()
-  ).toBeVisible({ timeout: 15_000 });
+  const objectiveTitle = page.getByTestId("objective-context-title");
+  await expect(objectiveTitle).toBeVisible({ timeout: 15_000 });
+  await expect(objectiveTitle).toHaveText(objectiveName);
 
   await page.getByTestId("top-bar-close").click({ timeout: 5_000 });
   await openLibraryAndTab(page, LibraryTab.Objectives);

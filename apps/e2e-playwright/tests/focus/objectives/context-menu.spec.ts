@@ -188,7 +188,7 @@ test("from library - Edit opens objective record in edit mode @context-menu", as
     .catch(() => false);
 
   const objectiveRecordVisible = await page
-    .locator('[data-testid="objective-name-input"]')
+    .locator('[data-testid="objective-context-title-input"]')
     .or(page.getByText(objectiveName).first())
     .first()
     .isVisible()
