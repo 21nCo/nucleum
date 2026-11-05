@@ -21,6 +21,7 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 
 import { Action } from "@nucleum/client/config/action.enum";
+import { SPACE_FOCUS_PARAM } from "@nucleum/client/config/space-route";
 
 import { logger } from "@nucleum/client/runtime/logging/logger";
 
@@ -79,6 +80,30 @@ const recordSpecificSearchParams = [
   AppSearchParam.SETTING,
   AccessMode.BESIDE_PAGE
 ];
+
+const FOCUS_SEARCH_PARAM_SUFFIX = `-${SPACE_FOCUS_PARAM}`;
+
+/**
+ * Lists the focus params of records that will no longer be open once the
+ * record in `replacedParam` changes, so records that stay open keep their focus.
+ */
+function resolveClosedFocusParams(url: URL, replacedParam: string) {
+  const openFocusParams = new Set<string>();
+  url.searchParams.forEach((value, key) => {
+    if (key !== replacedParam && isRecordId(value)) {
+      openFocusParams.add(
+        navigation.resolveRecordSpecificSearchParam(value, SPACE_FOCUS_PARAM)
+      );
+    }
+  });
+  const closed: string[] = [];
+  url.searchParams.forEach((_, key) => {
+    if (key.endsWith(FOCUS_SEARCH_PARAM_SUFFIX) && !openFocusParams.has(key)) {
+      closed.push(key);
+    }
+  });
+  return closed;
+}
 
 /** Compare navigation targets without treating equivalent query encodings as changes. */
 function areNavigationUrlsEqual(left: URL, right: URL) {
@@ -481,6 +506,11 @@ export const navigation = {
         isPreventRefresh: true,
         url
       }) ?? url;
+    url =
+      navigation.toggleSearchParam(
+        resolveClosedFocusParams(url, accessMode ?? AppSearchParam.SELECTED),
+        { isPreventRefresh: true, url }
+      ) ?? url;
     navigation.toggleSearchParam(
       {
         ...(accessMode

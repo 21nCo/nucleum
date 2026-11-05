@@ -1,0 +1,176 @@
+<script lang="ts">
+  import { tick, untrack } from "svelte";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { cn } from "@21n/ui/environment/presentation";
+  import { SpaceView } from "@nucleum/features/spaces/space.type";
+  import type { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
+
+  let {
+    store,
+    parentLabel = undefined,
+    isPinned = false,
+    isEditable = true,
+    onBack = undefined,
+    onTogglePin,
+    onViewChange
+  }: {
+    store: ActiveSpaceStore;
+    /** Name of the space one level up; shows the back button when set. */
+    parentLabel?: string;
+    isPinned?: boolean;
+    /** Whether the items can be edited in this view. */
+    isEditable?: boolean;
+    onBack?: () => void;
+    onTogglePin: () => void;
+    onViewChange: (view: SpaceView) => void;
+  } = $props();
+
+  const views = [
+    { value: SpaceView.SIDENAV, label: "Side nav", icon: "sidebar" },
+    { value: SpaceView.WALL, label: "Wall", icon: "widget" }
+  ];
+
+  let titleInput = $state<HTMLInputElement>();
+  let draftTitle = $state("");
+  const space = $derived($store);
+  const title = $derived(space?.label || "Untitled space");
+  const view = $derived(space?.view ?? SpaceView.SIDENAV);
+  const isEditMode = $derived(Boolean(space?.isInEditMode));
+  const isTitleEditing = $derived(Boolean(space?.isTitleEditing));
+
+  $effect(() => {
+    if (isTitleEditing && titleInput) {
+      const input = titleInput;
+      draftTitle = untrack(() => space?.label ?? "");
+      tick().then(() => {
+        input.focus();
+        input.select();
+      });
+    }
+  });
+
+  function saveTitle() {
+    if (!isTitleEditing) return;
+    const trimmed = draftTitle.trim();
+    store.setTitleEditing(false);
+    if (trimmed !== (space?.label ?? "")) store.updateLabel(trimmed);
+  }
+
+  function onTitleKeydown(event: KeyboardEvent) {
+    if (event.isComposing || event.keyCode === 229) return;
+    if (event.key === "Enter") {
+      event.preventDefault();
+      saveTitle();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      store.setTitleEditing(false);
+    }
+  }
+</script>
+
+<header class="flex flex-col gap-2 px-3 pt-3 w-full" data-testid="space-header">
+  {#if onBack && parentLabel !== undefined}
+    <button
+      type="button"
+      class="flex items-center gap-1 self-start max-w-full px-1 py-0.5 rounded-md text-b3 text-fgs2 hover:bg-bgs2-striped"
+      aria-label={`Back to ${parentLabel || "Untitled space"}`}
+      data-testid="space-back"
+      onclick={onBack}
+    >
+      <Icon icon="chevron-left" size={Size.sm} class="stroke-fgs2" />
+      <span class="truncate">{parentLabel || "Untitled space"}</span>
+    </button>
+  {/if}
+  <div class="flex items-center gap-2 min-w-0">
+    {#if space?.avatar}
+      <AvatarRenderer avatar={space.avatar} size={Size.md} />
+    {/if}
+    {#if isTitleEditing}
+      <input
+        bind:this={titleInput}
+        bind:value={draftTitle}
+        class="flex-1 min-w-0 px-2 py-1 rounded-md border border-brs2 bg-bgs1 text-h4 font-semibold outline-none focus:border-aps1"
+        placeholder="Untitled space"
+        aria-label="Space name"
+        data-testid="space-title-input"
+        onkeydown={onTitleKeydown}
+        onblur={saveTitle}
+      />
+    {:else}
+      <button
+        type="button"
+        class={cn(
+          "flex-1 min-w-0 px-1 rounded-md text-left text-h4 font-semibold truncate hover:bg-bgs2-striped",
+          { "text-fgs3": !space?.label }
+        )}
+        title="Rename"
+        aria-label={`Rename ${title}`}
+        data-testid="space-title"
+        onclick={() => store.setTitleEditing(true)}
+      >
+        {title}
+      </button>
+    {/if}
+  </div>
+  <div class="flex items-center gap-1">
+    <div
+      class="flex items-center p-0.5 rounded-md bg-bgs2"
+      role="group"
+      aria-label="Space view"
+    >
+      {#each views as option (option.value)}
+        <button
+          type="button"
+          class={cn("flex items-center gap-1 px-2 py-1 rounded text-b3", {
+            "bg-bgs1 text-fgs1 shadow-sm": view === option.value,
+            "text-fgs2 hover:text-fgs1": view !== option.value
+          })}
+          aria-pressed={view === option.value}
+          data-testid={`space-view-${option.value}`}
+          onclick={() => onViewChange(option.value)}
+        >
+          <Icon icon={option.icon} size={Size.sm} class="stroke-current" />
+          {option.label}
+        </button>
+      {/each}
+    </div>
+    <span class="flex-1"></span>
+    <button
+      type="button"
+      class="p-1.5 rounded-md hover:bg-bgs2-striped"
+      aria-pressed={isPinned}
+      aria-label="Pin to app menu"
+      title={isPinned ? "Unpin from app menu" : "Pin to app menu"}
+      data-testid="space-pin"
+      onclick={onTogglePin}
+    >
+      <Icon
+        icon={isPinned ? "unpin" : "pin"}
+        size={Size.sm}
+        class="stroke-fgs2"
+      />
+    </button>
+    {#if isEditable}
+      <button
+        type="button"
+        class={cn("p-1.5 rounded-md", {
+          "bg-aps3 text-aps1": isEditMode,
+          "hover:bg-bgs2-striped": !isEditMode
+        })}
+        aria-pressed={isEditMode}
+        aria-label="Edit items"
+        title={isEditMode ? "Done" : "Edit items"}
+        data-testid="space-edit"
+        onclick={() => store.setEditMode(!isEditMode)}
+      >
+        <Icon
+          icon={isEditMode ? "check" : "edit"}
+          size={Size.sm}
+          class="stroke-fgs2"
+        />
+      </button>
+    {/if}
+  </div>
+</header>

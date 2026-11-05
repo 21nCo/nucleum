@@ -295,9 +295,9 @@ export interface Space {
   label?: string;
   readonly trashedAt?: number | null;
   readonly trashedBy?: string | null;
-  type: string;
   readonly updatedAt?: number | null;
   readonly updatedBy?: string | null;
+  view: string;
   readonly visibility?: string | null;
 }
 
@@ -417,21 +417,6 @@ export interface PropertyValues {
   readonly updatedBy?: string | null;
 }
 
-export interface SpaceItems {
-  spaceId: string;
-  itemId: string;
-  toResource: string;
-  description: string;
-  itemType: string;
-  label: string;
-  parentId: string;
-  sortOrder: number;
-  readonly createdAt?: number | null;
-  readonly updatedAt?: number | null;
-  readonly createdBy?: string | null;
-  readonly updatedBy?: string | null;
-}
-
 export interface SessionItems {
   sessionId: string;
   itemId: string;
@@ -467,7 +452,6 @@ export interface Tables {
   collection_items: CollectionItems;
   record_links: RecordLinks;
   property_values: PropertyValues;
-  space_items: SpaceItems;
   session_items: SessionItems;
 }
 

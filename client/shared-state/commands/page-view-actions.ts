@@ -54,18 +54,18 @@ export function combinePageViewSegments(
 export type PageRoute = {
   action: IAction;
   /**
-   * Segments after the page path when the page has registered sub-views; undefined
-   * for pages without sub-views.
+   * Segments after the page path when the page has registered sub-views or accepts
+   * any sub-path; undefined for other pages.
    */
   subPath?: string[];
 };
 
 /**
  * Resolves a path to its page action. Exact matches win; otherwise the longest path
- * prefix that belongs to a page with registered sub-views is used, and the remaining
- * segments become its sub-path. Sub-view actions never resolve as pages themselves:
- * a sub-view action id, as launched from a command, resolves through its parent
- * page with the sub-view's path segments.
+ * prefix that belongs to a page with registered sub-views, or to a page that accepts
+ * any sub-path, is used, and the remaining segments become its sub-path. Sub-view
+ * actions never resolve as pages themselves: a sub-view action id, as launched from a
+ * command, resolves through its parent page with the sub-view's path segments.
  */
 export function resolvePageRoute(
   actions: IAction[],
@@ -78,9 +78,10 @@ export function resolvePageRoute(
     return resolvePageRoute(actions, subView.path);
   }
   const pages = actions.filter((action) => !action.subViewOf);
-  const parents = new Set(
-    actions.map((action) => action.subViewOf).filter(Boolean)
-  );
+  const parents = new Set([
+    ...actions.map((action) => action.subViewOf).filter(Boolean),
+    ...pages.filter((action) => action.isSubPathOpen).map((a) => a.action)
+  ]);
   const findAction = (candidate: string) =>
     pages.find((action) => action.path === candidate) ??
     pages.find((action) => action.action === candidate);

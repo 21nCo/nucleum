@@ -15,6 +15,13 @@
       "when": 1789212939191,
       "tag": "0001_align_datafn_mapping",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793670450942,
+      "tag": "0002_space_view",
+      "breakpoints": true
     }
   ]
 }

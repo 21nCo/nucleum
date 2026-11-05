@@ -26,6 +26,7 @@ describe("DataFn feature composition", () => {
       "linkTag",
       "property",
       "view",
+      "space",
       "file"
     ]);
     expect(resolveProductTableNames(Product.POINTRON)).toEqual([
@@ -38,7 +39,8 @@ describe("DataFn feature composition", () => {
       "collection",
       "linkTag",
       "property",
-      "view"
+      "view",
+      "space"
     ]);
     expect(resolveProductTableNames(Product.NUCLEUM)).toEqual(
       nucleumDatafnSchema.resources.map((resource) => resource.name)

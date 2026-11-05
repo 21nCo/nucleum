@@ -70,6 +70,7 @@ export const globalActions: IAction[] = [
   calendarCommands.event_create,
   collectionsCommands.property_edit,
   spacesCommands.space_create,
+  spacesCommands.space,
   ...libraryCommands.resourceMetadata,
   collectionsCommands.collection,
   calendarCommands.event,

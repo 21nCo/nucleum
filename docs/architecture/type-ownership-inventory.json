@@ -4901,12 +4901,12 @@
     },
     {
       "path": "client/features/spaces/combination/combination.type.ts",
-      "disposition": "retained",
+      "disposition": "renamed",
       "destinations": [
-        "client/features/spaces/combination/combination.type.ts"
+        "client/features/spaces/space.type.ts"
       ],
       "ownership": "capability-public",
-      "rationale": "Capability-owned contract retained beside implementation; external production imports are declared in the feature entrypoint registry.",
+      "rationale": "Combinations became spaces (TIDY-485): CombinationNavItemType was renamed to SpaceNavItemType with unchanged members, the other combination types were renamed to Space types, and CombinationType was retired because a space stores its view (sidenav or wall) instead of a layout type.",
       "declarations": [
         "CombinationNavItemType",
         "ICombinationNavItemBase",
@@ -4931,12 +4931,12 @@
     },
     {
       "path": "client/features/spaces/combination/combination.utils.ts",
-      "disposition": "retained",
+      "disposition": "renamed",
       "destinations": [
-        "client/features/spaces/combination/combination.utils.ts"
+        "client/features/spaces/space.utils.ts"
       ],
       "ownership": "capability-public",
-      "rationale": "Capability-owned contract retained beside implementation; external production imports are declared in the feature entrypoint registry.",
+      "rationale": "Combination tree utilities renamed to space utilities (TIDY-485); RemovedNavItem was folded into a private helper.",
       "declarations": [
         "RemovedNavItem"
       ],

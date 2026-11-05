@@ -4,7 +4,7 @@
   import { Arrangement } from "@21n/ui/elements/direction.enum";
   import { cn } from "@21n/ui/environment/presentation";
   import CollectionThumbnail from "@nucleum/features/collections/thumbnail/CollectionThumbnail.svelte";
-  import CombinationThumbnail from "@nucleum/features/spaces/combination/thumbnail/CombinationThumbnail.svelte";
+  import SpaceThumbnail from "@nucleum/features/spaces/thumbnail/SpaceThumbnail.svelte";
   import NodeThumbnail from "@nucleum/features/memory/node/thumbnail/NodeThumbnail.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -20,7 +20,7 @@
     ICollectionThumb
   } from "@nucleum/features/collections/collection.type";
   import type { IProperty } from "@nucleum/features/collections/properties/property.type";
-  import type { ISideNavCombination } from "@nucleum/features/spaces/combination/combination.type";
+  import type { ISpace } from "@nucleum/features/spaces/space.type";
   import type { IFile } from "@nucleum/shared-state/files/file.type";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import NodeItems from "@nucleum/features/memory/node/NodeRecords.svelte";
@@ -43,7 +43,7 @@
     | INodeThumb
     | ICollection
     | IFile
-    | ISideNavCombination
+    | ISpace
     | IObjectiveThumb
     | ITaskThumb
     | ICalendarEvent;
@@ -120,8 +120,8 @@
     return item as unknown as ICollectionThumb;
   }
 
-  function asCombination(item: RecordItem): ISideNavCombination {
-    return item as ISideNavCombination;
+  function asSpace(item: RecordItem): ISpace {
+    return item as ISpace;
   }
 
   function asGoal(item: RecordItem): IObjectiveThumb {
@@ -238,8 +238,8 @@
               onClick={(e) => handleClick(e, item)}
             />
           {:else if resourceType === Resource.space}
-            <CombinationThumbnail
-              item={asCombination(item)}
+            <SpaceThumbnail
+              item={asSpace(item)}
               {size}
               {accessPoint}
               {accessPointState}
@@ -313,8 +313,8 @@
             onClick={(e) => handleClick(e, item)}
           />
         {:else if resource === Resource.space}
-          <CombinationThumbnail
-            item={asCombination(item)}
+          <SpaceThumbnail
+            item={asSpace(item)}
             {size}
             {accessPoint}
             {accessPointState}

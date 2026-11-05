@@ -20,6 +20,7 @@
   import view from "@21n/ui/environment/view.store";
   import { cn } from "@21n/ui/environment/presentation";
   import AppMenuSwitcherItemGroup from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItemGroup.svelte";
+  import AppMenuPinnedSpaces from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuPinnedSpaces.svelte";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
@@ -164,6 +165,7 @@
       items={defaultPages}
       {onClick}
     />
+    <AppMenuPinnedSpaces {layoutContext} />
     {#if isEnableUserPinnedPages && userPinnedPages.length > 0}
       <div
         class={cn("flex flex-col", {

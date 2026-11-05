@@ -30,7 +30,8 @@ export function resolveProductResources(
         Resource.objective,
         Resource.task,
         Resource.collection,
-        Resource.event
+        Resource.event,
+        Resource.space
       ];
     case Product.MEMOTRON:
       if (context === "search")

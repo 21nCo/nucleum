@@ -187,6 +187,29 @@ export class BulkEditor {
             onSuccess(action, items.length, Resource.collection);
             break;
         }
+      } else if (this.resource === Resource.space) {
+        switch (action) {
+          case "star":
+            await bulkMerge(Resource.space, { isStarred: true });
+            onSuccess(action, items.length, Resource.space);
+            break;
+          case "unstar":
+            await bulkMerge(Resource.space, { isStarred: false });
+            onSuccess(action, items.length, Resource.space);
+            break;
+          case "archive":
+            await bulkMerge(Resource.space, { isArchived: true });
+            onSuccess(action, items.length, Resource.space);
+            break;
+          case "unarchive":
+            await bulkMerge(Resource.space, { isArchived: false });
+            onSuccess(action, items.length, Resource.space);
+            break;
+          case "delete":
+            await bulkTrash(Resource.space);
+            onSuccess(action, items.length, Resource.space);
+            break;
+        }
       } else if (this.resource === Resource.objective) {
         switch (action) {
           case "star":

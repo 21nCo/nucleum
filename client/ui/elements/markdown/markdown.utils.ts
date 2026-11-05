@@ -76,6 +76,14 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"'\/]/g, (match) => htmlEscapes[match] || match);
 }
 
+/** Escapes HTML delimiters and inline Markdown syntax so user text renders literally through `renderMdAsHtml`. */
+export function escapeMarkdownText(text: string): string {
+  return text.replace(
+    /[&<>"'*_~`[\]\\]/g,
+    (char) => `&#${char.charCodeAt(0)};`
+  );
+}
+
 /** Renders the established Markdown display syntax without depending on editor state. */
 export function renderMdAsHtml(
   text: string,

@@ -436,14 +436,13 @@ export const space = pgTable("space", {
   label: text("label"),
   trashedAt: bigint("trashed_at", { mode: "number" }),
   trashedBy: text("trashed_by"),
-  type: text("type").notNull(),
   updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
   updatedBy: text("updated_by"),
+  view: text("view").notNull().default("sidenav"),
   visibility: text("visibility"),
 }, (table) => [
   primaryKey({ columns: [table.__ns, table.id] }),
   index("idx_space___ns").on(table.__ns),
-  index("space_type_idx").on(table.type),
   index("idx_space_visibility").on(table.visibility),
   index("idx_space_created_by_visibility").on(table.createdBy, table.visibility),
 ]);
@@ -752,28 +751,4 @@ export const session_items = pgTable("session_items", {
   foreignKey({ columns: [table.__ns, table.sessionId], foreignColumns: [session.__ns, session.id] }).onDelete("cascade"),
 ]);
 
-export const space_items = pgTable("space_items", {
-  __ns: text("__ns").notNull(),
-  createdAt: bigint("created_at", { mode: "number" }),
-  createdBy: text("created_by"),
-  description: text("description"),
-  id: text("id").notNull(),
-  itemId: text("item_id").notNull(),
-  itemType: text("item_type"),
-  label: text("label"),
-  parentId: text("parent_id"),
-  sortOrder: numeric("sort_order"),
-  spaceId: text("space_id").notNull(),
-  toResource: text("to_resource").notNull(),
-  updatedAt: bigint("updated_at", { mode: "number" }),
-  updatedBy: text("updated_by"),
-}, (table) => [
-  primaryKey({ columns: [table.__ns, table.id] }),
-  index("idx_space_items___ns").on(table.__ns),
-  uniqueIndex("space_items_space_id_item_id_idx").on(table.__ns, table.spaceId, table.toResource, table.itemId),
-  index("space_items_space_id_idx").on(table.__ns, table.spaceId),
-  index("space_items_item_id_idx").on(table.__ns, table.toResource, table.itemId),
-  foreignKey({ columns: [table.__ns, table.spaceId], foreignColumns: [space.__ns, space.id] }),
-]);
-
-export const schema = { __datafn_changes, __datafn_idempotency, __datafn_meta, __datafn_permissions_global, __datafn_principal_hierarchy, __datafn_principal_memberships, __datafn_seed, accessLog, capture, collection, collection_items, collection_properties, collection_views, datafnTimezoneChange, event, file, kv, linkTag, node, objective, property, property_values, publicLink, record_links, session, sessionLog, session_items, space, space_items, task, vector, view };
+export const schema = { __datafn_changes, __datafn_idempotency, __datafn_meta, __datafn_permissions_global, __datafn_principal_hierarchy, __datafn_principal_memberships, __datafn_seed, accessLog, capture, collection, collection_items, collection_properties, collection_views, datafnTimezoneChange, event, file, kv, linkTag, node, objective, property, property_values, publicLink, record_links, session, sessionLog, session_items, space, task, vector, view };

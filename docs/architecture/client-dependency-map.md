@@ -190,6 +190,6 @@ This is a conceptual responsibility/data-flow diagram, not a deployment graph. T
 
 ## Capability dependencies and remaining limits
 
-The features owner contains calendar, collections, focus, memory, records, and spaces. Its public entrypoint list constrains cross-capability imports, but does not make the capability graph acyclic. Calendar consumes focus/memory; memory, focus, and collections have reciprocal contracts and rendering integrations; spaces composes multiple resource capabilities. Review changes to those edges as contract changes. Recursive Markdown and combination renderers are distinct from state-module cycles.
+The features owner contains calendar, collections, focus, memory, records, and spaces. Its public entrypoint list constrains cross-capability imports, but does not make the capability graph acyclic. Calendar consumes focus/memory; memory, focus, and collections have reciprocal contracts and rendering integrations; spaces composes multiple resource capabilities. Review changes to those edges as contract changes. Recursive Markdown and space item renderers are distinct from state-module cycles.
 
 The owner graph is acyclic. The aggregate `@nucleum/client` manifest still groups runtime/config/next, so the npm dependency/peer graph is not equivalent. Splitting those workspaces is deferred until its build and distribution benefits justify the migration. Optional overlay aliases and framework-generated modules are build contracts, not ordinary workspace packages.
