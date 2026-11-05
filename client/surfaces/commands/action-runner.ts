@@ -59,7 +59,7 @@ export const actionRunner = {
     let action = actionRunner.resolveAction(slug);
     logger.log({ at: "runAction", action, slug, params });
     if (!action) {
-      navigation.gotoPath(`/${NOT_FOUND_PATH}`);
+      void navigation.gotoPath(`/${NOT_FOUND_PATH}`);
       return;
     }
     const store = get(appStore);
