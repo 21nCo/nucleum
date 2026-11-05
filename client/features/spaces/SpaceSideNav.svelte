@@ -1,10 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount, tick, type Snippet } from "svelte";
   import { toSvelteStore } from "@datafn/svelte";
-  import Icon from "@21n/ui/elements/Icon.svelte";
-  import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
-  import { escapeMarkdownText } from "@21n/ui/elements/markdown/markdown.utils";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
@@ -13,8 +10,6 @@
     acquireDnDPage,
     appStore
   } from "@nucleum/shared-state/app-context/app.store";
-  import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
-  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import {
     SpaceNavItemType,
     type ISpaceItemTarget,
@@ -26,14 +21,15 @@
     SpaceKeyboardMove
   } from "@nucleum/features/spaces/space-nav.type";
   import { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
+  import { confirmSpaceItemDelete } from "@nucleum/features/spaces/space.actions";
   import SpaceNavItem from "@nucleum/features/spaces/SpaceNavItem.svelte";
-  import SpaceItemPicker from "@nucleum/features/spaces/SpaceItemPicker.svelte";
+  import SpaceAddPanel from "@nucleum/features/spaces/SpaceAddPanel.svelte";
   import SpaceResourceRenderer from "@nucleum/features/spaces/SpaceResourceRenderer.svelte";
+  import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
   import {
     collectResourceItems,
     findItem,
     findParentId,
-    flattenNavItems,
     isSpaceItemOpenable
   } from "@nucleum/features/spaces/space.utils";
 
@@ -67,7 +63,7 @@
   let isRootDragOver = $state(false);
   let contentElement = $state<HTMLElement>();
   let scrollRequest = 0;
-  let headingScrollTimer: ReturnType<typeof setTimeout> | undefined;
+  let cancelScroll: (() => void) | undefined;
   let releaseDnDPage: (() => void) | undefined;
 
   const resourceIds = $derived(
@@ -115,8 +111,7 @@
 
   onDestroy(() => {
     releaseDnDPage?.();
-    scrollRequest++;
-    clearTimeout(headingScrollTimer);
+    cancelHeadingScroll();
   });
 
   $effect(() => {
@@ -139,7 +134,7 @@
       return;
     selectedItemId = findFirstOpenable(items)?.id ?? null;
     activeHeadingId = undefined;
-    scrollRequest++;
+    cancelHeadingScroll();
   });
 
   function isAutoOpenable(item: ISpaceResourceNavItem) {
@@ -156,37 +151,27 @@
     return collectResourceItems(list).find(isAutoOpenable);
   }
 
+  function cancelHeadingScroll() {
+    scrollRequest++;
+    cancelScroll?.();
+    cancelScroll = undefined;
+  }
+
   function openItem(item: ISpaceResourceNavItem) {
     selectedItemId = item.id;
     activeHeadingId = undefined;
-    scrollRequest++;
+    cancelHeadingScroll();
   }
 
-  /**
-   * Opens a page and scrolls its content to a heading. The page renders its blocks
-   * progressively, so the scroll is repeated a few times until the layout settles.
-   */
+  /** Opens a page and scrolls its content to a heading. */
   async function openHeading(item: ISpaceResourceNavItem, headingId: string) {
     selectedItemId = item.id;
     activeHeadingId = headingId;
-    const request = ++scrollRequest;
-    const deadline = Date.now() + 5000;
+    cancelHeadingScroll();
+    const request = scrollRequest;
     await tick();
-    let settledPasses = 0;
-    const attempt = () => {
-      if (request !== scrollRequest) return;
-      const element = contentElement?.querySelector(
-        `[id="${CSS.escape(headingId)}"]`
-      );
-      if (element) {
-        element.scrollIntoView({ block: "start" });
-        settledPasses += 1;
-        if (settledPasses >= 10) return;
-      }
-      if (Date.now() < deadline)
-        headingScrollTimer = setTimeout(attempt, element ? 250 : 100);
-    };
-    attempt();
+    if (request !== scrollRequest) return;
+    cancelScroll = scrollToHeading(() => contentElement, headingId);
   }
 
   function focusSpace(item: ISpaceResourceNavItem) {
@@ -217,22 +202,13 @@
     await store.updateNavItemLabel(id, label);
   }
 
-  function confirmDelete(item: ISpaceNavItem, rawLabel: string) {
-    const label = escapeMarkdownText(rawLabel);
-    const isSection = item.type === SpaceNavItemType.SECTION;
-    const nested = flattenNavItems(item.children ?? []).length;
-    confirmationNotification.notify({
-      title: isSection ? "Delete section" : "Remove from space",
-      message: isSection
-        ? `Delete **${label}**${nested ? ` and the ${nested} item${nested === 1 ? "" : "s"} inside it` : ""} from this space? The records themselves are not deleted.`
-        : `Remove **${label}** from this space? The record itself is not deleted.`,
-      type: AlertType.WARNING,
-      confirmAction: {
-        label: isSection ? "Delete" : "Remove",
-        callback: async () => {
-          if (targetSectionId === item.id) targetSectionId = null;
-          await store.deleteNavItem(item.id);
-        }
+  function confirmDelete(item: ISpaceNavItem, label: string) {
+    confirmSpaceItemDelete({
+      store,
+      item,
+      label,
+      onConfirm: () => {
+        if (targetSectionId === item.id) targetSectionId = null;
       }
     });
   }
@@ -408,46 +384,19 @@
       {/if}
     </nav>
     {#if isEditMode}
-      <section class="flex flex-col gap-2 px-3 pb-3" aria-label="Add to space">
-        {#if targetSection}
-          <div class="flex items-center gap-1 text-b3 text-fgs2">
-            <span class="truncate">Adding to {targetSection.label}</span>
-            <button
-              type="button"
-              class="p-0.5 rounded hover:bg-bgs2-striped"
-              aria-label="Add to the top level instead"
-              onclick={() => (targetSectionId = null)}
-            >
-              <Icon icon="minus-circle" size={Size.xs} class="stroke-fgs3" />
-            </button>
-          </div>
-        {/if}
-        <SpaceItemPicker
-          {product}
-          currentSpaceId={spaceId}
-          {focusChain}
-          {items}
-          targetLabel={targetSection?.label}
-          targetId={targetSection?.id}
-          onSelect={addRecord}
-        />
-        <button
-          type="button"
-          class="flex items-center gap-2 px-2 py-1.5 rounded-md text-b2 text-fgs2 hover:bg-bgs2-striped"
-          data-testid="space-add-section"
-          onclick={() =>
-            addSection(targetSection ? targetSectionId! : undefined)}
-        >
-          <Icon icon="plus" size={Size.sm} class="stroke-fgs2" />
-          {targetSection
-            ? `Add section in ${targetSection.label}`
-            : "Add section"}
-        </button>
-        <p class="text-b4 text-fgs3">
-          Drag rows to rearrange. With a row focused, Alt and the arrow keys
-          move it.
-        </p>
-      </section>
+      <SpaceAddPanel
+        class="px-3 pb-3"
+        {product}
+        {spaceId}
+        {focusChain}
+        {items}
+        {targetSection}
+        hint="Drag rows to rearrange. With a row focused, Alt and the arrow keys move it."
+        onClearTarget={() => (targetSectionId = null)}
+        onSelect={addRecord}
+        onAddSection={() =>
+          addSection(targetSection ? targetSectionId! : undefined)}
+      />
     {/if}
   </aside>
   <main

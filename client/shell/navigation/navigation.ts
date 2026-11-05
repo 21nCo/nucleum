@@ -81,28 +81,32 @@ const recordSpecificSearchParams = [
   AccessMode.BESIDE_PAGE
 ];
 
-const FOCUS_SEARCH_PARAM_SUFFIX = `-${SPACE_FOCUS_PARAM}`;
+const layerScopedRecordParams = [SPACE_FOCUS_PARAM];
+
+const closableLayerModes = [
+  AccessMode.BESIDE_BASE,
+  AccessMode.FULL,
+  AccessMode.PAGE,
+  AccessMode.BESIDE_PAGE,
+  AccessMode.OVERLAY
+];
 
 /**
- * Lists the focus params of records that will no longer be open once the
- * record in `replacedParam` changes, so records that stay open keep their focus.
+ * Removes record-specific state, such as a space's focused sub space, only for the records that
+ * leave the view, so a record that stays open beneath an overlay keeps it. The record being opened
+ * is cleared too, so opening a space always starts at its root.
  */
-function resolveClosedFocusParams(url: URL, replacedParam: string) {
-  const openFocusParams = new Set<string>();
-  url.searchParams.forEach((value, key) => {
-    if (key !== replacedParam && isRecordId(value)) {
-      openFocusParams.add(
-        navigation.resolveRecordSpecificSearchParam(value, SPACE_FOCUS_PARAM)
+function clearLayerScopedRecordParams(
+  url: URL,
+  ids: (IRecordId | null | undefined)[]
+) {
+  for (const id of ids) {
+    if (!id) continue;
+    for (const param of layerScopedRecordParams)
+      url.searchParams.delete(
+        navigation.resolveRecordSpecificSearchParam(id, param)
       );
-    }
-  });
-  const closed: string[] = [];
-  url.searchParams.forEach((_, key) => {
-    if (key.endsWith(FOCUS_SEARCH_PARAM_SUFFIX) && !openFocusParams.has(key)) {
-      closed.push(key);
-    }
-  });
-  return closed;
+  }
 }
 
 /** Compare navigation targets without treating equivalent query encodings as changes. */
@@ -501,16 +505,21 @@ export const navigation = {
         new URL(window.location.href).searchParams.get(AccessMode.PANEL) ===
         Action.NAVIGATOR;
     }
+    const currentUrl = new URL(window.location.href);
+    const replacedModes =
+      accessMode === AccessMode.FULL
+        ? [AccessMode.FULL, AccessMode.PAGE, AccessMode.BESIDE_PAGE]
+        : [accessMode ?? AppSearchParam.SELECTED];
+    clearLayerScopedRecordParams(url, [
+      id,
+      ...replacedModes.map((mode) => currentUrl.searchParams.get(mode)),
+      currentUrl.searchParams.get(AccessMode.BESIDE_PAGE)
+    ]);
     url =
       navigation.toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true,
         url
       }) ?? url;
-    url =
-      navigation.toggleSearchParam(
-        resolveClosedFocusParams(url, accessMode ?? AppSearchParam.SELECTED),
-        { isPreventRefresh: true, url }
-      ) ?? url;
     navigation.toggleSearchParam(
       {
         ...(accessMode
@@ -645,6 +654,7 @@ export const navigation = {
         ? determineResourceAccessMode(props.id)
         : undefined;
     const isInPlace = !!props?.id && !props?.accessMode && !resolvedMode;
+    const currentUrl = new URL(window.location.href);
     const url =
       navigation.toggleSearchParam(
         isInPlace
@@ -656,6 +666,20 @@ export const navigation = {
           : recordSpecificSearchParams,
         { isPreventRefresh: true }
       ) ?? new URL(window.location.href);
+    const closedModes = props?.accessMode
+      ? [props.accessMode]
+      : props?.id
+        ? []
+        : props?.isRestrictToModals
+          ? [AccessMode.PAGE, AccessMode.BESIDE_PAGE]
+          : closableLayerModes;
+    clearLayerScopedRecordParams(url, [
+      props?.id,
+      ...closedModes.map((mode) => currentUrl.searchParams.get(mode)),
+      isInPlace
+        ? undefined
+        : currentUrl.searchParams.get(AccessMode.BESIDE_PAGE)
+    ]);
     if (props?.accessMode) {
       navigation.toggleSearchParam(
         [props.accessMode, `${props.accessMode}At`],

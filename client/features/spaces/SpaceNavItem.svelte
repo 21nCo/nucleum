@@ -17,8 +17,8 @@
   } from "@nucleum/features/spaces/space.type";
   import type { ISpaceNavContext } from "@nucleum/features/spaces/space-nav.type";
   import {
-    isSpaceItemOpenable,
-    resolveOpeningProductName,
+    isSpaceItemBlocked,
+    resolveSpaceItemStatus,
     resolveTargetLabel
   } from "@nucleum/features/spaces/space.utils";
 
@@ -66,8 +66,18 @@
           "Untitled"
   );
   const avatar = $derived(target?.avatar ?? item.avatar);
-  const status = $derived(resolveStatus());
-  const isUnavailable = $derived(Boolean(status && status.kind !== "archived"));
+  const status = $derived(
+    resourceItem
+      ? resolveSpaceItemStatus({
+          item: resourceItem,
+          product: nav.product,
+          target,
+          isTargetsLoaded: nav.isTargetsLoaded,
+          loopIds: nav.loopIds
+        })
+      : undefined
+  );
+  const isUnavailable = $derived(isSpaceItemBlocked(status));
   const hasHeadings = $derived(isMarkdownPage && !isUnavailable);
   const isExpandable = $derived(
     (isSection && (item.children?.length ?? 0) > 0) || hasHeadings
@@ -80,32 +90,6 @@
       renameInput?.select();
     }
   });
-
-  function resolveStatus():
-    | {
-        kind: "unsupported" | "loop" | "missing" | "trashed" | "archived";
-        text: string;
-      }
-    | undefined {
-    if (!resourceItem) return undefined;
-    if (!isSpaceItemOpenable(resourceItem.resourceType, nav.product)) {
-      const opener = resolveOpeningProductName(
-        resourceItem.resourceType,
-        nav.product
-      );
-      return {
-        kind: "unsupported",
-        text: opener ? `Opens in ${opener}` : "Not available in this app"
-      };
-    }
-    if (isSubSpace && nav.loopIds.has(resourceItem.resourceId.toString()))
-      return { kind: "loop", text: "Already open above" };
-    if (nav.isTargetsLoaded && !target)
-      return { kind: "missing", text: "Not available" };
-    if (target?.trashedAt) return { kind: "trashed", text: "In trash" };
-    if (target?.isArchived) return { kind: "archived", text: "Archived" };
-    return undefined;
-  }
 
   function activate() {
     if (isSection) {

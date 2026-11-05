@@ -91,7 +91,7 @@
     isSearchContext={false}
   />
 {:else}
-  {#key currentId}
+  {#key chain.join("/")}
     <SpaceBody
       spaceId={currentId}
       {parentId}

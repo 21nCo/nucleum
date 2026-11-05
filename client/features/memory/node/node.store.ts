@@ -1228,17 +1228,15 @@ export function resolveNodeContextMenu(
     ];
   } else if (accessPoint !== ResourceAccessPoint.SELF) {
     let primaryItems = [
-      resourceActions.select(accessPoint, params?.accessPointId),
+      ...resourceActions.selectIfSupported(accessPoint, params?.accessPointId),
       resourceActions.star(),
       resourceActions.addToCollection(),
       resourceActions.link(),
       resourceActions.edit(accessPoint),
+      ...(isTextBookmarkOrSocialPost ? [nodeActions.copyHighlightText] : []),
       resourceActions.copyLink(),
       ...(node.url ? [resourceActions.copyExternalLink()] : [])
     ];
-    if (isTextBookmarkOrSocialPost) {
-      primaryItems.splice(5, 0, nodeActions.copyHighlightText);
-    }
     if (
       accessPoint === ResourceAccessPoint.COLLECTION &&
       params?.accessPointId

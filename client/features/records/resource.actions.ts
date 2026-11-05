@@ -211,6 +211,17 @@ export class ResourceActions<T extends IActionableResource> {
     };
   }
   /**
+   * The Select action as a list, empty where bulk selection has no toolbar actions,
+   * such as cards shown inside a space.
+   */
+  selectIfSupported(
+    accessPoint: ResourceAccessPoint,
+    accessPointId?: IRecordId
+  ): IContextMenuItem[] {
+    if (accessPoint === ResourceAccessPoint.SPACE) return [];
+    return [this.select(accessPoint, accessPointId)];
+  }
+  /**
    * Action triggered from either resource browser or library page.
    * @returns
    */
