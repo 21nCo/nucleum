@@ -126,8 +126,9 @@
    * Saves the draft and leaves edit mode once the latest title is saved. While
    * a save is awaited the input stays editable, so after each one the draft is
    * checked again and a newer save is awaited before editing closes. A finish
-   * outlived by its editing session, which was cancelled, closed or reopened
-   * while a save was awaited, stops without saving or closing the new one.
+   * outlived by its editing session, which was cancelled, closed, reopened or
+   * whose editor was removed while a save was awaited, stops without saving
+   * or closing the new one.
    */
   async function finish() {
     const session = editSession;
@@ -148,7 +149,13 @@
     return true;
   }
 
-  onMount(() => registerEditModeFinisher(store.id.toString(), finish));
+  onMount(() => {
+    const unregister = registerEditModeFinisher(store.id.toString(), finish);
+    return () => {
+      editSession += 1;
+      unregister();
+    };
+  });
 
   function reportSaveFailure(error: unknown) {
     logger.error({ at: "ContextZoneEditableTitle.save", error });

@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/svelte";
+import { cleanup, fireEvent, render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { get, writable } from "svelte/store";
 import { describe, expect, it, vi } from "vitest";
@@ -169,5 +169,21 @@ describe("ContextZoneEditableTitle", () => {
     ]);
     expect(get(state).isInEditMode).toBe(true);
     expect(reopened.value).toBe("Y");
+  });
+
+  it("leaves a replacement editor open when the removed editor's confirm finishes", async () => {
+    const { store, state, pending } = createStore("Original");
+    const input = await renderTitle(store);
+    await type(input, "X");
+    await fireEvent.keyDown(input, { key: "Enter" });
+    cleanup();
+    const replacement = await renderTitle(store);
+    await type(replacement, "Y");
+
+    pending.shift()!.resolve();
+    await settle();
+    expect(get(state).isInEditMode).toBe(true);
+    expect(replacement.isConnected).toBe(true);
+    expect(replacement.value).toBe("Y");
   });
 });
