@@ -103,12 +103,12 @@ export function closeCaptureAfterSave(isReplacedByOpenedNode: boolean) {
 }
 
 /**
- * Closes a capture that is open as the page after it is cleared or saved on a
- * constrained width, as a phone page capture does. A capture open in the
- * overlay or the right panel stays open, and the page under it is kept.
+ * Closes the page after a capture is cleared or saved on a constrained width
+ * when that capture is the page, given the layer it is rendered in, as a phone
+ * page capture does. A capture in the overlay or the right panel stays open,
+ * and a page under it is kept, even when that page is another capture.
  */
-export function closeCapturePageAfterReset() {
-  const page = new URL(window.location.href).searchParams.get(AccessMode.PAGE);
-  if (!page || !captureActions.includes(page)) return;
+export function closeCapturePageAfterReset(layer: AccessMode | undefined) {
+  if (layer !== AccessMode.PAGE) return;
   navigation.closeResource({ accessMode: AccessMode.PAGE });
 }

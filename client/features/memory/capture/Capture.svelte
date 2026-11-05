@@ -51,10 +51,13 @@
 
   let {
     captureId = generateResourceId(Resource.capture),
-    isWindowDnD = false
+    isWindowDnD = false,
+    accessMode = undefined
   }: {
     captureId?: IRecordId;
     isWindowDnD?: boolean;
+    /** Layer the capture is rendered in, given when it is opened as a resource such as the page. */
+    accessMode?: AccessMode;
   } = $props();
   const captureContext = {
     id: captureId
@@ -136,7 +139,7 @@
 
   function reset() {
     captureStore.reset();
-    if ($view.isConstrainedWidth) closeCapturePageAfterReset();
+    if ($view.isConstrainedWidth) closeCapturePageAfterReset(accessMode);
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
   }
 

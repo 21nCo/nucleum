@@ -112,23 +112,21 @@ describe("handleSingleNodePostSave", () => {
 });
 
 describe("closeCapturePageAfterReset", () => {
-  it.each([
-    capture,
-    MemotronAction.CAPTURE_SECONDARY,
-    MemotronAction.CAPTURE_DND
-  ])("closes the capture page %s", (page) => {
-    visit(`?${AccessMode.PAGE}=${page}`);
-    closeCapturePageAfterReset();
+  it("closes the page when the cleared capture is the page", () => {
+    visit(`?${AccessMode.PAGE}=${MemotronAction.CAPTURE_SECONDARY}`);
+    closeCapturePageAfterReset(AccessMode.PAGE);
     expect(navigation.closeResource).toHaveBeenCalledWith({
       accessMode: AccessMode.PAGE
     });
   });
 
-  it("keeps the page under a capture open in the panel or the overlay", () => {
-    for (const mode of [AccessMode.PANEL, AccessMode.OVERLAY]) {
-      visit(`?${AccessMode.PAGE}=node%3Aopen&${mode}=${capture}`);
-      closeCapturePageAfterReset();
-    }
+  it("keeps a capture page open when a capture in the panel or the overlay is cleared", () => {
+    visit(
+      `?${AccessMode.PAGE}=${MemotronAction.CAPTURE_SECONDARY}&${AccessMode.PANEL}=${capture}`
+    );
+    closeCapturePageAfterReset(AccessMode.PANEL);
+    closeCapturePageAfterReset(AccessMode.OVERLAY);
+    closeCapturePageAfterReset(undefined);
     expect(navigation.closeResource).not.toHaveBeenCalled();
   });
 });
