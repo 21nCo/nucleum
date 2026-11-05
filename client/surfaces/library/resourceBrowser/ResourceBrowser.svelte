@@ -35,21 +35,43 @@
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import { Action } from "@nucleum/client/config/action.enum";
+  import { parseLibrarySubType } from "@nucleum/surfaces/library/library-route";
   let {
     resource,
     onBack = undefined,
     isPreventCwPadding = false,
-    right: rightSnippet = undefined
+    right: rightSnippet = undefined,
+    subType = undefined,
+    onSubTypeChange = undefined
   }: {
     resource: Resource;
     onBack?: (() => void) | undefined;
     isPreventCwPadding?: boolean;
     right?: Snippet | undefined;
+    subType?: string;
+    onSubTypeChange?: (subType: string) => void;
   } = $props();
   let backPath = $derived($page.url.searchParams.get(AppSearchParam.RETURN_TO));
   let hasBack = $derived(onBack !== undefined || backPath !== null);
+  let viewSubType = $derived(
+    subType ??
+      (onSubTypeChange
+        ? undefined
+        : parseLibrarySubType(
+            resource,
+            $page.url.searchParams.get(AppSearchParam.TYPE) ?? undefined
+          ))
+  );
 
   let id = $derived($page.url.searchParams.get(AppSearchParam.SELECTED));
+
+  /** Keeps the subtype chosen in a standalone browser in its URL, so a reload restores it. */
+  function syncSubTypeQuery(nextSubType: string) {
+    navigation.toggleSearchParam(
+      { [AppSearchParam.TYPE]: nextSubType },
+      { replaceState: true }
+    );
+  }
   let arrangement: Arrangement = resolveArrangement();
   let selectionCount = 0;
   let bulkEditCountUnsub: (() => void) | undefined;
@@ -146,6 +168,8 @@
           accessPoint={ResourceAccessPoint.BROWSER}
           accessPointState={state}
           isConstrainedWidth={true}
+          subType={viewSubType}
+          onSubTypeChange={onSubTypeChange ?? syncSubTypeQuery}
         />
       </div>
     {/snippet}

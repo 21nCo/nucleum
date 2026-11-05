@@ -48,7 +48,10 @@
   import { installPosthogTelemetry } from "@nucleum/client/runtime/telemetry/posthog";
   import dynamicProductData from "$lib/product.json";
   import { getSettingsAsModal } from "@nucleum/composition/settings-actions";
-  import { globalActions } from "@nucleum/composition/global-commands";
+  import {
+    globalActions,
+    resolveGlobalViewActions
+  } from "@nucleum/composition/global-commands";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { updateNucleumDatafnConnectivity } from "@nucleum/datafn/datafn.store";
 
@@ -147,7 +150,11 @@
     const modifiedGlobalActions = globalActions.filter(
       (x) => !localActions.some((y) => y.action === x.action)
     );
-    let actions = [...localActions, ...modifiedGlobalActions];
+    let actions = [
+      ...localActions,
+      ...modifiedGlobalActions,
+      ...resolveGlobalViewActions(product)
+    ];
     if (isSheet) appStore.initActionsForSheet(actions);
     else appStore.initActions(actions, getSettingsAsModal());
   }

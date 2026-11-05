@@ -88,7 +88,9 @@
     const unsubscribe = appEvents.subscribe((e) => {
       if (e.event === GlobalEvent.APP_MENU_SWITCHED) {
         const currentPath = window?.location?.pathname?.replace("/", "");
-        if (currentPath !== e.value) return;
+        const currentPage =
+          appStore.resolvePageRoute(currentPath)?.action.action;
+        if (currentPath !== e.value && currentPage !== e.value) return;
         isCollapsed = !isCollapsed;
         isExplicitlyCollapsed = false;
       }

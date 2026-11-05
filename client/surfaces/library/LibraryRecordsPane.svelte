@@ -1,6 +1,10 @@
 <script lang="ts">
   import { createLibraryQuery } from "./library-query";
   import {
+    LIBRARY_DEFAULT_SUBTYPE,
+    resolveLibrarySubTypeOptions
+  } from "./library-route";
+  import {
     resolveLibraryArrangement,
     resolveLibraryEmptyStateMessage,
     resolveLibraryFooterMessage
@@ -8,11 +12,6 @@
 
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
-
-  import { resolveObjectiveSubTypesForSwitcher } from "@nucleum/features/focus/goals/goal.utils";
-  import { resolveTaskSubTypesForSwitcher } from "@nucleum/features/focus/tasks/task.utils";
-  import { resolveNodeSubTypesForSwitcher } from "@nucleum/features/memory/node/node.utils";
-  import { resolveCollectionSubTypesForSwitcher } from "@nucleum/features/collections/collection.utils";
 
   import Records from "@nucleum/surfaces/library/records/Records.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -50,7 +49,7 @@
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import Toggle from "@21n/ui/elements/toggle/Toggle.svelte";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { page } from "$app/stores";
   import InlineSearchBar from "@21n/ui/elements/InlineSearchBar.svelte";
   import { InputStyle } from "@21n/ui/elements/input/input.type";
@@ -70,6 +69,10 @@
   import { isCustomLibrary } from "@nucleum/shared-state/resources/library.utils";
   import LinkTagsControlPanel from "@nucleum/features/memory/linking/LinkTagsControlPanel.svelte";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import {
+    routeSubTypeSwitcherParams,
+    type SubTypeSwitcherParams
+  } from "@nucleum/features/records/subtype-switcher-params";
   import Text from "@21n/ui/elements/text/Text.svelte";
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { dragSelection } from "@21n/ui/actions/dragSelection.action";
@@ -82,13 +85,17 @@
     accessPoint = ResourceAccessPoint.LIBRARY,
     accessPointState = ResourceAccessPointState.DEFAULT,
     arrangement: arrangementProp = null,
-    isConstrainedWidth = $view.isConstrainedWidth
+    isConstrainedWidth = $view.isConstrainedWidth,
+    subType = undefined,
+    onSubTypeChange = undefined
   }: {
     resource: Resource;
     accessPoint?: ResourceAccessPoint;
     accessPointState?: ResourceAccessPointState;
     arrangement?: Arrangement | null;
     isConstrainedWidth?: boolean;
+    subType?: string;
+    onSubTypeChange?: (subType: string) => void;
   } = $props();
 
   let arrangement = $state<Arrangement | null>(arrangementProp);
@@ -99,7 +106,9 @@
   let starredData = $state<any[]>([]);
   let recordLimit = $state(50);
   let searchType = $state<SearchType>(SearchType.FULL_TEXT);
-  let selectedSubType = $state<SubType>("all");
+  let selectedSubType = $state<SubType>(
+    untrack(() => subType ?? LIBRARY_DEFAULT_SUBTYPE) as SubType
+  );
   let isRefreshing = $state(true);
   let totalCountAfterFilter = $state(0);
   let isRefreshingTotalCount = $state(false);
@@ -323,12 +332,7 @@
     if (isCustom) return;
     abortController = new AbortController();
     pageSub = page.subscribe(async (p) => {
-      const subResourceParam = p.url.searchParams.get(AppSearchParam.TYPE);
       let isRefreshNeeded = false;
-      if (subResourceParam && subResourceParam !== selectedSubType) {
-        selectedSubType = (subResourceParam as SubType) ?? "all";
-        isRefreshNeeded = true;
-      }
       if (p.url.searchParams.get(AppSearchParam.STARRED)) {
         isStarFilterSelected = true;
         isRefreshNeeded = true;
@@ -562,13 +566,36 @@
 
   const debouncedSearch = debouncer(refresh, 500);
 
+  $effect(() => {
+    if (!subType) return;
+    const nextSubType = subType as SubType;
+    if (untrack(() => selectedSubType) === nextSubType) return;
+    selectedSubType = nextSubType;
+    if (!isCustom) untrack(() => refresh());
+  });
+
+  function onSearchParamsChange(params: SubTypeSwitcherParams) {
+    routeSubTypeSwitcherParams(
+      params,
+      (nextSubType) => {
+        if (onSubTypeChange) {
+          onSubTypeChange(nextSubType);
+          return;
+        }
+        selectedSubType = nextSubType as SubType;
+        refresh();
+      },
+      (rest) => navigation.toggleSearchParam(rest)
+    );
+  }
+
 </script>
 
 {#if isCustom}
   {#if resource === Resource.relation}
     <LinkTagsControlPanel {accessPoint} />
   {:else if resource === Resource.task}
-    <TaskLibrary {accessPoint} />
+    <TaskLibrary {accessPoint} {subType} {onSubTypeChange} />
   {/if}
 {:else}
   {#if isConstrainedWidth}
@@ -668,16 +695,8 @@
       }}
     />
     <LibrarySubTypeSwitcher
-      options={resource === Resource.node
-        ? resolveNodeSubTypesForSwitcher()
-        : resource === Resource.collection
-          ? resolveCollectionSubTypesForSwitcher()
-          : resource === Resource.objective
-            ? resolveObjectiveSubTypesForSwitcher(true)
-            : resource === Resource.task
-              ? resolveTaskSubTypesForSwitcher()
-              : []}
-      onSearchParamsChange={(params) => navigation.toggleSearchParam(params)}
+      options={resolveLibrarySubTypeOptions(resource)}
+      {onSearchParamsChange}
       {resource}
       {isConstrainedWidth}
       {accessPoint}

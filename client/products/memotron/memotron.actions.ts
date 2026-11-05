@@ -33,6 +33,36 @@ import LibraryPanelContentResolver from "@nucleum/surfaces/library/LibraryPanelC
 import PreviewImageUploader from "@nucleum/features/memory/node/PreviewImageUploader.svelte";
 import NodeSettings from "@nucleum/features/memory/node/NodeSettings.svelte";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";
+import { createPageViewActions } from "@nucleum/shared-state/commands/page-view-actions";
+import { createLibraryViewActions } from "@nucleum/surfaces/library/library-route";
+import { memotronLibraryResources } from "@nucleum/products/memotron/library/memotron-library";
+import { resolveMemotronOverviewViewSegments } from "@nucleum/products/memotron/overview/memotron-overview-views";
+
+const libraryAction: IAction = {
+  action: MemotronAction.LIBRARY,
+  label: appMenuActionLabelsByAction[Action.LIBRARY],
+  icon: "library",
+  component: LibraryPanelContentResolver,
+  panel: MemotronLibrary,
+  type: ActionType.PAGE,
+  componentParams: {
+    defaultResource: Resource.node
+  },
+  modalParams: {
+    layout: {
+      size: Size.lg,
+      orientation: Orientation.Horizontal
+    }
+  }
+};
+
+const overviewAction: IAction = {
+  action: Action.OVERVIEW,
+  type: ActionType.PAGE,
+  label: appMenuActionLabelsByAction[Action.OVERVIEW],
+  icon: "overview",
+  component: MemotronOverview
+};
 
 export const memotronActions: IAction[] = [
   {
@@ -170,23 +200,8 @@ export const memotronActions: IAction[] = [
       }
     }
   },
-  {
-    action: MemotronAction.LIBRARY,
-    label: appMenuActionLabelsByAction[Action.LIBRARY],
-    icon: "library",
-    component: LibraryPanelContentResolver,
-    panel: MemotronLibrary,
-    type: ActionType.PAGE,
-    componentParams: {
-      defaultResource: Resource.node
-    },
-    modalParams: {
-      layout: {
-        size: Size.lg,
-        orientation: Orientation.Horizontal
-      }
-    }
-  },
+  libraryAction,
+  ...createLibraryViewActions(libraryAction, memotronLibraryResources),
   {
     action: "serendipity",
     type: ActionType.MODAL,
@@ -225,13 +240,11 @@ export const memotronActions: IAction[] = [
     icon: "relation",
     component: LinkTagsControlPanel
   },
-  {
-    action: Action.OVERVIEW,
-    type: ActionType.PAGE,
-    label: appMenuActionLabelsByAction[Action.OVERVIEW],
-    icon: "overview",
-    component: MemotronOverview
-  },
+  overviewAction,
+  ...createPageViewActions(
+    overviewAction,
+    resolveMemotronOverviewViewSegments()
+  ),
   {
     action: "onboarding",
     type: ActionType.PAGE,

@@ -13,6 +13,7 @@ enum ResourceBase {
   appMenu = "appMenu",
   accessLog = "accessLog",
   uiState = "uiState",
+  navigatorHistory = "navigatorHistory",
   keyboardShortcuts = "keyboardShortcuts",
   mutation = "mutation",
   event = "event",

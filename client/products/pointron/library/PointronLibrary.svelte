@@ -5,8 +5,13 @@
   import { Product } from "@nucleum/client/config/product.type";
   import { resolveProductConfig } from "@nucleum/products/product.config";
 
+  let {
+    subPath = undefined,
+    isRouted = undefined
+  }: { subPath?: string[]; isRouted?: boolean } = $props();
+
   const libraryResources = resolveProductConfig(Product.POINTRON).resources
     .browse;
 </script>
 
-<Library resources={libraryResources} />
+<Library resources={libraryResources} {subPath} {isRouted} />

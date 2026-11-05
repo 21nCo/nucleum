@@ -6,7 +6,7 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { BulkEditor } from "@nucleum/features/records/bulk-editor";
   import {
     TaskDueDateFilter,
@@ -54,6 +54,10 @@
   import { intersection } from "@21n/ui/actions/intersection.action";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
+  import {
+    routeSubTypeSwitcherParams,
+    type SubTypeSwitcherParams
+  } from "@nucleum/features/records/subtype-switcher-params";
   import { dragSelection } from "@21n/ui/actions/dragSelection.action";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
@@ -69,13 +73,17 @@
     collectionId = undefined,
     accessPoint = undefined,
     parentBgIndex = 1,
-    isPreventAddNew = false
+    isPreventAddNew = false,
+    subType = undefined,
+    onSubTypeChange = undefined
   }: {
     objectiveId?: IRecordId | undefined;
     collectionId?: IRecordId | undefined;
     accessPoint?: ResourceAccessPoint | undefined;
     parentBgIndex?: number;
     isPreventAddNew?: boolean;
+    subType?: string;
+    onSubTypeChange?: (subType: string) => void;
   } = $props();
 
   const instance = generateMiniRandomId();
@@ -178,9 +186,46 @@
     });
   }
 
+  function selectSubType(value: string) {
+    selectedSubType = (value as SubType) ?? "all";
+    persistSelectedSubTypeState();
+    selectedDate = new Date();
+    viewDate = new Date();
+  }
+
+  function onSearchParamsChange(params: SubTypeSwitcherParams) {
+    if (objectiveId) {
+      navigation.toggleSearchParam(params);
+      return;
+    }
+    routeSubTypeSwitcherParams(
+      params,
+      (nextSubType) => {
+        if (onSubTypeChange) {
+          onSubTypeChange(nextSubType);
+          return;
+        }
+        selectSubType(nextSubType);
+        refresh();
+      },
+      (rest) => navigation.toggleSearchParam(rest)
+    );
+  }
+
+  $effect(() => {
+    if (objectiveId || !subType) return;
+    if (untrack(() => selectedSubType) === subType) return;
+    untrack(() => {
+      selectSubType(subType);
+      refresh();
+    });
+  });
+
   onMount(() => {
     isFiltersExpanded = resolveFiltersExpandedState();
-    selectedSubType = resolveSelectedSubTypeState();
+    selectedSubType = ((!objectiveId && subType) ||
+      resolveSelectedSubTypeState()) as SubType;
+    if (!objectiveId && subType) persistSelectedSubTypeState();
 
     bulkEditChangeUnsub = bulkEditStore.count.subscribe((count) => {
       if (count === 0) {
@@ -199,13 +244,10 @@
     const pageSub = page.subscribe(async (p) => {
       const subResourceParam = objectiveId
         ? p.url.searchParams.get(`${instance}-${AppSearchParam.TYPE}`)
-        : p.url.searchParams.get(AppSearchParam.TYPE);
+        : undefined;
       let isRefreshNeeded = false;
       if (subResourceParam && subResourceParam !== selectedSubType) {
-        selectedSubType = (subResourceParam as SubType) ?? "all";
-        persistSelectedSubTypeState();
-        selectedDate = new Date();
-        viewDate = new Date();
+        selectSubType(subResourceParam);
         isRefreshNeeded = true;
       }
 
@@ -544,7 +586,7 @@
 >
   <LibrarySubTypeSwitcher
     options={resolveTaskSubTypesForSwitcher()}
-    onSearchParamsChange={(params) => navigation.toggleSearchParam(params)}
+    {onSearchParamsChange}
     resource={Resource.task}
     accessPoint={resolveAccessPoint()}
     {selectedSubType}

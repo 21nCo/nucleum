@@ -137,6 +137,7 @@
   "client/features/records/cover/CoverRenderer.svelte",
   "client/features/records/bulk-editor.ts",
   "client/features/records/resource.actions.ts",
+  "client/features/records/subtype-switcher-params.ts",
   "client/features/spaces/combination/SideNavCombination.svelte",
   "client/features/spaces/combination/combination.type.ts",
   "client/features/spaces/combination/thumbnail/CombinationThumbnail.svelte",

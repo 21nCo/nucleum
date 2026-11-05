@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import Records from "@nucleum/surfaces/library/records/Records.svelte";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
@@ -33,27 +32,77 @@
   import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
   import { Product } from "@nucleum/client/config/product.type";
   import { isHideCreateAction } from "@nucleum/shared-state/resources/library.utils";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import ComponentShortcutListener from "@21n/ui/compositions/keyboard/ComponentShortcutListener.svelte";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
-  import { isValidEnumValue } from "@21n/shared-utils/text.utils";
+  import {
+    LIBRARY_DEFAULT_SUBTYPE,
+    parseLibraryPath,
+    parseLibraryResource,
+    parseLibrarySubType,
+    isLibraryPathRouted,
+    replaceLibraryPath,
+    resolveLibraryFallbackSubType
+  } from "@nucleum/surfaces/library/library-route";
 
-  let { resources = [] }: { resources?: Resource[] } = $props();
+  let {
+    resources = [],
+    subPath = undefined,
+    isRouted = undefined
+  }: {
+    resources?: Resource[];
+    subPath?: string[];
+    isRouted?: boolean;
+  } = $props();
 
+  const routed = $derived(
+    isRouted ??
+      isLibraryPathRouted(
+        $appStore.actions,
+        $appStore.currentComponent,
+        $page.url.pathname
+      )
+  );
   let selectedResource = $state<Resource>(Resource.unknown);
-  let syncFeedbackRef = $state<InlineSyncingFeedback>();
+  let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
+  const subType = $derived(
+    selectedResource === Resource.unknown
+      ? undefined
+      : ((routed
+          ? parseLibraryPath($page.url.pathname).subType
+          : parseLibrarySubType(selectedResource, localSubPath?.[1])) ??
+          resolveLibraryFallbackSubType(selectedResource))
+  );
 
-  function syncSelectedResource(resourceParam?: string | null) {
-    if (resourceParam && isValidEnumValue(resourceParam, Resource)) {
-      selectedResource = resourceParam as Resource;
+  function selectView(
+    resource?: Resource,
+    nextSubType?: string,
+    options?: { isResetFilters?: boolean }
+  ) {
+    if (routed) {
+      replaceLibraryPath(resource, nextSubType, options);
       return;
     }
-    if (!resourceParam && $view.isConstrainedWidth) {
+    localSubPath = resource
+      ? [resource, nextSubType ?? LIBRARY_DEFAULT_SUBTYPE]
+      : undefined;
+  }
+
+  function selectSubType(nextSubType: string) {
+    selectView(selectedResource, nextSubType);
+  }
+  let syncFeedbackRef = $state<InlineSyncingFeedback>();
+
+  function syncSelectedResource(pathResource?: Resource) {
+    if (pathResource) {
+      selectedResource = pathResource;
+      return;
+    }
+    if ($view.isConstrainedWidth) {
       selectedResource = Resource.unknown;
       return;
     }
-    if (!$view.isConstrainedWidth && selectedResource === Resource.unknown) {
+    if (selectedResource === Resource.unknown) {
       selectedResource = resources[0] ?? Resource.unknown;
     }
   }
@@ -104,15 +153,47 @@
     }
   });
 
+  $effect.pre(() => {
+    const next = subPath;
+    if (routed) return;
+    untrack(() => {
+      localSubPath = next;
+      syncSelectedResource(parseLibraryResource(next?.[0]));
+    });
+  });
+
+  $effect(() => {
+    if (!routed || !subPath) return;
+    const segments = subPath;
+    untrack(() => canonicalizeRoutedPath(segments));
+  });
+
+  function canonicalizeRoutedPath(segments: string[]) {
+    const pathResource = parseLibraryResource(segments[0]);
+    const resource =
+      pathResource ??
+      ($view.isConstrainedWidth
+        ? undefined
+        : selectedResource !== Resource.unknown
+          ? selectedResource
+          : resources[0]);
+    const viewSubType = resource
+      ? ((pathResource && parseLibrarySubType(resource, segments[1])) ??
+        resolveLibraryFallbackSubType(resource))
+      : undefined;
+    const canonical = resource ? [resource, viewSubType] : [];
+    if (segments.join("/") === canonical.join("/")) return;
+    replaceLibraryPath(resource, viewSubType);
+  }
+
   onMount(() => {
     const syncFromWindow = () => {
-      const resourceParam = new URL(window.location.href).searchParams.get(
-        AppSearchParam.RESOURCE
-      );
-      syncSelectedResource(resourceParam);
+      if (!routed) return;
+      syncSelectedResource(parseLibraryPath(window.location.pathname).resource);
     };
     const pageSub = page.subscribe(async (p) => {
-      syncSelectedResource(p.url.searchParams.get(AppSearchParam.RESOURCE));
+      if (!routed) return;
+      syncSelectedResource(parseLibraryPath(p.url.pathname).resource);
     });
     window.addEventListener(GlobalEvent.CUSTOM_NAVIGATION, syncFromWindow);
     window.addEventListener("popstate", syncFromWindow);
@@ -198,11 +279,8 @@
       isShowCount={true}
       onSelect={(selectedValue) => {
         selectedResource = selectedValue;
-        navigation.toggleSearchParam({
-          [AppSearchParam.RESOURCE]: selectedValue,
-          [AppSearchParam.TYPE]: "all",
-          [AppSearchParam.STARRED]: null,
-          [AppSearchParam.ARCHIVED]: null
+        selectView(selectedValue, LIBRARY_DEFAULT_SUBTYPE, {
+          isResetFilters: true
         });
         syncFeedbackRef?.refresh(selectedValue);
       }}
@@ -244,10 +322,12 @@
       <div class="flex flex-grow">
         <ResourceBrowser
           resource={selectedResource}
+          {subType}
+          onSubTypeChange={selectSubType}
           isPreventCwPadding={true}
           onBack={() => {
             selectedResource = Resource.unknown;
-            navigation.toggleSearchParam([AppSearchParam.RESOURCE]);
+            selectView();
           }}
         />
       </div>
@@ -257,7 +337,11 @@
     {#if selectedResource !== Resource.unknown}
       <div class="flex flex-col gap-4 w-full">
         {#key selectedResource}
-          <LibraryRecordsPane resource={selectedResource} />
+          <LibraryRecordsPane
+            resource={selectedResource}
+            {subType}
+            onSubTypeChange={selectSubType}
+          />
         {/key}
       </div>
     {/if}

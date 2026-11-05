@@ -121,7 +121,6 @@ export enum AppSearchParam {
   BULK = "bulk",
   MODE = "mode",
   CLIPBOARD = "clipboard",
-  RESOURCE = "resource",
   STARRED = "starred",
   ARCHIVED = "archived",
   DATE = "date",

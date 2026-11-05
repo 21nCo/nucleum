@@ -9,6 +9,7 @@
 
   import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { MemotronOverviewPanel } from "@nucleum/products/memotron/overview/overview.type";
+  import { memotronOverviewItems } from "@nucleum/products/memotron/overview/memotron-overview-views";
   import { Product } from "@nucleum/client/config/product.type";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
 
@@ -63,18 +64,7 @@
     }}
   >
     <PanelSwitcher
-      items={[
-        {
-          label: "Graph",
-          value: MemotronOverviewPanel.GRAPH,
-          icon: "graph"
-        },
-        {
-          label: "Map",
-          value: MemotronOverviewPanel.MAP,
-          icon: "ph:map-pin-light"
-        }
-      ]}
+      items={memotronOverviewItems}
       style={PanelSwitcherStyle.BAR}
       title={isNucleusContext ? "" : "Overview"}
       isExpandToFullWidth={true}
