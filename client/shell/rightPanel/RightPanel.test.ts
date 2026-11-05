@@ -66,7 +66,8 @@ describe("RightPanel", () => {
     });
     await rerender({ action, isSheet: true, isSuspended: true });
     await tick();
-    expect(container.querySelector("[hidden]")).toBeTruthy();
+    const sheet = container.querySelector<HTMLElement>("[hidden]");
+    expect(sheet?.style.display).toBe("none");
     expect(queryByRole("dialog")).toBe(null);
 
     await rerender({ action, isSheet: true, isSuspended: false });

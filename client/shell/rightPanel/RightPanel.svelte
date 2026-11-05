@@ -83,6 +83,7 @@
       )}
   {...sheetAttributes}
   hidden={isSuspended || undefined}
+  style:display={isSuspended ? "none" : undefined}
   use:trapFocusWhile={isSheet && !isSuspended}
   in:fly={isSheet
     ? { y: 40, duration: 150, easing: quadInOut }
