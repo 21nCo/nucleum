@@ -12,6 +12,8 @@ import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import type { IEvent } from "@21n/ui/elements/input/event.type";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
+import { getContext } from "svelte";
+import { Context } from "@nucleum/shared-state/app-context/app-store.type";
 
 /** Resolves the collection selected by capture links. */
 export function resolveLinkedCollectionId(captureState: {
@@ -142,4 +144,16 @@ export function isCaptureSaveShortcut(event: IEvent, isVisible: boolean) {
     event.event === GlobalEvent.ENTER &&
     event.value?.metaKey === true
   );
+}
+
+/**
+ * Reads, when a save starts, the layer of the Capture around the calling
+ * component, which a save passes on so that only that Capture's surface
+ * closes. Undefined outside a Capture.
+ */
+export function resolveCaptureLayerReader(): () => AccessMode | undefined {
+  const capture = getContext<{ layer?: AccessMode } | undefined>(
+    Context.CAPTURE
+  );
+  return () => capture?.layer;
 }

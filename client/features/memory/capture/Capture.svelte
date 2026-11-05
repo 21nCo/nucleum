@@ -66,17 +66,20 @@
     /** Layer the capture is rendered in, given when it is opened as a resource such as the page. */
     accessMode?: AccessMode;
   } = $props();
+  const isRightPanelHosted = isInRightPanel();
+  const captureLayer = $derived(
+    accessMode ?? (isRightPanelHosted ? AccessMode.PANEL : AccessMode.OVERLAY)
+  );
   const captureContext = {
-    id: captureId
+    id: captureId,
+    get layer() {
+      return captureLayer;
+    }
   };
 
   setContext(Context.CAPTURE, captureContext);
   const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
   const hostVisibility = resolveHostVisibility();
-  const isRightPanelHosted = isInRightPanel();
-  const captureLayer = $derived(
-    accessMode ?? (isRightPanelHosted ? AccessMode.PANEL : AccessMode.OVERLAY)
-  );
   let captureStore = $state<IActiveCaptureStore>(
     ActiveCaptureStore.resolve(captureId)
   );
@@ -96,15 +99,13 @@
     captureStore = ActiveCaptureStore.resolve(captureId);
   });
 
-  $effect(() => captureStore.setLayer(captureLayer));
-
   onMount(async () => {
     if (!isWindowDnD) {
       releaseDnDPage = acquireDnDPage();
     }
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
       if (isCaptureSaveShortcut(x, get(hostVisibility))) {
-        await captureStore.save();
+        await captureStore.save({ layer: captureLayer });
       }
     });
     subs.push(appEventSub);
@@ -158,7 +159,7 @@
   }
 
   async function onSave() {
-    await captureStore.save();
+    await captureStore.save({ layer: captureLayer });
     reset();
   }
 
@@ -269,7 +270,8 @@
                 selected={$captureStore.method}
                 isHideTypeShortcuts={$captureStore.isCaptureFromCollectionPage}
                 onSelect={onTypeSelect}
-                onCapture={captureStore.handleCapture}
+                onCapture={(event) =>
+                  captureStore.handleCapture(event, { layer: captureLayer })}
               />
               <CaptureDraftsAction
                 onSelect={(draft) => {

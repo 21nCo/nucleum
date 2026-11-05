@@ -155,16 +155,6 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     this.set({ ...generateSeedStore(), id: capture });
   }
 
-  private layer: AccessMode | undefined;
-
-  /**
-   * Records the layer the Capture showing this store is rendered in, so a
-   * save closes only that Capture's surface.
-   */
-  setLayer(layer: AccessMode | undefined) {
-    this.layer = layer;
-  }
-
   async modify(
     val: Partial<ICapture>,
     params?: { isPreventBackPropagation?: boolean }
@@ -521,9 +511,13 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     }, 100);
   }
 
-  async save() {
+  /**
+   * Saves the markdown capture. `layer` is the layer of the Capture that
+   * saves it, the only surface the save closes.
+   */
+  async save(params?: { layer?: AccessMode }) {
     this.setIsSaving(true);
-    await this.saveMarkdownCapture();
+    await this.saveMarkdownCapture(params);
     const val = this.get();
     if (val.bulkQueryParam === "true" && val.linkQueryParam) {
       await this.setTypeFromLinkParam(val.linkQueryParam);
@@ -538,7 +532,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     this.setIsSaving(false);
   }
 
-  async handleCapture(event: Event) {
+  async handleCapture(event: Event, params?: { layer?: AccessMode }) {
     logger.log({ at: "Capture.svelte - handleCapture", event });
     try {
       this.setIsSaving(true);
@@ -546,7 +540,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       if (input.files && input.files[0]) {
         const file = input.files[0];
         if (file) {
-          await this.saveFile(file);
+          await this.saveFile(file, undefined, { layer: params?.layer });
           this.setIsSaving(false);
           return;
         }
@@ -672,6 +666,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
+      layer?: AccessMode;
     }
   ) {
     contentType = contentType ?? resolveContentTypeForFile(file);
@@ -685,7 +680,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         const result = await this.saveMarkdownFromMdFile(file);
         this.postSave(result?.slice(0, 1), {
           isOpenOnSave: params?.isOpenOnSave,
-          isEmbedContext: params?.isEmbedContext
+          isEmbedContext: params?.isEmbedContext,
+          layer: params?.layer
         });
         return result?.[0];
       }
@@ -738,7 +734,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       }
       this.postSave(result, {
         isOpenOnSave: params?.isOpenOnSave,
-        isEmbedContext: params?.isEmbedContext
+        isEmbedContext: params?.isEmbedContext,
+        layer: params?.layer
       });
       return Array.isArray(result) ? result?.[0] : result;
     } finally {
@@ -830,6 +827,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
       uploadProgressId?: string;
+      layer?: AccessMode;
     }
   ) {
     if (!params?.isEmbedContext) this.setIsSaving(true);
@@ -842,7 +840,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           files.map((x) => x.file)
         );
         this.postSave(result, {
-          isEmbedContext: params?.isEmbedContext
+          isEmbedContext: params?.isEmbedContext,
+          layer: params?.layer
         });
         return result;
       }
@@ -909,7 +908,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         await this.saveLinksForMultiFileCapture(nodes);
       }
       this.postSave(result, {
-        isEmbedContext: params?.isEmbedContext
+        isEmbedContext: params?.isEmbedContext,
+        layer: params?.layer
       });
       return result;
     } finally {
@@ -934,6 +934,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
       thumbnailBlob?: Blob;
+      layer?: AccessMode;
     }
   ) {
     if (!params?.isEmbedContext) this.setIsSaving(true);
@@ -990,7 +991,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       }
       this.postSave(result2, {
         isOpenOnSave: params?.isOpenOnSave,
-        isEmbedContext: params?.isEmbedContext
+        isEmbedContext: params?.isEmbedContext,
+        layer: params?.layer
       });
       return result2?.[0];
     } finally {
@@ -1010,6 +1012,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     params?: {
       deviceInfo?: MediaDeviceInfo | null;
       isMediaDeviceCapture?: boolean;
+      layer?: AccessMode;
     }
   ) {
     logger.debug({
@@ -1076,7 +1079,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     ) {
       return result2;
     }
-    this.postSave(result2, {});
+    this.postSave(result2, { layer: params?.layer });
   }
 
   async saveWebpage(
@@ -1161,6 +1164,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     params?: {
       isEmbedContext?: boolean;
       isOpenOnSave?: boolean;
+      /** Layer of the Capture that saved; only that surface closes. */
+      layer?: AccessMode;
     }
   ) {
     logger.debug({ at: "CaptureStore.postSave", result, params });
@@ -1195,7 +1200,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         shouldOpenUponSave,
         linkedCollectionId,
         shouldReturnToLinkedCollection,
-        layer: this.layer
+        layer: params?.layer
       });
     } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
@@ -1204,7 +1209,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     closeCaptureAfterSave(
       result.length === 1 &&
         (shouldOpenUponSave || shouldReturnToLinkedCollection),
-      this.layer
+      params?.layer
     );
     this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));
     await this.deletePermanently();
@@ -1256,7 +1261,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     return persistContentLinks(links);
   }
 
-  async saveMarkdownCapture() {
+  async saveMarkdownCapture(params?: { layer?: AccessMode }) {
     const val = this.get();
 
     const ctx = get(context);
@@ -1384,7 +1389,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       context: captureAction
     });
     await this.saveLinks(id);
-    this.postSave(result.slice(0, 1));
+    this.postSave(result.slice(0, 1), { layer: params?.layer });
     return result;
   }
 

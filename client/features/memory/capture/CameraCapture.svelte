@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolveCaptureLayerReader } from "@nucleum/features/memory/capture/capture-completion";
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { onMount } from "svelte";
@@ -25,6 +26,7 @@
     captureStore: IActiveCaptureStore;
     onClear?: (() => void) | undefined;
   } = $props();
+  const captureLayer = resolveCaptureLayerReader();
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
   let photoTaken = $state(false);
@@ -135,7 +137,8 @@
       }
       const result = await captureStore.saveCameraCapture(blob, {
         deviceInfo,
-        isMediaDeviceCapture: true
+        isMediaDeviceCapture: true,
+        layer: captureLayer()
       });
       isSaving = false;
       const node = Array.isArray(result) ? result[0] : result;
