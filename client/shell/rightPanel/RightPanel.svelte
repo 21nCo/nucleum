@@ -15,11 +15,17 @@
 
   let {
     action,
-    isSheet = false
+    isSheet = false,
+    isSuspended = false
   }: {
     action: IAction;
     /** Renders the tool as a full-screen sheet, as on phones. */
     isSheet?: boolean;
+    /**
+     * Hides the sheet without unmounting its tool while a layer opened over
+     * it is shown, so the tool keeps its state until that layer closes.
+     */
+    isSuspended?: boolean;
   } = $props();
 
   const sheetAttributes = $derived(
@@ -76,7 +82,8 @@
         }
       )}
   {...sheetAttributes}
-  use:trapFocusWhile={isSheet}
+  hidden={isSuspended || undefined}
+  use:trapFocusWhile={isSheet && !isSuspended}
   in:fly={isSheet
     ? { y: 40, duration: 150, easing: quadInOut }
     : { x: -10, duration: 100, easing: quadInOut }}

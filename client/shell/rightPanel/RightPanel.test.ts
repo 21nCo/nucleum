@@ -57,4 +57,21 @@ describe("RightPanel", () => {
     expect(document.activeElement).toBe(input);
     opener.remove();
   });
+
+  it("hides a suspended sheet without unmounting its tool", async () => {
+    resolver.mockClear();
+    const action = { action: "capture", label: "Capture" } as never;
+    const { rerender, container, queryByRole } = render(RightPanel, {
+      props: { action, isSheet: true }
+    });
+    await rerender({ action, isSheet: true, isSuspended: true });
+    await tick();
+    expect(container.querySelector("[hidden]")).toBeTruthy();
+    expect(queryByRole("dialog")).toBe(null);
+
+    await rerender({ action, isSheet: true, isSuspended: false });
+    await tick();
+    expect(queryByRole("dialog", { name: "Capture" })).toBeTruthy();
+    expect(resolver).toHaveBeenCalledTimes(1);
+  });
 });

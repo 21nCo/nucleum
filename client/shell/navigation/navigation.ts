@@ -13,6 +13,7 @@ import { goto } from "@nucleum/client/runtime/navigation/navigation-request";
 import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
 
 import view from "@21n/ui/environment/view.store";
+import { isRightPanelSheet } from "@nucleum/shared-state/commands/live-action-access";
 import context from "@nucleum/client/runtime/context.store";
 import { appEvents } from "@nucleum/shared-state/events/app-events.store";
 
@@ -706,7 +707,8 @@ export const navigation = {
       } else if (intent === "select") {
         isCloseNavigator =
           isNavigatorOpen &&
-          (get(view).isPortrait || navigatorLayer === AccessMode.OVERLAY);
+          (isRightPanelSheet(get(view)) ||
+            navigatorLayer === AccessMode.OVERLAY);
       } else if (intent === "extend") {
         accessTrail.extend(id.toString());
       }

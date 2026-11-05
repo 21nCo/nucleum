@@ -68,7 +68,10 @@
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
   const isPanelShown = $derived(!!rightPanel && !isOverlayFullScreen);
   const isPanelSheet = $derived(isRightPanelSheet($view));
-  const isPanelSheetShown = $derived(isPanelShown && isPanelSheet);
+  const isPanelSuspended = $derived(isPanelSheet && !!mainPath);
+  const isPanelSheetShown = $derived(
+    isPanelShown && isPanelSheet && !isPanelSuspended
+  );
 
   $effect(() => {
     contextZone.setVisibleLayers(
@@ -211,7 +214,11 @@
           </div>
         </div>
         {#if rightPanel && isPanelShown}
-          <RightPanel action={rightPanel} isSheet={isPanelSheet} />
+          <RightPanel
+            action={rightPanel}
+            isSheet={isPanelSheet}
+            isSuspended={isPanelSuspended}
+          />
         {/if}
       </div>
       {#if $view.isPortrait && $context.embed !== Embed.HANDSET && !isPanelShown}

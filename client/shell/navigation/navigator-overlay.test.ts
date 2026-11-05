@@ -74,3 +74,18 @@ describe("navigator opened as an overlay", () => {
     expect(overlay()).toBe("search");
   });
 });
+
+describe("navigator panel shown as a sheet on a constrained landscape view", () => {
+  it("closes the navigator sheet after it opens a trail node", () => {
+    view.refresh(800, 600);
+    navigation.openResource("node:a", "page" as never);
+    navigation.openResource("node:b", "page" as never);
+    history.setSearchParam("panel", "navigator");
+    const trail = accessTrail.get().current!;
+    navigation.openTrailNode(
+      trail.nodes.findIndex((node) => node.id === "node:a")
+    );
+    expect(activeNode()?.node.id).toBe("node:a");
+    expect(new URL(window.location.href).searchParams.get("panel")).toBeNull();
+  });
+});
