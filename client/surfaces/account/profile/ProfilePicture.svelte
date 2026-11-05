@@ -14,7 +14,8 @@
     context = "cp-profile",
     fileId: providedFileId = undefined,
     isEditing = false,
-    isLoading = false
+    isLoading = false,
+    onclick = undefined
   }: {
     context?:
       | "cmd-page"
@@ -25,6 +26,8 @@
     fileId?: IRecordId | undefined;
     isEditing?: boolean;
     isLoading?: boolean;
+    /** Runs when the picture is tapped. */
+    onclick?: () => void;
   } = $props();
   let fileId = $state<IRecordId | undefined>(undefined);
   let initials = $state<string | undefined>(undefined);
@@ -90,6 +93,7 @@
 </script>
 
 <button
+  {onclick}
   class={cn(" flex justify-center items-center bg-bgs3", {
     "rounded-full w-7 h-7 lp:w-6 lp:h-6": context === "topbar",
     "rounded-full w-16 h-16": context === "cp-profile",

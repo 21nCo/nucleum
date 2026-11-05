@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { onMount, onDestroy } from "svelte";
-  import { player } from "@nucleum/shell/overlays/modal.store";
+  import { isPortraitMiniPlayerDocked } from "@nucleum/shell/overlays/portrait-dock";
   import view from "@21n/ui/environment/view.store";
   import { cn } from "@21n/ui/environment/presentation";
   import { generateRandomId } from "@21n/shared-utils/crypto.utils";
@@ -18,7 +18,6 @@
     class?: string;
     children?: Snippet | undefined;
   } = $props();
-  let isAppMenuHidden = $state(resolveIfAppMenuHidden());
   const fallbackContainerId = generateRandomId();
   let ref: HTMLElement;
   let portal: HTMLElement | undefined = undefined;
@@ -27,7 +26,6 @@
   );
 
   onMount(() => {
-    isAppMenuHidden = resolveIfAppMenuHidden();
     const finalContainerId = containerId || fallbackContainerId;
     if (finalContainerId && ref) {
       portal = document.createElement("div");
@@ -49,10 +47,6 @@
       }
     }
   });
-
-  function resolveIfAppMenuHidden() {
-    return !document.getElementById("app-menu");
-  }
 </script>
 
 <div id={fallbackContainerId} />
@@ -63,9 +57,8 @@
       zIndex && zIndex,
       margin && margin,
       !margin && {
-        "mb-8": $view.isPortrait && isAppMenuHidden,
-        "mb-[10.5rem]": $view.isPortrait && $player.isMiniOn,
-        "mb-24": $view.isPortrait && !isAppMenuHidden,
+        "mb-8": $view.isPortrait && !$isPortraitMiniPlayerDocked,
+        "mb-[6.5rem]": $view.isPortrait && $isPortraitMiniPlayerDocked,
         "mb-4": !$view.isPortrait
       },
       resolvedClassList

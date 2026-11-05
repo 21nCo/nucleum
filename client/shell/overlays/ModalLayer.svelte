@@ -34,6 +34,10 @@
   import { cn } from "@21n/ui/environment/presentation";
   import ConfirmationNotification from "@nucleum/shell/notifications/ConfirmationNotification.svelte";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
+  import {
+    isPlayerShownInPage,
+    isPortraitMiniPlayerDocked
+  } from "@nucleum/shell/overlays/portrait-dock";
   const ComponentResolver = requireActionRenderer();
   let modals = $state<ModalEvent[]>([]);
   let isShowAppearancePreview = $state(false);
@@ -140,13 +144,23 @@
   </div>
 {/if}
 
+{#if $view.isPortrait && $isPortraitMiniPlayerDocked}
+  <div
+    class="fixed bottom-0 inset-x-0 z-30 pb-6 bg-bgs1 border-t border-brs2"
+    data-testid="portrait-mini-player"
+  >
+    <ComponentResolver path={$player.action} isPreventErrorFeedback={true} />
+  </div>
+{/if}
+
 {#if isValidArrayWithData($toasts) && $view.isPortrait}
   <div
     class={cn(
       "fixed bottom-0 left-0 mx-6 flex flex-col justify-center w-full gap-4 z-[100]",
       {
-        "mb-[10.5rem]": $player.isMiniOn,
-        "mb-24": $view.isPortrait
+        "mb-24": !$isPortraitMiniPlayerDocked && !$isPlayerShownInPage,
+        "mb-[6.5rem]": $isPlayerShownInPage,
+        "mb-[10.5rem]": $isPortraitMiniPlayerDocked
       }
     )}
     transition:slide={{ duration: 200, axis: "x" }}

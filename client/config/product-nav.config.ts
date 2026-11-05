@@ -76,12 +76,16 @@ const productNavConfig = {
       Action.OVERVIEW
     ] as const,
     homePath: Action.CALENDAR,
-    homePathPt: Action.LIBRARY_PORTRAIT,
+    homePathPt: Action.MOBILEHOME,
     librarySectionLabel: "Nucleum"
   },
   [Product.MEMOTRON]: {
     appMenu: [Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
-    appMenuPt: [] as const,
+    appMenuPt: [
+      Action.CALENDAR,
+      Action.OVERVIEW,
+      Action.LIBRARY_PORTRAIT
+    ] as const,
     homePath: Action.CALENDAR,
     homePathPt: Action.MOBILEHOME,
     librarySectionLabel: "Memory"
@@ -95,7 +99,7 @@ const productNavConfig = {
       Action.LIBRARY_PORTRAIT
     ] as const,
     homePath: Action.CALENDAR,
-    homePathPt: PointronAction.FOCUS,
+    homePathPt: Action.MOBILEHOME,
     librarySectionLabel: "Focus"
   }
 } satisfies Partial<Record<Product, IProductNavConfig>>;

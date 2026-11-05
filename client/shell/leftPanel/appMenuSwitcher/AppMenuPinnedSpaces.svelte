@@ -2,17 +2,20 @@
 
 <script lang="ts">
   import { page } from "$app/stores";
-  import { toSvelteStore } from "@datafn/svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import AvatarRenderer from "@21n/ui/elements/avatarPicker/AvatarRenderer.svelte";
   import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
-  import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
   import { Size } from "@21n/ui/elements/size.enum";
   import { Placement } from "@21n/ui/elements/direction.enum";
   import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
   import { popover } from "@21n/ui/actions/popover.action";
   import { cn } from "@21n/ui/environment/presentation";
-  import { datafn } from "@nucleum/datafn/datafn.store";
+  import {
+    createPinnedSpacesStore,
+    orderPinnedSpaces,
+    toPinnedSpacesKey,
+    type PinnedSpace
+  } from "@nucleum/shell/navigation/pinned-spaces";
   import { LayoutContext } from "@nucleum/shell/layout-mode.type";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import {
@@ -33,27 +36,10 @@
     layoutContext: LayoutContext;
   } = $props();
 
-  type PinnedSpace = { id: string; label?: string; avatar?: IAvatar };
-
   const pinnedIds = $derived(appMenuStore.pinnedSpaces($appMenuStore));
-  const pinnedKey = $derived(pinnedIds.join(","));
-  const spacesStore = $derived(
-    toSvelteStore<PinnedSpace[]>(
-      datafn.space.signal({
-        filters: { id: { $in: pinnedKey ? pinnedKey.split(",") : [] } },
-        select: ["id", "label", "avatar"]
-      }),
-      { initialData: [] }
-    )
-  );
-  const spaces = $derived.by(() => {
-    const byId = new Map(
-      ($spacesStore.data ?? []).map((space) => [space.id, space])
-    );
-    return pinnedIds
-      .map((id) => byId.get(id))
-      .filter((space): space is PinnedSpace => Boolean(space));
-  });
+  const pinnedKey = $derived(toPinnedSpacesKey(pinnedIds));
+  const spacesStore = $derived(createPinnedSpacesStore(pinnedKey));
+  const spaces = $derived(orderPinnedSpaces(pinnedIds, $spacesStore.data));
   const activeSpaceId = $derived.by(() => {
     const segments = $page.url.pathname.split("/").filter(Boolean);
     return segments[0] === SPACE_PAGE_ACTION && segments[1]

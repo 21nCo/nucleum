@@ -1,15 +1,9 @@
 <script lang="ts">
   import { navigation } from "@nucleum/shell/navigation/navigation";
-  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
-
-  import { appStore } from "@nucleum/shared-state/app-context/app.store";
-  import { Action } from "@nucleum/client/config/action.enum";
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import Writer from "@nucleum/features/memory/capture/Writer.svelte";
   import { CaptureMethod } from "@nucleum/features/memory/capture/capture.type";
@@ -18,12 +12,10 @@
     type IActiveCaptureStore
   } from "@nucleum/features/memory/capture/capture.store";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
-  import HomeTopNav from "@nucleum/products/memotron/home/mobile/HomeTopNav.svelte";
   import { haptic } from "@nucleum/client/runtime/embed/embed.utils";
+  import PhoneHome from "@nucleum/surfaces/home/PhoneHome.svelte";
   import TypeSelectorOnMobile from "@nucleum/features/memory/capture/typeSelector/TypeSelectorOnMobile.svelte";
   import { fly } from "svelte/transition";
-  import HomeQuickAccess from "@21n/ui/compositions/navigation/QuickAccessGrid.svelte";
-  import type { IQuickAccessItem } from "@21n/ui/compositions/navigation/quick-access.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import CaptureTopBar from "@nucleum/features/memory/capture/CaptureTopBar.svelte";
   import context from "@nucleum/client/runtime/context.store";
@@ -38,31 +30,20 @@
   import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { inlineToasts } from "@nucleum/shared-state/notifications/notification.store";
   import NotificationListener from "@nucleum/shell/notifications/NotificationListener.svelte";
-  import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
   import FileUploader from "@nucleum/features/memory/capture/FileUploader.svelte";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import ComponentEmbedLayer from "@nucleum/shell/layers/ComponentEmbedLayer.svelte";
-  import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import { quintOut } from "svelte/easing";
-  import ResourceSearchBase from "@nucleum/products/memotron/library/search/ResourceSearchBase.svelte";
   import account from "@nucleum/client/runtime/account/account.store";
   import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
   import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "@21n/ui/elements/text/info.type";
-  import { resolveProductConfig } from "@nucleum/products/product.config";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-  import { searchStore } from "@nucleum/surfaces/search/search.store";
-  import { datafn } from "@nucleum/datafn/datafn.store";
-  import { rootNodeTypeList } from "@nucleum/features/memory/node/node.type";
-  import { resolveCollectionResource } from "@nucleum/features/collections/collection.utils";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { datafnHeavyComputedSignalOptions } from "@nucleum/datafn/signalCache";
   let {
     captureId = $bindable(generateResourceId(Resource.capture))
   }: {
     captureId?: IRecordId;
   } = $props();
-  let mode = $state<"search" | "capture" | undefined>(undefined);
+  let mode = $state<"capture" | undefined>(undefined);
   let captureStore = $state<IActiveCaptureStore>(
     ActiveCaptureStore.resolve(captureId)
   );
@@ -74,85 +55,10 @@
   let cameraCaptureRef = $state<HTMLInputElement>();
   const transitionDuration = 250;
   initializeCaptureStore();
-  let searchBaseRef = $state<ResourceSearchBase>();
-  const homePathPt = resolveProductConfig().homePathPt;
-  const quickAccessCountStore = $derived.by(() =>
-    toSvelteStore(
-      () =>
-        datafn.resourceCountsSignal(
-          {
-            resources: [Resource.node, Resource.collection],
-            queriesByResource: {
-              [Resource.node]: {
-                filters: {
-                  contentType: { $in: [...rootNodeTypeList] },
-                  metaType: { $is_empty: true },
-                  creationContext: { $is_empty: true }
-                }
-              },
-              [Resource.collection]: {
-                filters: {
-                  resource: {
-                    $in: resolveCollectionResource($appStore.product)
-                  }
-                }
-              }
-            }
-          },
-          datafnHeavyComputedSignalOptions
-        ),
-      { initialData: {}, defer: { strategy: "idle", delayMs: 300 } }
-    )
-  );
-  const quickAccessItems = $derived.by((): IQuickAccessItem[] => [
-    {
-      id: "nodes",
-      label: "Nodes",
-      icon: resolveResourceIcon(Resource.node),
-      count: $quickAccessCountStore.data?.[Resource.node]
-    },
-    {
-      id: "collections",
-      label: "Collections",
-      icon: resolveResourceIcon(Resource.collection),
-      count: $quickAccessCountStore.data?.[Resource.collection]
-    },
-    {
-      id: "calendar",
-      label: "Calendar",
-      icon: "calendar"
-    }
-  ]);
 
   function initializeCaptureStore() {
     captureId = generateResourceId(Resource.capture);
     captureStore = ActiveCaptureStore.resolve(captureId);
-  }
-
-  const commonActionParams = {
-    searchParams: {
-      [AppSearchParam.RETURN_TO]: homePathPt
-    }
-  };
-
-  function handleSettingsClick() {
-    haptic();
-    requireCommandHost().runAction(Action.SETTINGS, commonActionParams);
-    mode = undefined;
-  }
-
-  function handleQuickAccessClick(item: IQuickAccessItem) {
-    haptic();
-    if (item.id === "calendar") {
-      requireCommandHost().runAction(Action.CALENDAR, commonActionParams);
-    } else {
-      requireCommandHost().runAction(ResourceActionType.BROWSE, {
-        componentParams: {
-          resource: item.id === "nodes" ? Resource.node : Resource.collection,
-          [AppSearchParam.RETURN_TO]: homePathPt
-        }
-      });
-    }
   }
 
   async function onTypeSelect(selected: string) {
@@ -249,145 +155,73 @@
     isFullPage={true}
   />
 {:else}
-  <div class="flex flex-col w-full bg-bgs2 pt-12">
-    <div
-      class={cn("transition-all duration-250 ease-out overflow-hidden", {
-        "max-h-96 opacity-100": !mode,
-        "max-h-0 opacity-0": mode
-      })}
-    >
-      {#if !mode}
-        <HomeTopNav {transitionDuration} onSettings={handleSettingsClick} />
-      {/if}
-      {#if !mode}
-        <div class="px-4">
-          <InlineSyncingFeedback resource={Resource.everything} />
+  <PhoneHome isSlotExpanded={mode === "capture"}>
+    {#snippet slot()}
+      {#if mode === "capture"}
+        <div
+          class="flex items-center p-4"
+          in:fly={{
+            y: -20,
+            duration: transitionDuration,
+            easing: quintOut
+          }}
+        >
+          <CaptureTopBar
+            {captureStore}
+            isHomeContext={true}
+            onFocusBody={() => {
+              writerRef?.focus();
+            }}
+            {onClear}
+            {onSave}
+          />
         </div>
       {/if}
-    </div>
-    {#if mode === "capture"}
-      <div
-        class="flex items-center p-4"
-        in:fly={{
-          y: -20,
-          duration: transitionDuration,
-          easing: quintOut
-        }}
-      >
-        <CaptureTopBar
-          {captureStore}
-          isHomeContext={true}
-          onFocusBody={() => {
-            writerRef?.focus();
-          }}
-          {onClear}
-          {onSave}
-        />
-      </div>
-    {/if}
 
-    {#if !mode || mode === "search"}
-      <div
-        class={cn("flex flex-col w-full", {
-          "h-full": mode === "search"
-        })}
-      >
-        <ResourceSearchBase
-          bind:this={searchBaseRef}
-          isExpanded={mode === "search"}
-          parentBgIndex={2}
-          onClose={() => {
-            mode = undefined;
+      {#if inlineToast}
+        {@const isError = inlineToast.type === AlertType.ERROR}
+        <div
+          class="px-3 pt-4"
+          transition:fly={{
+            y: -10,
+            duration: transitionDuration,
+            easing: quintOut
           }}
         >
           <div
-            class={cn("flex items-center gap-2  pt-3 pb-3", {
-              "px-4": mode !== "search",
-              "pl-4": mode === "search"
-            })}
+            class="border border-dashed border-brs3 rounded-md py-2 pl-3 pr-1 flex items-center justify-between"
           >
-            <TextInput
-              bind:value={$searchStore.query}
-              placeholder={$searchStore.resourceType === Resource.everything
-                ? "Search across your memory..."
-                : "Search " + $searchStore.resourceType + "s"}
-              onFocus={() => {
-                mode = "search";
-                setTimeout(() => {
-                  searchBaseRef?.search();
-                }, 100);
-              }}
-              onKeydown={(e) => {
-                searchStore.keydown(e.detail.event);
-              }}
-              onKeyup={(e) => {
-                searchStore.keyup(e.detail.event);
-              }}
-            />
-          </div>
-        </ResourceSearchBase>
-      </div>
-    {/if}
-    {#if !mode}
-      <div
-        class="flex-shrink-0"
-        transition:fly={{
-          y: -30,
-          duration: transitionDuration,
-          easing: quintOut
-        }}
-      >
-        <HomeQuickAccess
-          items={quickAccessItems}
-          onItemClick={handleQuickAccessClick}
-        />
-      </div>
-    {/if}
-    {#if inlineToast}
-      {@const isError = inlineToast.type === AlertType.ERROR}
-      <div
-        class="px-3 pt-4"
-        transition:fly={{
-          y: -10,
-          duration: transitionDuration,
-          easing: quintOut
-        }}
-      >
-        <div
-          class="border border-dashed border-brs3 rounded-md py-2 pl-3 pr-1 flex items-center justify-between"
-        >
-          <div class="flex items-center gap-2">
-            <Icon
-              icon={isError ? "x-circle" : "check-circle"}
-              size={Size.sm}
-              class={isError ? "text-ars1" : "text-ags1"}
-              isFilled={!isError}
-            />
-            <span
-              class={cn("text-b2", {
-                "text-fgs2": !isError,
-                "text-ars1": isError
-              })}
-            >
-              {inlineToast.message}
-            </span>
-          </div>
-          <div class="flex items-center gap-2">
-            {#if !isError}
-              <Button
-                label="View"
+            <div class="flex items-center gap-2">
+              <Icon
+                icon={isError ? "x-circle" : "check-circle"}
                 size={Size.sm}
-                isPreventMinWidth={true}
-                type={ButtonVariant.PRIMARY}
-                onclick={onInlineToastAction}
+                class={isError ? "text-ars1" : "text-ags1"}
+                isFilled={!isError}
               />
-            {/if}
-            <Button icon="cross" onclick={onInlineToastClose} />
+              <span
+                class={cn("text-b2", {
+                  "text-fgs2": !isError,
+                  "text-ars1": isError
+                })}
+              >
+                {inlineToast.message}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              {#if !isError}
+                <Button
+                  label="View"
+                  size={Size.sm}
+                  isPreventMinWidth={true}
+                  type={ButtonVariant.PRIMARY}
+                  onclick={onInlineToastAction}
+                />
+              {/if}
+              <Button icon="cross" onclick={onInlineToastClose} />
+            </div>
           </div>
         </div>
-      </div>
-    {/if}
-    {#if mode !== "search"}
+      {/if}
       <div
         class={cn("flex-1 min-h-0 overflow-y-auto", {
           "mt-4": mode === undefined,
@@ -468,8 +302,8 @@
           {/if}
         </div>
       </div>
-    {/if}
-  </div>
+    {/snippet}
+  </PhoneHome>
 {/if}
 
 <NotificationListener

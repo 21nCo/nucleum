@@ -60,7 +60,6 @@ export interface IAppConfigBase extends IProductConfigBase {
    * Home path for portrait mode
    */
   homePathPt: string;
-  isShowCaptureOnMobile?: boolean;
   settings?: SettingsSection[];
   databaseName?: string;
   librarySectionLabel?: string;
@@ -174,7 +173,6 @@ export const products: Record<string, IAppConfigBase> = {
     appMenuPt: [...memotronNav.appMenuPt],
     homePath: memotronNav.homePath,
     homePathPt: memotronNav.homePathPt,
-    isShowCaptureOnMobile: true,
     resources: resolveClientProductResources(Product.MEMOTRON),
     librarySectionLabel: memotronNav.librarySectionLabel,
     configurableShortcuts: [

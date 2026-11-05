@@ -378,7 +378,8 @@
     <ThemeLayer extensionContext={isPipShown ? "focusplayer" : undefined}>
       <div
         class={cn("flex flex-col gap-1 w-full", {
-          hidden: !isRenderPip && !$view.isConstrainedWidth,
+          hidden:
+            !isRenderPip && !$view.isConstrainedWidth && !$view.isPortrait,
           "opacity-0": isRenderPip && !isPipShown
         })}
       >

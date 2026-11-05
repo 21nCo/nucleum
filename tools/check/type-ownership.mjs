@@ -270,6 +270,20 @@ const changedEnumContracts = new Map([
     ]
   ],
   [
+    "client/types/layout.type.ts",
+    [
+      {
+        name: "LayoutContext",
+        members: {
+          DEFAULT: null,
+          MINIMIZED: null,
+          THIN: null,
+          THIN_WITH_LABEL: null
+        }
+      }
+    ]
+  ],
+  [
     "schema/resource.enum.ts",
     [
       {

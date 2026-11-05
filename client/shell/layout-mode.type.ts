@@ -4,7 +4,6 @@ export enum LayoutContext {
    * @deprecated - was experimental
    */
   MINIMIZED,
-  PORTRAIT,
   THIN,
   THIN_WITH_LABEL
 }

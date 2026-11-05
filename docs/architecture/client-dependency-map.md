@@ -117,7 +117,7 @@ flowchart LR
   ui --> uiHosts
 ```
 
-Product navigation reaches the shell only through `@nucleum/shared-state/product/product-config-host`. Brand, bulk edit, offline status, capture, quick actions, and persistent indicators reach shell chrome as snippets from `client/composition/chrome/` and the product base layers. Pages and resources put their view controls in the top bar context zone through `client/shell/topNav/contextZone/ContextZoneContent.svelte`; the shell never imports them. Persistence receives its logger through `persistence/logging-host`.
+Product navigation reaches the shell only through `@nucleum/shared-state/product/product-config-host`. Brand, bulk edit, offline status, quick actions, and persistent indicators reach shell chrome as snippets from `client/composition/chrome/` and the product base layers. Pages and resources put their view controls in the top bar context zone through `client/shell/topNav/contextZone/ContextZoneContent.svelte`; the shell never imports them. Persistence receives its logger through `persistence/logging-host`.
 
 ## App component chain
 

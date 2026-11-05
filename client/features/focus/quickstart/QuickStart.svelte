@@ -17,10 +17,7 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import { isValidArray } from "@21n/shared-utils/obj.utils";
-  import {
-    isSameResource,
-    resourceAction
-  } from "@nucleum/datafn/resource.utils";
+  import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import { resolveObjectiveColor } from "@nucleum/features/focus/goals/goal.utils";
   import { LoadingAnimationType } from "@21n/ui/elements/feedback/feedback.type";
@@ -29,9 +26,11 @@
   import view from "@21n/ui/environment/view.store";
   import QuickStartLayoutToggle from "@nucleum/features/focus/quickstart/actions/QuickStartLayoutToggle.svelte";
   import { datafn } from "@nucleum/datafn/datafn.store";
-  import { toSvelteStore } from "@datafn/svelte";
-  import { time } from "@datafn/client";
-  import type { ISessionLog } from "@nucleum/features/focus/logs/log.type";
+  import {
+    createPinnedQuickFocusStore,
+    createTodayFocusLogStore,
+    resolveQuickFocusItems
+  } from "@nucleum/features/focus/quickstart/quick-focus";
 
   let isLoadingState = $state(false);
   let searchQuery = $state("");
@@ -40,29 +39,13 @@
   restoreLayoutState();
   let searchPinnedItems = $state<IObjectiveThumb[]>([]);
   let searchUnpinnedItems = $state<IObjectiveThumb[]>([]);
-  const pinnedObjectiveStore = toSvelteStore<IObjectiveThumb[]>(
-    datafn.objective.signal({
-      select: ["*", "parent.*"],
-      filters: {
-        id: { $ne: "" },
-        isPinnedForQuickFocus: true
-      },
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true
-      }
-    }),
-    { initialData: [] }
-  );
-  const currentDayLogStore = toSvelteStore<ISessionLog[]>(
-    datafn.sessionLog.signal({
-      select: ["id", "objectiveId", "focus", "breakTime", "startUnix"],
-      temporal: time.day("startUnix", new Date())
-    }),
-    { initialData: [] }
-  );
+  const pinnedObjectiveStore = createPinnedQuickFocusStore();
+  const currentDayLogStore = createTodayFocusLogStore();
   const items = $derived(
-    resolvePinnedItems($pinnedObjectiveStore.data, $currentDayLogStore.data)
+    resolveQuickFocusItems(
+      $pinnedObjectiveStore.data,
+      $currentDayLogStore.data
+    )
   );
   const isLoading = $derived(
     isLoadingState ||
@@ -84,32 +67,6 @@
       scope: UIStateScope.DEVICE
     });
     layout = layoutState ?? Layout.LIST;
-  }
-
-  function resolvePinnedItems(
-    objectives: IObjectiveThumb[],
-    logs: ISessionLog[]
-  ) {
-    return objectives
-      .map((objective: IObjectiveThumb) => ({
-        ...objective,
-        color: resolveObjectiveColor(objective),
-        focus: logs
-          .filter((log) =>
-            log.objectiveId
-              ? isSameResource(log.objectiveId, objective.id)
-              : false
-          )
-          .reduce((total, log) => total + (log.focus ?? 0), 0)
-      }))
-      .sort((a: IObjectiveThumb, b: IObjectiveThumb) => {
-        if (a.color === b.color) {
-          return (a.label ?? "").localeCompare(b.label ?? "");
-        }
-        if (a.color === undefined) return 1;
-        if (b.color === undefined) return -1;
-        return a.color - b.color;
-      });
   }
 
   async function onSearch(val: string) {

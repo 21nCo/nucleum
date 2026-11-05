@@ -20,13 +20,35 @@ import { resolveLibrarySwitcherResources } from "@nucleum/surfaces/library/resou
 import { resolveNucleusOverviewViewSegments } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
 import { resolveProductConfig } from "@nucleum/products/product.config";
 import { Product } from "@nucleum/client/config/product.type";
+import NucleusHomeOnMobile from "@nucleum/products/nucleus/home/NucleusHomeOnMobile.svelte";
 
-const actionsToFilterInSub: string[] = [Action.LIBRARY, Action.OVERVIEW];
+const actionsToFilterInSub: string[] = [
+  Action.LIBRARY,
+  Action.OVERVIEW,
+  Action.MOBILEHOME
+];
+
+const memotronActionsToFilterInSub: string[] = [
+  ...actionsToFilterInSub,
+  Action.LIBRARY_PORTRAIT
+];
 
 function isSubProductAction(action: IAction) {
+  return isNotFilteredBy(actionsToFilterInSub, action);
+}
+
+/**
+ * Memotron and Pointron both register the phone Library page; Nucleum keeps
+ * Pointron's, so Memotron's page and its views are left out.
+ */
+function isMemotronSubProductAction(action: IAction) {
+  return isNotFilteredBy(memotronActionsToFilterInSub, action);
+}
+
+function isNotFilteredBy(filtered: string[], action: IAction) {
   return (
-    !actionsToFilterInSub.includes(action.action) &&
-    !actionsToFilterInSub.includes(action.subViewOf ?? "")
+    !filtered.includes(action.action) &&
+    !filtered.includes(action.subViewOf ?? "")
   );
 }
 
@@ -55,7 +77,7 @@ const overviewAction: IAction = {
 };
 
 export const nucleusActions: IAction[] = [
-  ...memotronActions.filter(isSubProductAction),
+  ...memotronActions.filter(isMemotronSubProductAction),
   ...pointronActions.filter(isSubProductAction),
   libraryAction,
   ...createLibraryViewActions(
@@ -70,6 +92,13 @@ export const nucleusActions: IAction[] = [
     overviewAction,
     resolveNucleusOverviewViewSegments()
   ),
+  {
+    action: Action.MOBILEHOME,
+    component: NucleusHomeOnMobile,
+    type: ActionType.PAGE,
+    isMeta: true,
+    isMenuHidden: true
+  },
   {
     action: Action.HOME,
     label: appMenuActionLabelsByAction[Action.HOME],
