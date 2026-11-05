@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolveCaptureLayerReader } from "@nucleum/features/memory/capture/capture-completion";
+  import { resolveCaptureSourceReader } from "@nucleum/features/memory/capture/capture-instances";
   import { onMount } from "svelte";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -13,7 +13,7 @@
     captureStore: IActiveCaptureStore;
     onClose?: (() => void) | undefined;
   } = $props();
-  const captureLayer = resolveCaptureLayerReader();
+  const captureSource = resolveCaptureSourceReader();
   let photoTaken = $state(false);
   let imagePreview = $state<string | null>(null);
   let fileInputRef: HTMLInputElement;
@@ -36,7 +36,7 @@
       fetch(imagePreview)
         .then((res) => res.blob())
         .then((blob) => {
-          captureStore.saveCameraCapture(blob, { layer: captureLayer() });
+          captureStore.saveCameraCapture(blob, { source: captureSource() });
         });
     }
   }

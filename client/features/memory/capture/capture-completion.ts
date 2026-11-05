@@ -12,8 +12,10 @@ import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import type { IEvent } from "@21n/ui/elements/input/event.type";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
-import { getContext } from "svelte";
-import { Context } from "@nucleum/shared-state/app-context/app-store.type";
+import {
+  isCaptureSourceMounted,
+  type CaptureSaveSource
+} from "@nucleum/features/memory/capture/capture-instances";
 
 /** Resolves the collection selected by capture links. */
 export function resolveLinkedCollectionId(captureState: {
@@ -40,8 +42,8 @@ export function handleSingleNodePostSave(params: {
   shouldOpenUponSave: boolean;
   linkedCollectionId?: IRecordId;
   shouldReturnToLinkedCollection: boolean;
-  /** Layer the saving Capture is rendered in; only that surface closes. */
-  layer: AccessMode | undefined;
+  /** Capture the save started from; only its surface closes. */
+  source: CaptureSaveSource | undefined;
 }) {
   if (!params.isConstrainedWidth && !params.isEmbedContext) {
     toasts.success("Node saved successfully!");
@@ -59,10 +61,7 @@ export function handleSingleNodePostSave(params: {
     return;
   }
 
-  const surface = resolveCaptureSurface(
-    new URL(window.location.href),
-    params.layer
-  );
+  const surface = resolveSourceSurface(params.source);
   const searchParams =
     surface && surface.accessMode !== AccessMode.PAGE
       ? { [surface.accessMode]: null }
@@ -101,20 +100,42 @@ export function resolveCaptureSurface(url: URL, layer: AccessMode | undefined) {
 }
 
 /**
- * Closes the saved Capture's own surface, given the layer it is rendered in,
- * so a Capture page saved while a Capture in the panel holds a draft leaves
- * the panel open. Skipped when opening the saved node already replaced the
- * capture.
+ * The surface of the Capture a save started from, while that same Capture is
+ * still mounted in its layer, so a slow save never closes a Capture that has
+ * replaced it there.
+ */
+function resolveSourceSurface(source: CaptureSaveSource | undefined) {
+  if (!source || !isCaptureSourceMounted(source)) return undefined;
+  return resolveCaptureSurface(new URL(window.location.href), source.layer);
+}
+
+/**
+ * Closes the saved Capture's own surface, while the Capture the save started
+ * from is still mounted there, so a Capture page saved while a Capture in the
+ * panel holds a draft leaves the panel open. Skipped when opening the saved
+ * node already replaced the capture.
  */
 export function closeCaptureAfterSave(
   isReplacedByOpenedNode: boolean,
-  layer: AccessMode | undefined
+  source: CaptureSaveSource | undefined
 ) {
   if (isReplacedByOpenedNode) {
     return;
   }
-  const surface = resolveCaptureSurface(new URL(window.location.href), layer);
+  const surface = resolveSourceSurface(source);
   if (surface) navigation.closeResource(surface);
+}
+
+/**
+ * Closes the layer a Capture is rendered in, from that Capture's own Close
+ * control, leaving Captures open in other layers as they are.
+ */
+export function closeCaptureLayer(layer: AccessMode) {
+  navigation.closeResource(
+    resolveCaptureSurface(new URL(window.location.href), layer) ?? {
+      accessMode: layer
+    }
+  );
 }
 
 /**
@@ -144,16 +165,4 @@ export function isCaptureSaveShortcut(event: IEvent, isVisible: boolean) {
     event.event === GlobalEvent.ENTER &&
     event.value?.metaKey === true
   );
-}
-
-/**
- * Reads, when a save starts, the layer of the Capture around the calling
- * component, which a save passes on so that only that Capture's surface
- * closes. Undefined outside a Capture.
- */
-export function resolveCaptureLayerReader(): () => AccessMode | undefined {
-  const capture = getContext<{ layer?: AccessMode } | undefined>(
-    Context.CAPTURE
-  );
-  return () => capture?.layer;
 }

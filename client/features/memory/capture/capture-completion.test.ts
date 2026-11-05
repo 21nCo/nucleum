@@ -25,10 +25,13 @@ import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 import {
   closeCaptureAfterSave,
+  closeCaptureLayer,
   closeCapturePageAfterReset,
   handleSingleNodePostSave,
   isCaptureSaveShortcut
 } from "./capture-completion";
+import { mountCapture, unmountCaptures } from "./capture-instances.test.setup";
+import { resolveShortcutCaptureInstance } from "./capture-instances";
 
 const capture = resourceAction(Resource.node, ResourceActionType.CREATE);
 const panelDraftWithCapturePage = `?${AccessMode.PANEL}=${capture}&${AccessMode.PAGE}=${MemotronAction.CAPTURE_SECONDARY}`;
@@ -38,6 +41,7 @@ function visit(search: string) {
 }
 
 afterEach(() => {
+  unmountCaptures();
   navigation.closeResource.mockReset();
   navigation.openResource.mockReset();
   visit("");
@@ -46,7 +50,7 @@ afterEach(() => {
 describe("closeCaptureAfterSave", () => {
   it("closes a capture open in the panel and leaves the overlay open", () => {
     visit(`?${AccessMode.PANEL}=${capture}&${AccessMode.OVERLAY}=search`);
-    closeCaptureAfterSave(false, AccessMode.PANEL);
+    closeCaptureAfterSave(false, mountCapture(AccessMode.PANEL));
     expect(navigation.closeResource).toHaveBeenCalledTimes(1);
     expect(navigation.closeResource).toHaveBeenCalledWith({
       id: capture,
@@ -56,7 +60,7 @@ describe("closeCaptureAfterSave", () => {
 
   it("closes a capture open in the overlay", () => {
     visit(`?${AccessMode.OVERLAY}=${capture}`);
-    closeCaptureAfterSave(false, AccessMode.OVERLAY);
+    closeCaptureAfterSave(false, mountCapture(AccessMode.OVERLAY));
     expect(navigation.closeResource).toHaveBeenCalledWith({
       id: capture,
       accessMode: AccessMode.OVERLAY
@@ -65,7 +69,7 @@ describe("closeCaptureAfterSave", () => {
 
   it("closes a saved Capture page and keeps the panel Capture with its draft", () => {
     visit(panelDraftWithCapturePage);
-    closeCaptureAfterSave(false, AccessMode.PAGE);
+    closeCaptureAfterSave(false, mountCapture(AccessMode.PAGE));
     expect(navigation.closeResource).toHaveBeenCalledTimes(1);
     expect(navigation.closeResource).toHaveBeenCalledWith({
       id: MemotronAction.CAPTURE_SECONDARY,
@@ -75,7 +79,7 @@ describe("closeCaptureAfterSave", () => {
 
   it("keeps the capture open when it opens the saved node", () => {
     visit(`?${AccessMode.OVERLAY}=${capture}`);
-    closeCaptureAfterSave(true, AccessMode.OVERLAY);
+    closeCaptureAfterSave(true, mountCapture(AccessMode.OVERLAY));
     expect(navigation.closeResource).not.toHaveBeenCalled();
   });
 });
@@ -93,7 +97,7 @@ describe("handleSingleNodePostSave", () => {
       shouldOpenUponSave: true,
       linkedCollectionId: overrides.linkedCollectionId,
       shouldReturnToLinkedCollection: !!overrides.linkedCollectionId,
-      layer
+      source: mountCapture(layer)
     });
   }
 
@@ -176,5 +180,50 @@ describe("isCaptureSaveShortcut", () => {
 
   it("ignores Cmd+Enter while its right panel is hidden under another layer", () => {
     expect(isCaptureSaveShortcut(enter, false)).toBe(false);
+  });
+});
+
+describe("several Captures open at once", () => {
+  it("leaves a replacement Capture open when a slow save from the one it replaced finishes", () => {
+    visit(`?${AccessMode.PANEL}=${capture}`);
+    const replaced = mountCapture(AccessMode.PANEL);
+    unmountCaptures();
+    mountCapture(AccessMode.PANEL);
+
+    closeCaptureAfterSave(false, replaced);
+    handleSingleNodePostSave({
+      node: { id: "node:saved" },
+      isConstrainedWidth: false,
+      shouldOpenUponSave: true,
+      shouldReturnToLinkedCollection: false,
+      source: replaced
+    });
+    expect(navigation.closeResource).not.toHaveBeenCalled();
+    expect(navigation.openResource).toHaveBeenCalledWith(
+      "node:saved",
+      AccessMode.PAGE,
+      { searchParams: {} }
+    );
+  });
+
+  it("sends Cmd+Enter to the focused Capture, otherwise to the topmost visible one", () => {
+    const pageElement = document.createElement("div");
+    const input = pageElement.appendChild(document.createElement("input"));
+    const page = mountCapture(AccessMode.PAGE, { element: pageElement });
+    const panel = mountCapture(AccessMode.PANEL);
+    mountCapture(AccessMode.OVERLAY, { isVisible: false });
+
+    expect(resolveShortcutCaptureInstance(input)).toBe(page.instance);
+    expect(resolveShortcutCaptureInstance(document.body)).toBe(panel.instance);
+  });
+
+  it("closes the Capture page from its own Close control and keeps the panel draft", () => {
+    visit(panelDraftWithCapturePage);
+    closeCaptureLayer(AccessMode.PAGE);
+    expect(navigation.closeResource).toHaveBeenCalledTimes(1);
+    expect(navigation.closeResource).toHaveBeenCalledWith({
+      id: MemotronAction.CAPTURE_SECONDARY,
+      accessMode: AccessMode.PAGE
+    });
   });
 });

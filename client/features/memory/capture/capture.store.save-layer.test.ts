@@ -23,11 +23,13 @@ import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { ActiveCaptureStore } from "./capture.store";
+import { mountCapture, unmountCaptures } from "./capture-instances.test.setup";
 
 const panelCapture = resourceAction(Resource.node, ResourceActionType.CREATE);
 const saved = [{ id: "node:saved" }];
 
 afterEach(() => {
+  unmountCaptures();
   navigation.closeResource.mockReset();
   window.history.replaceState(null, "", "/");
 });
@@ -43,7 +45,7 @@ describe("saving a draft open in two Captures", () => {
     const panelView = ActiveCaptureStore.resolve("capture:shared" as never);
     expect(panelView).toBe(pageView);
 
-    await pageView.postSave(saved, { layer: AccessMode.PAGE });
+    await pageView.postSave(saved, { source: mountCapture(AccessMode.PAGE) });
     expect(navigation.closeResource).toHaveBeenCalledTimes(1);
     expect(navigation.closeResource).toHaveBeenCalledWith({
       id: MemotronAction.CAPTURE_SECONDARY,

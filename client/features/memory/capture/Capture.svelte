@@ -44,13 +44,17 @@
 
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import EdgeButton from "@21n/ui/elements/button/EdgeButton.svelte";
-  import { resolveOpenLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
-  import { resourceAction } from "@nucleum/datafn/resource.utils";
-  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import {
     closeCapturePageAfterReset,
+    closeCaptureLayer,
     isCaptureSaveShortcut
   } from "@nucleum/features/memory/capture/capture-completion";
+  import {
+    registerCaptureInstance,
+    resolveShortcutCaptureInstance,
+    type CaptureSaveSource
+  } from "@nucleum/features/memory/capture/capture-instances";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import {
     isInRightPanel,
     resolveHostVisibility
@@ -70,15 +74,20 @@
   const captureLayer = $derived(
     accessMode ?? (isRightPanelHosted ? AccessMode.PANEL : AccessMode.OVERLAY)
   );
+  const instanceKey = generateSimpleRandomId();
+  const captureSource = $derived<CaptureSaveSource>({
+    instance: instanceKey,
+    layer: captureLayer
+  });
+  let rootElement = $state<HTMLElement | undefined>(undefined);
   const captureContext = {
     id: captureId,
-    get layer() {
-      return captureLayer;
+    get source() {
+      return captureSource;
     }
   };
 
   setContext(Context.CAPTURE, captureContext);
-  const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
   const hostVisibility = resolveHostVisibility();
   let captureStore = $state<IActiveCaptureStore>(
     ActiveCaptureStore.resolve(captureId)
@@ -103,9 +112,20 @@
     if (!isWindowDnD) {
       releaseDnDPage = acquireDnDPage();
     }
+    subs.push(
+      registerCaptureInstance({
+        key: instanceKey,
+        layer: () => captureLayer,
+        element: () => rootElement,
+        isVisible: () => get(hostVisibility)
+      })
+    );
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
-      if (isCaptureSaveShortcut(x, get(hostVisibility))) {
-        await captureStore.save({ layer: captureLayer });
+      if (
+        isCaptureSaveShortcut(x, get(hostVisibility)) &&
+        resolveShortcutCaptureInstance(document.activeElement) === instanceKey
+      ) {
+        await captureStore.save({ source: captureSource });
       }
     });
     subs.push(appEventSub);
@@ -159,7 +179,7 @@
   }
 
   async function onSave() {
-    await captureStore.save({ layer: captureLayer });
+    await captureStore.save({ source: captureSource });
     reset();
   }
 
@@ -204,124 +224,120 @@
   });
 </script>
 
-{#if $captureStore.isSaving && $captureStore.method !== CaptureMethod.UPLOAD}
-  <EmptyStatusView isLoadingState={true} loadingText="Saving..." />
-{:else}
-  {#key $captureStore.refreshId}
-    <div
-      class="w-full h-full flex justify-center otop:pt-12"
-      id={`mdcontainer-${$captureStore.id}`}
-    >
+<div class="contents" bind:this={rootElement}>
+  {#if $captureStore.isSaving && $captureStore.method !== CaptureMethod.UPLOAD}
+    <EmptyStatusView isLoadingState={true} loadingText="Saving..." />
+  {:else}
+    {#key $captureStore.refreshId}
       <div
-        class={cn("w-full max-w-5xl h-full flex flex-col px-4 pt-4 bg-bgs1", {
-          "pb-4": !isShowBottomCloseButton
-        })}
+        class="w-full h-full flex justify-center otop:pt-12"
+        id={`mdcontainer-${$captureStore.id}`}
       >
-        {#if !$captureStore.isSaving}
-          <CaptureTopBar
-            bind:this={captureTopBarRef}
-            {captureStore}
-            onFocusBody={() => writerRef?.focus()}
-            onClear={reset}
-            {onSave}
-          />
-        {/if}
-        <main class="flex flex-col gap-6 w-full flex-grow">
-          <div
-            class={cn("w-full", {
-              "h-48 min-h-48": $captureStore.isEmpty,
-              "h-full": !$captureStore.isEmpty
-            })}
-          >
-            {#if $captureStore.method === CaptureMethod.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
-              <FileUploader {captureStore} onClear={reset} />
-            {:else if $captureStore.method === CaptureMethod.WEB}
-              <div
-                class="flex h-full w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-brs3 bg-bgs2/60 px-6 text-center"
-              >
-                <Icon icon="globe-alt" size={Size.lg} class="text-fgs3" />
-                <div class="max-w-md text-b3 text-fgs3">
-                  Search movies, books, podcasts, and recipes from the web and
-                  add them to this capture.
+        <div
+          class={cn("w-full max-w-5xl h-full flex flex-col px-4 pt-4 bg-bgs1", {
+            "pb-4": !isShowBottomCloseButton
+          })}
+        >
+          {#if !$captureStore.isSaving}
+            <CaptureTopBar
+              bind:this={captureTopBarRef}
+              {captureStore}
+              onFocusBody={() => writerRef?.focus()}
+              onClear={reset}
+              {onSave}
+            />
+          {/if}
+          <main class="flex flex-col gap-6 w-full flex-grow">
+            <div
+              class={cn("w-full", {
+                "h-48 min-h-48": $captureStore.isEmpty,
+                "h-full": !$captureStore.isEmpty
+              })}
+            >
+              {#if $captureStore.method === CaptureMethod.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
+                <FileUploader {captureStore} onClear={reset} />
+              {:else if $captureStore.method === CaptureMethod.WEB}
+                <div
+                  class="flex h-full w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-brs3 bg-bgs2/60 px-6 text-center"
+                >
+                  <Icon icon="globe-alt" size={Size.lg} class="text-fgs3" />
+                  <div class="max-w-md text-b3 text-fgs3">
+                    Search movies, books, podcasts, and recipes from the web and
+                    add them to this capture.
+                  </div>
+                  <Button
+                    label="Open Add from Web"
+                    type={ButtonVariant.PRIMARY}
+                    size={Size.md}
+                    onclick={() => {
+                      isWebModalOpen = true;
+                    }}
+                  />
                 </div>
-                <Button
-                  label="Open Add from Web"
-                  type={ButtonVariant.PRIMARY}
-                  size={Size.md}
-                  onclick={() => {
-                    isWebModalOpen = true;
+              {:else}
+                <Writer
+                  {captureStore}
+                  bind:this={writerRef}
+                  onChange={(e) => {
+                    captureStore.onMdContentChanges(e);
                   }}
+                  onClear={reset}
                 />
-              </div>
-            {:else}
-              <Writer
-                {captureStore}
-                bind:this={writerRef}
-                onChange={(e) => {
-                  captureStore.onMdContentChanges(e);
-                }}
-                onClear={reset}
-              />
-            {/if}
-          </div>
-          {#if $captureStore.isEmpty}
-            <div class="flex flex-col gap-8 w-full dp:px-12 dp:my-10">
-              <TypeSelector
-                selected={$captureStore.method}
-                isHideTypeShortcuts={$captureStore.isCaptureFromCollectionPage}
-                onSelect={onTypeSelect}
-                onCapture={(event) =>
-                  captureStore.handleCapture(event, { layer: captureLayer })}
-              />
-              <CaptureDraftsAction
-                onSelect={(draft) => {
-                  captureId = draft.id;
-                  captureStore = ActiveCaptureStore.resolve(captureId);
-                  captureStore.load(draft);
-                }}
-              />
-              {#if $view.isConstrainedWidth}
-                <ScrollViewBottomSpacer size={Size.sm} />
               {/if}
             </div>
-          {/if}
-        </main>
+            {#if $captureStore.isEmpty}
+              <div class="flex flex-col gap-8 w-full dp:px-12 dp:my-10">
+                <TypeSelector
+                  selected={$captureStore.method}
+                  isHideTypeShortcuts={$captureStore.isCaptureFromCollectionPage}
+                  onSelect={onTypeSelect}
+                  onCapture={(event) =>
+                    captureStore.handleCapture(event, {
+                      source: captureSource
+                    })}
+                />
+                <CaptureDraftsAction
+                  onSelect={(draft) => {
+                    captureId = draft.id;
+                    captureStore = ActiveCaptureStore.resolve(captureId);
+                    captureStore.load(draft);
+                  }}
+                />
+                {#if $view.isConstrainedWidth}
+                  <ScrollViewBottomSpacer size={Size.sm} />
+                {/if}
+              </div>
+            {/if}
+          </main>
 
-        {#if $view.isConstrainedWidth && ($captureStore.isEmpty || $captureStore.method === CaptureMethod.AUDIO)}
-          <div
-            class="w-full flex justify-center mb-5"
-            in:fly={{ y: -100, duration: 250 }}
-          >
-            <button
-              class="flex w-12 h-12 text-fgs3 hover:bg-bgs3 bg-bgs2 rounded-full items-center justify-center"
-              onclick={reset}
+          {#if $view.isConstrainedWidth && ($captureStore.isEmpty || $captureStore.method === CaptureMethod.AUDIO)}
+            <div
+              class="w-full flex justify-center mb-5"
+              in:fly={{ y: -100, duration: 250 }}
             >
-              <Icon icon="cross" />
-            </button>
-          </div>
-        {/if}
-        {#if isShowBottomCloseButton}
-          <div class="w-full flex justify-center">
-            <EdgeButton
-              icon="cross"
-              tooltip="Close capture"
-              label="Close"
-              onclick={() => {
-                navigation.closeResource({
-                  accessMode:
-                    resolveOpenLiveActionAccessMode(
-                      captureAction,
-                      new URL(window.location.href)
-                    ) ?? AccessMode.OVERLAY
-                });
-              }}
-            />
-          </div>
-        {/if}
+              <button
+                class="flex w-12 h-12 text-fgs3 hover:bg-bgs3 bg-bgs2 rounded-full items-center justify-center"
+                onclick={reset}
+              >
+                <Icon icon="cross" />
+              </button>
+            </div>
+          {/if}
+          {#if isShowBottomCloseButton}
+            <div class="w-full flex justify-center">
+              <EdgeButton
+                icon="cross"
+                tooltip="Close capture"
+                label="Close"
+                onclick={() => closeCaptureLayer(captureLayer)}
+              />
+            </div>
+          {/if}
+        </div>
       </div>
-    </div>
-  {/key}
-{/if}
+    {/key}
+  {/if}
+</div>
 
 <WebCaptureModal
   open={isWebModalOpen}

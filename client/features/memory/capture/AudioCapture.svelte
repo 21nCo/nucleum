@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolveCaptureLayerReader } from "@nucleum/features/memory/capture/capture-completion";
+  import { resolveCaptureSourceReader } from "@nucleum/features/memory/capture/capture-instances";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { PlayActionState } from "@nucleum/shared-state/events/event.enum";
@@ -33,7 +33,7 @@
     onSaved?: ((result: any) => void) | undefined;
     onClear?: (() => void) | undefined;
   } = $props();
-  const captureLayer = resolveCaptureLayerReader();
+  const captureSource = resolveCaptureSourceReader();
 
   let recordingState = $state(PlayActionState.NOT_STARTED);
   let url: string;
@@ -138,7 +138,7 @@
         isEmbedContext: accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
         creationContext,
         thumbnailBlob: waveformBlob,
-        layer: captureLayer()
+        source: captureSource()
       }
     );
     onSaved?.(result);

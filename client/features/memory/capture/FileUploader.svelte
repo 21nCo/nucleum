@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolveCaptureLayerReader } from "@nucleum/features/memory/capture/capture-completion";
+  import { resolveCaptureSourceReader } from "@nucleum/features/memory/capture/capture-instances";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { fileDrop } from "@21n/ui/actions/fileDrop.action";
@@ -37,7 +37,7 @@
     captureStore: IActiveCaptureStore;
     onClear?: (() => void) | undefined;
   } = $props();
-  const captureLayer = resolveCaptureLayerReader();
+  const captureSource = resolveCaptureSourceReader();
 
   const imageFileTypes = [
     ".jpg",
@@ -87,7 +87,7 @@
       if (all.length === 1) {
         let file = all[0];
         await captureStore.saveFile(file, undefined, {
-          layer: captureLayer()
+          source: captureSource()
         });
       } else if (all.length > 1) {
         multipleFilesData = resolveMultipleFilesData(all, MAX_FILE_SIZE_MB);
@@ -111,7 +111,7 @@
     await wait(10);
     await captureStore.saveMultipleFiles(multipleFilesData.files, {
       uploadProgressId: uploadProgressElementId,
-      layer: captureLayer()
+      source: captureSource()
     });
   }
   async function handleInsertIntoMd(e: MouseEvent) {
