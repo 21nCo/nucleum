@@ -51,7 +51,10 @@
     closeCapturePageAfterReset,
     isCaptureSaveShortcut
   } from "@nucleum/features/memory/capture/capture-completion";
-  import { resolveHostVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+  import {
+    isInRightPanel,
+    resolveHostVisibility
+  } from "@nucleum/shell/rightPanel/right-panel-visibility";
 
   let {
     captureId = generateResourceId(Resource.capture),
@@ -70,6 +73,10 @@
   setContext(Context.CAPTURE, captureContext);
   const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
   const hostVisibility = resolveHostVisibility();
+  const isRightPanelHosted = isInRightPanel();
+  const captureLayer = $derived(
+    accessMode ?? (isRightPanelHosted ? AccessMode.PANEL : AccessMode.OVERLAY)
+  );
   let captureStore = $state<IActiveCaptureStore>(
     ActiveCaptureStore.resolve(captureId)
   );
@@ -88,6 +95,8 @@
     captureContext.id = captureId;
     captureStore = ActiveCaptureStore.resolve(captureId);
   });
+
+  $effect(() => captureStore.setLayer(captureLayer));
 
   onMount(async () => {
     if (!isWindowDnD) {

@@ -22,6 +22,11 @@ export function provideRightPanelVisibility(isVisible: Readable<boolean>) {
   setContext(RIGHT_PANEL_VISIBILITY, isVisible);
 }
 
+/** Whether the calling component is rendered inside a right panel. */
+export function isInRightPanel() {
+  return getContext(RIGHT_PANEL_VISIBILITY) !== undefined;
+}
+
 /**
  * Whether the layer hosting the calling component is visible: the right
  * panel's visibility inside a right panel, otherwise whether no other layer,

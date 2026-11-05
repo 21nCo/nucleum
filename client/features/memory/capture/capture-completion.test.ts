@@ -31,6 +31,7 @@ import {
 } from "./capture-completion";
 
 const capture = resourceAction(Resource.node, ResourceActionType.CREATE);
+const panelDraftWithCapturePage = `?${AccessMode.PANEL}=${capture}&${AccessMode.PAGE}=${MemotronAction.CAPTURE_SECONDARY}`;
 
 function visit(search: string) {
   window.history.replaceState(null, "", `/${search}`);
@@ -45,7 +46,7 @@ afterEach(() => {
 describe("closeCaptureAfterSave", () => {
   it("closes a capture open in the panel and leaves the overlay open", () => {
     visit(`?${AccessMode.PANEL}=${capture}&${AccessMode.OVERLAY}=search`);
-    closeCaptureAfterSave(false);
+    closeCaptureAfterSave(false, AccessMode.PANEL);
     expect(navigation.closeResource).toHaveBeenCalledTimes(1);
     expect(navigation.closeResource).toHaveBeenCalledWith({
       id: capture,
@@ -55,16 +56,26 @@ describe("closeCaptureAfterSave", () => {
 
   it("closes a capture open in the overlay", () => {
     visit(`?${AccessMode.OVERLAY}=${capture}`);
-    closeCaptureAfterSave(false);
+    closeCaptureAfterSave(false, AccessMode.OVERLAY);
     expect(navigation.closeResource).toHaveBeenCalledWith({
       id: capture,
       accessMode: AccessMode.OVERLAY
     });
   });
 
+  it("closes a saved Capture page and keeps the panel Capture with its draft", () => {
+    visit(panelDraftWithCapturePage);
+    closeCaptureAfterSave(false, AccessMode.PAGE);
+    expect(navigation.closeResource).toHaveBeenCalledTimes(1);
+    expect(navigation.closeResource).toHaveBeenCalledWith({
+      id: MemotronAction.CAPTURE_SECONDARY,
+      accessMode: AccessMode.PAGE
+    });
+  });
+
   it("keeps the capture open when it opens the saved node", () => {
     visit(`?${AccessMode.OVERLAY}=${capture}`);
-    closeCaptureAfterSave(true);
+    closeCaptureAfterSave(true, AccessMode.OVERLAY);
     expect(navigation.closeResource).not.toHaveBeenCalled();
   });
 });
@@ -72,19 +83,23 @@ describe("closeCaptureAfterSave", () => {
 describe("handleSingleNodePostSave", () => {
   const node = { id: "node:saved" as const };
 
-  function save(overrides: { linkedCollectionId?: "collection:linked" } = {}) {
+  function save(
+    layer: AccessMode,
+    overrides: { linkedCollectionId?: "collection:linked" } = {}
+  ) {
     handleSingleNodePostSave({
       node,
       isConstrainedWidth: false,
       shouldOpenUponSave: true,
       linkedCollectionId: overrides.linkedCollectionId,
-      shouldReturnToLinkedCollection: !!overrides.linkedCollectionId
+      shouldReturnToLinkedCollection: !!overrides.linkedCollectionId,
+      layer
     });
   }
 
   it("closes a panel capture and keeps an unrelated overlay when opening the saved node", () => {
     visit(`?${AccessMode.PANEL}=${capture}&${AccessMode.OVERLAY}=search`);
-    save();
+    save(AccessMode.PANEL);
     expect(navigation.openResource).toHaveBeenCalledWith(
       node.id,
       AccessMode.PAGE,
@@ -94,7 +109,7 @@ describe("handleSingleNodePostSave", () => {
 
   it("closes an overlay capture when opening the saved node", () => {
     visit(`?${AccessMode.OVERLAY}=${capture}`);
-    save();
+    save(AccessMode.OVERLAY);
     expect(navigation.openResource).toHaveBeenCalledWith(
       node.id,
       AccessMode.PAGE,
@@ -104,11 +119,21 @@ describe("handleSingleNodePostSave", () => {
 
   it("closes a panel capture when returning to the linked collection", () => {
     visit(`?${AccessMode.PANEL}=${capture}&${AccessMode.OVERLAY}=search`);
-    save({ linkedCollectionId: "collection:linked" });
+    save(AccessMode.PANEL, { linkedCollectionId: "collection:linked" });
     expect(navigation.openResource).toHaveBeenCalledWith(
       "collection:linked",
       AccessMode.PAGE,
       { searchParams: { [AccessMode.PANEL]: null } }
+    );
+  });
+
+  it("keeps the panel Capture open when a Capture page returns to the linked collection", () => {
+    visit(panelDraftWithCapturePage);
+    save(AccessMode.PAGE, { linkedCollectionId: "collection:linked" });
+    expect(navigation.openResource).toHaveBeenCalledWith(
+      "collection:linked",
+      AccessMode.PAGE,
+      { searchParams: {} }
     );
   });
 });

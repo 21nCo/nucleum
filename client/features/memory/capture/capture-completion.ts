@@ -12,7 +12,6 @@ import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import type { IEvent } from "@21n/ui/elements/input/event.type";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
-import { resolveOpenLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
 
 /** Resolves the collection selected by capture links. */
 export function resolveLinkedCollectionId(captureState: {
@@ -39,6 +38,8 @@ export function handleSingleNodePostSave(params: {
   shouldOpenUponSave: boolean;
   linkedCollectionId?: IRecordId;
   shouldReturnToLinkedCollection: boolean;
+  /** Layer the saving Capture is rendered in; only that surface closes. */
+  layer: AccessMode | undefined;
 }) {
   if (!params.isConstrainedWidth && !params.isEmbedContext) {
     toasts.success("Node saved successfully!");
@@ -56,11 +57,14 @@ export function handleSingleNodePostSave(params: {
     return;
   }
 
-  const searchParams = Object.fromEntries(
-    resolveOpenCaptureLayers(new URL(window.location.href)).map(
-      ({ accessMode }) => [accessMode, null]
-    )
+  const surface = resolveCaptureSurface(
+    new URL(window.location.href),
+    params.layer
   );
+  const searchParams =
+    surface && surface.accessMode !== AccessMode.PAGE
+      ? { [surface.accessMode]: null }
+      : {};
 
   if (params.shouldReturnToLinkedCollection && params.linkedCollectionId) {
     navigation.openResource(params.linkedCollectionId, AccessMode.PAGE, {
@@ -82,26 +86,33 @@ const captureActions: string[] = [
   MemotronAction.CAPTURE_SECONDARY
 ];
 
-/** Capture surfaces open in `url` with the layer each one is open in. */
-export function resolveOpenCaptureLayers(url: URL) {
-  return captureActions.flatMap((id) => {
-    const accessMode = resolveOpenLiveActionAccessMode(id, url);
-    return accessMode ? [{ id, accessMode }] : [];
-  });
+/**
+ * The capture surface open in `url` that a Capture rendered in `layer` is,
+ * with the layer it is open in, or undefined when that layer shows no
+ * capture. Other Captures open in other layers are never included.
+ */
+export function resolveCaptureSurface(url: URL, layer: AccessMode | undefined) {
+  const id = layer ? url.searchParams.get(layer) : null;
+  return layer && id && captureActions.includes(id)
+    ? { id, accessMode: layer }
+    : undefined;
 }
 
 /**
- * Closes the capture surface after completion in the layer it is open in, so
- * a capture opened in the panel closes and an unrelated overlay stays open.
- * Skipped when opening the saved node already replaced the capture.
+ * Closes the saved Capture's own surface, given the layer it is rendered in,
+ * so a Capture page saved while a Capture in the panel holds a draft leaves
+ * the panel open. Skipped when opening the saved node already replaced the
+ * capture.
  */
-export function closeCaptureAfterSave(isReplacedByOpenedNode: boolean) {
+export function closeCaptureAfterSave(
+  isReplacedByOpenedNode: boolean,
+  layer: AccessMode | undefined
+) {
   if (isReplacedByOpenedNode) {
     return;
   }
-  resolveOpenCaptureLayers(new URL(window.location.href)).forEach(
-    ({ id, accessMode }) => navigation.closeResource({ id, accessMode })
-  );
+  const surface = resolveCaptureSurface(new URL(window.location.href), layer);
+  if (surface) navigation.closeResource(surface);
 }
 
 /**

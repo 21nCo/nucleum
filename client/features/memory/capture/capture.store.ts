@@ -155,6 +155,16 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     this.set({ ...generateSeedStore(), id: capture });
   }
 
+  private layer: AccessMode | undefined;
+
+  /**
+   * Records the layer the Capture showing this store is rendered in, so a
+   * save closes only that Capture's surface.
+   */
+  setLayer(layer: AccessMode | undefined) {
+    this.layer = layer;
+  }
+
   async modify(
     val: Partial<ICapture>,
     params?: { isPreventBackPropagation?: boolean }
@@ -1184,7 +1194,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         isConstrainedWidth: viewStore.isConstrainedWidth,
         shouldOpenUponSave,
         linkedCollectionId,
-        shouldReturnToLinkedCollection
+        shouldReturnToLinkedCollection,
+        layer: this.layer
       });
     } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
@@ -1192,7 +1203,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (params?.isEmbedContext) return;
     closeCaptureAfterSave(
       result.length === 1 &&
-        (shouldOpenUponSave || shouldReturnToLinkedCollection)
+        (shouldOpenUponSave || shouldReturnToLinkedCollection),
+      this.layer
     );
     this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));
     await this.deletePermanently();
