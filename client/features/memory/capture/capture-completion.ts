@@ -10,6 +10,8 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { isValidString } from "@21n/shared-utils/text.utils";
+import type { IEvent } from "@21n/ui/elements/input/event.type";
+import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 import { resolveOpenLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
 
 /** Resolves the collection selected by capture links. */
@@ -115,4 +117,17 @@ export function closeCapturePageAfterReset(layer: AccessMode | undefined) {
     return;
   }
   navigation.closeResource({ accessMode: AccessMode.PAGE });
+}
+
+/**
+ * Whether an app event saves the capture: Cmd/Ctrl+Enter while the capture is
+ * visible. A capture in a right panel hidden under another layer ignores it,
+ * so it never saves a draft the user cannot see.
+ */
+export function isCaptureSaveShortcut(event: IEvent, isVisible: boolean) {
+  return (
+    isVisible &&
+    event.event === GlobalEvent.ENTER &&
+    event.value?.metaKey === true
+  );
 }

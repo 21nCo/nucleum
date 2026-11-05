@@ -10,6 +10,8 @@
   import { focusTrap } from "@21n/ui/actions/focus-trap.action";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { writable } from "svelte/store";
+  import { provideRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
 
   const ComponentResolver = requireActionRenderer();
 
@@ -27,6 +29,10 @@
      */
     isSuspended?: boolean;
   } = $props();
+
+  const visibility = writable(true);
+  provideRightPanelVisibility(visibility);
+  $effect(() => visibility.set(!isSuspended));
 
   const sheetAttributes = $derived(
     isSheet

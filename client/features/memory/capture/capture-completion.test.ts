@@ -22,10 +22,12 @@ import { Resource } from "@nucleum/datafn/resource.enum";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
+import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 import {
   closeCaptureAfterSave,
   closeCapturePageAfterReset,
-  handleSingleNodePostSave
+  handleSingleNodePostSave,
+  isCaptureSaveShortcut
 } from "./capture-completion";
 
 const capture = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -134,5 +136,20 @@ describe("closeCapturePageAfterReset", () => {
     visit(`?${AccessMode.PAGE}=node%3Asaved`);
     closeCapturePageAfterReset(AccessMode.PAGE);
     expect(navigation.closeResource).not.toHaveBeenCalled();
+  });
+});
+
+describe("isCaptureSaveShortcut", () => {
+  const enter = { event: GlobalEvent.ENTER, value: { metaKey: true } };
+
+  it("saves on Cmd+Enter while the capture is visible", () => {
+    expect(isCaptureSaveShortcut(enter, true)).toBe(true);
+    expect(
+      isCaptureSaveShortcut({ event: GlobalEvent.ENTER, value: {} }, true)
+    ).toBe(false);
+  });
+
+  it("ignores Cmd+Enter while its right panel is hidden under another layer", () => {
+    expect(isCaptureSaveShortcut(enter, false)).toBe(false);
   });
 });

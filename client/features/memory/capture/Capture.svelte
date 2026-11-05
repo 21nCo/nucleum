@@ -12,6 +12,7 @@
   import { CaptureMethod } from "@nucleum/features/memory/capture/capture.type";
   import FileUploader from "@nucleum/features/memory/capture/FileUploader.svelte";
   import { onDestroy, onMount, setContext } from "svelte";
+  import { get } from "svelte/store";
   import { page } from "$app/stores";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import view from "@21n/ui/environment/view.store";
@@ -32,7 +33,6 @@
   import CaptureDraftsAction from "@nucleum/features/memory/capture/draftSelector/CaptureDraftsAction.svelte";
   import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-  import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import CaptureTopBar from "@nucleum/features/memory/capture/CaptureTopBar.svelte";
   import WebCaptureModal from "@nucleum/features/memory/capture/web/WebCaptureModal.svelte";
   import type { WebArtifact } from "@nucleum/features/memory/capture/web/webCapture.types";
@@ -47,7 +47,11 @@
   import { resolveOpenLiveActionAccessMode } from "@nucleum/shared-state/commands/live-action-access";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import { closeCapturePageAfterReset } from "@nucleum/features/memory/capture/capture-completion";
+  import {
+    closeCapturePageAfterReset,
+    isCaptureSaveShortcut
+  } from "@nucleum/features/memory/capture/capture-completion";
+  import { resolveRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
 
   let {
     captureId = generateResourceId(Resource.capture),
@@ -65,6 +69,7 @@
 
   setContext(Context.CAPTURE, captureContext);
   const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
+  const panelVisibility = resolveRightPanelVisibility();
   let captureStore = $state<IActiveCaptureStore>(
     ActiveCaptureStore.resolve(captureId)
   );
@@ -89,7 +94,7 @@
       releaseDnDPage = acquireDnDPage();
     }
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
-      if (x.event === GlobalEvent.ENTER && x.value.metaKey === true) {
+      if (isCaptureSaveShortcut(x, get(panelVisibility))) {
         await captureStore.save();
       }
     });
@@ -316,15 +321,17 @@
   onPreview={handleWebArtifactPreview}
 />
 
-<ComponentShortcutListener
-  checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
-  isAllowFromTextInput={true}
-  shortcuts={[
-    {
-      shortcut: MemotronAction.ACTIVATE_LINK_BOX,
-      callback: () => {
-        captureTopBarRef?.toggleLinkBox();
+{#if $panelVisibility}
+  <ComponentShortcutListener
+    checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
+    isAllowFromTextInput={true}
+    shortcuts={[
+      {
+        shortcut: MemotronAction.ACTIVATE_LINK_BOX,
+        callback: () => {
+          captureTopBarRef?.toggleLinkBox();
+        }
       }
-    }
-  ]}
-/>
+    ]}
+  />
+{/if}

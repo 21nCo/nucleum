@@ -37,6 +37,7 @@
   import { readable, type Writable } from "svelte/store";
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import type { IContainer } from "@nucleum/shell/layout.type";
+  import { resolveRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
   import { resolveMinWidth } from "@nucleum/shell/layout.utils";
 
   const container =
@@ -96,6 +97,8 @@
   async function onStartSessionClicked() {
     await activeSession.startSession();
   }
+
+  const panelVisibility = resolveRightPanelVisibility();
 </script>
 
 {#if $view.isPortrait || ($container && ($container.isPortrait || $container.width < MIN_WIDTH_TO_EXPAND))}
@@ -189,18 +192,20 @@
     {/if}
   </div>
 {/if}
-<ComponentShortcutListener
-  checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
-  shortcuts={[
-    {
-      shortcut: manualLogHotKey,
-      callback: onManualLogClicked
-    },
-    {
-      shortcut: focusToggleHotKey,
-      callback: () => {
-        requireCommandHost().runAction(PointronAction.TOGGLE_FOCUS_SESSION);
+{#if $panelVisibility}
+  <ComponentShortcutListener
+    checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
+    shortcuts={[
+      {
+        shortcut: manualLogHotKey,
+        callback: onManualLogClicked
+      },
+      {
+        shortcut: focusToggleHotKey,
+        callback: () => {
+          requireCommandHost().runAction(PointronAction.TOGGLE_FOCUS_SESSION);
+        }
       }
-    }
-  ]}
-/>
+    ]}
+  />
+{/if}

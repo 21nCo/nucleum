@@ -12,6 +12,8 @@ vi.mock("@nucleum/shared-state/resources/action-renderer", () => ({
 }));
 
 import RightPanel from "@nucleum/shell/rightPanel/RightPanel.svelte";
+import { resolveRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+import { get, type Readable } from "svelte/store";
 
 describe("RightPanel", () => {
   beforeAll(() => {
@@ -95,5 +97,26 @@ describe("RightPanel", () => {
     expect(document.activeElement).toBe(opener);
     opener.remove();
     overlayInput.remove();
+  });
+
+  it("tells its tool that it is hidden while suspended", async () => {
+    let visibility: Readable<boolean> | undefined;
+    resolver.mockImplementationOnce(() => {
+      visibility = resolveRightPanelVisibility();
+    });
+    const action = { action: "capture", label: "Capture" } as never;
+    const { rerender } = render(RightPanel, {
+      props: { action, isSheet: false }
+    });
+    await tick();
+    expect(get(visibility!)).toBe(true);
+
+    await rerender({ action, isSheet: false, isSuspended: true });
+    await tick();
+    expect(get(visibility!)).toBe(false);
+
+    await rerender({ action, isSheet: false, isSuspended: false });
+    await tick();
+    expect(get(visibility!)).toBe(true);
   });
 });
