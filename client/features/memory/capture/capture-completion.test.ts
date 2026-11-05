@@ -129,4 +129,10 @@ describe("closeCapturePageAfterReset", () => {
     closeCapturePageAfterReset(undefined);
     expect(navigation.closeResource).not.toHaveBeenCalled();
   });
+
+  it("keeps the node a save opened in place of the capture page", () => {
+    visit(`?${AccessMode.PAGE}=node%3Asaved`);
+    closeCapturePageAfterReset(AccessMode.PAGE);
+    expect(navigation.closeResource).not.toHaveBeenCalled();
+  });
 });

@@ -106,9 +106,13 @@ export function closeCaptureAfterSave(isReplacedByOpenedNode: boolean) {
  * Closes the page after a capture is cleared or saved on a constrained width
  * when that capture is the page, given the layer it is rendered in, as a phone
  * page capture does. A capture in the overlay or the right panel stays open,
- * and a page under it is kept, even when that page is another capture.
+ * and a page under it is kept, even when that page is another capture. A page
+ * that already shows something else, such as the node a save opened, stays.
  */
 export function closeCapturePageAfterReset(layer: AccessMode | undefined) {
-  if (layer !== AccessMode.PAGE) return;
+  const page = new URL(window.location.href).searchParams.get(AccessMode.PAGE);
+  if (layer !== AccessMode.PAGE || !page || !captureActions.includes(page)) {
+    return;
+  }
   navigation.closeResource({ accessMode: AccessMode.PAGE });
 }
