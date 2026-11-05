@@ -867,7 +867,8 @@ export const navigation = {
   },
   /**
    * Closes a resource: by explicit access mode, by the mode the id is open in, or, for an id
-   * rendered in place, by clearing the library selection when it is selected. With no props it
+   * rendered in place, by clearing the library selection when it is selected. Closing a resource
+   * rendered in place or in the right panel keeps the resource beside the page. With no props it
    * closes every opened layer. `isHistoryBack` closes a page the user opened from the base page
    * by going back in history; callers that navigate right after closing leave it off.
    */
@@ -883,10 +884,12 @@ export const navigation = {
         ? determineResourceAccessMode(props.id)
         : undefined;
     const isInPlace = !!props?.id && !props?.accessMode && !resolvedMode;
+    const isPageSideKept =
+      isInPlace || (props?.accessMode ?? resolvedMode) === AccessMode.PANEL;
     const currentUrl = new URL(window.location.href);
     const url =
       navigation.toggleSearchParam(
-        isInPlace
+        isPageSideKept
           ? recordSpecificSearchParams.filter(
               (param) =>
                 param !== AccessMode.BESIDE_PAGE &&
@@ -905,7 +908,7 @@ export const navigation = {
     clearLayerScopedRecordParams(url, [
       props?.id,
       ...closedModes.map((mode) => currentUrl.searchParams.get(mode)),
-      isInPlace
+      isPageSideKept
         ? undefined
         : currentUrl.searchParams.get(AccessMode.BESIDE_PAGE)
     ]);

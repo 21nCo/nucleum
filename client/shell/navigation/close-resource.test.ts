@@ -62,6 +62,22 @@ describe("closeResource for in-place resources", () => {
     expect(url.searchParams.has("abcde-task")).toBe(false);
   });
 
+  it("keeps the page-side resource when closing the right panel", () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/calendar?page=node%3Aone&besidePage=node%3Aside&panel=node%3Acreate"
+    );
+    navigation.closeResource({
+      id: "node:create",
+      accessMode: AccessMode.PANEL
+    });
+    const url = lastUrl();
+    expect(url.searchParams.get("page")).toBe("node:one");
+    expect(url.searchParams.get("besidePage")).toBe("node:side");
+    expect(url.searchParams.has("panel")).toBe(false);
+  });
+
   it("still clears the page-side resource when closing a page", () => {
     window.history.replaceState(
       {},
