@@ -22,6 +22,18 @@
     isSheet?: boolean;
   } = $props();
 
+  const sheetAttributes = $derived(
+    isSheet
+      ? {
+          "data-testid": "right-panel-sheet",
+          role: "dialog",
+          "aria-modal": "true" as const,
+          "aria-label": action.label ?? action.action,
+          tabindex: -1
+        }
+      : {}
+  );
+
   /**
    * Traps keyboard focus in `node` while `isActive`, so the same element can
    * switch between the sheet and the panel without being remounted.
@@ -61,11 +73,7 @@
           "border-r border-brs3": !$context.experiments?.isEnableRoundedMain
         }
       )}
-  data-testid={isSheet ? "right-panel-sheet" : undefined}
-  role={isSheet ? "dialog" : undefined}
-  aria-modal={isSheet ? "true" : undefined}
-  aria-label={isSheet ? (action.label ?? action.action) : undefined}
-  tabindex={isSheet ? -1 : undefined}
+  {...sheetAttributes}
   use:trapFocusWhile={isSheet}
   in:fly={isSheet
     ? { y: 40, duration: 150, easing: quadInOut }
