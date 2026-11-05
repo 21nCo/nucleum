@@ -122,4 +122,14 @@ describe("client/ui/actions/focus-trap.action", () => {
     expect(event.defaultPrevented).toBe(true);
     expect(document.activeElement?.id).toBe("first");
   });
+
+  it("keeps focus inside and stops wrapping when it is released", async () => {
+    const { trap } = setup();
+    const last = document.getElementById("last") as HTMLElement;
+    last.focus();
+    trap.release();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(last);
+    expect(tab(last).defaultPrevented).toBe(false);
+  });
 });
