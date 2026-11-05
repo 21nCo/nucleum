@@ -18,6 +18,8 @@
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
+  import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import { nextCycleValue } from "@nucleum/shell/topNav/contextZone/context-zone";
   let {
     panel = $bindable(CalendarLayout.Classic),
     children = undefined,
@@ -45,6 +47,16 @@
   );
   const dev_enableBirdView = import.meta.env?.DEV;
 
+  function cycleLayout() {
+    const next = nextCycleValue(
+      panelOptions.map((option) => option.value as CalendarLayout),
+      panel
+    );
+    if (!next) return;
+    panel = next;
+    onPanelSwitch(new CustomEvent("select", { detail: next }));
+  }
+
   function onPanelSwitch(event: CustomEvent) {
     if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))
       return;
@@ -62,13 +74,15 @@
     <header class="grid grid-cols-3 w-full sticky top-0 z-10 h-full">
       <div class="flex items-center gap-4 h-full">
         {#if $appStore.product === Product.NUCLEUM && dev_enableBirdView}
-          <div class="h-full">
-            <BoxSwitcher
-              options={panelOptions}
-              bind:selected={panel}
-              onSelect={onPanelSwitch}
-            />
-          </div>
+          <ContextZoneContent cycle={cycleLayout}>
+            <div class="h-full" data-testid="calendar-layout-switcher">
+              <BoxSwitcher
+                options={panelOptions}
+                bind:selected={panel}
+                onSelect={onPanelSwitch}
+              />
+            </div>
+          </ContextZoneContent>
         {:else}
           <BackButton
             isEnabled={backPath !== null}

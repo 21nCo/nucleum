@@ -2,7 +2,7 @@ import type { IPlayer, ModalEvent } from "@21n/ui/elements/modal/popup.type";
 import { writable } from "svelte/store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { ObservableStore } from "@nucleum/datafn/observable-store";
-import { AccessMode } from "@nucleum/datafn/resource.type";
+import { resolveFullScreenOverlayPath } from "@nucleum/shell/overlays/full-screen-overlay";
 
 /** Shell operations required by reusable overlay state. */
 export interface OverlayHost {
@@ -128,9 +128,10 @@ class FullScreenStore extends ObservableStore<{ path?: string }> {
     overlayHost?.closeFullscreen();
   }
 
+  /** Restores a full screen overlay, kept as the overlay with full screen on, after a reload. */
   restore() {
-    const fullSearchParam = new URLSearchParams(window.location.search).get(
-      AccessMode.FULL
+    const fullSearchParam = resolveFullScreenOverlayPath(
+      new URLSearchParams(window.location.search)
     );
     if (fullSearchParam) {
       this.show(fullSearchParam);

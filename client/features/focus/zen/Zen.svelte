@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolveFullScreenOverlayPath } from "@nucleum/shell/overlays/full-screen-overlay";
   import { startTouch, moveTouch } from "@nucleum/shell/interaction/touch-gestures";
   import { activeSession } from "@nucleum/features/focus/session.store";
   import { SessionUIContext } from "@nucleum/features/focus/session.type";
@@ -20,7 +21,6 @@
   import { cn } from "@21n/ui/environment/presentation";
   import { fullScreen } from "@nucleum/shell/overlays/modal.store";
   import { page } from "$app/stores";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { getContext } from "svelte";
@@ -38,8 +38,9 @@
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
   let fullScreenFocusIsEnabled = $derived(
-    $page?.url?.searchParams?.get(AccessMode.FULL) ===
-      PointronAction.FULL_SCREEN_FOCUS
+    !!$page?.url?.searchParams &&
+      resolveFullScreenOverlayPath($page.url.searchParams) ===
+        PointronAction.FULL_SCREEN_FOCUS
   );
   let isExtraLargeScreen = $derived(
     $container && $container.landscapiness > 1.7 && $view.scale > 1.8

@@ -26,6 +26,7 @@ function lastUrl() {
 }
 
 beforeEach(() => {
+  navigation.syncAccessTrail(undefined);
   gotoPath = vi
     .spyOn(navigation, "gotoPath")
     .mockImplementation(async () => undefined);

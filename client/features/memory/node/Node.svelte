@@ -26,7 +26,6 @@
   import ComponentEmbedLayer from "@nucleum/shell/layers/ComponentEmbedLayer.svelte";
   import context from "@nucleum/client/runtime/context.store";
   import NodePanelSwitcher from "./floatingBar/NodePanelSwitcher.svelte";
-  import { fly } from "svelte/transition";
   import { resolvePanelParam } from "@nucleum/shared-state/resources/panelParam.mixin";
   import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
@@ -120,8 +119,9 @@
 
   onDestroy(() => {
     releaseDnDPage?.();
-    ActiveNodeStore.destroy(id, accessMode);
   });
+
+  $effect(() => ActiveNodeStore.retain(id, () => accessMode));
 
   const debouncedInitialize = debouncer(initialize, 1500);
   let hasReceivedInitialPropertySignal = false;
@@ -163,11 +163,12 @@
         {isConstrainedWidth}
       />
     {/if}
-    {#if isShowFloatingBar}
-      <div transition:fly={{ y: 50 }}>
-        <NodePanelSwitcher {node} {isConstrainedWidth} />
-      </div>
-    {/if}
+    <NodePanelSwitcher
+      {node}
+      {accessMode}
+      {isConstrainedWidth}
+      isFloatingHidden={!isShowFloatingBar}
+    />
   </div>
 {:else}
   <div class="w-full h-full otop:pt-12 pt-4 mo:px-4 px-20">

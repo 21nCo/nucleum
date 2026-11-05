@@ -112,9 +112,7 @@ export const products: Record<string, IAppConfigBase> = {
   [Product.NUCLEUM]: {
     requiredPlan: isDevDeployment ? undefined : PlanType.NUCLEUS,
     ...resolveBaseSharedProductConfig(Product.NUCLEUM),
-    appMenu: (isDev && nucleusNav.appMenuDev
-      ? nucleusNav.appMenuDev
-      : nucleusNav.appMenu) as string[],
+    appMenu: [...nucleusNav.appMenu],
     appMenuPt: [...nucleusNav.appMenuPt],
     homePath: nucleusNav.homePath,
     homePathPt: nucleusNav.homePathPt,

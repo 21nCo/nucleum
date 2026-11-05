@@ -87,6 +87,7 @@ import {
 } from "@nucleum/features/memory/markdown/markdown.utils";
 import type { IBlock } from "@nucleum/features/memory/markdown/md.type";
 import { ActiveResourceStore } from "@nucleum/shared-state/resources/active-resource.store";
+import type { CaptureSaveSource } from "@nucleum/features/memory/capture/capture-instances";
 import { convertWebMToWav } from "@nucleum/client/runtime/audio/audio.utils";
 import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
 import { resolveCalendarNotesId } from "@nucleum/features/calendar/calendar.utils";
@@ -511,9 +512,13 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     }, 100);
   }
 
-  async save() {
+  /**
+   * Saves the markdown capture. `source` is the Capture that saves it, the
+   * only surface the save closes.
+   */
+  async save(params?: { source?: CaptureSaveSource }) {
     this.setIsSaving(true);
-    await this.saveMarkdownCapture();
+    await this.saveMarkdownCapture(params);
     const val = this.get();
     if (val.bulkQueryParam === "true" && val.linkQueryParam) {
       await this.setTypeFromLinkParam(val.linkQueryParam);
@@ -528,7 +533,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     this.setIsSaving(false);
   }
 
-  async handleCapture(event: Event) {
+  async handleCapture(event: Event, params?: { source?: CaptureSaveSource }) {
     logger.log({ at: "Capture.svelte - handleCapture", event });
     try {
       this.setIsSaving(true);
@@ -536,7 +541,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       if (input.files && input.files[0]) {
         const file = input.files[0];
         if (file) {
-          await this.saveFile(file);
+          await this.saveFile(file, undefined, { source: params?.source });
           this.setIsSaving(false);
           return;
         }
@@ -662,6 +667,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
+      source?: CaptureSaveSource;
     }
   ) {
     contentType = contentType ?? resolveContentTypeForFile(file);
@@ -675,7 +681,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         const result = await this.saveMarkdownFromMdFile(file);
         this.postSave(result?.slice(0, 1), {
           isOpenOnSave: params?.isOpenOnSave,
-          isEmbedContext: params?.isEmbedContext
+          isEmbedContext: params?.isEmbedContext,
+          source: params?.source
         });
         return result?.[0];
       }
@@ -728,7 +735,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       }
       this.postSave(result, {
         isOpenOnSave: params?.isOpenOnSave,
-        isEmbedContext: params?.isEmbedContext
+        isEmbedContext: params?.isEmbedContext,
+        source: params?.source
       });
       return Array.isArray(result) ? result?.[0] : result;
     } finally {
@@ -820,6 +828,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
       uploadProgressId?: string;
+      source?: CaptureSaveSource;
     }
   ) {
     if (!params?.isEmbedContext) this.setIsSaving(true);
@@ -832,7 +841,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           files.map((x) => x.file)
         );
         this.postSave(result, {
-          isEmbedContext: params?.isEmbedContext
+          isEmbedContext: params?.isEmbedContext,
+          source: params?.source
         });
         return result;
       }
@@ -899,7 +909,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         await this.saveLinksForMultiFileCapture(nodes);
       }
       this.postSave(result, {
-        isEmbedContext: params?.isEmbedContext
+        isEmbedContext: params?.isEmbedContext,
+        source: params?.source
       });
       return result;
     } finally {
@@ -924,6 +935,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
       thumbnailBlob?: Blob;
+      source?: CaptureSaveSource;
     }
   ) {
     if (!params?.isEmbedContext) this.setIsSaving(true);
@@ -980,7 +992,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       }
       this.postSave(result2, {
         isOpenOnSave: params?.isOpenOnSave,
-        isEmbedContext: params?.isEmbedContext
+        isEmbedContext: params?.isEmbedContext,
+        source: params?.source
       });
       return result2?.[0];
     } finally {
@@ -1000,6 +1013,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     params?: {
       deviceInfo?: MediaDeviceInfo | null;
       isMediaDeviceCapture?: boolean;
+      source?: CaptureSaveSource;
     }
   ) {
     logger.debug({
@@ -1066,7 +1080,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     ) {
       return result2;
     }
-    this.postSave(result2, {});
+    void this.postSave(result2, { source: params?.source });
   }
 
   async saveWebpage(
@@ -1151,6 +1165,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     params?: {
       isEmbedContext?: boolean;
       isOpenOnSave?: boolean;
+      /** Capture the save started from; only its surface closes. */
+      source?: CaptureSaveSource;
     }
   ) {
     logger.debug({ at: "CaptureStore.postSave", result, params });
@@ -1184,13 +1200,18 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         isConstrainedWidth: viewStore.isConstrainedWidth,
         shouldOpenUponSave,
         linkedCollectionId,
-        shouldReturnToLinkedCollection
+        shouldReturnToLinkedCollection,
+        source: params?.source
       });
     } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
     if (params?.isEmbedContext) return;
-    closeCaptureAfterSave(shouldOpenUponSave);
+    closeCaptureAfterSave(
+      result.length === 1 &&
+        (shouldOpenUponSave || shouldReturnToLinkedCollection),
+      params?.source
+    );
     this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));
     await this.deletePermanently();
   }
@@ -1241,7 +1262,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     return persistContentLinks(links);
   }
 
-  async saveMarkdownCapture() {
+  async saveMarkdownCapture(params?: { source?: CaptureSaveSource }) {
     const val = this.get();
 
     const ctx = get(context);
@@ -1369,7 +1390,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       context: captureAction
     });
     await this.saveLinks(id);
-    this.postSave(result.slice(0, 1));
+    void this.postSave(result.slice(0, 1), { source: params?.source });
     return result;
   }
 

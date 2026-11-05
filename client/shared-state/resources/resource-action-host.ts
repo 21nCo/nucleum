@@ -17,8 +17,6 @@ export interface ResourceActionHost {
       | { id?: IRecordId; accessMode: AccessMode }
   ): void;
   maximize(mode: AccessMode | undefined, id: IRecordId): void;
-  openTab(id: IRecordId): void;
-  removeTab(id: IRecordId): void;
   requestLink(options: {
     label?: string;
     resource?: Resource;

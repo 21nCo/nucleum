@@ -402,7 +402,6 @@ export function resolveObjectiveContextMenu(
   const openingActionGroup = {
     group: "open",
     items: [
-      resourceActions.openAsTab(),
       ...(accessPoint !== ResourceAccessPoint.SELF
         ? [resourceActions.openAsSplit()]
         : []),

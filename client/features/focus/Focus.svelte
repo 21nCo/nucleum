@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolveFullScreenOverlayPath } from "@nucleum/shell/overlays/full-screen-overlay";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import type { Snippet } from "svelte";
@@ -36,6 +37,7 @@
   import { readable, type Writable } from "svelte/store";
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import type { IContainer } from "@nucleum/shell/layout.type";
+  import { resolveHostVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
   import { resolveMinWidth } from "@nucleum/shell/layout.utils";
 
   const container =
@@ -55,8 +57,9 @@
   let mode = $state(0);
   let isInlineEnabled = $state(true);
   let fullScreenFocusIsEnabled = $derived(
-    $page?.url?.searchParams?.get(AccessMode.FULL) ===
-      PointronAction.FULL_SCREEN_FOCUS
+    !!$page?.url?.searchParams &&
+      resolveFullScreenOverlayPath($page.url.searchParams) ===
+        PointronAction.FULL_SCREEN_FOCUS
   );
   const manualLogHotKey = {
     key: "m"
@@ -94,6 +97,8 @@
   async function onStartSessionClicked() {
     await activeSession.startSession();
   }
+
+  const hostVisibility = resolveHostVisibility();
 </script>
 
 {#if $view.isPortrait || ($container && ($container.isPortrait || $container.width < MIN_WIDTH_TO_EXPAND))}
@@ -187,18 +192,20 @@
     {/if}
   </div>
 {/if}
-<ComponentShortcutListener
-  checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
-  shortcuts={[
-    {
-      shortcut: manualLogHotKey,
-      callback: onManualLogClicked
-    },
-    {
-      shortcut: focusToggleHotKey,
-      callback: () => {
-        requireCommandHost().runAction(PointronAction.TOGGLE_FOCUS_SESSION);
+{#if $hostVisibility}
+  <ComponentShortcutListener
+    checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
+    shortcuts={[
+      {
+        shortcut: manualLogHotKey,
+        callback: onManualLogClicked
+      },
+      {
+        shortcut: focusToggleHotKey,
+        callback: () => {
+          requireCommandHost().runAction(PointronAction.TOGGLE_FOCUS_SESSION);
+        }
       }
-    }
-  ]}
-/>
+    ]}
+  />
+{/if}

@@ -27,9 +27,6 @@
   import PageLoadingAnimation from "@21n/ui/elements/feedback/animations/PageLoadingAnimation.svelte";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
-  import { page } from "$app/stores";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
-  import SplitView from "@nucleum/shell/SplitView.svelte";
   import { Orientation } from "@21n/ui/elements/direction.enum";
   import ColorLayer from "@nucleum/shell/layers/themeLayer/ColorLayer.svelte";
   import { Action } from "@nucleum/client/config/action.enum";
@@ -37,11 +34,9 @@
   import { cn } from "@21n/ui/environment/presentation";
   import ConfirmationNotification from "@nucleum/shell/notifications/ConfirmationNotification.svelte";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
-  import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
   const ComponentResolver = requireActionRenderer();
   let modals = $state<ModalEvent[]>([]);
   let isShowAppearancePreview = $state(false);
-  let fullscreen = $state<string | undefined>(undefined);
   let isWindowVisible = $state(true);
   let isDialogEnabled = $state(false);
   onMount(() => {
@@ -52,16 +47,11 @@
         modals = [];
       }
     });
-    const pageSub = page.subscribe((value) => {
-      const searchParams = value?.url?.searchParams ?? new URLSearchParams();
-      fullscreen = searchParams.get(AccessMode.FULL) ?? undefined;
-    });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
 
     return () => {
       appEventSub();
       modalEventSub();
-      pageSub();
     };
 
     /**
@@ -166,30 +156,6 @@
     {/each}
   </div>
 {/if}
-{#key fullscreen}
-  {#if fullscreen}
-    <Modal
-      show={fullscreen != undefined}
-      id={fullscreen + "-focus"}
-      isDismissable={true}
-      isShowOverlay={true}
-      isUseDialog={false}
-      size={Size.full}
-    >
-      <ModalLayout path={fullscreen} params={{ layout: { size: Size.full } }}>
-        <div class="contents" {...pageLayerAttributes}>
-          <SplitView
-            id={fullscreen}
-            componentParams={{
-              isModal: true,
-              accessMode: AccessMode.FULL
-            }}
-          />
-        </div>
-      </ModalLayout>
-    </Modal>
-  {/if}
-{/key}
 {#each modals.filter((modal) => modal?.path) as modal, index (modal.path === Action.CMD ? `${modal.path}-${modal.componentParams?.command ?? "default"}-${modal.componentParams?.commandType ?? "default"}` : modal.path)}
   <Modal
     show={modal.isShow}

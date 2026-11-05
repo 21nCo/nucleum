@@ -1,21 +1,22 @@
 import { get, writable } from "svelte/store";
 import { type IRecordId } from "@nucleum/schema/legacy/data.type";
 import {
-  AccessMode,
+  type AccessMode,
   type IActiveResource,
   type IResource,
   type IResourceStarrable
 } from "@nucleum/datafn/resource.type";
-import {
-  determineResourceAccessMode,
-  determineResourceType
-} from "@nucleum/datafn/resource.utils";
+import { determineResourceType } from "@nucleum/datafn/resource.utils";
 import { resolveCurrentUserId } from "@nucleum/client/runtime/account/session-token";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { datafn } from "@nucleum/datafn/datafn.store";
 
 const activeResources = new Map<string, ActiveResourceStore<any, any>>();
+const activeResourceOwners = new Map<
+  string,
+  { accessMode: () => AccessMode | undefined }[]
+>();
 
 export function updateActiveResource(
   id: IRecordId,
@@ -200,20 +201,41 @@ export class ActiveResourceStore<
     return activeResources.get(idStr)! as TActive;
   }
 
-  static destroy(id: IRecordId, accessMode?: AccessMode) {
-    if (accessMode === AccessMode.FULL) {
-      const resolvedAccessMode = determineResourceAccessMode(id);
-      if (resolvedAccessMode !== AccessMode.FULL) {
-        const resource = activeResources.get(id.toString());
-        if (resource) {
-          resource.update((prev) => ({
-            ...prev,
-            accessMode: resolvedAccessMode
-          }));
-        }
+  /**
+   * Marks the store of `id` as used by a mounted view open in `accessMode`,
+   * such as a resource shown both on the base page and on the page covering
+   * it. The returned function releases it: the store takes back the access
+   * mode of the newest view still mounted, and is dropped after its last
+   * owner releases. Pass a getter when the view's mode can change while it
+   * stays mounted, so a release hands back the mode it has then.
+   */
+  static retain(
+    id: IRecordId,
+    accessMode?: AccessMode | (() => AccessMode | undefined)
+  ) {
+    const idStr = id.toString();
+    const owner = {
+      accessMode:
+        typeof accessMode === "function" ? accessMode : () => accessMode
+    };
+    activeResourceOwners.set(idStr, [
+      ...(activeResourceOwners.get(idStr) ?? []),
+      owner
+    ]);
+    return () => {
+      const owners = activeResourceOwners.get(idStr) ?? [];
+      if (!owners.includes(owner)) return;
+      const remaining = owners.filter((item) => item !== owner);
+      if (remaining.length > 0) {
+        activeResourceOwners.set(idStr, remaining);
+        const mode = remaining[remaining.length - 1].accessMode();
+        activeResources
+          .get(idStr)
+          ?.update((prev) => (prev ? { ...prev, accessMode: mode } : prev));
         return;
       }
-    }
-    activeResources.delete(id.toString());
+      activeResourceOwners.delete(idStr);
+      activeResources.delete(idStr);
+    };
   }
 }

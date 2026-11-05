@@ -15,7 +15,6 @@ import { get } from "svelte/store";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import { appEvents } from "@nucleum/shared-state/events/app-events.store";
-import { tabs } from "@nucleum/shell/topNav/tabs/tabs.store";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import {
   determineResourceType,
@@ -28,9 +27,14 @@ import { configureShortcutHost } from "@nucleum/shared-state/shortcuts/shortcut-
 import { configureRecentsHost } from "@nucleum/shared-state/resources/recent-host";
 import { configureResourcePanelHost } from "@nucleum/shared-state/resources/resource-panel-host";
 import { configureResourceActionHost } from "@nucleum/shared-state/resources/resource-action-host";
-import { resolveProductConfig } from "@nucleum/products/product.config";
+import {
+  product as configuredProduct,
+  resolveProductConfig
+} from "@nucleum/products/product.config";
+import { Product } from "@nucleum/client/config/product.type";
 import { configureProductConfigHost } from "@nucleum/shared-state/product/product-config-host";
 import { configureSurfaceProductConfig } from "@nucleum/shared-state/product/surface-config-host";
+import { resolveLibrarySwitcherSections } from "@nucleum/surfaces/library/resource-switcher.utils";
 import { configurePersistenceLogger } from "@nucleum/persistence/logging-host";
 import { shortcutsConfig } from "./shortcuts.config";
 import { copyResourceLinkToClipboard } from "@nucleum/shell/navigation/resource-link.utils";
@@ -63,10 +67,13 @@ export function installApplicationHosts() {
       onDismiss: (action) => appEvents.nav(action),
       openFullscreen: (path) =>
         navigation.toggleSearchParam({
-          [AccessMode.FULL]: path,
-          [AccessMode.PAGE]: null
+          [AccessMode.OVERLAY]: path,
+          [AppSearchParam.MAX]: true,
+          [AccessMode.PAGE]: null,
+          [AccessMode.BESIDE_PAGE]: null
         }),
-      closeFullscreen: () => navigation.toggleSearchParam([AccessMode.FULL]),
+      closeFullscreen: () =>
+        navigation.toggleSearchParam([AccessMode.OVERLAY, AppSearchParam.MAX]),
       resolvePlayer: (path) =>
         appStore.resolveComponentFromPath(path)?.associatedPlayer
     });
@@ -93,7 +100,9 @@ export function installApplicationHosts() {
           [AppSearchParam.PANEL]: panel
         }),
       close: (id) => navigation.closeResource({ id }),
-      goBack: () => navigation.goBack(),
+      goBack: () => {
+        if (!navigation.backInTrail()) navigation.goBack();
+      },
       maximize: (mode, id) => navigation.toggleFullScreen(mode, id)
     });
 
@@ -102,8 +111,6 @@ export function installApplicationHosts() {
       open: (id, mode, options) => navigation.openResource(id, mode, options),
       close: (options) => navigation.closeResource(options),
       maximize: (mode, id) => navigation.toggleFullScreen(mode, id),
-      openTab: (id) => navigation.openTab(id),
-      removeTab: (id) => tabs.remove(id),
       requestLink: (options) =>
         requireCommandHost().runAction(Action.BULK_LINK, {
           componentParams: options
@@ -122,8 +129,11 @@ export function installApplicationHosts() {
       logo: SubAtomLogo,
       loadingView: AppLoadingView
     });
-    configureProductConfigHost(resolveProductConfig());
     configureSurfaceProductConfig(resolveProductConfig);
+    configureProductConfigHost({
+      ...resolveProductConfig(),
+      navigatorResources: resolveNavigatorResources()
+    });
     configureElementActionHost({
       navigate: goto,
       openLink: (href) => navigation.openLink(href),
@@ -178,4 +188,20 @@ export function installApplicationHosts() {
       disposePlatform = undefined;
     }
   };
+}
+
+/** Record types the navigator searches: every enabled library resource type. */
+function resolveNavigatorResources(): string[] {
+  return [
+    ...new Set(
+      resolveLibrarySwitcherSections(
+        configuredProduct as Product,
+        resolveProductConfig().resources.browse,
+        import.meta.env?.DEV ?? false
+      )
+        .flatMap((section) => section.items)
+        .filter((item) => !item.isDisabled)
+        .map((item) => String(item.value))
+    )
+  ];
 }

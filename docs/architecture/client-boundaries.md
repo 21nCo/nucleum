@@ -93,7 +93,8 @@ Lower layers do not import composition to reach product behavior. `installApplic
 | Invalid-session recovery (`runtime/account/session-recovery-host`) | Composition | HTTP transport; account surface owns redirect/reload policy |
 | `product-config-host` | Composition | Shell |
 | `surface-config-host` | Composition | Surfaces |
-| Chrome snippets (brand, search, bulk edit, offline status, capture, profile) | `client/composition/chrome/` | Shell, through optional snippet props |
+| Chrome snippets (brand, profile picture, bulk edit, offline status, capture, quick actions, persistent indicators) | `client/composition/chrome/` and the product base layers | Shell, through optional snippet props |
+| Top bar context zone (`client/shell/topNav/contextZone`) | Pages and resources, through `ContextZoneContent` inside the pane scopes that `NavigationLayout` and `RightSplit` set | Shell top bar |
 | `persistence/logging-host` | Composition | Persistence |
 
 Shell and feature adapters pass view-specific props such as keyboard matching, time scales, and address resolution. Do not add a compatibility wrapper or a generic service locator.

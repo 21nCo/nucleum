@@ -207,14 +207,9 @@
       value: BlockAction.OPEN_IN_FULL_SCREEN,
       icon: "fullscreen",
       callback: async () => {
-        navigation.openResource(block.id, AccessMode.FULL);
-      }
-    },
-    [BlockAction.OPEN_AS_TAB]: {
-      value: BlockAction.OPEN_AS_TAB,
-      icon: "tabs",
-      callback: async () => {
-        navigation.openTab(block.id);
+        navigation.openResource(block.id, AccessMode.PAGE, {
+          isFullScreen: true
+        });
       }
     },
     [BlockAction.COLOR]: {
@@ -311,7 +306,6 @@
             // actions[BlockAction.COPY_LINK],
             actions[BlockAction.COPY_BLOCK_TEXT],
             // actions[BlockAction.OPEN_AS_SPLIT],
-            actions[BlockAction.OPEN_AS_TAB],
             actions[BlockAction.SHORTCUTS]
           ]
         }

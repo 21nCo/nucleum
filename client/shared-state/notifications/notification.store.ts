@@ -39,10 +39,7 @@ function initToastStore() {
     if (isAlreadyPresent || event.type === AlertType.PROGRESS) return;
 
     timer = setTimeout(() => {
-      update((n: Toast[]) => {
-        n.shift();
-        return n;
-      });
+      update((n: Toast[]) => n.filter((x) => x.id !== event.id));
     }, toastDefaultDuration);
   };
   const setProgress = (progress: number) => {
@@ -114,6 +111,10 @@ function initToastStore() {
     },
     closeProgress,
     setProgress,
+    /** Removes one toast, such as when the user hovers it away. */
+    dismiss: (id: string) => {
+      update((n: Toast[]) => n.filter((x) => x.id !== id));
+    },
     trigger: trigger
   };
 }

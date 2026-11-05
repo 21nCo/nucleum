@@ -8,19 +8,23 @@ export type IUIStateStore = {
 export enum UIState {
   isOnboardingComplete = "isOnboardingComplete",
   /**
-   * Minimizes the left app navigation bar
+   * Hides the left app menu (command-only mode)
    */
-  isInThinMode = "isInThinMode",
   isHideLeftNavBar = "isHideLeftNavBar",
   hideShortcutHints = "hideShortcutHints",
   /**
-   * Completely hides the left app navigation bar on hot key shortcut or minimize toggle
+   * Whether the Q hot key switches to command-only mode (default) instead of
+   * only hiding the app menu labels
    */
   completelyHideLeftNavBar = "completelyHideLeftNavBar",
   /**
    * Hides the labels in the app menu items
    */
   hideLeftNavMenuLabels = "hideLeftNavMenuLabels",
+  /**
+   * Per live action override of where it opens (overlay or right panel)
+   */
+  liveActionAccessMode = "liveActionAccessMode",
   arrangement = "arrangement",
   universalPropertyRecents = "universalPropertyRecents",
 

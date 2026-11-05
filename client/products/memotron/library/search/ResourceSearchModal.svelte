@@ -12,11 +12,9 @@
   let searchBaseRef: ResourceSearchBase;
 
   onMount(async () => {
-    if (!isInline) {
-      setTimeout(() => {
-        searchInputRef?.focus();
-      }, 100);
-    }
+    setTimeout(() => {
+      searchInputRef?.focus();
+    }, 100);
   });
 </script>
 
@@ -25,15 +23,12 @@
   isGlobalSearchModal={true}
   {isInline}
   onClose={() => {
-    if (isInline) return;
     navigation.closeResource({
       id: Action.SEARCH
     });
   }}
 >
-  {#if !isInline}
-    <div class="pl-4 w-full">
-      <SearchInput bind:this={searchInputRef} />
-    </div>
-  {/if}
+  <div class="pl-4 w-full">
+    <SearchInput bind:this={searchInputRef} />
+  </div>
 </ResourceSearchBase>

@@ -111,9 +111,7 @@ export enum AppSearchParam {
   BACK = "back",
   EDIT = "edit",
   TYPE = "type",
-  /**
-   * Should be used only with some prefix like recordId etc... Otherwise it will conflict with ResourceAccessMode.TAB
-   */
+  /** Page launched in the agent command mode page, as `page:<action>`. */
   TAB = "tab",
   PANEL = "panel",
   VIEW = "view",
@@ -134,7 +132,6 @@ export enum AppSearchParam {
   PAGE_AT = "pageAt",
   BESIDE_PAGE_AT = "besidePageAt",
   BESIDE_AT = "besideAt",
-  FULL_AT = "fullAt",
   /**
    * Resource selected in the library resource browser and rendered in place beside the list.
    */

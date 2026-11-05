@@ -12,6 +12,11 @@
   import { memotronOverviewItems } from "@nucleum/products/memotron/overview/memotron-overview-views";
   import { Product } from "@nucleum/client/config/product.type";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import {
+    contextZone,
+    nextCycleValue
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     isConstrainedWidth = $bindable(false),
@@ -26,6 +31,7 @@
     resolveSavedState() ?? MemotronOverviewPanel.GRAPH
   );
   const isNucleusContext = $derived($appStore.product === Product.NUCLEUM);
+  const isContextZoneHosted = contextZone.isHosted;
 
   let containerWidth = 0;
   $effect(() => {
@@ -44,17 +50,54 @@
     }
   }
 
-  function onPanelSwitch(event: CustomEvent) {
+  function savePanel(panel: string | undefined) {
     if (
-      !event.detail ||
-      !Object.values(MemotronOverviewPanel).includes(event.detail)
+      !panel ||
+      !Object.values(MemotronOverviewPanel).includes(
+        panel as MemotronOverviewPanel
+      )
     )
       return;
-    uiState.setState(UIState.memotronOverviewPanel, event.detail, {
+    uiState.setState(UIState.memotronOverviewPanel, panel, {
       scope: UIStateScope.DEVICE
     });
   }
+
+  function onPanelSwitch(event: CustomEvent) {
+    savePanel(event.detail);
+  }
+
+  function cyclePanel() {
+    const panel = nextCycleValue(
+      memotronOverviewItems.map((item) => String(item.value)),
+      selectedPanel
+    );
+    if (!panel) return;
+    selectedPanel = panel as MemotronOverviewPanel;
+    savePanel(panel);
+  }
 </script>
+
+{#snippet overviewBar(isContextZone: boolean)}
+  <PanelSwitcher
+    items={memotronOverviewItems}
+    style={PanelSwitcherStyle.BAR}
+    title={isNucleusContext || isContextZone ? "" : "Overview"}
+    isExpandToFullWidth={!isContextZone}
+    size={Size.sm}
+    bind:value={selectedPanel}
+    onSwitch={onPanelSwitch}
+    tempTitleWithActionDisabled={true}
+  >
+    {#snippet right()}
+      {#if !isContextZone}
+        <div class="mr-3">
+          {@render rightSnippet?.()}
+        </div>
+      {/if}
+    {/snippet}
+  </PanelSwitcher>
+{/snippet}
 
 <div class="relative w-full h-full flex flex-col justify-center items-center">
   <div
@@ -63,22 +106,23 @@
       containerWidth = e.width;
     }}
   >
-    <PanelSwitcher
-      items={memotronOverviewItems}
-      style={PanelSwitcherStyle.BAR}
-      title={isNucleusContext ? "" : "Overview"}
-      isExpandToFullWidth={true}
-      size={Size.sm}
-      bind:value={selectedPanel}
-      onSwitch={onPanelSwitch}
-      tempTitleWithActionDisabled={true}
-    >
-      {#snippet right()}
-        <div class="mr-3">
-          {@render rightSnippet?.()}
+    {#if isNucleusContext}
+      {@render overviewBar(false)}
+    {:else}
+      <ContextZoneContent cycle={cyclePanel}>
+        <div class="h-full flex items-center" data-testid="overview-tabs">
+          {@render overviewBar(true)}
         </div>
-      {/snippet}
-    </PanelSwitcher>
+        {#snippet fallback()}
+          {@render overviewBar(false)}
+        {/snippet}
+      </ContextZoneContent>
+      {#if rightSnippet && $isContextZoneHosted}
+        <div class="flex w-full justify-end py-1 mr-3">
+          {@render rightSnippet()}
+        </div>
+      {/if}
+    {/if}
   </div>
   <div class="relative w-full h-full">
     {@render children?.()}

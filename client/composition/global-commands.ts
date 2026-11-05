@@ -98,6 +98,8 @@ export const globalActions: IAction[] = [
   libraryCommands.browse,
   settingsCommands.offline_status,
   shellCommands.navigator,
+  shellCommands.open_navigator,
+  shellCommands.cycle_context_view,
   calendarCommands.today,
   shellCommands.rhombus
 ];

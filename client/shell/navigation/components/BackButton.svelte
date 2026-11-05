@@ -17,7 +17,7 @@
     parentBgIndex = 1,
     isEnabled = true,
     path = undefined,
-    accessMode = AccessMode.FULL,
+    accessMode = undefined,
     isPreventDefault = false,
     class: classList = "",
     children = undefined,
@@ -64,7 +64,7 @@
     }
     if ($view.isConstrainedWidth && !path) {
       navigation.goBack();
-    } else {
+    } else if (accessMode) {
       navigation.closeResource({ accessMode });
     }
     if (path) modalEvent.hide(path, "BackButton.svelte");

@@ -1,7 +1,11 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { logger } from "@nucleum/client/runtime/logging/logger";
+  import {
+    isFullScreenPage,
+    navigation
+  } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { tabState } from "@nucleum/shell/topNav/tabs/tab-state";
 
@@ -15,7 +19,8 @@
   import {
     determineResourceAccessMode,
     determineResourceType,
-    isRecordId
+    isRecordId,
+    isTrashedResource
   } from "@nucleum/datafn/resource.utils";
   import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
   import { resolveResource } from "@nucleum/datafn/resource-query.utils";
@@ -33,7 +38,6 @@
   import { rearrangeOnAxis } from "@21n/ui/actions/rearrange.action";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import Button from "@21n/ui/elements/button/Button.svelte";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import context from "@nucleum/client/runtime/context.store";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
@@ -55,23 +59,33 @@
     onRearranged?: (displacement: number) => void;
   } = $props();
   let resource = $state<any>(undefined);
+  let isResolved = $state(false);
+  const isShown = $derived(
+    !isResolved ||
+      !isTrail ||
+      (!!resource && !(resource.id && isTrashedResource(resource)))
+  );
   let action = $state<any>(undefined);
   let isHovering = $state(false);
   let resourceType = $state<Resource>(Resource.unknown);
   const dev_isFullHeightTabStyle = true;
-  let contextMenu = [
-    {
-      group: "all",
-      items: [
-        {
-          value: "remove",
-          label: "Remove from tabs",
-          icon: "cross",
-          callback: async () => tabState.removeResourceFromTabs(item)
-        }
-      ]
-    }
-  ];
+  const contextMenu = $derived(
+    isTrail
+      ? []
+      : [
+          {
+            group: "all",
+            items: [
+              {
+                value: "remove",
+                label: "Remove from tabs",
+                icon: "cross",
+                callback: async () => tabState.removeResourceFromTabs(item)
+              }
+            ]
+          }
+        ]
+  );
   let isActive = $derived(
     item.toString() === $page.url?.searchParams?.get(AccessMode.PAGE)
   );
@@ -96,6 +110,7 @@
     const record = get(recordStore).data[0];
     if (record && typeof record === "object") {
       resource = { ...untrack(() => resource), ...record };
+      isResolved = true;
     }
   });
 
@@ -106,7 +121,11 @@
       if (isRecordId(item)) {
         resourceType = determineResourceType(item);
         action = requireCommandHost().resolveAction(resourceType);
-        resource = await resolveResource(item);
+        const resolved = await resolveResource(item).catch((error) => {
+          logger.error({ at: "TopBarResourceItem.initialize", item, error });
+          return undefined;
+        });
+        if (resolved) resource = { ...resolved, ...(resource ?? {}) };
       } else {
         action = requireCommandHost().resolveAction(item);
         if (action) {
@@ -116,15 +135,14 @@
           };
         }
       }
+      isResolved = true;
     }
   });
 
   function resolveContextMenu() {
     if (!resource?.id) return contextMenu;
     const currentMode = determineResourceAccessMode(resource.id);
-    const maxSearchParam = new URLSearchParams(window.location.search).get(
-      AppSearchParam.MAX
-    );
+    const maxSearchParam = isFullScreenPage(resource.id);
     return [
       ...contextMenu,
       {
@@ -185,128 +203,124 @@
   }
 </script>
 
-<div
-  class={cn("border--x border--r-brs3 border-l-transparent max-h-full z-10", {
-    "h-full": !isInterimTab && dev_isFullHeightTabStyle,
-    "p-1": !isTrail && (!dev_isFullHeightTabStyle || isInterimTab)
-  })}
->
+{#if isShown}
   <div
-    use:popover={{
-      placement: Placement.BottomCenter,
-      content: ContextMenu,
-      triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
-      componentProps: { menuResolver: resolveContextMenu },
-      id: "topBarContextMenu",
-      groupId: "topBarContextMenuGroup"
-    }}
-    use:hoverable={{
-      onHover: (e) => (isHovering = e)
-    }}
-    use:rearrangeOnAxis={{
-      enabled: true,
-      onRearrange: handleRearrange,
-      onRearranged: handleRearranged,
-      threshold: 30
-    }}
-    class={cn(
-      "relative z-20 flex items-center text-b2 gap-2 truncate",
-      // abg(isActive, 1),
-      {
-        "rounded-md": !dev_isFullHeightTabStyle || isInterimTab,
-        "px-4 py-1.5": !isInterimTab && !isTrail,
-        "px-2 py-1 border": isInterimTab,
-        "border-transparent hover:border-dashed hover:border-brs3":
-          isInterimTab && !isActive,
-        "border-dashed border-brs4 bg-bgs3": isActive && isInterimTab,
-        "w-full": isTrail,
-        "bg-bgs2": isTrail && !isActive,
-        "max-w-48 min-w-24": !isTrail,
-        "px-1 py-1.5": !isInterimTab && isTrail,
-        "hover:bg-bgs3 text-fgs2 hover:text-fgs1": !isActive,
-        "bg-bgs1": !isInterimTab && isActive
-      },
-      !isInterimTab &&
-        dev_isFullHeightTabStyle && {
-          "h-full border-b": true,
-          "border-transparent": !isActive,
-          "border-aps1": isActive
-        }
-    )}
-    role="button"
-    tabindex="0"
-    onclick={handleTabClick}
-    onkeydown={handleTabKeyDown}
+    class={cn("border--x border--r-brs3 border-l-transparent max-h-full z-10", {
+      "h-full": !isInterimTab && dev_isFullHeightTabStyle,
+      "p-1": !isTrail && (!dev_isFullHeightTabStyle || isInterimTab)
+    })}
   >
-    <div class="truncate text-b3">
-      {#if !resource}
-        <span class="w-32"> loading... </span>
-      {:else if action?.resourceLabelRenderer && resource}
-        {@const ResourceLabelRenderer = action.resourceLabelRenderer}
-        <ResourceLabelRenderer
-          item={resource}
-          accessPoint={ResourceAccessPoint.TABS}
-        />
-      {:else}
-        <span class="flex items-center gap-1">
-          {#if resource.icon}
-            <Icon icon={resource.icon} size={Size.sm} />
-          {/if}
-          {isValidString(resource?.label) ? resource?.label : "Untitled"}
-        </span>
+    <div
+      use:popover={{
+        placement: Placement.BottomCenter,
+        content: ContextMenu,
+        triggerMethod: [PopoverTriggerMethod.RIGHT_CLICK],
+        componentProps: { menuResolver: resolveContextMenu },
+        id: "topBarContextMenu",
+        groupId: "topBarContextMenuGroup"
+      }}
+      use:hoverable={{
+        onHover: (e) => (isHovering = e)
+      }}
+      use:rearrangeOnAxis={{
+        enabled: true,
+        onRearrange: handleRearrange,
+        onRearranged: handleRearranged,
+        threshold: 30
+      }}
+      class={cn(
+        "relative z-20 flex items-center text-b2 gap-2 truncate",
+        // abg(isActive, 1),
+        {
+          "rounded-md": !dev_isFullHeightTabStyle || isInterimTab,
+          "px-4 py-1.5": !isInterimTab && !isTrail,
+          "px-2 py-1 border": isInterimTab,
+          "border-transparent hover:border-dashed hover:border-brs3":
+            isInterimTab && !isActive,
+          "border-dashed border-brs4 bg-bgs3": isActive && isInterimTab,
+          "w-full": isTrail,
+          "bg-bgs2": isTrail && !isActive,
+          "max-w-48 min-w-24": !isTrail,
+          "px-1 py-1.5": !isInterimTab && isTrail,
+          "hover:bg-bgs3 text-fgs2 hover:text-fgs1": !isActive,
+          "bg-bgs1": !isInterimTab && isActive
+        },
+        !isInterimTab &&
+          dev_isFullHeightTabStyle && {
+            "h-full border-b": true,
+            "border-transparent": !isActive,
+            "border-aps1": isActive
+          }
+      )}
+      role="button"
+      tabindex="0"
+      onclick={handleTabClick}
+      onkeydown={handleTabKeyDown}
+    >
+      <div class="truncate text-b3">
+        {#if !resource && !isResolved}
+          <span
+            class="block h-3 w-28 rounded bg-bgs3 animate-pulse"
+            aria-hidden="true"
+          ></span>
+        {:else if action?.resourceLabelRenderer && resource}
+          {@const ResourceLabelRenderer = action.resourceLabelRenderer}
+          <ResourceLabelRenderer
+            item={resource}
+            accessPoint={ResourceAccessPoint.TABS}
+            isShowFallbackIcons={true}
+          />
+        {:else}
+          <span class="flex items-center gap-1">
+            {#if resource?.icon}
+              <Icon icon={resource.icon} size={Size.sm} />
+            {/if}
+            {isValidString(resource?.label) ? resource?.label : "Untitled"}
+          </span>
+        {/if}
+      </div>
+      {#if isInterimTab && !isTrail}
+        <div class="flex items-center">
+          <Button
+            icon="cross"
+            tooltip="Close"
+            size={Size.sm}
+            parentBgIndex={2}
+            onclick={() => {
+              onClose?.();
+            }}
+          />
+        </div>
+      {/if}
+      {#if !isTrail && !isInterimTab && (isHovering || $context.isTouchDevice)}
+        <div
+          class={cn(
+            "absolute right-0 h-full rounded-r-md bg-gradient-to-l  to-transparent pl-10",
+            {
+              "from-bgs3 via-bgs3": !isActive && !$context.isTouchDevice,
+              "from-bgs2 via-bgs2": !isActive && $context.isTouchDevice,
+              "from-bgs1 via-bgs1": isActive
+            }
+          )}
+        >
+          <button
+            type="button"
+            onclick={(event) => {
+              event.stopPropagation();
+              tabs.remove(item);
+              if (isActive) {
+                navigation.goBack();
+              }
+            }}
+            use:tooltip={{
+              text: "Close"
+            }}
+            class="h-full flex justify-center items-center pr-2"
+          >
+            <Icon icon="cross" size={Size.sm} class="stroke-fgs2" />
+          </button>
+        </div>
       {/if}
     </div>
-    {#if isInterimTab && !isTrail}
-      <div class="flex items-center">
-        <Button
-          icon="ph:push-pin-light"
-          tooltip="Pin to tabs"
-          size={Size.sm}
-          parentBgIndex={2}
-          onclick={() => {
-            const backParam = $page.url?.searchParams?.get(AppSearchParam.BACK);
-            navigation.openTab(item, backParam ?? undefined);
-          }}
-        />
-        <Button
-          icon="cross"
-          tooltip="Close"
-          size={Size.sm}
-          parentBgIndex={2}
-          onclick={() => {
-            onClose?.();
-          }}
-        />
-      </div>
-    {/if}
-    {#if !isTrail && !isInterimTab && (isHovering || $context.isTouchDevice)}
-      <div
-        class={cn(
-          "absolute right-0 h-full rounded-r-md bg-gradient-to-l  to-transparent pl-10",
-          {
-            "from-bgs3 via-bgs3": !isActive && !$context.isTouchDevice,
-            "from-bgs2 via-bgs2": !isActive && $context.isTouchDevice,
-            "from-bgs1 via-bgs1": isActive
-          }
-        )}
-      >
-        <button
-          type="button"
-          onclick={(event) => {
-            event.stopPropagation();
-            tabs.remove(item);
-            if (isActive) {
-              navigation.goBack();
-            }
-          }}
-          use:tooltip={{
-            text: "Close"
-          }}
-          class="h-full flex justify-center items-center pr-2"
-        >
-          <Icon icon="cross" size={Size.sm} class="stroke-fgs2" />
-        </button>
-      </div>
-    {/if}
   </div>
-</div>
+{/if}

@@ -1,0 +1,40 @@
+<svelte:options runes={true} />
+
+<script lang="ts">
+  import context from "@nucleum/client/runtime/context.store";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+
+  let {
+    label = "Close",
+    menuColumn = undefined,
+    onclick
+  }: {
+    /** Accessible name and tooltip of the button. */
+    label?: string;
+    /** App menu column the button lines up with, if that column is shown. */
+    menuColumn?: "labels" | "icons";
+    onclick: () => void;
+  } = $props();
+</script>
+
+<button
+  type="button"
+  data-testid="top-bar-close"
+  aria-label={label}
+  class={cn(
+    "flex items-center justify-center h-full shrink-0 text-fgs2 hover:bg-bgs3-striped hover:text-fgs1",
+    {
+      "border-r border-brs3": !$context.experiments?.isEnableRoundedMain,
+      "w-[5.5rem]": menuColumn === "labels",
+      "w-[3.5rem]": menuColumn === "icons",
+      "px-4": !menuColumn
+    }
+  )}
+  use:tooltip={{ text: label }}
+  {onclick}
+>
+  <Icon icon="cross" size={Size.md} />
+</button>

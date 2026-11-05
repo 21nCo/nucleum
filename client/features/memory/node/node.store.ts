@@ -1153,7 +1153,7 @@ export function resolveNodeContextMenu(
     commonGroups = [
       {
         group: "open",
-        items: [resourceActions.openAsTab(), resourceActions.maximize()]
+        items: [resourceActions.maximize()]
       },
       moreGroup
     ];
@@ -1174,11 +1174,7 @@ export function resolveNodeContextMenu(
     commonGroups = [
       {
         group: "open",
-        items: [
-          resourceActions.openAsTab(),
-          resourceActions.openAsSplit(),
-          resourceActions.maximize()
-        ]
+        items: [resourceActions.openAsSplit(), resourceActions.maximize()]
       },
       moreGroup
     ];

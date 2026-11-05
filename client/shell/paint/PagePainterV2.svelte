@@ -106,7 +106,7 @@
       const homePath = $view.isPortrait
         ? productConfig.homePathPt
         : productConfig.homePath;
-      navigation.gotoPath(homePath);
+      navigation.gotoPath(homePath + window.location.search);
       return;
     } else if (!path) {
       navigation.gotoPath("/404");

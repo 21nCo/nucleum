@@ -5,11 +5,13 @@ fills it. Pure "where things go and how you move", never "what a screen does".
 
 ## Owners
 
-`navigation` (URL/history, resource navigation), `topNav`, `bottomNav`,
-`leftPanel`, `rightPanel`, `trail`, `layers` (theme, metadata, embed),
-`overlays`, `modal`, `paint` (page and
-resource resolvers fed through the shared-state action renderer), `split views`,
-`tabs`, `interaction`, `navigator`, `shortcuts`, `sync` and `notifications` chrome.
+`navigation` (URL/history, resource navigation, the layer 0 base page and
+layer 1 resource page, full screen and phone back), `topNav`, `leftPanel`,
+`rightPanel`, `layers` (theme, metadata, embed), `overlays`, `modal`, `paint`
+(page and resource resolvers fed through the shared-state action renderer),
+`split views`, retired app `tabs`, `interaction`, `navigator` (search, history
+and the access trail tree with recent trails), `shortcuts`, `sync` and
+`notifications` chrome.
 
 `navigation/NavigationLayout.svelte` owns route-driven arrangement and receives
 connected nav snippets from application. `overlays/ModalLayer.svelte` owns the
@@ -39,9 +41,13 @@ does, only how screens are framed and reached, it belongs here.
 Shell is acyclic: it must not import `composition/`, `surfaces/`, or
 `products/`, directly or transitively. Product navigation config enters through
 `@nucleum/shared-state/product/product-config-host`; concrete chrome
-(brand/logo, account avatar, search input, bulk-edit bar, offline status,
-capture, profile section) enters through optional Svelte snippet props provided
-by the application chrome adapters (`client/composition/chrome/`).
+(brand/logo, account avatar, bulk-edit bar, offline status, capture, quick
+actions, persistent indicators) enters through optional Svelte snippet props
+provided by the application chrome adapters (`client/composition/chrome/`),
+with product base layers supplying quick actions and persistent indicators.
+Pages and resources register their view controls for the top bar context zone
+with `topNav/contextZone/ContextZoneContent.svelte`; the zone follows the pane
+(`ContextZonePaneScope`) the user worked in last.
 
 ## Junk-drawer test
 

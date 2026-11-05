@@ -213,8 +213,8 @@
   let isConstrainedWidth = $derived(
     $view.isConstrainedWidth ||
       $view.isPortrait ||
-      $collection?.accessMode === AccessMode.BESIDE_BASE ||
-      $collection?.accessMode === AccessMode.BESIDE_PAGE ||
+      accessMode === AccessMode.BESIDE_BASE ||
+      accessMode === AccessMode.BESIDE_PAGE ||
       (containerWidth < 1000 &&
         ($collection?.coverLayout?.placement === Placement.Right ||
           $collection?.coverLayout?.placement === Placement.Left))
@@ -253,8 +253,9 @@
 
   onDestroy(() => {
     releaseDnDPage?.();
-    ActiveCollectionStore.destroy(id, accessMode);
   });
+
+  $effect(() => ActiveCollectionStore.retain(id, () => accessMode));
 
   async function initialize() {
     if (!id || isInitializing) return;
@@ -723,6 +724,7 @@
         >
           <CollectionTitleBar
             {collection}
+            {accessMode}
             {accessPoint}
             {isSingleViewMode}
             {isConstrainedWidth}

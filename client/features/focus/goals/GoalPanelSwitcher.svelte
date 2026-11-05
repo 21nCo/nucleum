@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
+  import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
   import {
     resolveObjectiveContextMenu,
     type IActiveObjectiveStore
@@ -8,6 +8,7 @@
   import type { IToggleItem } from "@21n/ui/elements/toggle/toggle.type";
   import type { IObjectiveThumb } from "@nucleum/features/focus/goals/goal.type";
   import {
+    type AccessMode,
     type IResourcePageWithPanels,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
@@ -18,11 +19,14 @@
   let {
     objective,
     panels,
+    accessMode = undefined,
     isConstrainedWidth = false,
     isThreeColumned = false
   }: {
     objective: IActiveObjectiveStore;
     panels: IToggleItem[];
+    /** Mode this view of the goal is open in; views share one goal store. */
+    accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
     isThreeColumned?: boolean;
   } = $props();
@@ -55,10 +59,10 @@
   }
 </script>
 
-<ResourcePanelSwitcher
+<ResourceViewSwitcher
   resourceStore={adaptedStore}
   {panels}
-  accessMode={$objective.accessMode}
+  {accessMode}
   {isConstrainedWidth}
   contextMenuResolver={() =>
     resolveObjectiveContextMenu(

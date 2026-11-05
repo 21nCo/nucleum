@@ -45,7 +45,8 @@ const libraryAction: IAction = {
   panel: MemotronLibrary,
   type: ActionType.PAGE,
   componentParams: {
-    defaultResource: Resource.node
+    defaultResource: Resource.node,
+    resources: memotronLibraryResources
   },
   modalParams: {
     layout: {
@@ -109,7 +110,10 @@ export const memotronActions: IAction[] = [
       ],
     icon: "mynaui:plus-hexagon",
     type: ActionType.LIVE,
-    accessMode: AccessMode.OVERLAY
+    accessMode: AccessMode.OVERLAY,
+    liveActionParams: {
+      isOpeningBehaviorConfigurable: true
+    }
   },
   {
     action: MemotronAction.CAPTURE_DND,

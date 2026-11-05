@@ -64,10 +64,7 @@ async function runPointronSmokeFlow(page: Page) {
     objectiveRecord.getByText(objectiveName, { exact: true }).first()
   ).toBeVisible({ timeout: 15_000 });
 
-  await objectiveRecord
-    .getByRole("button", { name: /^Close$/i })
-    .first()
-    .click({ timeout: 5_000 });
+  await page.getByTestId("top-bar-close").click({ timeout: 5_000 });
   await openLibraryAndTab(page, LibraryTab.Objectives);
   await expect(
     getResourceThumbnails(page).filter({ hasText: objectiveName })
@@ -102,7 +99,7 @@ async function runMemotronSmokeFlow(page: import("@playwright/test").Page) {
     recordSurface.getByText(nodeText, { exact: true }).first()
   ).toBeVisible({ timeout: 15_000 });
 
-  const closeBtn = recordSurface.getByRole("button", { name: "Close" });
+  const closeBtn = page.getByTestId("top-bar-close");
   await closeBtn.click({ timeout: 5_000 });
 
   await openLibraryAndTab(page, LibraryTab.Nodes);

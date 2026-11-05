@@ -33,15 +33,12 @@
   let {
     spaceId,
     focusChain,
-    accessMode = undefined,
     header,
     onFocusSpace
   }: {
     spaceId: string;
     /** Spaces open above this one, from the root down. */
     focusChain: string[];
-    /** How the space itself is open; a full-screen space opens its records full screen. */
-    accessMode?: AccessMode;
     header: Snippet;
     onFocusSpace: (spaceId: string) => void;
   } = $props();
@@ -125,10 +122,7 @@
 
   function openItem(item: ISpaceResourceNavItem) {
     stopOpenedPageHeadingScroll();
-    navigation.openResource(
-      item.resourceId,
-      accessMode === AccessMode.FULL ? AccessMode.FULL : AccessMode.PAGE
-    );
+    navigation.openResource(item.resourceId, AccessMode.PAGE);
   }
 
   /** Opens a page over the space and scrolls it to a heading once it renders. */

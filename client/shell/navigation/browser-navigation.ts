@@ -2,6 +2,7 @@ import { navigation } from "@nucleum/shell/navigation/navigation";
 import { get } from "svelte/store";
 
 import { goto } from "$app/navigation";
+import { page } from "$app/state";
 
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 
@@ -43,8 +44,12 @@ function handleCustomNavigation(event: any) {
     !event.detail.path.includes("mailto:") &&
     !event.detail.path.includes("//oauthsignin")
   ) {
+    const replaceState = event.detail?.replaceState ?? false;
+    const state =
+      event.detail?.state ?? (replaceState ? page.state : undefined);
     goto(event.detail.path, {
-      replaceState: event.detail?.replaceState ?? false
+      replaceState,
+      ...(state ? { state: state as App.PageState } : {})
     });
   } else if (event.detail.path) window.location = event.detail.path;
 }

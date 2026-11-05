@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { get } from "svelte/store";
 import { AccessMode } from "@nucleum/datafn/resource.type";
+import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import modalEvent, {
   configureOverlayHost,
   fullScreen,
@@ -72,7 +73,11 @@ describe("overlay shell contract", () => {
 
   it("restores the fullscreen path from the existing URL key", () => {
     expect(fullScreen.restore()).toBeUndefined();
-    history.replaceState({}, "", `/?${AccessMode.FULL}=focus`);
+    history.replaceState(
+      {},
+      "",
+      `/?${AccessMode.OVERLAY}=focus&${AppSearchParam.MAX}=true`
+    );
     expect(fullScreen.restore()).toBe(true);
     expect(fullScreen.get().path).toBe("focus");
     expect(host.openFullscreen).toHaveBeenCalledWith("focus");

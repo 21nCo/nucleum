@@ -33,7 +33,7 @@
   let isCompletelyHideLeftNavBar = $state(
     uiState.getState(UIState.completelyHideLeftNavBar, {
       scope: UIStateScope.PRODUCT
-    }) ?? false
+    }) ?? true
   );
 </script>
 
@@ -98,7 +98,7 @@
         label={{
           label: "Hide App menu bar on hot key",
           tooltip: {
-            body: "Completely hides the app menu bar on usage of the hot key **Q**. By default, it minimizes the app menu bar."
+            body: "The hot key **Q** switches to command-only mode, hiding the app menu bar. When off, **Q** only hides the menu labels."
           }
         }}
         isExpanded={true}

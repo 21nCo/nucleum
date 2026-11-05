@@ -134,13 +134,20 @@
       if (!x) return;
       const currentAccessMode = determineResourceAccessMode($node.id);
       const clickedAccessMode = navigation.determineClickAccessMode(x.event);
-      if (clickedAccessMode && clickedAccessMode !== currentAccessMode) {
-        navigation.openResource(x.id, clickedAccessMode);
+      const isFullScreen = navigation.isFullScreenClick(x.event);
+      if (
+        clickedAccessMode &&
+        (clickedAccessMode !== currentAccessMode || isFullScreen)
+      ) {
+        navigation.openResource(x.id, clickedAccessMode, {
+          isFullScreen,
+          origin: $node.id
+        });
         node.eventStore.set(undefined);
         return;
       }
       //TODO - temp direct reload instead of within focus
-      temp_Focus(x.id, { currentAccessMode, accessMode: clickedAccessMode });
+      temp_Focus(x.id, { currentAccessMode });
       node.eventStore.set(undefined);
       return;
     });
@@ -151,7 +158,6 @@
   function temp_Focus(
     id: IRecordId,
     params?: {
-      accessMode?: AccessMode;
       currentAccessMode?: AccessMode;
     }
   ) {
@@ -159,14 +165,7 @@
 
     const currentAccessMode =
       params?.currentAccessMode ?? determineResourceAccessMode($node.id);
-    if (
-      currentAccessMode === AccessMode.TAB &&
-      (!params?.accessMode || params?.accessMode === AccessMode.TAB)
-    ) {
-      navigation.replaceTab(id, $node.id);
-      return;
-    }
-    navigation.openResource(id, currentAccessMode);
+    navigation.openResource(id, currentAccessMode, { origin: $node.id });
   }
 
   onDestroy(() => {

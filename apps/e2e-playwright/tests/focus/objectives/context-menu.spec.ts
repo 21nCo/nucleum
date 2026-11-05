@@ -544,42 +544,6 @@ test("from library - Delete and restore objective via context menu @context-menu
   }
 });
 
-test("from library - Open as tab adds objective to tab bar @context-menu", async ({
-  page
-}) => {
-  test.setTimeout(90_000);
-  await ensureInAppOnHome(page);
-
-  const objectiveName = `E2E tab ${Date.now()}`;
-  const objective = await e2eSeed.focus.objective({ label: objectiveName });
-  await openObjectiveLibrary(page);
-  await expect(getResourceThumbnail(page, objective.id)).toBeVisible({
-    timeout: 15_000
-  });
-
-  await openContextMenuOnGoal(page, objective.id);
-  const openTabItem = page.locator('[data-context-menu-item-id="Open as tab"]');
-  await expect(openTabItem).toBeVisible({ timeout: 5_000 });
-  await openTabItem.click();
-
-  const recordSurface = getResourceRecordSurface(page);
-  await expect(recordSurface).toBeVisible({ timeout: 10_000 });
-  const closeBtn = recordSurface
-    .getByRole("button", { name: /^Close$/i })
-    .first();
-  await expect(closeBtn).toBeVisible({ timeout: 10_000 });
-  await closeBtn.click({ timeout: 5_000 });
-  await expect(recordSurface).toBeHidden({ timeout: 10_000 });
-  await openObjectiveLibrary(page);
-
-  await openContextMenuOnGoal(page, objective.id);
-  const removeTabItem = page.locator(
-    '[data-context-menu-item-id="Remove from tabs"]'
-  );
-  await expect(removeTabItem).toBeVisible({ timeout: 8_000 });
-  await removeTabItem.click();
-});
-
 test("from library - Select activates bulk selection mode @context-menu", async ({
   page
 }) => {

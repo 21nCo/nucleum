@@ -203,7 +203,9 @@ export async function waitForSessionElapsed(page: Page, seconds: number) {
  * Hides the focus full-screen surface while leaving the session running.
  */
 export async function hideFocusFullscreen(page: Page) {
-  const fullscreen = page.getByTestId("modal-FULL_SCREEN_FOCUS-focus");
+  const fullscreen = page.locator(
+    '[data-testid="overlay-layer"][data-overlay="FULL_SCREEN_FOCUS"]'
+  );
   const exitButton = fullscreen.getByRole("button").filter({
     has: page.locator('use[href*="arrows-in"], use[href*="minimize"]')
   });

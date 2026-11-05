@@ -6,7 +6,6 @@ import {
   getResourceContextMenuTrigger,
   getResourceRecordContextMenuTrigger,
   getResourceThumbnail,
-  getResourceThumbnails,
   openResourceQueryState,
   requireResourceBrowseContract
 } from "../../utils/resource-matrix";
@@ -48,20 +47,6 @@ async function openContextMenuOnNode(
 ) {
   const force = options?.force ?? false;
   const nodeRow = getResourceThumbnail(page, nodeId);
-  await nodeRow.waitFor({ state: "visible", timeout: 15_000 });
-  await nodeRow.hover({ force });
-  const contextMenuTrigger = getResourceContextMenuTrigger(nodeRow);
-  await contextMenuTrigger.waitFor({ state: "visible", timeout: 8_000 });
-  await contextMenuTrigger.click({ timeout: 5_000, force });
-}
-
-/** Open context menu on the first node in the list (e.g. when node displays as "Untitled"). */
-async function openContextMenuOnFirstNode(
-  page: Page,
-  options?: { force?: boolean }
-) {
-  const force = options?.force ?? false;
-  const nodeRow = getResourceThumbnails(page).first();
   await nodeRow.waitFor({ state: "visible", timeout: 15_000 });
   await nodeRow.hover({ force });
   const contextMenuTrigger = getResourceContextMenuTrigger(nodeRow);
@@ -372,49 +357,6 @@ test.describe("nodes - context menu (from library, from record page) @context-me
           timeout: 15_000
         });
       }
-    });
-
-    test("Open as tab adds node to tab bar", async ({ page }) => {
-      test.setTimeout(90_000);
-      await ensureInAppOnHome(page);
-
-      const nodeName = `E2E node tab ${Date.now()}`;
-      const node = await e2eSeed.memory.node({ label: nodeName });
-      await openNodesLibrary(page);
-      await expect(getResourceThumbnail(page, node.id)).toBeVisible({
-        timeout: 15_000
-      });
-
-      await openContextMenuOnNode(page, node.id);
-      const openTabItem = page.locator(
-        '[data-context-menu-item-id="Open as tab"]'
-      );
-      await expect(openTabItem).toBeVisible({ timeout: 5_000 });
-      await openTabItem.click();
-
-      // Wait for the tab to appear in the top bar (may show as node name or "Untitled")
-      await expect(
-        page
-          .getByRole("button", {
-            name: new RegExp(nodeName + "|Untitled", "i")
-          })
-          .first()
-      )
-        .toBeVisible({ timeout: 10_000 })
-        .catch(() => null);
-
-      const closeBtn = page.getByRole("button", { name: /Close/i }).first();
-      await expect(closeBtn).toBeVisible({ timeout: 10_000 });
-      await closeBtn.click({ timeout: 5_000 });
-      await openNodesLibrary(page);
-
-      // Node may display as "Untitled" in the list after opening as tab; use first node
-      await openContextMenuOnFirstNode(page);
-      const removeTabItem = page.locator(
-        '[data-context-menu-item-id="Remove from tabs"]'
-      );
-      await expect(removeTabItem).toBeVisible({ timeout: 8_000 });
-      await removeTabItem.click();
     });
 
     test("Select activates bulk selection mode", async ({ page }) => {

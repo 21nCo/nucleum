@@ -9,6 +9,10 @@ import { Action } from "@nucleum/client/config/action.enum";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import Navigator from "@nucleum/shell/navigator/Navigator.svelte";
 import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
+import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
+import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+import { requestNavigatorFocus } from "@nucleum/shell/navigator/navigator-focus";
+import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
 
 /** Commands owned by shell; assembled in application composition. */
 export const shellCommands = {
@@ -65,6 +69,27 @@ export const shellCommands = {
     accessMode: AccessMode.PANEL,
     liveActionParams: {
       size: Size.sm
+    }
+  },
+  open_navigator: {
+    action: Action.OPEN_NAVIGATOR,
+    label: "Open navigator",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      if (resolveNavigatorLayer(new URL(window.location.href))) {
+        requestNavigatorFocus();
+        return;
+      }
+      requireCommandHost().runAction(Action.NAVIGATOR);
+    }
+  },
+  cycle_context_view: {
+    action: Action.CYCLE_CONTEXT_VIEW,
+    label: "Next view tab",
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      contextZone.cycle();
     }
   },
   rhombus: {

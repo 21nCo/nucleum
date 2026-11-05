@@ -45,8 +45,6 @@ describe("resource action host contract", () => {
       open: vi.fn(),
       close: vi.fn(),
       maximize: vi.fn(),
-      openTab: vi.fn(),
-      removeTab: vi.fn(),
       requestLink: vi.fn(),
       afterNodeMutation: vi.fn().mockResolvedValue(undefined)
     };

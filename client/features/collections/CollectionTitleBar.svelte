@@ -9,7 +9,7 @@
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { resolveCollectionContextMenu } from "./collection.store";
   import {
-    AccessMode,
+    type AccessMode,
     ResourceAccessPoint
   } from "@nucleum/datafn/resource.type";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
@@ -43,6 +43,7 @@
   let {
     searchQuery = $bindable(""),
     collection,
+    accessMode = undefined,
     accessPoint = ResourceAccessPoint.SELF,
     isShowMetaViews = $bindable(false),
     isSingleViewMode = false,
@@ -53,6 +54,8 @@
   }: {
     searchQuery?: string;
     collection: IActiveCollectionStore;
+    /** Mode this view of the collection is open in; views share one store. */
+    accessMode?: AccessMode;
     accessPoint?: ResourceAccessPoint;
     isShowMetaViews?: boolean;
     isSingleViewMode?: boolean;
@@ -146,9 +149,8 @@
     isEnabled={!$collection.isInEditMode &&
       isConstrainedWidth &&
       accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED &&
-      !!$collection.accessMode &&
-      $collection.accessMode !== AccessMode.FULL}
-    accessMode={$collection.accessMode}
+      !!accessMode}
+    {accessMode}
     class="truncate"
   >
     {#if $collection.type === CollectionType.TYPED}
@@ -283,17 +285,14 @@
             resolveCollectionForContextMenu(),
             ResourceAccessPoint.SELF,
             {
-              accessMode: $collection.accessMode
+              accessMode: accessMode
             }
           )}
         position={Placement.Left}
         id="collectionContextMenu"
         size={Size.lg}
       />
-      <ResourceInlineCloseButton
-        accessMode={$collection.accessMode}
-        id={$collection.id}
-      />
+      <ResourceInlineCloseButton {accessMode} id={$collection.id} />
     </div>
   {:else if accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <span
@@ -373,7 +372,7 @@
               resolveCollectionForContextMenu(),
               ResourceAccessPoint.SELF,
               {
-                accessMode: $collection.accessMode
+                accessMode: accessMode
               }
             )}
           position={Placement.BottomCenter}
@@ -383,10 +382,7 @@
         {#if isSingleViewMode}
           <AddResourceAction {onAdd} variant="default" />
         {/if}
-        <ResourceInlineCloseButton
-          accessMode={$collection.accessMode}
-          id={$collection.id}
-        />
+        <ResourceInlineCloseButton {accessMode} id={$collection.id} />
       {/if}
     </span>
   {/if}

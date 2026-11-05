@@ -14,37 +14,48 @@
   import TopNavLeftMenuItem from "@nucleum/shell/topNav/TopNavLeftMenuItem.svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
+  let {
+    mode = "action"
+  }: {
+    /**
+     * `indicator` renders the running session timer only; `action` renders the
+     * focus quick action.
+     */
+    mode?: "indicator" | "action";
+  } = $props();
   const action = PointronAction.FOCUS;
 </script>
 
-{#if $activeSession.isSessionRunning}
-  <button
-    class={cn(
-      "flex items-center gap-1 tabular-nums text-b3 font-mono border hover:bg-bgs3 py-1 px-2 mx-2 rounded-md",
-      {
-        "text-aps1 border-aps1":
-          $activeSession.state === SessionState.FOCUS_RUNNING,
-        "text-ass1 border-ass1":
-          $activeSession.state === SessionState.BREAK_RUNNING
-      }
-    )}
-    onclick={() => {
-      requireCommandHost().runAction(action);
-    }}
-    use:tooltip={{
-      text: "Open focus"
-    }}
-  >
-    <Icon
-      icon="focus"
-      size={Size.sm}
-      class={cn({
-        "text-aps1": $activeSession.state === SessionState.FOCUS_RUNNING,
-        "text-ass1": $activeSession.state === SessionState.BREAK_RUNNING
-      })}
-    />
-    {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
-  </button>
+{#if mode === "indicator"}
+  {#if $activeSession.isSessionRunning}
+    <button
+      class={cn(
+        "flex items-center gap-1 tabular-nums text-b3 font-mono border hover:bg-bgs3 py-1 px-2 mx-2 rounded-md",
+        {
+          "text-aps1 border-aps1":
+            $activeSession.state === SessionState.FOCUS_RUNNING,
+          "text-ass1 border-ass1":
+            $activeSession.state === SessionState.BREAK_RUNNING
+        }
+      )}
+      onclick={() => {
+        requireCommandHost().runAction(action);
+      }}
+      use:tooltip={{
+        text: "Open focus"
+      }}
+    >
+      <Icon
+        icon="focus"
+        size={Size.sm}
+        class={cn({
+          "text-aps1": $activeSession.state === SessionState.FOCUS_RUNNING,
+          "text-ass1": $activeSession.state === SessionState.BREAK_RUNNING
+        })}
+      />
+      {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
+    </button>
+  {/if}
 {:else}
   <TopNavLeftMenuItem {action} tooltip="Open focus" ariaLabel="Focus" />
 {/if}

@@ -102,6 +102,18 @@ export function rankNavigatorHistory(
   return limit === undefined ? ranked : ranked.slice(0, limit);
 }
 
+/** Orders entries by when they were last opened, newest first. */
+export function rankNavigatorHistoryByRecency(
+  history: NavigatorHistory,
+  limit?: number
+): RankedNavigatorHistoryEntry[] {
+  const ranked = Object.entries(history.entries)
+    .filter(([, entry]) => entry.lastOpenedAt > 0)
+    .map(([id, entry]) => ({ id, entry, score: entry.lastOpenedAt }))
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+  return limit === undefined ? ranked : ranked.slice(0, limit);
+}
+
 /** Ranks entries most often opened from the given origin record in the window. */
 export function rankNavigatorHistoryFrom(
   history: NavigatorHistory,

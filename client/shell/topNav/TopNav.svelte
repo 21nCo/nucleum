@@ -1,293 +1,235 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { navigation } from "@nucleum/shell/navigation/navigation";
-
   import type { Snippet } from "svelte";
-  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { onMount } from "svelte";
-  import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-
-  import { Action } from "@nucleum/client/config/action.enum";
-  import Tabs from "@nucleum/shell/topNav/tabs/Tabs.svelte";
-  import { tabs, vTrail } from "@nucleum/shell/topNav/tabs/tabs.store";
-  import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
-  import { fly } from "svelte/transition";
-  import { quadIn } from "svelte/easing";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
   import { page } from "$app/stores";
-  import TopBarResourceItem from "@nucleum/shell/topNav/tabs/TopBarResourceItem.svelte";
-  import { cn } from "@21n/ui/environment/presentation";
-
-  import TopNavLeftMenuItem from "@nucleum/shell/topNav/TopNavLeftMenuItem.svelte";
-  import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
+  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
+  import {
+    UIState,
+    UIStateScope
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import { Action } from "@nucleum/client/config/action.enum";
+  import { AccessMode } from "@nucleum/datafn/resource.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
-  import TopNavLeftLogo from "@nucleum/shell/topNav/TopNavLeftLogo.svelte";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import context from "@nucleum/client/runtime/context.store";
-  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
-  import ToastNotificationContent from "@nucleum/shell/notifications/ToastNotificationContent.svelte";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
-  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
+  import { cn } from "@21n/ui/environment/presentation";
+  import Icon from "@21n/ui/elements/Icon.svelte";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import { tooltip } from "@21n/ui/actions/popover.action";
+  import TopNavLeftMenuItem from "@nucleum/shell/topNav/TopNavLeftMenuItem.svelte";
+  import TopNavDateTime from "@nucleum/shell/topNav/TopNavDateTime.svelte";
+  import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
+  import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
+  import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
+  import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
+  import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
+  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    closeTopLayer,
+    resolveCloseControlLabel
+  } from "@nucleum/shell/navigation/top-layer";
+  import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   let {
-    topnav,
+    topnav = undefined,
+    indicators = undefined,
     leftLogo = undefined,
-    searchInput = undefined,
     bulkEditBar = undefined,
-    offlineStatus = undefined,
-    onCloseSearch = undefined
+    offlineStatus = undefined
   }: {
+    /** Quick actions rendered in the actions zone. */
     topnav?: Snippet;
-    /** Left-most chrome slot (typically the account/settings logo entry). */
+    /** Persistent product indicators, such as a running focus session. */
+    indicators?: Snippet;
+    /** Brand slot rendered over the app menu column. */
     leftLogo?: Snippet;
-    /** Search input slot rendered while the top-nav search mode is active. */
-    searchInput?: Snippet<[params: { style: InputStyle; isAutoFocus: boolean }]>;
-    /** Bulk-edit toolbar slot rendered when bulk selection is active. */
-    bulkEditBar?: Snippet<[params: {
-      count: number;
-      context: any;
-      subContext?: string;
-      onAction: (detail: { action: string; data?: any }) => void;
-      onSelectAll: () => void;
-      onClear: () => void;
-    }]>;
-    /** Sync/offline status slot rendered in the trailing chrome row. */
+    /** Bulk-edit toolbar slot rendered in the context zone during selection. */
+    bulkEditBar?: Snippet<
+      [
+        params: {
+          count: number;
+          context: any;
+          subContext?: string;
+          onAction: (detail: { action: string; data?: any }) => void;
+          onSelectAll: () => void;
+          onClear: () => void;
+        }
+      ]
+    >;
+    /** Sync/offline status slot rendered with the persistent indicators. */
     offlineStatus?: Snippet<[{ isIconOnly?: boolean }]>;
-    /** Renderer provided by the application layer to reset product search. */
-    onCloseSearch?: () => void;
   } = $props();
-  let pinnedItems = $state<IRecordId[]>(tabs.get() ?? []);
-  let bulkEditCount = $state(0);
-  let bulkEditContext = $state<any>(null);
-  let bulkEditSubContext = $state<string | undefined>(undefined);
+
   const isDev = import.meta.env.DEV;
-  let isSearchMode = $state(
-    new URLSearchParams(window.location.search).get(AccessMode.OVERLAY) ===
-      Action.SEARCH
-  );
-  let isShowBackToSearch = $state(
-    $vTrail.base === Action.SEARCH &&
-      new URLSearchParams(window.location.search).get(AccessMode.PAGE) !== null
-  );
-  let currentSearchParams = $state(new URLSearchParams(window.location.search));
+  const productConfig = requireProductConfig();
+  const bulkEditCount = bulkEditStore.count;
+  const bulkEditContext = bulkEditStore.context;
+  const bulkEditSubContext = bulkEditStore.subContext;
+  const activeEntry = contextZone.active;
 
-  let currentTab = $derived(currentSearchParams.get(AccessMode.TAB));
-  let isInterimTab = $derived(
-    !!currentTab && !pinnedItems.some((x) => x.toString() === currentTab)
+  let isHideMenuLabels = $state(readHideMenuLabels());
+  let isHideLeftNavBar = $state(readHideLeftNavBar());
+
+  const searchParams = $derived($page.url.searchParams);
+  const isBulkMode = $derived($bulkEditCount > 0 && !!$bulkEditContext);
+  const isResourceOpen = $derived(
+    !!searchParams.get(AccessMode.PAGE) ||
+      !!searchParams.get(AccessMode.BESIDE_PAGE) ||
+      !!searchParams.get(AccessMode.BESIDE_BASE)
+  );
+  const isCloseMode = $derived(isBulkMode || isResourceOpen);
+  const closeLabel = $derived(
+    resolveCloseControlLabel(searchParams, $bulkEditCount)
+  );
+  const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
+  const isPageFullScreen = $derived(
+    isPageOpen && !!searchParams.get(AppSearchParam.MAX)
+  );
+  const isHomePage = $derived(isHomeRoute($page.url));
+  const isToastMode = $derived($toasts.length > 0);
+  const isAppMenuColumnVisible = $derived(
+    !isPageFullScreen &&
+      !isHideLeftNavBar &&
+      !$appStore.isMenuHidden &&
+      productConfig.appMenu.length > 0
   );
 
-  let isRightOverlayMode = $derived(isValidArrayWithData($toasts));
-  let isFullOverlayMode = $derived(bulkEditCount > 0 || isSearchMode);
+  function readHideMenuLabels(): boolean {
+    return !!uiState.getState(UIState.hideLeftNavMenuLabels, {
+      scope: UIStateScope.DAP
+    });
+  }
+
+  function readHideLeftNavBar(): boolean {
+    return !!uiState.getState(UIState.isHideLeftNavBar);
+  }
 
   onMount(() => {
-    const unsubscribe = uiState.subscribe((x) => {
-      void x;
-      queueMicrotask(() => {
-        pinnedItems = tabs.get() ?? [];
-      });
+    const release = contextZone.host();
+    const unsubscribe = uiState.subscribe(() => {
+      isHideMenuLabels = readHideMenuLabels();
+      isHideLeftNavBar = readHideLeftNavBar();
     });
-    const bulkEditCountUnsub = bulkEditStore.count.subscribe((count) => {
-      queueMicrotask(() => {
-        bulkEditCount = count;
-      });
-    });
-    const bulkEditContextUnsub = bulkEditStore.context.subscribe((ctx) => {
-      queueMicrotask(() => {
-        bulkEditContext = ctx;
-      });
-    });
-    const bulkEditSubContextUnsub = bulkEditStore.subContext.subscribe(
-      (sub) => {
-        queueMicrotask(() => {
-          bulkEditSubContext = sub;
-        });
-      }
-    );
-
-    const pageSub = page.subscribe((p) => {
-      queueMicrotask(() => {
-        currentSearchParams = p?.url?.searchParams ?? new URLSearchParams();
-        isSearchMode =
-          currentSearchParams.get(AccessMode.OVERLAY) === Action.SEARCH &&
-          !currentSearchParams.get(AccessMode.PAGE);
-        isShowBackToSearch =
-          $vTrail.base === Action.SEARCH &&
-          currentSearchParams.get(AccessMode.PAGE) !== null;
-      });
-    });
-
     return () => {
-      if (unsubscribe) unsubscribe();
-      if (bulkEditCountUnsub) bulkEditCountUnsub();
-      if (bulkEditContextUnsub) bulkEditContextUnsub();
-      if (bulkEditSubContextUnsub) bulkEditSubContextUnsub();
-      if (pageSub) pageSub();
+      release();
+      unsubscribe();
     };
   });
 </script>
 
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
-  class={cn(
-    "w-full h-12 max-h-12 min-h-11 bg-bgs2 userdata grid transition-all duration-200",
-    {
-      "grid-cols-[auto_1fr]": isFullOverlayMode,
-      "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
-    },
-    !isFullOverlayMode && {
-      "grid-cols-[auto_auto_1fr_auto]": pinnedItems.length > 0,
-      "grid-cols-[auto_1fr_auto]": pinnedItems.length < 1
-    }
-  )}
+  class={cn("flex w-full h-12 max-h-12 min-h-11 bg-bgs2 userdata", {
+    "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
+  })}
+  data-testid="top-bar"
 >
   {#if $context.embed !== Embed.HANDSET}
-    {@render leftLogo?.()}
-  {/if}
-  <!-- {#if !isFullOverlayMode}
-    <div
-      class={cn("flex h-full", {
-        "border-r border-brs3": isShowBackToSearch
-      })}
-    >
-      <TopNavLeftMenuItem
-        action={Action.SEARCH}
-        label={isShowBackToSearch ? "Back to search" : undefined}
-        icon={isShowBackToSearch ? "back" : "search"}
-        isFirstItem={true}
-        isPreventDefault={true}
-        onClick={() => {
-          if (new URLSearchParams(window.location.search).get(AccessMode.PAGE)) {
-            navigation.toggleSearchParam({
-              [AccessMode.PAGE]: null,
-              [AccessMode.OVERLAY]: Action.SEARCH
-            });
-            return;
-          }
-          navigation.toggleSearchParam({
-            [AccessMode.OVERLAY]: Action.SEARCH
-          });
-        }}
+    {#if isCloseMode}
+      <TopBarCloseButton
+        label={closeLabel}
+        menuColumn={isAppMenuColumnVisible
+          ? isHideMenuLabels
+            ? "icons"
+            : "labels"
+          : undefined}
+        onclick={() =>
+          closeTopLayer({ isIncludePanel: false, isIncludeFullScreen: false })}
       />
-    </div>
-    {#if pinnedItems.length > 0}
-      <div
-        class={cn(
-          "flex items-center justify-start relative h-full flex-grow overflow-x-auto transition-opacity",
-          {
-            "opacity-80 hover:opacity-100":
-              !isRightOverlayMode && !isFullOverlayMode,
-            "opacity-60 hover:opacity-100": isRightOverlayMode
-          }
-        )}
-      >
-        <Tabs {pinnedItems} />
-        <div
-          class="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none"
+    {:else}
+      {@render leftLogo?.()}
+    {/if}
+  {/if}
+  <div
+    class="flex flex-1 min-w-0 h-full items-center justify-start overflow-x-auto"
+    data-testid="top-bar-context-zone"
+  >
+    {#if isPageOpen && !isBulkMode}
+      <div class="flex items-center h-full shrink-0 pl-1 pr-1 gap-0.5">
+        <button
+          type="button"
+          data-testid="top-bar-back"
+          aria-label="Back"
+          class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+          use:tooltip={{ text: "Back" }}
+          onclick={() => navigation.backInTrail()}
         >
-          <div
-            class={cn(
-              "h-full flex items-center justify-end bg-gradient-to-r from-transparent via-bgs2 to-bgs2 px-2",
-              {
-                "w-12": !isRightOverlayMode,
-                "w-24": isRightOverlayMode
-              }
-            )}
-          ></div>
-        </div>
+          <Icon icon="chevron-left" size={Size.md} />
+        </button>
+        {#if isPageFullScreen}
+          <button
+            type="button"
+            data-testid="top-bar-exit-full-screen"
+            aria-label="Exit full screen"
+            class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+            use:tooltip={{ text: "Exit full screen" }}
+            onclick={() => navigation.exitFullScreen()}
+          >
+            <Icon icon="exitfullscreen" size={Size.md} />
+          </button>
+        {/if}
       </div>
     {/if}
-  {/if} -->
-  {#if isRightOverlayMode || isFullOverlayMode}
-    <!-- TODO - multiple toasts case -->
-    <div
-      class={cn(
-        "text-b2 w-full flex items-center justify-end pr-3 !opacity-100"
-      )}
-      in:fly={isSearchMode
-        ? { duration: 1 }
-        : { duration: 200, y: -10, easing: quadIn }}
-    >
-      {#if isSearchMode}
-        <button
-          class="flex items-center gap-2 justify-between w-full h-full text-b2 text-fgs2"
-        >
-          <TopNavLeftMenuItem
-            action={Action.SEARCH}
-            icon="cross"
-            tooltip="Close search"
-            isFirstItem={true}
-            isPreventDefault={true}
-            onClick={() => {
-              onCloseSearch?.();
-            }}
-          />
-          {@render searchInput?.({
-            style: InputStyle.PLAIN,
-            isAutoFocus: true
-          })}
-        </button>
-      {:else if $toasts.length > 0}
-        <ToastNotificationContent notification={$toasts[$toasts.length - 1]} />
-      {:else if bulkEditCount > 0 && bulkEditContext}
-        {@render bulkEditBar?.({
-          count: bulkEditCount,
-          context: bulkEditContext,
-          subContext: bulkEditSubContext,
-          onAction: (detail: { action: string; data?: any }) =>
-            bulkEditStore.onAction(detail.action, detail.data),
-          onSelectAll: () => bulkEditStore.onSelectAll(),
-          onClear: () => bulkEditStore.reset()
-        })}
-      {/if}
-    </div>
-  {:else}
-    <div class="flex items-center justify-start h-full text-b3 text-fgs3 px-3">
-      <!-- Toast, player, status, upcoming message, contextual action suggestions
-      area (Default current time) -->
-    </div>
-    <div
-      class="flex items-center justify-end h-full"
-      in:fly={{ duration: 200, y: 10, easing: quadIn }}
-    >
-      {#if isInterimTab && currentTab}
-        {#key currentTab}
-          <TopBarResourceItem
-            item={currentTab}
-            onClick={() => {}}
-            isInterimTab
-            onClose={() => {
-              navigation.goBack();
-            }}
-          />
-        {/key}
-      {/if}
-      <div class="flex items-center px-2">
-        <TrailLeftIndicator />
-        {@render offlineStatus?.({})}
-        <InlineSyncingFeedback
-          resource={Resource.everything}
-          isShorter={true}
-          text="Syncing..."
-        />
+    {#if isBulkMode}
+      {@render bulkEditBar?.({
+        count: $bulkEditCount,
+        context: $bulkEditContext,
+        subContext: $bulkEditSubContext,
+        onAction: (detail: { action: string; data?: any }) =>
+          bulkEditStore.onAction(detail.action, detail.data),
+        onSelectAll: () => bulkEditStore.onSelectAll(),
+        onClear: () => bulkEditStore.reset()
+      })}
+    {:else if $activeEntry}
+      {#key $activeEntry.key}
+        <div class="flex items-center h-full min-w-0">
+          {@render $activeEntry.content()}
+        </div>
+      {/key}
+    {:else if isHomePage}
+      <div class="pl-2 h-full">
+        <TopNavDateTime />
       </div>
+    {/if}
+  </div>
+  <div
+    class="flex items-center justify-end h-full shrink-0"
+    data-testid="top-bar-actions-zone"
+  >
+    {#if isToastMode}
+      <TopNavToasts />
+    {:else}
       {@render topnav?.()}
       <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
-      <!-- <TopNavLeftMenuItem
-        action={Action.NAVIGATOR}
-        label="Navigator"
-        isLastItem={true}
-      /> -->
-      <!-- <TopNavLeftMenuItem action={Action.SETTINGS} isLastItem={true} /> -->
       {#if isDev}
         <TopNavLeftMenuItem
           action={Action.RHOMBUS}
           label="Rhombus"
           tooltip="Rhombus on the side"
-          isLastItem={true}
         />
       {/if}
-    </div>
-  {/if}
+    {/if}
+  </div>
+  <div
+    class="flex items-center h-full shrink-0 px-1"
+    data-testid="top-bar-indicators"
+  >
+    <TrailLeftIndicator />
+    {@render offlineStatus?.({})}
+    <InlineSyncingFeedback
+      resource={Resource.everything}
+      isShorter={true}
+      text="Syncing..."
+    />
+    {@render indicators?.()}
+  </div>
+  <NavigatorPill />
 </div>

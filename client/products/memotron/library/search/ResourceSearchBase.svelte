@@ -232,7 +232,10 @@
       return;
     }
     if ($view.isPortrait) {
-      navigation.openResource(item.id, AccessMode.FULL);
+      navigation.openResource(item.id, AccessMode.PAGE, {
+        origin: Action.SEARCH,
+        searchParams: { [AccessMode.OVERLAY]: null }
+      });
       return;
     }
     navigation.toggleSearchParam([AccessMode.OVERLAY]);

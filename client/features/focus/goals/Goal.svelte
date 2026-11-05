@@ -11,14 +11,13 @@
   } from "@nucleum/datafn/resource.type";
   import ObjectiveTitleRow from "@nucleum/features/focus/goals/info/GoalTitleRow.svelte";
   import CustomColorPropagator from "@21n/ui/elements/style/CustomColorPropagator.svelte";
-  import { onDestroy, untrack } from "svelte";
+  import { untrack } from "svelte";
   import { page } from "$app/stores";
   import { cn } from "@21n/ui/environment/presentation";
   import appearance from "@nucleum/shared-state/appearance/appearance.store";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
   import { Size } from "@21n/ui/elements/size.enum";
-  import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
   import ObjectivePanelSwitcher from "./GoalPanelSwitcher.svelte";
   import { resolvePanelParam } from "@nucleum/shared-state/resources/panelParam.mixin";
   import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
@@ -82,10 +81,7 @@
     }
   });
 
-  onDestroy(() => {
-    const latestAccessMode = $objective?.accessMode ?? accessMode;
-    ActiveObjectiveStore.destroy(id, latestAccessMode);
-  });
+  $effect(() => ActiveObjectiveStore.retain(id, () => accessMode));
 
   function resolvePreviouslySelectedView() {
     const panelState = uiState.getState(UIState.objectivePanelSelection, {
@@ -190,6 +186,7 @@
           <ObjectivePanelSwitcher
             panels={tabs}
             {objective}
+            {accessMode}
             {isConstrainedWidth}
             {isThreeColumned}
           />
@@ -219,19 +216,7 @@
                       onSwitch={(e) => {
                         objective.switchPanel(e.detail);
                       }}
-                    >
-                      {#snippet right()}
-                        <div>
-                          {#if $objective.accessMode === AccessMode.FULL && !isConstrainedWidth}
-                            <ResourceInlineCloseButton
-                              accessMode={$objective.accessMode}
-                              parentBgIndex={2}
-                              id={$objective.id}
-                            />
-                          {/if}
-                        </div>
-                      {/snippet}
-                    </PanelSwitcher>
+                    ></PanelSwitcher>
                     {#if isConstrainedWidth}
                       <div
                         class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"

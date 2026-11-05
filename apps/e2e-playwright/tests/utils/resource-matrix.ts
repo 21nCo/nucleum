@@ -236,9 +236,7 @@ export async function openResourceRecord(
 ) {
   const recordSurface = getResourceRecordSurface(page);
   if (await recordSurface.isVisible()) {
-    await recordSurface
-      .getByRole("button", { name: "Close", exact: true })
-      .click();
+    await page.getByTestId("top-bar-close").click();
     await expect(recordSurface).toBeHidden();
   }
   const contract = await openResourceBrowser(page, projectName, resource);
