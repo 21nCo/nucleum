@@ -105,4 +105,14 @@ describe("navigator panel shown as a sheet on a constrained landscape view", () 
     expect(activeNode()?.node.id).toBe("node:a");
     expect(new URL(window.location.href).searchParams.get("panel")).toBeNull();
   });
+
+  it("closes the navigator sheet when a resource opens beside the page", () => {
+    view.refresh(800, 600);
+    navigation.openResource("node:a", "page" as never);
+    history.setSearchParam("panel", "navigator");
+    navigation.openResource("node:b", "besidePage" as never);
+    const params = new URL(window.location.href).searchParams;
+    expect(params.get("besidePage")).toBe("node:b");
+    expect(params.get("panel")).toBeNull();
+  });
 });

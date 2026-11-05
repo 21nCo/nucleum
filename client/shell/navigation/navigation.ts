@@ -202,6 +202,18 @@ export function isFullScreenPage(
   );
 }
 
+/**
+ * Whether the navigator open in `layer` covers the page: as an overlay, or as
+ * a right panel shown as a full-screen sheet, as in portrait. A resource it
+ * opens there would stay hidden under it, so the open closes the navigator.
+ */
+function isNavigatorCoveringPage(layer: AccessMode | undefined) {
+  return (
+    layer === AccessMode.OVERLAY ||
+    (layer === AccessMode.PANEL && isRightPanelSheet(get(view)))
+  );
+}
+
 /** Resolves whether a page open starts a trail or extends the current one. */
 function resolveAccessTrailIntent(
   openPage: string | null,
@@ -705,10 +717,7 @@ export const navigation = {
         }
         isCloseNavigator = isNavigatorOpen;
       } else if (intent === "select") {
-        isCloseNavigator =
-          isNavigatorOpen &&
-          (isRightPanelSheet(get(view)) ||
-            navigatorLayer === AccessMode.OVERLAY);
+        isCloseNavigator = isNavigatorCoveringPage(navigatorLayer);
       } else if (intent === "extend") {
         accessTrail.extend(id.toString());
       }
@@ -739,8 +748,11 @@ export const navigation = {
     const isBesideOpen =
       accessMode === AccessMode.BESIDE_BASE ||
       accessMode === AccessMode.BESIDE_PAGE;
-    const isCloseNavigatorOverlay =
-      isBesideOpen && resolveNavigatorLayer(url) === AccessMode.OVERLAY;
+    const besideNavigatorLayer = isBesideOpen
+      ? resolveNavigatorLayer(url)
+      : undefined;
+    const isCloseBesideNavigator =
+      isNavigatorCoveringPage(besideNavigatorLayer);
     url = clearOpenedRecordParams(
       url,
       id,
@@ -761,7 +773,9 @@ export const navigation = {
           ? { [AppSearchParam.MAX]: true }
           : {}),
         ...(params?.searchParams ?? {}),
-        ...(isCloseNavigatorOverlay ? { [AccessMode.OVERLAY]: null } : {}),
+        ...(isCloseBesideNavigator && besideNavigatorLayer
+          ? { [besideNavigatorLayer]: null }
+          : {}),
         ...(isCloseNavigator && navigatorLayer
           ? { [navigatorLayer]: null }
           : {})
