@@ -92,17 +92,11 @@
   data-testid="space-wall-card"
   data-resource-id={resourceId}
 >
-  {#if status}
+  {#if status && isBlocked}
     <button
       type="button"
-      class={cn(
-        "flex items-center gap-3 w-full p-3 rounded-md border border-brs2 bg-bgs2 text-left",
-        {
-          "cursor-not-allowed": isBlocked,
-          "notouch:hover:border-brs4": !isBlocked
-        }
-      )}
-      aria-disabled={isBlocked ? "true" : undefined}
+      class="flex items-center gap-3 w-full p-3 rounded-md border border-brs2 bg-bgs2 text-left cursor-not-allowed"
+      aria-disabled="true"
       title={status.text}
       onclick={() => open()}
     >
