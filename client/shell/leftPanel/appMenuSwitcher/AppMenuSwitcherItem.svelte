@@ -217,7 +217,8 @@
           isActive && (!dev_mixedPanel || !$appStore.currentComponent?.panel),
         "border-transparent":
           isActive && dev_mixedPanel && $appStore.currentComponent?.panel,
-        "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel
+        "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel,
+        "group/appmenu app-framed:!bg-transparent app-framed:!bg-none app-framed:!border-transparent app-framed:justify-center": true
       }
     )}
     onclick={(event) => {
@@ -247,13 +248,22 @@
         "bg-bgs3 border-brs3":
           layoutContext === LayoutContext.THIN_WITH_LABEL &&
           isActive &&
-          isShowLabel
+          isShowLabel,
+        "app-framed:!bg-transparent app-framed:!bg-none app-framed:!border-transparent app-framed:py-1":
+          layoutContext === LayoutContext.THIN_WITH_LABEL
       })}
     >
       {#if item.icon}
         <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
         <div
-          class="w-6 flex flex-col gap-1 items-center justify-center"
+          class={cn("w-6 flex flex-col gap-1 items-center justify-center", {
+            "app-framed:w-12 app-framed:h-12 app-framed:rounded-[var(--app-control-radius)] app-framed:transition-colors":
+              layoutContext === LayoutContext.THIN_WITH_LABEL,
+            "app-framed:bg-aps3":
+              layoutContext === LayoutContext.THIN_WITH_LABEL && isActive,
+            "app-framed:group-hover/appmenu:bg-bgs3":
+              layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive
+          })}
           bind:this={buttonRef}
         >
           <Icon

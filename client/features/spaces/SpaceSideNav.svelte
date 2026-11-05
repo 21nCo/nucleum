@@ -337,7 +337,7 @@
 <div class="flex h-full w-full overflow-hidden" data-testid="space-sidenav">
   <aside
     class={cn(
-      "flex flex-col h-full shrink-0 border-r border-brs3 bg-bgs1 gap-3",
+      "flex flex-col h-full shrink-0 border-r border-brs3 bg-bgs1 gap-3 app-framed:border-r-0 app-framed:bg-bgs2 app-framed:m-2 app-framed:h-[calc(100%-1rem)] app-framed:rounded-[var(--app-panel-radius)] app-framed:overflow-hidden",
       {
         "w-80 min-w-[18rem] max-w-[20rem]": !isEmbedded,
         "w-72 min-w-[16rem]": isEmbedded

@@ -7,6 +7,7 @@
   } from "@21n/ui/elements/select/select.type";
   import TrainPanelSwitcherItem from "@21n/ui/elements/switcher/train/TrainPanelSwitcherItem.svelte";
   import { PanelSwitcherActiveItemStrength } from "@21n/ui/elements/switcher/switcher.enum";
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   let {
     items,
     value = $bindable(),
@@ -32,6 +33,8 @@
         : parentBgIndex - 1
   );
 
+  const isFramed = $derived($shape.isFramed);
+
   function emitSwitch(nextValue: ISelectValue) {
     const switchEvent = new CustomEvent<ISelectValue>("switch", {
       detail: nextValue
@@ -46,13 +49,17 @@
   )}
 >
   <div
-    class={cn("flex items-center min-w-fit", bg(effectiveParentBgIndex), {
-      "border border-brs3 p-0.5":
-        activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE,
-      "p-1": activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE,
-      "rounded-full": size === Size.lg,
-      "rounded-md": size !== Size.lg
-    })}
+    class={cn(
+      "flex items-center min-w-fit",
+      bg(effectiveParentBgIndex),
+      size === Size.lg ? "rounded-full" : $shape.radiusClass,
+      {
+        "border border-brs3 p-0.5":
+          activeItemStrength !== PanelSwitcherActiveItemStrength.SUBTLE,
+        "!border-transparent gap-1": isFramed,
+        "p-1": activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE
+      }
+    )}
   >
     {#each items as item, index (item.value)}
       <TrainPanelSwitcherItem

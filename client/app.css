@@ -255,6 +255,64 @@ blockquote {
     background-size: 2.83px 2.83px;
   }
 
+  :is([data-app-style="semi"], [data-app-style="rounded"])
+    :is([class*="hover:bg-bgs1"], [class*="hover:bg-bgs2"]):not(
+      [class*="-striped"],
+      [class*="app-framed:bg-"]
+    ):hover {
+    background: repeating-linear-gradient(
+      45deg,
+      rgb(var(--colors-bgs3)) 0px,
+      rgb(var(--colors-bgs3)) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    background-size: 2.83px 2.83px;
+  }
+
+  :is([data-app-style="semi"], [data-app-style="rounded"])
+    :is([class*="hover:bg-bgs3"], [class*="hover:bg-bgs4"]):not(
+      [class*="-striped"],
+      [class*="app-framed:bg-"]
+    ):hover {
+    background: repeating-linear-gradient(
+      45deg,
+      rgb(var(--colors-bgs4)) 0px,
+      rgb(var(--colors-bgs4)) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    background-size: 2.83px 2.83px;
+  }
+
+  :is([data-app-style="semi"], [data-app-style="rounded"])
+    [class*="app-framed:bg-"]:is([class*="hover:bg-bgs"]):not(
+      [class*="-striped"]
+    ):hover {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgb(var(--colors-bgs4)) 0px,
+      rgb(var(--colors-bgs4)) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    background-size: 2.83px 2.83px;
+  }
+
+  :is([data-app-style="semi"], [data-app-style="rounded"])
+    [data-chrome-icons]
+    [data-icon-size="md"] {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  :is([data-app-style="semi"], [data-app-style="rounded"])
+    [data-chrome-icons]
+    [data-icon-size="lg"] {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
   .bg-aps2-striped, .bg-aps3-striped {
     background: repeating-linear-gradient(
       /* to top left, */

@@ -6,7 +6,6 @@
   import { page } from "$app/stores";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import RightSplit from "@nucleum/shell/RightSplit.svelte";
-  import context from "@nucleum/client/runtime/context.store";
   import { cn } from "@21n/ui/environment/presentation";
   let {
     children,
@@ -28,16 +27,10 @@
 
 <div
   class={cn("flex w-full h-full", {
-    "pr-2 pb-2": $context.experiments?.isEnableRoundedMain,
     "pb-2": isBottomBarAbsent
   })}
 >
-  <div
-    class={cn("flex w-full h-full", {
-      "rounded-xl bg-bgs1 border border-brs2 overflow-hidden":
-        $context.experiments?.isEnableRoundedMain
-    })}
-  >
+  <div class="flex w-full h-full">
     <div class="flex h-full {split ? 'min-w-1/2 w-1/2 shrink-0' : 'w-full'}">
       {@render children?.()}
     </div>

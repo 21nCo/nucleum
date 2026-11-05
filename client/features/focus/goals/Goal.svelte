@@ -20,7 +20,10 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import ObjectivePanelSwitcher from "./GoalPanelSwitcher.svelte";
   import { resolvePanelParam } from "@nucleum/shared-state/resources/panelParam.mixin";
-  import { PanelSwitcherStyle } from "@21n/ui/elements/switcher/switcher.enum";
+  import {
+    BarStyle,
+    PanelSwitcherStyle
+  } from "@21n/ui/elements/switcher/switcher.enum";
   import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
   import ObjectivePanelContentResolver from "./GoalPanelContentResolver.svelte";
   import ObjectiveLeftPanel from "./GoalLeftPanel.svelte";
@@ -199,7 +202,7 @@
             {#if isConstrainedWidth}
               <div
                 class={cn(
-                  "relative flex flex-col w-full overflow-auto gap-3 cw:bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3",
+                  "relative flex flex-col w-full overflow-auto gap-3 cw:bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3 app-framed:border-transparent app-framed:!bg-transparent",
                   {
                     "bg-bgs2 py-2": isConstrainedWidth
                   }
@@ -220,6 +223,7 @@
                       isExpandToFullWidth={true}
                       parentBgIndex={2}
                       isBgBar={true}
+                      framedBarStyle={BarStyle.DOT}
                       size={Size.sm}
                       isRearrangeableByDefault={true}
                       onRearrange={rearrangePanels}

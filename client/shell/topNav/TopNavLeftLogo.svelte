@@ -11,7 +11,6 @@
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { onMount } from "svelte";
-  import context from "@nucleum/client/runtime/context.store";
 
   import Icon from "@21n/ui/elements/Icon.svelte";
   let {
@@ -63,16 +62,14 @@
 <button
   data-testid="topnav-account-settings"
   class={cn(
-    "group flex items-center h-full w-fit hover:bg-bgs3-striped",
+    "group flex items-center h-full w-fit hover:bg-bgs3-striped border-r border-brs3 app-framed:border-r-0 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)]",
     !action && {
       "px-[0.72rem]": isHideMenuLabels,
-      "px-[1.72rem]": !isHideMenuLabels,
-      "border-r border-brs3": !$context.experiments?.isEnableRoundedMain
+      "px-[1.72rem]": !isHideMenuLabels
     },
     action && {
       "px-[1.08rem]": isHideMenuLabels,
-      "px-[2.08rem]": !isHideMenuLabels,
-      "border-r border-brs3": !$context.experiments?.isEnableRoundedMain
+      "px-[2.08rem]": !isHideMenuLabels
     }
   )}
   onclick={() => {

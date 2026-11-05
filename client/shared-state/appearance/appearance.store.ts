@@ -1,6 +1,7 @@
 import { get, writable } from "svelte/store";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { AppSkin, Theme, type ColorScheme } from "@21n/theme/appearance.type";
+import { AppStyle, resolveAppStyle } from "@21n/theme/app-style";
 import { type AppearanceStore } from "@nucleum/shared-state/appearance/appearance.type";
 import colorSchemes from "@21n/theme/colorschemes.json";
 import { StoreDataType } from "@nucleum/schema/legacy/store-data-type.enum";
@@ -34,14 +35,20 @@ const seedAppearance: AppearanceState = {
   colorScheme:
     colorSchemes.find((cs) => cs.id == defaultLightColorSchemeId) ??
     colorSchemes[0],
-  accessibilitySizingFactor: 1
+  accessibilitySizingFactor: 1,
+  appStyle: AppStyle.Boxed
 };
 const cachedAppearance = retrieveLocally(
   Resource.appearance
 ) as AppearanceState | null;
 
 export const appearance = initAppearanceStore();
-appearance.subscribe((value) => syncElementAppearance(value));
+appearance.subscribe((value) =>
+  syncElementAppearance({
+    colorScheme: value.colorScheme,
+    appStyle: resolveAppStyle(value.appStyle)
+  })
+);
 
 function initAppearanceStore() {
   const defaultData = {
@@ -59,7 +66,8 @@ function initAppearanceStore() {
       isSyncWithSystem: store.isSyncWithSystem,
       lightColorSchemeId: store.lightColorSchemeId.toString(),
       darkColorSchemeId: store.darkColorSchemeId.toString(),
-      userThemeSetting: store.userThemeSetting
+      userThemeSetting: store.userThemeSetting,
+      appStyle: resolveAppStyle(store.appStyle)
     });
     cache(store);
   };
@@ -104,12 +112,13 @@ function initAppearanceStore() {
     update,
     syncAppearanceFromCloud: (x: UserAppearanceSettings) => {
       update((a) => {
-        let modified = {
+        let modified: AppearanceState = {
           ...a,
           lightColorSchemeId: x.lightColorSchemeId.toString(),
           darkColorSchemeId: x.darkColorSchemeId.toString(),
           isSyncWithSystem: x.isSyncWithSystem,
-          userThemeSetting: x.userThemeSetting
+          userThemeSetting: x.userThemeSetting,
+          appStyle: resolveAppStyle(x.appStyle)
         };
         const currentTheme = modified.isSyncWithSystem
           ? modified.systemTheme
@@ -187,6 +196,15 @@ function initAppearanceStore() {
         if (a.isSyncWithSystem) {
           modified = switchTheme(theme, modified);
         }
+        persist(modified);
+        return modified;
+      });
+    },
+
+    /** Changes the shape of the application chrome and syncs it to the account. */
+    setAppStyle: (style: AppStyle) => {
+      update((a) => {
+        const modified = { ...a, appStyle: resolveAppStyle(style) };
         persist(modified);
         return modified;
       });

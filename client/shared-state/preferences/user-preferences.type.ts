@@ -1,4 +1,5 @@
 import type { AppSkin, Theme } from "@21n/theme/appearance.type";
+import type { AppStyle } from "@21n/theme/app-style";
 import type { TimeScale } from "@21n/shared-utils/datetime/period.type";
 import type { IAvatar } from "@21n/ui/elements/avatarPicker/avatar.type";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
@@ -63,6 +64,7 @@ export type UserAppearanceSettings = {
   isBlurredBgForPopups?: boolean;
   isFixedLeftNav?: boolean;
   typeface?: string;
+  appStyle?: AppStyle;
 };
 
 export type TimeZoneRecord = {

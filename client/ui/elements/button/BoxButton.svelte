@@ -10,6 +10,7 @@
   import ShortcutText from "../text/ShortcutText.svelte";
   import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
 
   let {
     icon = undefined,
@@ -44,10 +45,14 @@
   aria-label={ariaLabel ?? tooltip}
   data-testid={testId}
   class={cn(
-    "flex gap-1 justify-center h-full w-full items-center",
+    "flex gap-1 justify-center items-center",
     width,
     `hover:${bg(parentBgIndex)}-striped`,
     {
+      "h-full w-full": !$shape.isFramed,
+      [`h-10 max-h-full shrink-0 ${$shape.radiusClass}`]: $shape.isFramed,
+      "w-10": $shape.isFramed && !label,
+      "px-3": $shape.isFramed && !!label,
       "text-b2": size === Size.md,
       "text-b3": size === Size.sm,
       "text-ars1": type === ButtonVariant.DANGER

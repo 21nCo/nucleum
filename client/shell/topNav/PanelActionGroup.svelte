@@ -123,13 +123,14 @@
 <div
   bind:this={groupRef}
   class={cn(
-    "flex shrink-0",
+    "flex shrink-0 app-framed:mr-[var(--app-shell-gap)]",
     expandedAction
       ? [
           "relative z-10 self-start h-[calc(100%+1px)] -mb-px border-l border-b border-brs3 bg-bgs2",
+          "app-framed:self-end app-framed:ml-[var(--app-shell-gap)] app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:px-[calc((0.5rem+var(--app-shell-gap))/2)] app-framed:gap-1 app-framed:mb-0 app-framed:border-0 app-framed:bg-bgs1 app-framed:rounded-t-[var(--app-tab-radius)]",
           widthClass
         ]
-      : "items-stretch self-stretch"
+      : "items-stretch self-stretch app-framed:items-center app-framed:self-center app-framed:gap-2"
   )}
   data-testid="top-bar-panel-actions"
   data-expanded={expandedAction}
@@ -140,7 +141,7 @@
         "flex items-center h-full",
         states[item.action] === "expanded"
           ? [
-              "flex-1 min-w-0 border-brs3",
+              "flex-1 min-w-0 border-brs3 app-framed:border-transparent",
               resolveExpandedBorderClass(index, actions.length)
             ]
           : "shrink-0"

@@ -7,6 +7,10 @@
   import "@21n/fonts/styles.css";
   import view from "@21n/ui/environment/view.store";
   import { AppSkin } from "@21n/theme/appearance.type";
+  import {
+    resolveAppStyle,
+    resolveAppStyleTokens
+  } from "@21n/theme/app-style";
   import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
   import appearance, {
     fallBackTypefaceString
@@ -46,6 +50,10 @@
   let accessibilitySizingFactor = $state(
     $userPreferences?.accessibilitySizingFactor ?? 1
   );
+  const appStyle = $derived(resolveAppStyle($appearance?.appStyle));
+  const appStyleTokens = $derived(
+    resolveAppStyleTokens(appStyle, $view.isPortrait)
+  );
 
   onMount(() => {
     refreshTailwind();
@@ -69,7 +77,10 @@
           preferenceAppearance.darkColorSchemeId ||
         $appearance.userThemeSetting !==
           preferenceAppearance.userThemeSetting ||
-        $appearance.isSyncWithSystem !== preferenceAppearance.isSyncWithSystem
+        $appearance.isSyncWithSystem !==
+          preferenceAppearance.isSyncWithSystem ||
+        resolveAppStyle($appearance.appStyle) !==
+          resolveAppStyle(preferenceAppearance.appStyle)
       ) {
         appearance.syncAppearanceFromCloud(preferenceAppearance);
       }
@@ -266,6 +277,11 @@
     glassy: $userPreferences?.appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}
+  data-app-style={appStyle}
+  style:--app-control-radius={appStyleTokens["--app-control-radius"]}
+  style:--app-panel-radius={appStyleTokens["--app-panel-radius"]}
+  style:--app-tab-radius={appStyleTokens["--app-tab-radius"]}
+  style:--app-shell-gap={appStyleTokens["--app-shell-gap"]}
   style:--number-typeface={resolveNumberTypeface(typeface)}
   style:--number-grid-size={resolveNumberGridSize(typeface)}
   style:--number-grid-typeface={resolveNumberGridTypeface(typeface)}

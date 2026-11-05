@@ -44,9 +44,9 @@
     {#each buttons as button}
       <div
         class={cn(
-          "w-full h-full",
+          "w-full h-full app-framed:flex app-framed:items-center app-framed:px-2",
           {
-            "border-t": isFooter
+            "border-t app-framed:border-transparent": isFooter
           },
           isFooter && {
             "border-brs2": parentBgIndex === 1,
@@ -58,6 +58,7 @@
           {...button}
           style={button.style ?? ButtonStyle.OUTLINED}
           isBoxed={true}
+          isExpandToFullWidth={true}
           onclick={(e) => button.callback?.(e)}
         />
       </div>

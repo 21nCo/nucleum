@@ -11,6 +11,7 @@
   import PanelSwitcherItemLabel from "@21n/ui/elements/switcher/PanelSwitcherItemLabel.svelte";
   import { rearrangeOnAxis } from "@21n/ui/actions/rearrange.action";
   import { scrollIntoViewOnFocus } from "@21n/ui/actions/scroll.action";
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   let {
     item,
     size = Size.md,
@@ -94,6 +95,11 @@
     onDebouncedChange?.(debouncedChangeEvent);
   }
 
+  const isRounded = $derived($shape.isRounded);
+  const isFramed = $derived(
+    $shape.isFramed && barStyle !== BarStyle.DOT && barStyle !== BarStyle.UNDER
+  );
+
   function handleClick() {
     if (item.value === "$add") {
       emitAdd();
@@ -110,11 +116,14 @@
     emitRearranged(displacement);
   }
 </script>
+
 {#if style === PanelSwitcherStyle.BAR}
   <button
     role="tab"
     aria-selected={isActive}
-    class={cn("relative group flex bg-transparent h-full", {
+    class={cn("relative group flex bg-transparent", {
+      "h-full": !isFramed,
+      "h-8 self-center items-center": isFramed,
       "px-4":
         (size === Size.md || size === Size.lg) &&
         barStyle === BarStyle.OVERFLOW &&
@@ -126,7 +135,10 @@
       "py-2": barStyle != BarStyle.EXACT,
       "border-b-2": barStyle === BarStyle.OVERFLOW,
       "border-ccs1": isActive && barStyle === BarStyle.OVERFLOW,
-      "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW
+      "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW,
+      [$shape.radiusClass]: isFramed,
+      [`hover:${bg(parentBgIndex)}`]: isFramed && !isActive,
+      "!bg-bgs1 shadow-sm !border-transparent": isFramed && isActive
     })}
     onclick={handleClick}
     disabled={isDisabled}
@@ -146,12 +158,14 @@
         "text-b2": (size === Size.sm && $view.isPortrait) || size === Size.xs,
         "text-h4": size === Size.lg,
         "text-fgs3": !isActive,
-        "text-ccs1": isActive && !isInEditMode,
+        "text-ccs1": isActive && !isInEditMode && !isFramed,
         "h-full": barStyle === BarStyle.EXACT,
         "border-b-2 pt-1": barStyle === BarStyle.EXACT && !isInversePlacement,
         "border-t-2": barStyle === BarStyle.EXACT && isInversePlacement,
         "border-ccs1": isActive && barStyle === BarStyle.EXACT,
-        "border-transparent": !isActive && barStyle === BarStyle.EXACT
+        "border-transparent": !isActive && barStyle === BarStyle.EXACT,
+        "!border-0 !pt-0 text-b2": isFramed,
+        "text-fgs1": isFramed && isActive && !isInEditMode
       })}
     >
       <PanelSwitcherItemLabel
@@ -169,7 +183,7 @@
         onDebouncedChange={(event) => emitDebouncedChange(event.detail)}
       />
     </div>
-    {#if isActive && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
+    {#if isActive && !isFramed && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
       <div
         class={cn("absolute", {
           "bottom-1 bg-ccs1 left-1/2 w-1 h-1 rounded-full":
@@ -187,7 +201,9 @@
     class={cn("relative group flex items-center gap-1 py-2", {
       "px-6": item.icon,
       "px-4": !item.icon,
-      "border border-brs3 rounded-t-md text-fgs1": isActive,
+      "border border-brs3 text-fgs1": isActive,
+      "rounded-t-md": isActive && !isRounded,
+      "rounded-t-2xl": isActive && isRounded,
       "border-ccs1- text-ccs1": isActive && !isInEditMode,
       "border border-transparent text-fgs3": !isActive
     })}

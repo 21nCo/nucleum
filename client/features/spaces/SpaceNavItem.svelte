@@ -229,12 +229,14 @@
     class={cn(
       "group relative flex items-center gap-1 pr-1 py-1 border-y transition-colors",
       {
-        "bg-bgs2 border-brs2": isActive || isAddTarget,
+        "bg-bgs2 border-brs2 app-framed:bg-bgs3": isActive || isAddTarget,
         "border-transparent hover:bg-bgs2-striped": !isActive && !isAddTarget,
         "opacity-50": nav.draggedItemId === item.id,
         "border-t-aps1": dropPosition === "before",
         "border-b-aps1": dropPosition === "after",
-        "bg-aps3/40": dropPosition === "inside"
+        "bg-aps3/40": dropPosition === "inside",
+        "app-framed:mx-2 app-framed:rounded-[var(--app-control-radius)]": true,
+        "app-framed:border-transparent": !dropPosition
       }
     )}
     style:padding-left={`${Math.min(depth * 1, 5) + 0.25}rem`}
@@ -310,6 +312,7 @@
         </span>
         <span
           class={cn("truncate text-b2", {
+            "app-framed:text-aps1": (isActive || isAddTarget) && !status,
             "text-fgs3": Boolean(status),
             "line-through": status?.kind === "trashed"
           })}

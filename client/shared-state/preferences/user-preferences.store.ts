@@ -1,4 +1,5 @@
 import { AppSkin, Theme } from "@21n/theme/appearance.type";
+import { AppStyle } from "@21n/theme/app-style";
 import type {
   IUserGlobalPreferences,
   UserAppearanceSettings
@@ -44,7 +45,8 @@ export const seedUserPreferences: IUserGlobalPreferences = {
     userThemeSetting: Theme.LIGHT,
     isBlurredBgForPopups: false,
     isFixedLeftNav: false,
-    typeface: "Twenty One Native"
+    typeface: "Twenty One Native",
+    appStyle: AppStyle.Boxed
   },
   avatarPicker: {
     skinIndex: 0,

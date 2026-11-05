@@ -349,7 +349,10 @@
         <SvgSpinnerIcon icon={resolvedIcon} />
       </div>
     {:else if isUseIconifySprite}
-      <svg class={cn(_classList, "iconifysvg", sizeClass)}>
+      <svg
+        class={cn(_classList, "iconifysvg", sizeClass)}
+        data-icon-size={size}
+      >
         <use href={resolveSpriteIconPath(renderedIconifyIcon)} />
       </svg>
     {:else if dev_useIconifyTailwind}
@@ -402,6 +405,7 @@
         : resolvedIcon == "capture2.0" || resolvedIcon === "capture2.0-mini"
           ? "0 0 52 52"
           : "0 0 24 24"}
+      data-icon-size={resolvedIcon.includes("-mini") ? undefined : size}
       class={cn(
         "flex items-center justify-center",
         _classList,

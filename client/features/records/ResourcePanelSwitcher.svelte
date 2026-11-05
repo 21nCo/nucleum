@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
   import { fly, slide } from "svelte/transition";
@@ -71,7 +72,11 @@
   }
 </script>
 
-{#snippet panelSwitcher(size: Size.sm | Size.md, isIconOnlyMode: boolean)}
+{#snippet panelSwitcher(
+  size: Size.sm | Size.md,
+  isIconOnlyMode: boolean,
+  isTrackFilled?: boolean
+)}
   <BoxSwitcher
     isTablist={true}
     isExpandOnActiveForIcon={true}
@@ -79,6 +84,7 @@
     {size}
     isAccentColor={true}
     isActiveIndicatorOnTop={false}
+    {isTrackFilled}
     selected={$resourceStore.panel}
     onSelect={(e) => $resourceStore.switchPanel(e.detail)}
     {isIconOnlyMode}
@@ -106,7 +112,7 @@
         size={Size.lg}
         isBoxed={true}
         {parentBgIndex}
-        class="h-full w-10"
+        class="h-full w-10 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)]"
         id="resourcePanelContextMenu"
         icon="more-outline-horizontal"
         heading="Actions"
@@ -132,7 +138,9 @@
 {#snippet viewTabs()}
   <div class="flex items-center h-full" data-testid="resource-context-tabs">
     {#if $resourceStore.isInEditMode}
-      <div class="flex items-center h-full pr-3 mr-3 border-r border-brs3">
+      <div
+        class="flex items-center h-full pr-3 mr-3 border-r border-brs3 app-framed:border-transparent"
+      >
         <EditModeDone
           onDone={() =>
             finishEditMode($resourceStore.id.toString(), () =>
@@ -152,7 +160,7 @@
         }}
       />
     {:else}
-      {@render panelSwitcher(Size.md, false)}
+      {@render panelSwitcher(Size.md, $shape.isFramed && isConstrainedWidth)}
       <div class="flex items-center h-full ml-2">
         {@render maximizeButton()}
         {@render actionsMenu(1)}
@@ -175,20 +183,21 @@
   <div class="absolute bottom-0 inset-x-0 mx-auto w-fit z-10">
     <div
       class={cn(
-        "flex flex-col border- border-t border-x border-brs2 border-t--bgs1 shadow-sm rounded-t-md overflow-hidden"
+        "flex flex-col border- border-t border-x border-brs2 border-t--bgs1 shadow-sm rounded-t-md overflow-hidden app-framed:rounded-t-[var(--app-panel-radius)]"
       )}
     >
       <div
         class={cn("flex cw:flex-row-reverse  overflow-hidden", {
           "h-8 bg-bgs3": $resourceStore.isInFocusMode,
-          "h-[50px] bg-bgs2": !$resourceStore.isInFocusMode,
+          "h-[50px] bg-bgs2 app-framed:h-12 app-framed:px-1":
+            !$resourceStore.isInFocusMode,
           "rounded--md": !$resourceStore.isInEditMode,
           "rounded-t--md": $resourceStore.isInEditMode
         })}
       >
         {#if $resourceStore.isInFocusMode}
           <div
-            class="flex h-full border-t border-brs2"
+            class="flex h-full border-t border-brs2 app-framed:border-transparent app-framed:items-center"
             in:slide={{ duration: 300, axis: "x" }}
           >
             <BoxButton
@@ -204,7 +213,7 @@
         {:else}
           {#if !isInPlace}
             <div
-              class="flex cw:border-l border-r border--t border-brs2 text-fgs2 mr-3"
+              class="flex cw:border-l border-r border--t border-brs2 text-fgs2 mr-3 app-framed:border-transparent app-framed:items-center"
             >
               <BoxButton
                 label="Close"
@@ -221,10 +230,11 @@
           {/if}
           {@render panelSwitcher(
             $view.isConstrainedWidth ? Size.sm : Size.md,
-            $view.isConstrainedWidth
+            $view.isConstrainedWidth,
+            false
           )}
           <div
-            class="flex items-center h-full cw:border-r border-l border-brs2 ml-3"
+            class="flex items-center h-full cw:border-r border-l border-brs2 ml-3 app-framed:border-transparent app-framed:gap-1 app-framed:pr-1"
           >
             {#if isConstrainedWidth && !isInPlace}
               <BoxButton

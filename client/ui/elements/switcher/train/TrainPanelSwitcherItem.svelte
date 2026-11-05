@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   import view from "@21n/ui/environment/view.store";
   import { Size } from "@21n/ui/elements/size.enum";
   import {
@@ -57,6 +58,8 @@
     });
     onDebouncedChange?.(debouncedChangeEvent);
   }
+
+  const isRounded = $derived($shape.isRounded);
 </script>
 
 <button
@@ -64,8 +67,10 @@
     "relative min-w-fit w-fit group",
     {
       "rounded-full px-6 py-2": size === Size.lg,
-      "rounded-[5px] px-3 py-1 w-24": size === Size.md,
-      "rounded-[5px] px-3 py-1 w-16": size === Size.sm,
+      "px-3 py-1 w-24": size === Size.md,
+      "px-3 py-1 w-16": size === Size.sm,
+      "rounded-[5px]": (size === Size.md || size === Size.sm) && !isRounded,
+      "rounded-full": (size === Size.md || size === Size.sm) && isRounded,
       "bg-ccs3 text-ccs1":
         isActive &&
         activeItemStrength === PanelSwitcherActiveItemStrength.DEFAULT,

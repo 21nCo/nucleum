@@ -29,6 +29,17 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { searchResources } from "@nucleum/shared-state/resources/resource-search";
   import { Action } from "@nucleum/client/config/action.enum";
+  import context from "@nucleum/client/runtime/context.store";
+  import {
+    Embed,
+    OperatingSystem
+  } from "@nucleum/client/runtime/context.type";
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
+  import type { IKeyboardShortcut } from "@21n/ui/elements/keyboard/shortcut.type";
+  import {
+    KeyboardKey,
+    ModifierKey
+  } from "@21n/ui/elements/keyboard/keyboard.type";
   import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
   import {
     flattenAccessTrail,
@@ -103,11 +114,23 @@
   );
   let clearedFrequentContext = $state<string | undefined>(undefined);
   let now = $state(Date.now());
-  const keyHints = [
-    { keys: "\u21b5", label: "open" },
-    { keys: "\u2318\u21b5", label: "split" },
-    { keys: "\u2318K", label: "super bar" }
-  ];
+  const splitModifier = $derived(
+    $context.os === OperatingSystem.MACOS || $context.os === OperatingSystem.IOS
+      ? ModifierKey.META
+      : ModifierKey.CTRL
+  );
+  const isKeyHintsShown = $derived(
+    $context.embed !== Embed.HANDSET && $context.embed !== Embed.TABLET
+  );
+  const keyHints: { shortcut: string | IKeyboardShortcut; label: string }[] =
+    $derived([
+      { shortcut: { key: KeyboardKey.ENTER }, label: "open" },
+      {
+        shortcut: { key: KeyboardKey.ENTER, modifiers: [splitModifier] },
+        label: "split"
+      },
+      { shortcut: Action.CMD, label: "super bar" }
+    ]);
   const fromHereItems = $derived(
     currentPageId && isRecordId(currentPageId)
       ? resolveHistoryItems(
@@ -376,7 +399,7 @@
 
 {#snippet band(label: string, action?: Snippet)}
   <div
-    class="flex items-center justify-between gap-2 h-10 shrink-0 px-4 border-b border-brs3 bg-bgs3"
+    class="flex items-center justify-between gap-2 h-10 shrink-0 px-4 border-b border-brs3 bg-bgs3 app-framed:border-transparent app-framed:bg-transparent"
   >
     <span
       class="truncate text-b4 font-semibold uppercase tracking-wide text-fgs2"
@@ -435,7 +458,7 @@
   <div class="flex flex-col gap-1 -ml-2">
     {#each ids as id, index (id)}
       <div
-        class={cn("rounded-md", {
+        class={cn("rounded-md app-rounded:rounded-xl", {
           "ring-1 ring-brs4": index === selectedIndex
         })}
         bind:this={resultElements[index]}
@@ -481,7 +504,7 @@
         </div>
         {#if row.index === activeIndex}
           <span
-            class="shrink-0 px-1.5 py-0.5 rounded-sm bg-aps1 text-b4 font-semibold text-abg"
+            class="shrink-0 px-1.5 py-0.5 rounded-sm app-rounded:rounded-full bg-aps1 text-b4 font-semibold text-abg"
             >here</span
           >
         {/if}
@@ -545,7 +568,9 @@
             </button>
           {/snippet}
           {@render band(resolveCurrentTrailBandLabel(currentTrail), endTrail)}
-          <div class="flex flex-col px-3 py-2 border-b border-brs3">
+          <div
+            class="flex flex-col px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+          >
             {@render trailTree(
               currentTrail,
               (index) =>
@@ -559,7 +584,9 @@
       {/if}
       <section class="flex flex-col shrink-0" data-testid="navigator-recent">
         {@render band("Recently accessed")}
-        <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+        <div
+          class="flex flex-col gap-2 px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+        >
           {#if recentItems.length > 0}
             {@render limitedHistoryList("recent", recentItems, true)}
           {:else}
@@ -586,12 +613,16 @@
               clearContext
             )}
           </div>
-          <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+          <div
+            class="flex flex-col gap-2 px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+          >
             {@render limitedHistoryList("frequent", fromHereItems)}
           </div>
         {:else}
           {@render band("Frequently accessed")}
-          <div class="flex flex-col gap-2 px-3 py-2 border-b border-brs3">
+          <div
+            class="flex flex-col gap-2 px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+          >
             {#if frequentItems.length > 0}
               {@render limitedHistoryList("frequent", frequentItems)}
             {:else}
@@ -610,7 +641,9 @@
           data-testid="navigator-recent-trails"
         >
           {@render band("Recent trails")}
-          <div class="flex flex-col gap-1 px-3 py-2 border-b border-brs3">
+          <div
+            class="flex flex-col gap-1 px-3 py-2 border-b border-brs3 app-framed:border-transparent"
+          >
             {#each limitedTrails.visible as trail (trail.key)}
               {@const isExpanded = expandedTrails.includes(trail.key)}
               <div
@@ -663,20 +696,23 @@
       {/if}
     {/if}
   </div>
-  <div
-    class="flex items-center gap-5 shrink-0 h-11 px-4 border-t border-brs3 text-b3 text-fgs3"
-    data-testid="navigator-key-hints"
-  >
-    {#each keyHints as hint (hint.label)}
-      <span class="flex items-center gap-1.5 leading-none">
-        <kbd
-          class="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded border border-brs3 bg-bgs1 font-sans text-b3 font-medium leading-none text-fgs2 shadow-sm"
-          >{hint.keys}</kbd
-        >
-        <span>{hint.label}</span>
-      </span>
-    {/each}
-  </div>
+  {#if isKeyHintsShown}
+    <div
+      class="flex items-center gap-5 shrink-0 h-11 px-4 border-t border-brs3 text-b3 text-fgs3 app-framed:border-transparent"
+      data-testid="navigator-key-hints"
+    >
+      {#each keyHints as hint (hint.label)}
+        <span class="flex items-center gap-1.5 leading-none">
+          <ShortcutText
+            shortcut={hint.shortcut}
+            parentBgIndex={1}
+            isAlwaysShown={true}
+          />
+          <span>{hint.label}</span>
+        </span>
+      {/each}
+    </div>
+  {/if}
 </div>
 
 <style>

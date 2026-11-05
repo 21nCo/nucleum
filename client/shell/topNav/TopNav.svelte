@@ -188,6 +188,9 @@
       isHomePage
     })
   );
+  const isContextTabLeading = $derived(
+    isAppMenuColumnVisible && panesBefore.length === 0
+  );
   let zoneRef = $state<HTMLDivElement | undefined>(undefined);
   let tabInnerRef = $state<HTMLDivElement | undefined>(undefined);
   let entryRef = $state<HTMLDivElement | undefined>(undefined);
@@ -283,12 +286,11 @@
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
   class={cn(
-    "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata",
-    {
-      "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
-    }
+    "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata border-b border-brs3",
+    "app-framed:border-b-0 app-framed:h-[calc(3rem+2*var(--app-shell-gap))] app-framed:min-h-[calc(3rem+2*var(--app-shell-gap))] app-framed:max-h-[calc(3rem+2*var(--app-shell-gap))]"
   )}
   data-testid="top-bar"
+  data-chrome-icons
 >
   {#if $context.embed !== Embed.HANDSET}
     {#if isCloseMode}
@@ -320,10 +322,12 @@
     {#if isContextTab}
       <div
         class={cn(
-          "relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
+          "context-tab relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
+          "app-framed:self-end app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:mb-0 app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
           tabSurface
         )}
         data-testid="top-bar-context-tab"
+        data-leading={isContextTabLeading ? "true" : undefined}
       >
         <div
           bind:this={tabInnerRef}
@@ -352,7 +356,7 @@
             />
             {#if $activeEntry}
               <div
-                class="shrink-0 w-px h-5 mx-3 bg-brs3"
+                class="shrink-0 w-px h-5 mx-3 bg-brs3 app-framed:bg-transparent"
                 aria-hidden="true"
                 data-testid="top-bar-identity-divider"
               ></div>
@@ -401,7 +405,7 @@
     {/if}
   </div>
   <div
-    class="flex items-center justify-end h-full shrink-0"
+    class="flex items-center justify-end h-full shrink-0 app-framed:gap-2 app-framed:px-1"
     data-testid="top-bar-actions-zone"
   >
     {#if isToastMode && !isToastInZone}
@@ -426,3 +430,48 @@
   </div>
   <PanelActionGroup actions={groupedPanelActions} {openPanel} {isPanelBeside} />
 </div>
+
+<style>
+  :global(:is([data-app-style="semi"], [data-app-style="rounded"]))
+    .context-tab::after,
+  :global(:is([data-app-style="semi"], [data-app-style="rounded"]))
+    .context-tab:not([data-leading])::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: var(--app-tab-radius);
+    height: var(--app-tab-radius);
+    background-color: inherit;
+    pointer-events: none;
+  }
+
+  :global(:is([data-app-style="semi"], [data-app-style="rounded"]))
+    .context-tab::after {
+    right: calc(var(--app-tab-radius) * -1);
+    -webkit-mask: radial-gradient(
+      circle at 100% 0,
+      transparent calc(var(--app-tab-radius) - 0.5px),
+      #000 var(--app-tab-radius)
+    );
+    mask: radial-gradient(
+      circle at 100% 0,
+      transparent calc(var(--app-tab-radius) - 0.5px),
+      #000 var(--app-tab-radius)
+    );
+  }
+
+  :global(:is([data-app-style="semi"], [data-app-style="rounded"]))
+    .context-tab:not([data-leading])::before {
+    left: calc(var(--app-tab-radius) * -1);
+    -webkit-mask: radial-gradient(
+      circle at 0 0,
+      transparent calc(var(--app-tab-radius) - 0.5px),
+      #000 var(--app-tab-radius)
+    );
+    mask: radial-gradient(
+      circle at 0 0,
+      transparent calc(var(--app-tab-radius) - 0.5px),
+      #000 var(--app-tab-radius)
+    );
+  }
+</style>

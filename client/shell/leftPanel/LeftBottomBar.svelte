@@ -9,7 +9,7 @@
 </script>
 
 <div class="w-full flex flex-col" data-testid="left-bottom-bar">
-  <div class="w-full h-12">
+  <div class="flex items-center justify-center w-full h-12">
     <BoxButton
       icon="settings"
       tooltip="Settings"
@@ -21,7 +21,7 @@
       }}
     />
   </div>
-  <div class="w-full h-12">
+  <div class="flex items-center justify-center w-full h-12">
     <BoxButton
       icon="question"
       tooltip="Help"

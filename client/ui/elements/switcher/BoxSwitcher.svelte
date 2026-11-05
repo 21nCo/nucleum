@@ -1,10 +1,14 @@
 <script lang="ts">
-  import type { ISelectItem, ISelectValue } from "@21n/ui/elements/select/select.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "@21n/ui/elements/select/select.type";
   import Icon from "../Icon.svelte";
   import { bg, cn } from "@21n/ui/environment/presentation";
   import { Size } from "@21n/ui/elements/size.enum";
   import { onMount } from "svelte";
   import { tooltip } from "@21n/ui/actions/popover.action";
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
 
   let {
     options,
@@ -13,6 +17,7 @@
     isIconOnlyMode = false,
     isExpandOnActiveForIcon = false,
     parentBgIndex = 1,
+    isTrackFilled = true,
     isAccentColor = false,
     size = Size.sm,
     isActiveIndicatorOnTop = false,
@@ -24,6 +29,7 @@
     isIconOnlyMode?: boolean;
     isExpandOnActiveForIcon?: boolean;
     parentBgIndex?: number;
+    isTrackFilled?: boolean;
     isAccentColor?: boolean;
     size?: Size.sm | Size.md;
     isActiveIndicatorOnTop?: boolean;
@@ -34,6 +40,9 @@
   });
 
   let containerWidth = $state(0);
+  const framedTrackWidth = $derived(
+    $shape.isFramed ? 8 + 4 * Math.max(options.length - 1, 0) : 0
+  );
   let containerEl = $state<HTMLDivElement | undefined>();
 
   function emitSelect(nextSelected: ISelectValue) {
@@ -72,66 +81,98 @@
   });
 </script>
 
-<div
-  role={isTablist ? "tablist" : undefined}
-  bind:this={containerEl}
-  class={cn("grid grid-flow-col h-full", {
-    "auto-cols-max w-full": !isExpandOnActiveForIcon || isIconOnlyMode
-  })}
-  style:width={!isIconOnlyMode && isExpandOnActiveForIcon && containerWidth > 0
-    ? `${containerWidth}px`
-    : undefined}
-  style:grid-template-columns={isExpandOnActiveForIcon
-    ? options.map((opt) => (opt.value === selected ? "1fr" : "auto")).join(" ")
-    : undefined}
->
-  {#each options as option (option.value)}
-    {@const isSelected = selected === option.value}
-    <button
-      type="button"
-      role={isTablist ? "tab" : undefined}
-      aria-selected={isTablist ? isSelected : undefined}
-      aria-label={option.label}
-      class={cn(
-        "flex items-center justify-center gap-1 h-full text-b2 transition-all duration-300",
-        {
-          "border-t": isActiveIndicatorOnTop,
-          "border-b": !isActiveIndicatorOnTop,
-          "px-3": size === Size.sm,
-          "px-4": size === Size.md,
-          "border-transparent hover:border-brs3 text-fgs3": !isSelected,
-          "border-fgs2": isSelected && !isAccentColor,
-          "border-aps1 text-aps1": isSelected && isAccentColor,
-          [`${bg(parentBgIndex)}`]: isSelected,
-          [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
-        }
-      )}
-      onclick={() => {
-        selected = option.value;
-        emitSelect(option.value);
-      }}
-      use:tooltip={{
-        text: option.label,
-        delay: isSelected || !isExpandOnActiveForIcon ? 1000 : 200
-      }}
-    >
-      {#if option.icon && typeof option.icon === "string"}
-        <Icon
-          icon={option.icon}
-          {size}
-          isFilled={isSelected}
-          class={cn({
+{#snippet track()}
+  <div
+    role={isTablist ? "tablist" : undefined}
+    bind:this={containerEl}
+    class={cn("grid grid-flow-col", {
+      "h-full": !$shape.isFramed,
+      "auto-cols-max w-full":
+        !$shape.isFramed && (!isExpandOnActiveForIcon || isIconOnlyMode),
+      "auto-cols-max":
+        $shape.isFramed && (!isExpandOnActiveForIcon || isIconOnlyMode),
+      "items-center gap-1 p-1": $shape.isFramed,
+      [bg(parentBgIndex + 1)]: $shape.isFramed && isTrackFilled,
+      "rounded-full": $shape.isRounded,
+      "rounded-lg": $shape.isFramed && !$shape.isRounded
+    })}
+    style:width={!isIconOnlyMode &&
+    isExpandOnActiveForIcon &&
+    containerWidth > 0
+      ? `${containerWidth + framedTrackWidth}px`
+      : undefined}
+    style:grid-template-columns={isExpandOnActiveForIcon
+      ? options
+          .map((opt) => (opt.value === selected ? "1fr" : "auto"))
+          .join(" ")
+      : undefined}
+  >
+    {#each options as option (option.value)}
+      {@const isSelected = selected === option.value}
+      <button
+        type="button"
+        role={isTablist ? "tab" : undefined}
+        aria-selected={isTablist ? isSelected : undefined}
+        aria-label={option.label}
+        class={cn(
+          "flex items-center justify-center gap-1 text-b2 transition-all duration-300",
+          {
+            "px-3": size === Size.sm,
+            "px-4": size === Size.md
+          },
+          !$shape.isFramed && {
+            "h-full": true,
+            "border-t": isActiveIndicatorOnTop,
+            "border-b": !isActiveIndicatorOnTop,
+            "border-transparent hover:border-brs3 text-fgs3": !isSelected,
+            "border-fgs2": isSelected && !isAccentColor,
+            "border-aps1 text-aps1": isSelected && isAccentColor,
+            [`${bg(parentBgIndex)}`]: isSelected,
+            [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
+          },
+          $shape.isFramed && {
+            [`h-8 ${$shape.radiusClass}`]: true,
+            "text-fgs3 hover:text-fgs1 hover:bg-bgs2-striped": !isSelected,
+            "bg-bgs1 shadow-sm": isSelected,
             "text-fgs1": isSelected && !isAccentColor,
-            "text-aps1": isSelected && isAccentColor,
-            "text-fgs2": !isSelected
-          })}
-        />
-      {/if}
-      {#if !isIconOnlyMode && option.label && (!isExpandOnActiveForIcon || selected === option.value)}
-        <span class="whitespace-nowrap">
-          {option.label}
-        </span>
-      {/if}
-    </button>
-  {/each}
-</div>
+            "text-aps1": isSelected && isAccentColor
+          }
+        )}
+        onclick={() => {
+          selected = option.value;
+          emitSelect(option.value);
+        }}
+        use:tooltip={{
+          text: option.label,
+          delay: isSelected || !isExpandOnActiveForIcon ? 1000 : 200
+        }}
+      >
+        {#if option.icon && typeof option.icon === "string"}
+          <Icon
+            icon={option.icon}
+            {size}
+            isFilled={isSelected}
+            class={cn({
+              "text-fgs1": isSelected && !isAccentColor,
+              "text-aps1": isSelected && isAccentColor,
+              "text-fgs2": !isSelected
+            })}
+          />
+        {/if}
+        {#if !isIconOnlyMode && option.label && (!isExpandOnActiveForIcon || selected === option.value)}
+          <span class="whitespace-nowrap">
+            {option.label}
+          </span>
+        {/if}
+      </button>
+    {/each}
+  </div>
+{/snippet}
+
+{#if $shape.isFramed}
+  <div class="flex items-center h-full shrink-0">
+    {@render track()}
+  </div>
+{:else}
+  {@render track()}
+{/if}

@@ -13,6 +13,8 @@
   import { Orientation } from "@21n/ui/elements/direction.enum";
   import view from "@21n/ui/environment/view.store";
   import TypefaceSelector from "@nucleum/surfaces/settings/appearance/TypefaceSelector.svelte";
+  import AppStyleSelector from "@nucleum/surfaces/settings/appearance/AppStyleSelector.svelte";
+  import { resolveAppStyle } from "@21n/theme/app-style";
   let { parentBackgroundIndex = 1 }: { parentBackgroundIndex?: number } =
     $props();
   void parentBackgroundIndex;
@@ -41,6 +43,11 @@
     onSelect={onTypefaceChange}
     size={Size.sm}
     {parentBackgroundIndex}
+  />
+  <AppStyleSelector
+    selected={resolveAppStyle($appearance.appStyle)}
+    onSelect={(style) => appearance.setAppStyle(style)}
+    size={Size.sm}
   />
   <SwitchInput
     checked={$appearance.isSyncWithSystem}

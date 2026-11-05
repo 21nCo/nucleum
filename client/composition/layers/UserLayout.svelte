@@ -97,11 +97,7 @@
 {/snippet}
 
 {#snippet topNav()}
-  <TopNav
-    topnav={topnavContent}
-    indicators={topnavIndicators}
-    {panelActions}
-  />
+  <TopNav topnav={topnavContent} indicators={topnavIndicators} {panelActions} />
 {/snippet}
 
 {#if isLoaded}
@@ -121,10 +117,12 @@
         data-full-screen="true"
       >
         <div
-          class={cn("flex shrink-0 w-full h-12 max-h-12 min-h-11 bg-bgs2", {
-            "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
-          })}
+          class={cn(
+            "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 border-b border-brs3",
+            "app-framed:border-b-0 app-framed:h-[calc(3rem+2*var(--app-shell-gap))] app-framed:min-h-[calc(3rem+2*var(--app-shell-gap))] app-framed:max-h-[calc(3rem+2*var(--app-shell-gap))]"
+          )}
           data-testid="command-mode-page-bar"
+          data-chrome-icons
         >
           <TopBarCloseButton
             label={resolveCloseControlLabel(

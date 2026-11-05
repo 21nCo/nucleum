@@ -8,6 +8,7 @@
 </script>
 
 <script lang="ts">
+  import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   import type { Snippet } from "svelte";
   import {
     BarStyle,
@@ -47,6 +48,7 @@
     isEnableAnimationForTitle = false,
     title = "",
     barStyle = BarStyle.EXACT,
+    framedBarStyle = undefined,
     activeItemStrength = PanelSwitcherActiveItemStrength.DEFAULT,
     isInversePlacement = false,
     triggerItemEdit = $bindable(null),
@@ -77,6 +79,7 @@
     isEnableAnimationForTitle?: boolean;
     title?: string;
     barStyle?: BarStyle;
+    framedBarStyle?: BarStyle | undefined;
     activeItemStrength?: PanelSwitcherActiveItemStrength;
     isInversePlacement?: boolean;
     triggerItemEdit?: string | null;
@@ -97,6 +100,14 @@
     onSwitch?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
 
+  const resolvedBarStyle = $derived(
+    $shape.isFramed && framedBarStyle !== undefined ? framedBarStyle : barStyle
+  );
+  const isTrack = $derived(
+    $shape.isFramed &&
+      resolvedBarStyle !== BarStyle.DOT &&
+      resolvedBarStyle !== BarStyle.UNDER
+  );
   let _items = $state<ISelectItem[]>([]);
   const titleValue = "$title";
   const switcherId = resolvePanelSwitcherId();
@@ -231,11 +242,12 @@
           "inline-block": !isExpandToFullWidth
         },
         style === PanelSwitcherStyle.BAR && {
+          "!border-transparent": $shape.isFramed,
           "overflow-x-auto": !isRenderAsDropdown,
           "h-12": !isExpandToFullWidth,
           "border-b border-brs3":
-            barStyle !== BarStyle.UNDER &&
-            barStyle !== BarStyle.DOT &&
+            resolvedBarStyle !== BarStyle.UNDER &&
+            resolvedBarStyle !== BarStyle.DOT &&
             isExpandToFullWidth &&
             !isBgBar
         },
@@ -264,8 +276,7 @@
                 },
                 isEnableTitleActionResolved && {
                   "text-aps1 bg-aps3": value === titleValue,
-                  [`text-fgs2 hover:${bg(parentBgIndex)}`]:
-                    value !== titleValue
+                  [`text-fgs2 hover:${bg(parentBgIndex)}`]: value !== titleValue
                 }
               )}
               onclick={() => {
@@ -291,14 +302,21 @@
       <div
         bind:this={child}
         role="tablist"
-        class={cn("flex items-center", bg(parentBgIndex - 1), {
-          "h-full": style === PanelSwitcherStyle.BAR,
+        class={cn("flex items-center", {
+          [bg(parentBgIndex - 1)]: !(style === PanelSwitcherStyle.BAR && isTrack),
+          "h-full": style === PanelSwitcherStyle.BAR && !isTrack,
+          [`self-center gap-1 p-1 !border-transparent ${bg(parentBgIndex + 1)}`]:
+            style === PanelSwitcherStyle.BAR && isTrack,
+          "rounded-full":
+            style === PanelSwitcherStyle.BAR && isTrack && $shape.isRounded,
+          "rounded-lg":
+            style === PanelSwitcherStyle.BAR && isTrack && !$shape.isRounded,
           "overflow-x-auto mr-auto": isExpandToFullWidth,
           "min-w-fit": !isExpandToFullWidth,
           "border-b border-brs3":
             ((style === PanelSwitcherStyle.BAR &&
-              barStyle !== BarStyle.UNDER &&
-              barStyle !== BarStyle.DOT) ||
+              resolvedBarStyle !== BarStyle.UNDER &&
+              resolvedBarStyle !== BarStyle.DOT) ||
               style === PanelSwitcherStyle.SNAKE) &&
             !isExpandToFullWidth &&
             !isInversePlacement
@@ -310,7 +328,7 @@
             {size}
             {style}
             isInEditMode={_items.length > 1 && isInEditMode}
-            {barStyle}
+            barStyle={resolvedBarStyle}
             {isInversePlacement}
             {parentBgIndex}
             {isRearrangeableByDefault}
@@ -337,7 +355,7 @@
             {size}
             {style}
             isInEditMode={true}
-            {barStyle}
+            barStyle={resolvedBarStyle}
             {isInversePlacement}
             {parentBgIndex}
             bind:triggerItemEdit

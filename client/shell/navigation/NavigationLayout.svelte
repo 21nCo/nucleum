@@ -78,6 +78,9 @@
   );
   const isPanelShown = $derived(!!rightPanel && !isPanelSuspended);
   const isPanelSheetShown = $derived(isPanelShown && isPanelSheet);
+  const isLeftNavShown = $derived(
+    $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode
+  );
 
   $effect(() => {
     contextZone.setVisibleLayers(
@@ -143,12 +146,8 @@
   </div>
 {/snippet}
 
-<div class="flex flex-col w-full h-full">
-  <div
-    class={cn("flex w-full flex-grow", {
-      "bg-bgs2": $context.experiments?.isEnableRoundedMain
-    })}
-  >
+<div class="shell-frame flex flex-col w-full h-full">
+  <div class="flex w-full flex-grow app-framed:bg-bgs2">
     {#if $context.embed === Embed.HANDSET}
       <div class="contents" inert={isPanelSheetShown}>
         {@render leftNav(false)}
@@ -159,13 +158,17 @@
         {@render topNav()}
       {/if}
       <div class="flex w-full flex-grow">
-        {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
+        {#if isLeftNavShown}
           <div class="contents" inert={isPanelSheetShown}>
             {@render leftNav(!!pop || !!mainPath)}
           </div>
         {/if}
         <div
-          class="min-w-0 flex-grow relative"
+          class={cn(
+            "shell-main min-w-0 flex-grow relative",
+            "app-framed:overflow-hidden app-framed:bg-bgs1 app-framed:rounded-[var(--app-panel-radius)] app-framed:mr-[var(--app-shell-gap)] app-framed:mb-[var(--app-shell-gap)]",
+            { "app-framed:ml-[var(--app-shell-gap)]": !isLeftNavShown }
+          )}
           inert={isPanelSheetShown}
           aria-hidden={isPanelSheetShown ? "true" : undefined}
         >
@@ -237,3 +240,10 @@
     </div>
   </div>
 </div>
+
+<style>
+  .shell-frame:has(:global(.context-tab[data-leading]))
+    .shell-main {
+    border-top-left-radius: 0;
+  }
+</style>

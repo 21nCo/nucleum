@@ -14,7 +14,10 @@
   import type { IKeyboardShortcut } from "@21n/ui/elements/keyboard/shortcut.type";
   import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
   import ButtonTooltip from "@21n/ui/elements/button/ButtonTooltip.svelte";
-  import { elementPlatform as context } from "@21n/ui/environment/element-environment.store";
+  import {
+    elementControlShape as shape,
+    isBoxedCell
+  } from "@21n/ui/environment/control-shape";
 
   let {
     parentBgIndex = 1,
@@ -76,6 +79,7 @@
   } = $props();
 
   let buttonRef: any;
+  const isCell = $derived(isBoxedCell(isBoxed, $shape));
   const hasDefaultContent = $derived(!!children);
   const type = $derived(
     (buttonType ?? variant) as
@@ -139,10 +143,10 @@
       "gap-2 text-b2 dp:text-base": size === Size.md,
       "gap-2 text-b3 dp:text-b2": size === Size.sm,
       "gap-1 text-b4 dp:text-b3": size === Size.xs,
-      "p-1.5 rounded-md": isIconOnlyButton && !isBoxed,
-      "w-full h-full": isBoxed,
-      "rounded-md": !isBoxed && !$context.experiments?.isEnableRoundedMain,
-      "rounded-full": !isBoxed && $context.experiments?.isEnableRoundedMain,
+      "p-1.5": isIconOnlyButton && !isCell,
+      "w-full h-full": isCell,
+      "h-10 w-10 shrink-0": isBoxed && !isCell && isIconOnlyButton,
+      [$shape.radiusClass]: !isCell,
       [bg(parentBgIndex)]:
         isHovering && isIconOnlyButton && style !== ButtonStyle.PLAIN,
       "underline-dotted hover:underline-dotted-primary":
@@ -160,7 +164,7 @@
         "min-w-fit": size === Size.xs
       },
     style !== ButtonStyle.PLAIN &&
-      !isBoxed &&
+      !isCell &&
       !isIconOnlyButton && {
         "shadow--md": true,
         "h-12 py-4 px-6": size === Size.lg,
@@ -176,7 +180,7 @@
           "bg-aps1": type === ButtonVariant.PRIMARY,
           "bg-ars1": type === ButtonVariant.DANGER,
           "border border-transparent hover:border-brs3":
-            type === ButtonVariant.SECONDARY && !isBoxed,
+            type === ButtonVariant.SECONDARY && !isCell,
           [bg(parentBgIndex + 1)]: type === ButtonVariant.SECONDARY,
           [`hover:${bg(parentBgIndex + 2)}-striped`]:
             type === ButtonVariant.SECONDARY
@@ -184,7 +188,7 @@
       ],
     style === ButtonStyle.OUTLINED && [
       {
-        border: !isBoxed,
+        border: !isCell,
         "border-aps2 bg-aps3 text-aps1 hover:bg-aps2-striped hover:border-aps1":
           type === ButtonVariant.PRIMARY,
         "border-brs3 text-fgs2 hover:text-fgs1":

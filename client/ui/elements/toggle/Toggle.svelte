@@ -8,6 +8,10 @@
   import { Placement } from "@21n/ui/elements/direction.enum";
   import type { IKeyboardShortcut } from "@21n/ui/elements/keyboard/shortcut.type";
   import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
+  import {
+    elementControlShape as shape,
+    isBoxedCell
+  } from "@21n/ui/environment/control-shape";
   let {
     icon,
     on = $bindable(false),
@@ -41,6 +45,7 @@
     onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
     onMouseDown?: ((event: MouseEvent) => void) | undefined;
   } = $props();
+  const isCell = $derived(isBoxedCell(isBoxed, $shape));
   let isHovering = $state(false);
   function onclick() {
     if (isPassive) return;
@@ -73,12 +78,12 @@
   class={cn(
     "flex relative items-center justify-center",
     {
-      "rounded-md": !isBoxed,
-      "h-full w-full": isBoxed,
+      [$shape.radiusClass]: !isCell,
+      "h-full w-full": isCell,
       [`${bg(parentBgIndex)}-striped`]: isHovering && !on,
       [bg(parentBgIndex)]: on
     },
-    !isBoxed && {
+    !isCell && {
       "min-h-8 min-w-8": bgSize === Size.sm || (!bgSize && size === Size.sm),
       "min-h-10 min-w-10": bgSize === Size.md || (!bgSize && size === Size.md),
       "min-h-12 min-w-12": bgSize === Size.lg || (!bgSize && size === Size.lg),

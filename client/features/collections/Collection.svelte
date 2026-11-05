@@ -830,6 +830,7 @@
                 title={isStickied ? $collection.label : ""}
                 isExpandToFullWidth={true}
                 barStyle={BarStyle.EXACT}
+                framedBarStyle={BarStyle.DOT}
                 isInEditMode={$collection.isInEditMode}
                 {parentBgIndex}
                 bind:triggerItemEdit

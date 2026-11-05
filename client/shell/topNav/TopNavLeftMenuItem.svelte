@@ -100,7 +100,9 @@
   {@const accessibleLabel = ariaLabel ?? tooltip ?? label ?? data.label}
   {@const shortcut = keyboardShortcuts.resolveShortcutForAction(action)}
   <div
-    class={cn("relative h-full", { "flex-1 min-w-0": isExpanded })}
+    class={cn("relative h-full app-framed:flex app-framed:items-center", {
+      "flex-1 min-w-0": isExpanded
+    })}
     use:topBarDropdown={{
       isOpen: isOpeningMenuOpen,
       onDismiss: () => (isOpeningMenuOpen = false)
@@ -109,10 +111,17 @@
     <button
       aria-label={accessibleLabel}
       aria-pressed={isExpanded ? true : undefined}
-      class={cn("flex items-center gap-1 h-full transition-colors", {
+      class={cn("relative flex items-center gap-1 h-full transition-colors", {
         "justify-center min-w-12 px-3.5 border-x border-transparent hover:border-brs3":
           !isExpanded,
-        "w-full justify-start gap-2 px-4 text-fgs1": isExpanded,
+        "app-framed:h-10 app-framed:border-transparent app-framed:hover:border-transparent app-framed:rounded-[var(--app-control-radius)]":
+          !isExpanded,
+        "app-framed:w-10 app-framed:min-w-10 app-framed:px-0":
+          !isExpanded && !label,
+        "w-full justify-start gap-2 px-4 text-fgs1 shadow-[inset_0_-2px_0_0_rgb(var(--colors-aps1))]":
+          isExpanded,
+        "app-framed:h-10 app-framed:shadow-none app-framed:bg-bgs3 app-framed:rounded-[var(--app-control-radius)]":
+          isExpanded,
         "hover:bg-bgs3 hover:text-fgs1": !isActive,
         "text-fgs2": !isActive && !isExpanded,
         "bg-aps3 text-aps1": isActive && !isExpanded
@@ -148,7 +157,7 @@
         isFilled={isHovered}
         class={cn({
           "text-fgs3": isHovered && !isActive,
-          "text-aps1": isActive
+          "text-aps1": isActive && !isExpanded
         })}
         size={label ? Size.sm : Size.md}
       />
@@ -157,6 +166,15 @@
       {/if}
       {#if trailing}
         <span class="flex items-center ml-auto">{@render trailing()}</span>
+      {/if}
+      {#if isExpanded}
+        <span
+          class="absolute inset-0 flex items-center justify-end pr-4 rounded-[inherit] bg-bgs3-striped text-b4 text-fgs3 opacity-0 hover:opacity-100 transition-opacity [mask-image:linear-gradient(to_left,black_30%,transparent_80%)] [-webkit-mask-image:linear-gradient(to_left,black_30%,transparent_80%)]"
+          data-testid="panel-action-close-hint"
+          aria-hidden="true"
+        >
+          Click to close
+        </span>
       {/if}
     </button>
     {#if isOpeningMenuOpen}

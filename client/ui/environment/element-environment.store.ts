@@ -1,10 +1,10 @@
 import colorSchemes from "@21n/theme/colorschemes.json";
 import type { ColorScheme } from "@21n/theme/appearance.type";
+import { AppStyle } from "@21n/theme/app-style";
 import { writable } from "svelte/store";
 
 export interface ElementPlatform {
   embed: string;
-  experiments?: Record<string, unknown>;
   isEmbed: boolean;
   isTouchDevice: boolean;
   os: string;
@@ -12,6 +12,7 @@ export interface ElementPlatform {
 
 export interface ElementAppearance {
   colorScheme: ColorScheme;
+  appStyle: AppStyle;
 }
 
 export interface ElementLogger {
@@ -34,7 +35,8 @@ export const elementPlatform = writable<ElementPlatform>({
 
 /** Theme presentation state supplied by the host application. */
 export const elementAppearance = writable<ElementAppearance>({
-  colorScheme: defaultColorScheme
+  colorScheme: defaultColorScheme,
+  appStyle: AppStyle.Boxed
 });
 
 /** Development presentation state supplied by the host application. */
