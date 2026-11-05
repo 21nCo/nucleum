@@ -29,7 +29,7 @@
   import { cn } from "@21n/ui/environment/presentation";
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
   import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
-  import { isOverlayOnTop } from "@nucleum/shell/navigation/top-layer";
+  import { isRightPanelCovered } from "@nucleum/shell/navigation/top-layer";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
   import {
@@ -67,14 +67,17 @@
   const isPageFullScreen = $derived(isMaxParam && !!popId && !$view.isPortrait);
   const isOverlayFullScreen = $derived(isMaxParam && !!mainPath && !popId);
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
-  const isPanelShown = $derived(!!rightPanel && !isOverlayFullScreen);
   const isPanelSheet = $derived(isRightPanelSheet($view));
   const isPanelSuspended = $derived(
-    isPanelSheet && isOverlayOnTop(mainPath, popId)
+    isRightPanelCovered({
+      overlay: mainPath,
+      page: popId,
+      isMax: isMaxParam,
+      isSheet: isPanelSheet
+    })
   );
-  const isPanelSheetShown = $derived(
-    isPanelShown && isPanelSheet && !isPanelSuspended
-  );
+  const isPanelShown = $derived(!!rightPanel && !isPanelSuspended);
+  const isPanelSheetShown = $derived(isPanelShown && isPanelSheet);
 
   $effect(() => {
     contextZone.setVisibleLayers(
@@ -216,7 +219,7 @@
             </AppSplitView>
           </div>
         </div>
-        {#if rightPanel && isPanelShown}
+        {#if rightPanel}
           <RightPanel
             action={rightPanel}
             isSheet={isPanelSheet}

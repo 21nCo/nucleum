@@ -5,7 +5,8 @@ vi.mock("@nucleum/shared-state/resources/bulkedit.store", () => ({
   bulkEditStore: {}
 }));
 
-const { isOverlayOnTop, resolveTopLayer } = await import("./top-layer");
+const { isOverlayOnTop, isRightPanelCovered, resolveTopLayer } =
+  await import("./top-layer");
 
 const params = (value: string) => new URLSearchParams(value);
 
@@ -88,5 +89,26 @@ describe("isOverlayOnTop", () => {
     expect(isOverlayOnTop("search", "node:1")).toBe(false);
     expect(isOverlayOnTop("navigator", "node:1")).toBe(true);
     expect(isOverlayOnTop(undefined, undefined)).toBe(false);
+  });
+});
+
+describe("isRightPanelCovered", () => {
+  const cover = (
+    overlay?: string,
+    page?: string,
+    isMax = false,
+    isSheet = false
+  ) => isRightPanelCovered({ overlay, page, isMax, isSheet });
+
+  it("covers the panel and the sheet under a full-screen overlay", () => {
+    expect(cover("zen", undefined, true, false)).toBe(true);
+    expect(cover("zen", undefined, true, true)).toBe(true);
+  });
+
+  it("covers only a sheet under an overlay on top", () => {
+    expect(cover("search", undefined, false, true)).toBe(true);
+    expect(cover("search", undefined, false, false)).toBe(false);
+    expect(cover("search", "node:1", false, true)).toBe(false);
+    expect(cover(undefined, "node:1", true, true)).toBe(false);
   });
 });

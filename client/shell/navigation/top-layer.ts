@@ -29,6 +29,23 @@ export function isOverlayOnTop(
 }
 
 /**
+ * Whether a layer is drawn over the right panel, which then stays mounted but
+ * hidden until that layer closes: an overlay shown in full screen, or, while
+ * the panel shows as a full-screen sheet, an overlay on top.
+ */
+export function isRightPanelCovered(params: {
+  overlay: string | null | undefined;
+  page: string | null | undefined;
+  isMax: boolean;
+  isSheet: boolean;
+}) {
+  const { overlay, page, isMax, isSheet } = params;
+  return (
+    (!!overlay && isMax && !page) || (isSheet && isOverlayOnTop(overlay, page))
+  );
+}
+
+/**
  * Resolves the topmost closable layer: overlay, then right panel, then bulk
  * selection, then the split beside the resource page, then full screen, then
  * the resource page, then the split next to the base page. A resource page
