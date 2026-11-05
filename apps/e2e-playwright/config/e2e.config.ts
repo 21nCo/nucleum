@@ -28,10 +28,13 @@ export interface SurfaceRoleAnchor {
   name?: string | RegExp;
 }
 
+type SurfaceTriggerRole = "button" | "tab" | "link";
+
 export interface SurfaceContract {
   route?: string;
   triggerTestId?: string;
-  triggerRole?: "button" | "tab" | "link";
+  /** Role of the trigger; a list matches an element with any of the roles. */
+  triggerRole?: SurfaceTriggerRole | readonly SurfaceTriggerRole[];
   triggerName?: string | RegExp;
   triggerText?: string | RegExp;
   anchorTestIds: readonly string[];
@@ -131,7 +134,7 @@ function makeLibrarySurface(
 ): SurfaceContract {
   return {
     route: "/library",
-    triggerRole: "button",
+    triggerRole: ["button", "tab"],
     triggerName: new RegExp(String.raw`^(${resourceLabel})(\s+\d+)?$`, "i"),
     anchorTestIds,
     anchorRoles: searchLabel

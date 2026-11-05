@@ -22,7 +22,7 @@ test("create objective via command bar, then start focus and verify in timeline 
 
   await runCommand(page, "Create a new objective");
 
-  const objectiveNameInput = page.getByTestId("objective-name-input");
+  const objectiveNameInput = page.getByTestId("objective-context-title-input");
   await objectiveNameInput.waitFor({ state: "visible", timeout: 15_000 });
   await objectiveNameInput.fill(objectiveName);
   await page.keyboard.press("Enter");
@@ -109,7 +109,7 @@ test("create objective via UI (Library → Objectives → New objective), then s
     await createNewGoalBtn.click({ timeout: 5_000 });
   }
 
-  const objectiveNameInput = page.getByTestId("objective-name-input");
+  const objectiveNameInput = page.getByTestId("objective-context-title-input");
   await objectiveNameInput.waitFor({ state: "visible", timeout: 15_000 });
   await objectiveNameInput.fill(objectiveName);
   await page.keyboard.press("Enter");

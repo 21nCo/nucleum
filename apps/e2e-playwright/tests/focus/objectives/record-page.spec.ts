@@ -519,7 +519,7 @@ async function expectGoalRecordContent(
   const lowerLabel = tabLabel.toLowerCase();
   if (lowerLabel.includes("info")) {
     const infoAnchors = [
-      page.getByTestId("objective-name-input"),
+      page.getByTestId("objective-context-title-input"),
       page
         .getByRole("heading", { name: new RegExp(`^${objectiveName}$`) })
         .first(),

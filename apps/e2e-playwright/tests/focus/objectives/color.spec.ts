@@ -26,9 +26,10 @@ async function openObjectiveFromLibrary(
   await openResourceRecord(page, test.info().project.name, "objective", {
     id: objective.id
   });
-  await expect(
-    page.getByRole("heading", { name: objective.label }).first()
-  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("objective-context-title")).toHaveText(
+    objective.label,
+    { timeout: 15_000 }
+  );
 }
 
 async function readCustomColor(locator: Locator) {
@@ -59,8 +60,10 @@ test("objective color persists and is reused on detail, Quick Focus, and analyti
   const objective = await e2eSeed.focus.objective({ label: objectiveName });
   await openObjectiveFromLibrary(page, objective);
 
-  await page.getByRole("heading", { name: objectiveName }).click();
-  await expect(page.getByTestId("objective-name-input")).toBeVisible({
+  const objectiveTitle = page.getByTestId("objective-context-title");
+  await expect(objectiveTitle).toHaveText(objectiveName);
+  await objectiveTitle.click();
+  await expect(page.getByTestId("objective-context-title-input")).toBeVisible({
     timeout: 10_000
   });
 
@@ -76,8 +79,9 @@ test("objective color persists and is reused on detail, Quick Focus, and analyti
 
   await openObjectiveFromLibrary(page, objective);
   const detailColorScope = page
-    .getByRole("heading", { name: objectiveName })
-    .locator("xpath=ancestor::*[contains(@style, '--customcolor')][1]");
+    .getByTestId("resource-record-surface")
+    .locator('[style*="--customcolor"]')
+    .first();
   const persistedColor = await readCustomColor(detailColorScope);
 
   const { quickFocusPanel, quickFocusSearch } =

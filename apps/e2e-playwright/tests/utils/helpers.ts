@@ -336,7 +336,14 @@ export async function openLibraryAndTab(
     timeout: 10_000,
     waitUntil: "domcontentloaded"
   });
-  const tabVisible = await tabButton
+  const libraryTab = tabButton
+    .or(
+      page
+        .getByTestId("top-bar-context-zone")
+        .getByRole("tab", { name: tabName })
+    )
+    .first();
+  const tabVisible = await libraryTab
     .waitFor({ state: "visible", timeout: 3_000 })
     .then(() => true)
     .catch(() => false);
@@ -352,8 +359,8 @@ export async function openLibraryAndTab(
       return;
     }
   }
-  await tabButton.waitFor({ state: "visible", timeout: 10_000 });
-  await tabButton.click({ timeout: 5_000 });
+  await libraryTab.waitFor({ state: "visible", timeout: 10_000 });
+  await libraryTab.click({ timeout: 5_000 });
 }
 
 /**
