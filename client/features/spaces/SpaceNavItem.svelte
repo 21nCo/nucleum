@@ -7,11 +7,13 @@
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+  import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import SpaceNavItem from "@nucleum/features/spaces/SpaceNavItem.svelte";
   import SpaceHeadingTree from "@nucleum/features/spaces/SpaceHeadingTree.svelte";
   import {
     SpaceNavItemType,
     type ISpaceNavItem,
+    type ISpacePageNavItem,
     type ISpaceResourceNavItem,
     type SpaceDropPosition
   } from "@nucleum/features/spaces/space.type";
@@ -19,8 +21,13 @@
   import {
     isSpaceItemBlocked,
     resolveSpaceItemStatus,
+    resolveSpacePageStatus,
     resolveTargetLabel
   } from "@nucleum/features/spaces/space.utils";
+  import {
+    openSpacePage,
+    resolveOpenableSpacePage
+  } from "@nucleum/features/spaces/space-page";
 
   let {
     item,
@@ -42,6 +49,16 @@
       ? (item as ISpaceResourceNavItem)
       : undefined
   );
+  const pageItem = $derived(
+    item.type === SpaceNavItemType.PAGE
+      ? (item as ISpacePageNavItem)
+      : undefined
+  );
+  const pageRoute = $derived(
+    pageItem
+      ? resolveOpenableSpacePage($appStore.actions, pageItem.path)
+      : undefined
+  );
   const target = $derived(
     resourceItem ? nav.targets[resourceItem.resourceId.toString()] : undefined
   );
@@ -61,21 +78,25 @@
   const label = $derived(
     isSection
       ? item.label || "Untitled section"
-      : (target ? resolveTargetLabel(target) : undefined) ||
+      : pageItem
+        ? pageRoute?.label || item.label || pageItem.path
+        : (target ? resolveTargetLabel(target) : undefined) ||
           item.label ||
           "Untitled"
   );
   const avatar = $derived(target?.avatar ?? item.avatar);
   const status = $derived(
-    resourceItem
-      ? resolveSpaceItemStatus({
-          item: resourceItem,
-          product: nav.product,
-          target,
-          isTargetsLoaded: nav.isTargetsLoaded,
-          loopIds: nav.loopIds
-        })
-      : undefined
+    pageItem
+      ? resolveSpacePageStatus(pageRoute)
+      : resourceItem
+        ? resolveSpaceItemStatus({
+            item: resourceItem,
+            product: nav.product,
+            target,
+            isTargetsLoaded: nav.isTargetsLoaded,
+            loopIds: nav.loopIds
+          })
+        : undefined
   );
   const isUnavailable = $derived(isSpaceItemBlocked(status));
   const hasHeadings = $derived(isMarkdownPage && !isUnavailable);
@@ -96,7 +117,12 @@
       nav.onSelectSection(item.id);
       return;
     }
-    if (!resourceItem || isUnavailable) return;
+    if (isUnavailable) return;
+    if (pageItem) {
+      void openSpacePage(pageItem);
+      return;
+    }
+    if (!resourceItem) return;
     if (isSubSpace) nav.onFocusSpace(resourceItem);
     else nav.onOpen(resourceItem);
   }
@@ -274,7 +300,9 @@
             <Icon
               icon={isSection
                 ? "folder"
-                : resolveResourceIcon(resourceItem!.resourceType)}
+                : pageItem
+                  ? (pageRoute?.action.icon ?? "link")
+                  : resolveResourceIcon(resourceItem!.resourceType)}
               size={Size.sm}
               class="stroke-fgs2"
             />

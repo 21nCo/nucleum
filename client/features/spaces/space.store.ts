@@ -14,6 +14,8 @@ import {
   type SpaceDropPosition
 } from "@nucleum/features/spaces/space.type";
 import {
+  cloneNavItems,
+  hasEquivalentNavItem,
   indentItem,
   insertItem,
   moveItem,
@@ -24,14 +26,29 @@ import {
   removeItemById,
   updateItemLabel
 } from "@nucleum/features/spaces/space.utils";
-import { determineResourceType } from "@nucleum/datafn/resource.utils";
+import {
+  determineResourceType,
+  isTrashedResource
+} from "@nucleum/datafn/resource.utils";
 import { datafn } from "@nucleum/datafn/datafn.store";
+import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { navigation } from "@nucleum/shell/navigation/navigation";
-import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 
 const activeSpaceStores = new Map<string, ActiveSpaceStore>();
+const recordMetadata = { includeTrashed: true, includeArchived: true };
+
+/**
+ * `items` followed by those of `added` they do not hold anywhere yet, by item
+ * or by the record or page it links to.
+ */
+function appendMissingItems(items: ISpaceNavItem[], added: ISpaceNavItem[]) {
+  return [
+    ...items,
+    ...cloneNavItems(added.filter((item) => !hasEquivalentNavItem(items, item)))
+  ];
+}
 
 /** Open state and mutations of one space, shared by every view of it. */
 export class ActiveSpaceStore {
@@ -43,6 +60,9 @@ export class ActiveSpaceStore {
   private itemsRevision = 0;
   private labelRevision = 0;
   private viewRevision = 0;
+  private settledItemsRevision = 0;
+  private itemsNamespace: string | null | undefined;
+  private itemsWrites: Promise<unknown> = Promise.resolve();
   private loadSequence = 0;
   private latestLoad: Promise<void> = Promise.resolve();
 
@@ -73,7 +93,14 @@ export class ActiveSpaceStore {
     return (get(this.subject) as IActiveSpace | undefined)?.items ?? [];
   }
 
-  private async mutate(record: Partial<ISpace>) {
+  /**
+   * Saves `record`. On failure the open state is reloaded from the saved
+   * record, or `onFailure` runs instead.
+   */
+  private async mutate(
+    record: Partial<ISpace>,
+    onFailure: () => Promise<void> = () => this.init()
+  ) {
     try {
       assertDatafnMutationSucceeded(
         await datafn.space.mutate({
@@ -86,24 +113,115 @@ export class ActiveSpaceStore {
     } catch (error) {
       logger.error({ at: "ActiveSpaceStore.mutate", error, id: this.id });
       toasts.error("Failed to save space");
-      await this.init();
+      await onFailure();
       return false;
     }
     return true;
   }
 
+  /**
+   * Shows `items` and saves them. Saves run one after another in call order,
+   * and each carries every earlier local change, so the last one wins with
+   * the complete list. A failed save is reloaded over only when no later
+   * change is waiting, since that change saves the shown items again. A save
+   * queued for one account is dropped when another account is active by the
+   * time it runs, and items still loaded from another account are not saved.
+   * Each save writes the items shown when it runs, so a change made to them
+   * by a queued task in between is kept.
+   */
   private async persistItems(items: ISpaceNavItem[]) {
-    this.itemsRevision++;
+    if (!this.isItemsCurrent()) return false;
+    const revision = ++this.itemsRevision;
+    const namespace = datafn.currentNamespace();
+    this.itemsNamespace = namespace;
     this.update((prev) => (prev ? { ...prev, items } : prev));
-    return this.mutate({ items });
+    const isCurrent = () => datafn.currentNamespace() === namespace;
+    const write = this.itemsWrites.then(async () => {
+      try {
+        if (!isCurrent() || !this.isItemsCurrent()) return false;
+        return await this.mutate({ items: this.readItems() }, async () => {
+          this.settledItemsRevision = revision;
+          if (revision === this.itemsRevision && isCurrent()) await this.init();
+        });
+      } finally {
+        this.settledItemsRevision = revision;
+      }
+    });
+    this.itemsWrites = write.catch(() => undefined);
+    return write;
+  }
+
+  /** Whether the shown items were loaded or edited in the active account. */
+  private isItemsCurrent() {
+    return this.itemsNamespace === datafn.currentNamespace();
+  }
+
+  /** Whether the open state holds the space's items, loaded in the active account. */
+  hasLoadedItems() {
+    return (
+      !!(get(this.subject) as IActiveSpace | undefined)?.items &&
+      this.isItemsCurrent()
+    );
   }
 
   /**
-   * Loads the record, keeping open-state flags across reloads. Items, title and
-   * view edited while the record loads are kept, since they are newer than the
-   * loaded copy. A load overtaken by a later one is dropped and settles when the
-   * latest load has been applied, so no caller proceeds without loaded items.
-   * Pass `isRecordedInRecents: false` when the space is loaded only to read its
+   * Appends items to the saved space and returns whether they were saved. It
+   * runs in the save queue, after every earlier local change is saved, and
+   * appends the items missing from the record as saved then, so it keeps
+   * changes saved elsewhere and items the user removed stay removed. The shown
+   * items become that result, or, when the user changed them in the meantime,
+   * gain the appended items, which the user's queued saves then carry. When a
+   * view has not loaded items of the active account yet, it loads them after
+   * the write instead; with no view yet, the first view loads them when it opens.
+   */
+  async appendItems(items: ISpaceNavItem[]) {
+    const namespace = datafn.currentNamespace();
+    const revision = this.itemsRevision;
+    const isCurrent = () => datafn.currentNamespace() === namespace;
+    const task = this.itemsWrites.then(async () => {
+      if (!isCurrent()) return false;
+      const saved = (await datafn.space.select(this.id.toString(), {
+        metadata: recordMetadata
+      })) as ISpace | undefined;
+      if (!saved || isTrashedResource(saved) || !isCurrent()) return false;
+      const next = appendMissingItems(
+        normalizeNavItems(saved.items ?? []),
+        items
+      );
+      if (!(await this.mutate({ items: next }, async () => undefined))) {
+        return false;
+      }
+      if (!isCurrent()) return true;
+      if (!this.hasLoadedItems()) {
+        if (get(this.subject)) {
+          await this.init(undefined, { isRecordedInRecents: false });
+        }
+        return true;
+      }
+      if (this.itemsRevision === revision) {
+        this.itemsRevision++;
+        this.settledItemsRevision = this.itemsRevision;
+        this.update((prev) => (prev ? { ...prev, items: next } : prev));
+      } else {
+        this.update((prev) =>
+          prev
+            ? { ...prev, items: appendMissingItems(prev.items ?? [], items) }
+            : prev
+        );
+      }
+      return true;
+    });
+    this.itemsWrites = task.catch(() => undefined);
+    return task;
+  }
+
+  /**
+   * Loads the record, keeping open-state flags across reloads. Items edited in
+   * the same account, and the title and view, edited while the record loads are
+   * kept, since they are newer than the loaded copy, and items left from another
+   * account are replaced. A load overtaken by a later one is dropped and settles
+   * when the latest load has been applied, so no caller proceeds without loaded
+   * items. Pass `isRecordedInRecents: false` when the space is loaded only to read its
    * settings, so it does not move to the top of recents.
    */
   init(
@@ -123,6 +241,7 @@ export class ActiveSpaceStore {
     const itemsRevisionAtStart = this.itemsRevision;
     const labelRevisionAtStart = this.labelRevision;
     const viewRevisionAtStart = this.viewRevision;
+    const namespace = datafn.currentNamespace();
     this.update(
       (prev) =>
         ({
@@ -177,7 +296,10 @@ export class ActiveSpaceStore {
           ? prev.view
           : (record.view ?? SpaceView.SIDENAV),
       items:
-        prev?.items && this.itemsRevision !== itemsRevisionAtStart
+        prev?.items &&
+        this.itemsNamespace === namespace &&
+        (this.itemsRevision !== itemsRevisionAtStart ||
+          this.itemsRevision !== this.settledItemsRevision)
           ? prev.items
           : normalizeNavItems(record.items ?? []),
       accessMode: accessMode ?? prev?.accessMode,
@@ -187,6 +309,7 @@ export class ActiveSpaceStore {
       isMissing: false,
       isLoadFailed: false
     }));
+    this.itemsNamespace = namespace;
     if (options.isRecordedInRecents === false) return;
     appStore.addToRecents({
       record,
@@ -307,22 +430,68 @@ export class ActiveSpaceStore {
 }
 
 /**
- * Creates an empty side nav space and opens it as a page with its title ready to
- * rename.
+ * Appends the items a saved space does not hold yet and returns whether they
+ * were saved. The append always runs in the space's shared save queue, created
+ * when no view of the space exists yet, so a view opened meanwhile loads after
+ * it and the user's edits are saved after it, in order. It stops without
+ * writing when the space is in the trash or another account becomes active
+ * meanwhile.
  */
-export async function createSpace() {
-  const id = generateResourceId(Resource.space);
+export function appendSpaceItems(id: IRecordId, items: ISpaceNavItem[]) {
+  return ActiveSpaceStore.resolve(id).appendItems(items);
+}
+
+/**
+ * Reloads the open state of a space from its record when a view of it already
+ * exists, so items written outside the store are shown and kept by later edits.
+ */
+export async function reloadActiveSpace(id: IRecordId) {
+  const store = activeSpaceStores.get(id.toString());
+  if (!store) return;
+  await store.init(undefined, { isRecordedInRecents: false });
+}
+
+/**
+ * Inserts a space record, under `id` when given, and returns its id, or undefined
+ * when the insert fails. Spaces start as an empty side nav.
+ */
+export async function insertSpace(
+  params: {
+    id?: string;
+    label?: string;
+    view?: SpaceView;
+    items?: ISpaceNavItem[];
+  } = {}
+) {
+  const id = params.id ?? generateResourceId(Resource.space);
   try {
     assertDatafnMutationSucceeded(
       await datafn.space.mutate({
         operation: "insert",
         id,
-        record: { id, label: "", view: SpaceView.SIDENAV, items: [] },
+        record: {
+          id,
+          label: params.label ?? "",
+          view: params.view ?? SpaceView.SIDENAV,
+          items: params.items ?? []
+        },
         context: ResourceAccessPoint.SPACE
       })
     );
   } catch (error) {
-    logger.error({ at: "createSpace", error });
+    logger.error({ at: "insertSpace", error });
+    return;
+  }
+  return id;
+}
+
+/**
+ * Creates an empty side nav space and opens it as a page with its title ready to
+ * rename.
+ */
+export async function createSpace() {
+  const id = await insertSpace();
+  if (!id) {
     toasts.error("Failed to create space");
     return;
   }

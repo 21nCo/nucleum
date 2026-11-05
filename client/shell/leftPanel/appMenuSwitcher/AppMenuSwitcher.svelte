@@ -11,20 +11,14 @@
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
   import { appStore, isInEditMode } from "@nucleum/shared-state/app-context/app.store";
   import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
-  import type { IAppMenuStore } from "@nucleum/shell/navigation/app-menu.type";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { appEvents } from "@nucleum/shared-state/events/app-events.store";
-  import Divider from "@21n/ui/elements/Divider.svelte";
-  import { ColorStrength } from "@21n/theme/appearance.type";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import view from "@21n/ui/environment/view.store";
   import { cn } from "@21n/ui/environment/presentation";
   import AppMenuSwitcherItemGroup from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItemGroup.svelte";
   import AppMenuPinnedSpaces from "@nucleum/shell/leftPanel/appMenuSwitcher/AppMenuPinnedSpaces.svelte";
-  import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
-  import type { Resource } from "@nucleum/datafn/resource.enum";
   import { hTrail, vTrail } from "@nucleum/shell/topNav/tabs/tabs.store";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   let {
@@ -41,44 +35,34 @@
   } = $props();
   let allPages = $state<IAction[]>([]);
   let defaultPages = $state<IAction[]>([]);
-  let userPinnedPages = $state<IAction[]>([]);
   let current = $state("");
   const productConfig = requireProductConfig();
-  const isEnableUserPinnedPages = false;
 
-  refresh(appMenuStore.get());
+  refresh();
   onMount(() => {
-    const unsubscribe = appMenuStore.subscribe((x: IAppMenuStore) => {
-      refresh(x);
+    const unsubscribe = appMenuStore.subscribe(() => {
+      refresh();
     });
     return () => {
       if (unsubscribe) unsubscribe();
     };
   });
 
-  function refresh(x: IAppMenuStore) {
+  function refresh() {
     allPages = [];
     let items = [];
-    const app = $appStore.product;
     let defaultMenu = productConfig.appMenu;
     if ($view.isConstrainedWidth || $view.isPortrait) {
       defaultMenu = productConfig.appMenuPt;
     }
-    let userPinnedMenu: string[] = [];
-    if (!$view.isConstrainedWidth) userPinnedMenu = x[app]?.user ?? [];
-    userPinnedMenu = userPinnedMenu
-      .filter((x) => x && !x.includes("browse"))
-      .map((x) => resourceAction(x as Resource, ResourceActionType.BROWSE));
-    const contextualMenu = [...defaultMenu, ...userPinnedMenu];
-    // console.log({ defaultMenu, contextualMenu });
     if (layoutContext === LayoutContext.PORTRAIT) {
-      items = contextualMenu.slice(
+      items = defaultMenu.slice(
         0,
         productConfig.isShowCaptureOnMobile ? 3 : 4
       );
       items.push("cp");
     } else {
-      items = contextualMenu.filter((item) => item !== "cp");
+      items = defaultMenu.filter((item) => item !== "cp");
     }
     items.forEach((action: string) => {
       const currentPage = requireCommandHost().resolveAction(action);
@@ -87,9 +71,6 @@
       }
     });
     defaultPages = allPages.filter((x) => defaultMenu.includes(x.action));
-    userPinnedPages = allPages
-      .filter((x) => userPinnedMenu.includes(x.action))
-      .filter((x) => x);
     if (layoutContext != LayoutContext.PORTRAIT) {
     }
     let currentPath = window?.location?.pathname?.replace("/", "");
@@ -166,25 +147,5 @@
       {onClick}
     />
     <AppMenuPinnedSpaces {layoutContext} />
-    {#if isEnableUserPinnedPages && userPinnedPages.length > 0}
-      <div
-        class={cn("flex flex-col", {
-          "gap-3": layoutContext === LayoutContext.THIN_WITH_LABEL,
-          "gap-1": layoutContext !== LayoutContext.THIN_WITH_LABEL
-        })}
-      >
-        <div class="w-full flex justify-center">
-          <div class="w-1/2">
-            <Divider colorStrength={ColorStrength.Strong} />
-          </div>
-        </div>
-        <AppMenuSwitcherItemGroup
-          {parentBackgroundIndex}
-          {layoutContext}
-          items={userPinnedPages}
-          {onClick}
-        />
-      </div>
-    {/if}
   </div>
 {/if}

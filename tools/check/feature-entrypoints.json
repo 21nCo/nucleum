@@ -138,6 +138,7 @@
   "client/features/records/bulk-editor.ts",
   "client/features/records/resource.actions.ts",
   "client/features/records/subtype-switcher-params.ts",
+  "client/features/spaces/pinned-space-migration.ts",
   "client/features/spaces/space.type.ts",
   "client/features/spaces/thumbnail/SpaceThumbnail.svelte",
   "client/features/calendar/global-commands.ts",

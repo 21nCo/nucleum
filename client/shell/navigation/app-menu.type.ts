@@ -11,4 +11,10 @@ export type IAppMenu = {
   user?: string[];
   /** Space ids pinned below the product's destinations, in pin order. */
   spaces?: string[];
+  /** The space that former resource-type pins and app tabs were moved into. */
+  pinnedSpaceId?: string;
+  /** Whether app tabs were moved into the pinned space. They move only once. */
+  tabsMigrated?: boolean;
+  /** Whether the pinned space was created but not yet pinned to the app menu. */
+  pinnedSpacePinPending?: boolean;
 };

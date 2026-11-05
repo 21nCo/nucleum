@@ -22,7 +22,6 @@
   import { hoverable } from "@21n/ui/actions/hover.action";
   import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
   import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
-  import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
@@ -129,15 +128,6 @@
 
   function resolveContextMenu() {
     const resource = item?.componentParams?.resource ?? Resource.unknown;
-    const pinAction = {
-      label: "Unpin from App menu",
-      value: "pin",
-      icon: "minus-circle",
-      callback: async () => {
-        appMenuStore.removeUserMenuItem(resource);
-        popRef.dispatchEvent(new CustomEvent("hide"));
-      }
-    };
     const createAction = {
       label: "Create new",
       value: "create",
@@ -149,24 +139,18 @@
         popRef.dispatchEvent(new CustomEvent("hide"));
       }
     };
-    if (isHideCreateAction(resource)) {
-      return [
-        {
-          group: "all",
-          items: [pinAction]
-        }
-      ];
-    }
+    if (isHideCreateAction(resource)) return [];
     return [
       {
         group: "all",
-        items: [pinAction, createAction]
+        items: [createAction]
       }
     ];
   }
 
   function resolvePopover() {
-    if (!item?.componentParams?.resource) {
+    const resource = item?.componentParams?.resource;
+    if (!resource || isHideCreateAction(resource)) {
       return {
         content: "",
         triggerMethod: []

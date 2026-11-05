@@ -142,6 +142,7 @@
     "./records/avatar/avatar.utils": "./records/avatar/avatar.utils.ts",
     "./records/cover/CoverPicker.svelte": "./records/cover/CoverPicker.svelte",
     "./records/cover/CoverRenderer.svelte": "./records/cover/CoverRenderer.svelte",
+    "./spaces/pinned-space-migration": "./spaces/pinned-space-migration.ts",
     "./spaces/space.type": "./spaces/space.type.ts",
     "./spaces/thumbnail/SpaceThumbnail.svelte": "./spaces/thumbnail/SpaceThumbnail.svelte",
     "./memory/maps/NodeMap.svelte": "./memory/maps/NodeMap.svelte",

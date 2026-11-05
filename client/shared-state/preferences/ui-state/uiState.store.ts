@@ -33,6 +33,7 @@ const uiStateSignal = datafn.kv.signal<IUIStateStore>(Resource.uiState, {
 });
 const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
 const pendingUiStateValues: OptimisticKvEntries = new Map();
+let pendingUiStateNamespace = datafn.currentNamespace();
 const legacyUiStateKeys = new Map([
   ["manualLogRecentGoals", UIState.manualLogRecentObjectives],
   ["goalPanelSelection", UIState.objectivePanelSelection]
@@ -68,6 +69,13 @@ function resolveStoredLocalState(): IUIStateStore["$local"] {
   }
 }
 
+function scopePendingUiStateValues() {
+  const namespace = datafn.currentNamespace();
+  if (namespace === pendingUiStateNamespace) return;
+  pendingUiStateValues.clear();
+  pendingUiStateNamespace = namespace;
+}
+
 function refreshUiStateLocal() {
   const migrated = migrateLegacyUiStateKeys(uiStateSignal.get() ?? uiStateSeed);
   const optimistic = applyOptimisticKvEntries(migrated, pendingUiStateValues);
@@ -79,6 +87,7 @@ function refreshUiStateLocal() {
 }
 
 uiStateSignal.subscribe((value) => {
+  scopePendingUiStateValues();
   acknowledgeOptimisticKvEntries(
     pendingUiStateValues,
     migrateLegacyUiStateKeys(value ?? uiStateSeed)
@@ -120,6 +129,10 @@ export const uiState = {
     }
     return key;
   },
+  /**
+   * Saves a state value. Returns the synced DataFn write, or undefined for state
+   * kept only on this device.
+   */
   setState(
     keyParam: Action | UIState | ResourceAccessPoint,
     value: any,
@@ -143,8 +156,8 @@ export const uiState = {
         });
       }
     } else {
-      this.modify({ [key]: value });
       logger.log({ context: "uiState.store - setState", key, value });
+      return this.modify({ [key]: value });
     }
   },
   getState(
@@ -168,6 +181,22 @@ export const uiState = {
     }
     return this.get()[key];
   },
+  /**
+   * Reads a synced state value from the active DataFn namespace, including local
+   * changes not yet acknowledged, without waiting for the live signal to load.
+   */
+  async readState(
+    keyParam: Action | UIState | ResourceAccessPoint,
+    params?: IUIStateParams
+  ) {
+    const stored = await datafn.kv.get<IUIStateStore>(Resource.uiState);
+    scopePendingUiStateValues();
+    const current = applyOptimisticKvEntries(
+      migrateLegacyUiStateKeys(stored ?? uiStateSeed),
+      pendingUiStateValues
+    );
+    return current[this.resolveKey(keyParam, params)];
+  },
   getResourceState(
     resource: Resource,
     location: ResourceAccessPoint,
@@ -187,6 +216,7 @@ export const uiState = {
     logger.log({ context: "uiState.store - setResourceState", key, value });
   },
   modify(n: Partial<IUIStateStore>) {
+    scopePendingUiStateValues();
     const mutationTokens = addOptimisticKvEntries(pendingUiStateValues, n);
     uiStateLocal.update((current) => ({ ...current, ...n }));
     const mutation = datafn.kv.merge(Resource.uiState, n);

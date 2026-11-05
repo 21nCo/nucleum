@@ -25,6 +25,14 @@ class TabStore {
     });
   }
 
+  /** Reads the stored tab ids, without waiting for the live UI state to load. */
+  async read(): Promise<IRecordId[]> {
+    const ids = await uiState.readState(ResourceAccessPoint.TABS, {
+      scope: UIStateScope.PRODUCT
+    });
+    return Array.isArray(ids) ? ids : [];
+  }
+
   rearrange(ids: IRecordId[]) {
     return uiState.setState(ResourceAccessPoint.TABS, ids, {
       scope: UIStateScope.PRODUCT

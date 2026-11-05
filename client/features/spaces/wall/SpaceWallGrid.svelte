@@ -1,13 +1,17 @@
 <script lang="ts">
-  import type { ISpaceResourceNavItem } from "@nucleum/features/spaces/space.type";
+  import {
+    SpaceNavItemType,
+    type ISpaceLeafNavItem
+  } from "@nucleum/features/spaces/space.type";
   import type { ISpaceWallContext } from "@nucleum/features/spaces/wall/space-wall.type";
   import SpaceWallCard from "@nucleum/features/spaces/wall/SpaceWallCard.svelte";
+  import SpaceWallPageLinkCard from "@nucleum/features/spaces/wall/SpaceWallPageLinkCard.svelte";
 
   let {
     items,
     wall
   }: {
-    items: ISpaceResourceNavItem[];
+    items: ISpaceLeafNavItem[];
     wall: ISpaceWallContext;
   } = $props();
 </script>
@@ -17,6 +21,10 @@
   data-testid="space-wall-grid"
 >
   {#each items as item (item.id)}
-    <SpaceWallCard {item} {wall} />
+    {#if item.type === SpaceNavItemType.PAGE}
+      <SpaceWallPageLinkCard {item} {wall} />
+    {:else}
+      <SpaceWallCard {item} {wall} />
+    {/if}
   {/each}
 </ul>
