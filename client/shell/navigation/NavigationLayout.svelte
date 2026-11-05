@@ -29,6 +29,7 @@
   import { cn } from "@21n/ui/environment/presentation";
   import { pageLayerAttributes } from "@nucleum/shell/navigation/page-layer";
   import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
+  import { isOverlayOnTop } from "@nucleum/shell/navigation/top-layer";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import ContextZonePaneScope from "@nucleum/shell/topNav/contextZone/ContextZonePaneScope.svelte";
   import {
@@ -68,7 +69,9 @@
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
   const isPanelShown = $derived(!!rightPanel && !isOverlayFullScreen);
   const isPanelSheet = $derived(isRightPanelSheet($view));
-  const isPanelSuspended = $derived(isPanelSheet && !!mainPath);
+  const isPanelSuspended = $derived(
+    isPanelSheet && isOverlayOnTop(mainPath, popId)
+  );
   const isPanelSheetShown = $derived(
     isPanelShown && isPanelSheet && !isPanelSuspended
   );
@@ -221,7 +224,7 @@
           />
         {/if}
       </div>
-      {#if $view.isPortrait && $context.embed !== Embed.HANDSET && !isPanelShown}
+      {#if $view.isPortrait && $context.embed !== Embed.HANDSET && !isPanelSheetShown}
         <PortraitBackControl
           isAppMenuShown={!isBaseCovered && !$appStore.isMenuHidden}
         />

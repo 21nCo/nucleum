@@ -5,7 +5,7 @@ vi.mock("@nucleum/shared-state/resources/bulkedit.store", () => ({
   bulkEditStore: {}
 }));
 
-const { resolveTopLayer } = await import("./top-layer");
+const { isOverlayOnTop, resolveTopLayer } = await import("./top-layer");
 
 const params = (value: string) => new URLSearchParams(value);
 
@@ -79,5 +79,14 @@ describe("resolveTopLayer with a full screen page", () => {
 
   it("ignores a stale full screen flag without a page", () => {
     expect(resolveTopLayer(params("max=true"), 0)).toBeUndefined();
+  });
+});
+
+describe("isOverlayOnTop", () => {
+  it("puts an overlay on top only with no page or when it is drawn above the page", () => {
+    expect(isOverlayOnTop("search", undefined)).toBe(true);
+    expect(isOverlayOnTop("search", "node:1")).toBe(false);
+    expect(isOverlayOnTop("navigator", "node:1")).toBe(true);
+    expect(isOverlayOnTop(undefined, undefined)).toBe(false);
   });
 });

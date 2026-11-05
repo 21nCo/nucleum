@@ -17,6 +17,18 @@ export type TopLayer =
   | "beside-base";
 
 /**
+ * Whether the overlay `overlay` is drawn above every other open layer: with no
+ * resource page open, or when it is an overlay drawn above the page, such as
+ * the navigator. An overlay opened under a resource page stays beneath it.
+ */
+export function isOverlayOnTop(
+  overlay: string | null | undefined,
+  page: string | null | undefined
+) {
+  return !!overlay && (!page || isOverlayAbovePage(overlay));
+}
+
+/**
  * Resolves the topmost closable layer: overlay, then right panel, then bulk
  * selection, then the split beside the resource page, then full screen, then
  * the resource page, then the split next to the base page. A resource page
@@ -31,7 +43,7 @@ export function resolveTopLayer(
   const isPageOpen = !!searchParams.get(AccessMode.PAGE);
   const overlay = searchParams.get(AccessMode.OVERLAY);
   const isOverlayOpen = !!overlay;
-  if (isOverlayOpen && (!isPageOpen || isOverlayAbovePage(overlay)))
+  if (isOverlayOnTop(overlay, searchParams.get(AccessMode.PAGE)))
     return "overlay";
   if (options?.isIncludePanel !== false && searchParams.get(AccessMode.PANEL))
     return "panel";
