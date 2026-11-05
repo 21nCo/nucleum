@@ -74,13 +74,15 @@ export function handleSingleNodePostSave(params: {
   }
 }
 
+const captureActions: string[] = [
+  resourceAction(Resource.node, ResourceActionType.CREATE),
+  MemotronAction.CAPTURE_DND,
+  MemotronAction.CAPTURE_SECONDARY
+];
+
 /** Capture surfaces open in `url` with the layer each one is open in. */
 export function resolveOpenCaptureLayers(url: URL) {
-  return [
-    resourceAction(Resource.node, ResourceActionType.CREATE),
-    MemotronAction.CAPTURE_DND,
-    MemotronAction.CAPTURE_SECONDARY
-  ].flatMap((id) => {
+  return captureActions.flatMap((id) => {
     const accessMode = resolveOpenLiveActionAccessMode(id, url);
     return accessMode ? [{ id, accessMode }] : [];
   });
@@ -106,12 +108,7 @@ export function closeCaptureAfterSave(isReplacedByOpenedNode: boolean) {
  * overlay or the right panel stays open, and the page under it is kept.
  */
 export function closeCapturePageAfterReset() {
-  const url = new URL(window.location.href);
-  if (
-    url.searchParams.get(AccessMode.PAGE) !==
-    resourceAction(Resource.node, ResourceActionType.CREATE)
-  ) {
-    return;
-  }
+  const page = new URL(window.location.href).searchParams.get(AccessMode.PAGE);
+  if (!page || !captureActions.includes(page)) return;
   navigation.closeResource({ accessMode: AccessMode.PAGE });
 }

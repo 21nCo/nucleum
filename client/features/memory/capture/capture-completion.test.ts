@@ -21,6 +21,7 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import { Resource } from "@nucleum/datafn/resource.enum";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
+import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import {
   closeCaptureAfterSave,
   closeCapturePageAfterReset,
@@ -111,8 +112,12 @@ describe("handleSingleNodePostSave", () => {
 });
 
 describe("closeCapturePageAfterReset", () => {
-  it("closes a capture open as the page", () => {
-    visit(`?${AccessMode.PAGE}=${capture}`);
+  it.each([
+    capture,
+    MemotronAction.CAPTURE_SECONDARY,
+    MemotronAction.CAPTURE_DND
+  ])("closes the capture page %s", (page) => {
+    visit(`?${AccessMode.PAGE}=${page}`);
     closeCapturePageAfterReset();
     expect(navigation.closeResource).toHaveBeenCalledWith({
       accessMode: AccessMode.PAGE
