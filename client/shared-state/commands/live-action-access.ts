@@ -45,6 +45,17 @@ export function canRenderRightPanel(
 }
 
 /**
+ * Whether the right panel shows as a full-screen sheet in `view`: in portrait,
+ * and on a constrained landscape view, where it cannot render beside the page,
+ * so a panel already open there keeps its tool instead of being removed.
+ */
+export function isRightPanelSheet(
+  view: Pick<IViewStore, "isPortrait" | "isConstrainedWidth">
+) {
+  return view.isPortrait || !canRenderRightPanel(view);
+}
+
+/**
  * Resolves where a live action opens in `view`: where it is set to open, or
  * the overlay when that is the right panel and the panel cannot render there.
  */

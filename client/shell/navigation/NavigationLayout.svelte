@@ -14,6 +14,7 @@
   import { UIState } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import AppSplitView from "@nucleum/shell/AppSplitView.svelte";
   import RightPanel from "@nucleum/shell/rightPanel/RightPanel.svelte";
+  import { isRightPanelSheet } from "@nucleum/shared-state/commands/live-action-access";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import { page } from "$app/stores";
   import RightSplit from "@nucleum/shell/RightSplit.svelte";
@@ -66,7 +67,8 @@
   const isOverlayFullScreen = $derived(isMaxParam && !!mainPath && !popId);
   const isMaxMode = $derived(isPageFullScreen || isOverlayFullScreen);
   const isPanelShown = $derived(!!rightPanel && !isOverlayFullScreen);
-  const isPanelSheetShown = $derived(isPanelShown && $view.isPortrait);
+  const isPanelSheet = $derived(isRightPanelSheet($view));
+  const isPanelSheetShown = $derived(isPanelShown && isPanelSheet);
 
   $effect(() => {
     contextZone.setVisibleLayers(
@@ -209,9 +211,7 @@
           </div>
         </div>
         {#if rightPanel && isPanelShown}
-          {#if $view.isPortrait || !$view.isConstrainedWidth}
-            <RightPanel action={rightPanel} isSheet={$view.isPortrait} />
-          {/if}
+          <RightPanel action={rightPanel} isSheet={isPanelSheet} />
         {/if}
       </div>
       {#if $view.isPortrait && $context.embed !== Embed.HANDSET && !isPanelShown}

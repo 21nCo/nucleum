@@ -8,7 +8,7 @@ vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
   uiState: { getState: () => saved.mode, setState: () => undefined }
 }));
 
-const { resolveEffectiveLiveActionAccessMode } =
+const { isRightPanelSheet, resolveEffectiveLiveActionAccessMode } =
   await import("./live-action-access");
 
 const capture = {
@@ -59,5 +59,13 @@ describe("resolveEffectiveLiveActionAccessMode", () => {
     expect(
       resolveEffectiveLiveActionAccessMode(capture, constrainedLandscape)
     ).toBe(AccessMode.OVERLAY);
+  });
+});
+
+describe("isRightPanelSheet", () => {
+  it("shows the panel as a sheet wherever it cannot render beside the page", () => {
+    expect(isRightPanelSheet(wide)).toBe(false);
+    expect(isRightPanelSheet(portrait)).toBe(true);
+    expect(isRightPanelSheet(constrainedLandscape)).toBe(true);
   });
 });
