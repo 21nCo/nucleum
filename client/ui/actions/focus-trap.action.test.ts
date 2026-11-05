@@ -132,4 +132,17 @@ describe("client/ui/actions/focus-trap.action", () => {
     expect(document.activeElement).toBe(last);
     expect(tab(last).defaultPrevented).toBe(false);
   });
+
+  it("returns focus to a given opener instead of the focused element", async () => {
+    const { opener, sheet, trap } = setup();
+    trap.release();
+    const last = document.getElementById("last") as HTMLElement;
+    last.focus();
+    const again = focusTrap(sheet, { opener: trap.opener });
+    expect(again.opener).toBe(opener);
+    again.destroy();
+    sheet.remove();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(opener);
+  });
 });

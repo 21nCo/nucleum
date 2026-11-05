@@ -44,13 +44,20 @@
    * Traps keyboard focus in `node` while `isActive`, so the same element can
    * switch between the sheet and the panel without being remounted. Leaving
    * the sheet releases the trap and keeps focus where it is; removing the
-   * sheet returns focus to its opener.
+   * sheet returns focus to the element that first opened it, even after it
+   * was suspended under an overlay and trapped again.
    */
   function trapFocusWhile(node: HTMLElement, isActive: boolean) {
-    let trap = isActive ? focusTrap(node) : undefined;
+    let opener: HTMLElement | undefined;
+    const start = () => {
+      const started = focusTrap(node, { opener });
+      opener = started.opener;
+      return started;
+    };
+    let trap = isActive ? start() : undefined;
     return {
       update(next: boolean) {
-        if (next && !trap) trap = focusTrap(node);
+        if (next && !trap) trap = start();
         if (!next && trap) {
           trap.release();
           trap = undefined;

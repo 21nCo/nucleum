@@ -75,4 +75,25 @@ describe("RightPanel", () => {
     expect(queryByRole("dialog", { name: "Capture" })).toBeTruthy();
     expect(resolver).toHaveBeenCalledTimes(1);
   });
+
+  it("returns focus to its opener when it closes after a suspension", async () => {
+    const opener = document.createElement("button");
+    const overlayInput = document.createElement("input");
+    document.body.append(opener, overlayInput);
+    opener.focus();
+    const action = { action: "capture", label: "Capture" } as never;
+    const { rerender, unmount } = render(RightPanel, {
+      props: { action, isSheet: true }
+    });
+    await rerender({ action, isSheet: true, isSuspended: true });
+    overlayInput.focus();
+    await rerender({ action, isSheet: true, isSuspended: false });
+    await tick();
+
+    unmount();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+    overlayInput.remove();
+  });
 });

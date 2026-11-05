@@ -18,14 +18,20 @@ function focusableElements(node: HTMLElement) {
  * Keeps keyboard focus inside `node` while it is mounted: moves focus into it
  * when it opens, wraps Tab and Shift+Tab at its ends unless a control inside
  * already handled the key, and returns focus to the element that was focused
- * before it when it is removed. `release` ends the trap without moving focus,
- * for a node that stays mounted after it no longer needs trapping.
+ * before it when it is removed, or to `options.opener` when given. `release`
+ * ends the trap without moving focus, for a node that stays mounted after it
+ * no longer needs trapping; `opener` lets a later trap on the same node
+ * return focus where the first one would.
  */
-export function focusTrap(node: HTMLElement) {
+export function focusTrap(
+  node: HTMLElement,
+  options: { opener?: HTMLElement } = {}
+) {
   const opener =
-    document.activeElement instanceof HTMLElement
+    options.opener ??
+    (document.activeElement instanceof HTMLElement
       ? document.activeElement
-      : undefined;
+      : undefined);
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key !== "Tab" || event.defaultPrevented) return;
@@ -51,6 +57,7 @@ export function focusTrap(node: HTMLElement) {
   node.addEventListener("keydown", handleKeydown);
 
   return {
+    opener,
     release() {
       node.removeEventListener("keydown", handleKeydown);
     },
