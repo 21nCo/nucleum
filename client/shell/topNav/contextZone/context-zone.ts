@@ -1,6 +1,6 @@
 import type { Snippet } from "svelte";
 import { getContext, setContext } from "svelte";
-import { derived, get, writable } from "svelte/store";
+import { derived, get, readable, writable, type Readable } from "svelte/store";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 
 /** Content layer a context-zone registration belongs to. */
@@ -144,6 +144,20 @@ export function getContextZonePane(): ContextZonePane {
   return (
     getContext<ContextZonePane | undefined>(PANE_CONTEXT_KEY) ??
     BASE_CONTEXT_ZONE_PANE
+  );
+}
+
+/**
+ * Whether the content layer around the caller is visible: false while another
+ * layer covers it, such as a page over the base page or a full-screen overlay
+ * over both. Content outside a layer scope, such as a modal, counts as visible.
+ */
+export function resolveContextZonePaneVisibility(): Readable<boolean> {
+  const pane = getContext<ContextZonePane | undefined>(PANE_CONTEXT_KEY);
+  if (!pane) return readable(true);
+  return derived(
+    visibleLayers,
+    (visible) => !visible || visible.has(pane.layer)
   );
 }
 

@@ -12,7 +12,7 @@ vi.mock("@nucleum/shared-state/resources/action-renderer", () => ({
 }));
 
 import RightPanel from "@nucleum/shell/rightPanel/RightPanel.svelte";
-import { resolveRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+import { resolveHostVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
 import { get, type Readable } from "svelte/store";
 
 describe("RightPanel", () => {
@@ -102,7 +102,7 @@ describe("RightPanel", () => {
   it("tells its tool that it is hidden while suspended", async () => {
     let visibility: Readable<boolean> | undefined;
     resolver.mockImplementationOnce(() => {
-      visibility = resolveRightPanelVisibility();
+      visibility = resolveHostVisibility();
     });
     const action = { action: "capture", label: "Capture" } as never;
     const { rerender } = render(RightPanel, {

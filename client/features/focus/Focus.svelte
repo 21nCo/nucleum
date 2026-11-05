@@ -37,7 +37,7 @@
   import { readable, type Writable } from "svelte/store";
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import type { IContainer } from "@nucleum/shell/layout.type";
-  import { resolveRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+  import { resolveHostVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
   import { resolveMinWidth } from "@nucleum/shell/layout.utils";
 
   const container =
@@ -98,7 +98,7 @@
     await activeSession.startSession();
   }
 
-  const panelVisibility = resolveRightPanelVisibility();
+  const hostVisibility = resolveHostVisibility();
 </script>
 
 {#if $view.isPortrait || ($container && ($container.isPortrait || $container.width < MIN_WIDTH_TO_EXPAND))}
@@ -192,7 +192,7 @@
     {/if}
   </div>
 {/if}
-{#if $panelVisibility}
+{#if $hostVisibility}
   <ComponentShortcutListener
     checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
     shortcuts={[

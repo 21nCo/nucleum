@@ -121,7 +121,8 @@ export function closeCapturePageAfterReset(layer: AccessMode | undefined) {
 
 /**
  * Whether an app event saves the capture: Cmd/Ctrl+Enter while the capture is
- * visible. A capture in a right panel hidden under another layer ignores it,
+ * visible. A capture hidden under another layer, such as a right panel or base
+ * page under a full-screen overlay or a page under the navigator, ignores it,
  * so it never saves a draft the user cannot see.
  */
 export function isCaptureSaveShortcut(event: IEvent, isVisible: boolean) {

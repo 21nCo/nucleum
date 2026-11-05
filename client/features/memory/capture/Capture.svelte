@@ -51,7 +51,7 @@
     closeCapturePageAfterReset,
     isCaptureSaveShortcut
   } from "@nucleum/features/memory/capture/capture-completion";
-  import { resolveRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+  import { resolveHostVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
 
   let {
     captureId = generateResourceId(Resource.capture),
@@ -69,7 +69,7 @@
 
   setContext(Context.CAPTURE, captureContext);
   const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
-  const panelVisibility = resolveRightPanelVisibility();
+  const hostVisibility = resolveHostVisibility();
   let captureStore = $state<IActiveCaptureStore>(
     ActiveCaptureStore.resolve(captureId)
   );
@@ -94,7 +94,7 @@
       releaseDnDPage = acquireDnDPage();
     }
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
-      if (isCaptureSaveShortcut(x, get(panelVisibility))) {
+      if (isCaptureSaveShortcut(x, get(hostVisibility))) {
         await captureStore.save();
       }
     });
@@ -321,7 +321,7 @@
   onPreview={handleWebArtifactPreview}
 />
 
-{#if $panelVisibility}
+{#if $hostVisibility}
   <ComponentShortcutListener
     checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
     isAllowFromTextInput={true}
