@@ -124,6 +124,7 @@
   "client/features/memory/node/title/NodeTitle.svelte",
   "client/features/memory/node/title/NodeTitleLabelPart.svelte",
   "client/features/memory/node/url.utils.ts",
+  "client/features/records/ContextZoneEditableTitle.svelte",
   "client/features/records/RecordStarStatusFeedback.svelte",
   "client/features/records/RecordStatusBanner.svelte",
   "client/features/records/RecordTrashBanner.svelte",

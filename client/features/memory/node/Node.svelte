@@ -32,7 +32,7 @@
   import { getContext } from "svelte";
   import { get, readable, type Writable } from "svelte/store";
   import type { IContainer } from "@nucleum/shell/layout.type";
-  import { resolveMinWidth } from "@nucleum/shell/layout.utils";
+  import { resolveNodeMinWidth } from "@nucleum/features/memory/node/node-layout";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
 
@@ -64,13 +64,23 @@
   let isRenderSplitView = false;
   let node = $derived(ActiveNodeStore.resolve(id));
   let isConstrainedWidth = $derived(
-    (($container &&
+    !!$container &&
       $container.width <
-        resolveMinWidth(
-          $node?.contentType === NodeType.NODULAR_MARKDOWN ? 3 : 2
-        )) ??
-      false) as boolean
+        resolveNodeMinWidth(
+          {
+            contentType: $node?.contentType,
+            panel: $node?.panel,
+            isInFocusMode: $node?.isInFocusMode
+          },
+          resolveRootFontSize()
+        )
   );
+
+  function resolveRootFontSize() {
+    return (
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+    );
+  }
 
   let isLoading = $state(false);
   let error = $state<any>(undefined);
@@ -154,7 +164,7 @@
 {:else if $node && !isLoading}
   <div class="w-full h-full relative">
     {#if [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)}
-      <MediaNode {node} nodeView={view} {isConstrainedWidth} />
+      <MediaNode {node} {accessMode} nodeView={view} {isConstrainedWidth} />
     {:else}
       <NonMediaNode
         {node}

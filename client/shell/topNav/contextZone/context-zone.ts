@@ -13,7 +13,17 @@ export type ContextZonePane = {
 export type ContextZoneRegistration = {
   content: Snippet;
   cycle?: () => void;
+  /**
+   * Background class of the context tab while this entry shows, matching the
+   * page or pane below, such as "bg-bgs2". Defaults to the page background.
+   */
+  surface?: string;
+  /** Replaces the page identity's title, such as an editable title. */
+  title?: Snippet;
 };
+
+/** Background class of the context tab when no entry declares one. */
+export const DEFAULT_CONTEXT_ZONE_SURFACE = "bg-bgs1";
 
 /** One registered context-zone entry. */
 export type ContextZoneEntry = ContextZoneRegistration & {
@@ -34,11 +44,12 @@ export const ContextZoneLayer = {
 } as const;
 
 const PANE_CONTEXT_KEY = Symbol("context-zone-pane");
-
 const entries = writable<ContextZoneEntry[]>([]);
+const panes = writable<{ key: number; pane: ContextZonePane }[]>([]);
 const activePaneId = writable<string | undefined>(undefined);
 const visibleLayers = writable<ReadonlySet<number> | undefined>(undefined);
 const hostCount = writable(0);
+const entryWidth = writable<number | undefined>(undefined);
 let nextKey = 0;
 
 /**
@@ -79,6 +90,80 @@ export function nextCycleValue<T>(values: T[], current: T | undefined) {
 }
 
 /**
+ * Picks the pane the context zone describes: the visible mounted pane the user
+ * worked in last, otherwise the pane of the entry the zone would show,
+ * otherwise the newest pane of the topmost visible layer.
+ */
+export function resolveContextZonePane(
+  registered: { key: number; pane: ContextZonePane }[],
+  mounted: { key: number; pane: ContextZonePane }[],
+  activePane: string | undefined,
+  visible?: ReadonlySet<number>
+): ContextZonePane | undefined {
+  const active = activePane
+    ? mounted.find(
+        (item) =>
+          item.pane.id === activePane &&
+          (!visible || visible.has(item.pane.layer))
+      )
+    : undefined;
+  return (
+    active?.pane ??
+    resolveContextZoneEntry(registered, activePane, visible)?.pane ??
+    resolveContextZoneEntry(mounted, activePane, visible)?.pane
+  );
+}
+
+/**
+ * Picks the entry shown for `pane`: its newest entry, or nothing when the
+ * pane registered none. Without a pane it falls back to
+ * `resolveContextZoneEntry`.
+ */
+export function resolveContextZonePaneEntry<
+  T extends { key: number; pane: ContextZonePane }
+>(
+  registered: T[],
+  pane: ContextZonePane | undefined,
+  activePane: string | undefined,
+  visible?: ReadonlySet<number>
+): T | undefined {
+  if (!pane) return resolveContextZoneEntry(registered, activePane, visible);
+  return resolveContextZoneEntry(
+    registered.filter((item) => item.pane.id === pane.id),
+    pane.id,
+    visible
+  );
+}
+
+/** Mounted panes on visible layers, one per pane id, in mount order. */
+export function resolveVisiblePanes(
+  mounted: { key: number; pane: ContextZonePane }[],
+  visible?: ReadonlySet<number>
+): ContextZonePane[] {
+  const seen = new Set<string>();
+  return mounted
+    .filter((item) => !visible || visible.has(item.pane.layer))
+    .filter((item) => {
+      if (seen.has(item.pane.id)) return false;
+      seen.add(item.pane.id);
+      return true;
+    })
+    .map((item) => item.pane);
+}
+
+const pane = derived(
+  [entries, panes, activePaneId, visibleLayers],
+  ([list, mounted, paneId, visible]) =>
+    resolveContextZonePane(list, mounted, paneId, visible)
+);
+
+const active = derived(
+  [entries, pane, activePaneId, visibleLayers],
+  ([list, shown, paneId, visible]) =>
+    resolveContextZonePaneEntry(list, shown, paneId, visible)
+);
+
+/**
  * Shell-owned registry for the top bar context zone. Pages and resources
  * register a snippet for the pane they render in; the top bar renders the
  * entry of the pane the user is working in.
@@ -89,9 +174,22 @@ export const contextZone = {
   /** Layers the user can see; undefined means every layer counts. */
   visibleLayers: { subscribe: visibleLayers.subscribe },
   isHosted: derived(hostCount, (count) => count > 0),
-  active: derived(
-    [entries, activePaneId, visibleLayers],
-    ([list, pane, visible]) => resolveContextZoneEntry(list, pane, visible)
+  /**
+   * Width, in pixels, the top bar can give the shown entry's controls without
+   * scrolling; undefined until a top bar measures it.
+   */
+  entryWidth: { subscribe: entryWidth.subscribe },
+  /** Records the width the top bar can give the shown entry's controls. */
+  setEntryWidth(width: number | undefined) {
+    if (get(entryWidth) !== width) entryWidth.set(width);
+  },
+  /** Entry shown in the zone: the newest entry of the described pane. */
+  active,
+  /** Pane whose page the context zone describes. */
+  pane,
+  /** Mounted panes on visible layers, in mount order, one per pane id. */
+  visiblePanes: derived([panes, visibleLayers], ([list, visible]) =>
+    resolveVisiblePanes(list, visible)
   ),
   /** Marks a top bar as hosting the zone; returns its release function. */
   host() {
@@ -105,11 +203,19 @@ export const contextZone = {
       { key, pane } as ContextZoneEntry,
       {
         content: { get: () => registration.content, enumerable: true },
-        cycle: { get: () => registration.cycle, enumerable: true }
+        cycle: { get: () => registration.cycle, enumerable: true },
+        surface: { get: () => registration.surface, enumerable: true },
+        title: { get: () => registration.title, enumerable: true }
       }
     );
     entries.update((list) => [...list, entry]);
     return () => entries.update((list) => list.filter((x) => x.key !== key));
+  },
+  /** Records a mounted pane; returns its release function. */
+  registerPane(pane: ContextZonePane) {
+    const key = ++nextKey;
+    panes.update((list) => [...list, { key, pane }]);
+    return () => panes.update((list) => list.filter((x) => x.key !== key));
   },
   /**
    * Sets the layers the user can see; entries of other layers stay hidden.
@@ -181,4 +287,22 @@ const contextZoneAccessModes = new Set<string>([
  */
 export function isContextZoneAccessMode(accessMode: string | undefined) {
   return !!accessMode && contextZoneAccessModes.has(accessMode);
+}
+
+/**
+ * Whether a resource view shows its title, view tabs and actions in the top
+ * bar context zone instead of its page body and floating bar: a top bar hosts
+ * the zone at full width, and the resource is open as a page or split.
+ */
+export function isResourceInContextZone(
+  isHosted: boolean,
+  layout: { isPortrait: boolean; isConstrainedWidth: boolean },
+  accessMode: string | undefined
+) {
+  return (
+    isHosted &&
+    !layout.isPortrait &&
+    !layout.isConstrainedWidth &&
+    isContextZoneAccessMode(accessMode)
+  );
 }

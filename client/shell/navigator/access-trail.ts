@@ -143,6 +143,23 @@ export function resolveAccessTrailParent(trail: AccessTrail | undefined) {
   return parent !== undefined && parent > -1 ? parent : undefined;
 }
 
+/**
+ * Node the open page goes back to: the node the active node was opened from,
+ * when the active node is the page `pageId`. Undefined when the page started
+ * the trail or is not the active node.
+ */
+export function resolveAccessTrailBack(
+  trail: AccessTrail | undefined,
+  pageId: string | null | undefined
+): { index: number; id: string } | undefined {
+  if (!trail || !pageId || trail.nodes[trail.active]?.id !== pageId) {
+    return undefined;
+  }
+  const parent = resolveAccessTrailParent(trail);
+  if (parent === undefined) return undefined;
+  return { index: parent, id: trail.nodes[parent].id };
+}
+
 /** Trail node a history entry shows: the trail key and the node's own key. */
 export type AccessTrailPosition = {
   trail: string;

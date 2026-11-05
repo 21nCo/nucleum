@@ -19,6 +19,7 @@
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { cn } from "@21n/ui/environment/presentation";
+  import view from "@21n/ui/environment/view.store";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { tooltip } from "@21n/ui/actions/popover.action";
@@ -27,15 +28,34 @@
   import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
   import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
   import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
+  import PanelActionGroup from "@nucleum/shell/topNav/PanelActionGroup.svelte";
+  import { isToastBesideActions } from "@nucleum/shell/topNav/toast-placement";
+  import { isContextTabShown } from "@nucleum/shell/topNav/context-tab";
+  import {
+    isTopNavPanelBeside,
+    type TopNavPanelAction,
+    type TopNavPanelActionState
+  } from "@nucleum/shell/topNav/panel-actions";
   import TrailLeftIndicator from "@nucleum/shell/topNav/TrailLeftIndicator.svelte";
   import InlineSyncingFeedback from "@nucleum/shell/sync/InlineSyncingFeedback.svelte";
-  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    DEFAULT_CONTEXT_ZONE_SURFACE,
+    contextZone
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    resolveContextZoneSubject,
+    resolveSpaceBaseBack
+  } from "@nucleum/shell/topNav/contextZone/context-zone-subject";
+  import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
+  import PaneSwitchButton from "@nucleum/shell/topNav/contextZone/PaneSwitchButton.svelte";
   import {
     closeTopLayer,
     resolveCloseControlLabel
   } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
   import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
+  import { resolveAccessTrailBack } from "@nucleum/shell/navigator/access-trail";
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   let {
@@ -43,7 +63,8 @@
     indicators = undefined,
     leftLogo = undefined,
     bulkEditBar = undefined,
-    offlineStatus = undefined
+    offlineStatus = undefined,
+    panelActions = []
   }: {
     /** Quick actions rendered in the actions zone. */
     topnav?: Snippet;
@@ -66,6 +87,11 @@
     >;
     /** Sync/offline status slot rendered with the persistent indicators. */
     offlineStatus?: Snippet<[{ isIconOnly?: boolean }]>;
+    /**
+     * Product quick actions that open in the right panel, such as Focus;
+     * grouped with Rhombus and the navigator.
+     */
+    panelActions?: TopNavPanelAction[];
   } = $props();
 
   const isDev = import.meta.env.DEV;
@@ -74,6 +100,8 @@
   const bulkEditContext = bulkEditStore.context;
   const bulkEditSubContext = bulkEditStore.subContext;
   const activeEntry = contextZone.active;
+  const activePane = contextZone.pane;
+  const visiblePanes = contextZone.visiblePanes;
 
   let isHideMenuLabels = $state(readHideMenuLabels());
   let isHideLeftNavBar = $state(readHideLeftNavBar());
@@ -90,10 +118,50 @@
     resolveCloseControlLabel(searchParams, $bulkEditCount)
   );
   const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
+  const trailBack = $derived(
+    resolveAccessTrailBack(
+      $accessTrail.current,
+      searchParams.get(AccessMode.PAGE)
+    )
+  );
+  const subject = $derived(resolveContextZoneSubject($activePane, $page.url));
+  const otherPanes = $derived(
+    isBulkMode
+      ? []
+      : $visiblePanes
+          .filter((pane) => pane.id !== $activePane?.id)
+          .map((pane) => ({
+            pane,
+            subject: resolveContextZoneSubject(pane, $page.url)
+          }))
+          .filter((item) => !!item.subject)
+  );
+  const panesBefore = $derived(
+    otherPanes.filter(
+      (item) => item.pane.layer < ($activePane?.layer ?? Infinity)
+    )
+  );
+  const panesAfter = $derived(
+    otherPanes.filter(
+      (item) => item.pane.layer >= ($activePane?.layer ?? Infinity)
+    )
+  );
+  const subjectBack = $derived(
+    subject?.kind === "resource" && subject.accessMode === AccessMode.PAGE
+      ? resolveSpaceBaseBack($page.url, trailBack)
+      : undefined
+  );
   const isPageFullScreen = $derived(
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
   );
   const isHomePage = $derived(isHomeRoute($page.url));
+  const openPanel = $derived(searchParams.get(AccessMode.PANEL));
+  const isPanelBeside = $derived(isTopNavPanelBeside($view));
+  const groupedPanelActions = $derived<TopNavPanelAction[]>([
+    ...panelActions,
+    ...(isDev ? [{ action: Action.RHOMBUS, content: rhombusAction }] : []),
+    { action: Action.NAVIGATOR, content: navigatorAction }
+  ]);
   const isToastMode = $derived($toasts.length > 0);
   const isAppMenuColumnVisible = $derived(
     !isPageFullScreen &&
@@ -112,6 +180,79 @@
     return !!uiState.getState(UIState.isHideLeftNavBar);
   }
 
+  const isContextTab = $derived(
+    isContextTabShown({
+      isBulkMode,
+      hasSubject: !!subject,
+      hasActiveEntry: !!$activeEntry,
+      isHomePage
+    })
+  );
+  let zoneRef = $state<HTMLDivElement | undefined>(undefined);
+  let tabInnerRef = $state<HTMLDivElement | undefined>(undefined);
+  let entryRef = $state<HTMLDivElement | undefined>(undefined);
+
+  function measureEntryWidth() {
+    if (!zoneRef || !tabInnerRef || !entryRef) {
+      contextZone.setEntryWidth(undefined);
+      return;
+    }
+    const others = [...zoneRef.children]
+      .filter(
+        (child) =>
+          (child as HTMLElement).dataset.testid !== "top-bar-context-tab" &&
+          !(child as HTMLElement).dataset.toastSlot
+      )
+      .reduce((total, child) => total + (child as HTMLElement).offsetWidth, 0);
+    const identity = tabInnerRef.scrollWidth - entryRef.scrollWidth;
+    contextZone.setEntryWidth(
+      Math.max(0, Math.floor(zoneRef.clientWidth - others - identity - 1))
+    );
+  }
+
+  $effect(() => {
+    if (!zoneRef) return;
+    const observer = new ResizeObserver(() => measureEntryWidth());
+    observer.observe(zoneRef);
+    if (tabInnerRef) observer.observe(tabInnerRef);
+    if (entryRef) observer.observe(entryRef);
+    measureEntryWidth();
+    return () => observer.disconnect();
+  });
+  let isToastRoomy = $state(false);
+  const isToastInZone = $derived(isToastMode && isToastRoomy);
+
+  function measureToastRoom() {
+    if (!zoneRef || isToastMode) return;
+    const used = [...zoneRef.children].reduce((total, child) => {
+      const element = child as HTMLElement;
+      const inner =
+        element.dataset.testid === "top-bar-context-tab"
+          ? (element.firstElementChild as HTMLElement | null)
+          : null;
+      return total + (inner ? inner.scrollWidth + 1 : element.offsetWidth);
+    }, 0);
+    isToastRoomy = isToastBesideActions(zoneRef.clientWidth, used);
+  }
+
+  $effect(() => {
+    if (!zoneRef) return;
+    const observer = new ResizeObserver(measureToastRoom);
+    observer.observe(zoneRef);
+    if (tabInnerRef) observer.observe(tabInnerRef);
+    return () => observer.disconnect();
+  });
+
+  $effect(() => {
+    void $page.url.href;
+    void $activeEntry;
+    void isToastMode;
+    requestAnimationFrame(measureToastRoom);
+  });
+  const tabSurface = $derived(
+    (!isBulkMode && $activeEntry?.surface) || DEFAULT_CONTEXT_ZONE_SURFACE
+  );
+
   onMount(() => {
     const release = contextZone.host();
     const unsubscribe = uiState.subscribe(() => {
@@ -125,11 +266,28 @@
   });
 </script>
 
+{#snippet rhombusAction(state: TopNavPanelActionState)}
+  <TopNavLeftMenuItem
+    action={Action.RHOMBUS}
+    label={state === "expanded" ? "Rhombus" : undefined}
+    tooltip="Rhombus on the side"
+    ariaLabel="Rhombus"
+    isExpanded={state === "expanded"}
+  />
+{/snippet}
+
+{#snippet navigatorAction(state: TopNavPanelActionState)}
+  <NavigatorPill {state} />
+{/snippet}
+
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
-  class={cn("flex w-full h-12 max-h-12 min-h-11 bg-bgs2 userdata", {
-    "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
-  })}
+  class={cn(
+    "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata",
+    {
+      "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
+    }
+  )}
   data-testid="top-bar"
 >
   {#if $context.embed !== Embed.HANDSET}
@@ -149,54 +307,96 @@
     {/if}
   {/if}
   <div
-    class="flex flex-1 min-w-0 h-full items-center justify-start overflow-x-auto"
+    bind:this={zoneRef}
+    class="flex flex-1 min-w-0 self-stretch items-stretch"
     data-testid="top-bar-context-zone"
   >
-    {#if isPageOpen && !isBulkMode}
-      <div class="flex items-center h-full shrink-0 pl-1 pr-1 gap-0.5">
-        <button
-          type="button"
-          data-testid="top-bar-back"
-          aria-label="Back"
-          class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-          use:tooltip={{ text: "Back" }}
-          onclick={() => navigation.backInTrail()}
+    {#each panesBefore as item (item.pane.id)}
+      <PaneSwitchButton
+        subject={item.subject!}
+        onFocus={() => contextZone.activatePane(item.pane.id)}
+      />
+    {/each}
+    {#if isContextTab}
+      <div
+        class={cn(
+          "relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
+          tabSurface
+        )}
+        data-testid="top-bar-context-tab"
+      >
+        <div
+          bind:this={tabInnerRef}
+          class="flex items-center h-full min-w-0 overflow-x-auto overflow-y-hidden pl-2 pr-4"
         >
-          <Icon icon="chevron-left" size={Size.md} />
-        </button>
-        {#if isPageFullScreen}
-          <button
-            type="button"
-            data-testid="top-bar-exit-full-screen"
-            aria-label="Exit full screen"
-            class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-            use:tooltip={{ text: "Exit full screen" }}
-            onclick={() => navigation.exitFullScreen()}
-          >
-            <Icon icon="exitfullscreen" size={Size.md} />
-          </button>
-        {/if}
+          {#if isPageFullScreen && !isBulkMode}
+            <div class="flex items-center h-full shrink-0 pl-1">
+              <button
+                type="button"
+                data-testid="top-bar-exit-full-screen"
+                aria-label="Exit full screen"
+                class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
+                use:tooltip={{ text: "Exit full screen" }}
+                onclick={() => navigation.exitFullScreen()}
+              >
+                <Icon icon="exitfullscreen" size={Size.md} />
+              </button>
+            </div>
+          {/if}
+          {#if subject && !isBulkMode}
+            <PageIdentity
+              {subject}
+              backId={subjectBack?.id}
+              titleContent={$activeEntry?.title}
+              onBack={() => navigation.backInTrail()}
+            />
+            {#if $activeEntry}
+              <div
+                class="shrink-0 w-px h-5 mx-3 bg-brs3"
+                aria-hidden="true"
+                data-testid="top-bar-identity-divider"
+              ></div>
+            {/if}
+          {/if}
+          {#if isBulkMode}
+            {@render bulkEditBar?.({
+              count: $bulkEditCount,
+              context: $bulkEditContext,
+              subContext: $bulkEditSubContext,
+              onAction: (detail: { action: string; data?: any }) =>
+                bulkEditStore.onAction(detail.action, detail.data),
+              onSelectAll: () => bulkEditStore.onSelectAll(),
+              onClear: () => bulkEditStore.reset()
+            })}
+          {:else if $activeEntry}
+            {#key $activeEntry.key}
+              <div
+                bind:this={entryRef}
+                class="flex items-center h-full min-w-0"
+              >
+                {@render $activeEntry.content()}
+              </div>
+            {/key}
+          {:else if isHomePage}
+            <div class="pl-2 h-full">
+              <TopNavDateTime />
+            </div>
+          {/if}
+        </div>
       </div>
     {/if}
-    {#if isBulkMode}
-      {@render bulkEditBar?.({
-        count: $bulkEditCount,
-        context: $bulkEditContext,
-        subContext: $bulkEditSubContext,
-        onAction: (detail: { action: string; data?: any }) =>
-          bulkEditStore.onAction(detail.action, detail.data),
-        onSelectAll: () => bulkEditStore.onSelectAll(),
-        onClear: () => bulkEditStore.reset()
-      })}
-    {:else if $activeEntry}
-      {#key $activeEntry.key}
-        <div class="flex items-center h-full min-w-0">
-          {@render $activeEntry.content()}
-        </div>
-      {/key}
-    {:else if isHomePage}
-      <div class="pl-2 h-full">
-        <TopNavDateTime />
+    {#each panesAfter as item (item.pane.id)}
+      <PaneSwitchButton
+        subject={item.subject!}
+        onFocus={() => contextZone.activatePane(item.pane.id)}
+      />
+    {/each}
+    {#if isToastInZone}
+      <div
+        class="flex items-center justify-end min-w-0 max-w-[32rem] ml-auto"
+        data-toast-slot="true"
+      >
+        <TopNavToasts />
       </div>
     {/if}
   </div>
@@ -204,22 +404,15 @@
     class="flex items-center justify-end h-full shrink-0"
     data-testid="top-bar-actions-zone"
   >
-    {#if isToastMode}
+    {#if isToastMode && !isToastInZone}
       <TopNavToasts />
     {:else}
       {@render topnav?.()}
       <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
-      {#if isDev}
-        <TopNavLeftMenuItem
-          action={Action.RHOMBUS}
-          label="Rhombus"
-          tooltip="Rhombus on the side"
-        />
-      {/if}
     {/if}
   </div>
   <div
-    class="flex items-center h-full shrink-0 px-1"
+    class="flex items-center h-full shrink-0 [&>*]:mx-1"
     data-testid="top-bar-indicators"
   >
     <TrailLeftIndicator />
@@ -231,5 +424,5 @@
     />
     {@render indicators?.()}
   </div>
-  <NavigatorPill />
+  <PanelActionGroup actions={groupedPanelActions} {openPanel} {isPanelBeside} />
 </div>

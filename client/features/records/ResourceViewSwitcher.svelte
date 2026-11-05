@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import type { Readable } from "svelte/store";
   import type { IToggleItem } from "@21n/ui/elements/toggle/toggle.type";
   import type { IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
@@ -14,6 +15,7 @@
   import {
     contextZone,
     isContextZoneAccessMode,
+    isResourceInContextZone,
     nextCycleValue
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
@@ -24,7 +26,8 @@
     accessMode = undefined,
     onAction = undefined,
     isFloatingHidden = false,
-    contextMenuResolver = undefined
+    contextMenuResolver = undefined,
+    title = undefined
   }: {
     resourceStore: Readable<IResourcePageWithPanels>;
     panels: IToggleItem[];
@@ -41,14 +44,13 @@
             }[]
           | undefined)
       | undefined;
+    /** Replaces the context zone title while the tabs show there. */
+    title?: Snippet;
   } = $props();
 
   const isContextZoneHosted = contextZone.isHosted;
   const isInContextZone = $derived(
-    $isContextZoneHosted &&
-      !$view.isConstrainedWidth &&
-      !$view.isPortrait &&
-      isContextZoneAccessMode(accessMode)
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
 
   function cyclePanel() {
@@ -70,7 +72,7 @@
   />
 {/if}
 {#if isInContextZone}
-  <ContextZoneContent isInlineFallback={false} cycle={cyclePanel}>
+  <ContextZoneContent isInlineFallback={false} cycle={cyclePanel} {title}>
     <ResourcePanelSwitcher
       variant="tabs"
       {resourceStore}

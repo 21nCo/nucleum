@@ -18,9 +18,12 @@
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   let {
     node,
+    accessMode = undefined,
     isConstrainedWidth = false
   }: {
     node: IActiveNodeStore;
+    /** Mode this view of the node is open in; views share one store. */
+    accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
   } = $props();
   let renderingDetails = $state<any>(undefined);
@@ -85,6 +88,11 @@
     </main>
   {/if}
   {#if (!isConstrainedWidth || (isConstrainedWidth && $node.panel !== ResourcePanelType.DEFAULT)) && $node.panel !== ResourcePanelType.CONTENT}
-    <MediaNodeRightPane {node} {renderingDetails} {isConstrainedWidth} />
+    <MediaNodeRightPane
+      {node}
+      {accessMode}
+      {renderingDetails}
+      {isConstrainedWidth}
+    />
   {/if}
 </div>

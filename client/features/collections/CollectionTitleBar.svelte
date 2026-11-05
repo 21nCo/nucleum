@@ -40,7 +40,14 @@
   import type { ICollection } from "@nucleum/features/collections/collection.type";
   import { tick } from "svelte";
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
-  import { isContextZoneAccessMode } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    contextZone,
+    isContextZoneAccessMode,
+    isResourceInContextZone
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import EditModeDone from "@21n/ui/elements/button/EditModeDoneButton.svelte";
+  import view from "@21n/ui/environment/view.store";
 
   let {
     searchQuery = $bindable(""),
@@ -52,6 +59,7 @@
     isConstrainedWidth = false,
     onSearch = undefined,
     onAdd = undefined,
+    onCloseEditMode = undefined,
     additionalContent = undefined
   }: {
     searchQuery?: string;
@@ -64,8 +72,14 @@
     isConstrainedWidth?: boolean;
     onSearch?: ((event?: CustomEvent<{ value: any }>) => void) | undefined;
     onAdd?: ((event: CustomEvent<string>) => void) | undefined;
+    /** Saves and leaves edit mode; offered in the context zone. */
+    onCloseEditMode?: () => void;
     additionalContent?: Snippet | undefined;
   } = $props();
+  const isContextZoneHosted = contextZone.isHosted;
+  const isActionsInContextZone = $derived(
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
+  );
   let dev_isEnableMetaViewsToggle: boolean = false;
 
   let isSearchFocused = $state(false);
@@ -131,6 +145,60 @@
     return $collection as unknown as ICollection;
   }
 </script>
+
+{#snippet collectionActions(isCloseShown: boolean)}
+  {@render additionalContent?.()}
+  {#if !$collection.isInEditMode && dev_isEnableMetaViewsToggle}
+    <Toggle
+      icon="ph:monitor-play-light"
+      tooltip="Play actions"
+      on={Boolean(isShowMetaViews)}
+      onChange={(event) => (isShowMetaViews = event.detail)}
+    />
+  {/if}
+  {#if !$collection.isInEditMode}
+    <Toggle
+      icon="edit"
+      tooltip="Enter edit mode"
+      on={Boolean($collection.isInEditMode)}
+      onChange={(event) => ($collection.isInEditMode = event.detail)}
+    />
+  {/if}
+  <ContextMenuAction
+    testId="resource-record-context-menu"
+    menuResolver={() =>
+      resolveCollectionContextMenu(
+        resolveCollectionForContextMenu(),
+        ResourceAccessPoint.SELF,
+        {
+          accessMode: accessMode
+        }
+      )}
+    position={Placement.BottomCenter}
+    id="collectionContextMenu"
+    size={Size.lg}
+  />
+  {#if isSingleViewMode}
+    <AddResourceAction {onAdd} variant="default" />
+  {/if}
+  {#if isCloseShown}
+    <ResourceInlineCloseButton {accessMode} id={$collection.id} />
+  {/if}
+{/snippet}
+
+{#if isActionsInContextZone && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
+  <ContextZoneContent isInlineFallback={false}>
+    <div
+      class="flex items-center h-full gap-3 px-2"
+      data-testid="collection-context-actions"
+    >
+      {#if $collection.isInEditMode && onCloseEditMode}
+        <EditModeDone onDone={onCloseEditMode} />
+      {/if}
+      {@render collectionActions(false)}
+    </div>
+  </ContextZoneContent>
+{/if}
 
 {#if accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED && $collection.id}
   <ContextActions
@@ -291,7 +359,7 @@
     </span>
   </BackButton>
 
-  {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
+  {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED && !isActionsInContextZone}
     <div class="flex gap-2 justify-center items-center">
       <ContextMenuAction
         testId="resource-record-context-menu"
@@ -362,42 +430,8 @@
           {/if}
         </div>
       {/if}
-      {#if !isSearchFocused}
-        {@render additionalContent?.()}
-        {#if !$collection.isInEditMode && dev_isEnableMetaViewsToggle}
-          <Toggle
-            icon="ph:monitor-play-light"
-            tooltip="Play actions"
-            on={Boolean(isShowMetaViews)}
-            onChange={(event) => (isShowMetaViews = event.detail)}
-          />
-        {/if}
-        {#if !$collection.isInEditMode}
-          <Toggle
-            icon="edit"
-            tooltip="Enter edit mode"
-            on={Boolean($collection.isInEditMode)}
-            onChange={(event) => ($collection.isInEditMode = event.detail)}
-          />
-        {/if}
-        <ContextMenuAction
-          testId="resource-record-context-menu"
-          menuResolver={() =>
-            resolveCollectionContextMenu(
-              resolveCollectionForContextMenu(),
-              ResourceAccessPoint.SELF,
-              {
-                accessMode: accessMode
-              }
-            )}
-          position={Placement.BottomCenter}
-          id="collectionContextMenu"
-          size={Size.lg}
-        />
-        {#if isSingleViewMode}
-          <AddResourceAction {onAdd} variant="default" />
-        {/if}
-        <ResourceInlineCloseButton {accessMode} id={$collection.id} />
+      {#if !isSearchFocused && !isActionsInContextZone}
+        {@render collectionActions(true)}
       {/if}
     </span>
   {/if}

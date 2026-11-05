@@ -6,7 +6,23 @@
   import ResourceStatusBanner from "@nucleum/features/records/RecordStatusBanner.svelte";
   import CollectionsLane from "@nucleum/features/memory/node/floatingBar/CollectionsLane.svelte";
   import { isShowStatusBanner } from "@nucleum/datafn/resource.utils";
-  let { node }: { node: IActiveNodeStore } = $props();
+  import {
+    contextZone,
+    isResourceInContextZone
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import view from "@21n/ui/environment/view.store";
+  let {
+    node,
+    accessMode = undefined
+  }: {
+    node: IActiveNodeStore;
+    /** Mode this view of the node is open in; views share one store. */
+    accessMode?: AccessMode;
+  } = $props();
+  const isContextZoneHosted = contextZone.isHosted;
+  const isTitleInContextZone = $derived(
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
+  );
 </script>
 
 <div
@@ -42,20 +58,22 @@
         }
       )}
     >
-      <div class="flex gap-3 justify-between items-center w-full">
-        <span class="flex items-center gap-4 flex-1 min-w-0">
-          <NodeTitle
-            node={$node}
-            onLabelChange={() => {
-              if ($node.label !== undefined)
-                node.modify({ label: $node.label });
-            }}
-            onEditModeChange={(value) => {
-              node.toggleEditMode(value);
-            }}
-          />
-        </span>
-      </div>
+      {#if !isTitleInContextZone}
+        <div class="flex gap-3 justify-between items-center w-full">
+          <span class="flex items-center gap-4 flex-1 min-w-0">
+            <NodeTitle
+              node={$node}
+              onLabelChange={() => {
+                if ($node.label !== undefined)
+                  node.modify({ label: $node.label });
+              }}
+              onEditModeChange={(value) => {
+                node.toggleEditMode(value);
+              }}
+            />
+          </span>
+        </div>
+      {/if}
       <div class="flex w-full justify-between">
         <CollectionsLane {node} />
       </div>

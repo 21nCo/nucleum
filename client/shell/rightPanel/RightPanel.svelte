@@ -13,8 +13,14 @@
   import { untrack } from "svelte";
   import { writable } from "svelte/store";
   import { provideRightPanelVisibility } from "@nucleum/shell/rightPanel/right-panel-visibility";
+  import { isReducedMotion } from "@nucleum/shell/topNav/panel-action-motion";
+  import { resolveRightPanelWidthClass } from "@nucleum/shell/rightPanel/right-panel-width";
 
   const ComponentResolver = requireActionRenderer();
+
+  function motionDuration(duration: number) {
+    return isReducedMotion() ? 0 : duration;
+  }
 
   let {
     action,
@@ -81,18 +87,10 @@
   class={isSheet
     ? "fixed inset-0 z-50 flex flex-col w-full h-full bg-bgs2 outline-none"
     : cn(
-        "flex justify-center items-center h-full bg-bgs2 transition-all duration-300",
+        "flex justify-center items-center h-full bg-bgs2 transition-all duration-300 motion-reduce:transition-none",
+        resolveRightPanelWidthClass(action.liveActionParams?.size),
         {
-          "min-w-96 w-96 2k:min-w-128 2k:w-128":
-            action.liveActionParams?.size === Size.sm,
-          "min-w-[32rem] w-[32rem] 2k:min-w-1/2 2k:w-1/2":
-            !action.liveActionParams?.size ||
-            action.liveActionParams?.size === Size.md,
-          "min-w-[36rem] w-[36rem] 2k:min-w-1/2 2k:w-1/2":
-            action.liveActionParams?.size === Size.lg,
-          "min-w-1/2 w-1/2 2k:min-w-1/2 2k:w-1/2":
-            action.liveActionParams?.size === Size.xl,
-          "border-r border-brs3": !$context.experiments?.isEnableRoundedMain
+          "border-l border-brs3": !$context.experiments?.isEnableRoundedMain
         }
       )}
   {...sheetAttributes}
@@ -101,7 +99,10 @@
   use:trapFocusWhile={isSheet && !isSuspended}
   in:fly={isSheet
     ? { y: 40, duration: 150, easing: quadInOut }
-    : { x: -10, duration: 100, easing: quadInOut }}
+    : { x: 24, duration: motionDuration(150), easing: quadInOut }}
+  out:fly={isSheet
+    ? { duration: 0 }
+    : { x: 24, duration: motionDuration(120), easing: quadInOut }}
 >
   {#if isSheet}
     <div class="flex items-center justify-between min-h-12 px-2 otop:pt-12">
@@ -119,7 +120,16 @@
       </button>
     </div>
   {/if}
-  <div class={isSheet ? "flex flex-col flex-1 min-h-0" : "contents"}>
-    <ComponentResolver path={action.path ?? action.action} />
-  </div>
+  {#key action.action}
+    <div
+      class={isSheet
+        ? "flex flex-col flex-1 min-h-0"
+        : "flex justify-center items-center w-full h-full"}
+      in:fly={isSheet
+        ? { duration: 0 }
+        : { x: 16, duration: motionDuration(200), easing: quadInOut }}
+    >
+      <ComponentResolver path={action.path ?? action.action} />
+    </div>
+  {/key}
 </div>

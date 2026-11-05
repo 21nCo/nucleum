@@ -1,6 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import type { TopNavPanelAction } from "@nucleum/shell/topNav/panel-actions";
   import { refreshTimeZone } from "@nucleum/shared-state/preferences/timezone";
   import { performAppUpdateCheck } from "@nucleum/surfaces/settings/about/app-update";
   import { isExtensionEnvironment } from "@21n/shared-utils/browser-environment";
@@ -72,12 +73,15 @@
     children,
     topnav: topnavContent,
     topnavIndicators = undefined,
+    panelActions = [],
     onReady
   }: {
     children?: Snippet;
     topnav?: Snippet;
     /** Persistent top bar indicators, such as a running focus session. */
     topnavIndicators?: Snippet;
+    /** Product quick actions that open in the right panel, such as Focus. */
+    panelActions?: TopNavPanelAction[];
     onReady?: () => void | Promise<void>;
   } = $props();
   const loadingMessages = {
@@ -394,7 +398,7 @@
       percentage={loadingMessage.percentage}
     />
   {:else}
-    <UserLayout topnav={topnavContent} {topnavIndicators}>
+    <UserLayout topnav={topnavContent} {topnavIndicators} {panelActions}>
       {@render children?.()}
     </UserLayout>
   {/if}

@@ -84,6 +84,20 @@ describe("navigator opened as an overlay", () => {
     expect(params.get("panel")).toBe("navigator");
   });
 
+  it("closes the navigator overlay even when asked to keep the navigator", () => {
+    view.refresh(800, 600);
+    navigation.openResource("node:a", "page" as never);
+    navigation.openResource("node:b", "page" as never);
+    openNavigatorOverlay();
+    const trail = accessTrail.get().current!;
+    navigation.openTrailNode(
+      trail.nodes.findIndex((node) => node.id === "node:a"),
+      { isKeepNavigator: true }
+    );
+    expect(activeNode()?.node.id).toBe("node:a");
+    expect(overlay()).toBeNull();
+  });
+
   it("leaves other overlays open", () => {
     view.refresh(800, 600);
     history.setSearchParam("overlay", "search");

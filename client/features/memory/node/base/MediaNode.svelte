@@ -8,10 +8,13 @@
   import MediaNodeCwTitlePanel from "../MediaNodeCwTitlePanel.svelte";
   let {
     node,
+    accessMode = undefined,
     nodeView = NodeView.CONTENT,
     isConstrainedWidth = false
   }: {
     node: IActiveNodeStore;
+    /** Mode this view of the node is open in; views share one store. */
+    accessMode?: AccessMode;
     nodeView?: NodeView;
     isConstrainedWidth?: boolean;
   } = $props();
@@ -22,13 +25,13 @@
     {#if nodeView === NodeView.BIRD}
       <NodeBirdView {node} />
     {:else}
-      <MediaContent {node} {isConstrainedWidth} />
+      <MediaContent {node} {accessMode} {isConstrainedWidth} />
     {/if}
     {#if isConstrainedWidth}
-      <MediaNodeCwTitlePanel {node} />
+      <MediaNodeCwTitlePanel {node} {accessMode} />
     {/if}
-    {#if ($node.accessMode === AccessMode.BESIDE_BASE || $node.accessMode === AccessMode.BESIDE_PAGE) && !$node.panel}
-      <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
+    {#if (accessMode === AccessMode.BESIDE_BASE || accessMode === AccessMode.BESIDE_PAGE) && !$node.panel}
+      <FullScreenCloseButton {accessMode} isFloat={true} />
     {/if}
   </div>
 {/if}

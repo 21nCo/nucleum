@@ -190,6 +190,23 @@ function isFullScreenOverlayOpen(searchParams: URLSearchParams) {
   return !!overlay && overlay === fullScreen.get().path;
 }
 
+let endedEntry: { pageId: string; position?: AccessTrailPosition } | undefined;
+
+/**
+ * Whether the page now shown is the history entry whose trail the user ended,
+ * reached again only by a navigation that changed other query params, or
+ * dropped the entry's trail state, such as opening or closing the navigator.
+ */
+function isEndedEntry(pageId: string, state?: AccessTrailHistoryState) {
+  if (!endedEntry || endedEntry.pageId !== pageId) return false;
+  if (!state) return true;
+  if (!endedEntry.position) return false;
+  return isSameAccessTrailPosition(
+    accessTrail.resolve(state.position),
+    accessTrail.resolve(endedEntry.position)
+  );
+}
+
 /** Whether `id` is the open page and that page is in full screen. */
 export function isFullScreenPage(
   id: IRecordId | undefined,
@@ -237,8 +254,11 @@ function areNavigationUrlsEqual(left: URL, right: URL) {
 
 /** URL, history, and resource navigation owned by the application layout. */
 export const navigation = {
-  /** Opens a node of the current access trail. */
-  openTrailNode(index: number) {
+  /**
+   * Opens a node of the current access trail. `isKeepNavigator` decides
+   * whether an open navigator stays open after the node opens.
+   */
+  openTrailNode(index: number, params?: { isKeepNavigator?: boolean }) {
     const trail = accessTrail.get().current;
     const node = trail?.nodes[index];
     if (!node) return;
@@ -246,14 +266,20 @@ export const navigation = {
     accessTrail.select(node.key);
     navigation.openResource(node.id, AccessMode.PAGE, {
       trail: "select",
-      from
+      from,
+      isKeepNavigator: params?.isKeepNavigator
     });
   },
   /**
    * Makes a recent trail current again and opens one of its resources, by
    * default the one that was active when the trail was left.
+   * `isKeepNavigator` decides whether an open navigator stays open.
    */
-  resumeTrail(key: string, index?: number) {
+  resumeTrail(
+    key: string,
+    index?: number,
+    params?: { isKeepNavigator?: boolean }
+  ) {
     const trail = accessTrail.get().recent.find((item) => item.key === key);
     const nodeIndex = index ?? trail?.active ?? 0;
     const node = trail?.nodes[nodeIndex];
@@ -263,7 +289,8 @@ export const navigation = {
     accessTrail.select(node.key);
     navigation.openResource(node.id, AccessMode.PAGE, {
       trail: "select",
-      from
+      from,
+      isKeepNavigator: params?.isKeepNavigator
     });
   },
   /**
@@ -301,6 +328,26 @@ export const navigation = {
     return true;
   },
   /**
+   * Ends the current access trail, keeping it as a recent trail. The open
+   * page stays outside any trail until a resource navigation, so navigations
+   * that only change other query params do not resume or restart it.
+   */
+  endAccessTrail() {
+    const pageId = new URL(window.location.href).searchParams.get(
+      AccessMode.PAGE
+    );
+    endedEntry = pageId
+      ? {
+          pageId,
+          position:
+            currentEntry?.pageId === pageId
+              ? currentEntry.state?.position
+              : undefined
+        }
+      : undefined;
+    accessTrail.end();
+  },
+  /**
    * Keeps the access trail in step with the open page after any navigation.
    * `historyState` is the state of the history entry now shown; its recorded
    * trail position selects the exact node, also for repeated resources. When
@@ -310,11 +357,14 @@ export const navigation = {
   syncAccessTrail(pageId: string | undefined, historyState?: unknown) {
     if (!pageId) {
       currentEntry = undefined;
+      endedEntry = undefined;
       accessTrail.sync(undefined);
       return;
     }
     const state = readAccessTrailHistoryState(historyState);
     currentEntry = { pageId, state };
+    if (isEndedEntry(pageId, state)) return;
+    endedEntry = undefined;
     accessTrail.sync(pageId, state?.position);
     const position = accessTrail.position();
     if (
@@ -566,7 +616,7 @@ export const navigation = {
       if (
         !additional?.isPreventRefresh &&
         (!areNavigationUrlsEqual(url, new URL(window.location.href)) ||
-          (additional?.replaceState === false && !!additional.historyState))
+          !!additional?.historyState)
       ) {
         navigation.gotoPath(url.href, {
           replaceState: additional?.replaceState ?? true,
@@ -583,7 +633,7 @@ export const navigation = {
     if (
       !additional?.isPreventRefresh &&
       (!areNavigationUrlsEqual(url, new URL(window.location.href)) ||
-        (additional?.replaceState === false && !!additional.historyState))
+        !!additional?.historyState)
     ) {
       navigation.gotoPath(url.href, {
         replaceState: additional?.replaceState ?? true,
@@ -642,6 +692,11 @@ export const navigation = {
        * opening; otherwise read from the current history entry or the trail.
        */
       from?: AccessTrailPosition;
+      /**
+       * Whether an open navigator stays open after the page opens. When left
+       * out, the navigator closes only when the page starts a new trail.
+       */
+      isKeepNavigator?: boolean;
     }
   ) => {
     logger.log({ at: "openResource", id, accessMode, params });
@@ -690,6 +745,12 @@ export const navigation = {
     let historyState: AccessTrailHistoryState | undefined;
     if (accessMode === AccessMode.PAGE) {
       const openPage = url.searchParams.get(AccessMode.PAGE);
+      const isOpenPageTrailEnded =
+        !!openPage &&
+        openPage === id.toString() &&
+        !!endedEntry &&
+        endedEntry.pageId === openPage;
+      endedEntry = undefined;
       const recorded =
         currentEntry?.pageId === openPage
           ? accessTrail.resolve(currentEntry.state?.position)
@@ -706,8 +767,10 @@ export const navigation = {
       );
       navigatorLayer = resolveNavigatorLayer(url);
       const isNavigatorOpen = !!navigatorLayer;
+      const isTrailRestarted =
+        (intent === "start" || intent === "extend") && isOpenPageTrailEnded;
       if (intent === "start") {
-        if (openPage !== id.toString()) {
+        if (openPage !== id.toString() || isTrailRestarted) {
           accessTrail.start(
             id.toString(),
             params?.origin && !isRecordId(params.origin)
@@ -715,23 +778,31 @@ export const navigation = {
               : undefined
           );
         }
-        isCloseNavigator = isNavigatorOpen;
+        isCloseNavigator = params?.isKeepNavigator === undefined;
       } else if (intent === "select") {
-        isCloseNavigator = isNavigatorCoveringPage(navigatorLayer);
+        isCloseNavigator = isRightPanelSheet(get(view));
       } else if (intent === "extend") {
-        accessTrail.extend(id.toString());
+        if (isTrailRestarted) accessTrail.start(id.toString());
+        else accessTrail.extend(id.toString());
       }
+      if (params?.isKeepNavigator !== undefined) {
+        isCloseNavigator = !params.isKeepNavigator;
+      }
+      isCloseNavigator =
+        (isCloseNavigator || navigatorLayer === AccessMode.OVERLAY) &&
+        isNavigatorOpen;
       const position = accessTrail.position();
       const isOtherEntry =
         openPage !== id.toString() ||
+        isTrailRestarted ||
         (intent === "select" &&
           !!openPosition &&
           !isSameAccessTrailPosition(position, openPosition));
       if (isOtherEntry && position) {
-        if (intent === "start" || intent === "extend") {
+        if (!isTrailRestarted && (intent === "start" || intent === "extend")) {
           forgetPageScroll(id.toString());
         }
-        if (intent === "back") {
+        if (intent === "back" || isTrailRestarted) {
           historyState = {
             position,
             from:

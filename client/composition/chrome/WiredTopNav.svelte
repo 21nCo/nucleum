@@ -12,11 +12,17 @@
   import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
   import { determineIfActiveSubscriber } from "@nucleum/client/runtime/account/plan.utils";
   import { Size } from "@21n/ui/elements/size.enum";
+  import type { TopNavPanelAction } from "@nucleum/shell/topNav/panel-actions";
 
   let {
     topnav = undefined,
-    indicators = undefined
-  }: { topnav?: Snippet; indicators?: Snippet } = $props();
+    indicators = undefined,
+    panelActions = []
+  }: {
+    topnav?: Snippet;
+    indicators?: Snippet;
+    panelActions?: TopNavPanelAction[];
+  } = $props();
   const isSubscriber = $derived(
     $account?.plan && $account?.dataMode === UserDataMode.CLOUD
       ? determineIfActiveSubscriber($account.plan)
@@ -67,4 +73,11 @@
   <OfflineStatusIndicator {isIconOnly} />
 {/snippet}
 
-<TopNav {topnav} {indicators} {leftLogo} {bulkEditBar} {offlineStatus} />
+<TopNav
+  {topnav}
+  {indicators}
+  {leftLogo}
+  {bulkEditBar}
+  {offlineStatus}
+  {panelActions}
+/>

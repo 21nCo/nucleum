@@ -180,7 +180,12 @@
             <aside
               class="flex flex-col gap-4 border-r border-brs2 w-96 2k:w-[35rem]"
             >
-              <ObjectiveLeftPanel {objective} {isConstrainedWidth} bind:status />
+              <ObjectiveLeftPanel
+                {objective}
+                {accessMode}
+                {isConstrainedWidth}
+                bind:status
+              />
             </aside>
           {/if}
           <ObjectivePanelSwitcher
@@ -200,7 +205,12 @@
                   }
                 )}
               >
-                <ObjectiveTitleRow {objective} isConstrainedWidth={true} bind:status />
+                <ObjectiveTitleRow
+                  {objective}
+                  {accessMode}
+                  isConstrainedWidth={true}
+                  bind:status
+                />
                 {#if dev_isPanelSwitcherOnTop}
                   <div class="relative">
                     <PanelSwitcher

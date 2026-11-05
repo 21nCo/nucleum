@@ -17,6 +17,7 @@ import { get, type Readable } from "svelte/store";
 
 describe("RightPanel", () => {
   beforeAll(() => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
     Element.prototype.animate = vi.fn(() => ({
       cancel: () => undefined,
       finished: Promise.resolve()

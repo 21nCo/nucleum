@@ -56,7 +56,7 @@
 </script>
 
 <CalendarLayoutView bind:panel>
-  {#snippet headerLeftOptions()}
+  {#snippet headerLeftOptions(_isCompact: boolean)}
     {#if isDev}
       <OptionSelector
         options={switchOptions}

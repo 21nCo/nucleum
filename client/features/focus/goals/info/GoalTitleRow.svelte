@@ -8,17 +8,29 @@
   import RecordStarStatusFeedback from "@nucleum/features/records/RecordStarStatusFeedback.svelte";
   import { AlertType, type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
   import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
+  import view from "@21n/ui/environment/view.store";
+  import {
+    contextZone,
+    isResourceInContextZone
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     objective,
+    accessMode = undefined,
     isConstrainedWidth = false,
     status = $bindable()
   }: {
     objective: IActiveObjectiveStore;
+    /** Mode this view of the objective is open in; views share one store. */
+    accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
     status?: IInlineStatus | undefined;
   } = $props();
 
+  const isContextZoneHosted = contextZone.isHosted;
+  const isTitleInContextZone = $derived(
+    isResourceInContextZone($isContextZoneHosted, $view, accessMode)
+  );
   let labelEditVal = $state($objective.label);
   let inputRef = $state<TextInput | undefined>(undefined);
 
@@ -70,6 +82,7 @@
   }
 </script>
 
+{#if !isTitleInContextZone}
 <div
   class={cn("flex flex-col items-center gap-1 userdata", {
     "px-3 lp:px-6 pt-2": isConstrainedWidth
@@ -126,7 +139,7 @@
     </div>
     {#if isConstrainedWidth}
       <ResourceInlineCloseButton
-        accessMode={$objective.accessMode}
+        {accessMode}
         additionalAccessModes={[AccessMode.PAGE]}
         parentBgIndex={2}
         id={$objective.id}
@@ -134,3 +147,4 @@
     {/if}
   </div>
 </div>
+{/if}

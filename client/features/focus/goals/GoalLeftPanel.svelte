@@ -4,16 +4,20 @@
   import ObjectiveTitleRow from "@nucleum/features/focus/goals/info/GoalTitleRow.svelte";
   import { SubObjectivesLayout } from "@nucleum/features/focus/goals/goal.type";
   import { cn } from "@21n/ui/environment/presentation";
+  import type { AccessMode } from "@nucleum/datafn/resource.type";
   import { type IInlineStatus } from "@nucleum/shared-state/notifications/notification.type";
   import SubObjectivesPanel from "@nucleum/features/focus/goals/sub/SubGoalsPanel.svelte";
   import RecordStatusBanner from "@nucleum/features/records/RecordStatusBanner.svelte";
 
   let {
     objective,
+    accessMode = undefined,
     isConstrainedWidth = false,
     status = $bindable()
   }: {
     objective: IActiveObjectiveStore;
+    /** Mode this view of the objective is open in; views share one store. */
+    accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
     status?: IInlineStatus | undefined;
   } = $props();
@@ -26,7 +30,7 @@
 >
   <div class="flex flex-col gap-2 px-3 pt-3 w-full h-fit">
     {#if !isConstrainedWidth}
-      <ObjectiveTitleRow {objective} bind:status />
+      <ObjectiveTitleRow {objective} {accessMode} bind:status />
     {/if}
     <div class="flex flex-col gap-1">
       {#if isConstrainedWidth}

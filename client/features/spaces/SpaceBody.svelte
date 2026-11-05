@@ -10,6 +10,9 @@
   import SpaceHeader from "@nucleum/features/spaces/SpaceHeader.svelte";
   import SpaceSideNav from "@nucleum/features/spaces/SpaceSideNav.svelte";
   import SpaceWall from "@nucleum/features/spaces/SpaceWall.svelte";
+  import SpaceContextZone from "@nucleum/features/spaces/SpaceContextZone.svelte";
+  import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     spaceId,
@@ -32,6 +35,7 @@
   } = $props();
 
   const store = ActiveSpaceStore.resolve(spaceId);
+  const isContextZoneHosted = contextZone.isHosted;
   const viewStore = $derived(
     ancestors.length ? ActiveSpaceStore.resolve(ancestors[0]) : store
   );
@@ -50,6 +54,10 @@
   let isLoaded = $state(false);
   const view = $derived($viewStore?.view ?? SpaceView.SIDENAV);
   const isPinned = $derived(appMenuStore.isSpacePinned(spaceId, $appMenuStore));
+  const rootId = $derived(ancestors[0] ?? spaceId);
+  const isRootPinned = $derived(
+    appMenuStore.isSpacePinned(rootId, $appMenuStore)
+  );
   const parentLabel = $derived(
     parentStore ? ($parentStore?.data?.[0]?.label ?? "") : undefined
   );
@@ -67,6 +75,9 @@
     return () => {
       if ($store?.isInEditMode) store.setEditMode(false);
       if ($store?.isTitleEditing) store.setTitleEditing(false);
+      if (viewStore !== store && $viewStore?.isTitleEditing) {
+        viewStore.setTitleEditing(false);
+      }
     };
   });
 
@@ -74,17 +85,44 @@
     if (isPinned) appMenuStore.unpinSpace(spaceId);
     else appMenuStore.pinSpace(spaceId);
   }
+
+  function toggleRootPin() {
+    if (isRootPinned) appMenuStore.unpinSpace(rootId);
+    else appMenuStore.pinSpace(rootId);
+  }
+
+  function changeView(next: SpaceView) {
+    viewStore.updateView(next);
+  }
+
+  function cycleZone() {
+    changeView(view === SpaceView.WALL ? SpaceView.SIDENAV : SpaceView.WALL);
+  }
 </script>
+
+{#if isLoaded && !$store?.isMissing}
+  <ContextZoneContent isInlineFallback={false} cycle={cycleZone}>
+    <SpaceContextZone
+      store={viewStore}
+      {view}
+      isPinned={isRootPinned}
+      onTogglePin={toggleRootPin}
+      onViewChange={changeView}
+    />
+  </ContextZoneContent>
+{/if}
 
 {#snippet header()}
   <SpaceHeader
     {store}
+    titleStore={viewStore}
     {parentLabel}
     onBack={parentId ? onBack : undefined}
     {view}
     {isPinned}
+    isCompact={$isContextZoneHosted}
     onTogglePin={togglePin}
-    onViewChange={(next) => viewStore.updateView(next)}
+    onViewChange={changeView}
   />
 {/snippet}
 

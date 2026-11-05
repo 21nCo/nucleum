@@ -128,6 +128,7 @@
     "./memory/node/title/NodeTitle.svelte": "./memory/node/title/NodeTitle.svelte",
     "./memory/node/title/NodeTitleLabelPart.svelte": "./memory/node/title/NodeTitleLabelPart.svelte",
     "./memory/node/url.utils": "./memory/node/url.utils.ts",
+    "./records/ContextZoneEditableTitle.svelte": "./records/ContextZoneEditableTitle.svelte",
     "./records/RecordStarStatusFeedback.svelte": "./records/RecordStarStatusFeedback.svelte",
     "./records/RecordStatusBanner.svelte": "./records/RecordStatusBanner.svelte",
     "./records/RecordTrashBanner.svelte": "./records/RecordTrashBanner.svelte",

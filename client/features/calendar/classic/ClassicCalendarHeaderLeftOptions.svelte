@@ -20,11 +20,14 @@
     selectedView = $bindable(TimeScaleUnit.MONTH),
     isRefreshing = false,
     parentBgIndex = 2,
+    isScopeHidden = false,
     onScaleSelection = undefined
   }: {
     selectedView?: TimeScaleUnit;
     isRefreshing?: boolean;
     parentBgIndex?: number;
+    /** Hides the scope button, as when the controls are compact. */
+    isScopeHidden?: boolean;
     onScaleSelection?:
       | ((event: CustomEvent<TimeScaleUnit>) => void)
       | undefined;
@@ -107,7 +110,7 @@
       />
     {/if}
   </div>
-  {#if isDev}
+  {#if isDev && !isScopeHidden}
     <Button icon="scope" tooltip="Calendar scope" />
   {/if}
 </div>

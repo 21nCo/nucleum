@@ -8,10 +8,17 @@
   let {
     items = [],
     limit = 3,
+    isLeading = false,
     onItemClick = undefined
   }: {
     items?: IBreadcrumbItem[];
     limit?: number;
+    /**
+     * Whether the items lead into content rendered after them, such as a
+     * title: every item ends with a separator, and past `limit` the farthest
+     * items collapse behind an ellipsis, keeping the last `limit` items.
+     */
+    isLeading?: boolean;
     onItemClick?: (payload: {
       event: MouseEvent | KeyboardEvent;
       item: IBreadcrumbItem;
@@ -24,7 +31,41 @@
   }
 </script>
 
-{#if items?.length > 0}
+{#snippet overflow(hidden: IBreadcrumbItem[])}
+  <button
+    class="flex-shrink-0"
+    aria-label="Show hidden breadcrumbs"
+    use:popover={{
+      content: BreadcrumbsOverflowPopover,
+      triggerMethod: [PopoverTriggerMethod.CLICK],
+      id: "breadcrumbs-overflow-popover",
+      componentProps: {
+        items: hidden,
+        onItemClick
+      }
+    }}
+  >
+    <span class="px-2 rounded-md hover:bg-bgs2"> .... </span>
+    <span class="px-2 opacity-50">/</span>
+  </button>
+{/snippet}
+
+{#if items?.length > 0 && isLeading}
+  <div class="flex min-w-0 shrink items-center" data-testid="breadcrumbs">
+    {#if items.length > limit}
+      {@render overflow(items.slice(0, -limit))}
+    {/if}
+    {#each items.slice(-limit) as item (item)}
+      <BreadcrumbItem
+        label={item.label}
+        isDisabled={item.disabled}
+        onClick={(e) => {
+          handleClick(e, item);
+        }}
+      />
+    {/each}
+  </div>
+{:else if items?.length > 0}
   <div class="flex w-full items-center">
     {#if items.length > limit}
       <div class="flex-shrink-0">
@@ -35,21 +76,7 @@
           }}
         />
       </div>
-      <button
-        class="flex-shrink-0"
-        use:popover={{
-          content: BreadcrumbsOverflowPopover,
-          triggerMethod: [PopoverTriggerMethod.CLICK],
-          id: "breadcrumbs-overflow-popover",
-          componentProps: {
-            items: items.slice(1, -1),
-            onItemClick
-          }
-        }}
-      >
-        <span class="px-2 rounded-md hover:bg-bgs2"> .... </span>
-        <span class="px-2 opacity-50">/</span>
-      </button>
+      {@render overflow(items.slice(1, -1))}
       <div class="flex-1 min-w-0 overflow-hidden">
         {#each items.slice(-1) as item, index}
           <BreadcrumbItem

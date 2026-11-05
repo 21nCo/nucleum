@@ -10,6 +10,12 @@
     type IActiveNodeStore
   } from "../node.store";
   import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
+  import ContextZoneEditableTitle from "@nucleum/features/records/ContextZoneEditableTitle.svelte";
+  import { resolveNodeLabelString } from "@nucleum/features/memory/node/node.utils";
+  import {
+    mediaNodeTypeList,
+    webNodeTypeList
+  } from "@nucleum/features/memory/node/node.type";
   import { derived } from "svelte/store";
   import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import type { IResourcePageWithPanels } from "@nucleum/datafn/resource.type";
@@ -76,9 +82,25 @@
   }
 
   let panels = $derived(resolvePanelOptions($node));
+  const isEditableContextTitle = $derived(
+    [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)
+  );
 </script>
 
+{#snippet contextTitle()}
+  <ContextZoneEditableTitle
+    store={node}
+    label={resolveNodeLabelString($node)}
+    placeholder="Enter title"
+    inputLabel="Title"
+    renameLabel="Rename"
+    testId="node-context-title"
+    class="max-w-[20rem]"
+  />
+{/snippet}
+
 <ResourceViewSwitcher
+  title={isEditableContextTitle ? contextTitle : undefined}
   resourceStore={adaptedStore}
   {panels}
   {isConstrainedWidth}

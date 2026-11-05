@@ -16,10 +16,10 @@
   import { page } from "$app/stores";
   import { onMount } from "svelte";
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
+  import type { Snippet } from "svelte";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
-  import context from "@nucleum/client/runtime/context.store";
   import {
     isLiveActionAccessConfigurable,
     resolveLiveActionAccessMode,
@@ -28,23 +28,25 @@
 
   let {
     action,
-    isLastItem = false,
-    isFirstItem = false,
     label = undefined,
     icon = undefined,
     tooltip = undefined,
     ariaLabel = undefined,
     isPreventDefault = false,
+    isExpanded = false,
+    trailing = undefined,
     onClick
   }: {
     action: Action | string;
-    isLastItem?: boolean;
-    isFirstItem?: boolean;
     label?: string;
     icon?: string;
     tooltip?: string;
     ariaLabel?: string;
     isPreventDefault?: boolean;
+    /** Fills the width it is given, as the open action of the panel group. */
+    isExpanded?: boolean;
+    /** Content shown after the label, such as a running timer. */
+    trailing?: Snippet;
     onClick?: (event: MouseEvent) => void;
   } = $props();
   let isHovered = $state(false);
@@ -98,7 +100,7 @@
   {@const accessibleLabel = ariaLabel ?? tooltip ?? label ?? data.label}
   {@const shortcut = keyboardShortcuts.resolveShortcutForAction(action)}
   <div
-    class="relative h-full"
+    class={cn("relative h-full", { "flex-1 min-w-0": isExpanded })}
     use:topBarDropdown={{
       isOpen: isOpeningMenuOpen,
       onDismiss: () => (isOpeningMenuOpen = false)
@@ -106,23 +108,15 @@
   >
     <button
       aria-label={accessibleLabel}
-      class={cn(
-        "flex items-center justify-center gap-1 h-full px-3.5 transition-colors",
-        {
-          "hover:border-brs3 hover:bg-bgs3-striped hover:text-fgs3 text-fgs2":
-            !isActive,
-          "bg-aps3 text-aps1 border-aps2": isActive,
-          "border-l": isLastItem && !$context.experiments?.isEnableRoundedMain,
-          "border-x": !isLastItem && !isFirstItem,
-          "border-r": isFirstItem && !$context.experiments?.isEnableRoundedMain
-        },
-        !isActive && {
-          "border-brs3":
-            action === Action.RHOMBUS || action === Action.NAVIGATOR,
-          "border-transparent":
-            action !== Action.RHOMBUS && action !== Action.NAVIGATOR
-        }
-      )}
+      aria-pressed={isExpanded ? true : undefined}
+      class={cn("flex items-center gap-1 h-full transition-colors", {
+        "justify-center min-w-12 px-3.5 border-x border-transparent hover:border-brs3":
+          !isExpanded,
+        "w-full justify-start gap-2 px-4 text-fgs1": isExpanded,
+        "hover:bg-bgs3 hover:text-fgs1": !isActive,
+        "text-fgs2": !isActive && !isExpanded,
+        "bg-aps3 text-aps1": isActive && !isExpanded
+      })}
       use:hoverable={{
         onHover: (val) => {
           queueMicrotask(() => {
@@ -160,6 +154,9 @@
       />
       {#if label}
         <span class="text-b3"> {label} </span>
+      {/if}
+      {#if trailing}
+        <span class="flex items-center ml-auto">{@render trailing()}</span>
       {/if}
     </button>
     {#if isOpeningMenuOpen}

@@ -28,16 +28,19 @@
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import TopBarCloseButton from "@nucleum/shell/topNav/TopBarCloseButton.svelte";
   import { cn } from "@21n/ui/environment/presentation";
+  import type { TopNavPanelAction } from "@nucleum/shell/topNav/panel-actions";
 
   let {
     children,
     topnav: topnavContent,
     topnavIndicators = undefined,
+    panelActions = [],
     main
   }: {
     children?: Snippet;
     topnav?: Snippet;
     topnavIndicators?: Snippet;
+    panelActions?: TopNavPanelAction[];
     main?: Snippet;
   } = $props();
 
@@ -94,7 +97,11 @@
 {/snippet}
 
 {#snippet topNav()}
-  <TopNav topnav={topnavContent} indicators={topnavIndicators} />
+  <TopNav
+    topnav={topnavContent}
+    indicators={topnavIndicators}
+    {panelActions}
+  />
 {/snippet}
 
 {#if isLoaded}
