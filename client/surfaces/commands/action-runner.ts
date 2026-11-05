@@ -95,7 +95,7 @@ export const actionRunner = {
     } else if (action.type === ActionType.RESOURCE && !isRenderAsPage) {
       navigation.openResource(
         action.action,
-        action.accessMode ?? AccessMode.POP,
+        action.accessMode ?? AccessMode.PAGE,
         {
           searchParams: params?.searchParams
         }
@@ -116,7 +116,7 @@ export const actionRunner = {
     } else if (action.type === ActionType.LIVE) {
       if (action.liveActionParams?.isOpeningBehaviorConfigurable) {
       }
-      const mode = action.accessMode ?? AccessMode.RIGHT;
+      const mode = action.accessMode ?? AccessMode.PANEL;
       const paramPresent = new URLSearchParams(window.location.search).get(
         mode
       );
@@ -124,10 +124,10 @@ export const actionRunner = {
         navigation.toggleSearchParam([mode]);
       } else {
         navigation.toggleSearchParam({
-          ...(mode === AccessMode.MAIN
+          ...(mode === AccessMode.OVERLAY
             ? {
-                [AccessMode.POP]: null,
-                [AccessMode.FSPLIT]: null
+                [AccessMode.PAGE]: null,
+                [AccessMode.BESIDE_PAGE]: null
               }
             : {}),
           [mode]: slug

@@ -325,13 +325,29 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
   }
 }
 
-export const determineResourceAccessMode = (id: IRecordId): AccessMode => {
+/** Order in which URL access modes are matched when a resource is open in more than one. */
+const ACCESS_MODE_LOOKUP_ORDER: readonly AccessMode[] = [
+  AccessMode.BESIDE_BASE,
+  AccessMode.BESIDE_PAGE,
+  AccessMode.PAGE,
+  AccessMode.FULL,
+  AccessMode.TAB,
+  AccessMode.OPEN_IN_BACKGROUND,
+  AccessMode.SLIDESHOW,
+  AccessMode.SHEET,
+  AccessMode.PANEL,
+  AccessMode.OVERLAY
+];
+
+/** Resolves the access mode a resource is open in from the URL; undefined means it renders in place. */
+export const determineResourceAccessMode = (
+  id: IRecordId
+): AccessMode | undefined => {
   const searchParams =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search)
       : new URLSearchParams();
-  const mode = (Object.values(AccessMode) as string[]).find(
-    (m) => m !== AccessMode.INLINE && searchParams.get(m) === id.toString()
+  return ACCESS_MODE_LOOKUP_ORDER.find(
+    (mode) => searchParams.get(mode) === id.toString()
   );
-  return (mode as AccessMode) || AccessMode.INLINE;
 };

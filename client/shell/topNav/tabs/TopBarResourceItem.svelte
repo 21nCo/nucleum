@@ -73,7 +73,7 @@
     }
   ];
   let isActive = $derived(
-    item.toString() === $page.url?.searchParams?.get(AccessMode.POP)
+    item.toString() === $page.url?.searchParams?.get(AccessMode.PAGE)
   );
   const recordStore = $derived.by(() => {
     if (!isRecordId(item) || resourceType === Resource.unknown)
@@ -133,21 +133,21 @@
           {
             value: "open-as-split",
             label:
-              currentMode === AccessMode.SPLIT
+              currentMode === AccessMode.BESIDE_BASE
                 ? "Close split screen"
                 : "Open in split screen",
             icon:
-              currentMode === AccessMode.SPLIT
+              currentMode === AccessMode.BESIDE_BASE
                 ? "minus-circle"
                 : "split-screen",
             callback: async () => {
-              if (currentMode === AccessMode.SPLIT) {
+              if (currentMode === AccessMode.BESIDE_BASE) {
                 navigation.closeResource({
                   id: resource.id,
-                  accessMode: AccessMode.SPLIT
+                  accessMode: AccessMode.BESIDE_BASE
                 });
               } else {
-                navigation.openResource(resource.id, AccessMode.SPLIT);
+                navigation.openResource(resource.id, AccessMode.BESIDE_BASE);
               }
             }
           },

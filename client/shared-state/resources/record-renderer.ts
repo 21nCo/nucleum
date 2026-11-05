@@ -3,7 +3,6 @@ import type { Arrangement } from "@21n/ui/elements/direction.enum";
 import type { Size } from "@21n/ui/elements/size.enum";
 import type { Resource } from "@nucleum/datafn/resource.enum";
 import type {
-  AccessMode,
   ResourceAccessPoint,
   ResourceAccessPointState
 } from "@nucleum/datafn/resource.type";
@@ -13,7 +12,7 @@ export interface RecordListProps {
   data?: any[];
   resource?: Resource;
   arrangement?: Arrangement;
-  defaultAccessMode?: AccessMode;
+  isOpenInPlace?: boolean;
   size?: Size.sm | Size.md;
   accessPoint?: ResourceAccessPoint;
   accessPointState?: ResourceAccessPointState;

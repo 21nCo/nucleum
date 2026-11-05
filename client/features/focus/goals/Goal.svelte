@@ -43,7 +43,7 @@
   let {
     id,
     accessPoint = ResourceAccessPoint.SELF,
-    accessMode = AccessMode.POP,
+    accessMode,
     status = $bindable()
   }: {
     id: string;

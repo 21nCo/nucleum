@@ -91,7 +91,7 @@ try {
         )?.name;
       if (!modulePath) throw new Error("Loaded navigation module not found");
       const { navigation } = await import(modulePath);
-      navigation.openResource(id, "r");
+      navigation.openResource(id, "page");
     },
     { root, id }
   );

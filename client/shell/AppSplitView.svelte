@@ -18,7 +18,7 @@
   let split = $state<string | undefined>(undefined);
   onMount(() => {
     const sub = page.subscribe((value) => {
-      split = value?.url?.searchParams.get(AccessMode.SPLIT) ?? undefined;
+      split = value?.url?.searchParams.get(AccessMode.BESIDE_BASE) ?? undefined;
     });
     return () => {
       sub();
@@ -42,7 +42,7 @@
       {@render children?.()}
     </div>
     {#if split}
-      <RightSplit {split} accessMode={AccessMode.SPLIT} />
+      <RightSplit {split} accessMode={AccessMode.BESIDE_BASE} />
     {/if}
   </div>
 </div>

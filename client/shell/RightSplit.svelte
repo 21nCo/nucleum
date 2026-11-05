@@ -5,7 +5,7 @@
   import { AccessMode } from "@nucleum/datafn/resource.type";
   let {
     split,
-    accessMode = AccessMode.SPLIT
+    accessMode = AccessMode.BESIDE_BASE
   }: {
     split: string;
     accessMode?: AccessMode;

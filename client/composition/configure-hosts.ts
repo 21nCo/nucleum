@@ -64,7 +64,7 @@ export function installApplicationHosts() {
       openFullscreen: (path) =>
         navigation.toggleSearchParam({
           [AccessMode.FULL]: path,
-          [AccessMode.POP]: null
+          [AccessMode.PAGE]: null
         }),
       closeFullscreen: () => navigation.toggleSearchParam([AccessMode.FULL]),
       resolvePlayer: (path) =>

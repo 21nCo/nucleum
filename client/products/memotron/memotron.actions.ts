@@ -80,14 +80,14 @@ export const memotronActions: IAction[] = [
       ],
     icon: "mynaui:plus-hexagon",
     type: ActionType.LIVE,
-    accessMode: AccessMode.MAIN
+    accessMode: AccessMode.OVERLAY
   },
   {
     action: MemotronAction.CAPTURE_DND,
     component: CaptureDnD,
     isMeta: true,
     type: ActionType.RESOURCE,
-    accessMode: AccessMode.POP,
+    accessMode: AccessMode.PAGE,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -103,7 +103,7 @@ export const memotronActions: IAction[] = [
     component: Capture,
     isMeta: true,
     type: ActionType.RESOURCE,
-    accessMode: AccessMode.POP,
+    accessMode: AccessMode.PAGE,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -159,7 +159,7 @@ export const memotronActions: IAction[] = [
     action: Resource.space,
     type: ActionType.MODAL,
     component: SideNavCombination,
-    accessMode: AccessMode.POP,
+    accessMode: AccessMode.PAGE,
     modalParams: {
       layout: {
         size: Size.xxl,

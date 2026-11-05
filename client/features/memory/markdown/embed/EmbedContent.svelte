@@ -317,7 +317,7 @@
 
   function onEditTitle(e: MouseEvent) {
     if ($view.isConstrainedWidth) {
-      if (body.id) navigation.openResource(body.id, AccessMode.POP);
+      if (body.id) navigation.openResource(body.id, AccessMode.PAGE);
       return;
     }
     e.stopPropagation();
@@ -355,7 +355,7 @@
       onclick={(e) => {
         if (resolveEmbedTarget(e.target)?.classList.contains("resizer")) return;
         if (_mediaBlock?.contentType === NodeType.FILE) return;
-        if (body.id) navigation.openResource(body.id, AccessMode.POP);
+        if (body.id) navigation.openResource(body.id, AccessMode.PAGE);
       }}
     >
       {#if isShowPreview}
@@ -477,7 +477,7 @@
                     style={ButtonStyle.OUTLINED}
                     onclick={() => {
                       if (body.id)
-                        navigation.openResource(body.id, AccessMode.POP);
+                        navigation.openResource(body.id, AccessMode.PAGE);
                     }}
                   />
                 {/if}
@@ -532,6 +532,7 @@
   <div class="h-96 w-[90vw] py-4 max-w-full overflow-x-auto">
     <Collection
       id={body.id}
+      accessMode={AccessMode.PAGE}
       accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
       parentBgIndex={$context.embed === Embed.HANDSET ? 2 : 1}
     />
@@ -539,7 +540,11 @@
 {:else if body?.subType === NodeType.TASK_AS_EMBED && body?.id}
   {#key body.id.toString()}
     <div class="h-fit min-h-20 w-full py-4 max-w-full overflow-x-auto">
-      <Task id={body.id} accessPoint={ResourceAccessPoint.MARKDOWN_EMBED} />
+      <Task
+        id={body.id}
+        accessMode={AccessMode.PAGE}
+        accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
+      />
     </div>
   {/key}
 {:else if isLoading}

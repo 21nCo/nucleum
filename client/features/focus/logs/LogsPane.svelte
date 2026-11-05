@@ -78,6 +78,7 @@
     </div>
     <SessionLogPage
       id={selectedId}
+      accessMode={AccessMode.PAGE}
       log={sessions.find(resourceInList(selectedId))}
     />
   </div>
@@ -132,7 +133,7 @@
             isLast={index === sessions.length - 1}
             onclick={() => {
               if (context === "journal") {
-                navigation.openResource(session.id, AccessMode.POP);
+                navigation.openResource(session.id, AccessMode.PAGE);
                 return;
               }
               selectedId = session.id;

@@ -99,7 +99,7 @@
   function openNotesInFullScreen() {
     const id = resolveCalendarNotesId(date, scale);
     if (!id) return;
-    navigation.openResource(id, AccessMode.POP);
+    navigation.openResource(id, AccessMode.PAGE);
   }
 </script>
 

@@ -81,7 +81,7 @@
     id = "",
     accessPoint = ResourceAccessPoint.SELF,
     parentBgIndex = 1,
-    accessMode = AccessMode.POP
+    accessMode
   }: {
     id?: string;
     accessPoint?: ResourceAccessPoint;
@@ -213,8 +213,8 @@
   let isConstrainedWidth = $derived(
     $view.isConstrainedWidth ||
       $view.isPortrait ||
-      $collection?.accessMode === AccessMode.SPLIT ||
-      $collection?.accessMode === AccessMode.FSPLIT ||
+      $collection?.accessMode === AccessMode.BESIDE_BASE ||
+      $collection?.accessMode === AccessMode.BESIDE_PAGE ||
       (containerWidth < 1000 &&
         ($collection?.coverLayout?.placement === Placement.Right ||
           $collection?.coverLayout?.placement === Placement.Left))

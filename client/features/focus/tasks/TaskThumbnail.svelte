@@ -190,7 +190,7 @@
     }
     navigation.openResource(
       item.id,
-      isInlineContext ? AccessMode.INLINE : AccessMode.POP,
+      isInlineContext ? undefined : AccessMode.PAGE,
       {
         origin:
           accessPoint === ResourceAccessPoint.OBJECTIVE

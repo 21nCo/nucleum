@@ -221,7 +221,7 @@
 
   function onInlineToastAction() {
     if (inlineToast?.data) {
-      navigation.openResource(inlineToast.data.id, AccessMode.POP);
+      navigation.openResource(inlineToast.data.id, AccessMode.PAGE);
     }
     onInlineToastClose();
   }

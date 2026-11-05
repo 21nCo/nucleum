@@ -15,7 +15,7 @@ global_search_modal: {
     label: "Search",
 
     type: ActionType.RESOURCE,
-    accessMode: AccessMode.POP,
+    accessMode: AccessMode.PAGE,
     preCondition: () => {
       return view.get().isConstrainedWidth;
     },
@@ -35,6 +35,6 @@ search: {
     label: "Search",
     icon: "search",
     type: ActionType.LIVE,
-    accessMode: AccessMode.MAIN
+    accessMode: AccessMode.OVERLAY
   }
 } satisfies Record<string, IAction | IAction[]>;

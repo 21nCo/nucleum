@@ -333,7 +333,7 @@
                 handleDelete();
               } else if (action === ResourceActionType.OPEN) {
                 // onOpenInApp();
-                openAppPath(`library?pop=${clip.id}`);
+                openAppPath(`library?page=${clip.id}`);
               } else if (action === ResourceActionType.EDIT_NOTES) {
                 isNotesOpened = true;
                 isLinkboxOpened = false;

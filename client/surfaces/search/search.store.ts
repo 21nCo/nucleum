@@ -38,7 +38,7 @@ function createSearchStore() {
 
     reset: () => {
       set({ query: "", resourceType: Resource.everything });
-      navigation.toggleSearchParam([AccessMode.MAIN]);
+      navigation.toggleSearchParam([AccessMode.OVERLAY]);
     },
 
     clear: () => {

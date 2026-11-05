@@ -2,7 +2,6 @@
   import { onMount, tick } from "svelte";
   import { vTrail } from "../topNav/tabs/tabs.store";
   import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import type { Action } from "@nucleum/client/config/action.enum";
   const ITEM_WIDTH =
@@ -90,10 +89,7 @@
         class="absolute top-0 h-full rounded-md"
         style="left: {getItemPosition(index)}px; width: {ITEM_WIDTH}px;"
       >
-        <ResourceResolver
-          id={parts[parts.length - 1]}
-          accessMode={AccessMode.INLINE}
-        />
+        <ResourceResolver id={parts[parts.length - 1]} />
       </div>
     {/each}
   </div>

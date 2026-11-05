@@ -132,7 +132,7 @@
   function reset() {
     captureStore.reset();
     if ($view.isConstrainedWidth) {
-      navigation.closeResource({ accessMode: AccessMode.POP });
+      navigation.closeResource({ accessMode: AccessMode.PAGE });
     }
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
   }
@@ -285,7 +285,7 @@
               tooltip="Close capture"
               label="Close"
               onclick={() => {
-                navigation.closeResource({ accessMode: AccessMode.MAIN });
+                navigation.closeResource({ accessMode: AccessMode.OVERLAY });
               }}
             />
           </div>

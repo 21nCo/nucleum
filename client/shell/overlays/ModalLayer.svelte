@@ -1,8 +1,6 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
-
   import Modal from "@nucleum/shell/modal/Modal.svelte";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import view from "@21n/ui/environment/view.store";
@@ -19,10 +17,7 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { fly, slide } from "svelte/transition";
   import { onMount } from "svelte";
-  import type {
-    ModalEvent,
-    ModalParams
-  } from "@21n/ui/elements/modal/popup.type";
+  import type { ModalEvent } from "@21n/ui/elements/modal/popup.type";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import type { IEvent } from "@21n/ui/elements/input/event.type";
   import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
@@ -46,15 +41,8 @@
   let modals = $state<ModalEvent[]>([]);
   let isShowAppearancePreview = $state(false);
   let fullscreen = $state<string | undefined>(undefined);
-  let pop = $state<
-    { path: string; resource: string; modalParams: ModalParams } | undefined
-  >(undefined);
-  const activePopModalPaths = $derived(
-    pop ? new Set([pop.path, `${pop.path}-resource`]) : undefined
-  );
   let isWindowVisible = $state(true);
   let isDialogEnabled = $state(false);
-  const isRenderPopAsModal = false;
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
@@ -66,14 +54,6 @@
     const pageSub = page.subscribe((value) => {
       const searchParams = value?.url?.searchParams ?? new URLSearchParams();
       fullscreen = searchParams.get(AccessMode.FULL) ?? undefined;
-      if (isRenderPopAsModal) {
-        const popParam = searchParams.get(AccessMode.POP) ?? undefined;
-        if (popParam) {
-          resolvePop(popParam);
-        } else {
-          pop = undefined;
-        }
-      }
     });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
 
@@ -127,20 +107,6 @@
       logger.log({ modals });
     }
   });
-  function resolvePop(resourceId: string) {
-    if (!resourceId) return;
-    const slug = resourceId.split(":")[0];
-    const action = requireCommandHost().resolveAction(slug);
-    if (!action) return;
-    pop = {
-      path: slug,
-      resource: resourceId,
-      modalParams: {
-        ...action.modalParams
-      }
-    };
-  }
-
   const visibilityChangeListener = () => {
     isWindowVisible = !document.hidden;
   };
@@ -221,48 +187,7 @@
     </Modal>
   {/if}
 {/key}
-{#key pop?.resource}
-  {#if pop}
-    <Modal
-      show={pop != undefined}
-      id={pop.path + "-resource"}
-      isDismissable={pop.modalParams?.isDismissable ?? true}
-      isShowOverlay={pop.modalParams?.isShowOverlay ?? true}
-      isDynamicSize={pop.modalParams?.layout?.isDynamicSize}
-      isUseDialog={pop.modalParams?.layout?.size != Size.full &&
-        $context.embed != Embed.HANDSET &&
-        isDialogEnabled}
-      size={pop.modalParams?.layout?.size ?? Size.md}
-      orientation={pop.modalParams?.layout?.orientation ??
-        Orientation.Horizontal}
-      hasCantileverButtons={pop.modalParams?.layout?.isShowCantileverClose ||
-        pop.modalParams?.layout?.isShowBackButton}
-    >
-      <ModalLayout
-        path={pop.path + "-resource"}
-        resource={pop.resource}
-        params={{
-          ...pop?.modalParams,
-          layout: {
-            ...pop.modalParams?.layout,
-            isShowCantileverClose:
-              pop.modalParams?.layout?.isShowCantileverClose,
-            isShowBackButton: pop.modalParams?.layout?.isShowBackButton
-          }
-        }}
-      >
-        <SplitView
-          id={pop.resource}
-          componentParams={{
-            isModal: true,
-            accessMode: AccessMode.POP
-          }}
-        />
-      </ModalLayout>
-    </Modal>
-  {/if}
-{/key}
-{#each modals.filter((modal) => modal?.path && !activePopModalPaths?.has(modal.path)) as modal, index (modal.path === Action.CMD ? `${modal.path}-${modal.componentParams?.command ?? "default"}-${modal.componentParams?.commandType ?? "default"}` : modal.path)}
+{#each modals.filter((modal) => modal?.path) as modal, index (modal.path === Action.CMD ? `${modal.path}-${modal.componentParams?.command ?? "default"}-${modal.componentParams?.commandType ?? "default"}` : modal.path)}
   <Modal
     show={modal.isShow}
     id={modal.path}

@@ -365,7 +365,7 @@
       <NodeLoadingPulse />
     </div>
   {/if}
-  {#if ($node.accessMode === AccessMode.SPLIT || $node.accessMode === AccessMode.FSPLIT) && (!$node.panel || $node.panel === ResourcePanelType.NONE)}
+  {#if ($node.accessMode === AccessMode.BESIDE_BASE || $node.accessMode === AccessMode.BESIDE_PAGE) && (!$node.panel || $node.panel === ResourcePanelType.NONE)}
     <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
   {/if}
 </div>

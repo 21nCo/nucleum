@@ -14,9 +14,9 @@ async function openSeededCollection(
   fixture: SeededObjectiveCollection
 ) {
   await page.goto(
-    `/collection_browse?inline=${encodeURIComponent(
+    `/collection_browse?selected=${encodeURIComponent(
       fixture.collectionId
-    )}&inlineAt=${Date.now()}`,
+    )}&selectedAt=${Date.now()}`,
     { waitUntil: "domcontentloaded" }
   );
   await expect(

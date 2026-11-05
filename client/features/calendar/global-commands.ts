@@ -117,7 +117,7 @@ export const calendarCommands = {
     label: "Today",
     type: ActionType.LIVE,
     component: Today,
-    accessMode: AccessMode.RIGHT,
+    accessMode: AccessMode.PANEL,
     liveActionParams: {
       size: Size.md
     }

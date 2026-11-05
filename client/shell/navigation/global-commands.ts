@@ -62,7 +62,7 @@ export const shellCommands = {
     label: "Navigator",
     type: ActionType.LIVE,
     component: Navigator,
-    accessMode: AccessMode.RIGHT,
+    accessMode: AccessMode.PANEL,
     liveActionParams: {
       size: Size.sm
     }
@@ -73,7 +73,7 @@ export const shellCommands = {
     label: "Rhombus",
     type: ActionType.LIVE,
     component: ComingSoonView,
-    accessMode: AccessMode.RIGHT,
+    accessMode: AccessMode.PANEL,
     liveActionParams: {
       size: Size.md,
       isOpeningBehaviorConfigurable: true

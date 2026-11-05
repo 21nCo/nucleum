@@ -54,18 +54,18 @@ export function handleSingleNodePostSave(params: {
   }
 
   if (params.shouldReturnToLinkedCollection && params.linkedCollectionId) {
-    navigation.openResource(params.linkedCollectionId, AccessMode.POP, {
+    navigation.openResource(params.linkedCollectionId, AccessMode.PAGE, {
       searchParams: {
-        [AccessMode.MAIN]: null
+        [AccessMode.OVERLAY]: null
       }
     });
     return;
   }
 
   if (params.shouldOpenUponSave) {
-    navigation.openResource(params.node.id, AccessMode.POP, {
+    navigation.openResource(params.node.id, AccessMode.PAGE, {
       searchParams: {
-        [AccessMode.MAIN]: null
+        [AccessMode.OVERLAY]: null
       }
     });
   }
@@ -78,14 +78,14 @@ export function closeCaptureAfterSave(shouldOpenUponSave: boolean) {
   }
   navigation.closeResource({
     id: resourceAction(Resource.node, ResourceActionType.CREATE),
-    accessMode: AccessMode.MAIN
+    accessMode: AccessMode.OVERLAY
   });
   navigation.closeResource({
     id: MemotronAction.CAPTURE_DND,
-    accessMode: AccessMode.MAIN
+    accessMode: AccessMode.OVERLAY
   });
   navigation.closeResource({
     id: MemotronAction.CAPTURE_SECONDARY,
-    accessMode: AccessMode.MAIN
+    accessMode: AccessMode.OVERLAY
   });
 }

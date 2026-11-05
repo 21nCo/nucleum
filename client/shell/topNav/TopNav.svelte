@@ -64,12 +64,12 @@
   let bulkEditSubContext = $state<string | undefined>(undefined);
   const isDev = import.meta.env.DEV;
   let isSearchMode = $state(
-    new URLSearchParams(window.location.search).get(AccessMode.MAIN) ===
+    new URLSearchParams(window.location.search).get(AccessMode.OVERLAY) ===
       Action.SEARCH
   );
   let isShowBackToSearch = $state(
     $vTrail.base === Action.SEARCH &&
-      new URLSearchParams(window.location.search).get(AccessMode.POP) !== null
+      new URLSearchParams(window.location.search).get(AccessMode.PAGE) !== null
   );
   let currentSearchParams = $state(new URLSearchParams(window.location.search));
 
@@ -110,11 +110,11 @@
       queueMicrotask(() => {
         currentSearchParams = p?.url?.searchParams ?? new URLSearchParams();
         isSearchMode =
-          currentSearchParams.get(AccessMode.MAIN) === Action.SEARCH &&
-          !currentSearchParams.get(AccessMode.POP);
+          currentSearchParams.get(AccessMode.OVERLAY) === Action.SEARCH &&
+          !currentSearchParams.get(AccessMode.PAGE);
         isShowBackToSearch =
           $vTrail.base === Action.SEARCH &&
-          currentSearchParams.get(AccessMode.POP) !== null;
+          currentSearchParams.get(AccessMode.PAGE) !== null;
       });
     });
 
@@ -158,15 +158,15 @@
         isFirstItem={true}
         isPreventDefault={true}
         onClick={() => {
-          if (new URLSearchParams(window.location.search).get(AccessMode.POP)) {
+          if (new URLSearchParams(window.location.search).get(AccessMode.PAGE)) {
             navigation.toggleSearchParam({
-              [AccessMode.POP]: null,
-              [AccessMode.MAIN]: Action.SEARCH
+              [AccessMode.PAGE]: null,
+              [AccessMode.OVERLAY]: Action.SEARCH
             });
             return;
           }
           navigation.toggleSearchParam({
-            [AccessMode.MAIN]: Action.SEARCH
+            [AccessMode.OVERLAY]: Action.SEARCH
           });
         }}
       />

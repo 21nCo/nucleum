@@ -10,7 +10,6 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import {
     ResourceAccessPoint,
-    AccessMode,
     ResourceAccessPointState
   } from "@nucleum/datafn/resource.type";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
@@ -53,7 +52,7 @@
     data = [],
     resource = Resource.node,
     arrangement = Arrangement.LIST,
-    defaultAccessMode = AccessMode.POP,
+    isOpenInPlace = false,
     size = Size.md,
     accessPoint = ResourceAccessPoint.BROWSER,
     accessPointState = ResourceAccessPointState.DEFAULT,
@@ -67,7 +66,7 @@
     data?: RecordItem[];
     resource?: Resource;
     arrangement?: Arrangement;
-    defaultAccessMode?: AccessMode;
+    isOpenInPlace?: boolean;
     size?: Size.sm | Size.md;
     accessPoint?: ResourceAccessPoint;
     accessPointState?: ResourceAccessPointState;
@@ -169,7 +168,7 @@
       : false;
     if (!result) {
       navigation.resourceClickHandler(resolveMouseEvent(e), item.id, {
-        defaultTo: defaultAccessMode,
+        isInPlace: isOpenInPlace,
         origin: accessPoint
       });
     }

@@ -36,7 +36,7 @@
 <button
   class="flex flex-col w-full px-1"
   onclick={() => {
-    navigation.openResource(item.id, AccessMode.POP);
+    navigation.openResource(item.id, AccessMode.PAGE);
   }}
   use:resizeListener={(el) => {
     width = el.width;

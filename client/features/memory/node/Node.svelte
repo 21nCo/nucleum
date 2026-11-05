@@ -47,7 +47,7 @@
     isFromSplitView = false
   }: {
     id: string;
-    accessMode: AccessMode;
+    accessMode?: AccessMode;
     isFromSplitView?: boolean;
   } = $props();
   let view = $state<NodeView>(NodeView.CONTENT);
@@ -174,6 +174,6 @@
     <NodeLoadingPulse />
   </div>
 {/if}
-{#if $context.isEmbed && accessMode !== AccessMode.POP && !isFromSplitView}
+{#if $context.isEmbed && accessMode !== AccessMode.PAGE && !isFromSplitView}
   <ComponentEmbedLayer isBackNavigable={true} />
 {/if}

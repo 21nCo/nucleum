@@ -77,7 +77,7 @@ export class ActiveObjectiveStore extends CollectibleStore<
   }
 
   async init(
-    accessMode: AccessMode,
+    accessMode: AccessMode | undefined,
     params?: {
       isInEditMode?: boolean;
       linkSearchParam?: string;

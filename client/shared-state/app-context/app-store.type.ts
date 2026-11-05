@@ -132,19 +132,23 @@ export enum AppSearchParam {
   EXT = "ext",
   PROVIDER = "provider",
   GUEST = "guest",
-  POP_AT = "popAt",
-  FSPLIT_AT = "fsplitAt",
-  SPLIT_AT = "splitAt",
+  PAGE_AT = "pageAt",
+  BESIDE_PAGE_AT = "besidePageAt",
+  BESIDE_AT = "besideAt",
   FULL_AT = "fullAt",
+  /**
+   * Resource selected in the library resource browser and rendered in place beside the list.
+   */
+  SELECTED = "selected",
   DEPTH = "depth",
   TRAVERSE = "traverse",
   NODE_VIEW = "nodeView",
   /**
-   * @deprecated - use MAIN access mode instead
+   * @deprecated - use the OVERLAY access mode instead
    */
   SEARCH = "search",
   /**
-   * @deprecated - use RIGHT access mode instead
+   * @deprecated - use the PANEL access mode instead
    * Opening an action in right panel
    */
   RIGHT = "right",

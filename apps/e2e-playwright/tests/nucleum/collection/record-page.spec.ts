@@ -27,7 +27,7 @@ async function expectCollectionRecordSurface(page: Page, name: string) {
   await expect
     .poll(
       () => {
-        const resource = new URL(page.url()).searchParams.get("r");
+        const resource = new URL(page.url()).searchParams.get("page");
         return resource?.startsWith("collection:") ?? false;
       },
       { message: "expectCollectionRecordSurface: toBe true", timeout: 10_000 }

@@ -271,7 +271,7 @@
         <a
           class="flex justify-center items-center px-3 rounded-br-md h-full hover:bg-bgs3 border-l border-l-brs2"
           title="Open in app"
-          href={resolveAppPath(`library?pop=${$webpage.id}`)}
+          href={resolveAppPath(`library?page=${$webpage.id}`)}
           target="_blank"
         >
           <Icon icon="weblink-two" size={Size.sm} />

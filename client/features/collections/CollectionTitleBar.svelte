@@ -146,7 +146,7 @@
     isEnabled={!$collection.isInEditMode &&
       isConstrainedWidth &&
       accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED &&
-      $collection.accessMode !== AccessMode.INLINE &&
+      !!$collection.accessMode &&
       $collection.accessMode !== AccessMode.FULL}
     accessMode={$collection.accessMode}
     class="truncate"

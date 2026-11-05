@@ -118,7 +118,7 @@ function generateSeedStore(): IActiveCapture {
   const nodeId = generateResourceId(Resource.node);
   return {
     id: generateResourceId(Resource.capture),
-    accessMode: AccessMode.MAIN,
+    accessMode: AccessMode.OVERLAY,
     createdAt: new Date(),
     updatedAt: new Date(),
     createdBy: currentUserId,
@@ -363,7 +363,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (!val) return;
     if (val === CaptureMethod.PASTE) {
       await openPasteConfirmationModalFromClipboard();
-      navigation.closeResource({ accessMode: AccessMode.MAIN });
+      navigation.closeResource({ accessMode: AccessMode.OVERLAY });
       return;
     }
     const isCollection = isRecordId(val, Resource.collection);

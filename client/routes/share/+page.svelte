@@ -3,7 +3,6 @@
   import { page } from "$app/stores";
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import ResourceResolver from "@nucleum/shell/paint/ResourceResolver.svelte";
-  import { AccessMode } from "@nucleum/datafn/resource.type";
   import { initializeNucleumPublicLinkDatafn } from "@nucleum/datafn/datafn.store";
 
   let isReady = $state(false);
@@ -38,6 +37,6 @@
   {:else if !isReady}
     <EmptyStatusView isLoadingState={true} mainText="Opening public link..." />
   {:else}
-    <ResourceResolver id={recordId} accessMode={AccessMode.INLINE} />
+    <ResourceResolver id={recordId} />
   {/if}
 </div>

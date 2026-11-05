@@ -17,7 +17,7 @@
   let split = $state<string | undefined>(undefined);
   onMount(() => {
     const sub = page.subscribe((value) => {
-      split = value?.url?.searchParams.get(AccessMode.FSPLIT) ?? undefined;
+      split = value?.url?.searchParams.get(AccessMode.BESIDE_PAGE) ?? undefined;
     });
     return () => {
       sub();
@@ -37,6 +37,6 @@
     {/if}
   </div>
   {#if split}
-    <RightSplit {split} accessMode={AccessMode.FSPLIT} />
+    <RightSplit {split} accessMode={AccessMode.BESIDE_PAGE} />
   {/if}
 </div>

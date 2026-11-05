@@ -209,7 +209,7 @@
             class="notouch:hover:underline active:underline"
             onclick={(e) => {
               e.stopPropagation();
-              navigation.openResource(objective.id, AccessMode.POP);
+              navigation.openResource(objective.id, AccessMode.PAGE);
             }}
           >
             {objective.label}
@@ -309,7 +309,7 @@
           class="notouch:hover:underline active:underline"
           onclick={(e) => {
             e.stopPropagation();
-            navigation.openResource(objective.id, AccessMode.POP);
+            navigation.openResource(objective.id, AccessMode.PAGE);
           }}
         >
           {objective.label}

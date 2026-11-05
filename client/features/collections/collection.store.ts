@@ -229,7 +229,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   /**
    * Initialized the collection with local cached data
    */
-  async init(accessMode: AccessMode) {
+  async init(accessMode?: AccessMode) {
     logger.log({ at: "ActiveCollectionStore.init", id: this.id });
     try {
       this.update((val: IActiveCollection) => {
@@ -500,7 +500,8 @@ export function resolveCollectionContextMenu(
   } else if (
     viewStore.isPortrait &&
     accessPoint === ResourceAccessPoint.SELF &&
-    params?.accessMode === AccessMode.INLINE
+    params !== undefined &&
+    !params.accessMode
   ) {
     commonGroups = [
       moreGroup,

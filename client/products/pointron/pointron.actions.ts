@@ -169,7 +169,7 @@ async function createObjective(params?: {
   });
   toasts.success("New objective created successfully");
   if (params?.isPreventOpenAfterCreate) return objective;
-  navigation.openResource(objective.id, AccessMode.POP, {
+  navigation.openResource(objective.id, AccessMode.PAGE, {
     searchParams: {
       [AppSearchParam.EDIT]: true,
       [AppSearchParam.LINK]: params?.linkSearchParam ?? null
@@ -428,7 +428,7 @@ export const pointronActions: IAction[] = [
     icon: "focus",
     type: ActionType.LIVE,
     label: appMenuActionLabelsByAction[PointronAction.FOCUS],
-    accessMode: AccessMode.RIGHT,
+    accessMode: AccessMode.PANEL,
     liveActionParams: {
       isOpeningBehaviorConfigurable: true
     }
@@ -693,7 +693,7 @@ export const pointronActions: IAction[] = [
           callback: async () => {
             const sessionId =
               params?.componentParams?.id ??
-              new URLSearchParams(window.location.search).get("r");
+              new URLSearchParams(window.location.search).get(AccessMode.PAGE);
             if (sessionId == null) {
               toasts.error("Missing session id. Aborting delete.");
               return false;

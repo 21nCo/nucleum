@@ -61,8 +61,8 @@ describe("resource action host contract", () => {
   });
 
   it.each([
-    [ResourceAccessPoint.BROWSER, AccessMode.INLINE],
-    [ResourceAccessPoint.LIBRARY, AccessMode.POP]
+    [ResourceAccessPoint.BROWSER, undefined],
+    [ResourceAccessPoint.LIBRARY, AccessMode.PAGE]
   ])("preserves edit navigation from %s", async (point, mode) => {
     const actions = new ResourceActions({
       id: ids[0],

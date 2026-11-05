@@ -46,7 +46,7 @@
   let currentSearchParams = $state(new URLSearchParams(window.location.search));
 
   let isNavigatorActive = $derived(
-    Action.NAVIGATOR === currentSearchParams.get(AccessMode.RIGHT)
+    Action.NAVIGATOR === currentSearchParams.get(AccessMode.PANEL)
   );
 
   onMount(() => {
