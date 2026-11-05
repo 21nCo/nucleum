@@ -200,11 +200,24 @@ describe("several Captures open at once", () => {
       source: replaced
     });
     expect(navigation.closeResource).not.toHaveBeenCalled();
-    expect(navigation.openResource).toHaveBeenCalledWith(
-      "node:saved",
-      AccessMode.PAGE,
-      { searchParams: {} }
-    );
+    expect(navigation.openResource).not.toHaveBeenCalled();
+  });
+
+  it("neither opens the node nor returns to the collection after its Capture page closed", () => {
+    const closed = mountCapture(AccessMode.PAGE);
+    unmountCaptures();
+    mountCapture(AccessMode.PAGE);
+    visit(`?${AccessMode.PAGE}=${MemotronAction.CAPTURE_SECONDARY}`);
+
+    handleSingleNodePostSave({
+      node: { id: "node:saved" },
+      isConstrainedWidth: false,
+      shouldOpenUponSave: true,
+      linkedCollectionId: "collection:linked",
+      shouldReturnToLinkedCollection: true,
+      source: closed
+    });
+    expect(navigation.openResource).not.toHaveBeenCalled();
   });
 
   it("sends Cmd+Enter to the focused Capture, otherwise to the topmost visible one", () => {

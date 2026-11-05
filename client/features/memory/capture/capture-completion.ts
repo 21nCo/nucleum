@@ -34,7 +34,12 @@ export function resolveLinkedCollectionId(captureState: {
   return linkQueryParam as IRecordId;
 }
 
-/** Opens a newly captured node according to capture options. */
+/**
+ * Opens a newly captured node according to capture options. A save whose
+ * Capture has since closed or been replaced keeps its node but neither opens
+ * it nor returns to the linked collection, so it never navigates over a
+ * newer Capture.
+ */
 export function handleSingleNodePostSave(params: {
   node: { id: IRecordId };
   isEmbedContext?: boolean;
@@ -57,7 +62,10 @@ export function handleSingleNodePostSave(params: {
     });
   }
 
-  if (params.isEmbedContext) {
+  if (
+    params.isEmbedContext ||
+    (params.source && !isCaptureSourceMounted(params.source))
+  ) {
     return;
   }
 
