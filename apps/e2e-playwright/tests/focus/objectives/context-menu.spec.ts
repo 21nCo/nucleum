@@ -325,8 +325,12 @@ test("from library - Convert to sub objective opens parent objective selector @c
   await cmdInput.waitFor({ state: "visible", timeout: 10_000 });
 
   await cmdInput.fill(parentGoalName);
+  const commandBar = page.locator("#CMD");
+  await expect(commandBar.getByText("No matches found!")).toBeHidden({
+    timeout: 10_000
+  });
   await expect(
-    page.getByText(parentGoalName, { exact: true }).last()
+    commandBar.getByRole("button", { name: parentGoalName }).first()
   ).toBeVisible({ timeout: 10_000 });
   await page.keyboard.press("Enter");
 
@@ -364,9 +368,10 @@ test("from library - Convert to sub objective opens parent objective selector @c
   ).toBeVisible({ timeout: 10_000 });
   await parentGoalRow.click();
 
-  await expect(
-    page.getByRole("heading", { name: parentGoalName, level: 1 })
-  ).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId("objective-context-title")).toHaveText(
+    parentGoalName,
+    { timeout: 10_000 }
+  );
   await expect(page.getByText(childGoalName, { exact: true })).toBeVisible({
     timeout: 10_000
   });

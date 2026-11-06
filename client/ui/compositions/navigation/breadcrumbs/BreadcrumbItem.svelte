@@ -6,12 +6,20 @@
     isDisabled = false,
     isLast = false,
     isOverflowItem = false,
+    isShrinkable = false,
     onClick = undefined
   }: {
     label?: string;
     isDisabled?: boolean;
     isLast?: boolean;
     isOverflowItem?: boolean;
+    /**
+     * Whether the item shrinks with its container instead of keeping its
+     * natural width: the label truncates down to a minimum width that keeps a
+     * few characters visible, or its own width when shorter, and the
+     * separator keeps its width.
+     */
+    isShrinkable?: boolean;
     onClick?: ((event: MouseEvent | KeyboardEvent) => void) | undefined;
   } = $props();
 
@@ -23,11 +31,17 @@
 </script>
 
 <div
-  class={cn("flex items-center", {
+  class={cn("items-center", {
+    flex: !isShrinkable || isLast || isOverflowItem,
+    "grid grid-cols-[minmax(min(2rem,var(--breadcrumb-label-floor)),max-content)_auto]":
+      isShrinkable && !isLast && !isOverflowItem,
     "w-full": isOverflowItem,
-    "flex-shrink-0": !isLast && !isOverflowItem,
+    "flex-shrink-0": !isLast && !isOverflowItem && !isShrinkable,
     "min-w-0 w-full": isLast && !isOverflowItem
   })}
+  style:--breadcrumb-label-floor={isShrinkable
+    ? `${label.length}ch`
+    : undefined}
 >
   <button
     onclick={onClick}
