@@ -40,4 +40,32 @@ describe("Breadcrumbs leading into a title", () => {
       expect.objectContaining({ item: items[2] })
     );
   });
+
+  it("lets kept items shrink to a minimum label width and clips them before the title", () => {
+    const { getByTestId, getByText } = render(Breadcrumbs, {
+      props: { items, limit: 1, isLeading: true }
+    });
+    expect(getByTestId("breadcrumbs").classList).toContain("overflow-hidden");
+    const label = getByText("Near");
+    const wrapper = label.parentElement as HTMLElement;
+    expect(label.classList).toContain("truncate");
+    expect(wrapper.classList).toContain(
+      "grid-cols-[minmax(2rem,max-content)_auto]"
+    );
+    expect(wrapper.classList).not.toContain("flex-shrink-0");
+    expect((wrapper.lastElementChild as HTMLElement).classList).toContain(
+      "flex-shrink-0"
+    );
+  });
+});
+
+describe("Breadcrumbs outside leading mode", () => {
+  it("keeps items at their natural width", () => {
+    const { getByText } = render(Breadcrumbs, {
+      props: { items: items.slice(0, 2), limit: 3 }
+    });
+    const wrapper = getByText("Root").parentElement as HTMLElement;
+    expect(wrapper.classList).toContain("flex-shrink-0");
+    expect(wrapper.classList).not.toContain("grid");
+  });
 });

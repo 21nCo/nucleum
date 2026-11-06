@@ -52,9 +52,10 @@ test("create objective via command bar, then start focus and verify in timeline 
     .first()
     .click({ timeout: 5_000 });
 
-  const focusTimerButton = page.getByRole("button", {
-    name: /^\d{1,2}:\d{2}$/
-  });
+  const focusTimerButton = page
+    .getByTestId("focus-top-nav-timer")
+    .or(page.getByRole("button", { name: /^\d{1,2}:\d{2}$/ }))
+    .first();
   await focusTimerButton.waitFor({ state: "visible", timeout: 8_000 });
   await waitForSessionElapsed(page, 4);
 
@@ -144,9 +145,10 @@ test("create objective via UI (Library → Objectives → New objective), then s
   await objectiveThumbnail.waitFor({ state: "visible", timeout: 15_000 });
   await objectiveThumbnail.click({ timeout: 5_000 });
 
-  const focusTimerButton = page.getByRole("button", {
-    name: /^\d{1,2}:\d{2}$/
-  });
+  const focusTimerButton = page
+    .getByTestId("focus-top-nav-timer")
+    .or(page.getByRole("button", { name: /^\d{1,2}:\d{2}$/ }))
+    .first();
   await focusTimerButton.waitFor({ state: "visible", timeout: 8_000 });
   await waitForSessionElapsed(page, 4);
 
