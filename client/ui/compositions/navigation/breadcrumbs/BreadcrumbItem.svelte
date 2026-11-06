@@ -16,7 +16,8 @@
     /**
      * Whether the item shrinks with its container instead of keeping its
      * natural width: the label truncates down to a minimum width that keeps a
-     * few characters visible, and the separator keeps its width.
+     * few characters visible, or its own width when shorter, and the
+     * separator keeps its width.
      */
     isShrinkable?: boolean;
     onClick?: ((event: MouseEvent | KeyboardEvent) => void) | undefined;
@@ -32,12 +33,15 @@
 <div
   class={cn("items-center", {
     flex: !isShrinkable || isLast || isOverflowItem,
-    "grid grid-cols-[minmax(2rem,max-content)_auto]":
+    "grid grid-cols-[minmax(min(2rem,var(--breadcrumb-label-floor)),max-content)_auto]":
       isShrinkable && !isLast && !isOverflowItem,
     "w-full": isOverflowItem,
     "flex-shrink-0": !isLast && !isOverflowItem && !isShrinkable,
     "min-w-0 w-full": isLast && !isOverflowItem
   })}
+  style:--breadcrumb-label-floor={isShrinkable
+    ? `${label.length}ch`
+    : undefined}
 >
   <button
     onclick={onClick}

@@ -50,7 +50,10 @@ describe("Breadcrumbs leading into a title", () => {
     const wrapper = label.parentElement as HTMLElement;
     expect(label.classList).toContain("truncate");
     expect(wrapper.classList).toContain(
-      "grid-cols-[minmax(2rem,max-content)_auto]"
+      "grid-cols-[minmax(min(2rem,var(--breadcrumb-label-floor)),max-content)_auto]"
+    );
+    expect(wrapper.style.getPropertyValue("--breadcrumb-label-floor")).toBe(
+      "4ch"
     );
     expect(wrapper.classList).not.toContain("flex-shrink-0");
     expect((wrapper.lastElementChild as HTMLElement).classList).toContain(

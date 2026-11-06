@@ -19,8 +19,8 @@
      * items collapse behind an ellipsis, keeping the last `limit` items.
      * Kept items shrink and truncate down to a minimum label width, and the
      * container clips its overflow so nothing paints under the content that
-     * follows. A consumer that lets the container size to its content keeps
-     * that minimum visible.
+     * follows, with room for focus outlines. A consumer that lets the
+     * container size to its content keeps that minimum visible.
      */
     isLeading?: boolean;
     onItemClick?: (payload: {
@@ -56,7 +56,7 @@
 
 {#if items?.length > 0 && isLeading}
   <div
-    class="flex min-w-0 shrink items-center overflow-hidden"
+    class="flex min-w-0 shrink items-center overflow-hidden -m-1 p-1"
     data-testid="breadcrumbs"
   >
     {#if items.length > limit}
