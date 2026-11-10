@@ -193,7 +193,7 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 - Version change: 1.11.3 to 1.12.0.
 - Updated the shell charter for the layered page model, the top bar context zone and the navigator's access trails, and the app menu (left panel), and marked app tabs as retired while their retained tab state stays with the shell (TIDY-484, TIDY-487, TIDY-488).
 - Updated the shell chrome inventory and added the context-zone registration rule: the search input, capture, and left nav profile section snippets are removed, quick actions, persistent indicators, and panel actions come from product base layers, and page controls enter the top bar only through `ContextZoneContent`.
-- Added the super bar search and the phone home hub to the surfaces inventory (TIDY-486, TIDY-489). No test or user-facing behavior authorization rules changed.
+- Added the super bar search and the phone home hub to the surfaces inventory (TIDY-486, TIDY-489), listed the existing sharing surface there, and documented that panel actions reach `TopNav` as the plain `panelActions` prop. No test or user-facing behavior authorization rules changed.
 
 - Version change: 1.11.2 to 1.11.3.
 - Clarified that `docs/architecture/client-boundaries.md` and `docs/architecture/type-ownership.md` are the current contracts, and that the TIDY-477 and TIDY-478 journals live in `docs/architecture/history/`. No principle or workflow changes.
