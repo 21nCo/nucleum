@@ -20,6 +20,22 @@ import {
 } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 import type { IActiveSessionStore } from "./session.type";
 
+const datafnOverrides = vi.hoisted(
+  () => ({}) as Record<string | symbol, unknown>
+);
+
+vi.mock("@nucleum/datafn/datafn.store", async (original) => {
+  const actual =
+    await original<typeof import("@nucleum/datafn/datafn.store")>();
+  return {
+    ...actual,
+    datafn: new Proxy(actual.datafn, {
+      get: (target, key) =>
+        key in datafnOverrides ? datafnOverrides[key] : Reflect.get(target, key)
+    })
+  };
+});
+
 vi.mock("@nucleum/client/runtime/embed/embed.utils", async (original) => ({
   ...(await original<
     typeof import("@nucleum/client/runtime/embed/embed.utils")
@@ -75,6 +91,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  for (const key of Reflect.ownKeys(datafnOverrides))
+    delete datafnOverrides[key];
   activeSession.shallowReset();
   window.localStorage.removeItem("uiState");
   vi.restoreAllMocks();
@@ -158,6 +176,30 @@ describe("closing a finished focus session", () => {
     runAction.mockClear();
     await activeSession.loader(
       finishedSnapshot("session-unsaved", SessionState.PRE_FINISHED)
+    );
+
+    expect(readClosedSessionId()).toBeUndefined();
+    expect(runAction).toHaveBeenCalledWith(PointronEvent.SESSION_FINISHED);
+  });
+
+  it("keeps a pre-finished session reopenable when the log mutation reports a failure", async () => {
+    datafnOverrides.session = {
+      mutate: vi.fn().mockResolvedValue([{ ok: true }])
+    };
+    datafnOverrides.sessionLog = {
+      mutate: vi
+        .fn()
+        .mockResolvedValue([{ ok: false, error: new Error("insert rejected") }])
+    };
+    await activeSession.modify(
+      finishedSnapshot("session-rejected", SessionState.PRE_FINISHED),
+      { isPersist: false }
+    );
+
+    await activeSession.finishSession({ isClose: true });
+    runAction.mockClear();
+    await activeSession.loader(
+      finishedSnapshot("session-rejected", SessionState.PRE_FINISHED)
     );
 
     expect(readClosedSessionId()).toBeUndefined();

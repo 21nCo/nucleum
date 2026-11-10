@@ -48,6 +48,7 @@ import context from "@nucleum/client/runtime/context.store";
 import { PointronEvent } from "@nucleum/shared-state/events/focus-event.enum";
 import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 import { datafn } from "@nucleum/datafn/datafn.store";
+import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 import { advancedCompositionDraft } from "@nucleum/features/focus/advanced/composition/advancedCompositionDraft.store";
 import { ObservableStore } from "@nucleum/datafn/observable-store";
 import {
@@ -1356,7 +1357,7 @@ async function finishFocus(params?: { end?: number }) {
     focusItemStore,
     params
   );
-  await datafn.session.mutate([
+  const sessionResult = await datafn.session.mutate([
     {
       operation: "insert",
       id: session.id,
@@ -1372,7 +1373,7 @@ async function finishFocus(params?: { end?: number }) {
       context: PointronAction.FINISH_FOCUS_SESSION
     }
   ]);
-  await datafn.sessionLog.mutate(
+  const logResult = await datafn.sessionLog.mutate(
     logs.map((record) => ({
       operation: "insert",
       id: record.id,
@@ -1386,6 +1387,8 @@ async function finishFocus(params?: { end?: number }) {
     }))
   );
   addToRecentFocusItems(logs);
+  assertDatafnMutationSucceeded(sessionResult);
+  assertDatafnMutationSucceeded(logResult);
 }
 
 export const sessionStore = {
