@@ -46,19 +46,28 @@ async function openGoalRecordFromLibrary(
 
 async function switchGoalRecordTab(
   page: import("@playwright/test").Page,
-  label: string
+  labels: readonly string[]
 ) {
-  const tab = page
-    .getByRole("tab", {
-      name: new RegExp(`^${escapeRegex(label)}$`, "i")
-    })
-    .first();
-  await expect(tab).toBeVisible({ timeout: 10_000 });
-  await tab.click({ timeout: 5_000 });
+  const tab = await expectAnyLocatorVisible(
+    labels.map((label) =>
+      page.getByRole("tab", {
+        name: new RegExp(`^${escapeRegex(label)}$`, "i")
+      })
+    ),
+    {
+      message: `objective record shows one of the tabs: ${labels.join(", ")}`,
+      timeout: 10_000
+    }
+  );
+  if ((await tab.getAttribute("aria-selected")) !== "true") {
+    await tab.click({ timeout: 5_000 });
+  }
   await expect(tab).toHaveAttribute("aria-selected", "true", {
     timeout: 5_000
   });
 }
+
+const goalRecordTaskTabs = ["Overview", "Tasks"] as const;
 
 async function resolveVisibleSubGoalInput(
   page: import("@playwright/test").Page
@@ -112,12 +121,52 @@ async function openSubGoalFromRecordPage(
   await subGoalButton.click({ timeout: 5_000 });
 }
 
+function getGoalContextBreadcrumb(
+  page: import("@playwright/test").Page,
+  label: string
+) {
+  return page
+    .getByTestId("objective-context-breadcrumbs")
+    .locator("#breadcrumb-item-label")
+    .filter({
+      hasText: new RegExp(`^${escapeRegex(label)}$`)
+    })
+    .first();
+}
+
+async function expectGoalContext(
+  page: import("@playwright/test").Page,
+  current: string,
+  nearestParent: string
+) {
+  await expect(page.getByTestId("objective-context-title")).toHaveText(
+    current,
+    { timeout: 10_000 }
+  );
+  await expect(getGoalContextBreadcrumb(page, nearestParent)).toBeVisible({
+    timeout: 10_000
+  });
+}
+
 async function clickGoalBreadcrumb(
   page: import("@playwright/test").Page,
   label: string
 ) {
+  const breadcrumb = getGoalContextBreadcrumb(page, label);
+  await expect(breadcrumb).toBeVisible({ timeout: 10_000 });
+  await breadcrumb.click({ timeout: 5_000 });
+}
+
+async function clickHiddenGoalBreadcrumb(
+  page: import("@playwright/test").Page,
+  label: string
+) {
+  await page
+    .getByTestId("objective-context-breadcrumbs")
+    .getByRole("button", { name: "Show hidden breadcrumbs" })
+    .click({ timeout: 5_000 });
   const breadcrumb = page
-    .locator("#breadcrumb-item-label")
+    .locator("#breadcrumbs-overflow-popover #breadcrumb-item-label")
     .filter({
       hasText: new RegExp(`^${escapeRegex(label)}$`)
     })
@@ -130,7 +179,7 @@ async function createTaskFromGoalRecordPage(
   page: import("@playwright/test").Page,
   label: string
 ) {
-  await switchGoalRecordTab(page, "Tasks");
+  await switchGoalRecordTab(page, goalRecordTaskTabs);
   const createTaskButton = page
     .getByRole("button", {
       name: /Create task|New task/i
@@ -149,10 +198,7 @@ async function openTaskFromGoalRecordPage(
   page: import("@playwright/test").Page,
   label: string
 ) {
-  const tasksTab = page.getByRole("tab", { name: /^Tasks$/i }).first();
-  if ((await tasksTab.getAttribute("aria-selected")) !== "true") {
-    await switchGoalRecordTab(page, "Tasks");
-  }
+  await switchGoalRecordTab(page, goalRecordTaskTabs);
   const taskRow = await resolveTaskRowByLabel(page, label);
   await taskRow.click({ timeout: 5_000 });
 }
@@ -262,30 +308,13 @@ test("create sub objective from objective record page and navigate hierarchy via
   await addSubGoalFromRecordPage(page, childGoalName);
   await openSubGoalFromRecordPage(page, childGoalName);
 
-  await expect(
-    page
-      .locator("#breadcrumb-item-label")
-      .filter({
-        hasText: new RegExp(`^${escapeRegex(parentGoalName)}$`)
-      })
-      .first()
-  ).toBeVisible({ timeout: 10_000 });
-  await expect(
-    page
-      .locator("#breadcrumb-item-label")
-      .filter({
-        hasText: new RegExp(`^${escapeRegex(childGoalName)}$`)
-      })
-      .first()
-  ).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText(childGoalName).first()).toBeVisible({
-    timeout: 10_000
-  });
+  await expectGoalContext(page, childGoalName, parentGoalName);
 
   await clickGoalBreadcrumb(page, parentGoalName);
-  await expect(page.getByText(parentGoalName).first()).toBeVisible({
-    timeout: 10_000
-  });
+  await expect(page.getByTestId("objective-context-title")).toHaveText(
+    parentGoalName,
+    { timeout: 10_000 }
+  );
 
   await openGoalRecordFromLibrary(page, parentGoalName);
   await showSubObjectivesSurface(page);
@@ -315,40 +344,16 @@ test("create grandchild objective from child objective record page and persist h
   await addSubGoalFromRecordPage(page, grandchildGoalName);
   await openSubGoalFromRecordPage(page, grandchildGoalName);
 
-  await expect(
-    page
-      .locator("#breadcrumb-item-label")
-      .filter({
-        hasText: new RegExp(`^${escapeRegex(parentGoalName)}$`)
-      })
-      .first()
-  ).toBeVisible({ timeout: 10_000 });
-  await expect(
-    page
-      .locator("#breadcrumb-item-label")
-      .filter({
-        hasText: new RegExp(`^${escapeRegex(childGoalName)}$`)
-      })
-      .first()
-  ).toBeVisible({ timeout: 10_000 });
-  await expect(
-    page
-      .locator("#breadcrumb-item-label")
-      .filter({
-        hasText: new RegExp(`^${escapeRegex(grandchildGoalName)}$`)
-      })
-      .first()
-  ).toBeVisible({ timeout: 10_000 });
+  await expectGoalContext(page, grandchildGoalName, childGoalName);
 
   await clickGoalBreadcrumb(page, childGoalName);
-  await expect(page.getByText(childGoalName).first()).toBeVisible({
-    timeout: 10_000
-  });
+  await expectGoalContext(page, childGoalName, parentGoalName);
 
   await clickGoalBreadcrumb(page, parentGoalName);
-  await expect(page.getByText(parentGoalName).first()).toBeVisible({
-    timeout: 10_000
-  });
+  await expect(page.getByTestId("objective-context-title")).toHaveText(
+    parentGoalName,
+    { timeout: 10_000 }
+  );
 
   await openGoalRecordFromLibrary(page, parentGoalName);
   await showSubObjectivesSurface(page);
@@ -361,6 +366,14 @@ test("create grandchild objective from child objective record page and persist h
       })
       .first()
   ).toBeVisible({ timeout: 10_000 });
+
+  await openSubGoalFromRecordPage(page, grandchildGoalName);
+  await expectGoalContext(page, grandchildGoalName, childGoalName);
+  await clickHiddenGoalBreadcrumb(page, parentGoalName);
+  await expect(page.getByTestId("objective-context-title")).toHaveText(
+    parentGoalName,
+    { timeout: 10_000 }
+  );
 });
 
 test("create task from objective record page and verify persistence after reopen @record-page", async ({
@@ -377,7 +390,7 @@ test("create task from objective record page and verify persistence after reopen
   await createTaskFromGoalRecordPage(page, taskName);
 
   await openGoalRecordFromLibrary(page, objectiveName);
-  await switchGoalRecordTab(page, "Tasks");
+  await switchGoalRecordTab(page, goalRecordTaskTabs);
   await expectTaskRowVisible(page, taskName);
 });
 
@@ -454,7 +467,7 @@ test("objective page status changes do not crash when collections are present @r
   await ensureInAppOnHome(page);
 
   const suffix = Date.now();
-  const collectionName = `ObjectiveStatusCol-${suffix}`;
+  const collectionName = `ObjStatCol-${String(suffix).slice(-6)}`;
   const objectiveName = `ObjectiveStatus-${suffix}`;
 
   await e2eSeed.collections.collection({
@@ -464,7 +477,7 @@ test("objective page status changes do not crash when collections are present @r
   const objective = await e2eSeed.focus.objective({ label: objectiveName });
   await openGoalRecordFromLibrary(page, objectiveName);
   await addCollectionThroughCollectionsLane(page, collectionName);
-  await expect(page.getByText(/^Collections$/i).first()).toBeVisible({
+  await expect(page.getByTestId("collections-lane")).toBeVisible({
     timeout: 10_000
   });
   await expect(
@@ -519,7 +532,7 @@ async function expectGoalRecordContent(
   const lowerLabel = tabLabel.toLowerCase();
   if (lowerLabel.includes("info")) {
     const infoAnchors = [
-      page.getByTestId("objective-name-input"),
+      page.getByTestId("objective-context-title-input"),
       page
         .getByRole("heading", { name: new RegExp(`^${objectiveName}$`) })
         .first(),

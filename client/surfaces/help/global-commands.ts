@@ -39,6 +39,7 @@ export const helpCommands = {
     type: ActionType.PAGE,
     isMeta: true,
     component: PageError,
+    componentParams: { isNotFoundPage: true },
     isMenuHidden: true
   },
   error: {

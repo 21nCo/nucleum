@@ -43,7 +43,7 @@
     scope = "all",
     onClose = void 0,
     onSearchAction = void 0,
-    selectedKind = $bindable(undefined)
+    selectedKind = $bindable()
   }: {
     search?: string;
     scope?: SuperBarScope;

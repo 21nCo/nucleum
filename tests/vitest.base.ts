@@ -17,6 +17,10 @@ export const alias = [
   { find: "@tests", replacement: path.join(repoRoot, "tests") },
   { find: "$lib", replacement: repoRoot },
   { find: "$lib/", replacement: repoRoot + "/" },
+  {
+    find: /^\$app\/(navigation|stores)$/,
+    replacement: path.join(repoRoot, "tests/fixtures/sveltekit/$1.ts")
+  },
   ...workspaceAliases
 ];
 

@@ -10,12 +10,17 @@
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import context from "@nucleum/client/runtime/context.store";
   import type { IAction } from "@nucleum/shared-state/commands/action.type";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import view from "@21n/ui/environment/view.store";
   import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
   import { resolveRecordedPagePath } from "@nucleum/shared-state/commands/page-view-actions";
+  import {
+    NOT_FOUND_PATH,
+    resolveNotFound,
+    trimSlashes
+  } from "@nucleum/shell/navigation/not-found";
 
   const ComponentResolver = requireActionRenderer();
   const productConfig = requireProductConfig();
@@ -31,14 +36,18 @@
   let action = $state<IAction | null>(null);
   let subPath = $state<string[] | undefined>(undefined);
   let isRouted = $state(false);
+  let inlineNotFoundPath = $state<string | undefined>(undefined);
   let lastRecordedPath: string | undefined;
   const params = $derived(
-    subPath
-      ? { ...(action?.componentParams ?? {}), subPath, isRouted }
-      : action?.componentParams
+    inlineNotFoundPath
+      ? { ...(action?.componentParams ?? {}), notFoundPath: inlineNotFoundPath }
+      : subPath
+        ? { ...(action?.componentParams ?? {}), subPath, isRouted }
+        : action?.componentParams
   );
   let pageSub: any;
   let pendingRefreshes = $state<number[]>([]);
+  const hasActions = $derived($appStore.actions.length > 0);
   const fileBasedRoutes = ["cparchived"];
   function resolvePath(pageData?: Page) {
     if (cmdPageLaunch) {
@@ -50,7 +59,7 @@
     let currentPath =
       pageData?.url?.pathname ??
       (typeof window !== "undefined" ? window.location.pathname : "");
-    currentPath = currentPath.replace(/^\/+|\/+$/g, "");
+    currentPath = trimSlashes(currentPath);
     if (prefix) {
       currentPath = prefix + "/" + currentPath;
     }
@@ -69,6 +78,13 @@
 
   afterNavigate(() => {
     queueRefresh();
+  });
+
+  $effect(() => {
+    if (!hasActions) return;
+    untrack(() => {
+      if (!action) queueRefresh();
+    });
   });
 
   onMount(() => {
@@ -108,20 +124,27 @@
         : productConfig.homePath;
       navigation.gotoPath(homePath + window.location.search);
       return;
-    } else if (!path) {
-      navigation.gotoPath("/404");
-      return;
     }
+    if ($appStore.actions.length === 0) return;
 
-    const route = appStore.resolvePageRoute(path);
+    const route = path ? appStore.resolvePageRoute(path) : null;
     action = route?.action ?? null;
+    inlineNotFoundPath = undefined;
 
     if (!action) {
       subPath = undefined;
       lastRecordedPath = undefined;
-      if (path === "index.html") navigation.gotoPath("/");
-      else navigation.gotoPath("/404", { queryParams: { path } });
-      return;
+      const notFound = resolveNotFound(path, {
+        isUrlPath: !cmdPageLaunch && !$context.isSheet,
+        currentUrl: pageData?.url ?? new URL(window.location.href)
+      });
+      if (notFound.kind === "redirect") {
+        navigation.gotoPath(notFound.url);
+        return;
+      }
+      action = appStore.resolveComponentFromPath(NOT_FOUND_PATH);
+      if (!action) return;
+      inlineNotFoundPath = path || undefined;
     }
     const isRoutedPage = !cmdPageLaunch && !$context.isSheet;
     const nextSubPath = route?.subPath;

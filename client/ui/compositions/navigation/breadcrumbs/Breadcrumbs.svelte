@@ -17,6 +17,10 @@
      * Whether the items lead into content rendered after them, such as a
      * title: every item ends with a separator, and past `limit` the farthest
      * items collapse behind an ellipsis, keeping the last `limit` items.
+     * Kept items shrink and truncate down to a minimum label width, and the
+     * container clips its overflow so nothing paints under the content that
+     * follows, with room for focus outlines. A consumer that lets the
+     * container size to its content keeps that minimum visible.
      */
     isLeading?: boolean;
     onItemClick?: (payload: {
@@ -33,7 +37,7 @@
 
 {#snippet overflow(hidden: IBreadcrumbItem[])}
   <button
-    class="flex-shrink-0"
+    class="flex-shrink-0 whitespace-nowrap"
     aria-label="Show hidden breadcrumbs"
     use:popover={{
       content: BreadcrumbsOverflowPopover,
@@ -51,7 +55,10 @@
 {/snippet}
 
 {#if items?.length > 0 && isLeading}
-  <div class="flex min-w-0 shrink items-center" data-testid="breadcrumbs">
+  <div
+    class="flex min-w-0 shrink items-center overflow-hidden -m-1 p-1"
+    data-testid="breadcrumbs"
+  >
     {#if items.length > limit}
       {@render overflow(items.slice(0, -limit))}
     {/if}
@@ -59,6 +66,7 @@
       <BreadcrumbItem
         label={item.label}
         isDisabled={item.disabled}
+        isShrinkable={true}
         onClick={(e) => {
           handleClick(e, item);
         }}
