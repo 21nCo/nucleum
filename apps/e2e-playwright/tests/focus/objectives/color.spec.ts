@@ -6,9 +6,11 @@ import {
   runCommand
 } from "../../utils/helpers";
 import { openResourceRecord } from "../../utils/resource-matrix";
+import { readPersistedSession } from "../active-session/session-test-support";
 import {
   blockGoogleAccountsNavigation,
   openQuickFocusPanelViaTopNav,
+  readSessionRuntime,
   waitForSessionElapsed
 } from "../focus-test-helpers";
 
@@ -100,7 +102,28 @@ test("objective color persists and is reused on detail, Quick Focus, and analyti
 
   await quickFocusObjective.click({ timeout: 5_000 });
   await waitForSessionElapsed(page, 2);
+  const sessionId = (await readSessionRuntime(page)).currentSessionId;
+  expect(sessionId, "the running focus session has an id").toBeTruthy();
   await finishCurrentFocus(page);
+  await expect
+    .poll(
+      async () => {
+        const { logs, session } = await readPersistedSession(page, sessionId!);
+        return (
+          Boolean(session?.endUnix) &&
+          logs.some((log) => log.objectiveId === objective.id)
+        );
+      },
+      {
+        message:
+          "objective color: the finished focus session and its objective log are persisted before opening analytics",
+        timeout: 15_000
+      }
+    )
+    .toBe(true);
+  await expect(page.locator("#SESSION_FINISHED")).toBeHidden({
+    timeout: 10_000
+  });
 
   await navigateToSurface(page, "overview.focus", testInfo.project.name);
   const analyticsColorScope = page
@@ -109,5 +132,7 @@ test("objective color persists and is reused on detail, Quick Focus, and analyti
       "xpath=ancestor::span[contains(@class, 'items-center')][1]/*[contains(@style, '--customcolor')]"
     );
   await expect(analyticsColorScope).toBeVisible({ timeout: 10_000 });
-  expect(await readCustomColor(analyticsColorScope)).toBe(persistedColor);
+  await expect(analyticsColorScope).toHaveCSS("--customcolor", persistedColor, {
+    timeout: 10_000
+  });
 });
