@@ -129,4 +129,38 @@ describe("closing a finished focus session", () => {
     expect(activeSession.get().state).toBe(SessionState.FINISHED);
     expect(activeSession.get().currentSessionId).toBe("session-open");
   });
+
+  it("does not record a running session as closed when it is abandoned", async () => {
+    await activeSession.modify(
+      {
+        ...finishedSnapshot("session-running", SessionState.FOCUS_RUNNING),
+        isSessionRunning: true
+      },
+      { isPersist: false }
+    );
+
+    await activeSession.close();
+
+    expect(readClosedSessionId()).toBeUndefined();
+  });
+
+  it("keeps a pre-finished session reopenable when its log is not saved", async () => {
+    const { sessionStore } = await import("./session.store");
+    vi.spyOn(sessionStore, "finishFocus").mockRejectedValue(
+      new Error("log write failed")
+    );
+    await activeSession.modify(
+      finishedSnapshot("session-unsaved", SessionState.PRE_FINISHED),
+      { isPersist: false }
+    );
+
+    await activeSession.finishSession({ isClose: true });
+    runAction.mockClear();
+    await activeSession.loader(
+      finishedSnapshot("session-unsaved", SessionState.PRE_FINISHED)
+    );
+
+    expect(readClosedSessionId()).toBeUndefined();
+    expect(runAction).toHaveBeenCalledWith(PointronEvent.SESSION_FINISHED);
+  });
 });

@@ -682,13 +682,21 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
   }
 
   /**
-   * Closes the active session. The closed session id is recorded on this device
-   * before the reset snapshot is written, so a reload or another window that
-   * still reads the finished snapshot does not reopen it.
+   * Closes the active session. A finished session's id is recorded on this
+   * device before the reset snapshot is written, so a reload or another window
+   * that still reads the finished snapshot does not reopen it. Pass
+   * `isMarkClosed: false` when the session log was not saved, so the finished
+   * snapshot can still reopen and the user can retry.
    */
-  async close() {
+  async close(params?: { isMarkClosed?: boolean }) {
     logger.log({ context: "session store close" });
-    this.markSessionClosed(this.get().currentSessionId);
+    const current = this.get();
+    if (
+      (params?.isMarkClosed ?? true) &&
+      (current.state === SessionState.FINISHED ||
+        current.state === SessionState.PRE_FINISHED)
+    )
+      this.markSessionClosed(current.currentSessionId);
     focusItemsStore.reset(true);
     let session = this.reset();
     this.modify(session);
@@ -878,6 +886,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     let session = this.get();
     let currentFocus = get(currentFocusItem);
     let finishedSession: IActiveSessionStore | undefined;
+    let isLogged = false;
     if (!session.isQuickStartOn)
       fullPageLoadingScreen.show("Finishing session...");
     try {
@@ -892,11 +901,12 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       finishedSession = this.resolveFinishedSession(end);
       this.modify(finishedSession, { isPersist: false });
       await sessionStore.finishFocus({ end: end.getTime() });
+      isLogged = true;
     } catch (err) {
       logger.error({ at: "finishSession", error: err });
     } finally {
       if (params?.isClose) {
-        this.close();
+        this.close({ isMarkClosed: isLogged });
       } else if (!params?.isQuickStartSwitch) {
         this.shallowReset();
 
