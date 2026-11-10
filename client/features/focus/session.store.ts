@@ -58,7 +58,10 @@ import {
 import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-import { UIState } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+import {
+  UIState,
+  UIStateScope
+} from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 import { removeDuplicatesFilter } from "@nucleum/datafn/resource.utils";
 import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
 import { StoreDataType } from "@nucleum/schema/legacy/store-data-type.enum";
@@ -678,8 +681,14 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     );
   }
 
+  /**
+   * Closes the active session. The closed session id is recorded on this device
+   * before the reset snapshot is written, so a reload or another window that
+   * still reads the finished snapshot does not reopen it.
+   */
   async close() {
     logger.log({ context: "session store close" });
+    this.markSessionClosed(this.get().currentSessionId);
     focusItemsStore.reset(true);
     let session = this.reset();
     this.modify(session);
@@ -715,8 +724,9 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
         isResetTimer: false
       });
     } else if (
-      savedSessionStore.state === SessionState.FINISHED ||
-      savedSessionStore.state === SessionState.PRE_FINISHED
+      (savedSessionStore.state === SessionState.FINISHED ||
+        savedSessionStore.state === SessionState.PRE_FINISHED) &&
+      !this.isClosedSession(savedSessionStore)
     ) {
       this.shallowReset();
       requireCommandHost().runAction(PointronEvent.SESSION_FINISHED);
@@ -726,6 +736,22 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       this.modify(savedSessionStore, { isPersist: false });
     }
     this.propagateMessageToParent(savedSessionStore);
+  }
+
+  private markSessionClosed(sessionId: IRecordId | undefined) {
+    if (!sessionId) return;
+    uiState.setState(UIState.closedFocusSessionId, String(sessionId), {
+      scope: UIStateScope.DAP
+    });
+  }
+
+  private isClosedSession(session: IActiveSessionStore) {
+    if (!session.currentSessionId) return false;
+    return (
+      uiState.getState(UIState.closedFocusSessionId, {
+        scope: UIStateScope.DAP
+      }) === String(session.currentSessionId)
+    );
   }
 
   /**
