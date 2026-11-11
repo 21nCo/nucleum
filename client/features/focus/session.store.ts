@@ -685,15 +685,21 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
   /**
    * Closes the active session. A finished session's id is recorded on this
    * device before the reset snapshot is written, so a reload or another window
-   * that still reads the finished snapshot does not reopen it. Pass
-   * `isMarkClosed: false` when the session log was not saved, so the finished
-   * snapshot can still reopen and the user can retry.
+   * that still reads the finished snapshot does not reopen it.
    */
-  async close(params?: { isMarkClosed?: boolean }) {
+  async close() {
+    return this.closeSession({ isMarkClosed: true });
+  }
+
+  /**
+   * Pass `isMarkClosed: false` when the session log was not saved, so the
+   * finished snapshot can still reopen and the user can retry.
+   */
+  private async closeSession(params: { isMarkClosed: boolean }) {
     logger.log({ context: "session store close" });
     const current = this.get();
     if (
-      (params?.isMarkClosed ?? true) &&
+      params.isMarkClosed &&
       (current.state === SessionState.FINISHED ||
         current.state === SessionState.PRE_FINISHED)
     )
@@ -907,7 +913,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       logger.error({ at: "finishSession", error: err });
     } finally {
       if (params?.isClose) {
-        this.close({ isMarkClosed: isLogged });
+        this.closeSession({ isMarkClosed: isLogged });
       } else if (!params?.isQuickStartSwitch) {
         this.shallowReset();
 
