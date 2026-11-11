@@ -127,20 +127,24 @@
 </script>
 
 {#if show}
-  {#if alignment === Placement.Right}
+  {#if alignment === Placement.Right && !$view.isConstrainedWidth}
     <div
-      class="popover-container fixed right-8 bg-bgs2 z-50 rounded-md overflow-y-auto"
-      style="height:min-content;bottom: 5%;"
+      class="pop-overlay fixed inset-0 z-50"
+      {id}
+      data-blank-modal={index}
+      data-modal-size={size}
+      transition:fade={{ duration: 100 }}
+      onclick={overlayClicked}
+      role="button"
+      onkeydown={() => {}}
+      tabindex="0"
     >
-      {#if title}
-        <ModalHeader
-          {title}
-          onClose={() => {
-            show = false;
-          }}
-        />
-      {/if}
-      <div class="popover-body w-full overflow-y-auto">
+      <div
+        id={id + "-modal"}
+        data-testid={`modal-${id}`}
+        data-modal-placement="right"
+        class="absolute top-0 right-0 flex flex-col h-full w-[28rem] 2k:w-[32rem] max-w-full bg-bgs1 border-l border-brs3 shadow-xl cursor-default app-framed:top-[var(--app-shell-gap)] app-framed:right-[var(--app-shell-gap)] app-framed:h-[calc(100%-2*var(--app-shell-gap))] app-framed:border app-framed:rounded-[var(--app-panel-radius)] overflow-hidden"
+      >
         <ColorLayer>
           {@render children?.()}
         </ColorLayer>
@@ -243,10 +247,6 @@
 {/if}
 
 <style>
-  .popover-container {
-    transform: translate3d(0, 0, 0);
-  }
-
   dialog.overlay::backdrop {
     backdrop-filter: blur(10px) grayscale(100%);
   }

@@ -19,6 +19,8 @@
   import { page } from "$app/stores";
   import { requireSurfaceProductConfig } from "@nucleum/shared-state/product/surface-config-host";
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
+  import view from "@21n/ui/environment/view.store";
   const ComponentResolver = requireActionRenderer();
   let selected: string = $state("");
   let parentBgIndex: number = 2;
@@ -34,11 +36,25 @@
   $effect(() => {
     if (settingSearchParam) runAction(settingSearchParam);
   });
+  /**
+   * Appearance previews live in its own right-side modal on wide screens, so
+   * selecting it closes Settings and opens that modal instead of rendering it
+   * inside Settings. Returns whether it did.
+   */
+  function openInRightModal(slug: string) {
+    if (slug !== Action.APPEARANCE_SETTINGS || $view.isConstrainedWidth)
+      return false;
+    if (settingSearchParam) navigation.toggleSearchParam([AppSearchParam.SETTING]);
+    modalEvent.hide(Action.SETTINGS, "SettingsAsModal");
+    requireCommandHost().runAction(Action.APPEARANCE_SETTINGS);
+    return true;
+  }
   async function runAction(slug: string) {
     if (!slug) {
       pageAction = null;
       return;
     }
+    if (openInRightModal(slug)) return;
     selected = slug;
     const action = requireCommandHost().resolveAction(slug);
     if (action?.component) {
@@ -105,6 +121,7 @@
                       isActive={selected === item}
                       width="w-40"
                       onclick={() => {
+                        if (openInRightModal(item)) return;
                         selected = item;
                         const action = requireCommandHost().resolveAction(item);
                         if (action?.component) pageAction = action;
