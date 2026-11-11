@@ -33,10 +33,17 @@ const locks = {
   })
 };
 
+/**
+ * Loads a fresh copy of the access trail store, standing in for another
+ * window of the account that shares the storage and the locks.
+ */
 async function openWindow() {
   vi.resetModules();
   return loadAccessTrailStore(storage.kv, "account");
 }
+
+const first = await openWindow();
+const second = await openWindow();
 
 beforeEach(() => {
   Object.defineProperty(navigator, "locks", {
@@ -52,9 +59,8 @@ afterEach(() => {
 
 describe("accessTrail in two windows of one account", () => {
   it("keeps both windows' trails when they save at the same time", async () => {
+    expect(second).not.toBe(first);
     vi.useFakeTimers();
-    const first = await openWindow();
-    const second = await openWindow();
     first.get();
     second.get();
     await vi.advanceTimersByTimeAsync(20);
