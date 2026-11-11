@@ -191,7 +191,7 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 ### Sync Impact Report
 
 - Version change: 1.12.0 to 1.12.1.
-- Expanded the Entire hooks section to agent hooks: Claude Code hooks are committed in `.claude/settings.json`, Cursor hooks move to the global `~/.cursor/hooks.json` through a wrapper that runs Entire in the event's workspace, and Entire CLI 0.12.2 is the minimum version. No test or user-facing behavior authorization rules changed.
+- Expanded the Entire hooks section to agent hooks: Claude Code hooks are committed in `.claude/settings.json`, Cursor hooks move to the global `~/.cursor/hooks.json` through a wrapper that runs Entire in the first workspace root with Entire set up, and Entire CLI 0.12.2 is the minimum version. No test or user-facing behavior authorization rules changed.
 
 - Version change: 1.11.3 to 1.12.0.
 - Updated the shell charter for the layered page model, the top bar context zone and the navigator's access trails, and the app menu (left panel), and marked app tabs as retired while their retained tab state stays with the shell (TIDY-484, TIDY-487, TIDY-488).
@@ -248,19 +248,30 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 - Use Entire CLI 0.12.2 or newer. Older versions don't register every hook event in `.claude/settings.json` (for example `stop-failure`), so some sessions go unrecorded.
 - Claude Code hooks are committed in `.claude/settings.json`. Put personal Claude settings in `.claude/settings.local.json`, which stays ignored.
 - Entire's Codex and Cursor hooks live in the global configs (`~/.codex/hooks.json` and `~/.cursor/hooks.json`). Do not add or commit a repo-level `.codex/hooks.json` or `.cursor/hooks.json`.
-- `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, delete the file afterwards. Both files are gitignored, so they won't show in `git status`, but agents still run them: a leftover `.cursor/hooks.json` next to the global hooks makes every Cursor event run Entire's hook twice.
-- Cursor runs global hooks from `~/.cursor/`, and Entire skips silently outside a git repository, so the plain `entire hooks cursor <event>` commands record nothing from the global file. Save this wrapper as `~/.cursor/hooks/entire-cursor.sh` (`chmod +x`). It moves into the event's first workspace root and passes the payload on:
+- `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, delete the file afterwards. Both files are gitignored, so they won't show in `git status`, but agents still run them.
+- Cursor runs global hooks from `~/.cursor/`, and Entire skips silently outside a git repository, so the plain `entire hooks cursor <event>` commands record nothing from the global file. Save this wrapper as `~/.cursor/hooks/entire-cursor.sh` (`chmod +x`; it needs `jq`). It moves into the first workspace root that has Entire set up and passes the payload on. In a multi-root workspace only that repo records the session. It does nothing in a repo that commits its own Entire Cursor hooks, so those don't run twice:
 
   ```sh
   #!/bin/sh
   # Global Cursor hook for Entire: entire-cursor.sh <entire cursor hook name>
   # Cursor runs user hooks (~/.cursor/hooks.json) from ~/.cursor/, but Entire finds
-  # the repo from its working directory. Move into the event's workspace root first,
-  # then hand Entire the same JSON payload on stdin.
+  # the repo from its working directory. Move into the first workspace root that has
+  # Entire set up, then hand Entire the same JSON payload on stdin.
   command -v entire >/dev/null 2>&1 || { cat >/dev/null; exit 0; }
   input=$(cat)
-  root=$(printf '%s' "$input" | jq -r '.workspace_roots[0] // empty' 2>/dev/null)
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "entire-cursor.sh: jq not found; Cursor session not recorded by Entire" >&2
+    exit 0
+  fi
+  root=$(printf '%s' "$input" | jq -r '.workspace_roots[]? // empty' 2>/dev/null |
+    while IFS= read -r r; do
+      if [ -d "$r/.entire" ] && git -C "$r" rev-parse --git-dir >/dev/null 2>&1; then
+        printf '%s\n' "$r"; break
+      fi
+    done)
   if [ -z "$root" ] || ! cd "$root" 2>/dev/null; then exit 0; fi
+  # A repo that commits its own Entire Cursor hooks already records the event.
+  grep -q 'entire hooks cursor' .cursor/hooks.json 2>/dev/null && exit 0
   printf '%s\n' "$input" | exec entire hooks cursor "$1"
   ```
 
