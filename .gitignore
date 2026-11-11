@@ -89,3 +89,6 @@ local-context.md
 
 # Codex hooks are global (~/.codex/hooks.json); never commit repo-level ones
 .codex/hooks.json
+
+# Cursor hooks are global (~/.cursor/hooks.json); never commit repo-level ones
+.cursor/hooks.json
