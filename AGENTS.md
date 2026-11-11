@@ -190,6 +190,9 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 
 ### Sync Impact Report
 
+- Version change: 1.12.0 to 1.12.1.
+- Expanded the Entire hooks section to agent hooks: Claude Code hooks are committed in `.claude/settings.json`, Cursor hooks move to the global `~/.cursor/hooks.json` through a wrapper that runs Entire in the event's workspace, and Entire CLI 0.12.2 is the minimum version. No test or user-facing behavior authorization rules changed.
+
 - Version change: 1.11.3 to 1.12.0.
 - Updated the shell charter for the layered page model, the top bar context zone and the navigator's access trails, and the app menu (left panel), and marked app tabs as retired while their retained tab state stays with the shell (TIDY-484, TIDY-487, TIDY-488).
 - Updated the shell chrome inventory and added the context-zone registration rule: the search input, capture, and left nav profile section snippets are removed, quick actions, persistent indicators, and panel actions come from product base layers, and page controls enter the top bar only through `ContextZoneContent`.
@@ -238,10 +241,28 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 - Narrowed `client/application` toward the composition root, modal orchestration, record presentation, and app-specific integrations.
 - Synchronized the architecture references and per-layer charter READMEs; retained existing test and UI authorization rules.
 
-**Version**: 1.12.0 | **Ratified**: 2025-09-27 | **Last Amended**: 2026-11-05
+**Version**: 1.12.1 | **Ratified**: 2025-09-27 | **Last Amended**: 2026-11-11
 
-## Codex and Cursor hooks (Entire)
+## Agent hooks (Entire)
 
+- Use Entire CLI 0.12.2 or newer. Older versions don't register every hook event in `.claude/settings.json` (for example `stop-failure`), so some sessions go unrecorded.
+- Claude Code hooks are committed in `.claude/settings.json`. Put personal Claude settings in `.claude/settings.local.json`, which stays ignored.
 - Entire's Codex and Cursor hooks live in the global configs (`~/.codex/hooks.json` and `~/.cursor/hooks.json`). Do not add or commit a repo-level `.codex/hooks.json` or `.cursor/hooks.json`.
-- `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, delete the file afterwards. Both files are gitignored, so they won't show in `git status`, but agents still run them: a leftover `.cursor/hooks.json` makes every Cursor event run Entire's hook twice.
-- If the Entire hooks are missing on your machine, add them to `~/.codex/hooks.json` or `~/.cursor/hooks.json`, not to this repo. Without them, sessions in that agent are not recorded.
+- `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, delete the file afterwards. Both files are gitignored, so they won't show in `git status`, but agents still run them: a leftover `.cursor/hooks.json` next to the global hooks makes every Cursor event run Entire's hook twice.
+- Cursor runs global hooks from `~/.cursor/`, and Entire skips silently outside a git repository, so the plain `entire hooks cursor <event>` commands record nothing from the global file. Save this wrapper as `~/.cursor/hooks/entire-cursor.sh` (`chmod +x`). It moves into the event's first workspace root and passes the payload on:
+
+  ```sh
+  #!/bin/sh
+  # Global Cursor hook for Entire: entire-cursor.sh <entire cursor hook name>
+  # Cursor runs user hooks (~/.cursor/hooks.json) from ~/.cursor/, but Entire finds
+  # the repo from its working directory. Move into the event's workspace root first,
+  # then hand Entire the same JSON payload on stdin.
+  command -v entire >/dev/null 2>&1 || { cat >/dev/null; exit 0; }
+  input=$(cat)
+  root=$(printf '%s' "$input" | jq -r '.workspace_roots[0] // empty' 2>/dev/null)
+  if [ -z "$root" ] || ! cd "$root" 2>/dev/null; then exit 0; fi
+  printf '%s\n' "$input" | exec entire hooks cursor "$1"
+  ```
+
+  Then add one entry per event to `~/.cursor/hooks.json`, keeping existing entries: `{"command": "./hooks/entire-cursor.sh <event>"}` for `sessionStart` → `session-start`, `beforeSubmitPrompt` → `before-submit-prompt`, `stop` → `stop`, `preCompact` → `pre-compact`, `subagentStart` → `subagent-start`, `subagentStop` → `subagent-stop` and `sessionEnd` → `session-end`.
+- If the Codex hooks are missing on your machine, add them to `~/.codex/hooks.json`, not to this repo. Without the global hooks, that agent's sessions are not recorded.
