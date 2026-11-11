@@ -240,8 +240,8 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 
 **Version**: 1.12.0 | **Ratified**: 2025-09-27 | **Last Amended**: 2026-11-05
 
-## Codex hooks (Entire)
+## Codex and Cursor hooks (Entire)
 
-- Entire's Codex hooks live in the global Codex config (`~/.codex/hooks.json`). Do not add or commit a repo-level `.codex/hooks.json`.
-- `entire enable` and `entire agent add codex` write `.codex/hooks.json` into the repo. If you run either one, delete that file afterwards; it is gitignored so it should never reach a commit.
-- If the Entire hooks are missing on your machine, add them to `~/.codex/hooks.json`, not to this repo.
+- Entire's Codex and Cursor hooks live in the global configs (`~/.codex/hooks.json` and `~/.cursor/hooks.json`). Do not add or commit a repo-level `.codex/hooks.json` or `.cursor/hooks.json`.
+- `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, delete the file afterwards. Both files are gitignored, so they won't show in `git status`, but agents still run them: a leftover `.cursor/hooks.json` makes every Cursor event run Entire's hook twice.
+- If the Entire hooks are missing on your machine, add them to `~/.codex/hooks.json` or `~/.cursor/hooks.json`, not to this repo. Without them, sessions in that agent are not recorded.
