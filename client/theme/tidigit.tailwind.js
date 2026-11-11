@@ -257,6 +257,8 @@ export default {
         "cs_tidigit_dark_orange",
         "cs_solarized_light",
         "cs_solarized_dark",
+        "cs_graphite_light",
+        "cs_graphite_dark",
         "border-brs1",
         "border-brs2",
         "border-brs3",

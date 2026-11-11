@@ -278,6 +278,7 @@
     dark: $appearance?.colorScheme?.isDark
   })}
   data-app-style={appStyle}
+  data-frame-palette={$appearance?.colorScheme?.hasFramePalette ? "" : undefined}
   style:--app-control-radius={appStyleTokens["--app-control-radius"]}
   style:--app-panel-radius={appStyleTokens["--app-panel-radius"]}
   style:--app-tab-radius={appStyleTokens["--app-tab-radius"]}
@@ -293,6 +294,45 @@
 </div>
 
 <style>
+  :global([data-frame-palette] .app-chrome) {
+    --colors-bgs1: var(--colors-fbgs1);
+    --colors-bgs2: var(--colors-fbgs2);
+    --colors-bgs3: var(--colors-fbgs3);
+    --colors-bgs4: var(--colors-fbgs4);
+    --colors-bgs5: var(--colors-fbgs5);
+    --colors-fgs1: var(--colors-ffgs1);
+    --colors-fgs2: var(--colors-ffgs2);
+    --colors-fgs3: var(--colors-ffgs3);
+    --colors-fgs4: var(--colors-ffgs4);
+    --colors-brs1: var(--colors-fbrs1);
+    --colors-brs2: var(--colors-fbrs2);
+    --colors-brs3: var(--colors-fbrs3);
+    --colors-brs4: var(--colors-fbrs4);
+    --colors-aps1: var(--colors-faps1);
+    --colors-aps2: var(--colors-faps2);
+    --colors-aps3: var(--colors-faps3);
+    --colors-onaps3: var(--colors-fonaps3);
+  }
+
+  :global([data-frame-palette] .app-chrome .app-content) {
+    --colors-bgs1: var(--colors-cbgs1);
+    --colors-bgs2: var(--colors-cbgs2);
+    --colors-bgs3: var(--colors-cbgs3);
+    --colors-bgs4: var(--colors-cbgs4);
+    --colors-bgs5: var(--colors-cbgs5);
+    --colors-fgs1: var(--colors-cfgs1);
+    --colors-fgs2: var(--colors-cfgs2);
+    --colors-fgs3: var(--colors-cfgs3);
+    --colors-fgs4: var(--colors-cfgs4);
+    --colors-brs1: var(--colors-cbrs1);
+    --colors-brs2: var(--colors-cbrs2);
+    --colors-brs3: var(--colors-cbrs3);
+    --colors-brs4: var(--colors-cbrs4);
+    --colors-aps1: var(--colors-caps1);
+    --colors-aps2: var(--colors-caps2);
+    --colors-aps3: var(--colors-caps3);
+  }
+
   /* TODO  - clipper case - the need for below typeface settings  */
 
   #nthemeclipper {
