@@ -42,6 +42,15 @@ const retiredEnumContracts = new Map([
   [
     "client/features/spaces/combination/combination.type.ts",
     [{ name: "CombinationType" }]
+  ],
+  [
+    "client/types/interaction-mode.type.ts",
+    [
+      {
+        name: "InteractionMode",
+        retiredPath: "client/ui/elements/keyboard/interaction-mode.type.ts"
+      }
+    ]
   ]
 ]);
 
@@ -116,7 +125,6 @@ const changedEnumContracts = new Map([
           BACK: "back",
           EDIT: "edit",
           TYPE: "type",
-          TAB: "tab",
           PANEL: "panel",
           VIEW: "view",
           LINK: "link",
@@ -156,7 +164,6 @@ const changedEnumContracts = new Map([
           CMD: "CMD",
           CLOSE: "CLOSE",
           CREATE: "create",
-          MODE_OF_INTERACTION: "MODE_OF_INTERACTION",
           EDIT_MODE: "EDIT_MODE",
           USER_LOGIN: "USER_LOGIN",
           USER_SIGNUP: "USER_SIGNUP",

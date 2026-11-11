@@ -16,16 +16,6 @@ import {
 const appStorePath = resolveRepoFsImportPath(
   "client/shared-state/app-context/app.store.ts"
 );
-const interactionModePath = resolveRepoFsImportPath(
-  "client/ui/elements/keyboard/interaction-mode.type.ts"
-);
-const actionEnumPath = resolveRepoFsImportPath("client/config/action.enum.ts");
-const uiStateStorePath = resolveRepoFsImportPath(
-  "client/shared-state/preferences/ui-state/uiState.store.ts"
-);
-const uiStateTypePath = resolveRepoFsImportPath(
-  "client/shared-state/preferences/ui-state/uiState.type.ts"
-);
 
 async function readGlobalEditMode(page: import("@playwright/test").Page) {
   return page.evaluate(
@@ -40,33 +30,6 @@ async function readGlobalEditMode(page: import("@playwright/test").Page) {
     },
     { modulePath: appStorePath }
   );
-}
-
-/** Restores the interaction-mode precondition without relying on hidden app chrome. */
-async function resetInteractionModeToDefault(
-  page: import("@playwright/test").Page
-) {
-  await page.evaluate(
-    async ({ modulePaths }) => {
-      const { InteractionMode } = await import(modulePaths.interactionModePath);
-      const { Action } = await import(modulePaths.actionEnumPath);
-      const { uiState } = await import(modulePaths.uiStateStorePath);
-      const { UIStateScope } = await import(modulePaths.uiStateTypePath);
-      uiState.setState(Action.MODE_OF_INTERACTION, InteractionMode.DEFAULT, {
-        scope: UIStateScope.PRODUCT
-      });
-    },
-    {
-      modulePaths: {
-        actionEnumPath,
-        interactionModePath,
-        uiStateStorePath,
-        uiStateTypePath
-      }
-    }
-  );
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await ensureInAppOnHome(page);
 }
 
 function isNucleumProject(projectName: string) {
@@ -183,7 +146,7 @@ test.describe("settings - open, close, navigate (shared) @settings @smoke", () =
   });
 });
 
-test.describe("settings - Mode of interaction (comprehensive) @settings", () => {
+test.describe("settings - Interface and keyboard shortcuts (comprehensive) @settings", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -192,7 +155,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     });
   });
 
-  async function openModeOfInteraction(page: import("@playwright/test").Page) {
+  async function openInterfaceSettings(page: import("@playwright/test").Page) {
     await openSettings(page);
     await expect(
       page.getByText("Settings", { exact: true }).first()
@@ -201,29 +164,27 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     });
     await page
       .getByTestId("settings-sidebar")
-      .getByRole("button", { name: /^Mode of interaction$/i })
+      .getByRole("button", { name: /^Appearance$/i })
       .click({ timeout: 5_000 });
-    const panel = page.getByTestId("mode-of-interaction-settings");
+    const panel = page.getByTestId("appearance-interface-settings");
     await expect(panel).toBeVisible({ timeout: 10_000 });
     await panel.scrollIntoViewIfNeeded();
   }
 
-  async function reopenModeOfInteractionPanel(
-    page: import("@playwright/test").Page
-  ) {
-    const sidebar = page.getByTestId("settings-sidebar");
-    await sidebar
-      .getByRole("button", { name: /^Appearance$/i })
-      .click({ timeout: 5_000 });
-    await expect(page.getByTestId("mode-of-interaction-settings")).toBeHidden({
-      timeout: 5_000
+  async function openShortcutSettings(page: import("@playwright/test").Page) {
+    await openSettings(page);
+    await expect(
+      page.getByText("Settings", { exact: true }).first()
+    ).toBeVisible({
+      timeout: 10_000
     });
-    await sidebar
-      .getByRole("button", { name: /^Mode of interaction$/i })
+    await page
+      .getByTestId("settings-sidebar")
+      .getByRole("button", { name: /^Keyboard shortcuts$/i })
       .click({ timeout: 5_000 });
-    await expect(page.getByTestId("mode-of-interaction-settings")).toBeVisible({
-      timeout: 5_000
-    });
+    const panel = page.getByTestId("keyboard-shortcut-settings");
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+    await panel.scrollIntoViewIfNeeded();
   }
 
   async function openKeyboardShortcuts(page: import("@playwright/test").Page) {
@@ -415,44 +376,6 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await expect(themeRoot).not.toHaveClass(/dark/, { timeout: 5_000 });
   });
 
-  test("Mode of interaction: all sections and controls visible", async ({
-    page
-  }, testInfo) => {
-    test.skip(
-      !isMemorySettingsProject(testInfo.project.name),
-      "Shared mode-of-interaction panel is not part of this product contract"
-    );
-    test.setTimeout(45_000);
-    await ensureInAppOnHome(page);
-    await openModeOfInteraction(page);
-
-    await expect(
-      page.getByText("Mode of interaction", { exact: true }).first()
-    ).toBeVisible({
-      timeout: 8_000
-    });
-    await expect(
-      page.getByText("Preferred mode of interaction", { exact: true }).first()
-    ).toBeVisible({ timeout: 5_000 });
-    await expect(
-      page.getByRole("button", { name: /^Default$/i }).first()
-    ).toBeVisible({ timeout: 5_000 });
-    await expect(
-      page.getByRole("button", { name: /^Home only$/i }).first()
-    ).toBeVisible({ timeout: 5_000 });
-
-    await expect(
-      page
-        .getByText("Hide all hot key and shortcut hints", { exact: true })
-        .first()
-    ).toBeVisible({ timeout: 5_000 });
-    await expect(
-      page.getByText("Hide App menu bar on hot key", { exact: true }).first()
-    ).toBeVisible({ timeout: 5_000 });
-
-    await assertKeyboardShortcutsContentVisible(page);
-  });
-
   test("Keyboard shortcuts: open from sidebar and assert same content visible", async ({
     page
   }, testInfo) => {
@@ -466,63 +389,13 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await assertKeyboardShortcutsContentVisible(page);
   });
 
-  test("Mode of interaction: switch Default → Home only, toggles hidden; switch back to Default", async ({
-    page
-  }) => {
-    test.setTimeout(45_000);
-    await ensureInAppOnHome(page);
-    await resetInteractionModeToDefault(page);
-    await openModeOfInteraction(page);
-
-    await page
-      .getByRole("button", { name: /^Home only$/i })
-      .first()
-      .click({ timeout: 5_000 });
-
-    await expect(page.getByTestId("toggle-hide-shortcut-hints")).toBeHidden({
-      timeout: 3_000
-    });
-    await expect(page.getByTestId("toggle-hide-menu-bar")).toBeHidden({
-      timeout: 3_000
-    });
-
-    await reopenModeOfInteractionPanel(page);
-    await expect(page.getByTestId("toggle-hide-shortcut-hints")).toBeHidden({
-      timeout: 3_000
-    });
-    await expect(page.getByTestId("toggle-hide-menu-bar")).toBeHidden({
-      timeout: 3_000
-    });
-
-    await page
-      .getByRole("button", { name: /^Default$/i })
-      .first()
-      .click({ timeout: 5_000 });
-
-    await expect(page.getByTestId("toggle-hide-shortcut-hints")).toBeVisible({
-      timeout: 5_000
-    });
-    await expect(page.getByTestId("toggle-hide-menu-bar")).toBeVisible({
-      timeout: 5_000
-    });
-
-    await reopenModeOfInteractionPanel(page);
-    await expect(page.getByTestId("toggle-hide-shortcut-hints")).toBeVisible({
-      timeout: 5_000
-    });
-    await expect(page.getByTestId("toggle-hide-menu-bar")).toBeVisible({
-      timeout: 5_000
-    });
-    await closeSettings(page);
-  });
-
-  test("Mode of interaction: enable Hide shortcut hints, verify setting persists and toggle reflects it, then disable", async ({
+  test("Interface: enable Hide shortcut hints, verify setting persists and toggle reflects it, then disable", async ({
     page
   }) => {
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
 
-    await openModeOfInteraction(page);
+    await openInterfaceSettings(page);
     const container = page.getByTestId("toggle-hide-shortcut-hints");
     await container.waitFor({ state: "visible", timeout: 5_000 });
     const checkbox = container.locator('input[type="checkbox"]');
@@ -536,7 +409,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
 
-    await openModeOfInteraction(page);
+    await openInterfaceSettings(page);
     const checkboxAfter = page
       .getByTestId("toggle-hide-shortcut-hints")
       .locator('input[type="checkbox"]');
@@ -550,7 +423,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
       timeout: 5_000
     });
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await openModeOfInteraction(page);
+    await openInterfaceSettings(page);
     const checkboxRestored = page
       .getByTestId("toggle-hide-shortcut-hints")
       .locator('input[type="checkbox"]');
@@ -561,7 +434,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
   });
 
-  test("Mode of interaction: enable Hide menu bar on Q and verify Q hides/shows left nav, then disable", async ({
+  test("Interface: enable Hide menu bar on Q and verify Q hides/shows left nav, then disable", async ({
     page
   }) => {
     test.setTimeout(60_000);
@@ -571,7 +444,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
       timeout: 10_000
     });
 
-    await openModeOfInteraction(page);
+    await openInterfaceSettings(page);
     const container = page.getByTestId("toggle-hide-menu-bar");
     await container.waitFor({ state: "visible", timeout: 5_000 });
     const checkbox = container.locator('input[type="checkbox"]');
@@ -584,7 +457,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
 
     await closeSettings(page);
 
-    await openModeOfInteraction(page);
+    await openInterfaceSettings(page);
     await expect(
       page.getByTestId("toggle-hide-menu-bar").locator('input[type="checkbox"]')
     ).toBeChecked({ timeout: 5_000 });
@@ -604,7 +477,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
       timeout: 5_000
     });
 
-    await openModeOfInteraction(page);
+    await openInterfaceSettings(page);
     const checkbox2 = page
       .getByTestId("toggle-hide-menu-bar")
       .locator('input[type="checkbox"]');
@@ -614,14 +487,14 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
       timeout: 5_000
     });
     await closeSettings(page);
-    await openModeOfInteraction(page);
+    await openInterfaceSettings(page);
     await expect(
       page.getByTestId("toggle-hide-menu-bar").locator('input[type="checkbox"]')
     ).toBeChecked({ checked: wasChecked, timeout: 5_000 });
     await closeSettings(page);
   });
 
-  test("Mode of interaction: See hot keys - open, verify list, close modals, then run each hot key and verify", async ({
+  test("Keyboard shortcuts: See hot keys - open, verify list, close modals, then run each hot key and verify", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -631,13 +504,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
 
-    await openModeOfInteraction(page);
-    const defaultModeBtn = page
-      .getByRole("button", { name: /^Default$/i })
-      .first();
-    if (await defaultModeBtn.isVisible().catch(() => false)) {
-      await defaultModeBtn.click({ timeout: 5_000 }).catch(() => null);
-    }
+    await openShortcutSettings(page);
 
     await page
       .getByRole("button", { name: /^See hot keys$/i })
@@ -727,7 +594,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await page.keyboard.press("Escape");
   });
 
-  test("Mode of interaction: See hot keys opens, verify each shortcut listed, then verify C/L/F/O/P/Q/Space trigger actions", async ({
+  test("Keyboard shortcuts: See hot keys opens, verify each shortcut listed, then verify C/L/F/O/P/Q/Space trigger actions", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -736,7 +603,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await openModeOfInteraction(page);
+    await openInterfaceSettings(page);
 
     const menuBarContainer = page.getByTestId("toggle-hide-menu-bar");
     await menuBarContainer.waitFor({ state: "visible", timeout: 5_000 });
@@ -750,6 +617,14 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
         .click({ timeout: 5_000 });
     }
     await expect(menuBarCheckbox).toBeChecked({ timeout: 5_000 });
+
+    await page
+      .getByTestId("settings-sidebar")
+      .getByRole("button", { name: /^Keyboard shortcuts$/i })
+      .click({ timeout: 5_000 });
+    await expect(page.getByTestId("keyboard-shortcut-settings")).toBeVisible({
+      timeout: 10_000
+    });
 
     await page
       .getByRole("button", { name: /^See hot keys$/i })
@@ -874,7 +749,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await page.keyboard.press("Escape");
 
     if (!menuBarWasChecked) {
-      await openModeOfInteraction(page);
+      await openInterfaceSettings(page);
       await page
         .getByTestId("toggle-hide-menu-bar")
         .locator("label:has(input[type='checkbox'])")
@@ -891,12 +766,12 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     }
   });
 
-  test("Mode of interaction: See markdown shortcuts opens (then close)", async ({
+  test("Keyboard shortcuts: See markdown shortcuts opens (then close)", async ({
     page
   }) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
 
     await page
       .getByRole("button", { name: /^See markdown shortcuts$/i })
@@ -912,7 +787,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await page.keyboard.press("Escape");
   });
 
-  test("Mode of interaction: shortcut rows have editable key (Command bar, Edit mode, Search, Go back, Go forward)", async ({
+  test("Keyboard shortcuts: shortcut rows have editable key (Command bar, Edit mode, Search, Go back, Go forward)", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -921,9 +796,9 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     );
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
 
-    const panel = page.getByTestId("mode-of-interaction-settings");
+    const panel = page.getByTestId("keyboard-shortcut-settings");
     await panel.scrollIntoViewIfNeeded();
     for (const label of [
       "Command bar",
@@ -973,9 +848,9 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     expect(savedValue).not.toBe("");
     await closeSettings(page);
 
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
     const reopenedRow = page
-      .getByTestId("mode-of-interaction-settings")
+      .getByTestId("keyboard-shortcut-settings")
       .getByText(rowLabel, { exact: true })
       .locator("..");
     await expect(
@@ -989,8 +864,8 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     rowLabel: string,
     defaultCombo: string
   ) {
-    await openModeOfInteraction(page);
-    const panel2 = page.getByTestId("mode-of-interaction-settings");
+    await openShortcutSettings(page);
+    const panel2 = page.getByTestId("keyboard-shortcut-settings");
     await panel2.scrollIntoViewIfNeeded();
     const row2 = panel2.getByText(rowLabel, { exact: true }).locator("..");
     await row2.locator("button").first().click({ timeout: 5_000 });
@@ -1011,9 +886,9 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     expect(restoredValue).not.toBe("");
     await closeSettings(page);
 
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
     const reopenedRow = page
-      .getByTestId("mode-of-interaction-settings")
+      .getByTestId("keyboard-shortcut-settings")
       .getByText(rowLabel, { exact: true })
       .locator("..");
     await expect(
@@ -1022,7 +897,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await closeSettings(page);
   }
 
-  test("Mode of interaction: change Command bar shortcut, verify it opens command bar, then reset to default", async ({
+  test("Keyboard shortcuts: change Command bar shortcut, verify it opens command bar, then reset to default", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -1031,13 +906,13 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    const panel = page.getByTestId("mode-of-interaction-settings");
+    const panel = page.getByTestId("keyboard-shortcut-settings");
 
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     const newCombo = `${modifier}+Shift+Alt+KeyO`;
     const defaultCombo = `${modifier}+KeyK`;
 
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
     await changeShortcutAndClose(page, panel, "Command bar", newCombo);
 
     await page.keyboard.press(newCombo);
@@ -1051,7 +926,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await resetShortcutAndClose(page, "Command bar", defaultCombo);
   });
 
-  test("Mode of interaction: change Search shortcut, verify it opens search, then reset to default", async ({
+  test("Keyboard shortcuts: change Search shortcut, verify it opens search, then reset to default", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -1060,12 +935,12 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    const panel = page.getByTestId("mode-of-interaction-settings");
+    const panel = page.getByTestId("keyboard-shortcut-settings");
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     const newCombo = `${modifier}+Shift+Alt+KeyK`;
     const defaultCombo = `${modifier}+Shift+KeyK`;
 
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
     await changeShortcutAndClose(page, panel, "Search", newCombo);
 
     await page.keyboard.press(newCombo);
@@ -1077,7 +952,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await resetShortcutAndClose(page, "Search", defaultCombo);
   });
 
-  test("Mode of interaction: change Edit mode shortcut, verify it triggers, then reset to default", async ({
+  test("Keyboard shortcuts: change Edit mode shortcut, verify it triggers, then reset to default", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -1086,33 +961,33 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    const panel = page.getByTestId("mode-of-interaction-settings");
+    const panel = page.getByTestId("keyboard-shortcut-settings");
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     const newCombo = `${modifier}+Shift+Alt+KeyE`;
     const defaultCombo = `${modifier}+KeyE`;
 
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
     await changeShortcutAndClose(page, panel, "Edit mode", newCombo);
 
     await page.keyboard.press(newCombo);
     await expect
       .poll(() => readGlobalEditMode(page), {
         message:
-          "Mode of interaction: change Edit mode shortcut, verify it tri...: toBe true"
+          "Keyboard shortcuts: change Edit mode shortcut, verify it tri...: toBe true"
       })
       .toBe(true);
     await page.keyboard.press(newCombo);
     await expect
       .poll(() => readGlobalEditMode(page), {
         message:
-          "Mode of interaction: change Edit mode shortcut, verify it tri...: toBe false"
+          "Keyboard shortcuts: change Edit mode shortcut, verify it tri...: toBe false"
       })
       .toBe(false);
 
     await resetShortcutAndClose(page, "Edit mode", defaultCombo);
   });
 
-  test("Mode of interaction: change Go back shortcut, verify it navigates back, then reset to default", async ({
+  test("Keyboard shortcuts: change Go back shortcut, verify it navigates back, then reset to default", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -1129,12 +1004,12 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
       timeout: 10_000
     });
 
-    const panel = page.getByTestId("mode-of-interaction-settings");
+    const panel = page.getByTestId("keyboard-shortcut-settings");
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     const newCombo = `${modifier}+Shift+Alt+KeyB`;
     const defaultCombo = `${modifier}+Shift+KeyB`;
 
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
     await changeShortcutAndClose(page, panel, "Go back", newCombo);
 
     await page.keyboard.press(newCombo);
@@ -1147,7 +1022,7 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
     await resetShortcutAndClose(page, "Go back", defaultCombo);
   });
 
-  test("Mode of interaction: change Go forward shortcut, verify it navigates forward, then reset to default", async ({
+  test("Keyboard shortcuts: change Go forward shortcut, verify it navigates forward, then reset to default", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -1173,12 +1048,12 @@ test.describe("settings - Mode of interaction (comprehensive) @settings", () => 
       timeout: 8_000
     });
 
-    const panel = page.getByTestId("mode-of-interaction-settings");
+    const panel = page.getByTestId("keyboard-shortcut-settings");
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     const newCombo = `${modifier}+Shift+Alt+KeyF`;
     const defaultCombo = `${modifier}+Shift+KeyF`;
 
-    await openModeOfInteraction(page);
+    await openShortcutSettings(page);
     await changeShortcutAndClose(page, panel, "Go forward", newCombo);
 
     await page.keyboard.press(newCombo);

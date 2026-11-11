@@ -70,7 +70,6 @@ export interface IProductE2ECapabilitiesConfig {
     focusPanel: boolean;
     nodeSettingsPanel: boolean;
     sharedSidebarSmoke: boolean;
-    sharedModeOfInteraction: boolean;
     sharedHotKeyMatrix: boolean;
     sharedShortcutCustomization: boolean;
     focusPipToggle: boolean;
@@ -157,7 +156,6 @@ export const productE2EConfigs = {
         focusPanel: true,
         nodeSettingsPanel: true,
         sharedSidebarSmoke: true,
-        sharedModeOfInteraction: true,
         sharedHotKeyMatrix: true,
         sharedShortcutCustomization: true,
         focusPipToggle: true,
@@ -241,7 +239,6 @@ export const productE2EConfigs = {
         focusPanel: false,
         nodeSettingsPanel: true,
         sharedSidebarSmoke: false,
-        sharedModeOfInteraction: true,
         sharedHotKeyMatrix: false,
         sharedShortcutCustomization: true,
         focusPipToggle: false,
@@ -325,7 +322,6 @@ export const productE2EConfigs = {
         focusPanel: true,
         nodeSettingsPanel: false,
         sharedSidebarSmoke: false,
-        sharedModeOfInteraction: false,
         sharedHotKeyMatrix: false,
         sharedShortcutCustomization: false,
         focusPipToggle: true,
