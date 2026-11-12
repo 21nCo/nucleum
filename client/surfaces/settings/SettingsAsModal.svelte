@@ -21,6 +21,12 @@
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
   import modalEvent from "@nucleum/shell/overlays/modal.store";
   import view from "@21n/ui/environment/view.store";
+  let {
+    isModal = false
+  }: {
+    /** Whether Settings is hosted in a modal rather than rendered as a page. */
+    isModal?: boolean;
+  } = $props();
   const ComponentResolver = requireActionRenderer();
   let selected: string = $state("");
   let parentBgIndex: number = 2;
@@ -38,13 +44,19 @@
   });
   /**
    * Appearance previews live in its own right-side modal on wide screens, so
-   * selecting it closes Settings and opens that modal instead of rendering it
-   * inside Settings. Returns whether it did.
+   * selecting it closes the Settings modal and opens that modal instead of
+   * rendering it inside Settings. Settings rendered as a page (portrait) cannot
+   * be closed here, so it keeps Appearance inline. Returns whether it did.
    */
   function openInRightModal(slug: string) {
-    if (slug !== Action.APPEARANCE_SETTINGS || $view.isConstrainedWidth)
+    if (
+      slug !== Action.APPEARANCE_SETTINGS ||
+      !isModal ||
+      $view.isConstrainedWidth
+    )
       return false;
-    if (settingSearchParam) navigation.toggleSearchParam([AppSearchParam.SETTING]);
+    if (settingSearchParam)
+      navigation.toggleSearchParam([AppSearchParam.SETTING]);
     modalEvent.hide(Action.SETTINGS, "SettingsAsModal");
     requireCommandHost().runAction(Action.APPEARANCE_SETTINGS);
     return true;
