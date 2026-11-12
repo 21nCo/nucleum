@@ -62,7 +62,7 @@ export function hasLayerInFront() {
 /**
  * Whether a pane's page keys should run: its layer is visible, the element is
  * not inside a covered (inert) part of the page, and it is the pane the user
- * works in when one is set.
+ * works in, or else the pane the top bar describes.
  */
 export function isKeyTargetPane(
   pane: ContextZonePane,
@@ -71,6 +71,6 @@ export function isKeyTargetPane(
   if (element?.closest("[inert]")) return false;
   const visible = get(contextZone.visibleLayers);
   if (visible && !visible.has(pane.layer)) return false;
-  const active = get(contextZone.activePaneId);
+  const active = get(contextZone.activePaneId) ?? get(contextZone.pane)?.id;
   return active === undefined || active === pane.id;
 }

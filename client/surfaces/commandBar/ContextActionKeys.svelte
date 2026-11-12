@@ -18,6 +18,7 @@
     isPlainPageKey
   } from "@nucleum/shell/shortcuts/page-keys";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
+  import { finishEditMode } from "@nucleum/shared-state/resources/edit-mode-finish";
   import { Action } from "@nucleum/client/config/action.enum";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import context from "@nucleum/client/runtime/context.store";
@@ -71,7 +72,8 @@
 
   /**
    * The edit mode shortcut (Cmd+E) toggles the open resource's own edit mode
-   * when it has one, also from inside its editor, so it can close edit mode.
+   * when it has one, also from inside its editor, so it can close edit mode;
+   * an open editor saves its pending changes first, as the Done button does.
    * Otherwise the shortcut runner toggles the app's edit mode as before.
    */
   function onEditShortcut(event: KeyboardEvent) {
@@ -93,9 +95,11 @@
     if (!action) return;
     event.preventDefault();
     event.stopPropagation();
-    void runContextAction(action, {
-      runCommand: (command) => requireCommandHost().runAction(command),
-      onAction: entry.onAction
+    void finishEditMode(entry.id, () => {
+      void runContextAction(action, {
+        runCommand: (command) => requireCommandHost().runAction(command),
+        onAction: entry.onAction
+      });
     });
   }
 </script>
