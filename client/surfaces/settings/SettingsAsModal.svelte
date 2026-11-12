@@ -21,6 +21,7 @@
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
   import modalEvent from "@nucleum/shell/overlays/modal.store";
   import view from "@21n/ui/environment/view.store";
+  import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   let {
     isModal = false
   }: {
@@ -44,20 +45,24 @@
   });
   /**
    * Appearance previews live in its own right-side modal on wide screens, so
-   * selecting it closes the Settings modal and opens that modal instead of
-   * rendering it inside Settings. Settings rendered as a page (portrait) cannot
-   * be closed here, so it keeps Appearance inline. Returns whether it did.
+   * selecting it closes Settings and opens that modal instead of rendering it
+   * inside Settings. Settings hosted in a modal is hidden; Settings rendered as
+   * the page (portrait) is replaced by its return path, else the product's
+   * home, so the app shows beside the drawer and Back does not reopen
+   * Settings. Returns whether it handed off.
    */
   function openInRightModal(slug: string) {
-    if (
-      slug !== Action.APPEARANCE_SETTINGS ||
-      !isModal ||
-      $view.isConstrainedWidth
-    )
+    if (slug !== Action.APPEARANCE_SETTINGS || $view.isConstrainedWidth)
       return false;
-    if (settingSearchParam)
-      navigation.toggleSearchParam([AppSearchParam.SETTING]);
-    modalEvent.hide(Action.SETTINGS, "SettingsAsModal");
+    if (isModal) {
+      if (settingSearchParam)
+        navigation.toggleSearchParam([AppSearchParam.SETTING]);
+      modalEvent.hide(Action.SETTINGS, "SettingsAsModal");
+    } else {
+      const product = requireProductConfig();
+      const home = $view.isPortrait ? product.homePathPt : product.homePath;
+      navigation.gotoPath(backPath || `/${home}`, { replaceState: true });
+    }
     requireCommandHost().runAction(Action.APPEARANCE_SETTINGS);
     return true;
   }

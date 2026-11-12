@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => {
   const { writable } = require("svelte/store") as typeof import("svelte/store");
   return {
     page: writable({ url: new URL("https://local.nucleum.app/calendar") }),
-    view: writable({ isConstrainedWidth: false }),
+    view: writable({ isConstrainedWidth: false, isPortrait: false }),
     hide: vi.fn(),
     runAction: vi.fn(),
     resolveAction: vi.fn(),
@@ -40,6 +40,12 @@ vi.mock("@nucleum/shared-state/product/surface-config-host", () => ({
         children: ["appearance-settings", "datetime-settings"]
       }
     ]
+  })
+}));
+vi.mock("@nucleum/shared-state/product/product-config-host", () => ({
+  requireProductConfig: () => ({
+    homePath: "calendar",
+    homePathPt: "home"
   })
 }));
 vi.mock("@nucleum/shared-state/resources/action-renderer", async () => {
@@ -83,7 +89,7 @@ describe("SettingsAsModal Appearance handoff", () => {
     mocks.resolveAction.mockImplementation((slug: string) =>
       slug === appearance.action ? appearance : null
     );
-    mocks.view.set({ isConstrainedWidth: false });
+    mocks.view.set({ isConstrainedWidth: false, isPortrait: false });
     mocks.page.set({ url: new URL("https://local.nucleum.app/calendar") });
   });
 
@@ -96,21 +102,27 @@ describe("SettingsAsModal Appearance handoff", () => {
     expect(mocks.hide).toHaveBeenCalledWith("cp", "SettingsAsModal");
     expect(mocks.runAction).toHaveBeenCalledWith("appearance-settings");
     expect(mocks.toggleSearchParam).not.toHaveBeenCalled();
+    expect(mocks.gotoPath).not.toHaveBeenCalled();
   });
 
-  it("keeps Appearance inline when Settings is rendered as a page", async () => {
+  it("leaves page-hosted Settings for its return path and opens the Appearance drawer", async () => {
+    mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
+    mocks.page.set({
+      url: new URL("https://local.nucleum.app/cp?returnTo=%2Fhome")
+    });
     const { getByTestId, queryByTestId } = render(SettingsAsModal, {
       props: { isModal: false }
     });
     await fireEvent.click(getByTestId("setting-appearance-settings"));
     await tick();
 
-    expect(mocks.hide).not.toHaveBeenCalled();
-    expect(mocks.runAction).not.toHaveBeenCalled();
-    expect(mocks.toggleSearchParam).toHaveBeenCalledWith({
-      setting: "appearance-settings"
+    expect(mocks.gotoPath).toHaveBeenCalledWith("/home", {
+      replaceState: true
     });
-    expect(queryByTestId("action-renderer")).toBeTruthy();
+    expect(mocks.runAction).toHaveBeenCalledWith("appearance-settings");
+    expect(mocks.hide).not.toHaveBeenCalled();
+    expect(mocks.toggleSearchParam).not.toHaveBeenCalled();
+    expect(queryByTestId("action-renderer")).toBeNull();
   });
 
   it("hands a deep link to Appearance to the drawer and clears it when Settings is a modal", async () => {
@@ -128,22 +140,41 @@ describe("SettingsAsModal Appearance handoff", () => {
     expect(mocks.toggleSearchParam).toHaveBeenCalledWith(["setting"]);
   });
 
-  it("renders a deep link to Appearance inside page-hosted Settings", async () => {
+  it("replaces a page-hosted Appearance deep link without a return path with the product home", async () => {
+    mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
     mocks.page.set({
       url: new URL("https://local.nucleum.app/cp?setting=appearance-settings")
     });
-    const { findByTestId } = render(SettingsAsModal, {
+    const { queryByTestId } = render(SettingsAsModal, {
       props: { isModal: false }
     });
 
-    expect(await findByTestId("action-renderer")).toBeTruthy();
+    await waitFor(() =>
+      expect(mocks.runAction).toHaveBeenCalledWith("appearance-settings")
+    );
+    expect(mocks.gotoPath).toHaveBeenCalledWith("/home", {
+      replaceState: true
+    });
     expect(mocks.hide).not.toHaveBeenCalled();
-    expect(mocks.runAction).not.toHaveBeenCalled();
     expect(mocks.toggleSearchParam).not.toHaveBeenCalled();
+    expect(queryByTestId("action-renderer")).toBeNull();
+  });
+
+  it("uses the landscape home when page-hosted Settings is shown in landscape", async () => {
+    mocks.page.set({ url: new URL("https://local.nucleum.app/cp") });
+    const { getByTestId } = render(SettingsAsModal, {
+      props: { isModal: false }
+    });
+    await fireEvent.click(getByTestId("setting-appearance-settings"));
+
+    expect(mocks.gotoPath).toHaveBeenCalledWith("/calendar", {
+      replaceState: true
+    });
+    expect(mocks.runAction).toHaveBeenCalledWith("appearance-settings");
   });
 
   it("keeps Appearance inside the Settings modal at constrained widths", async () => {
-    mocks.view.set({ isConstrainedWidth: true });
+    mocks.view.set({ isConstrainedWidth: true, isPortrait: false });
     const { getByTestId } = render(SettingsAsModal, {
       props: { isModal: true }
     });
@@ -151,5 +182,6 @@ describe("SettingsAsModal Appearance handoff", () => {
 
     expect(mocks.hide).not.toHaveBeenCalled();
     expect(mocks.runAction).not.toHaveBeenCalled();
+    expect(mocks.gotoPath).not.toHaveBeenCalled();
   });
 });
