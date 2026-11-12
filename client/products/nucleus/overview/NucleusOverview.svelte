@@ -14,7 +14,7 @@
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import { resolveNucleusOverviewItems } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
-  import { nextCycleValue } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import type { ContextZoneViews } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     subPath = undefined,
@@ -68,17 +68,16 @@
     }
   }
 
-  function cyclePanel() {
-    const panel = parsePanel(
-      nextCycleValue(
-        items.map((item) => String(item.value)),
-        selectedPanel
-      )
-    );
-    if (!panel) return;
-    selectedPanel = panel;
-    savePanel(panel);
-  }
+  const panelViews = $derived<ContextZoneViews>({
+    values: items.map((item) => String(item.value)),
+    active: selectedPanel,
+    select: (value) => {
+      const panel = parsePanel(value);
+      if (!panel) return;
+      selectedPanel = panel;
+      savePanel(panel);
+    }
+  });
 
   function onPanelSelect(event: CustomEvent) {
     const panel = parsePanel(event.detail);
@@ -139,7 +138,7 @@
       onSelect={onPanelSelect}
     />
   {/snippet}
-  <ContextZoneContent cycle={cyclePanel}>
+  <ContextZoneContent views={panelViews}>
     <div class="h-full" data-testid="overview-tabs">
       {@render overviewTabs()}
     </div>

@@ -16,7 +16,7 @@
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import {
     contextZone,
-    nextCycleValue
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
   import {
     isLibrarySwitcherInTopBar,
@@ -65,14 +65,6 @@
     else localSubPath = [resource, subType];
   }
 
-  function cycleResource() {
-    const next = nextCycleValue(
-      contextZoneOptions.map((item) => item.value as Resource),
-      selectedResource
-    );
-    if (next) selectResource(next);
-  }
-
   let recordsPaneRef = $state<LibraryRecordsPane | undefined>();
   let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
 
@@ -86,6 +78,11 @@
     pathResource ??
       ($view.isConstrainedWidth ? Resource.unknown : defaultResource)
   );
+  const resourceViews = $derived<ContextZoneViews>({
+    values: contextZoneOptions.map((item) => String(item.value)),
+    active: selectedResource,
+    select: (value) => selectResource(value as Resource)
+  });
   const selectedSubType = $derived(
     selectedResource === Resource.unknown
       ? undefined
@@ -110,7 +107,7 @@
 </script>
 
 {#if isSwitcherInTopBar}
-  <ContextZoneContent isInlineFallback={false} cycle={cycleResource}>
+  <ContextZoneContent isInlineFallback={false} views={resourceViews}>
     <div class="h-full" data-testid="library-resource-tabs">
       <BoxSwitcher
         isTablist={true}

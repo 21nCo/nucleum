@@ -289,6 +289,8 @@
     });
     if (event.key === KeyboardKey.ESCAPE && focus) {
       mdStore.focus.set(undefined);
+      if (document.activeElement instanceof HTMLElement)
+        document.activeElement.blur();
       event.stopPropagation();
     }
   }

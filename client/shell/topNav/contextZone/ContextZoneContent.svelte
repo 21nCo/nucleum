@@ -4,12 +4,13 @@
   import type { Snippet } from "svelte";
   import {
     contextZone,
-    getContextZonePane
+    getContextZonePane,
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     children,
-    cycle = undefined,
+    views = undefined,
     surface = undefined,
     title = undefined,
     fallback = undefined,
@@ -17,8 +18,8 @@
   }: {
     /** Controls shown in the top bar context zone for this pane. */
     children: Snippet;
-    /** Selects the next tab or view of this entry. */
-    cycle?: () => void;
+    /** Views the keyboard can move between while this entry shows. */
+    views?: ContextZoneViews;
     /** Background class of the context tab, matching the page below. */
     surface?: string;
     /** Replaces the page identity's title while this entry shows. */
@@ -38,8 +39,8 @@
       get content() {
         return children;
       },
-      get cycle() {
-        return cycle;
+      get views() {
+        return views;
       },
       get surface() {
         return surface;
