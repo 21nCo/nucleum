@@ -4,7 +4,10 @@
 
   import type { Snippet } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
-  import type { ISelectItem } from "@21n/ui/elements/select/select.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "@21n/ui/elements/select/select.type";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
@@ -103,15 +106,16 @@
       ? [
           {
             group: "layout",
-            items: panelOptions.map((option) => ({
-              value: option.value,
-              label: `${option.label} view`,
-              icon: option.value === panel ? "check" : "",
-              callback: async () => {
-                panel = option.value as CalendarLayout;
-                onPanelSwitch(new CustomEvent("select", { detail: option.value }));
+            items: [],
+            option: {
+              label: "Layout",
+              options: panelOptions,
+              value: panel,
+              onChange: (value: ISelectValue) => {
+                panel = value as CalendarLayout;
+                onPanelSwitch(new CustomEvent("select", { detail: value }));
               }
-            }))
+            }
           }
         ]
       : [];
