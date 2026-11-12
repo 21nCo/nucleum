@@ -40,6 +40,7 @@
   import type { ICollection } from "@nucleum/features/collections/collection.type";
   import { tick } from "svelte";
   import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
+  import { isInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import {
     contextZone,
@@ -150,15 +151,16 @@
    * The collection's own menu, with the single-key letters shown and run while
    * it is open as a page or split, where those keys apply.
    */
+  const isInPlace = isInPlaceResource();
+  const isKeyedMenu = $derived(isContextZoneAccessMode(accessMode) || isInPlace);
+
   function resolveKeyedCollectionMenu() {
     const menu = resolveCollectionContextMenu(
       resolveCollectionForContextMenu(),
       ResourceAccessPoint.SELF,
       { accessMode }
     );
-    return isContextZoneAccessMode(accessMode)
-      ? withResourceActionKeys(menu)
-      : menu;
+    return isKeyedMenu ? withResourceActionKeys(menu) : menu;
   }
 </script>
 
@@ -214,7 +216,7 @@
     id={$collection.id.toString()}
     resource={Resource.collection}
     resolve={resolveKeyedCollectionMenu}
-    isEnabled={isContextZoneAccessMode(accessMode)}
+    isEnabled={isKeyedMenu}
   />
 {/if}
 <div

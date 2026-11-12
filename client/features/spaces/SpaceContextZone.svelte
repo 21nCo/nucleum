@@ -8,6 +8,8 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { SpaceView } from "@nucleum/features/spaces/space.type";
   import type { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
+  import { resolveSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
 
   let {
     store,
@@ -29,25 +31,14 @@
   ];
 
   function resolveMenu() {
-    return [
-      {
-        group: "space",
-        items: [
-          {
-            value: "rename",
-            label: "Rename",
-            icon: "edit",
-            callback: async () => store.setTitleEditing(true)
-          },
-          {
-            value: "pin",
-            label: isPinned ? "Unpin from app menu" : "Pin to app menu",
-            icon: isPinned ? "unpin" : "pin",
-            callback: async () => onTogglePin()
-          }
-        ]
-      }
-    ];
+    if (!$store) return [];
+    return withResourceActionKeys(
+      resolveSpacePageMenu($store, {
+        isPinned,
+        onRename: () => store.setTitleEditing(true),
+        onTogglePin
+      })
+    );
   }
 </script>
 

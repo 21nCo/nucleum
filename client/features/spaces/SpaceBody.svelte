@@ -11,6 +11,10 @@
   import SpaceSideNav from "@nucleum/features/spaces/SpaceSideNav.svelte";
   import SpaceWall from "@nucleum/features/spaces/SpaceWall.svelte";
   import SpaceContextZone from "@nucleum/features/spaces/SpaceContextZone.svelte";
+  import { Resource } from "@nucleum/datafn/resource.enum";
+  import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
+  import { resolveSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 
@@ -91,6 +95,22 @@
     else appMenuStore.pinSpace(rootId);
   }
 
+  /**
+   * The open space's menu for the super bar and its single-key letters. An
+   * item opened inside the space registers its own menu later in the same
+   * pane, so it takes precedence until it closes.
+   */
+  function resolveSpaceMenu() {
+    if (!$viewStore) return [];
+    return withResourceActionKeys(
+      resolveSpacePageMenu($viewStore, {
+        isPinned: isRootPinned,
+        onRename: () => viewStore.setTitleEditing(true),
+        onTogglePin: toggleRootPin
+      })
+    );
+  }
+
   function changeView(next: SpaceView) {
     viewStore.updateView(next);
   }
@@ -99,6 +119,14 @@
     changeView(view === SpaceView.WALL ? SpaceView.SIDENAV : SpaceView.WALL);
   }
 </script>
+
+{#if isLoaded && !$store?.isMissing && !isEmbedded}
+  <ContextActions
+    id={rootId}
+    resource={Resource.space}
+    resolve={resolveSpaceMenu}
+  />
+{/if}
 
 {#if isLoaded && !$store?.isMissing}
   <ContextZoneContent isInlineFallback={false} cycle={cycleZone}>
