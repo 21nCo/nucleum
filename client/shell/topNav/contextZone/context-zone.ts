@@ -9,10 +9,21 @@ export type ContextZonePane = {
   layer: number;
 };
 
+/**
+ * Views a context-zone entry can switch between, in display order, with the
+ * active view and a way to select another one.
+ */
+export type ContextZoneViews = {
+  values: string[];
+  active: string | undefined;
+  select: (value: string) => void;
+};
+
 /** Values a registration supplies to the top bar context zone. */
 export type ContextZoneRegistration = {
   content: Snippet;
-  cycle?: () => void;
+  /** Views the keyboard can move between while this entry shows. */
+  views?: ContextZoneViews;
   /**
    * Background class of the context tab while this entry shows, matching the
    * page or pane below, such as "bg-bgs2". Defaults to the page background.
@@ -45,12 +56,25 @@ export const ContextZoneLayer = {
 
 const PANE_CONTEXT_KEY = Symbol("context-zone-pane");
 const entries = writable<ContextZoneEntry[]>([]);
+const viewSources = writable<
+  { key: number; pane: ContextZonePane; source: { views?: ContextZoneViews } }[]
+>([]);
+const subViewSources = writable<ContextZoneSubViewSource[]>([]);
 const panes = writable<{ key: number; pane: ContextZonePane }[]>([]);
 const activePaneId = writable<string | undefined>(undefined);
 const visibleLayers = writable<ReadonlySet<number> | undefined>(undefined);
 const hostCount = writable(0);
 const entryWidth = writable<number | undefined>(undefined);
 let nextKey = 0;
+let lastSubViewUse = 0;
+
+function markSubViewsUsed(key: number) {
+  lastSubViewUse += 1;
+  const usedAt = lastSubViewUse;
+  subViewSources.update((list) =>
+    list.map((item) => (item.key === key ? { ...item, usedAt } : item))
+  );
+}
 
 /**
  * Picks the entry shown in the context zone: the newest entry of the pane the
@@ -84,9 +108,24 @@ export function resolveContextZoneEntry<
 
 /** Returns the value after `current` in `values`, wrapping to the first. */
 export function nextCycleValue<T>(values: T[], current: T | undefined) {
+  return stepCycleValue(values, current, 1);
+}
+
+/**
+ * Returns the value `delta` places from `current` in `values`, wrapping at
+ * both ends. Without a current value, a forward step returns the first value
+ * and a backward step the last.
+ */
+export function stepCycleValue<T>(
+  values: T[],
+  current: T | undefined,
+  delta: number
+) {
   if (values.length === 0) return undefined;
   const index = current === undefined ? -1 : values.indexOf(current);
-  return values[(index + 1) % values.length];
+  if (index === -1) return delta >= 0 ? values[0] : values[values.length - 1];
+  const length = values.length;
+  return values[(((index + delta) % length) + length) % length];
 }
 
 /**
@@ -132,6 +171,93 @@ export function resolveContextZonePaneEntry<
     registered.filter((item) => item.pane.id === pane.id),
     pane.id,
     visible
+  );
+}
+
+/**
+ * Picks the views the keyboard moves between: the shown entry's views,
+ * otherwise the views of the newest page switcher registered for the shown
+ * pane, such as a switcher in a side panel.
+ */
+export function resolveContextZoneViews(
+  entry: { views?: ContextZoneViews } | undefined,
+  sources: {
+    key: number;
+    pane: ContextZonePane;
+    source: { views?: ContextZoneViews };
+  }[],
+  pane: ContextZonePane | undefined
+): ContextZoneViews | undefined {
+  if (entry?.views) return entry.views;
+  const candidates = sources.filter(
+    (item) => item.source.views && (!pane || item.pane.id === pane.id)
+  );
+  if (candidates.length === 0) return undefined;
+  return candidates.reduce((latest, item) =>
+    item.key > latest.key ? item : latest
+  ).source.views;
+}
+
+/**
+ * Direction of an in-page switcher: horizontal switchers (view modes,
+ * calendar scale) step with Option+Shift+Left/Right, vertical lists (settings
+ * list, side navs) with Option+Up/Down.
+ */
+export type ContextZoneSwitcherAxis = "horizontal" | "vertical";
+
+/** Where an in-page switcher lives and which keys step it. */
+export type ContextZoneSubViewOptions = {
+  axis?: ContextZoneSwitcherAxis;
+  /** The switcher is inside a modal, so it steps only while a modal is in front. */
+  isInModal?: boolean;
+};
+
+/** One in-page sub switcher registered for keyboard stepping. */
+export type ContextZoneSubViewSource = {
+  key: number;
+  pane: ContextZonePane;
+  source: { views?: ContextZoneViews };
+  usedAt: number;
+} & ContextZoneSubViewOptions;
+
+/** Which switchers the keyboard is looking for. */
+export type ContextZoneSubViewQuery = {
+  axis?: ContextZoneSwitcherAxis;
+  /** A modal is in front, so only switchers inside a modal count. */
+  isModalOpen?: boolean;
+};
+
+/** Handle returned when a page registers an in-page sub switcher. */
+export type ContextZoneSubViewRegistration = {
+  /** Marks the switcher as the one the keyboard steps next. */
+  touch: () => void;
+  /** Removes the switcher. */
+  release: () => void;
+};
+
+/**
+ * Picks the in-page sub switcher the keyboard steps: among the switchers of
+ * the shown pane that have views, the one used most recently (picked by the
+ * keyboard or by the user in the switcher), otherwise the newest registered.
+ */
+export function resolveContextZoneSubViewSource(
+  sources: ContextZoneSubViewSource[],
+  pane: ContextZonePane | undefined,
+  query: ContextZoneSubViewQuery = {}
+): ContextZoneSubViewSource | undefined {
+  const axis = query.axis ?? "horizontal";
+  const candidates = sources.filter((item) => {
+    if (!item.source.views || (item.axis ?? "horizontal") !== axis)
+      return false;
+    if (query.isModalOpen) return !!item.isInModal;
+    return !item.isInModal && (!pane || item.pane.id === pane.id);
+  });
+  if (candidates.length === 0) return undefined;
+  return candidates.reduce((latest, item) =>
+    item.usedAt > latest.usedAt ||
+    (item.usedAt === latest.usedAt && item.key > latest.key)
+      ? item
+      : latest
   );
 }
 
@@ -203,13 +329,71 @@ export const contextZone = {
       { key, pane } as ContextZoneEntry,
       {
         content: { get: () => registration.content, enumerable: true },
-        cycle: { get: () => registration.cycle, enumerable: true },
+        views: { get: () => registration.views, enumerable: true },
         surface: { get: () => registration.surface, enumerable: true },
         title: { get: () => registration.title, enumerable: true }
       }
     );
     entries.update((list) => [...list, entry]);
     return () => entries.update((list) => list.filter((x) => x.key !== key));
+  },
+  /**
+   * Registers views of a page switcher shown outside the context zone, such
+   * as in a side panel, so the keyboard can move between them while the
+   * shown entry has no views of its own; returns its unregister function.
+   */
+  registerViews(pane: ContextZonePane, source: { views?: ContextZoneViews }) {
+    const key = ++nextKey;
+    viewSources.update((list) => [...list, { key, pane, source }]);
+    return () =>
+      viewSources.update((list) => list.filter((x) => x.key !== key));
+  },
+  /**
+   * Registers an in-page sub switcher, such as the bird view mode or the
+   * calendar scale, that Option+Shift+Arrow steps through. Call `touch` when
+   * the user picks a view in it, so the keyboard follows that switcher.
+   */
+  registerSubViews(
+    pane: ContextZonePane,
+    source: { views?: ContextZoneViews },
+    options: ContextZoneSubViewOptions = {}
+  ): ContextZoneSubViewRegistration {
+    const key = ++nextKey;
+    subViewSources.update((list) => [
+      ...list,
+      { key, pane, source, usedAt: 0, ...options }
+    ]);
+    return {
+      touch: () => markSubViewsUsed(key),
+      release: () =>
+        subViewSources.update((list) => list.filter((x) => x.key !== key))
+    };
+  },
+  /** Sub switcher views the keyboard steps in the pane the zone describes. */
+  resolveSubViews(query: ContextZoneSubViewQuery = {}) {
+    return resolveContextZoneSubViewSource(
+      get(subViewSources),
+      get(contextZone.pane),
+      query
+    )?.source.views;
+  },
+  /**
+   * Moves the in-page sub switcher `delta` views along, wrapping at both
+   * ends; returns whether a view was selected.
+   */
+  stepSub(delta: number, query: ContextZoneSubViewQuery = {}) {
+    const source = resolveContextZoneSubViewSource(
+      get(subViewSources),
+      get(contextZone.pane),
+      query
+    );
+    const views = source?.source.views;
+    if (!source || !views) return false;
+    const next = stepCycleValue(views.values, views.active, delta);
+    if (next === undefined || next === views.active) return false;
+    markSubViewsUsed(source.key);
+    views.select(next);
+    return true;
   },
   /** Records a mounted pane; returns its release function. */
   registerPane(pane: ContextZonePane) {
@@ -238,9 +422,40 @@ export const contextZone = {
   releasePane(paneId: string) {
     if (get(activePaneId) === paneId) activePaneId.set(undefined);
   },
-  /** Cycles the tabs or switcher of the active entry. */
+  /** Views the keyboard moves between in the pane the zone describes. */
+  resolveViews() {
+    return resolveContextZoneViews(
+      get(contextZone.active),
+      get(viewSources),
+      get(contextZone.pane)
+    );
+  },
+  /** Selects the next view of the shown entry, wrapping to the first. */
   cycle() {
-    get(contextZone.active)?.cycle?.();
+    contextZone.step(1);
+  },
+  /**
+   * Moves the shown entry `delta` views along, wrapping at both ends; returns
+   * whether a view was selected.
+   */
+  step(delta: number) {
+    const views = contextZone.resolveViews();
+    if (!views) return false;
+    const next = stepCycleValue(views.values, views.active, delta);
+    if (next === undefined || next === views.active) return false;
+    views.select(next);
+    return true;
+  },
+  /**
+   * Selects the view at `index` (zero based) of the shown entry; returns
+   * whether a view was selected.
+   */
+  selectAt(index: number) {
+    const views = contextZone.resolveViews();
+    const value = views?.values[index];
+    if (!views || value === undefined) return false;
+    if (value !== views.active) views.select(value);
+    return true;
   }
 };
 

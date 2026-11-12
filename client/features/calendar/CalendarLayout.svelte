@@ -4,7 +4,10 @@
 
   import type { Snippet } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
-  import type { ISelectItem } from "@21n/ui/elements/select/select.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "@21n/ui/elements/select/select.type";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
@@ -23,7 +26,7 @@
   import { Placement } from "@21n/ui/elements/direction.enum";
   import {
     contextZone,
-    nextCycleValue
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
   let {
     panel = $bindable(CalendarLayout.Classic),
@@ -103,15 +106,16 @@
       ? [
           {
             group: "layout",
-            items: panelOptions.map((option) => ({
-              value: option.value,
-              label: `${option.label} view`,
-              icon: option.value === panel ? "check" : "",
-              callback: async () => {
-                panel = option.value as CalendarLayout;
-                onPanelSwitch(new CustomEvent("select", { detail: option.value }));
+            items: [],
+            option: {
+              label: "Layout",
+              options: panelOptions,
+              value: panel,
+              onChange: (value: ISelectValue) => {
+                panel = value as CalendarLayout;
+                onPanelSwitch(new CustomEvent("select", { detail: value }));
               }
-            }))
+            }
           }
         ]
       : [];
@@ -140,15 +144,14 @@
     $appStore.product === Product.NUCLEUM && dev_enableBirdView
   );
 
-  function cycleLayout() {
-    const next = nextCycleValue(
-      panelOptions.map((option) => option.value as CalendarLayout),
-      panel
-    );
-    if (!next) return;
-    panel = next;
-    onPanelSwitch(new CustomEvent("select", { detail: next }));
-  }
+  const layoutViews = $derived<ContextZoneViews>({
+    values: panelOptions.map((option) => String(option.value)),
+    active: panel,
+    select: (value) => {
+      panel = value as CalendarLayout;
+      onPanelSwitch(new CustomEvent("select", { detail: value }));
+    }
+  });
 
   function onPanelSwitch(event: CustomEvent) {
     if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))
@@ -209,7 +212,7 @@
 {#if $isContextZoneHosted}
   <ContextZoneContent
     isInlineFallback={false}
-    cycle={isLayoutSwitcher ? cycleLayout : undefined}
+    views={isLayoutSwitcher ? layoutViews : undefined}
   >
     <div
       bind:this={controlsRef}

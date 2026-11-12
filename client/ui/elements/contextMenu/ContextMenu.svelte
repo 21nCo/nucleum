@@ -1,11 +1,15 @@
 <script lang="ts">
-  import type { IContextMenuGroup, IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import type {
+    IContextMenuGroup,
+    IContextMenuItem
+  } from "@21n/ui/elements/contextMenu/context-menu.type";
   import { Size } from "@21n/ui/elements/size.enum";
   import { bg, cn } from "@21n/ui/environment/presentation";
   import Divider from "@21n/ui/elements/Divider.svelte";
   import Text from "@21n/ui/elements/text/Text.svelte";
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import ContextMenuItem from "@21n/ui/elements/contextMenu/ContextMenuItem.svelte";
+  import ContextMenuOptionGroup from "@21n/ui/elements/contextMenu/ContextMenuOptionGroup.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import view from "@21n/ui/environment/view.store";
   let {
@@ -15,7 +19,8 @@
     onSelect = () => {},
     parentBgIndex = 1,
     isFullWidth = $view.isConstrainedWidth,
-    bottomRender = undefined
+    bottomRender = undefined,
+    onClose = undefined
   }: {
     menuResolver: () => IContextMenuGroup[];
     size?: Size.sm | Size.md | Size.lg | Size.xl;
@@ -24,15 +29,59 @@
     parentBgIndex?: number;
     isFullWidth?: boolean;
     bottomRender?: string | undefined;
+    onClose?: (() => void) | undefined;
   } = $props();
-  const menu = $derived<IContextMenuGroup[]>(menuResolver ? menuResolver() : []);
+  let menuRef = $state<HTMLDivElement>();
+  const menu = $derived<IContextMenuGroup[]>(
+    menuResolver ? menuResolver() : []
+  );
 
   function resolveItemSize() {
     return size === Size.xl ? Size.lg : size;
   }
+
+  function resolveMenuButtons() {
+    if (!menuRef) return [];
+    return Array.from(
+      menuRef.querySelectorAll<HTMLButtonElement>("button.contextmenuitem")
+    ).filter((button) => !button.disabled);
+  }
+
+  /**
+   * Moves focus through the menu items with Up and Down while the menu is
+   * shown, and closes it on Escape. Enter and Space activate the focused item.
+   */
+  function onWindowKeydown(event: KeyboardEvent) {
+    if (!menuRef || menuRef.getClientRects().length === 0) return;
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey) return;
+    if (event.altKey) return;
+    if (event.key === "Escape" && onClose) {
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+      return;
+    }
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const buttons = resolveMenuButtons();
+    if (buttons.length === 0) return;
+    const step = event.key === "ArrowDown" ? 1 : -1;
+    const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    const next =
+      index < 0
+        ? step === 1
+          ? 0
+          : buttons.length - 1
+        : (index + step + buttons.length) % buttons.length;
+    event.preventDefault();
+    event.stopPropagation();
+    buttons[next].focus();
+  }
 </script>
 
+<svelte:window onkeydown={onWindowKeydown} />
+
 <div
+  bind:this={menuRef}
   class={cn(
     "flex flex-col gap-1 p-1 rounded-md",
     {
@@ -68,15 +117,22 @@
         "flex-row justify-around p-2 gap-2": group.isToggleGroup
       })}
     >
-      {#each group.items as item}
-        <ContextMenuItem
-          {item}
+      {#if group.option}
+        <ContextMenuOptionGroup
+          option={group.option}
           size={resolveItemSize()}
-          isToggleGroup={group.isToggleGroup}
-          {parentBgIndex}
-          onSelect={() => onSelect(item)}
         />
-      {/each}
+      {:else}
+        {#each group.items as item}
+          <ContextMenuItem
+            {item}
+            size={resolveItemSize()}
+            isToggleGroup={group.isToggleGroup}
+            {parentBgIndex}
+            onSelect={() => onSelect(item)}
+          />
+        {/each}
+      {/if}
     </div>
     {#if index !== menu.length - 1}
       <Divider colorStrength={ColorStrength.Strong} />

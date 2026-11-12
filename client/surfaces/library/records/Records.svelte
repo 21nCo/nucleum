@@ -22,7 +22,10 @@
   import type { IProperty } from "@nucleum/features/collections/properties/property.type";
   import type { ISpace } from "@nucleum/features/spaces/space.type";
   import type { IFile } from "@nucleum/shared-state/files/file.type";
-  import { determineResourceType } from "@nucleum/datafn/resource.utils";
+  import {
+    determineResourceType,
+    resourceInList
+  } from "@nucleum/datafn/resource.utils";
   import NodeItems from "@nucleum/features/memory/node/NodeRecords.svelte";
   import LibraryLoadingPulse from "@nucleum/surfaces/library/LibraryLoadingPulse.svelte";
   import ObjectiveThumbnail from "@nucleum/features/focus/goals/thumbnail/GoalThumbnail.svelte";
@@ -35,6 +38,12 @@
   import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
 
   import { stringify } from "@21n/shared-utils/json.utils";
+  import { itemNavigation } from "@21n/ui/actions/itemNavigation.action";
+  import {
+    resolveResourceSelectionContext,
+    toggleResourceSelection
+  } from "@nucleum/features/records/resource.actions";
+  import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteDataStore } from "@datafn/svelte";
@@ -173,9 +182,83 @@
       });
     }
   }
+
+  function resolveElementItem(element: HTMLElement) {
+    const id = element.getAttribute("data-id");
+    return data.find((item) => item.id?.toString() === id);
+  }
+
+  function openFromKeyboard(element: HTMLElement, event: KeyboardEvent) {
+    const item = resolveElementItem(element);
+    if (!item) return;
+    if (isPreventDefault) {
+      onRecordClick?.(new CustomEvent<any>("click", { detail: item }));
+      return;
+    }
+    navigation.resourceClickHandler(event, item.id, {
+      isInPlace: isOpenInPlace,
+      origin: accessPoint
+    });
+  }
+
+  function toggleFromKeyboard(element: HTMLElement) {
+    const item = resolveElementItem(element);
+    if (!item) return;
+    toggleResourceSelection(item.id, accessPoint);
+  }
+
+  let rangeBaseIds: IRecordId[] = [];
+  const isSelectable = $derived(
+    accessPoint !== ResourceAccessPoint.PICKER &&
+      accessPoint !== ResourceAccessPoint.MAP &&
+      !isPreventDefault
+  );
+
+  function hasSelectionInList() {
+    const { selectedIds } = bulkEditStore.getState();
+    return selectedIds.some((id) =>
+      data.some((item) => resourceInList(item.id)(id))
+    );
+  }
+
+  function extendFromKeyboard(
+    elements: HTMLElement[],
+    isNewRange: boolean,
+    anchorElement: HTMLElement
+  ) {
+    const anchor = resolveElementItem(anchorElement);
+    if (!anchor) return;
+    const resourceType = determineResourceType(anchor.id);
+    const items = elements
+      .map(resolveElementItem)
+      .filter(
+        (item): item is RecordItem =>
+          !!item && determineResourceType(item.id) === resourceType
+      );
+    const context = resolveResourceSelectionContext(anchor.id, accessPoint);
+    if (!bulkEditStore.matchesContext(context)) {
+      toggleResourceSelection(anchor.id, accessPoint);
+      rangeBaseIds = [];
+    } else if (isNewRange) {
+      rangeBaseIds = bulkEditStore.getState().selectedIds;
+    }
+    const base = rangeBaseIds.filter(
+      (id) => !items.some((item) => resourceInList(item.id)(id))
+    );
+    bulkEditStore.select([...base, ...items.map((item) => item.id)]);
+  }
 </script>
 
-<div class="flex flex-col w-full h-full">
+<div
+  class="flex flex-col w-full h-full"
+  use:itemNavigation={{
+    itemSelector: "[id^='thumbnail-'][data-id]",
+    onOpen: openFromKeyboard,
+    onToggle: isSelectable ? toggleFromKeyboard : undefined,
+    onExtend: isSelectable ? extendFromKeyboard : undefined,
+    hasSelection: hasSelectionInList
+  }}
+>
   <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->
   {#if resource === Resource.node && arrangement === Arrangement.MASONRY}
     <NodeItems

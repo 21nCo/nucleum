@@ -36,7 +36,10 @@
   } from "@nucleum/features/focus/session.store";
   import { movingBorder } from "@21n/ui/actions/movingBorder.action";
 
-  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import {
+    ButtonStyle,
+    ButtonVariant
+  } from "@21n/ui/elements/button/button.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { resolveBulkSelectionAccessPointId } from "@nucleum/datafn/resource.utils";
@@ -73,6 +76,15 @@
   void size;
   void parentBgIndex;
   let isHovering = $state(false);
+  let isMenuRequested = $state(false);
+  let isMenuVisible = $state(false);
+
+  let wasMenuVisible = false;
+
+  $effect(() => {
+    if (wasMenuVisible && !isMenuVisible) isMenuRequested = false;
+    wasMenuVisible = isMenuVisible;
+  });
   let isDatePickerOpen = $state(false);
   let isShowDatePickerOnCw = $state(false);
   let isTaskOpened = $state(false);
@@ -229,6 +241,9 @@
   {isDraggable}
   isPreventDefaultContextMenu={true}
   onClick={handleThumbnailClick}
+  onMenuRequest={() => {
+    isMenuRequested = true;
+  }}
 >
   {#if $view.isConstrainedWidth && isTaskOpened}
     <div
@@ -265,6 +280,7 @@
     use:hoverable={{
       onHover: (value) => {
         isHovering = value;
+        isMenuRequested = false;
       }
     }}
   >
@@ -366,7 +382,7 @@
         {/if}
       </div>
 
-      {#if isHovering || isDatePickerOpen || ($context.isTouchDevice && !$view.isPortrait)}
+      {#if isHovering || isMenuRequested || isDatePickerOpen || ($context.isTouchDevice && !$view.isPortrait)}
         {@const isInlineContext =
           !$view.isConstrainedWidth &&
           (accessPoint === ResourceAccessPoint.BROWSER ||
@@ -428,6 +444,7 @@
         {isApplyCustomColor}
         bgSize={Size.sm}
         onAction={onContextMenuAction}
+        bind:isPopoverVisible={isMenuVisible}
         isInline={true}
       />
     {:else if accessPoint === ResourceAccessPoint.PICKER}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   import type { Snippet } from "svelte";
   import {
     OptionSelectorStyle,
@@ -177,7 +178,16 @@
     );
   }
 
+  const subTypeViews = useContextZoneSubViews(() => ({
+    values: renderedSubTypes.map((option) =>
+      String(option.value).toLowerCase()
+    ),
+    active: selectedSubType,
+    select: (value) => onSelect(value)
+  }));
+
   function onSelect(val: string) {
+    subTypeViews.touch();
     if (subContext) {
       onSearchParamsChange({
         [`${subContext}-${AppSearchParam.TYPE}`]: val.toLowerCase()

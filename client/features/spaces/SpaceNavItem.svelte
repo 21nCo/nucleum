@@ -138,6 +138,7 @@
     const move = moves[event.key];
     if (!move) return;
     event.preventDefault();
+    event.stopPropagation();
     nav.onKeyboardMove(item.id, move);
   }
 

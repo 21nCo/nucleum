@@ -52,6 +52,55 @@ type ResourceLifecycleHooks = {
   onRestore?: (ids: IRecordId[]) => Promise<unknown> | unknown;
 };
 
+/** Bulk selection context of a resource shown at an access point. */
+export function resolveResourceSelectionContext(
+  id: IRecordId,
+  accessPoint: ResourceAccessPoint,
+  accessPointId?: IRecordId
+) {
+  return {
+    resource: determineResourceType(id),
+    accessPoint,
+    accessPointId: resolveBulkSelectionAccessPointId(accessPoint, accessPointId)
+  };
+}
+
+/**
+ * Activates bulk selection for a resource's access point when another context
+ * holds it, then adds the resource to the selection or removes it.
+ */
+export function toggleResourceSelection(
+  id: IRecordId,
+  accessPoint: ResourceAccessPoint,
+  accessPointId?: IRecordId
+) {
+  const multiSelectContext = resolveResourceSelectionContext(
+    id,
+    accessPoint,
+    accessPointId
+  );
+  if (!bulkEditStore.matchesContext(multiSelectContext)) {
+    bulkEditStore.activate(multiSelectContext, {
+      onAction: (ids, action, data) => {
+        const bulkEditor = new BulkEditor(
+          multiSelectContext.resource,
+          bulkEditStore
+        );
+        bulkEditor.run(action, data);
+      },
+      subContext: multiSelectContext.accessPointId?.toString()
+    });
+  }
+  const currentSelection = bulkEditStore.getState().selectedIds;
+  if (currentSelection.some(resourceInList(id))) {
+    bulkEditStore.select(
+      currentSelection.filter((y) => !isSameResource(y, id))
+    );
+  } else {
+    bulkEditStore.select([...currentSelection, id]);
+  }
+}
+
 export class ResourceActions<T extends IActionableResource> {
   accessPoint?: ResourceAccessPoint;
   accessMode?: AccessMode;
@@ -227,31 +276,11 @@ export class ResourceActions<T extends IActionableResource> {
     accessPoint: ResourceAccessPoint,
     accessPointId?: IRecordId
   ): IContextMenuItem {
-    const resolvedAccessPointId = resolveBulkSelectionAccessPointId(
+    const multiSelectContext = resolveResourceSelectionContext(
+      this.resource.id,
       accessPoint,
       accessPointId
     );
-    const multiSelectContext = {
-      resource: determineResourceType(this.resource.id),
-      accessPoint,
-      accessPointId: resolvedAccessPointId
-    };
-
-    const resolveEditor = () => {
-      if (!bulkEditStore.matchesContext(multiSelectContext)) {
-        bulkEditStore.activate(multiSelectContext, {
-          onAction: (ids, action, data) => {
-            const bulkEditor = new BulkEditor(
-              multiSelectContext.resource,
-              bulkEditStore
-            );
-            bulkEditor.run(action, data);
-          },
-          subContext: resolvedAccessPointId?.toString()
-        });
-      }
-    };
-
     const state = bulkEditStore.getState();
     const selectedItems = state.selectedIds;
     const isSameSelectionContext =
@@ -265,16 +294,7 @@ export class ResourceActions<T extends IActionableResource> {
       value: ResourceActionType.SELECT,
       icon: "check-circle",
       callback: async () => {
-        resolveEditor();
-        const currentState = bulkEditStore.getState();
-        const currentSelection = currentState.selectedIds;
-        if (currentSelection.some(resourceInList(this.resource.id))) {
-          bulkEditStore.select(
-            currentSelection.filter((y) => !isSameResource(y, this.resource.id))
-          );
-        } else {
-          bulkEditStore.select([...currentSelection, this.resource.id]);
-        }
+        toggleResourceSelection(this.resource.id, accessPoint, accessPointId);
       }
     };
   }

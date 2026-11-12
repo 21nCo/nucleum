@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { Snippet } from "svelte";
+  import { tick, type Snippet } from "svelte";
   import { hoverable } from "@21n/ui/actions/hover.action";
+  import { itemMenuEvent } from "@21n/ui/actions/itemNavigation.action";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import {
     determineResourceType,
@@ -36,7 +37,8 @@
     children,
     right,
     onAction = undefined,
-    onClick = undefined
+    onClick = undefined,
+    onMenuRequest = undefined
   }: {
     isHovering?: boolean;
     item: any;
@@ -56,6 +58,7 @@
       | ((event: CustomEvent<{ action: string; id: string }>) => void)
       | undefined;
     onClick?: ((event: MouseEvent) => void) | undefined;
+    onMenuRequest?: (() => void) | undefined;
   } = $props();
   let item = $state(itemProp);
   let isLocalHovering = $state(false);
@@ -102,6 +105,28 @@
     }
   });
 
+  let rootRef = $state<HTMLDivElement>();
+
+  $effect(() => {
+    const element = rootRef;
+    if (!element) return;
+    element.addEventListener(itemMenuEvent, openContextMenuFromKeyboard);
+    return () =>
+      element.removeEventListener(itemMenuEvent, openContextMenuFromKeyboard);
+  });
+
+  async function openContextMenuFromKeyboard() {
+    if (!rootRef) return;
+    if (onMenuRequest) onMenuRequest();
+    else if (canShowContextMenu) isContextMenuVisible = true;
+    await tick();
+    rootRef
+      .querySelector<HTMLElement>(
+        "[data-testid='thumbnail-context-menu-trigger']"
+      )
+      ?.click();
+  }
+
   function toggleSelection(shouldSelect: boolean) {
     const state = bulkEditStore.getState();
     if (
@@ -136,6 +161,7 @@
   data-id={item.id}
   draggable={isDraggable}
   onclick={onClick}
+  bind:this={rootRef}
   use:hoverable={{
     onHover: (e) => {
       isLocalHovering = e;

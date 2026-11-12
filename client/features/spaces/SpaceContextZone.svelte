@@ -1,9 +1,4 @@
 <script lang="ts">
-  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
-  import {
-    PanelSwitcherActiveItemStrength,
-    PanelSwitcherStyle
-  } from "@21n/ui/elements/switcher/switcher.enum";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import { SpaceView } from "@nucleum/features/spaces/space.type";
@@ -31,6 +26,16 @@
   function resolveMenu() {
     return [
       {
+        group: "view",
+        items: [],
+        option: {
+          label: "View",
+          options: views,
+          value: view,
+          onChange: (value) => onViewChange(value as SpaceView)
+        }
+      },
+      {
         group: "space",
         items: [
           {
@@ -52,21 +57,6 @@
 </script>
 
 <div class="flex items-center h-full min-w-0" data-testid="space-context-zone">
-  <div
-    class="flex items-center h-full shrink-0 px-2"
-    data-testid="space-view-switcher"
-  >
-    <PanelSwitcher
-      style={PanelSwitcherStyle.TRAIN}
-      items={views}
-      value={view}
-      size={Size.sm}
-      parentBgIndex={0}
-      isPreventTabShortcut={true}
-      activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
-      onSwitch={(event) => onViewChange(event.detail as SpaceView)}
-    />
-  </div>
   <div class="flex items-center h-full shrink-0">
     <ContextMenuAction
       id="spaceContextZoneMenu"
