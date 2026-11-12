@@ -58,7 +58,7 @@
   <Icon icon="chevron-right" size={Size.sm} />
 {/if}
 {#if item.hotKey}
-  <ShortcutText shortcut={{ key: item.hotKey }} parentBgIndex={2} size={Size.sm} />
+  <ShortcutText shortcut={{ key: item.hotKey }} parentBgIndex={2} />
 {/if}
 {#if item.badge && !item.action && !item.secondStepComponent}
   <Badge text={item.badge} />

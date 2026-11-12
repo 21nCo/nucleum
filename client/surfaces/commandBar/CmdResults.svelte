@@ -361,12 +361,8 @@
         <ShortcutText
           shortcut={{ key: entry.action.item.hotKey }}
           parentBgIndex={2}
-          size={Size.sm}
         />
       {/if}
-      <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
-        {contextLabel.toLowerCase()}
-      </div>
     </ResultItem>
   {:else if entry.kind === "command"}
     <CmdResultItem
