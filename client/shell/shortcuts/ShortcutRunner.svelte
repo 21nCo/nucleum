@@ -81,9 +81,8 @@
   };
 
   const pinnedIds = $derived(appMenuStore.pinnedSpaces($appMenuStore));
-  const pinnedSpacesStore = $derived(
-    createPinnedSpacesStore(toPinnedSpacesKey(pinnedIds))
-  );
+  const pinnedKey = $derived(toPinnedSpacesKey(pinnedIds));
+  const pinnedSpacesStore = $derived(createPinnedSpacesStore(pinnedKey));
   const pinnedSpaces = $derived(
     orderPinnedSpaces(pinnedIds, $pinnedSpacesStore.data)
   );
@@ -117,6 +116,7 @@
     if (spaceIndex !== undefined) {
       const space = pinnedSpaces[spaceIndex];
       if (space) navigation.gotoPath(resolveSpacePath(space.id));
+      event.stopPropagation();
       event.preventDefault();
       return;
     }
