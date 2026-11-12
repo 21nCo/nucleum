@@ -171,6 +171,19 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await panel.scrollIntoViewIfNeeded();
   }
 
+  /** Switches the open Settings modal to Keyboard shortcuts and waits for its panel. */
+  async function showKeyboardShortcutsPanel(
+    page: import("@playwright/test").Page
+  ) {
+    await page
+      .getByTestId("settings-sidebar")
+      .getByRole("button", { name: /^Keyboard shortcuts$/i })
+      .click({ timeout: 5_000 });
+    const panel = page.getByTestId("keyboard-shortcut-settings");
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+    return panel;
+  }
+
   async function openShortcutSettings(page: import("@playwright/test").Page) {
     await openSettings(page);
     await expect(
@@ -178,12 +191,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     ).toBeVisible({
       timeout: 10_000
     });
-    await page
-      .getByTestId("settings-sidebar")
-      .getByRole("button", { name: /^Keyboard shortcuts$/i })
-      .click({ timeout: 5_000 });
-    const panel = page.getByTestId("keyboard-shortcut-settings");
-    await expect(panel).toBeVisible({ timeout: 10_000 });
+    const panel = await showKeyboardShortcutsPanel(page);
     await panel.scrollIntoViewIfNeeded();
   }
 
@@ -618,13 +626,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     }
     await expect(menuBarCheckbox).toBeChecked({ timeout: 5_000 });
 
-    await page
-      .getByTestId("settings-sidebar")
-      .getByRole("button", { name: /^Keyboard shortcuts$/i })
-      .click({ timeout: 5_000 });
-    await expect(page.getByTestId("keyboard-shortcut-settings")).toBeVisible({
-      timeout: 10_000
-    });
+    await showKeyboardShortcutsPanel(page);
 
     await page
       .getByRole("button", { name: /^See hot keys$/i })
