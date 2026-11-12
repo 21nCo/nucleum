@@ -149,7 +149,8 @@
       if (
         event.key === KeyboardKey.ESCAPE ||
         isTextElement(event.target) ||
-        $context.embed === Embed.HANDSET
+        $context.embed === Embed.HANDSET ||
+        hasLayerInFront()
       )
         clearChord();
       else runChord(event);

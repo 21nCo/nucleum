@@ -53,9 +53,9 @@ export function isPlainPageKey(
 export function hasLayerInFront() {
   return Boolean(
     resolveModalOnFront() ||
-      resolveDialogOnFront() ||
-      hasOpenPopover() ||
-      hasOpenModalSheet()
+    resolveDialogOnFront() ||
+    hasOpenPopover() ||
+    hasOpenModalSheet()
   );
 }
 
