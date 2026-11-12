@@ -221,18 +221,23 @@
     );
   }
 
-  function extendFromKeyboard(elements: HTMLElement[], isNewRange: boolean) {
-    const resolved = elements
+  function extendFromKeyboard(
+    elements: HTMLElement[],
+    isNewRange: boolean,
+    anchorElement: HTMLElement
+  ) {
+    const anchor = resolveElementItem(anchorElement);
+    if (!anchor) return;
+    const resourceType = determineResourceType(anchor.id);
+    const items = elements
       .map(resolveElementItem)
-      .filter((item): item is RecordItem => !!item);
-    if (resolved.length === 0) return;
-    const resourceType = determineResourceType(resolved[0].id);
-    const items = resolved.filter(
-      (item) => determineResourceType(item.id) === resourceType
-    );
-    const context = resolveResourceSelectionContext(items[0].id, accessPoint);
+      .filter(
+        (item): item is RecordItem =>
+          !!item && determineResourceType(item.id) === resourceType
+      );
+    const context = resolveResourceSelectionContext(anchor.id, accessPoint);
     if (!bulkEditStore.matchesContext(context)) {
-      toggleResourceSelection(items[0].id, accessPoint);
+      toggleResourceSelection(anchor.id, accessPoint);
       rangeBaseIds = [];
     } else if (isNewRange) {
       rangeBaseIds = bulkEditStore.getState().selectedIds;

@@ -37,7 +37,8 @@
     children,
     right,
     onAction = undefined,
-    onClick = undefined
+    onClick = undefined,
+    onMenuRequest = undefined
   }: {
     isHovering?: boolean;
     item: any;
@@ -57,6 +58,7 @@
       | ((event: CustomEvent<{ action: string; id: string }>) => void)
       | undefined;
     onClick?: ((event: MouseEvent) => void) | undefined;
+    onMenuRequest?: (() => void) | undefined;
   } = $props();
   let item = $state(itemProp);
   let isLocalHovering = $state(false);
@@ -115,10 +117,9 @@
 
   async function openContextMenuFromKeyboard() {
     if (!rootRef) return;
-    if (canShowContextMenu) {
-      isContextMenuVisible = true;
-      await tick();
-    }
+    if (onMenuRequest) onMenuRequest();
+    else if (canShowContextMenu) isContextMenuVisible = true;
+    await tick();
     rootRef
       .querySelector<HTMLElement>(
         "[data-testid='thumbnail-context-menu-trigger']"

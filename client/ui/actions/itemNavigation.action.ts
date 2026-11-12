@@ -22,7 +22,11 @@ export interface ItemNavigationConfig {
    * on the first press of a range, so the caller can keep what was selected
    * before it.
    */
-  onExtend?: (elements: HTMLElement[], isNewRange: boolean) => void;
+  onExtend?: (
+    elements: HTMLElement[],
+    isNewRange: boolean,
+    anchor: HTMLElement
+  ) => void;
   /** Whether a bulk selection exists, which Escape clears before the highlight. */
   hasSelection?: () => boolean;
 }
@@ -50,6 +54,7 @@ function isMenuKey(event: KeyboardEvent) {
 const entries: ItemNavigationEntry[] = [];
 let lastInteracted: ItemNavigationEntry | undefined;
 let suppressedBy: Element | undefined;
+let suppressedAt: string | undefined;
 let isListening = false;
 
 function resolveItems(entry: ItemNavigationEntry) {
@@ -86,7 +91,11 @@ function isReachable(entry: ItemNavigationEntry, layer: Element | null) {
 
 function resolveActiveEntry(): ItemNavigationEntry | undefined {
   const layer = resolveFrontLayer();
-  if (suppressedBy?.isConnected && suppressedBy.getClientRects().length > 0)
+  if (
+    suppressedBy?.isConnected &&
+    suppressedBy.getClientRects().length > 0 &&
+    suppressedAt === location.href
+  )
     return undefined;
   suppressedBy = undefined;
   if (lastInteracted && isReachable(lastInteracted, layer))
@@ -159,7 +168,8 @@ function moveHighlight(
     );
     entry.config.onExtend(
       resolveItemRange(anchorIndex, nextIndex).map((index) => items[index]),
-      isNewRange
+      isNewRange,
+      items[anchorIndex]
     );
   } else {
     entry.anchorKey = undefined;
@@ -189,7 +199,10 @@ function onKeydown(event: KeyboardEvent) {
   }
   if (event.key === "Escape") {
     if (event.metaKey || event.ctrlKey || event.shiftKey) return;
-    if (entry.config.hasSelection?.()) return;
+    if (entry.config.hasSelection?.()) {
+      entry.anchorKey = undefined;
+      return;
+    }
     if (!entry.isShown) return;
     clearHighlight(entry);
     event.preventDefault();
@@ -254,7 +267,11 @@ function onPointerDown(event: PointerEvent) {
   const target = event.target;
   const entry = entries.find((candidate) => candidate.node.contains(target));
   if (!entry) {
-    suppressedBy = resolveOtherScrollArea(target) ?? suppressedBy;
+    const area = resolveOtherScrollArea(target);
+    if (area) {
+      suppressedBy = area;
+      suppressedAt = location.href;
+    }
     return;
   }
   suppressedBy = undefined;
@@ -285,6 +302,8 @@ function stopListening() {
  * `itemmenu` on the item so it can open its menu. Escape clears the highlight once no selection is
  * left. Only the list the user last clicked in, or else the most recently
  * mounted visible list, responds, and lists behind a modal or dialog do not.
+ * A click inside another scrolling area keeps the arrow keys for that area
+ * until a list is clicked or mounted, the area closes, or the URL changes.
  */
 export function itemNavigation(
   node: HTMLElement,
@@ -302,6 +321,7 @@ export function itemNavigation(
   };
   entry.observer.observe(node, { childList: true, subtree: true });
   entries.push(entry);
+  suppressedBy = undefined;
   startListening();
   return {
     update(nextConfig: ItemNavigationConfig) {
