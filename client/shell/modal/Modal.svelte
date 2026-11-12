@@ -1,3 +1,8 @@
+<script module lang="ts">
+  /** How many open drawers currently hold each background element inert. */
+  const inertHolds = new WeakMap<HTMLElement, number>();
+</script>
+
 <script lang="ts">
   import type { Snippet } from "svelte";
   import modalEvent from "@nucleum/shell/overlays/modal.store";
@@ -122,6 +127,29 @@
   }
 
   /**
+   * Holds `element` inert for one drawer. An element already inert for another
+   * reason is left alone; returns whether this drawer took a hold.
+   */
+  function holdInert(element: HTMLElement) {
+    const holds = inertHolds.get(element) ?? 0;
+    if (!holds && element.hasAttribute("inert")) return false;
+    inertHolds.set(element, holds + 1);
+    setInert(element, true);
+    return true;
+  }
+
+  /** Releases one drawer's hold, restoring `element` when none remain. */
+  function releaseInert(element: HTMLElement) {
+    const holds = (inertHolds.get(element) ?? 1) - 1;
+    if (holds > 0) {
+      inertHolds.set(element, holds);
+      return;
+    }
+    inertHolds.delete(element);
+    setInert(element, false);
+  }
+
+  /**
    * Makes the app behind `overlay` inert: every sibling of it and of its
    * ancestors, except the live popover and tooltip containers and modals
    * opened above it. Returns the elements it made inert.
@@ -143,13 +171,11 @@
         if (
           sibling === node ||
           !(sibling instanceof HTMLElement) ||
-          sibling.hasAttribute("inert") ||
           LIVE_CONTAINER_IDS.includes(sibling.id) ||
           isAbove
         )
           continue;
-        setInert(sibling, true);
-        changed.push(sibling);
+        if (holdInert(sibling)) changed.push(sibling);
       }
     }
     return changed;
@@ -169,10 +195,8 @@
   function isolateDrawer(node: HTMLElement) {
     const trap = trapFocus(node);
     trap.release();
-    const background = popoverElements().filter(
-      (popover) => !popover.hasAttribute("inert")
-    );
-    for (const popover of background) setInert(popover, true);
+    const background = popoverElements();
+    const heldPopovers = background.filter(holdInert);
     const inertApp = node.parentElement
       ? inertBackground(node.parentElement)
       : [];
@@ -215,8 +239,8 @@
       destroy() {
         window.removeEventListener("keydown", guardOutside, true);
         root.removeEventListener("keydown", keepInside);
-        for (const element of [...background, ...inertApp])
-          setInert(element, false);
+        for (const element of [...heldPopovers, ...inertApp])
+          releaseInert(element);
         trap.destroy();
         queueMicrotask(() => {
           const active = document.activeElement;
@@ -225,7 +249,9 @@
             active !== document.body &&
             active.isConnected &&
             !node.contains(active);
-          if (trap.opener?.isConnected || isFocusKept) return;
+          const opener = trap.opener;
+          const hasOpener = opener?.isConnected && opener !== document.body;
+          if (hasOpener || isFocusKept) return;
           inertApp
             .filter((element) => element.isConnected)
             .flatMap(focusableElements)[0]

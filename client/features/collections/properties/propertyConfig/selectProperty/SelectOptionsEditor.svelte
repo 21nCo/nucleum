@@ -109,8 +109,12 @@
     };
   });
 
+  /**
+   * Adds the typed option on a global Enter from outside a text field. An
+   * editor inside an inert subtree, such as the app behind a modal drawer,
+   * ignores keys.
+   */
   function handleKeyDown(e: KeyboardEvent) {
-    // An editor behind a modal drawer is inert and must not act on keys.
     if (root?.closest("[inert]")) return;
     const isTextInputSource = isTextElement(e.target);
     if (e.key === "Enter" && !isTextInputSource) {

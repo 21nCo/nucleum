@@ -281,7 +281,7 @@ describe("Modal right-side drawer", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("keeps a paste in the drawer from the app's global paste handler", async () => {
+  it("keeps a paste or a drag over the drawer from the app's global handlers", async () => {
     const runAction = vi.fn();
     configureCommandHost({
       runAction,
@@ -292,6 +292,7 @@ describe("Modal right-side drawer", () => {
     const { getByTestId } = renderDrawer();
 
     await fireEvent.paste(getByTestId("first"));
+    await fireEvent.dragEnter(getByTestId("first"), { relatedTarget: null });
     expect(runAction).not.toHaveBeenCalled();
   });
 
@@ -305,20 +306,50 @@ describe("Modal right-side drawer", () => {
     expect(document.activeElement).toBe(first);
   });
 
-  it("returns focus to the app's first control when the opener is gone", async () => {
-    const app = document.createElement("div");
-    app.innerHTML = `<button data-testid="app-start">Home</button>`;
-    const opener = document.createElement("button");
-    document.body.append(app, opener);
-    opener.focus();
-    const { getByTestId, rerender } = renderDrawer();
-    await tick();
-    opener.remove();
+  it.each([
+    ["removed", true],
+    ["the body", false]
+  ])(
+    "returns focus to the app's first control when the opener is %s",
+    async (_label, isRemovedAfterOpening) => {
+      const app = document.createElement("div");
+      app.innerHTML = `<button data-testid="app-start">Home</button>`;
+      const opener = document.createElement("button");
+      document.body.append(app, opener);
+      opener.focus();
+      if (!isRemovedAfterOpening) opener.blur();
+      const { getByTestId, rerender } = renderDrawer();
+      await tick();
+      if (isRemovedAfterOpening) opener.remove();
 
-    await rerender({ show: false });
+      await rerender({ show: false });
+      await waitFor(() =>
+        expect(document.activeElement).toBe(getByTestId("app-start"))
+      );
+    }
+  );
+
+  it("keeps the app inert while a second drawer is open after the first closes", async () => {
+    const app = document.createElement("div");
+    document.body.append(app);
+    const first = renderDrawer();
+    const second = render(Modal, {
+      props: {
+        id: "second-drawer",
+        title: "Second",
+        alignment: Placement.Right,
+        children
+      }
+    });
+
+    await first.rerender({ show: false });
     await waitFor(() =>
-      expect(document.activeElement).toBe(getByTestId("app-start"))
+      expect(document.querySelectorAll("[data-blank-modal]")).toHaveLength(1)
     );
+    expect(app.hasAttribute("inert")).toBe(true);
+
+    await second.rerender({ show: false });
+    await waitFor(() => expect(app.hasAttribute("inert")).toBe(false));
   });
 
   it("keeps the centred modal at constrained widths", () => {
