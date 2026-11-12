@@ -30,7 +30,10 @@
     CHORD_TIMEOUT_MS,
     resolveChordSpaceIndex
   } from "@nucleum/shell/shortcuts/chord-keys";
-  import { hasOpenPopover } from "@nucleum/shell/shortcuts/page-keys";
+  import {
+    hasLayerInFront,
+    hasOpenPopover
+  } from "@nucleum/shell/shortcuts/page-keys";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -72,7 +75,8 @@
       event
     });
     if (!shortcut) {
-      if (keyboardShortcuts.isChordPrefix(event)) startChord(event);
+      if (keyboardShortcuts.isChordPrefix(event) && !hasLayerInFront())
+        startChord(event);
       return;
     }
     if (!requireCommandHost().resolveAction(shortcut.action)) return;

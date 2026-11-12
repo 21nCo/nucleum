@@ -38,6 +38,7 @@
     isPlainPageKey
   } from "@nucleum/shell/shortcuts/page-keys";
   import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { isInRightPanel } from "@nucleum/shell/rightPanel/right-panel-visibility";
 
   let {
     scale,
@@ -89,13 +90,16 @@
 
   /**
    * T shows the timeline and O the overview, or notes where the product has
-   * no overview, when the day column offers them as panels.
+   * no overview, when the day column offers them as panels. A column in the
+   * right panel (Today) leaves the keys to the page's calendar.
    */
   const keyPane = getContextZonePane();
+  const isPanelColumn = isInRightPanel();
   let rootRef = $state<HTMLDivElement | undefined>();
 
   function onPanelKey(event: KeyboardEvent) {
-    if (!isPlainPageKey(event) || !isKeyTargetPane(keyPane, rootRef)) return;
+    if (isPanelColumn || !isPlainPageKey(event)) return;
+    if (!isKeyTargetPane(keyPane, rootRef)) return;
     const key = event.key.toLowerCase();
     const values = panels.map((panel) => panel.value);
     const target =

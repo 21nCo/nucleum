@@ -46,11 +46,16 @@ export function isPlainPageKey(
   if (event.metaKey || event.ctrlKey || event.altKey) return false;
   if (event.shiftKey && !options.allowShift) return false;
   if (isTextElement(event.target)) return false;
-  return !(
+  return !hasLayerInFront();
+}
+
+/** Whether a modal, dialog, popover or modal sheet is in front of the page. */
+export function hasLayerInFront() {
+  return Boolean(
     resolveModalOnFront() ||
-    resolveDialogOnFront() ||
-    hasOpenPopover() ||
-    hasOpenModalSheet()
+      resolveDialogOnFront() ||
+      hasOpenPopover() ||
+      hasOpenModalSheet()
   );
 }
 
