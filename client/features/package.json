@@ -138,6 +138,7 @@
     "./records/ResourceThumbnailContextMenu.svelte": "./records/ResourceThumbnailContextMenu.svelte",
     "./records/bulk-editor": "./records/bulk-editor.ts",
     "./records/resource.actions": "./records/resource.actions.ts",
+    "./records/resource-action-keys": "./records/resource-action-keys.ts",
     "./records/subtype-switcher-params": "./records/subtype-switcher-params.ts",
     "./records/avatar/Avatar.svelte": "./records/avatar/Avatar.svelte",
     "./records/avatar/avatar.utils": "./records/avatar/avatar.utils.ts",

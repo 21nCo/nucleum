@@ -33,6 +33,7 @@
   import Diagnostics from "@nucleum/surfaces/help/diagnostics/Diagnostics.svelte";
   import ModalLayer from "@nucleum/shell/overlays/ModalLayer.svelte";
   import AnalyticsLayer from "@nucleum/composition/layers/telemetry/AnalyticsLayer.svelte";
+  import ContextActionKeys from "@nucleum/surfaces/commandBar/ContextActionKeys.svelte";
   import ShortcutRunner from "@nucleum/shell/shortcuts/ShortcutRunner.svelte";
   import Intercom from "@nucleum/surfaces/help/support/Intercom.svelte";
   import { installVisibilitySync } from "@nucleum/datafn/visibility-sync";
@@ -399,5 +400,6 @@
   />
   <ModalLayer />
   <ShortcutRunner />
+  <ContextActionKeys />
 {/if}
 <Intercom />

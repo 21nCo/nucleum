@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { onDestroy, tick } from "svelte";
@@ -356,6 +357,13 @@
         {/if}
         <span class="truncate">{entry.action.label}</span>
       </div>
+      {#if entry.action.item.hotKey}
+        <ShortcutText
+          shortcut={{ key: entry.action.item.hotKey }}
+          parentBgIndex={2}
+          size={Size.sm}
+        />
+      {/if}
       <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
         {contextLabel.toLowerCase()}
       </div>

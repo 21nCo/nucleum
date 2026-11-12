@@ -75,6 +75,15 @@ export function flattenContextActions(
   );
 }
 
+/** Finds the action whose single key is `key`, ignoring letter case. */
+export function findContextActionByKey(
+  actions: ContextActionItem[],
+  key: string
+): ContextActionItem | undefined {
+  const pressed = key.length === 1 ? key.toLowerCase() : key;
+  return actions.find((action) => action.item.hotKey === pressed);
+}
+
 /** Keeps the actions whose label contains the query, ignoring case. */
 export function filterContextActions(
   actions: ContextActionItem[],

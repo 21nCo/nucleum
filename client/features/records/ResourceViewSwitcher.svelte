@@ -10,6 +10,7 @@
   import view from "@21n/ui/environment/view.store";
   import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import {
@@ -48,6 +49,11 @@
     title?: Snippet;
   } = $props();
 
+  const keyedMenuResolver = $derived(
+    contextMenuResolver
+      ? () => withResourceActionKeys(contextMenuResolver?.() ?? [])
+      : undefined
+  );
   const isContextZoneHosted = contextZone.isHosted;
   const isInContextZone = $derived(
     isResourceInContextZone($isContextZoneHosted, $view, accessMode)
@@ -66,7 +72,7 @@
   <ContextActions
     id={$resourceStore.id.toString()}
     resource={determineResourceType($resourceStore.id)}
-    resolve={() => contextMenuResolver?.() ?? []}
+    resolve={() => keyedMenuResolver?.() ?? []}
     {onAction}
     isEnabled={isContextZoneAccessMode(accessMode)}
   />
@@ -80,7 +86,7 @@
       {isConstrainedWidth}
       {accessMode}
       {onAction}
-      {contextMenuResolver}
+      contextMenuResolver={keyedMenuResolver}
     />
   </ContextZoneContent>
   <ResourcePanelSwitcher
@@ -97,6 +103,6 @@
     {accessMode}
     {onAction}
     {isFloatingHidden}
-    {contextMenuResolver}
+    contextMenuResolver={keyedMenuResolver}
   />
 {/if}

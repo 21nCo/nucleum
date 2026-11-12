@@ -33,6 +33,7 @@
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
+  import { isPlainPageKey } from "@nucleum/shell/shortcuts/page-keys";
 
   let {
     scale,
@@ -82,6 +83,30 @@
     }
   });
 
+  /**
+   * T shows the timeline and O the overview, or notes where the product has
+   * no overview, when the day column offers them as panels.
+   */
+  function onPanelKey(event: KeyboardEvent) {
+    if (!isPlainPageKey(event)) return;
+    const key = event.key.toLowerCase();
+    const values = panels.map((panel) => panel.value);
+    const target =
+      key === "t"
+        ? CalendarColumnPanel.Timeline
+        : key === "o"
+          ? values.includes(CalendarColumnPanel.Overview)
+            ? CalendarColumnPanel.Overview
+            : CalendarColumnPanel.Notes
+          : undefined;
+    if (!target || !values.includes(target)) return;
+    event.preventDefault();
+    selectedPanel = target;
+    uiState.setState(UIState.calendarColumnPanel, target, {
+      scope: UIStateScope.DEVICE
+    });
+  }
+
   function resolveLayout(width: number) {
     if (width > 1400) {
       return CalendarColumnLayout.FULL;
@@ -102,6 +127,8 @@
     navigation.openResource(id, AccessMode.PAGE);
   }
 </script>
+
+<svelte:window onkeydown={onPanelKey} />
 
 <div
   class="flex flex-col h-full w-full"

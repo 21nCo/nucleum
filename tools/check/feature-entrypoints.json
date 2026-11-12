@@ -138,6 +138,7 @@
   "client/features/records/cover/CoverRenderer.svelte",
   "client/features/records/bulk-editor.ts",
   "client/features/records/resource.actions.ts",
+  "client/features/records/resource-action-keys.ts",
   "client/features/records/subtype-switcher-params.ts",
   "client/features/spaces/pinned-space-migration.ts",
   "client/features/spaces/space.type.ts",
