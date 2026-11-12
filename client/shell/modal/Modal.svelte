@@ -3,7 +3,10 @@
   import modalEvent from "@nucleum/shell/overlays/modal.store";
   import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
   import { fade } from "svelte/transition";
-  import { focusTrap as trapFocus } from "@21n/ui/actions/focus-trap.action";
+  import {
+    focusableElements,
+    focusTrap as trapFocus
+  } from "@21n/ui/actions/focus-trap.action";
   import { generateUID } from "@21n/shared-utils/legacy-id";
   import { Size } from "@21n/ui/elements/size.enum";
   import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
@@ -94,11 +97,20 @@
     dialog?.showModal();
   }
 
-  /** The popover containers whose popovers a right-side drawer owns. */
-  function drawerPopoverContainers() {
+  /** The shared containers that popovers render into. */
+  function popoverContainers() {
     return ["popovers", "secondary-popovers"]
       .map((containerId) => document.getElementById(containerId))
       .filter((container): container is HTMLElement => !!container);
+  }
+
+  /** Popovers rendered into the shared popover containers. */
+  function popoverElements() {
+    return popoverContainers()
+      .flatMap((container) => [...container.children])
+      .filter(
+        (element): element is HTMLElement => element instanceof HTMLElement
+      );
   }
 
   /**
@@ -110,32 +122,60 @@
   }
 
   /**
-   * Keeps the app behind a right-side drawer keyboard-inert while the drawer
-   * is the front modal: focus stays in the drawer and its popovers, and keys
-   * pressed in its popovers or on the page body do not reach document or
-   * window listeners. `Escape` still passes so the drawer can close.
+   * Keeps the app behind a right-side drawer inert to the keyboard while the
+   * drawer is the front modal. Focus enters the drawer and returns to the
+   * opener on close; Tab cycles through the drawer and the popovers it opened,
+   * and is pulled back in from anywhere else. Keys from outside them are
+   * blocked, and keys from its popovers do not reach document or window
+   * listeners. Popovers already open behind it are made inert. `Escape`
+   * still passes so the drawer can close.
    */
   function isolateDrawer(node: HTMLElement) {
-    const containers = drawerPopoverContainers();
-    const trap = trapFocus(node, { include: containers });
+    const trap = trapFocus(node);
+    const background = popoverElements().filter((popover) => !popover.inert);
+    for (const popover of background) popover.inert = true;
+    const owned = () => [
+      node,
+      ...popoverElements().filter((popover) => !background.includes(popover))
+    ];
     const isOnFront = () => resolveModalOnFront()?.id === id;
+    const guardKey = (event: KeyboardEvent) => {
+      if (!isOnFront() || event.defaultPrevented) return;
+      const scopes = owned();
+      const isInside = scopes.some((scope) =>
+        scope.contains(event.target as Node)
+      );
+      if (event.key === "Tab") {
+        const elements = scopes.flatMap(focusableElements);
+        const index = isInside
+          ? elements.indexOf(document.activeElement as HTMLElement)
+          : -1;
+        const next = event.shiftKey
+          ? elements[(index <= 0 ? elements.length : index) - 1]
+          : (elements[index + 1] ?? elements[0]);
+        event.preventDefault();
+        (next ?? node).focus();
+      } else if (!isInside && event.key !== KeyboardKey.ESCAPE) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
     const stopFromPopover = (event: KeyboardEvent) => {
-      if (isOnFront()) stopBackgroundKey(event);
+      const isFromPopover = owned()
+        .slice(1)
+        .some((popover) => popover.contains(event.target as Node));
+      if (isFromPopover && isOnFront()) stopBackgroundKey(event);
     };
-    const stopFromBody = (event: KeyboardEvent) => {
-      const isBodyTarget =
-        event.target === document.body ||
-        event.target === document.documentElement;
-      if (isBodyTarget && isOnFront()) stopBackgroundKey(event);
-    };
+    const containers = popoverContainers();
+    window.addEventListener("keydown", guardKey, true);
     for (const container of containers)
       container.addEventListener("keydown", stopFromPopover);
-    window.addEventListener("keydown", stopFromBody, true);
     return {
       destroy() {
+        window.removeEventListener("keydown", guardKey, true);
         for (const container of containers)
           container.removeEventListener("keydown", stopFromPopover);
-        window.removeEventListener("keydown", stopFromBody, true);
+        for (const popover of background) popover.inert = false;
         trap.destroy();
       }
     };

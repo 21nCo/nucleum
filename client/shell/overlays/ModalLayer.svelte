@@ -27,7 +27,7 @@
   import PageLoadingAnimation from "@21n/ui/elements/feedback/animations/PageLoadingAnimation.svelte";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
-  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
   import ColorLayer from "@nucleum/shell/layers/themeLayer/ColorLayer.svelte";
   import { Action } from "@nucleum/client/config/action.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -43,6 +43,14 @@
   let isShowAppearancePreview = $state(false);
   let isWindowVisible = $state(true);
   let isDialogEnabled = $state(false);
+  const isRightDrawerOpen = $derived(
+    !$view.isConstrainedWidth &&
+      modals.some(
+        (modal) =>
+          modal?.isShow !== false &&
+          modal?.layout?.alignment === Placement.Right
+      )
+  );
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
@@ -126,10 +134,11 @@
     class={cn(
       "fixed bottom-0 right-0 mb-6 mr-6 flex flex-col items-end gap-4",
       {
-        "z-[100]": !$fullScreen.path,
-        "z-40": $fullScreen.path
+        "z-[100]": !$fullScreen.path && !isRightDrawerOpen,
+        "z-40": $fullScreen.path || isRightDrawerOpen
       }
     )}
+    inert={isRightDrawerOpen}
   >
     {#if $player.isMiniOn}
       <div class={cn("player", { "opacity-0": $fullScreen.path })}>

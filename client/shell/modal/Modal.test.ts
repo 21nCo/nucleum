@@ -20,6 +20,18 @@ const children = createRawSnippet(() => ({
     `<div><button data-testid="first">First</button><button data-testid="last">Last</button></div>`
 }));
 
+function popoverContainer() {
+  const popovers = document.createElement("div");
+  popovers.id = "popovers";
+  document.body.append(popovers);
+  return popovers;
+}
+
+function openPopover(popovers: HTMLElement) {
+  popovers.innerHTML = `<div class="popover"><button>Option</button></div>`;
+  return popovers.querySelector("button")!;
+}
+
 function renderDrawer() {
   return render(Modal, {
     props: {
@@ -106,19 +118,32 @@ describe("Modal right-side drawer", () => {
     document.removeEventListener("keydown", documentKey);
   });
 
-  it("keeps keys pressed in its popovers or on the body from the app behind it", async () => {
-    const popovers = document.createElement("div");
-    popovers.id = "popovers";
-    popovers.innerHTML = `<div class="popover"><button data-testid="option">Option</button></div>`;
-    document.body.append(popovers);
+  it("keeps keys pressed in its popovers, on the body or on a background control from the app behind it", async () => {
+    const popovers = popoverContainer();
+    const background = document.createElement("button");
+    document.body.append(background);
     const documentKey = vi.fn();
     const windowKey = vi.fn();
+    const backgroundKey = vi.fn();
     document.addEventListener("keydown", documentKey);
     window.addEventListener("keydown", windowKey);
+    background.addEventListener("keydown", backgroundKey);
     renderDrawer();
+    const option = openPopover(popovers);
+    const optionKey = vi.fn();
+    option.addEventListener("keydown", optionKey);
 
-    await fireEvent.keyDown(popovers.querySelector("button")!, { key: "n" });
+    await fireEvent.keyDown(option, { key: "n" });
+    expect(optionKey).toHaveBeenCalledTimes(1);
     await fireEvent.keyDown(document.body, { key: "l" });
+    const enter = new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true
+    });
+    background.dispatchEvent(enter);
+    expect(enter.defaultPrevented).toBe(true);
+    expect(backgroundKey).not.toHaveBeenCalled();
     expect(documentKey).not.toHaveBeenCalled();
     expect(windowKey).not.toHaveBeenCalled();
 
@@ -128,15 +153,12 @@ describe("Modal right-side drawer", () => {
     window.removeEventListener("keydown", windowKey);
   });
 
-  it("includes its popovers in the Tab cycle", async () => {
-    const popovers = document.createElement("div");
-    popovers.id = "popovers";
-    popovers.innerHTML = `<div class="popover"><button data-testid="option">Option</button></div>`;
-    document.body.append(popovers);
+  it("includes the popovers it opens in the Tab cycle", async () => {
+    const popovers = popoverContainer();
     const { getByTestId } = renderDrawer();
     const first = getByTestId("first");
     const last = getByTestId("last");
-    const option = popovers.querySelector("button")!;
+    const option = openPopover(popovers);
 
     last.focus();
     await fireEvent.keyDown(last, { key: "Tab" });
@@ -147,6 +169,64 @@ describe("Modal right-side drawer", () => {
 
     await fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
     expect(document.activeElement).toBe(option);
+  });
+
+  it("makes popovers left open behind it inert and keeps them out of the Tab cycle", async () => {
+    const popovers = popoverContainer();
+    const stale = openPopover(popovers);
+    const { getByTestId, rerender } = renderDrawer();
+    const first = getByTestId("first");
+    const last = getByTestId("last");
+
+    expect(stale.closest<HTMLElement>(".popover")?.inert).toBe(true);
+    last.focus();
+    await fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+    await fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+
+    await rerender({ show: false });
+    await waitFor(() =>
+      expect(stale.closest<HTMLElement>(".popover")?.inert).toBe(false)
+    );
+  });
+
+  it("pulls Tab from outside the drawer back into it", async () => {
+    const background = document.createElement("button");
+    document.body.append(background);
+    const { getByTestId } = renderDrawer();
+
+    background.focus();
+    await fireEvent.keyDown(background, { key: "Tab" });
+    expect(document.activeElement).toBe(getByTestId("first"));
+
+    (document.activeElement as HTMLElement).blur();
+    await fireEvent.keyDown(document.body, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(getByTestId("last"));
+  });
+
+  it("leaves keys and Tab to a modal above it", async () => {
+    const documentKey = vi.fn();
+    document.addEventListener("keydown", documentKey);
+    renderDrawer();
+    const above = document.createElement("div");
+    above.setAttribute("data-blank-modal", "1");
+    above.innerHTML = `<button>Confirm</button>`;
+    document.body.append(above);
+    const confirm = above.querySelector("button")!;
+    confirm.focus();
+
+    const tab = new KeyboardEvent("keydown", {
+      key: "Tab",
+      bubbles: true,
+      cancelable: true
+    });
+    confirm.dispatchEvent(tab);
+    expect(tab.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(confirm);
+    await fireEvent.keyDown(confirm, { key: "n" });
+    expect(documentKey).toHaveBeenCalled();
+    document.removeEventListener("keydown", documentKey);
   });
 
   it("lets keys reach the app again after it closes", async () => {

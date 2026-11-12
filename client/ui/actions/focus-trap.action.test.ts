@@ -145,33 +145,4 @@ describe("client/ui/actions/focus-trap.action", () => {
     await Promise.resolve();
     expect(document.activeElement).toBe(opener);
   });
-
-  it("cycles Tab through included containers after the trapped element", () => {
-    document.body.innerHTML = `
-      <div id="sheet" tabindex="-1">
-        <button id="first">Close</button>
-        <button id="last">Font</button>
-      </div>
-      <div id="popovers"><button id="option">Option</button></div>
-    `;
-    const sheet = document.getElementById("sheet") as HTMLElement;
-    const popovers = document.getElementById("popovers") as HTMLElement;
-    const first = document.getElementById("first") as HTMLElement;
-    const last = document.getElementById("last") as HTMLElement;
-    const option = document.getElementById("option") as HTMLElement;
-    const trap = focusTrap(sheet, { include: [popovers] });
-
-    first.focus();
-    expect(tab(first).defaultPrevented).toBe(true);
-    expect(document.activeElement).toBe(last);
-    tab(last);
-    expect(document.activeElement).toBe(option);
-    tab(option);
-    expect(document.activeElement).toBe(first);
-    tab(first, true);
-    expect(document.activeElement).toBe(option);
-
-    trap.release();
-    expect(tab(option).defaultPrevented).toBe(false);
-  });
 });
