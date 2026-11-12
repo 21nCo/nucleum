@@ -106,7 +106,9 @@
       resolveSpacePageMenu($viewStore, {
         isPinned: isRootPinned,
         onRename: () => viewStore.setTitleEditing(true),
-        onTogglePin: toggleRootPin
+        onTogglePin: toggleRootPin,
+        onChanged: () =>
+          viewStore.init(undefined, { isRecordedInRecents: false })
       })
     );
   }
@@ -136,6 +138,7 @@
       isPinned={isRootPinned}
       onTogglePin={toggleRootPin}
       onViewChange={changeView}
+      isKeyed={!isEmbedded}
     />
   </ContextZoneContent>
 {/if}
