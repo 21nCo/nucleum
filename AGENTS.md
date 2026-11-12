@@ -248,37 +248,42 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 - Use Entire CLI 0.12.2 or newer. Older versions don't register every hook event in `.claude/settings.json` (for example `stop-failure`), so some sessions go unrecorded.
 - Claude Code hooks are committed in `.claude/settings.json`. Put personal Claude settings in `.claude/settings.local.json`, which stays ignored.
 - Entire's Codex and Cursor hooks live in the global configs (`~/.codex/hooks.json` and `~/.cursor/hooks.json`). Do not add or commit a repo-level `.codex/hooks.json` or `.cursor/hooks.json`.
-- `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, delete the file afterwards. Both files are gitignored, so they won't show in `git status`, but agents still run them.
-- Cursor runs global hooks from `~/.cursor/`, and Entire skips silently outside a git repository, so the plain `entire hooks cursor <event>` commands record nothing from the global file. Save this wrapper as `~/.cursor/hooks/entire-cursor.sh` (`chmod +x`; it needs `jq`). It finds the first workspace root inside a repo with Entire set up (the root can be a subfolder), moves to that repo's top level and passes the payload on. In a multi-root workspace only that repo records the session. It skips an event when the workspace root's own `.cursor/hooks.json` already runs Entire for that event, so nothing runs twice:
+- `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, remove Entire's entries from the file afterward, and delete the file only if nothing else is left in it. Both files are gitignored, so they won't show in `git status`, but agents still run them.
+- Cursor runs global hooks from `~/.cursor/`, and Entire skips silently outside a git repository, so the plain `entire hooks cursor <event>` commands record nothing from the global file. Save this wrapper as `~/.cursor/hooks/entire-cursor.sh` (`chmod +x`; it needs `jq` and a POSIX shell, so it covers macOS and Linux, not native Windows). It finds the first workspace root inside a repo where Entire is set up and enabled (the root can be a subfolder), moves to that repo's top level and passes the payload on. In a multi-root workspace only that repo records the session. It skips an event when the workspace root's own `.cursor/hooks.json` already runs Entire for that event with no matcher, so nothing runs twice:
 
   ```sh
   #!/bin/sh
-  # Global Cursor hook for Entire: entire-cursor.sh <entire cursor hook name>
-  # Cursor runs user hooks (~/.cursor/hooks.json) from ~/.cursor/, but Entire finds
-  # the repo from its working directory. Move into the repo of the first workspace
-  # root that has Entire set up, then hand Entire the same JSON payload on stdin.
   command -v entire >/dev/null 2>&1 || { cat >/dev/null; exit 0; }
   input=$(cat)
   if ! command -v jq >/dev/null 2>&1; then
     echo "entire-cursor.sh: jq not found; Cursor session not recorded by Entire" >&2
     exit 0
   fi
-  # Each line out: <workspace root>\t<repo top level>, for the first root inside a
-  # git repo with Entire set up (the root may be a subfolder of that repo).
   pick=$(printf '%s' "$input" | jq -r '.workspace_roots[]? // empty' 2>/dev/null |
     while IFS= read -r r; do
       top=$(git -C "$r" rev-parse --show-toplevel 2>/dev/null) || continue
-      if [ -d "$top/.entire" ]; then printf '%s\t%s\n' "$r" "$top"; break; fi
+      [ -f "$top/.entire/settings.json" ] || [ -f "$top/.entire/settings.local.json" ] || continue
+      on=$(cat "$top/.entire/settings.json" "$top/.entire/settings.local.json" 2>/dev/null |
+        jq -s '[.[] | .enabled? | select(. != null)] | if length > 0 then last else true end' 2>/dev/null)
+      if [ "$on" = true ]; then printf '%s\t%s\n' "$r" "$top"; break; fi
     done)
   [ -n "$pick" ] || exit 0
-  root=${pick%%"$(printf '\t')"*}
-  top=${pick#*"$(printf '\t')"}
-  # Cursor loads project hooks from the workspace root. If that root's
-  # .cursor/hooks.json already runs Entire for this event, it records it.
-  grep -Eq "entire hooks cursor $1([^a-z-]|\$)" "$root/.cursor/hooks.json" 2>/dev/null && exit 0
+  tab=$(printf '\t')
+  root=${pick%%"$tab"*}
+  top=${pick#*"$tab"}
+  case "$1" in
+    session-start) event=sessionStart ;; before-submit-prompt) event=beforeSubmitPrompt ;;
+    pre-compact) event=preCompact ;; subagent-start) event=subagentStart ;;
+    subagent-stop) event=subagentStop ;; session-end) event=sessionEnd ;; *) event=$1 ;;
+  esac
+  if jq -e --arg ev "$event" --arg name "$1" \
+    '[.hooks[$ev][]? | select(.matcher == null) | select((.command // "") | test("entire hooks cursor " + $name + "([^a-z-]|$)"))] | length > 0' \
+    "$root/.cursor/hooks.json" >/dev/null 2>&1; then
+    exit 0
+  fi
   cd "$top" || exit 0
   printf '%s\n' "$input" | exec entire hooks cursor "$1"
   ```
 
-  Then add one entry per event to `~/.cursor/hooks.json`, keeping existing entries: `{"command": "./hooks/entire-cursor.sh <event>"}` for `sessionStart` → `session-start`, `beforeSubmitPrompt` → `before-submit-prompt`, `stop` → `stop`, `preCompact` → `pre-compact`, `subagentStart` → `subagent-start`, `subagentStop` → `subagent-stop` and `sessionEnd` → `session-end`.
+  Then add one entry per event to `~/.cursor/hooks.json`, keeping existing entries: `{"command": "./hooks/entire-cursor.sh <event>"}` for `sessionStart` -> `session-start`, `beforeSubmitPrompt` -> `before-submit-prompt`, `stop` -> `stop`, `preCompact` -> `pre-compact`, `subagentStart` -> `subagent-start`, `subagentStop` -> `subagent-stop` and `sessionEnd` -> `session-end`.
 - If the Codex hooks are missing on your machine, add them to `~/.codex/hooks.json`, not to this repo. Without the global hooks, that agent's sessions are not recorded.
