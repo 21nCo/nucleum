@@ -367,14 +367,7 @@
     <div class="flex gap-2 justify-center items-center">
       <ContextMenuAction
         testId="resource-record-context-menu"
-        menuResolver={() =>
-          resolveCollectionContextMenu(
-            resolveCollectionForContextMenu(),
-            ResourceAccessPoint.SELF,
-            {
-              accessMode: accessMode
-            }
-          )}
+        menuResolver={resolveKeyedCollectionMenu}
         position={Placement.Left}
         id="collectionContextMenu"
         size={Size.lg}
