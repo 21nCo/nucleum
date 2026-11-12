@@ -15,6 +15,9 @@
   import TypefaceSelector from "@nucleum/surfaces/settings/appearance/TypefaceSelector.svelte";
   import AppStyleSelector from "@nucleum/surfaces/settings/appearance/AppStyleSelector.svelte";
   import { resolveAppStyle } from "@21n/theme/app-style";
+  import InterfaceSettings from "@nucleum/surfaces/settings/appearance/InterfaceSettings.svelte";
+  import context from "@nucleum/client/runtime/context.store";
+  import { Embed } from "@nucleum/client/runtime/context.type";
   let { parentBackgroundIndex = 1 }: { parentBackgroundIndex?: number } =
     $props();
   void parentBackgroundIndex;
@@ -143,5 +146,8 @@
         }
       }}
     />
+  {/if}
+  {#if $context.embed !== Embed.HANDSET}
+    <InterfaceSettings />
   {/if}
 </ScrollView>
