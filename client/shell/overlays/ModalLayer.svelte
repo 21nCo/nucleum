@@ -38,11 +38,28 @@
     isPlayerShownInPage,
     isPortraitMiniPlayerDocked
   } from "@nucleum/shell/overlays/portrait-dock";
+  import {
+    isToastRaisedAboveModal,
+    shouldRaiseToasts
+  } from "@nucleum/shell/overlays/raised-toasts";
+  import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
   const ComponentResolver = requireActionRenderer();
   let modals = $state<ModalEvent[]>([]);
   let isShowAppearancePreview = $state(false);
   let isWindowVisible = $state(true);
   let isDialogEnabled = $state(false);
+  const isToastRaised = $derived(
+    shouldRaiseToasts({
+      toastCount: $toasts.length,
+      openModalCount: modals.filter((modal) => modal?.path).length,
+      hasConfirmation: Boolean($confirmationNotification),
+      isPortrait: $view.isPortrait
+    })
+  );
+  $effect(() => {
+    isToastRaisedAboveModal.set(isToastRaised);
+  });
+  $effect(() => () => isToastRaisedAboveModal.set(false));
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
@@ -219,6 +236,19 @@
       <ConfirmationNotification />
     </ModalLayout>
   </Modal>
+{/if}
+
+{#if isToastRaised}
+  <div
+    class="fixed top-0 inset-x-0 z-[55] flex justify-center mt-1 pointer-events-none"
+    data-testid="modal-raised-toasts"
+  >
+    <div
+      class="flex items-center h-12 max-w-[32rem] rounded-md bg-bgs2 border border-brs3 shadow-lg pointer-events-auto"
+    >
+      <TopNavToasts />
+    </div>
+  </div>
 {/if}
 
 <svelte:document onvisibilitychange={visibilityChangeListener} />

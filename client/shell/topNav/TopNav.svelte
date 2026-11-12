@@ -30,6 +30,7 @@
   import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
   import PanelActionGroup from "@nucleum/shell/topNav/PanelActionGroup.svelte";
   import { isToastBesideActions } from "@nucleum/shell/topNav/toast-placement";
+  import { isToastRaisedAboveModal } from "@nucleum/shell/overlays/raised-toasts";
   import { isContextTabShown } from "@nucleum/shell/topNav/context-tab";
   import {
     isTopNavPanelBeside,
@@ -162,7 +163,9 @@
     ...(isDev ? [{ action: Action.RHOMBUS, content: rhombusAction }] : []),
     { action: Action.NAVIGATOR, content: navigatorAction }
   ]);
-  const isToastMode = $derived($toasts.length > 0);
+  const isToastMode = $derived(
+    $toasts.length > 0 && !$isToastRaisedAboveModal
+  );
   const isAppMenuColumnVisible = $derived(
     !isPageFullScreen &&
       !isHideLeftNavBar &&

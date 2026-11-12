@@ -18,9 +18,37 @@ import { dispatchCustomEvent } from "@21n/shared-utils/dom-events";
 export const toastDefaultDuration = 3500;
 export const toasts = initToastStore();
 
+type ToastTimer = {
+  handle: ReturnType<typeof setTimeout> | undefined;
+  deadline: number;
+  remaining: number;
+};
+
 function initToastStore() {
-  let timer: any;
+  const timers = new Map<string, ToastTimer>();
   const { subscribe, set, update } = writable<Toast[]>([]);
+
+  const remove = (id: string) => {
+    const timer = timers.get(id);
+    if (timer) clearTimeout(timer.handle);
+    timers.delete(id);
+    update((n: Toast[]) => n.filter((x) => x.id !== id));
+  };
+
+  const schedule = (id: string, duration: number) => {
+    const existing = timers.get(id);
+    if (existing) clearTimeout(existing.handle);
+    timers.set(id, {
+      handle: setTimeout(() => remove(id), duration),
+      deadline: Date.now() + duration,
+      remaining: duration
+    });
+  };
+
+  const clearTimers = () => {
+    for (const timer of timers.values()) clearTimeout(timer.handle);
+    timers.clear();
+  };
 
   /**
    * Triggers a toast notification
@@ -29,18 +57,44 @@ function initToastStore() {
   const trigger = (event: Toast) => {
     logger.log({ at: "toast", event });
     let isAlreadyPresent = false;
+    let dropped: Toast | undefined;
     update((n: Toast[]) => {
       isAlreadyPresent = n.some((x) => x.id === event.id);
       if (isAlreadyPresent) return n;
-      if (n.length > 3) n.shift();
+      if (n.length > 3) dropped = n.shift();
       n.push(event);
       return n;
     });
+    if (dropped) {
+      clearTimeout(timers.get(dropped.id)?.handle);
+      timers.delete(dropped.id);
+    }
     if (isAlreadyPresent || event.type === AlertType.PROGRESS) return;
+    schedule(event.id, toastDefaultDuration);
+  };
 
-    timer = setTimeout(() => {
-      update((n: Toast[]) => n.filter((x) => x.id !== event.id));
-    }, toastDefaultDuration);
+  /**
+   * Stops the auto-dismiss countdown of the given toasts, for example while
+   * the pointer rests on them, keeping the time each one has left.
+   */
+  const pause = (ids: string[]) => {
+    const now = Date.now();
+    for (const id of ids) {
+      const timer = timers.get(id);
+      if (!timer || timer.handle === undefined) continue;
+      clearTimeout(timer.handle);
+      timer.handle = undefined;
+      timer.remaining = Math.max(timer.deadline - now, 0);
+    }
+  };
+
+  /** Restarts the countdown of paused toasts with the time they had left. */
+  const resume = (ids: string[]) => {
+    for (const id of ids) {
+      const timer = timers.get(id);
+      if (!timer || timer.handle !== undefined) continue;
+      schedule(id, timer.remaining);
+    }
   };
   const setProgress = (progress: number) => {
     update((n: Toast[]) => {
@@ -64,7 +118,7 @@ function initToastStore() {
       set(m);
     },
     reset: () => {
-      clearTimeout(timer);
+      clearTimers();
       update(() => {
         return [];
       });
@@ -113,8 +167,10 @@ function initToastStore() {
     setProgress,
     /** Removes one toast, such as when the user hovers it away. */
     dismiss: (id: string) => {
-      update((n: Toast[]) => n.filter((x) => x.id !== id));
+      remove(id);
     },
+    pause,
+    resume,
     trigger: trigger
   };
 }
