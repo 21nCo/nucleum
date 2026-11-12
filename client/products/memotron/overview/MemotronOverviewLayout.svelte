@@ -15,7 +15,7 @@
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import {
     contextZone,
-    nextCycleValue
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
@@ -67,15 +67,14 @@
     savePanel(event.detail);
   }
 
-  function cyclePanel() {
-    const panel = nextCycleValue(
-      memotronOverviewItems.map((item) => String(item.value)),
-      selectedPanel
-    );
-    if (!panel) return;
-    selectedPanel = panel as MemotronOverviewPanel;
-    savePanel(panel);
-  }
+  const panelViews = $derived<ContextZoneViews>({
+    values: memotronOverviewItems.map((item) => String(item.value)),
+    active: selectedPanel,
+    select: (value) => {
+      selectedPanel = value as MemotronOverviewPanel;
+      savePanel(value);
+    }
+  });
 </script>
 
 {#snippet overviewBar(isContextZone: boolean)}
@@ -109,7 +108,7 @@
     {#if isNucleusContext}
       {@render overviewBar(false)}
     {:else}
-      <ContextZoneContent cycle={cyclePanel}>
+      <ContextZoneContent views={panelViews}>
         <div class="h-full flex items-center" data-testid="overview-tabs">
           {@render overviewBar(true)}
         </div>

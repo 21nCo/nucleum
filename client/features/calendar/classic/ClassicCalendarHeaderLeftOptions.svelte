@@ -15,6 +15,7 @@
     resolveCalendarScales,
     type CalendarScale
   } from "@nucleum/features/calendar/calendar-route";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
 
   let {
     selectedView = $bindable(TimeScaleUnit.MONTH),
@@ -76,8 +77,18 @@
     .map((scale) => optionsByScale[scale])
     .filter(Boolean);
 
+  const scaleSubViews = useContextZoneSubViews(() => ({
+    values: switchOptions.map((option) => String(option?.value)),
+    active: selectedView,
+    select: (value) =>
+      handleScaleSelection(
+        new CustomEvent("select", { detail: value as TimeScaleUnit })
+      )
+  }));
+
   function handleScaleSelection(e: CustomEvent<TimeScaleUnit>) {
     if (!e.detail) return;
+    scaleSubViews.touch();
     selectedView = e.detail;
     uiState.setState(UIState.classicCalendarScale, selectedView, {
       scope: UIStateScope.DAP

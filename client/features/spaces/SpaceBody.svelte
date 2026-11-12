@@ -94,14 +94,10 @@
   function changeView(next: SpaceView) {
     viewStore.updateView(next);
   }
-
-  function cycleZone() {
-    changeView(view === SpaceView.WALL ? SpaceView.SIDENAV : SpaceView.WALL);
-  }
 </script>
 
 {#if isLoaded && !$store?.isMissing}
-  <ContextZoneContent isInlineFallback={false} cycle={cycleZone}>
+  <ContextZoneContent isInlineFallback={false}>
     <SpaceContextZone
       store={viewStore}
       {view}

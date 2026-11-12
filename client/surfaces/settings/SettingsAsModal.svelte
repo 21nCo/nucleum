@@ -19,6 +19,7 @@
   import { page } from "$app/stores";
   import { requireSurfaceProductConfig } from "@nucleum/shared-state/product/surface-config-host";
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   const ComponentResolver = requireActionRenderer();
   let selected: string = $state("");
   let parentBgIndex: number = 2;
@@ -34,6 +35,26 @@
   $effect(() => {
     if (settingSearchParam) runAction(settingSearchParam);
   });
+  function selectSetting(item: string) {
+    selected = item;
+    const action = requireCommandHost().resolveAction(item);
+    if (action?.component) pageAction = action;
+    navigation.toggleSearchParam({
+      [AppSearchParam.SETTING]: item
+    });
+  }
+
+  const settingListViews = useContextZoneSubViews(
+    () => ({
+      values: (config ?? [])
+        .flatMap((section) => section.children ?? [])
+        .filter((item) => !!requireCommandHost().resolveAction(item)?.component),
+      active: selected || undefined,
+      select: selectSetting
+    }),
+    { axis: "vertical", isInModal: true }
+  );
+
   async function runAction(slug: string) {
     if (!slug) {
       pageAction = null;
@@ -105,12 +126,8 @@
                       isActive={selected === item}
                       width="w-40"
                       onclick={() => {
-                        selected = item;
-                        const action = requireCommandHost().resolveAction(item);
-                        if (action?.component) pageAction = action;
-                        navigation.toggleSearchParam({
-                          [AppSearchParam.SETTING]: item
-                        });
+                        settingListViews.touch();
+                        selectSetting(item);
                       }}
                     />
                   {/each}

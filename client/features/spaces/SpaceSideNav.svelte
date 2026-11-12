@@ -25,6 +25,7 @@
   import SpaceNavItem from "@nucleum/features/spaces/SpaceNavItem.svelte";
   import SpaceAddPanel from "@nucleum/features/spaces/SpaceAddPanel.svelte";
   import SpaceResourceRenderer from "@nucleum/features/spaces/SpaceResourceRenderer.svelte";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
   import {
     collectResourceItems,
@@ -157,7 +158,23 @@
     cancelScroll = undefined;
   }
 
+  const itemListViews = useContextZoneSubViews(
+    () => ({
+      values: collectResourceItems(items)
+        .filter(isAutoOpenable)
+        .map((item) => item.id),
+      active: selectedItemId ?? undefined,
+      select: (id) => {
+        const item = findItem(items, id);
+        if (item?.type === SpaceNavItemType.RESOURCE)
+          openItem(item as ISpaceResourceNavItem);
+      }
+    }),
+    { axis: "vertical" }
+  );
+
   function openItem(item: ISpaceResourceNavItem) {
+    itemListViews.touch();
     selectedItemId = item.id;
     activeHeadingId = undefined;
     cancelHeadingScroll();

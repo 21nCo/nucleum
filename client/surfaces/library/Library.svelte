@@ -7,6 +7,8 @@
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import ResourceSwitcher from "@nucleum/surfaces/library/resourceSwitcher/ResourceSwitcher.svelte";
+  import { resolveLibrarySwitcherSections } from "@nucleum/surfaces/library/resource-switcher.utils";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
     resourceAction,
@@ -35,7 +37,11 @@
   import ComponentShortcutListener from "@21n/ui/compositions/keyboard/ComponentShortcutListener.svelte";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
-  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    contextZone,
+    getContextZonePane,
+    type ContextZoneViews
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
   import {
     isLibrarySwitcherInTopBar,
     libraryTopBarTabs
@@ -78,6 +84,35 @@
         isConstrainedWidth: $view.isConstrainedWidth
       })
   );
+  const contextZonePane = getContextZonePane();
+  const sidePanelOrder = $derived([
+    ...new Set(
+      resolveLibrarySwitcherSections(
+        $appStore.product,
+        resources,
+        import.meta.env.DEV
+      ).flatMap((section) => section.items.map((item) => String(item.value)))
+    )
+  ]);
+  const sidePanelViews = $derived<ContextZoneViews>({
+    values: sidePanelOrder,
+    active: selectedResource,
+    select: (value) => selectResourceFromSwitcher(value as Resource)
+  });
+
+  useContextZoneSubViews(
+    () => (isSwitcherInTopBar ? undefined : sidePanelViews),
+    { axis: "vertical" }
+  );
+
+  $effect(() => {
+    if (isSwitcherInTopBar) return;
+    return contextZone.registerViews(contextZonePane, {
+      get views() {
+        return sidePanelViews;
+      }
+    });
+  });
   let localSubPath = $state<string[] | undefined>(untrack(() => subPath));
   const subType = $derived(
     selectedResource === Resource.unknown
@@ -100,6 +135,14 @@
     localSubPath = resource
       ? [resource, nextSubType ?? LIBRARY_DEFAULT_SUBTYPE]
       : undefined;
+  }
+
+  function selectResourceFromSwitcher(resource: Resource) {
+    selectedResource = resource;
+    selectView(resource, LIBRARY_DEFAULT_SUBTYPE, {
+      isResetFilters: true
+    });
+    syncFeedbackRef?.refresh(resource);
   }
 
   function selectSubType(nextSubType: string) {
@@ -292,13 +335,7 @@
         {resources}
         selected={selectedResource}
         isShowCount={true}
-        onSelect={(selectedValue) => {
-          selectedResource = selectedValue;
-          selectView(selectedValue, LIBRARY_DEFAULT_SUBTYPE, {
-            isResetFilters: true
-          });
-          syncFeedbackRef?.refresh(selectedValue);
-        }}
+        onSelect={selectResourceFromSwitcher}
       />
     </div>
   {/if}
