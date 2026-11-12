@@ -17,7 +17,10 @@
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import { resolveNucleusOverviewItems } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
-  import type { ContextZoneViews } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    contextZone,
+    type ContextZoneViews
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     subPath = undefined,
@@ -25,6 +28,7 @@
   }: { subPath?: string[]; isRouted?: boolean } = $props();
 
   const items = resolveNucleusOverviewItems();
+  const entryWidth = contextZone.entryWidth;
   let selectedPanel = $state<OverviewPanel>(resolveInitialPanel());
   let appliedSubPath = untrack(() => subPath?.join("/"));
 
@@ -133,21 +137,22 @@
 </script>
 
 <div class="w-full h-full flex flex-col">
-  {#snippet overviewTabs()}
+  {#snippet overviewTabs(isInContextZone: boolean)}
     <BoxSwitcher
       options={items}
       bind:selected={selectedPanel}
       onSelect={onPanelSelect}
-      isOverflowToMenu={true}
+      isOverflowToMenu={isInContextZone}
+      overflowWidth={isInContextZone ? $entryWidth : undefined}
     />
   {/snippet}
   <ContextZoneContent views={panelViews}>
-    <div class="flex h-full min-w-0" data-testid="overview-tabs">
-      {@render overviewTabs()}
+    <div class="h-full" data-testid="overview-tabs">
+      {@render overviewTabs(true)}
     </div>
     {#snippet fallback()}
       <div class="h-12 min-h-12 border-b border-brs3 pl-3">
-        {@render overviewTabs()}
+        {@render overviewTabs(false)}
       </div>
     {/snippet}
   </ContextZoneContent>

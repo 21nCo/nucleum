@@ -34,7 +34,7 @@
 
 <button
   use:popover={{
-    placement: Placement.Right,
+    placement: Placement.RightStart,
     offsetInPx: 12,
     triggerMethod: [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
     content: item.secondStepComponent?.component,
@@ -50,7 +50,7 @@
   }}
   onchange={handlePopoverChange}
   class={cn(
-    "contextmenuitem flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
+    "contextmenuitem flex w-full items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
     {
       "p-1.5": size === Size.sm,
       "p-2": size === Size.md,

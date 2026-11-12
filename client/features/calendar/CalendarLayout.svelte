@@ -2,7 +2,7 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import type { Snippet } from "svelte";
+  import { tick, type Snippet } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import type {
     ISelectItem,
@@ -40,7 +40,7 @@
   }: {
     panel?: CalendarLayout;
     children?: Snippet | undefined;
-    /** Date header; receives whether the controls are tight. */
+    /** Date header; receives whether the date should be short. */
     header?: Snippet<[boolean]> | undefined;
     /**
      * Left header controls; receives whether the controls are compact and
@@ -68,57 +68,86 @@
   let controlsRef = $state<HTMLDivElement | undefined>(undefined);
   const TIGHT_GAP_PX = 12;
   const LOOSE_GAP_PX = 28;
-  let fullControlsWidth = $state(0);
-  let controlGroupCount = $state(0);
-  const isCompact = $derived(
-    fullControlsWidth > 0 &&
-      $entryWidth !== undefined &&
-      $entryWidth < fullControlsWidth
-  );
-  let compactControlsWidth = $state(0);
-  const isTight = $derived(
-    isCompact &&
-      compactControlsWidth > 0 &&
-      $entryWidth !== undefined &&
-      $entryWidth < compactControlsWidth
-  );
+  const MENU_WIDTH_PX = 40;
+  let groupWidths = $state<Record<string, number>>({});
+
+  /**
+   * Width the controls need at a level. Level 0 shows everything; level 1
+   * moves Go to today and settings into the menu; level 2 shortens the date;
+   * level 3 also moves the layout switcher; level 4 also moves the scale.
+   */
+  function requiredWidth(level: number, gap = TIGHT_GAP_PX) {
+    const width = (key: string, fallback = 0) => groupWidths[key] ?? fallback;
+    const layout = isLayoutSwitcher ? width("layout") : width("back");
+    const date = width("date");
+    const shortDate = width("date-short", date * 0.6);
+    const scale = width("scale", width("scale-full"));
+    const right = width("right", MENU_WIDTH_PX);
+    const keptLayout = isLayoutSwitcher ? 0 : layout;
+    const groups = [
+      [layout, width("scale-full"), date, width("trailing")],
+      [layout, scale, date, right],
+      [layout, scale, shortDate, right],
+      [keptLayout, scale, shortDate, right],
+      [keptLayout, shortDate, right]
+    ][level];
+    const shown = groups.filter((value) => value > 0);
+    return (
+      shown.reduce((sum, value) => sum + value, 0) +
+      gap * Math.max(0, shown.length - 1)
+    );
+  }
+
+  const level = $derived.by(() => {
+    if ($entryWidth === undefined || !groupWidths.date) return 0;
+    const available = $entryWidth;
+    for (const candidate of [0, 1, 2, 3]) {
+      if (candidate === 3 && !isLayoutSwitcher) continue;
+      if (requiredWidth(candidate) <= available) return candidate;
+    }
+    return 4;
+  });
+  const isCompact = $derived(level >= 1);
+  const isShortDate = $derived(level >= 2);
+  const isTight = $derived(level >= 4);
   const isLoose = $derived(
-    !isCompact &&
-      fullControlsWidth > 0 &&
+    level === 0 &&
       $entryWidth !== undefined &&
-      $entryWidth >=
-        fullControlsWidth +
-          Math.max(0, controlGroupCount - 1) * (LOOSE_GAP_PX - TIGHT_GAP_PX)
+      $entryWidth >= requiredWidth(0, LOOSE_GAP_PX)
   );
 
+  function measureGroups() {
+    if (!controlsRef) return;
+    const next = { ...groupWidths };
+    let isChanged = false;
+    for (const child of controlsRef.querySelectorAll<HTMLElement>(
+      ":scope > [data-calendar-group]"
+    )) {
+      const key = child.dataset.calendarGroup!;
+      const width = Math.ceil(child.getBoundingClientRect().width);
+      if (next[key] !== width) {
+        next[key] = width;
+        isChanged = true;
+      }
+    }
+    if (isChanged) groupWidths = next;
+  }
+
   $effect(() => {
-    if (!controlsRef || isCompact) return;
+    if (!controlsRef) return;
     const element = controlsRef;
-    const measure = () => {
-      if (isCompact) return;
-      const groups = element.children.length;
-      const gap = parseFloat(getComputedStyle(element).columnGap) || 0;
-      controlGroupCount = groups;
-      fullControlsWidth =
-        element.scrollWidth - Math.max(0, groups - 1) * (gap - TIGHT_GAP_PX);
-    };
-    const observer = new ResizeObserver(measure);
+    const observer = new ResizeObserver(() => measureGroups());
     observer.observe(element);
-    measure();
+    for (const child of element.children) observer.observe(child);
+    measureGroups();
     return () => observer.disconnect();
   });
 
   $effect(() => {
-    if (!controlsRef || !isCompact || isTight) return;
-    const element = controlsRef;
-    const measure = () => {
-      if (!isCompact || isTight) return;
-      compactControlsWidth = element.scrollWidth;
-    };
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    measure();
-    return () => observer.disconnect();
+    void level;
+    tick().then(() => {
+      measureGroups();
+    });
   });
 
   function openCalendarSettings() {
@@ -130,23 +159,24 @@
   }
 
   function resolveOverflowMenu() {
-    const layoutGroup = isLayoutSwitcher
-      ? [
-          {
-            group: "layout",
-            items: [],
-            option: {
-              label: "Layout",
-              options: panelOptions,
-              value: panel,
-              onChange: (value: ISelectValue) => {
-                panel = value as CalendarLayout;
-                onPanelSwitch(new CustomEvent("select", { detail: value }));
+    const layoutGroup =
+      isLayoutSwitcher && level >= 3
+        ? [
+            {
+              group: "layout",
+              items: [],
+              option: {
+                label: "Layout",
+                options: panelOptions,
+                value: panel,
+                onChange: (value: ISelectValue) => {
+                  panel = value as CalendarLayout;
+                  onPanelSwitch(new CustomEvent("select", { detail: value }));
+                }
               }
             }
-          }
-        ]
-      : [];
+          ]
+        : [];
     return [
       ...layoutGroup,
       ...(isTight ? (overflowMenu?.() ?? []) : []),
@@ -250,19 +280,43 @@
       data-testid="calendar-context-controls"
       data-compact={isCompact ? "true" : undefined}
       data-tight={isTight ? "true" : undefined}
+      data-level={level}
     >
-      {#if isLayoutSwitcher && !isCompact}
-        {@render layoutSwitcher()}
+      {#if isLayoutSwitcher && level < 3}
+        <div
+          class="flex items-center h-full shrink-0"
+          data-calendar-group="layout"
+        >
+          {@render layoutSwitcher()}
+        </div>
       {:else if backPath !== null && !isLayoutSwitcher}
-        {@render backButton(false)}
+        <div
+          class="flex items-center h-full shrink-0"
+          data-calendar-group="back"
+        >
+          {@render backButton(false)}
+        </div>
       {/if}
-      <div class="flex items-center h-full gap-3 shrink-0">
+      <div
+        class="flex items-center h-full gap-3 shrink-0"
+        data-calendar-group={level === 0
+          ? "scale-full"
+          : isTight
+            ? "scale-menu"
+            : "scale"}
+      >
         {@render headerLeftOptions?.(isCompact, isTight)}
       </div>
-      <div class="flex items-center h-full shrink-0">
-        {@render header?.(isTight)}
+      <div
+        class="flex items-center h-full shrink-0"
+        data-calendar-group={isShortDate ? "date-short" : "date"}
+      >
+        {@render header?.(isShortDate)}
       </div>
-      <div class="flex items-center h-full shrink-0">
+      <div
+        class="flex items-center h-full shrink-0"
+        data-calendar-group={isCompact ? "right" : "trailing"}
+      >
         {#if isCompact}
           {@render headerRightOptions?.()}
           <ContextMenuAction

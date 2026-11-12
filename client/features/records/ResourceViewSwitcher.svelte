@@ -50,6 +50,7 @@
   } = $props();
 
   const isContextZoneHosted = contextZone.isHosted;
+  const contextZoneEntryWidth = contextZone.entryWidth;
   const isInContextZone = $derived(
     isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
@@ -86,6 +87,7 @@
   <ContextZoneContent isInlineFallback={false} {views} {title}>
     <ResourcePanelSwitcher
       variant="tabs"
+      entryWidth={$contextZoneEntryWidth}
       {resourceStore}
       {panels}
       {isConstrainedWidth}

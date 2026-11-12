@@ -63,7 +63,7 @@
 
 {#if (live && !isMissing) || pageAction}
   <div
-    class="flex items-center h-full min-w-[5rem] max-w-[24rem] shrink-[4] pl-2 pr-1 gap-1"
+    class="flex items-center h-full min-w-[8rem] max-w-[24rem] shrink-[4] pl-2 pr-1 gap-1"
     data-testid="top-bar-page-identity"
   >
     {#if parent && onBack}

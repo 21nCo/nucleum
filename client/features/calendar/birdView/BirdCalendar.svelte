@@ -85,7 +85,7 @@
       />
     {/if}
   {/snippet}
-  {#snippet header(_isTight: boolean)}
+  {#snippet header(_isShortDate: boolean)}
     <CalendarHeader
       bind:selectedDate
       bind:selectedView={scale}

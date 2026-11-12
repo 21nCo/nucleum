@@ -25,6 +25,7 @@
     size = Size.sm,
     isActiveIndicatorOnTop = false,
     isOverflowToMenu = false,
+    overflowWidth = undefined,
     onSelect = undefined
   }: {
     options: ISelectItem[];
@@ -42,6 +43,12 @@
      * menu, keeping the selected option in the row.
      */
     isOverflowToMenu?: boolean;
+    /**
+     * Width the switcher may use, when the surrounding layout knows it. The
+     * switcher then takes only the width its shown options need; without it
+     * the switcher measures the room it is given.
+     */
+    overflowWidth?: number | undefined;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
   $effect(() => {
@@ -69,14 +76,16 @@
   let trackGap = $state(0);
   let trackPadding = $state(0);
 
+  const budgetWidth = $derived(overflowWidth ?? availableWidth);
   const visibleIndexes = $derived.by(() => {
     if (!isOverflowToMenu || optionWidths.length !== options.length)
       return options.map((_, index) => index);
-    if (availableWidth <= 0) return options.map((_, index) => index);
+    if (overflowWidth === undefined && availableWidth <= 0)
+      return options.map((_, index) => index);
     return resolveSwitcherVisibleOptions({
       widths: optionWidths,
       activeIndex: options.findIndex((option) => option.value === selected),
-      available: availableWidth,
+      available: budgetWidth,
       moreWidth,
       gap: trackGap,
       padding: trackPadding
@@ -87,8 +96,7 @@
     if (visibleIndexes.length === options.length) return false;
     const active = visibleIndexes[0];
     return (
-      trackPadding + optionWidths[active] + trackGap + moreWidth >
-      availableWidth
+      trackPadding + optionWidths[active] + trackGap + moreWidth > budgetWidth
     );
   });
   const visibleOptions = $derived(
@@ -97,6 +105,17 @@
   const hiddenOptions = $derived(
     options.filter((_, index) => !visibleIndexes.includes(index))
   );
+  const rootWidth = $derived.by(() => {
+    if (overflowWidth === undefined || hiddenOptions.length === 0)
+      return fullWidth;
+    const shown = visibleIndexes.map((index) => optionWidths[index] ?? 0);
+    return Math.ceil(
+      trackPadding +
+        shown.reduce((sum, width) => sum + width, 0) +
+        moreWidth +
+        trackGap * shown.length
+    );
+  });
 
   function measureOptions() {
     if (!measureEl) return;
@@ -139,6 +158,13 @@
     void $shape;
     void size;
     tick().then(measureOptions);
+  });
+
+  $effect(() => {
+    if (!isOverflowToMenu || !measureEl) return;
+    const observer = new ResizeObserver(() => measureOptions());
+    observer.observe(measureEl);
+    return () => observer.disconnect();
   });
 
   function resolveMoreMenu(): IContextMenuGroup[] {
@@ -187,8 +213,8 @@
 </script>
 
 {#snippet moreContent()}
-  <span class="flex items-center gap-0.5">
-    <Icon icon="more-outline-horizontal" {size} />
+  <span class="flex items-center gap-1 text-b2 whitespace-nowrap">
+    <span>+{Math.max(hiddenOptions.length, 1)}</span>
     <Icon icon="chevron-down" size={Size.xs} />
   </span>
 {/snippet}
@@ -294,7 +320,7 @@
       <ContextMenuAction
         id="switcherMore"
         testId="switcher-more"
-        tooltip="More"
+        tooltip={`${hiddenOptions.length} more`}
         menuResolver={resolveMoreMenu}
         {size}
         actionSize={size}
@@ -320,8 +346,11 @@
 {#if isOverflowToMenu}
   <div
     bind:this={overflowRootEl}
-    class="relative flex items-center h-full min-w-0 shrink"
-    style:width={fullWidth > 0 ? `${fullWidth}px` : undefined}
+    class={cn("relative flex items-center h-full", {
+      "min-w-0 shrink": overflowWidth === undefined,
+      "shrink-0": overflowWidth !== undefined
+    })}
+    style:width={rootWidth > 0 ? `${rootWidth}px` : undefined}
   >
     <div
       aria-hidden="true"

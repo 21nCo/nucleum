@@ -545,7 +545,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       return;
     }
 
-    let adjustedPlacement = placement;
+    const isStartAligned = placement === Placement.RightStart;
+    let adjustedPlacement = isStartAligned ? Placement.Right : placement;
     resetPosition();
     adjustIfNotEnoughTop();
     adjustIfNotEnoughBottom();
@@ -630,7 +631,13 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       adjustedPlacement === Placement.Left ||
       adjustedPlacement === Placement.Right
     ) {
-      if (triggerRect.top < popRect.height / 2) {
+      if (isStartAligned) {
+        const top = Math.min(
+          triggerRect.top - offsetInPx,
+          documentHeight - popRect.height - 6
+        );
+        popoverElement.style.top = `${Math.max(6, top)}px`;
+      } else if (triggerRect.top < popRect.height / 2) {
         popoverElement.style.top = "6px";
       } else if (documentHeight - triggerRect.bottom < popRect.height / 2) {
         popoverElement.style.bottom = "6px";

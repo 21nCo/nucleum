@@ -3,6 +3,8 @@ export enum Placement {
   Bottom = "bottom",
   Left = "left",
   Right = "right",
+  /** Beside the trigger on the right, top edges aligned, as for submenus. */
+  RightStart = "right-start",
   BottomLeft = "bottom-left",
   BottomRight = "bottom-right",
   TopLeft = "top-left",

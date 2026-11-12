@@ -60,6 +60,28 @@ const renamedEnumContracts = new Map([
 /** Runtime enums whose members were intentionally changed after the baseline, keyed by baseline path and pinned to their audited members. */
 const changedEnumContracts = new Map([
   [
+    "client/types/direction.enum.ts",
+    [
+      {
+        name: "Placement",
+        members: {
+          Top: "top",
+          Bottom: "bottom",
+          Left: "left",
+          Right: "right",
+          RightStart: "right-start",
+          BottomLeft: "bottom-left",
+          BottomRight: "bottom-right",
+          TopLeft: "top-left",
+          TopRight: "top-right",
+          BottomCenter: "bottom-center",
+          TopCenter: "top-center",
+          Center: "center"
+        }
+      }
+    ]
+  ],
+  [
     "client/datafn/resource.type.ts",
     [
       {
