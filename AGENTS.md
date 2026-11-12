@@ -191,7 +191,7 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 ### Sync Impact Report
 
 - Version change: 1.12.0 to 1.12.1.
-- Expanded the Entire hooks section to agent hooks: Claude Code hooks are committed in `.claude/settings.json`, Cursor hooks move to the global `~/.cursor/hooks.json` through a wrapper that runs Entire in the repo of the first workspace root with Entire set up, and Entire CLI 0.12.2 is the minimum version. No test or user-facing behavior authorization rules changed.
+- Expanded the Entire hooks section to agent hooks: Claude Code hooks are committed in `.claude/settings.json`, Cursor hooks move to the global `~/.cursor/hooks.json` through a wrapper that runs Entire in the repo of the first workspace root with Entire set up and enabled, and Entire CLI 0.12.2 is the minimum version. No test or user-facing behavior authorization rules changed.
 
 - Version change: 1.11.3 to 1.12.0.
 - Updated the shell charter for the layered page model, the top bar context zone and the navigator's access trails, and the app menu (left panel), and marked app tabs as retired while their retained tab state stays with the shell (TIDY-484, TIDY-487, TIDY-488).
@@ -249,7 +249,7 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 - Claude Code hooks are committed in `.claude/settings.json`. Put personal Claude settings in `.claude/settings.local.json`, which stays ignored.
 - Entire's Codex and Cursor hooks live in the global configs (`~/.codex/hooks.json` and `~/.cursor/hooks.json`). Do not add or commit a repo-level `.codex/hooks.json` or `.cursor/hooks.json`.
 - `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, remove Entire's entries from the file afterward, and delete the file only if nothing else is left in it. Both files are gitignored, so they won't show in `git status`, but agents still run them.
-- Cursor runs global hooks from `~/.cursor/`, and Entire skips silently outside a git repository, so the plain `entire hooks cursor <event>` commands record nothing from the global file. Save this wrapper as `~/.cursor/hooks/entire-cursor.sh` (`chmod +x`; it needs `jq` and a POSIX shell, so it covers macOS and Linux, not native Windows). It finds the first workspace root inside a repo where Entire is set up and enabled (the root can be a subfolder), moves to that repo's top level and passes the payload on. In a multi-root workspace only that repo records the session. It skips an event when the workspace root's own `.cursor/hooks.json` already runs Entire for that event with no matcher, so nothing runs twice:
+- Cursor runs global hooks from `~/.cursor/`, and Entire skips silently outside a git repository, so the plain `entire hooks cursor <event>` commands record nothing from the global file. Save this wrapper as `~/.cursor/hooks/entire-cursor.sh` (`chmod +x`; it needs `jq` and a POSIX shell, so it covers macOS and Linux, not native Windows). It finds the first workspace root inside a repo where Entire is set up and enabled (the root can be a subfolder), moves to that repo's top level and passes the payload on. In a multi-root workspace only that repo records the session. It skips an event when the workspace root's own `.cursor/hooks.json` already runs Entire for that event and its matcher (if any) matches the event as Cursor applies it, so nothing runs twice:
 
   ```sh
   #!/bin/sh
@@ -276,9 +276,17 @@ The Nucleum constitution supersedes conflicting process documents for automated 
     pre-compact) event=preCompact ;; subagent-start) event=subagentStart ;;
     subagent-stop) event=subagentStop ;; session-end) event=sessionEnd ;; *) event=$1 ;;
   esac
-  if jq -e --arg ev "$event" --arg name "$1" \
-    '[.hooks[$ev][]? | select(.matcher == null) | select((.command // "") | test("entire hooks cursor " + $name + "([^a-z-]|$)"))] | length > 0' \
-    "$root/.cursor/hooks.json" >/dev/null 2>&1; then
+  if printf '%s' "$input" | jq -e --arg ev "$event" --arg name "$1" --slurpfile cfg "$root/.cursor/hooks.json" '
+    (if $ev == "subagentStart" or $ev == "subagentStop" then (.subagent_type // "")
+     elif $ev == "beforeSubmitPrompt" then "UserPromptSubmit"
+     elif $ev == "stop" then "Stop"
+     else null end) as $value
+    | [$cfg[0].hooks[$ev][]?
+       | select((.command // "") | test("entire hooks cursor " + $name + "([^a-z-]|$)"))
+       | .matcher as $m
+       | select($m == null or $m == "" or $m == "*" or $value == null
+                or (try ($value | test($m)) catch false))]
+    | length > 0' >/dev/null 2>&1; then
     exit 0
   fi
   cd "$top" || exit 0
