@@ -26,10 +26,14 @@
   import KeyboardToolbar from "@21n/ui/elements/keyboardToolbar/KeyboardToolbar.svelte";
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
-  import type {
-    SuperBarEntry,
-    SuperBarScope
+  import {
+    resolveCommandsPrefix,
+    type SuperBarEntry,
+    type SuperBarScope
   } from "@nucleum/surfaces/commandBar/super-bar";
+  import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
 
   let {
     command = undefined,
@@ -50,11 +54,33 @@
   let searchAction = $state<IAction | null>(null);
   let isFocusing = $state(false);
   let selectedKind = $state<SuperBarEntry["kind"] | undefined>(undefined);
+  let isContextDismissed = $state(false);
+  let isCommandsMode = $state(false);
+  const activeContext = contextActions.active;
+  const contextLabel = $derived(
+    $activeContext ? properCase($activeContext.resource) : ""
+  );
+  const isContextShown = $derived(
+    !!$activeContext &&
+      !isContextDismissed &&
+      scope === "all" &&
+      !isPerformingSearchAction &&
+      !isCommandsMode
+  );
   const defaultPlaceholder = $derived(
     scope === "search"
       ? "Start typing to search"
-      : "Search anything, run a command or ask Rhombus"
+      : isCommandsMode
+        ? "Search for a command"
+        : "Search anything, run a command or ask Rhombus"
   );
+  $effect(() => {
+    if (isCommandsMode || isPerformingSearchAction || scope !== "all") return;
+    const rest = resolveCommandsPrefix(value);
+    if (rest === undefined) return;
+    isCommandsMode = true;
+    value = rest;
+  });
   let placeholder = $state("");
   $effect(() => {
     if (!isPerformingSearchAction) {
@@ -78,6 +104,18 @@
   });
   function handleKeyDown(event: KeyboardEvent) {
     if (event.isComposing || event.keyCode === 229) return;
+    if (event.key === "Backspace" && value === "") {
+      if (isCommandsMode) {
+        event.preventDefault();
+        isCommandsMode = false;
+        return;
+      }
+      if (isContextShown) {
+        event.preventDefault();
+        isContextDismissed = true;
+        return;
+      }
+    }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       resultsRef?.moveSelection(event.key === "ArrowDown" ? "down" : "up");
@@ -203,6 +241,33 @@
       "flex mo:flex-col w-full bg-bgs1 justify-between items-center mo:rounded-none rounded-t-md"
     )}
   >
+    {#if isCommandsMode}
+      <span
+        class="flex items-center gap-1 shrink-0 ml-4 -mr-2 px-2 py-1 rounded-md bg-bgs2 text-b3 text-fgs2"
+        data-testid="super-bar-mode-chip"
+      >
+        <Icon icon="command" size={Size.xs} />
+        Commands
+      </span>
+    {:else if isContextShown}
+      <span
+        class="flex items-center gap-1 shrink-0 ml-4 -mr-2 pl-2 pr-1 py-1 rounded-md bg-bgs2 text-b3 text-fgs2"
+        data-testid="super-bar-context-pill"
+      >
+        This {contextLabel.toLowerCase()}
+        <button
+          type="button"
+          class="flex items-center justify-center w-5 h-5 rounded hover:bg-bgs3"
+          aria-label="Remove context"
+          onclick={() => {
+            isContextDismissed = true;
+            inputRef?.focus();
+          }}
+        >
+          <Icon icon="cross" size={Size.xs} />
+        </button>
+      </span>
+    {/if}
     <input
       data-testid="command-bar-input"
       bind:this={inputRef}
@@ -250,6 +315,8 @@
       <CmdResults
         search={value}
         {scope}
+        {isContextShown}
+        isCommandsOnly={isCommandsMode}
         bind:this={resultsRef}
         bind:selectedKind
         {onSearchAction}

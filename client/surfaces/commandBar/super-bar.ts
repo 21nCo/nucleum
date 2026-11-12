@@ -29,6 +29,18 @@ export type SuperBarEntry =
 /** Commands shown above the search results while a query is typed. */
 export const SUPER_BAR_COMMAND_LIMIT = 5;
 
+/** Prefix that narrows the super bar to commands only. */
+export const SUPER_BAR_COMMANDS_PREFIX = ">";
+
+/**
+ * Reads a typed `>` prefix: returns the query without it when the input
+ * starts with the prefix, otherwise undefined.
+ */
+export function resolveCommandsPrefix(value: string): string | undefined {
+  if (!value.startsWith(SUPER_BAR_COMMANDS_PREFIX)) return undefined;
+  return value.slice(SUPER_BAR_COMMANDS_PREFIX.length).trimStart();
+}
+
 function resolveContextItemLabel(item: IContextMenuItem) {
   if (item.type === ContextMenuType.SWITCH) {
     const label = item.label ?? properCase(enumToString(String(item.value)));
@@ -142,8 +154,17 @@ export function buildSuperBarEntries(params: {
   contextActions: ContextActionItem[];
   commands: ICommandAction[];
   results: ResourceSearchHit[];
+  /** Lists every matching command and nothing else. */
+  isCommandsOnly?: boolean;
 }): SuperBarEntry[] {
   const isTyping = params.query.trim().length > 0;
+  if (params.isCommandsOnly) {
+    return params.commands.map((action) => ({
+      kind: "command",
+      key: `command:${action.action}:${action.variant ?? ""}`,
+      action
+    }));
+  }
   if (params.scope === "search") {
     return params.results.map((hit) => ({
       kind: "result",
