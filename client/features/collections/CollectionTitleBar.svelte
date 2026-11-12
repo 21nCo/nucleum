@@ -39,6 +39,7 @@
   import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
   import type { ICollection } from "@nucleum/features/collections/collection.type";
   import { tick } from "svelte";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import {
     contextZone,
@@ -144,6 +145,21 @@
   function resolveCollectionForContextMenu() {
     return $collection as unknown as ICollection;
   }
+
+  /**
+   * The collection's own menu, with the single-key letters shown and run while
+   * it is open as a page or split, where those keys apply.
+   */
+  function resolveKeyedCollectionMenu() {
+    const menu = resolveCollectionContextMenu(
+      resolveCollectionForContextMenu(),
+      ResourceAccessPoint.SELF,
+      { accessMode }
+    );
+    return isContextZoneAccessMode(accessMode)
+      ? withResourceActionKeys(menu)
+      : menu;
+  }
 </script>
 
 {#snippet collectionActions(isCloseShown: boolean)}
@@ -166,14 +182,7 @@
   {/if}
   <ContextMenuAction
     testId="resource-record-context-menu"
-    menuResolver={() =>
-      resolveCollectionContextMenu(
-        resolveCollectionForContextMenu(),
-        ResourceAccessPoint.SELF,
-        {
-          accessMode: accessMode
-        }
-      )}
+    menuResolver={resolveKeyedCollectionMenu}
     position={Placement.BottomCenter}
     id="collectionContextMenu"
     size={Size.lg}
@@ -204,12 +213,7 @@
   <ContextActions
     id={$collection.id.toString()}
     resource={Resource.collection}
-    resolve={() =>
-      resolveCollectionContextMenu(
-        resolveCollectionForContextMenu(),
-        ResourceAccessPoint.SELF,
-        { accessMode }
-      )}
+    resolve={resolveKeyedCollectionMenu}
     isEnabled={isContextZoneAccessMode(accessMode)}
   />
 {/if}
