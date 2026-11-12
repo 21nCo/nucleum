@@ -198,12 +198,33 @@ export function resolveContextZoneViews(
   ).source.views;
 }
 
+/**
+ * Direction of an in-page switcher: horizontal switchers (view modes,
+ * calendar scale) step with Option+Shift+Left/Right, vertical lists (settings
+ * list, side navs) with Option+Up/Down.
+ */
+export type ContextZoneSwitcherAxis = "horizontal" | "vertical";
+
+/** Where an in-page switcher lives and which keys step it. */
+export type ContextZoneSubViewOptions = {
+  axis?: ContextZoneSwitcherAxis;
+  /** The switcher is inside a modal, so it steps only while a modal is in front. */
+  isInModal?: boolean;
+};
+
 /** One in-page sub switcher registered for keyboard stepping. */
 export type ContextZoneSubViewSource = {
   key: number;
   pane: ContextZonePane;
   source: { views?: ContextZoneViews };
   usedAt: number;
+} & ContextZoneSubViewOptions;
+
+/** Which switchers the keyboard is looking for. */
+export type ContextZoneSubViewQuery = {
+  axis?: ContextZoneSwitcherAxis;
+  /** A modal is in front, so only switchers inside a modal count. */
+  isModalOpen?: boolean;
 };
 
 /** Handle returned when a page registers an in-page sub switcher. */
@@ -221,11 +242,16 @@ export type ContextZoneSubViewRegistration = {
  */
 export function resolveContextZoneSubViewSource(
   sources: ContextZoneSubViewSource[],
-  pane: ContextZonePane | undefined
+  pane: ContextZonePane | undefined,
+  query: ContextZoneSubViewQuery = {}
 ): ContextZoneSubViewSource | undefined {
-  const candidates = sources.filter(
-    (item) => item.source.views && (!pane || item.pane.id === pane.id)
-  );
+  const axis = query.axis ?? "horizontal";
+  const candidates = sources.filter((item) => {
+    if (!item.source.views || (item.axis ?? "horizontal") !== axis)
+      return false;
+    if (query.isModalOpen) return !!item.isInModal;
+    return !item.isInModal && (!pane || item.pane.id === pane.id);
+  });
   if (candidates.length === 0) return undefined;
   return candidates.reduce((latest, item) =>
     item.usedAt > latest.usedAt ||
@@ -329,10 +355,14 @@ export const contextZone = {
    */
   registerSubViews(
     pane: ContextZonePane,
-    source: { views?: ContextZoneViews }
+    source: { views?: ContextZoneViews },
+    options: ContextZoneSubViewOptions = {}
   ): ContextZoneSubViewRegistration {
     const key = ++nextKey;
-    subViewSources.update((list) => [...list, { key, pane, source, usedAt: 0 }]);
+    subViewSources.update((list) => [
+      ...list,
+      { key, pane, source, usedAt: 0, ...options }
+    ]);
     return {
       touch: () => markSubViewsUsed(key),
       release: () =>
@@ -340,20 +370,22 @@ export const contextZone = {
     };
   },
   /** Sub switcher views the keyboard steps in the pane the zone describes. */
-  resolveSubViews() {
+  resolveSubViews(query: ContextZoneSubViewQuery = {}) {
     return resolveContextZoneSubViewSource(
       get(subViewSources),
-      get(contextZone.pane)
+      get(contextZone.pane),
+      query
     )?.source.views;
   },
   /**
    * Moves the in-page sub switcher `delta` views along, wrapping at both
    * ends; returns whether a view was selected.
    */
-  stepSub(delta: number) {
+  stepSub(delta: number, query: ContextZoneSubViewQuery = {}) {
     const source = resolveContextZoneSubViewSource(
       get(subViewSources),
-      get(contextZone.pane)
+      get(contextZone.pane),
+      query
     );
     const views = source?.source.views;
     if (!source || !views) return false;

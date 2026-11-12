@@ -123,6 +123,30 @@ export const shellCommands = {
       contextZone.stepSub(-1);
     }
   },
+  previous_list_item: {
+    action: Action.PREVIOUS_LIST_ITEM,
+    label: "Previous list item",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      contextZone.stepSub(-1, {
+        axis: "vertical",
+        isModalOpen: !!resolveModalOnFront()
+      });
+    }
+  },
+  next_list_item: {
+    action: Action.NEXT_LIST_ITEM,
+    label: "Next list item",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      contextZone.stepSub(1, {
+        axis: "vertical",
+        isModalOpen: !!resolveModalOnFront()
+      });
+    }
+  },
   next_sub_view: {
     action: Action.NEXT_SUB_VIEW,
     label: "Next sub view",

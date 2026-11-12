@@ -218,6 +218,8 @@ const changedEnumContracts = new Map([
           NEXT_CONTEXT_VIEW: "next-context-view",
           PREVIOUS_SUB_VIEW: "previous-sub-view",
           NEXT_SUB_VIEW: "next-sub-view",
+          PREVIOUS_LIST_ITEM: "previous-list-item",
+          NEXT_LIST_ITEM: "next-list-item",
           RHOMBUS: "rhombus",
           TODAY: "today",
           FEED: "feed"
