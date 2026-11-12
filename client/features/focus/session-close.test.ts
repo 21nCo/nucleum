@@ -206,3 +206,87 @@ describe("closing a finished focus session", () => {
     expect(runAction).toHaveBeenCalledWith(PointronEvent.SESSION_FINISHED);
   });
 });
+
+describe("finishing focus with a rejected mutation", () => {
+  async function spyOnRecents() {
+    const { focusItemsStore } = await import("./session.store");
+    const setState = vi.spyOn(uiState, "setState");
+    const refreshRecents = vi.spyOn(focusItemsStore, "refreshRecents");
+    return {
+      recentsWrites: () =>
+        setState.mock.calls.filter(([key]) => key === UIState.recentFocusItems),
+      refreshRecents
+    };
+  }
+
+  it("writes no logs and leaves recents unchanged when the session insert is rejected", async () => {
+    const { sessionStore } = await import("./session.store");
+    const logMutate = vi.fn().mockResolvedValue([]);
+    datafnOverrides.session = {
+      mutate: vi
+        .fn()
+        .mockResolvedValue([
+          { ok: false, error: new Error("session rejected") }
+        ])
+    };
+    datafnOverrides.sessionLog = { mutate: logMutate };
+    const recents = await spyOnRecents();
+
+    await expect(sessionStore.finishFocus()).rejects.toThrow(
+      "session rejected"
+    );
+
+    expect(logMutate).not.toHaveBeenCalled();
+    expect(recents.recentsWrites()).toEqual([]);
+    expect(recents.refreshRecents).not.toHaveBeenCalled();
+  });
+
+  it("leaves recents unchanged when the log insert is rejected", async () => {
+    const { sessionStore } = await import("./session.store");
+    datafnOverrides.session = {
+      mutate: vi.fn().mockResolvedValue([{ ok: true }])
+    };
+    datafnOverrides.sessionLog = {
+      mutate: vi
+        .fn()
+        .mockResolvedValue([{ ok: false, error: new Error("log rejected") }])
+    };
+    const recents = await spyOnRecents();
+
+    await expect(sessionStore.finishFocus()).rejects.toThrow("log rejected");
+
+    expect(recents.recentsWrites()).toEqual([]);
+    expect(recents.refreshRecents).not.toHaveBeenCalled();
+  });
+});
+
+describe("closing a session synchronously", () => {
+  it("dismisses the session before close() returns", async () => {
+    await activeSession.modify(finishedSnapshot("session-sync"), {
+      isPersist: false
+    });
+
+    const closing = activeSession.close();
+
+    expect(closing).toBeInstanceOf(Promise);
+    expect(activeSession.get().state).toBe(SessionState.NOT_STARTED);
+    expect(readClosedSessionId()).toBe("session-sync");
+    await expect(closing).resolves.toMatchObject({
+      state: SessionState.NOT_STARTED
+    });
+  });
+
+  it("records and closes a pre-finished session once its log is saved", async () => {
+    const { sessionStore } = await import("./session.store");
+    vi.spyOn(sessionStore, "finishFocus").mockResolvedValue(undefined);
+    await activeSession.modify(
+      finishedSnapshot("session-pre", SessionState.PRE_FINISHED),
+      { isPersist: false }
+    );
+
+    await activeSession.finishSession({ isClose: true });
+
+    expect(activeSession.get().state).toBe(SessionState.NOT_STARTED);
+    expect(readClosedSessionId()).toBe("session-pre");
+  });
+});

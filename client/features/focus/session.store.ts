@@ -687,15 +687,19 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
    * device before the reset snapshot is written, so a reload or another window
    * that still reads the finished snapshot does not reopen it.
    */
-  async close() {
-    return this.closeSession({ isMarkClosed: true });
+  close(): Promise<IActiveSessionStore> {
+    return new Promise((resolve) =>
+      resolve(this.closeSession({ isMarkClosed: true }))
+    );
   }
 
   /**
-   * Pass `isMarkClosed: false` when the session log was not saved, so the
-   * finished snapshot can still reopen and the user can retry.
+   * Runs synchronously, so the modal is dismissed and the closed id is
+   * recorded before the caller continues. Pass `isMarkClosed: false` when the
+   * session log was not saved, so this device does not suppress the finished
+   * modal for that session.
    */
-  private async closeSession(params: { isMarkClosed: boolean }) {
+  private closeSession(params: { isMarkClosed: boolean }) {
     logger.log({ context: "session store close" });
     const current = this.get();
     if (
@@ -1379,6 +1383,7 @@ async function finishFocus(params?: { end?: number }) {
       context: PointronAction.FINISH_FOCUS_SESSION
     }
   ]);
+  assertDatafnMutationSucceeded(sessionResult);
   const logResult = await datafn.sessionLog.mutate(
     logs.map((record) => ({
       operation: "insert",
@@ -1392,9 +1397,8 @@ async function finishFocus(params?: { end?: number }) {
       context: PointronAction.FINISH_FOCUS_SESSION
     }))
   );
-  addToRecentFocusItems(logs);
-  assertDatafnMutationSucceeded(sessionResult);
   assertDatafnMutationSucceeded(logResult);
+  addToRecentFocusItems(logs);
 }
 
 export const sessionStore = {
