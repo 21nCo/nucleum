@@ -248,6 +248,7 @@ const changedEnumContracts = new Map([
           recentFocusItems: "recentFocusItems",
           focusItemsPickFromPanel: "focusItemsPickFromPanel",
           objectivePanelSelection: "objectivePanelSelection",
+          closedFocusSessionId: "closedFocusSessionId",
           captureShortcutRecents: "captureShortcutRecents",
           openNodesUponSave: "openNodesUponSave",
           memotronOverviewPanel: "memotronOverviewPanel",
