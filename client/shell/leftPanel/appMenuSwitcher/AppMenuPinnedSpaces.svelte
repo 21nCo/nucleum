@@ -180,7 +180,7 @@
                     ? Size.sm
                     : Size.lg}
                   class={cn({
-                    "fill-aps1 stroke-aps1 app-framed:fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))] app-framed:stroke-[rgb(var(--colors-onaps3,var(--colors-aps1)))] app-framed:text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]":
+                    "fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))] stroke-[rgb(var(--colors-onaps3,var(--colors-aps1)))] text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]":
                       isActive,
                     "stroke-fgs2": !isActive
                   })}

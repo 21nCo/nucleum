@@ -124,7 +124,7 @@
           isExpanded,
         "hover:bg-bgs3 hover:text-fgs1": !isActive,
         "text-fgs2": !isActive && !isExpanded,
-        "bg-aps3 text-aps1": isActive && !isExpanded
+        "bg-aps3 text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]": isActive && !isExpanded
       })}
       use:hoverable={{
         onHover: (val) => {
@@ -157,7 +157,7 @@
         isFilled={isHovered}
         class={cn({
           "text-fgs3": isHovered && !isActive,
-          "text-aps1": isActive && !isExpanded
+          "text-[rgb(var(--colors-onaps3,var(--colors-aps1)))] fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))]": isActive && !isExpanded
         })}
         size={label ? Size.sm : Size.md}
       />

@@ -284,7 +284,7 @@
               },
               (layoutContext === LayoutContext.THIN ||
                 layoutContext === LayoutContext.THIN_WITH_LABEL) && {
-                "fill-aps1 app-framed:fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))] app-framed:text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]":
+                "fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))] text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]":
                   isActive,
                 "fill-fgs2":
                   !isActive &&
