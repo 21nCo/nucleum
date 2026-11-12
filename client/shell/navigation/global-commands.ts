@@ -113,6 +113,26 @@ export const shellCommands = {
       contextZone.step(1);
     }
   },
+  previous_sub_view: {
+    action: Action.PREVIOUS_SUB_VIEW,
+    label: "Previous sub view",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      if (resolveModalOnFront()) return;
+      contextZone.stepSub(-1);
+    }
+  },
+  next_sub_view: {
+    action: Action.NEXT_SUB_VIEW,
+    label: "Next sub view",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      if (resolveModalOnFront()) return;
+      contextZone.stepSub(1);
+    }
+  },
   rhombus: {
     action: Action.RHOMBUS,
     icon: "proicons:rhombus",
