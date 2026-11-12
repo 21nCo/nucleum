@@ -4,6 +4,7 @@
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import {
+    isRightDrawerOnFront,
     isTextElement,
     resolveDialogOnFront,
     resolveModalOnFront
@@ -23,16 +24,6 @@
     return (
       (event.key === KeyboardKey.ESCAPE && event.metaKey === true) ||
       (event.key === KeyboardKey.ENTER && event.metaKey === true)
-    );
-  }
-
-  /**
-   * Whether the front modal is a right-side drawer, which keeps the app behind
-   * it visible but not interactive.
-   */
-  function isRightDrawerOnFront() {
-    return !!resolveModalOnFront()?.querySelector(
-      "[data-modal-placement='right']"
     );
   }
 

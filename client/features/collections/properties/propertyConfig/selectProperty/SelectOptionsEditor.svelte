@@ -49,6 +49,7 @@
   let error = $state<string | null>(null);
   let isCreatedUsingGlobalEnterKey = false;
   let newLabel = $state("");
+  let root = $state<HTMLDivElement | undefined>();
   let refreshGroupsId = $state(new Date().getTime());
   function onremove(e: CustomEvent<string>) {
     const id = e.detail;
@@ -109,6 +110,8 @@
   });
 
   function handleKeyDown(e: KeyboardEvent) {
+    // An editor behind a modal drawer is inert and must not act on keys.
+    if (root?.closest("[inert]")) return;
     const isTextInputSource = isTextElement(e.target);
     if (e.key === "Enter" && !isTextInputSource) {
       e.stopPropagation();
@@ -208,6 +211,7 @@
 </script>
 
 <div
+  bind:this={root}
   class={cn("flex flex-col", {
     "min-w-80 w-80 min-h-80 max-h-[60vh] bg-bgs1 border border-brs2 rounded-md":
       isPopoverContext,

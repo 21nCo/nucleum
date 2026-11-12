@@ -180,38 +180,23 @@ describe("SettingsAsModal Appearance handoff", () => {
     ["a scheme", "javascript:alert(1)"],
     ["the Settings route", "/cp"],
     ["a Settings sub-route", "/cp/targets?setting=data-settings"],
-    ["an encoded Settings route", "/%63p"]
+    ["an encoded Settings route", "/%63p"],
+    ["a Settings overlay", "/calendar?overlay=cp"],
+    ["a Settings right panel", "/calendar?panel=cp"],
+    ["a Settings page", "/calendar?page=cp"],
+    ["a Settings beside page", "/calendar?besidePage=cp"],
+    ["a Settings base split", "/calendar?beside=cp"],
+    ["a legacy full Settings param", "/calendar?full=cp"],
+    [
+      "a later repeated Settings overlay",
+      "/calendar?overlay=library&overlay=cp"
+    ],
+    [
+      "an encoded Settings overlay sub-route",
+      "/calendar?overlay=%2FCP%2Ftargets"
+    ]
   ])(
     "falls back to the product home when the return path is %s",
-    async (_label, returnTo) => {
-      mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
-      const url = new URL("https://local.nucleum.app/cp");
-      url.searchParams.set("setting", "appearance-settings");
-      url.searchParams.set("returnTo", returnTo);
-      mocks.page.set({ url });
-      render(SettingsAsModal, { props: { isModal: false } });
-
-      await waitFor(() =>
-        expect(mocks.runAction).toHaveBeenCalledWith("appearance-settings")
-      );
-      expect(mocks.gotoPath).toHaveBeenCalledTimes(1);
-      expect(mocks.gotoPath).toHaveBeenCalledWith("/home", {
-        replaceState: true
-      });
-    }
-  );
-
-  it.each([
-    ["an overlay", "/calendar?overlay=cp"],
-    ["a right panel", "/calendar?panel=cp"],
-    ["a page", "/calendar?page=cp"],
-    ["a beside page", "/calendar?besidePage=cp"],
-    ["the base split", "/calendar?beside=cp"],
-    ["the legacy full param", "/calendar?full=cp"],
-    ["a later repeated overlay", "/calendar?overlay=library&overlay=cp"],
-    ["an encoded overlay sub-route", "/calendar?overlay=%2FCP%2Ftargets"]
-  ])(
-    "falls back to the product home when the return path opens Settings in %s",
     async (_label, returnTo) => {
       mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
       const url = new URL("https://local.nucleum.app/cp");

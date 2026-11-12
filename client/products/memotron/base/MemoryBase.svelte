@@ -9,8 +9,11 @@
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
+  import { isRightDrawerOnFront } from "@21n/ui/actions/interaction-dom";
 
   function handlePaste(event: ClipboardEvent) {
+    // The app behind a right-side drawer does not act on input.
+    if (isRightDrawerOnFront()) return;
     try {
       const target = event.target as HTMLElement;
       if (

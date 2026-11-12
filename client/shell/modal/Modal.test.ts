@@ -12,6 +12,9 @@ const mocks = vi.hoisted(() => {
 vi.mock("@21n/ui/environment/view.store", () => ({ default: mocks.view }));
 
 import { Placement } from "@21n/ui/elements/direction.enum";
+import { configureCommandHost } from "@nucleum/shared-state/commands/command-host";
+import SelectOptionsEditor from "@nucleum/features/collections/properties/propertyConfig/selectProperty/SelectOptionsEditor.svelte";
+import MemoryBase from "@nucleum/products/memotron/base/MemoryBase.svelte";
 import Modal from "./Modal.svelte";
 import RightDrawerHarness from "../../../tests/fixtures/components/RightDrawerHarness.svelte";
 
@@ -49,14 +52,13 @@ describe("Modal right-side drawer", () => {
     mocks.view.set({ isConstrainedWidth: false, isPortrait: false });
   });
 
-  it("exposes the drawer as a labelled modal dialog over a non-focusable backdrop", () => {
+  it("exposes the drawer as a labelled dialog over a non-focusable backdrop", () => {
     const { getByTestId, container } = renderDrawer();
     const panel = getByTestId("modal-appearance-settings");
     const overlay = container.querySelector("[data-blank-modal]");
 
     expect(panel.getAttribute("data-modal-placement")).toBe("right");
     expect(panel.getAttribute("role")).toBe("dialog");
-    expect(panel.getAttribute("aria-modal")).toBe("true");
     expect(panel.getAttribute("aria-label")).toBe("Appearance");
     expect(overlay?.getAttribute("role")).not.toBe("button");
     expect(overlay?.hasAttribute("tabindex")).toBe(false);
@@ -234,10 +236,89 @@ describe("Modal right-side drawer", () => {
     document.addEventListener("keydown", documentKey);
     const { rerender } = renderDrawer();
     await rerender({ show: false });
+    await waitFor(() =>
+      expect(document.querySelector("[data-blank-modal]")).toBeNull()
+    );
 
     await fireEvent.keyDown(document.body, { key: "l" });
     expect(documentKey).toHaveBeenCalledTimes(1);
     document.removeEventListener("keydown", documentKey);
+  });
+
+  it("makes the app behind it inert, keeps its popovers in the accessibility tree and restores both on close", async () => {
+    const app = document.createElement("div");
+    const alreadyInert = document.createElement("div");
+    alreadyInert.setAttribute("inert", "");
+    document.body.append(app, alreadyInert);
+    const popovers = popoverContainer();
+    const { getByTestId, rerender } = renderDrawer();
+    const option = openPopover(popovers);
+    const panel = getByTestId("modal-appearance-settings");
+
+    expect(app.hasAttribute("inert")).toBe(true);
+    expect(popovers.hasAttribute("inert")).toBe(false);
+    expect(panel.closest("[inert]")).toBeNull();
+    expect(option.closest("[inert]")).toBeNull();
+    expect(panel.hasAttribute("aria-modal")).toBe(false);
+
+    await rerender({ show: false });
+    await waitFor(() => expect(app.hasAttribute("inert")).toBe(false));
+    expect(alreadyInert.hasAttribute("inert")).toBe(true);
+  });
+
+  it("keeps a background editor's earlier window Enter listener from adding an option", async () => {
+    const onChange = vi.fn();
+    const editor = render(SelectOptionsEditor, {
+      props: { config: { options: [], groups: [] }, onChange }
+    });
+    const input = editor.container.querySelector("input")!;
+    await fireEvent.input(input, { target: { value: "Urgent" } });
+    const { getByTestId } = renderDrawer();
+    const first = getByTestId("first");
+    first.focus();
+
+    await fireEvent.keyDown(first, { key: "Enter" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("keeps a paste in the drawer from the app's global paste handler", async () => {
+    const runAction = vi.fn();
+    configureCommandHost({
+      runAction,
+      resolveAction: () => null,
+      runResourceAction: vi.fn()
+    });
+    render(MemoryBase);
+    const { getByTestId } = renderDrawer();
+
+    await fireEvent.paste(getByTestId("first"));
+    expect(runAction).not.toHaveBeenCalled();
+  });
+
+  it("leaves Tab to a drawer control that handles it", async () => {
+    const { getByTestId } = renderDrawer();
+    const first = getByTestId("first");
+    first.addEventListener("keydown", (event) => event.preventDefault());
+    first.focus();
+
+    await fireEvent.keyDown(first, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("returns focus to the app's first control when the opener is gone", async () => {
+    const app = document.createElement("div");
+    app.innerHTML = `<button data-testid="app-start">Home</button>`;
+    const opener = document.createElement("button");
+    document.body.append(app, opener);
+    opener.focus();
+    const { getByTestId, rerender } = renderDrawer();
+    await tick();
+    opener.remove();
+
+    await rerender({ show: false });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(getByTestId("app-start"))
+    );
   });
 
   it("keeps the centred modal at constrained widths", () => {

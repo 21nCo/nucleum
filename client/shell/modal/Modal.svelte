@@ -113,70 +113,124 @@
       );
   }
 
-  /**
-   * Stops a key other than `Escape` from reaching the app behind the drawer.
-   * Used on the drawer, after its own controls handled the key.
-   */
-  function stopBackgroundKey(event: KeyboardEvent) {
-    if (event.key !== KeyboardKey.ESCAPE) event.stopPropagation();
+  /** Containers that stay live behind a drawer, so the popovers and tooltips it opens work. */
+  const LIVE_CONTAINER_IDS = ["popovers", "secondary-popovers", "tooltips"];
+
+  function setInert(element: HTMLElement, isInert: boolean) {
+    element.inert = isInert;
+    element.toggleAttribute("inert", isInert);
   }
 
   /**
-   * Keeps the app behind a right-side drawer inert to the keyboard while the
-   * drawer is the front modal. Focus enters the drawer and returns to the
-   * opener on close; Tab cycles through the drawer and the popovers it opened,
-   * and is pulled back in from anywhere else. Keys from outside them are
-   * blocked, and keys from its popovers do not reach document or window
-   * listeners. Popovers already open behind it are made inert. `Escape`
-   * still passes so the drawer can close.
+   * Makes the app behind `overlay` inert: every sibling of it and of its
+   * ancestors, except the live popover and tooltip containers and modals
+   * opened above it. Returns the elements it made inert.
+   */
+  function inertBackground(overlay: HTMLElement) {
+    const changed: HTMLElement[] = [];
+    for (
+      let node: HTMLElement = overlay;
+      node.parentElement && node.parentElement !== document.documentElement;
+      node = node.parentElement
+    ) {
+      for (const sibling of node.parentElement.children) {
+        const isAbove =
+          sibling.matches("[data-blank-modal]") &&
+          !!(
+            overlay.compareDocumentPosition(sibling) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+          );
+        if (
+          sibling === node ||
+          !(sibling instanceof HTMLElement) ||
+          sibling.hasAttribute("inert") ||
+          LIVE_CONTAINER_IDS.includes(sibling.id) ||
+          isAbove
+        )
+          continue;
+        setInert(sibling, true);
+        changed.push(sibling);
+      }
+    }
+    return changed;
+  }
+
+  /**
+   * Keeps the app behind a right-side drawer non-interactive while the drawer
+   * is the front modal. The app behind it and popovers already open are made
+   * inert, so they take no focus or pointer input; the popover containers stay
+   * live for the popovers the drawer opens. Focus enters the drawer and, on
+   * close, returns to the opener or, when the opener is gone, to the first
+   * control of the app. Keys from the drawer and its popovers reach their own
+   * handlers first; then Tab cycles through them unless a control handled it,
+   * and keys other than `Escape` stop before document and window listeners.
+   * Keys from outside them are blocked, and Tab is pulled back in.
    */
   function isolateDrawer(node: HTMLElement) {
     const trap = trapFocus(node);
-    const background = popoverElements().filter((popover) => !popover.inert);
-    for (const popover of background) popover.inert = true;
+    trap.release();
+    const background = popoverElements().filter(
+      (popover) => !popover.hasAttribute("inert")
+    );
+    for (const popover of background) setInert(popover, true);
+    const inertApp = node.parentElement
+      ? inertBackground(node.parentElement)
+      : [];
     const owned = () => [
       node,
       ...popoverElements().filter((popover) => !background.includes(popover))
     ];
+    const isOwned = (target: EventTarget | null) =>
+      owned().some((scope) => scope.contains(target as Node));
     const isOnFront = () => resolveModalOnFront()?.id === id;
-    const guardKey = (event: KeyboardEvent) => {
-      if (!isOnFront() || event.defaultPrevented) return;
-      const scopes = owned();
-      const isInside = scopes.some((scope) =>
-        scope.contains(event.target as Node)
-      );
-      if (event.key === "Tab") {
-        const elements = scopes.flatMap(focusableElements);
-        const index = isInside
-          ? elements.indexOf(document.activeElement as HTMLElement)
-          : -1;
-        const next = event.shiftKey
-          ? elements[(index <= 0 ? elements.length : index) - 1]
-          : (elements[index + 1] ?? elements[0]);
-        event.preventDefault();
-        (next ?? node).focus();
-      } else if (!isInside && event.key !== KeyboardKey.ESCAPE) {
+    const cycleTab = (event: KeyboardEvent, isInside: boolean) => {
+      const elements = owned().flatMap(focusableElements);
+      const index = isInside
+        ? elements.indexOf(document.activeElement as HTMLElement)
+        : -1;
+      const next = event.shiftKey
+        ? elements[(index <= 0 ? elements.length : index) - 1]
+        : (elements[index + 1] ?? elements[0]);
+      event.preventDefault();
+      (next ?? node).focus();
+    };
+    const guardOutside = (event: KeyboardEvent) => {
+      if (!isOnFront() || event.defaultPrevented || isOwned(event.target))
+        return;
+      if (event.key === "Tab") cycleTab(event, false);
+      else if (event.key !== KeyboardKey.ESCAPE) {
         event.preventDefault();
         event.stopPropagation();
       }
     };
-    const stopFromPopover = (event: KeyboardEvent) => {
-      const isFromPopover = owned()
-        .slice(1)
-        .some((popover) => popover.contains(event.target as Node));
-      if (isFromPopover && isOnFront()) stopBackgroundKey(event);
+    const keepInside = (event: KeyboardEvent) => {
+      if (!isOnFront() || !isOwned(event.target)) return;
+      if (event.key === "Tab" && !event.defaultPrevented) cycleTab(event, true);
+      if (event.key !== KeyboardKey.ESCAPE) event.stopPropagation();
     };
-    const containers = popoverContainers();
-    window.addEventListener("keydown", guardKey, true);
-    for (const container of containers)
-      container.addEventListener("keydown", stopFromPopover);
+    const root = document.documentElement;
+    window.addEventListener("keydown", guardOutside, true);
+    root.addEventListener("keydown", keepInside);
     return {
       destroy() {
-        window.removeEventListener("keydown", guardKey, true);
-        for (const container of containers)
-          container.removeEventListener("keydown", stopFromPopover);
-        for (const popover of background) popover.inert = false;
+        window.removeEventListener("keydown", guardOutside, true);
+        root.removeEventListener("keydown", keepInside);
+        for (const element of [...background, ...inertApp])
+          setInert(element, false);
         trap.destroy();
+        queueMicrotask(() => {
+          const active = document.activeElement;
+          const isFocusKept =
+            active instanceof HTMLElement &&
+            active !== document.body &&
+            active.isConnected &&
+            !node.contains(active);
+          if (trap.opener?.isConnected || isFocusKept) return;
+          inertApp
+            .filter((element) => element.isConnected)
+            .flatMap(focusableElements)[0]
+            ?.focus();
+        });
       }
     };
   }
@@ -227,11 +281,9 @@
         data-testid={`modal-${id}`}
         data-modal-placement="right"
         role="dialog"
-        aria-modal="true"
         aria-label={title || undefined}
         tabindex="-1"
         use:isolateDrawer
-        onkeydown={stopBackgroundKey}
         class="absolute top-0 right-0 flex flex-col h-full w-[28rem] 2k:w-[32rem] max-w-full bg-bgs1 border-l border-brs3 shadow-xl cursor-default outline-none app-framed:top-[var(--app-shell-gap)] app-framed:right-[var(--app-shell-gap)] app-framed:h-[calc(100%-2*var(--app-shell-gap))] app-framed:border app-framed:rounded-[var(--app-panel-radius)] overflow-hidden"
       >
         <ColorLayer>
