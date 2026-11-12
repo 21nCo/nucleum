@@ -155,6 +155,10 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     });
   });
 
+  /**
+   * Selects Appearance in the Settings sidebar, which closes Settings and opens
+   * the Appearance drawer, and waits for its Interface panel. Returns the drawer.
+   */
   async function openInterfaceSettings(page: import("@playwright/test").Page) {
     await openSettings(page);
     await expect(
@@ -166,9 +170,20 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       .getByTestId("settings-sidebar")
       .getByRole("button", { name: /^Appearance$/i })
       .click({ timeout: 5_000 });
-    const panel = page.getByTestId("appearance-interface-settings");
+    const drawer = page.getByTestId("modal-appearance-settings");
+    await expect(drawer).toBeVisible({ timeout: 10_000 });
+    const panel = drawer.getByTestId("appearance-interface-settings");
     await expect(panel).toBeVisible({ timeout: 10_000 });
     await panel.scrollIntoViewIfNeeded();
+    return drawer;
+  }
+
+  /** Closes the Appearance drawer through its close button. */
+  async function closeAppearanceDrawer(
+    drawer: import("@playwright/test").Locator
+  ) {
+    await drawer.getByTestId("modal-close").click({ timeout: 5_000 });
+    await expect(drawer).toBeHidden({ timeout: 5_000 });
   }
 
   /** Switches the open Settings modal to Keyboard shortcuts and waits for its panel. */
@@ -611,7 +626,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await openInterfaceSettings(page);
+    const appearanceDrawer = await openInterfaceSettings(page);
 
     const menuBarContainer = page.getByTestId("toggle-hide-menu-bar");
     await menuBarContainer.waitFor({ state: "visible", timeout: 5_000 });
@@ -626,7 +641,8 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     }
     await expect(menuBarCheckbox).toBeChecked({ timeout: 5_000 });
 
-    await showKeyboardShortcutsPanel(page);
+    await closeAppearanceDrawer(appearanceDrawer);
+    await openShortcutSettings(page);
 
     await page
       .getByRole("button", { name: /^See hot keys$/i })
@@ -751,7 +767,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await page.keyboard.press("Escape");
 
     if (!menuBarWasChecked) {
-      await openInterfaceSettings(page);
+      const restoreDrawer = await openInterfaceSettings(page);
       await page
         .getByTestId("toggle-hide-menu-bar")
         .locator("label:has(input[type='checkbox'])")
@@ -761,10 +777,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
           .getByTestId("toggle-hide-menu-bar")
           .locator('input[type="checkbox"]')
       ).not.toBeChecked({ timeout: 5_000 });
-      await page
-        .locator("#cp")
-        .getByTestId("modal-close")
-        .click({ timeout: 5_000 });
+      await closeAppearanceDrawer(restoreDrawer);
     }
   });
 
