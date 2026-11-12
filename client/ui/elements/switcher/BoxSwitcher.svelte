@@ -105,17 +105,6 @@
   const hiddenOptions = $derived(
     options.filter((_, index) => !visibleIndexes.includes(index))
   );
-  const rootWidth = $derived.by(() => {
-    if (overflowWidth === undefined || hiddenOptions.length === 0)
-      return fullWidth;
-    const shown = visibleIndexes.map((index) => optionWidths[index] ?? 0);
-    return Math.ceil(
-      trackPadding +
-        shown.reduce((sum, width) => sum + width, 0) +
-        moreWidth +
-        trackGap * shown.length
-    );
-  });
 
   function measureOptions() {
     if (!measureEl) return;
@@ -350,7 +339,9 @@
       "min-w-0 shrink": overflowWidth === undefined,
       "shrink-0": overflowWidth !== undefined
     })}
-    style:width={rootWidth > 0 ? `${rootWidth}px` : undefined}
+    style:width={overflowWidth === undefined && fullWidth > 0
+      ? `${fullWidth}px`
+      : undefined}
   >
     <div
       aria-hidden="true"
