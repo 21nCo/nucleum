@@ -27,16 +27,29 @@
   }
 
   /**
+   * Whether the front modal is a right-side drawer, which keeps the app behind
+   * it visible but not interactive.
+   */
+  function isRightDrawerOnFront() {
+    return !!resolveModalOnFront()?.querySelector(
+      "[data-modal-placement='right']"
+    );
+  }
+
+  /**
    * Listens to keyboard events and runs the shortcut if the event is a shortcut.
    *
    * Avoids running the shortcut if the event is a text input element and the key is `Enter`. This is to avoid running the shortcut when the user is typing in a text field with suggestions.
    *
    * Pressing `Escape` when text element is required in cases like command bar modal, search modal etc. If this is causing issue, kindly stop propagation on keyDown event from the source if its Esc key.
    *
+   * While a right-side drawer is on front only `Escape` passes, so shortcuts do not act on the app behind it.
+   *
    * @param event
    */
   const shortcutListener = (event: KeyboardEvent) => {
     if ($context.embed === Embed.HANDSET) return;
+    if (event.key !== KeyboardKey.ESCAPE && isRightDrawerOnFront()) return;
     const target = event.target || event.srcElement;
     const isTextInputSource = isTextElement(target);
     const isSystemShortcut = checkIfSystemShortcut(event);

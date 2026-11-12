@@ -3,7 +3,7 @@
   import modalEvent from "@nucleum/shell/overlays/modal.store";
   import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
   import { fade } from "svelte/transition";
-  import ModalHeader from "@21n/ui/elements/modal/ModalHeader.svelte";
+  import { focusTrap as trapFocus } from "@21n/ui/actions/focus-trap.action";
   import { generateUID } from "@21n/shared-utils/legacy-id";
   import { Size } from "@21n/ui/elements/size.enum";
   import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
@@ -23,7 +23,6 @@
     show = $bindable(true),
     title = "",
     isShowOverlay = true,
-    isOnRight = false,
     alignment = Placement.Center,
     isDismissable = true,
     isUseDialog = false,
@@ -38,7 +37,6 @@
     show?: boolean;
     title?: string;
     isShowOverlay?: boolean;
-    isOnRight?: boolean;
     alignment?: Placement;
     isDismissable?: boolean;
     isUseDialog?: boolean;
@@ -49,7 +47,6 @@
     id?: string;
     children?: Snippet | undefined;
   } = $props();
-  void isOnRight;
   let dialog = $state<HTMLDialogElement | undefined>();
   let focusTrap = $state<HTMLDivElement | undefined>();
   $effect(() => {
@@ -135,15 +132,18 @@
       data-modal-size={size}
       transition:fade={{ duration: 100 }}
       onclick={overlayClicked}
-      role="button"
-      onkeydown={() => {}}
-      tabindex="0"
+      role="presentation"
     >
       <div
         id={id + "-modal"}
         data-testid={`modal-${id}`}
         data-modal-placement="right"
-        class="absolute top-0 right-0 flex flex-col h-full w-[28rem] 2k:w-[32rem] max-w-full bg-bgs1 border-l border-brs3 shadow-xl cursor-default app-framed:top-[var(--app-shell-gap)] app-framed:right-[var(--app-shell-gap)] app-framed:h-[calc(100%-2*var(--app-shell-gap))] app-framed:border app-framed:rounded-[var(--app-panel-radius)] overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title || undefined}
+        tabindex="-1"
+        use:trapFocus
+        class="absolute top-0 right-0 flex flex-col h-full w-[28rem] 2k:w-[32rem] max-w-full bg-bgs1 border-l border-brs3 shadow-xl cursor-default outline-none app-framed:top-[var(--app-shell-gap)] app-framed:right-[var(--app-shell-gap)] app-framed:h-[calc(100%-2*var(--app-shell-gap))] app-framed:border app-framed:rounded-[var(--app-panel-radius)] overflow-hidden"
       >
         <ColorLayer>
           {@render children?.()}

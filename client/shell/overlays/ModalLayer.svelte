@@ -183,7 +183,7 @@
     size={modal.layout?.size ?? Size.md}
     isDynamicSize={modal.layout?.isDynamicSize}
     orientation={modal.layout?.orientation ?? Orientation.Vertical}
-    isOnRight={modal?.isOnRight}
+    title={modal.title}
     alignment={modal.layout?.alignment}
     hasCantileverButtons={modal.layout?.isShowCantileverClose ||
       modal.layout?.isShowBackButton}

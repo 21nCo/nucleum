@@ -22,6 +22,7 @@
   import modalEvent from "@nucleum/shell/overlays/modal.store";
   import view from "@21n/ui/environment/view.store";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
+  import { AccessMode } from "@nucleum/datafn/resource.type";
   let {
     isModal = false
   }: {
@@ -43,11 +44,27 @@
   $effect(() => {
     if (settingSearchParam) runAction(settingSearchParam);
   });
+  const layerParams = [
+    AccessMode.OVERLAY,
+    AccessMode.PANEL,
+    AccessMode.PAGE,
+    AccessMode.BESIDE_PAGE,
+    "full"
+  ];
+  /** Whether a path or a shell layer value names the Settings route. */
+  function isSettingsTarget(value: string) {
+    const settingsPath = `/${Action.SETTINGS}`;
+    const head = `/${value.toLowerCase().replace(/^\/+/, "")}`.split(
+      /[:?#]/
+    )[0];
+    return head === settingsPath || head.startsWith(`${settingsPath}/`);
+  }
   /**
    * The automatic handoff only follows a return path that stays inside the
-   * app: a single-slash relative path on this origin that is not Settings
-   * itself. Anything else (an external or protocol-relative URL, a scheme, or
-   * a Settings path) falls back to the product home.
+   * app: a single-slash relative path on this origin that neither is Settings
+   * nor opens it in a shell layer (overlay, panel, page, beside page or the
+   * legacy full param). Anything else (an external or protocol-relative URL,
+   * a scheme, or a Settings target) falls back to the product home.
    */
   function appReturnPath(path: string | null) {
     if (!path?.startsWith("/") || path.startsWith("//")) return null;
@@ -55,10 +72,11 @@
     try {
       const url = new URL(path, base);
       if (url.origin !== base) return null;
-      const pathname = decodeURIComponent(url.pathname).toLowerCase();
-      const settingsPath = `/${Action.SETTINGS}`;
-      if (pathname === settingsPath || pathname.startsWith(`${settingsPath}/`))
-        return null;
+      if (isSettingsTarget(decodeURIComponent(url.pathname))) return null;
+      const layers = layerParams.flatMap((param) =>
+        url.searchParams.getAll(param)
+      );
+      if (layers.some(isSettingsTarget)) return null;
     } catch {
       return null;
     }

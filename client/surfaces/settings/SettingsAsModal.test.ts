@@ -201,6 +201,50 @@ describe("SettingsAsModal Appearance handoff", () => {
     }
   );
 
+  it.each([
+    ["an overlay", "/calendar?overlay=cp"],
+    ["a right panel", "/calendar?panel=cp"],
+    ["a page", "/calendar?page=cp"],
+    ["a beside page", "/calendar?besidePage=cp"],
+    ["the legacy full param", "/calendar?full=cp"],
+    ["a later repeated overlay", "/calendar?overlay=library&overlay=cp"],
+    ["an encoded overlay sub-route", "/calendar?overlay=%2FCP%2Ftargets"]
+  ])(
+    "falls back to the product home when the return path opens Settings in %s",
+    async (_label, returnTo) => {
+      mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
+      const url = new URL("https://local.nucleum.app/cp");
+      url.searchParams.set("setting", "appearance-settings");
+      url.searchParams.set("returnTo", returnTo);
+      mocks.page.set({ url });
+      render(SettingsAsModal, { props: { isModal: false } });
+
+      await waitFor(() =>
+        expect(mocks.runAction).toHaveBeenCalledWith("appearance-settings")
+      );
+      expect(mocks.gotoPath).toHaveBeenCalledTimes(1);
+      expect(mocks.gotoPath).toHaveBeenCalledWith("/home", {
+        replaceState: true
+      });
+    }
+  );
+
+  it("keeps an in-app return path whose layers open other surfaces", async () => {
+    mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
+    const url = new URL("https://local.nucleum.app/cp");
+    url.searchParams.set("returnTo", "/calendar?overlay=library&panel=cpu");
+    mocks.page.set({ url });
+    const { getByTestId } = render(SettingsAsModal, {
+      props: { isModal: false }
+    });
+    await fireEvent.click(getByTestId("setting-appearance-settings"));
+
+    expect(mocks.gotoPath).toHaveBeenCalledWith(
+      "/calendar?overlay=library&panel=cpu",
+      { replaceState: true }
+    );
+  });
+
   it("keeps an in-app return path with its query when handing off", async () => {
     mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
     const url = new URL("https://local.nucleum.app/cp");
