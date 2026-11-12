@@ -41,6 +41,16 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
   [Action.CYCLE_CONTEXT_VIEW]: {
     key: "v"
   },
+  [Action.PREVIOUS_CONTEXT_VIEW]: {
+    key: KeyboardKey.ARROW_LEFT,
+    code: KeyboardKey.ARROW_LEFT,
+    modifiers: [ModifierKey.ALT]
+  },
+  [Action.NEXT_CONTEXT_VIEW]: {
+    key: KeyboardKey.ARROW_RIGHT,
+    code: KeyboardKey.ARROW_RIGHT,
+    modifiers: [ModifierKey.ALT]
+  },
   [Action.CMD]: {
     key: "k",
     modifiers: [ModifierKey.META]

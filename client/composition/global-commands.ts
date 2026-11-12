@@ -98,6 +98,8 @@ export const globalActions: IAction[] = [
   shellCommands.navigator,
   shellCommands.open_navigator,
   shellCommands.cycle_context_view,
+  shellCommands.previous_context_view,
+  shellCommands.next_context_view,
   calendarCommands.today,
   shellCommands.rhombus
 ];

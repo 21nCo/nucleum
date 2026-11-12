@@ -11,6 +11,7 @@ import Navigator from "@nucleum/shell/navigator/Navigator.svelte";
 import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+import { resolveModalOnFront } from "@21n/ui/actions/interaction-dom";
 import { requestNavigatorFocus } from "@nucleum/shell/navigator/navigator-focus";
 import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
 
@@ -90,6 +91,26 @@ export const shellCommands = {
     type: ActionType.FUNCTION,
     fn: async () => {
       contextZone.cycle();
+    }
+  },
+  previous_context_view: {
+    action: Action.PREVIOUS_CONTEXT_VIEW,
+    label: "Previous view",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      if (resolveModalOnFront()) return;
+      contextZone.step(-1);
+    }
+  },
+  next_context_view: {
+    action: Action.NEXT_CONTEXT_VIEW,
+    label: "Next view",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      if (resolveModalOnFront()) return;
+      contextZone.step(1);
     }
   },
   rhombus: {

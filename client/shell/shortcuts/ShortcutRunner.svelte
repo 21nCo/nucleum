@@ -24,6 +24,8 @@
   import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
+  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { resolveContextViewIndex } from "@nucleum/shell/shortcuts/context-view-keys";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -61,7 +63,10 @@
       target,
       event
     });
-    if (!shortcut) return;
+    if (!shortcut) {
+      selectContextViewByNumber(event);
+      return;
+    }
     const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
       scope: UIStateScope.PRODUCT
     });
@@ -77,6 +82,18 @@
     event.stopPropagation();
     event.preventDefault();
   };
+
+  /**
+   * Selects the top bar view numbered by a plain 1 to 9 key, unless a modal,
+   * dialog or popover is in front.
+   */
+  function selectContextViewByNumber(event: KeyboardEvent) {
+    const index = resolveContextViewIndex(event);
+    if (index === undefined) return;
+    if (resolveModalOnFront() || resolveDialogOnFront() || hasOpenPopover())
+      return;
+    if (contextZone.selectAt(index)) event.preventDefault();
+  }
 
   function hasOpenPopover() {
     return Array.from(document.querySelectorAll(".popover")).some(
@@ -104,7 +121,8 @@
 
   /**
    * Closes the top layer on a plain Escape: overlay, then right panel, then
-   * bulk selection, then the resource page. Runs after the event bubbles so
+   * bulk selection, then the resource page. While a text editor has focus,
+   * Escape only releases that focus, so keyboard shortcuts work next. Runs after the event bubbles so
    * editors, modals, dialogs and popovers that handle Escape stop it first;
    * the selection size is read in the capture phase, before selection
    * handlers clear it.
@@ -116,6 +134,10 @@
     if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
       return;
     if ($context.embed === Embed.HANDSET || event.defaultPrevented) return;
+    if (event.target instanceof HTMLElement && event.target.isContentEditable) {
+      event.target.blur();
+      return;
+    }
     if (isFormField(event.target)) return;
     if (resolveModalOnFront() || resolveDialogOnFront() || hasOpenPopover())
       return;
