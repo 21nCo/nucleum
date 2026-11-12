@@ -84,6 +84,7 @@
             options: option.options,
             value: current,
             size,
+            isSubmenu: true,
             onChange: change
           }
         }

@@ -4,7 +4,7 @@
     ISelectValue
   } from "@21n/ui/elements/select/select.type";
   import { Size } from "@21n/ui/elements/size.enum";
-  import { cn } from "@21n/ui/environment/presentation";
+  import { bg, cn } from "@21n/ui/environment/presentation";
   import Icon from "@21n/ui/elements/Icon.svelte";
 
   let {
@@ -12,6 +12,7 @@
     options,
     value,
     size = Size.md,
+    isSubmenu = false,
     onChange
   }: {
     /** Caption shown above the options; omitted inside a submenu. */
@@ -19,12 +20,17 @@
     options: ISelectItem[];
     value: ISelectValue | undefined;
     size?: Size.sm | Size.md | Size.lg;
+    /** Draws the menu panel around the options when shown as a submenu. */
+    isSubmenu?: boolean;
     onChange: (value: ISelectValue) => void;
   } = $props();
 </script>
 
 <div
-  class="flex flex-col"
+  class={cn("flex flex-col", {
+    [`gap-1 p-1 min-w-40 rounded-md border border-brs2 shadow-md ${bg(1)}`]:
+      isSubmenu
+  })}
   role="group"
   aria-label={label}
   data-testid="context-menu-option-list"
