@@ -37,13 +37,6 @@ type ItemNavigationEntry = {
 };
 
 const highlightAttribute = "data-item-highlighted";
-const highlightClasses = [
-  "outline",
-  "outline-2",
-  "outline-aps1",
-  "outline-offset-2",
-  "rounded-md"
-];
 const entries: ItemNavigationEntry[] = [];
 let lastInteracted: ItemNavigationEntry | undefined;
 let isListening = false;
@@ -97,7 +90,6 @@ function paintHighlight(entry: ItemNavigationEntry) {
   )) {
     if (resolveItemKey(element) === shownKey) continue;
     element.removeAttribute(highlightAttribute);
-    element.classList.remove(...highlightClasses);
   }
   if (shownKey === undefined) return;
   const element = resolveItems(entry).find(
@@ -105,7 +97,6 @@ function paintHighlight(entry: ItemNavigationEntry) {
   );
   if (!element || element.hasAttribute(highlightAttribute)) return;
   element.setAttribute(highlightAttribute, "true");
-  element.classList.add(...highlightClasses);
 }
 
 function clearHighlight(entry: ItemNavigationEntry) {
