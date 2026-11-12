@@ -11,6 +11,7 @@
   import { cn } from "@21n/ui/environment/presentation";
   import type { AppearanceProfile } from "@nucleum/shared-state/appearance/appearance-profiles";
   import AppearanceProfileNameEditor from "@nucleum/surfaces/settings/appearance/AppearanceProfileNameEditor.svelte";
+  import { resolveAppearanceProfileSummary } from "@nucleum/surfaces/settings/appearance/appearance-profile-summary";
 
   let {
     profile,
@@ -35,14 +36,27 @@
   const schemes = colorSchemes as unknown as ColorScheme[];
   let menuKey = $state(0);
 
-  function swatch(id: string) {
-    const scheme = schemes.find((entry) => String(entry.id) === String(id));
+  function findScheme(id: string) {
+    return schemes.find((entry) => String(entry.id) === String(id));
+  }
+
+  function swatch(scheme: ColorScheme | undefined) {
     return [scheme?.colors.bgs2 ?? "", scheme?.colors.aps1 ?? ""];
   }
 
-  const light = $derived(swatch(profile.settings.lightColorSchemeId));
-  const dark = $derived(swatch(profile.settings.darkColorSchemeId));
+  const lightScheme = $derived(findScheme(profile.settings.lightColorSchemeId));
+  const darkScheme = $derived(findScheme(profile.settings.darkColorSchemeId));
+  const light = $derived(swatch(lightScheme));
+  const dark = $derived(swatch(darkScheme));
   const style = $derived(profile.settings.appStyle ?? AppStyle.Boxed);
+  const summary = $derived(
+    resolveAppearanceProfileSummary({
+      lightLabel: lightScheme?.label,
+      darkLabel: darkScheme?.label,
+      appStyle: style,
+      typeface: profile.settings.typeface
+    })
+  );
   const hasMenu = $derived(!profile.isBuiltIn && (onRename || onDelete));
 
   function closeMenuThen(action: (() => void) | undefined) {
@@ -130,8 +144,11 @@
       {@render swatchPreview()}
       <div class="flex flex-col min-w-0">
         <span class="truncate text-b2 text-fgs1">{profile.name}</span>
-        <span class="truncate text-b3 text-fgs3">
-          {profile.settings.typeface}
+        <span
+          class="truncate text-b3 text-fgs3"
+          data-testid="appearance-profile-summary"
+        >
+          {summary}
         </span>
       </div>
     </button>
