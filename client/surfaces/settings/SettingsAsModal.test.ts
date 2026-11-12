@@ -173,6 +173,49 @@ describe("SettingsAsModal Appearance handoff", () => {
     expect(mocks.runAction).toHaveBeenCalledWith("appearance-settings");
   });
 
+  it.each([
+    ["an external URL", "https://example.net/home"],
+    ["a protocol-relative URL", "//example.net/home"],
+    ["a backslash host URL", "/\\example.net/home"],
+    ["a scheme", "javascript:alert(1)"],
+    ["the Settings route", "/cp"],
+    ["a Settings sub-route", "/cp/targets?setting=data-settings"],
+    ["an encoded Settings route", "/%63p"]
+  ])(
+    "falls back to the product home when the return path is %s",
+    async (_label, returnTo) => {
+      mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
+      const url = new URL("https://local.nucleum.app/cp");
+      url.searchParams.set("setting", "appearance-settings");
+      url.searchParams.set("returnTo", returnTo);
+      mocks.page.set({ url });
+      render(SettingsAsModal, { props: { isModal: false } });
+
+      await waitFor(() =>
+        expect(mocks.runAction).toHaveBeenCalledWith("appearance-settings")
+      );
+      expect(mocks.gotoPath).toHaveBeenCalledTimes(1);
+      expect(mocks.gotoPath).toHaveBeenCalledWith("/home", {
+        replaceState: true
+      });
+    }
+  );
+
+  it("keeps an in-app return path with its query when handing off", async () => {
+    mocks.view.set({ isConstrainedWidth: false, isPortrait: true });
+    const url = new URL("https://local.nucleum.app/cp");
+    url.searchParams.set("returnTo", "/goal/abc?tab=notes");
+    mocks.page.set({ url });
+    const { getByTestId } = render(SettingsAsModal, {
+      props: { isModal: false }
+    });
+    await fireEvent.click(getByTestId("setting-appearance-settings"));
+
+    expect(mocks.gotoPath).toHaveBeenCalledWith("/goal/abc?tab=notes", {
+      replaceState: true
+    });
+  });
+
   it("keeps Appearance inside the Settings modal at constrained widths", async () => {
     mocks.view.set({ isConstrainedWidth: true, isPortrait: false });
     const { getByTestId } = render(SettingsAsModal, {

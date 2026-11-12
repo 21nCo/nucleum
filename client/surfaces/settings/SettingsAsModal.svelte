@@ -44,11 +44,32 @@
     if (settingSearchParam) runAction(settingSearchParam);
   });
   /**
+   * The automatic handoff only follows a return path that stays inside the
+   * app: a single-slash relative path on this origin that is not Settings
+   * itself. Anything else (an external or protocol-relative URL, a scheme, or
+   * a Settings path) falls back to the product home.
+   */
+  function appReturnPath(path: string | null) {
+    if (!path?.startsWith("/") || path.startsWith("//")) return null;
+    const base = "https://return-to.invalid";
+    try {
+      const url = new URL(path, base);
+      if (url.origin !== base) return null;
+      const pathname = decodeURIComponent(url.pathname).toLowerCase();
+      const settingsPath = `/${Action.SETTINGS}`;
+      if (pathname === settingsPath || pathname.startsWith(`${settingsPath}/`))
+        return null;
+    } catch {
+      return null;
+    }
+    return path;
+  }
+  /**
    * Appearance previews live in its own right-side modal on wide screens, so
    * selecting it closes Settings and opens that modal instead of rendering it
    * inside Settings. Settings hosted in a modal is hidden; Settings rendered as
-   * the page (portrait) is replaced by its return path, else the product's
-   * home, so the app shows beside the drawer and Back does not reopen
+   * the page (portrait) is replaced by its in-app return path, else the
+   * product's home, so the app shows beside the drawer and Back does not reopen
    * Settings. Returns whether it handed off.
    */
   function openInRightModal(slug: string) {
@@ -61,7 +82,9 @@
     } else {
       const product = requireProductConfig();
       const home = $view.isPortrait ? product.homePathPt : product.homePath;
-      navigation.gotoPath(backPath || `/${home}`, { replaceState: true });
+      navigation.gotoPath(appReturnPath(backPath) ?? `/${home}`, {
+        replaceState: true
+      });
     }
     requireCommandHost().runAction(Action.APPEARANCE_SETTINGS);
     return true;
