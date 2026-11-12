@@ -314,6 +314,18 @@
     --colors-onaps3: var(--colors-fonaps3);
   }
 
+  :global(
+    [data-frame-palette] .app-chrome .fill-logo-dark:not(.app-content *)
+  ) {
+    fill: #ffffff;
+  }
+
+  :global(
+    [data-frame-palette] .app-chrome .stroke-logo-dark:not(.app-content *)
+  ) {
+    stroke: #ffffff;
+  }
+
   :global([data-frame-palette] .app-chrome .app-content) {
     --colors-bgs1: var(--colors-cbgs1);
     --colors-bgs2: var(--colors-cbgs2);
