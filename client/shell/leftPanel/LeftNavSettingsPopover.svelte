@@ -161,7 +161,7 @@
     {/if}
     <div class="mt-3">
       <InlineInfoBanner
-        content="Use hot key Q to show/hide labels"
+        content="Use hot key [ to show/hide labels"
         type={InfoTextType.TIP}
       />
     </div>
