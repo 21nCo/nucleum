@@ -26,7 +26,7 @@
   import { Placement } from "@21n/ui/elements/direction.enum";
   import {
     contextZone,
-    nextCycleValue
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
   let {
     panel = $bindable(CalendarLayout.Classic),
@@ -144,15 +144,14 @@
     $appStore.product === Product.NUCLEUM && dev_enableBirdView
   );
 
-  function cycleLayout() {
-    const next = nextCycleValue(
-      panelOptions.map((option) => option.value as CalendarLayout),
-      panel
-    );
-    if (!next) return;
-    panel = next;
-    onPanelSwitch(new CustomEvent("select", { detail: next }));
-  }
+  const layoutViews = $derived<ContextZoneViews>({
+    values: panelOptions.map((option) => String(option.value)),
+    active: panel,
+    select: (value) => {
+      panel = value as CalendarLayout;
+      onPanelSwitch(new CustomEvent("select", { detail: value }));
+    }
+  });
 
   function onPanelSwitch(event: CustomEvent) {
     if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))
@@ -213,7 +212,7 @@
 {#if $isContextZoneHosted}
   <ContextZoneContent
     isInlineFallback={false}
-    cycle={isLayoutSwitcher ? cycleLayout : undefined}
+    views={isLayoutSwitcher ? layoutViews : undefined}
   >
     <div
       bind:this={controlsRef}

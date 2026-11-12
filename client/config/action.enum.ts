@@ -61,6 +61,8 @@ export enum Action {
   NAVIGATOR = "navigator",
   OPEN_NAVIGATOR = "open-navigator",
   CYCLE_CONTEXT_VIEW = "cycle-context-view",
+  PREVIOUS_CONTEXT_VIEW = "previous-context-view",
+  NEXT_CONTEXT_VIEW = "next-context-view",
   RHOMBUS = "rhombus",
   TODAY = "today",
   FEED = "feed"
