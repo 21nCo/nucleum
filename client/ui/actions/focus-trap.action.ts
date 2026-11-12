@@ -21,12 +21,15 @@ function focusableElements(node: HTMLElement) {
  * before it when it is removed, or to `options.opener` when given. `release`
  * ends the trap without moving focus, for a node that stays mounted after it
  * no longer needs trapping; `opener` lets a later trap on the same node
- * return focus where the first one would.
+ * return focus where the first one would. `include` adds containers outside
+ * `node` that it owns, such as its popover containers: their controls join
+ * the Tab cycle after those of `node`, and Tab inside them is trapped too.
  */
 export function focusTrap(
   node: HTMLElement,
-  options: { opener?: HTMLElement } = {}
+  options: { opener?: HTMLElement; include?: HTMLElement[] } = {}
 ) {
+  const containers = [node, ...(options.include ?? [])];
   const opener =
     options.opener ??
     (document.activeElement instanceof HTMLElement
@@ -35,7 +38,7 @@ export function focusTrap(
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key !== "Tab" || event.defaultPrevented) return;
-    const elements = focusableElements(node);
+    const elements = containers.flatMap(focusableElements);
     const active = document.activeElement;
     if (elements.length === 0) {
       event.preventDefault();
@@ -50,19 +53,28 @@ export function focusTrap(
     } else if (!event.shiftKey && active === last) {
       event.preventDefault();
       first.focus();
+    } else if (containers.length > 1) {
+      const index = elements.indexOf(active as HTMLElement);
+      const next = elements[index + (event.shiftKey ? -1 : 1)];
+      if (index < 0 || !next) return;
+      event.preventDefault();
+      next.focus();
     }
   }
 
   if (!node.contains(document.activeElement)) node.focus();
-  node.addEventListener("keydown", handleKeydown);
+  for (const container of containers)
+    container.addEventListener("keydown", handleKeydown);
 
   return {
     opener,
     release() {
-      node.removeEventListener("keydown", handleKeydown);
+      for (const container of containers)
+        container.removeEventListener("keydown", handleKeydown);
     },
     destroy() {
-      node.removeEventListener("keydown", handleKeydown);
+      for (const container of containers)
+        container.removeEventListener("keydown", handleKeydown);
       queueMicrotask(() => {
         const active = document.activeElement;
         const isFocusElsewhere =

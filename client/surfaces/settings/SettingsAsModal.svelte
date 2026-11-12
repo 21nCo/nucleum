@@ -44,13 +44,7 @@
   $effect(() => {
     if (settingSearchParam) runAction(settingSearchParam);
   });
-  const layerParams = [
-    AccessMode.OVERLAY,
-    AccessMode.PANEL,
-    AccessMode.PAGE,
-    AccessMode.BESIDE_PAGE,
-    "full"
-  ];
+  const layerParams = [...Object.values(AccessMode), "full"];
   /** Whether a path or a shell layer value names the Settings route. */
   function isSettingsTarget(value: string) {
     const settingsPath = `/${Action.SETTINGS}`;
@@ -62,9 +56,9 @@
   /**
    * The automatic handoff only follows a return path that stays inside the
    * app: a single-slash relative path on this origin that neither is Settings
-   * nor opens it in a shell layer (overlay, panel, page, beside page or the
-   * legacy full param). Anything else (an external or protocol-relative URL,
-   * a scheme, or a Settings target) falls back to the product home.
+   * nor opens it in a shell layer (any access mode param, or the legacy full
+   * param). Anything else (an external or protocol-relative URL, a scheme, or
+   * a Settings target) falls back to the product home.
    */
   function appReturnPath(path: string | null) {
     if (!path?.startsWith("/") || path.startsWith("//")) return null;

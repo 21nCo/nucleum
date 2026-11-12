@@ -206,6 +206,7 @@ describe("SettingsAsModal Appearance handoff", () => {
     ["a right panel", "/calendar?panel=cp"],
     ["a page", "/calendar?page=cp"],
     ["a beside page", "/calendar?besidePage=cp"],
+    ["the base split", "/calendar?beside=cp"],
     ["the legacy full param", "/calendar?full=cp"],
     ["a later repeated overlay", "/calendar?overlay=library&overlay=cp"],
     ["an encoded overlay sub-route", "/calendar?overlay=%2FCP%2Ftargets"]

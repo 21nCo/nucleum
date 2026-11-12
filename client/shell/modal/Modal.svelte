@@ -18,6 +18,7 @@
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
+  import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
   let {
     index = 0,
     show = $bindable(true),
@@ -93,6 +94,53 @@
     dialog?.showModal();
   }
 
+  /** The popover containers whose popovers a right-side drawer owns. */
+  function drawerPopoverContainers() {
+    return ["popovers", "secondary-popovers"]
+      .map((containerId) => document.getElementById(containerId))
+      .filter((container): container is HTMLElement => !!container);
+  }
+
+  /**
+   * Stops a key other than `Escape` from reaching the app behind the drawer.
+   * Used on the drawer, after its own controls handled the key.
+   */
+  function stopBackgroundKey(event: KeyboardEvent) {
+    if (event.key !== KeyboardKey.ESCAPE) event.stopPropagation();
+  }
+
+  /**
+   * Keeps the app behind a right-side drawer keyboard-inert while the drawer
+   * is the front modal: focus stays in the drawer and its popovers, and keys
+   * pressed in its popovers or on the page body do not reach document or
+   * window listeners. `Escape` still passes so the drawer can close.
+   */
+  function isolateDrawer(node: HTMLElement) {
+    const containers = drawerPopoverContainers();
+    const trap = trapFocus(node, { include: containers });
+    const isOnFront = () => resolveModalOnFront()?.id === id;
+    const stopFromPopover = (event: KeyboardEvent) => {
+      if (isOnFront()) stopBackgroundKey(event);
+    };
+    const stopFromBody = (event: KeyboardEvent) => {
+      const isBodyTarget =
+        event.target === document.body ||
+        event.target === document.documentElement;
+      if (isBodyTarget && isOnFront()) stopBackgroundKey(event);
+    };
+    for (const container of containers)
+      container.addEventListener("keydown", stopFromPopover);
+    window.addEventListener("keydown", stopFromBody, true);
+    return {
+      destroy() {
+        for (const container of containers)
+          container.removeEventListener("keydown", stopFromPopover);
+        window.removeEventListener("keydown", stopFromBody, true);
+        trap.destroy();
+      }
+    };
+  }
+
   function resolveSizeClasses() {
     if (isDynamicSize) {
       return {};
@@ -142,7 +190,8 @@
         aria-modal="true"
         aria-label={title || undefined}
         tabindex="-1"
-        use:trapFocus
+        use:isolateDrawer
+        onkeydown={stopBackgroundKey}
         class="absolute top-0 right-0 flex flex-col h-full w-[28rem] 2k:w-[32rem] max-w-full bg-bgs1 border-l border-brs3 shadow-xl cursor-default outline-none app-framed:top-[var(--app-shell-gap)] app-framed:right-[var(--app-shell-gap)] app-framed:h-[calc(100%-2*var(--app-shell-gap))] app-framed:border app-framed:rounded-[var(--app-panel-radius)] overflow-hidden"
       >
         <ColorLayer>
