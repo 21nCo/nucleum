@@ -94,7 +94,7 @@ function resolveActiveEntry(): ItemNavigationEntry | undefined {
   if (
     suppressedBy?.isConnected &&
     suppressedBy.getClientRects().length > 0 &&
-    suppressedAt === location.href
+    suppressedAt === location.pathname
   )
     return undefined;
   suppressedBy = undefined;
@@ -270,7 +270,7 @@ function onPointerDown(event: PointerEvent) {
     const area = resolveOtherScrollArea(target);
     if (area) {
       suppressedBy = area;
-      suppressedAt = location.href;
+      suppressedAt = location.pathname;
     }
     return;
   }
@@ -303,7 +303,7 @@ function stopListening() {
  * left. Only the list the user last clicked in, or else the most recently
  * mounted visible list, responds, and lists behind a modal or dialog do not.
  * A click inside another scrolling area keeps the arrow keys for that area
- * until a list is clicked or mounted, the area closes, or the URL changes.
+ * until a list is clicked or mounted, the area closes, or the page path changes.
  */
 export function itemNavigation(
   node: HTMLElement,
