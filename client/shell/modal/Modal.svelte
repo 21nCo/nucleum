@@ -186,8 +186,8 @@
    * is the front modal. The app behind it and popovers already open are made
    * inert, so they take no focus or pointer input; the popover containers stay
    * live for the popovers the drawer opens. Focus enters the drawer and, on
-   * close, returns to the opener or, when the opener is gone, to the first
-   * control of the app. Keys from the drawer and its popovers reach their own
+   * close, returns to the opener or, when the opener is gone, to the modal
+   * left on front or else the first control of the app. Keys from the drawer and its popovers reach their own
    * handlers first; then Tab cycles through them unless a control handled it,
    * and keys other than `Escape` stop before document and window listeners.
    * Keys from outside them are blocked, and Tab is pulled back in.
@@ -252,10 +252,12 @@
           const opener = trap.opener;
           const hasOpener = opener?.isConnected && opener !== document.body;
           if (hasOpener || isFocusKept) return;
-          inertApp
-            .filter((element) => element.isConnected)
-            .flatMap(focusableElements)[0]
-            ?.focus();
+          const front = resolveModalOnFront();
+          const scopes =
+            front instanceof HTMLElement
+              ? [front]
+              : inertApp.filter((element) => element.isConnected);
+          (scopes.flatMap(focusableElements)[0] ?? front)?.focus();
         });
       }
     };

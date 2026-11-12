@@ -329,6 +329,22 @@ describe("Modal right-side drawer", () => {
     }
   );
 
+  it("returns focus to a modal left open beneath it when the opener is gone", async () => {
+    const app = document.createElement("div");
+    app.innerHTML = `<button>Home</button>`;
+    const beneath = document.createElement("div");
+    beneath.setAttribute("data-blank-modal", "0");
+    beneath.innerHTML = `<button data-testid="beneath-start">Done</button>`;
+    document.body.append(app, beneath);
+    const { getByTestId, rerender } = renderDrawer();
+    await tick();
+
+    await rerender({ show: false });
+    await waitFor(() =>
+      expect(document.activeElement).toBe(getByTestId("beneath-start"))
+    );
+  });
+
   it("keeps the app inert while a second drawer is open after the first closes", async () => {
     const app = document.createElement("div");
     document.body.append(app);
