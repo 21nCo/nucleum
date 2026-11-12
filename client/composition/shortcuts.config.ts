@@ -36,12 +36,20 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
     prefix: GO,
     key: "f"
   },
+  [Action.NEW_COMMANDS]: {
+    prefix: GO,
+    key: "n"
+  },
+  [Action.CREATE]: {
+    key: "n"
+  },
   [Action.HOT_KEYS]: {
     key: "?",
     modifiers: [ModifierKey.SHIFT]
   },
   [Action.TOGGLE_SIDEBAR]: {
-    key: "["
+    key: "[",
+    code: "BracketLeft"
   },
   [Action.NAVIGATOR]: {
     key: "/"

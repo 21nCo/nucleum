@@ -19,6 +19,11 @@
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
+  import {
+    createPinnedSpacesStore,
+    orderPinnedSpaces,
+    toPinnedSpacesKey
+  } from "@nucleum/shell/navigation/pinned-spaces";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { resolveSpacePath } from "@nucleum/client/config/space-route";
   import {
@@ -51,9 +56,8 @@
       appEvents.publish(event.key.toString() as GlobalEvent, event);
       return;
     }
-    if (isTextInputSource && event.metaKey === false) return;
-    if (pendingPrefix !== undefined) {
-      runChord(event);
+    if (isTextInputSource && event.metaKey === false) {
+      clearChord();
       return;
     }
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
@@ -70,10 +74,19 @@
       if (keyboardShortcuts.isChordPrefix(event)) startChord(event);
       return;
     }
+    if (!requireCommandHost().resolveAction(shortcut.action)) return;
     requireCommandHost().runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
   };
+
+  const pinnedIds = $derived(appMenuStore.pinnedSpaces($appMenuStore));
+  const pinnedSpacesStore = $derived(
+    createPinnedSpacesStore(toPinnedSpacesKey(pinnedIds))
+  );
+  const pinnedSpaces = $derived(
+    orderPinnedSpaces(pinnedIds, $pinnedSpacesStore.data)
+  );
 
   let pendingPrefix: string | undefined;
   let pendingTimer: ReturnType<typeof setTimeout> | undefined;
@@ -92,7 +105,8 @@
   }
 
   /**
-   * Runs the second key of a chord such as G then C. G then 1 to 9 opens the
+   * Runs the second key of a chord such as G then C, in the capture phase so
+   * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
    * pinned space in that app menu position. Any other key ends the chord.
    */
   function runChord(event: KeyboardEvent) {
@@ -101,13 +115,14 @@
     clearChord();
     const spaceIndex = resolveChordSpaceIndex(prefix, event);
     if (spaceIndex !== undefined) {
-      const spaceId = appMenuStore.pinnedSpaces()[spaceIndex];
-      if (spaceId) navigation.gotoPath(resolveSpacePath(spaceId));
+      const space = pinnedSpaces[spaceIndex];
+      if (space) navigation.gotoPath(resolveSpacePath(space.id));
       event.preventDefault();
       return;
     }
     const { shortcut } = keyboardShortcuts.resolveShortcut(event, prefix);
-    if (!shortcut) return;
+    if (!shortcut || !requireCommandHost().resolveAction(shortcut.action))
+      return;
     requireCommandHost().runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
@@ -133,6 +148,15 @@
   let escapeBulkCount: number | undefined;
 
   const escapeCaptureListener = (event: KeyboardEvent) => {
+    if (pendingPrefix !== undefined) {
+      if (
+        event.key === KeyboardKey.ESCAPE ||
+        isTextElement(event.target) ||
+        $context.embed === Embed.HANDSET
+      )
+        clearChord();
+      else runChord(event);
+    }
     if (event.key !== KeyboardKey.ESCAPE) return;
     escapeBulkCount = get(bulkEditStore.count);
   };

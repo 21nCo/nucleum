@@ -25,6 +25,33 @@ test.describe("global chords", () => {
     await expect(page).toHaveURL(/\/calendar(\/|$|\?)/);
   });
 
+  test("G then N opens the super bar on the create commands", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+
+    await page.keyboard.press("g");
+    await page.keyboard.press("n");
+    const input = page.getByPlaceholder("Create something new");
+    await expect(input).toBeFocused({ timeout: 10_000 });
+    await expect(
+      page
+        .getByRole("button", { name: "Create a new collection", exact: true })
+        .first()
+    ).toBeVisible();
+    await input.fill("collection");
+    await expect(
+      page.getByRole("button", { name: "Create a new space", exact: true })
+    ).toHaveCount(0);
+    await expect(
+      page
+        .getByRole("button", { name: "Create a new collection", exact: true })
+        .first()
+    ).toBeVisible();
+  });
+
   test("question mark opens the hot key sheet listing the chords", async ({
     page
   }) => {
