@@ -39,7 +39,10 @@
 
   import { stringify } from "@21n/shared-utils/json.utils";
   import { itemNavigation } from "@21n/ui/actions/itemNavigation.action";
-  import { toggleResourceSelection } from "@nucleum/features/records/resource.actions";
+  import {
+    resolveResourceSelectionContext,
+    toggleResourceSelection
+  } from "@nucleum/features/records/resource.actions";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
   import { datafn } from "@nucleum/datafn/datafn.store";
@@ -205,16 +208,34 @@
   }
 
   let rangeBaseIds: IRecordId[] = [];
+  const isSelectable = $derived(
+    accessPoint !== ResourceAccessPoint.PICKER &&
+      accessPoint !== ResourceAccessPoint.MAP &&
+      !isPreventDefault
+  );
+
+  function hasSelectionInList() {
+    const { selectedIds } = bulkEditStore.getState();
+    return selectedIds.some((id) =>
+      data.some((item) => resourceInList(item.id)(id))
+    );
+  }
 
   function extendFromKeyboard(elements: HTMLElement[], isNewRange: boolean) {
-    const items = elements
+    const resolved = elements
       .map(resolveElementItem)
       .filter((item): item is RecordItem => !!item);
-    if (items.length === 0) return;
-    const state = bulkEditStore.getState();
-    if (isNewRange) rangeBaseIds = state.selectedIds;
-    if (state.selectedIds.length === 0) {
+    if (resolved.length === 0) return;
+    const resourceType = determineResourceType(resolved[0].id);
+    const items = resolved.filter(
+      (item) => determineResourceType(item.id) === resourceType
+    );
+    const context = resolveResourceSelectionContext(items[0].id, accessPoint);
+    if (!bulkEditStore.matchesContext(context)) {
       toggleResourceSelection(items[0].id, accessPoint);
+      rangeBaseIds = [];
+    } else if (isNewRange) {
+      rangeBaseIds = bulkEditStore.getState().selectedIds;
     }
     const base = rangeBaseIds.filter(
       (id) => !items.some((item) => resourceInList(item.id)(id))
@@ -228,9 +249,9 @@
   use:itemNavigation={{
     itemSelector: "[id^='thumbnail-'][data-id]",
     onOpen: openFromKeyboard,
-    onToggle: toggleFromKeyboard,
-    onExtend: extendFromKeyboard,
-    hasSelection: () => bulkEditStore.getState().selectedIds.length > 0
+    onToggle: isSelectable ? toggleFromKeyboard : undefined,
+    onExtend: isSelectable ? extendFromKeyboard : undefined,
+    hasSelection: hasSelectionInList
   }}
 >
   <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->

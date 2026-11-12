@@ -52,7 +52,8 @@ type ResourceLifecycleHooks = {
   onRestore?: (ids: IRecordId[]) => Promise<unknown> | unknown;
 };
 
-function resolveResourceSelectionContext(
+/** Bulk selection context of a resource shown at an access point. */
+export function resolveResourceSelectionContext(
   id: IRecordId,
   accessPoint: ResourceAccessPoint,
   accessPointId?: IRecordId

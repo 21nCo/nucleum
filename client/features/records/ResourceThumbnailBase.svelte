@@ -114,9 +114,11 @@
   });
 
   async function openContextMenuFromKeyboard() {
-    if (!canShowContextMenu || !rootRef) return;
-    isContextMenuVisible = true;
-    await tick();
+    if (!rootRef) return;
+    if (canShowContextMenu) {
+      isContextMenuVisible = true;
+      await tick();
+    }
     rootRef
       .querySelector<HTMLElement>(
         "[data-testid='thumbnail-context-menu-trigger']"

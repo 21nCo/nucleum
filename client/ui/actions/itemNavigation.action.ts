@@ -49,6 +49,7 @@ function isMenuKey(event: KeyboardEvent) {
 }
 const entries: ItemNavigationEntry[] = [];
 let lastInteracted: ItemNavigationEntry | undefined;
+let suppressedBy: Element | undefined;
 let isListening = false;
 
 function resolveItems(entry: ItemNavigationEntry) {
@@ -85,6 +86,9 @@ function isReachable(entry: ItemNavigationEntry, layer: Element | null) {
 
 function resolveActiveEntry(): ItemNavigationEntry | undefined {
   const layer = resolveFrontLayer();
+  if (suppressedBy?.isConnected && suppressedBy.getClientRects().length > 0)
+    return undefined;
+  suppressedBy = undefined;
   if (lastInteracted && isReachable(lastInteracted, layer))
     return lastInteracted;
   for (let index = entries.length - 1; index >= 0; index--) {
@@ -189,6 +193,7 @@ function onKeydown(event: KeyboardEvent) {
     if (!entry.isShown) return;
     clearHighlight(entry);
     event.preventDefault();
+    event.stopPropagation();
     return;
   }
   const highlighted = resolveHighlighted(entry);
@@ -216,17 +221,43 @@ function onKeydown(event: KeyboardEvent) {
   ) {
     event.preventDefault();
     event.stopPropagation();
-    entry.anchorKey = resolveItemKey(highlighted);
+    entry.anchorKey = undefined;
     entry.config.onToggle(highlighted);
   }
 }
 
-function onPointerDown(event: PointerEvent) {
-  const entry = entries.find(
-    (candidate) =>
-      event.target instanceof Node && candidate.node.contains(event.target)
+function isScrollable(element: Element) {
+  const style = getComputedStyle(element);
+  return (
+    /(auto|scroll)/.test(style.overflowY) &&
+    element.scrollHeight > element.clientHeight + 1
   );
-  if (!entry) return;
+}
+
+/**
+ * Returns the nearest scrolling area around a pointer target that holds no
+ * list, so arrow keys keep scrolling it after a click inside.
+ */
+function resolveOtherScrollArea(target: Node) {
+  let element = target instanceof Element ? target : target.parentElement;
+  while (element && element !== document.body) {
+    const holdsList = entries.some((entry) => element!.contains(entry.node));
+    if (holdsList) return undefined;
+    if (isScrollable(element)) return element;
+    element = element.parentElement;
+  }
+  return undefined;
+}
+
+function onPointerDown(event: PointerEvent) {
+  if (!(event.target instanceof Node)) return;
+  const target = event.target;
+  const entry = entries.find((candidate) => candidate.node.contains(target));
+  if (!entry) {
+    suppressedBy = resolveOtherScrollArea(target) ?? suppressedBy;
+    return;
+  }
+  suppressedBy = undefined;
   lastInteracted = entry;
   clearHighlight(entry);
 }
