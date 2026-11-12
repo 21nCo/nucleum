@@ -312,6 +312,7 @@
     --colors-aps2: var(--colors-faps2);
     --colors-aps3: var(--colors-faps3);
     --colors-onaps3: var(--colors-fonaps3);
+    color: rgba(var(--colors-fgs1), 1);
   }
 
   :global(
@@ -343,6 +344,7 @@
     --colors-aps1: var(--colors-caps1);
     --colors-aps2: var(--colors-caps2);
     --colors-aps3: var(--colors-caps3);
+    color: rgba(var(--colors-fgs1), 1);
   }
 
   /* TODO  - clipper case - the need for below typeface settings  */
