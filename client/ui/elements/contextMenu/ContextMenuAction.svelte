@@ -106,7 +106,14 @@
     triggerMethod: triggerMethod
       ? [triggerMethod]
       : [PopoverTriggerMethod.CLICK],
-    componentProps: { size, heading, menuResolver, onSelect, parentBgIndex },
+    componentProps: {
+      size,
+      heading,
+      menuResolver,
+      onSelect,
+      parentBgIndex,
+      onClose: hide
+    },
     groupId: "contextMenuPopover-" + id,
     id,
     isRenderAsSibling

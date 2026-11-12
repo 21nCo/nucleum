@@ -66,8 +66,10 @@
         "p-1.5": size === Size.sm,
         "p-2": size === Size.md,
         "px-3 py-2": size === Size.lg,
-        "notouch:hover:bg-bgs3-striped active:bg-bgs3-striped": !isRedAccent,
-        "notouch:hover:bg-ars3 active:bg-ars3": isRedAccent
+        "notouch:hover:bg-bgs3-striped active:bg-bgs3-striped focus-visible:bg-bgs3-striped focus-visible:outline-none":
+          !isRedAccent,
+        "notouch:hover:bg-ars3 active:bg-ars3 focus-visible:bg-ars3 focus-visible:outline-none":
+          isRedAccent
       }
     )}
     data-context-menu-item-id={item.value}

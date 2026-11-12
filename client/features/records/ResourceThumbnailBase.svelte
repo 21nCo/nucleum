@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { Snippet } from "svelte";
+  import { tick, type Snippet } from "svelte";
   import { hoverable } from "@21n/ui/actions/hover.action";
+  import { itemMenuEvent } from "@21n/ui/actions/itemNavigation.action";
   import { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import {
     determineResourceType,
@@ -102,6 +103,27 @@
     }
   });
 
+  let rootRef = $state<HTMLDivElement>();
+
+  $effect(() => {
+    const element = rootRef;
+    if (!element) return;
+    element.addEventListener(itemMenuEvent, openContextMenuFromKeyboard);
+    return () =>
+      element.removeEventListener(itemMenuEvent, openContextMenuFromKeyboard);
+  });
+
+  async function openContextMenuFromKeyboard() {
+    if (!canShowContextMenu || !rootRef) return;
+    isContextMenuVisible = true;
+    await tick();
+    rootRef
+      .querySelector<HTMLElement>(
+        "[data-testid='thumbnail-context-menu-trigger']"
+      )
+      ?.click();
+  }
+
   function toggleSelection(shouldSelect: boolean) {
     const state = bulkEditStore.getState();
     if (
@@ -136,6 +158,7 @@
   data-id={item.id}
   draggable={isDraggable}
   onclick={onClick}
+  bind:this={rootRef}
   use:hoverable={{
     onHover: (e) => {
       isLocalHovering = e;

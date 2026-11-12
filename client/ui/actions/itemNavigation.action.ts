@@ -37,6 +37,16 @@ type ItemNavigationEntry = {
 };
 
 const highlightAttribute = "data-item-highlighted";
+
+/** Event dispatched on the highlighted item to ask it to open its menu. */
+export const itemMenuEvent = "itemmenu";
+
+function isMenuKey(event: KeyboardEvent) {
+  if (event.metaKey || event.ctrlKey) return false;
+  if (event.key === "ContextMenu") return true;
+  if (event.key === "F10") return event.shiftKey;
+  return event.key === "." && !event.shiftKey;
+}
 const entries: ItemNavigationEntry[] = [];
 let lastInteracted: ItemNavigationEntry | undefined;
 let isListening = false;
@@ -183,6 +193,12 @@ function onKeydown(event: KeyboardEvent) {
   }
   const highlighted = resolveHighlighted(entry);
   if (!highlighted) return;
+  if (isMenuKey(event)) {
+    event.preventDefault();
+    event.stopPropagation();
+    highlighted.dispatchEvent(new CustomEvent(itemMenuEvent));
+    return;
+  }
   if (event.key === "Enter" && !event.shiftKey && entry.config.onOpen) {
     event.preventDefault();
     event.stopPropagation();
@@ -234,7 +250,8 @@ function stopListening() {
  * plain arrow keys. Left and Right move within a row, Up and Down across rows.
  * Enter opens the highlighted item and hides the highlight until the next
  * arrow, which resumes from that item. Space toggles its selection, Shift+arrows
- * extend the selection, and Escape clears the highlight once no selection is
+ * extend the selection, and the period, ContextMenu or Shift+F10 key dispatches
+ * `itemmenu` on the item so it can open its menu. Escape clears the highlight once no selection is
  * left. Only the list the user last clicked in, or else the most recently
  * mounted visible list, responds, and lists behind a modal or dialog do not.
  */
