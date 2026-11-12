@@ -23,6 +23,7 @@
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
+  import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
   import { Placement } from "@21n/ui/elements/direction.enum";
   import {
     contextZone,
@@ -34,14 +35,21 @@
     header = undefined,
     headerLeftOptions = undefined,
     headerRightOptions = undefined,
+    overflowMenu = undefined,
     onGoToToday = undefined
   }: {
     panel?: CalendarLayout;
     children?: Snippet | undefined;
-    header?: Snippet | undefined;
-    /** Left header controls; receives whether the controls are compact. */
-    headerLeftOptions?: Snippet<[boolean]> | undefined;
+    /** Date header; receives whether the controls are tight. */
+    header?: Snippet<[boolean]> | undefined;
+    /**
+     * Left header controls; receives whether the controls are compact and
+     * whether they are tight (compact controls that still do not fit).
+     */
+    headerLeftOptions?: Snippet<[boolean, boolean]> | undefined;
     headerRightOptions?: Snippet | undefined;
+    /** Extra calendar menu groups shown while the controls are tight. */
+    overflowMenu?: (() => IContextMenuGroup[]) | undefined;
     onGoToToday?: (() => void) | undefined;
   } = $props();
   const panelOptions: ISelectItem[] = [
@@ -67,6 +75,13 @@
       $entryWidth !== undefined &&
       $entryWidth < fullControlsWidth
   );
+  let compactControlsWidth = $state(0);
+  const isTight = $derived(
+    isCompact &&
+      compactControlsWidth > 0 &&
+      $entryWidth !== undefined &&
+      $entryWidth < compactControlsWidth
+  );
   const isLoose = $derived(
     !isCompact &&
       fullControlsWidth > 0 &&
@@ -86,6 +101,19 @@
       controlGroupCount = groups;
       fullControlsWidth =
         element.scrollWidth - Math.max(0, groups - 1) * (gap - TIGHT_GAP_PX);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    measure();
+    return () => observer.disconnect();
+  });
+
+  $effect(() => {
+    if (!controlsRef || !isCompact || isTight) return;
+    const element = controlsRef;
+    const measure = () => {
+      if (!isCompact || isTight) return;
+      compactControlsWidth = element.scrollWidth;
     };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
@@ -121,6 +149,7 @@
       : [];
     return [
       ...layoutGroup,
+      ...(isTight ? (overflowMenu?.() ?? []) : []),
       {
         group: "calendar",
         items: [
@@ -220,6 +249,7 @@
       style:column-gap={`${isLoose ? LOOSE_GAP_PX : TIGHT_GAP_PX}px`}
       data-testid="calendar-context-controls"
       data-compact={isCompact ? "true" : undefined}
+      data-tight={isTight ? "true" : undefined}
     >
       {#if isLayoutSwitcher && !isCompact}
         {@render layoutSwitcher()}
@@ -227,10 +257,10 @@
         {@render backButton(false)}
       {/if}
       <div class="flex items-center h-full gap-3 shrink-0">
-        {@render headerLeftOptions?.(isCompact)}
+        {@render headerLeftOptions?.(isCompact, isTight)}
       </div>
       <div class="flex items-center h-full shrink-0">
-        {@render header?.()}
+        {@render header?.(isTight)}
       </div>
       <div class="flex items-center h-full shrink-0">
         {#if isCompact}
@@ -267,9 +297,9 @@
           {:else}
             {@render backButton(true)}
           {/if}
-          {@render headerLeftOptions?.(false)}
+          {@render headerLeftOptions?.(false, false)}
         </div>
-        {@render header?.()}
+        {@render header?.(false)}
         <div class="flex gap--2 justify-end items-center h-full w-full">
           {@render trailingControls()}
         </div>

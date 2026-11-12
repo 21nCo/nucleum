@@ -9,6 +9,11 @@
   import view from "@21n/ui/environment/view.store";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import Button from "@21n/ui/elements/button/Button.svelte";
+  import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "@21n/ui/elements/select/select.type";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
   import {
     CALENDAR_HEATMAP_SCALE,
@@ -22,6 +27,7 @@
     isRefreshing = false,
     parentBgIndex = 2,
     isScopeHidden = false,
+    isScaleInMenu = false,
     onScaleSelection = undefined
   }: {
     selectedView?: TimeScaleUnit;
@@ -29,6 +35,11 @@
     parentBgIndex?: number;
     /** Hides the scope button, as when the controls are compact. */
     isScopeHidden?: boolean;
+    /**
+     * Hides the scale switcher so it fits a narrow top bar; the scale is then
+     * offered through `resolveScaleMenuGroup` in the calendar menu.
+     */
+    isScaleInMenu?: boolean;
     onScaleSelection?:
       | ((event: CustomEvent<TimeScaleUnit>) => void)
       | undefined;
@@ -86,6 +97,25 @@
       )
   }));
 
+  /** The scale as a calendar menu option group, for compact top bars. */
+  export function resolveScaleMenuGroup(): IContextMenuGroup[] {
+    return [
+      {
+        group: "scale",
+        items: [],
+        option: {
+          label: "Scale",
+          options: switchOptions as ISelectItem[],
+          value: selectedView,
+          onChange: (value: ISelectValue) =>
+            handleScaleSelection(
+              new CustomEvent("select", { detail: value as TimeScaleUnit })
+            )
+        }
+      }
+    ];
+  }
+
   function handleScaleSelection(e: CustomEvent<TimeScaleUnit>) {
     if (!e.detail) return;
     scaleSubViews.touch();
@@ -98,29 +128,31 @@
 </script>
 
 <div class="flex items-center gap-2">
-  <div>
-    {#if $view.isConstrainedWidth}
-      <DropDown
-        items={switchOptions}
-        value={selectedView}
-        isDisableSearch={true}
-        width="min-w-32"
-        size={Size.sm}
-        isEnforceWidth={true}
-        onSelect={handleScaleSelection}
-      />
-    {:else}
-      <OptionSelector
-        options={switchOptions}
-        selected={selectedView}
-        size={Size.sm}
-        {parentBgIndex}
-        isExpandOnActiveForIcon={true}
-        style={OptionSelectorStyle.ICON}
-        onSelect={handleScaleSelection}
-      />
-    {/if}
-  </div>
+  {#if $view.isConstrainedWidth || !isScaleInMenu}
+    <div>
+      {#if $view.isConstrainedWidth}
+        <DropDown
+          items={switchOptions}
+          value={selectedView}
+          isDisableSearch={true}
+          width="min-w-32"
+          size={Size.sm}
+          isEnforceWidth={true}
+          onSelect={handleScaleSelection}
+        />
+      {:else}
+        <OptionSelector
+          options={switchOptions}
+          selected={selectedView}
+          size={Size.sm}
+          {parentBgIndex}
+          isExpandOnActiveForIcon={true}
+          style={OptionSelectorStyle.ICON}
+          onSelect={handleScaleSelection}
+        />
+      {/if}
+    </div>
+  {/if}
   {#if isDev && !isScopeHidden}
     <Button icon="scope" tooltip="Calendar scope" />
   {/if}

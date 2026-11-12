@@ -89,6 +89,7 @@
     selected={$resourceStore.panel}
     onSelect={(e) => $resourceStore.switchPanel(e.detail)}
     {isIconOnlyMode}
+    isOverflowToMenu={variant === "tabs"}
   />
 {/snippet}
 
@@ -137,7 +138,10 @@
 {/snippet}
 
 {#snippet viewTabs()}
-  <div class="flex items-center h-full" data-testid="resource-context-tabs">
+  <div
+    class="flex items-center h-full min-w-0"
+    data-testid="resource-context-tabs"
+  >
     {#if $resourceStore.isInEditMode}
       <div
         class="flex items-center h-full pr-3 mr-3 border-r border-brs3 app-framed:border-transparent"
@@ -162,7 +166,7 @@
       />
     {:else}
       {@render panelSwitcher(Size.md, $shape.isFramed && isConstrainedWidth)}
-      <div class="flex items-center h-full ml-2">
+      <div class="flex items-center h-full ml-2 shrink-0">
         {@render maximizeButton()}
         {@render actionsMenu(1)}
       </div>

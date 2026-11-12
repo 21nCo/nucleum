@@ -4,7 +4,10 @@
   import { onMount, untrack } from "svelte";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { OverviewPanel } from "@nucleum/client/config/product.type";
   import { Action } from "@nucleum/client/config/action.enum";
   import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
@@ -27,8 +30,7 @@
 
   function parsePanel(slug: string | undefined) {
     return items.find((item) => item.value === slug)?.value as
-      | OverviewPanel
-      | undefined;
+      OverviewPanel | undefined;
   }
 
   function resolveSavedState() {
@@ -136,10 +138,11 @@
       options={items}
       bind:selected={selectedPanel}
       onSelect={onPanelSelect}
+      isOverflowToMenu={true}
     />
   {/snippet}
   <ContextZoneContent views={panelViews}>
-    <div class="h-full" data-testid="overview-tabs">
+    <div class="flex h-full min-w-0" data-testid="overview-tabs">
       {@render overviewTabs()}
     </div>
     {#snippet fallback()}

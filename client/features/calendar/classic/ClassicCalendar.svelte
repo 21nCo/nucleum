@@ -35,6 +35,7 @@
   let selectedDate = $state(new Date());
   let selectedScale = $state<TimeScaleUnit>(TimeScaleUnit.DAY);
   let yearViewRef = $state<YearView>();
+  let scaleOptionsRef = $state<ClassicCalendarHeaderLeftOptions>();
   let weekViewRef = $state<WeekView>();
   let visibleWeekDates = $state<Date[] | undefined>(undefined);
   let width = $derived(resolveSavedWidthSelection(selectedView));
@@ -161,6 +162,7 @@
 </script>
 
 <CalendarLayoutView
+  overflowMenu={() => scaleOptionsRef?.resolveScaleMenuGroup() ?? []}
   bind:panel
   onGoToToday={() => {
     if (
@@ -179,16 +181,19 @@
     }
   }}
 >
-  {#snippet headerLeftOptions(isCompact: boolean)}
+  {#snippet headerLeftOptions(isCompact: boolean, isTight: boolean)}
     <ClassicCalendarHeaderLeftOptions
+      bind:this={scaleOptionsRef}
       bind:selectedView
       {isRefreshing}
       isScopeHidden={isCompact}
+      isScaleInMenu={isTight}
       onScaleSelection={handleScaleSelection}
     />
   {/snippet}
-  {#snippet header()}
+  {#snippet header(isTight: boolean)}
     <CalendarHeader
+      isShortDate={isTight}
       bind:selectedDate
       bind:selectedView
       {visibleWeekDates}

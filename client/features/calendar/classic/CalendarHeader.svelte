@@ -11,7 +11,8 @@
     parentBgIndex = 2,
     onDateChange = undefined,
     onGoToPrevious = undefined,
-    onGoToNext = undefined
+    onGoToNext = undefined,
+    isShortDate = false
   }: {
     selectedDate?: Date;
     selectedView?: TimeScaleUnit;
@@ -20,6 +21,8 @@
     onDateChange?: (() => void) | undefined;
     onGoToPrevious?: (() => void) | undefined;
     onGoToNext?: (() => void) | undefined;
+    /** Shortens month names so the header fits a narrow top bar. */
+    isShortDate?: boolean;
   } = $props();
 
   const monthNames = [
@@ -92,7 +95,37 @@
   }
 
   const weekDates = $derived(getWeekDates(selectedDate));
-  const currentMonth = $derived(monthNames[selectedDate.getMonth()]);
+  const currentMonth = $derived(monthName(selectedDate.getMonth()));
+  const weekLabel = $derived(
+    visibleWeekDates && visibleWeekDates.length >= 7
+      ? formatWeekRange(
+          visibleWeekDates[0],
+          visibleWeekDates[6],
+          visibleWeekDates[6].getFullYear()
+        )
+      : formatWeekRange(weekDates[0], weekDates[6], currentYear)
+  );
+
+  function monthName(month: number) {
+    const name = monthNames[month];
+    return isShortDate ? name.slice(0, 3) : name;
+  }
+
+  /**
+   * Week range label. Short labels drop the repeated month and the current
+   * year, for example "Nov 8 - 14"; full labels keep both months and the year.
+   */
+  function formatWeekRange(start: Date, end: Date, year: number) {
+    const startMonth = monthName(start.getMonth());
+    const endMonth = monthName(end.getMonth());
+    const endPart =
+      isShortDate && start.getMonth() === end.getMonth()
+        ? `${end.getDate()}`
+        : `${endMonth} ${end.getDate()}`;
+    const yearPart =
+      isShortDate && year === new Date().getFullYear() ? "" : `, ${year}`;
+    return `${startMonth} ${start.getDate()} - ${endPart}${yearPart}`;
+  }
   const currentYear = $derived(selectedDate.getFullYear());
 </script>
 
@@ -112,17 +145,7 @@
     {#if selectedView === TimeScaleUnit.YEAR}
       {currentYear}
     {:else if selectedView === TimeScaleUnit.WEEK}
-      {#if visibleWeekDates && visibleWeekDates.length >= 7}
-        {monthNames[visibleWeekDates[0].getMonth()]}
-        {visibleWeekDates[0].getDate()} - {monthNames[
-          visibleWeekDates[6].getMonth()
-        ]}
-        {visibleWeekDates[6].getDate()}, {visibleWeekDates[6].getFullYear()}
-      {:else}
-        {monthNames[weekDates[0].getMonth()]}
-        {weekDates[0].getDate()} - {monthNames[weekDates[6].getMonth()]}
-        {weekDates[6].getDate()}, {currentYear}
-      {/if}
+      {weekLabel}
     {:else if selectedView === TimeScaleUnit.MONTH}
       {currentMonth} {currentYear}
     {:else}

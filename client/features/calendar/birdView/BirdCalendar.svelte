@@ -73,7 +73,7 @@
 </script>
 
 <CalendarLayoutView bind:panel>
-  {#snippet headerLeftOptions(_isCompact: boolean)}
+  {#snippet headerLeftOptions(_isCompact: boolean, _isTight: boolean)}
     {#if isDev}
       <OptionSelector
         options={switchOptions}
@@ -85,7 +85,7 @@
       />
     {/if}
   {/snippet}
-  {#snippet header()}
+  {#snippet header(_isTight: boolean)}
     <CalendarHeader
       bind:selectedDate
       bind:selectedView={scale}
