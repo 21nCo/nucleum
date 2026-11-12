@@ -41,12 +41,18 @@
   let {
     search = "",
     scope = "all",
+    isContextShown = true,
+    isCommandsOnly = false,
     onClose = void 0,
     onSearchAction = void 0,
     selectedKind = $bindable()
   }: {
     search?: string;
     scope?: SuperBarScope;
+    /** Whether the open resource's actions are offered. */
+    isContextShown?: boolean;
+    /** Lists commands only, without context actions or search results. */
+    isCommandsOnly?: boolean;
     /** Kind of the selected row, so the bar can hint what Enter does. */
     selectedKind?: SuperBarEntry["kind"] | undefined;
     onClose?: () => void;
@@ -74,7 +80,13 @@
     return loadDefaultFilteredActions(allActions);
   });
   const contextItems = $derived.by(() => {
-    if (scope !== "all" || !$activeContextActions) return [];
+    if (
+      scope !== "all" ||
+      !isContextShown ||
+      isCommandsOnly ||
+      !$activeContextActions
+    )
+      return [];
     try {
       return flattenContextActions($activeContextActions.resolve(), {
         hasActionHandler: Boolean($activeContextActions.onAction)
@@ -93,7 +105,8 @@
       scope,
       contextActions: contextItems,
       commands: scope === "all" ? filteredActions : [],
-      results: resultsQuery === query ? results : []
+      results: resultsQuery === query ? results : [],
+      isCommandsOnly
     })
   );
   const selectedEntry = $derived(
@@ -103,14 +116,14 @@
     selectedKind = selectedEntry?.kind;
   });
   const hasPendingSearch = $derived(
-    !!query && (isSearching || resultsQuery !== query)
+    !!query && !isCommandsOnly && (isSearching || resultsQuery !== query)
   );
 
   $effect(() => {
     const value = query;
     selectedKey = null;
     cancelSearch();
-    if (!value) {
+    if (!value || isCommandsOnly) {
       results = [];
       resultsQuery = "";
       isSearching = false;

@@ -34,7 +34,6 @@ import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { resolveNavigationLinkTarget } from "@nucleum/shell/navigation/link-target";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
-import { isCommandModeLayout } from "@nucleum/shell/navigation/command-mode-layout";
 import { resolveLegacyFullParamPath } from "@nucleum/shell/navigation/legacy-full-param";
 import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
@@ -725,11 +724,7 @@ export const navigation = {
       else accessMode = AccessMode.BESIDE_BASE;
     }
     if (
-      (get(view).isPortrait ||
-        isCommandModeLayout(
-          get(appStore).interactionMode,
-          get(context).embed
-        )) &&
+      get(view).isPortrait &&
       (accessMode === AccessMode.BESIDE_BASE ||
         accessMode === AccessMode.BESIDE_PAGE)
     ) {

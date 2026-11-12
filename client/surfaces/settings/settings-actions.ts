@@ -11,7 +11,6 @@ import AppearanceSettings from "@nucleum/surfaces/settings/appearance/Appearance
 import AccessibilitySettings from "@nucleum/surfaces/settings/appearance/accessibility/AccessibilitySettings.svelte";
 import DateTimeSettings from "@nucleum/surfaces/settings/datetime/DateTimeSettings.svelte";
 import DeveloperSettings from "@nucleum/surfaces/settings/developer/DeveloperSettings.svelte";
-import InteractionModeSettings from "@nucleum/surfaces/settings/interactionMode/InteractionModeSettings.svelte";
 import ModSettings from "@nucleum/surfaces/settings/mod/ModSettings.svelte";
 import ShortcutSettings from "@nucleum/surfaces/settings/shortcuts/ShortcutSettings.svelte";
 import SyncSettings from "@nucleum/surfaces/settings/sync/SyncSettings.svelte";
@@ -33,19 +32,6 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     label: "Developer",
     icon: "code",
     component: DeveloperSettings
-  },
-  {
-    action: Action.MODE_OF_INTERACTION,
-    label: "Mode of interaction",
-    icon: "cursor-click",
-    component: InteractionModeSettings,
-    modalParams: {
-      title: "Mode of interaction",
-      layout: {
-        size: Size.lg
-      }
-    },
-    hideContext: [Embed.HANDSET]
   },
   {
     action: Action.APPEARANCE_SETTINGS,

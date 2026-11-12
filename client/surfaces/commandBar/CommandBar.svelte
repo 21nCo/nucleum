@@ -26,22 +26,24 @@
   import KeyboardToolbar from "@21n/ui/elements/keyboardToolbar/KeyboardToolbar.svelte";
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
-  import type {
-    SuperBarEntry,
-    SuperBarScope
+  import {
+    resolveCommandsPrefix,
+    type SuperBarEntry,
+    type SuperBarScope
   } from "@nucleum/surfaces/commandBar/super-bar";
+  import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import Icon from "@21n/ui/elements/Icon.svelte";
 
   let {
     command = undefined,
     commandType = undefined,
     componentParams = undefined,
-    isFullPageContext = false,
     scope = "all"
   }: {
     command?: string | undefined;
     commandType?: ActionType | undefined;
     componentParams?: any;
-    isFullPageContext?: boolean;
     /** `search` opens the super bar on search results only. */
     scope?: SuperBarScope;
   } = $props();
@@ -52,13 +54,33 @@
   let searchAction = $state<IAction | null>(null);
   let isFocusing = $state(false);
   let selectedKind = $state<SuperBarEntry["kind"] | undefined>(undefined);
+  let isContextDismissed = $state(false);
+  let isCommandsMode = $state(false);
+  const activeContext = contextActions.active;
+  const contextLabel = $derived(
+    $activeContext ? properCase($activeContext.resource) : ""
+  );
+  const isContextShown = $derived(
+    !!$activeContext &&
+      !isContextDismissed &&
+      scope === "all" &&
+      !isPerformingSearchAction &&
+      !isCommandsMode
+  );
   const defaultPlaceholder = $derived(
     scope === "search"
       ? "Start typing to search"
-      : isFullPageContext
+      : isCommandsMode
         ? "Search for a command"
         : "Search anything, run a command or ask Rhombus"
   );
+  $effect(() => {
+    if (isCommandsMode || isPerformingSearchAction || scope !== "all") return;
+    const rest = resolveCommandsPrefix(value);
+    if (rest === undefined) return;
+    isCommandsMode = true;
+    value = rest;
+  });
   let placeholder = $state("");
   $effect(() => {
     if (!isPerformingSearchAction) {
@@ -82,6 +104,18 @@
   });
   function handleKeyDown(event: KeyboardEvent) {
     if (event.isComposing || event.keyCode === 229) return;
+    if (event.key === "Backspace" && value === "") {
+      if (isCommandsMode) {
+        event.preventDefault();
+        isCommandsMode = false;
+        return;
+      }
+      if (isContextShown) {
+        event.preventDefault();
+        isContextDismissed = true;
+        return;
+      }
+    }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       resultsRef?.moveSelection(event.key === "ArrowDown" ? "down" : "up");
@@ -150,8 +184,8 @@
     );
   }
   /**
-   * Used in command-only mode.
-   * @param event
+   * Focuses or blurs the super bar input with the super bar shortcut or Space,
+   * and blurs it on Escape.
    */
   const shortcutListener = (event: KeyboardEvent) => {
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
@@ -177,11 +211,7 @@
 <div
   class={cn(
     "flex flex-col cw:w-full cw:min-w-full w-[50rem] max-w-full overflow-auto",
-    {
-      "border border-brs2 rounded-md": isFullPageContext,
-      "cw:h-full h-[30rem]":
-        !isFullPageContext || (isFullPageContext && isFocusing)
-    }
+    "cw:h-full h-[30rem]"
   )}
 >
   {#if isPerformingSearchAction && searchAction}
@@ -211,6 +241,33 @@
       "flex mo:flex-col w-full bg-bgs1 justify-between items-center mo:rounded-none rounded-t-md"
     )}
   >
+    {#if isCommandsMode}
+      <span
+        class="flex items-center gap-1 shrink-0 ml-4 -mr-2 px-2 py-1 rounded-md bg-bgs2 text-b3 text-fgs2"
+        data-testid="super-bar-mode-chip"
+      >
+        <Icon icon="command" size={Size.xs} />
+        Commands
+      </span>
+    {:else if isContextShown}
+      <span
+        class="flex items-center gap-1 shrink-0 ml-4 -mr-2 pl-2 pr-1 py-1 rounded-md bg-bgs2 text-b3 text-fgs2"
+        data-testid="super-bar-context-pill"
+      >
+        This {contextLabel.toLowerCase()}
+        <button
+          type="button"
+          class="flex items-center justify-center w-5 h-5 rounded hover:bg-bgs3"
+          aria-label="Remove context"
+          onclick={() => {
+            isContextDismissed = true;
+            inputRef?.focus();
+          }}
+        >
+          <Icon icon="cross" size={Size.xs} />
+        </button>
+      </span>
+    {/if}
     <input
       data-testid="command-bar-input"
       bind:this={inputRef}
@@ -226,12 +283,7 @@
     {#if !$view.isConstrainedWidth && $context.embed !== Embed.HANDSET}
       <div class="mr-4">
         <div
-          class={cn(
-            "px-2 flex justify-center items-center gap-2 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit",
-            {
-              "bg-bgs2": !(isFullPageContext && !isFocusing)
-            }
-          )}
+          class="px-2 flex justify-center items-center gap-2 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit bg-bgs2"
         >
           {#if value && !isPerformingSearchAction && selectedKind === "result"}
             <b>Enter</b> to open,
@@ -239,18 +291,6 @@
             > to open beside
           {:else if value}
             Press <b>Enter</b> to run
-          {:else if isFullPageContext && !isFocusing}
-            <!-- {resolveShortcutText({
-              key: "Space",
-              os: $context.os
-            })} -->
-            <ShortcutText
-              shortcut={Action.CMD}
-              parentBgIndex={1}
-              isAlwaysShown={true}
-            />
-          {:else if isFullPageContext && isFocusing}
-            Press <b>Esc</b> to close
           {:else}
             Super bar
           {/if}
@@ -271,10 +311,12 @@
       <!-- {:else}
         <EmptyStatusView size={Size.sm} subText="start typing to search..." />
       {/if} -->
-    {:else if !isFullPageContext || (isFullPageContext && isFocusing)}
+    {:else}
       <CmdResults
         search={value}
         {scope}
+        {isContextShown}
+        isCommandsOnly={isCommandsMode}
         bind:this={resultsRef}
         bind:selectedKind
         {onSearchAction}
@@ -286,7 +328,7 @@
     <div class="flex w-full justify-center py-2 pb-8">
       <Button label="Close" style={ButtonStyle.PLAIN} onclick={close} />
     </div>
-  {:else if !isFullPageContext}
+  {:else}
     <div
       class={cn(
         "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4 rounded-b-md"
