@@ -327,7 +327,7 @@ export const helpCommands = {
   troubleshoot: {
     action: "troubleshoot",
     label: "Troubleshoot",
-    icon: "adjustments-horizontal",
+    icon: "lucide:activity",
     type: ActionType.MODAL,
     component: Troubleshoot,
     modalParams: {
