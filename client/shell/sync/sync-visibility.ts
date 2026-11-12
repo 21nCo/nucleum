@@ -56,6 +56,8 @@ export function delayedSyncVisibility(
     return () => {
       unsubscribe();
       clearTimers();
+      // The next subscriber starts hidden, so it must not read a stale `true`.
+      set(false);
     };
   });
 }

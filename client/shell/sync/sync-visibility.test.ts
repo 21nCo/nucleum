@@ -84,4 +84,22 @@ describe("delayedSyncVisibility", () => {
     expect(get(visible)).toBe(true);
     stop();
   });
+
+  it("resets to hidden when the last subscriber leaves while visible", () => {
+    const { syncing, visible, stop } = setup();
+    syncing.set(true);
+    vi.advanceTimersByTime(800);
+    syncing.set(false);
+    expect(get(visible)).toBe(true);
+    expect(vi.getTimerCount()).toBe(1);
+    stop();
+    expect(vi.getTimerCount()).toBe(0);
+
+    const values: boolean[] = [];
+    const stopAgain = visible.subscribe((value) => values.push(value));
+    vi.advanceTimersByTime(2000);
+    expect(values).toEqual([false]);
+    expect(get(visible)).toBe(false);
+    stopAgain();
+  });
 });
