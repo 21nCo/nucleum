@@ -1,7 +1,6 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import {
@@ -17,11 +16,6 @@
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-  import { Action } from "@nucleum/client/config/action.enum";
-  import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-  import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
 
@@ -62,17 +56,6 @@
       event
     });
     if (!shortcut) return;
-    const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      scope: UIStateScope.PRODUCT
-    });
-    if (
-      interactionMode === InteractionMode.AGENT &&
-      shortcut.action === Action.CMD
-    ) {
-      navigation.toggleSearchParam([AppSearchParam.TAB]);
-      event.preventDefault();
-      return;
-    }
     requireCommandHost().runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
