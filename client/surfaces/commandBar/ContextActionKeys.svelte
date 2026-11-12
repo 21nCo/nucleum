@@ -67,6 +67,10 @@
       });
       return;
     }
+    if (action.item.value === ResourceActionType.EDIT) {
+      void finishEditMode(entry.id, () => void run());
+      return;
+    }
     void run();
   }
 
