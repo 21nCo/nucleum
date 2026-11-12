@@ -142,7 +142,8 @@ const changedEnumContracts = new Map([
           NODE_VIEW: "nodeView",
           SEARCH: "search",
           RIGHT: "right",
-          MAX: "max"
+          MAX: "max",
+          MAX_OPENED: "maxOpened"
         }
       }
     ]

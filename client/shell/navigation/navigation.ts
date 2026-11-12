@@ -1,4 +1,5 @@
 import { isRecordId } from "@nucleum/datafn/resource.utils";
+import { isPageOpenedInFullScreen } from "@nucleum/shell/navigation/full-screen-origin";
 import { get, type Readable } from "svelte/store";
 
 import {
@@ -1012,6 +1013,7 @@ export const navigation = {
             `${AccessMode.PAGE}At`,
             AccessMode.BESIDE_PAGE,
             `${AccessMode.BESIDE_PAGE}At`,
+            AppSearchParam.MAX_OPENED,
             ...(isFullScreenOverlayOpen(url.searchParams)
               ? []
               : [AppSearchParam.MAX])
@@ -1063,6 +1065,7 @@ export const navigation = {
       removeSearchParam(`${mode}At`);
     });
     removeSearchParam(AppSearchParam.MAX);
+    removeSearchParam(AppSearchParam.MAX_OPENED);
     navigation.gotoPath(url.href);
 
     function removeSearchParam(param: string) {
@@ -1081,20 +1084,42 @@ export const navigation = {
     logger.log({ at: "toggleFullScreen", currentMode, resourceId });
     const searchParams = new URLSearchParams(window.location.search);
     if (isFullScreenPage(resourceId, searchParams)) {
-      navigation.exitFullScreen();
+      navigation.minimizeFullScreen();
       return;
     }
     if (searchParams.get(AccessMode.PAGE) === resourceId?.toString()) {
-      navigation.toggleSearchParam({ [AppSearchParam.MAX]: true });
+      navigation.toggleSearchParam({
+        [AppSearchParam.MAX]: true,
+        [AppSearchParam.MAX_OPENED]: null
+      });
       return;
     }
     navigation.openResource(resourceId, AccessMode.PAGE, {
       isFullScreen: true,
-      searchParams:
-        currentMode && currentMode !== AccessMode.PAGE
+      searchParams: {
+        [AppSearchParam.MAX_OPENED]: true,
+        ...(currentMode && currentMode !== AccessMode.PAGE
           ? { [currentMode]: null }
-          : undefined
+          : {})
+      }
     });
+  },
+  /**
+   * Minimizes a full screen page: a page opened straight into full screen
+   * closes and returns to where it was opened from, such as a space with its
+   * side nav; a page that was already open only leaves full screen.
+   */
+  minimizeFullScreen: () => {
+    if (
+      isPageOpenedInFullScreen(new URLSearchParams(window.location.search))
+    ) {
+      navigation.closeResource({
+        accessMode: AccessMode.PAGE,
+        isHistoryBack: true
+      });
+      return;
+    }
+    navigation.exitFullScreen();
   },
   /**
    * Turns full screen off without closing the page. Over a full screen
@@ -1105,7 +1130,10 @@ export const navigation = {
       fullScreen.hide();
       return;
     }
-    navigation.toggleSearchParam([AppSearchParam.MAX]);
+    navigation.toggleSearchParam([
+      AppSearchParam.MAX,
+      AppSearchParam.MAX_OPENED
+    ]);
   },
   setCurrentPath: (path: string) => {
     appStore.update((n: IAppStore) => {

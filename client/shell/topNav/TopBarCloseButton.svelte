@@ -8,11 +8,14 @@
 
   let {
     label = "Close",
+    icon = "cross",
     menuColumn = undefined,
     onclick
   }: {
     /** Accessible name and tooltip of the button. */
     label?: string;
+    /** Icon of the button, such as a minimize icon over a full screen page. */
+    icon?: string;
     /** App menu column the button lines up with, if that column is shown. */
     menuColumn?: "labels" | "icons";
     onclick: () => void;
@@ -36,5 +39,5 @@
   use:tooltip={{ text: label }}
   {onclick}
 >
-  <Icon icon="cross" size={Size.md} />
+  <Icon {icon} size={Size.md} />
 </button>
