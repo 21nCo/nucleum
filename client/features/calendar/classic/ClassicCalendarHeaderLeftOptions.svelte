@@ -9,7 +9,11 @@
   import view from "@21n/ui/environment/view.store";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import Button from "@21n/ui/elements/button/Button.svelte";
-  import { isPlainPageKey } from "@nucleum/shell/shortcuts/page-keys";
+  import {
+    isKeyTargetPane,
+    isPlainPageKey
+  } from "@nucleum/shell/shortcuts/page-keys";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
   import {
     CALENDAR_HEATMAP_SCALE,
@@ -78,8 +82,11 @@
     .filter(Boolean);
 
   /** D, W, M, Y and E pick the scale whose switcher shows that letter. */
+  const keyPane = getContextZonePane();
+  let rootRef = $state<HTMLDivElement | undefined>();
+
   function onScaleKey(event: KeyboardEvent) {
-    if (!isPlainPageKey(event)) return;
+    if (!isPlainPageKey(event) || !isKeyTargetPane(keyPane, rootRef)) return;
     const letter = `text:${event.key.toUpperCase()}`;
     const option = switchOptions.find((item) => item?.icon === letter);
     if (!option) return;
@@ -101,7 +108,7 @@
 
 <svelte:window onkeydown={onScaleKey} />
 
-<div class="flex items-center gap-2">
+<div bind:this={rootRef} class="flex items-center gap-2">
   <div>
     {#if $view.isConstrainedWidth}
       <DropDown

@@ -50,9 +50,9 @@
   } = $props();
 
   const keyedMenuResolver = $derived(
-    contextMenuResolver
+    contextMenuResolver && isContextZoneAccessMode(accessMode)
       ? () => withResourceActionKeys(contextMenuResolver?.() ?? [])
-      : undefined
+      : contextMenuResolver
   );
   const isContextZoneHosted = contextZone.isHosted;
   const isInContextZone = $derived(

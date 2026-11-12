@@ -30,6 +30,7 @@
     CHORD_TIMEOUT_MS,
     resolveChordSpaceIndex
   } from "@nucleum/shell/shortcuts/chord-keys";
+  import { hasOpenPopover } from "@nucleum/shell/shortcuts/page-keys";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -106,7 +107,8 @@
   /**
    * Runs the second key of a chord such as G then C, in the capture phase so
    * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
-   * pinned space in that app menu position. Any other key ends the chord.
+   * pinned space in that app menu position. Any other key ends the chord and
+   * is consumed, so it does not also run a page's single-key action.
    */
   function runChord(event: KeyboardEvent) {
     if (["Shift", "Meta", "Control", "Alt"].includes(event.key)) return;
@@ -120,21 +122,12 @@
       event.preventDefault();
       return;
     }
+    event.stopPropagation();
+    event.preventDefault();
     const { shortcut } = keyboardShortcuts.resolveShortcut(event, prefix);
     if (!shortcut || !requireCommandHost().resolveAction(shortcut.action))
       return;
     requireCommandHost().runAction(shortcut.action);
-    event.stopPropagation();
-    event.preventDefault();
-  }
-
-  function hasOpenPopover() {
-    return Array.from(document.querySelectorAll(".popover")).some(
-      (element) =>
-        !element.classList.contains("pointer-events-none") &&
-        element.getClientRects().length > 0 &&
-        getComputedStyle(element).visibility !== "hidden"
-    );
   }
 
   function isFormField(target: EventTarget | null) {

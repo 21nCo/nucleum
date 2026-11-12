@@ -33,7 +33,11 @@
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
-  import { isPlainPageKey } from "@nucleum/shell/shortcuts/page-keys";
+  import {
+    isKeyTargetPane,
+    isPlainPageKey
+  } from "@nucleum/shell/shortcuts/page-keys";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     scale,
@@ -87,8 +91,11 @@
    * T shows the timeline and O the overview, or notes where the product has
    * no overview, when the day column offers them as panels.
    */
+  const keyPane = getContextZonePane();
+  let rootRef = $state<HTMLDivElement | undefined>();
+
   function onPanelKey(event: KeyboardEvent) {
-    if (!isPlainPageKey(event)) return;
+    if (!isPlainPageKey(event) || !isKeyTargetPane(keyPane, rootRef)) return;
     const key = event.key.toLowerCase();
     const values = panels.map((panel) => panel.value);
     const target =
@@ -131,6 +138,7 @@
 <svelte:window onkeydown={onPanelKey} />
 
 <div
+  bind:this={rootRef}
   class="flex flex-col h-full w-full"
   id="mdcontainer-{mdId}"
   use:resizeListener={(e) => {

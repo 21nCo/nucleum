@@ -12,7 +12,10 @@
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
   import { ButtonVariant } from "@21n/ui/elements/button/button.type";
-  import { isPlainPageKey } from "@nucleum/shell/shortcuts/page-keys";
+  import {
+    isKeyTargetPane,
+    isPlainPageKey
+  } from "@nucleum/shell/shortcuts/page-keys";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -25,7 +28,7 @@
   function onKeydown(event: KeyboardEvent) {
     if ($context.embed === Embed.HANDSET || !isPlainPageKey(event)) return;
     const entry = get(contextActions.active);
-    if (!entry) return;
+    if (!entry || !isKeyTargetPane(entry.pane)) return;
     let menu;
     try {
       menu = entry.resolve();
