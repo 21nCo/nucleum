@@ -10,7 +10,6 @@
     datafnRuntime,
     refreshNucleumDatafnStatus
   } from "@nucleum/datafn/datafn.store";
-  import context from "@nucleum/client/runtime/context.store";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -27,7 +26,10 @@
   import { resolveLegacyImportableRecordCount } from "@nucleum/persistence/legacy-backup/summary";
   import type { LegacyLocalDataSummary } from "@nucleum/persistence/legacy-backup/types";
   import { onMount } from "svelte";
-  import { showInfoToast } from "./data-settings-feedback";
+  import {
+    runWithStatusToast,
+    showInfoToast
+  } from "./data-settings-feedback";
 
   let isBackupInProgress = $state(false);
   let isRestoreInProgress = $state(false);
@@ -47,50 +49,59 @@
   });
 
   async function handleBackup() {
-    isBackupInProgress = true;
-    try {
-      if (!$datafnRuntime?.storage) {
-        showInfoToast("Local backup is not available in cloud direct mode");
-        return;
-      }
-      const data = await datafn.exportData();
-      const product = $appStore.product;
-      const fileName = `${product}-backup-${parseAndFormatDate(new Date())}.json`;
-      const blob = new Blob([stringify(data, { isPreventReplacer: true })], {
-        type: "application/json"
-      });
-      const isDelivered = await fileStore.downloadFromBlob(blob, {
-        fileName: fileName,
-        fileNameForEmbed: `${product}_backup`,
-        contentType: "application/json",
-        isHandleEmbedCase: true
-      });
-      if (!isDelivered) throw new Error("Backup delivery failed");
-      if ($context.isEmbed) {
-        toasts.success("Backup file downloaded successfully");
-        return;
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      isBackupInProgress = false;
+    if (!$datafnRuntime?.storage) {
+      showInfoToast("Local backup is not available in cloud direct mode");
+      return;
     }
+    isBackupInProgress = true;
+    const product = $appStore.product;
+    const fileName = `${product}-backup-${parseAndFormatDate(new Date())}.json`;
+    await runWithStatusToast(
+      "datafn-backup",
+      {
+        progress: "Preparing backup...",
+        success: `Backup downloaded as **${fileName}**`,
+        failure: "Unable to create backup"
+      },
+      async () => {
+        const data = await datafn.exportData();
+        const blob = new Blob([stringify(data, { isPreventReplacer: true })], {
+          type: "application/json"
+        });
+        const isDelivered = await fileStore.downloadFromBlob(blob, {
+          fileName: fileName,
+          fileNameForEmbed: `${product}_backup`,
+          contentType: "application/json",
+          isHandleEmbedCase: true
+        });
+        if (!isDelivered) throw new Error("Backup delivery failed");
+      },
+      (error) => logger.error({ at: "DataSettings.handleBackup", error })
+    );
+    isBackupInProgress = false;
   }
-  async function handleDrop(
-    all: File[],
-    valid: File[],
-    errors: { file: File; type: string }[]
-  ) {
-    console.log("restore", all, valid, errors);
+  async function handleDrop(all: File[]) {
+    if (!$datafnRuntime?.storage) {
+      showInfoToast("Restore is not available in cloud direct mode");
+      return;
+    }
+    const file = all[0];
+    if (!file) {
+      toasts.error("No backup file was selected");
+      return;
+    }
     isRestoreInProgress = true;
-    try {
-      if (!$datafnRuntime?.storage) {
-        showInfoToast("Restore is not available in cloud direct mode");
-        return;
-      }
-      const data = await all[0].text();
-      if (data) {
-        if (!$datafnRuntime) return;
+    await runWithStatusToast(
+      "datafn-restore",
+      {
+        progress: `Restoring data from **${file.name}**...`,
+        success: "Data restored successfully",
+        failure: "Unable to restore data"
+      },
+      async () => {
+        const data = await file.text();
+        if (!data) throw new Error("Backup file is empty");
+        if (!$datafnRuntime) throw new Error("DataFn is not ready");
         const result = (await datafn.importData(parse(data), {
           triggerCloneUp: $datafnRuntime.mode === "sync"
         })) as DatafnImportResult;
@@ -104,14 +115,10 @@
           );
         }
         await refreshNucleumDatafnStatus();
-        toasts.success("Data restored successfully");
-      }
-    } catch (e) {
-      logger.error({ at: "DataSettings.handleDrop", error: e });
-      toasts.error("Unable to restore data");
-    } finally {
-      isRestoreInProgress = false;
-    }
+      },
+      (error) => logger.error({ at: "DataSettings.handleDrop", error })
+    );
+    isRestoreInProgress = false;
   }
 
   async function refreshLegacyLocalDataSummary() {

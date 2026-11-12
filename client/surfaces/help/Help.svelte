@@ -17,7 +17,7 @@
   import account from "@nucleum/client/runtime/account/account.store";
   import { PlanType } from "@nucleum/schema/account/subscription";
   const ComponentResolver = requireActionRenderer();
-  let pageAction: IAction | null = null;
+  let pageAction = $state<IAction | null>(null);
   let updatedDate: string | undefined = resolveUpdatedDate();
   let config = $derived($appStore?.appData?.help);
   async function runAction(slug: string) {
@@ -86,6 +86,16 @@
                     width="w-40"
                     onclick={() => {
                       runAction("chat");
+                    }}
+                  />
+                {/if}
+                {#if sectionIndex === 0}
+                  <SettingThumbnail
+                    orientation={Orientation.Vertical}
+                    action={"troubleshoot"}
+                    width="w-40"
+                    onclick={() => {
+                      runAction("troubleshoot");
                     }}
                   />
                 {/if}

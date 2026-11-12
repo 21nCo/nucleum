@@ -8,6 +8,7 @@ import { Orientation } from "@21n/ui/elements/direction.enum";
 import { intercomId } from "@nucleum/surfaces/help/support/intercom.config";
 import Help from "@nucleum/surfaces/help/Help.svelte";
 import DebugPage from "@nucleum/surfaces/help/diagnostics/DiagnosticsPage.svelte";
+import Troubleshoot from "@nucleum/surfaces/help/diagnostics/Troubleshoot.svelte";
 import modalEvent from "@nucleum/shell/overlays/modal.store";
 import { Action } from "@nucleum/client/config/action.enum";
 import BookACall from "@nucleum/surfaces/help/support/BookACall.svelte";
@@ -326,6 +327,21 @@ export const helpCommands = {
   troubleshoot: {
     action: "troubleshoot",
     label: "Troubleshoot",
+    icon: "adjustments-horizontal",
+    type: ActionType.MODAL,
+    component: Troubleshoot,
+    modalParams: {
+      title: "Troubleshoot",
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Horizontal
+      }
+    }
+  },
+  diagnostics: {
+    action: "diagnostics",
+    label: "Diagnostics",
+    icon: "data",
     type: ActionType.MODAL,
     component: DebugPage,
     modalParams: {
