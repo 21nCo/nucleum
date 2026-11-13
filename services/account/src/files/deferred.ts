@@ -22,6 +22,11 @@ export interface FileDeferredWork {
   settled(): Promise<void>;
 }
 
+/**
+ * Creates the FileFn `runtime.defer` hook for one request. Deferred work is
+ * tracked until it settles and, when `ctx` is given, handed to
+ * `ctx.waitUntil` so the Worker stays alive for it.
+ */
 export function createFileDeferredWork(
   ctx?: WaitUntilContext
 ): FileDeferredWork {

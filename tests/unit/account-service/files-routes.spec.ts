@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createMemoryRuntimeStores,
   memoryAdapter
@@ -123,6 +123,7 @@ interface TestApp {
   services: AccountServices;
   authDatabase: Adapter;
   r2: ReturnType<typeof createFakeR2>;
+  logs: ReturnType<typeof createCapturedLogger>;
 }
 
 function createTestApp(
@@ -131,12 +132,13 @@ function createTestApp(
   const regionId = input.regionId ?? "insouth";
   const r2 = createFakeR2();
   const authDatabase = memoryAdapter({ debug: false });
+  const logs = createCapturedLogger("filefn-routes-test");
   const services = buildAccountServices({
     infra: {
       database: authDatabase,
       syncDatabase: memoryAdapter({ debug: false }),
       stores: createMemoryRuntimeStores(),
-      logger: createCapturedLogger("filefn-routes-test").logger,
+      logger: logs.logger,
       files: {
         database: memoryAdapter({ debug: false }),
         storage: (resolvedRegionId) =>
@@ -162,7 +164,7 @@ function createTestApp(
   });
   const app = new Hono();
   registerCoreRoutes(app, services);
-  return { app, services, authDatabase, r2 };
+  return { app, services, authDatabase, r2, logs };
 }
 
 interface BearerUser {
@@ -276,6 +278,11 @@ describe("account service /files", () => {
 
   beforeEach(() => {
     testApp = createTestApp();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 
   it("returns 401 without a session", async () => {
@@ -560,7 +567,6 @@ describe("account service /files", () => {
     const downloads: Array<[string, Record<string, string>]> = [
       [`/files/proxy/files/${fileId}/download`, owner.headers],
       [`/files/proxy/files/${fileId}/versions/${versionId}/download`, owner.headers],
-      // A share link is opened by someone else, possibly signed in on this origin.
       [`/files/proxy/share-links/${token}/download`, {}]
     ];
     for (const [path, headers] of downloads) {
@@ -579,6 +585,64 @@ describe("account service /files", () => {
     expect(metadata.status).toBe(200);
     expect(metadata.response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(metadata.response.headers.get("content-disposition")).toBeNull();
+  });
+
+  it("keeps share tokens out of request logs and debug-sink payloads", async () => {
+    const sinkBodies: string[] = [];
+    vi.stubEnv("DEBUG_SINK_URL", "https://debug-sink.test");
+    vi.stubEnv("ACCOUNT_LATENCY_DEBUG", "true");
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+      sinkBodies.push(String(init?.body ?? ""));
+      expect(String(input)).toBe("https://debug-sink.test/v1/logs");
+      return new Response(null, { status: 204 });
+    });
+
+    const owner = await signUpBearer(testApp.app);
+    const { fileId } = await uploadFile(testApp, owner);
+    const share = await request(testApp.app, `/files/${fileId}/share-links`, {
+      method: "POST",
+      headers: owner.headers,
+      body: {}
+    });
+    expect(share.status).toBe(201);
+    const token: string = share.body.data.token;
+    testApp.logs.clear();
+    sinkBodies.length = 0;
+
+    const sharePaths = [
+      `/files/share-links/${token}/download`,
+      `/files/proxy/share-links/${token}/download`
+    ];
+    for (const path of sharePaths) {
+      expect((await request(testApp.app, path)).status, path).toBe(200);
+    }
+    const revoke = await request(testApp.app, `/files/${fileId}/share-links/${token}`, {
+      method: "DELETE",
+      headers: owner.headers
+    });
+    expect(revoke.status).toBe(200);
+    for (const path of sharePaths) {
+      const revoked = await request(testApp.app, path);
+      expect(revoked.status, path).toBeGreaterThanOrEqual(400);
+      expect(revoked.status, path).toBeLessThan(500);
+    }
+
+    const loggedPaths = testApp.logs
+      .events()
+      .filter((event) => event.msg === "account request")
+      .map((event) => event.ctx?.path);
+    expect(loggedPaths).toEqual(
+      expect.arrayContaining([
+        "/files/share-links/:token/download",
+        "/files/proxy/share-links/:token/download",
+        `/files/${fileId}/share-links/:token`
+      ])
+    );
+    expect(sinkBodies.length).toBeGreaterThanOrEqual(5);
+    expect(JSON.stringify(testApp.logs.events())).not.toContain(token);
+    for (const body of sinkBodies) {
+      expect(body).not.toContain(token);
+    }
   });
 
   it("returns 404 for paths FileFn does not serve and leaves other prefixes alone", async () => {

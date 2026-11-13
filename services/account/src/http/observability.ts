@@ -11,6 +11,7 @@ import {
 import type { Logger } from "@logfn/core";
 import type { AccountDebugSinkLog } from "../debug-sink.js";
 import type { AccountObservationEvent } from "../observability/events.js";
+import { redactFileRequestPath } from "../files/routes.js";
 
 type AccountRequestDebugLog = Required<
   Pick<AccountDebugSinkLog, "level" | "route" | "message" | "payload" | "tags">
@@ -53,7 +54,7 @@ export function createAccountRequestObservationMiddleware(
       },
       work: next,
       onComplete: async ({ request, snapshot }) => {
-        const path = new URL(request.url).pathname;
+        const path = redactFileRequestPath(new URL(request.url).pathname);
         const dbGroup = readObservationGroup(snapshot, "db");
         const cacheGroup = readObservationGroup(snapshot, "cache");
         const lookupGroup = readObservationGroup(snapshot, "lookup");
@@ -125,6 +126,10 @@ function redactLatencyDetails(
 ): RequestObservationSnapshot {
   return {
     ...latency,
+    path:
+      typeof latency.path === "string"
+        ? redactFileRequestPath(latency.path)
+        : latency.path,
     totalDurationMs: round(latency.totalDurationMs),
     groups: Object.fromEntries(
       Object.entries(latency.groups).map(([kind, group]) => [

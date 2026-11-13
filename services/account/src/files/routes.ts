@@ -1,9 +1,14 @@
 import type { FileFn } from "@filefn/server";
 import type { Hono } from "hono";
+import { AuthFnError } from "authfn";
+import { jsonError } from "authfn/http/envelopes";
 import { ACCOUNT_FILES_BASE_PATH } from "./server.js";
 
+/** Inputs for mounting FileFn on the account app. */
 export interface RegisterAccountFileRoutesInput {
+  /** Account Hono app to register the `/files` routes on. */
   app: Hono;
+  /** Returns the region's FileFn, or null when file storage is not configured. */
   getFileFn: () => Promise<FileFn | null>;
 }
 
@@ -21,7 +26,9 @@ export const FILE_RESPONSE_ISOLATION_HEADERS: Readonly<Record<string, string>> =
 
 /**
  * Registers FileFn under `/files`. Requests return 503 when the region has no
- * file storage configured and 404 for paths FileFn does not serve. Every
+ * file storage configured and 404 for paths FileFn does not serve. An AuthFn
+ * error raised while resolving the session is answered with its AuthFn status,
+ * code and details, as the AuthFn routes answer it. Every
  * response carries the isolation headers, and file bytes (the proxy download
  * routes and any non-JSON response) are sent as attachments.
  */
@@ -42,7 +49,15 @@ export function registerAccountFileRoutes(
         )
       );
     }
-    const response = await fileFn.router.handle(request);
+    let response: Response | null;
+    try {
+      response = await fileFn.router.handle(request);
+    } catch (error) {
+      if (!(error instanceof AuthFnError)) {
+        throw error;
+      }
+      response = jsonError(request, error);
+    }
     return isolateFileResponse(
       request,
       response ?? fileErrorResponse(404, "FILEFN_ROUTE_NOT_FOUND", "Not found")
@@ -71,6 +86,37 @@ export function isolateFileResponse(
     );
   }
   return isolated;
+}
+
+const SHARE_LINKS_SEGMENT = "share-links";
+
+/**
+ * Returns a `/files` request path that is safe to log: the segment after
+ * `share-links`, which is the anonymous share token on the share download and
+ * revoke routes, becomes `:token`. Other paths are returned unchanged.
+ */
+export function redactFileRequestPath(pathname: string): string {
+  if (
+    pathname !== ACCOUNT_FILES_BASE_PATH &&
+    !pathname.startsWith(`${ACCOUNT_FILES_BASE_PATH}/`)
+  ) {
+    return pathname;
+  }
+  const segments = pathname.split("/");
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    if (isShareLinksSegment(segments[index]) && segments[index + 1]) {
+      segments[index + 1] = ":token";
+    }
+  }
+  return segments.join("/");
+}
+
+function isShareLinksSegment(segment: string): boolean {
+  try {
+    return decodeURIComponent(segment).toLowerCase() === SHARE_LINKS_SEGMENT;
+  } catch {
+    return false;
+  }
 }
 
 function carriesFileBytes(request: Request, response: Response): boolean {

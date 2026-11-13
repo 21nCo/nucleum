@@ -119,8 +119,6 @@ export default {
     try {
       return await app.fetch(request, env);
     } finally {
-      // FileFn background work handed to ctx.waitUntil may still use the
-      // databases, so they close only after it settles.
       await closeAfterDeferredWork({
         ctx,
         deferred: fileDeferredWork,

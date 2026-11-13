@@ -1,10 +1,14 @@
+import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
+import { memoryAdapter } from "@superfunctions/db/adapters/memory";
 import {
   AuthFnCsrfInvalidError,
+  AuthFnInvalidCredentialsError,
   AuthFnPlacementDirectoryUnavailableError,
   AuthFnRegionMismatchError,
   AuthFnRoutingCellUnavailableError,
   AuthFnSessionExpiredError,
+  AuthFnSessionRevokedError,
   AuthFnUnauthenticatedError
 } from "authfn";
 import {
@@ -12,9 +16,15 @@ import {
   createFileDeferredWork
 } from "../../../services/account/src/files/deferred";
 import {
+  redactFileRequestPath,
+  registerAccountFileRoutes
+} from "../../../services/account/src/files/routes";
+import {
+  createAccountFileFn,
   createAccountFileSessionResolver,
   type AccountFileAuth
 } from "../../../services/account/src/files/server";
+import { createAccountFileStorage } from "../../../services/account/src/files/storage";
 
 function deferredPromise() {
   let resolve!: () => void;
@@ -38,10 +48,8 @@ describe("account FileFn deferred work", () => {
 
     await closeAfterDeferredWork({ ctx, deferred, close, onError: vi.fn() });
     expect(close).not.toHaveBeenCalled();
-    // The tracked task plus the close are both handed to waitUntil.
     expect(waitUntil).toHaveLength(2);
 
-    // Deferred work hands in more work before it settles (event fan-out).
     deferred.runtime.defer!(second.promise);
     first.resolve();
     await Promise.resolve();
@@ -84,12 +92,34 @@ describe("account FileFn deferred work", () => {
 });
 
 describe("account FileFn session resolver", () => {
-  function resolverThrowing(error: unknown) {
-    const auth = {
+  function authThrowing(error: unknown): AccountFileAuth {
+    return {
       provider: { authenticate: vi.fn(async () => Promise.reject(error)) },
       authorizeMutation: vi.fn(async () => Promise.reject(error))
     } as unknown as AccountFileAuth;
-    return createAccountFileSessionResolver(auth);
+  }
+  function resolverThrowing(error: unknown) {
+    return createAccountFileSessionResolver(authThrowing(error));
+  }
+  function filesAppThrowing(error: unknown): Hono {
+    const app = new Hono();
+    const storage = createAccountFileStorage(
+      {
+        FILEFN_R2_ACCOUNT_ID: "test-account",
+        FILEFN_R2_ACCESS_KEY_ID: "test-access-key",
+        FILEFN_R2_SECRET_ACCESS_KEY: "test-secret-key",
+        FILEFN_R2_BUCKET: "nucleus-files-test-{region}"
+      },
+      "insouth",
+      { endpoint: "https://r2.test", fetch: vi.fn() }
+    );
+    const fileFn = createAccountFileFn({
+      auth: authThrowing(error),
+      database: memoryAdapter({ debug: false }),
+      storage: storage!
+    });
+    registerAccountFileRoutes({ app, getFileFn: async () => fileFn });
+    return app;
   }
   const get = () => new Request("http://account.test/files");
 
@@ -97,14 +127,16 @@ describe("account FileFn session resolver", () => {
     for (const error of [
       new AuthFnUnauthenticatedError(),
       new AuthFnSessionExpiredError(),
-      new AuthFnRegionMismatchError()
+      new AuthFnSessionRevokedError(),
+      new AuthFnInvalidCredentialsError()
     ]) {
       await expect(resolverThrowing(error)(get()), error.code).resolves.toBeNull();
     }
   });
 
-  it("lets AuthFn infrastructure failures propagate instead of answering 401", async () => {
+  it("lets region mismatch and AuthFn infrastructure failures propagate instead of answering 401", async () => {
     for (const error of [
+      new AuthFnRegionMismatchError(undefined, { authority: "https://account-euwest.test" }),
       new AuthFnPlacementDirectoryUnavailableError(),
       new AuthFnRoutingCellUnavailableError()
     ]) {
@@ -112,10 +144,72 @@ describe("account FileFn session resolver", () => {
     }
   });
 
+  it("answers /files with the AuthFn status, code and details of a propagated AuthFn error", async () => {
+    const mismatch = await filesAppThrowing(
+      new AuthFnRegionMismatchError(undefined, {
+        authority: "https://account-euwest.test",
+        redirectTo: "https://account-euwest.test/files"
+      })
+    ).request("http://account.test/files");
+    expect(mismatch.status).toBe(409);
+    expect(mismatch.headers.get("x-content-type-options")).toBe("nosniff");
+    const body = await mismatch.json();
+    expect(body.error).toMatchObject({
+      code: "AUTHFN_REGION_MISMATCH",
+      details: {
+        authority: "https://account-euwest.test",
+        redirectTo: "https://account-euwest.test/files"
+      }
+    });
+
+    const unavailable = await filesAppThrowing(
+      new AuthFnPlacementDirectoryUnavailableError()
+    ).request("http://account.test/files");
+    expect(unavailable.status).toBe(503);
+    expect((await unavailable.json()).error).toMatchObject({
+      code: "AUTHFN_PLACEMENT_DIRECTORY_UNAVAILABLE",
+      retryable: true
+    });
+
+    const signedOut = await filesAppThrowing(new AuthFnSessionExpiredError()).request(
+      "http://account.test/files"
+    );
+    expect(signedOut.status).toBe(401);
+    expect((await signedOut.json()).error.code).toBe("FILEFN_AUTH_REQUIRED");
+  });
+
   it("maps a CSRF failure on a write to 403", async () => {
     const resolve = resolverThrowing(new AuthFnCsrfInvalidError());
     await expect(
       resolve(new Request("http://account.test/files/upload/init", { method: "POST" }))
     ).rejects.toMatchObject({ code: "FILEFN_FORBIDDEN" });
+  });
+});
+
+describe("account FileFn request path redaction", () => {
+  it("replaces share tokens with :token on share download and revoke paths", () => {
+    expect(redactFileRequestPath("/files/share-links/secret-token/download")).toBe(
+      "/files/share-links/:token/download"
+    );
+    expect(redactFileRequestPath("/files/proxy/share-links/secret-token/download")).toBe(
+      "/files/proxy/share-links/:token/download"
+    );
+    expect(redactFileRequestPath("/files/file-1/share-links/secret-token")).toBe(
+      "/files/file-1/share-links/:token"
+    );
+    expect(redactFileRequestPath("/files/proxy/share%2Dlinks/secret-token/download/")).toBe(
+      "/files/proxy/share%2Dlinks/:token/download/"
+    );
+  });
+
+  it("leaves other paths unchanged", () => {
+    for (const path of [
+      "/files/file-1/share-links",
+      "/files/file-1/download",
+      "/datafn/share-links/not-a-file-token",
+      "/auth/session"
+    ]) {
+      expect(redactFileRequestPath(path)).toBe(path);
+    }
   });
 });
