@@ -1,0 +1,31 @@
+.github/workflows/account-service-deploy.yml
+  s_ce12272281eb3b::t_fac97190c7e21d 137-138,141-145
+.github/workflows/debug-sink-deploy.yml
+  s_ce12272281eb3b::t_02b246eba04182 45
+apps/e2e-playwright/scripts/account-base-url.ts
+  s_ce12272281eb3b::t_de08c1ba097f97 2,14
+services/account/README.md
+  s_ce12272281eb3b::t_b5a732eec2add9 219-225,298-303
+services/account/config/environments.json
+  s_ce12272281eb3b::t_d64393a1987961 73,117
+services/account/scripts/dev-multiregion.mjs
+  s_ce12272281eb3b::t_4404551d3a2c87 35,53,68-92
+services/frontend/scripts/cloudflare-sync.mjs
+  s_ce12272281eb3b::t_49bb8aca5c81cc 37-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d0a3118fbd995f5f7d66b34f53188dc8903c27a6",
+  "prompts": {},
+  "sessions": {
+    "s_ce12272281eb3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d2376f8-4af3-4920-96da-dff6a042ab4c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

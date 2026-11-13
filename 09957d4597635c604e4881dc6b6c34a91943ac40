@@ -1,0 +1,19 @@
+.circleci/config.yml
+  s_f7c485e0aebd05::t_d60fd5d20c3f82 16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "09957d4597635c604e4881dc6b6c34a91943ac40",
+  "prompts": {},
+  "sessions": {
+    "s_f7c485e0aebd05": {
+      "agent_id": {
+        "tool": "amp",
+        "id": "TU-034PFjbTi0PSo5MPzfpczO",
+        "model": "unknown"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

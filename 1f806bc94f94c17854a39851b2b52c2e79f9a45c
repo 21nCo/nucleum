@@ -1,0 +1,33 @@
+services/account/README.md
+  s_ce12272281eb3b::t_ad697044895c1c 223-227
+services/account/scripts/deploy.mjs
+  s_ce12272281eb3b::t_ddc454ab7f112f 5,31-36
+services/account/scripts/dev-multiregion.mjs
+  s_ce12272281eb3b::t_ab21a6d3eaab41 5,35-39,57
+services/account/scripts/wrangler-config.mjs
+  s_ce12272281eb3b::t_eb53098332ad0d 405-435
+services/frontend/README.md
+  s_ce12272281eb3b::t_b277e336489b53 68-73
+services/frontend/config/environments.json
+  s_ce12272281eb3b::t_4aebbfd13ec482 87-90
+services/frontend/scripts/deploy.mjs
+  s_ce12272281eb3b::t_52298cc7c07ff2 15-16,33-37
+services/frontend/scripts/frontend-config.mjs
+  s_ce12272281eb3b::t_8a8074e7c466ec 240-270
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1f806bc94f94c17854a39851b2b52c2e79f9a45c",
+  "prompts": {},
+  "sessions": {
+    "s_ce12272281eb3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d2376f8-4af3-4920-96da-dff6a042ab4c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
