@@ -166,6 +166,12 @@
                   layoutContext === LayoutContext.THIN_WITH_LABEL,
                 "app-framed:bg-aps3":
                   layoutContext === LayoutContext.THIN_WITH_LABEL && isActive,
+                "app-framed:text-[rgb(var(--colors-onaps3))]":
+                  layoutContext === LayoutContext.THIN_WITH_LABEL && isActive,
+                "text-[rgb(var(--colors-onaps3))]":
+                  layoutContext === LayoutContext.THIN_WITH_LABEL &&
+                  isActive &&
+                  !isShowLabel,
                 "app-framed:group-hover/appmenu:bg-bgs3":
                   layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive
               })}

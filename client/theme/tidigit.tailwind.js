@@ -41,8 +41,6 @@ const mappedColorSchemes = colorSchemes.map((cs) => {
   };
 });
 
-// Frame palette tokens are emitted as the same `--colors-*` variables (RGB
-// triplets) the themer writes, without becoming Tailwind colours.
 const framePaletteVariables = Object.fromEntries(
   colorSchemes
     .filter((cs) => cs.hasFramePalette)

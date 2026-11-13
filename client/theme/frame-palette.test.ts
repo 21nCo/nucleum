@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import colorSchemes from "@21n/theme/colorschemes.json";
 import {
   FRAME_PALETTE_TOKENS,
+  resolveFramePaletteAttribute,
   splitFramePalette
 } from "@21n/theme/frame-palette.js";
 
@@ -11,6 +12,13 @@ import themeLayerSource from "../shell/layers/themeLayer/ThemeLayer.svelte?raw";
 const framedSchemes = colorSchemes.filter(
   (scheme) => (scheme as { hasFramePalette?: boolean }).hasFramePalette
 );
+
+function readRule(selector: string) {
+  const start = themeLayerSource.indexOf(`:global(${selector})`);
+  expect(start).toBeGreaterThan(-1);
+  const open = themeLayerSource.indexOf("{", start);
+  return themeLayerSource.slice(open + 1, themeLayerSource.indexOf("}", open));
+}
 
 describe("frame palette", () => {
   it("is used by the Graphite schemes", () => {
@@ -47,6 +55,38 @@ describe("frame palette", () => {
         )
       );
     expect(leaking).toEqual([]);
+  });
+});
+
+describe("frame palette remap", () => {
+  it("draws on the frame accent with fonaps3 inside the chrome", () => {
+    expect(readRule("[data-frame-palette] .app-chrome")).toMatch(
+      /--colors-onaps3:\s*var\(--colors-fonaps3\);/
+    );
+  });
+
+  it("unsets onaps3 inside content so it falls back to the content accent", () => {
+    expect(readRule("[data-frame-palette] .app-chrome .app-content")).toMatch(
+      /--colors-onaps3:\s*initial;/
+    );
+  });
+});
+
+describe("resolveFramePaletteAttribute", () => {
+  it("sets data-frame-palette only for a scheme with a frame palette", () => {
+    const attributes = colorSchemes.map((scheme) => [
+      scheme.tailwindSelector,
+      resolveFramePaletteAttribute(scheme)
+    ]);
+    expect(attributes.filter(([, value]) => value !== undefined)).toEqual([
+      ["cs_graphite_light", ""],
+      ["cs_graphite_dark", ""]
+    ]);
+  });
+
+  it("is absent without a colour scheme", () => {
+    expect(resolveFramePaletteAttribute(undefined)).toBeUndefined();
+    expect(resolveFramePaletteAttribute(null)).toBeUndefined();
   });
 });
 

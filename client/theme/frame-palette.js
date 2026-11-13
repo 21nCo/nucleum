@@ -5,7 +5,9 @@
  * content copy (`c*`) of each role below, plus `fonaps3`, the colour drawn on
  * the selected frame accent. ThemeLayer remaps the role variables to the frame
  * copies inside `.app-chrome` and back to the content copies inside
- * `.app-content`. The tokens are only read through those CSS variables.
+ * `.app-content`. The tokens are only read through those CSS variables:
+ * the Tailwind theme emits them as the same `--colors-*` RGB triplets the
+ * themer writes, without making them Tailwind colours.
  */
 export const FRAME_PALETTE_ROLES = [
   "bgs1",
@@ -57,4 +59,15 @@ export function splitFramePalette(colors) {
     }
   }
   return { colors: shared, framePalette };
+}
+
+/**
+ * Value of ThemeLayer's `data-frame-palette` attribute: present only for a
+ * scheme flagged `hasFramePalette`, so the frame remap applies to it alone.
+ *
+ * @param {{ hasFramePalette?: boolean } | null | undefined} colorScheme
+ * @returns {"" | undefined}
+ */
+export function resolveFramePaletteAttribute(colorScheme) {
+  return colorScheme?.hasFramePalette ? "" : undefined;
 }

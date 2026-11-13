@@ -7,6 +7,7 @@
   import "@21n/fonts/styles.css";
   import view from "@21n/ui/environment/view.store";
   import { AppSkin } from "@21n/theme/appearance.type";
+  import { resolveFramePaletteAttribute } from "@21n/theme/frame-palette.js";
   import {
     resolveAppStyle,
     resolveAppStyleTokens
@@ -278,7 +279,7 @@
     dark: $appearance?.colorScheme?.isDark
   })}
   data-app-style={appStyle}
-  data-frame-palette={$appearance?.colorScheme?.hasFramePalette ? "" : undefined}
+  data-frame-palette={resolveFramePaletteAttribute($appearance?.colorScheme)}
   style:--app-control-radius={appStyleTokens["--app-control-radius"]}
   style:--app-panel-radius={appStyleTokens["--app-panel-radius"]}
   style:--app-tab-radius={appStyleTokens["--app-tab-radius"]}
@@ -344,7 +345,6 @@
     --colors-aps1: var(--colors-caps1);
     --colors-aps2: var(--colors-caps2);
     --colors-aps3: var(--colors-caps3);
-    /* Unset so consumers fall back to the restored content accent. */
     --colors-onaps3: initial;
     color: rgba(var(--colors-fgs1), 1);
   }
