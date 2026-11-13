@@ -212,8 +212,8 @@ describe("sanitizeDiagnosticText", () => {
   });
 
   it("redacts a quoted secret value cut off before its closing quote", () => {
-    expect(sanitizeDiagnosticText('{"password": "half-a-secr')).toBe(
-      '{"password": "[redacted]"'
+    expect(sanitizeDiagnosticText('{"apiKey": "cut-off-val')).toBe(
+      '{"apiKey": "[redacted]"'
     );
   });
 

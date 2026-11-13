@@ -63,6 +63,39 @@ describe("resolveHelpSections", () => {
     expect(items[0]).toBe("troubleshoot");
   });
 
+  it.each([
+    [
+      "subscribers",
+      true,
+      ["troubleshoot", "chat"],
+      ["troubleshoot", "chat", "docs"]
+    ],
+    ["non-subscribers", false, ["troubleshoot"], ["troubleshoot", "docs"]]
+  ])(
+    "drops a later section holding only code-owned tiles for %s",
+    (_label, isChatAvailable, children, firstItems) => {
+      const config = [
+        { section: "main", children: ["docs"] },
+        { section: "Support", children },
+        { section: "Community", children: ["discord"] }
+      ];
+      expect(resolveHelpSections(config, isChatAvailable)).toEqual([
+        { heading: undefined, items: firstItems },
+        { heading: "Community", items: ["discord"] }
+      ]);
+    }
+  );
+
+  it("keeps the first section when it holds only code-owned tiles", () => {
+    const config = [
+      { section: "Support", children: ["troubleshoot", "chat"] },
+      { section: "More", children: [] }
+    ];
+    expect(resolveHelpSections(config, true)).toEqual([
+      { heading: "Support", items: ["troubleshoot", "chat"] }
+    ]);
+  });
+
   it("keeps a configured Chat entry for users without the chat tile", () => {
     const config = [{ section: "main", children: ["chat"] }];
     expect(resolveHelpSections(config, false)[0].items).toEqual([

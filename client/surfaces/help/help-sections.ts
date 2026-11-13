@@ -19,7 +19,8 @@ export const CHAT_ACTION = "chat";
  * renders first, followed by Chat for subscribers, whether the remote config
  * is absent, empty or starts with an inactive section. Code-owned tiles are
  * merged into the first active section and removed from configured children,
- * so none of them appear twice.
+ * so none of them appear twice. A later section left without items is dropped
+ * so its heading never renders over an empty row.
  */
 export function resolveHelpSections(
   config: HelpConfigSection[] | null | undefined,
@@ -42,6 +43,6 @@ export function resolveHelpSections(
   const [first, ...rest] = sections;
   return [
     { heading: first?.heading, items: [...codeOwned, ...(first?.items ?? [])] },
-    ...rest
+    ...rest.filter((section) => section.items.length > 0)
   ];
 }
