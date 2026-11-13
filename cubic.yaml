@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://cubic.dev/schema/cubic-repository-config.schema.json
+# Hosted cubic review settings. cubic bills per reviewed line, so this skips
+# test snapshots, generated output and lockfiles. Hand-written code, tests,
+# fixtures, docs, READMEs and changelogs stay reviewed.
+version: 1
+
+reviews:
+  ignore:
+    files:
+      # Test snapshots
+      - '**/*.snap'
+      # Generated output (the generators and their inputs stay reviewed)
+      - '**/dist/**'
+      - '**/generated/**'
+      - '**/*.generated.*'
+      # Lockfiles. Manifests stay reviewed. PRs driven by the 21n Linear loops
+      # get a local osv-scanner check of advisories a lockfile change adds
+      # (thyaravind/automations), before the PR opens and on every fix push.
+      # Other PRs get no advisory check before merge; GitHub Dependabot alerts
+      # report advisories on the default branch afterwards.
+      - 'pnpm-lock.yaml'
+      - '**/pnpm-lock.yaml'
+      - 'package-lock.json'
+      - '**/package-lock.json'
+      - 'yarn.lock'
+      - '**/yarn.lock'
+      - 'bun.lock'
+      - '**/bun.lock'
+      - 'bun.lockb'
+      - '**/bun.lockb'
+      - 'Cargo.lock'
+      - '**/Cargo.lock'
+      - 'composer.lock'
+      - '**/composer.lock'
+      - '**/Package.resolved'
+      # Wildcards skip hidden folders, so Xcode's .swiftpm copies are named explicitly
+      - '**/.swiftpm/**/Package.resolved'
+      - '.github/**/Package.resolved'
+      - '.github/**/pnpm-lock.yaml'
+      - '.github/**/package-lock.json'
+      - '.github/**/yarn.lock'
+      - '.github/**/bun.lock'
+      - '.github/**/bun.lockb'
+      - '.github/**/Cargo.lock'
+      - '.github/**/composer.lock'
