@@ -7,7 +7,11 @@ vi.mock("@nucleum/shared-state/app-context/app.store", async () => {
       product: "nucleum",
       env: "dev",
       version: "1.2.3",
-      build: 7
+      build: 7,
+      actions: [
+        { action: "notes", path: "notes", isSubPathOpen: true },
+        { action: "settings" }
+      ]
     })
   };
 });
@@ -58,12 +62,15 @@ vi.mock("@21n/ui/environment/view.store", async () => {
 });
 
 import {
+  DIAGNOSTIC_ERROR_SUMMARIES,
   buildDiagnosticReport,
   collectDiagnosticIdentifiers,
   collectDiagnosticSections,
   formatDiagnosticReport,
   resolveOrigin,
-  sanitizeDiagnosticText
+  sanitizeDiagnosticText,
+  summarizeDiagnosticError,
+  summarizeDiagnosticPath
 } from "./diagnostic-report";
 
 describe("formatDiagnosticReport", () => {
@@ -101,9 +108,8 @@ describe("collectDiagnosticSections", () => {
     expect(text).toContain("storage: 1.0 MB of 10.0 MB");
     expect(text).toContain("version: 1.2.3");
     expect(text).toContain("pendingChanges: 2");
-    expect(text).toContain(
-      'lastError: Failed to open IndexedDB "[redacted]" for [redacted]: boom'
-    );
+    expect(text).toContain("lastError: storage error");
+    expect(text).not.toContain("boom");
     expect(text).toContain("server: https://account-insouth.example.app");
     expect(text).toContain("colorScheme: colorscheme:clean_ember_light");
     expect(text).not.toContain("01JSECRETID");
@@ -119,11 +125,11 @@ describe("collectDiagnosticSections", () => {
       "01JSECRETID"
     ]);
     const text = formatDiagnosticReport(
-      collectDiagnosticSections(undefined),
+      [{ title: "Sync", fields: { note: "for user:01JSECRETID: boom" } }],
       new Date(),
-      ["ns-custom-value"]
+      collectDiagnosticIdentifiers()
     );
-    expect(text).toContain("for user:[redacted]: boom");
+    expect(text).toContain("note: for [redacted]: boom");
     expect(
       sanitizeDiagnosticText("open ns-custom-value-search failed", [
         "ns-custom-value"
@@ -195,5 +201,112 @@ describe("sanitizeDiagnosticText", () => {
     expect(text).toContain("lastError: POST https://a.example.app for [email]");
     expect(text).not.toContain("/x/y");
     expect(text).not.toContain("a@b.co");
+  });
+});
+
+/** Reviewer probes from local review rounds 2 and 3, with their private parts. */
+const errorProbes: [string, string[]][] = [
+  ['Validation failed for note "Private journal entry"', ["Private journal"]],
+  ["otp: 123456, userId: 01JOTHERACCOUNTID", ["123456", "01JOTHERACCOUNTID"]],
+  [
+    "Cookie: session=first-secret; device=second-secret",
+    ["first-secret", "second-secret"]
+  ],
+  ['{"password": "\\"remaining-secret"}', ["remaining-secret"]],
+  ["token: dummy-secret", ["dummy-secret"]],
+  ['{"access_token": "a b","refresh_token":"c"}', ['"a b"']],
+  ["accessToken=abc123 refreshToken=def", ["abc123"]],
+  ['Failed to open IndexedDB "nucleum-ns_user_01JSECRETID"', ["01JSECRETID"]],
+  [
+    "Fetch https://a.example.app/datafn/sync?token=abc failed for jane@example.com",
+    ["/datafn/sync", "token=abc", "jane@example.com"]
+  ]
+];
+
+describe("summarizeDiagnosticError", () => {
+  it.each(errorProbes)(
+    "never echoes %s into the report",
+    (message, secrets) => {
+      const text = formatDiagnosticReport(
+        [
+          {
+            title: "Sync",
+            fields: { lastError: summarizeDiagnosticError(message) }
+          }
+        ],
+        new Date("2026-11-12T00:00:00.000Z")
+      );
+      const line = text.split("\n").find((x) => x.startsWith("lastError: "));
+      expect(DIAGNOSTIC_ERROR_SUMMARIES).toContain(
+        line?.slice("lastError: ".length)
+      );
+      for (const secret of secrets) expect(text).not.toContain(secret);
+    }
+  );
+
+  it("classifies common sync failures", () => {
+    expect(summarizeDiagnosticError(null)).toBe("none");
+    expect(summarizeDiagnosticError("")).toBe("none");
+    expect(summarizeDiagnosticError("Failed to fetch")).toBe("network error");
+    expect(summarizeDiagnosticError({ message: "401 Unauthorized" })).toBe(
+      "auth error"
+    );
+    expect(summarizeDiagnosticError("QuotaExceededError")).toBe(
+      "storage error"
+    );
+    expect(summarizeDiagnosticError("Revision conflict")).toBe(
+      "conflict error"
+    );
+    expect(summarizeDiagnosticError("Mutation rejected")).toBe(
+      "validation error"
+    );
+    expect(summarizeDiagnosticError("Something odd happened")).toBe(
+      "unknown error"
+    );
+  });
+
+  it("maps arbitrary input into the finite set", () => {
+    let seed = 7;
+    const next = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31);
+    for (let index = 0; index < 500; index++) {
+      const length = next() % 80;
+      const message = Array.from({ length }, () =>
+        String.fromCharCode(32 + (next() % 95))
+      ).join("");
+      expect(DIAGNOSTIC_ERROR_SUMMARIES).toContain(
+        summarizeDiagnosticError(message)
+      );
+    }
+    for (const value of [42, {}, { message: 5 }, ["x"], true]) {
+      expect(DIAGNOSTIC_ERROR_SUMMARIES).toContain(
+        summarizeDiagnosticError(value)
+      );
+    }
+  });
+});
+
+describe("summarizeDiagnosticPath", () => {
+  const actions = [
+    { action: "notes", path: "notes", isSubPathOpen: true },
+    { action: "settings" }
+  ] as never;
+
+  it("keeps only the code-owned page route", () => {
+    expect(summarizeDiagnosticPath("/notes", actions)).toBe("/notes");
+    expect(
+      summarizeDiagnosticPath("/notes/private-journal-01JX/", actions)
+    ).toBe("/notes/...");
+    expect(summarizeDiagnosticPath("/settings", actions)).toBe("/settings");
+    expect(summarizeDiagnosticPath("/", actions)).toBe("/");
+    expect(summarizeDiagnosticPath(undefined, actions)).toBeUndefined();
+  });
+
+  it("does not echo paths that match no page", () => {
+    expect(summarizeDiagnosticPath("/my-private-space/x", actions)).toBe(
+      "[unrecognized route]"
+    );
+    expect(summarizeDiagnosticPath("/settings/secret", undefined)).toBe(
+      "[unrecognized route]"
+    );
   });
 });

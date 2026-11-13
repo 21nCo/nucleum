@@ -3,6 +3,8 @@ import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import appearance from "@nucleum/shared-state/appearance/appearance.store";
 import context from "@nucleum/client/runtime/context.store";
 import { nucleumDatafnStatus } from "@nucleum/datafn/datafn.store";
+import { resolvePageRoute } from "@nucleum/shared-state/commands/page-view-actions";
+import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import view from "@21n/ui/environment/view.store";
 
 /** One titled group of diagnostic fields. */
@@ -45,8 +47,9 @@ function redactSecretField(
 }
 
 /**
- * Removes account identity and secrets from free text such as error
- * messages: URLs keep only their origin, and email addresses, bearer and
+ * Defence in depth for report values: free-text sources are summarized
+ * before they reach the report, and this still removes account identity and
+ * secrets from any text that remains: URLs keep only their origin, and email addresses, bearer and
  * basic credentials, JWTs, secret-like key values, storage namespaces,
  * DataFn database names and the given identifiers are replaced.
  */
@@ -124,6 +127,80 @@ export function formatDiagnosticReport(
   return lines.join("\n");
 }
 
+/** The only values the report's `lastError` field can take. */
+export const DIAGNOSTIC_ERROR_SUMMARIES = [
+  "none",
+  "network error",
+  "auth error",
+  "storage error",
+  "conflict error",
+  "validation error",
+  "unknown error"
+] as const;
+
+export type DiagnosticErrorSummary =
+  (typeof DIAGNOSTIC_ERROR_SUMMARIES)[number];
+
+/** Checked in order; the first category whose pattern matches wins. */
+const ERROR_CATEGORY_PATTERNS: [DiagnosticErrorSummary, RegExp][] = [
+  [
+    "storage error",
+    /indexed\s*db|\bidb\b|dexie|quota|storage|database|transaction|opfs|sqlite/i
+  ],
+  [
+    "auth error",
+    /unauthori[sz]ed|forbidden|\b40[13]\b|\bauth|token|credential|session|log\s*in|permission|access denied/i
+  ],
+  ["conflict error", /conflict|\b409\b|version mismatch|stale|concurrent/i],
+  [
+    "validation error",
+    /validat|invalid|schema|required|rejected|\b4(?:00|22)\b|must be/i
+  ],
+  [
+    "network error",
+    /network|fetch|timed?\s*out|timeout|offline|econn|enotfound|dns|socket|cors|connection|\b50[234]\b|unreachable/i
+  ]
+];
+
+/**
+ * Summarizes a sync error as one of {@link DIAGNOSTIC_ERROR_SUMMARIES}. The
+ * message is free text that can carry record content, account ids and
+ * credentials, so it is only classified and never echoed into the report.
+ */
+export function summarizeDiagnosticError(
+  error: unknown
+): DiagnosticErrorSummary {
+  if (error === undefined || error === null || error === "") return "none";
+  const message =
+    typeof error === "string"
+      ? error
+      : typeof error === "object" && "message" in error
+        ? String((error as { message?: unknown }).message ?? "")
+        : "";
+  for (const [summary, pattern] of ERROR_CATEGORY_PATTERNS) {
+    if (pattern.test(message)) return summary;
+  }
+  return "unknown error";
+}
+
+/**
+ * Reduces a URL path to the code-owned route of the page it opens, so record
+ * ids, slugs and other user-chosen segments never reach the report. Extra
+ * segments after the page route print as "/...".
+ */
+export function summarizeDiagnosticPath(
+  pathname: string | undefined,
+  actions: IAction[] | undefined
+): string | undefined {
+  if (pathname === undefined) return undefined;
+  const path = pathname.replace(/^\/+|\/+$/g, "");
+  if (!path) return "/";
+  const route = resolvePageRoute(actions ?? [], path);
+  if (!route) return "[unrecognized route]";
+  const routePath = route.action.path ?? route.action.action;
+  return `/${routePath}${route.subPath?.length ? "/..." : ""}`;
+}
+
 /** Keeps only the origin of a URL so paths and query strings never leak. */
 export function resolveOrigin(url: string | null | undefined) {
   if (!url) return undefined;
@@ -154,7 +231,8 @@ export async function resolveStorageEstimate() {
 /**
  * Collects app, device, sync and appearance details for troubleshooting.
  * It never includes account identity, user content, storage namespaces,
- * tokens or full URLs. It is synchronous so a click handler can write the
+ * tokens or full URLs: free-text sources such as the sync error and the URL
+ * path are reduced to finite summaries, and every value is still sanitized. It is synchronous so a click handler can write the
  * report to the clipboard without losing user activation (WebKit).
  */
 export function collectDiagnosticSections(
@@ -173,7 +251,10 @@ export function collectDiagnosticSections(
         environment: app.env,
         version: app.version,
         build: app.build,
-        path: typeof location === "undefined" ? undefined : location.pathname
+        path: summarizeDiagnosticPath(
+          typeof location === "undefined" ? undefined : location.pathname,
+          app.actions
+        )
       }
     },
     {
@@ -207,12 +288,7 @@ export function collectDiagnosticSections(
         lastSyncAt: sync.lastSyncAt
           ? new Date(sync.lastSyncAt).toISOString()
           : undefined,
-        lastError: sync.lastError
-          ? String(
-              (sync.lastError as { message?: string })?.message ??
-                sync.lastError
-            )
-          : undefined,
+        lastError: summarizeDiagnosticError(sync.lastError),
         server: resolveOrigin(sync.remoteUrl)
       }
     },
