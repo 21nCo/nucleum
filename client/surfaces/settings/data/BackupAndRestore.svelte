@@ -27,6 +27,7 @@
   import type { LegacyLocalDataSummary } from "@nucleum/persistence/legacy-backup/types";
   import { onMount } from "svelte";
   import {
+    formatFileToastMessage,
     runWithStatusToast,
     showInfoToast
   } from "./data-settings-feedback";
@@ -60,7 +61,7 @@
       "datafn-backup",
       {
         progress: "Preparing backup...",
-        success: `Backup downloaded as **${fileName}**`,
+        success: formatFileToastMessage("Backup downloaded as", fileName),
         failure: "Unable to create backup"
       },
       async () => {
@@ -94,7 +95,11 @@
     await runWithStatusToast(
       "datafn-restore",
       {
-        progress: `Restoring data from **${file.name}**...`,
+        progress: formatFileToastMessage(
+          "Restoring data from",
+          file.name,
+          "..."
+        ),
         success: "Data restored successfully",
         failure: "Unable to restore data"
       },

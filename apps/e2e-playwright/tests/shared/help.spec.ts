@@ -43,4 +43,24 @@ test.describe("help center", () => {
     await expect(troubleshoot).toBeHidden();
     await expect(page.getByText("Help center", { exact: true })).toBeVisible();
   });
+
+  test("Troubleshoot opens the detailed Diagnostics page", async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ensureInAppOnHome(page);
+
+    await page.getByTestId("app-menu-help").click();
+    await page.getByText("Troubleshoot", { exact: true }).first().click();
+    await page
+      .getByTestId("troubleshoot")
+      .getByTestId("open-diagnostics")
+      .click();
+
+    const diagnostics = page.getByTestId("modal-diagnostics");
+    await expect(diagnostics).toBeVisible();
+    await expect(
+      diagnostics.getByRole("button", { name: "Dexie console" })
+    ).toBeVisible();
+    await expect(page).not.toHaveURL(/\/404/);
+  });
 });

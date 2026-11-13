@@ -1,6 +1,7 @@
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { escapeMarkdownText } from "@21n/ui/elements/markdown/markdown.utils";
 
 /** Shows an informational notice for data settings operations. */
 export function showInfoToast(message: string) {
@@ -44,4 +45,16 @@ export async function runWithStatusToast(
     toasts.error(messages.failure, { closeProgressId: id });
     return false;
   }
+}
+
+/**
+ * Builds a toast message that names a file in bold. Toasts render Markdown as
+ * HTML, so the file name is escaped to render literally.
+ */
+export function formatFileToastMessage(
+  prefix: string,
+  fileName: string,
+  suffix = ""
+): string {
+  return `${prefix} **${escapeMarkdownText(fileName)}**${suffix}`;
 }

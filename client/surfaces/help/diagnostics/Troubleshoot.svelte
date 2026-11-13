@@ -25,11 +25,14 @@
     };
   });
 
+  /**
+   * Copies the diagnostic report. The report is built and the clipboard write
+   * starts synchronously in the click handler, because WebKit drops user
+   * activation across an await.
+   */
   async function copyDiagnostics() {
     isCopyInProgress = true;
     try {
-      // Build the report and start the clipboard write synchronously in the
-      // click handler: WebKit drops user activation across an await.
       const report = formatDiagnosticReport(
         collectDiagnosticSections(storageEstimate),
         new Date()
