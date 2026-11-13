@@ -52,14 +52,14 @@ function isExecutable(candidate: string): boolean {
 }
 
 /**
- * Resolves the Docker CLI to an absolute path: the absolute directories of
- * `PATH` in order, then the standard install locations.
+ * Resolves the Docker CLI to an absolute path: each `PATH` entry in order,
+ * with relative and empty entries resolved against the working directory as
+ * the shell does, then the standard install locations.
  */
 function findDocker(): string | undefined {
   const executable = process.platform === "win32" ? "docker.exe" : "docker";
-  const searchPath = (process.env.PATH ?? "").split(path.delimiter).filter((directory) => path.isAbsolute(directory));
   return [
-    ...searchPath.map((directory) => path.join(directory, executable)),
+    ...(process.env.PATH ?? "").split(path.delimiter).map((directory) => path.resolve(directory, executable)),
     "/usr/bin/docker",
     "/usr/local/bin/docker",
     "/opt/homebrew/bin/docker",
