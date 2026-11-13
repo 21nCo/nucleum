@@ -1,6 +1,10 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
+import {
+  requireE2EProduct,
+  resolveSurfaceContract
+} from "../../config/e2e.config";
 import { ensureInAppOnHome } from "../utils/helpers";
 import { openSettings } from "../utils/settings";
 import {
@@ -30,8 +34,25 @@ async function copyNodeLink(page: Page, nodeId: string) {
   await item.click();
 }
 
+/** Presses Tab until `target` has focus, failing after `maxPresses`. */
+async function tabUntilFocused(page: Page, target: Locator, maxPresses = 80) {
+  for (let presses = 0; presses < maxPresses; presses++) {
+    await page.keyboard.press("Tab");
+    if (await target.evaluate((element) => element === document.activeElement))
+      return;
+  }
+  throw new Error(`Tab did not reach the target in ${maxPresses} presses`);
+}
+
 test.describe("toasts", () => {
-  test.beforeEach(async ({ page, seed, context }) => {
+  test.beforeEach(async ({ page, seed, context }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "Toasts are raised by copying node links, and this product has no nodes"
+    );
     e2eSeed = seed;
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await blockExternalAuthRequests(page);
@@ -69,7 +90,7 @@ test.describe("toasts", () => {
     const raised = page.getByTestId("modal-raised-toasts");
     await expect(raised).toBeVisible();
     await expect(page.getByTestId("top-bar-toasts")).toHaveCount(1);
-    await raised.getByTestId("top-bar-toast-latest").hover();
+    await raised.getByTestId("top-bar-toast-count").hover();
 
     const hoverStartedAt = Date.now();
     await expect(async () => {
@@ -80,9 +101,11 @@ test.describe("toasts", () => {
         /link copied/i,
         { timeout: 100 }
       );
-    }, "hovered toast outlives its auto-dismiss time").toPass({
-      timeout: TOAST_DURATION_MS + 5_000
-    });
+    }, "toasts outlive their auto-dismiss time while the count is hovered").toPass(
+      {
+        timeout: TOAST_DURATION_MS + 5_000
+      }
+    );
 
     await raised
       .getByTestId("top-bar-toast-latest")
@@ -93,6 +116,12 @@ test.describe("toasts", () => {
     await expect(list).toBeVisible();
     await expect(list.getByText(/link copied/i)).toHaveCount(2);
     await expect(page.getByTestId("settings-sidebar")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(list).toBeHidden();
+    await expect(page.getByTestId("settings-sidebar")).toBeVisible();
+    await raised.getByTestId("top-bar-toast-count").click();
+    await expect(list).toBeVisible();
 
     await list
       .getByRole("button", { name: "Dismiss notification" })
@@ -156,6 +185,67 @@ test.describe("toasts", () => {
 
     await raised.getByTestId("top-bar-toast-dismiss").click();
     await expect(raised).toBeHidden();
+    await expect(drawer).toBeVisible();
+  });
+
+  test("raised toasts over the Appearance drawer work from the keyboard", async ({
+    page
+  }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await ensureInAppOnHome(page);
+
+    const first = await e2eSeed.memory.node({
+      label: `E2E toast keys first ${Date.now()}`
+    });
+    const second = await e2eSeed.memory.node({
+      label: `E2E toast keys second ${Date.now()}`
+    });
+    await openNodesLibrary(page);
+    await copyNodeLink(page, first.id);
+    await copyNodeLink(page, second.id);
+    const topBarCount = page
+      .getByTestId("top-bar-toasts")
+      .getByTestId("top-bar-toast-count");
+    await expect(topBarCount).toHaveText("2");
+    await topBarCount.hover();
+
+    await openSettings(page);
+    const raised = page.getByTestId("modal-raised-toasts");
+    await raised.getByTestId("top-bar-toast-count").hover();
+    await page
+      .getByTestId("settings-sidebar")
+      .getByRole("button", { name: /^Appearance$/i })
+      .click({ timeout: 5_000 });
+    const drawer = page.getByTestId("modal-appearance-settings");
+    await expect(drawer).toBeVisible({ timeout: 10_000 });
+    const count = raised.getByTestId("top-bar-toast-count");
+    await count.hover();
+
+    await tabUntilFocused(page, count);
+    await expect(count).toBeFocused();
+    await page.mouse.move(10, 600);
+    await page.keyboard.press("Enter");
+    const list = raised.getByTestId("top-bar-toast-list");
+    await expect(list).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(list).toBeHidden();
+    await expect(drawer).toBeVisible();
+
+    await page.keyboard.press("Space");
+    await expect(list).toBeVisible();
+    const rowDismiss = list
+      .getByRole("button", { name: "Dismiss notification" })
+      .first();
+    await tabUntilFocused(page, rowDismiss, 10);
+    await expect(rowDismiss).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(list).toBeHidden();
+    await expect(raised.getByTestId("top-bar-toast-count")).toBeHidden();
+    await expect(raised.getByTestId("top-bar-toast-latest")).toContainText(
+      /link copied/i
+    );
     await expect(drawer).toBeVisible();
   });
 });

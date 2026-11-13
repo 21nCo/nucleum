@@ -196,7 +196,8 @@
    * inert, so they take no focus or pointer input; the popover containers stay
    * live for the popovers the drawer opens. Focus enters the drawer and, on
    * close, returns to the opener or, when the opener is gone, to the modal
-   * left on front or else the first control of the app. Keys from the drawer and its popovers reach their own
+   * left on front or else the first control of the app. The toasts raised above
+   * the modal layer share the drawer's scope. Keys from the drawer and its popovers reach their own
    * handlers first; then Tab cycles through them unless a control handled it,
    * and keys other than `Escape` stop before document and window listeners.
    * Keys from outside them are blocked, and Tab is pulled back in.
@@ -209,9 +210,14 @@
     const inertApp = node.parentElement
       ? inertBackground(node.parentElement)
       : [];
+    const raisedToasts = () => {
+      const host = document.getElementById(RAISED_TOASTS_ID);
+      return host ? [host] : [];
+    };
     const owned = () => [
       node,
-      ...popoverElements().filter((popover) => !background.includes(popover))
+      ...popoverElements().filter((popover) => !background.includes(popover)),
+      ...raisedToasts()
     ];
     const isOwned = (target: EventTarget | null) =>
       owned().some((scope) => scope.contains(target as Node));

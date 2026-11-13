@@ -68,10 +68,18 @@
   bind:this={root}
   use:topBarDropdown={{
     isOpen: isListOpen,
-    onDismiss: () => (isListOpen = false)
+    onDismiss: () => (isListOpen = false),
+    isEscapeContained: true
   }}
   class="relative flex items-stretch justify-end h-full pr-3 text-b2 min-w-0"
   data-testid="top-bar-toasts"
+  role="presentation"
+  onpointerenter={() => {
+    isHovered = true;
+  }}
+  onpointerleave={() => {
+    isHovered = false;
+  }}
   onfocusin={(event) => {
     isFocused = isKeyboardFocused(event.target as Element | null);
   }}
@@ -106,12 +114,6 @@
     })}
     data-testid="top-bar-toast-latest"
     role="group"
-    onpointerenter={() => {
-      isHovered = true;
-    }}
-    onpointerleave={() => {
-      isHovered = false;
-    }}
   >
     {#if latest}
       {#key latest.id}

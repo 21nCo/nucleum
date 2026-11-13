@@ -4,6 +4,11 @@ import modalEvent from "@nucleum/shell/overlays/modal.store";
 export type TopBarDropdownParams = {
   isOpen: boolean;
   onDismiss: () => void;
+  /**
+   * Also stops the Escape that closes the dropdown from propagating, so window
+   * listeners such as an open modal's close or the shortcut runner never see it.
+   */
+  isEscapeContained?: boolean;
 };
 
 /**
@@ -25,6 +30,7 @@ export function topBarDropdown(
     if (!current.isOpen) return;
     if (event.key === "Escape") {
       event.preventDefault();
+      if (current.isEscapeContained) event.stopPropagation();
       current.onDismiss();
       return;
     }
