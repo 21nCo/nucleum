@@ -82,6 +82,30 @@ DATAFN_DB_POOL_SIZE=5
 DATAFN_MAX_PAYLOAD_BYTES=5242880
 ```
 
+## Files
+
+The account service hosts FileFn under `/files/*`. AuthFn sessions resolve the
+FileFn principal (the session `actorId`), unauthenticated requests get `401`,
+and a principal reads and writes only its own files unless granted. Unsafe
+methods with a cookie session must send the `x-authfn-csrf` header. Uploads
+follow the Nucleus policies (100 MB cap, allowed media and document types).
+
+FileFn tables live in the regional DataFn Postgres (`drizzle/filefn`, applied
+with `npm run filefn:migrate`). File bytes go to one R2 bucket per region,
+configured by:
+
+- `FILEFN_R2_ACCOUNT_ID`, `FILEFN_R2_ACCESS_KEY_ID`,
+  `FILEFN_R2_SECRET_ACCESS_KEY`: R2 S3-API credentials. Workers read them from
+  the Secrets Store (`secretsStore.names` in `config/environments.json`).
+- `FILEFN_R2_BUCKET`: the bucket name; `{region}` is replaced with the
+  service's region ID. Workers get the rendered per-region name from
+  `filefnR2Bucket` in `config/environments.json`.
+
+Without all four values `/files/*` answers `503 FILEFN_UNAVAILABLE` and the
+rest of the service is unaffected. Every environment lists the three R2
+secrets in `omitSecretsStoreBindings` until its buckets and Secrets Store
+entries are provisioned; remove them there, then run `secrets:sync:<env>`.
+
 ## Running Local Apps Against Account Backends
 
 All local browser flows should go through Caddy so cookies, OAuth redirects, and
