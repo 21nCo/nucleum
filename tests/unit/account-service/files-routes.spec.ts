@@ -218,16 +218,17 @@ const fileBytes = new TextEncoder().encode("hello from filefn");
 async function uploadFile(
   testApp: TestApp,
   user: BearerUser,
-  options: { fileId?: string } = {}
+  options: { fileId?: string; fileName?: string; mimeType?: string; bytes?: Uint8Array } = {}
 ): Promise<{ fileId: string; versionId: string }> {
+  const bytes = options.bytes ?? fileBytes;
   const init = await request(testApp.app, "/files/upload/init", {
     method: "POST",
     headers: user.headers,
     body: {
       policy: "nucleus-durable-default",
-      fileName: "note.txt",
-      mimeType: "text/plain",
-      size: fileBytes.length,
+      fileName: options.fileName ?? "note.txt",
+      mimeType: options.mimeType ?? "text/plain",
+      size: bytes.length,
       ...(options.fileId ? { fileId: options.fileId } : {})
     }
   });
@@ -238,13 +239,13 @@ async function uploadFile(
   const sign = await request(testApp.app, `/files/upload/${uploadSessionId}/parts/1/sign`, {
     method: "POST",
     headers: user.headers,
-    body: { contentLength: fileBytes.length }
+    body: { contentLength: bytes.length }
   });
   expect(sign.status).toBe(200);
   const put = await testApp.r2.fetch(sign.body.data.url, {
     method: "PUT",
     headers: sign.body.data.headers,
-    body: fileBytes
+    body: bytes
   });
   expect(put.status).toBe(200);
 
@@ -254,7 +255,7 @@ async function uploadFile(
     {
       method: "POST",
       headers: user.headers,
-      body: { etag: put.headers.get("etag"), size: fileBytes.length }
+      body: { etag: put.headers.get("etag"), size: bytes.length }
     }
   );
   expect(partComplete.status).toBe(200);
@@ -534,6 +535,50 @@ describe("account service /files", () => {
 
     const health = await request(unconfigured.app, "/health");
     expect(health.status).toBe(200);
+  });
+
+  it("serves uploaded SVG bytes as sandboxed attachments on every proxy download", async () => {
+    const owner = await signUpBearer(testApp.app);
+    const svg = new TextEncoder().encode(
+      '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(document.cookie)</script></svg>'
+    );
+    const { fileId, versionId } = await uploadFile(testApp, owner, {
+      fileName: "image.svg",
+      mimeType: "image/svg+xml",
+      bytes: svg
+    });
+
+    const share = await request(testApp.app, `/files/${fileId}/share-links`, {
+      method: "POST",
+      headers: owner.headers,
+      body: {}
+    });
+    expect(share.status).toBe(201);
+    const token = share.body.data.token;
+    expect(typeof token).toBe("string");
+
+    const downloads: Array<[string, Record<string, string>]> = [
+      [`/files/proxy/files/${fileId}/download`, owner.headers],
+      [`/files/proxy/files/${fileId}/versions/${versionId}/download`, owner.headers],
+      // A share link is opened by someone else, possibly signed in on this origin.
+      [`/files/proxy/share-links/${token}/download`, {}]
+    ];
+    for (const [path, headers] of downloads) {
+      const response = await testApp.app.request(`${AUTHORITY}${path}`, { headers });
+      expect(response.status, path).toBe(200);
+      expect(response.headers.get("content-type"), path).toBe("image/svg+xml");
+      expect(response.headers.get("x-content-type-options"), path).toBe("nosniff");
+      expect(response.headers.get("content-security-policy"), path).toBe(
+        "sandbox; default-src 'none'"
+      );
+      expect(response.headers.get("content-disposition"), path).toBe("attachment");
+      expect(new Uint8Array(await response.arrayBuffer()), path).toEqual(svg);
+    }
+
+    const metadata = await request(testApp.app, `/files/${fileId}`, { headers: owner.headers });
+    expect(metadata.status).toBe(200);
+    expect(metadata.response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(metadata.response.headers.get("content-disposition")).toBeNull();
   });
 
   it("returns 404 for paths FileFn does not serve and leaves other prefixes alone", async () => {

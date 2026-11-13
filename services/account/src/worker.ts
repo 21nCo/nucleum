@@ -7,6 +7,10 @@ import {
   createCloudflareFileDatabase,
   type AccountFileDatabase
 } from "./files/database.js";
+import {
+  closeAfterDeferredWork,
+  createFileDeferredWork
+} from "./files/deferred.js";
 import { createAccountFileStorage } from "./files/storage.js";
 import { createAccountCloudflareLookupStore } from "./lookup/cloudflare-do.js";
 import { createLogger } from "./logging.js";
@@ -59,6 +63,7 @@ export default {
       | ReturnType<typeof createCloudflareSyncDatabase>
       | undefined;
     let fileDatabase: AccountFileDatabase | undefined;
+    const fileDeferredWork = createFileDeferredWork(ctx);
     const workerEnv = globalProcess.process.env;
     const observability = createObservability(logger, undefined, {
       requestContext: createAsyncLocalRequestContext()
@@ -82,7 +87,7 @@ export default {
             return fileDatabase.adapter;
           },
           storage: (regionId) => createAccountFileStorage(workerEnv, regionId),
-          runtime: ctx ? { defer: (work) => ctx.waitUntil(work) } : undefined
+          runtime: ctx ? fileDeferredWork.runtime : undefined
         }
       },
       deployment: {
@@ -95,9 +100,7 @@ export default {
     const app = new Hono();
     registerCoreRoutes(app, services);
 
-    try {
-      return await app.fetch(request, env);
-    } finally {
+    const closeRequestResources = async (): Promise<void> => {
       try {
         await services.close();
       } finally {
@@ -111,6 +114,21 @@ export default {
           }
         }
       }
+    };
+
+    try {
+      return await app.fetch(request, env);
+    } finally {
+      // FileFn background work handed to ctx.waitUntil may still use the
+      // databases, so they close only after it settles.
+      await closeAfterDeferredWork({
+        ctx,
+        deferred: fileDeferredWork,
+        close: closeRequestResources,
+        onError: (error) => {
+          logger.error("nucleus account deferred close failed", { error });
+        }
+      });
     }
   }
 };

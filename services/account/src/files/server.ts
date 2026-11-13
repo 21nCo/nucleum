@@ -54,8 +54,10 @@ export function createAccountFileFn(input: CreateAccountFileFnInput): FileFn {
  * Maps the AuthFn session on a request to the FileFn principal, using the
  * session `actorId` as `principalId`. Unsafe methods go through
  * `authorizeMutation`, so a cookie session must carry its CSRF token. A
- * missing, expired, revoked or forged session resolves to null (401) and a
- * CSRF failure to 403; other failures propagate.
+ * missing, expired, revoked or forged session (any other AuthFn 4xx) resolves
+ * to null (401) and a CSRF failure to 403. AuthFn 5xx failures, such as an
+ * unavailable placement directory or routing cell, and non-AuthFn errors
+ * propagate so an outage is not reported as a signed-out user.
  */
 export function createAccountFileSessionResolver(
   auth: AccountFileAuth
@@ -70,7 +72,7 @@ export function createAccountFileSessionResolver(
       if (error instanceof AuthFnCsrfInvalidError) {
         throw forbidden({ reason: "csrf" });
       }
-      if (error instanceof AuthFnError) {
+      if (error instanceof AuthFnError && error.status < 500) {
         return null;
       }
       throw error;
