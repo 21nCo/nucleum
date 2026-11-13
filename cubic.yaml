@@ -1,23 +1,87 @@
 # yaml-language-server: $schema=https://cubic.dev/schema/cubic-repository-config.schema.json
-# Hosted cubic review settings. Usage is billed per reviewed line, so skip
-# files whose review adds little. Keep reviewing test code: it is where cubic
-# finds tests that don't check what they claim.
+# Hosted cubic review settings. cubic bills per reviewed line, so this skips
+# files whose review adds little. Code (including test code and test helpers),
+# agent instructions, prompts, skills, specs and contracts stay reviewed.
 version: 1
 
 reviews:
   ignore:
     files:
-      # Docs. The local review runs a docs-vs-code check (cubic CLI) on every
-      # change before the PR opens and on every fix push.
-      - '*.md'
-      - '**/*.md'
-      - '*.mdx'
-      - '**/*.mdx'
-      # Test data, not test code
-      - '**/fixtures/**'
-      - '**/__fixtures__/**'
-      - '**/testdata/**'
-      - '**/golden/**'
+      # Prose documentation. The local review runs a docs-vs-code check (cubic
+      # CLI) before the PR opens and on every fix push.
+      - '**/README.md'
+      - '**/CHANGELOG.md'
+      - '**/CONTRIBUTING.md'
+      - 'docs/**/*.md'
+      - 'docs/**/*.mdx'
+      - '**/docs/**/*.md'
+      - '**/docs/**/*.mdx'
+      # Recorded test data (data file types only; helper code under these
+      # folders stays reviewed)
+      - '**/fixtures/**/*.json'
+      - '**/fixtures/**/*.jsonl'
+      - '**/fixtures/**/*.ndjson'
+      - '**/fixtures/**/*.yaml'
+      - '**/fixtures/**/*.yml'
+      - '**/fixtures/**/*.txt'
+      - '**/fixtures/**/*.csv'
+      - '**/fixtures/**/*.tsv'
+      - '**/fixtures/**/*.html'
+      - '**/fixtures/**/*.xml'
+      - '**/fixtures/**/*.eml'
+      - '**/fixtures/**/*.sse'
+      - '**/fixtures/**/*.log'
+      - '**/fixtures/**/*.har'
+      - '**/fixtures/**/*.svg'
+      - '**/fixtures/**/*.snap'
+      - '**/__fixtures__/**/*.json'
+      - '**/__fixtures__/**/*.jsonl'
+      - '**/__fixtures__/**/*.ndjson'
+      - '**/__fixtures__/**/*.yaml'
+      - '**/__fixtures__/**/*.yml'
+      - '**/__fixtures__/**/*.txt'
+      - '**/__fixtures__/**/*.csv'
+      - '**/__fixtures__/**/*.tsv'
+      - '**/__fixtures__/**/*.html'
+      - '**/__fixtures__/**/*.xml'
+      - '**/__fixtures__/**/*.eml'
+      - '**/__fixtures__/**/*.sse'
+      - '**/__fixtures__/**/*.log'
+      - '**/__fixtures__/**/*.har'
+      - '**/__fixtures__/**/*.svg'
+      - '**/__fixtures__/**/*.snap'
+      - '**/testdata/**/*.json'
+      - '**/testdata/**/*.jsonl'
+      - '**/testdata/**/*.ndjson'
+      - '**/testdata/**/*.yaml'
+      - '**/testdata/**/*.yml'
+      - '**/testdata/**/*.txt'
+      - '**/testdata/**/*.csv'
+      - '**/testdata/**/*.tsv'
+      - '**/testdata/**/*.html'
+      - '**/testdata/**/*.xml'
+      - '**/testdata/**/*.eml'
+      - '**/testdata/**/*.sse'
+      - '**/testdata/**/*.log'
+      - '**/testdata/**/*.har'
+      - '**/testdata/**/*.svg'
+      - '**/testdata/**/*.snap'
+      - '**/golden/**/*.json'
+      - '**/golden/**/*.jsonl'
+      - '**/golden/**/*.ndjson'
+      - '**/golden/**/*.yaml'
+      - '**/golden/**/*.yml'
+      - '**/golden/**/*.txt'
+      - '**/golden/**/*.csv'
+      - '**/golden/**/*.tsv'
+      - '**/golden/**/*.html'
+      - '**/golden/**/*.xml'
+      - '**/golden/**/*.eml'
+      - '**/golden/**/*.sse'
+      - '**/golden/**/*.log'
+      - '**/golden/**/*.har'
+      - '**/golden/**/*.svg'
+      - '**/golden/**/*.snap'
       - '**/__snapshots__/**'
       - '**/*.snap'
       # Generated output
@@ -36,3 +100,5 @@ reviews:
       - 'Cargo.lock'
       - '**/Cargo.lock'
       - '**/Package.resolved'
+      - '.github/**/package-lock.json'
+      - '.github/**/pnpm-lock.yaml'
