@@ -474,12 +474,4 @@
       #000 var(--app-tab-radius)
     );
   }
-
-  :global(
-      :is([data-app-style="semi"], [data-app-style="rounded"])
-        .shell-frame:has(.context-tab[data-leading])
-        .shell-main
-    ) {
-    border-top-left-radius: 0;
-  }
 </style>

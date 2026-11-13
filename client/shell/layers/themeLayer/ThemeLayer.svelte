@@ -344,6 +344,8 @@
     --colors-aps1: var(--colors-caps1);
     --colors-aps2: var(--colors-caps2);
     --colors-aps3: var(--colors-caps3);
+    /* Unset so consumers fall back to the restored content accent. */
+    --colors-onaps3: initial;
     color: rgba(var(--colors-fgs1), 1);
   }
 

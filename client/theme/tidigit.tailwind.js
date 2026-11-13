@@ -4,6 +4,8 @@ import colorSchemesBranding from "@21n/theme/colorschemes-branding.json";
 import colorSchemes from "@21n/theme/colorschemes.json";
 import { createRequire } from "module";
 
+import { GRADIENT_SAFELIST_PATTERN } from "./frame-palette.js";
+
 const themes = [
   {
     name: "clean",
@@ -276,7 +278,7 @@ export default {
         "cursor-row-resize",
         "text-abg",
         {
-          pattern: /(from|via|to)-(.+)/
+          pattern: GRADIENT_SAFELIST_PATTERN
         }
         // {
         //   pattern: /ph--.*/
