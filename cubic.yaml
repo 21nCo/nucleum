@@ -1,7 +1,8 @@
 # yaml-language-server: $schema=https://cubic.dev/schema/cubic-repository-config.schema.json
 # Hosted cubic review settings. cubic bills per reviewed line, so this skips
 # files whose review adds little. Code (including test code and test helpers),
-# agent instructions, prompts, skills, specs and contracts stay reviewed.
+# agent instructions, prompts, skills, specs, contracts and docs that define
+# behaviour stay reviewed.
 version: 1
 
 reviews:
@@ -9,15 +10,12 @@ reviews:
     files:
       # Prose documentation. The local review runs a docs-vs-code check (cubic
       # CLI) before the PR opens and on every fix push.
-      - '**/README.md'
+      - 'apps/**/README.md'
+      - 'services/**/README.md'
+      - 'ios/**/README.md'
       - '**/CHANGELOG.md'
       - '**/CONTRIBUTING.md'
-      - 'docs/**/*.md'
-      - 'docs/**/*.mdx'
-      - '**/docs/**/*.md'
-      - '**/docs/**/*.mdx'
-      # Recorded test data (data file types only; helper code under these
-      # folders stays reviewed)
+      # Recorded test data (data file types only; helper code under these folders stays reviewed)
       - '**/fixtures/**/*.json'
       - '**/fixtures/**/*.jsonl'
       - '**/fixtures/**/*.ndjson'
@@ -33,7 +31,6 @@ reviews:
       - '**/fixtures/**/*.log'
       - '**/fixtures/**/*.har'
       - '**/fixtures/**/*.svg'
-      - '**/fixtures/**/*.snap'
       - '**/__fixtures__/**/*.json'
       - '**/__fixtures__/**/*.jsonl'
       - '**/__fixtures__/**/*.ndjson'
@@ -49,7 +46,6 @@ reviews:
       - '**/__fixtures__/**/*.log'
       - '**/__fixtures__/**/*.har'
       - '**/__fixtures__/**/*.svg'
-      - '**/__fixtures__/**/*.snap'
       - '**/testdata/**/*.json'
       - '**/testdata/**/*.jsonl'
       - '**/testdata/**/*.ndjson'
@@ -65,7 +61,6 @@ reviews:
       - '**/testdata/**/*.log'
       - '**/testdata/**/*.har'
       - '**/testdata/**/*.svg'
-      - '**/testdata/**/*.snap'
       - '**/golden/**/*.json'
       - '**/golden/**/*.jsonl'
       - '**/golden/**/*.ndjson'
@@ -81,8 +76,7 @@ reviews:
       - '**/golden/**/*.log'
       - '**/golden/**/*.har'
       - '**/golden/**/*.svg'
-      - '**/golden/**/*.snap'
-      - '**/__snapshots__/**'
+      # Test snapshots (snapshot folders holding reviewed contract JSON stay reviewed)
       - '**/*.snap'
       # Generated output
       - '**/dist/**'
