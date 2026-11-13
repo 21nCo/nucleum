@@ -78,4 +78,38 @@ describe("TopNavToasts keyboard focus", () => {
     vi.advanceTimersByTime(toastDefaultDuration);
     expect(messages()).toEqual([]);
   });
+
+  it("shows the latest toast's close button while the list is open without hover", async () => {
+    toasts.success("First");
+    toasts.success("Second");
+    const { getByTestId } = render(TopNavToasts);
+    await flush();
+    const close = getByTestId("top-bar-toast-dismiss");
+    expect(close.className).toContain("opacity-0");
+
+    getByTestId("top-bar-toast-count").focus();
+    await fireEvent.click(getByTestId("top-bar-toast-count"));
+    await flush();
+    expect(getByTestId("top-bar-toast-list")).toBeTruthy();
+    expect(close.className).not.toContain("opacity-0");
+
+    await fireEvent.click(close);
+    await flush();
+    expect(messages()).toEqual(["First"]);
+  });
+
+  it("bounds and centres the raised list in its host instead of the toast", async () => {
+    toasts.success("First");
+    toasts.success("Second");
+    const { getByTestId } = render(TopNavToasts, { props: { isRaised: true } });
+    await flush();
+    await fireEvent.click(getByTestId("top-bar-toast-count"));
+    await flush();
+
+    expect(getByTestId("top-bar-toasts").className).not.toContain("relative");
+    const list = getByTestId("top-bar-toast-list").className;
+    expect(list).toContain("max-w-[calc(100%-1rem)]");
+    expect(list).toContain("left-1/2");
+    expect(list).not.toContain("right-0");
+  });
 });

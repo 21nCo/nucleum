@@ -31,6 +31,8 @@ import { Placement } from "@21n/ui/elements/direction.enum";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import modalEvent, { configureOverlayHost, player } from "./modal.store";
 import ModalLayer from "./ModalLayer.svelte";
+import { isToastRaisedAboveModal } from "./raised-toasts";
+import TopBarToastHostProbe from "../../../tests/fixtures/components/TopBarToastHostProbe.svelte";
 
 const raisedHost = () =>
   document.querySelector<HTMLElement>('[data-testid="modal-raised-toasts"]');
@@ -40,6 +42,25 @@ const modalShown = (path: string) =>
   document.querySelector(`[data-testid="modal-${path}"]`) !== null;
 
 const DRAWER = "appearance-settings";
+const TOP_BAR_HOST = '[data-testid="top-bar-toasts"]';
+
+/** Renders a top bar toast host that follows the same rule as `TopNav`. */
+function renderTopBarProbe() {
+  render(TopBarToastHostProbe, {
+    target: document.body,
+    props: { toasts, isRaised: isToastRaisedAboveModal }
+  });
+}
+
+/** Top bar toast hosts outside the raised host that `nodes` add. */
+function addedTopBarHosts(nodes: Iterable<Node>) {
+  return [...nodes].filter(
+    (node) =>
+      node instanceof HTMLElement &&
+      node.matches(TOP_BAR_HOST) &&
+      !node.closest('[data-testid="modal-raised-toasts"]')
+  );
+}
 
 async function raiseTwoToasts() {
   toasts.pause([
@@ -54,7 +75,7 @@ async function openList() {
   await waitFor(() => expect(inRaised("top-bar-toast-list")).not.toBeNull());
 }
 
-describe("raised toasts from the keyboard", () => {
+describe("raised toasts in the modal layer", () => {
   beforeEach(() => {
     document.body.innerHTML = "";
     configureOverlayHost({
@@ -143,5 +164,85 @@ describe("raised toasts from the keyboard", () => {
 
     expect(await fireEvent.keyDown(dismiss, { key: "Enter" })).toBe(true);
     expect(await fireEvent.keyDown(dismiss, { key: " " })).toBe(true);
+  });
+
+  it("stays usable and clear of a drawer opened over raised toasts", async () => {
+    render(ModalLayer, { target: document.body });
+    modalEvent.notify({ path: "settings", isShow: true });
+    toasts.pause([toasts.success("Link copied")]);
+    await waitFor(() => expect(raisedHost()).not.toBeNull());
+    expect(raisedHost()!.className).toContain("right-0");
+
+    modalEvent.notify({
+      path: DRAWER,
+      isShow: true,
+      layout: { alignment: Placement.Right }
+    });
+    await waitFor(() =>
+      expect(raisedHost()!.className).toContain("right-[28rem]")
+    );
+    expect(raisedHost()!.className).not.toContain("right-0");
+    expect(raisedHost()!.closest("[inert]")).toBeNull();
+    expect(inRaised("top-bar-toast-latest")?.closest("[inert]")).toBeNull();
+  });
+
+  it("spans the full width again once the drawer closes", async () => {
+    render(ModalLayer, { target: document.body });
+    modalEvent.notify({
+      path: DRAWER,
+      isShow: true,
+      layout: { alignment: Placement.Right }
+    });
+    modalEvent.notify({ path: "settings", isShow: true });
+    toasts.pause([toasts.success("Link copied")]);
+    await waitFor(() =>
+      expect(raisedHost()?.className).toContain("right-[28rem]")
+    );
+
+    modalEvent.hide(DRAWER);
+    await waitFor(() => expect(raisedHost()!.className).toContain("right-0"));
+  });
+
+  it("keeps a single toast host while a modal opens and closes over toasts", async () => {
+    renderTopBarProbe();
+    render(ModalLayer, { target: document.body });
+    toasts.pause([toasts.success("Link copied")]);
+    await waitFor(() =>
+      expect(document.querySelectorAll(TOP_BAR_HOST)).toHaveLength(1)
+    );
+    const counts: number[] = [];
+    const observer = new MutationObserver(() =>
+      counts.push(document.querySelectorAll(TOP_BAR_HOST).length)
+    );
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    modalEvent.notify({ path: "settings", isShow: true });
+    await waitFor(() => expect(raisedHost()).not.toBeNull());
+    modalEvent.hide("settings");
+    await waitFor(() => expect(raisedHost()).toBeNull());
+    observer.disconnect();
+
+    expect(counts.length).toBeGreaterThan(0);
+    expect(counts.every((count) => count === 1)).toBe(true);
+  });
+
+  it("never mounts the top bar toast host for a toast raised over an open modal", async () => {
+    renderTopBarProbe();
+    render(ModalLayer, { target: document.body });
+    modalEvent.notify({ path: "settings", isShow: true });
+    await waitFor(() => expect(modalShown("settings")).toBe(true));
+    const added: Node[] = [];
+    const observer = new MutationObserver((records) => {
+      for (const record of records)
+        added.push(...addedTopBarHosts(record.addedNodes));
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    toasts.pause([toasts.success("Link copied")]);
+    await waitFor(() => expect(raisedHost()).not.toBeNull());
+    observer.disconnect();
+
+    expect(added).toEqual([]);
+    expect(document.querySelectorAll(TOP_BAR_HOST)).toHaveLength(1);
   });
 });

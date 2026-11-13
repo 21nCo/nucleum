@@ -81,7 +81,7 @@ function initToastStore() {
     const now = Date.now();
     for (const id of ids) {
       const timer = timers.get(id);
-      if (!timer || timer.handle === undefined) continue;
+      if (timer?.handle === undefined) continue;
       clearTimeout(timer.handle);
       timer.handle = undefined;
       timer.remaining = Math.max(timer.deadline - now, 0);
@@ -165,7 +165,7 @@ function initToastStore() {
     },
     closeProgress,
     setProgress,
-    /** Removes one toast, such as when the user hovers it away. */
+    /** Removes one toast the user dismissed and clears its timer. */
     dismiss: (id: string) => {
       remove(id);
     },

@@ -40,8 +40,8 @@
   } from "@nucleum/shell/overlays/portrait-dock";
   import {
     isToastRaisedAboveModal,
-    RAISED_TOASTS_ID,
-    shouldRaiseToasts
+    modalLayerOpenCount,
+    RAISED_TOASTS_ID
   } from "@nucleum/shell/overlays/raised-toasts";
   import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
   const ComponentResolver = requireActionRenderer();
@@ -57,24 +57,17 @@
           modal?.layout?.alignment === Placement.Right
       )
   );
-  const isToastRaised = $derived(
-    shouldRaiseToasts({
-      toastCount: $toasts.length,
-      openModalCount: modals.filter((modal) => modal?.path).length,
-      hasConfirmation: Boolean($confirmationNotification),
-      isPortrait: $view.isPortrait
-    })
-  );
-  $effect(() => {
-    isToastRaisedAboveModal.set(isToastRaised);
-  });
-  $effect(() => () => isToastRaisedAboveModal.set(false));
+  /** Replaces the open modals and publishes their count in the same step. */
+  function setModals(next: ModalEvent[]) {
+    modals = next;
+    modalLayerOpenCount.set(next.filter((modal) => modal?.path).length);
+  }
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePreview = x.value ?? false;
       } else if (x.event === GlobalEvent.USER_LOGIN) {
-        modals = [];
+        setModals([]);
       }
     });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
@@ -82,6 +75,7 @@
     return () => {
       appEventSub();
       modalEventSub();
+      modalLayerOpenCount.set(0);
     };
 
     /**
@@ -100,7 +94,7 @@
       }
       logger.log({ context: "modal event - ModalLayer", event: x });
       if (!x.isShow) {
-        modals = modals.filter((y) => y.path != x.path);
+        setModals(modals.filter((y) => y.path != x.path));
         postDataToParent(EmbedDataMessage.MODAL, x);
       } else if (
         $context.isEmbed &&
@@ -118,9 +112,9 @@
         if (existingIndex > -1) {
           const nextModals = [...modals];
           nextModals.splice(existingIndex, 1);
-          modals = [...nextModals, x];
+          setModals([...nextModals, x]);
         } else {
-          modals = [...modals, x];
+          setModals([...modals, x]);
         }
         if ($view.isPortrait) toasts.reset();
         postDataToParent(EmbedDataMessage.ENABLE_GESTURE_NAVIGATION, false);
@@ -248,7 +242,7 @@
   </Modal>
 {/if}
 
-{#if isToastRaised}
+{#if $isToastRaisedAboveModal}
   <div
     id={RAISED_TOASTS_ID}
     class={cn(
@@ -262,7 +256,7 @@
     <div
       class="flex items-center h-12 min-w-0 max-w-[32rem] rounded-md bg-bgs2 border border-brs3 shadow-lg pointer-events-auto"
     >
-      <TopNavToasts />
+      <TopNavToasts isRaised={true} />
     </div>
   </div>
 {/if}

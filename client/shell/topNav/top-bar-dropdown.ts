@@ -5,8 +5,9 @@ export type TopBarDropdownParams = {
   isOpen: boolean;
   onDismiss: () => void;
   /**
-   * Also stops the Escape that closes the dropdown from propagating, so window
-   * listeners such as an open modal's close or the shortcut runner never see it.
+   * Also stops the Escape that closes the dropdown from propagating past the
+   * window capture phase, so bubbling listeners such as an open modal's close
+   * never see it. Other capture listeners on window still run.
    */
   isEscapeContained?: boolean;
 };

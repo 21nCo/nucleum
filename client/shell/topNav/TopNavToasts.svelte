@@ -12,6 +12,13 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { tick } from "svelte";
 
+  let {
+    isRaised = false
+  }: {
+    /** Shown in the host raised above a modal, which anchors and bounds the list. */
+    isRaised?: boolean;
+  } = $props();
+
   let isListOpen = $state(false);
   let isHovered = $state(false);
   let isFocused = $state(false);
@@ -23,9 +30,8 @@
       latest && !latest.isNonDismissable && latest.type !== AlertType.PROGRESS
     )
   );
-  const pausedIds = $derived(
-    isListOpen || isHovered || isFocused ? $toasts.map((toast) => toast.id) : []
-  );
+  const isEngaged = $derived(isListOpen || isHovered || isFocused);
+  const pausedIds = $derived(isEngaged ? $toasts.map((toast) => toast.id) : []);
 
   $effect(() => {
     if ($toasts.length < 2) isListOpen = false;
@@ -71,7 +77,9 @@
     onDismiss: () => (isListOpen = false),
     isEscapeContained: true
   }}
-  class="relative flex items-stretch justify-end h-full pr-3 text-b2 min-w-0"
+  class={cn("flex items-stretch justify-end h-full pr-3 text-b2 min-w-0", {
+    relative: !isRaised
+  })}
   data-testid="top-bar-toasts"
   role="presentation"
   onpointerenter={() => {
@@ -133,7 +141,7 @@
           type="button"
           class={cn(
             "flex items-center justify-center self-center w-6 h-6 shrink-0 rounded-md hover:bg-bgs3 transition-opacity",
-            { "opacity-0 focus-visible:opacity-100": !isHovered }
+            { "opacity-0 focus-visible:opacity-100": !isEngaged }
           )}
           aria-label="Dismiss notification"
           data-testid="top-bar-toast-dismiss"
@@ -146,7 +154,12 @@
   </div>
   {#if isListOpen}
     <div
-      class="absolute right-0 top-full mt-1 z-[60] w-96 max-h-96 overflow-auto flex flex-col gap-1 p-2 rounded-md border border-brs3 bg-bgs1 shadow-lg"
+      class={cn(
+        "absolute top-full mt-1 z-[60] w-96 max-h-96 overflow-auto flex flex-col gap-1 p-2 rounded-md border border-brs3 bg-bgs1 shadow-lg",
+        isRaised
+          ? "left-1/2 -translate-x-1/2 max-w-[calc(100%-1rem)]"
+          : "right-0"
+      )}
       data-testid="top-bar-toast-list"
     >
       {#each [...$toasts].reverse() as toast (toast.id)}

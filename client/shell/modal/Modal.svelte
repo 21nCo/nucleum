@@ -160,8 +160,9 @@
 
   /**
    * Makes the app behind `overlay` inert: every sibling of it and of its
-   * ancestors, except the live popover and tooltip containers and modals
-   * opened above it. Returns the elements it made inert.
+   * ancestors, except the live popover and tooltip containers, the toasts
+   * raised above the modal layer and modals opened above it. Returns the
+   * elements it made inert.
    */
   function inertBackground(overlay: HTMLElement) {
     const changed: HTMLElement[] = [];

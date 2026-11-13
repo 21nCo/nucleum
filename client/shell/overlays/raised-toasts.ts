@@ -1,10 +1,30 @@
-import { writable } from "svelte/store";
+import { derived, writable } from "svelte/store";
+import view from "@21n/ui/environment/view.store";
+import {
+  confirmationNotification,
+  toasts
+} from "@nucleum/shared-state/notifications/notification.store";
 
 /**
- * True while toasts render in the modal layer above an open modal, so the top
- * bar hides its own toast host and announcements are not duplicated.
+ * Number of modals the modal layer shows. The modal layer updates it together
+ * with its own list, so the toast host hand-off never waits for a render.
  */
-export const isToastRaisedAboveModal = writable(false);
+export const modalLayerOpenCount = writable(0);
+
+/**
+ * True while toasts render in the modal layer above an open modal. The modal
+ * layer and the top bar both read it, so exactly one toast host is mounted.
+ */
+export const isToastRaisedAboveModal = derived(
+  [toasts, confirmationNotification, view, modalLayerOpenCount],
+  ([$toasts, $confirmation, $view, $openModalCount]) =>
+    shouldRaiseToasts({
+      toastCount: $toasts.length,
+      openModalCount: $openModalCount,
+      hasConfirmation: Boolean($confirmation),
+      isPortrait: $view.isPortrait
+    })
+);
 
 /**
  * Element id of the raised toast host. A right-side drawer keeps it live when
