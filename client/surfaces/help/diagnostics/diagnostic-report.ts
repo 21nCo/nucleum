@@ -15,29 +15,89 @@ const MAX_VALUE_LENGTH = 300;
 
 const URL_PATTERN = /\b[a-z][a-z\d+.-]*:\/\/[^\s"'<>()]+/gi;
 const EMAIL_PATTERN = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
-const BEARER_PATTERN = /\bBearer\s+[^\s"',;]+/gi;
+const BEARER_PATTERN = /\b(Bearer|Basic)\s+[^\s"',;]+/gi;
 const JWT_PATTERN = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
-const SECRET_PARAM_PATTERN =
-  /\b(token|access_token|refresh_token|api_key|apikey|key|secret|password)=[^\s&"']+/gi;
+/**
+ * A secret-like key followed by its value, in query (`token=x`), label
+ * (`token: x`) and JSON (`"access_token": "x"`) forms. Keys match in any
+ * case and inside camelCase or snake_case names (`accessToken`, `api_key`).
+ */
+const SECRET_FIELD_PATTERN =
+  /(["']?)\b([\w-]*?(?:token|secret|password|passwd|pwd|api[_-]?key|apikey|private[_-]?key|authorization|cookie|credentials?|session[_-]?id|signature|key))\1(\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s"',;&}\]]+)/gi;
+/** Namespaced account or guest ids and the DataFn database names built from them. */
+const NAMESPACE_ID_PATTERN = /(?<![A-Za-z\d])(user|guest)[:_][\w-]{6,}/gi;
+const DATAFN_DB_NAME_PATTERN = /\bnucleum-datafn-[\w-]+/gi;
+const MIN_IDENTIFIER_LENGTH = 4;
+
+function escapeRegExp(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function redactSecretField(
+  _match: string,
+  quote: string,
+  key: string,
+  separator: string,
+  value: string
+) {
+  const valueQuote = /^["']/.test(value) ? value[0] : "";
+  return `${quote}${key}${quote}${separator}${valueQuote}[redacted]${valueQuote}`;
+}
 
 /**
  * Removes account identity and secrets from free text such as error
- * messages: URLs keep only their origin, and email addresses, bearer
- * tokens, JWTs and secret query parameters are replaced.
+ * messages: URLs keep only their origin, and email addresses, bearer and
+ * basic credentials, JWTs, secret-like key values, storage namespaces,
+ * DataFn database names and the given identifiers are replaced.
  */
-export function sanitizeDiagnosticText(text: string): string {
-  return text
+export function sanitizeDiagnosticText(
+  text: string,
+  identifiers: readonly string[] = []
+): string {
+  let result = text;
+  const knownIdentifiers = [...new Set(identifiers)]
+    .filter((identifier) => identifier.length >= MIN_IDENTIFIER_LENGTH)
+    .sort((a, b) => b.length - a.length);
+  for (const identifier of knownIdentifiers) {
+    result = result.replace(
+      new RegExp(escapeRegExp(identifier), "gi"),
+      "[redacted]"
+    );
+  }
+  return result
     .replace(URL_PATTERN, (url) => resolveOrigin(url) ?? "[url]")
-    .replace(BEARER_PATTERN, "Bearer [redacted]")
+    .replace(BEARER_PATTERN, "$1 [redacted]")
     .replace(JWT_PATTERN, "[redacted]")
-    .replace(SECRET_PARAM_PATTERN, "$1=[redacted]")
+    .replace(SECRET_FIELD_PATTERN, redactSecretField)
+    .replace(DATAFN_DB_NAME_PATTERN, "[database]")
+    .replace(NAMESPACE_ID_PATTERN, "$1:[redacted]")
     .replace(EMAIL_PATTERN, "[email]");
 }
 
-function formatValue(value: string | number | boolean | null | undefined) {
+/**
+ * Lists the current storage namespace and database names, in the forms they
+ * take inside storage error messages, so the report can redact them.
+ */
+export function collectDiagnosticIdentifiers(): string[] {
+  const { namespace, storageDbName } = get(nucleumDatafnStatus);
+  const identifiers: string[] = [];
+  if (storageDbName) identifiers.push(storageDbName);
+  if (namespace) {
+    identifiers.push(namespace, namespace.replace(/:/g, "_"));
+    const id = namespace.slice(namespace.indexOf(":") + 1);
+    if (id !== namespace) identifiers.push(id);
+  }
+  return identifiers;
+}
+
+function formatValue(
+  value: string | number | boolean | null | undefined,
+  identifiers: readonly string[]
+) {
   if (value === undefined || value === null || value === "") return "-";
   const text = sanitizeDiagnosticText(
-    String(value).replace(/\s+/g, " ").trim()
+    String(value).replace(/\s+/g, " ").trim(),
+    identifiers
   );
   return text.length > MAX_VALUE_LENGTH
     ? `${text.slice(0, MAX_VALUE_LENGTH)}...`
@@ -46,17 +106,19 @@ function formatValue(value: string | number | boolean | null | undefined) {
 
 /**
  * Formats diagnostic sections as plain text for pasting into a support
- * conversation. Missing values print as "-" and long values are shortened.
+ * conversation. Every value is sanitized, with `identifiers` redacted as well.
+ * Missing values print as "-" and long values are shortened.
  */
 export function formatDiagnosticReport(
   sections: DiagnosticSection[],
-  generatedAt: Date
+  generatedAt: Date,
+  identifiers: readonly string[] = []
 ): string {
   const lines = [`Diagnostic information (${generatedAt.toISOString()})`];
   for (const section of sections) {
     lines.push("", `## ${section.title}`);
     for (const [key, value] of Object.entries(section.fields)) {
-      lines.push(`${key}: ${formatValue(value)}`);
+      lines.push(`${key}: ${formatValue(value, identifiers)}`);
     }
   }
   return lines.join("\n");
@@ -163,4 +225,20 @@ export function collectDiagnosticSections(
       }
     }
   ];
+}
+
+/**
+ * Builds the plain-text report with the current storage namespace and
+ * database names redacted. It is synchronous so a click handler can write it
+ * to the clipboard within the click's user activation.
+ */
+export function buildDiagnosticReport(
+  storage: string | undefined,
+  generatedAt: Date
+): string {
+  return formatDiagnosticReport(
+    collectDiagnosticSections(storage),
+    generatedAt,
+    collectDiagnosticIdentifiers()
+  );
 }

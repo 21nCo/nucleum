@@ -7,8 +7,7 @@
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { onMount } from "svelte";
   import {
-    collectDiagnosticSections,
-    formatDiagnosticReport,
+    buildDiagnosticReport,
     resolveStorageEstimate
   } from "@nucleum/surfaces/help/diagnostics/diagnostic-report";
 
@@ -33,10 +32,7 @@
   async function copyDiagnostics() {
     isCopyInProgress = true;
     try {
-      const report = formatDiagnosticReport(
-        collectDiagnosticSections(storageEstimate),
-        new Date()
-      );
+      const report = buildDiagnosticReport(storageEstimate, new Date());
       await copyToClipboard(report);
       toasts.success("Diagnostic information copied to the clipboard");
     } catch (error) {

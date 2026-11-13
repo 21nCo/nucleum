@@ -19,11 +19,15 @@ export type DataOperationMessages = {
   failure: string;
 };
 
+const runningOperationIds = new Set<string>();
+
 /**
  * Runs a data settings operation behind a progress toast and replaces it with
  * a success or failure toast. The operation returns false to end silently,
  * for example after it showed its own notice; a thrown error shows the
- * failure toast and is passed to `onError`.
+ * failure toast and is passed to `onError`. Toasts are keyed by `id`, so a
+ * second call with the id of a running operation is ignored and returns false
+ * instead of ending the first operation's progress toast early.
  */
 export async function runWithStatusToast(
   id: string,
@@ -31,6 +35,8 @@ export async function runWithStatusToast(
   operation: () => Promise<boolean | void>,
   onError?: (error: unknown) => void
 ): Promise<boolean> {
+  if (runningOperationIds.has(id)) return false;
+  runningOperationIds.add(id);
   toasts.showProgress(id, messages.progress);
   try {
     const result = await operation();
@@ -44,6 +50,8 @@ export async function runWithStatusToast(
     onError?.(error);
     toasts.error(messages.failure, { closeProgressId: id });
     return false;
+  } finally {
+    runningOperationIds.delete(id);
   }
 }
 

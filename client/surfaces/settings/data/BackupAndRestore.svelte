@@ -50,6 +50,7 @@
   });
 
   async function handleBackup() {
+    if (isBackupInProgress) return;
     if (!$datafnRuntime?.storage) {
       showInfoToast("Local backup is not available in cloud direct mode");
       return;
@@ -82,6 +83,7 @@
     isBackupInProgress = false;
   }
   async function handleDrop(all: File[]) {
+    if (isRestoreInProgress) return;
     if (!$datafnRuntime?.storage) {
       showInfoToast("Restore is not available in cloud direct mode");
       return;
@@ -180,7 +182,13 @@
       isLoading={isBackupInProgress}
       isDisabled={!hasLocalDatafnStorage}
     />
-    <div use:fileDrop={{ accept: "application/json", onDrop: handleDrop }}>
+    <div
+      use:fileDrop={{
+        accept: "application/json",
+        onDrop: handleDrop,
+        disabled: isRestoreInProgress
+      }}
+    >
       <Button
         label="Restore"
         icon="restore"

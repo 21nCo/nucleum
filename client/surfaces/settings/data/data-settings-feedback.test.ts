@@ -61,6 +61,30 @@ describe("runWithStatusToast", () => {
     expect(toasts.success).not.toHaveBeenCalled();
     expect(toasts.error).not.toHaveBeenCalled();
   });
+
+  it("ignores a second run with the same id until the first one ends", async () => {
+    let finishFirst = () => {};
+    const first = runWithStatusToast(
+      "op",
+      messages,
+      () => new Promise<void>((resolve) => (finishFirst = resolve))
+    );
+    const second = vi.fn(async () => {});
+    await expect(runWithStatusToast("op", messages, second)).resolves.toBe(
+      false
+    );
+    expect(second).not.toHaveBeenCalled();
+    expect(toasts.showProgress).toHaveBeenCalledTimes(1);
+    expect(toasts.success).not.toHaveBeenCalled();
+
+    finishFirst();
+    await expect(first).resolves.toBe(true);
+    expect(toasts.success).toHaveBeenCalledTimes(1);
+    await expect(runWithStatusToast("op", messages, second)).resolves.toBe(
+      true
+    );
+    expect(second).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("formatFileToastMessage", () => {

@@ -42,9 +42,12 @@ vi.mock("@nucleum/datafn/datafn.store", async () => {
       online: true,
       pendingChanges: 2,
       lastSyncAt: 0,
-      lastError: { message: "boom" },
-      namespace: "user-secret-namespace",
-      storageDbName: "db-user-secret",
+      lastError: {
+        message:
+          'Failed to open IndexedDB "nucleum-datafn-dev-nucleum_user_01JSECRETID" for user:01JSECRETID: boom'
+      },
+      namespace: "user:01JSECRETID",
+      storageDbName: "nucleum-datafn-dev-nucleum_user_01JSECRETID",
       remoteUrl: "https://account-insouth.example.app/datafn?token=abc"
     })
   };
@@ -55,6 +58,8 @@ vi.mock("@21n/ui/environment/view.store", async () => {
 });
 
 import {
+  buildDiagnosticReport,
+  collectDiagnosticIdentifiers,
   collectDiagnosticSections,
   formatDiagnosticReport,
   resolveOrigin,
@@ -92,18 +97,38 @@ describe("resolveOrigin", () => {
 
 describe("collectDiagnosticSections", () => {
   it("collects app, sync and appearance details without identifiers", () => {
-    const text = formatDiagnosticReport(
-      collectDiagnosticSections("1.0 MB of 10.0 MB"),
-      new Date()
-    );
+    const text = buildDiagnosticReport("1.0 MB of 10.0 MB", new Date());
     expect(text).toContain("storage: 1.0 MB of 10.0 MB");
     expect(text).toContain("version: 1.2.3");
     expect(text).toContain("pendingChanges: 2");
-    expect(text).toContain("lastError: boom");
+    expect(text).toContain(
+      'lastError: Failed to open IndexedDB "[redacted]" for [redacted]: boom'
+    );
     expect(text).toContain("server: https://account-insouth.example.app");
     expect(text).toContain("colorScheme: colorscheme:clean_ember_light");
-    expect(text).not.toContain("user-secret");
+    expect(text).not.toContain("01JSECRETID");
+    expect(text).not.toContain("nucleum-datafn-");
     expect(text).not.toContain("token=abc");
+  });
+
+  it("redacts the runtime namespace and database names in every form", () => {
+    expect(collectDiagnosticIdentifiers()).toEqual([
+      "nucleum-datafn-dev-nucleum_user_01JSECRETID",
+      "user:01JSECRETID",
+      "user_01JSECRETID",
+      "01JSECRETID"
+    ]);
+    const text = formatDiagnosticReport(
+      collectDiagnosticSections(undefined),
+      new Date(),
+      ["ns-custom-value"]
+    );
+    expect(text).toContain("for user:[redacted]: boom");
+    expect(
+      sanitizeDiagnosticText("open ns-custom-value-search failed", [
+        "ns-custom-value"
+      ])
+    ).toBe("open [redacted]-search failed");
   });
 });
 
@@ -116,6 +141,42 @@ describe("sanitizeDiagnosticText", () => {
     expect(text).toBe(
       "Fetch https://a.example.app failed for [email] " +
         "with Bearer [redacted] and [redacted], retry access_token=[redacted]"
+    );
+  });
+
+  it.each([
+    ["token: dummy-secret", "token: [redacted]"],
+    ["Token : dummy-secret", "Token : [redacted]"],
+    [
+      '{"access_token": "a b","refresh_token":"c"}',
+      '{"access_token": "[redacted]","refresh_token":"[redacted]"}'
+    ],
+    [
+      "accessToken=abc123 refreshToken=def",
+      "accessToken=[redacted] refreshToken=[redacted]"
+    ],
+    [
+      "apiKey: k-123, clientSecret='s 1'",
+      "apiKey: [redacted], clientSecret='[redacted]'"
+    ],
+    ["password=hunter2&next=1", "password=[redacted]&next=1"],
+    [
+      "Authorization: Basic dXNlcjpwYXNz",
+      "Authorization: [redacted] [redacted]"
+    ],
+    ["{'sessionId': 'abc'}", "{'sessionId': '[redacted]'}"]
+  ])("redacts secret values in %s", (input, expected) => {
+    expect(sanitizeDiagnosticText(input)).toBe(expected);
+  });
+
+  it("redacts namespaces and DataFn database names it was not given", () => {
+    expect(
+      sanitizeDiagnosticText(
+        'Failed to open IndexedDB "nucleum-datafn-prod-nucleum_guest_dap-123456" (guest:dap-123456)'
+      )
+    ).toBe('Failed to open IndexedDB "[database]" (guest:[redacted])');
+    expect(sanitizeDiagnosticText("status: idle, user: none")).toBe(
+      "status: idle, user: none"
     );
   });
 
