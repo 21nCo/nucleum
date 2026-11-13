@@ -63,9 +63,9 @@ vi.mock("@21n/ui/environment/view.store", async () => {
 
 import {
   DIAGNOSTIC_ERROR_SUMMARIES,
+  MAX_SANITIZED_LENGTH,
   buildDiagnosticReport,
   collectDiagnosticIdentifiers,
-  collectDiagnosticSections,
   formatDiagnosticReport,
   resolveOrigin,
   sanitizeDiagnosticText,
@@ -173,6 +173,48 @@ describe("sanitizeDiagnosticText", () => {
     ["{'sessionId': 'abc'}", "{'sessionId': '[redacted]'}"]
   ])("redacts secret values in %s", (input, expected) => {
     expect(sanitizeDiagnosticText(input)).toBe(expected);
+  });
+
+  it.each([
+    ["a@b@c.example", "a@[email]"],
+    ["x.y+z@mail.example.org, then q@r.io", "[email], then [email]"],
+    ["@handle and a@nodot", "@handle and a@nodot"]
+  ])("redacts email addresses in %s", (input, expected) => {
+    expect(sanitizeDiagnosticText(input)).toBe(expected);
+  });
+
+  const adversarialInputs: [string, string][] = [
+    ["an address-like run", "a".repeat(16_000)],
+    ["a run of dashed words", "a-".repeat(8_000)],
+    ["a run of dotted words", "a.".repeat(8_000)],
+    ["a run of JWT prefixes", "eyJ-".repeat(4_000)],
+    ["a run of at signs", "a@".repeat(8_000)]
+  ];
+
+  it.each(adversarialInputs)(
+    "stays bounded on 16k characters of %s",
+    (_label, input) => {
+      const startedAt = performance.now();
+      const text = sanitizeDiagnosticText(input);
+      expect(performance.now() - startedAt).toBeLessThan(250);
+      expect(text.length).toBeLessThanOrEqual(MAX_SANITIZED_LENGTH + 3);
+    }
+  );
+
+  it("drops long text at a word boundary so no partial secret remains", () => {
+    const filler = "word ".repeat((MAX_SANITIZED_LENGTH - 10) / 5);
+    const text = sanitizeDiagnosticText(
+      `${filler}jane.doe@example.com token=abcdef`
+    );
+    expect(text).toBe(`${filler.trimEnd()}...`);
+    expect(text).not.toContain("jane");
+    expect(sanitizeDiagnosticText("x".repeat(20_000))).toBe("...");
+  });
+
+  it("redacts a quoted secret value cut off before its closing quote", () => {
+    expect(sanitizeDiagnosticText('{"password": "half-a-secr')).toBe(
+      '{"password": "[redacted]"'
+    );
   });
 
   it("redacts namespaces and DataFn database names it was not given", () => {
@@ -299,6 +341,22 @@ describe("summarizeDiagnosticPath", () => {
     expect(summarizeDiagnosticPath("/settings", actions)).toBe("/settings");
     expect(summarizeDiagnosticPath("/", actions)).toBe("/");
     expect(summarizeDiagnosticPath(undefined, actions)).toBeUndefined();
+  });
+
+  it("trims slashes in bounded time on 16k characters", () => {
+    for (const input of [
+      `/${"/".repeat(16_000)}a`,
+      `a${"/".repeat(16_000)}a`,
+      "/".repeat(16_000)
+    ]) {
+      const startedAt = performance.now();
+      summarizeDiagnosticPath(input, actions);
+      expect(performance.now() - startedAt).toBeLessThan(250);
+    }
+    expect(summarizeDiagnosticPath("///settings///", actions)).toBe(
+      "/settings"
+    );
+    expect(summarizeDiagnosticPath("/".repeat(16_000), actions)).toBe("/");
   });
 
   it("does not echo paths that match no page", () => {

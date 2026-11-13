@@ -14,9 +14,17 @@ export type DiagnosticSection = {
 };
 
 const MAX_VALUE_LENGTH = 300;
+/**
+ * Sanitizing reads at most this many characters, so its patterns run in
+ * bounded time on adversarial input. Longer text is cut at a word boundary,
+ * which keeps a partial secret or address from reaching the report.
+ */
+export const MAX_SANITIZED_LENGTH = 1000;
 
 const URL_PATTERN = /\b[a-z][a-z\d+.-]*:\/\/[^\s"'<>()]+/gi;
-const EMAIL_PATTERN = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+const EMAIL_LOCAL_CHAR = /[\w.+-]/;
+/** Sticky, so it matches the domain right after an "@" and nowhere else. */
+const EMAIL_DOMAIN_PATTERN = /[\w-]+(?:\.[\w-]+)+/y;
 const BEARER_PATTERN = /\b(Bearer|Basic)\s+[^\s"',;]+/gi;
 const JWT_PATTERN = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
 /**
@@ -25,7 +33,7 @@ const JWT_PATTERN = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
  * case and inside camelCase or snake_case names (`accessToken`, `api_key`).
  */
 const SECRET_FIELD_PATTERN =
-  /(["']?)\b([\w-]*?(?:token|secret|password|passwd|pwd|api[_-]?key|apikey|private[_-]?key|authorization|cookie|credentials?|session[_-]?id|signature|key))\1(\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s"',;&}\]]+)/gi;
+  /(["']?)\b([\w-]*?(?:token|secret|password|passwd|pwd|api[_-]?key|apikey|private[_-]?key|authorization|cookie|credentials?|session[_-]?id|signature|key))\1(\s*[:=]\s*)("[^"]*(?:"|$)|'[^']*(?:'|$)|[^\s"',;&}\]]+)/gi;
 /** Namespaced account or guest ids and the DataFn database names built from them. */
 const NAMESPACE_ID_PATTERN = /(?<![A-Za-z\d])(user|guest)[:_][\w-]{6,}/gi;
 const DATAFN_DB_NAME_PATTERN = /\bnucleum-datafn-[\w-]+/gi;
@@ -47,17 +55,47 @@ function redactSecretField(
 }
 
 /**
+ * Replaces email addresses in one linear pass: each "@" anchors the match,
+ * and the local part is read backwards only up to the previous match.
+ */
+function redactEmails(text: string): string {
+  let result = "";
+  let copied = 0;
+  let at = text.indexOf("@");
+  while (at !== -1) {
+    let start = at;
+    while (start > copied && EMAIL_LOCAL_CHAR.test(text[start - 1])) start--;
+    EMAIL_DOMAIN_PATTERN.lastIndex = at + 1;
+    const domain = start < at ? EMAIL_DOMAIN_PATTERN.exec(text) : null;
+    if (domain) {
+      result += `${text.slice(copied, start)}[email]`;
+      copied = at + 1 + domain[0].length;
+    }
+    at = text.indexOf("@", domain ? copied : at + 1);
+  }
+  return result + text.slice(copied);
+}
+
+/** Cuts text longer than {@link MAX_SANITIZED_LENGTH} at its last space. */
+function boundSanitizedInput(text: string): string {
+  if (text.length <= MAX_SANITIZED_LENGTH) return text;
+  const cut = text.slice(0, MAX_SANITIZED_LENGTH);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(" "), 0))}...`;
+}
+
+/**
  * Defence in depth for report values: free-text sources are summarized
  * before they reach the report, and this still removes account identity and
  * secrets from any text that remains: URLs keep only their origin, and email addresses, bearer and
  * basic credentials, JWTs, secret-like key values, storage namespaces,
- * DataFn database names and the given identifiers are replaced.
+ * DataFn database names and the given identifiers are replaced. Text past
+ * {@link MAX_SANITIZED_LENGTH} characters is dropped first.
  */
 export function sanitizeDiagnosticText(
   text: string,
   identifiers: readonly string[] = []
 ): string {
-  let result = text;
+  let result = boundSanitizedInput(text);
   const knownIdentifiers = [...new Set(identifiers)]
     .filter((identifier) => identifier.length >= MIN_IDENTIFIER_LENGTH)
     .sort((a, b) => b.length - a.length);
@@ -67,14 +105,15 @@ export function sanitizeDiagnosticText(
       "[redacted]"
     );
   }
-  return result
-    .replace(URL_PATTERN, (url) => resolveOrigin(url) ?? "[url]")
-    .replace(BEARER_PATTERN, "$1 [redacted]")
-    .replace(JWT_PATTERN, "[redacted]")
-    .replace(SECRET_FIELD_PATTERN, redactSecretField)
-    .replace(DATAFN_DB_NAME_PATTERN, "[database]")
-    .replace(NAMESPACE_ID_PATTERN, "$1:[redacted]")
-    .replace(EMAIL_PATTERN, "[email]");
+  return redactEmails(
+    result
+      .replace(URL_PATTERN, (url) => resolveOrigin(url) ?? "[url]")
+      .replace(BEARER_PATTERN, "$1 [redacted]")
+      .replace(JWT_PATTERN, "[redacted]")
+      .replace(SECRET_FIELD_PATTERN, redactSecretField)
+      .replace(DATAFN_DB_NAME_PATTERN, "[database]")
+      .replace(NAMESPACE_ID_PATTERN, "$1:[redacted]")
+  );
 }
 
 /**
@@ -183,6 +222,14 @@ export function summarizeDiagnosticError(
   return "unknown error";
 }
 
+function trimSlashes(path: string): string {
+  let start = 0;
+  let end = path.length;
+  while (start < end && path[start] === "/") start++;
+  while (end > start && path[end - 1] === "/") end--;
+  return path.slice(start, end);
+}
+
 /**
  * Reduces a URL path to the code-owned route of the page it opens, so record
  * ids, slugs and other user-chosen segments never reach the report. Extra
@@ -193,7 +240,7 @@ export function summarizeDiagnosticPath(
   actions: IAction[] | undefined
 ): string | undefined {
   if (pathname === undefined) return undefined;
-  const path = pathname.replace(/^\/+|\/+$/g, "");
+  const path = trimSlashes(pathname);
   if (!path) return "/";
   const route = resolvePageRoute(actions ?? [], path);
   if (!route) return "[unrecognized route]";
