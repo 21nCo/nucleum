@@ -10,6 +10,12 @@
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   import ComponentEmbedLayer from "@nucleum/shell/layers/ComponentEmbedLayer.svelte";
+  let {
+    isModal = false
+  }: {
+    /** Set by the modal layer when Settings is hosted in a modal. */
+    isModal?: boolean;
+  } = $props();
   const ComponentResolver = requireActionRenderer();
   const route = $derived($page.url.searchParams.get(AppSearchParam.SETTING));
   const backPath = $derived(
@@ -35,6 +41,6 @@
     {/if}
   </SettingsAsPageLayout>
 {:else}
-  <SettingsAsModal />
+  <SettingsAsModal {isModal} />
 {/if}
 <ComponentEmbedLayer isBackNavigable={true} />
