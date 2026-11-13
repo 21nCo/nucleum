@@ -1,0 +1,31 @@
+apps/e2e-playwright/tests/shared/toasts.spec.ts
+  s_b66d0e9dd4fae0::t_41b9736de519ac 120-160
+client/shell/modal/Modal.svelte
+  s_b66d0e9dd4fae0::t_ea56f7613b4e04 30,122-131
+client/shell/overlays/ModalLayer.svelte
+  s_b66d0e9dd4fae0::t_4722ab536947d8 43,253-259,263
+client/shell/overlays/raised-toasts.drawer.test.ts
+  s_b66d0e9dd4fae0::t_33dd7d501568f3 1-98
+client/shell/overlays/raised-toasts.ts
+  s_b66d0e9dd4fae0::t_1f7a2a36f5d790 9-14
+client/shell/topNav/TopNavToasts.svelte
+  s_b66d0e9dd4fae0::t_55635bdea7b966 13,17-18,27,34-54,68,75-80
+client/shell/topNav/TopNavToasts.test.ts
+  s_b66d0e9dd4fae0::t_1ad36ad570fd12 1-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "81ff0cf104e476d24f7a3832a716a4b255c51722",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

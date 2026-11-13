@@ -1,0 +1,138 @@
+apps/e2e-playwright/tests/focus/active-session/session-finished-modal.spec.ts
+  h_a39f9495f9ec1d 1-86
+apps/e2e-playwright/tests/shared/settings/settings.spec.ts
+  h_a39f9495f9ec1d 149,158-162,171,173-175,178-186,189-190,193-195,197-207,209-210,415,421,435,449,460,470,483,503,513,520,530,620,629,644-646,770,780,784,789,805,814,816,866,868,882-883,904,906,915,924,930,944,953,958,970,979,984,991,998,1005,1022,1027,1040,1066,1071
+client/composition/chrome/WiredTopNav.svelte
+  h_a39f9495f9ec1d 37
+client/composition/layers/UserLayout.svelte
+  h_a39f9495f9ec1d 6,59-61
+client/features/collections/properties/propertyConfig/selectProperty/SelectOptionsEditor.svelte
+  h_a39f9495f9ec1d 52,112-116,118,218
+client/features/focus/session-close.test.ts
+  h_a39f9495f9ec1d 1-292
+client/features/focus/session.store.ts
+  h_a39f9495f9ec1d 51,62-65,685-702,704-710,746-748,760-775,900,915,920,1370,1386-1387,1400
+client/products/memotron/base/MemoryBase.svelte
+  h_a39f9495f9ec1d 12,14-17,19,42,53
+client/shared-state/app-context/app.store.ts
+  h_a39f9495f9ec1d 143
+client/shared-state/preferences/ui-state/uiState.type.ts
+  h_a39f9495f9ec1d 47-51
+client/shell/layers/themeLayer/ThemeLayer.svelte
+  h_a39f9495f9ec1d 10,282,298-351
+client/shell/layers/themeLayer/fonts.config.ts
+  h_a39f9495f9ec1d 41-42
+client/shell/leftPanel/LeftNav.svelte
+  h_a39f9495f9ec1d 24
+client/shell/leftPanel/LeftNavFixed.svelte
+  h_a39f9495f9ec1d 77,89
+client/shell/leftPanel/appMenuSwitcher/AppMenuPinnedSpaces.svelte
+  h_a39f9495f9ec1d 169-174,189-192
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte
+  h_a39f9495f9ec1d 19-22,287-289
+client/shell/modal/Modal.svelte
+  h_a39f9495f9ec1d 1-5,11-14,29,105-265,297,299-305,307-316
+client/shell/modal/Modal.test.ts
+  h_a39f9495f9ec1d 1-379
+client/shell/modal/ModalLayout.svelte
+  h_a39f9495f9ec1d 45-47,128,151-152,155
+client/shell/navigation/NavigationLayout.svelte
+  h_a39f9495f9ec1d 150-152
+client/shell/navigation/navigation.ts
+  h_a39f9495f9ec1d 727
+client/shell/overlays/ModalLayer.svelte
+  h_a39f9495f9ec1d 30,51-58,154-155,158,212
+client/shell/overlays/ModalLayer.test.ts
+  h_a39f9495f9ec1d 1-75
+client/shell/paint/Panel.svelte
+  h_a39f9495f9ec1d 72
+client/shell/shortcuts/ShortcutRunner.svelte
+  h_a39f9495f9ec1d 7,37-38,43
+client/shell/shortcuts/ShortcutRunner.test.ts
+  h_a39f9495f9ec1d 1-81
+client/shell/sync/InlineSyncingFeedback.svelte
+  h_a39f9495f9ec1d 5-6,23-27,29
+client/shell/sync/sync-visibility.test.ts
+  h_a39f9495f9ec1d 2-96,98-103
+client/shell/sync/sync-visibility.ts
+  h_a39f9495f9ec1d 1-63
+client/shell/topNav/NavigatorPill.svelte
+  h_a39f9495f9ec1d 102
+client/shell/topNav/TopNav.svelte
+  h_a39f9495f9ec1d 289,292,328-329,445
+client/shell/topNav/TopNavLeftLogo.svelte
+  h_a39f9495f9ec1d 64
+client/shell/topNav/TopNavLeftMenuItem.svelte
+  h_a39f9495f9ec1d 127,160
+client/surfaces/account/profile/ProfilePicture.svelte
+  h_a39f9495f9ec1d 113
+client/surfaces/commandBar/CommandBar.svelte
+  h_a39f9495f9ec1d 56,149-150,176,221,249,264
+client/surfaces/commands/action-runner.ts
+  h_a39f9495f9ec1d 155-157
+client/surfaces/settings/SettingsAsModal.svelte
+  h_a39f9495f9ec1d 22-31,47-103,109,176
+client/surfaces/settings/SettingsAsModal.test.ts
+  h_a39f9495f9ec1d 1-260
+client/surfaces/settings/appearance/AppearanceSettings.svelte
+  h_a39f9495f9ec1d 18-20,150-152
+client/surfaces/settings/appearance/InterfaceSettings.svelte
+  h_a39f9495f9ec1d 3-4,12-13,18-22,31-34,36-86,88
+client/surfaces/settings/appearance/TypefaceSelector.svelte
+  h_a39f9495f9ec1d 73
+client/surfaces/settings/asPage/SettingsAsPage.svelte
+  h_a39f9495f9ec1d 13-18,44
+client/surfaces/settings/settings-actions.ts
+  h_a39f9495f9ec1d 2,51-52
+client/surfaces/settings/shortcuts/ShortcutSettings.svelte
+  h_a39f9495f9ec1d 17
+client/theme/appearance.type.ts
+  h_a39f9495f9ec1d 20-24
+client/theme/colorschemes.json
+  h_a39f9495f9ec1d 557-692
+client/theme/frame-palette.js
+  h_a39f9495f9ec1d 1-73
+client/theme/frame-palette.test.ts
+  h_a39f9495f9ec1d 1-114
+client/theme/tidigit.tailwind.js
+  h_a39f9495f9ec1d 7-8,30-34,39,44-55,278-279,331-333
+client/ui/actions/focus-trap.action.ts
+  h_a39f9495f9ec1d 11-12
+client/ui/actions/interaction-dom.ts
+  h_a39f9495f9ec1d 49-58
+client/ui/elements/modal/ModalHeader.svelte
+  h_a39f9495f9ec1d 10,15-16,37-38
+docs/architecture/type-ownership-inventory.json
+  h_a39f9495f9ec1d 7692-7693,7695
+schema/features.ts
+  h_a39f9495f9ec1d 134-139,157-159
+schema/file-record.datafn.test.ts
+  h_a39f9495f9ec1d 1-193
+services/account/drizzle/datafn/0003_file_filefn_fields.sql
+  h_a39f9495f9ec1d 1-2
+services/account/drizzle/datafn/meta/0003_snapshot.json
+  h_a39f9495f9ec1d 1-6173
+services/account/drizzle/datafn/meta/_journal.json
+  h_a39f9495f9ec1d 25-31
+services/account/src/db/generated/datafn/datafn-schema.drizzle.ts
+  h_a39f9495f9ec1d 139,146
+services/account/src/db/generated/datafn/datafn-types.ts
+  h_a39f9495f9ec1d 89,96
+tests/fixtures/components/RightDrawerHarness.svelte
+  h_a39f9495f9ec1d 1-23
+tests/fixtures/components/SettingThumbnailStub.svelte
+  h_a39f9495f9ec1d 1-2,5-6
+tools/check/type-ownership.mjs
+  h_a39f9495f9ec1d 45-53,258
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fb8c2cc0bf06f045536bca9ed640ed8034b30f4d",
+  "prompts": {},
+  "humans": {
+    "h_a39f9495f9ec1d": {
+      "author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

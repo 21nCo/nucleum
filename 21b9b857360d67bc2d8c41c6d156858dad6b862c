@@ -1,0 +1,79 @@
+.github/workflows/account-service-deploy.yml
+  s_ce12272281eb3b::t_44734dbfc67b72 130-142,145-147
+.github/workflows/debug-sink-deploy.yml
+  s_ce12272281eb3b::t_aa605b2b6b50c9 1-70
+.github/workflows/frontend-cloudflare-deploy.yml
+  s_ce12272281eb3b::t_887d2fe7024d05 123-135,138-139
+.github/workflows/frontend-cloudflare-routes.yml
+  s_ce12272281eb3b::t_df4031df093b3d 52-54,57
+.github/workflows/tests-weekly.yml
+  s_ce12272281eb3b::t_838ff48abc92d2 100
+.github/workflows/tests.yml
+  s_ce12272281eb3b::t_cf5e6840479253 125,188
+apps/e2e-playwright/scripts/save-google-auth-state.ts
+  s_ce12272281eb3b::t_4ad872c8a182e5 30-32,52-57
+client/application/network/index.test.ts
+  s_ce12272281eb3b::t_5c6be3aa0a1854 35,37-65
+client/runtime/account/network.ts
+  s_ce12272281eb3b::t_d85668022b657c 1-7,46-50,123-125,155,227-245
+ios/memotron/Memotron.xcodeproj/project.pbxproj
+  s_ce12272281eb3b::t_89cf0f24679520 556,622,680,730,780,822,864,930,988,1054,1360,1410,1460,1510,1760,1802,1844,1886
+ios/memotron/Memotron/local/LocalConfig.swift
+  s_ce12272281eb3b::t_c41618b5f3f2ef 20,31-37,47,58-60
+ios/nucleum/Nucleum.xcodeproj/project.pbxproj
+  s_ce12272281eb3b::t_e966c5f13d674c 556,622,680,730,780,822,864,930,988,1054,1360,1410,1460,1510,1760,1802,1844,1886
+ios/nucleum/Nucleum/local/LocalConfig.swift
+  s_ce12272281eb3b::t_ecf2e53549bbea 20,31-37,47,58-60
+ios/pointron/Pointron.xcodeproj/project.pbxproj
+  s_ce12272281eb3b::t_10618ab709e8c1 718,753,789,826,863,929,987,1038,1089,1124,1160,1195,1373,1410,1447,1484,1669,1735,1793,1859,2165,2216,2267,2318
+ios/pointron/Pointron/local/LocalConfig.swift
+  s_ce12272281eb3b::t_7aa31454a44dd1 21,32-38,48,59-61
+services/account/README.md
+  s_ce12272281eb3b::t_6efd389a220c72 9-25,102,114-115,120-124,127-128,137,237,271-273,276,287,289-295,387-394
+services/account/config/environments.json
+  s_ce12272281eb3b::t_dc64148952717f 67,72-74,78-79,83-84,88-89,97-103,106,111-113,117-118,122-123,127-128
+services/account/scripts/cloudflare-sync.mjs
+  s_ce12272281eb3b::t_e49064ea2729b4 24,29-32
+services/account/scripts/deploy.mjs
+  s_ce12272281eb3b::t_1341adbed199c9 5,31-40
+services/account/scripts/dev-multiregion.mjs
+  s_ce12272281eb3b::t_14337f16ec7d94 5,28-34
+services/account/scripts/sync-routes.mjs
+  s_ce12272281eb3b::t_2828115442912e 34
+services/account/scripts/sync-secrets-store.mjs
+  s_ce12272281eb3b::t_72fed7c5e96167 5,26-33,45,67,76
+services/account/scripts/sync-waf-exceptions.mjs
+  s_ce12272281eb3b::t_f39a5599e835ea 50,88,92,94
+services/account/scripts/wrangler-config.mjs
+  s_ce12272281eb3b::t_6f403dcd3f0178 56-58,133-134,164,168,191,227-249,251,281,289-312,323-330,335-342
+services/debug-sink/README.md
+  s_ce12272281eb3b::t_415a8607676156 30-35,52
+services/debug-sink/wrangler.toml
+  s_ce12272281eb3b::t_eb57b0d1cb56b3 6,11
+services/frontend/README.md
+  s_ce12272281eb3b::t_23ebaa1efced78 13,25,63-67
+services/frontend/config/environments.json
+  s_ce12272281eb3b::t_c408a1349b86d8 79-83,86,89
+services/frontend/scripts/frontend-config.mjs
+  s_ce12272281eb3b::t_24892f81fc21bb 55-57,61-73,81-83,95,99-100,105,114-115
+services/frontend/scripts/sync-routes.mjs
+  s_ce12272281eb3b::t_5d85982fdeebb4 34,82,86-88
+services/frontend/scripts/sync-waf-exceptions.mjs
+  s_ce12272281eb3b::t_e23cbfc1c585f9 46,140,144-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "21b9b857360d67bc2d8c41c6d156858dad6b862c",
+  "prompts": {},
+  "sessions": {
+    "s_ce12272281eb3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d2376f8-4af3-4920-96da-dff6a042ab4c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

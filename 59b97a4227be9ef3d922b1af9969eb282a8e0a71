@@ -1,0 +1,21 @@
+.circleci/config.yml
+  s_fc1e5ad5b6d4c0::t_6862a023ed6add 58-59
+package.json
+  s_fc1e5ad5b6d4c0::t_dd462a3485f48a 69-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "59b97a4227be9ef3d922b1af9969eb282a8e0a71",
+  "prompts": {},
+  "sessions": {
+    "s_fc1e5ad5b6d4c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35f3409b-369e-4783-b998-c6a953fd6b02",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

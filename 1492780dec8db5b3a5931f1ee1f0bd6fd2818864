@@ -1,0 +1,19 @@
+apps/e2e-playwright/tests/memotron/overview.spec.ts
+  s_fc1e5ad5b6d4c0::t_dbcc87e80cbaed 2-3,22-26,28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1492780dec8db5b3a5931f1ee1f0bd6fd2818864",
+  "prompts": {},
+  "sessions": {
+    "s_fc1e5ad5b6d4c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "35f3409b-369e-4783-b998-c6a953fd6b02",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+services/account/scripts/deploy.mjs
+  s_ce12272281eb3b::t_de2e73e44506a9 77-79,82-83
+.github/workflows/account-service-deploy.yml
+  s_ce12272281eb3b::t_de2e73e44506a9 160-162
+services/account/README.md
+  s_ce12272281eb3b::t_de2e73e44506a9 63-77
+services/account/drizzle.datafn.config.ts
+  s_ce12272281eb3b::t_de2e73e44506a9 3,12-13,21-22,26-31,33-40,47
+services/account/src/db/postgres-security.ts
+  s_ce12272281eb3b::t_de2e73e44506a9 39-43,45,47-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a3db9456070dbf1bbbf6a005833dae8e805fe284",
+  "prompts": {},
+  "sessions": {
+    "s_ce12272281eb3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d2376f8-4af3-4920-96da-dff6a042ab4c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
