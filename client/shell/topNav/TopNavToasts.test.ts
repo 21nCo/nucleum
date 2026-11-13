@@ -87,10 +87,10 @@ describe("TopNavToasts keyboard focus", () => {
     const close = getByTestId("top-bar-toast-dismiss");
     expect(close.className).toContain("opacity-0");
 
-    getByTestId("top-bar-toast-count").focus();
     await fireEvent.click(getByTestId("top-bar-toast-count"));
     await flush();
     expect(getByTestId("top-bar-toast-list")).toBeTruthy();
+    expect(document.activeElement).toBe(document.body);
     expect(close.className).not.toContain("opacity-0");
 
     await fireEvent.click(close);

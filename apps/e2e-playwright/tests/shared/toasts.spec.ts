@@ -45,13 +45,10 @@ async function tabUntilFocused(page: Page, target: Locator, maxPresses = 80) {
 }
 
 /**
- * Copies two node links, carries their toasts into Settings and the
- * Appearance drawer, and opens the raised toast list there.
+ * Copies two node links and carries their toasts, hovered so they stay, into
+ * Settings and the Appearance drawer.
  */
-async function openRaisedListBesideDrawer(
-  page: Page,
-  nodeIds: [string, string]
-) {
+async function carryTwoToastsIntoDrawer(page: Page, nodeIds: [string, string]) {
   await copyNodeLink(page, nodeIds[0]);
   await copyNodeLink(page, nodeIds[1]);
   const topBarCount = page
@@ -63,7 +60,17 @@ async function openRaisedListBesideDrawer(
   await openSettings(page);
   const raised = page.getByTestId("modal-raised-toasts");
   await raised.getByTestId("top-bar-toast-count").hover();
-  await openAppearanceDrawer(page);
+  const drawer = await openAppearanceDrawer(page);
+  await raised.getByTestId("top-bar-toast-count").hover();
+  return { raised, drawer };
+}
+
+/** Carries two toasts into the Appearance drawer and opens their list. */
+async function openRaisedListBesideDrawer(
+  page: Page,
+  nodeIds: [string, string]
+) {
+  const { raised } = await carryTwoToastsIntoDrawer(page, nodeIds);
   await raised.getByTestId("top-bar-toast-count").click();
   const list = raised.getByTestId("top-bar-toast-list");
   await expect(list).toBeVisible();
@@ -79,6 +86,18 @@ async function openAppearanceDrawer(page: Page) {
   const drawer = page.getByTestId("modal-appearance-settings");
   await expect(drawer).toBeVisible({ timeout: 10_000 });
   return drawer;
+}
+
+/** Selects `style` in the Appearance drawer, opening Settings if needed. */
+async function selectAppStyle(page: Page, style: string) {
+  const drawer = page.getByTestId("modal-appearance-settings");
+  if (!(await drawer.isVisible())) {
+    await openSettings(page);
+    await openAppearanceDrawer(page);
+  }
+  const option = drawer.locator(`[data-app-style-option="${style}"]`);
+  await option.click();
+  await expect(option).toHaveAttribute("aria-pressed", "true");
 }
 
 /** Asserts the expanded list lies fully on screen and left of the drawer. */
@@ -225,12 +244,7 @@ test.describe("toasts", () => {
     await openSettings(page);
     const raised = page.getByTestId("modal-raised-toasts");
     await raised.getByTestId("top-bar-toast-latest").hover();
-    await page
-      .getByTestId("settings-sidebar")
-      .getByRole("button", { name: /^Appearance$/i })
-      .click({ timeout: 5_000 });
-    const drawer = page.getByTestId("modal-appearance-settings");
-    await expect(drawer).toBeVisible({ timeout: 10_000 });
+    const drawer = await openAppearanceDrawer(page);
     const latest = raised.getByTestId("top-bar-toast-latest");
     await latest.hover();
     await expect(latest).toContainText(/link copied/i);
@@ -260,25 +274,11 @@ test.describe("toasts", () => {
       label: `E2E toast keys second ${Date.now()}`
     });
     await openNodesLibrary(page);
-    await copyNodeLink(page, first.id);
-    await copyNodeLink(page, second.id);
-    const topBarCount = page
-      .getByTestId("top-bar-toasts")
-      .getByTestId("top-bar-toast-count");
-    await expect(topBarCount).toHaveText("2");
-    await topBarCount.hover();
-
-    await openSettings(page);
-    const raised = page.getByTestId("modal-raised-toasts");
-    await raised.getByTestId("top-bar-toast-count").hover();
-    await page
-      .getByTestId("settings-sidebar")
-      .getByRole("button", { name: /^Appearance$/i })
-      .click({ timeout: 5_000 });
-    const drawer = page.getByTestId("modal-appearance-settings");
-    await expect(drawer).toBeVisible({ timeout: 10_000 });
+    const { raised, drawer } = await carryTwoToastsIntoDrawer(page, [
+      first.id,
+      second.id
+    ]);
     const count = raised.getByTestId("top-bar-toast-count");
-    await count.hover();
 
     await tabUntilFocused(page, count);
     await expect(count).toBeFocused();
@@ -344,25 +344,39 @@ test.describe("toasts", () => {
 
     await openSettings(page);
     const drawer = await openAppearanceDrawer(page);
-    await drawer.locator('[data-app-style-option="rounded"]').click();
-    await expect(page.locator('[data-app-style="rounded"]')).not.toHaveCount(0);
-    await expect(async () => {
-      await page.keyboard.press("Escape");
-      await expect(page.getByTestId("settings-sidebar")).toBeHidden({
-        timeout: 1_000
-      });
-    }, "Escape closes the drawer and Settings").toPass({ timeout: 10_000 });
+    const originalStyle = await drawer
+      .locator('[data-app-style-option][aria-pressed="true"]')
+      .getAttribute("data-app-style-option");
+    expect(originalStyle).toBeTruthy();
+    await selectAppStyle(page, "rounded");
+    try {
+      await expect(page.locator('[data-app-style="rounded"]')).not.toHaveCount(
+        0
+      );
+      await expect(async () => {
+        await page.keyboard.press("Escape");
+        await expect(page.getByTestId("settings-sidebar")).toBeHidden({
+          timeout: 1_000
+        });
+      }, "Escape closes the drawer and Settings").toPass({ timeout: 10_000 });
 
-    const first = await e2eSeed.memory.node({
-      label: `E2E toast framed first ${Date.now()}`
-    });
-    const second = await e2eSeed.memory.node({
-      label: `E2E toast framed second ${Date.now()}`
-    });
-    await openNodesLibrary(page);
-    const list = await openRaisedListBesideDrawer(page, [first.id, second.id]);
-    await page.setViewportSize({ width: 801, height: 600 });
-    await expect(list).toBeVisible();
-    await expectListBesideDrawer(page, list);
+      const first = await e2eSeed.memory.node({
+        label: `E2E toast framed first ${Date.now()}`
+      });
+      const second = await e2eSeed.memory.node({
+        label: `E2E toast framed second ${Date.now()}`
+      });
+      await openNodesLibrary(page);
+      const list = await openRaisedListBesideDrawer(page, [
+        first.id,
+        second.id
+      ]);
+      await page.setViewportSize({ width: 801, height: 600 });
+      await expect(list).toBeVisible();
+      await expectListBesideDrawer(page, list);
+    } finally {
+      await page.setViewportSize({ width: 1024, height: 800 });
+      await selectAppStyle(page, originalStyle!);
+    }
   });
 });
