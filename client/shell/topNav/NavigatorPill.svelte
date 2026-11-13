@@ -99,7 +99,7 @@
       >
       {#if trailCount > 0}
         <span
-          class="px-1.5 py-0.5 rounded-sm bg-aps3 text-b4 font-semibold text-aps1"
+          class="px-1.5 py-0.5 rounded-sm bg-aps3 text-b4 font-semibold text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]"
           aria-hidden="true">{trailCount}</span
         >
       {/if}

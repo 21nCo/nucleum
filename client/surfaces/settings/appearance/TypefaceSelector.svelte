@@ -70,6 +70,7 @@
       value: "Twenty One Native",
       badge: "Default"
     },
+    { label: "Urbanist", value: "Urbanist" },
     { label: "Varela", value: "Varela" },
     { label: "Varela Round", value: "Varela Round" }
   ];
