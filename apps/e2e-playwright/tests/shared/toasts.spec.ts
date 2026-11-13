@@ -100,6 +100,37 @@ async function selectAppStyle(page: Page, style: string) {
   await expect(option).toHaveAttribute("aria-pressed", "true");
 }
 
+/** Gives the scenario two minutes and enters the app at `viewport`. */
+async function enterApp(page: Page, viewport = { width: 1024, height: 800 }) {
+  test.setTimeout(120_000);
+  await page.setViewportSize(viewport);
+  await ensureInAppOnHome(page);
+}
+
+/** Seeds `count` labelled nodes and opens the Nodes library on them. */
+async function seedNodesInLibrary(page: Page, scenario: string, count = 2) {
+  const ids: string[] = [];
+  for (let index = 1; index <= count; index++) {
+    const node = await e2eSeed.memory.node({
+      label: `E2E toast ${scenario} ${index} ${Date.now()}`
+    });
+    ids.push(node.id);
+  }
+  await openNodesLibrary(page);
+  return ids;
+}
+
+/** Resizes to `viewport` and asserts the open list stays beside the drawer. */
+async function expectListBesideDrawerAt(
+  page: Page,
+  list: Locator,
+  viewport: { width: number; height: number }
+) {
+  await page.setViewportSize(viewport);
+  await expect(list).toBeVisible();
+  await expectListBesideDrawer(page, list);
+}
+
 /** Asserts the expanded list lies fully on screen and left of the drawer. */
 async function expectListBesideDrawer(page: Page, list: Locator) {
   await expect(async () => {
@@ -138,20 +169,11 @@ test.describe("toasts", () => {
   test("toasts stay above an open modal, pause on hover and open the list on click", async ({
     page
   }) => {
-    test.setTimeout(120_000);
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await ensureInAppOnHome(page);
+    await enterApp(page, { width: 1440, height: 900 });
+    const [firstId, secondId] = await seedNodesInLibrary(page, "modal");
 
-    const first = await e2eSeed.memory.node({
-      label: `E2E toast first ${Date.now()}`
-    });
-    const second = await e2eSeed.memory.node({
-      label: `E2E toast second ${Date.now()}`
-    });
-    await openNodesLibrary(page);
-
-    await copyNodeLink(page, first.id);
-    await copyNodeLink(page, second.id);
+    await copyNodeLink(page, firstId);
+    await copyNodeLink(page, secondId);
 
     const topBarToasts = page.getByTestId("top-bar-toasts");
     await expect(topBarToasts.getByTestId("top-bar-toast-count")).toHaveText(
@@ -214,7 +236,7 @@ test.describe("toasts", () => {
     await page.getByTestId("modal-close").first().click();
     await expect(page.getByTestId("settings-sidebar")).toBeHidden();
 
-    await copyNodeLink(page, first.id);
+    await copyNodeLink(page, firstId);
     const latest = page
       .getByTestId("top-bar-toasts")
       .getByTestId("top-bar-toast-latest");
@@ -227,15 +249,9 @@ test.describe("toasts", () => {
   test("raised toasts sit beside the Appearance drawer and stay usable over it", async ({
     page
   }) => {
-    test.setTimeout(120_000);
-    await page.setViewportSize({ width: 1024, height: 800 });
-    await ensureInAppOnHome(page);
-
-    const node = await e2eSeed.memory.node({
-      label: `E2E toast drawer ${Date.now()}`
-    });
-    await openNodesLibrary(page);
-    await copyNodeLink(page, node.id);
+    await enterApp(page);
+    const [nodeId] = await seedNodesInLibrary(page, "drawer", 1);
+    await copyNodeLink(page, nodeId);
     await page
       .getByTestId("top-bar-toasts")
       .getByTestId("top-bar-toast-latest")
@@ -263,20 +279,11 @@ test.describe("toasts", () => {
   test("raised toasts over the Appearance drawer work from the keyboard", async ({
     page
   }) => {
-    test.setTimeout(120_000);
-    await page.setViewportSize({ width: 1024, height: 800 });
-    await ensureInAppOnHome(page);
-
-    const first = await e2eSeed.memory.node({
-      label: `E2E toast keys first ${Date.now()}`
-    });
-    const second = await e2eSeed.memory.node({
-      label: `E2E toast keys second ${Date.now()}`
-    });
-    await openNodesLibrary(page);
+    await enterApp(page);
+    const [firstId, secondId] = await seedNodesInLibrary(page, "keys");
     const { raised, drawer } = await carryTwoToastsIntoDrawer(page, [
-      first.id,
-      second.id
+      firstId,
+      secondId
     ]);
     const count = raised.getByTestId("top-bar-toast-count");
 
@@ -314,33 +321,17 @@ test.describe("toasts", () => {
   test("the raised toast list stays on screen beside the Appearance drawer", async ({
     page
   }) => {
-    test.setTimeout(120_000);
-    await page.setViewportSize({ width: 1024, height: 800 });
-    await ensureInAppOnHome(page);
-
-    const first = await e2eSeed.memory.node({
-      label: `E2E toast bounds first ${Date.now()}`
-    });
-    const second = await e2eSeed.memory.node({
-      label: `E2E toast bounds second ${Date.now()}`
-    });
-    await openNodesLibrary(page);
-    const list = await openRaisedListBesideDrawer(page, [first.id, second.id]);
-    await page.setViewportSize({ width: 801, height: 600 });
-    await expect(list).toBeVisible();
-    await expectListBesideDrawer(page, list);
-
-    await page.setViewportSize({ width: 2200, height: 1100 });
-    await expect(list).toBeVisible();
-    await expectListBesideDrawer(page, list);
+    await enterApp(page);
+    const [firstId, secondId] = await seedNodesInLibrary(page, "bounds");
+    const list = await openRaisedListBesideDrawer(page, [firstId, secondId]);
+    await expectListBesideDrawerAt(page, list, { width: 801, height: 600 });
+    await expectListBesideDrawerAt(page, list, { width: 2200, height: 1100 });
   });
 
   test("the raised toast list stays on screen beside the drawer in a framed app style", async ({
     page
   }) => {
-    test.setTimeout(120_000);
-    await page.setViewportSize({ width: 1024, height: 800 });
-    await ensureInAppOnHome(page);
+    await enterApp(page);
 
     await openSettings(page);
     const drawer = await openAppearanceDrawer(page);
@@ -360,20 +351,9 @@ test.describe("toasts", () => {
         });
       }, "Escape closes the drawer and Settings").toPass({ timeout: 10_000 });
 
-      const first = await e2eSeed.memory.node({
-        label: `E2E toast framed first ${Date.now()}`
-      });
-      const second = await e2eSeed.memory.node({
-        label: `E2E toast framed second ${Date.now()}`
-      });
-      await openNodesLibrary(page);
-      const list = await openRaisedListBesideDrawer(page, [
-        first.id,
-        second.id
-      ]);
-      await page.setViewportSize({ width: 801, height: 600 });
-      await expect(list).toBeVisible();
-      await expectListBesideDrawer(page, list);
+      const [firstId, secondId] = await seedNodesInLibrary(page, "framed");
+      const list = await openRaisedListBesideDrawer(page, [firstId, secondId]);
+      await expectListBesideDrawerAt(page, list, { width: 801, height: 600 });
     } finally {
       await page.setViewportSize({ width: 1024, height: 800 });
       await selectAppStyle(page, originalStyle!);
