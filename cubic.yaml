@@ -33,6 +33,9 @@ reviews:
       - 'composer.lock'
       - '**/composer.lock'
       - '**/Package.resolved'
+      # Wildcards skip hidden folders, so Xcode's .swiftpm copies are named explicitly
+      - '**/.swiftpm/**/Package.resolved'
+      - '.github/**/Package.resolved'
       - '.github/**/pnpm-lock.yaml'
       - '.github/**/package-lock.json'
       - '.github/**/yarn.lock'
