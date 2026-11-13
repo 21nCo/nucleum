@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncOptions } from "node:child_process";
-import { accessSync, constants, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { randomBytes } from "node:crypto";
+import { accessSync, constants, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { getSchema } from "@filefn/server";
 import { readMigrationFiles } from "drizzle-orm/migrator";
@@ -13,9 +15,14 @@ import * as filefnTables from "../db/generated/filefn/filefn-schema";
 /**
  * Verifies the FileFn schema and migration history against `@filefn/server`
  * `getSchema()`: the checked-in Drizzle schema is what the generator produces
- * today, and the `filefn:migrate` and `datafn:migrate` scripts build every
- * FileFn table, column, index and constraint in one disposable database,
- * whichever history is applied first.
+ * today and maps every FileFn table, and the `filefn:migrate` and
+ * `datafn:migrate` scripts build every FileFn table, column, index and
+ * constraint in two databases of one disposable PostgreSQL container, one per
+ * application order. The container publishes only on loopback with an
+ * ephemeral host port and a per-run random password. Each history keeps its
+ * own journal, so applying them in either order, or again, applies every
+ * migration once. Field-level unique constraints carry Drizzle's names, and
+ * `getSchema()` constraints keep their declared names.
  */
 const serviceDir = fileURLToPath(new URL("../..", import.meta.url));
 const generatedFile = "src/db/generated/filefn/filefn-schema.ts";
@@ -31,7 +38,42 @@ function run(command: string, args: string[], options: SpawnSyncOptions = {}): s
 }
 
 function physicalName(modelName: string) {
-  return `filefn_${modelName.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)}`;
+  return `filefn_${modelName.replace(/[A-Z]/g, "_$&").toLowerCase()}`;
+}
+
+/** Whether `candidate` is an executable regular file. */
+function isExecutable(candidate: string): boolean {
+  try {
+    accessSync(candidate, constants.X_OK);
+    return statSync(candidate).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolves the Docker CLI to an absolute path: the absolute directories of
+ * `PATH` in order, then the standard install locations.
+ */
+function findDocker(): string | undefined {
+  const executable = process.platform === "win32" ? "docker.exe" : "docker";
+  const searchPath = (process.env.PATH ?? "").split(path.delimiter).filter((directory) => path.isAbsolute(directory));
+  return [
+    ...searchPath.map((directory) => path.join(directory, executable)),
+    "/usr/bin/docker",
+    "/usr/local/bin/docker",
+    "/opt/homebrew/bin/docker",
+    "/Applications/Docker.app/Contents/Resources/bin/docker",
+    "C:/Program Files/Docker/Docker/resources/bin/docker.exe"
+  ].find(isExecutable);
+}
+
+/** Polls `isReady` up to `attempts` more times, 250 ms apart, one probe at a time. */
+async function waitUntil(isReady: () => boolean, attempts: number): Promise<boolean> {
+  if (isReady()) return true;
+  if (attempts <= 0) return false;
+  await delay(250);
+  return waitUntil(isReady, attempts - 1);
 }
 
 const pgType = { string: "text", number: "integer", boolean: "boolean", json: "json" } as const;
@@ -54,7 +96,6 @@ for (const table of filefnSchema.schemas) {
   }
 }
 
-// The checked-in generated schema is the generator's current output and maps every FileFn table.
 const output = mkdtempSync(path.join(tmpdir(), "filefn-schema-"));
 try {
   run("npx", ["superfunctions", "generate-schema", "--config", "./superfunctions.config.mjs", "--library", "filefn",
@@ -69,38 +110,23 @@ try {
 }
 const generatedTables = Object.values(filefnTables).map((table) => getTableConfig(table as PgTable));
 assert.deepEqual(
-  generatedTables.map((table) => table.name).sort(),
-  filefnSchema.schemas.map((table) => physicalName(table.modelName)).sort(),
+  generatedTables.map((table) => table.name).sort((a, b) => a.localeCompare(b)),
+  filefnSchema.schemas.map((table) => physicalName(table.modelName)).sort((a, b) => a.localeCompare(b)),
   "Generated FileFn tables do not match getSchema()"
 );
 
-const docker = [
-  "/usr/bin/docker",
-  "/usr/local/bin/docker",
-  "/opt/homebrew/bin/docker",
-  "/Applications/Docker.app/Contents/Resources/bin/docker",
-  "C:/Program Files/Docker/Docker/resources/bin/docker.exe"
-].find((candidate) => {
-  try {
-    accessSync(candidate, constants.X_OK);
-    return true;
-  } catch {
-    return false;
-  }
-});
-assert(docker, "Install Docker in a standard system location");
+const docker = findDocker();
+assert(docker, "Docker was not found on PATH or in a standard install location");
 
-const password = "filefn-migration-fixture";
-// Publishes only on loopback with an ephemeral host port, for the drizzle-kit scripts.
+const password = randomBytes(18).toString("hex");
 const container = run(docker, ["run", "--rm", "-d", "-p", "127.0.0.1::5432", "-e", `POSTGRES_PASSWORD=${password}`, "postgres:17-alpine"]);
 
 try {
   const port = run(docker, ["port", container, "5432/tcp"]).split("\n")[0].split(":").pop();
-  let ready = false;
-  for (let attempt = 0; attempt < 120 && !ready; attempt++) {
-    ready = spawnSync(docker, ["exec", container, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"], { stdio: "ignore" }).status === 0;
-    if (!ready) await new Promise((resolve) => setTimeout(resolve, 250));
-  }
+  const ready = await waitUntil(
+    () => spawnSync(docker, ["exec", container, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"], { stdio: "ignore" }).status === 0,
+    119
+  );
   assert(ready, "Disposable PostgreSQL did not become ready");
 
   for (const [database, order] of [
@@ -120,35 +146,33 @@ try {
     for (const table of Object.values(datafnSchema))
       assert(datafnTables.has(getTableConfig(table).name), `${database}: DataFn table ${getTableConfig(table).name} is missing`);
 
-    // Each history keeps its own journal, so applying them in either order, or again, applies every migration once.
     for (const script of order) migrate(script);
     assert.equal(sql("SELECT count(*) FROM drizzle.__drizzle_migrations_filefn"), String(filefnMigrations.length));
     assert.equal(sql("SELECT count(*) FROM drizzle.__drizzle_migrations"), String(datafnMigrations.length));
 
     assert.deepEqual(
-      rows(`SELECT table_name || '|' || column_name || '|' || data_type || '|' || is_nullable
-        FROM information_schema.columns WHERE table_schema = 'public' AND table_name LIKE 'filefn\\_%'`),
+      rows(String.raw`SELECT table_name || '|' || column_name || '|' || data_type || '|' || is_nullable
+        FROM information_schema.columns WHERE table_schema = 'public' AND table_name LIKE 'filefn\_%'`),
       expected.columns,
       `${database}: FileFn columns do not match getSchema()`
     );
-    // Field-level unique constraints carry Drizzle's names; getSchema() constraints keep their declared names.
     assert.deepEqual(
-      rows(`SELECT t.relname || '|' || string_agg(a.attname, ',' ORDER BY k.ord)
+      rows(String.raw`SELECT t.relname || '|' || string_agg(a.attname, ',' ORDER BY k.ord)
           || CASE WHEN count(*) > 1 THEN '|' || c.conname ELSE '' END
         FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
         CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY k(attnum, ord)
         JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = k.attnum
-        WHERE c.contype = 'u' AND t.relname LIKE 'filefn\\_%' GROUP BY t.relname, c.conname`),
+        WHERE c.contype = 'u' AND t.relname LIKE 'filefn\_%' GROUP BY t.relname, c.conname`),
       expected.unique,
       `${database}: FileFn unique constraints do not match getSchema()`
     );
     assert.deepEqual(
-      rows(`SELECT t.relname || '|' || i.relname || '|' || CASE WHEN x.indisunique THEN 'unique' ELSE 'plain' END
+      rows(String.raw`SELECT t.relname || '|' || i.relname || '|' || CASE WHEN x.indisunique THEN 'unique' ELSE 'plain' END
           || '|' || string_agg(a.attname, ',' ORDER BY k.ord)
         FROM pg_index x JOIN pg_class i ON i.oid = x.indexrelid JOIN pg_class t ON t.oid = x.indrelid
         CROSS JOIN LATERAL unnest(x.indkey) WITH ORDINALITY k(attnum, ord)
         JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = k.attnum
-        WHERE t.relname LIKE 'filefn\\_%' AND NOT EXISTS (SELECT 1 FROM pg_constraint c WHERE c.conindid = x.indexrelid)
+        WHERE t.relname LIKE 'filefn\_%' AND NOT EXISTS (SELECT 1 FROM pg_constraint c WHERE c.conindid = x.indexrelid)
         GROUP BY t.relname, i.relname, x.indisunique`),
       expected.indexes,
       `${database}: FileFn indexes do not match getSchema()`
