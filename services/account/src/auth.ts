@@ -23,6 +23,7 @@ import { createAccountLookupStore } from "./lookup/dynamodb.js";
 import { ACCOUNT_AUTH_NAMESPACE } from "./auth/constants.js";
 import { sendAccountDebugLog } from "./debug-sink.js";
 import { createAccountAuthPlugins } from "./auth/plugins.js";
+import { accountScopeRegistry } from "./datafn/app-scopes.js";
 
 export interface CreateAccountAuthInput {
   database: Adapter;
@@ -66,6 +67,7 @@ export function accountAuthfn(
       }
     },
     plugins: createAccountAuthPlugins(),
+    scopes: accountScopeRegistry,
     openApi: {
       title: "Nucleus Account API",
       version: "2026-04-24"

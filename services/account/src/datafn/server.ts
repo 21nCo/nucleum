@@ -6,22 +6,34 @@ import {
   type DataFnAction,
   type DatafnPublicLinksPlugin,
   type DatafnPublicLinkPrincipal,
+  type DatafnRouteHookInput,
   type RateLimitConfig,
   type DatafnServer,
   type SearchProvider
 } from '@datafn/server';
 import type { AuthFnSession } from 'authfn';
-import type { Adapter, RuntimeStores } from '@superfunctions/db';
+import {
+  wrapWithRowLevelNamespace,
+  type Adapter,
+  type RuntimeStores
+} from '@superfunctions/db';
 import type { SuperfunctionObservability } from '@superfunctions/observability';
 import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import { createSyncSearchProvider } from './search-provider.js';
 import { resolveAccountUserNamespace } from './namespace.js';
 import { readPositiveIntegerEnv } from './env.js';
+import {
+  authorizeAppScopes,
+  filterScopedResponseBody,
+  hasFullAppAccess,
+  resolveAppScopeAccess
+} from './app-scopes.js';
 
 export {
   resolveAccountUserNamespace,
   resolveAccountUserPrincipal
 } from './namespace.js';
+export { accountScopeRegistry } from './app-scopes.js';
 
 export interface SyncContext {
   request: Request;
@@ -75,7 +87,10 @@ export function createSyncServer(
 ): Promise<SyncServer> {
   const app = syncApp;
   const runtimePublicLinks = createDatafnPublicLinksPlugin<AuthFnSession>({
-    authenticateOwner: (request) => authorizeMutationRequest(input.auth, request),
+    authenticateOwner: async (request) => {
+      const session = await authorizeMutationRequest(input.auth, request);
+      return session && isUnscopedUserSession(session) ? session : null;
+    },
     getOwnerActorId: (session) => session.actorId,
     getOwnerNamespace: (actorId) => resolveAccountUserNamespace(actorId),
     directory: input.stores?.directory,
@@ -93,6 +108,12 @@ export function createSyncServer(
       : [])
   ];
   const publicLinks = runtimePublicLinks;
+  const scopedDatabase = wrapWithRowLevelNamespace(input.database, {
+    enabled: true,
+    columnName: '__ns',
+    mandatory: true
+  });
+  const regionHeader = input.regionId ?? process.env.ACCOUNT_REGION_ID;
   return app.createServer<SyncContext>({
     database: input.database,
     stores: input.stores,
@@ -117,8 +138,26 @@ export function createSyncServer(
         regionId: input.regionId ?? process.env.ACCOUNT_REGION_ID
       };
     },
-    authorize: async (ctx, action) => {
+    authorize: async (ctx, action, payload) => {
       if (ctx.session) {
+        if (ctx.session.actorType !== 'user') return false;
+        const access = resolveAppScopeAccess(ctx.session);
+        if (!hasFullAppAccess(access)) {
+          const namespace = resolveAccountUserNamespace(ctx.session.actorId);
+          const allowed = await authorizeAppScopes({
+            access,
+            action,
+            payload,
+            schema: nucleumDatafnSchema,
+            readRecord: (resource, id) =>
+              scopedDatabase.findOne<Record<string, unknown>>({
+                model: resource,
+                where: [{ field: 'id', operator: 'eq', value: id }],
+                namespace
+              })
+          });
+          if (!allowed) return false;
+        }
         if (!MUTATING_DATAFN_ACTIONS.has(action)) return true;
         return Boolean(await authorizeMutationRequest(input.auth, ctx.request));
       }
@@ -142,13 +181,10 @@ export function createSyncServer(
     rateLimit: input.rateLimit === false
       ? undefined
       : input.rateLimit ?? createDefaultRateLimit(input.stores),
-    routeHooks: (input.regionId ?? process.env.ACCOUNT_REGION_ID)
-      ? {
-          headers: {
-            'x-datafn-region': input.regionId ?? process.env.ACCOUNT_REGION_ID ?? ''
-          }
-        }
-      : undefined,
+    routeHooks: {
+      afterResponse: filterScopedSpaceResponse,
+      ...(regionHeader ? { headers: { 'x-datafn-region': regionHeader } } : {})
+    },
     observability: input.observability
   });
 }
@@ -210,4 +246,39 @@ async function authorizeMutationRequest(
   } catch {
     return null;
   }
+}
+
+/**
+ * Share-link management acts on any record in the namespace, so only user
+ * sessions that hold every app scope may create or revoke links.
+ */
+function isUnscopedUserSession(session: AuthFnSession): boolean {
+  return session.actorType === 'user' &&
+    hasFullAppAccess(resolveAppScopeAccess(session));
+}
+
+/**
+ * Strips space items outside an app-scoped session's read grant from DataFn
+ * query and transact responses. Other responses pass through unchanged.
+ */
+async function filterScopedSpaceResponse(
+  hook: DatafnRouteHookInput<SyncContext>
+): Promise<Response> {
+  const session = hook.context.session;
+  if (!session || (hook.action !== 'query' && hook.action !== 'transact')) {
+    return hook.response;
+  }
+  const grant = resolveAppScopeAccess(session).read;
+  if (grant === 'all' || !hook.response.ok) return hook.response;
+  const body: unknown = await hook.response.clone().json().catch(() => undefined);
+  if (body === undefined) return hook.response;
+  const filtered = filterScopedResponseBody(hook.action, hook.payload, body, grant);
+  if (filtered === body) return hook.response;
+  const headers = new Headers(hook.response.headers);
+  headers.delete('content-length');
+  return new Response(JSON.stringify(filtered), {
+    status: hook.response.status,
+    statusText: hook.response.statusText,
+    headers
+  });
 }
