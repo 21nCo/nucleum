@@ -4,6 +4,8 @@ import colorSchemesBranding from "@21n/theme/colorschemes-branding.json";
 import colorSchemes from "@21n/theme/colorschemes.json";
 import { createRequire } from "module";
 
+import { splitFramePalette } from "./frame-palette.js";
+
 const themes = [
   {
     name: "clean",
@@ -25,16 +27,32 @@ const themes = [
   }
 ];
 
+const require = createRequire(import.meta.url);
+const {
+  toCustomPropValue
+} = require("tailwindcss-themer/lib/utils/customPropUtils");
+
 const mappedColorSchemes = colorSchemes.map((cs) => {
   return {
     name: cs.tailwindSelector,
     extend: {
-      colors: cs.colors
+      colors: splitFramePalette(cs.colors).colors
     }
   };
 });
 
-const require = createRequire(import.meta.url);
+const framePaletteVariables = Object.fromEntries(
+  colorSchemes
+    .filter((cs) => cs.hasFramePalette)
+    .map((cs) => [
+      `.${cs.tailwindSelector}`,
+      Object.fromEntries(
+        Object.entries(splitFramePalette(cs.colors).framePalette).map(
+          ([name, value]) => [`--colors-${name}`, toCustomPropValue(value)]
+        )
+      )
+    ])
+);
 
 export default {
   content: [
@@ -257,6 +275,8 @@ export default {
         "cs_tidigit_dark_orange",
         "cs_solarized_light",
         "cs_solarized_dark",
+        "cs_graphite_light",
+        "cs_graphite_dark",
         "border-brs1",
         "border-brs2",
         "border-brs3",
@@ -308,6 +328,9 @@ export default {
         ...colorSchemesBranding
       ]
     }),
+    function ({ addBase }) {
+      addBase(framePaletteVariables);
+    },
     function ({ addVariant }) {
       addVariant("os-macos", ".os-macos &");
       addVariant("os-windows", ".os-windows &");

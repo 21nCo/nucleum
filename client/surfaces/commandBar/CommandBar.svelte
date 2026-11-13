@@ -35,13 +35,11 @@
     command = undefined,
     commandType = undefined,
     componentParams = undefined,
-    isFullPageContext = false,
     scope = "all"
   }: {
     command?: string | undefined;
     commandType?: ActionType | undefined;
     componentParams?: any;
-    isFullPageContext?: boolean;
     /** `search` opens the super bar on search results only. */
     scope?: SuperBarScope;
   } = $props();
@@ -55,9 +53,7 @@
   const defaultPlaceholder = $derived(
     scope === "search"
       ? "Start typing to search"
-      : isFullPageContext
-        ? "Search for a command"
-        : "Search anything, run a command or ask Rhombus"
+      : "Search anything, run a command or ask Rhombus"
   );
   let placeholder = $state("");
   $effect(() => {
@@ -150,8 +146,8 @@
     );
   }
   /**
-   * Used in command-only mode.
-   * @param event
+   * Focuses or blurs the super bar input with the super bar shortcut or Space,
+   * and blurs it on Escape.
    */
   const shortcutListener = (event: KeyboardEvent) => {
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
@@ -177,11 +173,7 @@
 <div
   class={cn(
     "flex flex-col cw:w-full cw:min-w-full w-[50rem] max-w-full overflow-auto",
-    {
-      "border border-brs2 rounded-md": isFullPageContext,
-      "cw:h-full h-[30rem]":
-        !isFullPageContext || (isFullPageContext && isFocusing)
-    }
+    "cw:h-full h-[30rem]"
   )}
 >
   {#if isPerformingSearchAction && searchAction}
@@ -226,12 +218,7 @@
     {#if !$view.isConstrainedWidth && $context.embed !== Embed.HANDSET}
       <div class="mr-4">
         <div
-          class={cn(
-            "px-2 flex justify-center items-center gap-2 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit",
-            {
-              "bg-bgs2": !(isFullPageContext && !isFocusing)
-            }
-          )}
+          class="px-2 flex justify-center items-center gap-2 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit bg-bgs2"
         >
           {#if value && !isPerformingSearchAction && selectedKind === "result"}
             <b>Enter</b> to open,
@@ -239,18 +226,6 @@
             > to open beside
           {:else if value}
             Press <b>Enter</b> to run
-          {:else if isFullPageContext && !isFocusing}
-            <!-- {resolveShortcutText({
-              key: "Space",
-              os: $context.os
-            })} -->
-            <ShortcutText
-              shortcut={Action.CMD}
-              parentBgIndex={1}
-              isAlwaysShown={true}
-            />
-          {:else if isFullPageContext && isFocusing}
-            Press <b>Esc</b> to close
           {:else}
             Super bar
           {/if}
@@ -271,7 +246,7 @@
       <!-- {:else}
         <EmptyStatusView size={Size.sm} subText="start typing to search..." />
       {/if} -->
-    {:else if !isFullPageContext || (isFullPageContext && isFocusing)}
+    {:else}
       <CmdResults
         search={value}
         {scope}
@@ -286,7 +261,7 @@
     <div class="flex w-full justify-center py-2 pb-8">
       <Button label="Close" style={ButtonStyle.PLAIN} onclick={close} />
     </div>
-  {:else if !isFullPageContext}
+  {:else}
     <div
       class={cn(
         "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4 rounded-b-md"

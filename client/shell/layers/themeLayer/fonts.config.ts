@@ -38,7 +38,8 @@ export const FONT_FAMILIES = [
   "Arvo:ital,wght@0,400;0,700;1,400;1,700",
   "Climate+Crisis:YEAR@1979..2050",
   "Cabin:ital,wght@0,400..700;1,400..700",
-  "Albert+Sans:ital,wght@0,100..900;1,100..900"
+  "Albert+Sans:ital,wght@0,100..900;1,100..900",
+  "Urbanist:ital,wght@0,100..900;1,100..900"
 ];
 
 export function generateGoogleFontsUrl(): string {

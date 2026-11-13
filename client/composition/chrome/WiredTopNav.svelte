@@ -34,7 +34,7 @@
   <SubAtomLogo size={Size.sm} />
 {/snippet}
 {#snippet profilePicture(
-  context: "cmd-page" | "cp-profile" | "account-settings" | "topbar" | "mobile-topbar"
+  context: "cp-profile" | "account-settings" | "topbar" | "mobile-topbar"
 )}
   <ProfilePicture {context} />
 {/snippet}

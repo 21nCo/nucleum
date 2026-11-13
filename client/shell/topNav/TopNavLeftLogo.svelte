@@ -31,7 +31,6 @@
     profilePicture?: Snippet<
       [
         context:
-          | "cmd-page"
           | "cp-profile"
           | "account-settings"
           | "topbar"
@@ -62,7 +61,7 @@
 <button
   data-testid="topnav-account-settings"
   class={cn(
-    "group flex items-center h-full w-fit hover:bg-bgs3-striped border-r border-brs3 app-framed:border-r-0 app-framed:h-10 app-framed:rounded-[var(--app-control-radius)]",
+    "group flex items-center h-full w-fit hover:bg-bgs3-striped border-r border-brs3 app-framed:border-r-transparent app-framed:h-10 app-framed:rounded-[var(--app-control-radius)]",
     !action && {
       "px-[0.72rem]": isHideMenuLabels,
       "px-[1.72rem]": !isHideMenuLabels

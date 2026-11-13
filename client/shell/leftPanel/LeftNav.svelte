@@ -21,7 +21,7 @@
 {#if !$appStore.isMenuHidden && !$view.isPortrait && productConfig.appMenu.length > 0}
   <LeftNavFixed {isRounded} {offlineStatus}>
     {#snippet panel()}
-      <div class="h-full overflow-auto relative">
+      <div class="app-content h-full overflow-auto relative bg-bgs2">
         {#if !isHidePanel && $appStore.currentComponent?.panel}
           {@const PanelComponent = $appStore.currentComponent.panel}
           <PanelComponent />
