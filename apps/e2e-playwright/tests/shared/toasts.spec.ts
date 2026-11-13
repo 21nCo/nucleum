@@ -117,4 +117,45 @@ test.describe("toasts", () => {
     await page.mouse.move(10, 600);
     await expect(latest).toBeHidden({ timeout: TOAST_DURATION_MS + 3_000 });
   });
+
+  test("raised toasts sit beside the Appearance drawer and stay usable over it", async ({
+    page
+  }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await ensureInAppOnHome(page);
+
+    const node = await e2eSeed.memory.node({
+      label: `E2E toast drawer ${Date.now()}`
+    });
+    await openNodesLibrary(page);
+    await copyNodeLink(page, node.id);
+    await page
+      .getByTestId("top-bar-toasts")
+      .getByTestId("top-bar-toast-latest")
+      .hover();
+
+    await openSettings(page);
+    const raised = page.getByTestId("modal-raised-toasts");
+    await raised.getByTestId("top-bar-toast-latest").hover();
+    await page
+      .getByTestId("settings-sidebar")
+      .getByRole("button", { name: /^Appearance$/i })
+      .click({ timeout: 5_000 });
+    const drawer = page.getByTestId("modal-appearance-settings");
+    await expect(drawer).toBeVisible({ timeout: 10_000 });
+    const latest = raised.getByTestId("top-bar-toast-latest");
+    await latest.hover();
+    await expect(latest).toContainText(/link copied/i);
+    await expect(page.getByTestId("top-bar-toasts")).toHaveCount(1);
+
+    const toastBox = await raised.getByTestId("top-bar-toasts").boundingBox();
+    const drawerBox = await drawer.boundingBox();
+    expect(toastBox && drawerBox).toBeTruthy();
+    expect(toastBox!.x + toastBox!.width).toBeLessThanOrEqual(drawerBox!.x);
+
+    await raised.getByTestId("top-bar-toast-dismiss").click();
+    await expect(raised).toBeHidden();
+    await expect(drawer).toBeVisible();
+  });
 });

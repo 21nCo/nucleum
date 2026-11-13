@@ -27,6 +27,7 @@
   import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
   import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
+  import { RAISED_TOASTS_ID } from "@nucleum/shell/overlays/raised-toasts";
   let {
     index = 0,
     show = $bindable(true),
@@ -118,8 +119,16 @@
       );
   }
 
-  /** Containers that stay live behind a drawer, so the popovers and tooltips it opens work. */
-  const LIVE_CONTAINER_IDS = ["popovers", "secondary-popovers", "tooltips"];
+  /**
+   * Containers that stay live behind a drawer, so the popovers and tooltips it
+   * opens work and the toasts raised above it stay usable.
+   */
+  const LIVE_CONTAINER_IDS = [
+    "popovers",
+    "secondary-popovers",
+    "tooltips",
+    RAISED_TOASTS_ID
+  ];
 
   function setInert(element: HTMLElement, isInert: boolean) {
     element.inert = isInert;

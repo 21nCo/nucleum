@@ -40,6 +40,7 @@
   } from "@nucleum/shell/overlays/portrait-dock";
   import {
     isToastRaisedAboveModal,
+    RAISED_TOASTS_ID,
     shouldRaiseToasts
   } from "@nucleum/shell/overlays/raised-toasts";
   import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
@@ -249,11 +250,17 @@
 
 {#if isToastRaised}
   <div
-    class="fixed top-0 inset-x-0 z-[55] flex justify-center mt-1 pointer-events-none"
+    id={RAISED_TOASTS_ID}
+    class={cn(
+      "fixed top-0 left-0 z-[55] flex justify-center mt-1 px-2 pointer-events-none",
+      isRightDrawerOpen
+        ? "right-[28rem] 2k:right-[32rem] app-framed:right-[calc(28rem+var(--app-shell-gap))] 2k:app-framed:right-[calc(32rem+var(--app-shell-gap))]"
+        : "right-0"
+    )}
     data-testid="modal-raised-toasts"
   >
     <div
-      class="flex items-center h-12 max-w-[32rem] rounded-md bg-bgs2 border border-brs3 shadow-lg pointer-events-auto"
+      class="flex items-center h-12 min-w-0 max-w-[32rem] rounded-md bg-bgs2 border border-brs3 shadow-lg pointer-events-auto"
     >
       <TopNavToasts />
     </div>

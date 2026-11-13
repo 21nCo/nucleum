@@ -10,9 +10,12 @@
   import { cn } from "@21n/ui/environment/presentation";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
+  import { tick } from "svelte";
 
   let isListOpen = $state(false);
   let isHovered = $state(false);
+  let isFocused = $state(false);
+  let root = $state<HTMLElement | undefined>();
 
   const latest = $derived($toasts[$toasts.length - 1]);
   const isLatestDismissable = $derived(
@@ -21,11 +24,32 @@
     )
   );
   const pausedIds = $derived(
-    isListOpen || isHovered ? $toasts.map((toast) => toast.id) : []
+    isListOpen || isHovered || isFocused ? $toasts.map((toast) => toast.id) : []
   );
 
   $effect(() => {
     if ($toasts.length < 2) isListOpen = false;
+  });
+
+  /** Whether `element` shows keyboard focus, which pauses the toasts like hover does. */
+  function isKeyboardFocused(element: Element | null) {
+    try {
+      return Boolean(element?.matches(":focus-visible"));
+    } catch {
+      return false;
+    }
+  }
+
+  /** Ends the focus pause once keyboard focus has left the toasts, including when the focused toast was removed. */
+  function syncFocus() {
+    const active = document.activeElement;
+    isFocused = Boolean(root?.contains(active)) && isKeyboardFocused(active);
+  }
+
+  $effect(() => {
+    void $toasts;
+    if (!isFocused) return;
+    tick().then(syncFocus);
   });
 
   function toggleList() {
@@ -41,12 +65,19 @@
 </script>
 
 <div
+  bind:this={root}
   use:topBarDropdown={{
     isOpen: isListOpen,
     onDismiss: () => (isListOpen = false)
   }}
   class="relative flex items-stretch justify-end h-full pr-3 text-b2 min-w-0"
   data-testid="top-bar-toasts"
+  onfocusin={(event) => {
+    isFocused = isKeyboardFocused(event.target as Element | null);
+  }}
+  onfocusout={(event) => {
+    if (!root?.contains(event.relatedTarget as Node | null)) isFocused = false;
+  }}
   in:fly={{ duration: 200, y: -10, easing: quadIn }}
 >
   {#if $toasts.length > 1}
