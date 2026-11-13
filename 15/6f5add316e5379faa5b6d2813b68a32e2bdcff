@@ -1,0 +1,23 @@
+client/surfaces/help/diagnostics/Troubleshoot.svelte
+  s_a7b249f561bdc3::t_0c05466e1a6420 8,11-12,16-26,31-32,34,55-56,87-88
+client/surfaces/help/diagnostics/diagnostic-report.test.ts
+  s_a7b249f561bdc3::t_37b6930375fb9a 60-61,94,96,99,109-138
+client/surfaces/help/diagnostics/diagnostic-report.ts
+  s_a7b249f561bdc3::t_0c343169d1b2ff 16-36,39-41,69-70,76-80,95-96,98-100,134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "156f5add316e5379faa5b6d2813b68a32e2bdcff",
+  "prompts": {},
+  "sessions": {
+    "s_a7b249f561bdc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_a7b249f561bdc3",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
