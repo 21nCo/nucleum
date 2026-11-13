@@ -280,7 +280,7 @@ async function filterScopedResponse(
   const body: unknown = await hook.response.clone().json().catch(() => undefined);
   if (body === undefined) return hook.response;
   const filtered = await filterScopedResponseBody(
-    hook.action, hook.payload, body, grant, scopeStore(session)
+    hook.action, hook.payload, body, grant, scopeStore(session), nucleumDatafnSchema
   );
   if (filtered === body) return hook.response;
   const headers = new Headers(hook.response.headers);

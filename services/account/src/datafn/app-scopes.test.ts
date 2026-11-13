@@ -737,3 +737,150 @@ describe('token without scopes', () => {
     expect(pushed.status).toBe(403);
   });
 });
+
+describe('relations written through record fields and relation metadata', () => {
+  beforeAll(async () => {
+    const seeded = await call('/datafn/mutation', actors.cookie, [
+      mutation('collection', 'insert', 'collection:memo-ext', { label: 'Extends', type: 'list', resource: 'node' }),
+      mutation('property', 'insert', 'property:memo-prop', { label: 'Mood', type: 'text', resource: 'node' })
+    ]);
+    expect(seeded.status).toBe(200);
+  });
+
+  it('memotron token cannot point a foreign-key field at a Pointron record', async () => {
+    for (const change of [
+      mutation('collection', 'merge', 'collection:memo-ext', { typeToExtend: 'collection:goals' }),
+      mutation('collection', 'insert', 'collection:memo-sneaky', {
+        label: 'Sneaky', type: 'list', resource: 'node', typeToExtend: 'collection:goals'
+      }),
+      mutation('node', 'merge', 'node:n3', { parent: 'objective:o1' })
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+    }
+    const transact = await call('/datafn/transact', actors.memotronWrite, {
+      steps: [{ mutation: mutation('collection', 'merge', 'collection:memo-ext', { typeToExtend: 'collection:goals' }) }]
+    });
+    expect(transact.status).toBe(403);
+    expect(await storedField('collection', 'collection:memo-ext', 'typeToExtend')).toBeFalsy();
+    expect(await storedField('node', 'node:n3', 'parent')).not.toBe('objective:o1');
+    expect(await ids(await call('/datafn/query', actors.cookie, {
+      resource: 'collection', version: 1, filters: { id: { eq: 'collection:memo-sneaky' } }
+    }))).toEqual([]);
+  });
+
+  it('memotron token points a foreign-key field at a Memotron record and clears it', async () => {
+    const pointed = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('collection', 'merge', 'collection:memo-ext', { typeToExtend: 'collection:notes' })
+    ));
+    expect(pointed.status).toBe(200);
+    expect(await storedField('collection', 'collection:memo-ext', 'typeToExtend')).toBe('collection:notes');
+    const cleared = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('collection', 'merge', 'collection:memo-ext', { typeToExtend: null })
+    ));
+    expect(cleared.status).toBe(200);
+    expect(await storedField('collection', 'collection:memo-ext', 'typeToExtend')).toBeNull();
+  });
+
+  it('memotron token cannot name a Pointron collection in property value metadata', async () => {
+    const valuesFor = async () => (await joinRows('property_values'))
+      .filter((row) => row.itemId === 'node:n3')
+      .map((row) => row.collectionId);
+    const cross = await call('/datafn/push', actors.memotronWrite, push(relationMutation('node', 'relate', 'node:n3', {
+      propertyValues: [{ $ref: 'property:memo-prop', collectionId: 'collection:goals', value: 'calm' }]
+    })));
+    expect(cross.status).toBe(403);
+    expect(await valuesFor()).toEqual([]);
+    const own = await call('/datafn/push', actors.memotronWrite, push(relationMutation('node', 'relate', 'node:n3', {
+      propertyValues: [{ $ref: 'property:memo-prop', collectionId: 'collection:notes', value: 'calm' }]
+    })));
+    expect(own.status).toBe(200);
+    expect(await valuesFor()).toEqual(['collection:notes']);
+  });
+
+  it('pointron token cannot point a foreign-key field at a Memotron record', async () => {
+    const response = await call('/datafn/push', actors.pointron, push(
+      mutation('collection', 'merge', 'collection:goals', { typeToExtend: 'collection:notes' })
+    ));
+    expect(response.status).toBe(403);
+    expect(await storedField('collection', 'collection:goals', 'typeToExtend')).toBeFalsy();
+  });
+});
+
+describe('space items pointing at shared resources', () => {
+  const collectionItem = (name: string) => ({
+    id: `item-collection-${name}`,
+    type: 'resource',
+    resourceType: 'collection',
+    resourceId: `collection:${name}`,
+    label: name
+  });
+  const mismatchedItem = { ...nodeItem, id: 'item-mismatched', resourceId: 'objective:o1' };
+  const spaceItem = { id: 'item-space', type: 'resource', resourceType: 'space', resourceId: 'space:notes', label: 'Notes' };
+  const allItems = [collectionItem('goals'), collectionItem('notes'), nodeItem, mismatchedItem, spaceItem];
+  const spaceQuery = { resource: 'space', version: 1, filters: { id: { eq: 'space:collections' } } };
+
+  async function storedItems(): Promise<unknown> {
+    return (await rows(await call('/datafn/query', actors.cookie, spaceQuery)))[0]?.items;
+  }
+
+  beforeAll(async () => {
+    const seeded = await call('/datafn/mutation', actors.cookie, [
+      mutation('space', 'insert', 'space:collections', { label: 'Collections', view: 'sidenav', items: allItems })
+    ]);
+    expect(seeded.status).toBe(200);
+  });
+
+  it('memotron token sees only items whose stored record is Memotron, in queries and transact', async () => {
+    const expected = [collectionItem('notes'), nodeItem];
+    expect((await rows(await call('/datafn/query', actors.memotronRead, spaceQuery)))[0]?.items)
+      .toEqual(expected);
+    const transact = await call('/datafn/transact', actors.memotronRead, { steps: [{ query: spaceQuery }] });
+    expect(transact.status).toBe(200);
+    const body = await transact.json() as { result: { results: { data: { items: unknown }[] }[] } };
+    expect(body.result.results[0]?.data[0]?.items).toEqual(expected);
+  });
+
+  it('pointron token sees only the Pointron collection item', async () => {
+    expect((await rows(await call('/datafn/query', actors.pointron, spaceQuery)))[0]?.items)
+      .toEqual([collectionItem('goals')]);
+  });
+
+  it('cookie and nucleum sessions still see every item', async () => {
+    for (const actor of ['cookie', 'nucleum'] as const) {
+      expect((await rows(await call('/datafn/query', actors[actor], spaceQuery)))[0]?.items).toEqual(allItems);
+    }
+  });
+
+  it('memotron write token cannot drop or delete hidden items', async () => {
+    for (const change of [
+      mutation('space', 'merge', 'space:collections', { items: [] }),
+      mutation('space', 'replace', 'space:collections', { label: 'Collections', view: 'sidenav', items: [nodeItem] }),
+      mutation('space', 'delete', 'space:collections')
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+    }
+    expect(await storedItems()).toEqual(allItems);
+  });
+
+  it('memotron write token cannot add an item pointing at a Pointron collection', async () => {
+    for (const items of [[collectionItem('goals')], [mismatchedItem], [spaceItem]]) {
+      const response = await call('/datafn/push', actors.memotronWrite, push(
+        mutation('space', 'insert', `space:sneaky-${sequence}`, { label: 'Sneaky', view: 'sidenav', items })
+      ));
+      expect(response.status).toBe(403);
+    }
+  });
+
+  it('memotron write token adds items for Memotron collections, including one created in the same push', async () => {
+    const response = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('collection', 'insert', 'collection:memo-fresh', { label: 'Fresh', type: 'list', resource: 'node' }),
+      mutation('space', 'insert', 'space:memo-collections', {
+        label: 'Memo', view: 'sidenav', items: [collectionItem('notes'), collectionItem('memo-fresh')]
+      })
+    ));
+    expect(response.status).toBe(200);
+    expect((await rows(await call('/datafn/query', actors.memotronRead, {
+      resource: 'space', version: 1, filters: { id: { eq: 'space:memo-collections' } }
+    })))[0]?.items).toEqual([collectionItem('notes'), collectionItem('memo-fresh')]);
+  });
+});

@@ -1,8 +1,13 @@
 import {
+  endpointIncludes,
   endpointList,
   findRelationMatch,
+  getRelationFkFieldsForResource,
+  relationFkFieldForManyOne,
+  relationFkFieldForOneMany,
   relationTargetEndpoint,
   resolveEndpointResource,
+  type DatafnRelationEndpoint,
   type DatafnSchema
 } from '@datafn/core';
 import type { DataFnAction } from '@datafn/server';
@@ -151,6 +156,8 @@ type DerivedPolicy = Extract<SharedResourcePolicy, { kind: 'collections' | 'link
 /** Per-request reads behind shared-resource checks, cached for one request. */
 interface SharedVisibility {
   readRecord(resource: string, id: string): Promise<Record<string, unknown> | null>;
+  /** Stored rows of `resource` by id, for the ids that exist. */
+  readRecords(resource: string, ids: readonly string[]): Promise<Map<string, Record<string, unknown>>>;
   /** Resource field values of the collections linked to each record id. */
   linkedCollectionResources(
     policy: Extract<DerivedPolicy, { kind: 'collections' }>,
@@ -168,6 +175,11 @@ function createSharedVisibility(store: AppScopeStore): SharedVisibility {
     async readRecord(resource, id) {
       const rows = await store.findMany(resource, [{ field: 'id', operator: 'eq', value: id }]);
       return rows[0] ?? null;
+    },
+    async readRecords(resource, ids) {
+      if (ids.length === 0) return new Map();
+      const rows = await store.findMany(resource, [{ field: 'id', operator: 'in', value: [...ids] }]);
+      return new Map(rows.map((row) => [String(row.id), row]));
     },
     async linkedCollectionResources(policy, ids) {
       const result = new Map<string, unknown[]>(ids.map((id) => [id, []]));
@@ -236,6 +248,149 @@ async function derivedAccess(
     if (decide(owners)) allowed.add(id);
   }
   return allowed;
+}
+
+/** Inputs for deciding which items of space item trees a grant may see. */
+interface SpaceItemAccessInput {
+  lists: readonly unknown[];
+  tables: ReadonlySet<string>;
+  mode: 'read' | 'write';
+  ownership: ResourceOwnership;
+  schema: DatafnSchema;
+  shared: SharedVisibility;
+  /** Field-policy records written earlier in the same request. */
+  pending?: ReadonlySet<string>;
+}
+
+/**
+ * Returns whether one space item (not its children) is visible to a grant.
+ * Sections and page links are. A resource item is visible when its type is in
+ * the grant and its id does not name another resource; one that points at a
+ * shared resource also needs the stored record to pass that resource's own
+ * policy, looked up once per type for all `lists`: a `resource` field inside
+ * the grant (collections, properties, access logs) or the linked collections
+ * and tagged links (views, link tags). Spaces and missing records are hidden.
+ */
+async function resolveSpaceItemAccess(
+  input: SpaceItemAccessInput
+): Promise<(item: Record<string, unknown>) => boolean> {
+  const { tables, ownership, schema, shared } = input;
+  const refs = new Map<string, Set<string>>();
+  for (const list of input.lists) collectResourceItemRefs(list, refs);
+  const visibleShared = new Set<string>();
+  for (const [resource, idSet] of refs) {
+    const policy = ownership.shared.get(resource);
+    if (!policy || !tables.has(resource)) continue;
+    const ids = [...idSet];
+    if (policy.kind === 'field') {
+      const stored = await shared.readRecords(resource, ids);
+      for (const id of ids) {
+        const owner = stored.get(id)?.[policy.field];
+        if (input.pending?.has(`${resource}|${id}`) ||
+          (typeof owner === 'string' && tables.has(owner))) {
+          visibleShared.add(`${resource}|${id}`);
+        }
+      }
+    } else if (isDerivedPolicy(policy)) {
+      const allowed = await derivedAccess(policy, ids, tables, input.mode, shared);
+      for (const id of allowed) visibleShared.add(`${resource}|${id}`);
+    }
+  }
+  return (item) => {
+    if (item.type === SPACE_ITEM_TYPES.page || item.type === SPACE_ITEM_TYPES.section) {
+      return true;
+    }
+    const { resourceType, resourceId } = item;
+    if (item.type !== SPACE_ITEM_TYPES.resource || typeof resourceType !== 'string' ||
+      typeof resourceId !== 'string' || !tables.has(resourceType)) {
+      return false;
+    }
+    const named = resourceNamedById(schema, resourceId);
+    if (named !== undefined && named !== resourceType) return false;
+    return !ownership.shared.has(resourceType) || visibleShared.has(`${resourceType}|${resourceId}`);
+  };
+}
+
+function collectResourceItemRefs(list: unknown, refs: Map<string, Set<string>>, depth = 0): void {
+  if (depth > 32 || !Array.isArray(list)) return;
+  for (const item of list) {
+    if (!isRecord(item)) continue;
+    if (item.type === SPACE_ITEM_TYPES.resource && typeof item.resourceType === 'string' &&
+      typeof item.resourceId === 'string') {
+      const ids = refs.get(item.resourceType) ?? new Set<string>();
+      ids.add(item.resourceId);
+      refs.set(item.resourceType, ids);
+    }
+    collectResourceItemRefs(item.children, refs, depth + 1);
+  }
+}
+
+/** The resource whose generated id prefix (`<idPrefix or name>:`) starts `id`, if any. */
+function resourceNamedById(schema: DatafnSchema, id: string): string | undefined {
+  let best: { name: string; length: number } | undefined;
+  for (const resource of schema.resources) {
+    const prefix = `${resource.idPrefix ?? resource.name}:`;
+    if (id.startsWith(prefix) && (!best || prefix.length > best.length)) {
+      best = { name: resource.name, length: prefix.length };
+    }
+  }
+  return best?.name;
+}
+
+/** One record field that stores a relation's foreign key, with its target. */
+interface RecordRelationField {
+  field: string;
+  resourceField?: string;
+  endpoint: DatafnRelationEndpoint;
+}
+
+const recordRelationFieldCache = new WeakMap<DatafnSchema, Map<string, RecordRelationField[]>>();
+
+/**
+ * Lists the foreign-key fields a resource's records carry, the same fields
+ * DataFn derives for many-one, one-many and htree relations, so a write that
+ * sets one relates the record without going through `relations`.
+ */
+function recordRelationFields(schema: DatafnSchema, resource: string): RecordRelationField[] {
+  let bySchema = recordRelationFieldCache.get(schema);
+  if (!bySchema) {
+    bySchema = new Map();
+    recordRelationFieldCache.set(schema, bySchema);
+  }
+  const cached = bySchema.get(resource);
+  if (cached) return cached;
+  const resourceFields = new Map(
+    getRelationFkFieldsForResource(schema, resource).map((fk) => [fk.field, fk.resourceField])
+  );
+  const fields: RecordRelationField[] = [];
+  for (const relation of schema.relations ?? []) {
+    let field: string;
+    let endpoint: DatafnRelationEndpoint;
+    if (relation.type === 'many-one' && endpointIncludes(relation.from, resource)) {
+      field = relationFkFieldForManyOne(relation);
+      endpoint = relation.to;
+    } else if (relation.type === 'one-many' && endpointIncludes(relation.to, resource)) {
+      field = relationFkFieldForOneMany(relation);
+      endpoint = relation.from;
+    } else if (relation.type === 'htree' && endpointIncludes(relation.to, resource)) {
+      field = relation.fkField || relation.foreignKey || relation.inverse || 'parentId';
+      endpoint = relation.from;
+    } else {
+      continue;
+    }
+    fields.push({ field, endpoint, resourceField: resourceFields.get(field) });
+  }
+  bySchema.set(resource, fields);
+  return fields;
+}
+
+/** Relation metadata fields that name a record by id, such as `collectionId`. */
+function idMetadataFields(relation: { metadata?: readonly { name: string }[] }): string[] {
+  return (relation.metadata ?? []).map((field) => field.name).filter((name) => /Id$/.test(name));
+}
+
+function isClearedValue(value: unknown): boolean {
+  return value === undefined || value === null || value === '';
 }
 
 function isDerivedPolicy(policy: SharedResourcePolicy | undefined): policy is DerivedPolicy {
@@ -365,10 +520,6 @@ function createScopeView(
 
   const allowedValue = (value: unknown) => typeof value === 'string' && tables.has(value);
 
-  const itemsVisible = (items: unknown) =>
-    items === undefined || items === null ||
-    (Array.isArray(items) && items.every((item) => spaceItemVisible(item, tables)));
-
   const canQuery = (query: unknown): boolean => {
     if (!isRecord(query) || typeof query.resource !== 'string') return false;
     if (query.filters !== undefined && !isRecord(query.filters)) return false;
@@ -421,6 +572,29 @@ function createScopeView(
   const pendingOwned = new Set<string>();
   const tagPolicy = linkTagPolicy(ownership);
 
+  /**
+   * True when every item of each space item tree in `lists` is one the write
+   * grant may see, so a write can neither add nor drop a hidden item.
+   */
+  const itemsWritable = async (lists: readonly unknown[]): Promise<boolean> => {
+    if (lists.some((items) => !isClearedList(items) && !Array.isArray(items))) return false;
+    const visible = await resolveSpaceItemAccess({
+      lists, tables, mode: 'write', ownership, schema, shared, pending: pendingOwned
+    });
+    return lists.every((items) => isClearedList(items) ||
+      (items as unknown[]).every((item) => spaceItemVisible(item, visible)));
+  };
+
+  /**
+   * The resource a relation endpoint resolves `id` to, or `undefined` when
+   * none does or the id's own prefix names a different resource.
+   */
+  const resolveTarget = (endpoint: DatafnRelationEndpoint, id: string): string | undefined => {
+    const target = resolveEndpointResource(endpoint, id, schema);
+    const named = resourceNamedById(schema, id);
+    return named === undefined || named === target ? target : undefined;
+  };
+
   const targetAllowed = async (target: string, id: string): Promise<boolean> => {
     if (!tables.has(target)) return false;
     const policy = ownership.shared.get(target);
@@ -448,6 +622,39 @@ function createScopeView(
       return owners.length === 0 ||
         owners.some(([from, to]) => allowedValue(from) && allowedValue(to));
     });
+  };
+
+  /**
+   * A relation metadata value naming a record (for example the collection a
+   * property value belongs to) must name one the write grant may reach.
+   */
+  const recordIdAllowed = async (value: unknown): Promise<boolean> => {
+    if (isClearedValue(value)) return true;
+    if (typeof value !== 'string') return false;
+    const target = resourceNamedById(schema, value);
+    return target !== undefined && (await targetAllowed(target, value));
+  };
+
+  /**
+   * Foreign-key fields relate a record as `relations` do, so each one an
+   * insert, merge or replace sets must point inside the write grant. Clearing
+   * one is allowed: the record itself is checked as writable separately.
+   */
+  const recordRelationsAllowed = async (
+    resource: string,
+    record: Record<string, unknown>
+  ): Promise<boolean> => {
+    for (const fk of recordRelationFields(schema, resource)) {
+      const kind = fk.resourceField === undefined ? undefined : record[fk.resourceField];
+      if (!isClearedValue(kind) && !allowedValue(kind)) return false;
+      const value = record[fk.field];
+      if (isClearedValue(value)) continue;
+      if (typeof value !== 'string') return false;
+      const target = resolveTarget(fk.endpoint, value);
+      if (typeof target !== 'string' || !(await targetAllowed(target, value))) return false;
+      if (!isClearedValue(kind) && kind !== target) return false;
+    }
+    return true;
   };
 
   /**
@@ -480,11 +687,15 @@ function createScopeView(
       if (!items) return false;
       const carriesTags = tagPolicy !== undefined &&
         'joinTable' in match.relation && match.relation.joinTable === tagPolicy.joinTable;
+      const idFields = idMetadataFields(match.relation);
       for (const item of items) {
-        const target = resolveEndpointResource(endpoint, item.toId, schema);
+        const target = resolveTarget(endpoint, item.toId);
         if (typeof target !== 'string' || !(await targetAllowed(target, item.toId))) return false;
         for (const key of ['fromResource', 'toResource']) {
           if (key in item.metadata && !allowedValue(item.metadata[key])) return false;
+        }
+        for (const key of idFields) {
+          if (!(await recordIdAllowed(item.metadata[key]))) return false;
         }
         if (carriesTags && !(await tagsUsable(item.metadata[tagPolicy.tagsField]))) return false;
       }
@@ -500,11 +711,13 @@ function createScopeView(
     const resource = mutation.resource;
     const operation = mutation.operation;
     if (!tables.has(resource)) return false;
+    if (mutation.record !== undefined && !isRecord(mutation.record)) return false;
+    const record = isRecord(mutation.record) ? mutation.record : undefined;
     if (!(await relationsAllowed(mutation, resource, operation))) return false;
+    if (record && !(await recordRelationsAllowed(resource, record))) return false;
     const policy = ownership.shared.get(resource);
     if (!policy) return true;
     if (policy.kind === 'none') return false;
-    const record = isRecord(mutation.record) ? mutation.record : undefined;
     const id = typeof mutation.id === 'string' ? mutation.id : undefined;
     if (!id) return false;
     if (policy.kind === 'field') {
@@ -526,38 +739,42 @@ function createScopeView(
       return (await derivedAccess(policy, [id], tables, 'write', shared)).has(id);
     }
     const field = policy.field;
-    if (record && field in record && !itemsVisible(record[field])) return false;
-    if (operation === 'merge' && !(record && field in record)) return true;
+    const writesItems = record !== undefined && field in record;
+    if (operation === 'merge' && !writesItems) return true;
     const existing = await shared.readRecord(resource, id);
-    return !existing || itemsVisible(existing[field]);
+    return itemsWritable([
+      ...(writesItems ? [record[field]] : []),
+      ...(existing ? [existing[field]] : [])
+    ]);
   };
 
   return { full: false, canQuery, canSearch, canMutate };
 }
 
 /**
- * Removes space items an app-scoped reader may not see: resource items whose
- * type is outside the grant, and anything of an unknown kind. Kept items keep
- * only their visible children; page links stay.
+ * Removes space items an app-scoped reader may not see. Kept items keep only
+ * their visible children.
  */
-export function filterSpaceItems(
+function filterSpaceItems(
   items: unknown,
-  grant: AppGrant,
-  ownership: ResourceOwnership = resourceOwnership
+  visible: (item: Record<string, unknown>) => boolean
 ): unknown {
-  if (grant === 'all' || !Array.isArray(items)) return items;
-  const tables = grantTables(grant, ownership);
-  const visit = (list: unknown[]): unknown[] => list.flatMap((item) => {
-    if (!isRecord(item) || !spaceItemKindVisible(item, tables)) return [];
-    return [Array.isArray(item.children) ? { ...item, children: visit(item.children) } : item];
+  if (isClearedList(items)) return items;
+  // Items stored in an unexpected shape are withheld rather than passed through.
+  if (!Array.isArray(items)) return [];
+  const visit = (list: unknown[], depth: number): unknown[] => list.flatMap((item) => {
+    if (depth > 32 || !isRecord(item) || !visible(item)) return [];
+    return [Array.isArray(item.children)
+      ? { ...item, children: visit(item.children, depth + 1) }
+      : item];
   });
-  return visit(items);
+  return visit(items, 0);
 }
 
 /**
  * Filters a successful DataFn `query` or `transact` response body for an
  * app-scoped reader, using the request payload to find which results read a
- * shared resource: space items outside the grant are removed, and view or
+ * shared resource: space items the grant may not see are removed, and view or
  * link tag rows the grant may not read are dropped. Returns the body
  * unchanged when nothing needed filtering.
  */
@@ -567,6 +784,7 @@ export async function filterScopedResponseBody(
   body: unknown,
   grant: AppGrant,
   store: AppScopeStore,
+  schema: DatafnSchema,
   ownership: ResourceOwnership = resourceOwnership
 ): Promise<unknown> {
   if (grant === 'all' || !isRecord(body) || body.ok !== true) return body;
@@ -576,15 +794,37 @@ export async function filterScopedResponseBody(
     isRecord(query) && typeof query.resource === 'string' && query.relation === undefined
       ? ownership.shared.get(query.resource)
       : undefined;
-  const filterResult = async (result: unknown, policy: SharedResourcePolicy | undefined) => {
+  const filterResults = async (results: unknown[], queries: unknown[]) => {
+    const policies = results.map((_, index) => policyFor(queries[index]));
+    // Every space item tree in the response is checked with one lookup per type.
+    const itemLists = results.flatMap((result, index) => {
+      const policy = policies[index];
+      if (policy?.kind !== 'items' || !isRecord(result) || !Array.isArray(result.data)) return [];
+      return result.data.map((row) => (isRecord(row) ? row[policy.field] : undefined));
+    });
+    const itemVisible = await resolveSpaceItemAccess({
+      lists: itemLists, tables, mode: 'read', ownership, schema, shared
+    });
+    const filtered: unknown[] = [];
+    for (const [index, result] of results.entries()) {
+      filtered.push(await filterResult(result, policies[index], itemVisible));
+    }
+    return filtered;
+  };
+  const filterResult = async (
+    result: unknown,
+    policy: SharedResourcePolicy | undefined,
+    itemVisible: (item: Record<string, unknown>) => boolean
+  ) => {
     if (policy?.kind === 'items') {
+      // Only rows carry items; other result shapes (such as counts) pass through.
       if (!isRecord(result) || !Array.isArray(result.data)) return result;
       const field = policy.field;
       return {
         ...result,
         data: result.data.map((row) =>
           isRecord(row) && field in row
-            ? { ...row, [field]: filterSpaceItems(row[field], grant, ownership) }
+            ? { ...row, [field]: filterSpaceItems(row[field], itemVisible) }
             : row
         )
       };
@@ -601,13 +841,6 @@ export async function filterScopedResponseBody(
     const data = rows.filter((row) => visible.has(row.id as string));
     return { ...result, data, ...('nextCursor' in result ? { nextCursor: null } : {}) };
   };
-  const filterResults = async (results: unknown[], queries: unknown[]) => {
-    const filtered: unknown[] = [];
-    for (const [index, result] of results.entries()) {
-      filtered.push(await filterResult(result, policyFor(queries[index])));
-    }
-    return filtered;
-  };
   if (action === 'query') {
     if (Array.isArray(payload)) {
       if (!payload.some(policyFor)) return body;
@@ -615,7 +848,8 @@ export async function filterScopedResponseBody(
       return { ...body, result: await filterResults(body.result, payload) };
     }
     if (!policyFor(payload)) return body;
-    return { ...body, result: await filterResult(body.result, policyFor(payload)) };
+    const [result] = await filterResults([body.result], [payload]);
+    return { ...body, result };
   }
   if (action !== 'transact' || !isRecord(payload) || !Array.isArray(payload.steps)) return body;
   const queries = payload.steps.map((step) => (isRecord(step) ? step.query : undefined));
@@ -640,22 +874,20 @@ function grantTables(
   return tables;
 }
 
-function spaceItemKindVisible(
-  item: Record<string, unknown>,
-  tables: ReadonlySet<string>
+/** True when an item and every item below it are visible. */
+function spaceItemVisible(
+  item: unknown,
+  visible: (item: Record<string, unknown>) => boolean,
+  depth = 0
 ): boolean {
-  if (item.type === SPACE_ITEM_TYPES.page || item.type === SPACE_ITEM_TYPES.section) {
-    return true;
-  }
-  return item.type === SPACE_ITEM_TYPES.resource &&
-    typeof item.resourceType === 'string' && tables.has(item.resourceType);
-}
-
-function spaceItemVisible(item: unknown, tables: ReadonlySet<string>, depth = 0): boolean {
-  if (depth > 32 || !isRecord(item) || !spaceItemKindVisible(item, tables)) return false;
+  if (depth > 32 || !isRecord(item) || !visible(item)) return false;
   if (item.children === undefined) return true;
   return Array.isArray(item.children) &&
-    item.children.every((child) => spaceItemVisible(child, tables, depth + 1));
+    item.children.every((child) => spaceItemVisible(child, visible, depth + 1));
+}
+
+function isClearedList(items: unknown): boolean {
+  return items === undefined || items === null;
 }
 
 function readsOtherNamespaces(metadata: unknown): boolean {
