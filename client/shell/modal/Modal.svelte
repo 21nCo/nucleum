@@ -27,6 +27,7 @@
   import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
   import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
+  import { RAISED_TOASTS_ID } from "@nucleum/shell/overlays/raised-toasts";
   let {
     index = 0,
     show = $bindable(true),
@@ -118,8 +119,16 @@
       );
   }
 
-  /** Containers that stay live behind a drawer, so the popovers and tooltips it opens work. */
-  const LIVE_CONTAINER_IDS = ["popovers", "secondary-popovers", "tooltips"];
+  /**
+   * Containers that stay live behind a drawer, so the popovers and tooltips it
+   * opens work and the toasts raised above it stay usable.
+   */
+  const LIVE_CONTAINER_IDS = [
+    "popovers",
+    "secondary-popovers",
+    "tooltips",
+    RAISED_TOASTS_ID
+  ];
 
   function setInert(element: HTMLElement, isInert: boolean) {
     element.inert = isInert;
@@ -151,8 +160,9 @@
 
   /**
    * Makes the app behind `overlay` inert: every sibling of it and of its
-   * ancestors, except the live popover and tooltip containers and modals
-   * opened above it. Returns the elements it made inert.
+   * ancestors, except the live popover and tooltip containers, the toasts
+   * raised above the modal layer and modals opened above it. Returns the
+   * elements it made inert.
    */
   function inertBackground(overlay: HTMLElement) {
     const changed: HTMLElement[] = [];
@@ -187,7 +197,8 @@
    * inert, so they take no focus or pointer input; the popover containers stay
    * live for the popovers the drawer opens. Focus enters the drawer and, on
    * close, returns to the opener or, when the opener is gone, to the modal
-   * left on front or else the first control of the app. Keys from the drawer and its popovers reach their own
+   * left on front or else the first control of the app. The toasts raised above
+   * the modal layer share the drawer's scope. Keys from the drawer and its popovers reach their own
    * handlers first; then Tab cycles through them unless a control handled it,
    * and keys other than `Escape` stop before document and window listeners.
    * Keys from outside them are blocked, and Tab is pulled back in.
@@ -200,9 +211,14 @@
     const inertApp = node.parentElement
       ? inertBackground(node.parentElement)
       : [];
+    const raisedToasts = () => {
+      const host = document.getElementById(RAISED_TOASTS_ID);
+      return host ? [host] : [];
+    };
     const owned = () => [
       node,
-      ...popoverElements().filter((popover) => !background.includes(popover))
+      ...popoverElements().filter((popover) => !background.includes(popover)),
+      ...raisedToasts()
     ];
     const isOwned = (target: EventTarget | null) =>
       owned().some((scope) => scope.contains(target as Node));
