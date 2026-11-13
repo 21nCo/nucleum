@@ -86,12 +86,14 @@ export interface File {
   readonly createdBy?: string | null;
   data?: unknown;
   duration?: number;
+  fileId?: string;
   id: string;
   isArchived?: boolean;
   isMeta?: boolean;
   label?: string;
   metadata?: unknown;
   name?: string;
+  processing?: Record<string, unknown>;
   size: number;
   thumbnailData?: unknown;
   thumbnailUrl?: string;

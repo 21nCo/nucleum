@@ -12,7 +12,6 @@ import { resolvePageRoute } from "@nucleum/shared-state/commands/page-view-actio
 import { dispatchCustomEvent } from "@21n/shared-utils/dom-events";
 import { persistLocally } from "@nucleum/persistence/legacy-local-storage";
 
-import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
 import { Action } from "@nucleum/client/config/action.enum";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 
@@ -141,8 +140,7 @@ const { subscribe, set, update } = writable<IAppStore>({
   appData: {},
   currentPath: "",
   isMenuHidden: false,
-  actions: [],
-  interactionMode: InteractionMode.DEFAULT
+  actions: []
 });
 
 export const appStore = {

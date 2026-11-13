@@ -31,7 +31,6 @@
     profilePicture?: Snippet<
       [
         context:
-          | "cmd-page"
           | "cp-profile"
           | "account-settings"
           | "topbar"

@@ -7,7 +7,6 @@ import { getResourceRecordSurface } from "./resource-matrix";
 export type SettingsPanelKey =
   | "focus"
   | "node"
-  | "mode"
   | "keyboardShortcuts"
   | "accessibility";
 
@@ -48,16 +47,6 @@ function buildSettingsPanelContracts(
       sidebarName: /^Node settings$/i,
       titlePattern: /^Node settings$/i,
       anchorPatterns: [/Don't show text highlight colors/i]
-    },
-    mode: {
-      key: "mode",
-      enabled: memoryProject,
-      sidebarName: /^Mode of interaction$/i,
-      titlePattern: /^Mode of interaction$/i,
-      anchorPatterns: [
-        /^Preferred mode of interaction$/i,
-        /^Hide all hot key and shortcut hints$/i
-      ]
     },
     keyboardShortcuts: {
       key: "keyboardShortcuts",
