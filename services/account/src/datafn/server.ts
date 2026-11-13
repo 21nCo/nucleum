@@ -26,14 +26,14 @@ import {
   authorizeAppScopes,
   filterScopedResponseBody,
   hasFullAppAccess,
-  resolveAppScopeAccess
+  resolveAppScopeAccess,
+  type AppScopeStore
 } from './app-scopes.js';
 
 export {
   resolveAccountUserNamespace,
   resolveAccountUserPrincipal
 } from './namespace.js';
-export { accountScopeRegistry } from './app-scopes.js';
 
 export interface SyncContext {
   request: Request;
@@ -113,6 +113,17 @@ export function createSyncServer(
     columnName: '__ns',
     mandatory: true
   });
+  const scopeStore = (session: AuthFnSession): AppScopeStore => {
+    const namespace = resolveAccountUserNamespace(session.actorId);
+    return {
+      findMany: (model, where) =>
+        scopedDatabase.findMany<Record<string, unknown>>({
+          model,
+          where: where.map((clause) => ({ ...clause })),
+          namespace
+        })
+    };
+  };
   const regionHeader = input.regionId ?? process.env.ACCOUNT_REGION_ID;
   return app.createServer<SyncContext>({
     database: input.database,
@@ -143,18 +154,12 @@ export function createSyncServer(
         if (ctx.session.actorType !== 'user') return false;
         const access = resolveAppScopeAccess(ctx.session);
         if (!hasFullAppAccess(access)) {
-          const namespace = resolveAccountUserNamespace(ctx.session.actorId);
           const allowed = await authorizeAppScopes({
             access,
             action,
             payload,
             schema: nucleumDatafnSchema,
-            readRecord: (resource, id) =>
-              scopedDatabase.findOne<Record<string, unknown>>({
-                model: resource,
-                where: [{ field: 'id', operator: 'eq', value: id }],
-                namespace
-              })
+            store: scopeStore(ctx.session)
           });
           if (!allowed) return false;
         }
@@ -182,7 +187,7 @@ export function createSyncServer(
       ? undefined
       : input.rateLimit ?? createDefaultRateLimit(input.stores),
     routeHooks: {
-      afterResponse: filterScopedSpaceResponse,
+      afterResponse: (hook) => filterScopedResponse(hook, scopeStore),
       ...(regionHeader ? { headers: { 'x-datafn-region': regionHeader } } : {})
     },
     observability: input.observability
@@ -258,11 +263,13 @@ function isUnscopedUserSession(session: AuthFnSession): boolean {
 }
 
 /**
- * Strips space items outside an app-scoped session's read grant from DataFn
- * query and transact responses. Other responses pass through unchanged.
+ * Filters DataFn query and transact responses for an app-scoped session:
+ * strips space items outside its read grant and drops view and link tag rows
+ * it may not read. Other responses pass through unchanged.
  */
-async function filterScopedSpaceResponse(
-  hook: DatafnRouteHookInput<SyncContext>
+async function filterScopedResponse(
+  hook: DatafnRouteHookInput<SyncContext>,
+  scopeStore: (session: AuthFnSession) => AppScopeStore
 ): Promise<Response> {
   const session = hook.context.session;
   if (!session || (hook.action !== 'query' && hook.action !== 'transact')) {
@@ -272,7 +279,9 @@ async function filterScopedSpaceResponse(
   if (grant === 'all' || !hook.response.ok) return hook.response;
   const body: unknown = await hook.response.clone().json().catch(() => undefined);
   if (body === undefined) return hook.response;
-  const filtered = filterScopedResponseBody(hook.action, hook.payload, body, grant);
+  const filtered = await filterScopedResponseBody(
+    hook.action, hook.payload, body, grant, scopeStore(session)
+  );
   if (filtered === body) return hook.response;
   const headers = new Headers(hook.response.headers);
   headers.delete('content-length');

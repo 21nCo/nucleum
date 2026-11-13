@@ -42,9 +42,10 @@ sequenceDiagram
   Feature->>Client: Query or mutation
   Client->>Auth: Obtain transport auth
   Client->>API: Authenticated /datafn request
-  API->>API: Authenticate; authorize mutations; resolve namespace
+  API->>API: Authenticate; authorize app scopes and mutations; resolve namespace
   API->>DB: DataFn operation through database adapter
   DB-->>API: Result
+  API->>API: Filter shared resources for app-scoped sessions
   API-->>Client: Protocol response
   Client-->>Feature: DataFn state / result
 ```
@@ -53,9 +54,11 @@ The sequence shows responsibility boundaries, not a guarantee that each local op
 
 [Client auth](../../client/runtime/account/auth.ts) creates a regional AuthFn client, uses credentials for cookie sessions, and chooses cookie or hybrid session mode for the host. [remote-transport.ts](../../client/datafn/remote-transport.ts) reuses that transport auth for DataFn. Authority resolution is described in [deployment topology](deployment-topology.md).
 
-The account [application](../../services/account/src/app.ts) registers CORS and [DataFn routes](../../services/account/src/datafn/routes.ts), which delegate `/datafn/*` to the configured DataFn router. The [server integration](../../services/account/src/datafn/server.ts) authenticates reads and applies mutation authorization to mutation, transaction, seed, push and reconciliation operations. Unknown resources are disabled. The [namespace helper](../../services/account/src/datafn/namespace.ts) normalizes the authenticated actor to a user namespace.
+The account [application](../../services/account/src/app.ts) registers CORS and [DataFn routes](../../services/account/src/datafn/routes.ts), which delegate `/datafn/*` to the configured DataFn router. The [server integration](../../services/account/src/datafn/server.ts) authenticates reads and applies mutation authorization to mutation, transaction, seed, push and reconciliation operations. Unknown resources are disabled. The [namespace helper](../../services/account/src/datafn/namespace.ts) normalizes the authenticated actor to a user namespace; API keys act as their owning user, and keys without an owner are refused.
 
-Public-link access is a separate path: the server installs the DataFn public-links plugin and resolves link context before normal session context. Scope enforcement depends on that plugin contract; the integration's public-link authorization branch must not be read as permission for arbitrary anonymous record access. [Client sharing](../../client/datafn/datafn-sharing.store.ts) owns Nucleum sharing integration.
+[App scopes](../../services/account/src/datafn/app-scopes.ts) authorize every read and write of an API-key session. The registry grants `memotron`, `pointron` and `nucleum` each `read` and `write`, plus `*`; a write needs `<app>:write`. Cookie sessions, `*` and `nucleum` keys reach every resource. A `memotron` or `pointron` key reaches its app's resources, which the [ownership table](../../services/account/src/datafn/resource-ownership.ts) derives from the product features in `@nucleum/schema`, and the resources both apps share only filtered to its app: collections, properties and access logs need a `resource` filter inside the grant; space items, views (through their linked collections) and link tags (through the links they tag) are filtered out of query and transaction responses, so view and link tag queries cannot page, count or group. Writes to a shared record, and relations to one, check the stored record, and every relation target must be inside the grant. Scoped keys cannot clone, pull, seed or reconcile the whole namespace.
+
+Public-link access is a separate path: the server installs the DataFn public-links plugin and resolves link context before normal session context. Scope enforcement depends on that plugin contract; the integration's public-link authorization branch must not be read as permission for arbitrary anonymous record access. Creating or revoking public links needs a user session that holds every app scope, because a link can expose any record in the namespace. [Client sharing](../../client/datafn/datafn-sharing.store.ts) owns Nucleum sharing integration.
 
 ## Encryption, recovery and lifecycle
 
@@ -69,6 +72,6 @@ File binaries follow [file transport](../../client/runtime/files/file-transport.
 
 [Domain schema](../../schema/datafn.ts) feeds the account [generation entry](../../services/account/src/datafn/sync.datafn.ts) and [generated Drizzle mappings](../../services/account/src/db/generated/datafn). Physical changes require a forward migration in [drizzle/datafn](../../services/account/drizzle/datafn). Generation alone does not upgrade a database.
 
-Relevant verification entrypoints are declared in the [account package](../../services/account/package.json): `typecheck`, `test:datafn:migrations`, and ApiFn memory, multi-region, rate-limit and PostgreSQL suites. Use isolated test databases for migration and integration tests. Verify fresh creation and upgrade from committed history when changing physical schema.
+Relevant verification entrypoints are declared in the [account package](../../services/account/package.json): `typecheck`, `test:datafn:migrations`, and ApiFn memory, multi-region, rate-limit and PostgreSQL suites. The `account` Vitest project in [tests](../../tests/projects/account.vitest.config.ts) runs the app-scope tests through the DataFn HTTP routes. Use isolated test databases for migration and integration tests. Verify fresh creation and upgrade from committed history when changing physical schema.
 
 For a failing user flow, trace browser requests first, then account logs and Caddy upstream health, then database assertions. Successful client import checks or a healthy `/health` endpoint do not establish sync correctness, persistence durability or cross-region behavior.

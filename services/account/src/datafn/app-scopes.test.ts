@@ -111,6 +111,40 @@ async function ids(response: Response): Promise<string[]> {
   return (await rows(response)).map((row) => String(row.id)).sort();
 }
 
+function relationMutation(
+  resource: string,
+  operation: string,
+  id: string,
+  relations: Record<string, unknown>,
+  extra: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return { ...mutation(resource, operation, id), relations, ...extra };
+}
+
+async function joinRows(model: string): Promise<Record<string, unknown>[]> {
+  return harness.datafnDatabase.findMany<Record<string, unknown>>({ model, where: [] });
+}
+
+async function linkTargets(id: string): Promise<string[]> {
+  return (await joinRows('record_links'))
+    .filter((link) => link.in === id)
+    .map((link) => String(link.out))
+    .sort();
+}
+
+async function linkTags(from: string, to: string): Promise<unknown> {
+  return (await joinRows('record_links')).find((link) => link.in === from && link.out === to)?.tags;
+}
+
+async function storedField(resource: string, id: string, field: string): Promise<unknown> {
+  const response = await call('/datafn/query', actors.cookie, {
+    resource,
+    version: 1,
+    filters: { id: { eq: id } }
+  });
+  return (await rows(response))[0]?.[field];
+}
+
 async function storedLabel(resource: string, id: string): Promise<unknown> {
   const response = await call('/datafn/query', actors.cookie, {
     resource,
@@ -144,9 +178,32 @@ beforeAll(async () => {
       view: 'sidenav',
       items: [nodeItem, objectiveItem, pageItem, sectionItem, nodeWithObjectiveChild]
     }),
-    mutation('space', 'insert', 'space:notes', { label: 'Notes', view: 'sidenav', items: [nodeItem] })
+    mutation('space', 'insert', 'space:notes', { label: 'Notes', view: 'sidenav', items: [nodeItem] }),
+    mutation('node', 'insert', 'node:n3', { label: 'Other note', contentType: 'text' }),
+    mutation('objective', 'insert', 'objective:o2', { label: 'Other goal', type: 'goal', status: 'active' }),
+    ...['notes', 'goals', 'both'].map((name) =>
+      mutation('view', 'insert', `view:${name}`, { label: name, layout: 'list' })),
+    ...['memo', 'point', 'shared', 'cross'].map((name) =>
+      mutation('linkTag', 'insert', `linkTag:${name}`, { label: name })),
+    relationMutation('collection', 'relate', 'collection:notes', {
+      views: ['view:notes', 'view:both']
+    }),
+    relationMutation('collection', 'relate', 'collection:goals', {
+      views: ['view:goals', 'view:both']
+    }),
+    relationMutation('node', 'relate', 'node:n1', {
+      links: [
+        { $ref: 'node:n3', linkType: 'direct', tags: ['linkTag:memo', 'linkTag:shared'] },
+        { $ref: 'objective:o1', linkType: 'direct', tags: ['linkTag:cross'] }
+      ]
+    }),
+    relationMutation('objective', 'relate', 'objective:o1', {
+      links: [{ $ref: 'objective:o2', linkType: 'direct', tags: ['linkTag:point', 'linkTag:shared'] }]
+    })
   ]);
   expect(seeded.status).toBe(200);
+  expect(await linkTargets('node:n1')).toEqual(['node:n3', 'objective:o1']);
+  expect((await joinRows('collection_views')).length).toBe(4);
 });
 
 describe('resource ownership', () => {
@@ -158,6 +215,16 @@ describe('resource ownership', () => {
     expect(resourceOwnership.shared.get('collection')).toEqual({ kind: 'field', field: 'resource' });
     expect(resourceOwnership.shared.get('property')).toEqual({ kind: 'field', field: 'resource' });
     expect(resourceOwnership.shared.get('space')).toEqual({ kind: 'items', field: 'items' });
+    expect(resourceOwnership.shared.get('view')).toEqual({
+      kind: 'collections',
+      joinTable: 'collection_views',
+      collectionColumn: 'collectionId',
+      recordColumn: 'viewId'
+    });
+    expect(resourceOwnership.shared.get('linkTag')).toMatchObject({
+      kind: 'linkTags',
+      joinTable: 'record_links'
+    });
     expect(resourceOwnership.shared.has('node')).toBe(false);
   });
 });
@@ -167,13 +234,15 @@ describe('cookie and nucleum sessions are unchanged', () => {
     it(`${actor} reads every app, unfiltered shared resources and full spaces`, async () => {
       const headers = actors[actor];
       expect(await ids(await call('/datafn/query', headers, { resource: 'objective', version: 1 })))
-        .toEqual(['objective:o1']);
+        .toEqual(['objective:o1', 'objective:o2']);
       expect(await ids(await call('/datafn/query', headers, { resource: 'node', version: 1 })))
         .toContain('node:n1');
       expect(await ids(await call('/datafn/query', headers, { resource: 'collection', version: 1 })))
         .toEqual(['collection:goals', 'collection:notes']);
       expect(await ids(await call('/datafn/query', headers, { resource: 'view', version: 1 })))
-        .toEqual(['view:v1']);
+        .toEqual(['view:both', 'view:goals', 'view:notes', 'view:v1']);
+      expect(await ids(await call('/datafn/query', headers, { resource: 'linkTag', version: 1 })))
+        .toEqual(['linkTag:cross', 'linkTag:memo', 'linkTag:point', 'linkTag:shared', 'linkTag:t1']);
       const spaces = await rows(await call('/datafn/query', headers, {
         resource: 'space',
         version: 1,
@@ -289,11 +358,55 @@ describe('memotron token reading shared resources', () => {
     }
   });
 
-  it('cannot read views or link tags, which carry nothing to filter by', async () => {
-    for (const resource of ['view', 'linkTag']) {
-      const response = await call('/datafn/query', actors.memotronRead, { resource, version: 1 });
+  it('sees views linked to at least one Memotron collection', async () => {
+    expect(await ids(await call('/datafn/query', actors.memotronRead, { resource: 'view', version: 1 })))
+      .toEqual(['view:both', 'view:notes']);
+    expect(await ids(await call('/datafn/query', actors.memotronRead, {
+      resource: 'view',
+      version: 1,
+      filters: { id: { eq: 'view:goals' } }
+    }))).toEqual([]);
+  });
+
+  it('sees link tags used on a link between Memotron records', async () => {
+    expect(await ids(await call('/datafn/query', actors.memotronRead, { resource: 'linkTag', version: 1 })))
+      .toEqual(['linkTag:memo', 'linkTag:shared']);
+  });
+
+  it('sees filtered views and link tags through batched queries and transact steps', async () => {
+    const batch = await call('/datafn/query', actors.memotronRead, [
+      { resource: 'node', version: 1 },
+      { resource: 'view', version: 1 }
+    ]);
+    expect(batch.status).toBe(200);
+    const batchBody = await batch.json() as { result: { data: { id: string }[] }[] };
+    expect(batchBody.result[1]?.data.map((row) => row.id).sort()).toEqual(['view:both', 'view:notes']);
+    const transact = await call('/datafn/transact', actors.memotronRead, {
+      steps: [{ query: { resource: 'linkTag', version: 1 } }]
+    });
+    expect(transact.status).toBe(200);
+    const text = JSON.stringify(await transact.json());
+    expect(text).toContain('linkTag:memo');
+    expect(text).not.toContain('linkTag:point');
+    expect(text).not.toContain('linkTag:cross');
+  });
+
+  it('cannot summarize or reach views and link tags around the filter', async () => {
+    for (const query of [
+      { resource: 'view', version: 1, groupBy: ['layout'] },
+      { resource: 'linkTag', version: 1, count: true },
+      { resource: 'view', version: 1, sort: ['label:asc'], limit: 1 },
+      { resource: 'view', version: 1, filters: { 'collections.resource': 'objective' } },
+      { resource: 'collection', version: 1, relation: 'views', id: 'collection:goals' },
+      { resource: 'view', version: 1, filters: 'id' }
+    ]) {
+      const response = await call('/datafn/query', actors.memotronRead, query);
       expect(response.status).toBe(403);
     }
+    expect((await call('/datafn/search', actors.memotronRead, {
+      query: 'goals',
+      resources: ['view']
+    })).status).toBe(403);
   });
 
   it('sees space items filtered to Memotron resources, including nested items', async () => {
@@ -428,33 +541,165 @@ describe('memotron write token pushing', () => {
     expect(rewritten.status).toBe(200);
   });
 
-  it('cannot write views or link tags', async () => {
-    const response = await call('/datafn/push', actors.memotronWrite, push(
-      mutation('view', 'merge', 'view:v1', { label: 'Hijacked' })
+  it('writes views only when every linked collection is Memotron', async () => {
+    const own = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('view', 'merge', 'view:notes', { label: 'Notes board' })
     ));
-    expect(response.status).toBe(403);
+    expect(own.status).toBe(200);
+    expect(await storedLabel('view', 'view:notes')).toBe('Notes board');
+    for (const change of [
+      mutation('view', 'merge', 'view:both', { label: 'Hijacked' }),
+      mutation('view', 'merge', 'view:goals', { label: 'Hijacked' }),
+      mutation('view', 'delete', 'view:both')
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+    }
+    expect(await storedLabel('view', 'view:both')).toBe('both');
   });
 
-  it('cannot link its records to Pointron records', async () => {
-    const response = await call('/datafn/push', actors.memotronWrite, push({
-      ...mutation('node', 'relate', 'node:n1'),
-      relation: 'links',
-      targetId: 'objective:o1'
+  it('creates a view and links it only to Memotron collections', async () => {
+    const created = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('view', 'insert', 'view:new', { label: 'New', layout: 'list' }),
+      relationMutation('collection', 'relate', 'collection:notes', { views: ['view:new'] })
+    ));
+    expect(created.status).toBe(200);
+    for (const change of [
+      relationMutation('collection', 'relate', 'collection:goals', { views: ['view:new'] }),
+      relationMutation('view', 'relate', 'view:new', { collections: ['collection:goals'] }),
+      relationMutation('collection', 'relate', 'collection:notes', { views: ['view:goals'] }),
+      relationMutation('collection', 'unrelate', 'collection:notes', { views: ['view:both'] })
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+    }
+    const links = (await joinRows('collection_views'))
+      .filter((link) => link.viewId === 'view:new' || link.viewId === 'view:goals')
+      .map((link) => `${String(link.collectionId)}>${String(link.viewId)}`)
+      .sort();
+    expect(links).toEqual(['collection:goals>view:goals', 'collection:notes>view:new']);
+    expect((await joinRows('collection_views')).some((link) =>
+      link.collectionId === 'collection:notes' && link.viewId === 'view:both')).toBe(true);
+  });
+
+  it('writes link tags only when every tagged link is between Memotron records', async () => {
+    const own = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('linkTag', 'merge', 'linkTag:memo', { label: 'memo renamed' }),
+      mutation('linkTag', 'insert', 'linkTag:new', { label: 'new' })
+    ));
+    expect(own.status).toBe(200);
+    for (const id of ['linkTag:shared', 'linkTag:point', 'linkTag:cross']) {
+      const response = await call('/datafn/push', actors.memotronWrite, push(
+        mutation('linkTag', 'merge', id, { label: 'Hijacked' })
+      ));
+      expect(response.status).toBe(403);
+    }
+    expect(await storedLabel('linkTag', 'linkTag:shared')).toBe('shared');
+  });
+
+  it('cannot relate its records to Pointron records through any relation key', async () => {
+    const crossApp = relationMutation('node', 'relate', 'node:n3', {
+      links: [{ $ref: 'objective:o1' }],
+      collections: [{ $ref: 'collection:goals' }]
+    }, { relation: 'parent' });
+    expect((await call('/datafn/push', actors.memotronWrite, push(crossApp))).status).toBe(403);
+    expect((await call('/datafn/mutation', actors.memotronWrite, crossApp)).status).toBe(403);
+    const transact = await call('/datafn/transact', actors.memotronWrite, {
+      steps: [{ mutation: relationMutation('node', 'relate', 'node:n3', { links: ['objective:o2'] }) }]
+    });
+    expect(transact.status).toBe(403);
+    const inserted = await call('/datafn/push', actors.memotronWrite, push({
+      ...mutation('node', 'insert', 'node:linked', { label: 'Linked', contentType: 'text' }),
+      relations: { links: ['objective:o1'] }
     }));
-    expect(response.status).toBe(403);
+    expect(inserted.status).toBe(403);
+    expect(await linkTargets('node:n3')).toEqual([]);
+    expect((await joinRows('collection_items')).filter((row) => row.itemId === 'node:n3')).toEqual([]);
+    expect(await storedLabel('node', 'node:linked')).toBeUndefined();
+  });
+
+  it('relates, retags and unrelates Memotron records with real client payloads', async () => {
+    const related = await call('/datafn/push', actors.memotronWrite, push(
+      relationMutation('node', 'relate', 'node:n3', { parent: 'node:n1' }),
+      relationMutation('node', 'relate', 'node:n3', {
+        links: [{ $ref: 'node:n1', fromResource: 'node', toResource: 'node', linkType: 'direct' }]
+      }),
+      relationMutation('node', 'relate', 'node:n3', { collections: ['collection:notes'] })
+    ));
+    expect(related.status).toBe(200);
+    expect(await storedField('node', 'node:n3', 'parent')).toBe('node:n1');
+    expect(await linkTargets('node:n3')).toEqual(['node:n1']);
+    const retagged = await call('/datafn/push', actors.memotronWrite, push(
+      relationMutation('node', 'modifyRelation', 'node:n1', {
+        links: [{
+          $ref: 'node:n3',
+          fromResource: 'node',
+          toResource: 'node',
+          linkType: 'direct',
+          tags: ['linkTag:memo', 'linkTag:shared', 'linkTag:new']
+        }]
+      })
+    ));
+    expect(retagged.status).toBe(200);
+    expect(await linkTags('node:n1', 'node:n3'))
+      .toEqual(['linkTag:memo', 'linkTag:shared', 'linkTag:new']);
+    const unrelated = await call('/datafn/push', actors.memotronWrite, push(
+      relationMutation('node', 'unrelate', 'node:n3', {
+        links: [{ $ref: 'node:n1', linkType: 'direct' }]
+      }),
+      relationMutation('node', 'unrelate', 'node:n3', { collections: ['collection:notes'] })
+    ));
+    expect(unrelated.status).toBe(200);
+    expect(await linkTargets('node:n3')).toEqual([]);
+  });
+
+  it('cannot retag or unlink a link to a Pointron record or apply a Pointron-only tag', async () => {
+    for (const change of [
+      relationMutation('node', 'modifyRelation', 'node:n1', {
+        links: [{ $ref: 'objective:o1', linkType: 'direct', tags: [] }]
+      }),
+      relationMutation('node', 'unrelate', 'node:n1', {
+        links: [{ $ref: 'objective:o1', linkType: 'direct' }]
+      }),
+      relationMutation('node', 'modifyRelation', 'node:n1', {
+        links: [{ $ref: 'node:n3', linkType: 'direct', tags: ['linkTag:point'] }]
+      }),
+      relationMutation('node', 'modifyRelation', 'node:n1', {
+        links: [{ $ref: 'node:n3', toResource: 'objective', linkType: 'direct' }]
+      })
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+    }
+    expect(await linkTargets('node:n1')).toEqual(['node:n3', 'objective:o1']);
+    expect(await linkTags('node:n1', 'objective:o1')).toEqual(['linkTag:cross']);
+  });
+
+  it('cannot send a relation operation that names no relation', async () => {
+    for (const change of [
+      relationMutation('node', 'relate', 'node:n3', {}),
+      { ...mutation('node', 'relate', 'node:n3'), relation: 'parent' },
+      relationMutation('node', 'relate', 'node:n3', { links: ['node:n1'] }, { relation: 'parent' })
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+    }
   });
 });
 
 describe('pointron token', () => {
   it('reads Pointron resources and not Memotron ones', async () => {
     expect(await ids(await call('/datafn/query', actors.pointron, { resource: 'objective', version: 1 })))
-      .toEqual(['objective:o1']);
+      .toEqual(['objective:o1', 'objective:o2']);
     expect((await call('/datafn/query', actors.pointron, { resource: 'node', version: 1 })).status).toBe(403);
     expect(await ids(await call('/datafn/query', actors.pointron, {
       resource: 'collection',
       version: 1,
       filters: { resource: 'objective' }
     }))).toEqual(['collection:goals']);
+  });
+
+  it('sees views and link tags filtered to Pointron', async () => {
+    expect(await ids(await call('/datafn/query', actors.pointron, { resource: 'view', version: 1 })))
+      .toEqual(['view:both', 'view:goals']);
+    expect(await ids(await call('/datafn/query', actors.pointron, { resource: 'linkTag', version: 1 })))
+      .toEqual(['linkTag:point', 'linkTag:shared']);
   });
 
   it('sees space items filtered to Pointron resources', async () => {

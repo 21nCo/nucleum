@@ -2,6 +2,7 @@ import {
   endpointList,
   findRelationMatch,
   relationTargetEndpoint,
+  resolveEndpointResource,
   type DatafnSchema
 } from '@datafn/core';
 import type { DataFnAction } from '@datafn/server';
@@ -10,7 +11,8 @@ import {
   SCOPED_APPS,
   resourceOwnership,
   type ResourceOwnership,
-  type ScopedApp
+  type ScopedApp,
+  type SharedResourcePolicy
 } from './resource-ownership.js';
 
 /**
@@ -32,11 +34,21 @@ export interface AppScopeAccess {
   write: AppGrant;
 }
 
-/** Loads a stored record in the caller's namespace, or `null` when absent. */
-export type AppScopeRecordReader = (
-  resource: string,
-  id: string
-) => Promise<Record<string, unknown> | null>;
+/** One equality or membership condition for an `AppScopeStore` read. */
+export interface AppScopeWhere {
+  field: string;
+  operator: 'eq' | 'in';
+  value: unknown;
+}
+
+/**
+ * Reads stored rows of a resource or join table in the caller's namespace.
+ * Scope checks use it to find a shared record's owner before a write, and the
+ * collections or links that make a view or link tag visible to an app.
+ */
+export interface AppScopeStore {
+  findMany(model: string, where: readonly AppScopeWhere[]): Promise<Record<string, unknown>[]>;
+}
 
 /** Inputs for one `authorizeAppScopes` decision. */
 export interface AuthorizeAppScopesInput {
@@ -44,7 +56,7 @@ export interface AuthorizeAppScopesInput {
   action: DataFnAction;
   payload: unknown;
   schema: DatafnSchema;
-  readRecord: AppScopeRecordReader;
+  store: AppScopeStore;
   ownership?: ResourceOwnership;
 }
 
@@ -78,14 +90,16 @@ function resolveGrant(
  * Decides whether a DataFn request stays inside the session's app grants.
  * A scoped grant reaches its apps' own resources, shared resources only
  * through their filter, and never whole-namespace sync (clone, pull, seed,
- * reconcile). Unrecognized payload shapes are denied.
+ * reconcile). Unrecognized payload shapes, including non-object filters,
+ * are denied.
  */
 export async function authorizeAppScopes(
   input: AuthorizeAppScopesInput
 ): Promise<boolean> {
   const ownership = input.ownership ?? resourceOwnership;
-  const read = createScopeView(input.access.read, ownership, input.schema);
-  const write = createScopeView(input.access.write, ownership, input.schema);
+  const shared = createSharedVisibility(input.store);
+  const read = createScopeView(input.access.read, ownership, input.schema, shared);
+  const write = createScopeView(input.access.write, ownership, input.schema, shared);
   const { payload } = input;
   switch (input.action) {
     case 'status':
@@ -95,18 +109,16 @@ export async function authorizeAppScopes(
     case 'search':
       return read.canSearch(payload);
     case 'mutation':
-      return everyAsync(asList(payload), (m) => write.canMutate(m, input.readRecord));
+      return everyAsync(asList(payload), (m) => write.canMutate(m));
     case 'push':
       return isRecord(payload) && Array.isArray(payload.mutations) &&
-        everyAsync(payload.mutations, (m) => write.canMutate(m, input.readRecord));
+        everyAsync(payload.mutations, (m) => write.canMutate(m));
     case 'transact':
       return isRecord(payload) && Array.isArray(payload.steps) &&
         everyAsync(payload.steps, async (step) => {
           if (!isRecord(step)) return false;
           if ('query' in step && !('mutation' in step)) return read.canQuery(step.query);
-          if ('mutation' in step && !('query' in step)) {
-            return write.canMutate(step.mutation, input.readRecord);
-          }
+          if ('mutation' in step && !('query' in step)) return write.canMutate(step.mutation);
           return false;
         });
     case 'clone':
@@ -123,18 +135,162 @@ export async function authorizeAppScopes(
 const RELATION_OPERATIONS = new Set(['relate', 'unrelate', 'modifyRelation']);
 const LOGICAL_FILTER_KEYS = new Set(['and', 'or', 'not']);
 const SPACE_ITEM_TYPES = { section: 'section', resource: 'resource', page: 'page' };
+const DERIVED_QUERY_DENIED_KEYS = [
+  'groupBy', 'aggregations', 'having', 'temporal', 'count', 'limit', 'offset', 'cursor'
+] as const;
 
 interface ScopeView {
   full: boolean;
   canQuery(query: unknown): boolean;
   canSearch(payload: unknown): boolean;
-  canMutate(mutation: unknown, readRecord: AppScopeRecordReader): Promise<boolean>;
+  canMutate(mutation: unknown): Promise<boolean>;
+}
+
+type DerivedPolicy = Extract<SharedResourcePolicy, { kind: 'collections' | 'linkTags' }>;
+
+/** Per-request reads behind shared-resource checks, cached for one request. */
+interface SharedVisibility {
+  readRecord(resource: string, id: string): Promise<Record<string, unknown> | null>;
+  /** Resource field values of the collections linked to each record id. */
+  linkedCollectionResources(
+    policy: Extract<DerivedPolicy, { kind: 'collections' }>,
+    ids: readonly string[]
+  ): Promise<Map<string, unknown[]>>;
+  /** Endpoint resource pairs of the links whose tags name each tag id. */
+  tagUses(
+    policy: Extract<DerivedPolicy, { kind: 'linkTags' }>
+  ): Promise<Map<string, Array<readonly [unknown, unknown]>>>;
+}
+
+function createSharedVisibility(store: AppScopeStore): SharedVisibility {
+  let tagUses: Promise<Map<string, Array<readonly [unknown, unknown]>>> | undefined;
+  return {
+    async readRecord(resource, id) {
+      const rows = await store.findMany(resource, [{ field: 'id', operator: 'eq', value: id }]);
+      return rows[0] ?? null;
+    },
+    async linkedCollectionResources(policy, ids) {
+      const result = new Map<string, unknown[]>(ids.map((id) => [id, []]));
+      if (ids.length === 0) return result;
+      const links = await store.findMany(policy.joinTable, [
+        { field: policy.recordColumn, operator: 'in', value: [...ids] }
+      ]);
+      const collectionIds = [...new Set(links.map((link) => link[policy.collectionColumn]))]
+        .filter((id): id is string => typeof id === 'string');
+      const collections = collectionIds.length === 0
+        ? []
+        : await store.findMany('collection', [{ field: 'id', operator: 'in', value: collectionIds }]);
+      const resourceById = new Map(collections.map((row) => [row.id, row.resource]));
+      for (const link of links) {
+        const owner = result.get(String(link[policy.recordColumn]));
+        // A link to a missing collection keeps an unknown owner, which no grant covers.
+        owner?.push(resourceById.get(link[policy.collectionColumn]));
+      }
+      return result;
+    },
+    tagUses(policy) {
+      tagUses ??= store.findMany(policy.joinTable, []).then((links) => {
+        const uses = new Map<string, Array<readonly [unknown, unknown]>>();
+        for (const link of links) {
+          for (const tag of parseTags(link[policy.tagsField])) {
+            const list = uses.get(tag) ?? [];
+            list.push([link[policy.fromResourceColumn], link[policy.toResourceColumn]] as const);
+            uses.set(tag, list);
+          }
+        }
+        return uses;
+      });
+      return tagUses;
+    }
+  };
+}
+
+/**
+ * Returns the ids among `ids` that a grant's tables may read (`read`) or
+ * write (`write`) for a resource filtered through linked collections or
+ * tagged links. Reading needs one linked collection or tagged link inside the
+ * grant; writing needs every one of them inside it, so a record no other
+ * app uses yet is writable but not readable.
+ */
+async function derivedAccess(
+  policy: DerivedPolicy,
+  ids: readonly string[],
+  tables: ReadonlySet<string>,
+  mode: 'read' | 'write',
+  shared: SharedVisibility
+): Promise<Set<string>> {
+  const inGrant = (value: unknown) => typeof value === 'string' && tables.has(value);
+  const decide = (owners: readonly boolean[]) =>
+    mode === 'read' ? owners.some(Boolean) : owners.every(Boolean);
+  const allowed = new Set<string>();
+  if (policy.kind === 'collections') {
+    const linked = await shared.linkedCollectionResources(policy, ids);
+    for (const id of ids) {
+      if (decide((linked.get(id) ?? []).map(inGrant))) allowed.add(id);
+    }
+    return allowed;
+  }
+  const uses = await shared.tagUses(policy);
+  for (const id of ids) {
+    const owners = (uses.get(id) ?? []).map(([from, to]) => inGrant(from) && inGrant(to));
+    if (decide(owners)) allowed.add(id);
+  }
+  return allowed;
+}
+
+function isDerivedPolicy(policy: SharedResourcePolicy | undefined): policy is DerivedPolicy {
+  return policy?.kind === 'collections' || policy?.kind === 'linkTags';
+}
+
+function linkTagPolicy(ownership: ResourceOwnership): Extract<DerivedPolicy, { kind: 'linkTags' }> | undefined {
+  for (const policy of ownership.shared.values()) {
+    if (policy.kind === 'linkTags') return policy;
+  }
+  return undefined;
+}
+
+function parseTags(value: unknown): string[] {
+  let parsed = value;
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+  return Array.isArray(parsed) ? parsed.filter((tag): tag is string => typeof tag === 'string') : [];
+}
+
+interface RelationItem {
+  toId: string;
+  metadata: Record<string, unknown>;
+}
+
+/** Mirrors DataFn's relation payload normalization; `null` for a malformed payload. */
+function relationItems(payload: unknown, depth = 0): RelationItem[] | null {
+  if (depth > 8) return null;
+  if (typeof payload === 'string') return [{ toId: payload, metadata: {} }];
+  if (Array.isArray(payload)) {
+    const items: RelationItem[] = [];
+    for (const entry of payload) {
+      const nested = relationItems(entry, depth + 1);
+      if (!nested) return null;
+      items.push(...nested);
+    }
+    return items;
+  }
+  if (isRecord(payload)) {
+    const { $ref, ...metadata } = payload;
+    return typeof $ref === 'string' && $ref.length > 0 ? [{ toId: $ref, metadata }] : null;
+  }
+  return null;
 }
 
 function createScopeView(
   grant: AppGrant,
   ownership: ResourceOwnership,
-  schema: DatafnSchema
+  schema: DatafnSchema,
+  shared: SharedVisibility
 ): ScopeView {
   if (grant === 'all') {
     return {
@@ -215,6 +371,7 @@ function createScopeView(
 
   const canQuery = (query: unknown): boolean => {
     if (!isRecord(query) || typeof query.resource !== 'string') return false;
+    if (query.filters !== undefined && !isRecord(query.filters)) return false;
     const resource = query.resource;
     if (!tables.has(resource)) return false;
     if (query.relation !== undefined) {
@@ -239,6 +396,11 @@ function createScopeView(
         query.having === undefined && !filterReferences(query.filters, policy.field) &&
         !sortReferences(query.sort, policy.field);
     }
+    if (isDerivedPolicy(policy)) {
+      // Rows are filtered after the query runs, so nothing may summarize them
+      // or page through them: a page cursor carries its last row's values.
+      return DERIVED_QUERY_DENIED_KEYS.every((key) => query[key] === undefined);
+    }
     return false;
   };
 
@@ -255,10 +417,82 @@ function createScopeView(
     );
   };
 
-  const canMutate = async (
-    mutation: unknown,
-    readRecord: AppScopeRecordReader
+  /** Field-policy records inserted earlier in the same request, by `resource|id`. */
+  const pendingOwned = new Set<string>();
+  const tagPolicy = linkTagPolicy(ownership);
+
+  const targetAllowed = async (target: string, id: string): Promise<boolean> => {
+    if (!tables.has(target)) return false;
+    const policy = ownership.shared.get(target);
+    if (!policy) return true;
+    if (policy.kind === 'field') {
+      if (pendingOwned.has(`${target}|${id}`)) return true;
+      const stored = await shared.readRecord(target, id);
+      return stored !== null && allowedValue(stored[policy.field]);
+    }
+    if (isDerivedPolicy(policy)) {
+      return (await derivedAccess(policy, [id], tables, 'write', shared)).has(id);
+    }
+    return false;
+  };
+
+  /** A link may carry a tag that is unused or already visible to the grant. */
+  const tagsUsable = async (tags: unknown): Promise<boolean> => {
+    if (tags === undefined || tags === null) return true;
+    if (!tagPolicy || !Array.isArray(tags) || !tags.every((tag) => typeof tag === 'string')) {
+      return false;
+    }
+    const uses = await shared.tagUses(tagPolicy);
+    return tags.every((tag) => {
+      const owners = uses.get(tag) ?? [];
+      return owners.length === 0 ||
+        owners.some(([from, to]) => allowedValue(from) && allowedValue(to));
+    });
+  };
+
+  /**
+   * DataFn applies every key of `relations` (and ignores `relation`), for
+   * relation operations and for inserts or updates that carry relations, so
+   * each named relation and each target record must sit inside the grant.
+   */
+  const relationsAllowed = async (
+    mutation: Record<string, unknown>,
+    resource: string,
+    operation: string
   ): Promise<boolean> => {
+    const relationOperation = RELATION_OPERATIONS.has(operation);
+    if (!relationOperation && mutation.relations === undefined && mutation.relation === undefined) {
+      return true;
+    }
+    if (!isRecord(mutation.relations)) return false;
+    const relations = mutation.relations;
+    const names = Object.keys(relations);
+    if (relationOperation && names.length === 0) return false;
+    if (mutation.relation !== undefined &&
+      !(typeof mutation.relation === 'string' && names.includes(mutation.relation))) {
+      return false;
+    }
+    for (const name of names) {
+      const match = findRelationMatch(schema, resource, name);
+      if (!match) return false;
+      const endpoint = relationTargetEndpoint(match.relation, match.direction);
+      const items = relationItems(relations[name]);
+      if (!items) return false;
+      const carriesTags = tagPolicy !== undefined &&
+        'joinTable' in match.relation && match.relation.joinTable === tagPolicy.joinTable;
+      for (const item of items) {
+        const target = resolveEndpointResource(endpoint, item.toId, schema);
+        if (typeof target !== 'string' || !(await targetAllowed(target, item.toId))) return false;
+        for (const key of ['fromResource', 'toResource']) {
+          if (key in item.metadata && !allowedValue(item.metadata[key])) return false;
+        }
+        if (carriesTags && !(await tagsUsable(item.metadata[tagPolicy.tagsField]))) return false;
+      }
+    }
+    return true;
+  };
+
+  const canMutate = async (mutation: unknown): Promise<boolean> => {
     if (!isRecord(mutation) || typeof mutation.resource !== 'string' ||
       typeof mutation.operation !== 'string') {
       return false;
@@ -266,36 +500,35 @@ function createScopeView(
     const resource = mutation.resource;
     const operation = mutation.operation;
     if (!tables.has(resource)) return false;
+    if (!(await relationsAllowed(mutation, resource, operation))) return false;
     const policy = ownership.shared.get(resource);
-    const touchesRelations = RELATION_OPERATIONS.has(operation) || mutation.relations !== undefined;
-    if (touchesRelations) {
-      if (policy) return false;
-      const names = RELATION_OPERATIONS.has(operation)
-        ? [mutation.relation]
-        : isRecord(mutation.relations) ? Object.keys(mutation.relations) : [undefined];
-      if (!names.every((name) => typeof name === 'string' &&
-        relationTargets(resource, name).length > 0 && pathAllowed(resource, [name]))) {
-        return false;
-      }
-    }
     if (!policy) return true;
     if (policy.kind === 'none') return false;
     const record = isRecord(mutation.record) ? mutation.record : undefined;
     const id = typeof mutation.id === 'string' ? mutation.id : undefined;
+    if (!id) return false;
     if (policy.kind === 'field') {
       const field = policy.field;
       if (record && field in record && !allowedValue(record[field])) return false;
       if (operation === 'insert' && !(record && field in record)) return false;
-      if (!id) return false;
-      const existing = await readRecord(resource, id);
-      if (existing) return allowedValue(existing[field]);
-      return operation === 'delete' || (record !== undefined && field in record);
+      const existing = await shared.readRecord(resource, id);
+      const key = `${resource}|${id}`;
+      const allowed = existing
+        ? allowedValue(existing[field])
+        : operation === 'delete' || (record !== undefined && field in record) ||
+          pendingOwned.has(key);
+      // Every allowed non-delete write leaves the field inside the grant.
+      if (allowed && operation !== 'delete') pendingOwned.add(key);
+      if (operation === 'delete') pendingOwned.delete(key);
+      return allowed;
+    }
+    if (isDerivedPolicy(policy)) {
+      return (await derivedAccess(policy, [id], tables, 'write', shared)).has(id);
     }
     const field = policy.field;
     if (record && field in record && !itemsVisible(record[field])) return false;
     if (operation === 'merge' && !(record && field in record)) return true;
-    if (!id) return false;
-    const existing = await readRecord(resource, id);
+    const existing = await shared.readRecord(resource, id);
     return !existing || itemsVisible(existing[field]);
   };
 
@@ -322,61 +555,77 @@ export function filterSpaceItems(
 }
 
 /**
- * Applies `filterSpaceItems` to every space record in a successful DataFn
- * `query` or `transact` response body, using the request payload to find
- * which results read the shared items policy resource. Returns the body
+ * Filters a successful DataFn `query` or `transact` response body for an
+ * app-scoped reader, using the request payload to find which results read a
+ * shared resource: space items outside the grant are removed, and view or
+ * link tag rows the grant may not read are dropped. Returns the body
  * unchanged when nothing needed filtering.
  */
-export function filterScopedResponseBody(
+export async function filterScopedResponseBody(
   action: DataFnAction,
   payload: unknown,
   body: unknown,
   grant: AppGrant,
+  store: AppScopeStore,
   ownership: ResourceOwnership = resourceOwnership
-): unknown {
+): Promise<unknown> {
   if (grant === 'all' || !isRecord(body) || body.ok !== true) return body;
-  const itemsField = (query: unknown): string | null => {
-    if (!isRecord(query) || typeof query.resource !== 'string') return null;
-    const policy = ownership.shared.get(query.resource);
-    return policy?.kind === 'items' ? policy.field : null;
+  const tables = grantTables(grant, ownership);
+  const shared = createSharedVisibility(store);
+  const policyFor = (query: unknown): SharedResourcePolicy | undefined =>
+    isRecord(query) && typeof query.resource === 'string' && query.relation === undefined
+      ? ownership.shared.get(query.resource)
+      : undefined;
+  const filterResult = async (result: unknown, policy: SharedResourcePolicy | undefined) => {
+    if (policy?.kind === 'items') {
+      if (!isRecord(result) || !Array.isArray(result.data)) return result;
+      const field = policy.field;
+      return {
+        ...result,
+        data: result.data.map((row) =>
+          isRecord(row) && field in row
+            ? { ...row, [field]: filterSpaceItems(row[field], grant, ownership) }
+            : row
+        )
+      };
+    }
+    if (!isDerivedPolicy(policy)) return result;
+    // An unexpected result shape for a filtered resource is emptied, not passed through.
+    if (!isRecord(result) || !Array.isArray(result.data)) return { data: [] };
+    const rows = result.data.filter(
+      (row): row is Record<string, unknown> => isRecord(row) && typeof row.id === 'string'
+    );
+    const visible = await derivedAccess(
+      policy, rows.map((row) => row.id as string), tables, 'read', shared
+    );
+    const data = rows.filter((row) => visible.has(row.id as string));
+    return { ...result, data, ...('nextCursor' in result ? { nextCursor: null } : {}) };
   };
-  const filterResult = (result: unknown, field: string | null): unknown => {
-    if (!field || !isRecord(result) || !Array.isArray(result.data)) return result;
-    return {
-      ...result,
-      data: result.data.map((row) =>
-        isRecord(row) && field in row
-          ? { ...row, [field]: filterSpaceItems(row[field], grant, ownership) }
-          : row
-      )
-    };
+  const filterResults = async (results: unknown[], queries: unknown[]) => {
+    const filtered: unknown[] = [];
+    for (const [index, result] of results.entries()) {
+      filtered.push(await filterResult(result, policyFor(queries[index])));
+    }
+    return filtered;
   };
   if (action === 'query') {
     if (Array.isArray(payload)) {
-      const fields = payload.map(itemsField);
-      if (!Array.isArray(body.result) || fields.every((field) => field === null)) return body;
-      const results = body.result;
-      return {
-        ...body,
-        result: results.map((result, index) => filterResult(result, fields[index] ?? null))
-      };
+      if (!payload.some(policyFor)) return body;
+      if (!Array.isArray(body.result)) return { ...body, result: [] };
+      return { ...body, result: await filterResults(body.result, payload) };
     }
-    const field = itemsField(payload);
-    return field ? { ...body, result: filterResult(body.result, field) } : body;
+    if (!policyFor(payload)) return body;
+    return { ...body, result: await filterResult(body.result, policyFor(payload)) };
   }
   if (action !== 'transact' || !isRecord(payload) || !Array.isArray(payload.steps)) return body;
-  const fields = payload.steps.map((step) => (isRecord(step) ? itemsField(step.query) : null));
-  if (!isRecord(body.result) || !Array.isArray(body.result.results) ||
-    fields.every((field) => field === null)) {
-    return body;
+  const queries = payload.steps.map((step) => (isRecord(step) ? step.query : undefined));
+  if (!queries.some(policyFor)) return body;
+  if (!isRecord(body.result) || !Array.isArray(body.result.results)) {
+    return { ...body, result: { ...(isRecord(body.result) ? body.result : {}), results: [] } };
   }
   return {
     ...body,
-    result: {
-      ...body.result,
-      results: body.result.results.map((result, index) =>
-        filterResult(result, fields[index] ?? null))
-    }
+    result: { ...body.result, results: await filterResults(body.result.results, queries) }
   };
 }
 
