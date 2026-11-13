@@ -283,10 +283,10 @@
   <NavigatorPill {state} />
 {/snippet}
 
-<div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
+<div class="app-chrome hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
   class={cn(
-    "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata border-b border-brs3",
+    "app-chrome flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata border-b border-brs3",
     "app-framed:border-b-0 app-framed:h-[calc(3rem+2*var(--app-shell-gap))] app-framed:min-h-[calc(3rem+2*var(--app-shell-gap))] app-framed:max-h-[calc(3rem+2*var(--app-shell-gap))]"
   )}
   data-testid="top-bar"
@@ -322,8 +322,8 @@
     {#if isContextTab}
       <div
         class={cn(
-          "context-tab relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
-          "app-framed:self-end app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:mb-0 app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
+          "app-content context-tab relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
+          "app-framed:self-end app-framed:h-[calc(100%-var(--app-shell-gap)+1px)] app-framed:-mb-px app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
           tabSurface
         )}
         data-testid="top-bar-context-tab"
@@ -439,7 +439,7 @@
     content: "";
     position: absolute;
     bottom: 0;
-    width: var(--app-tab-radius);
+    width: calc(var(--app-tab-radius) + 1px);
     height: var(--app-tab-radius);
     background-color: inherit;
     pointer-events: none;
