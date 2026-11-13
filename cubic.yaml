@@ -1,21 +1,21 @@
 # yaml-language-server: $schema=https://cubic.dev/schema/cubic-repository-config.schema.json
 # Hosted cubic review settings. cubic bills per reviewed line, so this skips
-# only machine-written files: changelogs, test snapshots, generated output and
-# lockfiles. All code, tests, fixtures, docs and READMEs stay reviewed.
+# test snapshots, generated output and lockfiles. Hand-written code, tests,
+# fixtures, docs, READMEs and changelogs stay reviewed.
 version: 1
 
 reviews:
   ignore:
     files:
-      - '**/CHANGELOG.md'
       # Test snapshots
       - '**/*.snap'
       # Generated output (the generators and their inputs stay reviewed)
       - '**/dist/**'
       - '**/generated/**'
       - '**/*.generated.*'
-      # Lockfiles. The loops' local review reports dependency advisories a
-      # lockfile change adds (osv-scanner) before the PR opens and on every fix push.
+      # Lockfiles. The 21n Linear-loop local review (thyaravind/automations,
+      # osv-scanner gate) reports dependency advisories a lockfile change adds
+      # before the PR opens and on every fix push; manifests stay reviewed.
       - 'pnpm-lock.yaml'
       - '**/pnpm-lock.yaml'
       - 'package-lock.json'
