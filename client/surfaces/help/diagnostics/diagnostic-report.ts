@@ -13,9 +13,32 @@ export type DiagnosticSection = {
 
 const MAX_VALUE_LENGTH = 300;
 
+const URL_PATTERN = /\b[a-z][a-z\d+.-]*:\/\/[^\s"'<>()]+/gi;
+const EMAIL_PATTERN = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+const BEARER_PATTERN = /\bBearer\s+[^\s"',;]+/gi;
+const JWT_PATTERN = /\beyJ[\w-]+\.[\w-]+\.[\w-]+/g;
+const SECRET_PARAM_PATTERN =
+  /\b(token|access_token|refresh_token|api_key|apikey|key|secret|password)=[^\s&"']+/gi;
+
+/**
+ * Removes account identity and secrets from free text such as error
+ * messages: URLs keep only their origin, and email addresses, bearer
+ * tokens, JWTs and secret query parameters are replaced.
+ */
+export function sanitizeDiagnosticText(text: string): string {
+  return text
+    .replace(URL_PATTERN, (url) => resolveOrigin(url) ?? "[url]")
+    .replace(BEARER_PATTERN, "Bearer [redacted]")
+    .replace(JWT_PATTERN, "[redacted]")
+    .replace(SECRET_PARAM_PATTERN, "$1=[redacted]")
+    .replace(EMAIL_PATTERN, "[email]");
+}
+
 function formatValue(value: string | number | boolean | null | undefined) {
   if (value === undefined || value === null || value === "") return "-";
-  const text = String(value).replace(/\s+/g, " ").trim();
+  const text = sanitizeDiagnosticText(
+    String(value).replace(/\s+/g, " ").trim()
+  );
   return text.length > MAX_VALUE_LENGTH
     ? `${text.slice(0, MAX_VALUE_LENGTH)}...`
     : text;
@@ -43,13 +66,18 @@ export function formatDiagnosticReport(
 export function resolveOrigin(url: string | null | undefined) {
   if (!url) return undefined;
   try {
-    return new URL(url).origin;
+    const origin = new URL(url).origin;
+    return origin === "null" ? undefined : origin;
   } catch {
     return undefined;
   }
 }
 
-async function resolveStorageEstimate() {
+/**
+ * Resolves the storage usage summary. It is asynchronous, so callers resolve
+ * it ahead of a clipboard write to keep the click's user activation.
+ */
+export async function resolveStorageEstimate() {
   try {
     const estimate = await navigator.storage?.estimate?.();
     if (!estimate) return undefined;
@@ -64,11 +92,12 @@ async function resolveStorageEstimate() {
 /**
  * Collects app, device, sync and appearance details for troubleshooting.
  * It never includes account identity, user content, storage namespaces,
- * tokens or full URLs.
+ * tokens or full URLs. It is synchronous so a click handler can write the
+ * report to the clipboard without losing user activation (WebKit).
  */
-export async function collectDiagnosticSections(): Promise<
-  DiagnosticSection[]
-> {
+export function collectDiagnosticSections(
+  storage?: string
+): DiagnosticSection[] {
   const app = get(appStore);
   const runtimeContext = get(context);
   const sync = get(nucleumDatafnStatus);
@@ -102,7 +131,7 @@ export async function collectDiagnosticSections(): Promise<
             ? undefined
             : `${window.innerWidth}x${window.innerHeight} @${window.devicePixelRatio}x`,
         isPortrait: currentView.isPortrait,
-        storage: await resolveStorageEstimate()
+        storage
       }
     },
     {

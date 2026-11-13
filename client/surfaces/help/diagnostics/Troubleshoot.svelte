@@ -5,18 +5,33 @@
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
+  import { onMount } from "svelte";
   import {
     collectDiagnosticSections,
-    formatDiagnosticReport
+    formatDiagnosticReport,
+    resolveStorageEstimate
   } from "@nucleum/surfaces/help/diagnostics/diagnostic-report";
 
   let isCopyInProgress = $state(false);
+  let storageEstimate: string | undefined = $state();
+
+  onMount(() => {
+    let isActive = true;
+    void resolveStorageEstimate().then((estimate) => {
+      if (isActive) storageEstimate = estimate;
+    });
+    return () => {
+      isActive = false;
+    };
+  });
 
   async function copyDiagnostics() {
     isCopyInProgress = true;
     try {
+      // Build the report and start the clipboard write synchronously in the
+      // click handler: WebKit drops user activation across an await.
       const report = formatDiagnosticReport(
-        await collectDiagnosticSections(),
+        collectDiagnosticSections(storageEstimate),
         new Date()
       );
       await copyToClipboard(report);
@@ -37,9 +52,8 @@
     <div class="flex flex-col gap-1">
       <div class="text-b1 text-fgs1">Copy diagnostic information</div>
       <div class="text-b3 text-fgs3">
-        App version, device, sync status and appearance. Paste it into a
-        support conversation. It does not include your account details or
-        content.
+        App version, device, sync status and appearance. Paste it into a support
+        conversation. It does not include your account details or content.
       </div>
     </div>
     <Button
@@ -70,8 +84,8 @@
     <div class="flex flex-col gap-1">
       <div class="text-b1 text-fgs1">Diagnostics</div>
       <div class="text-b3 text-fgs3">
-        Detailed device, storage and sync state, local data consoles and
-        logging controls.
+        Detailed device, storage and sync state, local data consoles and logging
+        controls.
       </div>
     </div>
     <Button

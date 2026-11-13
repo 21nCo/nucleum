@@ -57,7 +57,8 @@ vi.mock("@21n/ui/environment/view.store", async () => {
 import {
   collectDiagnosticSections,
   formatDiagnosticReport,
-  resolveOrigin
+  resolveOrigin,
+  sanitizeDiagnosticText
 } from "./diagnostic-report";
 
 describe("formatDiagnosticReport", () => {
@@ -90,11 +91,12 @@ describe("resolveOrigin", () => {
 });
 
 describe("collectDiagnosticSections", () => {
-  it("collects app, sync and appearance details without identifiers", async () => {
+  it("collects app, sync and appearance details without identifiers", () => {
     const text = formatDiagnosticReport(
-      await collectDiagnosticSections(),
+      collectDiagnosticSections("1.0 MB of 10.0 MB"),
       new Date()
     );
+    expect(text).toContain("storage: 1.0 MB of 10.0 MB");
     expect(text).toContain("version: 1.2.3");
     expect(text).toContain("pendingChanges: 2");
     expect(text).toContain("lastError: boom");
@@ -102,5 +104,35 @@ describe("collectDiagnosticSections", () => {
     expect(text).toContain("colorScheme: colorscheme:clean_ember_light");
     expect(text).not.toContain("user-secret");
     expect(text).not.toContain("token=abc");
+  });
+});
+
+describe("sanitizeDiagnosticText", () => {
+  it("reduces URLs to their origin and removes identity and secrets", () => {
+    const text = sanitizeDiagnosticText(
+      "Fetch https://a.example.app/datafn/sync?token=abc failed for jane@example.com " +
+        "with Bearer s3cr3t and eyJhbGciOi.eyJzdWIiOi.c2lnbmF0dXJl, retry access_token=xyz"
+    );
+    expect(text).toBe(
+      "Fetch https://a.example.app failed for [email] " +
+        "with Bearer [redacted] and [redacted], retry access_token=[redacted]"
+    );
+  });
+
+  it("applies to every value in the formatted report", () => {
+    const text = formatDiagnosticReport(
+      [
+        {
+          title: "Sync",
+          fields: {
+            lastError: "POST https://a.example.app/x/y?key=1 for a@b.co"
+          }
+        }
+      ],
+      new Date("2026-11-12T00:00:00.000Z")
+    );
+    expect(text).toContain("lastError: POST https://a.example.app for [email]");
+    expect(text).not.toContain("/x/y");
+    expect(text).not.toContain("a@b.co");
   });
 });
