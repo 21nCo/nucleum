@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://cubic.dev/schema/cubic-repository-config.schema.json
+# Hosted cubic review settings. Usage is billed per reviewed line, so skip
+# files whose review adds little. Keep reviewing test code: it is where cubic
+# finds tests that don't check what they claim.
+version: 1
+
+reviews:
+  ignore:
+    files:
+      # Docs. The local review runs a docs-vs-code check (cubic CLI) on every
+      # change before the PR opens and on every fix push.
+      - '*.md'
+      - '**/*.md'
+      - '*.mdx'
+      - '**/*.mdx'
+      # Test data, not test code
+      - '**/fixtures/**'
+      - '**/__fixtures__/**'
+      - '**/testdata/**'
+      - '**/golden/**'
+      - '**/__snapshots__/**'
+      - '**/*.snap'
+      # Generated output
+      - '**/dist/**'
+      - '**/generated/**'
+      - '**/*.generated.*'
+      # Lockfiles. The local review checks new dependency advisories with osv-scanner.
+      - 'pnpm-lock.yaml'
+      - '**/pnpm-lock.yaml'
+      - 'package-lock.json'
+      - '**/package-lock.json'
+      - 'yarn.lock'
+      - '**/yarn.lock'
+      - 'bun.lock'
+      - '**/bun.lock'
+      - 'Cargo.lock'
+      - '**/Cargo.lock'
+      - '**/Package.resolved'
