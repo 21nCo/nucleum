@@ -9,8 +9,14 @@
   import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
+  import { isRightDrawerOnFront } from "@21n/ui/actions/interaction-dom";
 
+  /**
+   * Offers to capture a paste from outside a text field. The app behind a
+   * right-side drawer ignores paste and drag input.
+   */
   function handlePaste(event: ClipboardEvent) {
+    if (isRightDrawerOnFront()) return;
     try {
       const target = event.target as HTMLElement;
       if (
@@ -33,6 +39,7 @@
   }
 
   function handleDragEnter(event: DragEvent) {
+    if (isRightDrawerOnFront()) return;
     if (
       !event.relatedTarget &&
       !$appStore.isDnDPageActive &&
@@ -43,6 +50,7 @@
   }
 
   function handleDragLeave(event: DragEvent) {
+    if (isRightDrawerOnFront()) return;
     if (
       !event.relatedTarget &&
       !$appStore.isDnDPageActive &&

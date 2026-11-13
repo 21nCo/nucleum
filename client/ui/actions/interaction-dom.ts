@@ -46,6 +46,16 @@ export function resolveModalOnFront() {
   return modals[modals.length - 1];
 }
 
+/**
+ * Whether the front modal is a right-side drawer, which keeps the app behind
+ * it visible but not interactive.
+ */
+export function isRightDrawerOnFront() {
+  return !!resolveModalOnFront()?.querySelector(
+    "[data-modal-placement='right']"
+  );
+}
+
 export function getEventPath(event: Event): EventTarget[] {
   let path: EventTarget[] = [];
   const target = event.target;
