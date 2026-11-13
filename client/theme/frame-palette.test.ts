@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import colorSchemes from "@21n/theme/colorschemes.json";
 import {
   FRAME_PALETTE_TOKENS,
-  GRADIENT_SAFELIST_PATTERN
+  splitFramePalette
 } from "@21n/theme/frame-palette.js";
 
 import themeLayerSource from "../shell/layers/themeLayer/ThemeLayer.svelte?raw";
@@ -50,33 +50,29 @@ describe("frame palette", () => {
   });
 });
 
-describe("GRADIENT_SAFELIST_PATTERN", () => {
-  it("keeps safelisting gradient stops of the shared colour roles", () => {
-    for (const className of [
-      "from-aps1",
-      "via-bgs2",
-      "to-fgs1",
-      "from-fgs4/50",
-      "to-transparent",
-      "via-brs3/5"
-    ]) {
-      expect(GRADIENT_SAFELIST_PATTERN.test(className), className).toBe(true);
-    }
+describe("splitFramePalette", () => {
+  it("keeps frame palette tokens out of the Tailwind colours", () => {
+    const [graphite] = framedSchemes;
+    const { colors, framePalette } = splitFramePalette(
+      graphite.colors as Record<string, string>
+    );
+    expect(Object.keys(framePalette).sort()).toEqual(
+      [...FRAME_PALETTE_TOKENS].sort()
+    );
+    expect(FRAME_PALETTE_TOKENS.filter((token) => token in colors)).toEqual([]);
+    expect(colors.bgs2).toBe(graphite.colors.bgs2);
+    expect(colors.fgs1).toBe(graphite.colors.fgs1);
+    expect(colors.aps1).toBe(graphite.colors.aps1);
   });
 
-  it("skips gradient stops of frame palette tokens at every opacity", () => {
-    for (const token of FRAME_PALETTE_TOKENS) {
-      for (const className of [
-        `from-${token}`,
-        `via-${token}`,
-        `to-${token}`,
-        `from-${token}/50`,
-        `to-${token}/5`
-      ]) {
-        expect(GRADIENT_SAFELIST_PATTERN.test(className), className).toBe(
-          false
-        );
-      }
-    }
+  it("leaves schemes without a frame palette unchanged", () => {
+    const plain = colorSchemes.find(
+      (scheme) => scheme.tailwindSelector === "cs_tidigit_light"
+    )!;
+    const { colors, framePalette } = splitFramePalette(
+      plain.colors as Record<string, string>
+    );
+    expect(colors).toEqual(plain.colors);
+    expect(framePalette).toEqual({});
   });
 });

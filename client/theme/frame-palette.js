@@ -5,8 +5,7 @@
  * content copy (`c*`) of each role below, plus `fonaps3`, the colour drawn on
  * the selected frame accent. ThemeLayer remaps the role variables to the frame
  * copies inside `.app-chrome` and back to the content copies inside
- * `.app-content`. The tokens are only read through those CSS variables, so
- * they must not generate Tailwind utilities.
+ * `.app-content`. The tokens are only read through those CSS variables.
  */
 export const FRAME_PALETTE_ROLES = [
   "bgs1",
@@ -34,10 +33,23 @@ export const FRAME_PALETTE_TOKENS = [
 ];
 
 /**
- * Safelists every gradient stop utility (`from-*`, `via-*`, `to-*`) except
- * those of frame palette tokens, which would otherwise add thousands of unused
- * rules (one per token, stop and opacity step) to every product's stylesheet.
+ * Splits a colour scheme's colours into the shared roles, which become
+ * Tailwind colours, and its frame palette tokens, which are emitted only as
+ * CSS variables so they do not add utilities (for example the safelisted
+ * gradient stops at every opacity step) to every product's stylesheet.
+ *
+ * @param {Record<string, string>} colors
+ * @returns {{ colors: Record<string, string>, framePalette: Record<string, string> }}
  */
-export const GRADIENT_SAFELIST_PATTERN = new RegExp(
-  `(from|via|to)-(?!(?:${FRAME_PALETTE_TOKENS.join("|")})(?:/|$))(.+)`
-);
+export function splitFramePalette(colors) {
+  const shared = {};
+  const framePalette = {};
+  for (const [name, value] of Object.entries(colors)) {
+    if (FRAME_PALETTE_TOKENS.includes(name)) {
+      framePalette[name] = value;
+    } else {
+      shared[name] = value;
+    }
+  }
+  return { colors: shared, framePalette };
+}

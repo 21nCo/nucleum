@@ -4,7 +4,7 @@ import colorSchemesBranding from "@21n/theme/colorschemes-branding.json";
 import colorSchemes from "@21n/theme/colorschemes.json";
 import { createRequire } from "module";
 
-import { GRADIENT_SAFELIST_PATTERN } from "./frame-palette.js";
+import { splitFramePalette } from "./frame-palette.js";
 
 const themes = [
   {
@@ -27,16 +27,34 @@ const themes = [
   }
 ];
 
+const require = createRequire(import.meta.url);
+const {
+  toCustomPropValue
+} = require("tailwindcss-themer/lib/utils/customPropUtils");
+
 const mappedColorSchemes = colorSchemes.map((cs) => {
   return {
     name: cs.tailwindSelector,
     extend: {
-      colors: cs.colors
+      colors: splitFramePalette(cs.colors).colors
     }
   };
 });
 
-const require = createRequire(import.meta.url);
+// Frame palette tokens are emitted as the same `--colors-*` variables (RGB
+// triplets) the themer writes, without becoming Tailwind colours.
+const framePaletteVariables = Object.fromEntries(
+  colorSchemes
+    .filter((cs) => cs.hasFramePalette)
+    .map((cs) => [
+      `.${cs.tailwindSelector}`,
+      Object.fromEntries(
+        Object.entries(splitFramePalette(cs.colors).framePalette).map(
+          ([name, value]) => [`--colors-${name}`, toCustomPropValue(value)]
+        )
+      )
+    ])
+);
 
 export default {
   content: [
@@ -278,7 +296,7 @@ export default {
         "cursor-row-resize",
         "text-abg",
         {
-          pattern: GRADIENT_SAFELIST_PATTERN
+          pattern: /(from|via|to)-(.+)/
         }
         // {
         //   pattern: /ph--.*/
@@ -312,6 +330,9 @@ export default {
         ...colorSchemesBranding
       ]
     }),
+    function ({ addBase }) {
+      addBase(framePaletteVariables);
+    },
     function ({ addVariant }) {
       addVariant("os-macos", ".os-macos &");
       addVariant("os-windows", ".os-windows &");
