@@ -13,9 +13,11 @@ reviews:
       - '**/dist/**'
       - '**/generated/**'
       - '**/*.generated.*'
-      # Lockfiles. The 21n Linear-loop local review (thyaravind/automations,
-      # osv-scanner gate) reports dependency advisories a lockfile change adds
-      # before the PR opens and on every fix push; manifests stay reviewed.
+      # Lockfiles. Manifests stay reviewed. PRs driven by the 21n Linear loops
+      # get a local osv-scanner check of advisories a lockfile change adds
+      # (thyaravind/automations), before the PR opens and on every fix push.
+      # Other PRs get no advisory check before merge; GitHub Dependabot alerts
+      # report advisories on the default branch afterwards.
       - 'pnpm-lock.yaml'
       - '**/pnpm-lock.yaml'
       - 'package-lock.json'
