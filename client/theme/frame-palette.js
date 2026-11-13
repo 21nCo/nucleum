@@ -38,13 +38,18 @@ export const FRAME_PALETTE_TOKENS = [
  * CSS variables so they do not add utilities (for example the safelisted
  * gradient stops at every opacity step) to every product's stylesheet.
  *
- * @param {Record<string, string>} colors
+ * @param {Readonly<Record<string, string | undefined>>} colors
  * @returns {{ colors: Record<string, string>, framePalette: Record<string, string> }}
  */
 export function splitFramePalette(colors) {
+  /** @type {Record<string, string>} */
   const shared = {};
+  /** @type {Record<string, string>} */
   const framePalette = {};
   for (const [name, value] of Object.entries(colors)) {
+    if (value === undefined) {
+      continue;
+    }
     if (FRAME_PALETTE_TOKENS.includes(name)) {
       framePalette[name] = value;
     } else {

@@ -32,7 +32,7 @@ describe("frame palette", () => {
   it.each(framedSchemes.map((scheme) => [scheme.tailwindSelector, scheme]))(
     "%s defines every frame palette token",
     (_, scheme) => {
-      const colors = scheme.colors as Record<string, string>;
+      const colors: Record<string, string | undefined> = scheme.colors;
       const missing = FRAME_PALETTE_TOKENS.filter((token) => !colors[token]);
       expect(missing).toEqual([]);
     }
@@ -53,9 +53,7 @@ describe("frame palette", () => {
 describe("splitFramePalette", () => {
   it("keeps frame palette tokens out of the Tailwind colours", () => {
     const [graphite] = framedSchemes;
-    const { colors, framePalette } = splitFramePalette(
-      graphite.colors as Record<string, string>
-    );
+    const { colors, framePalette } = splitFramePalette(graphite.colors);
     expect(Object.keys(framePalette).sort()).toEqual(
       [...FRAME_PALETTE_TOKENS].sort()
     );
@@ -69,9 +67,7 @@ describe("splitFramePalette", () => {
     const plain = colorSchemes.find(
       (scheme) => scheme.tailwindSelector === "cs_tidigit_light"
     )!;
-    const { colors, framePalette } = splitFramePalette(
-      plain.colors as Record<string, string>
-    );
+    const { colors, framePalette } = splitFramePalette(plain.colors);
     expect(colors).toEqual(plain.colors);
     expect(framePalette).toEqual({});
   });
