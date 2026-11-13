@@ -1,0 +1,19 @@
+apps/e2e-playwright/tests/shared/toasts.spec.ts
+  s_49498a69941aee::t_77709ac37c6480 103-133,172-173,175-176,239,252-254,282-283,285-286,324-328,334,354-356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b07ed7f43b8d465663833ed6aaaaae99abf90877",
+  "prompts": {},
+  "sessions": {
+    "s_49498a69941aee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_49498a69941aee",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
