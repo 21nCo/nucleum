@@ -132,9 +132,12 @@ export interface FileDeletionCascade {
   /**
    * Settles captured deletions with the DataFn response body. A request-set
    * `fileId` counts only when the body reports both the write that set it and
-   * the delete as applied. Each deletion is then settled as described on the
-   * interface; a FileFn failure leaves the row for the cleanup run with
-   * exponential backoff. Never rejects, so the write response is unaffected.
+   * the delete as applied; its pending row is written before this resolves,
+   * so every owed deletion is durable before any FileFn call starts. The
+   * FileFn and storage work then runs in the background and never holds the
+   * response; each deletion is settled as described on the interface, and a
+   * failure or cut-off leaves the row for the cleanup run with exponential
+   * backoff. Never rejects, so the write response is unaffected.
    */
   settle(captured: CapturedFileDeletions, responseBody: unknown): Promise<void>;
   /**
@@ -265,25 +268,41 @@ export function createFileDeletionCascade(
     return entry;
   };
 
-  const settleCaptured = async (
+  /**
+   * Writes a pending row for each request-set `fileId` the response reports
+   * applied, so every owed deletion is durable before any FileFn or storage
+   * call starts. A row that cannot be written is reported; DataFn has
+   * already applied the write.
+   */
+  const recordApplied = async (
     captured: CapturedFileDeletions,
     responseBody: unknown
-  ): Promise<void> => {
-    for (const entry of captured.stored) {
-      await settleOne(entry);
-    }
-    if (captured.requested.length === 0) return;
+  ): Promise<PendingFileDeletion[]> => {
+    if (captured.requested.length === 0) return [];
     const applied = appliedWrites(captured.action, captured.payload, responseBody);
+    const owed: PendingFileDeletion[] = [];
     for (const candidate of captured.requested) {
       if (!candidate.writes.every(applied)) continue;
       try {
-        await settleOne(
-          await record(captured.principalId, candidate.fileId, candidate.recordId)
-        );
+        owed.push(await record(captured.principalId, candidate.fileId, candidate.recordId));
       } catch (error) {
         report(error, 0);
       }
     }
+    return owed;
+  };
+
+  /**
+   * Runs FileFn work past the response: through the host's `defer` hook when
+   * it has one (Worker `waitUntil`), otherwise detached, as on Node. Work cut
+   * off midway leaves its leased rows for {@link FileDeletionCascade.sweep}.
+   */
+  const runInBackground = (work: Promise<unknown>): void => {
+    const settled = work.then(
+      () => undefined,
+      (error: unknown) => report(error, 0)
+    );
+    input.runtime?.defer?.(settled);
   };
 
   /**
@@ -356,10 +375,12 @@ export function createFileDeletionCascade(
           captured.stored.push(await record(principalId, storedFileId, deletion.recordId));
         }
       }
+      const requested = new Set<string>();
       for (const deletion of deletions) {
         for (const { fileId, write } of deletion.fileIds) {
-          if (seen.has(fileId)) continue;
-          seen.add(fileId);
+          const key = JSON.stringify([deletion.recordId, fileId, write.slot, deletion.write.slot]);
+          if (seen.has(fileId) || requested.has(key)) continue;
+          requested.add(key);
           captured.requested.push({
             fileId,
             recordId: deletion.recordId,
@@ -370,12 +391,13 @@ export function createFileDeletionCascade(
       return captured;
     },
     async settle(captured, responseBody) {
-      const work = settleCaptured(captured, responseBody);
-      if (input.runtime?.defer) {
-        input.runtime.defer(work);
-        return;
-      }
-      await work;
+      const owed = [...captured.stored, ...(await recordApplied(captured, responseBody))];
+      if (owed.length === 0) return;
+      runInBackground((async () => {
+        for (const entry of owed) {
+          await settleOne(entry);
+        }
+      })());
     },
     retryDue,
     sweep() {
@@ -383,11 +405,7 @@ export function createFileDeletionCascade(
       const sinceLast = startedAt - sweepThrottle.lastSweepAt;
       if (sinceLast >= 0 && sinceLast < SWEEP_INTERVAL_MS) return;
       sweepThrottle.lastSweepAt = startedAt;
-      const work = retryDue({ limit: SWEEP_LIMIT }).then(
-        () => undefined,
-        (error: unknown) => report(error, 0)
-      );
-      if (input.runtime?.defer) input.runtime.defer(work);
+      runInBackground(retryDue({ limit: SWEEP_LIMIT }));
     }
   };
 }

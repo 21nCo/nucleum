@@ -20,11 +20,30 @@ interface Fixture {
   fileDatabase: Adapter;
   deletedKeys: string[];
   failFileFn: { next: boolean };
+  holdFileFn: FileFnHold;
   deferred: Promise<unknown>[];
 }
 
-/** FileFn database that throws on the next `files` lookup while `failFileFn.next` is set. */
-function failingWhenFlagged(database: Adapter, failFileFn: { next: boolean }): Adapter {
+/** While `held`, FileFn `files` lookups wait until {@link releaseFileFn}. */
+interface FileFnHold {
+  held: boolean;
+  waiting: (() => void)[];
+}
+
+function releaseFileFn(hold: FileFnHold): void {
+  hold.held = false;
+  for (const resume of hold.waiting.splice(0)) resume();
+}
+
+/**
+ * FileFn database that throws on the next `files` lookup while
+ * `failFileFn.next` is set and holds `files` lookups while `hold.held` is set.
+ */
+function failingWhenFlagged(
+  database: Adapter,
+  failFileFn: { next: boolean },
+  hold: FileFnHold
+): Adapter {
   return {
     ...database,
     findOne: async (params) => {
@@ -32,16 +51,24 @@ function failingWhenFlagged(database: Adapter, failFileFn: { next: boolean }): A
         failFileFn.next = false;
         throw new Error('FileFn database unavailable');
       }
+      if (hold.held && params.model === 'files') {
+        await new Promise<void>((resume) => { hold.waiting.push(resume); });
+      }
       return database.findOne(params);
     }
   } as Adapter;
 }
 
-/** Builds an account app with FileFn; `inline` omits the Worker `defer` hook, as on Node. */
+/**
+ * Builds an account app with FileFn; `inline` omits the Worker `defer` hook,
+ * as on Node. While FileFn is held, the `defer` hook drops its work, as when
+ * a Worker's `waitUntil` budget runs out.
+ */
 function createFixture(options: { inline?: boolean } = {}): Fixture {
   const fileDatabase = memoryAdapter({ debug: false });
   const deletedKeys: string[] = [];
   const failFileFn = { next: false };
+  const holdFileFn: FileFnHold = { held: false, waiting: [] };
   const deferred: Promise<unknown>[] = [];
   const storage = {
     name: 'test-storage',
@@ -60,12 +87,14 @@ function createFixture(options: { inline?: boolean } = {}): Fixture {
   const harness = createAccountTestHarness({
     enableRateLimit: false,
     files: {
-      database: failingWhenFlagged(fileDatabase, failFileFn),
+      database: failingWhenFlagged(fileDatabase, failFileFn, holdFileFn),
       storage: () => storage,
-      runtime: options.inline ? undefined : { defer: (work) => { deferred.push(work); } }
+      runtime: options.inline
+        ? undefined
+        : { defer: (work) => { if (!holdFileFn.held) deferred.push(work); } }
     }
   });
-  return { harness, fileDatabase, deletedKeys, failFileFn, deferred };
+  return { harness, fileDatabase, deletedKeys, failFileFn, holdFileFn, deferred };
 }
 
 /** Sends a request and waits for the work it deferred past the response. */
@@ -505,15 +534,98 @@ describe('file record deletion cascade', () => {
     expect(await pendingDeletions(fixture)).toEqual([]);
   });
 
-  it('settles before answering on a host without deferred work', async () => {
+  it('records every owed deletion before FileFn work that the Worker cuts off', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const fixture = createFixture();
+    const user = await signUp(fixture.harness);
+    const stored = await createFileRecord(fixture, user);
+    const transientId = `file:${randomUUID()}`;
+    const upload = `file_${randomUUID()}`;
+    await createFileFnFile(fixture, upload, stored.ownerId);
+
+    fixture.holdFileFn.held = true;
+    const response = await pushAll(fixture, user, [
+      fileMutation('delete', stored.recordId),
+      fileMutation('insert', transientId, fileRecord(transientId, upload)),
+      fileMutation('delete', transientId)
+    ]);
+
+    expect(response.status).toBe(200);
+    expect(await recordExists(fixture, transientId)).toBe(false);
+    expect((await pendingDeletions(fixture))
+      .map(({ fileId, recordId }) => ({ fileId, recordId }))
+      .sort((a, b) => String(a.fileId).localeCompare(String(b.fileId))))
+      .toEqual([
+        { fileId: stored.fileId, recordId: stored.recordId },
+        { fileId: upload, recordId: transientId }
+      ].sort((a, b) => a.fileId.localeCompare(b.fileId)));
+
+    fixture.holdFileFn.held = false;
+    vi.setSystemTime(Date.now() + 11 * 60 * 1000);
+    expect((await pushAll(fixture, user, [])).status).toBe(200);
+
+    expect(await fileExists(fixture, stored.fileId)).toBe(false);
+    expect(await fileExists(fixture, upload)).toBe(false);
+    expect(await pendingDeletions(fixture)).toEqual([]);
+  });
+
+  it('answers the push without waiting for FileFn on a host without deferred work', async () => {
     const fixture = createFixture({ inline: true });
     const user = await signUp(fixture.harness);
-    const file = await createFileRecord(fixture, user);
+    const stored = await createFileRecord(fixture, user);
+    const transientId = `file:${randomUUID()}`;
+    const upload = `file_${randomUUID()}`;
+    await createFileFnFile(fixture, upload, stored.ownerId);
 
-    expect((await push(fixture, user, 'delete', file.recordId)).status).toBe(200);
+    fixture.holdFileFn.held = true;
+    const answered = await Promise.race([
+      pushAll(fixture, user, [
+        fileMutation('delete', stored.recordId),
+        fileMutation('insert', transientId, fileRecord(transientId, upload)),
+        fileMutation('delete', transientId)
+      ]).then((response) => response.status),
+      new Promise((resolve) => { setTimeout(() => resolve('held'), 1000); })
+    ]);
 
-    expect(await fileExists(fixture, file.fileId)).toBe(false);
-    expect(fixture.deletedKeys).toEqual([file.storageKey]);
+    expect(answered).toBe(200);
+    expect((await pendingDeletions(fixture)).map(({ fileId }) => fileId).sort())
+      .toEqual([stored.fileId, upload].sort());
+    expect(await fileExists(fixture, stored.fileId)).toBe(true);
+
+    releaseFileFn(fixture.holdFileFn);
+
+    await vi.waitFor(async () => {
+      expect(await pendingDeletions(fixture)).toEqual([]);
+    });
+    expect(await fileExists(fixture, stored.fileId)).toBe(false);
+    expect(await fileExists(fixture, upload)).toBe(false);
+    expect(fixture.deletedKeys.sort()).toEqual([stored.storageKey, `files/${upload}/v1`].sort());
+  });
+
+  it('owes a file id set on several records by whichever of them DataFn applied', async () => {
+    const fixture = createFixture();
+    const user = await signUp(fixture.harness);
+    const ownerId = (await createFileRecord(fixture, user)).ownerId;
+    const upload = `file_${randomUUID()}`;
+    await createFileFnFile(fixture, upload, ownerId);
+    const missingId = `file:${randomUUID()}`;
+    const appliedId = `file:${randomUUID()}`;
+
+    const response = await call(fixture, '/datafn/transact', user, {
+      atomic: false,
+      steps: [
+        { mutation: fileMutation('merge', missingId, { fileId: upload }) },
+        { mutation: fileMutation('delete', missingId) },
+        { mutation: fileMutation('insert', appliedId, fileRecord(appliedId, upload)) },
+        { mutation: fileMutation('delete', appliedId) }
+      ]
+    });
+
+    expect(response.status).toBe(200);
+    const { result } = await response.json() as { result: { results: { ok: boolean }[] } };
+    expect(result.results.map(({ ok }) => ok)).toEqual([false, expect.any(Boolean), true, true]);
+    expect(await recordExists(fixture, appliedId)).toBe(false);
+    expect(await fileExists(fixture, upload)).toBe(false);
     expect(await pendingDeletions(fixture)).toEqual([]);
   });
 });
