@@ -18,6 +18,7 @@
   "dependencies": {
     "@21n/shared-utils": "*",
     "@datafn/client": "0.1.0",
+    "@filefn/client": "0.2.0",
     "@nucleum/schema": "*",
     "svelte": "^5.55.0",
     "pdfjs-dist": "^4.1.392"
