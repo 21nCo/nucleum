@@ -396,34 +396,37 @@ describe("account FileFn request path redaction", () => {
     expect(redactFileRequestPath(unrelated)).toBe(unrelated);
   });
 
-  it("spends the same work per nesting layer on short and 8x longer paths", () => {
-    // Runner-independent scaling guard: both samples redact the same total
-    // number of nesting layers (16 x 2,000 vs 2 x 16,000), so a linear decoder
-    // costs about the same for each while a decoder that rescans the path per
-    // layer costs about 8x more on the long paths. Samples are interleaved and
-    // the medians compared, so a uniformly slow or contended runner cancels out.
-    const sample = (layers: number, repeats: number) => {
-      const paths = Object.values(nestedPaths(layers));
-      const started = performance.now();
-      for (let repeat = 0; repeat < repeats; repeat += 1) {
-        for (const path of paths) redactFileRequestPath(path);
-      }
-      return performance.now() - started;
-    };
+  /**
+   * Times `repeats` redactions of the three nested paths at `layers` depth.
+   * Short and long samples share the same total number of layers, so a linear
+   * decoder costs about the same for each while a decoder that rescans the
+   * path per layer costs about 8x more on the long paths; interleaving the
+   * samples and comparing medians cancels out a uniformly slow runner.
+   */
+  const sampleRedaction = (layers: number, repeats: number) => {
+    const paths = Object.values(nestedPaths(layers));
+    const started = performance.now();
+    for (let repeat = 0; repeat < repeats; repeat += 1) {
+      for (const path of paths) redactFileRequestPath(path);
+    }
+    return performance.now() - started;
+  };
+
+  it("costs the same per nesting layer for 8 x 1,000 and 1 x 8,000 layer paths", () => {
     const median = (values: number[]) =>
       [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]!;
-    sample(2_000, 16);
-    sample(16_000, 2);
+    sampleRedaction(1_000, 8);
+    sampleRedaction(8_000, 1);
     const short: number[] = [];
     const long: number[] = [];
-    for (let round = 0; round < 5; round += 1) {
-      short.push(sample(2_000, 16));
-      long.push(sample(16_000, 2));
+    for (let round = 0; round < 7; round += 1) {
+      short.push(sampleRedaction(1_000, 8));
+      long.push(sampleRedaction(8_000, 1));
     }
-    const ratio = median(long) / median(short);
-    expect(ratio, `short ${short.join(",")} ms; long ${long.join(",")} ms`).toBeLessThan(3);
-    expect(median(long)).toBeLessThan(5_000);
-  });
+    const timings = `short ${short.join(",")} ms; long ${long.join(",")} ms`;
+    expect(median(long) / median(short), timings).toBeLessThan(3);
+    expect(median(long), timings).toBeLessThan(2_000);
+  }, 30_000);
 
   it("never lets a generated share token survive, whatever the per-character encoding", () => {
     let seed = 0x5eed538;
