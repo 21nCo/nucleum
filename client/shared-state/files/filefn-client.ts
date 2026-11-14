@@ -18,6 +18,7 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 
 const FILEFN_OFFLINE_DIR_PREFIX = "filefn-pending-uploads";
 const OFFLINE_REPLAY_START_FILE_ID = "";
+const OFFLINE_REPLAY_LOCK_PREFIX = "filefn-offline-replay";
 
 /** Signed-in cloud account that owns a FileFn client. */
 export type FileFnAccountScope = {
@@ -75,8 +76,19 @@ export function resolveFileFnOfflineDir(userId: string): string {
  * change of that authority, seen on an account change or the next call,
  * recreates the client, and sign-out tears it down.
  *
- * Creating a client starts the replay of the account's offline queue: staged
- * uploads are sent now when online and on every later `online` event.
+ * Creating a client starts the replay of the account's offline queue in the
+ * one tab that holds the account's replay lock (Web Locks): staged uploads are
+ * sent now when online and on every later `online` event. A client in another
+ * tab waits for the lock and starts its replay once the holder is torn down or
+ * its tab closes.
+ *
+ * Known limit (owner amendment 2026-11-14, deferred to TIDY-544 and FILE-15):
+ * the lock covers only this startup replay. @filefn/client 0.2.0 also starts
+ * its replay on the first use of the offline queue (an offline upload, a
+ * pending local descriptor or a local render), so a tab that waits for the
+ * lock replays outside it once it uses the queue, and without Web Locks every
+ * client replays. Delivery then stays at least once, as in @filefn/client
+ * 0.2.0: two tabs replaying one staged upload can create two upload sessions.
  *
  * Teardown aborts the client's in-flight requests, rejects every later call
  * with an AbortError before it does any work, and rejects the pending `done()`
@@ -84,11 +96,14 @@ export function resolveFileFnOfflineDir(userId: string): string {
  * staged, in the account's offline queue stay there for the account's next
  * client to replay; a handle's `abort()` after teardown does not delete them.
  *
- * Known limit: @filefn/client 0.2.0 has no dispose, so a torn-down client's
- * OfflineSync keeps its window `online` listener. Its replay can only reach the
- * torn-down transport, which rejects with an AbortError before any request;
- * the queue then keeps the upload unchanged, without spending a retry, for the
- * current client. Removing the listener needs an SDK dispose (TIDY-553).
+ * Known limit: @filefn/client 0.2.0 has no dispose and cannot restart the
+ * replay of an existing OfflineSync, so every client that started its replay
+ * keeps its window `online` listener after teardown. On a reconnect it reads
+ * each staged upload, reaches only the torn-down transport, which rejects with
+ * an AbortError before any request, and leaves the upload unchanged, without
+ * spending a retry, for the current client. A tab adds one such listener per
+ * client it created while holding the replay lock, and none while another tab
+ * holds it. Removing them needs an SDK dispose (TIDY-553).
  */
 export async function getFileFnClient(): Promise<FileFnClient | null> {
   if (!isBoundToAccount) {
@@ -103,12 +118,11 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
   return currentEntry === entry ? client : getFileFnClient();
 }
 
-async function settleFileFnClientSync() {
-  let sync: Promise<void>;
-  do {
-    sync = latestSync;
-    await sync;
-  } while (sync !== latestSync);
+function settleFileFnClientSync(): Promise<void> {
+  const sync = latestSync;
+  return sync.then(() =>
+    sync === latestSync ? undefined : settleFileFnClientSync()
+  );
 }
 
 /**
@@ -189,8 +203,41 @@ async function createAccountFileFnClient(
       opfsDir: resolveFileFnOfflineDir(userId)
     }
   });
-  if (!teardown.aborted) startOfflineReplay(client);
+  if (!teardown.aborted) startOfflineReplayWhenOwner(userId, client, teardown);
   return guardFileFnClient(client, teardown);
+}
+
+/**
+ * Starts the client's offline queue replay once its tab holds the account's
+ * replay lock, and holds the lock until the client is torn down, so one tab
+ * replays the shared queue at a time and the next waiting client takes over.
+ * Without Web Locks every client replays (at least once, see
+ * getFileFnClient).
+ */
+function startOfflineReplayWhenOwner(
+  userId: string,
+  client: FileFnClient,
+  teardown: AbortSignal
+) {
+  const locks: LockManager | undefined = globalThis.navigator?.locks;
+  if (!locks) {
+    startOfflineReplay(client);
+    return;
+  }
+  const lockName = `${OFFLINE_REPLAY_LOCK_PREFIX}:${resolveFileFnOfflineDir(userId)}`;
+  locks
+    .request(lockName, { signal: teardown }, () => {
+      if (teardown.aborted) return;
+      startOfflineReplay(client);
+      return new Promise<void>((resolve) => {
+        teardown.addEventListener("abort", () => resolve(), { once: true });
+      });
+    })
+    .catch((error: unknown) => {
+      if (!teardown.aborted) {
+        logger.error({ at: "filefn.client.replay", error });
+      }
+    });
 }
 
 /**

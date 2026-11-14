@@ -241,6 +241,123 @@ async function stageOffline(userId: string) {
   return handle;
 }
 
+/**
+ * Installs exclusive in-memory Web Locks shared by every tab of a test and
+ * returns the number of lock requests still waiting.
+ */
+function installWebLocks() {
+  const tails = new Map<string, Promise<void>>();
+  let waiting = 0;
+  const request = (
+    name: string,
+    options: { signal?: AbortSignal },
+    callback: () => unknown
+  ) => {
+    const previous = tails.get(name) ?? Promise.resolve();
+    let release!: () => void;
+    tails.set(name, new Promise<void>((resolve) => (release = resolve)));
+    waiting += 1;
+    return new Promise((resolve, reject) => {
+      const { signal } = options;
+      const onAbort = () => reject(signal?.reason);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      void previous.then(async () => {
+        signal?.removeEventListener("abort", onAbort);
+        waiting -= 1;
+        if (signal?.aborted) return release();
+        try {
+          resolve(await callback());
+        } catch (error) {
+          reject(error);
+        } finally {
+          release();
+        }
+      });
+    });
+  };
+  Object.defineProperty(navigator, "locks", {
+    configurable: true,
+    value: { request }
+  });
+  return () => waiting;
+}
+
+const tabs: Array<{ account: typeof account }> = [];
+
+/** Opens another tab of the app: its own modules over the shared browser. */
+async function openTab() {
+  vi.resetModules();
+  const tab = {
+    getFileFnClient: (await import("./filefn-client")).getFileFnClient,
+    account: (await import("@nucleum/client/runtime/account/account.store"))
+      .default
+  };
+  tabs.push(tab);
+  return tab;
+}
+
+/**
+ * Serves single-part uploads like the FileFn server: every upload session
+ * request opens a new session, and completing a session records one file
+ * version. Each initialization answers once the gate opens, or fails when
+ * aborted.
+ */
+function serveUploadSessions(initGate: Promise<void> = Promise.resolve()) {
+  const inits: string[] = [];
+  const versions = new Set<string>();
+  let fileId = "";
+  fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+    if (url.endsWith("/files/upload/init")) {
+      inits.push(url);
+      fileId = JSON.parse(String(init?.body)).fileId;
+      const session = `session-${inits.length}`;
+      await Promise.race([
+        initGate,
+        new Promise((_resolve, reject) =>
+          init?.signal?.addEventListener("abort", () =>
+            reject(init.signal?.reason)
+          )
+        )
+      ]);
+      return jsonResponse({
+        uploadSessionId: session,
+        totalParts: 1,
+        chunkSizeBytes: 5
+      });
+    }
+    const session = /\/upload\/([^/]+)\//.exec(url)?.[1] ?? "";
+    if (url.endsWith("/parts/1/sign")) {
+      return jsonResponse({ url: `/upload/${session}/parts/1/data` });
+    }
+    if (url.endsWith("/parts/1/data")) {
+      return jsonResponse({ etag: "etag-1", recorded: true });
+    }
+    if (url.endsWith(`/upload/${session}/complete`)) {
+      versions.add(session);
+      return jsonResponse({ fileId });
+    }
+    return new Response(null, { status: 404 });
+  });
+  return { inits, versions };
+}
+
+/** Stages an upload into an account's queue as a previous page load did. */
+function stageBeforeReload(userId: string) {
+  return new OPFSStore({
+    rootDir: `filefn-pending-uploads-${userId}`
+  }).stagePendingUpload({
+    uploadSessionId: "offline_reloaded",
+    fileId: "file-reloaded",
+    policy: "attachment",
+    fileName: "reloaded.txt",
+    size: 5,
+    mimeType: "text/plain",
+    fileData: new TextEncoder().encode("hello").buffer,
+    createdAt: new Date(0).toISOString(),
+    retryCount: 0
+  });
+}
+
 const ACCOUNT_URL_TEMPLATE = "https://account-{region}-dev.nucleum.app";
 let csrfCookie = "";
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -256,6 +373,8 @@ beforeEach(() => {
 
 afterEach(async () => {
   account.set(signedOut);
+  for (const tab of tabs.splice(0)) tab.account.set(signedOut);
+  Reflect.deleteProperty(navigator, "locks");
   document.cookie = `${csrfCookie}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   await clientStorage.remove(ClientStorageKey.REGION);
   vi.unstubAllGlobals();
@@ -582,6 +701,65 @@ describe("FileFn client runtime", () => {
     ).toBe(true);
     expect(metadata.writes).toBe(1);
     expect(JSON.parse(String(metadata.content)).retryCount).toBe(0);
+  });
+
+  it("replays a staged upload in one tab only, however often another tab of the account recreates its client", async () => {
+    installWebLocks();
+    goOffline();
+    account.set(cloudAccount("user-a", "useast"));
+    const staged = await stageOffline("user-a");
+    const { metadata, data } = stagedFiles("user-a", staged.uploadSessionId);
+    const other = await openTab();
+    for (const region of ["euwest", "insouth", "euwest", "insouth"]) {
+      other.account.set(cloudAccount("user-a", region));
+      await other.getFileFnClient();
+    }
+    const { inits, versions } = serveUploadSessions();
+
+    reconnect();
+
+    await vi.waitFor(() => expect(stagedSessions("user-a")).toEqual([]));
+    expect(inits).toEqual([
+      "https://account-useast-dev.nucleum.app/files/upload/init"
+    ]);
+    expect(versions.size).toBe(1);
+    expect(data.reads).toBe(1);
+    expect(metadata.writes).toBe(1);
+  });
+
+  it("hands the replay to the account's other tab when the replaying client is torn down mid-upload", async () => {
+    const waitingLocks = installWebLocks();
+    goOffline();
+    onLine.mockReturnValue(true);
+    await stageBeforeReload("user-a");
+    const { metadata } = stagedFiles("user-a", "offline_reloaded");
+    let openInitGate!: () => void;
+    const { inits, versions } = serveUploadSessions(
+      new Promise<void>((resolve) => {
+        openInitGate = resolve;
+      })
+    );
+    account.set(cloudAccount("user-a", "useast"));
+    await getFileFnClient();
+    await vi.waitFor(() => expect(inits).toHaveLength(1));
+    const other = await openTab();
+    other.account.set(cloudAccount("user-a", "euwest"));
+    await other.getFileFnClient();
+    await vi.waitFor(() => expect(waitingLocks()).toBe(1));
+    expect(inits).toHaveLength(1);
+
+    account.set(signedOut);
+
+    await vi.waitFor(() => expect(inits).toHaveLength(2));
+    expect(JSON.parse(String(metadata.content)).retryCount).toBe(0);
+    openInitGate();
+    await vi.waitFor(() => expect(stagedSessions("user-a")).toEqual([]));
+    expect(inits).toEqual([
+      "https://account-useast-dev.nucleum.app/files/upload/init",
+      "https://account-euwest-dev.nucleum.app/files/upload/init"
+    ]);
+    expect(versions).toEqual(new Set(["session-2"]));
+    expect(metadata.writes).toBe(1);
   });
 
   it("does not hand out a client whose account signed out during creation", async () => {
