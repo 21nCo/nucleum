@@ -95,6 +95,7 @@ export const globalActions: IAction[] = [
   calendarCommands.calendar_settings,
   libraryCommands.browse,
   settingsCommands.offline_status,
+  settingsCommands.switch_appearance_profile,
   shellCommands.navigator,
   shellCommands.open_navigator,
   shellCommands.cycle_context_view,

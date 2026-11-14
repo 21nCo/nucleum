@@ -18,6 +18,7 @@
   import InterfaceSettings from "@nucleum/surfaces/settings/appearance/InterfaceSettings.svelte";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
+  import AppearanceProfiles from "@nucleum/surfaces/settings/appearance/AppearanceProfiles.svelte";
   let { parentBackgroundIndex = 1 }: { parentBackgroundIndex?: number } =
     $props();
   void parentBackgroundIndex;
@@ -40,6 +41,7 @@
 </script>
 
 <ScrollView class="flex flex-col gap-8" bottomSpacerSize={Size.sm}>
+  <AppearanceProfiles />
   <TypefaceSelector
     label={{ label: "Font", orientation: Orientation.Vertical }}
     value={$userPreferences.appearance.typeface || "Sen"}
