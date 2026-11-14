@@ -1,0 +1,29 @@
+client/surfaces/settings/data/data-settings-feedback.test.ts
+  s_0b0647615a23f7::t_2a0b53f1a0c232 64-87
+client/surfaces/help/diagnostics/Troubleshoot.svelte
+  s_0b0647615a23f7::t_284a30e7b5cce5 10,35
+client/surfaces/help/diagnostics/diagnostic-report.test.ts
+  s_0b0647615a23f7::t_817e93d8dec16a 45-50,61-62,100,104-106,109-110,113-132,147-182
+client/surfaces/help/diagnostics/diagnostic-report.ts
+  s_0b0647615a23f7::t_f24df7156dca65 18,20-45,49-51,53-67,69,71-73,77-96,99-100,109-110,114-115,121,229-244
+client/surfaces/settings/data/BackupAndRestore.svelte
+  s_0b0647615a23f7::t_5bfcede4ed3f0a 53,86,185-191
+client/surfaces/settings/data/data-settings-feedback.ts
+  s_0b0647615a23f7::t_1278951ccfc256 22-23,28-30,38-39,53-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9033c715a03f8b4644d6ec13ca7cb0166aa2b710",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

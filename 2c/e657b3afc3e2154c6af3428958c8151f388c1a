@@ -1,0 +1,33 @@
+docs/architecture/data-and-sync.md
+  s_3f1d61aec39317::t_14b8ba086fdb84 14
+services/account/README.md
+  s_3f1d61aec39317::t_1c6674921b2d78 94-95,106-110,365-367
+services/account/src/files/deferred.ts
+  s_3f1d61aec39317::t_f9aa11cbddd4f1 1-78
+services/account/src/files/routes.ts
+  s_3f1d61aec39317::t_edeb15530867c3 10-21,24-26,33,36-42,45-47,55-97
+services/account/src/files/server.ts
+  s_3f1d61aec39317::t_7af3cf6b30fb91 57-60,75
+services/account/src/worker.ts
+  s_3f1d61aec39317::t_beda6efd5ff909 10-13,66,90,103,117-131
+tests/unit/account-service/files-routes.spec.ts
+  s_3f1d61aec39317::t_bddf9fbf847cf6 221,223,229-231,242,248,258,540-583
+tests/unit/account-service/files-runtime.spec.ts
+  s_3f1d61aec39317::t_00425741e6e73b 1-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2ce657b3afc3e2154c6af3428958c8151f388c1a",
+  "prompts": {},
+  "sessions": {
+    "s_3f1d61aec39317": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_3f1d61aec39317",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

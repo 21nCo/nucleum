@@ -1,0 +1,29 @@
+client/surfaces/help/diagnostics/Troubleshoot.svelte
+  s_0d85e5b70dc887::t_84115fe22826e6 28-32
+client/surfaces/settings/data/BackupAndRestore.svelte
+  s_0d85e5b70dc887::t_f60f92dc627c78 30,64,98-102
+client/surfaces/settings/data/data-settings-feedback.ts
+  s_0d85e5b70dc887::t_d19ed58a9eac20 4,49-60
+apps/e2e-playwright/tests/shared/help.spec.ts
+  s_0d85e5b70dc887::t_779f1fbb6f2661 46-65
+client/composition/global-commands.ts
+  s_0d85e5b70dc887::t_c87df6d766e749 58
+client/surfaces/settings/data/data-settings-feedback.test.ts
+  s_0d85e5b70dc887::t_6986f81f7bae15 14-18,65-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bb3a72bda4a1c80155d7c37214512d766fb8199b",
+  "prompts": {},
+  "sessions": {
+    "s_0d85e5b70dc887": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "37e3656b-fb3d-4769-b9a9-5d99c965fb6b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
