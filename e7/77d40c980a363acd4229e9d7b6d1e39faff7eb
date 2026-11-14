@@ -1,0 +1,79 @@
+client/package.json
+  s_f058f999ab46b7::t_91b3cc94ab1d44 14
+client/composition/package.json
+  s_f058f999ab46b7::t_7a3c5b0863a7c0 11-12
+schema/features.ts
+  s_887df0abf80405::t_87684bdfefef0a 349
+client/features/package.json
+  s_f058f999ab46b7::t_ec3d81525014ca 158-159
+schema/package.json
+  s_f058f999ab46b7::t_9d06e67d3b93de 7
+client/shared-state/package.json
+  s_f058f999ab46b7::t_7f19fd52ae5dc1 20
+services/account/src/db/generated/datafn/datafn-types.ts
+  s_f058f999ab46b7::t_ee86f000552b46 139,172,315
+services/account/drizzle/datafn/meta/0004_snapshot.json
+  s_f058f999ab46b7::t_57ce78793457bf 1-6173
+services/account/src/db/generated/datafn/datafn-schema.drizzle.ts
+  s_f058f999ab46b7::t_c1525a81eef8c2 211,257,462
+client/datafn/package.json
+  s_f058f999ab46b7::t_785a0f75133868 8
+client/persistence/package.json
+  s_f058f999ab46b7::t_2a9fa530b304df 10
+services/account/drizzle/datafn/0004_datafn_ancestor_inactive_not_null.sql
+  s_f058f999ab46b7::t_3d737d6b3964d9 1-6
+client/products/package.json
+  s_f058f999ab46b7::t_a91fbcc99edfca 7-8
+package-lock.json
+  s_f058f999ab46b7::t_c978d7fab7339a 2892,2939-2940,2969,2984,3008-3009,3062,3078-3079,3101,3121-3122,3150-3151,5134-5136,5140-5141,5151-5153,5156,5162-5164,5171-5173,5176-5179,5185-5221,5223-5225,5228,33766,33785-33787,33812,34067-34112
+schema/preferences-kv-merge.datafn.test.ts
+  s_f058f999ab46b7::t_2ba1234b315aa8 1-87
+client/extensions/package.json
+  s_f058f999ab46b7::t_b267cf83e92fa8 10
+client/features/memory/node/node.store.ts
+  s_f058f999ab46b7::t_69123973788b3c 331-336,338-342,344-348,350-354
+client/surfaces/package.json
+  s_f058f999ab46b7::t_3ae45c009719fc 12-13
+client/shell/package.json
+  s_f058f999ab46b7::t_97aaf00f1e1364 11-12
+services/account/package.json
+  s_f058f999ab46b7::t_be83868722b54c 64-66,91
+services/account/drizzle/datafn/meta/_journal.json
+  s_f058f999ab46b7::t_c841bb29b25fab 32-38
+package.json
+  s_b66d0e9dd4fae0::t_646a96e8f6b90b 106-108
+client/persistence/legacy-backup/datafn-import.test.ts
+  s_f058f999ab46b7::t_9dedb1985136cf 144-147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e777d40c980a363acd4229e9d7b6d1e39faff7eb",
+  "prompts": {},
+  "sessions": {
+    "s_887df0abf80405": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1db16-7957-7701-ba54-fa5f9786e013",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
