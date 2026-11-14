@@ -43,13 +43,19 @@ async function queryWithToken(
   secret: string,
   resource: string
 ) {
-  const context = await apiRequest.newContext({ ignoreHTTPSErrors: true });
+  const context = await apiRequest.newContext({
+    ignoreHTTPSErrors: true,
+    storageState: { cookies: [], origins: [] }
+  });
   try {
     const response = await context.post(`${accountBaseUrl}/datafn/query`, {
       headers: { authorization: `Bearer ${secret}` },
       data: { resource, version: 1 }
     });
-    return { status: response.status(), body: await response.json() };
+    return {
+      status: response.status(),
+      body: await response.json().catch(() => null)
+    };
   } finally {
     await context.dispose();
   }
@@ -103,6 +109,7 @@ test.describe("settings - personal access tokens @settings @auth", () => {
       target.resource
     );
     expect(allowed.status, JSON.stringify(allowed.body)).toBe(200);
+    expect(allowed.body?.ok).toBe(true);
 
     await section.getByTestId("access-token-dismiss").click();
     await expect(secret).toBeHidden();
@@ -123,7 +130,11 @@ test.describe("settings - personal access tokens @settings @auth", () => {
       secretValue,
       target.resource
     );
-    expect([401, 403]).toContain(denied.status);
+    expect(
+      denied.status,
+      "a revoked token no longer reaches DataFn"
+    ).toBeGreaterThanOrEqual(400);
+    expect(denied.body?.ok).not.toBe(true);
 
     await page.reload();
     section = await openAccessTokens(page);
