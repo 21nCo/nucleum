@@ -136,4 +136,57 @@ describe("context menu option submenu", () => {
     expect(checkedSubmenuOption()).toBe("month");
     expect(row.textContent).toContain("Scale: Month");
   });
+
+  it("stretches the submenu row across the menu like a regular secondary item", async () => {
+    const menu: IContextMenuGroup[] = [
+      {
+        group: "scale",
+        items: [],
+        option: {
+          label: "Scale",
+          options: scaleOptions,
+          value: "month",
+          onChange: vi.fn()
+        }
+      },
+      {
+        group: "move",
+        items: [
+          {
+            value: "move",
+            label: "Move to",
+            secondStepComponent: { component: ContextMenuAction, props: {} }
+          }
+        ]
+      }
+    ];
+    const { getByRole } = render(ContextMenuAction, {
+      props: { id: "optionSubmenuWidthTest", menuResolver: () => menu }
+    });
+
+    await fireEvent.click(getByRole("button", { name: "Actions" }));
+    const row = await waitFor(() => {
+      const element = document.querySelector<HTMLElement>(
+        '#popovers [data-context-menu-item-id="option-Scale"]'
+      );
+      expect(element).toBeTruthy();
+      return element!;
+    });
+    const regular = document.querySelector<HTMLElement>(
+      '#popovers [data-context-menu-item-id="move"]'
+    );
+    expect(regular).toBeTruthy();
+
+    // A flex item stretches across a flex column (align-items: stretch), while
+    // a flex button in a block box shrinks to its content and moves its
+    // right-placed submenu over the parent menu.
+    for (const element of [row, regular!]) {
+      const container = element.parentElement!;
+      expect(container.classList.contains("flex")).toBe(true);
+      expect(container.classList.contains("flex-col")).toBe(true);
+      expect(
+        [...container.classList].some((name) => /^items-(?!stretch)/.test(name))
+      ).toBe(false);
+    }
+  });
 });

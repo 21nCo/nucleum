@@ -44,7 +44,13 @@
   }
 </script>
 
-<div data-testid="context-menu-option-group" data-layout={layout}>
+<!-- A flex column stretches every layout's row, including the submenu
+     button, to the menu width like the group's regular items. -->
+<div
+  class="flex flex-col"
+  data-testid="context-menu-option-group"
+  data-layout={layout}
+>
   {#if layout === ContextMenuOptionLayout.SEGMENTED}
     <div
       class="flex items-center justify-between gap-3 pl-2 pr-1 py-1"
