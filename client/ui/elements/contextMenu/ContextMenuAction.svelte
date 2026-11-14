@@ -98,12 +98,24 @@
     return true;
   }
 
-  /** Finds the open menu where the popover renders it: the document or the trigger's shadow root. */
-  function findMenu(trigger: HTMLElement): HTMLElement | null {
+  /**
+   * The trigger's own Document or ShadowRoot, which may belong to another
+   * window (a same-origin iframe), so it is detected without instanceof.
+   */
+  function rootOf(trigger: HTMLElement): Document | ShadowRoot | null {
     const root = trigger.getRootNode();
+    return "getElementById" in root ? (root as Document | ShadowRoot) : null;
+  }
+
+  /**
+   * Finds the open menu where the popover renders it: beside the trigger in
+   * its root, or in a popover container of the trigger's or the app document.
+   */
+  function findMenu(trigger: HTMLElement): HTMLElement | null {
     return (
-      document.getElementById(id) ??
-      (root instanceof ShadowRoot ? root.getElementById(id) : null)
+      rootOf(trigger)?.getElementById(id) ??
+      trigger.ownerDocument.getElementById(id) ??
+      document.getElementById(id)
     );
   }
 
@@ -118,10 +130,11 @@
 
   /** True when the closed menu took focus with it, so nothing holds it now. */
   function isFocusLost(trigger: HTMLElement): boolean {
-    const root = trigger.getRootNode();
-    const active = document.activeElement;
-    if (!active || active === document.body) return true;
-    return root instanceof ShadowRoot && active === root.host
+    const doc = trigger.ownerDocument;
+    const root = rootOf(trigger);
+    const active = doc.activeElement;
+    if (!active || active === doc.body) return true;
+    return root && "host" in root && active === root.host
       ? !root.activeElement
       : false;
   }

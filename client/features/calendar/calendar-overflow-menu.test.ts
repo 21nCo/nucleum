@@ -79,3 +79,19 @@ describe("calendar overflow menu reopen deadline", () => {
     ).toBe(true);
   });
 });
+
+describe("calendar overflow menu reopen at open time", () => {
+  it("keeps answering the pick deadline after a successful settle", () => {
+    requestCalendarOverflowMenuReopen(1_000);
+    const reopen = claimCalendarOverflowMenuReopen(1_900);
+    expect(reopen.settle(true, 1_950)).toBe(true);
+    const end = 1_000 + CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS;
+    expect(reopen.isWithinWindow(end)).toBe(true);
+    expect(reopen.isWithinWindow(end + 1)).toBe(false);
+  });
+
+  it("is never within the window without a pick", () => {
+    const reopen = claimCalendarOverflowMenuReopen(1_000);
+    expect(reopen.isWithinWindow(1_000)).toBe(false);
+  });
+});

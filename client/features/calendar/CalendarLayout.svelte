@@ -109,12 +109,19 @@
    * switcher's current option instead of dropping to the page.
    */
   function releaseCompact() {
-    const focused = document.activeElement;
+    const focused = focusedInControlsRoot();
     isHoldingCompact = false;
     void tick().then(() => {
-      if (focused instanceof HTMLElement && !focused.isConnected)
-        focusLayoutSwitcher();
+      if (focused && !focused.isConnected) focusLayoutSwitcher();
     });
+  }
+
+  /** The focused element as seen from the controls' own Document or ShadowRoot. */
+  function focusedInControlsRoot(): Element | null {
+    const root = controlsRef?.getRootNode() as Partial<DocumentOrShadowRoot>;
+    return (
+      root?.activeElement ?? controlsRef?.ownerDocument.activeElement ?? null
+    );
   }
 
   function focusLayoutSwitcher() {
@@ -138,7 +145,8 @@
     isHoldingCompact = isReopening || overflowMenuReopen.isPending;
     if (!isReopening || !menu) return;
     const frame = requestAnimationFrame(() => {
-      if (!menu.show(releaseCompact)) releaseCompact();
+      if (!overflowMenuReopen.isWithinWindow() || !menu.show(releaseCompact))
+        releaseCompact();
     });
     return () => {
       cancelAnimationFrame(frame);

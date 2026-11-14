@@ -1,5 +1,6 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { tick } from "svelte";
 import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
 
 const mocks = vi.hoisted(() => {
@@ -48,6 +49,10 @@ vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
 }));
 
 import CalendarLayoutView from "@nucleum/features/calendar/CalendarLayout.svelte";
+import {
+  CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS,
+  takeCalendarOverflowMenuReopen
+} from "@nucleum/features/calendar/calendar-overflow-menu";
 
 const CONTROLS_WIDTH: Partial<Record<CalendarLayout, number>> = {
   [CalendarLayout.Bird]: 400,
@@ -85,15 +90,26 @@ async function openOverflowMenu() {
  * CalendarLayout, so a layout pick unmounts the view and its open menu and
  * mounts the next one.
  */
-function renderSwappingCalendar(initial: CalendarLayout) {
-  let view = render(CalendarLayoutView, { props: { panel: initial } });
+function renderSwappingCalendar(initial: CalendarLayout, target?: HTMLElement) {
+  let view = render(CalendarLayoutView, { target, props: { panel: initial } });
   let shown = initial;
   mocks.setState.mockImplementation((_key: unknown, layout: CalendarLayout) => {
     if (layout === shown) return;
     shown = layout;
     view.unmount();
-    view = render(CalendarLayoutView, { props: { panel: layout } });
+    view = render(CalendarLayoutView, { target, props: { panel: layout } });
   });
+}
+
+/** Renders the swapping calendar inside an open shadow root. */
+function renderSwappingCalendarInShadowRoot(initial: CalendarLayout) {
+  const host = document.createElement("div");
+  document.body.append(host);
+  const shadow = host.attachShadow({ mode: "open" });
+  const target = document.createElement("div");
+  shadow.append(target);
+  renderSwappingCalendar(initial, target);
+  return shadow;
 }
 
 function nextFrames() {
@@ -129,7 +145,7 @@ describe("CalendarLayout overflow menu layout pick", () => {
       configurable: true,
       get(this: HTMLElement) {
         if (this.dataset.testid !== "calendar-context-controls") return 0;
-        const layout = document
+        const layout = (this.getRootNode() as ParentNode)
           .querySelector(
             "[data-testid='calendar-layout-bird'], [data-testid='calendar-layout-classic']"
           )
@@ -151,6 +167,8 @@ describe("CalendarLayout overflow menu layout pick", () => {
   });
 
   afterEach(() => {
+    CONTROLS_WIDTH[CalendarLayout.Bird] = 400;
+    vi.restoreAllMocks();
     if (scrollWidth)
       Object.defineProperty(HTMLElement.prototype, "scrollWidth", scrollWidth);
     document.body.innerHTML = "";
@@ -299,5 +317,148 @@ describe("CalendarLayout overflow menu layout pick", () => {
     expect(
       document.querySelector('[data-testid="calendar-overflow-menu"]')
     ).toBeNull();
+  });
+  /**
+   * Holds every animation frame until `runFrames`, then runs them with the
+   * clock at `at`, as a frame delayed by a busy or backgrounded page would.
+   */
+  function delayFrames(clock: { now: number }) {
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(Date, "now").mockImplementation(() => clock.now);
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", (handle: number) => {
+      frames[handle - 1] = () => {};
+    });
+    return (at: number) => {
+      clock.now = at;
+      for (const frame of frames.splice(0)) frame(at);
+    };
+  }
+
+  async function pickClassicWithDelayedFrame(frameDelayMs: number) {
+    CONTROLS_WIDTH[CalendarLayout.Classic] = 400;
+    const clock = { now: 10_000 };
+    renderSwappingCalendar(CalendarLayout.Bird);
+    await openOverflowMenu();
+    const runFrames = delayFrames(clock);
+
+    await fireEvent.click(layoutOption(CalendarLayout.Classic));
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-testid="calendar-layout-classic"]')
+      ).toBeTruthy()
+    );
+    await waitFor(() => expect(overflowMenu()).toBeNull());
+    const triggerClick = vi.spyOn(
+      document.querySelector<HTMLElement>(
+        '[data-testid="calendar-overflow-menu"]'
+      )!,
+      "click"
+    );
+    runFrames(10_000 + frameDelayMs);
+    return triggerClick;
+  }
+
+  it("does not reopen the menu from a frame that runs after the reopen window", async () => {
+    const triggerClick = await pickClassicWithDelayedFrame(
+      CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS + 1
+    );
+
+    expect(triggerClick).not.toHaveBeenCalled();
+    await tick();
+    expect(overflowMenu()).toBeNull();
+    expect(document.activeElement).toBe(document.body);
+    expect(takeCalendarOverflowMenuReopen(10_100)).toBe(false);
+
+    mocks.entryWidth.set(90);
+    await tick();
+    expect(triggerClick).not.toHaveBeenCalled();
+    expect(overflowMenu()).toBeNull();
+  });
+
+  it("still reopens the menu from a frame that runs exactly at the end of the window", async () => {
+    const triggerClick = await pickClassicWithDelayedFrame(
+      CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS
+    );
+    expect(triggerClick).toHaveBeenCalledTimes(1);
+
+    await waitFor(() =>
+      expect(document.activeElement).toBe(layoutOption(CalendarLayout.Classic))
+    );
+  });
+
+  it("hands focus to the inline switcher inside a shadow root and keeps the compact trigger", async () => {
+    CONTROLS_WIDTH[CalendarLayout.Classic] = 400;
+    const shadow = renderSwappingCalendarInShadowRoot(CalendarLayout.Bird);
+    const trigger = () =>
+      shadow.querySelector<HTMLElement>('[data-testid="calendar-overflow-menu"]');
+    const closeWithToday = () =>
+      fireEvent.click(
+        overflowMenu()!.querySelector<HTMLElement>(
+          '[data-context-menu-item-id="today"]'
+        )!
+      );
+    await waitFor(() => expect(trigger()).toBeTruthy());
+    await fireEvent.click(trigger()!);
+    await waitFor(() => expect(overflowMenu()).toBeTruthy());
+
+    await fireEvent.click(layoutOption(CalendarLayout.Classic));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(layoutOption(CalendarLayout.Classic))
+    );
+    const compactTrigger = trigger();
+    await closeWithToday();
+    await waitFor(() => expect(overflowMenu()).toBeNull());
+    await nextFrames();
+    expect(trigger()).toBe(compactTrigger);
+    expect(shadow.activeElement).toBe(compactTrigger);
+
+    CONTROLS_WIDTH[CalendarLayout.Bird] = 50;
+    await fireEvent.click(compactTrigger!);
+    await waitFor(() => expect(overflowMenu()).toBeTruthy());
+    await fireEvent.click(layoutOption(CalendarLayout.Bird));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(layoutOption(CalendarLayout.Bird))
+    );
+    await closeWithToday();
+
+    await waitFor(() =>
+      expect(shadow.activeElement).toBe(
+        shadow.querySelector(
+          '[data-testid="calendar-layout-switcher"] button[aria-label="Columns"]'
+        )
+      )
+    );
+    expect(trigger()).toBeNull();
+  });
+
+  it("leaves focus the user moved elsewhere inside a shadow root when the reopened menu closes", async () => {
+    CONTROLS_WIDTH[CalendarLayout.Classic] = 50;
+    const shadow = renderSwappingCalendarInShadowRoot(CalendarLayout.Bird);
+    const outside = document.createElement("input");
+    shadow.append(outside);
+    const trigger = await waitFor(() => {
+      const element = shadow.querySelector<HTMLElement>(
+        '[data-testid="calendar-overflow-menu"]'
+      );
+      expect(element).toBeTruthy();
+      return element!;
+    });
+    await fireEvent.click(trigger);
+    await waitFor(() => expect(overflowMenu()).toBeTruthy());
+    await fireEvent.click(layoutOption(CalendarLayout.Classic));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(layoutOption(CalendarLayout.Classic))
+    );
+
+    outside.focus();
+    await fireEvent.click(outside);
+
+    await waitFor(() => expect(overflowMenu()).toBeNull());
+    await nextFrames();
+    expect(shadow.activeElement).toBe(outside);
   });
 });

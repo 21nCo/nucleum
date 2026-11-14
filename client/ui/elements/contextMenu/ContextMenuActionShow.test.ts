@@ -171,4 +171,56 @@ describe("ContextMenuAction show", () => {
       expect(onClose).not.toHaveBeenCalled();
     }
   );
+  describe("in a same-origin iframe with the menu rendered beside its trigger", () => {
+    function renderInFrame(id: string) {
+      const frame = document.createElement("iframe");
+      document.body.append(frame);
+      const frameDocument = frame.contentDocument!;
+      const target = frameDocument.createElement("div");
+      frameDocument.body.append(target);
+      const view = render(ContextMenuAction, {
+        target,
+        props: { id, menuResolver: todayMenu, isRenderAsSibling: true }
+      });
+      const trigger = frameDocument.querySelector<HTMLElement>(
+        'button[aria-label="Actions"]'
+      )!;
+      const item = () =>
+        frameDocument.querySelector<HTMLElement>(
+          '[data-context-menu-item-id="today"]'
+        );
+      return { ...view, frameDocument, trigger, item };
+    }
+
+    it("focuses the menu, then returns focus to the trigger on hide and on an action", async () => {
+      const { component, frameDocument, trigger, item } =
+        renderInFrame("showFrame");
+
+      expect(component.show()).toBe(true);
+      await waitFor(() => expect(frameDocument.activeElement).toBe(item()));
+      component.hide();
+      await waitFor(() => expect(item()).toBeNull());
+      expect(frameDocument.activeElement).toBe(trigger);
+
+      expect(component.show()).toBe(true);
+      await waitFor(() => expect(frameDocument.activeElement).toBe(item()));
+      await fireEvent.click(item()!);
+      await waitFor(() => expect(item()).toBeNull());
+      expect(frameDocument.activeElement).toBe(trigger);
+    });
+
+    it("keeps focus the user moved to another element in the frame", async () => {
+      const { component, frameDocument, item } = renderInFrame("showFrameOut");
+      const outside = frameDocument.createElement("input");
+      frameDocument.body.append(outside);
+
+      component.show();
+      await waitFor(() => expect(frameDocument.activeElement).toBe(item()));
+      outside.focus();
+      component.hide();
+
+      await waitFor(() => expect(item()).toBeNull());
+      expect(frameDocument.activeElement).toBe(outside);
+    });
+  });
 });

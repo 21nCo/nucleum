@@ -38,7 +38,9 @@ function takeReopenDeadline(now: number): number | undefined {
  * when the new layout would fit inline. `settle` answers true exactly once, when
  * the trigger is mounted within the reopen window; a trigger that only
  * appears after the window drops the request. The window is measured from
- * the pick, so a late claim never extends it.
+ * the pick, so a late claim never extends it. `isWithinWindow` lets the
+ * caller recheck the same deadline when it actually opens the menu, so a
+ * delayed frame after a successful settle never opens it late.
  */
 export function claimCalendarOverflowMenuReopen(now = Date.now()) {
   const deadline = takeReopenDeadline(now) ?? Number.NEGATIVE_INFINITY;
@@ -50,6 +52,9 @@ export function claimCalendarOverflowMenuReopen(now = Date.now()) {
     settle(hasTrigger: boolean, at = Date.now()): boolean {
       if (!isPending || (!hasTrigger && at <= deadline)) return false;
       isPending = false;
+      return at <= deadline;
+    },
+    isWithinWindow(at = Date.now()): boolean {
       return at <= deadline;
     }
   };
