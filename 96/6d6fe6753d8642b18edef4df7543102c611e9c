@@ -1,0 +1,33 @@
+client/features/calendar/CalendarLayout.svelte
+  s_0b0647615a23f7::t_e32447a567ad00 69-70,72-75,104-107,111-116,118-121
+client/features/calendar/CalendarLayoutOverflowMenu.test.ts
+  s_0b0647615a23f7::t_39dd8301414db9 200,204-205,207,209-228
+client/features/calendar/calendar-overflow-menu.test.ts
+  s_0b0647615a23f7::t_59e2ab936689c4 31,34-35,38,41-45,48,51-54,57,59-60
+client/features/calendar/calendar-overflow-menu.ts
+  s_0b0647615a23f7::t_a8620163d9a19d 32-36,42-46,48
+client/ui/elements/contextMenu/ContextMenuAction.svelte
+  s_0b0647615a23f7::t_ed6bc386fcfaf5 76-77,79,81-91,93,99-101
+client/ui/elements/contextMenu/ContextMenuOptionGroup.svelte
+  s_0b0647615a23f7::t_48ca5ced469c36 103
+client/ui/elements/contextMenu/ContextMenuOptionList.svelte
+  s_0b0647615a23f7::t_5dcdddbb27a985 25,58
+client/ui/elements/contextMenu/ContextMenuOptionSubmenu.test.ts
+  s_0b0647615a23f7::t_4f606403058fb5 79-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "966d6fe6753d8642b18edef4df7543102c611e9c",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
