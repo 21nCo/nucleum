@@ -23,6 +23,7 @@ import {
   AuthFnUnauthenticatedError,
   type AuthFnServer
 } from "authfn";
+import { hasFullAppAccess, resolveAppScopeAccess } from "../datafn/app-scopes.js";
 
 /** Path prefix the account service mounts FileFn under. */
 export const ACCOUNT_FILES_BASE_PATH = "/files";
@@ -92,7 +93,11 @@ export function createAccountFileFn(input: CreateAccountFileFnInput): FileFn {
  * CSRF failure to 403. Every other error propagates: the `/files` routes
  * answer an AuthFn error, such as a region mismatch (409 with its redirect
  * details) or an unavailable placement directory (503), with its own status
- * and code, so neither is reported as a signed-out user.
+ * and code, so neither is reported as a signed-out user. API keys act as
+ * their owning user, and FileFn grants the owner every file permission, so
+ * only a session holding every app scope for read and write (cookie
+ * sessions, `*` and `nucleum` read and write keys) reaches `/files`; an
+ * app-scoped, read-only or scopeless key gets 403.
  */
 export function createAccountFileSessionResolver(
   auth: AccountFileAuth
@@ -102,7 +107,11 @@ export function createAccountFileSessionResolver(
       const session = SAFE_METHODS.has(request.method.toUpperCase())
         ? await auth.provider.authenticate(request)
         : await auth.authorizeMutation(request);
-      return session?.actorId ? { principalId: session.actorId } : null;
+      if (!session?.actorId) return null;
+      if (!hasFullAppAccess(resolveAppScopeAccess(session))) {
+        throw forbidden({ reason: "scope" });
+      }
+      return { principalId: session.actorId };
     } catch (error) {
       if (error instanceof AuthFnCsrfInvalidError) {
         throw forbidden({ reason: "csrf" });

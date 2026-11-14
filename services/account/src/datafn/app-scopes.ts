@@ -548,6 +548,33 @@ function createScopeView(
   const fieldValueAllowed = (policy: FieldPolicy, value: unknown) =>
     typeof value === 'string' && fieldPolicyValues(policy, tables, ownership).has(value);
 
+  /**
+   * A row that names one record (an access log's `resourceId`) must name a
+   * record of the type in its field, before and after the write, so a log of
+   * an app's own type cannot name another app's or a shared record. An id
+   * with no resource prefix names no record and is allowed.
+   */
+  const recordFieldBound = (
+    policy: FieldPolicy,
+    record: Record<string, unknown> | undefined,
+    existing: Record<string, unknown> | null,
+    operation: string
+  ): boolean => {
+    const recordField = policy.recordField;
+    if (!recordField) return true;
+    const bound = (row: Record<string, unknown>) => {
+      const recordId = row[recordField];
+      if (isClearedValue(recordId)) return true;
+      if (typeof recordId !== 'string') return false;
+      const named = resourceNamedById(schema, recordId);
+      return named === undefined || named === row[policy.field];
+    };
+    if (existing && !bound(existing)) return false;
+    if (!record) return true;
+    // A merge keeps the stored fields it does not set; other writes replace them.
+    return bound(operation === 'merge' ? { ...(existing ?? {}), ...record } : record);
+  };
+
   const canQuery = (query: unknown): boolean => {
     if (!isRecord(query) || typeof query.resource !== 'string') return false;
     if (query.filters !== undefined && !isRecord(query.filters)) return false;
@@ -763,6 +790,7 @@ function createScopeView(
         return false;
       }
       const existing = await shared.readRecord(resource, id);
+      if (policy.recordField && !recordFieldBound(policy, record, existing, operation)) return false;
       const key = `${resource}|${id}`;
       const allowed = existing
         ? fieldValueAllowed(policy, existing[field])
@@ -990,9 +1018,13 @@ function sortReferences(sort: unknown, field: string): boolean {
   });
 }
 
-/** True when a query projection returns each row's id (no select, `*` or `id`). */
+/**
+ * True when a query projection returns each row's id: no or an empty
+ * selection (DataFn's default fields), `*` or `id`.
+ */
 function selectKeepsId(select: unknown): boolean {
-  return select === undefined || (Array.isArray(select) && (select.includes('id') || select.includes('*')));
+  return select === undefined || (Array.isArray(select) &&
+    (select.length === 0 || select.includes('id') || select.includes('*')));
 }
 
 function asList(payload: unknown): unknown[] {

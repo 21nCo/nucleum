@@ -1096,6 +1096,34 @@ describe('access logs of shared resources', () => {
     expect(await storedLabel('accessLog', 'accessLog:new-collection')).toBeUndefined();
   });
 
+  it('scoped tokens cannot write a log of their own type that names another record', async () => {
+    for (const change of [
+      mutation('accessLog', 'insert', 'accessLog:forged-goal', {
+        resource: 'node', resourceId: 'objective:o1', action: 'OPEN', timestamp: at
+      }),
+      mutation('accessLog', 'insert', 'accessLog:forged-collection', {
+        resource: 'node', resourceId: 'collection:goals', action: 'OPEN', timestamp: at
+      }),
+      mutation('accessLog', 'replace', 'accessLog:node', {
+        resource: 'node', resourceId: 'collection:goals', action: 'OPEN', timestamp: at
+      }),
+      mutation('accessLog', 'merge', 'accessLog:node', { resourceId: 'objective:o1' })
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+      expect((await call('/datafn/mutation', actors.memotronWrite, change)).status).toBe(403);
+      expect((await call('/datafn/transact', actors.memotronWrite, { steps: [{ mutation: change }] })).status)
+        .toBe(403);
+    }
+    const pointronForged = mutation('accessLog', 'insert', 'accessLog:forged-node', {
+      resource: 'objective', resourceId: 'node:n1', action: 'OPEN', timestamp: at
+    });
+    expect((await call('/datafn/push', actors.pointron, push(pointronForged))).status).toBe(403);
+    expect(await storedField('accessLog', 'accessLog:node', 'resourceId')).toBe('node:n1');
+    for (const id of ['accessLog:forged-goal', 'accessLog:forged-collection', 'accessLog:forged-node']) {
+      expect(await storedField('accessLog', id, 'resource')).toBeUndefined();
+    }
+  });
+
   it('scoped tokens write logs of their own resources', async () => {
     const response = await call('/datafn/push', actors.memotronWrite, push(
       mutation('accessLog', 'merge', 'accessLog:node', { action: 'EDIT' }),
@@ -1180,11 +1208,13 @@ describe('projections of filtered views and link tags', () => {
     const unprojected = await ids(await call('/datafn/query', actors.memotronRead, { resource: 'view', version: 1 }));
     expect(unprojected).toContain('view:notes');
     expect(unprojected).not.toContain('view:goals');
-    for (const select of [['id', 'label'], ['*']]) {
+    for (const select of [['id', 'label'], ['*'], []]) {
       const data = await rows(await call('/datafn/query', actors.memotronRead, { resource: 'view', version: 1, select }));
       expect(data.map((row) => String(row.id)).sort()).toEqual(unprojected);
       expect(data.every((row) => typeof row.label === 'string')).toBe(true);
     }
+    expect(await ids(await call('/datafn/query', actors.memotronRead, { resource: 'linkTag', version: 1, select: [] })))
+      .toEqual(await ids(await call('/datafn/query', actors.memotronRead, { resource: 'linkTag', version: 1 })));
     const transact = await call('/datafn/transact', actors.memotronRead, {
       steps: [{ query: { resource: 'linkTag', version: 1, select: ['id', 'label'] } }]
     });
