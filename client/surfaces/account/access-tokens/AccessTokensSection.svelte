@@ -12,6 +12,7 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import Text from "@21n/ui/elements/text/Text.svelte";
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
+  import { escapeMarkdownText } from "@21n/ui/elements/markdown/markdown.utils";
   import { copyToClipboard } from "@21n/shared-utils/clipboard";
   import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
@@ -143,11 +144,13 @@
 
   /**
    * Focus target when the focused control goes away and no nearer control
-   * takes its place: Create, else Retry, else the open form, else the heading.
+   * takes its place: Create, else Retry, else the shown secret's Copy, else
+   * the open form, else the heading.
    */
   async function focusSectionFallback() {
     if (await focusInSection('[data-testid="access-token-create"]')) return;
     if (await focusInSection('[data-testid="access-token-retry"]')) return;
+    if (await focusInSection('[data-testid="access-token-copy"]')) return;
     if (isFormVisible && nameInput) {
       await nameInput.focus();
       return;
@@ -173,7 +176,7 @@
   }
 
   async function handleCreate() {
-    if (isCreating) return;
+    if (isCreating || created) return;
     isCreating = true;
     formError = undefined;
     const tokenName = name.trim();
@@ -213,14 +216,14 @@
     revokingId = undefined;
     confirmRevokeId = undefined;
     if (!result.ok) {
-      toasts.error(result.message);
+      toasts.error(escapeMarkdownText(result.message));
       await focusRowButton(token.id, "access-token-revoke");
       return;
     }
     if (created?.id === token.id) created = undefined;
     const index = tokens.findIndex((entry) => entry.id === token.id);
     tokens = tokens.filter((entry) => entry.id !== token.id);
-    toasts.success(`Revoked ${token.name}`);
+    toasts.success(`Revoked ${escapeMarkdownText(token.name)}`);
     const neighbour = tokens[index] ?? tokens[index - 1];
     if (neighbour) await focusRowButton(neighbour.id, "access-token-revoke");
     else await focusSectionFallback();
@@ -283,7 +286,7 @@
         app's data on your behalf. Treat them like passwords.
       </div>
     </div>
-    {#if !isFormVisible && !loadError}
+    {#if !isFormVisible && !loadError && !created}
       <Button
         icon="plus"
         label="Create token"

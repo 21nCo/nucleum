@@ -562,7 +562,7 @@
     </div>
   </div>
 
-  {#if accountDetails}
+  {#if isSignedIn}
     <AccessTokensSection />
   {/if}
 

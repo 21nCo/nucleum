@@ -68,22 +68,75 @@ async function queryWithToken(
   }
 }
 
+const cleanupAttempts = 3;
+
+type CleanupResult = { ok: boolean; transient: boolean; detail: string };
+
+function isTransientStatus(status: number) {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+async function sendRevoke(
+  page: Page,
+  accountBaseUrl: string,
+  keyId: string
+): Promise<CleanupResult> {
+  try {
+    const cookies = await page.context().cookies(accountBaseUrl);
+    const csrf = cookies.find((cookie) => cookie.name.endsWith(".csrf"))?.value;
+    const response = await page.request.delete(
+      `${accountBaseUrl}/auth/api-keys/${encodeURIComponent(keyId)}`,
+      { headers: csrf ? { "x-authfn-csrf": csrf } : {} }
+    );
+    if (response.ok()) {
+      return {
+        ok: true,
+        transient: false,
+        detail: `HTTP ${response.status()}`
+      };
+    }
+    const body = await response.text().catch(() => "");
+    return {
+      ok: false,
+      transient: isTransientStatus(response.status()),
+      detail: `HTTP ${response.status()}: ${body}`
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      transient: true,
+      detail: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
 /**
  * Revokes a token through the account service with the page's cookie session,
- * so a failed run does not leave a live token behind.
+ * so a failed run does not leave a live token behind. Retries rejected
+ * requests and transient statuses a bounded number of times and reports
+ * whether the account service confirmed the revocation.
  */
 async function revokeTokenDirectly(
   page: Page,
   accountBaseUrl: string,
   keyId: string
-) {
-  const cookies = await page.context().cookies(accountBaseUrl);
-  const csrf = cookies.find((cookie) => cookie.name.endsWith(".csrf"))?.value;
-  await page.request
-    .delete(`${accountBaseUrl}/auth/api-keys/${encodeURIComponent(keyId)}`, {
-      headers: csrf ? { "x-authfn-csrf": csrf } : {}
-    })
+): Promise<CleanupResult> {
+  let result: CleanupResult = {
+    ok: false,
+    transient: true,
+    detail: "not attempted"
+  };
+  let attempts = 0;
+  await expect(async () => {
+    attempts += 1;
+    result = await sendRevoke(page, accountBaseUrl, keyId);
+    if (!result.ok && result.transient && attempts < cleanupAttempts) {
+      throw new Error(result.detail);
+    }
+  })
+    .toPass({ intervals: [1_000, 2_000], timeout: 30_000 })
     .catch(() => undefined);
+  return result;
 }
 
 test.describe("settings - personal access tokens @settings @auth", () => {
@@ -102,6 +155,7 @@ test.describe("settings - personal access tokens @settings @auth", () => {
     let accountBaseUrl: string | undefined;
     let keyId: string | undefined;
     let revoked = false;
+    let failure: unknown;
 
     try {
       let section = await openAccessTokens(page);
@@ -184,9 +238,21 @@ test.describe("settings - personal access tokens @settings @auth", () => {
       await page.reload();
       section = await openAccessTokens(page);
       await expect(tokenRow(section, name)).toHaveCount(0);
+    } catch (error) {
+      failure = error;
+      throw error;
     } finally {
       if (!revoked && accountBaseUrl && keyId) {
-        await revokeTokenDirectly(page, accountBaseUrl, keyId);
+        const cleanup = await revokeTokenDirectly(page, accountBaseUrl, keyId);
+        if (!cleanup.ok) {
+          const message = `Cleanup could not revoke access token ${keyId}; it may stay active until it expires (${cleanup.detail})`;
+          testInfo.annotations.push({
+            type: "cleanup-failed",
+            description: message
+          });
+          console.warn(message);
+          if (failure === undefined) throw new Error(message);
+        }
       }
     }
   });

@@ -33,6 +33,7 @@ vi.mock("@nucleum/shared-state/notifications/notification.store", () => ({
   toasts: { success: mocks.toastSuccess, error: mocks.toastError }
 }));
 
+import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
 import AccessTokensSection from "./AccessTokensSection.svelte";
 
 const existing = {
@@ -55,6 +56,12 @@ const createdToken = {
   expiresAt: new Date("2099-02-01T00:00:00.000Z"),
   lastUsedAt: new Date("2026-11-14T01:00:00.000Z")
 };
+
+function renderToast(message: string) {
+  const container = document.createElement("div");
+  container.innerHTML = renderMdAsHtml(message);
+  return container;
+}
 
 function rows() {
   return screen.queryAllByTestId("access-token-row");
@@ -327,6 +334,63 @@ describe("AccessTokensSection", () => {
     expect(screen.getByTestId("access-token-create")).toBeTruthy();
   });
 
+  it("shows a token name and a revoke error literally in toasts", async () => {
+    const payload = '<img src=x onerror="alert(1)"> **bold** [x](https://e.x)';
+    const hostile = { ...existing, name: payload };
+    const second = { ...existing, id: "key_second", name: "Second" };
+    mocks.listAccessTokens
+      .mockResolvedValueOnce({ ok: true, data: [hostile, second] })
+      .mockResolvedValue({ ok: true, data: [second] });
+    mocks.revokeAccessToken
+      .mockResolvedValueOnce({ ok: true, data: { id: "key_existing" } })
+      .mockResolvedValue({ ok: false, kind: "invalid", message: payload });
+
+    render(AccessTokensSection);
+    await waitFor(() => expect(rows()).toHaveLength(2));
+    await fireEvent.click(screen.getAllByTestId("access-token-revoke")[0]);
+    await fireEvent.click(screen.getByTestId("access-token-revoke-confirm"));
+    await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledTimes(1));
+
+    const success = renderToast(mocks.toastSuccess.mock.calls[0][0]);
+    expect(success.textContent).toBe(`Revoked ${payload}`);
+    expect(success.querySelector("img, b, i, placeholder")).toBeNull();
+
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    await fireEvent.click(screen.getByTestId("access-token-revoke"));
+    await fireEvent.click(screen.getByTestId("access-token-revoke-confirm"));
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledTimes(1));
+
+    const failure = renderToast(mocks.toastError.mock.calls[0][0]);
+    expect(failure.textContent).toBe(payload);
+    expect(failure.querySelector("img, b, i, placeholder")).toBeNull();
+  });
+
+  it("keeps a created secret until it is dismissed", async () => {
+    mocks.listAccessTokens
+      .mockResolvedValueOnce({ ok: true, data: [existing] })
+      .mockResolvedValue({ ok: true, data: [createdToken, existing] });
+    mocks.createAccessToken.mockResolvedValue({
+      ok: true,
+      data: { id: "key_new", secret: "ak_first" }
+    });
+
+    render(AccessTokensSection);
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    await submitToken("CLI");
+    await waitFor(() => expect(rows()).toHaveLength(2));
+
+    expect(screen.getByTestId("access-token-secret").textContent).toBe(
+      "ak_first"
+    );
+    expect(screen.queryByTestId("access-token-create")).toBeNull();
+    expect(screen.queryByTestId("access-token-form")).toBeNull();
+    expect(mocks.createAccessToken).toHaveBeenCalledTimes(1);
+
+    await fireEvent.click(screen.getByTestId("access-token-dismiss"));
+    expect(screen.queryByTestId("access-token-secret")).toBeNull();
+    expect(screen.getByTestId("access-token-create")).toBeTruthy();
+  });
+
   it("moves focus to the confirm control and back when revoking is cancelled", async () => {
     mocks.listAccessTokens.mockResolvedValue({ ok: true, data: [existing] });
 
@@ -489,6 +553,38 @@ describe("AccessTokensSection", () => {
       await waitFor(() =>
         expect(document.activeElement).toBe(
           screen.getByTestId("access-token-create")
+        )
+      );
+    });
+
+    it("keeps focus on the shown secret's Copy when a revoke empties the list", async () => {
+      mocks.listAccessTokens
+        .mockResolvedValueOnce({ ok: true, data: [existing] })
+        .mockResolvedValueOnce({ ok: true, data: [existing] })
+        .mockResolvedValue({ ok: true, data: [] });
+      mocks.createAccessToken.mockResolvedValue({
+        ok: true,
+        data: { id: "key_unlisted", secret: "ak_once" }
+      });
+      mocks.revokeAccessToken.mockResolvedValue({ ok: true, data: {} });
+
+      render(AccessTokensSection);
+      await waitFor(() => expect(rows()).toHaveLength(1));
+      await submitToken("CLI");
+      await waitFor(() =>
+        expect(mocks.listAccessTokens).toHaveBeenCalledTimes(2)
+      );
+      await revokeRow("key_existing");
+
+      await waitFor(() =>
+        expect(screen.getByText("You have no access tokens.")).toBeTruthy()
+      );
+      expect(screen.getByTestId("access-token-secret").textContent).toBe(
+        "ak_once"
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByTestId("access-token-copy")
         )
       );
     });
