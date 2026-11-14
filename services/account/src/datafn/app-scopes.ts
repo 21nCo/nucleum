@@ -775,6 +775,12 @@ function createScopeView(
     // DataFn writes the row named by record.id when it overrides mutation.id,
     // so the record may only repeat the id that is authorized below.
     if (record && 'id' in record && record.id !== mutation.id) return false;
+    // The mutation id names the source record of every write, relations included,
+    // so its id prefix may not name another resource.
+    if (typeof mutation.id === 'string') {
+      const named = resourceNamedById(schema, mutation.id);
+      if (named !== undefined && named !== resource) return false;
+    }
     if (!(await relationsAllowed(mutation, resource, operation))) return false;
     if (record && !(await recordRelationsAllowed(resource, record))) return false;
     const policy = ownership.shared.get(resource);

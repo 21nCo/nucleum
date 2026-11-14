@@ -1010,6 +1010,31 @@ describe('record and relation identity overrides', () => {
     expect(await storedLabel('collection', 'collection:notes')).toBe('Notes again');
   });
 
+  it('memotron token cannot write or relate another app record by naming it as the mutation id', async () => {
+    const linksBefore = await joinRows('record_links');
+    const collectionItemsBefore = await joinRows('collection_items');
+    const objectivesBefore = [await storedLabel('objective', 'objective:o1'), await storedLabel('objective', 'objective:o2')];
+    expect(objectivesBefore.every((label) => typeof label === 'string')).toBe(true);
+    for (const change of [
+      relationMutation('node', 'relate', 'objective:o1', { links: [{ $ref: 'node:n3', linkType: 'direct', tags: [] }] }),
+      relationMutation('node', 'relate', 'objective:o1', { collections: 'collection:notes' }),
+      relationMutation('node', 'unrelate', 'objective:o1', { links: 'objective:o2' }),
+      mutation('node', 'merge', 'objective:o1', { label: 'Hijacked' }),
+      mutation('node', 'delete', 'objective:o2')
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+      expect((await call('/datafn/mutation', actors.memotronWrite, change)).status).toBe(403);
+      expect((await call('/datafn/transact', actors.memotronWrite, { steps: [{ mutation: change }] })).status)
+        .toBe(403);
+    }
+    const pointronChange = relationMutation('objective', 'relate', 'node:n1', { collections: 'collection:goals' });
+    expect((await call('/datafn/push', actors.pointron, push(pointronChange))).status).toBe(403);
+    expect(await joinRows('record_links')).toEqual(linksBefore);
+    expect(await joinRows('collection_items')).toEqual(collectionItemsBefore);
+    expect([await storedLabel('objective', 'objective:o1'), await storedLabel('objective', 'objective:o2')])
+      .toEqual(objectivesBefore);
+  });
+
   it('memotron token cannot override a join row id or its endpoint columns in relation metadata', async () => {
     const linksBefore = await joinRows('record_links');
     for (const metadata of [
