@@ -1,0 +1,23 @@
+services/account/scripts/deploy.mjs
+  s_b66d0e9dd4fae0::t_bfa65234ce15f6 70-74
+services/account/src/files/routes.ts
+  s_b66d0e9dd4fae0::t_64b7f3fccd6f09 107,138-143,145-164
+tests/unit/account-service/files-runtime.spec.ts
+  s_b66d0e9dd4fae0::t_c949018bb2b4e8 371-382
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3d6a820acb3acafc9a7a0994012bd31fc7fdc4e5",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

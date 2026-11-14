@@ -1,0 +1,25 @@
+client/shared-state/files/filefn-client.ts
+  s_0d7e217a030e00::t_969294c479333c 1-154
+client/shared-state/package.json
+  s_0d7e217a030e00::t_baabfa7f9c09e6 21
+package-lock.json
+  s_0d7e217a030e00::t_af0f3786529d50 3102,6224-6229
+client/shared-state/files/filefn-client.test.ts
+  s_0d7e217a030e00::t_403dce7a0afa8e 1-193
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "908721609554e5453866dfcc1757d6b96e7496ff",
+  "prompts": {},
+  "sessions": {
+    "s_0d7e217a030e00": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dde721c5-3187-4b07-85ad-bff7f78fd1eb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
