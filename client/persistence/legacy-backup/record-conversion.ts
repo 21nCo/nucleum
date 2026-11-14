@@ -249,9 +249,6 @@ function transformLegacyRecord(
     result.trashedBy =
       result.trashedBy ?? normalizeRecordId(trashInformation.deletedBy);
   }
-  if (record.isParentInactive !== undefined) {
-    result.isAncestorInactive = record.isParentInactive;
-  }
 
   if (resource === "objective") {
     const parents = normalizeRecordIdArray(record.parent);

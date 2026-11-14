@@ -9,8 +9,8 @@
   "dependencies": {
     "@21n/fonts": "^1.0.1",
     "@authfn/client": "0.2.3",
-    "@datafn/client": "0.1.0",
-    "@datafn/svelte": "0.1.0",
+    "@datafn/client": "0.1.4",
+    "@datafn/svelte": "0.1.1",
     "@nucleum/datafn": "*",
     "@nucleum/features": "*",
     "@nucleum/schema": "*",

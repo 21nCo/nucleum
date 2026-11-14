@@ -136,7 +136,7 @@ export interface Node {
   file?: string;
   id: string;
   importId?: string;
-  isAncestorInactive?: boolean;
+  readonly isAncestorInactive: boolean;
   isArchived?: boolean;
   isLocked?: boolean;
   isStarred?: boolean;
@@ -169,7 +169,7 @@ export interface Objective {
   endDate?: number;
   id: string;
   importId?: string;
-  isAncestorInactive?: boolean;
+  readonly isAncestorInactive: boolean;
   isArchived?: boolean;
   isLocked?: boolean;
   isPinnedForQuickFocus?: boolean;
@@ -312,7 +312,7 @@ export interface Task {
   dateUnix: number;
   estimated?: number;
   id: string;
-  isAncestorInactive?: boolean;
+  readonly isAncestorInactive: boolean;
   isArchived?: boolean;
   isChecked?: boolean;
   label?: string;
