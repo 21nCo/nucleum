@@ -3,7 +3,6 @@ export enum Action {
   CMD = "CMD",
   CLOSE = "CLOSE",
   CREATE = "create",
-  MODE_OF_INTERACTION = "MODE_OF_INTERACTION",
   EDIT_MODE = "EDIT_MODE",
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",

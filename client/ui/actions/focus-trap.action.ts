@@ -8,7 +8,8 @@ const FOCUSABLE_SELECTOR = [
   "[tabindex]:not([tabindex='-1'])"
 ].join(",");
 
-function focusableElements(node: HTMLElement) {
+/** Keyboard-focusable elements inside `node`, in DOM order. */
+export function focusableElements(node: HTMLElement) {
   return [...node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
     (element) => element.tabIndex >= 0 && !element.closest("[inert], [hidden]")
   );

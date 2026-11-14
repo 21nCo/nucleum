@@ -46,7 +46,6 @@ import AnalyticsViewsPageEditMobile from "@nucleum/features/focus/analytics/Anal
 import { Embed } from "@nucleum/client/runtime/context.type";
 import ImportOnboarding from "@nucleum/products/pointron/settings/data/ImportOnboarding.svelte";
 import { Action } from "@nucleum/client/config/action.enum";
-import FocusPlayerCommandModeWidget from "@nucleum/features/focus/player/FocusPlayerCommandModeWidget.svelte";
 import PointronLibrary from "@nucleum/products/pointron/library/PointronLibrary.svelte";
 import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
 import { SessionState } from "@nucleum/features/focus/sessionState.enum";
@@ -456,12 +455,6 @@ export const pointronActions: IAction[] = [
     type: ActionType.INLINE,
     isMeta: true,
     component: FocusPlayer
-  },
-  {
-    action: PointronAction.FOCUS_PLAYER + Action.CMD,
-    type: ActionType.INLINE,
-    isMeta: true,
-    component: FocusPlayerCommandModeWidget
   },
   {
     action: PointronAction.FOCUS,

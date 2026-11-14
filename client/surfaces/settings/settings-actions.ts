@@ -1,4 +1,5 @@
 import { Size } from "@21n/ui/elements/size.enum";
+import { Placement } from "@21n/ui/elements/direction.enum";
 import { Action } from "@nucleum/client/config/action.enum";
 import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
@@ -11,7 +12,6 @@ import AppearanceSettings from "@nucleum/surfaces/settings/appearance/Appearance
 import AccessibilitySettings from "@nucleum/surfaces/settings/appearance/accessibility/AccessibilitySettings.svelte";
 import DateTimeSettings from "@nucleum/surfaces/settings/datetime/DateTimeSettings.svelte";
 import DeveloperSettings from "@nucleum/surfaces/settings/developer/DeveloperSettings.svelte";
-import InteractionModeSettings from "@nucleum/surfaces/settings/interactionMode/InteractionModeSettings.svelte";
 import ModSettings from "@nucleum/surfaces/settings/mod/ModSettings.svelte";
 import ShortcutSettings from "@nucleum/surfaces/settings/shortcuts/ShortcutSettings.svelte";
 import SyncSettings from "@nucleum/surfaces/settings/sync/SyncSettings.svelte";
@@ -35,19 +35,6 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     component: DeveloperSettings
   },
   {
-    action: Action.MODE_OF_INTERACTION,
-    label: "Mode of interaction",
-    icon: "cursor-click",
-    component: InteractionModeSettings,
-    modalParams: {
-      title: "Mode of interaction",
-      layout: {
-        size: Size.lg
-      }
-    },
-    hideContext: [Embed.HANDSET]
-  },
-  {
     action: Action.APPEARANCE_SETTINGS,
     label: "Appearance",
     cmdLabel: [
@@ -61,7 +48,8 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     modalParams: {
       title: "Appearance Settings",
       layout: {
-        size: Size.lg
+        size: Size.lg,
+        alignment: Placement.Right
       }
     }
   },

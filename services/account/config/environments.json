@@ -30,7 +30,10 @@
       "APPLE_TEAM_ID": "NUCLEUS_ACCOUNT_{ENV}_APPLE_TEAM_ID",
       "APPLE_KEY_ID": "NUCLEUS_ACCOUNT_{ENV}_APPLE_KEY_ID",
       "DATAFN_OPENSEARCH_URL": "NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_URL",
-      "DATAFN_OPENSEARCH_API_KEY": "NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_API_KEY"
+      "DATAFN_OPENSEARCH_API_KEY": "NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_API_KEY",
+      "FILEFN_R2_ACCOUNT_ID": "NUCLEUS_ACCOUNT_{ENV}_FILEFN_R2_ACCOUNT_ID",
+      "FILEFN_R2_ACCESS_KEY_ID": "NUCLEUS_ACCOUNT_{ENV}_FILEFN_R2_ACCESS_KEY_ID",
+      "FILEFN_R2_SECRET_ACCESS_KEY": "NUCLEUS_ACCOUNT_{ENV}_FILEFN_R2_SECRET_ACCESS_KEY"
     }
   },
   "productDomains": {
@@ -72,7 +75,8 @@
       "debugSinkUrl": "https://nucleus-debug-sink.21n-dev.workers.dev",
       "secretsStoreId": "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID",
       "secretsStoreIdEnv": "ACCOUNT_DEV_SECRETS_STORE_ID",
-      "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY"],
+      "filefnR2Bucket": "nucleus-files-dev-{region}",
+      "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY", "FILEFN_R2_ACCOUNT_ID", "FILEFN_R2_ACCESS_KEY_ID", "FILEFN_R2_SECRET_ACCESS_KEY"],
       "cloudflareCredentialsEnv": {
         "accountId": "CLOUDFLARE_DEV_ACCOUNT_ID",
         "token": "CLOUDFLARE_DEV_API_TOKEN"
@@ -116,7 +120,8 @@
       "debugSinkUrl": "https://nucleus-debug-sink.21n-dev.workers.dev",
       "secretsStoreId": "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID",
       "secretsStoreIdEnv": "ACCOUNT_DEV_SECRETS_STORE_ID",
-      "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY"],
+      "filefnR2Bucket": "nucleus-files-dev-{region}",
+      "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY", "FILEFN_R2_ACCOUNT_ID", "FILEFN_R2_ACCESS_KEY_ID", "FILEFN_R2_SECRET_ACCESS_KEY"],
       "cloudflareCredentialsEnv": {
         "accountId": "CLOUDFLARE_DEV_ACCOUNT_ID",
         "token": "CLOUDFLARE_DEV_API_TOKEN"
@@ -147,6 +152,8 @@
       "lookupWorkerName": "nucleus-account-pre-lookup",
       "cacheKvNamespaceId": "72bb56e048d941ec92aad94df99d9e36",
       "cachePrefix": "authfn:nucleus_account_pre:",
+      "filefnR2Bucket": "nucleus-files-pre-{region}",
+      "omitSecretsStoreBindings": ["FILEFN_R2_ACCOUNT_ID", "FILEFN_R2_ACCESS_KEY_ID", "FILEFN_R2_SECRET_ACCESS_KEY"],
       "cookiePrefix": "nucleus_pre",
       "latencyDebug": false,
       "includeLocalWebOrigins": false,
@@ -176,6 +183,8 @@
       "lookupWorkerName": "nucleus-account-live-lookup",
       "cacheKvNamespaceId": "18a83200ea7542fa9b6929257711065b",
       "cachePrefix": "authfn:nucleus_account_live:",
+      "filefnR2Bucket": "nucleus-files-live-{region}",
+      "omitSecretsStoreBindings": ["FILEFN_R2_ACCOUNT_ID", "FILEFN_R2_ACCESS_KEY_ID", "FILEFN_R2_SECRET_ACCESS_KEY"],
       "cookiePrefix": "nucleus",
       "latencyDebug": false,
       "includeLocalWebOrigins": false,

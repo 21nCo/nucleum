@@ -147,7 +147,9 @@
 {/snippet}
 
 <div class="shell-frame flex flex-col w-full h-full">
-  <div class="flex w-full flex-grow app-framed:bg-bgs2">
+  <div
+    class="flex w-full flex-grow app-framed:bg-[rgb(var(--colors-fbgs2,var(--colors-bgs2)))]"
+  >
     {#if $context.embed === Embed.HANDSET}
       <div class="contents" inert={isPanelSheetShown}>
         {@render leftNav(false)}

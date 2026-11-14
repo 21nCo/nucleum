@@ -16,7 +16,10 @@
   import { EmbedMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { shortcutHints } from "@nucleum/shared-state/shortcuts/shortcut-hints.store";
-  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { popover } from "@21n/ui/actions/popover.action";
   import { hoverable } from "@21n/ui/actions/hover.action";
@@ -281,7 +284,9 @@
               },
               (layoutContext === LayoutContext.THIN ||
                 layoutContext === LayoutContext.THIN_WITH_LABEL) && {
-                "fill-aps1": isActive,
+                "fill-aps1 app-framed:fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))] app-framed:text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]":
+                  isActive,
+                "!fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))] !text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]": isActive && !isShowLabel,
                 "fill-fgs2":
                   !isActive &&
                   layoutContext === LayoutContext.THIN_WITH_LABEL &&
