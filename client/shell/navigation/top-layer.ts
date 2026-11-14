@@ -1,5 +1,6 @@
 import { get } from "svelte/store";
 import { AccessMode } from "@nucleum/datafn/resource.type";
+import { isPageOpenedInFullScreen } from "@nucleum/shell/navigation/full-screen-origin";
 import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
 import { navigation } from "@nucleum/shell/navigation/navigation";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
@@ -104,6 +105,22 @@ const layerParams: Partial<Record<TopLayer, AccessMode>> = {
 };
 
 /**
+ * Minimizes a full screen page: a page opened straight into full screen
+ * closes and returns to where it was opened from, such as a space with its
+ * side nav; a page that was already open only leaves full screen.
+ */
+export function minimizeFullScreen() {
+  if (isPageOpenedInFullScreen(new URLSearchParams(window.location.search))) {
+    navigation.closeResource({
+      accessMode: AccessMode.PAGE,
+      isHistoryBack: true
+    });
+    return;
+  }
+  navigation.exitFullScreen();
+}
+
+/**
  * Closes the topmost layer. The top bar close button skips the right panel,
  * which has its own toggle, and closes a full screen page instead of only
  * leaving full screen; Esc includes both. Returns the closed layer.
@@ -126,7 +143,7 @@ export function closeTopLayer(options?: {
     return layer;
   }
   if (layer === "full-screen") {
-    navigation.exitFullScreen();
+    minimizeFullScreen();
     return layer;
   }
   if (

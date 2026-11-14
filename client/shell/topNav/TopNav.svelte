@@ -20,9 +20,6 @@
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { cn } from "@21n/ui/environment/presentation";
   import view from "@21n/ui/environment/view.store";
-  import Icon from "@21n/ui/elements/Icon.svelte";
-  import { Size } from "@21n/ui/elements/size.enum";
-  import { tooltip } from "@21n/ui/actions/popover.action";
   import TopNavLeftMenuItem from "@nucleum/shell/topNav/TopNavLeftMenuItem.svelte";
   import TopNavDateTime from "@nucleum/shell/topNav/TopNavDateTime.svelte";
   import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
@@ -51,6 +48,7 @@
   import PaneSwitchButton from "@nucleum/shell/topNav/contextZone/PaneSwitchButton.svelte";
   import {
     closeTopLayer,
+    minimizeFullScreen,
     resolveCloseControlLabel
   } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
@@ -155,6 +153,7 @@
   const isPageFullScreen = $derived(
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
   );
+  const isMinimizeMode = $derived(isPageFullScreen && !isBulkMode);
   const isHomePage = $derived(isHomeRoute($page.url));
   const openPanel = $derived(searchParams.get(AccessMode.PANEL));
   const isPanelBeside = $derived(isTopNavPanelBeside($view));
@@ -298,14 +297,20 @@
   {#if $context.embed !== Embed.HANDSET}
     {#if isCloseMode}
       <TopBarCloseButton
-        label={closeLabel}
+        label={isMinimizeMode ? "Minimize" : closeLabel}
+        icon={isMinimizeMode ? "exitfullscreen" : "cross"}
         menuColumn={isAppMenuColumnVisible
           ? isHideMenuLabels
             ? "icons"
             : "labels"
           : undefined}
         onclick={() =>
-          closeTopLayer({ isIncludePanel: false, isIncludeFullScreen: false })}
+          isMinimizeMode
+            ? minimizeFullScreen()
+            : closeTopLayer({
+                isIncludePanel: false,
+                isIncludeFullScreen: false
+              })}
       />
     {:else}
       {@render leftLogo?.()}
@@ -336,26 +341,14 @@
           bind:this={tabInnerRef}
           class="flex items-center h-full min-w-0 overflow-x-auto overflow-y-hidden pl-2 pr-4"
         >
-          {#if isPageFullScreen && !isBulkMode}
-            <div class="flex items-center h-full shrink-0 pl-1">
-              <button
-                type="button"
-                data-testid="top-bar-exit-full-screen"
-                aria-label="Exit full screen"
-                class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-                use:tooltip={{ text: "Exit full screen" }}
-                onclick={() => navigation.exitFullScreen()}
-              >
-                <Icon icon="exitfullscreen" size={Size.md} />
-              </button>
-            </div>
-          {/if}
           {#if subject && !isBulkMode}
             <PageIdentity
               {subject}
-              backId={subjectBack?.id}
+              backId={isPageFullScreen ? undefined : subjectBack?.id}
               titleContent={$activeEntry?.title}
-              onBack={() => navigation.backInTrail()}
+              onBack={isPageFullScreen
+                ? undefined
+                : () => navigation.backInTrail()}
             />
             {#if $activeEntry}
               <div
@@ -413,25 +406,31 @@
   >
     {#if isToastMode && !isToastInZone}
       <TopNavToasts />
-    {:else}
+    {:else if !isPageFullScreen}
       {@render topnav?.()}
       <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
     {/if}
   </div>
-  <div
-    class="flex items-center h-full shrink-0 [&>*]:mx-1"
-    data-testid="top-bar-indicators"
-  >
-    <TrailLeftIndicator />
-    {@render offlineStatus?.({})}
-    <InlineSyncingFeedback
-      resource={Resource.everything}
-      isShorter={true}
-      text="Syncing..."
+  {#if !isPageFullScreen}
+    <div
+      class="flex items-center h-full shrink-0 [&>*]:mx-1"
+      data-testid="top-bar-indicators"
+    >
+      <TrailLeftIndicator />
+      {@render offlineStatus?.({})}
+      <InlineSyncingFeedback
+        resource={Resource.everything}
+        isShorter={true}
+        text="Syncing..."
+      />
+      {@render indicators?.()}
+    </div>
+    <PanelActionGroup
+      actions={groupedPanelActions}
+      {openPanel}
+      {isPanelBeside}
     />
-    {@render indicators?.()}
-  </div>
-  <PanelActionGroup actions={groupedPanelActions} {openPanel} {isPanelBeside} />
+  {/if}
 </div>
 
 <style>

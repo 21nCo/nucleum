@@ -145,7 +145,12 @@ export enum AppSearchParam {
   /**
    * Whether to maximize the resource or not
    */
-  MAX = "max"
+  MAX = "max",
+  /**
+   * Marks a page that was opened straight into full screen, so minimizing it
+   * closes the page and returns to where it was opened from.
+   */
+  MAX_OPENED = "maxOpened"
 }
 
 export enum Context {
