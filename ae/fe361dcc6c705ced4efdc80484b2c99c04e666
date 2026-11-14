@@ -1,0 +1,60 @@
+client/features/records/identity/ResourceIdentityPopover.svelte
+  s_f058f999ab46b7::t_4536ba5f87eb63 2,5,9-10,12-16,22,25,34-35,38,45-139,151,154-187,190-198,200-204,207-217,219-266,268,271-273
+  s_f058f999ab46b7::t_a20b22e02c8144 274-276,278-279,281-282
+client/features/collections/collection.utils.ts
+  s_f058f999ab46b7::t_004e39364f18b5 2,23,329-368
+client/features/focus/goals/GoalLeftPanel.svelte
+  s_f058f999ab46b7::t_e5099415c274bb 2,33-34,36-41
+client/features/focus/goals/GoalPanelSwitcher.svelte
+  s_f058f999ab46b7::t_4a26aec318e5b0 108
+client/features/focus/goals/info/GoalTitleRow.svelte
+  s_f058f999ab46b7::t_558d89a3dc1563 2,32-33,35-40
+client/features/memory/common/linkbox/LinkSearch.svelte
+  s_f058f999ab46b7::t_232cab9b1a53d6 12,173
+client/features/memory/node/MediaNodeCwTitlePanel.svelte
+  s_f058f999ab46b7::t_9ff0b06caac48f 2,24-25,27-32
+client/features/memory/node/floatingBar/NodePanelSwitcher.svelte
+  s_f058f999ab46b7::t_5feba55d80773a 118-119
+client/features/memory/node/identity/NodeIdentity.svelte
+  s_f058f999ab46b7::t_0d768ddc21ead3 59
+client/features/memory/node/rightPanel/NodeDefaultRightPane.svelte
+  s_f058f999ab46b7::t_2d696d9802e83c 2,52-53,55-60
+client/features/records/ResourcePanelSwitcher.svelte
+  s_f058f999ab46b7::t_1136d51bdda3b6 46-51,71-72,193-203
+client/features/records/ResourceViewSwitcher.svelte
+  s_f058f999ab46b7::t_cb384e09a4f45c 14-17,36-37,56-57,61,71-76,108-114,118
+client/features/records/identity/ResourceIdentity.svelte
+  s_f058f999ab46b7::t_36114481133ce6 25,38-39,51,82,87,92,102,107-114,125,128
+client/features/records/identity/identity-collections.ts
+  s_f058f999ab46b7::t_f33cd3f86396e7 1-23
+client/features/records/identity/resource-identity.test.ts
+  s_f058f999ab46b7::t_9c168c96414fc4 3,63-84
+client/features/records/identity/resource-identity.ts
+  s_f058f999ab46b7::t_6816a121608f29 43-69
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_619b7a98d154eb 102-103,350-351,356,375-396
+client/shell/topNav/contextZone/ContextZoneContent.svelte
+  s_f058f999ab46b7::t_2141d8cebbbb0f 16-17,29-32,56-61
+client/shell/topNav/contextZone/PageIdentity.svelte
+  s_f058f999ab46b7::t_a4973bde5fce3a 6,21,30-31,68,70-73,90-92
+client/shell/topNav/contextZone/context-zone-resource-placement.test.ts
+  s_f058f999ab46b7::t_60f81354faead8 2-5,35-63
+client/shell/topNav/contextZone/context-zone.ts
+  s_f058f999ab46b7::t_1a47a9ccab5050 34-44,120-140,324-328,351-352,373-378,559-561,567
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aefe361dcc6c705ced4efdc80484b2c99c04e666",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
