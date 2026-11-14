@@ -1,0 +1,23 @@
+client/features/calendar/CalendarLayout.svelte
+  s_f058f999ab46b7::t_a84634361eaa52 13-16,126-129,214-227,230-232,340
+client/features/calendar/CalendarLayoutOverflowMenu.test.ts
+  s_f058f999ab46b7::t_05fcdf662c5ba2 106,124,126,128-130,132,139-152,165-170
+client/shell/shortcuts/ShortcutRunner.test.ts
+  s_f058f999ab46b7::t_a78ffcfe28373a 11-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c697334c2f180b341fd902fa89cb019427118b82",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
