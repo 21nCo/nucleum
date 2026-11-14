@@ -25,6 +25,7 @@
     <BoxButton
       icon="question"
       tooltip="Help"
+      testId="app-menu-help"
       parentBgIndex={2}
       onclick={(event) => {
         event.stopPropagation();
