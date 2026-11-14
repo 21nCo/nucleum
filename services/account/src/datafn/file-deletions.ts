@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DataFnAction } from '@datafn/server';
 import { FileFnError, type FileFn, type FileFnRuntime } from '@filefn/server';
 import {
+  NotFoundError,
   wrapWithRowLevelNamespace,
   type Adapter,
   type WhereClause
@@ -16,6 +17,9 @@ const CAPTURE_LEASE_MS = 10 * 60 * 1000;
 const RETRY_BASE_MS = 60 * 1000;
 const RETRY_MAX_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_RETRY_LIMIT = 100;
+const SWEEP_INTERVAL_MS = 60 * 1000;
+const SWEEP_LIMIT = 20;
+const RECORD_WRITE_OPERATIONS = new Set(['insert', 'merge', 'replace']);
 const MAX_ERROR_LENGTH = 500;
 
 /** One pending FileFn deletion owned by `principalId`. */
@@ -28,6 +32,17 @@ export interface PendingFileDeletion {
 
 /** What happened to one pending deletion. */
 export type FileDeletionOutcome = 'deleted' | 'kept' | 'retrying';
+
+/** A `file` record a write permanently deletes, with the FileFn ids it may reference. */
+export interface FileRecordDeletion {
+  recordId: string;
+  /**
+   * FileFn ids that earlier `insert`, `merge` or `replace` mutations in the
+   * same request set on the record, in request order. The stored value is
+   * read separately.
+   */
+  fileIds: string[];
+}
 
 /** Totals from one cleanup run. */
 export interface FileDeletionRetryResult {
@@ -48,7 +63,15 @@ export interface CreateFileDeletionCascadeInput {
   onError?: (error: unknown, context: { attempts: number }) => void;
   /** Clock override for tests. */
   now?: () => number;
+  /**
+   * Shared throttle for {@link FileDeletionCascade.sweep}. Defaults to one
+   * per process or Worker isolate, since the Worker builds a cascade per
+   * request.
+   */
+  sweepThrottle?: { lastSweepAt: number };
 }
+
+const processSweepThrottle = { lastSweepAt: Number.NEGATIVE_INFINITY };
 
 /**
  * Deletes the FileFn file behind a `file` record once that record is
@@ -56,9 +79,11 @@ export interface CreateFileDeletionCascadeInput {
  */
 export interface FileDeletionCascade {
   /**
-   * Records a pending deletion for every `file` record a `push`, `mutation`
-   * or `transact` payload permanently deletes, before DataFn runs it. Pending
-   * rows stay leased for ten minutes so the cleanup run leaves them to the
+   * Records a pending deletion for every FileFn file a `push`, `mutation`
+   * or `transact` payload may orphan by permanently deleting a `file`
+   * record, before DataFn runs it: the record's stored `fileId` and any
+   * `fileId` an earlier mutation in the same request set on it. Pending rows
+   * stay leased for ten minutes so the cleanup run leaves them to the
    * request. A storage failure rejects so the write is refused and retried
    * by the client instead of orphaning the file.
    */
@@ -76,10 +101,18 @@ export interface FileDeletionCascade {
    */
   settle(pending: readonly PendingFileDeletion[]): Promise<void>;
   /**
-   * Cleanup-cron entry point: settles up to `limit` pending deletions whose
-   * lease or backoff has elapsed, oldest first.
+   * Settles up to `limit` pending deletions whose lease or backoff has
+   * elapsed, oldest first. Each row is claimed with a fresh lease before it
+   * is settled, so concurrent runs never settle the same row twice.
    */
   retryDue(options?: { limit?: number }): Promise<FileDeletionRetryResult>;
+  /**
+   * Retries due deletions in the background at most once a minute per
+   * process or Worker isolate. The DataFn server calls it after each
+   * authenticated request, so failed or interrupted deletions are retried in
+   * every runtime without a scheduler. Never throws.
+   */
+  sweep(): void;
 }
 
 /** Creates the `file` record deletion cascade over the regional sync database. */
@@ -87,6 +120,7 @@ export function createFileDeletionCascade(
   input: CreateFileDeletionCascadeInput
 ): FileDeletionCascade {
   const now = input.now ?? Date.now;
+  const sweepThrottle = input.sweepThrottle ?? processSweepThrottle;
   const records = wrapWithRowLevelNamespace(input.database, {
     enabled: true,
     columnName: '__ns',
@@ -171,35 +205,81 @@ export function createFileDeletionCascade(
     }
   };
 
+  const record = async (principalId: string, fileId: string): Promise<PendingFileDeletion> => {
+    const entry: PendingFileDeletion = { id: randomUUID(), principalId, fileId, attempts: 0 };
+    const createdAt = now();
+    await table.create({
+      model: FILE_DELETIONS_MODEL,
+      data: {
+        id: entry.id,
+        principalId,
+        fileId,
+        attempts: 0,
+        nextAttemptAt: createdAt + CAPTURE_LEASE_MS,
+        lastError: null,
+        createdAt
+      }
+    });
+    return entry;
+  };
+
+  /**
+   * Moves a due row's lease forward in one conditional update; false when
+   * another run claimed or settled it first. `update` is used rather than
+   * `updateMany` because the postgres-js driver reports no affected-row count.
+   */
+  const claim = async (row: Record<string, unknown>): Promise<boolean> => {
+    try {
+      await table.update({
+        model: FILE_DELETIONS_MODEL,
+        where: [
+          { field: 'id', operator: 'eq', value: row.id },
+          { field: 'nextAttemptAt', operator: 'eq', value: row.nextAttemptAt }
+        ],
+        data: { nextAttemptAt: now() + CAPTURE_LEASE_MS }
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof NotFoundError) return false;
+      throw error;
+    }
+  };
+
+  const retryDue = async (
+    options: { limit?: number } = {}
+  ): Promise<FileDeletionRetryResult> => {
+    const rows = await table.findMany<Record<string, unknown>>({
+      model: FILE_DELETIONS_MODEL,
+      where: [{ field: 'nextAttemptAt', operator: 'lte', value: now() }],
+      orderBy: [{ field: 'nextAttemptAt', direction: 'asc' }],
+      limit: options.limit ?? DEFAULT_RETRY_LIMIT
+    });
+    const result: FileDeletionRetryResult = { deleted: 0, kept: 0, retrying: 0 };
+    for (const row of rows) {
+      if (!(await claim(row))) continue;
+      const outcome = await settleOne({
+        id: String(row.id),
+        principalId: String(row.principalId),
+        fileId: String(row.fileId),
+        attempts: Number(row.attempts ?? 0)
+      });
+      result[outcome] += 1;
+    }
+    return result;
+  };
+
   return {
     async capture(action, payload, principalId) {
       const namespace = resolveAccountUserNamespace(principalId);
       const pending: PendingFileDeletion[] = [];
       const seen = new Set<string>();
-      for (const recordId of deletedFileRecordIds(action, payload)) {
-        const fileId = await referencedFileId(namespace, recordId);
-        if (!fileId || seen.has(fileId)) continue;
-        seen.add(fileId);
-        const entry: PendingFileDeletion = {
-          id: randomUUID(),
-          principalId,
-          fileId,
-          attempts: 0
-        };
-        const createdAt = now();
-        await table.create({
-          model: FILE_DELETIONS_MODEL,
-          data: {
-            id: entry.id,
-            principalId,
-            fileId,
-            attempts: 0,
-            nextAttemptAt: createdAt + CAPTURE_LEASE_MS,
-            lastError: null,
-            createdAt
-          }
-        });
-        pending.push(entry);
+      for (const deletion of fileRecordDeletions(action, payload)) {
+        const stored = await referencedFileId(namespace, deletion.recordId);
+        for (const fileId of [...(stored ? [stored] : []), ...deletion.fileIds]) {
+          if (seen.has(fileId)) continue;
+          seen.add(fileId);
+          pending.push(await record(principalId, fileId));
+        }
       }
       return pending;
     },
@@ -212,24 +292,17 @@ export function createFileDeletionCascade(
       }
       await work;
     },
-    async retryDue(options = {}) {
-      const rows = await table.findMany<Record<string, unknown>>({
-        model: FILE_DELETIONS_MODEL,
-        where: [{ field: 'nextAttemptAt', operator: 'lte', value: now() }],
-        orderBy: [{ field: 'nextAttemptAt', direction: 'asc' }],
-        limit: options.limit ?? DEFAULT_RETRY_LIMIT
-      });
-      const result: FileDeletionRetryResult = { deleted: 0, kept: 0, retrying: 0 };
-      for (const row of rows) {
-        const outcome = await settleOne({
-          id: String(row.id),
-          principalId: String(row.principalId),
-          fileId: String(row.fileId),
-          attempts: Number(row.attempts ?? 0)
-        });
-        result[outcome] += 1;
-      }
-      return result;
+    retryDue,
+    sweep() {
+      const startedAt = now();
+      const sinceLast = startedAt - sweepThrottle.lastSweepAt;
+      if (sinceLast >= 0 && sinceLast < SWEEP_INTERVAL_MS) return;
+      sweepThrottle.lastSweepAt = startedAt;
+      const work = retryDue({ limit: SWEEP_LIMIT }).then(
+        () => undefined,
+        (error: unknown) => report(error, 0)
+      );
+      if (input.runtime?.defer) input.runtime.defer(work);
     }
   };
 }
@@ -257,34 +330,61 @@ async function deleteFromFileFn(
 }
 
 /**
- * Lists the ids of `file` records a DataFn write payload permanently deletes.
- * `trash` is not a deletion. Malformed entries are skipped; DataFn rejects
- * them itself.
+ * Lists the `file` records a DataFn write payload permanently deletes, in
+ * request order, mirroring how DataFn reads `push`, `mutation` (single or
+ * batch) and `transact` (wrapped or bare mutation steps). `trash` is not a
+ * deletion. Malformed entries are skipped; DataFn rejects them itself.
  */
-export function deletedFileRecordIds(action: DataFnAction, payload: unknown): string[] {
-  const mutations: unknown[] = [];
-  if (action === 'push' && isRecord(payload) && Array.isArray(payload.mutations)) {
-    mutations.push(...payload.mutations);
-  } else if (action === 'mutation') {
-    mutations.push(...(Array.isArray(payload) ? payload : [payload]));
-  } else if (action === 'transact' && isRecord(payload) && Array.isArray(payload.steps)) {
-    for (const step of payload.steps) {
-      if (isRecord(step) && 'mutation' in step) mutations.push(step.mutation);
-    }
-  }
-  const ids: string[] = [];
-  for (const mutation of mutations) {
+export function fileRecordDeletions(
+  action: DataFnAction,
+  payload: unknown
+): FileRecordDeletion[] {
+  const setFileIds = new Map<string, string[]>();
+  const deletions: FileRecordDeletion[] = [];
+  for (const mutation of writeMutations(action, payload)) {
     if (
-      isRecord(mutation) &&
-      mutation.resource === FILE_RESOURCE &&
-      mutation.operation === 'delete' &&
-      typeof mutation.id === 'string' &&
-      mutation.id.length > 0
+      !isRecord(mutation) ||
+      mutation.resource !== FILE_RESOURCE ||
+      typeof mutation.id !== 'string' ||
+      mutation.id.length === 0
     ) {
-      ids.push(mutation.id);
+      continue;
+    }
+    const recordId = mutation.id;
+    if (mutation.operation === 'delete') {
+      deletions.push({ recordId, fileIds: [...(setFileIds.get(recordId) ?? [])] });
+      continue;
+    }
+    const fileId = isRecord(mutation.record) ? mutation.record.fileId : undefined;
+    if (
+      typeof mutation.operation === 'string' &&
+      RECORD_WRITE_OPERATIONS.has(mutation.operation) &&
+      typeof fileId === 'string' &&
+      fileId.length > 0
+    ) {
+      setFileIds.set(recordId, [...(setFileIds.get(recordId) ?? []), fileId]);
     }
   }
-  return ids;
+  return deletions;
+}
+
+function writeMutations(action: DataFnAction, payload: unknown): unknown[] {
+  if (action === 'push') {
+    return isRecord(payload) && Array.isArray(payload.mutations) ? payload.mutations : [];
+  }
+  if (action === 'mutation') {
+    return Array.isArray(payload) ? payload : [payload];
+  }
+  if (action !== 'transact' || !isRecord(payload) || !Array.isArray(payload.steps)) {
+    return [];
+  }
+  const mutations: unknown[] = [];
+  for (const step of payload.steps) {
+    if (!isRecord(step) || step.query) continue;
+    if (step.mutation) mutations.push(step.mutation);
+    else if (typeof step.operation === 'string') mutations.push(step);
+  }
+  return mutations;
 }
 
 function retryDelayMs(attempts: number): number {

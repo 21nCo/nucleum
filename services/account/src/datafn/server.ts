@@ -58,7 +58,8 @@ export interface CreateSyncServerInput {
   searchProvider?: SearchProvider;
   /**
    * Deletes the FileFn file behind each `file` record a write permanently
-   * deletes. Omitted, records are deleted without touching FileFn.
+   * deletes, and retries owed deletions after authenticated requests.
+   * Omitted, records are deleted without touching FileFn.
    */
   fileDeletions?: FileDeletionCascade;
 }
@@ -135,11 +136,13 @@ export function createSyncServer(
   const settleFileDeletions = async (
     hook: DatafnRouteHookInput<SyncContext>
   ): Promise<Response> => {
+    if (!input.fileDeletions) return hook.response;
     const pending = pendingFileDeletions.get(hook.context);
-    if (pending && input.fileDeletions) {
+    if (pending) {
       pendingFileDeletions.delete(hook.context);
       await input.fileDeletions.settle(pending);
     }
+    if (hook.context.session) input.fileDeletions.sweep();
     return hook.response;
   };
   return app.createServer<SyncContext>({

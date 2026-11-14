@@ -103,9 +103,10 @@ export interface AccountServices {
   getSyncServer: () => Promise<SyncServer>;
   getFileFn: () => Promise<FileFn | null>;
   /**
-   * Cleanup-cron entry point: retries FileFn deletions still owed for
-   * permanently deleted `file` records. Without file infrastructure it does
-   * nothing.
+   * Retries FileFn deletions still owed for permanently deleted `file`
+   * records. DataFn requests already retry them in the background once a
+   * minute; a scheduled job may also call this. Without file infrastructure
+   * it does nothing.
    */
   retryFileDeletions: (options?: { limit?: number }) => Promise<FileDeletionRetryResult>;
   regionId: string;
