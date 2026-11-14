@@ -368,6 +368,18 @@ describe("account FileFn request path redaction", () => {
     }
   });
 
+  it("redacts and normalizes maximum-length nested paths in linear time", () => {
+    const layers = 64_000;
+    const marked = `/files/%${"25".repeat(layers)}73hare-links/secret-token/download`;
+    const unrelatedMarked = `/unhandled/%${"25".repeat(layers)}73hare-links/secret-token`;
+    const unrelated = `/auth/%${"25".repeat(layers)}41/session`;
+    const started = performance.now();
+    expect(redactFileRequestPath(marked)).toBe("/files/share-links/:token/download");
+    expect(redactFileRequestPath(unrelatedMarked)).toBe("/unhandled/share-links/:token");
+    expect(redactFileRequestPath(unrelated)).toBe(unrelated);
+    expect(performance.now() - started).toBeLessThan(500);
+  });
+
   it("never lets a generated share token survive, whatever the per-character encoding", () => {
     let seed = 0x5eed538;
     const random = (limit: number) => {

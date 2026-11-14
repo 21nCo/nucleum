@@ -12,8 +12,6 @@ const environment = normalizeEnvironment(process.argv[2] ?? 'dev');
 const regionsArg = process.argv.find((arg) => arg.startsWith('--regions='))?.split('=')[1];
 const regions = regionsArg ? regionsArg.split(',').map((entry) => entry.trim()).filter(Boolean) : Object.keys(config.regions);
 const dryRun = process.argv.includes('--dry-run');
-// --outdir=<dir> (dry runs only) keeps each Worker bundle and its esbuild
-// metafile under <dir>/<wranglerEnv>/ so the build output can be inspected.
 const outdirArg = process.argv.find((arg) => arg.startsWith('--outdir='))?.slice('--outdir='.length);
 const usage = 'Usage: node scripts/deploy.mjs <dev|pre|live> [--regions=insouth,useast,euwest] [--dry-run [--outdir=<dir>]]';
 
@@ -69,6 +67,11 @@ for (const region of regions) {
   deployWorker(envConfig.regions[region].wranglerEnv);
 }
 
+/**
+ * Runs `wrangler deploy` for one Wrangler env. With `--outdir=<dir>` (dry runs
+ * only) the bundle and its esbuild metafile are kept under
+ * `<dir>/<wranglerEnv>/` so the build output can be inspected.
+ */
 function deployWorker(wranglerEnv) {
   const bundleArgs = outdir
     ? ['--outdir', path.join(outdir, wranglerEnv), '--metafile', path.join(outdir, wranglerEnv, 'meta.json')]

@@ -104,7 +104,7 @@ export function isolateFileResponse(
 
 const SHARE_LINKS_MARKER = "share-links";
 const SHARE_ROUTE_LITERALS = new Set(["download"]);
-const ASCII_ESCAPE = /%[0-7][0-9a-f]/gi;
+const ASCII_ESCAPE_HEX = /^[0-7][0-9a-f]$/i;
 
 /**
  * Returns a request path that is safe to log. The path is normalized by
@@ -135,16 +135,33 @@ export function redactFileRequestPath(pathname: string): string {
   return normalized.slice(0, keep) + rest;
 }
 
+/**
+ * Decodes ASCII `%XX` escapes to a fixed point in one left-to-right pass: after
+ * each character is appended, an escape ending at it is decoded in place and
+ * the check repeats, so nested `%25` layers resolve without rescanning the
+ * whole string and the work stays linear in the path length.
+ */
 function decodeAsciiEscapes(value: string): string {
-  let previous: string;
-  let current = value;
-  do {
-    previous = current;
-    current = previous.replace(ASCII_ESCAPE, (escape) =>
-      String.fromCharCode(Number.parseInt(escape.slice(1), 16))
-    );
-  } while (current !== previous);
-  return current;
+  const output: string[] = [];
+  for (const char of value) {
+    output.push(char);
+    let escape = trailingAsciiEscape(output);
+    while (escape !== null) {
+      output.length -= 3;
+      output.push(String.fromCharCode(Number.parseInt(escape, 16)));
+      escape = trailingAsciiEscape(output);
+    }
+  }
+  return output.join("");
+}
+
+function trailingAsciiEscape(output: string[]): string | null {
+  const length = output.length;
+  if (length < 3 || output[length - 3] !== "%") {
+    return null;
+  }
+  const hex = `${output[length - 2]}${output[length - 1]}`;
+  return ASCII_ESCAPE_HEX.test(hex) ? hex : null;
 }
 
 function asciiLowerCase(value: string): string {
