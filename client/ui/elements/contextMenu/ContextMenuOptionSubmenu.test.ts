@@ -177,9 +177,6 @@ describe("context menu option submenu", () => {
     );
     expect(regular).toBeTruthy();
 
-    // A flex item stretches across a flex column (align-items: stretch), while
-    // a flex button in a block box shrinks to its content and moves its
-    // right-placed submenu over the parent menu.
     for (const element of [row, regular!]) {
       const container = element.parentElement!;
       expect(container.classList.contains("flex")).toBe(true);

@@ -44,8 +44,6 @@
   }
 </script>
 
-<!-- A flex column stretches every layout's row, including the submenu
-     button, to the menu width like the group's regular items. -->
 <div
   class="flex flex-col"
   data-testid="context-menu-option-group"
