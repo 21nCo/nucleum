@@ -19,25 +19,30 @@ export function requestCalendarOverflowMenuReopen(now = Date.now()): void {
  * within the reopen window, so a stale one never opens the menu later.
  */
 export function takeCalendarOverflowMenuReopen(now = Date.now()): boolean {
+  return takeReopenDeadline(now) !== undefined;
+}
+
+/** Consumes a pending request; returns when its window ends, if still open. */
+function takeReopenDeadline(now: number): number | undefined {
   const requestedAt = reopenRequestedAt;
   reopenRequestedAt = undefined;
-  return (
-    requestedAt !== undefined &&
-    now - requestedAt <= CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS
-  );
+  if (requestedAt === undefined) return undefined;
+  const deadline = requestedAt + CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS;
+  return now <= deadline ? deadline : undefined;
 }
 
 /**
  * Claims the pending reopen request for a newly mounted calendar layout, so
- * no later layout or resize can act on it. While `isPending`, the layout
- * keeps its compact presentation so the overflow trigger exists even when
- * the new layout would fit inline. `settle` answers true exactly once, when
+ * no later layout or resize can act on it. While `isPending`, the measured
+ * layout keeps its compact presentation so the overflow trigger exists even
+ * when the new layout would fit inline. `settle` answers true exactly once, when
  * the trigger is mounted within the reopen window; a trigger that only
- * appears after the window drops the request.
+ * appears after the window drops the request. The window is measured from
+ * the pick, so a late claim never extends it.
  */
 export function claimCalendarOverflowMenuReopen(now = Date.now()) {
-  let isPending = takeCalendarOverflowMenuReopen(now);
-  const deadline = now + CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS;
+  const deadline = takeReopenDeadline(now) ?? Number.NEGATIVE_INFINITY;
+  let isPending = deadline >= now;
   return {
     get isPending(): boolean {
       return isPending;

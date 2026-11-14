@@ -60,3 +60,22 @@ describe("calendar overflow menu reopen claim", () => {
     expect(reopen.settle(true, 1_010)).toBe(false);
   });
 });
+
+describe("calendar overflow menu reopen deadline", () => {
+  it("measures the window from the pick, not from a late claim", () => {
+    requestCalendarOverflowMenuReopen(1_000);
+    const reopen = claimCalendarOverflowMenuReopen(1_900);
+    expect(reopen.settle(false, 1_950)).toBe(false);
+    expect(reopen.isPending).toBe(true);
+    expect(reopen.settle(true, 2_500)).toBe(false);
+    expect(reopen.isPending).toBe(false);
+  });
+
+  it("still reopens exactly at the end of the window after a late claim", () => {
+    requestCalendarOverflowMenuReopen(1_000);
+    const reopen = claimCalendarOverflowMenuReopen(1_900);
+    expect(
+      reopen.settle(true, 1_000 + CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS)
+    ).toBe(true);
+  });
+});

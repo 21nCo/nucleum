@@ -1,6 +1,7 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
+import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
 
 vi.mock("@21n/ui/elements/markdown/markdown.utils", () => ({
   renderMdAsHtml: (value: string) => value
@@ -48,4 +49,126 @@ describe("ContextMenuAction show", () => {
       expect(document.querySelector("#popovers .popover")).toBeNull()
     );
   });
+
+  const todayMenu = () => [
+    { group: "main", items: [{ value: "today", label: "Go to today" }] }
+  ];
+
+  function menuItem(root: ParentNode = document) {
+    return root.querySelector<HTMLElement>(
+      '#popovers [data-context-menu-item-id="today"]'
+    );
+  }
+
+  it("returns focus to the trigger when a shown menu is hidden", async () => {
+    const { component, getByRole } = render(ContextMenuAction, {
+      props: { id: "showHide", menuResolver: todayMenu }
+    });
+    const trigger = getByRole("button", { name: "Actions" });
+
+    expect(component.show()).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(menuItem()));
+    component.hide();
+
+    await waitFor(() => expect(menuItem()).toBeNull());
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("returns focus to the trigger after an action in a shown menu", async () => {
+    const onAction = vi.fn();
+    const { component, getByRole } = render(ContextMenuAction, {
+      props: { id: "showAction", menuResolver: todayMenu, onAction }
+    });
+    const trigger = getByRole("button", { name: "Actions" });
+
+    component.show();
+    await waitFor(() => expect(document.activeElement).toBe(menuItem()));
+    await fireEvent.click(menuItem()!);
+
+    await waitFor(() => expect(menuItem()).toBeNull());
+    expect(onAction).toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("leaves focus on an element the user moved to outside the menu", async () => {
+    const outside = document.createElement("input");
+    document.body.append(outside);
+    const { component } = render(ContextMenuAction, {
+      props: { id: "showOutside", menuResolver: todayMenu }
+    });
+
+    component.show();
+    await waitFor(() => expect(document.activeElement).toBe(menuItem()));
+    outside.focus();
+    await fireEvent.click(outside);
+
+    await waitFor(() => expect(menuItem()).toBeNull());
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it("focuses the checked option of a menu rendered inside a shadow root", async () => {
+    document.getElementById("popovers")?.remove();
+    const host = document.createElement("div");
+    document.body.append(host);
+    const shadow = host.attachShadow({ mode: "open" });
+    const popovers = document.createElement("div");
+    popovers.id = "popovers";
+    const target = document.createElement("div");
+    shadow.append(popovers, target);
+    const { component } = render(ContextMenuAction, {
+      target,
+      props: {
+        id: "showShadow",
+        menuResolver: () => [
+          {
+            group: "layout",
+            items: [],
+            option: {
+              label: "Layout",
+              options: [
+                { value: "columns", label: "Columns" },
+                { value: "classic", label: "Classic" }
+              ],
+              value: "classic",
+              onChange: vi.fn()
+            }
+          }
+        ]
+      }
+    });
+
+    expect(component.show()).toBe(true);
+
+    const checked = await waitFor(() => {
+      const option = shadow.querySelector<HTMLElement>(
+        '[role="radio"][aria-checked="true"]'
+      );
+      expect(option?.getAttribute("data-option-value")).toBe("classic");
+      return option;
+    });
+    await waitFor(() => expect(shadow.activeElement).toBe(checked));
+  });
+
+  it.each([PopoverTriggerMethod.RIGHT_CLICK, PopoverTriggerMethod.HOVER])(
+    "refuses to show a menu whose trigger method is %s",
+    (triggerMethod) => {
+      const { component, getByRole } = render(ContextMenuAction, {
+        props: { id: "showNonClick", menuResolver: todayMenu, triggerMethod }
+      });
+      const trigger = getByRole("button", { name: "Actions" });
+      const addListener = vi.spyOn(trigger, "addEventListener");
+      const click = vi.spyOn(trigger, "click");
+      const onClose = vi.fn();
+
+      expect(component.show(onClose)).toBe(false);
+
+      expect(addListener).not.toHaveBeenCalled();
+      expect(click).not.toHaveBeenCalled();
+      expect(document.querySelector("#popovers .popover")).toBeNull();
+      trigger.dispatchEvent(
+        new CustomEvent("change", { detail: { open: false } })
+      );
+      expect(onClose).not.toHaveBeenCalled();
+    }
+  );
 });

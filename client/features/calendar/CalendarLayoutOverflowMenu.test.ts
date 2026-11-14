@@ -135,7 +135,10 @@ describe("CalendarLayout overflow menu layout pick", () => {
           )
           ?.getAttribute("data-testid")
           ?.replace("calendar-layout-", "");
-        return CONTROLS_WIDTH[layout as CalendarLayout] ?? 400;
+        const gaps =
+          Math.max(0, this.children.length - 1) *
+          (parseFloat(this.style.columnGap) || 0);
+        return (CONTROLS_WIDTH[layout as CalendarLayout] ?? 400) + gaps;
       }
     });
     mocks.entryWidth.set(100);
@@ -241,5 +244,60 @@ describe("CalendarLayout overflow menu layout pick", () => {
     );
     await nextFrames();
     expect(overflowMenu()).toBeNull();
+  });
+
+  it("keeps the same trigger and returns focus to it when a compact layout's reopened menu closes", async () => {
+    CONTROLS_WIDTH[CalendarLayout.Classic] = 400;
+    renderSwappingCalendar(CalendarLayout.Bird);
+    await openOverflowMenu();
+    await fireEvent.click(layoutOption(CalendarLayout.Classic));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(layoutOption(CalendarLayout.Classic))
+    );
+    const trigger = document.querySelector<HTMLElement>(
+      '[data-testid="calendar-overflow-menu"]'
+    );
+
+    await fireEvent.click(
+      overflowMenu()!.querySelector<HTMLElement>(
+        '[data-context-menu-item-id="today"]'
+      )!
+    );
+
+    await waitFor(() => expect(overflowMenu()).toBeNull());
+    await nextFrames();
+    expect(
+      document.querySelector('[data-testid="calendar-overflow-menu"]')
+    ).toBe(trigger);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("moves focus to the inline layout switcher when the reopened menu closes and the layout fits", async () => {
+    CONTROLS_WIDTH[CalendarLayout.Classic] = 50;
+    renderSwappingCalendar(CalendarLayout.Bird);
+    await openOverflowMenu();
+    await fireEvent.click(layoutOption(CalendarLayout.Classic));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(layoutOption(CalendarLayout.Classic))
+    );
+
+    await fireEvent.click(
+      overflowMenu()!.querySelector<HTMLElement>(
+        '[data-context-menu-item-id="today"]'
+      )!
+    );
+
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        document.querySelector(
+          '[data-testid="calendar-layout-switcher"] button[aria-label="Classic"]'
+        )
+      )
+    );
+    expect(document.activeElement).not.toBe(document.body);
+    await nextFrames();
+    expect(
+      document.querySelector('[data-testid="calendar-overflow-menu"]')
+    ).toBeNull();
   });
 });
