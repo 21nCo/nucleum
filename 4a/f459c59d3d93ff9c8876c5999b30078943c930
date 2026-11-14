@@ -1,0 +1,31 @@
+apps/e2e-playwright/tests/shared/settings/access-tokens.spec.ts
+  s_b66d0e9dd4fae0::t_ebc30662fd92ca 1-132
+client/runtime/account/access-tokens.test.ts
+  s_b66d0e9dd4fae0::t_843c22282aa8dc 1-239
+client/runtime/account/access-tokens.ts
+  s_b66d0e9dd4fae0::t_54da62991a9ae0 1-252
+client/surfaces/account/access-tokens/AccessTokensSection.svelte
+  s_b66d0e9dd4fae0::t_5ccbc8ae5b7288 1-370
+client/surfaces/account/access-tokens/AccessTokensSection.test.ts
+  s_b66d0e9dd4fae0::t_b2f3e774945e09 1-227
+client/surfaces/account/profile/ProfileCPSection.svelte
+  s_b66d0e9dd4fae0::t_e390a784438e1d 64
+client/surfaces/settings/account/AccountSettings.svelte
+  s_b66d0e9dd4fae0::t_dfe4da1a577dc3 24,565-568
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4af459c59d3d93ff9c8876c5999b30078943c930",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
