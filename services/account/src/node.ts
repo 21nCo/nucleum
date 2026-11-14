@@ -6,6 +6,12 @@ import { createAsyncLocalRequestContext } from "@superfunctions/observability/no
 import { buildAccountServices, registerCoreRoutes } from "./app.js";
 import { createNodeDatabase } from "./db/node.js";
 import { createNodeSyncDatabase } from "./db/datafn-node.js";
+import {
+  createNodeFileDatabase,
+  type AccountFileDatabase
+} from "./files/database.js";
+import { createAccountFileStorage } from "./files/storage.js";
+import { createAccountLookupStore } from "./lookup/dynamodb.js";
 import { createLogger } from "./logging.js";
 import { createAccountObservability } from "./observability/events.js";
 import { createAccountNodeRuntimeStores } from "./runtime-stores.js";
@@ -13,6 +19,7 @@ import { createAccountNodeRuntimeStores } from "./runtime-stores.js";
 const logger = createLogger();
 const database = createNodeDatabase();
 let syncDatabase: ReturnType<typeof createNodeSyncDatabase> | undefined;
+let fileDatabase: AccountFileDatabase | undefined;
 const observability = createAccountObservability(logger, undefined, {
   requestContext: createAsyncLocalRequestContext()
 });
@@ -25,9 +32,17 @@ const services = buildAccountServices({
       return syncDatabase.adapter;
     },
     stores: createAccountNodeRuntimeStores(),
-    logger
+    logger,
+    files: {
+      database: () => {
+        fileDatabase ??= createNodeFileDatabase();
+        return fileDatabase.adapter;
+      },
+      storage: (regionId) => createAccountFileStorage(process.env, regionId)
+    }
   },
   deployment: {
+    regionLookupStore: createAccountLookupStore(),
     observability,
     resolveClientIp: (request) => verifiedClientIps.get(request)
   }
@@ -74,7 +89,11 @@ const shutdown = async () => {
       try {
         await syncDatabase?.close();
       } finally {
-        await database.close();
+        try {
+          await fileDatabase?.close();
+        } finally {
+          await database.close();
+        }
       }
     }
   } catch (error) {
