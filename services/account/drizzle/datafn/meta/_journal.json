@@ -29,6 +29,13 @@
       "when": 1794513990865,
       "tag": "0003_file_filefn_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794682060491,
+      "tag": "0004_account_file_deletions",
+      "breakpoints": true
     }
   ]
 }
