@@ -10,7 +10,6 @@ import {
 } from "../../../services/account/src/files/storage";
 import {
   renderConfig,
-  renderWranglerConfig,
   secretStoreBindingsForEnvironment
 } from "../../../services/account/scripts/wrangler-config.mjs";
 
@@ -100,43 +99,42 @@ describe("account Worker config for FileFn", () => {
   });
 });
 
-function run(command: string, args: string[]): void {
-  const result = spawnSync(command, args, {
-    cwd: serviceRoot,
-    encoding: "utf8",
-    env: { ...process.env, WRANGLER_SEND_METRICS: "false" },
-    shell: process.platform === "win32"
-  });
-  expect(result.status, `${command} ${args.join(" ")}\n${result.stdout}\n${result.stderr}`).toBe(0);
-}
-
 describe("account Worker bundle", () => {
-  it("worker:build output contains FileFn and storage-r2 but no @aws-sdk module", () => {
+  it("npm run worker:build emits lookup and regional bundles with FileFn and storage-r2 but no @aws-sdk module", () => {
     const outdir = fs.mkdtempSync(path.join(os.tmpdir(), "account-worker-build-"));
     try {
-      const wranglerConfig = renderWranglerConfig(serviceRoot, environmentsConfig, "dev");
-      const wranglerEnv = environmentsConfig.environments.dev.regions.insouth.wranglerEnv;
-      const metafile = path.join(outdir, "meta.json");
-      run("npm", ["run", "build"]);
-      run("npx", [
-        "wrangler",
-        "deploy",
-        "--config",
-        wranglerConfig,
-        "--env",
-        wranglerEnv,
-        "--dry-run",
-        "--outdir",
-        outdir,
-        "--metafile",
-        metafile
-      ]);
-      const inputs = Object.keys(JSON.parse(fs.readFileSync(metafile, "utf8")).inputs);
-      expect(inputs.some((input) => input.includes("@superfunctions/storage-r2"))).toBe(true);
-      expect(inputs.some((input) => input.includes("@filefn/server"))).toBe(true);
-      expect(inputs.filter((input) => input.includes("@aws-sdk"))).toEqual([]);
+      const result = spawnSync("npm", ["run", "worker:build", "--", `--outdir=${outdir}`], {
+        cwd: serviceRoot,
+        encoding: "utf8",
+        env: { ...process.env, WRANGLER_SEND_METRICS: "false" },
+        shell: process.platform === "win32"
+      });
+      expect(result.status, `npm run worker:build\n${result.stdout}\n${result.stderr}`).toBe(0);
+      const devConfig = environmentsConfig.environments.dev;
+      const bundleInputs = (wranglerEnv: string) => {
+        const metafile = path.join(outdir, wranglerEnv, "meta.json");
+        expect(fs.existsSync(metafile), `${metafile} missing`).toBe(true);
+        return Object.keys(JSON.parse(fs.readFileSync(metafile, "utf8")).inputs);
+      };
+      const lookupInputs = bundleInputs(devConfig.lookupWorkerEnv);
+      const regionalInputs = bundleInputs(devConfig.regions.insouth.wranglerEnv);
+      expect(lookupInputs.length).toBeGreaterThan(0);
+      expect(regionalInputs.some((input) => input.includes("@superfunctions/storage-r2"))).toBe(true);
+      expect(regionalInputs.some((input) => input.includes("@filefn/server"))).toBe(true);
+      expect(lookupInputs.filter((input) => input.includes("@aws-sdk"))).toEqual([]);
+      expect(regionalInputs.filter((input) => input.includes("@aws-sdk"))).toEqual([]);
     } finally {
       fs.rmSync(outdir, { recursive: true, force: true });
     }
   }, 300_000);
+
+  it("rejects --outdir outside a dry run", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["scripts/deploy.mjs", "dev", "--regions=insouth", "--outdir=/tmp/account-worker-build"],
+      { cwd: serviceRoot, encoding: "utf8", env: { PATH: process.env.PATH ?? "" } }
+    );
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("--outdir=<dir>");
+  });
 });

@@ -1,5 +1,5 @@
 import type { FileFn } from "@filefn/server";
-import type { Hono } from "hono";
+import type { Hono, MiddlewareHandler } from "hono";
 import { AuthFnError } from "authfn";
 import { jsonError } from "authfn/http/envelopes";
 import { ACCOUNT_FILES_BASE_PATH } from "./server.js";
@@ -28,9 +28,11 @@ export const FILE_RESPONSE_ISOLATION_HEADERS: Readonly<Record<string, string>> =
  * Registers FileFn under `/files`. Requests return 503 when the region has no
  * file storage configured and 404 for paths FileFn does not serve. An AuthFn
  * error raised while resolving the session is answered with its AuthFn status,
- * code and details, as the AuthFn routes answer it. Every
- * response carries the isolation headers, and successful file bytes (the proxy
- * download routes and any non-JSON 2xx response) are sent as attachments.
+ * code and details, as the AuthFn routes answer it. Any other error thrown
+ * while loading FileFn or handling the request still goes through the app's
+ * error handler and is then answered as an isolated 500 `FILEFN_INTERNAL_ERROR`.
+ * FileFn responses carry the isolation headers, and successful file bytes (the
+ * proxy download routes and any non-JSON 2xx response) are sent as attachments.
  */
 export function registerAccountFileRoutes(
   input: RegisterAccountFileRoutesInput
@@ -63,6 +65,17 @@ export function registerAccountFileRoutes(
       response ?? fileErrorResponse(404, "FILEFN_ROUTE_NOT_FOUND", "Not found")
     );
   };
+  const isolateErrors: MiddlewareHandler = async (c, next) => {
+    await next();
+    if (c.error) {
+      c.res = isolateFileResponse(
+        c.req.raw,
+        fileErrorResponse(500, "FILEFN_INTERNAL_ERROR", "File service error")
+      );
+    }
+  };
+  app.use(ACCOUNT_FILES_BASE_PATH, isolateErrors);
+  app.use(`${ACCOUNT_FILES_BASE_PATH}/*`, isolateErrors);
   app.all(ACCOUNT_FILES_BASE_PATH, handler);
   app.all(`${ACCOUNT_FILES_BASE_PATH}/*`, handler);
 }
@@ -89,61 +102,53 @@ export function isolateFileResponse(
   return isolated;
 }
 
-const SHARE_LINKS_SEGMENT = "share-links";
+const SHARE_LINKS_MARKER = "share-links";
 const SHARE_ROUTE_LITERALS = new Set(["download"]);
-const MAX_DECODE_PASSES = 4;
+const ASCII_ESCAPE = /%[0-7][0-9a-f]/gi;
 
 /**
- * Returns a request path that is safe to log. A path that names a
- * `share-links` segment once percent-decoded (any casing, any mount prefix or
- * encoding, empty segments allowed) is logged decoded, with every non-empty
- * segment after it except the literal `download` replaced by `:token`, so the
- * anonymous share token never reaches a log whether FileFn serves the path or
- * not. Other paths are returned unchanged.
+ * Returns a request path that is safe to log. The path is normalized by
+ * decoding every ASCII `%XX` escape, byte by byte and repeatedly until nothing
+ * changes, so no encoding depth, invalid byte beside a separator or mount
+ * prefix hides the `share-links` marker. When the normalized path contains the
+ * marker (any casing, alone or inside a larger segment), everything after it
+ * is logged with each non-empty piece except the literal `download` replaced
+ * by `:token`; a piece that still holds an escape or any other character is
+ * redacted too, so the anonymous share token never reaches a log whether
+ * FileFn serves the path or not. Paths without the marker are returned
+ * unchanged.
  */
 export function redactFileRequestPath(pathname: string): string {
-  const segments = decodeForLog(pathname).split("/");
-  const shareIndex = segments.findIndex(
-    (segment) => segment.toLowerCase() === SHARE_LINKS_SEGMENT
-  );
-  if (shareIndex < 0) {
+  const normalized = decodeAsciiEscapes(pathname);
+  const markerStart = asciiLowerCase(normalized).indexOf(SHARE_LINKS_MARKER);
+  if (markerStart < 0) {
     return pathname;
   }
-  return segments
-    .map((segment, index) =>
-      index > shareIndex &&
-      segment &&
-      !SHARE_ROUTE_LITERALS.has(segment.toLowerCase())
-        ? ":token"
-        : segment
+  const keep = markerStart + SHARE_LINKS_MARKER.length;
+  const rest = normalized
+    .slice(keep)
+    .split("/")
+    .map((piece) =>
+      piece && !SHARE_ROUTE_LITERALS.has(asciiLowerCase(piece)) ? ":token" : piece
     )
     .join("/");
+  return normalized.slice(0, keep) + rest;
 }
 
-function decodeForLog(value: string): string {
+function decodeAsciiEscapes(value: string): string {
+  let previous: string;
   let current = value;
-  for (let pass = 0; pass < MAX_DECODE_PASSES; pass += 1) {
-    const decoded = decodeEscapes(current);
-    if (decoded === current) {
-      break;
-    }
-    current = decoded;
-  }
+  do {
+    previous = current;
+    current = previous.replace(ASCII_ESCAPE, (escape) =>
+      String.fromCharCode(Number.parseInt(escape.slice(1), 16))
+    );
+  } while (current !== previous);
   return current;
 }
 
-function decodeEscapes(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value.replace(/(?:%[0-9a-f]{2})+/gi, (escapes) => {
-      try {
-        return decodeURIComponent(escapes);
-      } catch {
-        return escapes;
-      }
-    });
-  }
+function asciiLowerCase(value: string): string {
+  return value.replace(/[A-Z]/g, (char) => char.toLowerCase());
 }
 
 function carriesFileBytes(request: Request, response: Response): boolean {

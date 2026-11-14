@@ -12,11 +12,16 @@ const environment = normalizeEnvironment(process.argv[2] ?? 'dev');
 const regionsArg = process.argv.find((arg) => arg.startsWith('--regions='))?.split('=')[1];
 const regions = regionsArg ? regionsArg.split(',').map((entry) => entry.trim()).filter(Boolean) : Object.keys(config.regions);
 const dryRun = process.argv.includes('--dry-run');
+// --outdir=<dir> (dry runs only) keeps each Worker bundle and its esbuild
+// metafile under <dir>/<wranglerEnv>/ so the build output can be inspected.
+const outdirArg = process.argv.find((arg) => arg.startsWith('--outdir='))?.slice('--outdir='.length);
+const usage = 'Usage: node scripts/deploy.mjs <dev|pre|live> [--regions=insouth,useast,euwest] [--dry-run [--outdir=<dir>]]';
 
-if (!environment || !config.environments[environment]) {
-  console.error('Usage: node scripts/deploy.mjs <dev|pre|live> [--regions=insouth,useast,euwest] [--dry-run]');
+if (!environment || !config.environments[environment] || (outdirArg !== undefined && (!dryRun || !outdirArg.trim()))) {
+  console.error(usage);
   process.exit(1);
 }
+const outdir = outdirArg ? path.resolve(process.env.INIT_CWD ?? process.cwd(), outdirArg) : null;
 
 const envConfig = config.environments[environment];
 const missing = missingHyperdriveIds(config, environment, regions);
@@ -58,11 +63,17 @@ if (!dryRun) {
 }
 
 run('npm', ['run', 'build']);
-run('wrangler', ['deploy', '--config', wranglerConfig, '--env', envConfig.lookupWorkerEnv, ...(dryRun ? ['--dry-run'] : [])]);
+deployWorker(envConfig.lookupWorkerEnv);
 
 for (const region of regions) {
-  const wranglerEnv = envConfig.regions[region].wranglerEnv;
-  run('wrangler', ['deploy', '--config', wranglerConfig, '--env', wranglerEnv, ...(dryRun ? ['--dry-run'] : [])]);
+  deployWorker(envConfig.regions[region].wranglerEnv);
+}
+
+function deployWorker(wranglerEnv) {
+  const bundleArgs = outdir
+    ? ['--outdir', path.join(outdir, wranglerEnv), '--metafile', path.join(outdir, wranglerEnv, 'meta.json')]
+    : [];
+  run('wrangler', ['deploy', '--config', wranglerConfig, '--env', wranglerEnv, ...(dryRun ? ['--dry-run'] : []), ...bundleArgs]);
 }
 
 function migrateDatafnDatabase(region) {

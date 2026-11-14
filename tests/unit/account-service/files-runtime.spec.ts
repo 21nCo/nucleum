@@ -17,6 +17,7 @@ import {
   createFileDeferredWork
 } from "../../../services/account/src/files/deferred";
 import {
+  FILE_RESPONSE_ISOLATION_HEADERS,
   isolateFileResponse,
   redactFileRequestPath,
   registerAccountFileRoutes
@@ -265,6 +266,43 @@ describe("account FileFn session resolver", () => {
     expect((await signedOut.json()).error.code).toBe("FILEFN_AUTH_REQUIRED");
   });
 
+  it("answers a FileFn initialization or handler failure with an isolated 500", async () => {
+    const onError = vi.fn((_error: Error) => new Response("Internal Server Error", { status: 500 }));
+    const failingApps = [
+      async () => {
+        throw new Error("database pool down");
+      },
+      async () =>
+        ({
+          router: {
+            handle: async () => {
+              throw new Error("router crashed");
+            }
+          }
+        }) as never
+    ];
+    for (const getFileFn of failingApps) {
+      const app = new Hono();
+      app.onError(onError);
+      registerAccountFileRoutes({ app, getFileFn });
+      for (const path of ["/files", "/files/file-1/download"]) {
+        const response = await app.request(`http://account.test${path}`);
+        expect(response.status, path).toBe(500);
+        for (const [name, value] of Object.entries(FILE_RESPONSE_ISOLATION_HEADERS)) {
+          expect(response.headers.get(name), `${path} ${name}`).toBe(value);
+        }
+        expect(response.headers.get("content-disposition"), path).toBeNull();
+        expect((await response.json()).error.code, path).toBe("FILEFN_INTERNAL_ERROR");
+      }
+    }
+    expect(onError.mock.calls.map(([error]) => error.message)).toEqual([
+      "database pool down",
+      "database pool down",
+      "router crashed",
+      "router crashed"
+    ]);
+  });
+
   it("maps a CSRF failure on a write to 403", async () => {
     const resolve = resolverThrowing(new AuthFnCsrfInvalidError());
     await expect(
@@ -299,12 +337,75 @@ describe("account FileFn request path redaction", () => {
       ["/files/SHARE-LINKS/secret-token/download", "/files/SHARE-LINKS/:token/download"],
       ["/files/share-links/secret-token/extra/secret-token", "/files/share-links/:token/:token/:token"],
       ["/files/share-links/secret-token%zz/download", "/files/share-links/:token/download"],
-      ["/files/share-links/secret%2Ftoken/download", "/files/share-links/:token/:token/download"]
+      ["/files/share-links/secret%2Ftoken/download", "/files/share-links/:token/:token/download"],
+      ["/files/share-links%2F%FFsecret-token/download", "/files/share-links/:token/download"],
+      ["/files/share-links%2f%FFsecret-token/download", "/files/share-links/:token/download"],
+      ["/files/share-links%FF%2Fsecret-token/download", "/files/share-links:token/:token/download"],
+      ["/files/%2525252573hare-links/secret-token/download", "/files/share-links/:token/download"],
+      ["/files/share-links%C0%AFsecret-token/download", "/files/share-links:token/download"],
+      ["/files/share-links/%E2%80%AEsecret-token/download", "/files/share-links/:token/download"],
+      ["/files/xshare-linksSECRET-token/download", "/files/xshare-links:token/download"],
+      ["/files/file-1.share-links.secret-token", "/files/file-1.share-links:token"]
     ];
     for (const [input, expected] of cases) {
       const redacted = redactFileRequestPath(input);
       expect(redacted, input).toBe(expected);
       expect(redacted, input).not.toContain("secret");
+    }
+  });
+
+  it("redacts share-links paths encoded to any depth from 1 through 12", () => {
+    for (let depth = 1; depth <= 12; depth += 1) {
+      const nest = (hex: string) => `%${"25".repeat(depth - 1)}${hex}`;
+      for (const input of [
+        `/files/${nest("73")}hare-links/secret-token/download`,
+        `/files/share-links${nest("2F")}secret-token/download`,
+        `/files/share-links${nest("2f")}%FFsecret-token${nest("2F")}download`,
+        `${nest("2F")}${nest("66")}iles${nest("2F")}share${nest("2D")}links${nest("2F")}secret-token`
+      ]) {
+        expect(redactFileRequestPath(input), `${depth}: ${input}`).not.toContain("secret");
+      }
+    }
+  });
+
+  it("never lets a generated share token survive, whatever the per-character encoding", () => {
+    let seed = 0x5eed538;
+    const random = (limit: number) => {
+      seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
+      return seed % limit;
+    };
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    const invalidBytes = ["%FF", "%C0%AF", "%E2%80%AE", "%zz", "%"];
+    const encode = (char: string) => {
+      const depth = random(13);
+      if (depth === 0) return char;
+      const hex = char.charCodeAt(0).toString(16).padStart(2, "0");
+      return `%${"25".repeat(depth - 1)}${random(2) ? hex.toUpperCase() : hex}`;
+    };
+    const templates = [
+      "/files/share-links/{t}/download",
+      "/files/proxy/share-links/{t}/download",
+      "/files/file-1/share-links/{t}",
+      "/files/share-links//{t}/download/"
+    ];
+    for (let iteration = 0; iteration < 2000; iteration += 1) {
+      const token = Array.from(
+        { length: 12 + random(20) },
+        () => alphabet[random(alphabet.length)]
+      ).join("");
+      const plain = templates[random(templates.length)]!.replace("{t}", token);
+      const withInvalid = iteration % 2 === 1;
+      const path = [...plain]
+        .map((char) => {
+          const encoded = encode(char);
+          if (!withInvalid || char !== "/") return encoded;
+          const invalid = invalidBytes[random(invalidBytes.length)]!;
+          return random(2) ? `${invalid}${encoded}` : `${encoded}${invalid}`;
+        })
+        .join("");
+      const redacted = redactFileRequestPath(path);
+      expect(redacted, path).not.toContain(token);
+      expect(decodeURIComponentSafely(redacted), path).not.toContain(token);
     }
   });
 
@@ -320,3 +421,19 @@ describe("account FileFn request path redaction", () => {
     }
   });
 });
+
+function decodeURIComponentSafely(value: string): string {
+  let current = value;
+  for (let pass = 0; pass < 32; pass += 1) {
+    const decoded = current.replace(/%[0-9a-f]{2}/gi, (escape) => {
+      try {
+        return decodeURIComponent(escape);
+      } catch {
+        return escape;
+      }
+    });
+    if (decoded === current) break;
+    current = decoded;
+  }
+  return current;
+}
