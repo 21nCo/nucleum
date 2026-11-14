@@ -100,6 +100,7 @@
         secondStepComponent: {
           component: ContextMenuOptionList,
           props: {
+            label: option.label,
             options: option.options,
             resolveValue: () => current,
             isSubmenu: true,

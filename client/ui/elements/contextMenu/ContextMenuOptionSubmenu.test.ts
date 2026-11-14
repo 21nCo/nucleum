@@ -76,6 +76,11 @@ describe("context menu option submenu", () => {
 
     await fireEvent.click(row);
     await waitFor(() => expect(checkedSubmenuOption()).toBe("month"));
+    const group = document.querySelector(
+      '#secondary-popovers [role="radiogroup"]'
+    );
+    expect(group?.getAttribute("aria-label")).toBe("Scale");
+    expect(group?.textContent).not.toContain("Scale");
 
     await fireEvent.click(submenuOption("week"));
     expect(onChange).toHaveBeenLastCalledWith("week");

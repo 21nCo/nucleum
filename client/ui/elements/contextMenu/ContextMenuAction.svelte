@@ -73,27 +73,32 @@
 
   /**
    * Opens the menu as if its trigger were clicked, so a click closes it, and
-   * moves focus into it: onto its checked option when it has one.
+   * moves focus into it: onto its checked option when it has one. Calls
+   * `onClose` once the menu closes. Returns false when it did not open it.
    */
-  export function show() {
+  export function show(onClose?: () => void): boolean {
     const trigger = contextMenuPopoverRef as HTMLElement | undefined;
-    if (!trigger || isPopoverVisible || document.getElementById(id)) return;
-    trigger.addEventListener(
-      "change",
-      (event) => {
-        if ((event as CustomEvent<{ open?: boolean }>).detail?.open)
-          focusMenu();
-      },
-      { once: true }
-    );
+    if (!trigger || isPopoverVisible || document.getElementById(id))
+      return false;
+    const onChange = (event: Event) => {
+      if ((event as CustomEvent<{ open?: boolean }>).detail?.open) {
+        focusMenu();
+        return;
+      }
+      trigger.removeEventListener("change", onChange);
+      onClose?.();
+    };
+    trigger.addEventListener("change", onChange);
     trigger.click();
+    return true;
   }
 
   function focusMenu() {
     const menu = document.getElementById(id);
     const target =
-      menu?.querySelector<HTMLElement>('[aria-checked="true"]:not([disabled])') ??
-      menu?.querySelector<HTMLElement>("button:not([disabled])");
+      menu?.querySelector<HTMLElement>(
+        '[aria-checked="true"]:not([disabled])'
+      ) ?? menu?.querySelector<HTMLElement>("button:not([disabled])");
     target?.focus();
   }
 

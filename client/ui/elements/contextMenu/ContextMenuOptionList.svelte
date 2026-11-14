@@ -22,7 +22,7 @@
     size = Size.md,
     onChange
   }: {
-    /** Caption shown above the options; omitted inside a submenu. */
+    /** Names the options; shown as a caption above them except in a submenu. */
     label?: string | undefined;
     options: ISelectItem[];
     value?: ISelectValue | undefined;
@@ -55,7 +55,7 @@
   onkeydown={(event) => handleContextMenuOptionKey(event, options, pick)}
   {...isSubmenu ? { [POPOVER_KEEP_OPEN_ATTRIBUTE]: "" } : {}}
 >
-  {#if label}
+  {#if label && !isSubmenu}
     <div class="px-2 pt-1 pb-0.5 text-b3 font-medium text-fgs3">{label}</div>
   {/if}
   {#each options as option, index (option.value)}

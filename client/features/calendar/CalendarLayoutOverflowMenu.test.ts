@@ -197,19 +197,40 @@ describe("CalendarLayout overflow menu layout pick", () => {
     );
   });
 
-  it("does not reopen the menu later when the new layout fits inline", async () => {
+  it("keeps the menu open when the new layout fits inline, and never reopens it later", async () => {
     CONTROLS_WIDTH[CalendarLayout.Classic] = 50;
     renderSwappingCalendar(CalendarLayout.Bird);
     await openOverflowMenu();
+    const columns = layoutOption(CalendarLayout.Bird);
+    columns.focus();
 
-    await fireEvent.click(layoutOption(CalendarLayout.Classic));
+    await fireEvent.keyDown(columns, { key: "ArrowRight" });
 
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-testid="calendar-layout-classic"]')
+      ).toBeTruthy()
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(layoutOption(CalendarLayout.Classic))
+    );
+    expect(
+      layoutOption(CalendarLayout.Classic).getAttribute("aria-checked")
+    ).toBe("true");
+    expect(
+      document.querySelector('[data-testid="calendar-layout-switcher"]')
+    ).toBeNull();
+
+    await fireEvent.click(
+      document.querySelector<HTMLElement>(
+        '[data-testid="calendar-overflow-menu"]'
+      )!
+    );
     await waitFor(() =>
       expect(
         document.querySelector('[data-testid="calendar-layout-switcher"]')
       ).toBeTruthy()
     );
-    await nextFrames();
     expect(overflowMenu()).toBeNull();
 
     mocks.entryWidth.set(10);

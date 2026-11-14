@@ -66,10 +66,13 @@
   const LOOSE_GAP_PX = 28;
   let fullControlsWidth = $state(0);
   let controlGroupCount = $state(0);
+  const overflowMenuReopen = claimCalendarOverflowMenuReopen();
+  let isHoldingCompact = $state(overflowMenuReopen.isPending);
   const isCompact = $derived(
-    fullControlsWidth > 0 &&
-      $entryWidth !== undefined &&
-      $entryWidth < fullControlsWidth
+    isHoldingCompact ||
+      (fullControlsWidth > 0 &&
+        $entryWidth !== undefined &&
+        $entryWidth < fullControlsWidth)
   );
   const isLoose = $derived(
     !isCompact &&
@@ -98,18 +101,24 @@
   });
 
   let overflowMenuRef = $state<ContextMenuAction | undefined>(undefined);
-  const overflowMenuReopen = claimCalendarOverflowMenuReopen();
+
+  function releaseCompact() {
+    isHoldingCompact = false;
+  }
 
   $effect(() => {
     const menu = overflowMenuRef;
-    const isReopen = overflowMenuReopen.settle({
-      isMeasured: fullControlsWidth > 0,
-      isCompact,
-      hasTrigger: menu !== undefined
+    if (!overflowMenuReopen.settle(menu !== undefined) || !menu) {
+      if (!overflowMenuReopen.isPending) releaseCompact();
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      if (!menu.show(releaseCompact)) releaseCompact();
     });
-    if (!isReopen || !menu) return;
-    const frame = requestAnimationFrame(() => menu.show());
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      releaseCompact();
+    };
   });
 
   function openCalendarSettings() {

@@ -28,48 +28,35 @@ describe("calendar overflow menu reopen", () => {
 });
 
 describe("calendar overflow menu reopen claim", () => {
-  const unmeasured = { isMeasured: false, isCompact: false, hasTrigger: false };
-  const inline = { isMeasured: true, isCompact: false, hasTrigger: false };
-  const compactWithoutTrigger = {
-    isMeasured: true,
-    isCompact: true,
-    hasTrigger: false
-  };
-  const compact = { isMeasured: true, isCompact: true, hasTrigger: true };
-
-  it("consumes the request when the layout mounts, before it measures", () => {
+  it("consumes the request when the layout mounts and holds it pending", () => {
     requestCalendarOverflowMenuReopen(1_000);
-    claimCalendarOverflowMenuReopen(1_010);
+    const reopen = claimCalendarOverflowMenuReopen(1_010);
+    expect(reopen.isPending).toBe(true);
     expect(takeCalendarOverflowMenuReopen(1_020)).toBe(false);
   });
 
-  it("waits for the compact trigger, then reopens exactly once", () => {
+  it("waits for the trigger, then reopens exactly once", () => {
     requestCalendarOverflowMenuReopen(1_000);
     const reopen = claimCalendarOverflowMenuReopen(1_010);
-    expect(reopen.settle(unmeasured, 1_020)).toBe(false);
-    expect(reopen.settle(compactWithoutTrigger, 1_030)).toBe(false);
-    expect(reopen.settle(compact, 1_040)).toBe(true);
-    expect(reopen.settle(compact, 1_050)).toBe(false);
+    expect(reopen.settle(false, 1_020)).toBe(false);
+    expect(reopen.isPending).toBe(true);
+    expect(reopen.settle(true, 1_030)).toBe(true);
+    expect(reopen.isPending).toBe(false);
+    expect(reopen.settle(true, 1_040)).toBe(false);
   });
 
-  it("drops the request for good when the layout settles inline", () => {
+  it("drops a request whose trigger appears only after the reopen window", () => {
     requestCalendarOverflowMenuReopen(1_000);
     const reopen = claimCalendarOverflowMenuReopen(1_010);
-    expect(reopen.settle(inline, 1_020)).toBe(false);
-    expect(reopen.settle(compact, 1_030)).toBe(false);
+    const late = 1_011 + CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS;
+    expect(reopen.settle(false, late)).toBe(false);
+    expect(reopen.isPending).toBe(false);
+    expect(reopen.settle(true, late)).toBe(false);
   });
 
-  it("drops a request the layout settles on after the reopen window", () => {
-    requestCalendarOverflowMenuReopen(1_000);
-    const reopen = claimCalendarOverflowMenuReopen(1_010);
-    expect(
-      reopen.settle(compact, 1_011 + CALENDAR_OVERFLOW_MENU_REOPEN_WINDOW_MS)
-    ).toBe(false);
-    expect(reopen.settle(compact, 1_020)).toBe(false);
-  });
-
-  it("never reopens without a pick", () => {
+  it("never reopens or holds without a pick", () => {
     const reopen = claimCalendarOverflowMenuReopen(1_000);
-    expect(reopen.settle(compact, 1_010)).toBe(false);
+    expect(reopen.isPending).toBe(false);
+    expect(reopen.settle(true, 1_010)).toBe(false);
   });
 });
