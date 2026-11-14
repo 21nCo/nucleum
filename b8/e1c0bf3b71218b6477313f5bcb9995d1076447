@@ -1,0 +1,23 @@
+apps/e2e-playwright/tests/shared/settings/access-tokens.spec.ts
+  s_8cd476e78c769e::t_076c1900cbf962 40-46,71-88,102-174,176-183
+client/surfaces/account/access-tokens/AccessTokensSection.svelte
+  s_8cd476e78c769e::t_fb0a2533d81739 2,75-76,92-96,98,101,175-193,216,247,339-350,388,397
+client/surfaces/account/access-tokens/AccessTokensSection.test.ts
+  s_8cd476e78c769e::t_09cac6eeba1daf 2,63-81,247-350
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b8e1c0bf3b71218b6477313f5bcb9995d1076447",
+  "prompts": {},
+  "sessions": {
+    "s_8cd476e78c769e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_8cd476e78c769e",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
