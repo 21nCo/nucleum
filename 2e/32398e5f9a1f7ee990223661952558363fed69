@@ -1,0 +1,21 @@
+client/ui/elements/contextMenu/ContextMenuAction.svelte
+  s_07dec5dac18f0d::t_0e77511ddc3a13 133-138,141-147,149-163
+client/ui/elements/contextMenu/ContextMenuActionShow.test.ts
+  s_07dec5dac18f0d::t_bd7180bb2d1281 265-356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2e32398e5f9a1f7ee990223661952558363fed69",
+  "prompts": {},
+  "sessions": {
+    "s_07dec5dac18f0d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5a95b85b-72a3-4f5d-964c-e78374f43f1b",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
