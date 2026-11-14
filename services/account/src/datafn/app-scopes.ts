@@ -3,6 +3,7 @@ import {
   endpointList,
   findRelationMatch,
   getRelationFkFieldsForResource,
+  parseSortTerm,
   relationFkFieldForManyOne,
   relationFkFieldForOneMany,
   relationTargetEndpoint,
@@ -820,13 +821,17 @@ export async function filterScopedResponseBody(
       // Only rows carry items; other result shapes (such as counts) pass through.
       if (!isRecord(result) || !Array.isArray(result.data)) return result;
       const field = policy.field;
+      // A page cursor copies its last row's sort fields; one holding the items
+      // field would carry the unfiltered tree, so it is dropped.
+      const cursorLeaks = isRecord(result.nextCursor) && field in result.nextCursor;
       return {
         ...result,
         data: result.data.map((row) =>
           isRecord(row) && field in row
             ? { ...row, [field]: filterSpaceItems(row[field], itemVisible) }
             : row
-        )
+        ),
+        ...(cursorLeaks ? { nextCursor: null } : {})
       };
     }
     if (!isDerivedPolicy(policy)) return result;
@@ -931,11 +936,21 @@ function filterReferences(filter: unknown, field: string, depth = 0): boolean {
   );
 }
 
+/**
+ * True when a sort may order rows by `field` (or a path below it). Terms are
+ * parsed as DataFn parses them (`field`, `-field`, `field:dir`, `{ field }`),
+ * and a sort DataFn would not parse counts as referencing the field.
+ */
 function sortReferences(sort: unknown, field: string): boolean {
-  const terms = Array.isArray(sort) ? sort : sort === undefined ? [] : [sort];
-  return terms.some((term) =>
-    typeof term !== 'string' || term.split(':')[0].split('.')[0] === field
-  );
+  if (sort === undefined || sort === null) return false;
+  if (!Array.isArray(sort)) return true;
+  return sort.some((term) => {
+    try {
+      return parseSortTerm(term).field.split('.')[0] === field;
+    } catch {
+      return true;
+    }
+  });
 }
 
 function asList(payload: unknown): unknown[] {

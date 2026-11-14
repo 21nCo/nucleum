@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
+import { filterScopedResponseBody } from './app-scopes.js';
 import { resourceOwnership } from './resource-ownership.js';
 
 const base = 'http://127.0.0.1:8787';
@@ -453,6 +455,71 @@ describe('memotron token reading shared resources', () => {
       sort: ['items:asc']
     });
     expect(sorted.status).toBe(403);
+  });
+
+  it('cannot page by items with the descending shorthand or any other sort spelling', async () => {
+    const pagedBy = (sort: unknown) => ({ resource: 'space', version: 1, sort, limit: 1 });
+    for (const sort of [
+      ['-items', 'id:asc'],
+      ['-items.0', 'id:asc'],
+      [{ field: 'items', direction: 'desc' }, 'id:asc'],
+      '-items',
+      ['id:sideways']
+    ]) {
+      expect((await call('/datafn/query', actors.memotronRead, pagedBy(sort))).status).toBe(403);
+    }
+    const leak = pagedBy(['-items', 'id:asc']);
+    expect((await call('/datafn/query', actors.memotronRead, [{ resource: 'node', version: 1 }, leak]))
+      .status).toBe(403);
+    expect((await call('/datafn/transact', actors.memotronRead, { steps: [{ query: leak }] })).status)
+      .toBe(403);
+    expect((await call('/datafn/query', actors.pointron, leak)).status).toBe(403);
+  });
+
+  it('pages spaces by other fields without a cursor carrying hidden items', async () => {
+    const paged = { resource: 'space', version: 1, sort: ['label:asc', 'id:asc'], limit: 1 };
+    for (const response of [
+      await call('/datafn/query', actors.memotronRead, paged),
+      await call('/datafn/transact', actors.memotronRead, { steps: [{ query: paged }] })
+    ]) {
+      expect(response.status).toBe(200);
+      const text = await response.text();
+      expect(text).toContain('nextCursor');
+      expect(text).toContain('space:mixed');
+      expect(text).not.toContain('objective:o1');
+    }
+  });
+
+  it('drops a page cursor that would carry unfiltered items', async () => {
+    const store = { findMany: async () => [] };
+    const body = {
+      ok: true,
+      result: {
+        data: [{ id: 'space:mixed', items: [nodeItem, objectiveItem] }],
+        nextCursor: { items: [nodeItem, objectiveItem], id: 'space:mixed' }
+      }
+    };
+    const filtered = await filterScopedResponseBody(
+      'query',
+      { resource: 'space', version: 1, limit: 1 },
+      body,
+      new Set(['memotron'] as const),
+      store,
+      nucleumDatafnSchema
+    );
+    expect(filtered).toEqual({
+      ok: true,
+      result: { data: [{ id: 'space:mixed', items: [nodeItem] }], nextCursor: null }
+    });
+    const transact = await filterScopedResponseBody(
+      'transact',
+      { steps: [{ query: { resource: 'space', version: 1, limit: 1 } }] },
+      { ok: true, result: { results: [body.result] } },
+      new Set(['memotron'] as const),
+      store,
+      nucleumDatafnSchema
+    );
+    expect(JSON.stringify(transact)).not.toContain('objective:o1');
   });
 });
 
