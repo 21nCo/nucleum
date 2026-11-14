@@ -91,7 +91,7 @@ methods with a cookie session must send the `x-authfn-csrf` header. Uploads
 follow the Nucleus policies (100 MB cap, allowed media and document types).
 
 FileFn tables live in the regional DataFn Postgres (`drizzle/filefn`, applied
-with `npm run filefn:migrate`; `scripts/deploy.mjs` does not run it, so apply it
+with `npm --workspace @21n/account-service run filefn:migrate`; `scripts/deploy.mjs` does not run it, so apply it
 to each regional database before deploying `/files` there). File bytes go to one R2 bucket per region,
 configured by:
 

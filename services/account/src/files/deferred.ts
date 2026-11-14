@@ -25,10 +25,13 @@ export interface FileDeferredWork {
 /**
  * Creates the FileFn `runtime.defer` hook for one request. Deferred work is
  * tracked until it settles and, when `ctx` is given, handed to
- * `ctx.waitUntil` so the Worker stays alive for it.
+ * `ctx.waitUntil` so the Worker stays alive for it. A task that rejects is
+ * passed to `onError` once; it still counts as settled so request resources
+ * close.
  */
 export function createFileDeferredWork(
-  ctx?: WaitUntilContext
+  ctx?: WaitUntilContext,
+  onError?: (error: unknown) => void
 ): FileDeferredWork {
   const pending = new Set<Promise<void>>();
   return {
@@ -38,8 +41,9 @@ export function createFileDeferredWork(
           () => {
             pending.delete(tracked);
           },
-          () => {
+          (error: unknown) => {
             pending.delete(tracked);
+            reportSafely(onError, error);
           }
         );
         pending.add(tracked);
@@ -49,10 +53,21 @@ export function createFileDeferredWork(
     pending: () => pending.size,
     async settled() {
       while (pending.size > 0) {
-        await Promise.allSettled([...pending]);
+        await Promise.allSettled(pending);
       }
     }
   };
+}
+
+function reportSafely(
+  onError: ((error: unknown) => void) | undefined,
+  error: unknown
+): void {
+  try {
+    onError?.(error);
+  } catch {
+    return;
+  }
 }
 
 /**

@@ -1,12 +1,18 @@
 import {
+  createDefaultAuthorizer,
   createFileFn,
   createNucleusPolicies,
   forbidden,
+  getSchema,
   type FileFn,
   type FileFnPrincipal,
   type FileFnRuntime
 } from "@filefn/server";
-import type { Adapter, RuntimeStores } from "@superfunctions/db";
+import {
+  wrapWithSchema,
+  type Adapter,
+  type RuntimeStores
+} from "@superfunctions/db";
 import type { StorageAdapter } from "@superfunctions/storage";
 import {
   AuthFnApiKeyRevokedError,
@@ -20,6 +26,8 @@ import {
 
 /** Path prefix the account service mounts FileFn under. */
 export const ACCOUNT_FILES_BASE_PATH = "/files";
+
+const FILEFN_NAMESPACE = "filefn";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
@@ -51,14 +59,21 @@ export interface CreateAccountFileFnInput {
 
 /**
  * Creates the account-service FileFn instance: AuthFn sessions resolve the
- * principal, Nucleus policies cap uploads at 100 MB and the allowed types,
- * and the router serves under `/files`.
+ * principal, the owner or an unexpired grant authorizes each read, write and
+ * delete, Nucleus policies cap uploads at 100 MB and the allowed types, and
+ * the router serves under `/files`.
  */
 export function createAccountFileFn(input: CreateAccountFileFnInput): FileFn {
   return createFileFn({
     database: input.database,
     storage: input.storage,
     stores: input.stores,
+    namespace: FILEFN_NAMESPACE,
+    authorizer: createDefaultAuthorizer({
+      db: wrapWithSchema(input.database, getSchema({ namespace: FILEFN_NAMESPACE })),
+      namespace: FILEFN_NAMESPACE,
+      adminRoles: []
+    }),
     policies: createNucleusPolicies(),
     auth: {
       required: true,

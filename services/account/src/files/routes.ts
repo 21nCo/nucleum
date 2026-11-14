@@ -29,8 +29,8 @@ export const FILE_RESPONSE_ISOLATION_HEADERS: Readonly<Record<string, string>> =
  * file storage configured and 404 for paths FileFn does not serve. An AuthFn
  * error raised while resolving the session is answered with its AuthFn status,
  * code and details, as the AuthFn routes answer it. Every
- * response carries the isolation headers, and file bytes (the proxy download
- * routes and any non-JSON response) are sent as attachments.
+ * response carries the isolation headers, and successful file bytes (the proxy
+ * download routes and any non-JSON 2xx response) are sent as attachments.
  */
 export function registerAccountFileRoutes(
   input: RegisterAccountFileRoutesInput
@@ -68,8 +68,9 @@ export function registerAccountFileRoutes(
 }
 
 /**
- * Returns the FileFn response with the isolation headers and, for file bytes,
- * `Content-Disposition: attachment` (keeping any filename parameter).
+ * Returns the FileFn response with the isolation headers and, for successful
+ * file bytes, `Content-Disposition: attachment` with the original parameters
+ * kept verbatim.
  */
 export function isolateFileResponse(
   request: Request,
@@ -89,38 +90,64 @@ export function isolateFileResponse(
 }
 
 const SHARE_LINKS_SEGMENT = "share-links";
+const SHARE_ROUTE_LITERALS = new Set(["download"]);
+const MAX_DECODE_PASSES = 4;
 
 /**
- * Returns a `/files` request path that is safe to log: the segment after
- * `share-links`, which is the anonymous share token on the share download and
- * revoke routes, becomes `:token`. Other paths are returned unchanged.
+ * Returns a request path that is safe to log. A path that names a
+ * `share-links` segment once percent-decoded (any casing, any mount prefix or
+ * encoding, empty segments allowed) is logged decoded, with every non-empty
+ * segment after it except the literal `download` replaced by `:token`, so the
+ * anonymous share token never reaches a log whether FileFn serves the path or
+ * not. Other paths are returned unchanged.
  */
 export function redactFileRequestPath(pathname: string): string {
-  if (
-    pathname !== ACCOUNT_FILES_BASE_PATH &&
-    !pathname.startsWith(`${ACCOUNT_FILES_BASE_PATH}/`)
-  ) {
+  const segments = decodeForLog(pathname).split("/");
+  const shareIndex = segments.findIndex(
+    (segment) => segment.toLowerCase() === SHARE_LINKS_SEGMENT
+  );
+  if (shareIndex < 0) {
     return pathname;
   }
-  const segments = pathname.split("/");
-  for (let index = 0; index < segments.length - 1; index += 1) {
-    if (isShareLinksSegment(segments[index]) && segments[index + 1]) {
-      segments[index + 1] = ":token";
-    }
-  }
-  return segments.join("/");
+  return segments
+    .map((segment, index) =>
+      index > shareIndex &&
+      segment &&
+      !SHARE_ROUTE_LITERALS.has(segment.toLowerCase())
+        ? ":token"
+        : segment
+    )
+    .join("/");
 }
 
-function isShareLinksSegment(segment: string): boolean {
+function decodeForLog(value: string): string {
+  let current = value;
+  for (let pass = 0; pass < MAX_DECODE_PASSES; pass += 1) {
+    const decoded = decodeEscapes(current);
+    if (decoded === current) {
+      break;
+    }
+    current = decoded;
+  }
+  return current;
+}
+
+function decodeEscapes(value: string): string {
   try {
-    return decodeURIComponent(segment).toLowerCase() === SHARE_LINKS_SEGMENT;
+    return decodeURIComponent(value);
   } catch {
-    return false;
+    return value.replace(/(?:%[0-9a-f]{2})+/gi, (escapes) => {
+      try {
+        return decodeURIComponent(escapes);
+      } catch {
+        return escapes;
+      }
+    });
   }
 }
 
 function carriesFileBytes(request: Request, response: Response): boolean {
-  if (response.status === 204 || response.status === 304) {
+  if (response.status < 200 || response.status >= 300 || response.status === 204) {
     return false;
   }
   if (new URL(request.url).pathname.startsWith(PROXY_PATH_PREFIX)) {
@@ -131,14 +158,10 @@ function carriesFileBytes(request: Request, response: Response): boolean {
 }
 
 function asAttachment(disposition: string | null): string {
-  const parameters = disposition
-    ?.split(";")
-    .slice(1)
-    .map((parameter) => parameter.trim())
-    .filter(Boolean);
-  return parameters?.length
-    ? `attachment; ${parameters.join("; ")}`
-    : "attachment";
+  const separator = disposition?.indexOf(";") ?? -1;
+  const parameters =
+    disposition && separator >= 0 ? disposition.slice(separator + 1).trim() : "";
+  return parameters ? `attachment; ${parameters}` : "attachment";
 }
 
 function fileErrorResponse(

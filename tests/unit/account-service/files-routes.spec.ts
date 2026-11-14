@@ -384,6 +384,77 @@ describe("account service /files", () => {
       headers: owner.headers
     });
     expect(deleted.status).toBe(200);
+    expect((await request(testApp.app, `/files/${fileId}`, { headers: owner.headers })).status).toBe(404);
+    const afterDelete = await request(testApp.app, "/files", { headers: owner.headers });
+    expect(afterDelete.body.data.files).toEqual([]);
+  });
+
+  it("lets a grantee read, replace and delete a file only while its grant is live", async () => {
+    const owner = await signUpBearer(testApp.app);
+    const grantee = await signUpBearer(testApp.app);
+    const stranger = await signUpBearer(testApp.app);
+    const expiredGrantee = await signUpBearer(testApp.app);
+    const revokedGrantee = await signUpBearer(testApp.app);
+    const { fileId } = await uploadFile(testApp, owner);
+    const grant = (userId: string, extra: Record<string, unknown> = {}) =>
+      request(testApp.app, `/files/${fileId}/permissions`, {
+        method: "POST",
+        headers: owner.headers,
+        body: { userId, canRead: true, canWrite: true, canDelete: true, ...extra }
+      });
+    const replaceInit = (user: BearerUser) =>
+      request(testApp.app, "/files/upload/init", {
+        method: "POST",
+        headers: user.headers,
+        body: {
+          policy: "nucleus-durable-default",
+          fileName: "note.txt",
+          mimeType: "text/plain",
+          size: fileBytes.length,
+          fileId
+        }
+      });
+
+    expect((await grant(grantee.actorId)).status).toBe(201);
+    expect(
+      (await grant(expiredGrantee.actorId, { expiresAt: new Date(Date.now() - 60_000).toISOString() })).status
+    ).toBe(201);
+    const revoked = await grant(revokedGrantee.actorId);
+    expect(revoked.status).toBe(201);
+    const revoke = await request(
+      testApp.app,
+      `/files/${fileId}/permissions/${revoked.body.data.permissionId}`,
+      { method: "DELETE", headers: owner.headers }
+    );
+    expect(revoke.status).toBeLessThan(300);
+
+    for (const user of [stranger, expiredGrantee, revokedGrantee]) {
+      expect((await request(testApp.app, `/files/${fileId}`, { headers: user.headers })).status).toBe(403);
+      expect((await replaceInit(user)).status).toBe(403);
+      const denied = await request(testApp.app, `/files/${fileId}`, {
+        method: "DELETE",
+        headers: user.headers
+      });
+      expect(denied.status).toBe(403);
+    }
+
+    expect((await request(testApp.app, `/files/${fileId}`, { headers: grantee.headers })).status).toBe(200);
+    const replaced = await uploadFile(testApp, grantee, {
+      fileId,
+      bytes: new TextEncoder().encode("replaced by grantee")
+    });
+    expect(replaced.fileId).toBe(fileId);
+    const proxied = await testApp.app.request(`${AUTHORITY}/files/proxy/files/${fileId}/download`, {
+      headers: owner.headers
+    });
+    expect(await proxied.text()).toBe("replaced by grantee");
+
+    const deleted = await request(testApp.app, `/files/${fileId}`, {
+      method: "DELETE",
+      headers: grantee.headers
+    });
+    expect(deleted.status).toBe(200);
+    expect((await request(testApp.app, `/files/${fileId}`, { headers: owner.headers })).status).toBe(404);
   });
 
   it("returns 403 when a principal reads, replaces or deletes another user's file", async () => {
@@ -613,6 +684,16 @@ describe("account service /files", () => {
       `/files/share-links/${token}/download`,
       `/files/proxy/share-links/${token}/download`
     ];
+    const malformedPaths = [
+      `/%66iles/share-links/${token}/download`,
+      `/files/share-links//${token}/download`,
+      `/files/proxy/share-links%2F${token}/download`,
+      `/files/SHARE-LINKS/${token}/download`
+    ];
+    for (const path of malformedPaths) {
+      const malformed = await request(testApp.app, path);
+      expect(malformed.status, path).toBeGreaterThanOrEqual(400);
+    }
     for (const path of sharePaths) {
       expect((await request(testApp.app, path)).status, path).toBe(200);
     }
@@ -638,7 +719,7 @@ describe("account service /files", () => {
         `/files/${fileId}/share-links/:token`
       ])
     );
-    expect(sinkBodies.length).toBeGreaterThanOrEqual(5);
+    expect(sinkBodies.length).toBeGreaterThanOrEqual(5 + malformedPaths.length);
     expect(JSON.stringify(testApp.logs.events())).not.toContain(token);
     for (const body of sinkBodies) {
       expect(body).not.toContain(token);

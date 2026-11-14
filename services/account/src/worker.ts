@@ -63,7 +63,9 @@ export default {
       | ReturnType<typeof createCloudflareSyncDatabase>
       | undefined;
     let fileDatabase: AccountFileDatabase | undefined;
-    const fileDeferredWork = createFileDeferredWork(ctx);
+    const fileDeferredWork = createFileDeferredWork(ctx, (error) => {
+      logger.error("nucleus account deferred file work failed", { error });
+    });
     const workerEnv = globalProcess.process.env;
     const observability = createObservability(logger, undefined, {
       requestContext: createAsyncLocalRequestContext()

@@ -1,6 +1,7 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
-import { build } from "esbuild";
 import { describe, expect, it } from "vitest";
 import {
   createAccountFileStorage,
@@ -9,6 +10,7 @@ import {
 } from "../../../services/account/src/files/storage";
 import {
   renderConfig,
+  renderWranglerConfig,
   secretStoreBindingsForEnvironment
 } from "../../../services/account/scripts/wrangler-config.mjs";
 
@@ -98,24 +100,43 @@ describe("account Worker config for FileFn", () => {
   });
 });
 
+function run(command: string, args: string[]): void {
+  const result = spawnSync(command, args, {
+    cwd: serviceRoot,
+    encoding: "utf8",
+    env: { ...process.env, WRANGLER_SEND_METRICS: "false" },
+    shell: process.platform === "win32"
+  });
+  expect(result.status, `${command} ${args.join(" ")}\n${result.stdout}\n${result.stderr}`).toBe(0);
+}
+
 describe("account Worker bundle", () => {
-  it("contains no @aws-sdk module", async () => {
-    const result = await build({
-      entryPoints: [path.join(serviceRoot, "src/worker.ts")],
-      bundle: true,
-      write: false,
-      metafile: true,
-      format: "esm",
-      platform: "neutral",
-      target: "es2022",
-      conditions: ["workerd", "worker", "browser"],
-      mainFields: ["browser", "module", "main"],
-      external: ["node:*", "cloudflare:*", "async_hooks", "crypto", "stream", "buffer", "events", "util", "net", "tls", "os", "fs", "path", "perf_hooks", "string_decoder", "url", "zlib", "http", "https", "child_process", "dns", "worker_threads", "process"],
-      logLevel: "silent"
-    });
-    const inputs = Object.keys(result.metafile.inputs);
-    expect(inputs.some((input) => input.includes("@superfunctions/storage-r2"))).toBe(true);
-    expect(inputs.some((input) => input.includes("@filefn/server"))).toBe(true);
-    expect(inputs.filter((input) => input.includes("@aws-sdk"))).toEqual([]);
-  }, 120_000);
+  it("worker:build output contains FileFn and storage-r2 but no @aws-sdk module", () => {
+    const outdir = fs.mkdtempSync(path.join(os.tmpdir(), "account-worker-build-"));
+    try {
+      const wranglerConfig = renderWranglerConfig(serviceRoot, environmentsConfig, "dev");
+      const wranglerEnv = environmentsConfig.environments.dev.regions.insouth.wranglerEnv;
+      const metafile = path.join(outdir, "meta.json");
+      run("npm", ["run", "build"]);
+      run("npx", [
+        "wrangler",
+        "deploy",
+        "--config",
+        wranglerConfig,
+        "--env",
+        wranglerEnv,
+        "--dry-run",
+        "--outdir",
+        outdir,
+        "--metafile",
+        metafile
+      ]);
+      const inputs = Object.keys(JSON.parse(fs.readFileSync(metafile, "utf8")).inputs);
+      expect(inputs.some((input) => input.includes("@superfunctions/storage-r2"))).toBe(true);
+      expect(inputs.some((input) => input.includes("@filefn/server"))).toBe(true);
+      expect(inputs.filter((input) => input.includes("@aws-sdk"))).toEqual([]);
+    } finally {
+      fs.rmSync(outdir, { recursive: true, force: true });
+    }
+  }, 300_000);
 });
