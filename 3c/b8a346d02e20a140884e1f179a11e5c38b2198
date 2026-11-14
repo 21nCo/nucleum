@@ -1,0 +1,19 @@
+apps/e2e-playwright/tests/shared/settings/access-tokens.spec.ts
+  s_f058f999ab46b7::t_33625a2f9a1147 46-49,55-58,112,133-137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3cb8a346d02e20a140884e1f179a11e5c38b2198",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
