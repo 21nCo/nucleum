@@ -130,29 +130,37 @@
 
   /**
    * True when the closed menu took focus with it, so nothing holds it now.
-   * Looks from the trigger's document up through the frames that contain it,
-   * so focus the user moved to a parent document is never taken back.
+   * Follows the live focus chain down from the top same-origin document
+   * through each focused frame and open shadow root. A document off that
+   * chain can still report the element it last focused, so it is not read.
+   * Focus counts as lost only when the chain ends on the body of a document
+   * the trigger sits in, so focus the user moved anywhere else, including
+   * into another frame, is never taken back.
    */
   function isFocusLost(trigger: HTMLElement): boolean {
-    const root = rootOf(trigger);
-    if (root && "host" in root && root.activeElement) return false;
-    let doc: Document | null = trigger.ownerDocument;
-    let frame: Element | null = null;
-    while (doc) {
-      const active = doc.activeElement;
-      const isUnclaimed =
-        !active ||
-        active === doc.body ||
-        active === frame ||
-        (frame === null &&
-          root !== null &&
-          "host" in root &&
-          active === root.host);
-      if (!isUnclaimed) return false;
-      frame = doc.defaultView?.frameElement ?? null;
-      doc = frame?.ownerDocument ?? null;
+    let doc = trigger.ownerDocument;
+    const triggerDocuments = new Set([doc]);
+    let frame = doc.defaultView?.frameElement;
+    while (frame) {
+      doc = frame.ownerDocument;
+      triggerDocuments.add(doc);
+      frame = doc.defaultView?.frameElement;
     }
-    return true;
+    let active = doc.activeElement;
+    while (active) {
+      if ("contentDocument" in active) {
+        const inner = (active as HTMLIFrameElement).contentDocument;
+        if (!inner) return false;
+        doc = inner;
+        active = inner.activeElement;
+      } else if (active.shadowRoot?.activeElement) {
+        active = active.shadowRoot.activeElement;
+      } else break;
+    }
+    return (
+      triggerDocuments.has(doc) &&
+      (!active || active === doc.body || active === doc.documentElement)
+    );
   }
 
   const { setEventContext, getEventContext } =

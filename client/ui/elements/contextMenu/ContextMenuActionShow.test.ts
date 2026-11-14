@@ -262,5 +262,97 @@ describe("ContextMenuAction show", () => {
       await waitFor(() => expect(item()).toBeNull());
       expect(frameDocument.activeElement).toBe(trigger);
     });
+
+    /**
+     * A browser that focuses an element in a frame also focuses the frame in
+     * its parent. jsdom skips the whole step when the frame document already
+     * reports that element as active, which is what a frame keeps after focus
+     * leaves it, so this adds the parent half for the trigger.
+     */
+    function focusFrameWithTrigger(trigger: HTMLElement) {
+      const frame = trigger.ownerDocument.defaultView!.frameElement as HTMLElement;
+      const focus = trigger.focus.bind(trigger);
+      trigger.focus = (options?: FocusOptions) => {
+        focus(options);
+        if (frame.ownerDocument.activeElement !== frame) frame.focus();
+      };
+      return frame;
+    }
+
+    it("returns focus to a frame trigger that was focused before a parent-document menu opened", async () => {
+      const { component, frameDocument, trigger, item } = renderInFrame(
+        "showFrameFocused",
+        false
+      );
+      const frame = focusFrameWithTrigger(trigger);
+      trigger.focus();
+      expect(document.activeElement).toBe(frame);
+
+      expect(component.show()).toBe(true);
+      await waitFor(() => expect(document.activeElement).toBe(item()));
+      expect(frameDocument.activeElement).toBe(trigger);
+      component.hide();
+      await waitFor(() => expect(item()).toBeNull());
+      expect(document.activeElement).toBe(frame);
+      expect(frameDocument.activeElement).toBe(trigger);
+
+      expect(component.show()).toBe(true);
+      await waitFor(() => expect(document.activeElement).toBe(item()));
+      await fireEvent.click(item()!);
+      await waitFor(() => expect(item()).toBeNull());
+      expect(document.activeElement).toBe(frame);
+      expect(frameDocument.activeElement).toBe(trigger);
+    });
+
+    it.each([
+      ["an input in the parent document", () => {
+        const input = document.createElement("input");
+        document.body.append(input);
+        return { held: input, active: input };
+      }],
+      ["an input in a parent shadow root", () => {
+        const host = document.createElement("div");
+        document.body.append(host);
+        const input = document.createElement("input");
+        host.attachShadow({ mode: "open" }).append(input);
+        return { held: host, active: input };
+      }]
+    ])(
+      "keeps %s the user focused while a menu from a focused frame trigger was open",
+      async (_what, place) => {
+        const { component, trigger, item } = renderInFrame(
+          "showFrameFocusedOut",
+          false
+        );
+        focusFrameWithTrigger(trigger);
+        trigger.focus();
+        const { held, active } = place();
+
+        component.show();
+        await waitFor(() => expect(document.activeElement).toBe(item()));
+        active.focus();
+        await fireEvent.click(active);
+
+        await waitFor(() => expect(item()).toBeNull());
+        expect(document.activeElement).toBe(held);
+        expect(active.getRootNode()).toHaveProperty("activeElement", active);
+      }
+    );
+
+    it("keeps focus the user moved into another frame that has nothing focusable", async () => {
+      const { component, frameDocument, trigger, item } =
+        renderInFrame("showOtherFrame");
+      const otherFrame = document.createElement("iframe");
+      document.body.append(otherFrame);
+
+      component.show();
+      await waitFor(() => expect(frameDocument.activeElement).toBe(item()));
+      otherFrame.focus();
+      component.hide();
+
+      await waitFor(() => expect(item()).toBeNull());
+      expect(document.activeElement).toBe(otherFrame);
+      expect(frameDocument.activeElement).not.toBe(trigger);
+    });
   });
 });
