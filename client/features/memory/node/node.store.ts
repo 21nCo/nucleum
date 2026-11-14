@@ -1261,6 +1261,8 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
+          resourceActions.addToCollection(),
+          resourceActions.link(),
           ...(canHaveTraces.includes(node.contentType)
             ? [nodeActions.tracesPane()]
             : []),
@@ -1280,6 +1282,8 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
+          resourceActions.addToCollection(),
+          resourceActions.link(),
           nodeActions.linksPane(),
           nodeStaticActions.metadataPane,
           nodeStaticActions.propertiesPane
@@ -1294,6 +1298,8 @@ export function resolveNodeContextMenu(
         group: "all",
         items: [
           resourceActions.star(),
+          resourceActions.addToCollection(),
+          resourceActions.link(),
           nodeActions.linksPane(),
           nodeActions.sideNotesPane(),
           nodeStaticActions.propertiesPane,
@@ -1317,6 +1323,8 @@ export function resolveNodeContextMenu(
       : undefined;
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [
+        resourceActions.addToCollection(),
+        resourceActions.link(),
         resourceActions.toggleReadMode(),
         nodeStaticActions.propertiesPane,
         nodeStaticActions.activityPane,
@@ -1324,6 +1332,8 @@ export function resolveNodeContextMenu(
         ...(coverPhotoAction ? [coverPhotoAction] : [])
       ]
     : [
+        resourceActions.addToCollection(),
+        resourceActions.link(),
         resourceActions.toggleReadMode(),
         nodeActions.toggleFullWidth(),
         nodeStaticActions.propertiesPane,

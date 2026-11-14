@@ -62,5 +62,6 @@ export enum Action {
   CYCLE_CONTEXT_VIEW = "cycle-context-view",
   RHOMBUS = "rhombus",
   TODAY = "today",
-  FEED = "feed"
+  FEED = "feed",
+  NEW_COMMANDS = "new-commands"
 }

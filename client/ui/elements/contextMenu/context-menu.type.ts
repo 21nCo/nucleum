@@ -10,6 +10,8 @@ export type IContextMenuGroup = {
 
 export type IContextMenuItem = ISelectItem & {
   callback?: (props?: any) => Promise<void>;
+  /** Single key that runs this item from the page, shown as a hint. */
+  hotKey?: string;
   action?: string;
   type?: ContextMenuType;
   initialValue?: boolean;

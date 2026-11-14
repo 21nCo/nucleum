@@ -365,6 +365,8 @@ export function resolveObjectiveContextMenu(
     primaryItems = [
       resourceActions.star(),
       resourceActions.edit(accessPoint),
+      resourceActions.addToCollection(),
+      resourceActions.link(),
       resourceActions.copyLink()
     ];
   } else if (

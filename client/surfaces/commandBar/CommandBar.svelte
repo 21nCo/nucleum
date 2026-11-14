@@ -64,16 +64,18 @@
   onMount(() => {
     inputRef?.focus();
   });
+  let appliedCommand: string | undefined;
   $effect(() => {
     if (
       !command ||
       commandType !== ActionType.SEARCH_CMD ||
-      (isPerformingSearchAction && searchAction?.action === command)
+      appliedCommand === command
     ) {
       return;
     }
     const action = requireCommandHost().resolveAction(command);
     if (!action) return;
+    appliedCommand = command;
     onSearchAction({ detail: action });
   });
   function handleKeyDown(event: KeyboardEvent) {

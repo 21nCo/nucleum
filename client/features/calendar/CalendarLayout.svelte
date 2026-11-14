@@ -18,11 +18,16 @@
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
+  import {
+    isKeyTargetPane,
+    isPlainPageKey
+  } from "@nucleum/shell/shortcuts/page-keys";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { Placement } from "@21n/ui/elements/direction.enum";
   import {
     contextZone,
+    getContextZonePane,
     nextCycleValue
   } from "@nucleum/shell/topNav/contextZone/context-zone";
   let {
@@ -89,6 +94,18 @@
     measure();
     return () => observer.disconnect();
   });
+
+  const keyPane = getContextZonePane();
+  let rootRef = $state<HTMLDivElement | undefined>();
+
+  /** Shift+T goes to today. */
+  function onTodayKey(event: KeyboardEvent) {
+    if (!event.shiftKey || event.key.toLowerCase() !== "t") return;
+    if (!isPlainPageKey(event, { allowShift: true }) || !onGoToToday) return;
+    if (!isKeyTargetPane(keyPane, rootRef)) return;
+    event.preventDefault();
+    onGoToToday();
+  }
 
   function openCalendarSettings() {
     requireCommandHost().runAction(Action.CALENDAR_SETTINGS, {
@@ -158,6 +175,8 @@
     });
   }
 </script>
+
+<svelte:window onkeydown={onTodayKey} />
 
 {#snippet layoutSwitcher()}
   <div class="h-full" data-testid="calendar-layout-switcher">
@@ -252,6 +271,7 @@
 {/if}
 
 <div
+  bind:this={rootRef}
   class="flex flex-col h-full w-full otop:pt-12"
   data-testid={`calendar-layout-${panel}`}
 >

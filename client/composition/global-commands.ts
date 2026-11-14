@@ -53,6 +53,7 @@ export const globalActions: IAction[] = [
   shellCommands.edit_mode,
   helpCommands.help,
   commandCommands.cmd,
+  commandCommands.new_commands,
   shellCommands.toggle_sidebar,
   helpCommands.troubleshoot,
   accountCommands.bootstrap,

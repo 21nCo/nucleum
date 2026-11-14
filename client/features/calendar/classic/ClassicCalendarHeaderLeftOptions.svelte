@@ -9,6 +9,14 @@
   import view from "@21n/ui/environment/view.store";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import Button from "@21n/ui/elements/button/Button.svelte";
+  import {
+    isKeyTargetPane,
+    isPlainPageKey
+  } from "@nucleum/shell/shortcuts/page-keys";
+  import {
+    getContextZonePane,
+    type ContextZonePane
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
   import {
     CALENDAR_HEATMAP_SCALE,
@@ -21,6 +29,8 @@
     isRefreshing = false,
     parentBgIndex = 2,
     isScopeHidden = false,
+    keyPane = undefined,
+    keyRoot = undefined,
     onScaleSelection = undefined
   }: {
     selectedView?: TimeScaleUnit;
@@ -28,6 +38,10 @@
     parentBgIndex?: number;
     /** Hides the scope button, as when the controls are compact. */
     isScopeHidden?: boolean;
+    /** Pane of the calendar page, used to decide whether scale keys apply. */
+    keyPane?: ContextZonePane | undefined;
+    /** Element of the calendar page, used to skip keys while it is covered. */
+    keyRoot?: HTMLElement | undefined;
     onScaleSelection?:
       | ((event: CustomEvent<TimeScaleUnit>) => void)
       | undefined;
@@ -76,6 +90,26 @@
     .map((scale) => optionsByScale[scale])
     .filter(Boolean);
 
+  const ownPane = getContextZonePane();
+  let rootRef = $state<HTMLDivElement | undefined>();
+
+  /**
+   * D, W, M, Y and E pick the scale whose switcher shows that letter. The
+   * calendar page passes its own pane and element, since these options may
+   * draw in the top bar, outside the page.
+   */
+  function onScaleKey(event: KeyboardEvent) {
+    if (!isPlainPageKey(event)) return;
+    if (!isKeyTargetPane(keyPane ?? ownPane, keyRoot ?? rootRef)) return;
+    const letter = `text:${event.key.toUpperCase()}`;
+    const option = switchOptions.find((item) => item?.icon === letter);
+    if (!option) return;
+    event.preventDefault();
+    handleScaleSelection(
+      new CustomEvent("select", { detail: option.value as TimeScaleUnit })
+    );
+  }
+
   function handleScaleSelection(e: CustomEvent<TimeScaleUnit>) {
     if (!e.detail) return;
     selectedView = e.detail;
@@ -86,7 +120,9 @@
   }
 </script>
 
-<div class="flex items-center gap-2">
+<svelte:window onkeydown={onScaleKey} />
+
+<div bind:this={rootRef} class="flex items-center gap-2">
   <div>
     {#if $view.isConstrainedWidth}
       <DropDown

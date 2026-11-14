@@ -457,7 +457,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
   });
 
-  test("Interface: enable Hide menu bar on Q and verify Q hides/shows left nav, then disable", async ({
+  test("Interface: enable Hide menu bar on [ and verify [ hides/shows left nav, then disable", async ({
     page
   }) => {
     test.setTimeout(60_000);
@@ -490,12 +490,12 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       timeout: 5_000
     });
 
-    await page.keyboard.press("q");
+    await page.keyboard.press("[");
     await expect(page.getByTestId("leftnav-sidebar-toggle")).toBeHidden({
       timeout: 5_000
     });
 
-    await page.keyboard.press("q");
+    await page.keyboard.press("[");
     await expect(page.getByTestId("leftnav-sidebar-toggle")).toBeVisible({
       timeout: 5_000
     });
@@ -593,6 +593,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await page.keyboard.press("Escape");
     await page.locator("body").click({ position: { x: 100, y: 300 } });
 
+    await page.keyboard.press("g");
     await page.keyboard.press("c");
     await expect(
       page.getByRole("button", { name: /^Today$/i }).first()
@@ -600,14 +601,17 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       timeout: 10_000
     });
 
+    await page.keyboard.press("g");
     await page.keyboard.press("l");
     await expectLibrarySurfaceVisible(page, 10_000);
 
+    await page.keyboard.press("g");
     await page.keyboard.press("o");
     await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
       timeout: 10_000
     });
 
+    await page.keyboard.press("g");
     await page.keyboard.press("l");
     await expectLibrarySurfaceVisible(page, 10_000);
 
@@ -617,7 +621,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await page.keyboard.press("Escape");
   });
 
-  test("Keyboard shortcuts: See hot keys opens, verify each shortcut listed, then verify C/L/F/O/P/Q/Space trigger actions", async ({
+  test("Keyboard shortcuts: See hot keys opens, verify each shortcut listed, then verify G C/G L/G F/G O/G P/[/Space trigger actions", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -710,6 +714,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await page.keyboard.press("Escape");
     await page.locator("body").click({ position: { x: 10, y: 10 } });
 
+    await page.keyboard.press("g");
     await page.keyboard.press("c");
     await expect(
       page.getByRole("button", { name: /^Today$/i }).first()
@@ -718,20 +723,24 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     });
 
     if (isFocusProject(testInfo.project.name)) {
+      await page.keyboard.press("g");
       await page.keyboard.press("f");
       await expect(
         page.getByText(/Focus|Quick focus|Focus session/i).first()
       ).toBeVisible({ timeout: 8_000 });
     }
 
+    await page.keyboard.press("g");
     await page.keyboard.press("l");
     await expectLibrarySurfaceVisible(page, 8_000);
 
+    await page.keyboard.press("g");
     await page.keyboard.press("o");
     await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
       timeout: 8_000
     });
 
+    await page.keyboard.press("g");
     await page.keyboard.press("p");
     await expect(page.getByTestId("capture-editor")).toBeVisible({
       timeout: 8_000
@@ -742,7 +751,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     });
 
     await page.locator("body").click({ position: { x: 100, y: 200 } });
-    await page.keyboard.press("q");
+    await page.keyboard.press("[");
     const leftNavExists =
       (await page.getByTestId("leftnav-settings").count()) > 0;
     if (leftNavExists) {
@@ -751,13 +760,14 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       });
     }
 
-    await page.keyboard.press("q");
+    await page.keyboard.press("[");
     if (leftNavExists) {
       await expect(page.getByTestId("leftnav-settings")).toBeVisible({
         timeout: 8_000
       });
     }
 
+    await page.keyboard.press("g");
     await page.keyboard.press("l");
     await expectLibrarySurfaceVisible(page, 8_000);
 

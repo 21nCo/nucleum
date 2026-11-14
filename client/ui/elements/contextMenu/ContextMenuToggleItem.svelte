@@ -2,6 +2,7 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { bg, cn } from "@21n/ui/environment/presentation";
   import Icon from "@21n/ui/elements/Icon.svelte";
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
   import Badge from "@21n/ui/elements/text/Badge.svelte";
   import type { IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
   import { hoverable } from "@21n/ui/actions/hover.action";
@@ -48,7 +49,7 @@
   }}
   data-context-menu-item-id={item.value}
   class={cn(
-    "contextmenuitem flex flex-col items-center justify-center rounded-md border flex-1",
+    "contextmenuitem relative flex flex-col items-center justify-center rounded-md border flex-1",
     {
       "min-h-8 min-w-8": size === Size.sm,
       "min-h-10 min-w-10": size === Size.md,
@@ -70,6 +71,11 @@
     })}
   />
   <span class="text-b3">{on ? item.activeLabel : item.label}</span>
+  {#if item.hotKey}
+    <div class="absolute top-1 right-1">
+      <ShortcutText shortcut={{ key: item.hotKey }} size={Size.sm} />
+    </div>
+  {/if}
   {#if count}
     <div class="absolute bottom-1 right-1">
       <Badge text={count} size={Size.sm} />
