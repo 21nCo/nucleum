@@ -1,0 +1,19 @@
+tests/unit/account-service/files-runtime.spec.ts
+  s_57919876cf70d7::t_7d6c49c20cb960 399-415,418-419,422-424,426-429
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9379f2fd38f77677e92a5239ea595f9b58138d80",
+  "prompts": {},
+  "sessions": {
+    "s_57919876cf70d7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e294f9e1-e7bd-43c4-ab64-cb5317c40da8",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
