@@ -21,6 +21,7 @@
   import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import ProfilePicture from "@nucleum/surfaces/account/profile/ProfilePicture.svelte";
+  import AccessTokensSection from "@nucleum/surfaces/account/access-tokens/AccessTokensSection.svelte";
   import { cn } from "@21n/ui/environment/presentation";
   import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
@@ -560,6 +561,10 @@
       </div>
     </div>
   </div>
+
+  {#if accountDetails}
+    <AccessTokensSection />
+  {/if}
 
   <div class="flex justify-center w-full gap-4">
     {#if isSignedIn}
