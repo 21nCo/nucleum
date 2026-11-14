@@ -108,7 +108,9 @@ test.describe("settings - personal access tokens @settings @auth", () => {
       await section.getByTestId("access-token-create").click();
       const form = section.getByTestId("access-token-form");
       await expect(form).toBeVisible();
-      await form.getByPlaceholder("What is this token for?").fill(name);
+      const nameInput = form.getByPlaceholder("What is this token for?");
+      await expect(nameInput).toBeFocused();
+      await nameInput.fill(name);
       await form.getByRole("button", { name: target.app, exact: true }).click();
       await form.getByRole("button", { name: "Read", exact: true }).click();
       await form.getByRole("button", { name: "7 days", exact: true }).click();
@@ -130,6 +132,7 @@ test.describe("settings - personal access tokens @settings @auth", () => {
 
       const secret = section.getByTestId("access-token-secret");
       await expect(secret).toBeVisible();
+      await expect(section.getByTestId("access-token-copy")).toBeFocused();
       const secretValue = (await secret.textContent())?.trim() ?? "";
       expect(secretValue.length).toBeGreaterThan(20);
       const row = tokenRow(section, name);
@@ -147,6 +150,7 @@ test.describe("settings - personal access tokens @settings @auth", () => {
 
       await section.getByTestId("access-token-dismiss").click();
       await expect(secret).toBeHidden();
+      await expect(section.getByTestId("access-token-create")).toBeFocused();
 
       await page.reload();
       section = await openAccessTokens(page);
@@ -161,6 +165,10 @@ test.describe("settings - personal access tokens @settings @auth", () => {
       await confirmRevoke.click();
       await expect(tokenRow(section, name)).toHaveCount(0);
       revoked = true;
+      await expect(
+        section.locator(":focus"),
+        "focus stays in the section after the row goes"
+      ).toHaveCount(1);
 
       const denied = await queryWithToken(
         accountBaseUrl,

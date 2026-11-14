@@ -74,6 +74,7 @@
   let revokingId = $state<string | undefined>(undefined);
   let listGeneration = 0;
   let sectionElement = $state<HTMLElement | undefined>(undefined);
+  let nameInput = $state<{ focus: () => Promise<void> } | undefined>(undefined);
 
   onMount(() => {
     void refresh();
@@ -118,11 +119,57 @@
     expiresInDays = 30;
     formError = undefined;
     isFormVisible = true;
+    void focusNameInput();
   }
 
   function closeForm() {
     isFormVisible = false;
     formError = undefined;
+    void focusSectionFallback();
+  }
+
+  async function focusNameInput() {
+    await tick();
+    await nameInput?.focus();
+  }
+
+  async function focusInSection(selector: string) {
+    await tick();
+    const target = sectionElement?.querySelector<HTMLElement>(selector);
+    if (!target) return false;
+    target.focus();
+    return true;
+  }
+
+  /**
+   * Focus target when the focused control goes away and no nearer control
+   * takes its place: Create, else Retry, else the open form, else the heading.
+   */
+  async function focusSectionFallback() {
+    if (await focusInSection('[data-testid="access-token-create"]')) return;
+    if (await focusInSection('[data-testid="access-token-retry"]')) return;
+    if (isFormVisible && nameInput) {
+      await nameInput.focus();
+      return;
+    }
+    await focusInSection("#access-tokens-heading");
+  }
+
+  /** Puts focus back in the section if a list reload removed its target. */
+  async function restoreFocusIfLost() {
+    await tick();
+    const active = document.activeElement;
+    if (!active || active === document.body) await focusSectionFallback();
+  }
+
+  async function handleRetry() {
+    await refresh();
+    await restoreFocusIfLost();
+  }
+
+  function dismissCreated() {
+    created = undefined;
+    void focusSectionFallback();
   }
 
   async function handleCreate() {
@@ -139,11 +186,14 @@
     isCreating = false;
     if (!result.ok) {
       formError = result.message;
+      await focusNameInput();
       return;
     }
     created = { ...result.data, name: tokenName };
     isFormVisible = false;
+    await focusInSection('[data-testid="access-token-copy"]');
     await refresh();
+    await restoreFocusIfLost();
   }
 
   async function handleCopy() {
@@ -164,12 +214,18 @@
     confirmRevokeId = undefined;
     if (!result.ok) {
       toasts.error(result.message);
+      await focusRowButton(token.id, "access-token-revoke");
       return;
     }
     if (created?.id === token.id) created = undefined;
+    const index = tokens.findIndex((entry) => entry.id === token.id);
     tokens = tokens.filter((entry) => entry.id !== token.id);
     toasts.success(`Revoked ${token.name}`);
+    const neighbour = tokens[index] ?? tokens[index - 1];
+    if (neighbour) await focusRowButton(neighbour.id, "access-token-revoke");
+    else await focusSectionFallback();
     await refresh();
+    await restoreFocusIfLost();
   }
 
   async function focusRowButton(tokenId: string, testId: string) {
@@ -177,7 +233,9 @@
     const row = Array.from(
       sectionElement?.querySelectorAll<HTMLElement>("[data-token-id]") ?? []
     ).find((element) => element.dataset.tokenId === tokenId);
-    row?.querySelector<HTMLElement>(`[data-testid="${testId}"]`)?.focus();
+    const target = row?.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+    if (target) target.focus();
+    else await focusSectionFallback();
   }
 
   /** Swaps the row to its confirm controls and moves focus to them. */
@@ -217,7 +275,7 @@
 >
   <div class="flex items-center justify-between gap-4 w-full">
     <div class="flex flex-col gap-1">
-      <div id="access-tokens-heading">
+      <div id="access-tokens-heading" tabindex="-1" class="outline-none">
         <Text content="Access tokens" style={TextStyle.PANEL_HEADING} />
       </div>
       <div class="text-b3 text-fgs3">
@@ -264,9 +322,7 @@
           size={Size.sm}
           style={ButtonStyle.PLAIN}
           testId="access-token-dismiss"
-          onclick={() => {
-            created = undefined;
-          }}
+          onclick={dismissCreated}
         />
       </div>
     </div>
@@ -278,6 +334,7 @@
       data-testid="access-token-form"
     >
       <TextInput
+        bind:this={nameInput}
         bind:value={name}
         label={{ label: "Name", orientation: Orientation.Vertical }}
         placeholder="What is this token for?"
@@ -345,7 +402,7 @@
         {isLoading}
         isDisabled={isLoading}
         testId="access-token-retry"
-        onclick={() => refresh()}
+        onclick={handleRetry}
       />
     </div>
   {:else if isLoading && tokens.length === 0}

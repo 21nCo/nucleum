@@ -348,4 +348,193 @@ describe("AccessTokensSection", () => {
     );
     expect(mocks.revokeAccessToken).not.toHaveBeenCalled();
   });
+  describe("focus", () => {
+    const third = {
+      ...existing,
+      id: "key_third",
+      name: "Third",
+      lastUsedAt: null
+    };
+
+    function rowButton(tokenId: string, testId: string) {
+      const row = rows().find((entry) => entry.dataset.tokenId === tokenId);
+      return row?.querySelector(`[data-testid="${testId}"]`) ?? null;
+    }
+
+    function nameField() {
+      return screen
+        .getByTestId("access-token-form")
+        .querySelector("input") as HTMLInputElement;
+    }
+
+    async function revokeRow(tokenId: string) {
+      await fireEvent.click(
+        rowButton(tokenId, "access-token-revoke") as HTMLElement
+      );
+      await fireEvent.click(
+        rowButton(tokenId, "access-token-revoke-confirm") as HTMLElement
+      );
+    }
+
+    it("moves focus to the Name input when the form opens and to Create when it is cancelled", async () => {
+      mocks.listAccessTokens.mockResolvedValue({ ok: true, data: [] });
+
+      render(AccessTokensSection);
+      await waitFor(() =>
+        expect(screen.getByTestId("access-token-create")).toBeTruthy()
+      );
+      await fireEvent.click(screen.getByTestId("access-token-create"));
+      await waitFor(() => expect(document.activeElement).toBe(nameField()));
+
+      await fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByTestId("access-token-create")
+        )
+      );
+    });
+
+    it("moves focus to Copy after a token is created and to Create when it is dismissed", async () => {
+      mocks.listAccessTokens
+        .mockResolvedValueOnce({ ok: true, data: [existing] })
+        .mockResolvedValue({ ok: true, data: [createdToken, existing] });
+      mocks.createAccessToken.mockResolvedValue({
+        ok: true,
+        data: { id: "key_new", secret: "ak_once" }
+      });
+
+      render(AccessTokensSection);
+      await waitFor(() => expect(rows()).toHaveLength(1));
+      await submitToken("CLI");
+
+      await waitFor(() => expect(rows()).toHaveLength(2));
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByTestId("access-token-copy")
+        )
+      );
+
+      await fireEvent.click(screen.getByTestId("access-token-dismiss"));
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByTestId("access-token-create")
+        )
+      );
+    });
+
+    it("returns focus to the Name input when creation fails", async () => {
+      const failure = deferred<unknown>();
+      mocks.listAccessTokens.mockResolvedValue({ ok: true, data: [] });
+      mocks.createAccessToken.mockReturnValue(failure.promise);
+
+      render(AccessTokensSection);
+      await waitFor(() =>
+        expect(screen.getByTestId("access-token-create")).toBeTruthy()
+      );
+      await submitToken("x");
+      screen.getByTestId("access-token-submit").focus();
+      failure.resolve({ ok: false, kind: "failed", message: "boom" });
+
+      await waitFor(() => expect(screen.getByText("boom")).toBeTruthy());
+      await waitFor(() => expect(document.activeElement).toBe(nameField()));
+    });
+
+    it("moves focus to the next row's Revoke after a revoke, else the previous row's", async () => {
+      mocks.listAccessTokens
+        .mockResolvedValueOnce({
+          ok: true,
+          data: [createdToken, existing, third]
+        })
+        .mockResolvedValueOnce({ ok: true, data: [createdToken, third] })
+        .mockResolvedValue({ ok: true, data: [createdToken] });
+      mocks.revokeAccessToken.mockResolvedValue({ ok: true, data: {} });
+
+      render(AccessTokensSection);
+      await waitFor(() => expect(rows()).toHaveLength(3));
+
+      await revokeRow("key_existing");
+      await waitFor(() =>
+        expect(mocks.listAccessTokens).toHaveBeenCalledTimes(2)
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          rowButton("key_third", "access-token-revoke")
+        )
+      );
+
+      await revokeRow("key_third");
+      await waitFor(() =>
+        expect(mocks.listAccessTokens).toHaveBeenCalledTimes(3)
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          rowButton("key_new", "access-token-revoke")
+        )
+      );
+    });
+
+    it("moves focus to Create when a revoke empties the list", async () => {
+      mocks.listAccessTokens
+        .mockResolvedValueOnce({ ok: true, data: [existing] })
+        .mockResolvedValue({ ok: true, data: [] });
+      mocks.revokeAccessToken.mockResolvedValue({ ok: true, data: {} });
+
+      render(AccessTokensSection);
+      await waitFor(() => expect(rows()).toHaveLength(1));
+      await revokeRow("key_existing");
+
+      await waitFor(() =>
+        expect(screen.getByText("You have no access tokens.")).toBeTruthy()
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByTestId("access-token-create")
+        )
+      );
+    });
+
+    it("returns focus to the row's Revoke when revocation fails", async () => {
+      mocks.listAccessTokens.mockResolvedValue({
+        ok: true,
+        data: [createdToken, existing]
+      });
+      mocks.revokeAccessToken.mockResolvedValue({
+        ok: false,
+        kind: "failed",
+        message: "nope"
+      });
+
+      render(AccessTokensSection);
+      await waitFor(() => expect(rows()).toHaveLength(2));
+      await revokeRow("key_existing");
+
+      await waitFor(() =>
+        expect(mocks.toastError).toHaveBeenCalledWith("nope")
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          rowButton("key_existing", "access-token-revoke")
+        )
+      );
+    });
+
+    it("moves focus to Create when a retry loads the list", async () => {
+      mocks.listAccessTokens
+        .mockResolvedValueOnce({ ok: false, kind: "failed", message: "down" })
+        .mockResolvedValue({ ok: true, data: [existing] });
+
+      render(AccessTokensSection);
+      await waitFor(() =>
+        expect(screen.getByTestId("access-token-retry")).toBeTruthy()
+      );
+      await fireEvent.click(screen.getByTestId("access-token-retry"));
+
+      await waitFor(() => expect(rows()).toHaveLength(1));
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByTestId("access-token-create")
+        )
+      );
+    });
+  });
 });
