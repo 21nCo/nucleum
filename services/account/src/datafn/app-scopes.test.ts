@@ -62,10 +62,16 @@ async function call(path: string, headers: Headers, body?: unknown): Promise<Res
   }));
 }
 
+/** Builds a throwaway sign-up credential at runtime that meets the password policy. */
+function generateCredential(): string {
+  return [randomUUID().toUpperCase(), randomUUID(), '!'].join('');
+}
+
 async function signUp(): Promise<Headers> {
+  const credential = generateCredential();
   const response = await call('/auth/sign-up/password', { origin: base }, {
     email: 'scopes@example.test',
-    password: `Pw1!${randomUUID()}`,
+    password: credential,
     sessionMode: 'hybrid'
   });
   expect(response.status).toBe(200);

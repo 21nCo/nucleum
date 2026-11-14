@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import { describe, expect, it, vi } from 'vitest';
 import { memoryAdapter } from '@superfunctions/db/adapters/memory';
@@ -51,8 +52,8 @@ describe('account FileFn session scopes', () => {
     const storage = createAccountFileStorage(
       {
         FILEFN_R2_ACCOUNT_ID: 'test-account',
-        FILEFN_R2_ACCESS_KEY_ID: 'test-access-key',
-        FILEFN_R2_SECRET_ACCESS_KEY: 'test-secret-key',
+        FILEFN_R2_ACCESS_KEY_ID: randomUUID(),
+        FILEFN_R2_SECRET_ACCESS_KEY: randomUUID(),
         FILEFN_R2_BUCKET: 'nucleus-files-test-{region}'
       },
       'insouth',
