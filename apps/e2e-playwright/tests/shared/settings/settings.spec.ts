@@ -295,25 +295,15 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       timeout: 10_000
     });
 
-    const lightSchemeVisible = await page
-      .getByText("Light color scheme", { exact: true })
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    if (!lightSchemeVisible) {
-      const syncToggle = page
-        .getByText("Sync theme with system", { exact: true })
-        .first()
-        .locator("xpath=ancestor::*[.//label][1]//label");
-      await syncToggle.click({ timeout: 5_000 });
+    const section = page.getByTestId("color-scheme-section");
+    const lightPicker = section.getByTestId("color-scheme-light-picker");
+    if (!(await lightPicker.isVisible().catch(() => false))) {
+      await section
+        .getByTestId("toggle-mixed-color-schemes")
+        .locator('input[type="checkbox"]')
+        .setChecked(true, { force: true });
     }
-
-    await expect(
-      page.getByText("Light color scheme", { exact: true }).first()
-    ).toBeVisible({
-      timeout: 10_000
-    });
+    await expect(lightPicker).toBeVisible({ timeout: 10_000 });
 
     const lightThemes = [
       { name: "Blue", id: "colorscheme:clean_tidyblue_light" },
@@ -327,29 +317,32 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     ];
 
     for (const theme of lightThemes) {
-      const btn = page
-        .getByRole("button", { name: theme.name, exact: true })
-        .first();
-      await btn.scrollIntoViewIfNeeded();
-      await btn.click({ timeout: 5_000 });
+      await lightPicker.click({ timeout: 5_000 });
+      await page
+        .getByRole("option", { name: theme.name, exact: true })
+        .first()
+        .click({ timeout: 5_000 });
+      await expect(lightPicker).toContainText(theme.name, { timeout: 5_000 });
       await expect(
-        page.getByRole("button", { name: theme.name, exact: true }).first()
-      ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
+        lightPicker.locator(`[data-scheme-swatch="${theme.id}"]`)
+      ).toBeVisible({ timeout: 5_000 });
     }
 
+    await lightPicker.click({ timeout: 5_000 });
     await page
-      .getByRole("button", { name: "Blue", exact: true })
+      .getByRole("option", { name: "Blue", exact: true })
       .first()
       .click({ timeout: 5_000 });
-    await expect(
-      page.getByRole("button", { name: "Blue", exact: true }).first()
-    ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
+    await expect(lightPicker).toContainText("Blue", { timeout: 5_000 });
 
     await closeSettings(page);
     await openAppearance(page);
     await expect(
-      page.getByRole("button", { name: "Blue", exact: true }).first()
-    ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
+      page
+        .getByTestId("color-scheme-section")
+        .locator('[data-scheme-swatch="colorscheme:clean_tidyblue_light"]')
+        .first()
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test("Appearance: switch between light and dark themes and verify theme layer updates", async ({
@@ -359,18 +352,10 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await ensureInAppOnHome(page);
     await openAppearance(page);
 
-    const lightSchemeVisible = await page
-      .getByText("Light color scheme", { exact: true })
+    await page
+      .getByRole("checkbox", { name: "Sync theme with system" })
       .first()
-      .isVisible()
-      .catch(() => false);
-
-    if (lightSchemeVisible) {
-      const syncToggle = page
-        .getByRole("button", { name: "Sync theme with system", exact: true })
-        .first();
-      await syncToggle.click({ timeout: 5_000 });
-    }
+      .setChecked(false, { force: true });
 
     const themeGroup = page.getByText("Theme", { exact: true }).first();
     await expect(themeGroup).toBeVisible({ timeout: 10_000 });
