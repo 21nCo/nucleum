@@ -65,6 +65,7 @@
     return resolveShortcutText({
       key: detail.key,
       modifiers: detail.modifiers,
+      prefix: detail.prefix,
       os: $context.os
     });
   });

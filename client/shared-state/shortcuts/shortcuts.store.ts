@@ -54,6 +54,7 @@ export const keyboardShortcuts = {
     return Object.entries({ ...defaultKeyMap, ...this.get() })
       .map(([action, shortcut]) => ({
         action,
+        prefix: shortcut?.prefix,
         key: shortcut?.key,
         code: shortcut?.code,
         modifiers: shortcut?.modifiers
@@ -75,22 +76,34 @@ export const keyboardShortcuts = {
   },
 
   /**
-   * Resolves the shortcut for the given key and modifiers.
-   * @param key
-   * @param modifiers
+   * Resolves the shortcut for a key press. With `prefix`, only chords started
+   * by that prefix key match; without it, only shortcuts without a prefix do.
    */
-  resolveShortcut(event: KeyboardEvent) {
+  resolveShortcut(event: KeyboardEvent, prefix?: string) {
     if (!event?.key) return { shortcut: undefined, modifiers: [] };
     const modifiers = resolveModifiers(event);
     const keyMap = this.fetchKeyMap();
     const shortcut = keyMap.find((s: any) => {
-      return this.checkShortcut(event, s);
+      return this.checkShortcut(event, s, prefix);
     });
     logger.log({ event, modifiers, shortcut, keyMap });
     return { shortcut, modifiers };
   },
 
-  checkShortcut(event: KeyboardEvent, shortcut: string | IKeyboardShortcut) {
+  /** Whether a plain key press starts a chord of the shortcut map. */
+  isChordPrefix(event: KeyboardEvent) {
+    if (resolveModifiers(event).length > 0) return false;
+    const key = event.key?.toLowerCase();
+    return this.fetchKeyMap().some(
+      (shortcut) => shortcut.prefix?.toLowerCase() === key
+    );
+  },
+
+  checkShortcut(
+    event: KeyboardEvent,
+    shortcut: string | IKeyboardShortcut,
+    prefix?: string
+  ) {
     try {
       if (typeof shortcut === "string") {
         const keyMap = this.fetchKeyMap();
@@ -99,6 +112,11 @@ export const keyboardShortcuts = {
         shortcut = result;
       }
       const { key, code, modifiers } = shortcut;
+      if (
+        (shortcut.prefix?.toLowerCase() ?? undefined) !==
+        (prefix?.toLowerCase() ?? undefined)
+      )
+        return false;
       const eventKey = event.key;
       const eventCode = event.code;
       const eventModifiers = resolveModifiers(event);

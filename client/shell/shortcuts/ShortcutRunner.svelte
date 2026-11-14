@@ -19,6 +19,18 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
+  import { appMenuStore } from "@nucleum/shell/navigation/app-menu.store";
+  import {
+    createPinnedSpacesStore,
+    orderPinnedSpaces,
+    toPinnedSpacesKey
+  } from "@nucleum/shell/navigation/pinned-spaces";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { resolveSpacePath } from "@nucleum/client/config/space-route";
+  import {
+    CHORD_TIMEOUT_MS,
+    resolveChordSpaceIndex
+  } from "@nucleum/shell/shortcuts/chord-keys";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -48,7 +60,10 @@
       appEvents.publish(event.key.toString() as GlobalEvent, event);
       return;
     }
-    if (isTextInputSource && event.metaKey === false) return;
+    if (isTextInputSource && event.metaKey === false) {
+      clearChord();
+      return;
+    }
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
     logger.log({
       at: "shortcutListener",
@@ -59,11 +74,63 @@
       target,
       event
     });
-    if (!shortcut) return;
+    if (!shortcut) {
+      if (keyboardShortcuts.isChordPrefix(event)) startChord(event);
+      return;
+    }
+    if (!requireCommandHost().resolveAction(shortcut.action)) return;
     requireCommandHost().runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
   };
+
+  const pinnedIds = $derived(appMenuStore.pinnedSpaces($appMenuStore));
+  const pinnedKey = $derived(toPinnedSpacesKey(pinnedIds));
+  const pinnedSpacesStore = $derived(createPinnedSpacesStore(pinnedKey));
+  const pinnedSpaces = $derived(
+    orderPinnedSpaces(pinnedIds, $pinnedSpacesStore.data)
+  );
+
+  let pendingPrefix: string | undefined;
+  let pendingTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function clearChord() {
+    pendingPrefix = undefined;
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = undefined;
+  }
+
+  function startChord(event: KeyboardEvent) {
+    clearChord();
+    pendingPrefix = event.key.toLowerCase();
+    pendingTimer = setTimeout(clearChord, CHORD_TIMEOUT_MS);
+    event.preventDefault();
+  }
+
+  /**
+   * Runs the second key of a chord such as G then C, in the capture phase so
+   * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
+   * pinned space in that app menu position. Any other key ends the chord.
+   */
+  function runChord(event: KeyboardEvent) {
+    if (["Shift", "Meta", "Control", "Alt"].includes(event.key)) return;
+    const prefix = pendingPrefix;
+    clearChord();
+    const spaceIndex = resolveChordSpaceIndex(prefix, event);
+    if (spaceIndex !== undefined) {
+      const space = pinnedSpaces[spaceIndex];
+      if (space) navigation.gotoPath(resolveSpacePath(space.id));
+      event.stopPropagation();
+      event.preventDefault();
+      return;
+    }
+    const { shortcut } = keyboardShortcuts.resolveShortcut(event, prefix);
+    if (!shortcut || !requireCommandHost().resolveAction(shortcut.action))
+      return;
+    requireCommandHost().runAction(shortcut.action);
+    event.stopPropagation();
+    event.preventDefault();
+  }
 
   function hasOpenPopover() {
     return Array.from(document.querySelectorAll(".popover")).some(
@@ -85,6 +152,15 @@
   let escapeBulkCount: number | undefined;
 
   const escapeCaptureListener = (event: KeyboardEvent) => {
+    if (pendingPrefix !== undefined) {
+      if (
+        event.key === KeyboardKey.ESCAPE ||
+        isTextElement(event.target) ||
+        $context.embed === Embed.HANDSET
+      )
+        clearChord();
+      else runChord(event);
+    }
     if (event.key !== KeyboardKey.ESCAPE) return;
     escapeBulkCount = get(bulkEditStore.count);
   };
