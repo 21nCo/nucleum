@@ -153,6 +153,22 @@ interface ScopeView {
 }
 
 type DerivedPolicy = Extract<SharedResourcePolicy, { kind: 'collections' | 'linkTags' }>;
+type FieldPolicy = Extract<SharedResourcePolicy, { kind: 'field' }>;
+
+/**
+ * Values a field policy's field may hold for a grant. A field that names the
+ * type of one record (an access log's `resource`, beside `resourceId`) may
+ * not name a shared type, whose visibility depends on that record's own
+ * policy, so scoped grants reach only logs of their apps' own resources.
+ */
+function fieldPolicyValues(
+  policy: FieldPolicy,
+  tables: ReadonlySet<string>,
+  ownership: ResourceOwnership
+): ReadonlySet<string> {
+  if (!policy.recordField) return tables;
+  return new Set([...tables].filter((name) => !ownership.shared.has(name)));
+}
 
 /** Per-request reads behind shared-resource checks, cached for one request. */
 interface SharedVisibility {
@@ -284,11 +300,12 @@ async function resolveSpaceItemAccess(
     if (!policy || !tables.has(resource)) continue;
     const ids = [...idSet];
     if (policy.kind === 'field') {
+      const values = fieldPolicyValues(policy, tables, ownership);
       const stored = await shared.readRecords(resource, ids);
       for (const id of ids) {
         const owner = stored.get(id)?.[policy.field];
         if (input.pending?.has(`${resource}|${id}`) ||
-          (typeof owner === 'string' && tables.has(owner))) {
+          (typeof owner === 'string' && values.has(owner))) {
           visibleShared.add(`${resource}|${id}`);
         }
       }
@@ -528,6 +545,8 @@ function createScopeView(
   };
 
   const allowedValue = (value: unknown) => typeof value === 'string' && tables.has(value);
+  const fieldValueAllowed = (policy: FieldPolicy, value: unknown) =>
+    typeof value === 'string' && fieldPolicyValues(policy, tables, ownership).has(value);
 
   const canQuery = (query: unknown): boolean => {
     if (!isRecord(query) || typeof query.resource !== 'string') return false;
@@ -549,7 +568,7 @@ function createScopeView(
     if (!policy) return true;
     if (query.operation !== undefined || readsOtherNamespaces(query.metadata)) return false;
     if (policy.kind === 'field') {
-      return constrainsField(query.filters, policy.field, tables);
+      return constrainsField(query.filters, policy.field, fieldPolicyValues(policy, tables, ownership));
     }
     if (policy.kind === 'items') {
       return query.groupBy === undefined && query.aggregations === undefined &&
@@ -559,7 +578,9 @@ function createScopeView(
     if (isDerivedPolicy(policy)) {
       // Rows are filtered after the query runs, so nothing may summarize them
       // or page through them: a page cursor carries its last row's values.
-      return DERIVED_QUERY_DENIED_KEYS.every((key) => query[key] === undefined);
+      // Rows are filtered by id, so a projection must keep it.
+      return DERIVED_QUERY_DENIED_KEYS.every((key) => query[key] === undefined) &&
+        selectKeepsId(query.select);
     }
     return false;
   };
@@ -611,7 +632,7 @@ function createScopeView(
     if (policy.kind === 'field') {
       if (pendingOwned.has(`${target}|${id}`)) return true;
       const stored = await shared.readRecord(target, id);
-      return stored !== null && allowedValue(stored[policy.field]);
+      return stored !== null && fieldValueAllowed(policy, stored[policy.field]);
     }
     if (isDerivedPolicy(policy)) {
       return (await derivedAccess(policy, [id], tables, 'write', shared)).has(id);
@@ -736,12 +757,15 @@ function createScopeView(
     if (!id) return false;
     if (policy.kind === 'field') {
       const field = policy.field;
-      if (record && field in record && !allowedValue(record[field])) return false;
-      if (operation === 'insert' && !(record && field in record)) return false;
+      if (record && field in record && !fieldValueAllowed(policy, record[field])) return false;
+      // An insert or replace writes the whole row, so it must set the field.
+      if ((operation === 'insert' || operation === 'replace') && !(record && field in record)) {
+        return false;
+      }
       const existing = await shared.readRecord(resource, id);
       const key = `${resource}|${id}`;
       const allowed = existing
-        ? allowedValue(existing[field])
+        ? fieldValueAllowed(policy, existing[field])
         : operation === 'delete' || (record !== undefined && field in record) ||
           pendingOwned.has(key);
       // Every allowed non-delete write leaves the field inside the grant.
@@ -964,6 +988,11 @@ function sortReferences(sort: unknown, field: string): boolean {
       return true;
     }
   });
+}
+
+/** True when a query projection returns each row's id (no select, `*` or `id`). */
+function selectKeepsId(select: unknown): boolean {
+  return select === undefined || (Array.isArray(select) && (select.includes('id') || select.includes('*')));
 }
 
 function asList(payload: unknown): unknown[] {

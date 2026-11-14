@@ -10,7 +10,10 @@ export type ScopedApp = (typeof SCOPED_APPS)[number];
 
 /**
  * How an app-scoped token sees a resource that both apps own:
- * `field` filters by a field naming the item's resource type, `items` filters
+ * `field` filters by a field naming the item's resource type (when the row
+ * also names one record, as an access log's `resourceId` does, that field may
+ * not name a shared type: the record's own policy would decide its visibility,
+ * and the row cannot show it), `items` filters
  * a space's item tree by the type each item points at, `collections` filters
  * by the `resource` field of the collections linked through a join table
  * (views), `linkTags` filters by the endpoint types of the links whose `tags`
@@ -18,7 +21,7 @@ export type ScopedApp = (typeof SCOPED_APPS)[number];
  * carries nothing to filter by, so only `nucleum` tokens reach it.
  */
 export type SharedResourcePolicy =
-  | { kind: 'field'; field: 'resource' }
+  | { kind: 'field'; field: 'resource'; recordField?: 'resourceId' }
   | { kind: 'items'; field: 'items' }
   | {
       kind: 'collections';
@@ -70,7 +73,11 @@ export function buildResourceOwnership(): ResourceOwnership {
 
 function sharedPolicyFor(name: string): SharedResourcePolicy {
   const fields = resourceFieldNames(name);
-  if (fields.has('resource')) return { kind: 'field', field: 'resource' };
+  if (fields.has('resource')) {
+    return fields.has('resourceId')
+      ? { kind: 'field', field: 'resource', recordField: 'resourceId' }
+      : { kind: 'field', field: 'resource' };
+  }
   if (name === 'space' && fields.has('items')) {
     return { kind: 'items', field: 'items' };
   }

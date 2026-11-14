@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
@@ -64,7 +65,7 @@ async function call(path: string, headers: Headers, body?: unknown): Promise<Res
 async function signUp(): Promise<Headers> {
   const response = await call('/auth/sign-up/password', { origin: base }, {
     email: 'scopes@example.test',
-    password: 'Sup3r-secret-pass!',
+    password: `Pw1!${randomUUID()}`,
     sessionMode: 'hybrid'
   });
   expect(response.status).toBe(200);
@@ -1030,5 +1031,166 @@ describe('record and relation identity overrides', () => {
     expect(await joinRows('record_links')).toEqual(linksBefore);
     expect((await joinRows('collection_views')).filter((row) => row.collectionId === 'collection:goals')
       .map((row) => row.viewId).sort()).toEqual(['view:both', 'view:goals']);
+  });
+});
+
+describe('access logs of shared resources', () => {
+  const at = Date.now();
+  const logs = {
+    'accessLog:goals': { resource: 'collection', resourceId: 'collection:goals', action: 'OPEN', timestamp: at },
+    'accessLog:notes': { resource: 'collection', resourceId: 'collection:notes', action: 'OPEN', timestamp: at },
+    'accessLog:node': { resource: 'node', resourceId: 'node:n1', action: 'OPEN', timestamp: at },
+    'accessLog:objective': { resource: 'objective', resourceId: 'objective:o1', action: 'OPEN', timestamp: at }
+  };
+  const logItem = (id: string) => ({ id: `item-${id}`, type: 'resource', resourceType: 'accessLog', resourceId: id, label: id });
+
+  async function logIds(headers: Headers, filters: unknown): Promise<string[]> {
+    return ids(await call('/datafn/query', headers, { resource: 'accessLog', version: 1, filters }));
+  }
+
+  beforeAll(async () => {
+    const seeded = await call('/datafn/mutation', actors.cookie, [
+      ...Object.entries(logs).map(([id, record]) => mutation('accessLog', 'insert', id, record)),
+      mutation('space', 'insert', 'space:logs', {
+        label: 'Logs', view: 'sidenav', items: Object.keys(logs).map(logItem)
+      })
+    ]);
+    expect(seeded.status).toBe(200);
+  });
+
+  it('cookie sessions still read logs of shared resources', async () => {
+    expect(await logIds(actors.cookie, { resource: 'collection' })).toEqual(['accessLog:goals', 'accessLog:notes']);
+  });
+
+  it('scoped tokens cannot read logs that name a shared resource, in queries, batches or transact', async () => {
+    for (const headers of [actors.memotronRead, actors.pointron]) {
+      for (const filters of [{ resource: 'collection' }, { resource: { in: ['node', 'collection'] } }]) {
+        const query = { resource: 'accessLog', version: 1, filters };
+        expect((await call('/datafn/query', headers, query)).status).toBe(403);
+        expect((await call('/datafn/query', headers, [query])).status).toBe(403);
+        expect((await call('/datafn/transact', headers, { steps: [{ query }] })).status).toBe(403);
+      }
+    }
+    expect(await logIds(actors.memotronRead, { resource: { in: ['node'] } })).toEqual(['accessLog:node']);
+    expect(await logIds(actors.pointron, { resource: 'objective' })).toEqual(['accessLog:objective']);
+  });
+
+  it('scoped tokens cannot change or delete logs that name a shared resource', async () => {
+    for (const change of [
+      mutation('accessLog', 'delete', 'accessLog:goals'),
+      mutation('accessLog', 'merge', 'accessLog:goals', { resource: 'node' }),
+      mutation('accessLog', 'merge', 'accessLog:notes', { action: 'CLOSE' }),
+      mutation('accessLog', 'insert', 'accessLog:new-collection', {
+        resource: 'collection', resourceId: 'collection:notes', action: 'OPEN', timestamp: at
+      })
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+      expect((await call('/datafn/mutation', actors.memotronWrite, change)).status).toBe(403);
+      expect((await call('/datafn/transact', actors.memotronWrite, { steps: [{ mutation: change }] })).status)
+        .toBe(403);
+    }
+    const pointronDelete = mutation('accessLog', 'delete', 'accessLog:notes');
+    expect((await call('/datafn/push', actors.pointron, push(pointronDelete))).status).toBe(403);
+    expect(await logIds(actors.cookie, { resource: 'collection' })).toEqual(['accessLog:goals', 'accessLog:notes']);
+    expect(await storedField('accessLog', 'accessLog:notes', 'action')).toBe('OPEN');
+    expect(await storedLabel('accessLog', 'accessLog:new-collection')).toBeUndefined();
+  });
+
+  it('scoped tokens write logs of their own resources', async () => {
+    const response = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('accessLog', 'merge', 'accessLog:node', { action: 'EDIT' }),
+      mutation('accessLog', 'insert', 'accessLog:node-2', {
+        resource: 'node', resourceId: 'node:n3', action: 'OPEN', timestamp: at
+      })
+    ));
+    expect(response.status).toBe(200);
+    expect(await logIds(actors.memotronRead, { resource: 'node' })).toEqual(['accessLog:node', 'accessLog:node-2']);
+    expect(await storedField('accessLog', 'accessLog:node', 'action')).toBe('EDIT');
+  });
+
+  it('space items pointing at logs of shared resources stay hidden', async () => {
+    const query = { resource: 'space', version: 1, filters: { id: { eq: 'space:logs' } } };
+    const visible = async (headers: Headers) =>
+      ((await rows(await call('/datafn/query', headers, query)))[0]?.items as { resourceId: string }[])
+        .map((item) => item.resourceId);
+    expect(await visible(actors.memotronRead)).toEqual(['accessLog:node']);
+    expect(await visible(actors.pointron)).toEqual(['accessLog:objective']);
+    const dropped = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('space', 'merge', 'space:logs', { items: [logItem('accessLog:node')] })
+    ));
+    expect(dropped.status).toBe(403);
+  });
+});
+
+describe('replacing shared records', () => {
+  it('memotron token cannot replace a collection without an in-grant resource field', async () => {
+    const before = await rows(await call('/datafn/query', actors.cookie, {
+      resource: 'collection', version: 1, filters: { id: { eq: 'collection:notes' } }
+    }));
+    for (const change of [
+      mutation('collection', 'replace', 'collection:notes', { label: 'Orphaned', type: 'list' }),
+      mutation('collection', 'replace', 'collection:notes', { label: 'Moved', type: 'list', resource: 'objective' }),
+      mutation('collection', 'replace', 'collection:notes'),
+      mutation('accessLog', 'replace', 'accessLog:node', { resourceId: 'node:n1', action: 'OPEN', timestamp: Date.now() })
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+      expect((await call('/datafn/mutation', actors.memotronWrite, change)).status).toBe(403);
+      expect((await call('/datafn/transact', actors.memotronWrite, { steps: [{ mutation: change }] })).status)
+        .toBe(403);
+    }
+    expect(await rows(await call('/datafn/query', actors.cookie, {
+      resource: 'collection', version: 1, filters: { id: { eq: 'collection:notes' } }
+    }))).toEqual(before);
+    expect(await storedField('accessLog', 'accessLog:node', 'resource')).toBe('node');
+  });
+
+  it('pointron token cannot replace a collection without its resource field', async () => {
+    const change = mutation('collection', 'replace', 'collection:goals', { label: 'Orphaned', type: 'list' });
+    expect((await call('/datafn/push', actors.pointron, push(change))).status).toBe(403);
+    expect(await storedField('collection', 'collection:goals', 'resource')).toBe('objective');
+  });
+
+  it('memotron token replaces a collection that keeps a Memotron resource', async () => {
+    const response = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('collection', 'replace', 'collection:notes', { label: 'Notes replaced', type: 'list', resource: 'node' })
+    ));
+    expect(response.status).toBe(200);
+    expect(await storedLabel('collection', 'collection:notes')).toBe('Notes replaced');
+    expect(await storedField('collection', 'collection:notes', 'resource')).toBe('node');
+  });
+});
+
+describe('projections of filtered views and link tags', () => {
+  it('denies a projection that drops the id the filter needs, in queries, batches and transact', async () => {
+    for (const query of [
+      { resource: 'view', version: 1, select: ['label'] },
+      { resource: 'linkTag', version: 1, select: ['label'] },
+      { resource: 'view', version: 1, select: 'label' }
+    ]) {
+      expect((await call('/datafn/query', actors.memotronRead, query)).status).toBe(403);
+      expect((await call('/datafn/query', actors.memotronRead, [{ resource: 'node', version: 1 }, query])).status)
+        .toBe(403);
+      expect((await call('/datafn/transact', actors.memotronRead, { steps: [{ query }] })).status).toBe(403);
+    }
+    expect((await call('/datafn/query', actors.pointron, { resource: 'view', version: 1, select: ['label'] })).status)
+      .toBe(403);
+  });
+
+  it('returns the filtered rows for a projection that keeps the id', async () => {
+    const unprojected = await ids(await call('/datafn/query', actors.memotronRead, { resource: 'view', version: 1 }));
+    expect(unprojected).toContain('view:notes');
+    expect(unprojected).not.toContain('view:goals');
+    for (const select of [['id', 'label'], ['*']]) {
+      const data = await rows(await call('/datafn/query', actors.memotronRead, { resource: 'view', version: 1, select }));
+      expect(data.map((row) => String(row.id)).sort()).toEqual(unprojected);
+      expect(data.every((row) => typeof row.label === 'string')).toBe(true);
+    }
+    const transact = await call('/datafn/transact', actors.memotronRead, {
+      steps: [{ query: { resource: 'linkTag', version: 1, select: ['id', 'label'] } }]
+    });
+    expect(transact.status).toBe(200);
+    const text = JSON.stringify(await transact.json());
+    expect(text).toContain('linkTag:memo');
+    expect(text).not.toContain('linkTag:point');
   });
 });
