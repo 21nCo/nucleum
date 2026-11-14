@@ -1,0 +1,43 @@
+services/account/package.json
+  s_7c4851e23b3e11::t_08114bf1151420 52,54,57-61,79
+services/account/src/datafn/server.ts
+  s_256459c5943ad5::t_dd6a651b63bc05 9,15-19,25-30,36,90-93,111-116,141,143-160,184-187,250-284
+package-lock.json
+  s_256459c5943ad5::t_22df1462fd5320 33511,33513,33516-33520,33538,33634-33651,33662-33682,33695-33784,34457-34497,34528-34578
+services/account/src/auth.ts
+  s_256459c5943ad5::t_e0cba46489e7bc 26,70
+services/account/src/datafn/app-scopes.test.ts
+  s_256459c5943ad5::t_76169e85f3fd6f 1-494
+services/account/src/datafn/app-scopes.ts
+  s_256459c5943ad5::t_c78f48d679714c 1-476
+services/account/src/datafn/resource-ownership.ts
+  s_256459c5943ad5::t_a0e6d97f83de5b 1-68
+tests/projects/account.vitest.config.ts
+  s_256459c5943ad5::t_f883ad8c3eae6a 1-19
+tests/vitest.workspace.ts
+  s_256459c5943ad5::t_7455da928b2e6e 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b3a57b2f46d78fdb032e3851691bace6e61fd7f",
+  "prompts": {},
+  "sessions": {
+    "s_256459c5943ad5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42f4ddbe-0397-42fa-8535-33294c865fb0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_7c4851e23b3e11": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "221c597d-02ea-44fb-b713-de93bd2e0f31",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

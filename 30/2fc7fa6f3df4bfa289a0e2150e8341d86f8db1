@@ -1,0 +1,23 @@
+client/surfaces/help/diagnostics/diagnostic-report.test.ts
+  s_c358e88d0788ce::t_0421b4b65414ab 215-216
+client/surfaces/help/help-sections.test.ts
+  s_c358e88d0788ce::t_656ef41b3f773b 66-98
+client/surfaces/help/help-sections.ts
+  s_c358e88d0788ce::t_ceab30a55c9b9b 22-23,46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "302fc7fa6f3df4bfa289a0e2150e8341d86f8db1",
+  "prompts": {},
+  "sessions": {
+    "s_c358e88d0788ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dda814f6-e79f-4907-99ee-36f8c7b63c13",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

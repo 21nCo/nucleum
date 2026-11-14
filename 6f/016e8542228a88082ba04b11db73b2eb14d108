@@ -1,0 +1,21 @@
+services/account/src/datafn/app-scopes.test.ts
+  s_0d7e217a030e00::t_72217009922d95 65-69,71,74
+services/account/src/files/session-scopes.test.ts
+  s_0d7e217a030e00::t_7a2c004b338b76 1,55-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6f016e8542228a88082ba04b11db73b2eb14d108",
+  "prompts": {},
+  "sessions": {
+    "s_0d7e217a030e00": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dde721c5-3187-4b07-85ad-bff7f78fd1eb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

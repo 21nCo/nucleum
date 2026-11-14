@@ -1,0 +1,41 @@
+client/features/calendar/CalendarLayoutOverflowMenu.test.ts
+  s_b66d0e9dd4fae0::t_3983a6180c2f2a 1-224
+client/features/calendar/calendar-overflow-menu.test.ts
+  s_b66d0e9dd4fae0::t_acdade597b962a 4,29-75
+client/ui/elements/contextMenu/ContextMenuOptionGroup.test.ts
+  s_b66d0e9dd4fae0::t_f3e14c4b6769fd 58,78-190
+client/ui/elements/contextMenu/ContextMenuOptionSubmenu.test.ts
+  s_b66d0e9dd4fae0::t_0bdc73948ac214 16,24,94-133
+client/ui/elements/contextMenu/context-menu-option.test.ts
+  s_b66d0e9dd4fae0::t_34b52df9bcd8e2 4-7,54-105
+client/features/calendar/CalendarLayout.svelte
+  s_b66d0e9dd4fae0::t_244ec531d6b045 32-33,101,105-110
+client/features/calendar/calendar-overflow-menu.ts
+  s_b66d0e9dd4fae0::t_084993814b9c30 29-63
+client/ui/elements/contextMenu/ContextMenuAction.svelte
+  s_b66d0e9dd4fae0::t_860fdb2a77967f 74-77,79-97
+client/ui/elements/contextMenu/ContextMenuOptionGroup.svelte
+  s_b66d0e9dd4fae0::t_c4a8a767077512 10-13,31-33,40-41,52,54-55,57-65,71-72,76-77
+client/ui/elements/contextMenu/ContextMenuOptionList.svelte
+  s_b66d0e9dd4fae0::t_2cbb3577f64154 10-14,41-46,51-52,55,61,65,67-68,75-76,78
+client/ui/elements/contextMenu/context-menu-option.ts
+  s_b66d0e9dd4fae0::t_f877f65692b64d 1-4,44-122
+tests/fixtures/components/ContextZoneContentInlineStub.svelte
+  s_b66d0e9dd4fae0::t_ca642101c6ba0a 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e866a6b617459b7a02fa31fc02841a97f2b81514",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

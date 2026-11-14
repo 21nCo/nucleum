@@ -1,0 +1,21 @@
+services/account/src/files/routes.ts
+  s_b66d0e9dd4fae0::t_d542443a6c7785 185
+tests/unit/account-service/files-runtime.spec.ts
+  s_b66d0e9dd4fae0::t_03c94c8084b16c 383-393,397-425
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d8e4d1a8832676b5f02bc1a335e736115dca540c",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

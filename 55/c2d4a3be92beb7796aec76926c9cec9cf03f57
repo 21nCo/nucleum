@@ -1,0 +1,41 @@
+tests/unit/account-service/files-runtime.spec.ts
+  s_130a98034ae118::t_e27b1f99aa1f69 1,3,6,11,19-23,27,95-96,100-122,130-131,137,139,147-180,188-215
+docs/architecture/data-and-sync.md
+  s_130a98034ae118::t_52982d35826501 13,56
+services/account/.env.example
+  s_130a98034ae118::t_009b6fe6e28af4 19-22
+services/account/src/files/deferred.ts
+  s_130a98034ae118::t_ea42b951dbcbf0 25-29
+services/account/src/files/routes.ts
+  s_e5593c6680c7b1::t_d2cf0fc6d2a53b 3-4,7,9,11,29-31,52-60,91-121
+services/account/src/files/server.ts
+  s_e5593c6680c7b1::t_af76883a248a7d 12,14-17,26-34,38,40,42,44,46,48,76-80,95
+services/account/src/http/observability.ts
+  s_e5593c6680c7b1::t_142e9737f1e517 14,57,129-132
+tests/unit/account-service/files-routes.spec.ts
+  s_e5593c6680c7b1::t_97def559d33b27 2,126,135,141,167,283-287,590-647
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "55c2d4a3be92beb7796aec76926c9cec9cf03f57",
+  "prompts": {},
+  "sessions": {
+    "s_130a98034ae118": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "528690fe-c1fc-4d28-be77-f24edfcfd1b7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_e5593c6680c7b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a1f125d605d9ff62b",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

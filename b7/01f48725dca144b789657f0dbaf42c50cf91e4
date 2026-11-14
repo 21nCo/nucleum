@@ -1,0 +1,19 @@
+services/account/src/testing/run-filefn-migrations.ts
+  s_eb94aa5e16f616::t_ce6a52e489845a 3-4,7,18-25,41-76,113-114,118-119,121,126-129,154-155,160,165,170,175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b701f48725dca144b789657f0dbaf42c50cf91e4",
+  "prompts": {},
+  "sessions": {
+    "s_eb94aa5e16f616": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3cf302e8-2c8b-40f8-bc7d-74e69e6eea0f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

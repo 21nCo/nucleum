@@ -1,0 +1,41 @@
+package-lock.json
+  s_edef4f8ac99574::t_a726545d81ce97 3033-3057,4080-4095,4117-4138,4140-4142,4145-4146,4148-4150,4159-4161,4164-4167,4175-4177,4180-4185,4193-4195,4198-4209,4217-4219,4222-4226,4234-4236,4239-4248,4256-4258,4261-4264,4272-4274,4277-4282,4290-4292,4295-4299,4369-4385,4387-4389,4392-4415,4423-4425,4428-4430,4438-4440,4443-4447,4455-4457,4460,4483-4485,4488,6223-6253,12898-12900,12903,12925-12927,12930-12931,12939-12941,12944-12945,12953-12955,12958-12959,12967-12969,13571-13576,13662-13672,33633
+services/account/drizzle.filefn.config.ts
+  s_edef4f8ac99574::t_dbd3045e351856 1-15
+services/account/drizzle/filefn/0000_initial_filefn.sql
+  s_edef4f8ac99574::t_5d39bb8f6b9fc0 1-115
+services/account/drizzle/filefn/0001_upload_parts_unique.sql
+  s_edef4f8ac99574::t_c4f5f0211c6515 1-5
+services/account/drizzle/filefn/meta/0000_snapshot.json
+  s_edef4f8ac99574::t_bd959ef76d4e3f 1-807
+services/account/drizzle/filefn/meta/0001_snapshot.json
+  s_edef4f8ac99574::t_18b8e8d4c7bf7e 1-807
+services/account/drizzle/filefn/meta/_journal.json
+  s_edef4f8ac99574::t_ecc211099c3a01 1-20
+services/account/package.json
+  s_edef4f8ac99574::t_1fbf4b8dc14091 20-22,48-49,67
+services/account/src/db/generated/filefn/filefn-schema.ts
+  s_edef4f8ac99574::t_a91f0773cf07bc 1-160
+services/account/src/testing/run-filefn-migrations.ts
+  s_edef4f8ac99574::t_5f1a94563a6a58 1-168
+services/account/superfunctions.config.mjs
+  s_edef4f8ac99574::t_93439a22465129 2-16,27
+services/account/superfunctions.config.ts
+  s_edef4f8ac99574::t_ca826d2304ae5c 2-16,27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b305dcb8e0c660fcc793b0fe90d33e284d8b18bb",
+  "prompts": {},
+  "sessions": {
+    "s_edef4f8ac99574": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_edef4f8ac99574",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+docs/architecture/data-and-sync.md
+  h_a39f9495f9ec1d 13-14,57
+package-lock.json
+  h_a39f9495f9ec1d 13581-13589,33547-33548
+services/account/.env.example
+  h_a39f9495f9ec1d 19-28
+services/account/README.md
+  h_a39f9495f9ec1d 85-113,365-367
+services/account/config/environments.json
+  h_a39f9495f9ec1d 33-36,78-79,123-124,155-156,186-187
+services/account/package.json
+  h_a39f9495f9ec1d 79-80
+services/account/scripts/deploy.mjs
+  h_a39f9495f9ec1d 15-16,18-19,22,64,67-79
+services/account/scripts/wrangler-config.mjs
+  h_a39f9495f9ec1d 173-175,278-285
+services/account/src/app.ts
+  h_a39f9495f9ec1d 20-21,38-39,52-62,99,185-192,194,207,223-230,261-264,278-281,313,323-341
+services/account/src/auth.ts
+  h_a39f9495f9ec1d 88
+services/account/src/files/database.ts
+  h_a39f9495f9ec1d 1-66
+services/account/src/files/deferred.ts
+  h_a39f9495f9ec1d 1-98
+services/account/src/files/routes.ts
+  h_a39f9495f9ec1d 1-232
+services/account/src/files/server.ts
+  h_a39f9495f9ec1d 1-116
+services/account/src/files/storage.ts
+  h_a39f9495f9ec1d 1-94
+services/account/src/http/observability.ts
+  h_a39f9495f9ec1d 14,57,129-132
+services/account/src/node.ts
+  h_a39f9495f9ec1d 9-14,22,35-42,45,92-96
+services/account/src/worker.ts
+  h_a39f9495f9ec1d 6-14,37-40,65-69,85-93,105,112-116,119-131
+tests/unit/account-service/files-config.spec.ts
+  h_a39f9495f9ec1d 1-140
+tests/unit/account-service/files-routes.spec.ts
+  h_a39f9495f9ec1d 1-744
+tests/unit/account-service/files-runtime.spec.ts
+  h_a39f9495f9ec1d 1-499
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "15b179766d9b56f32fb85c979f24fa1add81ebf7",
+  "prompts": {},
+  "humans": {
+    "h_a39f9495f9ec1d": {
+      "author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

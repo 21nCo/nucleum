@@ -1,0 +1,27 @@
+client/surfaces/help/Help.svelte
+  s_b66d0e9dd4fae0::t_7172b9af7ecd43 19,23-28,51-81,84-101
+client/surfaces/help/diagnostics/diagnostic-report.test.ts
+  s_b66d0e9dd4fae0::t_e2b43fd5545da9 66,178-219,346-361
+client/surfaces/help/diagnostics/diagnostic-report.ts
+  s_b66d0e9dd4fae0::t_460e065a540d23 17-22,25-27,36,57-85,91-92,98,108-116,225-232,243
+client/surfaces/help/help-sections.test.ts
+  s_b66d0e9dd4fae0::t_3510550df9894b 1-73
+client/surfaces/help/help-sections.ts
+  s_b66d0e9dd4fae0::t_98f798dcb9259e 1-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fed616d0f9cf039b5239ab3f89be2f284fb13192",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

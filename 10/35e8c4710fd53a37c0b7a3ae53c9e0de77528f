@@ -1,0 +1,27 @@
+docs/architecture/data-and-sync.md
+  s_86d126a810806c::t_a5597fa5cd61dd 45,48,57,59-61,75
+services/account/src/datafn/app-scopes.test.ts
+  s_86d126a810806c::t_1e92be2feb64af 114-147,181-202,205-206,218-227,237,243-245,361-403,406-409,544-546,548-595,598-611,613-682,689,698-704
+services/account/src/datafn/app-scopes.ts
+  s_86d126a810806c::t_4737cbe1c9b082 5,14-15,37-51,59,93-94,100-102,112,115,121,138-140,146-286,292-293,374,399-403,420-461,463-495,503,509,514-526,531,558-561,564,569,571,573-602,604-609,613-615,617-618,621-624,628
+services/account/src/datafn/resource-ownership.ts
+  s_86d126a810806c::t_5eef33b970072e 1,14-18,23-35,46-49,77-109
+services/account/src/datafn/server.ts
+  s_86d126a810806c::t_acac6984b2d194 29-30,116-126,162,190,266-268,270-272,282-284
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1035e8c4710fd53a37c0b7a3ae53c9e0de77528f",
+  "prompts": {},
+  "sessions": {
+    "s_86d126a810806c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_86d126a810806c",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

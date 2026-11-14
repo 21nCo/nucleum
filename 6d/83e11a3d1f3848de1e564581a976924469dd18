@@ -1,0 +1,49 @@
+package-lock.json
+  s_eb94aa5e16f616::t_6fda444d7e15f7 13673-13681,33654-33655
+services/account/.env.example
+  s_eb94aa5e16f616::t_5b2be737eb776b 19-27
+services/account/README.md
+  s_eb94aa5e16f616::t_b4111023f00863 85-108
+services/account/config/environments.json
+  s_eb94aa5e16f616::t_17176defad8068 33-36,78-79,123-124,155-156,186-187
+services/account/package.json
+  s_eb94aa5e16f616::t_8847910e0d8512 79-80
+services/account/scripts/wrangler-config.mjs
+  s_eb94aa5e16f616::t_4def75cb94a43d 173-175,278-285
+services/account/src/app.ts
+  s_eb94aa5e16f616::t_42211b8993274e 20-21,38-39,52-62,99,185-192,194,207,223-230,261-264,278-281,313,323-341
+services/account/src/auth.ts
+  s_eb94aa5e16f616::t_4bddb8f4963deb 86
+services/account/src/files/database.ts
+  s_eb94aa5e16f616::t_643695abccb21e 1-66
+services/account/src/files/routes.ts
+  s_eb94aa5e16f616::t_3f2c1152f55457 1-45
+services/account/src/files/server.ts
+  s_eb94aa5e16f616::t_6c56cc142c31cd 1-79
+services/account/src/files/storage.ts
+  s_eb94aa5e16f616::t_45c7384b58f66b 1-94
+services/account/src/node.ts
+  s_eb94aa5e16f616::t_2f35a66017fb8b 9-14,22,35-42,45,92-96
+services/account/src/worker.ts
+  s_eb94aa5e16f616::t_d7686135646033 6-10,33-36,61-62,78-86,107-111
+tests/unit/account-service/files-config.spec.ts
+  s_eb94aa5e16f616::t_35f0703b5a95fd 1-121
+tests/unit/account-service/files-routes.spec.ts
+  s_eb94aa5e16f616::t_328530bdafa7e6 1-549
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6d83e11a3d1f3848de1e564581a976924469dd18",
+  "prompts": {},
+  "sessions": {
+    "s_eb94aa5e16f616": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3cf302e8-2c8b-40f8-bc7d-74e69e6eea0f",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
