@@ -1,0 +1,23 @@
+services/account/src/datafn/app-scopes.test.ts
+  s_0b0647615a23f7::t_b4ca0b4687c242 2,4,459-523
+docs/architecture/data-and-sync.md
+  s_0b0647615a23f7::t_58c1330bbb410e 59
+services/account/src/datafn/app-scopes.ts
+  s_0b0647615a23f7::t_1b457c0fe59410 6,824-826,833-834,939-943,945-953
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4635a4078464e2835a876f3804c38fc1b9153eb6",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
