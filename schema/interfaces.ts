@@ -57,11 +57,29 @@ export type InterfaceSharedFilter =
   | { kind: "items"; field: "items"; paged: true };
 
 /**
+ * Fields the apps write together with, or derive from, other fields. The
+ * fields a rule names are never in a write list on their own.
+ *
+ * - `hierarchy`: `parent` places the row under another row of the same
+ *   resource, and `derived` hold its ancestor chain, which the apps rewrite for
+ *   the row and its descendants whenever the parent changes. The parent is
+ *   readable and filterable but not writable in v1: creates place the row at
+ *   the top level, and moves stay in the apps.
+ * - `completion`: a write of `checked` also sets `completedAt`, to the write
+ *   time when it is true and to null when it is false. `completedAt` is never
+ *   written directly.
+ */
+export type InterfaceDerivedRule =
+  | { kind: "hierarchy"; parent: string; derived: readonly string[] }
+  | { kind: "completion"; checked: string; completedAt: string };
+
+/**
  * Exposure of one DataFn resource through MCP tools, REST routes and CLI
  * commands. `fields` is the fixed list and get projection; `filters` and
  * `sorts` are the list allowlists; `create` and `update` are the writable
- * field allowlists, or `false` when the operation is not offered. `shared`
- * is the filter app-scoped tokens see the resource through.
+ * field allowlists, or `false` when the operation is not offered. `derived`
+ * lists the fields written together with or derived from others. `shared` is
+ * the filter app-scoped tokens see the resource through.
  */
 export interface InterfaceResourceContract {
   resource: InterfaceSchemaResource;
@@ -71,13 +89,27 @@ export interface InterfaceResourceContract {
   sorts: readonly string[];
   create: false | readonly string[];
   update: false | readonly string[];
+  derived?: readonly InterfaceDerivedRule[];
   shared?: InterfaceSharedFilter;
 }
+
+/** A derived-field rule whose field names are checked against the schema. */
+type InterfaceDerivedRuleDefinition<Name extends InterfaceSchemaResource> =
+  | {
+      kind: "hierarchy";
+      parent: InterfaceFieldName<Name>;
+      derived: readonly InterfaceFieldName<Name>[];
+    }
+  | {
+      kind: "completion";
+      checked: InterfaceFieldName<Name>;
+      completedAt: InterfaceFieldName<Name>;
+    };
 
 /** A resource contract whose field names are checked against the schema. */
 type InterfaceResourceDefinition<Name extends InterfaceSchemaResource> = Omit<
   InterfaceResourceContract,
-  "resource" | "fields" | "filters" | "sorts" | "create" | "update"
+  "resource" | "fields" | "filters" | "sorts" | "create" | "update" | "derived"
 > & {
   resource: Name;
   fields: readonly InterfaceFieldName<Name>[];
@@ -85,6 +117,7 @@ type InterfaceResourceDefinition<Name extends InterfaceSchemaResource> = Omit<
   sorts: readonly InterfaceFieldName<Name>[];
   create: false | readonly InterfaceFieldName<Name>[];
   update: false | readonly InterfaceFieldName<Name>[];
+  derived?: readonly InterfaceDerivedRuleDefinition<Name>[];
 };
 
 /** One app's interface: its paths, scopes and exposed resources. */
@@ -127,8 +160,9 @@ export const interfaceResources = {
     ],
     filters: ["contentType", "metaType", "parent", "isStarred", "isArchived"],
     sorts: ["label", "date", ...recordSorts],
-    create: ["label", "contentType", "url", "notes", "parent", "date", "isStarred"],
-    update: ["label", "url", "notes", "parent", "date", "isStarred", "isLocked"]
+    create: ["label", "contentType", "url", "notes", "date", "isStarred"],
+    update: ["label", "url", "notes", "date", "isStarred", "isLocked"],
+    derived: [{ kind: "hierarchy", parent: "parent", derived: ["parentPath", "mdParent"] }]
   }),
   file: defineResource({
     resource: "file",
@@ -185,7 +219,6 @@ export const interfaceResources = {
       "description",
       "startDate",
       "endDate",
-      "parentId",
       "color",
       "sortOrder",
       "isPinnedForQuickFocus",
@@ -202,7 +235,8 @@ export const interfaceResources = {
       "isPinnedForQuickFocus",
       "isStarred",
       "isLocked"
-    ]
+    ],
+    derived: [{ kind: "hierarchy", parent: "parentId", derived: ["parentPath"] }]
   }),
   task: defineResource({
     resource: "task",
@@ -211,28 +245,18 @@ export const interfaceResources = {
       "id",
       "label",
       "isChecked",
-      "date",
       "dateUnix",
       "estimated",
       "minutes",
-      "completedAt",
       "completedAtUnix",
       "objectiveId",
       ...recordMeta
     ],
     filters: ["isChecked", "dateUnix", "objectiveId", "isArchived"],
     sorts: ["label", "dateUnix", "completedAtUnix", ...recordSorts],
-    create: ["label", "date", "dateUnix", "estimated", "objectiveId", "isChecked"],
-    update: [
-      "label",
-      "date",
-      "dateUnix",
-      "estimated",
-      "objectiveId",
-      "isChecked",
-      "completedAt",
-      "completedAtUnix"
-    ]
+    create: ["label", "dateUnix", "estimated", "objectiveId", "isChecked"],
+    update: ["label", "dateUnix", "estimated", "objectiveId", "isChecked"],
+    derived: [{ kind: "completion", checked: "isChecked", completedAt: "completedAtUnix" }]
   }),
   session: defineResource({
     resource: "session",

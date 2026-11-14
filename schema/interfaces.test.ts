@@ -36,6 +36,8 @@ type SchemaRelationShape = {
   to: string | readonly string[];
   type: string;
   relation?: string;
+  fkField?: string;
+  pathField?: string;
   joinTable?: string;
   metadata?: readonly { name: string }[];
 };
@@ -69,6 +71,46 @@ function contractOf(name: InterfaceExposedResource): InterfaceResourceContract {
 function writeLists(contract: InterfaceResourceContract) {
   return [contract.create, contract.update].filter(
     (fields): fields is readonly string[] => fields !== false
+  );
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/**
+ * Self relations whose rows keep an ancestor chain, read from the schema: an
+ * htree `pathField`, or a `<fk>Path` or markdown `md<Fk>` sibling of a plain
+ * self relation's foreign key.
+ */
+function schemaHierarchies(): { resource: string; parent: string; derived: string[] }[] {
+  return schemaRelations
+    .filter(
+      (relation): relation is SchemaRelationShape & { from: string; fkField: string } =>
+        typeof relation.from === "string" &&
+        relation.from === relation.to &&
+        typeof relation.fkField === "string"
+    )
+    .map((relation) => {
+      const fields = schemaFields(relation.from);
+      const candidates = [
+        relation.pathField,
+        `${relation.fkField}Path`,
+        `md${capitalize(relation.fkField)}`
+      ].filter((field): field is string => !!field && fields.has(field));
+      return {
+        resource: relation.from,
+        parent: relation.fkField,
+        derived: [...new Set(candidates)].sort()
+      };
+    })
+    .filter((hierarchy) => hierarchy.derived.length > 0);
+}
+
+/** Fields a resource's derived-field rules forbid writing directly. */
+function derivedOnlyFields(contract: InterfaceResourceContract): string[] {
+  return (contract.derived ?? []).flatMap((rule) =>
+    rule.kind === "hierarchy" ? [rule.parent, ...rule.derived] : [rule.completedAt]
   );
 }
 
@@ -140,7 +182,11 @@ describe("per-app interface contract", () => {
         ...contract.fields,
         ...contract.filters,
         ...contract.sorts,
-        ...writeLists(contract).flat()
+        ...writeLists(contract).flat(),
+        ...derivedOnlyFields(contract),
+        ...(contract.derived ?? []).flatMap((rule) =>
+          rule.kind === "completion" ? [rule.checked] : []
+        )
       ];
       expect(declared.filter((field) => !fields.has(field))).toEqual([]);
       expect(contract.fields).toContain("id");
@@ -187,6 +233,67 @@ describe("per-app interface contract", () => {
       expect(required.filter((field) => !create.includes(field))).toEqual([]);
     }
   });
+
+  it("declares a read-only hierarchy rule for every self relation with an ancestor path", () => {
+    const hierarchies = schemaHierarchies().filter((hierarchy) =>
+      (exposedNames as readonly string[]).includes(hierarchy.resource)
+    );
+    expect(hierarchies.map((hierarchy) => hierarchy.resource).sort()).toEqual([
+      "node",
+      "objective"
+    ]);
+    for (const hierarchy of hierarchies) {
+      const contract = contractOf(hierarchy.resource as InterfaceExposedResource);
+      const rules = (contract.derived ?? []).filter((rule) => rule.kind === "hierarchy");
+      expect(
+        rules.map((rule) => ({ parent: rule.parent, derived: [...rule.derived].sort() }))
+      ).toEqual([{ parent: hierarchy.parent, derived: hierarchy.derived }]);
+      expect(contract.fields).toContain(hierarchy.parent);
+      expect(contract.filters).toContain(hierarchy.parent);
+    }
+    const declared = exposedNames.filter((name) =>
+      (contractOf(name).derived ?? []).some((rule) => rule.kind === "hierarchy")
+    );
+    expect(declared.sort()).toEqual(hierarchies.map((hierarchy) => hierarchy.resource).sort());
+  });
+
+  it("declares completion for every resource with a checked flag and a completion time", () => {
+    const withCompletion = exposedNames.filter((name) => {
+      const fields = schemaFields(name);
+      return fields.has("isChecked") && fields.has("completedAtUnix");
+    });
+    expect(withCompletion).toEqual(["task"]);
+    for (const name of withCompletion) {
+      const contract = contractOf(name);
+      expect(contract.derived?.filter((rule) => rule.kind === "completion")).toEqual([
+        { kind: "completion", checked: "isChecked", completedAt: "completedAtUnix" }
+      ]);
+      expect(contract.create).toContain("isChecked");
+      expect(contract.update).toContain("isChecked");
+      expect(contract.fields).toContain("completedAtUnix");
+    }
+  });
+
+  it.each(exposedNames)(
+    "never writes a %s hierarchy parent, ancestor chain or derived time directly",
+    (name) => {
+      const contract = contractOf(name);
+      const forbidden = derivedOnlyFields(contract);
+      for (const list of writeLists(contract)) {
+        expect(list.filter((field) => forbidden.includes(field))).toEqual([]);
+      }
+    }
+  );
+
+  it.each(exposedNames)(
+    "writes only the Unix twin of a %s date that has one",
+    (name) => {
+      const fields = schemaFields(name);
+      for (const list of writeLists(contractOf(name))) {
+        expect(list.filter((field) => fields.has(`${field}Unix`))).toEqual([]);
+      }
+    }
+  );
 
   it("never allows deletes, trash or bulk operations", () => {
     for (const app of interfaceApps) {
