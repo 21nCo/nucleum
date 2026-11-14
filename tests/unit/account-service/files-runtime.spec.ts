@@ -345,7 +345,15 @@ describe("account FileFn request path redaction", () => {
       ["/files/share-links%C0%AFsecret-token/download", "/files/share-links:token/download"],
       ["/files/share-links/%E2%80%AEsecret-token/download", "/files/share-links/:token/download"],
       ["/files/xshare-linksSECRET-token/download", "/files/xshare-links:token/download"],
-      ["/files/file-1.share-links.secret-token", "/files/file-1.share-links:token"]
+      ["/files/file-1.share-links.secret-token", "/files/file-1.share-links:token"],
+      ["/files/share-lin%E2%84%AAs/secret-token/download", "/files/share-lin%E2%84%AAs/:token/download"],
+      ["/files/proxy/share-lin%E2%84%AAs/secret-token/download", "/files/proxy/share-lin%E2%84%AAs/:token/download"],
+      ["/files/file-1/share-lin%E2%84%AAs/secret-token", "/files/file-1/share-lin%E2%84%AAs/:token"],
+      ["/files/share-lin\u212As/secret-token", "/files/share-lin\u212As/:token"],
+      ["/files/%EF%BD%93hare-links/secret-token", "/files/%EF%BD%93hare-links/:token"],
+      ["/files/%C5%BFhare-links/secret-token", "/files/%C5%BFhare-links/:token"],
+      ["/files/share-lin%E2%84%AAssecret-token/download", "/files/:token/download"],
+      ["/files/share-lin%E2%84%AAs%FF/secret-token", "/files/:token/:token"]
     ];
     for (const [input, expected] of cases) {
       const redacted = redactFileRequestPath(input);

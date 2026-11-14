@@ -106,33 +106,60 @@ const SHARE_LINKS_MARKER = "share-links";
 const SHARE_ROUTE_LITERALS = new Set(["download"]);
 const ASCII_ESCAPE_HEX = /^[0-7][0-9a-f]$/i;
 
+const UTF8_DECODER = new TextDecoder();
+
 /**
  * Returns a request path that is safe to log. The path is normalized by
- * decoding every ASCII `%XX` escape, byte by byte and repeatedly until nothing
- * changes, so no encoding depth, invalid byte beside a separator or mount
- * prefix hides the `share-links` marker. When the normalized path contains the
- * marker (any casing, alone or inside a larger segment), everything after it
- * is logged with each non-empty piece except the literal `download` replaced
- * by `:token`; a piece that still holds an escape or any other character is
- * redacted too, so the anonymous share token never reaches a log whether
- * FileFn serves the path or not. Paths without the marker are returned
- * unchanged.
+ * decoding every ASCII `%XX` escape to a fixed point, so no encoding depth,
+ * invalid byte beside a separator or mount prefix hides the `share-links`
+ * marker. Segments are matched after also decoding UTF-8 escapes, NFKC
+ * normalization and lowercasing, so lookalikes such as the Kelvin sign match
+ * too. From the first segment that contains the marker, the rest of that
+ * segment and every later non-empty segment except the literal `download` are
+ * replaced by `:token`; a marker segment that only folds to the marker is kept
+ * and any other folded match is redacted whole, so the anonymous share token
+ * never reaches a log whether FileFn serves the path or not. Paths without
+ * the marker are returned unchanged.
  */
 export function redactFileRequestPath(pathname: string): string {
-  const normalized = decodeAsciiEscapes(pathname);
-  const markerStart = asciiLowerCase(normalized).indexOf(SHARE_LINKS_MARKER);
-  if (markerStart < 0) {
+  const segments = decodeAsciiEscapes(pathname).split("/");
+  const markerIndex = segments.findIndex((segment) =>
+    foldForMatch(segment).includes(SHARE_LINKS_MARKER)
+  );
+  if (markerIndex < 0) {
     return pathname;
   }
-  const keep = markerStart + SHARE_LINKS_MARKER.length;
-  const rest = normalized
-    .slice(keep)
-    .split("/")
-    .map((piece) =>
-      piece && !SHARE_ROUTE_LITERALS.has(asciiLowerCase(piece)) ? ":token" : piece
-    )
+  return segments
+    .map((segment, index) => {
+      if (index < markerIndex) {
+        return segment;
+      }
+      if (index === markerIndex) {
+        return redactMarkerSegment(segment);
+      }
+      return segment && !SHARE_ROUTE_LITERALS.has(foldForMatch(segment))
+        ? ":token"
+        : segment;
+    })
     .join("/");
-  return normalized.slice(0, keep) + rest;
+}
+
+function redactMarkerSegment(segment: string): string {
+  const markerStart = asciiLowerCase(segment).indexOf(SHARE_LINKS_MARKER);
+  if (markerStart < 0) {
+    return foldForMatch(segment) === SHARE_LINKS_MARKER ? segment : ":token";
+  }
+  const keep = markerStart + SHARE_LINKS_MARKER.length;
+  return keep < segment.length ? `${segment.slice(0, keep)}:token` : segment;
+}
+
+function foldForMatch(segment: string): string {
+  const decoded = segment.replace(/(?:%[0-9a-f]{2})+/gi, (run) =>
+    UTF8_DECODER.decode(
+      Uint8Array.from(run.slice(1).split("%"), (hex) => Number.parseInt(hex, 16))
+    )
+  );
+  return decoded.normalize("NFKC").toLowerCase().normalize("NFKC");
 }
 
 /**

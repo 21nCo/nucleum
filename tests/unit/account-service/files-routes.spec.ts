@@ -690,7 +690,10 @@ describe("account service /files", () => {
       `/files/proxy/share-links%2F${token}/download`,
       `/files/SHARE-LINKS/${token}/download`,
       `/files/share-links%2F%FF${token}/download`,
-      `/files/%2525252573hare-links/${token}/download`
+      `/files/%2525252573hare-links/${token}/download`,
+      `/files/share-lin%E2%84%AAs/${token}/download`,
+      `/files/proxy/share-lin%E2%84%AAs/${token}/download`,
+      `/files/${fileId}/share-lin%E2%84%AAs/${token}`
     ];
     for (const path of malformedPaths) {
       const malformed = await request(testApp.app, path);
