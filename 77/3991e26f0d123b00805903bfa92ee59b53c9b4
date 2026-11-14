@@ -1,0 +1,21 @@
+schema/interfaces.test.ts
+  s_f058f999ab46b7::t_c4f151f6c83942 39-40,77-116,185-189,237-297
+schema/interfaces.ts
+  s_f058f999ab46b7::t_15fe70b7a3b606 59-75,80-82,92,96-108,112,120,163-165,238-239,257-259
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "773991e26f0d123b00805903bfa92ee59b53c9b4",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

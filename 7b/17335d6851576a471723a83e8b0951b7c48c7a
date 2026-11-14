@@ -1,0 +1,53 @@
+client/features/calendar/CalendarLayout.svelte
+  s_6689ac0868c66a::t_bedd252949d726 5,70,105-110,112,114-131,136-139
+client/ui/elements/contextMenu/ContextMenuAction.svelte
+  s_b66d0e9dd4fae0::t_74e93af10676e8 76-79,83-85,89,93,101-111,119-128
+client/features/calendar/CalendarLayoutOverflowMenu.test.ts
+  s_0b0647615a23f7::t_26a6659a359a10 138-141,248-302
+client/features/calendar/calendar-overflow-menu.test.ts
+  s_0b0647615a23f7::t_bf1e34e1d18596 63-81
+client/features/calendar/calendar-overflow-menu.ts
+  s_0b0647615a23f7::t_c45d7087c9c046 22-26,29-31,36-38,40-41,44-45
+client/ui/elements/contextMenu/ContextMenuActionShow.test.ts
+  s_f058f999ab46b7::t_9790403aabf1cb 4,52-173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7b17335d6851576a471723a83e8b0951b7c48c7a",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_6689ac0868c66a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1d9e6-2aca-7a72-aacd-f7819d1eb75c",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
