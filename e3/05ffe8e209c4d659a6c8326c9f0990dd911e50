@@ -1,0 +1,21 @@
+client/shared-state/files/filefn-client.test.ts
+  s_9917ba0f979360::t_11ee781b7bec2d 57-168,188-189,300-383
+client/shared-state/files/filefn-client.ts
+  s_9917ba0f979360::t_0bb67243dddf33 1-7,70-81,117,129,144-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e305ffe8e209c4d659a6c8326c9f0990dd911e50",
+  "prompts": {},
+  "sessions": {
+    "s_9917ba0f979360": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8cfe4441-5255-4980-8bc2-485d7550fc3e",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

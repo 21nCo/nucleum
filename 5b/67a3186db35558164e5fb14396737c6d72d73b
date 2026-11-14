@@ -1,0 +1,47 @@
+apps/e2e-playwright/tests/shared/help.spec.ts
+  s_5a4a98f9bde17d::t_45b7e02b09549e 1-66
+apps/e2e-playwright/tests/shared/settings/backup.spec.ts
+  s_5a4a98f9bde17d::t_8657582e70fc57 1-38
+client/composition/global-commands.ts
+  s_5a4a98f9bde17d::t_837d8ef2c70aff 58
+client/shell/leftPanel/LeftBottomBar.svelte
+  s_5a4a98f9bde17d::t_144de6bcd1620a 28
+client/surfaces/help/Help.svelte
+  s_5a4a98f9bde17d::t_6ad70e57ac496e 19,21,23-28,51-81,84-101
+client/surfaces/help/diagnostics/Troubleshoot.svelte
+  s_5a4a98f9bde17d::t_6b887cb5859d00 1-98
+client/surfaces/help/diagnostics/diagnostic-report.test.ts
+  s_5a4a98f9bde17d::t_f041ac364da16d 1-370
+client/surfaces/help/diagnostics/diagnostic-report.ts
+  s_5a4a98f9bde17d::t_09bdb0cbd8f286 1-367
+client/surfaces/help/global-commands.ts
+  s_5a4a98f9bde17d::t_bd205430f1435e 11,330-344
+client/surfaces/help/help-sections.test.ts
+  s_5a4a98f9bde17d::t_908008c69e6057 1-106
+client/surfaces/help/help-sections.ts
+  s_5a4a98f9bde17d::t_2207314d923124 1-48
+client/surfaces/settings/data/BackupAndRestore.svelte
+  s_5a4a98f9bde17d::t_919f44156c64e9 29-33,53-56,58-83,85-95,97-111,125-128,185-191
+client/surfaces/settings/data/data-settings-feedback.test.ts
+  s_5a4a98f9bde17d::t_e6d6613f6c90b1 1-104
+client/surfaces/settings/data/data-settings-feedback.ts
+  s_5a4a98f9bde17d::t_5d34fbdb8f44fc 4,14-68
+shared/utils/clipboard.ts
+  s_5a4a98f9bde17d::t_6320a02ce1968d 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5b67a3186db35558164e5fb14396737c6d72d73b",
+  "prompts": {},
+  "sessions": {
+    "s_5a4a98f9bde17d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_5a4a98f9bde17d",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

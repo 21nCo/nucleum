@@ -1,0 +1,27 @@
+services/account/scripts/deploy.mjs
+  s_fa1eb79da670b1::t_a3e338eab72d89 15-18,20-21,24,66,69-76
+services/account/src/files/routes.ts
+  s_fa1eb79da670b1::t_0a39e19f941e84 2,31-35,68-78,105,107,110-119,122-124,127-132,135,138-139,141-146,150-151
+tests/unit/account-service/files-config.spec.ts
+  s_fa1eb79da670b1::t_8eb1ae6e48e54d 103,106-125,130-139
+tests/unit/account-service/files-routes.spec.ts
+  s_fa1eb79da670b1::t_d7c6df2f0e7107 691-693
+tests/unit/account-service/files-runtime.spec.ts
+  s_fa1eb79da670b1::t_a95cfb6796b7f8 20,269-305,340-348,357-411,424-439
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3d8b8f1857024bc72d0861337b15b120979e7f21",
+  "prompts": {},
+  "sessions": {
+    "s_fa1eb79da670b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_fa1eb79da670b1",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

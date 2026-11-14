@@ -1,0 +1,23 @@
+services/account/src/files/routes.ts
+  s_7948f259747998::t_ddeb363492381e 109-110,113-122,125-129,132-151,153-159,161-162
+tests/unit/account-service/files-routes.spec.ts
+  s_7948f259747998::t_326645d084285d 693-696
+tests/unit/account-service/files-runtime.spec.ts
+  s_7948f259747998::t_6a022f9ba5c477 348-356
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ea54b392f99e9ee4ba7a94adc7b7d414f3a19b6d",
+  "prompts": {},
+  "sessions": {
+    "s_7948f259747998": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e3ad57b4-244b-4052-b678-1608708c550b",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
