@@ -1,0 +1,40 @@
+client/features/spaces/SpaceTopBarTitle.svelte
+  s_f058f999ab46b7::t_08aeef2482db47 1-107
+  s_f058f999ab46b7::t_7ec720a401abe9 108-115
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_5297f1e3ccd5ea 43-47,86,88-93,95-96,178-190,225-229,238-248
+client/features/records/ContextZoneEditableTitle.svelte
+  s_f058f999ab46b7::t_32e9ec3fdb7b52 37-38,56-57,217-220
+client/features/spaces/SpaceBody.svelte
+  s_f058f999ab46b7::t_c70b9217c2d23e 18,131-135,147-167
+client/features/spaces/SpaceBody.test.ts
+  s_f058f999ab46b7::t_d4cd8b3914f42e 51-53
+client/features/spaces/SpaceContextZone.svelte
+  s_f058f999ab46b7::t_4f79a30f871f67 16-17,26-27,69,72-74
+client/features/spaces/SpaceHeader.svelte
+  s_f058f999ab46b7::t_37b91ea2cab18c 142-143
+client/features/spaces/space.store.ts
+  s_f058f999ab46b7::t_8ed7e2025a98ed 327-332
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_40091899fda1a2 276-299,374,399
+client/shell/topNav/contextZone/ContextZoneContent.svelte
+  s_f058f999ab46b7::t_b910125f8fe8d5 18,34-35,65-67
+client/shell/topNav/contextZone/context-zone.ts
+  s_f058f999ab46b7::t_68dc4e56d2f565 45-49,383-384
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e0d26183c19c251856725bf53b4554c3c4b95714",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
