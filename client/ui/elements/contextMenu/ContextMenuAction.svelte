@@ -71,6 +71,12 @@
     triggerEventDown("hideSecondaryMenu", {});
   }
 
+  /** Opens the menu as if its trigger were clicked, so a click closes it. */
+  export function show() {
+    if (isPopoverVisible) return;
+    contextMenuPopoverRef?.click();
+  }
+
   const { setEventContext, getEventContext } =
     createEventPropagator("contextMenuAction");
   setEventContext();

@@ -26,6 +26,12 @@ export type IPopoverRenderBaseParams = {
   isPlaceAtCaret?: boolean;
 };
 
+/**
+ * Marks popover content, such as a nested submenu, whose clicks are not
+ * outside clicks for any open popover, so a pick there keeps its parent open.
+ */
+export const POPOVER_KEEP_OPEN_ATTRIBUTE = "data-popover-keep-open";
+
 export enum PopoverTriggerMethod {
   CLICK = "click",
   RIGHT_CLICK = "right-click",

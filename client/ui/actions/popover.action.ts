@@ -6,7 +6,10 @@ import {
   type ComponentType
 } from "svelte";
 import { Placement } from "@21n/ui/elements/direction.enum";
-import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
+import {
+  POPOVER_KEEP_OPEN_ATTRIBUTE,
+  PopoverTriggerMethod
+} from "@21n/ui/actions/popover.type";
 import { detectTouchDevice } from "@21n/shared-utils/browser-platform";
 import { getEventPath } from "@21n/ui/actions/interaction-dom";
 import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
@@ -844,6 +847,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     const target =
       targetNode instanceof Element ? targetNode : targetNode.parentElement;
     if (!target) return;
+    if (target.closest(`[${POPOVER_KEEP_OPEN_ATTRIBUTE}]`)) return;
     const path = event.composedPath?.() ?? getEventPath(event);
     if (target.tagName.toLowerCase() === "path") {
       const svgParent = target.closest("svg");

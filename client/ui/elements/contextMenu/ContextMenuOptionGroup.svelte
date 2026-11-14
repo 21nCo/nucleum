@@ -82,7 +82,8 @@
           component: ContextMenuOptionList,
           props: {
             options: option.options,
-            value: current,
+            resolveValue: () => current,
+            isSubmenu: true,
             size,
             onChange: change
           }

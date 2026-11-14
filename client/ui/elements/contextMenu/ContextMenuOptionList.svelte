@@ -6,21 +6,33 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
   import Icon from "@21n/ui/elements/Icon.svelte";
+  import { POPOVER_KEEP_OPEN_ATTRIBUTE } from "@21n/ui/actions/popover.type";
 
   let {
     label = undefined,
     options,
-    value,
+    value = undefined,
+    resolveValue = undefined,
+    isSubmenu = false,
     size = Size.md,
     onChange
   }: {
     /** Caption shown above the options; omitted inside a submenu. */
     label?: string | undefined;
     options: ISelectItem[];
-    value: ISelectValue | undefined;
+    value?: ISelectValue | undefined;
+    /**
+     * Reads the current value live. A submenu popover mounts its props once,
+     * so it passes a getter instead of a value snapshot.
+     */
+    resolveValue?: (() => ISelectValue | undefined) | undefined;
+    /** Keeps the parent menu open when an option in this submenu is picked. */
+    isSubmenu?: boolean;
     size?: Size.sm | Size.md | Size.lg;
     onChange: (value: ISelectValue) => void;
   } = $props();
+
+  const current = $derived(resolveValue ? resolveValue() : value);
 </script>
 
 <div
@@ -28,12 +40,13 @@
   role="group"
   aria-label={label}
   data-testid="context-menu-option-list"
+  {...isSubmenu ? { [POPOVER_KEEP_OPEN_ATTRIBUTE]: "" } : {}}
 >
   {#if label}
     <div class="px-2 pt-1 pb-0.5 text-b3 font-medium text-fgs3">{label}</div>
   {/if}
   {#each options as option (option.value)}
-    {@const isActive = option.value === value}
+    {@const isActive = option.value === current}
     <button
       type="button"
       role="menuitemradio"
