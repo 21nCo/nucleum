@@ -380,16 +380,49 @@ describe("account FileFn request path redaction", () => {
     }
   });
 
-  it("redacts and normalizes maximum-length nested paths in linear time", () => {
-    const layers = 64_000;
-    const marked = `/files/%${"25".repeat(layers)}73hare-links/secret-token/download`;
-    const unrelatedMarked = `/unhandled/%${"25".repeat(layers)}73hare-links/secret-token`;
-    const unrelated = `/auth/%${"25".repeat(layers)}41/session`;
-    const started = performance.now();
+  const nestedPaths = (layers: number) => {
+    const nested = `%${"25".repeat(layers)}`;
+    return {
+      marked: `/files/${nested}73hare-links/secret-token/download`,
+      unrelatedMarked: `/unhandled/${nested}73hare-links/secret-token`,
+      unrelated: `/auth/${nested}41/session`
+    };
+  };
+
+  it("redacts and normalizes maximum-length nested paths", () => {
+    const { marked, unrelatedMarked, unrelated } = nestedPaths(64_000);
     expect(redactFileRequestPath(marked)).toBe("/files/share-links/:token/download");
     expect(redactFileRequestPath(unrelatedMarked)).toBe("/unhandled/share-links/:token");
     expect(redactFileRequestPath(unrelated)).toBe(unrelated);
-    expect(performance.now() - started).toBeLessThan(500);
+  });
+
+  it("spends the same work per nesting layer on short and 8x longer paths", () => {
+    // Runner-independent scaling guard: both samples redact the same total
+    // number of nesting layers (16 x 2,000 vs 2 x 16,000), so a linear decoder
+    // costs about the same for each while a decoder that rescans the path per
+    // layer costs about 8x more on the long paths. Samples are interleaved and
+    // the medians compared, so a uniformly slow or contended runner cancels out.
+    const sample = (layers: number, repeats: number) => {
+      const paths = Object.values(nestedPaths(layers));
+      const started = performance.now();
+      for (let repeat = 0; repeat < repeats; repeat += 1) {
+        for (const path of paths) redactFileRequestPath(path);
+      }
+      return performance.now() - started;
+    };
+    const median = (values: number[]) =>
+      [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]!;
+    sample(2_000, 16);
+    sample(16_000, 2);
+    const short: number[] = [];
+    const long: number[] = [];
+    for (let round = 0; round < 5; round += 1) {
+      short.push(sample(2_000, 16));
+      long.push(sample(16_000, 2));
+    }
+    const ratio = median(long) / median(short);
+    expect(ratio, `short ${short.join(",")} ms; long ${long.join(",")} ms`).toBeLessThan(3);
+    expect(median(long)).toBeLessThan(5_000);
   });
 
   it("never lets a generated share token survive, whatever the per-character encoding", () => {

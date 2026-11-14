@@ -182,7 +182,7 @@ function decodeAsciiEscapes(value: string): string {
     let escape = trailingAsciiEscape(output);
     while (escape !== null) {
       output.length -= 3;
-      output.push(String.fromCharCode(Number.parseInt(escape, 16)));
+      output.push(String.fromCodePoint(Number.parseInt(escape, 16)));
       escape = trailingAsciiEscape(output);
     }
   }
