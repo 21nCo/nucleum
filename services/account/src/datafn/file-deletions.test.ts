@@ -402,9 +402,10 @@ describe('file record deletion cascade', () => {
 describe('retrying pending deletions', () => {
   it('settles each due deletion once when cleanup runs overlap', async () => {
     const database = memoryAdapter({ debug: false });
-    const deleteFile = vi.fn(async (_fileId: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-    });
+    // FileFn deletes block until released, so both runs are mid-settle at once.
+    let release: () => void = () => undefined;
+    const released = new Promise<void>((resolve) => { release = resolve; });
+    const deleteFile = vi.fn(async (_fileId: string) => released);
     const fileFn = { services: { files: { deleteFile } } } as unknown as FileFn;
     let clock = 1_000_000;
     const cascade = createFileDeletionCascade({
@@ -429,7 +430,10 @@ describe('retrying pending deletions', () => {
     }
     clock += 1;
 
-    const results = await Promise.all([cascade.retryDue(), cascade.retryDue()]);
+    const runs = Promise.all([cascade.retryDue(), cascade.retryDue()]);
+    await vi.waitFor(() => expect(deleteFile).toHaveBeenCalledTimes(2));
+    release();
+    const results = await runs;
 
     expect(results.reduce((total, result) => total + result.deleted, 0)).toBe(2);
     expect(deleteFile.mock.calls.map(([fileId]) => fileId).sort()).toEqual(['file_a', 'file_b']);
