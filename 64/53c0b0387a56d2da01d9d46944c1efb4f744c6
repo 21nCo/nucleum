@@ -1,0 +1,39 @@
+client/features/calendar/CalendarLayout.svelte
+  s_d4816ff781c8be::t_272e07ad786f5a 31-34,100-109,129-130,256
+client/features/calendar/calendar-overflow-menu.test.ts
+  s_d4816ff781c8be::t_6a17be6516a39b 1-27
+client/features/calendar/calendar-overflow-menu.ts
+  s_d4816ff781c8be::t_968b0ed118856d 1-28
+client/ui/actions/popover-keep-open.test.ts
+  s_d4816ff781c8be::t_a5c7f3a612d270 1-65
+client/ui/actions/popover.action.ts
+  s_d4816ff781c8be::t_2f9174c89fe670 9-12,850
+client/ui/actions/popover.type.ts
+  s_d4816ff781c8be::t_a3a84aa8a1367a 29-34
+client/ui/elements/contextMenu/ContextMenuAction.svelte
+  s_d4816ff781c8be::t_37e8e53a7ce726 74-79
+client/ui/elements/contextMenu/ContextMenuActionShow.test.ts
+  s_d4816ff781c8be::t_07bd1d57f6b461 1-51
+client/ui/elements/contextMenu/ContextMenuOptionGroup.svelte
+  s_d4816ff781c8be::t_f21bb9cd07f1b5 85-86
+client/ui/elements/contextMenu/ContextMenuOptionList.svelte
+  s_d4816ff781c8be::t_df8d33e7f01f5d 9,14-16,23-30,34-35,43,49
+client/ui/elements/contextMenu/ContextMenuOptionSubmenu.test.ts
+  s_d4816ff781c8be::t_8b413ebb4d29a3 1-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6453c0b0387a56d2da01d9d46944c1efb4f744c6",
+  "prompts": {},
+  "sessions": {
+    "s_d4816ff781c8be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_d4816ff781c8be",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
