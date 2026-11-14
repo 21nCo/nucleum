@@ -1,0 +1,23 @@
+client/ui/elements/contextMenu/ContextMenuActionShow.test.ts
+  s_ca712d9f004878::t_db9ff5292642e6 174-175,183,189,225-264
+client/features/calendar/CalendarLayoutOverflowMenu.test.ts
+  s_ca712d9f004878::t_65017b3fbc695c 397-399
+client/ui/elements/contextMenu/ContextMenuAction.svelte
+  s_ca712d9f004878::t_bc9894ef1d5bdb 131-135,138-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "de43e3e603d56dca968d609fa91caf873ce45f55",
+  "prompts": {},
+  "sessions": {
+    "s_ca712d9f004878": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3e7d3367-bcef-435f-b7f9-6c0a9a38bf8b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
