@@ -37,7 +37,8 @@ function failingWhenFlagged(database: Adapter, failFileFn: { next: boolean }): A
   } as Adapter;
 }
 
-function createFixture(): Fixture {
+/** Builds an account app with FileFn; `inline` omits the Worker `defer` hook, as on Node. */
+function createFixture(options: { inline?: boolean } = {}): Fixture {
   const fileDatabase = memoryAdapter({ debug: false });
   const deletedKeys: string[] = [];
   const failFileFn = { next: false };
@@ -61,8 +62,7 @@ function createFixture(): Fixture {
     files: {
       database: failingWhenFlagged(fileDatabase, failFileFn),
       storage: () => storage,
-      // Worker-style host: work deferred past the response, awaited by `call`.
-      runtime: { defer: (work) => { deferred.push(work); } }
+      runtime: options.inline ? undefined : { defer: (work) => { deferred.push(work); } }
     }
   });
   return { harness, fileDatabase, deletedKeys, failFileFn, deferred };
@@ -355,7 +355,6 @@ describe('file record deletion cascade', () => {
     expect(pending).toMatchObject({ fileId: file.fileId, attempts: 1 });
     expect(String(pending?.lastError)).toContain('FileFn database unavailable');
 
-    // Any authenticated DataFn request sweeps due deletions, at most once a minute.
     vi.setSystemTime(Date.now() + 2 * 60 * 1000);
     expect((await pushAll(fixture, user, [])).status).toBe(200);
 
@@ -397,16 +396,136 @@ describe('file record deletion cascade', () => {
     expect(fixture.deletedKeys).toEqual([]);
     expect(await pendingDeletions(fixture)).toEqual([]);
   });
+
+  it('keeps a file named only by writes DataFn rejected or rolled back', async () => {
+    const fixture = createFixture();
+    const user = await signUp(fixture.harness);
+    const existing = await createFileRecord(fixture, user);
+    const upload = `file_${randomUUID()}`;
+    const replacement = `file_${randomUUID()}`;
+    await createFileFnFile(fixture, upload, existing.ownerId);
+    await createFileFnFile(fixture, replacement, existing.ownerId);
+    const rejectedId = `file:${randomUUID()}`;
+    const rolledBackId = `file:${randomUUID()}`;
+    const { mutationId: _omitted, ...unidentifiedDelete } =
+      fileMutation('delete', existing.recordId);
+
+    const withoutClient = await call(fixture, '/datafn/push', user, { mutations: [
+      fileMutation('insert', rejectedId, fileRecord(rejectedId, upload)),
+      fileMutation('delete', rejectedId)
+    ] });
+    const rolledBack = await call(fixture, '/datafn/transact', user, {
+      atomic: true,
+      steps: [
+        { mutation: fileMutation('insert', rolledBackId, fileRecord(rolledBackId, upload)) },
+        { mutation: fileMutation('delete', rolledBackId) },
+        { mutation: fileMutation('merge', `file:${randomUUID()}`, { label: 'missing' }) }
+      ]
+    });
+    const partial = await pushAll(fixture, user, [
+      fileMutation('merge', existing.recordId, { fileId: replacement }),
+      unidentifiedDelete
+    ]);
+
+    expect(withoutClient.status).toBe(400);
+    expect(rolledBack.status).toBe(200);
+    expect(await rolledBack.json()).toMatchObject({ result: { ok: false } });
+    expect(partial.status).toBe(400);
+    expect(await recordExists(fixture, rolledBackId)).toBe(false);
+    expect(await recordExists(fixture, existing.recordId)).toBe(true);
+    expect(await fileExists(fixture, upload)).toBe(true);
+    expect(await fileExists(fixture, existing.fileId)).toBe(true);
+    expect(await fileExists(fixture, replacement)).toBe(true);
+    expect(fixture.deletedKeys).toEqual([]);
+    expect(await pendingDeletions(fixture)).toEqual([]);
+  });
+
+  it('keeps an owner file a grantee allowed to delete it names in a record the grantee deletes', async () => {
+    const fixture = createFixture();
+    const owner = await signUp(fixture.harness);
+    const grantee = await signUp(fixture.harness);
+    const shared = await createFileRecord(fixture, owner);
+    const granteeActor = (await createFileRecord(fixture, grantee)).ownerId;
+    const granted = await call(fixture, `/files/${shared.fileId}/permissions`, owner, {
+      userId: granteeActor,
+      canRead: true,
+      canWrite: true,
+      canDelete: true
+    });
+    expect(granted.status).toBe(201);
+    const synced = `file:${randomUUID()}`;
+    const transient = `file:${randomUUID()}`;
+
+    expect((await push(fixture, grantee, 'insert', synced, fileRecord(synced, shared.fileId)))
+      .status).toBe(200);
+    expect((await push(fixture, grantee, 'delete', synced)).status).toBe(200);
+    expect((await pushAll(fixture, grantee, [
+      fileMutation('insert', transient, fileRecord(transient, shared.fileId)),
+      fileMutation('delete', transient)
+    ])).status).toBe(200);
+
+    expect(await recordExists(fixture, synced)).toBe(false);
+    expect(await fileExists(fixture, shared.fileId)).toBe(true);
+    expect(await recordExists(fixture, shared.recordId)).toBe(true);
+    expect(fixture.deletedKeys).toEqual([]);
+    expect(await pendingDeletions(fixture)).toEqual([]);
+  });
+
+  it('never deletes a FileFn file for an app-scoped key that /files refuses', async () => {
+    const fixture = createFixture();
+    const user = await signUp(fixture.harness);
+    const ownerId = (await createFileRecord(fixture, user)).ownerId;
+    const created = await call(fixture, '/auth/api-keys', user, {
+      name: 'memotron',
+      scopes: ['memotron:read', 'memotron:write']
+    });
+    expect(created.status).toBe(201);
+    const { data } = await created.json() as { data: { secret: string } };
+    const memotronKey = { authorization: `Bearer ${data.secret}` };
+    const together = `file_${randomUUID()}`;
+    const apart = `file_${randomUUID()}`;
+    await createFileFnFile(fixture, together, ownerId);
+    await createFileFnFile(fixture, apart, ownerId);
+    const oneRequest = `file:${randomUUID()}`;
+    const twoRequests = `file:${randomUUID()}`;
+
+    expect((await pushAll(fixture, memotronKey, [
+      fileMutation('insert', oneRequest, fileRecord(oneRequest, together)),
+      fileMutation('delete', oneRequest)
+    ])).status).toBe(200);
+    expect((await push(fixture, memotronKey, 'insert', twoRequests,
+      fileRecord(twoRequests, apart))).status).toBe(200);
+    expect((await push(fixture, memotronKey, 'delete', twoRequests)).status).toBe(200);
+
+    expect(await recordExists(fixture, oneRequest)).toBe(false);
+    expect(await recordExists(fixture, twoRequests)).toBe(false);
+    expect(await fileExists(fixture, together)).toBe(true);
+    expect(await fileExists(fixture, apart)).toBe(true);
+    expect(fixture.deletedKeys).toEqual([]);
+    expect(await pendingDeletions(fixture)).toEqual([]);
+  });
+
+  it('settles before answering on a host without deferred work', async () => {
+    const fixture = createFixture({ inline: true });
+    const user = await signUp(fixture.harness);
+    const file = await createFileRecord(fixture, user);
+
+    expect((await push(fixture, user, 'delete', file.recordId)).status).toBe(200);
+
+    expect(await fileExists(fixture, file.fileId)).toBe(false);
+    expect(fixture.deletedKeys).toEqual([file.storageKey]);
+    expect(await pendingDeletions(fixture)).toEqual([]);
+  });
 });
 
 describe('retrying pending deletions', () => {
   it('settles each due deletion once when cleanup runs overlap', async () => {
     const database = memoryAdapter({ debug: false });
-    // FileFn deletes block until released, so both runs are mid-settle at once.
     let release: () => void = () => undefined;
     const released = new Promise<void>((resolve) => { release = resolve; });
     const deleteFile = vi.fn(async (_fileId: string) => released);
-    const fileFn = { services: { files: { deleteFile } } } as unknown as FileFn;
+    const getFile = async (fileId: string) => ({ fileId, ownerId: 'user_1' });
+    const fileFn = { services: { files: { getFile, deleteFile } } } as unknown as FileFn;
     let clock = 1_000_000;
     const cascade = createFileDeletionCascade({
       database,
@@ -421,6 +540,7 @@ describe('retrying pending deletions', () => {
           id: randomUUID(),
           principalId: 'user_1',
           fileId,
+          recordId: `file:${fileId}`,
           attempts: 0,
           nextAttemptAt: clock - 1,
           lastError: null,
@@ -443,25 +563,30 @@ describe('retrying pending deletions', () => {
 
 describe('fileRecordDeletions', () => {
   it('lists permanent file deletes from push, mutation and transact payloads only', () => {
-    const remove = { resource: 'file', operation: 'delete', id: 'file:a' };
-    const deleted = [{ recordId: 'file:a', fileIds: [] }];
+    const remove = { resource: 'file', operation: 'delete', id: 'file:a', mutationId: 'm1' };
+    const deletedAt = (slot: number) => [{
+      recordId: 'file:a',
+      write: { slot, recordId: 'file:a', mutationId: 'm1' },
+      fileIds: []
+    }];
     expect(fileRecordDeletions('push', { mutations: [
-      remove,
       { resource: 'file', operation: 'trash', id: 'file:b' },
+      remove,
       { resource: 'node', operation: 'delete', id: 'node:c' }
-    ] })).toEqual(deleted);
-    expect(fileRecordDeletions('mutation', remove)).toEqual(deleted);
-    expect(fileRecordDeletions('mutation', [remove])).toEqual(deleted);
-    expect(fileRecordDeletions('transact', { steps: [{ mutation: remove }, { query: {} }] }))
-      .toEqual(deleted);
-    expect(fileRecordDeletions('transact', { steps: [remove] })).toEqual(deleted);
+    ] })).toEqual(deletedAt(1));
+    expect(fileRecordDeletions('mutation', remove)).toEqual(deletedAt(0));
+    expect(fileRecordDeletions('mutation', [remove])).toEqual(deletedAt(0));
+    expect(fileRecordDeletions('transact', { steps: [{ query: {} }, { mutation: remove }] }))
+      .toEqual(deletedAt(1));
+    expect(fileRecordDeletions('transact', { steps: [remove] })).toEqual(deletedAt(0));
     expect(fileRecordDeletions('transact', { steps: [{ query: {}, mutation: remove }] }))
       .toEqual([]);
     expect(fileRecordDeletions('pull', { mutations: [remove] })).toEqual([]);
     expect(fileRecordDeletions('push', { mutations: [{ ...remove, id: 7 }, null] })).toEqual([]);
   });
 
-  it('carries file ids set earlier in the request to the deletion', () => {
+  it('carries file ids set earlier in the request, with the write that set each, to the deletion', () => {
+    const write = (slot: number) => ({ slot, recordId: 'file:a' });
     expect(fileRecordDeletions('push', { mutations: [
       { resource: 'file', operation: 'delete', id: 'file:a' },
       { resource: 'file', operation: 'insert', id: 'file:a', record: { fileId: 'F1' } },
@@ -469,8 +594,12 @@ describe('fileRecordDeletions', () => {
       { resource: 'file', operation: 'merge', id: 'file:b', record: { fileId: 'F3' } },
       { resource: 'file', operation: 'delete', id: 'file:a' }
     ] })).toEqual([
-      { recordId: 'file:a', fileIds: [] },
-      { recordId: 'file:a', fileIds: ['F1', 'F2'] }
+      { recordId: 'file:a', write: write(0), fileIds: [] },
+      {
+        recordId: 'file:a',
+        write: write(4),
+        fileIds: [{ fileId: 'F1', write: write(1) }, { fileId: 'F2', write: write(2) }]
+      }
     ]);
   });
 });

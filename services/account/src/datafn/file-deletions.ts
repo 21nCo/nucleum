@@ -27,21 +27,54 @@ export interface PendingFileDeletion {
   id: string;
   principalId: string;
   fileId: string;
+  /** The deleted `file` record; the deletion is owed only while it stays gone. */
+  recordId: string;
   attempts: number;
 }
 
 /** What happened to one pending deletion. */
 export type FileDeletionOutcome = 'deleted' | 'kept' | 'retrying';
 
+/**
+ * One mutation of a DataFn write payload: its position in the list DataFn
+ * answers per mutation (push mutations, mutation batch, transact steps) and
+ * the identifiers its result carries.
+ */
+export interface FileRecordWrite {
+  slot: number;
+  recordId: string;
+  mutationId?: string;
+}
+
 /** A `file` record a write permanently deletes, with the FileFn ids it may reference. */
 export interface FileRecordDeletion {
   recordId: string;
+  /** The `delete` mutation. */
+  write: FileRecordWrite;
   /**
    * FileFn ids that earlier `insert`, `merge` or `replace` mutations in the
-   * same request set on the record, in request order. The stored value is
-   * read separately.
+   * same request set on the record, in request order, with the mutation that
+   * set each. The stored value is read separately.
    */
-  fileIds: string[];
+  fileIds: { fileId: string; write: FileRecordWrite }[];
+}
+
+/** A FileFn id set and deleted within one request, owed only if DataFn applied both writes. */
+interface RequestFileDeletion {
+  fileId: string;
+  recordId: string;
+  writes: FileRecordWrite[];
+}
+
+/** Deletions one DataFn write may owe, captured before DataFn runs it. */
+export interface CapturedFileDeletions {
+  action: DataFnAction;
+  payload: unknown;
+  principalId: string;
+  /** Rows for the stored `fileId` of each deleted record, written before DataFn ran. */
+  stored: PendingFileDeletion[];
+  /** File ids the request itself set on a record it then deleted. */
+  requested: RequestFileDeletion[];
 }
 
 /** Totals from one cleanup run. */
@@ -76,30 +109,34 @@ const processSweepThrottle = { lastSweepAt: Number.NEGATIVE_INFINITY };
 /**
  * Deletes the FileFn file behind a `file` record once that record is
  * permanently deleted through DataFn. Trashing is a merge and never cascades.
+ * A file is deleted only when a record DataFn applied in the principal's
+ * namespace referenced it, DataFn applied that record's deletion, no other
+ * record in the namespace references it and FileFn reports the principal as
+ * its owner. The caller passes only sessions that `/files` would accept.
  */
 export interface FileDeletionCascade {
   /**
-   * Records a pending deletion for every FileFn file a `push`, `mutation`
-   * or `transact` payload may orphan by permanently deleting a `file`
-   * record, before DataFn runs it: the record's stored `fileId` and any
-   * `fileId` an earlier mutation in the same request set on it. Pending rows
-   * stay leased for ten minutes so the cleanup run leaves them to the
-   * request. A storage failure rejects so the write is refused and retried
-   * by the client instead of orphaning the file.
+   * Reads what a `push`, `mutation` or `transact` payload may orphan by
+   * permanently deleting `file` records, before DataFn runs it. Each deleted
+   * record's stored `fileId` gets a pending row, leased for ten minutes so
+   * the cleanup run leaves it to the request; a `fileId` an earlier mutation
+   * in the same request set on the record is held in memory until DataFn
+   * answers. Null when nothing is deleted. A storage failure rejects so the
+   * write is refused and retried by the client instead of orphaning the file.
    */
   capture(
     action: DataFnAction,
     payload: unknown,
     principalId: string
-  ): Promise<PendingFileDeletion[]>;
+  ): Promise<CapturedFileDeletions | null>;
   /**
-   * Settles pending deletions after DataFn answered: a file whose record is
-   * gone and that no other `file` record in the namespace references is
-   * deleted from FileFn; one still referenced is kept and its pending row
-   * dropped; a FileFn failure leaves the row for the cleanup run with
+   * Settles captured deletions with the DataFn response body. A request-set
+   * `fileId` counts only when the body reports both the write that set it and
+   * the delete as applied. Each deletion is then settled as described on the
+   * interface; a FileFn failure leaves the row for the cleanup run with
    * exponential backoff. Never rejects, so the write response is unaffected.
    */
-  settle(pending: readonly PendingFileDeletion[]): Promise<void>;
+  settle(captured: CapturedFileDeletions, responseBody: unknown): Promise<void>;
   /**
    * Settles up to `limit` pending deletions whose lease or backoff has
    * elapsed, oldest first. Each row is claimed with a fresh lease before it
@@ -136,18 +173,15 @@ export function createFileDeletionCascade(
     }
   };
 
-  const referencedFileId = async (
+  const findRecord = (
     namespace: string,
     recordId: string
-  ): Promise<string | null> => {
-    const record = await records.findOne<Record<string, unknown>>({
+  ): Promise<Record<string, unknown> | null> =>
+    records.findOne<Record<string, unknown>>({
       model: FILE_RESOURCE,
       where: [{ field: 'id', operator: 'eq', value: recordId }],
       namespace
     });
-    const fileId = record?.fileId;
-    return typeof fileId === 'string' && fileId.length > 0 ? fileId : null;
-  };
 
   const stillReferenced = async (
     namespace: string,
@@ -168,7 +202,10 @@ export function createFileDeletionCascade(
     const byId: WhereClause[] = [{ field: 'id', operator: 'eq', value: pending.id }];
     try {
       const namespace = resolveAccountUserNamespace(pending.principalId);
-      if (await stillReferenced(namespace, pending.fileId)) {
+      if (
+        (await findRecord(namespace, pending.recordId)) ||
+        (await stillReferenced(namespace, pending.fileId))
+      ) {
         await table.delete({ model: FILE_DELETIONS_MODEL, where: byId });
         return 'kept';
       }
@@ -176,9 +213,9 @@ export function createFileDeletionCascade(
       if (!fileFn) {
         throw new Error('FileFn is not configured for this region');
       }
-      await deleteFromFileFn(fileFn, pending);
+      const outcome = await deleteOwnedFile(fileFn, pending);
       await table.delete({ model: FILE_DELETIONS_MODEL, where: byId });
-      return 'deleted';
+      return outcome;
     } catch (error) {
       const attempts = pending.attempts + 1;
       report(error, attempts);
@@ -199,14 +236,18 @@ export function createFileDeletionCascade(
     }
   };
 
-  const settle = async (pending: readonly PendingFileDeletion[]): Promise<void> => {
-    for (const entry of pending) {
-      await settleOne(entry);
-    }
-  };
-
-  const record = async (principalId: string, fileId: string): Promise<PendingFileDeletion> => {
-    const entry: PendingFileDeletion = { id: randomUUID(), principalId, fileId, attempts: 0 };
+  const record = async (
+    principalId: string,
+    fileId: string,
+    recordId: string
+  ): Promise<PendingFileDeletion> => {
+    const entry: PendingFileDeletion = {
+      id: randomUUID(),
+      principalId,
+      fileId,
+      recordId,
+      attempts: 0
+    };
     const createdAt = now();
     await table.create({
       model: FILE_DELETIONS_MODEL,
@@ -214,6 +255,7 @@ export function createFileDeletionCascade(
         id: entry.id,
         principalId,
         fileId,
+        recordId,
         attempts: 0,
         nextAttemptAt: createdAt + CAPTURE_LEASE_MS,
         lastError: null,
@@ -221,6 +263,27 @@ export function createFileDeletionCascade(
       }
     });
     return entry;
+  };
+
+  const settleCaptured = async (
+    captured: CapturedFileDeletions,
+    responseBody: unknown
+  ): Promise<void> => {
+    for (const entry of captured.stored) {
+      await settleOne(entry);
+    }
+    if (captured.requested.length === 0) return;
+    const applied = appliedWrites(captured.action, captured.payload, responseBody);
+    for (const candidate of captured.requested) {
+      if (!candidate.writes.every(applied)) continue;
+      try {
+        await settleOne(
+          await record(captured.principalId, candidate.fileId, candidate.recordId)
+        );
+      } catch (error) {
+        report(error, 0);
+      }
+    }
   };
 
   /**
@@ -261,6 +324,7 @@ export function createFileDeletionCascade(
         id: String(row.id),
         principalId: String(row.principalId),
         fileId: String(row.fileId),
+        recordId: String(row.recordId),
         attempts: Number(row.attempts ?? 0)
       });
       result[outcome] += 1;
@@ -270,22 +334,43 @@ export function createFileDeletionCascade(
 
   return {
     async capture(action, payload, principalId) {
+      const deletions = fileRecordDeletions(action, payload);
+      if (deletions.length === 0) return null;
       const namespace = resolveAccountUserNamespace(principalId);
-      const pending: PendingFileDeletion[] = [];
+      const captured: CapturedFileDeletions = {
+        action,
+        payload,
+        principalId,
+        stored: [],
+        requested: []
+      };
       const seen = new Set<string>();
-      for (const deletion of fileRecordDeletions(action, payload)) {
-        const stored = await referencedFileId(namespace, deletion.recordId);
-        for (const fileId of [...(stored ? [stored] : []), ...deletion.fileIds]) {
-          if (seen.has(fileId)) continue;
-          seen.add(fileId);
-          pending.push(await record(principalId, fileId));
+      for (const deletion of deletions) {
+        const storedFileId = (await findRecord(namespace, deletion.recordId))?.fileId;
+        if (
+          typeof storedFileId === 'string' &&
+          storedFileId.length > 0 &&
+          !seen.has(storedFileId)
+        ) {
+          seen.add(storedFileId);
+          captured.stored.push(await record(principalId, storedFileId, deletion.recordId));
         }
       }
-      return pending;
+      for (const deletion of deletions) {
+        for (const { fileId, write } of deletion.fileIds) {
+          if (seen.has(fileId)) continue;
+          seen.add(fileId);
+          captured.requested.push({
+            fileId,
+            recordId: deletion.recordId,
+            writes: [write, deletion.write]
+          });
+        }
+      }
+      return captured;
     },
-    async settle(pending) {
-      if (pending.length === 0) return;
-      const work = settle(pending);
+    async settle(captured, responseBody) {
+      const work = settleCaptured(captured, responseBody);
       if (input.runtime?.defer) {
         input.runtime.defer(work);
         return;
@@ -308,23 +393,25 @@ export function createFileDeletionCascade(
 }
 
 /**
- * Deletes the file as its owner. A file that is already gone counts as
- * deleted. A file the principal does not own is refused by FileFn and left
- * in place: the record named another owner's file, which this cascade must
- * never remove, so the refusal is final and also counts as settled.
+ * Deletes the file only when FileFn reports the principal as its owner. A
+ * grant, even one allowing delete, is not enough: the owner's own records may
+ * still reference the file. A file that is already gone counts as deleted; a
+ * file the principal cannot read or does not own is left in place and counts
+ * as kept, which is final.
  */
-async function deleteFromFileFn(
+async function deleteOwnedFile(
   fileFn: FileFn,
   pending: PendingFileDeletion
-): Promise<void> {
+): Promise<'deleted' | 'kept'> {
+  const actor = { principalId: pending.principalId };
   try {
-    await fileFn.services.files.deleteFile(pending.fileId, {
-      principalId: pending.principalId
-    });
+    const file = await fileFn.services.files.getFile(pending.fileId, actor);
+    if (file.ownerId !== pending.principalId) return 'kept';
+    await fileFn.services.files.deleteFile(pending.fileId, actor);
+    return 'deleted';
   } catch (error) {
-    if (error instanceof FileFnError && (error.status === 404 || error.status === 403)) {
-      return;
-    }
+    if (error instanceof FileFnError && error.status === 404) return 'deleted';
+    if (error instanceof FileFnError && error.status === 403) return 'kept';
     throw error;
   }
 }
@@ -339,9 +426,9 @@ export function fileRecordDeletions(
   action: DataFnAction,
   payload: unknown
 ): FileRecordDeletion[] {
-  const setFileIds = new Map<string, string[]>();
+  const setFileIds = new Map<string, { fileId: string; write: FileRecordWrite }[]>();
   const deletions: FileRecordDeletion[] = [];
-  for (const mutation of writeMutations(action, payload)) {
+  for (const { slot, mutation } of writeMutations(action, payload)) {
     if (
       !isRecord(mutation) ||
       mutation.resource !== FILE_RESOURCE ||
@@ -351,8 +438,15 @@ export function fileRecordDeletions(
       continue;
     }
     const recordId = mutation.id;
+    const write: FileRecordWrite = {
+      slot,
+      recordId,
+      ...(typeof mutation.mutationId === 'string' && mutation.mutationId.length > 0
+        ? { mutationId: mutation.mutationId }
+        : {})
+    };
     if (mutation.operation === 'delete') {
-      deletions.push({ recordId, fileIds: [...(setFileIds.get(recordId) ?? [])] });
+      deletions.push({ recordId, write, fileIds: [...(setFileIds.get(recordId) ?? [])] });
       continue;
     }
     const fileId = isRecord(mutation.record) ? mutation.record.fileId : undefined;
@@ -362,28 +456,82 @@ export function fileRecordDeletions(
       typeof fileId === 'string' &&
       fileId.length > 0
     ) {
-      setFileIds.set(recordId, [...(setFileIds.get(recordId) ?? []), fileId]);
+      setFileIds.set(recordId, [...(setFileIds.get(recordId) ?? []), { fileId, write }]);
     }
   }
   return deletions;
 }
 
-function writeMutations(action: DataFnAction, payload: unknown): unknown[] {
+/**
+ * Reads which payload mutations DataFn reports as applied. `push` answers a
+ * list of applied mutation ids, also on a 400 after a partial batch, so a
+ * mutation counts only when its id is unique in the payload. `mutation` and
+ * `transact` answer one result per mutation or step; it counts only when it
+ * is `ok` and names the record. Anything else counts as not applied.
+ */
+function appliedWrites(
+  action: DataFnAction,
+  payload: unknown,
+  body: unknown
+): (write: FileRecordWrite) => boolean {
+  if (!isRecord(body)) return () => false;
   if (action === 'push') {
-    return isRecord(payload) && Array.isArray(payload.mutations) ? payload.mutations : [];
+    const applied = isRecord(body.result) && Array.isArray(body.result.applied)
+      ? new Set(body.result.applied)
+      : new Set();
+    const counts = new Map<string, number>();
+    for (const { mutation } of writeMutations(action, payload)) {
+      const mutationId = isRecord(mutation) ? mutation.mutationId : undefined;
+      if (typeof mutationId === 'string') {
+        counts.set(mutationId, (counts.get(mutationId) ?? 0) + 1);
+      }
+    }
+    return (write) =>
+      write.mutationId !== undefined &&
+      counts.get(write.mutationId) === 1 &&
+      applied.has(write.mutationId);
+  }
+  if (body.ok !== true) return () => false;
+  let results: unknown[] = [];
+  if (action === 'mutation') {
+    results = Array.isArray(payload)
+      ? (Array.isArray(body.result) ? body.result : [])
+      : [body.result];
+  } else if (action === 'transact' && isRecord(body.result) && Array.isArray(body.result.results)) {
+    results = body.result.results;
+  }
+  return (write) => {
+    const result = results[write.slot];
+    return (
+      isRecord(result) &&
+      result.ok === true &&
+      Array.isArray(result.affectedIds) &&
+      result.affectedIds.includes(write.recordId) &&
+      (write.mutationId === undefined || result.mutationId === write.mutationId)
+    );
+  };
+}
+
+function writeMutations(
+  action: DataFnAction,
+  payload: unknown
+): { slot: number; mutation: unknown }[] {
+  const indexed = (list: unknown[]) => list.map((mutation, slot) => ({ slot, mutation }));
+  if (action === 'push') {
+    return isRecord(payload) && Array.isArray(payload.mutations) ? indexed(payload.mutations) : [];
   }
   if (action === 'mutation') {
-    return Array.isArray(payload) ? payload : [payload];
+    return indexed(Array.isArray(payload) ? payload : [payload]);
   }
   if (action !== 'transact' || !isRecord(payload) || !Array.isArray(payload.steps)) {
     return [];
   }
-  const mutations: unknown[] = [];
-  for (const step of payload.steps) {
-    if (!isRecord(step) || step.query) continue;
-    if (step.mutation) mutations.push(step.mutation);
-    else if (typeof step.operation === 'string') mutations.push(step);
-  }
+  const mutations: { slot: number; mutation: unknown }[] = [];
+  payload.steps.forEach((step: unknown, slot: number) => {
+    if (!isRecord(step) || step.query) return;
+    if (step.mutation) mutations.push({ slot, mutation: step.mutation });
+    else if (typeof step.operation === 'string') mutations.push({ slot, mutation: step });
+  });
   return mutations;
 }
 

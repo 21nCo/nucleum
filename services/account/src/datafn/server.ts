@@ -22,7 +22,7 @@ import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import { createSyncSearchProvider } from './search-provider.js';
 import { resolveAccountUserNamespace } from './namespace.js';
 import { readPositiveIntegerEnv } from './env.js';
-import type { FileDeletionCascade, PendingFileDeletion } from './file-deletions.js';
+import type { CapturedFileDeletions, FileDeletionCascade } from './file-deletions.js';
 import {
   authorizeAppScopes,
   filterScopedResponseBody,
@@ -57,9 +57,10 @@ export interface CreateSyncServerInput {
   observability?: SuperfunctionObservability;
   searchProvider?: SearchProvider;
   /**
-   * Deletes the FileFn file behind each `file` record a write permanently
-   * deletes, and retries owed deletions after authenticated requests.
-   * Omitted, records are deleted without touching FileFn.
+   * Deletes the FileFn file behind each `file` record a write by a session
+   * holding every app scope permanently deletes, and retries owed deletions
+   * after authenticated requests. Omitted, records are deleted without
+   * touching FileFn.
    */
   fileDeletions?: FileDeletionCascade;
 }
@@ -132,15 +133,18 @@ export function createSyncServer(
     };
   };
   const regionHeader = input.regionId ?? process.env.ACCOUNT_REGION_ID;
-  const pendingFileDeletions = new WeakMap<object, PendingFileDeletion[]>();
+  const capturedFileDeletions = new WeakMap<object, CapturedFileDeletions>();
   const settleFileDeletions = async (
     hook: DatafnRouteHookInput<SyncContext>
   ): Promise<Response> => {
     if (!input.fileDeletions) return hook.response;
-    const pending = pendingFileDeletions.get(hook.context);
-    if (pending) {
-      pendingFileDeletions.delete(hook.context);
-      await input.fileDeletions.settle(pending);
+    const captured = capturedFileDeletions.get(hook.context);
+    if (captured) {
+      capturedFileDeletions.delete(hook.context);
+      const body: unknown = captured.requested.length > 0
+        ? await hook.response.clone().json().catch(() => undefined)
+        : undefined;
+      await input.fileDeletions.settle(captured, body);
     }
     if (hook.context.session) input.fileDeletions.sweep();
     return hook.response;
@@ -185,11 +189,11 @@ export function createSyncServer(
         }
         if (!MUTATING_DATAFN_ACTIONS.has(action)) return true;
         if (!(await authorizeMutationRequest(input.auth, ctx.request))) return false;
-        if (input.fileDeletions) {
-          const pending = await input.fileDeletions.capture(
+        if (input.fileDeletions && hasFullAppAccess(access)) {
+          const captured = await input.fileDeletions.capture(
             action, payload, ctx.session.actorId
           );
-          if (pending.length > 0) pendingFileDeletions.set(ctx, pending);
+          if (captured) capturedFileDeletions.set(ctx, captured);
         }
         return true;
       }
