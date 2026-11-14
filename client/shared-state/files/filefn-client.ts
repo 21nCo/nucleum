@@ -17,6 +17,7 @@ import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 
 const FILEFN_OFFLINE_DIR_PREFIX = "filefn-pending-uploads";
+const OFFLINE_REPLAY_START_FILE_ID = "";
 
 /** Signed-in cloud account that owns a FileFn client. */
 export type FileFnAccountScope = {
@@ -25,6 +26,7 @@ export type FileFnAccountScope = {
 };
 
 type FileFnClientEntry = {
+  userId: string;
   key: string;
   controller: AbortController;
   client: Promise<FileFnClient>;
@@ -32,6 +34,8 @@ type FileFnClientEntry = {
 
 let currentEntry: FileFnClientEntry | null = null;
 let isBoundToAccount = false;
+let syncGeneration = 0;
+let latestSync: Promise<void> = Promise.resolve();
 
 /**
  * Returns the cloud account a FileFn client belongs to, or null for a
@@ -66,7 +70,13 @@ export function resolveFileFnOfflineDir(userId: string): string {
 /**
  * Returns the FileFn client of the signed-in cloud account, or null when no
  * cloud account is signed in. The first call binds the client to the account
- * state: a region switch recreates it and sign-out tears it down.
+ * state. A client belongs to one account and one effective FileFn authority:
+ * the session region, else the stored account region, else `insouth`. A
+ * change of that authority, seen on an account change or the next call,
+ * recreates the client, and sign-out tears it down.
+ *
+ * Creating a client starts the replay of the account's offline queue: staged
+ * uploads are sent now when online and on every later `online` event.
  *
  * Teardown aborts the client's in-flight requests, rejects every later call
  * with an AbortError before it does any work, and rejects the pending `done()`
@@ -74,11 +84,11 @@ export function resolveFileFnOfflineDir(userId: string): string {
  * staged, in the account's offline queue stay there for the account's next
  * client to replay; a handle's `abort()` after teardown does not delete them.
  *
- * Known limit: @filefn/client 0.2.0 has no dispose, so once a client has used
- * its offline queue, its OfflineSync keeps a window `online` listener after
- * teardown. That sync can only reach the torn-down transport, which rejects
- * with an AbortError that spends no offline retry. Removing the listener needs
- * an SDK dispose (TIDY-553).
+ * Known limit: @filefn/client 0.2.0 has no dispose, so a torn-down client's
+ * OfflineSync keeps its window `online` listener. Its replay can only reach the
+ * torn-down transport, which rejects with an AbortError before any request;
+ * the queue then keeps the upload unchanged, without spending a retry, for the
+ * current client. Removing the listener needs an SDK dispose (TIDY-553).
  */
 export async function getFileFnClient(): Promise<FileFnClient | null> {
   if (!isBoundToAccount) {
@@ -86,25 +96,66 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
     account.subscribe(syncFileFnClient);
   }
   syncFileFnClient(account.get());
+  await settleFileFnClientSync();
   const entry = currentEntry;
   if (!entry) return null;
   const client = await entry.client;
   return currentEntry === entry ? client : getFileFnClient();
 }
 
+async function settleFileFnClientSync() {
+  let sync: Promise<void>;
+  do {
+    sync = latestSync;
+    await sync;
+  } while (sync !== latestSync);
+}
+
+/**
+ * Binds the current client to the account's effective FileFn authority. A
+ * signed-out account or another user tears the client down at once; the
+ * stored region, read when the session carries none, can only be compared
+ * once read, and a newer sync supersedes it.
+ */
 function syncFileFnClient(value: UserAccount | null | undefined) {
+  const generation = ++syncGeneration;
   const scope = resolveFileFnAccountScope(value);
-  const key = scope ? `${scope.userId}:${scope.region ?? ""}` : null;
-  if (currentEntry && currentEntry.key === key) return;
+  if (currentEntry?.userId !== scope?.userId) tearDownFileFnClient();
+  if (!scope?.region) {
+    latestSync = scope
+      ? bindToStoredRegion(scope.userId, generation)
+      : Promise.resolve();
+    return;
+  }
+  bindFileFnClient(scope.userId, scope.region);
+  latestSync = Promise.resolve();
+}
+
+function bindToStoredRegion(userId: string, generation: number) {
+  const sync = clientStorage.get(ClientStorageKey.REGION).then((stored) => {
+    if (generation === syncGeneration) {
+      bindFileFnClient(userId, stored ?? "insouth");
+    }
+  });
+  sync.catch((error: unknown) => {
+    logger.error({ at: "filefn.client.sync", error });
+  });
+  return sync;
+}
+
+function bindFileFnClient(userId: string, region: string) {
+  const baseUrl = resolveFileFnBaseUrl(region);
+  const key = `${userId}:${baseUrl}`;
+  if (currentEntry?.key === key) return;
   tearDownFileFnClient();
-  if (!scope || !key) return;
   const controller = new AbortController();
   const entry: FileFnClientEntry = {
+    userId,
     key,
     controller,
-    client: createAccountFileFnClient(scope, controller.signal)
+    client: createAccountFileFnClient(userId, baseUrl, controller.signal)
   };
-  entry.client.catch((error) => {
+  entry.client.catch((error: unknown) => {
     logger.error({ at: "filefn.client.create", error });
     if (currentEntry === entry) currentEntry = null;
   });
@@ -118,16 +169,13 @@ function tearDownFileFnClient() {
 }
 
 async function createAccountFileFnClient(
-  scope: FileFnAccountScope,
+  userId: string,
+  baseUrl: string,
   teardown: AbortSignal
 ): Promise<FileFnClient> {
-  const region =
-    scope.region ??
-    (await clientStorage.get(ClientStorageKey.REGION)) ??
-    "insouth";
   const transport = await createNucleumAuthFnTransportAuth();
   const client = createFileFnClient({
-    baseUrl: resolveFileFnBaseUrl(region),
+    baseUrl,
     credentials: (await transport.getCredentials?.()) ?? "include",
     fetch: createTeardownFetch(teardown),
     getAuthHeaders: async () => {
@@ -138,10 +186,26 @@ async function createAccountFileFnClient(
     },
     offline: {
       enabled: true,
-      opfsDir: resolveFileFnOfflineDir(scope.userId)
+      opfsDir: resolveFileFnOfflineDir(userId)
     }
   });
+  if (!teardown.aborted) startOfflineReplay(client);
   return guardFileFnClient(client, teardown);
+}
+
+/**
+ * Starts the client's offline queue replay. @filefn/client 0.2.0 creates and
+ * starts its OfflineSync only on the first use of the offline queue, so this
+ * makes that first use with a local lookup that matches no staged upload and
+ * sends no request. Later uses reuse the same OfflineSync, so a client never
+ * runs two replays.
+ */
+function startOfflineReplay(client: FileFnClient) {
+  client
+    .getPendingLocalDescriptor(OFFLINE_REPLAY_START_FILE_ID)
+    .catch((error: unknown) => {
+      logger.error({ at: "filefn.client.replay", error });
+    });
 }
 
 function createTeardownError() {

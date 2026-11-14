@@ -8,6 +8,7 @@ import {
 import { resolveAccountCookiePrefix } from "@nucleum/client/runtime/account/network";
 import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
+import { OPFSStore } from "@filefn/client";
 
 const createdConfigs = vi.hoisted(() => [] as Array<Record<string, any>>);
 
@@ -100,6 +101,8 @@ class FakeDirectory {
 class FakeFile {
   readonly kind = "file";
   content: string | ArrayBuffer = "";
+  writes = 0;
+  reads = 0;
   constructor(readonly name: string) {}
 
   async createWritable() {
@@ -110,11 +113,13 @@ class FakeFile {
       },
       close: async () => {
         this.content = written;
+        this.writes += 1;
       }
     };
   }
 
   async getFile() {
+    this.reads += 1;
     const content = this.content;
     return {
       text: async () =>
@@ -143,13 +148,33 @@ function stagedSessions(userId: string) {
     .map((entry) => entry.name);
 }
 
+/**
+ * Returns the metadata and data files of a staged upload in an account's
+ * queue. A replay attempt reads the data file once to send it and once more
+ * to settle a failure.
+ */
+function stagedFiles(userId: string, uploadSessionId: string) {
+  const queue = opfsRoot.entries.get(`filefn-pending-uploads-${userId}`);
+  const session =
+    queue instanceof FakeDirectory ? queue.entries.get(uploadSessionId) : null;
+  if (!(session instanceof FakeDirectory)) throw new Error("not staged");
+  const metadata = session.entries.get("metadata.json");
+  const data = session.entries.get("data.bin");
+  if (!(metadata instanceof FakeFile) || !(data instanceof FakeFile)) {
+    throw new Error("not staged");
+  }
+  return { metadata, data };
+}
+
+let onLine: ReturnType<typeof vi.spyOn>;
+
 function goOffline() {
   opfsRoot = new FakeDirectory("");
   Object.defineProperty(navigator, "storage", {
     configurable: true,
     value: { getDirectory: async () => opfsRoot }
   });
-  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  onLine = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
   vi.stubGlobal(
     "URL",
     Object.assign(class extends URL {}, {
@@ -164,6 +189,56 @@ function textFile(name: string) {
   return Object.assign(new File(["hello"], name, { type: "text/plain" }), {
     arrayBuffer: async () => new TextEncoder().encode("hello").buffer
   });
+}
+
+/** Goes back online and announces it, as the browser does on reconnect. */
+function reconnect() {
+  onLine.mockReturnValue(true);
+  window.dispatchEvent(new Event("online"));
+}
+
+/**
+ * Serves single-part uploads and returns the request URLs of each upload
+ * session the account service initialized. Initialization answers once the
+ * given gate opens.
+ */
+function serveUploads(initGate: Promise<void> = Promise.resolve()) {
+  const inits: string[] = [];
+  let fileId = "";
+  fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+    if (url.endsWith("/files/upload/init")) {
+      inits.push(url);
+      fileId = JSON.parse(String(init?.body)).fileId;
+      await initGate;
+      return jsonResponse({
+        uploadSessionId: "server-session",
+        totalParts: 1,
+        chunkSizeBytes: 5
+      });
+    }
+    if (url.endsWith("/parts/1/sign")) {
+      return jsonResponse({ url: "/upload/server-session/parts/1/data" });
+    }
+    if (url.endsWith("/parts/1/data")) {
+      return jsonResponse({ etag: "etag-1", recorded: true });
+    }
+    if (url.endsWith("/upload/server-session/complete")) {
+      return jsonResponse({ fileId });
+    }
+    return new Response(null, { status: 404 });
+  });
+  return inits;
+}
+
+/** Stages an upload into an account's queue while offline. */
+async function stageOffline(userId: string) {
+  const client = await getFileFnClient();
+  const handle = client!.uploadFile({
+    policy: "attachment",
+    file: textFile("staged.txt")
+  });
+  await vi.waitFor(() => expect(stagedSessions(userId)).toHaveLength(1));
+  return handle;
 }
 
 const ACCOUNT_URL_TEMPLATE = "https://account-{region}-dev.nucleum.app";
@@ -379,6 +454,134 @@ describe("FileFn client runtime", () => {
       expect(stagedSessions("user-a")).toEqual([handle.uploadSessionId])
     );
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps the client when the session fills in or recases its effective region", async () => {
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccount("user-a"));
+    const client = await getFileFnClient();
+    let requestSignal: AbortSignal | undefined;
+    fetchMock.mockImplementationOnce(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>(() => {
+          requestSignal = init.signal ?? undefined;
+        })
+    );
+    client!.getFile("file-1").catch(() => undefined);
+    await vi.waitFor(() => expect(requestSignal).toBeDefined());
+
+    account.set(cloudAccount("user-a", "useast"));
+    expect(await getFileFnClient()).toBe(client);
+    account.set(cloudAccount("user-a", " UsEast "));
+    expect(await getFileFnClient()).toBe(client);
+
+    expect(createdConfigs).toHaveLength(1);
+    expect(requestSignal?.aborted).toBe(false);
+  });
+
+  it("moves to the stored region when it changes while the session carries none", async () => {
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccount("user-a"));
+    const previous = await getFileFnClient();
+
+    await clientStorage.set(ClientStorageKey.REGION, "euwest");
+    const next = await getFileFnClient();
+
+    expect(next).not.toBe(previous);
+    expect(createdConfigs.map((config) => config.baseUrl)).toEqual([
+      "https://account-useast-dev.nucleum.app/files",
+      "https://account-euwest-dev.nucleum.app/files"
+    ]);
+    await expect(previous!.getFile("file-1")).rejects.toMatchObject({
+      name: "AbortError"
+    });
+  });
+
+  it("replays uploads staged before a reload when the account's client is created online", async () => {
+    goOffline();
+    onLine.mockReturnValue(true);
+    const inits = serveUploads();
+    await new OPFSStore({
+      rootDir: "filefn-pending-uploads-user-a"
+    }).stagePendingUpload({
+      uploadSessionId: "offline_reloaded",
+      fileId: "file-reloaded",
+      policy: "attachment",
+      fileName: "reloaded.txt",
+      size: 5,
+      mimeType: "text/plain",
+      fileData: new TextEncoder().encode("hello").buffer,
+      createdAt: new Date(0).toISOString(),
+      retryCount: 0
+    });
+
+    account.set(cloudAccount("user-a", "useast"));
+    await getFileFnClient();
+
+    await vi.waitFor(() => expect(stagedSessions("user-a")).toEqual([]));
+    expect(inits).toEqual([
+      "https://account-useast-dev.nucleum.app/files/upload/init"
+    ]);
+  });
+
+  it("leaves the staged upload untouched on reconnect after sign-out and replays it once on re-sign-in", async () => {
+    goOffline();
+    account.set(cloudAccount("user-a", "useast"));
+    const staged = await stageOffline("user-a");
+    const { metadata, data } = stagedFiles("user-a", staged.uploadSessionId);
+    const stagedContent = metadata.content;
+    const inits = serveUploads();
+
+    account.set(signedOut);
+    reconnect();
+    await vi.waitFor(() => expect(data.reads).toBe(2));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(stagedSessions("user-a")).toEqual([staged.uploadSessionId]);
+    expect(metadata.content).toBe(stagedContent);
+    expect(JSON.parse(String(metadata.content)).retryCount).toBe(0);
+
+    account.set(cloudAccount("user-a", "useast"));
+    await getFileFnClient();
+
+    await vi.waitFor(() => expect(stagedSessions("user-a")).toEqual([]));
+    expect(inits).toEqual([
+      "https://account-useast-dev.nucleum.app/files/upload/init"
+    ]);
+    expect(metadata.writes).toBe(1);
+  });
+
+  it("replays a staged upload once, through the current client only, on reconnect after a region switch", async () => {
+    goOffline();
+    account.set(cloudAccount("user-a", "useast"));
+    const staged = await stageOffline("user-a");
+    const { metadata, data } = stagedFiles("user-a", staged.uploadSessionId);
+    account.set(cloudAccount("user-a", "euwest"));
+    await getFileFnClient();
+    let openInitGate!: () => void;
+    const inits = serveUploads(
+      new Promise<void>((resolve) => {
+        openInitGate = resolve;
+      })
+    );
+
+    reconnect();
+    await vi.waitFor(() => expect(inits).toHaveLength(1));
+    await vi.waitFor(() => expect(data.reads).toBe(3));
+    expect(JSON.parse(String(metadata.content)).retryCount).toBe(0);
+    openInitGate();
+
+    await vi.waitFor(() => expect(stagedSessions("user-a")).toEqual([]));
+    expect(inits).toEqual([
+      "https://account-euwest-dev.nucleum.app/files/upload/init"
+    ]);
+    expect(
+      fetchMock.mock.calls.every(([url]) =>
+        String(url).startsWith("https://account-euwest-dev.nucleum.app/")
+      )
+    ).toBe(true);
+    expect(metadata.writes).toBe(1);
+    expect(JSON.parse(String(metadata.content)).retryCount).toBe(0);
   });
 
   it("does not hand out a client whose account signed out during creation", async () => {
