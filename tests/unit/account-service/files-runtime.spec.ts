@@ -353,7 +353,11 @@ describe("account FileFn request path redaction", () => {
       ["/files/%EF%BD%93hare-links/secret-token", "/files/%EF%BD%93hare-links/:token"],
       ["/files/%C5%BFhare-links/secret-token", "/files/%C5%BFhare-links/:token"],
       ["/files/share-lin%E2%84%AAssecret-token/download", "/files/:token/download"],
-      ["/files/share-lin%E2%84%AAs%FF/secret-token", "/files/:token/:token"]
+      ["/files/share-lin%E2%84%AAs%FF/secret-token", "/files/:token/:token"],
+      ["/files/share-links%CC%81/secret-token/download", "/files/share-links:token/:token/download"],
+      ["/files/share-links%CC%81secret-token", "/files/share-links:token"],
+      ["/files/share-links\u0301/secret-token", "/files/share-links:token/:token"],
+      ["/files/sha%CC%8Cre-links/secret-token", "/files/sha%CC%8Cre-links/:token"]
     ];
     for (const [input, expected] of cases) {
       const redacted = redactFileRequestPath(input);
@@ -395,7 +399,7 @@ describe("account FileFn request path redaction", () => {
       return seed % limit;
     };
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    const invalidBytes = ["%FF", "%C0%AF", "%E2%80%AE", "%zz", "%"];
+    const invalidBytes = ["%FF", "%C0%AF", "%E2%80%AE", "%zz", "%", "%CC%81", "\u0301", "%CC%A7"];
     const encode = (char: string) => {
       const depth = random(13);
       if (depth === 0) return char;

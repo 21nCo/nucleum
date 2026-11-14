@@ -112,9 +112,10 @@ const UTF8_DECODER = new TextDecoder();
  * Returns a request path that is safe to log. The path is normalized by
  * decoding every ASCII `%XX` escape to a fixed point, so no encoding depth,
  * invalid byte beside a separator or mount prefix hides the `share-links`
- * marker. Segments are matched after also decoding UTF-8 escapes, NFKC
- * normalization and lowercasing, so lookalikes such as the Kelvin sign match
- * too. From the first segment that contains the marker, the rest of that
+ * marker. A segment matches when its ASCII-lowercased form contains the
+ * marker or, to also catch lookalikes such as the Kelvin sign or a marker
+ * with combining marks, when it does after decoding UTF-8 escapes, NFKD
+ * normalization, dropping combining marks and lowercasing. From the first segment that contains the marker, the rest of that
  * segment and every later non-empty segment except the literal `download` are
  * replaced by `:token`; a marker segment that only folds to the marker is kept
  * and any other folded match is redacted whole, so the anonymous share token
@@ -123,8 +124,10 @@ const UTF8_DECODER = new TextDecoder();
  */
 export function redactFileRequestPath(pathname: string): string {
   const segments = decodeAsciiEscapes(pathname).split("/");
-  const markerIndex = segments.findIndex((segment) =>
-    foldForMatch(segment).includes(SHARE_LINKS_MARKER)
+  const markerIndex = segments.findIndex(
+    (segment) =>
+      asciiLowerCase(segment).includes(SHARE_LINKS_MARKER) ||
+      foldForMatch(segment).includes(SHARE_LINKS_MARKER)
   );
   if (markerIndex < 0) {
     return pathname;
@@ -159,7 +162,11 @@ function foldForMatch(segment: string): string {
       Uint8Array.from(run.slice(1).split("%"), (hex) => Number.parseInt(hex, 16))
     )
   );
-  return decoded.normalize("NFKC").toLowerCase().normalize("NFKC");
+  return stripMarks(stripMarks(decoded).toLowerCase());
+}
+
+function stripMarks(value: string): string {
+  return value.normalize("NFKD").replace(/\p{M}/gu, "");
 }
 
 /**
