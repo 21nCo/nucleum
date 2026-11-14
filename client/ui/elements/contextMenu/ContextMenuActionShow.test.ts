@@ -171,8 +171,8 @@ describe("ContextMenuAction show", () => {
       expect(onClose).not.toHaveBeenCalled();
     }
   );
-  describe("in a same-origin iframe with the menu rendered beside its trigger", () => {
-    function renderInFrame(id: string) {
+  describe("in a same-origin iframe", () => {
+    function renderInFrame(id: string, isRenderAsSibling = true) {
       const frame = document.createElement("iframe");
       document.body.append(frame);
       const frameDocument = frame.contentDocument!;
@@ -180,13 +180,13 @@ describe("ContextMenuAction show", () => {
       frameDocument.body.append(target);
       const view = render(ContextMenuAction, {
         target,
-        props: { id, menuResolver: todayMenu, isRenderAsSibling: true }
+        props: { id, menuResolver: todayMenu, isRenderAsSibling }
       });
       const trigger = frameDocument.querySelector<HTMLElement>(
         'button[aria-label="Actions"]'
       )!;
       const item = () =>
-        frameDocument.querySelector<HTMLElement>(
+        (isRenderAsSibling ? frameDocument : document).querySelector<HTMLElement>(
           '[data-context-menu-item-id="today"]'
         );
       return { ...view, frameDocument, trigger, item };
@@ -221,6 +221,46 @@ describe("ContextMenuAction show", () => {
 
       await waitFor(() => expect(item()).toBeNull());
       expect(frameDocument.activeElement).toBe(outside);
+    });
+      it.each([
+      ["beside the trigger in the frame", true],
+      ["in the parent document's popovers", false]
+    ])(
+      "keeps focus the user moved to the parent document when the menu renders %s",
+      async (_where, isRenderAsSibling) => {
+        const { component, frameDocument, trigger, item } = renderInFrame(
+          "showFrameParent",
+          isRenderAsSibling
+        );
+        const parentInput = document.createElement("input");
+        document.body.append(parentInput);
+
+        component.show();
+        await waitFor(() => expect(item()).toBeTruthy());
+        await waitFor(() =>
+          expect(item()!.ownerDocument.activeElement).toBe(item())
+        );
+        parentInput.focus();
+        await fireEvent.click(parentInput);
+
+        await waitFor(() => expect(item()).toBeNull());
+        expect(document.activeElement).toBe(parentInput);
+        expect(frameDocument.activeElement).not.toBe(trigger);
+      }
+    );
+
+    it("returns focus to the frame trigger when a menu in the parent document is hidden", async () => {
+      const { component, frameDocument, trigger, item } = renderInFrame(
+        "showFramePortal",
+        false
+      );
+
+      component.show();
+      await waitFor(() => expect(document.activeElement).toBe(item()));
+      component.hide();
+
+      await waitFor(() => expect(item()).toBeNull());
+      expect(frameDocument.activeElement).toBe(trigger);
     });
   });
 });

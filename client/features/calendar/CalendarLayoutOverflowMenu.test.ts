@@ -394,7 +394,9 @@ describe("CalendarLayout overflow menu layout pick", () => {
     CONTROLS_WIDTH[CalendarLayout.Classic] = 400;
     const shadow = renderSwappingCalendarInShadowRoot(CalendarLayout.Bird);
     const trigger = () =>
-      shadow.querySelector<HTMLElement>('[data-testid="calendar-overflow-menu"]');
+      shadow.querySelector<HTMLElement>(
+        '[data-testid="calendar-overflow-menu"]'
+      );
     const closeWithToday = () =>
       fireEvent.click(
         overflowMenu()!.querySelector<HTMLElement>(

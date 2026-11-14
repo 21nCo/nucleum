@@ -128,15 +128,31 @@
     target?.focus();
   }
 
-  /** True when the closed menu took focus with it, so nothing holds it now. */
+  /**
+   * True when the closed menu took focus with it, so nothing holds it now.
+   * Looks from the trigger's document up through the frames that contain it,
+   * so focus the user moved to a parent document is never taken back.
+   */
   function isFocusLost(trigger: HTMLElement): boolean {
-    const doc = trigger.ownerDocument;
     const root = rootOf(trigger);
-    const active = doc.activeElement;
-    if (!active || active === doc.body) return true;
-    return root && "host" in root && active === root.host
-      ? !root.activeElement
-      : false;
+    if (root && "host" in root && root.activeElement) return false;
+    let doc: Document | null = trigger.ownerDocument;
+    let frame: Element | null = null;
+    while (doc) {
+      const active = doc.activeElement;
+      const isUnclaimed =
+        !active ||
+        active === doc.body ||
+        active === frame ||
+        (frame === null &&
+          root !== null &&
+          "host" in root &&
+          active === root.host);
+      if (!isUnclaimed) return false;
+      frame = doc.defaultView?.frameElement ?? null;
+      doc = frame?.ownerDocument ?? null;
+    }
+    return true;
   }
 
   const { setEventContext, getEventContext } =
