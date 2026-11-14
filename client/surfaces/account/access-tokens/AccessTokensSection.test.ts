@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {
@@ -57,6 +58,25 @@ const createdToken = {
 
 function rows() {
   return screen.queryAllByTestId("access-token-row");
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+async function submitToken(name: string) {
+  await fireEvent.click(screen.getByTestId("access-token-create"));
+  await fireEvent.input(
+    screen
+      .getByTestId("access-token-form")
+      .querySelector("input") as HTMLInputElement,
+    { target: { value: name } }
+  );
+  await fireEvent.click(screen.getByTestId("access-token-submit"));
 }
 
 beforeEach(() => {
@@ -223,5 +243,109 @@ describe("AccessTokensSection", () => {
       ).toBeTruthy()
     );
     expect(screen.queryByTestId("access-token-create")).toBeNull();
+  });
+
+  it("keeps a revoked token hidden when an earlier list resolves after a later one", async () => {
+    const afterCreate = deferred<unknown>();
+    mocks.listAccessTokens
+      .mockResolvedValueOnce({ ok: true, data: [existing] })
+      .mockReturnValueOnce(afterCreate.promise)
+      .mockResolvedValue({ ok: true, data: [createdToken] });
+    mocks.createAccessToken.mockResolvedValue({
+      ok: true,
+      data: { id: "key_new", secret: "ak_once" }
+    });
+    mocks.revokeAccessToken.mockResolvedValue({
+      ok: true,
+      data: { id: "key_existing" }
+    });
+
+    render(AccessTokensSection);
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    await submitToken("CLI");
+    await waitFor(() =>
+      expect(screen.getByTestId("access-token-secret")).toBeTruthy()
+    );
+    await waitFor(() =>
+      expect(mocks.listAccessTokens).toHaveBeenCalledTimes(2)
+    );
+
+    await fireEvent.click(screen.getByTestId("access-token-revoke"));
+    await fireEvent.click(screen.getByTestId("access-token-revoke-confirm"));
+    await waitFor(() =>
+      expect(mocks.listAccessTokens).toHaveBeenCalledTimes(3)
+    );
+    await waitFor(() =>
+      expect(rows().map((row) => row.dataset.tokenId)).toEqual(["key_new"])
+    );
+
+    afterCreate.resolve({ ok: true, data: [createdToken, existing] });
+    await afterCreate.promise;
+    await tick();
+    expect(rows().map((row) => row.dataset.tokenId)).toEqual(["key_new"]);
+  });
+
+  it("keeps a created token visible when the initial list resolves late", async () => {
+    const initial = deferred<unknown>();
+    mocks.listAccessTokens
+      .mockReturnValueOnce(initial.promise)
+      .mockResolvedValue({ ok: true, data: [createdToken] });
+    mocks.createAccessToken.mockResolvedValue({
+      ok: true,
+      data: { id: "key_new", secret: "ak_once" }
+    });
+
+    render(AccessTokensSection);
+    await submitToken("CLI");
+    await waitFor(() => expect(rows()).toHaveLength(1));
+
+    initial.resolve({ ok: true, data: [] });
+    await initial.promise;
+    await tick();
+    expect(rows().map((row) => row.dataset.tokenId)).toEqual(["key_new"]);
+  });
+
+  it("offers a retry after the list fails to load", async () => {
+    mocks.listAccessTokens
+      .mockResolvedValueOnce({
+        ok: false,
+        kind: "failed",
+        message: "Could not reach the account service. Try again."
+      })
+      .mockResolvedValue({ ok: true, data: [existing] });
+
+    render(AccessTokensSection);
+    await waitFor(() =>
+      expect(screen.getByTestId("access-token-retry")).toBeTruthy()
+    );
+    expect(screen.queryByTestId("access-token-create")).toBeNull();
+
+    await fireEvent.click(screen.getByTestId("access-token-retry"));
+
+    await waitFor(() => expect(rows()).toHaveLength(1));
+    expect(screen.queryByTestId("access-token-retry")).toBeNull();
+    expect(screen.getByTestId("access-token-create")).toBeTruthy();
+  });
+
+  it("moves focus to the confirm control and back when revoking is cancelled", async () => {
+    mocks.listAccessTokens.mockResolvedValue({ ok: true, data: [existing] });
+
+    render(AccessTokensSection);
+    await waitFor(() => expect(rows()).toHaveLength(1));
+
+    await fireEvent.click(screen.getByTestId("access-token-revoke"));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByTestId("access-token-revoke-confirm")
+      )
+    );
+
+    await fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByTestId("access-token-revoke")
+      )
+    );
+    expect(mocks.revokeAccessToken).not.toHaveBeenCalled();
   });
 });

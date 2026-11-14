@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import {
     ButtonStyle,
@@ -72,6 +72,8 @@
   );
   let confirmRevokeId = $state<string | undefined>(undefined);
   let revokingId = $state<string | undefined>(undefined);
+  let listGeneration = 0;
+  let sectionElement = $state<HTMLElement | undefined>(undefined);
 
   onMount(() => {
     void refresh();
@@ -87,9 +89,16 @@
     );
   }
 
+  /**
+   * Reloads the list. Only the latest request writes its result, so an
+   * earlier list that resolves late cannot bring back a revoked token or
+   * hide a created one.
+   */
   async function refresh() {
+    const generation = ++listGeneration;
     isLoading = true;
     const result = await listAccessTokens();
+    if (generation !== listGeneration) return;
     if (result.ok) {
       tokens = result.data;
       loadError = undefined;
@@ -163,6 +172,25 @@
     await refresh();
   }
 
+  async function focusRowButton(tokenId: string, testId: string) {
+    await tick();
+    const row = Array.from(
+      sectionElement?.querySelectorAll<HTMLElement>("[data-token-id]") ?? []
+    ).find((element) => element.dataset.tokenId === tokenId);
+    row?.querySelector<HTMLElement>(`[data-testid="${testId}"]`)?.focus();
+  }
+
+  /** Swaps the row to its confirm controls and moves focus to them. */
+  function askToRevoke(token: AccessToken) {
+    confirmRevokeId = token.id;
+    void focusRowButton(token.id, "access-token-revoke-confirm");
+  }
+
+  function cancelRevoke(token: AccessToken) {
+    confirmRevokeId = undefined;
+    void focusRowButton(token.id, "access-token-revoke");
+  }
+
   function describeGrant(token: AccessToken) {
     if (!token.app || !token.access) return "Custom scopes";
     return `${appLabels[token.app]} - ${accessLabels[token.access]}`;
@@ -185,6 +213,7 @@
   class="flex flex-col gap-4 w-full items-start"
   aria-labelledby="access-tokens-heading"
   data-testid="access-tokens"
+  bind:this={sectionElement}
 >
   <div class="flex items-center justify-between gap-4 w-full">
     <div class="flex flex-col gap-1">
@@ -215,8 +244,7 @@
       data-testid="access-token-created"
     >
       <div class="text-b2">
-        Copy the token for {created.name} now. You will not be able to see it
-        again.
+        Copy the token for {created.name} now. You will not be able to see it again.
       </div>
       <div class="flex items-center gap-2 w-full">
         <code
@@ -308,7 +336,18 @@
   {#if loadError?.isUnsupported}
     <div class="text-fgs3 text-b3">{loadError.message}</div>
   {:else if loadError}
-    <div class="text-ars1 text-b3" role="alert">{loadError.message}</div>
+    <div class="flex items-center gap-2">
+      <div class="text-ars1 text-b3" role="alert">{loadError.message}</div>
+      <Button
+        label={isLoading ? "Retrying..." : "Retry"}
+        size={Size.sm}
+        style={ButtonStyle.OUTLINED}
+        {isLoading}
+        isDisabled={isLoading}
+        testId="access-token-retry"
+        onclick={() => refresh()}
+      />
+    </div>
   {:else if isLoading && tokens.length === 0}
     <div class="text-fgs3 text-b3">Loading access tokens...</div>
   {:else if tokens.length === 0}
@@ -346,9 +385,7 @@
                 size={Size.sm}
                 style={ButtonStyle.PLAIN}
                 isDisabled={revokingId !== undefined}
-                onclick={() => {
-                  confirmRevokeId = undefined;
-                }}
+                onclick={() => cancelRevoke(token)}
               />
             {:else}
               <Button
@@ -357,9 +394,7 @@
                 style={ButtonStyle.OUTLINED}
                 isDisabled={revokingId !== undefined}
                 testId="access-token-revoke"
-                onclick={() => {
-                  confirmRevokeId = token.id;
-                }}
+                onclick={() => askToRevoke(token)}
               />
             {/if}
           </div>
