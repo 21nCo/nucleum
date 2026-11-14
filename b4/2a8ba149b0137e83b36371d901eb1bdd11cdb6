@@ -1,0 +1,27 @@
+docs/architecture/data-and-sync.md
+  s_b66d0e9dd4fae0::t_508ea00bddc413 59
+package-lock.json
+  s_b66d0e9dd4fae0::t_78b8f9b323066c 3900-3908,4017-4109,13648-13688,13698-13718,16985-17029,34624,34631,34638,34648,34658
+services/account/src/datafn/app-scopes.test.ts
+  s_b66d0e9dd4fae0::t_9db6c2e974410b 1,68,1036-1196
+services/account/src/datafn/app-scopes.ts
+  s_b66d0e9dd4fae0::t_cc4cc28f9d3934 156-171,303,308,548-549,571,581-583,635,760-764,768,993-997
+services/account/src/datafn/resource-ownership.ts
+  s_b66d0e9dd4fae0::t_984bcb133067dd 13-16,24,76-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b42a8ba149b0137e83b36371d901eb1bdd11cdb6",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
