@@ -390,6 +390,14 @@ function idMetadataFields(relation: { metadata?: readonly { name: string }[] }):
   return (relation.metadata ?? []).map((field) => field.name).filter((name) => /Id$/.test(name));
 }
 
+/**
+ * Relation item metadata keys DataFn would spread over a join row's identity:
+ * the row id and the join columns that name both endpoints.
+ */
+function identityMetadataFields(relation: { joinColumns?: { from?: string; to?: string } }): string[] {
+  return ['id', relation.joinColumns?.from || 'from', relation.joinColumns?.to || 'to'];
+}
+
 function isClearedValue(value: unknown): boolean {
   return value === undefined || value === null || value === '';
 }
@@ -689,7 +697,9 @@ function createScopeView(
       const carriesTags = tagPolicy !== undefined &&
         'joinTable' in match.relation && match.relation.joinTable === tagPolicy.joinTable;
       const idFields = idMetadataFields(match.relation);
+      const identityFields = identityMetadataFields(match.relation);
       for (const item of items) {
+        if (identityFields.some((key) => key in item.metadata)) return false;
         const target = resolveTarget(endpoint, item.toId);
         if (typeof target !== 'string' || !(await targetAllowed(target, item.toId))) return false;
         for (const key of ['fromResource', 'toResource']) {
@@ -714,6 +724,9 @@ function createScopeView(
     if (!tables.has(resource)) return false;
     if (mutation.record !== undefined && !isRecord(mutation.record)) return false;
     const record = isRecord(mutation.record) ? mutation.record : undefined;
+    // DataFn writes the row named by record.id when it overrides mutation.id,
+    // so the record may only repeat the id that is authorized below.
+    if (record && 'id' in record && record.id !== mutation.id) return false;
     if (!(await relationsAllowed(mutation, resource, operation))) return false;
     if (record && !(await recordRelationsAllowed(resource, record))) return false;
     const policy = ownership.shared.get(resource);

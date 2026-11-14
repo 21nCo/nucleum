@@ -951,3 +951,84 @@ describe('space items pointing at shared resources', () => {
     })))[0]?.items).toEqual([collectionItem('notes'), collectionItem('memo-fresh')]);
   });
 });
+
+describe('record and relation identity overrides', () => {
+  const takeover = { id: 'collection:goals', label: 'TAKEN', type: 'list', resource: 'node' };
+
+  async function storedSpaceItems(id: string): Promise<unknown> {
+    return storedField('space', id, 'items');
+  }
+
+  it('memotron token cannot write another record by naming it in record.id', async () => {
+    const goalsBefore = await rows(await call('/datafn/query', actors.cookie, {
+      resource: 'collection', version: 1, filters: { id: { eq: 'collection:goals' } }
+    }));
+    for (const change of [
+      mutation('collection', 'replace', 'collection:unused', takeover),
+      mutation('collection', 'merge', 'collection:notes', { id: 'collection:goals', label: 'TAKEN' }),
+      mutation('collection', 'insert', 'collection:unused', takeover)
+    ]) {
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+      expect((await call('/datafn/mutation', actors.memotronWrite, change)).status).toBe(403);
+      const transact = await call('/datafn/transact', actors.memotronWrite, { steps: [{ mutation: change }] });
+      expect(transact.status).toBe(403);
+    }
+    expect(await rows(await call('/datafn/query', actors.cookie, {
+      resource: 'collection', version: 1, filters: { id: { eq: 'collection:goals' } }
+    }))).toEqual(goalsBefore);
+    expect(await storedLabel('collection', 'collection:unused')).toBeUndefined();
+  });
+
+  it('memotron token cannot replace a space holding hidden items through record.id', async () => {
+    const itemsBefore = await storedSpaceItems('space:mixed');
+    const response = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('space', 'replace', 'space:fresh', { id: 'space:mixed', label: 'Fresh', view: 'sidenav', items: [] })
+    ));
+    expect(response.status).toBe(403);
+    expect(await storedSpaceItems('space:mixed')).toEqual(itemsBefore);
+    expect(await storedLabel('space', 'space:fresh')).toBeUndefined();
+  });
+
+  it('memotron token writes a record whose record.id repeats the mutation id', async () => {
+    const response = await call('/datafn/push', actors.memotronWrite, push(
+      mutation('node', 'insert', 'node:same-id', { id: 'node:same-id', label: 'Same id', contentType: 'text' }),
+      mutation('collection', 'merge', 'collection:notes', { id: 'collection:notes', label: 'Notes again' })
+    ));
+    expect(response.status).toBe(200);
+    expect(await storedLabel('node', 'node:same-id')).toBe('Same id');
+    expect(await storedLabel('collection', 'collection:notes')).toBe('Notes again');
+  });
+
+  it('pointron token cannot write a Memotron collection through record.id', async () => {
+    const response = await call('/datafn/push', actors.pointron, push(
+      mutation('collection', 'replace', 'collection:point-unused', {
+        id: 'collection:notes', label: 'TAKEN', type: 'list', resource: 'objective'
+      })
+    ));
+    expect(response.status).toBe(403);
+    expect(await storedLabel('collection', 'collection:notes')).toBe('Notes again');
+  });
+
+  it('memotron token cannot override a join row id or its endpoint columns in relation metadata', async () => {
+    const linksBefore = await joinRows('record_links');
+    for (const metadata of [
+      { id: 'objective:o1:objective:o2' },
+      { in: 'objective:o1' },
+      { out: 'objective:o2' }
+    ]) {
+      const change = relationMutation('node', 'relate', 'node:n1', {
+        links: [{ $ref: 'node:n3', linkType: 'direct', tags: [], ...metadata }]
+      });
+      expect((await call('/datafn/push', actors.memotronWrite, push(change))).status).toBe(403);
+      expect((await call('/datafn/transact', actors.memotronWrite, { steps: [{ mutation: change }] })).status)
+        .toBe(403);
+    }
+    const viewOverride = relationMutation('collection', 'relate', 'collection:notes', {
+      views: [{ $ref: 'view:notes', collectionId: 'collection:goals' }]
+    });
+    expect((await call('/datafn/push', actors.memotronWrite, push(viewOverride))).status).toBe(403);
+    expect(await joinRows('record_links')).toEqual(linksBefore);
+    expect((await joinRows('collection_views')).filter((row) => row.collectionId === 'collection:goals')
+      .map((row) => row.viewId).sort()).toEqual(['view:both', 'view:goals']);
+  });
+});
