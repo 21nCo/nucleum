@@ -54,6 +54,118 @@ function jsonResponse(body: unknown) {
   });
 }
 
+type FakeEntry = FakeDirectory | FakeFile;
+
+/** In-memory OPFS directory with the subset of the API the offline queue uses. */
+class FakeDirectory {
+  readonly kind = "directory";
+  readonly entries = new Map<string, FakeEntry>();
+  constructor(readonly name: string) {}
+
+  async getDirectoryHandle(name: string, options?: { create?: boolean }) {
+    let entry = this.entries.get(name);
+    if (!entry && options?.create) {
+      entry = new FakeDirectory(name);
+      this.entries.set(name, entry);
+    }
+    if (!(entry instanceof FakeDirectory)) {
+      throw new DOMException(name, "NotFoundError");
+    }
+    return entry;
+  }
+
+  async getFileHandle(name: string, options?: { create?: boolean }) {
+    let entry = this.entries.get(name);
+    if (!entry && options?.create) {
+      entry = new FakeFile(name);
+      this.entries.set(name, entry);
+    }
+    if (!(entry instanceof FakeFile)) {
+      throw new DOMException(name, "NotFoundError");
+    }
+    return entry;
+  }
+
+  async removeEntry(name: string) {
+    if (!this.entries.delete(name)) {
+      throw new DOMException(name, "NotFoundError");
+    }
+  }
+
+  async *values() {
+    yield* this.entries.values();
+  }
+}
+
+class FakeFile {
+  readonly kind = "file";
+  content: string | ArrayBuffer = "";
+  constructor(readonly name: string) {}
+
+  async createWritable() {
+    let written: string | ArrayBuffer = "";
+    return {
+      write: async (data: string | ArrayBuffer) => {
+        written = data;
+      },
+      close: async () => {
+        this.content = written;
+      }
+    };
+  }
+
+  async getFile() {
+    const content = this.content;
+    return {
+      text: async () =>
+        typeof content === "string"
+          ? content
+          : new TextDecoder().decode(content),
+      arrayBuffer: async () =>
+        typeof content === "string"
+          ? new TextEncoder().encode(content).buffer
+          : content
+    };
+  }
+}
+
+let opfsRoot: FakeDirectory;
+
+/** Returns the upload sessions fully staged in an account's offline queue. */
+function stagedSessions(userId: string) {
+  const queue = opfsRoot.entries.get(`filefn-pending-uploads-${userId}`);
+  if (!(queue instanceof FakeDirectory)) return [];
+  return [...queue.entries.values()]
+    .filter(
+      (entry): entry is FakeDirectory =>
+        entry instanceof FakeDirectory && entry.entries.has("metadata.json")
+    )
+    .map((entry) => entry.name);
+}
+
+function goOffline() {
+  opfsRoot = new FakeDirectory("");
+  Object.defineProperty(navigator, "storage", {
+    configurable: true,
+    value: { getDirectory: async () => opfsRoot }
+  });
+  vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  vi.stubGlobal(
+    "URL",
+    Object.assign(class extends URL {}, {
+      createObjectURL: () => "blob:staged",
+      revokeObjectURL: () => undefined
+    })
+  );
+}
+
+/** Returns a text file that can be read, which jsdom's File cannot. */
+function textFile(name: string) {
+  return Object.assign(new File(["hello"], name, { type: "text/plain" }), {
+    arrayBuffer: async () => new TextEncoder().encode("hello").buffer
+  });
+}
+
 const ACCOUNT_URL_TEMPLATE = "https://account-{region}-dev.nucleum.app";
 let csrfCookie = "";
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -73,6 +185,8 @@ afterEach(async () => {
   await clientStorage.remove(ClientStorageKey.REGION);
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+  Reflect.deleteProperty(navigator, "storage");
 });
 
 describe("FileFn client runtime", () => {
@@ -181,6 +295,90 @@ describe("FileFn client runtime", () => {
       "filefn-pending-uploads-user-a",
       "filefn-pending-uploads-user-b"
     ]);
+  });
+
+  it("fences every method of a torn-down client that used its offline queue and keeps the staged upload for the account", async () => {
+    goOffline();
+    account.set(cloudAccount("user-a", "useast"));
+    const client = await getFileFnClient();
+    const staged = client!.uploadFile({
+      policy: "attachment",
+      file: textFile("staged.txt")
+    });
+    await vi.waitFor(() => expect(stagedSessions("user-a")).toHaveLength(1));
+    const done = staged.done();
+
+    account.set(signedOut);
+
+    await expect(done).rejects.toMatchObject({ name: "AbortError" });
+    staged.abort();
+    const late = client!.uploadFile({
+      policy: "attachment",
+      file: textFile("late.txt")
+    });
+    await expect(late.done()).rejects.toMatchObject({ name: "AbortError" });
+    await expect(
+      client!.getPendingLocalDescriptor(staged.fileId)
+    ).rejects.toMatchObject({ name: "AbortError" });
+    await expect(
+      client!.resolveRenderable({
+        fileId: staged.fileId,
+        intent: "full",
+        preferLocal: true
+      })
+    ).rejects.toMatchObject({ name: "AbortError" });
+    await expect(client!.deleteFile(staged.fileId)).rejects.toMatchObject({
+      name: "AbortError"
+    });
+    expect(stagedSessions("user-a")).toEqual([staged.uploadSessionId]);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    account.set(cloudAccount("user-a", "useast"));
+    const next = await getFileFnClient();
+    await expect(
+      next!.getPendingLocalDescriptor(staged.fileId)
+    ).resolves.toMatchObject({
+      fileId: staged.fileId,
+      uploadSessionId: staged.uploadSessionId,
+      state: "pending-local"
+    });
+  });
+
+  it("settles done() with an AbortError when the client is torn down during offline staging", async () => {
+    goOffline();
+    account.set(cloudAccount("user-a", "useast"));
+    const client = await getFileFnClient();
+    let releaseStaging!: () => void;
+    const stagingHeld = new Promise<void>((resolve) => {
+      releaseStaging = resolve;
+    });
+    let stagingStarted = false;
+    const handle = client!.uploadFile({
+      policy: "attachment",
+      file: textFile("staging.txt"),
+      preprocessors: [
+        {
+          name: "hold-staging",
+          matches: async () => {
+            stagingStarted = true;
+            await stagingHeld;
+            return false;
+          },
+          process: async (context) => ({ file: context.file })
+        }
+      ]
+    });
+    const done = handle.done();
+    await vi.waitFor(() => expect(stagingStarted).toBe(true));
+
+    account.set(cloudAccount("user-a", "euwest"));
+
+    await expect(done).rejects.toMatchObject({ name: "AbortError" });
+    releaseStaging();
+    await vi.waitFor(() =>
+      expect(stagedSessions("user-a")).toEqual([handle.uploadSessionId])
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("does not hand out a client whose account signed out during creation", async () => {

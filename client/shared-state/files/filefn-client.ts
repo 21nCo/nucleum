@@ -1,4 +1,10 @@
-import { createFileFnClient, type FileFnClient } from "@filefn/client";
+import {
+  createFileFnClient,
+  generateFileId,
+  type FileFnClient,
+  type UploadHandle,
+  type UploadResult
+} from "@filefn/client";
 import account from "@nucleum/client/runtime/account/account.store";
 import {
   UserDataMode,
@@ -61,6 +67,18 @@ export function resolveFileFnOfflineDir(userId: string): string {
  * Returns the FileFn client of the signed-in cloud account, or null when no
  * cloud account is signed in. The first call binds the client to the account
  * state: a region switch recreates it and sign-out tears it down.
+ *
+ * Teardown aborts the client's in-flight requests, rejects every later call
+ * with an AbortError before it does any work, and rejects the pending `done()`
+ * of every upload handle the client returned. Uploads already staged, or being
+ * staged, in the account's offline queue stay there for the account's next
+ * client to replay; a handle's `abort()` after teardown does not delete them.
+ *
+ * Known limit: @filefn/client 0.2.0 has no dispose, so once a client has used
+ * its offline queue, its OfflineSync keeps a window `online` listener after
+ * teardown. That sync can only reach the torn-down transport, which rejects
+ * with an AbortError that spends no offline retry. Removing the listener needs
+ * an SDK dispose (TIDY-553).
  */
 export async function getFileFnClient(): Promise<FileFnClient | null> {
   if (!isBoundToAccount) {
@@ -96,9 +114,7 @@ function syncFileFnClient(value: UserAccount | null | undefined) {
 function tearDownFileFnClient() {
   const entry = currentEntry;
   currentEntry = null;
-  entry?.controller.abort(
-    new DOMException("The FileFn client was torn down", "AbortError")
-  );
+  entry?.controller.abort(createTeardownError());
 }
 
 async function createAccountFileFnClient(
@@ -110,7 +126,7 @@ async function createAccountFileFnClient(
     (await clientStorage.get(ClientStorageKey.REGION)) ??
     "insouth";
   const transport = await createNucleumAuthFnTransportAuth();
-  return createFileFnClient({
+  const client = createFileFnClient({
     baseUrl: resolveFileFnBaseUrl(region),
     credentials: (await transport.getCredentials?.()) ?? "include",
     fetch: createTeardownFetch(teardown),
@@ -125,6 +141,112 @@ async function createAccountFileFnClient(
       opfsDir: resolveFileFnOfflineDir(scope.userId)
     }
   });
+  return guardFileFnClient(client, teardown);
+}
+
+function createTeardownError() {
+  return new DOMException("The FileFn client was torn down", "AbortError");
+}
+
+/**
+ * Settles with the promise, or rejects with the teardown reason once the
+ * client is torn down, whichever comes first.
+ */
+function untilTornDown<T>(promise: Promise<T>, teardown: AbortSignal) {
+  return new Promise<T>((resolve, reject) => {
+    const onTeardown = () => reject(teardown.reason as unknown);
+    if (teardown.aborted) onTeardown();
+    else teardown.addEventListener("abort", onTeardown, { once: true });
+    promise.then(resolve, reject).finally(() => {
+      teardown.removeEventListener("abort", onTeardown);
+    });
+  });
+}
+
+/**
+ * Fences a handle by the client teardown: `done()` rejects at teardown, and
+ * `abort()` after teardown leaves an offline-staged upload in the queue.
+ */
+function guardUploadHandle<T extends UploadHandle>(
+  handle: T,
+  teardown: AbortSignal
+): T {
+  let done: Promise<UploadResult> | undefined;
+  return {
+    get uploadSessionId() {
+      return handle.uploadSessionId;
+    },
+    get uploadSessionToken() {
+      return handle.uploadSessionToken;
+    },
+    get fileId() {
+      return handle.fileId;
+    },
+    onProgress: (callback) => handle.onProgress(callback),
+    abort: () => {
+      if (!teardown.aborted) handle.abort();
+    },
+    done: () => {
+      done ??= teardown.aborted
+        ? Promise.reject(teardown.reason as unknown)
+        : untilTornDown(handle.done(), teardown);
+      return done;
+    }
+  } as T;
+}
+
+function createTornDownHandle(fileId?: string): UploadHandle {
+  return {
+    uploadSessionId: "",
+    fileId,
+    onProgress: () => undefined,
+    abort: () => undefined,
+    done: () => Promise.reject(createTeardownError())
+  };
+}
+
+/**
+ * Wraps a FileFn client so that after teardown no method reaches the network,
+ * the offline queue or its staged bytes.
+ */
+function guardFileFnClient(
+  client: FileFnClient,
+  teardown: AbortSignal
+): FileFnClient {
+  const guard = <T>(run: () => Promise<T>) => {
+    if (teardown.aborted) return Promise.reject(teardown.reason as unknown);
+    return untilTornDown(run(), teardown);
+  };
+  return {
+    uploadFile: (input) => {
+      if (teardown.aborted) {
+        return {
+          ...createTornDownHandle(),
+          fileId: input.fileId ?? generateFileId()
+        };
+      }
+      return guardUploadHandle(client.uploadFile(input), teardown);
+    },
+    resumeUpload: (uploadSessionId, file, options) => {
+      if (teardown.aborted) {
+        return createTornDownHandle(options?.fileId);
+      }
+      return guardUploadHandle(
+        client.resumeUpload(uploadSessionId, file, options),
+        teardown
+      );
+    },
+    getFile: (fileId) => guard(() => client.getFile(fileId)),
+    listArtifacts: (fileId) => guard(() => client.listArtifacts(fileId)),
+    downloadUrl: (fileId, options) =>
+      guard(() => client.downloadUrl(fileId, options)),
+    downloadArtifact: (fileId, artifactId) =>
+      guard(() => client.downloadArtifact(fileId, artifactId)),
+    resolveRenderable: (input) => guard(() => client.resolveRenderable(input)),
+    deleteFile: (fileId) => guard(() => client.deleteFile(fileId)),
+    getPendingLocalDescriptor: (fileId) =>
+      guard(() => client.getPendingLocalDescriptor(fileId))
+  };
 }
 
 /**
