@@ -29,8 +29,8 @@
     nextCycleValue
   } from "@nucleum/shell/topNav/contextZone/context-zone";
   import {
-    requestCalendarOverflowMenuReopen,
-    takeCalendarOverflowMenuReopen
+    claimCalendarOverflowMenuReopen,
+    requestCalendarOverflowMenuReopen
   } from "@nucleum/features/calendar/calendar-overflow-menu";
   let {
     panel = $bindable(CalendarLayout.Classic),
@@ -98,11 +98,16 @@
   });
 
   let overflowMenuRef = $state<ContextMenuAction | undefined>(undefined);
+  const overflowMenuReopen = claimCalendarOverflowMenuReopen();
 
   $effect(() => {
     const menu = overflowMenuRef;
-    if (!menu || !takeCalendarOverflowMenuReopen()) return;
-    // Reopen before the next paint, after the pick's click has finished.
+    const isReopen = overflowMenuReopen.settle({
+      isMeasured: fullControlsWidth > 0,
+      isCompact,
+      hasTrigger: menu !== undefined
+    });
+    if (!isReopen || !menu) return;
     const frame = requestAnimationFrame(() => menu.show());
     return () => cancelAnimationFrame(frame);
   });

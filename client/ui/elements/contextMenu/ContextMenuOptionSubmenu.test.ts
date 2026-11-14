@@ -13,7 +13,7 @@ const scaleOptions = ["Day", "Week", "Month", "Year", "Heatmap"].map(
 
 function submenuOption(name: string) {
   const option = document.querySelector<HTMLElement>(
-    `#secondary-popovers [role="menuitemradio"][data-option-value="${name}"]`
+    `#secondary-popovers [role="radio"][data-option-value="${name}"]`
   );
   if (!option) throw new Error(`Submenu option ${name} is not shown`);
   return option;
@@ -21,7 +21,7 @@ function submenuOption(name: string) {
 
 function checkedSubmenuOption() {
   return document
-    .querySelector('#secondary-popovers [role="menuitemradio"][aria-checked="true"]')
+    .querySelector('#secondary-popovers [role="radio"][aria-checked="true"]')
     ?.getAttribute("data-option-value");
 }
 
@@ -89,6 +89,46 @@ describe("context menu option submenu", () => {
     expect(onChange).toHaveBeenCalledTimes(2);
     await waitFor(() => expect(checkedSubmenuOption()).toBe("month"));
     expect(document.querySelector("#popovers .popover")).toBeTruthy();
+    expect(row.textContent).toContain("Scale: Month");
+  });
+
+  it("never picks a disabled option in the submenu", async () => {
+    const onChange = vi.fn();
+    const menu: IContextMenuGroup[] = [
+      {
+        group: "scale",
+        items: [],
+        option: {
+          label: "Scale",
+          options: scaleOptions.map((item) => ({
+            ...item,
+            isDisabled: item.value === "year"
+          })),
+          value: "month",
+          onChange
+        }
+      }
+    ];
+    const { getByRole } = render(ContextMenuAction, {
+      props: { id: "optionSubmenuDisabledTest", menuResolver: () => menu }
+    });
+
+    await fireEvent.click(getByRole("button", { name: "Actions" }));
+    const row = await waitFor(() => {
+      const element = document.querySelector<HTMLElement>(
+        '#popovers [data-context-menu-item-id="option-Scale"]'
+      );
+      expect(element).toBeTruthy();
+      return element!;
+    });
+    await fireEvent.click(row);
+    await waitFor(() => expect(checkedSubmenuOption()).toBe("month"));
+
+    const year = submenuOption("year");
+    expect(year.hasAttribute("disabled")).toBe(true);
+    await fireEvent.click(year);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(checkedSubmenuOption()).toBe("month");
     expect(row.textContent).toContain("Scale: Month");
   });
 });

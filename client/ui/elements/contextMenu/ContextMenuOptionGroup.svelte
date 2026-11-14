@@ -7,7 +7,10 @@
   import ContextMenuItemWithSecondary from "@21n/ui/elements/contextMenu/ContextMenuItemWithSecondary.svelte";
   import {
     ContextMenuOptionLayout,
-    resolveContextMenuOptionLayout
+    handleContextMenuOptionKey,
+    isContextMenuOptionEnabled,
+    resolveContextMenuOptionLayout,
+    resolveContextMenuOptionTabStop
   } from "@21n/ui/elements/contextMenu/context-menu-option";
 
   let {
@@ -25,13 +28,17 @@
   });
 
   const layout = $derived(resolveContextMenuOptionLayout(option.options));
+  const tabStop = $derived(
+    resolveContextMenuOptionTabStop(option.options, current)
+  );
   const currentLabel = $derived(
     option.options.find((item) => item.value === current)?.label ??
       (current === undefined ? "" : String(current))
   );
 
   function change(value: ISelectValue) {
-    if (value === current) return;
+    if (value === current || !isContextMenuOptionEnabled(option.options, value))
+      return;
     current = value;
     option.onChange(value);
   }
@@ -42,20 +49,32 @@
     <div
       class="flex items-center justify-between gap-3 pl-2 pr-1 py-1"
       role="radiogroup"
+      tabindex="-1"
       aria-label={option.label}
+      onkeydown={(event) =>
+        handleContextMenuOptionKey(event, option.options, change)}
     >
-      <span class="shrink-0 text-fgs2">{option.label}</span>
-      <div class="flex items-center gap-0.5 p-0.5 rounded-md bg-bgs4 min-w-0">
-        {#each option.options as item (item.value)}
+      <span
+        class="min-w-0 truncate text-fgs2"
+        title={option.label}
+        data-testid="context-menu-option-label"
+      >
+        {option.label}
+      </span>
+      <div class="flex shrink-0 items-center gap-0.5 p-0.5 rounded-md bg-bgs4">
+        {#each option.options as item, index (item.value)}
           {@const isActive = item.value === current}
           <button
             type="button"
             role="radio"
             aria-checked={isActive}
+            disabled={item.isDisabled}
+            tabindex={index === tabStop ? 0 : -1}
             data-option-value={item.value}
             class={cn("px-2.5 py-1 rounded text-b3 whitespace-nowrap", {
               "bg-bgs1 text-fgs1 font-medium shadow-sm ring-1 ring-brs3": isActive,
-              "text-fgs2 hover:text-fgs1": !isActive
+              "text-fgs2 hover:text-fgs1": !isActive && !item.isDisabled,
+              "text-fgs4 cursor-not-allowed": item.isDisabled
             })}
             onclick={() => change(item.value)}
           >

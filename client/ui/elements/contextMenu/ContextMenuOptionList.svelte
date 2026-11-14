@@ -7,6 +7,11 @@
   import { cn } from "@21n/ui/environment/presentation";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { POPOVER_KEEP_OPEN_ATTRIBUTE } from "@21n/ui/actions/popover.type";
+  import {
+    handleContextMenuOptionKey,
+    isContextMenuOptionEnabled,
+    resolveContextMenuOptionTabStop
+  } from "@21n/ui/elements/contextMenu/context-menu-option";
 
   let {
     label = undefined,
@@ -33,35 +38,44 @@
   } = $props();
 
   const current = $derived(resolveValue ? resolveValue() : value);
+  const tabStop = $derived(resolveContextMenuOptionTabStop(options, current));
+
+  function pick(next: ISelectValue) {
+    if (next === current || !isContextMenuOptionEnabled(options, next)) return;
+    onChange(next);
+  }
 </script>
 
 <div
   class="flex flex-col"
-  role="group"
+  role="radiogroup"
+  tabindex="-1"
   aria-label={label}
   data-testid="context-menu-option-list"
+  onkeydown={(event) => handleContextMenuOptionKey(event, options, pick)}
   {...isSubmenu ? { [POPOVER_KEEP_OPEN_ATTRIBUTE]: "" } : {}}
 >
   {#if label}
     <div class="px-2 pt-1 pb-0.5 text-b3 font-medium text-fgs3">{label}</div>
   {/if}
-  {#each options as option (option.value)}
+  {#each options as option, index (option.value)}
     {@const isActive = option.value === current}
     <button
       type="button"
-      role="menuitemradio"
+      role="radio"
       aria-checked={isActive}
+      disabled={option.isDisabled}
+      tabindex={index === tabStop ? 0 : -1}
       data-option-value={option.value}
       class={cn("flex items-center gap-2.5 w-full rounded-md text-left", {
         "p-1.5": size === Size.sm,
         "p-2": size === Size.md,
         "px-3 py-2": size === Size.lg,
         "bg-bgs3 text-fgs1 font-medium": isActive,
-        "text-fgs2 hover:bg-bgs3": !isActive
+        "text-fgs2 hover:bg-bgs3": !isActive && !option.isDisabled,
+        "text-fgs4 cursor-not-allowed": option.isDisabled
       })}
-      onclick={() => {
-        if (!isActive) onChange(option.value);
-      }}
+      onclick={() => pick(option.value)}
     >
       <span
         class={cn(

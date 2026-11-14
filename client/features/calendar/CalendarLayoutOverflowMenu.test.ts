@@ -1,0 +1,224 @@
+import { fireEvent, render, waitFor } from "@testing-library/svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
+
+const mocks = vi.hoisted(() => {
+  const { readable, writable } =
+    require("svelte/store") as typeof import("svelte/store");
+  return {
+    isHosted: readable(true),
+    entryWidth: writable<number | undefined>(100),
+    app: writable({ product: "nucleum" }),
+    setState: vi.fn()
+  };
+});
+
+vi.mock("@21n/ui/elements/markdown/markdown.utils", () => ({
+  renderMdAsHtml: (value: string) => value
+}));
+vi.mock("@nucleum/shell/topNav/contextZone/context-zone", async (load) => ({
+  ...(await load<
+    typeof import("@nucleum/shell/topNav/contextZone/context-zone")
+  >()),
+  contextZone: { isHosted: mocks.isHosted, entryWidth: mocks.entryWidth }
+}));
+vi.mock(
+  "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte",
+  async () => ({
+    default: (
+      await import("../../../tests/fixtures/components/ContextZoneContentInlineStub.svelte")
+    ).default
+  })
+);
+vi.mock("@nucleum/shell/navigation/components/BackButton.svelte", async () => ({
+  default: (await import("../../../tests/fixtures/components/EmptyStub.svelte"))
+    .default
+}));
+vi.mock("@nucleum/shell/navigation/navigation", () => ({
+  navigation: { gotoPath: vi.fn() }
+}));
+vi.mock("@nucleum/shared-state/commands/command-host", () => ({
+  requireCommandHost: () => ({ runAction: vi.fn() })
+}));
+vi.mock("@nucleum/shared-state/app-context/app.store", () => ({
+  appStore: mocks.app
+}));
+vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
+  uiState: { setState: mocks.setState }
+}));
+
+import CalendarLayoutView from "@nucleum/features/calendar/CalendarLayout.svelte";
+
+const CONTROLS_WIDTH: Partial<Record<CalendarLayout, number>> = {
+  [CalendarLayout.Bird]: 400,
+  [CalendarLayout.Classic]: 50
+};
+
+function overflowMenu() {
+  return document.querySelector<HTMLElement>(
+    "#popovers #calendarContextZoneMenu"
+  );
+}
+
+function layoutOption(name: string) {
+  const option = overflowMenu()?.querySelector<HTMLElement>(
+    `[role="radio"][data-option-value="${name}"]`
+  );
+  if (!option) throw new Error(`Layout option ${name} is not shown`);
+  return option;
+}
+
+async function openOverflowMenu() {
+  const trigger = await waitFor(() => {
+    const element = document.querySelector<HTMLElement>(
+      '[data-testid="calendar-overflow-menu"]'
+    );
+    expect(element).toBeTruthy();
+    return element!;
+  });
+  await fireEvent.click(trigger);
+  await waitFor(() => expect(overflowMenu()).toBeTruthy());
+}
+
+/**
+ * Renders the calendar as Calendar.svelte does: each layout mounts its own
+ * CalendarLayout, so a layout pick unmounts the view and its open menu and
+ * mounts the next one.
+ */
+function renderSwappingCalendar(initial: CalendarLayout) {
+  let view = render(CalendarLayoutView, { props: { panel: initial } });
+  let shown = initial;
+  mocks.setState.mockImplementation((_key: unknown, layout: CalendarLayout) => {
+    if (layout === shown) return;
+    shown = layout;
+    view.unmount();
+    view = render(CalendarLayoutView, { props: { panel: layout } });
+  });
+}
+
+function nextFrames() {
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
+  );
+}
+
+describe("CalendarLayout overflow menu layout pick", () => {
+  let scrollWidth: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }))
+    );
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      }
+    );
+    scrollWidth = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollWidth"
+    );
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
+      configurable: true,
+      get(this: HTMLElement) {
+        if (this.dataset.testid !== "calendar-context-controls") return 0;
+        const layout = document
+          .querySelector(
+            "[data-testid='calendar-layout-bird'], [data-testid='calendar-layout-classic']"
+          )
+          ?.getAttribute("data-testid")
+          ?.replace("calendar-layout-", "");
+        return CONTROLS_WIDTH[layout as CalendarLayout] ?? 400;
+      }
+    });
+    mocks.entryWidth.set(100);
+    mocks.setState.mockReset();
+    const popovers = document.createElement("div");
+    popovers.id = "popovers";
+    const secondary = document.createElement("div");
+    secondary.id = "secondary-popovers";
+    document.body.append(popovers, secondary);
+  });
+
+  afterEach(() => {
+    if (scrollWidth)
+      Object.defineProperty(HTMLElement.prototype, "scrollWidth", scrollWidth);
+    document.body.innerHTML = "";
+    vi.unstubAllGlobals();
+  });
+
+  it("swaps the layout and reopens the menu with focus on the new choice", async () => {
+    CONTROLS_WIDTH[CalendarLayout.Classic] = 400;
+    renderSwappingCalendar(CalendarLayout.Bird);
+    await openOverflowMenu();
+    expect(layoutOption(CalendarLayout.Bird).getAttribute("aria-checked")).toBe(
+      "true"
+    );
+
+    await fireEvent.click(layoutOption(CalendarLayout.Classic));
+
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-testid="calendar-layout-classic"]')
+      ).toBeTruthy()
+    );
+    expect(mocks.setState).toHaveBeenCalledWith(
+      expect.anything(),
+      CalendarLayout.Classic,
+      expect.anything()
+    );
+    await waitFor(() =>
+      expect(
+        layoutOption(CalendarLayout.Classic).getAttribute("aria-checked")
+      ).toBe("true")
+    );
+    expect(document.activeElement).toBe(layoutOption(CalendarLayout.Classic));
+
+    await fireEvent.keyDown(layoutOption(CalendarLayout.Classic), {
+      key: "ArrowLeft"
+    });
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-testid="calendar-layout-bird"]')
+      ).toBeTruthy()
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(layoutOption(CalendarLayout.Bird))
+    );
+    expect(layoutOption(CalendarLayout.Bird).getAttribute("aria-checked")).toBe(
+      "true"
+    );
+  });
+
+  it("does not reopen the menu later when the new layout fits inline", async () => {
+    CONTROLS_WIDTH[CalendarLayout.Classic] = 50;
+    renderSwappingCalendar(CalendarLayout.Bird);
+    await openOverflowMenu();
+
+    await fireEvent.click(layoutOption(CalendarLayout.Classic));
+
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-testid="calendar-layout-switcher"]')
+      ).toBeTruthy()
+    );
+    await nextFrames();
+    expect(overflowMenu()).toBeNull();
+
+    mocks.entryWidth.set(10);
+    await waitFor(() =>
+      expect(
+        document.querySelector('[data-testid="calendar-overflow-menu"]')
+      ).toBeTruthy()
+    );
+    await nextFrames();
+    expect(overflowMenu()).toBeNull();
+  });
+});

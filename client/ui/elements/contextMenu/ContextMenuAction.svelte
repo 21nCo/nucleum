@@ -71,10 +71,30 @@
     triggerEventDown("hideSecondaryMenu", {});
   }
 
-  /** Opens the menu as if its trigger were clicked, so a click closes it. */
+  /**
+   * Opens the menu as if its trigger were clicked, so a click closes it, and
+   * moves focus into it: onto its checked option when it has one.
+   */
   export function show() {
-    if (isPopoverVisible) return;
-    contextMenuPopoverRef?.click();
+    const trigger = contextMenuPopoverRef as HTMLElement | undefined;
+    if (!trigger || isPopoverVisible || document.getElementById(id)) return;
+    trigger.addEventListener(
+      "change",
+      (event) => {
+        if ((event as CustomEvent<{ open?: boolean }>).detail?.open)
+          focusMenu();
+      },
+      { once: true }
+    );
+    trigger.click();
+  }
+
+  function focusMenu() {
+    const menu = document.getElementById(id);
+    const target =
+      menu?.querySelector<HTMLElement>('[aria-checked="true"]:not([disabled])') ??
+      menu?.querySelector<HTMLElement>("button:not([disabled])");
+    target?.focus();
   }
 
   const { setEventContext, getEventContext } =
