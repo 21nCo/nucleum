@@ -25,6 +25,18 @@ const datafnStorePath = resolveRepoFsImportPath(
   "client/datafn/datafn.store.ts"
 );
 
+/**
+ * Whether the app server serves repo source modules, as the Vite dev server
+ * does; a static build answers those imports with HTML.
+ */
+async function isRepoSourceServed(page: Page) {
+  const response = await page.request.get(spaceStorePath);
+  return (
+    response.ok() &&
+    /javascript/.test(response.headers()["content-type"] ?? "")
+  );
+}
+
 /** Inserts a side nav space listing `nodes` and opens it as the page. */
 async function openSideNavSpace(
   page: Page,
@@ -86,6 +98,10 @@ test.describe("maximize", () => {
         "library.nodes"
       ),
       "The maximized page is a node opened from the Nodes library, and this product has no nodes"
+    );
+    test.skip(
+      !(await isRepoSourceServed(page)),
+      "Seeding and the space setup import repo source modules, which only the Vite dev server serves"
     );
     e2eSeed = seed;
     await blockExternalAuthRequests(page);

@@ -685,7 +685,9 @@ export const navigation = {
   },
   /**
    * Link target that opens `id` in `accessMode` from the current URL, with the
-   * same record state cleared as opening it through `openResource`.
+   * same record state cleared as opening it through `openResource`. A link
+   * never carries the full screen origin marker, which belongs only to the
+   * history entry a full screen open pushed.
    */
   resolveResourceHref(id: IRecordId, accessMode: AccessMode) {
     const url = clearOpenedRecordParams(
@@ -693,6 +695,7 @@ export const navigation = {
       id,
       accessMode
     );
+    url.searchParams.delete(AppSearchParam.MAX_OPENED);
     url.searchParams.set(accessMode, id.toString());
     return `${url.pathname}${url.search}${url.hash}`;
   },

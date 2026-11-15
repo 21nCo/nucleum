@@ -198,6 +198,38 @@ describe("reopening a page opened straight into full screen", () => {
   });
 });
 
+describe("a resource link built on a page opened straight into full screen", () => {
+  it.each([
+    ["another page", "node:b", AccessMode.PAGE],
+    ["the open page", "node:a", AccessMode.PAGE],
+    ["a beside page", "node:b", AccessMode.BESIDE_PAGE]
+  ])("to %s does not carry the origin marker", (_, id, accessMode) => {
+    navigation.toggleFullScreen(undefined, "node:a");
+    expect(params().get("maxOpened")).toBe("true");
+
+    const href = new URL(
+      navigation.resolveResourceHref(id, accessMode),
+      window.location.origin
+    );
+    expect(href.searchParams.get(accessMode)).toBe(id);
+    expect(href.searchParams.has("maxOpened")).toBe(false);
+  });
+
+  it("opens a page that Minimize keeps open and only leaves full screen", () => {
+    navigation.toggleFullScreen(undefined, "node:a");
+    const href = navigation.resolveResourceHref("node:b", AccessMode.PAGE);
+
+    history.install();
+    history.entries.splice(0, 1, { url: href });
+    history.show();
+    expect(params().get("max")).toBe("true");
+
+    navigation.minimizeFullScreen();
+    expect(params().get(AccessMode.PAGE)).toBe("node:b");
+    expect(params().has("max")).toBe(false);
+  });
+});
+
 describe("minimizing a page that was not opened into full screen", () => {
   it("keeps an already open page and only leaves full screen", () => {
     navigation.openResource("node:a", AccessMode.PAGE);
