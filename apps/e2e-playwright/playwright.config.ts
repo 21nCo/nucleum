@@ -22,9 +22,14 @@ const chromeLaunchOptions = {
     : {})
 };
 const defaultViewport = { width: 1512, height: 982 } as const;
-const browserChannel = configuredExecutablePath
-  ? {}
-  : { channel: "chrome" as const };
+// Playwright's bundled Chromium by default. Installed Google Chrome copies its
+// app bundle (~1.4 GB) to a temp folder on every launch and leaves it behind
+// when the run is killed, so it is opt-in: E2E_BROWSER_CHANNEL=chrome.
+const configuredChannel = process.env.E2E_BROWSER_CHANNEL?.trim();
+const browserChannel =
+  configuredExecutablePath || !configuredChannel
+    ? {}
+    : { channel: configuredChannel };
 
 function getProjectBaseURL(projectName: string): string {
   if (projectName === Product.NUCLEUM) {

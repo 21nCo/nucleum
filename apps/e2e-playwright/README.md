@@ -61,7 +61,7 @@ npm run test --workspace=e2e-playwright --
 
 - **Login:** For `cloud` and `cloud-only`, set in `.env`: `E2E_LOGIN_EMAIL` and `E2E_LOGIN_PASSWORD`. Tests can auto-refresh stale auth state when those are present. In CI, set these as secrets.
 - **Base URL:** Set in `.env`: `APP_BASE_URL` (default), or `APP_BASE_URL_NUCLEUM`, `APP_BASE_URL_MEMOTRON`, `APP_BASE_URL_POINTRON` per project (e.g. `https://local.nucleum.app`).
-- **Browser binary:** Tests use the Chrome channel by default. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to run with a specific Chromium-compatible executable in containers or other environments without Google Chrome.
+- **Browser binary:** Tests use Playwright's bundled Chromium (`npx playwright install chromium`) by default. Set `E2E_BROWSER_CHANNEL=chrome` to run with the installed Google Chrome instead; each Chrome launch copies its app bundle (about 1.4 GB) to a temp folder and leaves it behind if the run is killed, so use it only when a test needs real Chrome. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to run with a specific Chromium-compatible executable; it takes precedence over the channel. The Google and email auth-state scripts still launch Google Chrome.
 
 ```bash
 E2E_AUTH_MODE=offline npm run test --workspace=e2e-playwright -- --project pointron tests/focus
