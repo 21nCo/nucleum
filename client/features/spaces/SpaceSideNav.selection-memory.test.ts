@@ -90,7 +90,7 @@ async function mountSpace(spaceId = "space:s", isEmbedded = false) {
   });
   await settle();
   const within = <T extends { anchor: Node }>(list: T[]) =>
-    list.findLast((entry) => target.contains(entry.anchor));
+    list.filter((entry) => target.contains(entry.anchor)).pop();
   return {
     unmount: () => {
       view.unmount();
