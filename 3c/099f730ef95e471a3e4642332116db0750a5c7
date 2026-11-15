@@ -1,0 +1,21 @@
+services/account/src/datafn/file-deletions.test.ts
+  s_3f5847da61917d::t_94d252ddf3a5e1 23,27-46,54-56,62-66,71,90,92-94,97,537-572,575-588,590-593,595-628
+services/account/src/datafn/file-deletions.ts
+  s_3f5847da61917d::t_9f7a93750cc929 135-140,271-277,280-281,283,287,292-305,378,381-383,394-400,408
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3c099f730ef95e471a3e4642332116db0750a5c7",
+  "prompts": {},
+  "sessions": {
+    "s_3f5847da61917d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_3f5847da61917d",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

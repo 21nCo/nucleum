@@ -1,0 +1,25 @@
+services/account/src/app.ts
+  s_0b0647615a23f7::t_f718fdea2c8b26 106-109
+services/account/src/datafn/file-deletions.test.ts
+  s_0b0647615a23f7::t_8322895f046e89 8-13,23,44,63-65,68,71-79,84-89,106-130,132,138-149,160,167-176,214-222,252-253,265,272-342,349,352,358,360,373,378,388,390-394,402-440,443-444,448-470
+services/account/src/datafn/file-deletions.ts
+  s_0b0647615a23f7::t_bf681f8de6c620 5,20-22,36-46,66-71,74-75,82-86,104-106,109-115,123,208-270,276-282,295-305,333-336,338-351,353-358,360-363,365,368-387
+services/account/src/datafn/server.ts
+  s_0b0647615a23f7::t_c8975175eb723d 61-62,139,141,145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1025e496af1ba88cc50cc8fc9c4cbe8ec929f1a2",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

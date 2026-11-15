@@ -1,0 +1,19 @@
+client/features/spaces/SpaceSideNav.selection-memory.test.ts
+  s_b66d0e9dd4fae0::t_36a98077eea452 93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "201b3011d0312f097e320a3cfb726febe5a61488",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
