@@ -124,8 +124,7 @@ export function createClassicCalendarIndicatorSignal({
           },
           temporal: time.period(
             "createdAt",
-            { scale: temporalScale, at: date },
-            { storage: "date" }
+            { scale: temporalScale, at: date }
           )
         },
         datafnHeavyComputedSignalOptions
@@ -154,8 +153,7 @@ export function createClassicCalendarIndicatorSignal({
           },
           temporal: time.period(
             "date",
-            { scale: temporalScale, at: date },
-            { storage: "date" }
+            { scale: temporalScale, at: date }
           )
         },
         datafnHeavyComputedSignalOptions
