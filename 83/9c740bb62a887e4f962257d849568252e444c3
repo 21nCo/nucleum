@@ -1,0 +1,27 @@
+client/shell/navigation/full-screen-origin.ts
+  s_f058f999ab46b7::t_d2c3b61f41f687 3-21,25-26,28-32,35-36
+client/shell/navigation/navigation.ts
+  s_f058f999ab46b7::t_3d5817f44f7df5 2-5,196-214,850-856,873
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_0acf88eb93fa0d 55-56,155,158-161,175
+client/shell/navigation/full-screen-minimize.test.ts
+  s_f058f999ab46b7::t_b5ff115f9bd5d2 4,23,95-136,173-185
+client/shell/navigation/top-layer-minimize.test.ts
+  s_f058f999ab46b7::t_06453473d2a763 6,20,24-26,34,71-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "839c740bb62a887e4f962257d849568252e444c3",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
