@@ -6,7 +6,11 @@ import { clientStorage } from "@nucleum/persistence/client-storage";
 import { datafnE2eeState } from "@nucleum/datafn/datafnE2ee.store";
 import { get } from "svelte/store";
 
-const datafnOfflinabilityDefault = true;
+/**
+ * New devices start in direct mode (no local copy), so the first sign-in
+ * doesn't wait for a full download. Offline storage stays an opt-in setting.
+ */
+const datafnOfflinabilityDefault = false;
 
 /** Describes local, synchronized, and direct remote DataFn modes. */
 export type NucleumDatafnMode = "local-only" | "sync" | "sync-direct";
@@ -47,14 +51,47 @@ export function resolveDatafnMode(input: InitializeNucleumDatafnInput) {
   return "sync";
 }
 
-/** Reads the persisted offline storage preference. */
-export async function resolveDatafnOfflinabilityPreference() {
+/**
+ * Reads the persisted offline storage preference.
+ *
+ * When none is saved yet and `storageDbName` is given, a device that already
+ * holds that local copy keeps offline storage (its data may include changes
+ * not yet synced); otherwise the default applies. That first decision is
+ * saved so every later reader sees the same value.
+ */
+export async function resolveDatafnOfflinabilityPreference(input?: {
+  storageDbName?: string | null;
+}) {
   if (typeof window === "undefined" && typeof chrome === "undefined") {
     return datafnOfflinabilityDefault;
   }
   const value = await clientStorage.get(ClientStorageKey.DATAFN_OFFLINABILITY);
-  if (value === null) return datafnOfflinabilityDefault;
-  return value !== "false";
+  if (value !== null) return value !== "false";
+  if (!input?.storageDbName) return datafnOfflinabilityDefault;
+  const isEnabled =
+    (await hasIndexedDbDatabase(input.storageDbName)) ||
+    datafnOfflinabilityDefault;
+  await clientStorage.set(
+    ClientStorageKey.DATAFN_OFFLINABILITY,
+    isEnabled.toString()
+  );
+  return isEnabled;
+}
+
+/**
+ * Whether an IndexedDB database exists. Treats an unknown answer (no
+ * `indexedDB.databases()` support, or an error) as present, so existing
+ * local data is never assumed absent.
+ */
+async function hasIndexedDbDatabase(name: string) {
+  if (typeof indexedDB === "undefined") return false;
+  if (typeof indexedDB.databases !== "function") return true;
+  try {
+    const databases = await indexedDB.databases();
+    return databases.some((database) => database.name === name);
+  } catch {
+    return true;
+  }
 }
 
 /** Persists offline storage policy while enforcing the E2EE requirement. */
