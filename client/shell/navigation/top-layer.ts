@@ -1,6 +1,9 @@
 import { get } from "svelte/store";
 import { AccessMode } from "@nucleum/datafn/resource.type";
-import { isPageOpenedInFullScreen } from "@nucleum/shell/navigation/full-screen-origin";
+import {
+  isPageFullScreenOwner,
+  isPageOpenedInFullScreen
+} from "@nucleum/shell/navigation/full-screen-origin";
 import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
 import { navigation } from "@nucleum/shell/navigation/navigation";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
@@ -94,6 +97,51 @@ export function resolveCloseControlLabel(
   }) === "bulk"
     ? "Clear selection"
     : "Close";
+}
+
+/** What the top bar's top-left control does to the topmost layer. */
+export type TopBarControl = "minimize" | "clear-selection" | "close";
+
+/**
+ * Options of the top bar's top-left control, which skips the right panel.
+ * It includes full screen only while the open page owns it, so a page over a
+ * full screen overlay closes, keeping the overlay in full screen.
+ */
+function resolveTopBarLayerOptions(
+  searchParams: URLSearchParams,
+  fullScreenPath: string | undefined
+) {
+  return {
+    isIncludePanel: false,
+    isIncludeFullScreen: isPageFullScreenOwner(searchParams, fullScreenPath)
+  };
+}
+
+/**
+ * Resolves the top bar's top-left control from the same layer order as Esc:
+ * Minimize only when the maximized page is the topmost layer, so an overlay
+ * drawn above it, a beside page or a bulk selection closes first.
+ */
+export function resolveTopBarControl(
+  searchParams: URLSearchParams,
+  bulkCount: number,
+  fullScreenPath: string | undefined = fullScreen.get().path
+): TopBarControl {
+  const layer = resolveTopLayer(
+    searchParams,
+    bulkCount,
+    resolveTopBarLayerOptions(searchParams, fullScreenPath)
+  );
+  if (layer === "full-screen") return "minimize";
+  return layer === "bulk" ? "clear-selection" : "close";
+}
+
+/** Runs the top bar's top-left control. Returns the closed layer. */
+export function closeTopBarLayer(): TopLayer | undefined {
+  const searchParams = new URLSearchParams(window.location.search);
+  return closeTopLayer(
+    resolveTopBarLayerOptions(searchParams, fullScreen.get().path)
+  );
 }
 
 const layerParams: Partial<Record<TopLayer, AccessMode>> = {

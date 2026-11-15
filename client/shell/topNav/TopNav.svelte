@@ -47,9 +47,8 @@
   import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
   import PaneSwitchButton from "@nucleum/shell/topNav/contextZone/PaneSwitchButton.svelte";
   import {
-    closeTopLayer,
-    minimizeFullScreen,
-    resolveCloseControlLabel
+    closeTopBarLayer,
+    resolveTopBarControl
   } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
   import { isPageFullScreenOwner } from "@nucleum/shell/navigation/full-screen-origin";
@@ -115,8 +114,8 @@
       !!searchParams.get(AccessMode.BESIDE_BASE)
   );
   const isCloseMode = $derived(isBulkMode || isResourceOpen);
-  const closeLabel = $derived(
-    resolveCloseControlLabel(searchParams, $bulkEditCount)
+  const closeControl = $derived(
+    resolveTopBarControl(searchParams, $bulkEditCount, $fullScreen.path)
   );
   const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
   const trailBack = $derived(
@@ -159,7 +158,6 @@
   const isPageFullScreen = $derived(
     isPageFullScreenOwner(searchParams, $fullScreen.path)
   );
-  const isMinimizeMode = $derived(isPageFullScreen && !isBulkMode);
   const isHomePage = $derived(isHomeRoute($page.url));
   const openPanel = $derived(searchParams.get(AccessMode.PANEL));
   const isPanelBeside = $derived(isTopNavPanelBeside($view));
@@ -303,20 +301,18 @@
   {#if $context.embed !== Embed.HANDSET}
     {#if isCloseMode}
       <TopBarCloseButton
-        label={isMinimizeMode ? "Minimize" : closeLabel}
-        icon={isMinimizeMode ? "exitfullscreen" : "cross"}
+        label={closeControl === "minimize"
+          ? "Minimize"
+          : closeControl === "clear-selection"
+            ? "Clear selection"
+            : "Close"}
+        icon={closeControl === "minimize" ? "exitfullscreen" : "cross"}
         menuColumn={isAppMenuColumnVisible
           ? isHideMenuLabels
             ? "icons"
             : "labels"
           : undefined}
-        onclick={() =>
-          isMinimizeMode
-            ? minimizeFullScreen()
-            : closeTopLayer({
-                isIncludePanel: false,
-                isIncludeFullScreen: false
-              })}
+        onclick={() => closeTopBarLayer()}
       />
     {:else}
       {@render leftLogo?.()}

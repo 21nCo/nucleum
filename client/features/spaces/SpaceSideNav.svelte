@@ -27,6 +27,10 @@
   import SpaceResourceRenderer from "@nucleum/features/spaces/SpaceResourceRenderer.svelte";
   import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
   import {
+    readSpaceSelection,
+    rememberSpaceSelection
+  } from "@nucleum/features/spaces/space-selection";
+  import {
     collectResourceItems,
     findItem,
     findParentId,
@@ -53,8 +57,12 @@
   const items = $derived($store?.items ?? []);
   const isEditMode = $derived(Boolean($store?.isInEditMode));
 
-  let selectedItemId = $state<string | null>(null);
-  let isClosedByUser = $state(false);
+  const selectionKey = spaceId;
+  const remembered = readSpaceSelection(selectionKey);
+  let selectedItemId = $state<string | null>(
+    remembered?.selectedItemId ?? null
+  );
+  let isClosedByUser = $state(remembered?.isClosedByUser ?? false);
   let activeHeadingId = $state<string | undefined>(undefined);
   let targetSectionId = $state<string | null>(null);
   let collapsedIds = $state(new Set<string>());
@@ -121,6 +129,10 @@
       targetSectionId = null;
       draggedItemId = null;
     }
+  });
+
+  $effect(() => {
+    rememberSpaceSelection(selectionKey, { selectedItemId, isClosedByUser });
   });
 
   $effect(() => {

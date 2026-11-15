@@ -26,7 +26,11 @@
 
   const container = writable<IContainer | undefined>(undefined);
   setContext<Writable<IContainer | undefined>>(Context.CONTAINER, container);
-  setInPlaceResource({ onClose: () => onClose?.() });
+  setInPlaceResource({
+    get onClose() {
+      return onClose ? () => onClose?.() : undefined;
+    }
+  });
 </script>
 
 <div

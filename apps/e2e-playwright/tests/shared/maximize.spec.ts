@@ -4,9 +4,11 @@ import {
   resolveSurfaceContract
 } from "../../config/e2e.config";
 import { ensureInAppOnHome } from "../utils/helpers";
+import { getResourceThumbnail } from "../utils/resource-matrix";
 import {
   blockExternalAuthRequests,
-  openNodeRecordFromLibraryById
+  openNodeRecordFromLibraryById,
+  openNodesLibrary
 } from "../memory/memory-test-helpers";
 
 let e2eSeed: E2ESeed;
@@ -64,5 +66,34 @@ test.describe("maximize", () => {
     await expect(
       page.getByRole("button", { name: "Command bar" })
     ).toBeVisible();
+  });
+
+  test("Minimize returns a page opened straight into full screen to where it was opened from", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E maximize origin ${Date.now()}`
+    });
+    await openNodesLibrary(page);
+    const origin = page.url();
+    expect(origin).not.toMatch(/[?&]page=/);
+
+    await getResourceThumbnail(page, node.id).click({
+      modifiers: ["Shift"],
+      timeout: 5_000
+    });
+    await expect(page.getByTestId("resource-record-surface")).toBeVisible({
+      timeout: 15_000
+    });
+    await expect(page).toHaveURL(/[?&]max=/);
+    const minimize = page.getByTestId("top-bar-close");
+    await expect(minimize).toHaveAttribute("aria-label", "Minimize");
+
+    await minimize.click();
+    await expect(page).toHaveURL(origin);
+    await expect(page.getByTestId("resource-record-surface")).toHaveCount(0);
+    await expect(getResourceThumbnail(page, node.id)).toBeVisible();
   });
 });
