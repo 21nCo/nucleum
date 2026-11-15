@@ -131,6 +131,12 @@ const event = {
   }
 } as const satisfies DatafnResourceDefinition;
 
+/**
+ * Synced file record. `fileId` references the FileFn file in the regional
+ * account database, and `processing` records the processing mode used, the
+ * artifact kinds present and their durations. Both are optional so records
+ * written before FileFn stay valid.
+ */
 const file = {
   name: "file",
   version: 1,
@@ -148,7 +154,9 @@ const file = {
     jsonField("data"),
     jsonField("thumbnailData"),
     booleanField("isMeta", false, false),
-    jsonField("metadata")
+    jsonField("metadata"),
+    stringField("fileId"),
+    objectField("processing")
   ],
   indices: { base: ["type"], search: ["label"] }
 } as const satisfies DatafnResourceDefinition;

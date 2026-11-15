@@ -3,6 +3,15 @@ import { Hono } from "hono";
 import { buildAccountServices, registerCoreRoutes } from "./app.js";
 import { createCloudflareDatabase } from "./db/cloudflare.js";
 import { createCloudflareSyncDatabase } from "./db/sync-cloudflare.js";
+import {
+  createCloudflareFileDatabase,
+  type AccountFileDatabase
+} from "./files/database.js";
+import {
+  closeAfterDeferredWork,
+  createFileDeferredWork
+} from "./files/deferred.js";
+import { createAccountFileStorage } from "./files/storage.js";
 import { createAccountCloudflareLookupStore } from "./lookup/cloudflare-do.js";
 import { createLogger } from "./logging.js";
 import { createAccountObservability as createObservability } from "./observability/events.js";
@@ -25,7 +34,10 @@ const SECRETS_STORE_ENV_KEYS = new Set([
   "APPLE_TEAM_ID",
   "APPLE_KEY_ID",
   "DATAFN_OPENSEARCH_URL",
-  "DATAFN_OPENSEARCH_API_KEY"
+  "DATAFN_OPENSEARCH_API_KEY",
+  "FILEFN_R2_ACCOUNT_ID",
+  "FILEFN_R2_ACCESS_KEY_ID",
+  "FILEFN_R2_SECRET_ACCESS_KEY"
 ]);
 
 export default {
@@ -50,6 +62,11 @@ export default {
     let syncDatabase:
       | ReturnType<typeof createCloudflareSyncDatabase>
       | undefined;
+    let fileDatabase: AccountFileDatabase | undefined;
+    const fileDeferredWork = createFileDeferredWork(ctx, (error) => {
+      logger.error("nucleus account deferred file work failed", { error });
+    });
+    const workerEnv = globalProcess.process.env;
     const observability = createObservability(logger, undefined, {
       requestContext: createAsyncLocalRequestContext()
     });
@@ -65,7 +82,15 @@ export default {
           return syncDatabase.adapter;
         },
         stores: createAccountCloudflareRuntimeStores(env),
-        logger
+        logger,
+        files: {
+          database: () => {
+            fileDatabase ??= createCloudflareFileDatabase(env);
+            return fileDatabase.adapter;
+          },
+          storage: (regionId) => createAccountFileStorage(workerEnv, regionId),
+          runtime: ctx ? fileDeferredWork.runtime : undefined
+        }
       },
       deployment: {
         regionLookupStore,
@@ -77,18 +102,33 @@ export default {
     const app = new Hono();
     registerCoreRoutes(app, services);
 
-    try {
-      return await app.fetch(request, env);
-    } finally {
+    const closeRequestResources = async (): Promise<void> => {
       try {
         await services.close();
       } finally {
         try {
           await syncDatabase?.close();
         } finally {
-          await database.close();
+          try {
+            await fileDatabase?.close();
+          } finally {
+            await database.close();
+          }
         }
       }
+    };
+
+    try {
+      return await app.fetch(request, env);
+    } finally {
+      await closeAfterDeferredWork({
+        ctx,
+        deferred: fileDeferredWork,
+        close: closeRequestResources,
+        onError: (error) => {
+          logger.error("nucleus account deferred close failed", { error });
+        }
+      });
     }
   }
 };

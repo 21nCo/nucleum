@@ -45,8 +45,6 @@
   import { getDapId } from "@nucleum/persistence/device-id";
   import PageError from "@nucleum/surfaces/help/errors/PageError.svelte";
 
-  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-  import { Action } from "@nucleum/client/config/action.enum";
 
   import { embedBridge } from "@nucleum/client/runtime/embed/embed.store";
   import { postMessageToParent } from "@nucleum/client/runtime/embed/embed.utils";
@@ -55,7 +53,6 @@
   import UserLayout from "./UserLayout.svelte";
   import LegacyLocalDataRecoveryGate from "@nucleum/surfaces/settings/data-recovery/LegacyLocalDataRecoveryGate.svelte";
 
-  import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 
   import { recentsStore } from "@nucleum/shared-state/resources/recent.store";
   import { resolveProductResources } from "@nucleum/datafn/resource.utils";
@@ -107,7 +104,6 @@
   let isAppLoading = $state(false);
   let error = $state<string | null>(null);
   let dev_isDisableSyncOnAppear = false;
-  let subs: any[] = [];
   let isStartupCompleted = false;
   const recovery = createLegacyDataRecovery({
     initializeDatabase,
@@ -139,11 +135,6 @@
         hide_default_launcher: true
       });
     addWindowEventListeners();
-    refreshUIStateDerived();
-    const uiStateSub = uiState.subscribe(() => {
-      refreshUIStateDerived();
-    });
-    subs.push(uiStateSub);
 
     const isLegacyRecoveryRequired = await recovery.prepare();
     if (!isLegacyRecoveryRequired) {
@@ -151,12 +142,6 @@
     }
   });
 
-  function refreshUIStateDerived() {
-    const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      scope: UIStateScope.PRODUCT
-    });
-    $appStore.interactionMode = interactionMode;
-  }
 
   async function startApplication(options?: {
     isOfflinabilityEnabled?: boolean;
@@ -372,7 +357,6 @@
   }
   onDestroy(() => {
     removeWindowEventListeners();
-    subs.forEach((sub) => sub());
   });
 </script>
 

@@ -56,7 +56,6 @@
     "./focus/logs/manualLog/QuickAddDurationsEditor.svelte": "./focus/logs/manualLog/QuickAddDurationsEditor.svelte",
     "./focus/logs/session-items.utils": "./focus/logs/session-items.utils.ts",
     "./focus/player/FocusPlayer.svelte": "./focus/player/FocusPlayer.svelte",
-    "./focus/player/FocusPlayerCommandModeWidget.svelte": "./focus/player/FocusPlayerCommandModeWidget.svelte",
     "./focus/player/FocusTopNavWidget.svelte": "./focus/player/FocusTopNavWidget.svelte",
     "./focus/pointronConstants.type": "./focus/pointronConstants.type.ts",
     "./focus/preferences.store": "./focus/preferences.store.ts",

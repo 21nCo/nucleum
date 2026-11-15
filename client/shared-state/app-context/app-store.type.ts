@@ -1,5 +1,4 @@
 import type { IAction } from "@nucleum/shared-state/commands/action.type";
-import type { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
 import type { IMetadata } from "./metadata.type";
 import type { Product } from "@nucleum/client/config/product.type";
 import type { OAuthProviderConfig } from "@nucleum/client/runtime/account/oauth.type";
@@ -21,10 +20,6 @@ export type IAppStore = {
   currentComponent?: IAction;
   sheetPath?: string;
   actions: IAction[];
-  /**
-   * Derived value from uiState. This is to avoid the dependency of appStore on uiState as appStore is used non-logged in user context.
-   */
-  interactionMode: InteractionMode;
 };
 
 export type IAppData = {
@@ -112,7 +107,6 @@ export enum AppSearchParam {
   EDIT = "edit",
   TYPE = "type",
   /** Page launched in the agent command mode page, as `page:<action>`. */
-  TAB = "tab",
   PANEL = "panel",
   VIEW = "view",
   LINK = "link",

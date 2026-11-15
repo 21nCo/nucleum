@@ -10,6 +10,7 @@
     ".": "./index.ts",
     "./datafn": "./datafn.ts",
     "./features": "./features.ts",
+    "./interfaces": "./interfaces.ts",
     "./fields": "./fields.ts",
     "./search.provider": "./search.provider.ts",
     "./resource.enum": "./resource.enum.ts",

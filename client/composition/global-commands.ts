@@ -55,6 +55,7 @@ export const globalActions: IAction[] = [
   commandCommands.cmd,
   shellCommands.toggle_sidebar,
   helpCommands.troubleshoot,
+  helpCommands.diagnostics,
   accountCommands.bootstrap,
   calendarCommands.calendar,
   commandCommands.activate_search_box,

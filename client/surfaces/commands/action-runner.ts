@@ -14,7 +14,6 @@ import { Embed } from "@nucleum/client/runtime/context.type";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
 import { Action } from "@nucleum/client/config/action.enum";
 import { type Event } from "@nucleum/shared-state/events/event.enum";
 import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -153,18 +152,9 @@ export const actionRunner = {
         action,
         searchParams: params?.searchParams
       });
-      if (
-        store.interactionMode === InteractionMode.AGENT &&
-        ctx.embed !== Embed.HANDSET
-      ) {
-        navigation.toggleSearchParam({
-          [AppSearchParam.TAB]: "page:" + action.action
-        });
-      } else {
-        navigation.gotoPath("/" + (action.path ?? action.action), {
-          queryParams: params?.searchParams
-        });
-      }
+      navigation.gotoPath("/" + (action.path ?? action.action), {
+        queryParams: params?.searchParams
+      });
       return;
     }
   },
