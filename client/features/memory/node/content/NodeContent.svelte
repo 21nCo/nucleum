@@ -31,6 +31,10 @@
   import { BlockAction } from "@nucleum/features/memory/markdown/md.type";
   import { wordCounter } from "@nucleum/features/memory/node/content/word-counter.action";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
+  import {
+    canCreateFirstBlock,
+    readStoredNoteBlocks
+  } from "@nucleum/features/memory/node/content/first-block";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { Size } from "@21n/ui/elements/size.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
@@ -101,10 +105,33 @@
 
   let focusEventSub: any;
 
+  /**
+   * Whether the stored note has no blocks. The copy on this page can lack
+   * them (narrow select, or a local store still downloading); writing a
+   * starter block then would replace the note's real content.
+   */
+  async function isNoteEmptyInStorage(id: IRecordId) {
+    try {
+      const stored = await readStoredNoteBlocks(id);
+      if (canCreateFirstBlock(stored)) return true;
+      logger.warn({
+        at: "NodeContent.firstBlock.skipped",
+        id,
+        storedBlockCount: stored.mdChildOrder.length,
+        hasBlocks: stored.hasBlocks
+      });
+      return false;
+    } catch (error) {
+      logger.error({ at: "NodeContent.firstBlock.read", id, error });
+      return false;
+    }
+  }
+
   onMount(async () => {
     if (
       $node.contentType === NodeType.NODULAR_MARKDOWN &&
-      (!Array.isArray($node.mdChildOrder) || $node.mdChildOrder.length < 1)
+      (!Array.isArray($node.mdChildOrder) || $node.mdChildOrder.length < 1) &&
+      (await isNoteEmptyInStorage($node.id))
     ) {
       const id = generateResourceId(Resource.node);
       const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
