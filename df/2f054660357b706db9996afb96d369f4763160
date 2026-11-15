@@ -1,0 +1,41 @@
+client/features/collections/properties/PropertiesPane.svelte
+  s_f058f999ab46b7::t_59af97936e09c3 407
+client/features/focus/goals/Goal.svelte
+  s_f058f999ab46b7::t_4e00edca48a35b 47,93-111,117
+client/features/focus/goals/GoalPanelContentResolver.svelte
+  s_f058f999ab46b7::t_8907c8acce6da2 12-20,36-55,64,95-127
+client/features/focus/goals/GoalPanelSwitcher.svelte
+  s_f058f999ab46b7::t_25aebf3a510c7c 28-29,101-102,215-220
+client/features/focus/goals/goal.store.ts
+  s_f058f999ab46b7::t_16adc1180cd53f 444
+client/features/focus/goals/info/GoalInfoPanel.svelte
+  s_f058f999ab46b7::t_a5023d2bed3e04 41,172-173
+client/features/focus/goals/sub/SubGoalItem.svelte
+  s_f058f999ab46b7::t_c78925aa84a490 24-25,33-34,66-67
+client/features/focus/goals/sub/SubGoalPeek.svelte
+  s_f058f999ab46b7::t_c12d6d26eb92a5 1-87
+client/features/focus/goals/sub/SubGoalsPanel.svelte
+  s_f058f999ab46b7::t_1cb324c33aa7d7 40-42,115-133,135-145,363,378-380
+client/features/focus/goals/sub/sub-objective-peek.ts
+  s_f058f999ab46b7::t_9d879115e62448 1-42
+client/ui/compositions/nestedList/NestedList.svelte
+  s_f058f999ab46b7::t_6ff6588b1b6342 19-20,23-24,75-76
+client/ui/compositions/nestedList/NestedListItem.svelte
+  s_f058f999ab46b7::t_57cee8196aec29 26,42-43,184-185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df2f054660357b706db9996afb96d369f4763160",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
