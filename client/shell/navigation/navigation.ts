@@ -1,5 +1,8 @@
 import { isRecordId } from "@nucleum/datafn/resource.utils";
-import { isPageOpenedInFullScreen } from "@nucleum/shell/navigation/full-screen-origin";
+import {
+  isPageFullScreenOwner,
+  isPageOpenedInFullScreen
+} from "@nucleum/shell/navigation/full-screen-origin";
 import { get, type Readable } from "svelte/store";
 
 import {
@@ -188,6 +191,25 @@ let currentEntry:
 function isFullScreenOverlayOpen(searchParams: URLSearchParams) {
   const overlay = searchParams.get(AccessMode.OVERLAY);
   return !!overlay && overlay === fullScreen.get().path;
+}
+
+/**
+ * Search params of a page opened in full screen, after the open applies its
+ * own search params, such as closing the overlay it was maximized from.
+ */
+function resolveOpenedPageParams(
+  url: URL,
+  id: IRecordId,
+  searchParams?: Record<string, string | boolean | number | null>
+) {
+  const next = new URLSearchParams(url.search);
+  next.set(AccessMode.PAGE, id.toString());
+  next.set(AppSearchParam.MAX, "true");
+  Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+    if (value === null) next.delete(key);
+    else next.set(key, String(value));
+  });
+  return next;
 }
 
 let endedEntry: { pageId: string; position?: AccessTrailPosition } | undefined;
@@ -735,7 +757,6 @@ export const navigation = {
     if (recordedAccessModes.has(accessMode)) {
       recordResourceOpen(id, params?.origin);
     }
-    const isFullScreenBefore = !!url.searchParams.get(AppSearchParam.MAX);
     let isCloseNavigator = false;
     let navigatorLayer: AccessMode | undefined;
     let isPushHistory = false;
@@ -826,6 +847,13 @@ export const navigation = {
       id,
       accessMode ?? AppSearchParam.SELECTED
     );
+    const isMaxOpened =
+      accessMode === AccessMode.PAGE &&
+      !!params?.isFullScreen &&
+      isPushHistory &&
+      isPageFullScreenOwner(
+        resolveOpenedPageParams(url, id, params?.searchParams)
+      );
     navigation.toggleSearchParam(
       {
         ...(accessMode
@@ -842,10 +870,7 @@ export const navigation = {
           : {}),
         ...(accessMode === AccessMode.PAGE
           ? {
-              [AppSearchParam.MAX_OPENED]:
-                params?.isFullScreen && isPushHistory && !isFullScreenBefore
-                  ? true
-                  : null
+              [AppSearchParam.MAX_OPENED]: isMaxOpened ? true : null
             }
           : {}),
         ...(params?.searchParams ?? {}),

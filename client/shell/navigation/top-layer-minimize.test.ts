@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { writable } from "svelte/store";
 
 const mocks = vi.hoisted(() => ({
+  fullScreenPath: undefined as string | undefined,
   navigation: {
     exitFullScreen: vi.fn(),
     minimizeFullScreen: vi.fn()
@@ -16,11 +17,13 @@ vi.mock("@nucleum/shared-state/resources/bulkedit.store", () => ({
   bulkEditStore: { count: writable(0), reset: vi.fn() }
 }));
 vi.mock("@nucleum/shell/overlays/modal.store", () => ({
-  fullScreen: { get: () => ({ path: undefined }), hide: vi.fn() }
+  fullScreen: { get: () => ({ path: mocks.fullScreenPath }), hide: vi.fn() }
 }));
 
 const { closeTopLayer, minimizeFullScreen } = await import("./top-layer");
-const { isPageOpenedInFullScreen } = await import("./full-screen-origin");
+const { isPageFullScreenOwner, isPageOpenedInFullScreen } = await import(
+  "./full-screen-origin"
+);
 
 function at(search: string) {
   window.history.replaceState(null, "", `/space/s1${search}`);
@@ -28,6 +31,7 @@ function at(search: string) {
 
 afterEach(() => {
   vi.clearAllMocks();
+  mocks.fullScreenPath = undefined;
 });
 
 describe("isPageOpenedInFullScreen", () => {
@@ -62,5 +66,39 @@ describe("minimizeFullScreen", () => {
     at("?page=node:1&max=true&maxOpened=true");
     expect(closeTopLayer()).toBe("full-screen");
     expect(mocks.navigation.minimizeFullScreen).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a page over a full screen overlay", () => {
+  const params = (value: string) => new URLSearchParams(value);
+
+  it("does not own full screen, so the top bar keeps Close", () => {
+    expect(isPageFullScreenOwner(params("page=node:1&max=true"))).toBe(true);
+    expect(
+      isPageFullScreenOwner(
+        params("overlay=focus&max=true&page=node:1"),
+        "focus"
+      )
+    ).toBe(false);
+    expect(
+      isPageFullScreenOwner(
+        params("overlay=search&max=true&page=node:1"),
+        "focus"
+      )
+    ).toBe(true);
+    expect(isPageFullScreenOwner(params("overlay=focus&max=true"))).toBe(
+      false
+    );
+  });
+
+  it("is never minimized by history, even when flagged", () => {
+    mocks.fullScreenPath = "focus";
+    at("?overlay=focus&max=true&page=node:1&maxOpened=true");
+    expect(
+      isPageOpenedInFullScreen(new URLSearchParams(window.location.search))
+    ).toBe(false);
+    minimizeFullScreen();
+    expect(mocks.navigation.minimizeFullScreen).not.toHaveBeenCalled();
+    expect(mocks.navigation.exitFullScreen).toHaveBeenCalledTimes(1);
   });
 });

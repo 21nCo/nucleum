@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import view from "@21n/ui/environment/view.store";
+import { fullScreen } from "@nucleum/shell/overlays/modal.store";
 import { navigation } from "./navigation";
 import { createTestHistory } from "./navigation-history.test.setup";
 
@@ -19,6 +20,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  fullScreen.hide(false);
 });
 
 function shown() {
@@ -90,6 +92,48 @@ describe("minimizing a page opened straight into full screen", () => {
     expect(shown()).toBe(origin);
   });
 
+  it("returns to the maximized page a beside page was maximized from", () => {
+    navigation.toggleFullScreen(undefined, "node:a");
+    navigation.openResource("node:b", AccessMode.BESIDE_PAGE);
+    const origin = shown();
+    expect(params().get("max")).toBe("true");
+
+    navigation.toggleFullScreen(AccessMode.BESIDE_PAGE, "node:b");
+    expect(params().get(AccessMode.PAGE)).toBe("node:b");
+    expect(params().get("maxOpened")).toBe("true");
+
+    navigation.minimizeFullScreen();
+    expect(shown()).toBe(origin);
+  });
+
+  it("returns to the maximized page a shift-click opened from", () => {
+    navigation.toggleFullScreen(undefined, "node:a");
+    const origin = shown();
+
+    navigation.resourceClickHandler(shiftClick(), "node:b");
+    expect(params().get(AccessMode.PAGE)).toBe("node:b");
+    expect(params().get("maxOpened")).toBe("true");
+
+    navigation.minimizeFullScreen();
+    expect(shown()).toBe(origin);
+  });
+
+  it("returns to the maximized space whose in-place item was maximized", () => {
+    navigation.openResource("space:s", AccessMode.PAGE);
+    navigation.toggleFullScreen(AccessMode.PAGE, "space:s");
+    const origin = shown();
+    expect(params().get("max")).toBe("true");
+    expect(params().has("maxOpened")).toBe(false);
+
+    navigation.toggleFullScreen(undefined, "node:item");
+    expect(params().get("maxOpened")).toBe("true");
+
+    navigation.minimizeFullScreen();
+    expect(shown()).toBe(origin);
+    expect(params().get(AccessMode.PAGE)).toBe("space:s");
+    expect(params().get("max")).toBe("true");
+  });
+
   it("closes to the base page when no in-app entry led to it", () => {
     history.entries.splice(0, 1, {
       url: "/home?page=node:a&max=true&maxOpened=true"
@@ -124,5 +168,18 @@ describe("minimizing a page that was not opened into full screen", () => {
     navigation.minimizeFullScreen();
     expect(params().get(AccessMode.PAGE)).toBe("node:b");
     expect(params().has("max")).toBe(false);
+  });
+});
+
+describe("a page opened over a full screen overlay", () => {
+  it("is not marked as opened into full screen, since the overlay owns it", () => {
+    fullScreen.show("focus");
+    history.entries.splice(0, 1, { url: "/home?overlay=focus&max=true" });
+    history.show();
+
+    navigation.resourceClickHandler(shiftClick(), "node:a");
+    expect(params().get(AccessMode.PAGE)).toBe("node:a");
+    expect(params().get(AccessMode.OVERLAY)).toBe("focus");
+    expect(params().has("maxOpened")).toBe(false);
   });
 });

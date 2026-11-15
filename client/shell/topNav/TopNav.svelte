@@ -52,6 +52,8 @@
     resolveCloseControlLabel
   } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
+  import { isPageFullScreenOwner } from "@nucleum/shell/navigation/full-screen-origin";
+  import { fullScreen } from "@nucleum/shell/overlays/modal.store";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
   import { resolveAccessTrailBack } from "@nucleum/shell/navigator/access-trail";
@@ -150,8 +152,12 @@
       ? resolveSpaceBaseBack($page.url, trailBack)
       : undefined
   );
-  const isPageFullScreen = $derived(
+  const isMaxOn = $derived(
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
+  );
+  /** Over a full screen overlay, the overlay owns full screen, not the page. */
+  const isPageFullScreen = $derived(
+    isPageFullScreenOwner(searchParams, $fullScreen.path)
   );
   const isMinimizeMode = $derived(isPageFullScreen && !isBulkMode);
   const isHomePage = $derived(isHomeRoute($page.url));
@@ -166,7 +172,7 @@
     $toasts.length > 0 && !$isToastRaisedAboveModal
   );
   const isAppMenuColumnVisible = $derived(
-    !isPageFullScreen &&
+    !isMaxOn &&
       !isHideLeftNavBar &&
       !$appStore.isMenuHidden &&
       productConfig.appMenu.length > 0
