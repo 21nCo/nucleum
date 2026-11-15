@@ -6,10 +6,12 @@ import { clearSpaceSelections } from "@nucleum/features/spaces/space-selection";
 import type { ISpaceNavContext } from "@nucleum/features/spaces/space-nav.type";
 import type { ISpaceResourceNavItem } from "@nucleum/features/spaces/space.type";
 
+type RendererProps = { resourceId?: string; onClose?: () => void };
+
+/** Props each mounted side nav passed, with the node it rendered at. */
 const mocks = vi.hoisted(() => ({
-  renderer: undefined as
-    { resourceId?: string; onClose?: () => void } | undefined,
-  nav: undefined as ISpaceNavContext | undefined
+  renderers: [] as { anchor: Node; props: RendererProps }[],
+  navs: [] as { anchor: Node; nav: ISpaceNavContext }[]
 }));
 
 vi.mock("@datafn/svelte", async () => {
@@ -57,16 +59,16 @@ vi.mock("@nucleum/features/spaces/space-heading-scroll", () => ({
   scrollToHeading: () => () => undefined
 }));
 vi.mock("@nucleum/features/spaces/SpaceNavItem.svelte", () => ({
-  default: (_anchor: unknown, props: { nav: ISpaceNavContext }) => {
-    mocks.nav = props.nav;
+  default: (anchor: Node, props: { nav: ISpaceNavContext }) => {
+    mocks.navs.push({ anchor, nav: props.nav });
   }
 }));
 vi.mock("@nucleum/features/spaces/SpaceAddPanel.svelte", () => ({
   default: () => {}
 }));
 vi.mock("@nucleum/features/spaces/SpaceResourceRenderer.svelte", () => ({
-  default: (_anchor: unknown, props: typeof mocks.renderer) => {
-    mocks.renderer = props;
+  default: (anchor: Node, props: RendererProps) => {
+    mocks.renderers.push({ anchor, props });
   }
 }));
 
@@ -74,17 +76,37 @@ async function settle() {
   for (let index = 0; index < 5; index++) await tick();
 }
 
-async function mountSpace(spaceId = "space:s") {
+async function mountSpace(spaceId = "space:s", isEmbedded = false) {
+  const target = document.body.appendChild(document.createElement("div"));
   const view = render(SpaceSideNav, {
+    target,
     props: {
       spaceId,
       focusChain: [],
+      isEmbedded,
       header: createRawSnippet(() => ({ render: () => "<div></div>" })),
       onFocusSpace: () => undefined
     }
   });
   await settle();
-  return view;
+  const within = <T extends { anchor: Node }>(list: T[]) =>
+    list.findLast((entry) => target.contains(entry.anchor));
+  return {
+    unmount: () => {
+      view.unmount();
+      target.remove();
+    },
+    /** The resource this side nav shows. */
+    shown: () => within(mocks.renderers)?.props.resourceId,
+    close: async () => {
+      within(mocks.renderers)?.props.onClose?.();
+      await settle();
+    },
+    open: async (item: ISpaceResourceNavItem) => {
+      within(mocks.navs)?.nav.onOpen(item);
+      await settle();
+    }
+  };
 }
 
 const itemTwo = {
@@ -97,38 +119,58 @@ const itemTwo = {
 
 afterEach(() => {
   clearSpaceSelections();
+  mocks.renderers = [];
+  mocks.navs = [];
+});
+
+describe("closing the item open in a space", () => {
+  it("shows the empty panel and opens no other item on its own", async () => {
+    const space = await mountSpace();
+    expect(space.shown()).toBe("node:one");
+
+    await space.close();
+    expect(space.shown()).toBeUndefined();
+  });
 });
 
 describe("the item a space shows across a remount", () => {
   it("returns to the item the user opened, not the first item", async () => {
     const first = await mountSpace();
-    mocks.nav?.onOpen(itemTwo);
-    await settle();
-    expect(mocks.renderer?.resourceId).toBe("node:two");
+    await first.open(itemTwo);
+    expect(first.shown()).toBe("node:two");
     first.unmount();
 
-    await mountSpace();
-    expect(mocks.renderer?.resourceId).toBe("node:two");
+    expect((await mountSpace()).shown()).toBe("node:two");
   });
 
   it("keeps the empty panel after the user closed the item", async () => {
     const first = await mountSpace();
-    mocks.renderer?.onClose?.();
-    await settle();
-    expect(mocks.renderer?.resourceId).toBeUndefined();
+    await first.close();
+    expect(first.shown()).toBeUndefined();
     first.unmount();
 
-    await mountSpace();
-    expect(mocks.renderer?.resourceId).toBeUndefined();
+    expect((await mountSpace()).shown()).toBeUndefined();
   });
 
   it("keeps the selection of each space apart", async () => {
     const first = await mountSpace("space:s");
-    mocks.nav?.onOpen(itemTwo);
-    await settle();
+    await first.open(itemTwo);
     first.unmount();
 
-    await mountSpace("space:other");
-    expect(mocks.renderer?.resourceId).toBe("node:one");
+    expect((await mountSpace("space:other")).shown()).toBe("node:one");
+  });
+
+  it("keeps the page and the embedded side nav of one space apart", async () => {
+    const page = await mountSpace("space:s");
+    const embedded = await mountSpace("space:s", true);
+    await embedded.close();
+    await page.open(itemTwo);
+    expect(page.shown()).toBe("node:two");
+    expect(embedded.shown()).toBeUndefined();
+    page.unmount();
+    embedded.unmount();
+
+    expect((await mountSpace("space:s")).shown()).toBe("node:two");
+    expect((await mountSpace("space:s", true)).shown()).toBeUndefined();
   });
 });

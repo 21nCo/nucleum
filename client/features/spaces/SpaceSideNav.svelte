@@ -28,7 +28,8 @@
   import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
   import {
     readSpaceSelection,
-    rememberSpaceSelection
+    rememberSpaceSelection,
+    type SpaceSideNavRole
   } from "@nucleum/features/spaces/space-selection";
   import {
     collectResourceItems,
@@ -57,8 +58,8 @@
   const items = $derived($store?.items ?? []);
   const isEditMode = $derived(Boolean($store?.isInEditMode));
 
-  const selectionKey = spaceId;
-  const remembered = readSpaceSelection(selectionKey);
+  const selectionRole: SpaceSideNavRole = isEmbedded ? "embedded" : "page";
+  const remembered = readSpaceSelection(spaceId, selectionRole);
   let selectedItemId = $state<string | null>(
     remembered?.selectedItemId ?? null
   );
@@ -132,7 +133,10 @@
   });
 
   $effect(() => {
-    rememberSpaceSelection(selectionKey, { selectedItemId, isClosedByUser });
+    rememberSpaceSelection(spaceId, selectionRole, {
+      selectedItemId,
+      isClosedByUser
+    });
   });
 
   $effect(() => {
