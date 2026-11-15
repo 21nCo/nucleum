@@ -761,8 +761,10 @@ export const navigation = {
     let navigatorLayer: AccessMode | undefined;
     let isPushHistory = false;
     let historyState: AccessTrailHistoryState | undefined;
+    let isSamePageOpen = false;
     if (accessMode === AccessMode.PAGE) {
       const openPage = url.searchParams.get(AccessMode.PAGE);
+      isSamePageOpen = openPage === id.toString();
       const isOpenPageTrailEnded =
         !!openPage &&
         openPage === id.toString() &&
@@ -868,7 +870,10 @@ export const navigation = {
         ...(accessMode === AccessMode.PAGE && params?.isFullScreen
           ? { [AppSearchParam.MAX]: true }
           : {}),
-        ...(accessMode === AccessMode.PAGE
+        // Reopening the open page in its own history entry, such as selecting
+        // it in the navigator, keeps where a full screen open came from.
+        ...(accessMode === AccessMode.PAGE &&
+        !(isSamePageOpen && !isPushHistory)
           ? {
               [AppSearchParam.MAX_OPENED]: isMaxOpened ? true : null
             }

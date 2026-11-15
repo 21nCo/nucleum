@@ -2,7 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import view from "@21n/ui/environment/view.store";
 import { fullScreen } from "@nucleum/shell/overlays/modal.store";
+import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
 import { navigation } from "./navigation";
+import {
+  closeTopBarLayer,
+  closeTopLayer,
+  minimizeFullScreen
+} from "./top-layer";
 import { createTestHistory } from "./navigation-history.test.setup";
 
 vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", async () =>
@@ -143,6 +149,51 @@ describe("minimizing a page opened straight into full screen", () => {
     navigation.minimizeFullScreen();
     expect(params().has(AccessMode.PAGE)).toBe(false);
     expect(params().has("max")).toBe(false);
+    expect(params().has("maxOpened")).toBe(false);
+  });
+});
+
+describe("reopening a page opened straight into full screen", () => {
+  function maximizeSpaceItem() {
+    navigation.openResource("space:s", AccessMode.PAGE);
+    const origin = shown();
+    navigation.toggleFullScreen(undefined, "node:item");
+    expect(params().get("maxOpened")).toBe("true");
+    return origin;
+  }
+
+  /** Selects the open page again in the navigator's access trail. */
+  function selectOpenPageInNavigator() {
+    const nodes = accessTrail.get().current?.nodes ?? [];
+    const index = nodes.findIndex((node) => node.id === "node:item");
+    expect(index).toBeGreaterThanOrEqual(0);
+    const length = history.entries.length;
+    navigation.openTrailNode(index);
+    expect(history.entries.length).toBe(length);
+    expect(params().get(AccessMode.PAGE)).toBe("node:item");
+  }
+
+  it.each([
+    ["the top-left button", () => closeTopBarLayer()],
+    ["the actions menu", () => minimizeFullScreen()],
+    ["Escape", () => closeTopLayer({ isIncludePanel: true })]
+  ])("keeps where it came from, so %s returns there", (_, minimize) => {
+    const origin = maximizeSpaceItem();
+
+    selectOpenPageInNavigator();
+    expect(params().get("maxOpened")).toBe("true");
+
+    minimize();
+    expect(shown()).toBe(origin);
+    expect(params().get(AccessMode.PAGE)).toBe("space:s");
+  });
+
+  it("forgets where it came from once another page opens in a new entry", () => {
+    maximizeSpaceItem();
+
+    navigation.openResource("node:other", AccessMode.PAGE);
+    expect(params().get(AccessMode.PAGE)).toBe("node:other");
+    expect(params().get("max")).toBe("true");
     expect(params().has("maxOpened")).toBe(false);
   });
 });
