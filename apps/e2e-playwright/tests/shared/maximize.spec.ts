@@ -1,4 +1,8 @@
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
+import {
+  requireE2EProduct,
+  resolveSurfaceContract
+} from "../../config/e2e.config";
 import { ensureInAppOnHome } from "../utils/helpers";
 import {
   blockExternalAuthRequests,
@@ -8,7 +12,14 @@ import {
 let e2eSeed: E2ESeed;
 
 test.describe("maximize", () => {
-  test.beforeEach(async ({ page, seed }) => {
+  test.beforeEach(async ({ page, seed }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The maximized page is a node opened from the Nodes library, and this product has no nodes"
+    );
     e2eSeed = seed;
     await blockExternalAuthRequests(page);
     await page.setViewportSize({ width: 1440, height: 900 });

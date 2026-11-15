@@ -111,10 +111,7 @@ const layerParams: Partial<Record<TopLayer, AccessMode>> = {
  */
 export function minimizeFullScreen() {
   if (isPageOpenedInFullScreen(new URLSearchParams(window.location.search))) {
-    navigation.closeResource({
-      accessMode: AccessMode.PAGE,
-      isHistoryBack: true
-    });
+    navigation.minimizeFullScreen();
     return;
   }
   navigation.exitFullScreen();

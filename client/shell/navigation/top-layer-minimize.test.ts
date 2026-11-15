@@ -5,8 +5,7 @@ import { writable } from "svelte/store";
 const mocks = vi.hoisted(() => ({
   navigation: {
     exitFullScreen: vi.fn(),
-    toggleSearchParam: vi.fn(),
-    closeResource: vi.fn()
+    minimizeFullScreen: vi.fn()
   }
 }));
 
@@ -48,10 +47,7 @@ describe("minimizeFullScreen", () => {
   it("closes a page that was opened straight into full screen", () => {
     at("?page=node:1&max=true&maxOpened=true");
     minimizeFullScreen();
-    expect(mocks.navigation.closeResource).toHaveBeenCalledWith({
-      accessMode: "page",
-      isHistoryBack: true
-    });
+    expect(mocks.navigation.minimizeFullScreen).toHaveBeenCalledTimes(1);
     expect(mocks.navigation.exitFullScreen).not.toHaveBeenCalled();
   });
 
@@ -59,12 +55,12 @@ describe("minimizeFullScreen", () => {
     at("?page=node:1&max=true");
     minimizeFullScreen();
     expect(mocks.navigation.exitFullScreen).toHaveBeenCalled();
-    expect(mocks.navigation.closeResource).not.toHaveBeenCalled();
+    expect(mocks.navigation.minimizeFullScreen).not.toHaveBeenCalled();
   });
 
   it("is what Escape does on a page opened in full screen", () => {
     at("?page=node:1&max=true&maxOpened=true");
     expect(closeTopLayer()).toBe("full-screen");
-    expect(mocks.navigation.closeResource).toHaveBeenCalled();
+    expect(mocks.navigation.minimizeFullScreen).toHaveBeenCalledTimes(1);
   });
 });

@@ -735,6 +735,7 @@ export const navigation = {
     if (recordedAccessModes.has(accessMode)) {
       recordResourceOpen(id, params?.origin);
     }
+    const isFullScreenBefore = !!url.searchParams.get(AppSearchParam.MAX);
     let isCloseNavigator = false;
     let navigatorLayer: AccessMode | undefined;
     let isPushHistory = false;
@@ -838,6 +839,14 @@ export const navigation = {
             }),
         ...(accessMode === AccessMode.PAGE && params?.isFullScreen
           ? { [AppSearchParam.MAX]: true }
+          : {}),
+        ...(accessMode === AccessMode.PAGE
+          ? {
+              [AppSearchParam.MAX_OPENED]:
+                params?.isFullScreen && isPushHistory && !isFullScreenBefore
+                  ? true
+                  : null
+            }
           : {}),
         ...(params?.searchParams ?? {}),
         ...(isCloseBesideNavigator && besideNavigatorLayer
@@ -1091,30 +1100,34 @@ export const navigation = {
     }
     navigation.openResource(resourceId, AccessMode.PAGE, {
       isFullScreen: true,
-      searchParams: {
-        [AppSearchParam.MAX_OPENED]: true,
-        ...(currentMode && currentMode !== AccessMode.PAGE
+      searchParams:
+        currentMode && currentMode !== AccessMode.PAGE
           ? { [currentMode]: null }
-          : {})
-      }
+          : undefined
     });
   },
   /**
-   * Minimizes a full screen page: a page opened straight into full screen
-   * closes and returns to where it was opened from, such as a space with its
-   * side nav; a page that was already open only leaves full screen.
+   * Minimizes a full screen page. A page opened straight into full screen
+   * closes: when its history entry was pushed by that open, going back
+   * returns to the exact view it was opened from, such as a space with its
+   * side nav or a page with a beside page; otherwise the page closes to the
+   * base page. A page that was already open only leaves full screen.
    */
   minimizeFullScreen: () => {
-    if (
-      isPageOpenedInFullScreen(new URLSearchParams(window.location.search))
-    ) {
-      navigation.closeResource({
-        accessMode: AccessMode.PAGE,
-        isHistoryBack: true
-      });
+    const searchParams = new URLSearchParams(window.location.search);
+    if (!isPageOpenedInFullScreen(searchParams)) {
+      navigation.exitFullScreen();
       return;
     }
-    navigation.exitFullScreen();
+    const openPage = searchParams.get(AccessMode.PAGE);
+    if (currentEntry?.pageId === openPage && currentEntry.state) {
+      window.history.back();
+      return;
+    }
+    navigation.closeResource({
+      accessMode: AccessMode.PAGE,
+      isHistoryBack: true
+    });
   },
   /**
    * Turns full screen off without closing the page. Over a full screen
