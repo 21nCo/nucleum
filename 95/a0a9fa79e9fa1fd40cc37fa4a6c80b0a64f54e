@@ -1,0 +1,31 @@
+services/account/drizzle/datafn/0004_account_file_deletions.sql
+  s_afdb4d60a696b4::t_c4b559b0a4b405 5
+services/account/drizzle/datafn/meta/0004_snapshot.json
+  s_afdb4d60a696b4::t_ad0ff848f7df58 2,6183-6188
+services/account/drizzle/datafn/meta/_journal.json
+  s_afdb4d60a696b4::t_beb96b1c46a980 36
+services/account/src/datafn/file-deletions.schema.ts
+  s_afdb4d60a696b4::t_0345286b360bd4 5-9,15
+services/account/src/datafn/file-deletions.test.ts
+  s_afdb4d60a696b4::t_1212892abb5a47 40-41,65,399-518,527-528,543,566-571,574,576-581,588-589,597-602
+services/account/src/datafn/file-deletions.ts
+  s_afdb4d60a696b4::t_b5124604717480 30-31,38-48,52-53,56-57,59-77,112-115,119-125,131,133-136,139,176,179-180,205-208,216,218,239-250,258,268-288,327,337-338,340-346,348-360,363-367,370,372-373,396-400,402,405-406,408-411,413-414,429,431,441-447,449,459,465-519,521,524,529-534
+services/account/src/datafn/server.ts
+  s_afdb4d60a696b4::t_037ba6d09ad572 25,60-63,136,141-147,192-193,196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "95a0a9fa79e9fa1fd40cc37fa4a6c80b0a64f54e",
+  "prompts": {},
+  "sessions": {
+    "s_afdb4d60a696b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_afdb4d60a696b4",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
