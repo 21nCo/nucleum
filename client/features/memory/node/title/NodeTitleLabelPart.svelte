@@ -30,7 +30,10 @@
     accessPoint?: ResourceAccessPoint;
     onClick?: (() => void) | undefined;
   } = $props();
-  let _label = $state<
+  // Derived, not set from an effect: the effect also read `_label` (in a
+  // debug log), and resolveNodeLabel returns a new object each time, so it
+  // re-ran itself until Svelte aborted and the Library list stopped updating.
+  const _label = $derived<
     | string
     | {
         label: string;
@@ -41,7 +44,7 @@
         text?: string;
       }
     | undefined
-  >(undefined);
+  >(resolveNodeLabel(item as INodeThumb));
   const dynamicLabelNodeTypes = [
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
@@ -74,22 +77,6 @@
       defaultTo: AccessMode.PAGE
     });
   }
-
-  $effect(() => {
-    _label = resolveNodeLabel(item as INodeThumb);
-    if (accessPoint === ResourceAccessPoint.LIBRARY) {
-      console.log(
-        "NodeTitleLabelPart.resolve",
-        JSON.stringify({
-          id: item?.id,
-          contentType: item?.contentType,
-          itemLabel: item?.label,
-          itemText: item?.text,
-          resolvedLabel: _label
-        })
-      );
-    }
-  });
 
   function handleRootClick() {
     onClick?.();
