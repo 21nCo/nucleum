@@ -80,6 +80,10 @@
   import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import { datafnHeavyComputedSignalOptions } from "@nucleum/datafn/signalCache";
+  import {
+    createPagedListStore,
+    PAGED_LIST_PAGE_SIZE
+  } from "@nucleum/datafn/paged-list.store";
 
   let {
     resource,
@@ -105,7 +109,6 @@
   let isArchivedFilterSelected = $state(false);
   let data = $state<any[]>([]);
   let starredData = $state<any[]>([]);
-  let recordLimit = $state(50);
   let searchType = $state<SearchType>(SearchType.FULL_TEXT);
   let selectedSubType = $state<SubType>(
     untrack(() => subType ?? LIBRARY_DEFAULT_SUBTYPE) as SubType
@@ -122,6 +125,8 @@
   let searchRefreshRunId = 0;
   let activeSearchSignature = $state("");
   let resolvedSearchSignature = $state("");
+  let loadMoreMarker = $state<HTMLDivElement | undefined>(undefined);
+  let isLoadMoreVisible = $state(false);
 
   const {
     queryLibraryRecords,
@@ -176,18 +181,77 @@
       subType: resolveSelectedSubType()
     })
   );
+  const listRequest = $derived.by(() => ({
+    select: resolveExpandedSelect(listQuery.resource),
+    filters: listQuery.filters,
+    metadata: resolveQueryMetadata(),
+    sort: [...resolveSort(listQuery.resource), "id"]
+  }));
   const recordStore = $derived.by(() =>
     toSvelteStore(
       datafn.table(listQuery.resource).signal({
-        select: resolveExpandedSelect(listQuery.resource),
-        filters: listQuery.filters,
-        metadata: resolveQueryMetadata(),
-        sort: resolveSort(listQuery.resource),
-        limit: recordLimit
+        ...listRequest,
+        limit: PAGED_LIST_PAGE_SIZE
       }),
       { initialData: [] as any[] }
     )
   );
+  /** Later pages of the current list query; a new query starts a fresh pager. */
+  const recordPager = $derived.by(() => {
+    const table = datafn.table(listQuery.resource);
+    const request = listRequest;
+    return createPagedListStore<any>({
+      fetchPage: async ({ offset, limit }) => {
+        const result = await table.query({
+          ...request,
+          limit,
+          offset
+        } as any);
+        return result.data ?? [];
+      }
+    });
+  });
+  $effect(() => {
+    if (isCustom) return;
+    recordPager.setFirstPage($recordStore.data ?? []);
+  });
+  /**
+   * Loads the next page while the load-more marker is on screen, once the
+   * first page and any page in flight have finished loading and more may
+   * exist. The observer reports only changes, so a page that leaves the
+   * marker on screen would otherwise stall the list. The check runs after
+   * the next layout, so a page that just pushed the marker off screen
+   * doesn't trigger another load before the observer reports it.
+   */
+  $effect(() => {
+    if (
+      !isLoadMoreVisible ||
+      isCustom ||
+      isSearchActive ||
+      $recordStore.loading ||
+      $recordPager.isLoading ||
+      !$recordPager.hasMore ||
+      displayedData.length === 0 ||
+      displayedData.length >= displayedTotalCount
+    ) {
+      return;
+    }
+    const pager = recordPager;
+    const frame = requestAnimationFrame(() => {
+      if (pager === recordPager && isLoadMoreMarkerOnScreen()) {
+        refresh(true);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  });
+
+  /** Whether the load-more marker is within the observer's 100px margin of the viewport. */
+  function isLoadMoreMarkerOnScreen() {
+    const rect = loadMoreMarker?.getBoundingClientRect();
+    return Boolean(
+      rect && rect.top < window.innerHeight + 100 && rect.bottom > -100
+    );
+  }
   const starredStore = $derived.by(() =>
     !canStarLibraryResource(listQuery.resource)
       ? readable({ data: [] as any[] })
@@ -225,7 +289,7 @@
       ? isSearchResultPending
         ? []
         : data
-      : normalizeLibraryRecords($recordStore.data ?? [])
+      : normalizeLibraryRecords($recordPager.items)
   );
   const displayedStarredData = $derived(
     isSearchActive
@@ -421,8 +485,8 @@
   async function refresh(isPagination?: boolean) {
     if (isCustom) return;
     if (!isSearchActive) {
-      if (isPagination) recordLimit += 50;
-      else recordLimit = 50;
+      if (isPagination) recordPager.loadMore();
+      else recordPager.reset();
       return;
     }
 
@@ -777,23 +841,28 @@
             : Size.md}
           isShowLoadingPulseAtTheEnd={displayedData.length <
             displayedTotalCount &&
-            recordLimit < displayedTotalCount &&
+            $recordPager.hasMore &&
             !searchQuery}
           arrangement={resolvedArrangement}
         />
       </div>
       <div
+        bind:this={loadMoreMarker}
         class="flex w-full justify-center text-b2 text-fgs3"
         use:intersection={{
           rootMargin: "100px",
           callback: () => {
+            isLoadMoreVisible = true;
             if (
+              isSearchActive &&
               displayedData.length > 0 &&
-              displayedData.length < displayedTotalCount &&
-              recordLimit < displayedTotalCount
+              displayedData.length < displayedTotalCount
             ) {
               refresh(true);
             }
+          },
+          onLeave: () => {
+            isLoadMoreVisible = false;
           }
         }}
       >
