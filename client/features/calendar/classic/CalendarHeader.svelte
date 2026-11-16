@@ -128,7 +128,11 @@
     {:else if selectedView === TimeScaleUnit.MONTH}
       {currentMonth} {currentYear}
     {:else}
-      <DatePicker bind:date={selectedDate} variant="inline-with-icon" />
+      <DatePicker
+        bind:date={selectedDate}
+        variant="inline-with-icon"
+        onChange={() => onDateChange?.()}
+      />
     {/if}
   </h2>
   <div class="h-full w-10">
