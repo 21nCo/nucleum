@@ -12,7 +12,10 @@ type CalendarEventRange = {
 const defaultCalendarEventDurationMs = 60 * 60 * 1000;
 
 /**
- * Builds a half-open event overlap filter for current and legacy event shapes.
+ * Builds a half-open event overlap filter on the top-level event times.
+ * Legacy events that kept their times in `value` get them lifted to the
+ * top-level fields on import; servers can't filter inside JSON, so a
+ * `value.*` branch here would make the whole query fail in direct mode.
  */
 export function resolveCalendarEventOverlapFilters(range: CalendarEventRange) {
   const openEndedStart = range.start - defaultCalendarEventDurationMs;
@@ -25,14 +28,6 @@ export function resolveCalendarEventOverlapFilters(range: CalendarEventRange) {
       {
         startUnix: { $gt: openEndedStart, $lt: range.end },
         endUnix: { $is_null: true }
-      },
-      {
-        "value.startUnix": { $lt: range.end },
-        "value.endUnix": { $gt: range.start }
-      },
-      {
-        "value.startUnix": { $gt: openEndedStart, $lt: range.end },
-        "value.endUnix": { $is_null: true }
       }
     ]
   };

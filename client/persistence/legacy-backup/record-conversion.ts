@@ -288,6 +288,27 @@ function transformLegacyRecord(
     }
   }
 
+  if (resource === "event") {
+    // Legacy events kept their times inside `value`; queries filter on the
+    // top-level fields (servers can't filter inside JSON).
+    const value =
+      typeof record.value === "object" && record.value !== null
+        ? (record.value as Record<string, unknown>)
+        : undefined;
+    if (
+      typeof result.startUnix !== "number" &&
+      typeof value?.startUnix === "number"
+    ) {
+      result.startUnix = value.startUnix;
+    }
+    if (
+      typeof result.endUnix !== "number" &&
+      typeof value?.endUnix === "number"
+    ) {
+      result.endUnix = value.endUnix;
+    }
+  }
+
   if (resource === "collection" && typeof result.resource === "string") {
     result.resource =
       resolveLegacyResourceName(result.resource) ?? result.resource;
