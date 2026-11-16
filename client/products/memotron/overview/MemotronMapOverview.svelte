@@ -23,7 +23,8 @@
   let isShowHeatmap = $state(false);
   const nodeStore = toSvelteStore<INode[]>(
     datafn.node.signal({
-      select: ["id", "label", "contentType", "metadata", "createdAt", "url"]
+      select: ["id", "label", "contentType", "metadata", "createdAt", "url"],
+      filters: { metadata: { $is_not_empty: true } }
     }),
     { initialData: [] }
   );

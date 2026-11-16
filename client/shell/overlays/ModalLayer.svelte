@@ -27,7 +27,7 @@
   import PageLoadingAnimation from "@21n/ui/elements/feedback/animations/PageLoadingAnimation.svelte";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
-  import { Orientation } from "@21n/ui/elements/direction.enum";
+  import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
   import ColorLayer from "@nucleum/shell/layers/themeLayer/ColorLayer.svelte";
   import { Action } from "@nucleum/client/config/action.enum";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -38,17 +38,36 @@
     isPlayerShownInPage,
     isPortraitMiniPlayerDocked
   } from "@nucleum/shell/overlays/portrait-dock";
+  import {
+    isToastRaisedAboveModal,
+    modalLayerOpenCount,
+    RAISED_TOASTS_ID
+  } from "@nucleum/shell/overlays/raised-toasts";
+  import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
   const ComponentResolver = requireActionRenderer();
   let modals = $state<ModalEvent[]>([]);
   let isShowAppearancePreview = $state(false);
   let isWindowVisible = $state(true);
   let isDialogEnabled = $state(false);
+  const isRightDrawerOpen = $derived(
+    !$view.isConstrainedWidth &&
+      modals.some(
+        (modal) =>
+          modal?.isShow !== false &&
+          modal?.layout?.alignment === Placement.Right
+      )
+  );
+  /** Replaces the open modals and publishes their count in the same step. */
+  function setModals(next: ModalEvent[]) {
+    modals = next;
+    modalLayerOpenCount.set(next.filter((modal) => modal?.path).length);
+  }
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
         isShowAppearancePreview = x.value ?? false;
       } else if (x.event === GlobalEvent.USER_LOGIN) {
-        modals = [];
+        setModals([]);
       }
     });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
@@ -56,6 +75,7 @@
     return () => {
       appEventSub();
       modalEventSub();
+      modalLayerOpenCount.set(0);
     };
 
     /**
@@ -74,7 +94,7 @@
       }
       logger.log({ context: "modal event - ModalLayer", event: x });
       if (!x.isShow) {
-        modals = modals.filter((y) => y.path != x.path);
+        setModals(modals.filter((y) => y.path != x.path));
         postDataToParent(EmbedDataMessage.MODAL, x);
       } else if (
         $context.isEmbed &&
@@ -92,9 +112,9 @@
         if (existingIndex > -1) {
           const nextModals = [...modals];
           nextModals.splice(existingIndex, 1);
-          modals = [...nextModals, x];
+          setModals([...nextModals, x]);
         } else {
-          modals = [...modals, x];
+          setModals([...modals, x]);
         }
         if ($view.isPortrait) toasts.reset();
         postDataToParent(EmbedDataMessage.ENABLE_GESTURE_NAVIGATION, false);
@@ -126,10 +146,11 @@
     class={cn(
       "fixed bottom-0 right-0 mb-6 mr-6 flex flex-col items-end gap-4",
       {
-        "z-[100]": !$fullScreen.path,
-        "z-40": $fullScreen.path
+        "z-[100]": !$fullScreen.path && !isRightDrawerOpen,
+        "z-40": $fullScreen.path || isRightDrawerOpen
       }
     )}
+    inert={isRightDrawerOpen}
   >
     {#if $player.isMiniOn}
       <div class={cn("player", { "opacity-0": $fullScreen.path })}>
@@ -183,7 +204,7 @@
     size={modal.layout?.size ?? Size.md}
     isDynamicSize={modal.layout?.isDynamicSize}
     orientation={modal.layout?.orientation ?? Orientation.Vertical}
-    isOnRight={modal?.isOnRight}
+    title={modal.title}
     alignment={modal.layout?.alignment}
     hasCantileverButtons={modal.layout?.isShowCantileverClose ||
       modal.layout?.isShowBackButton}
@@ -219,6 +240,25 @@
       <ConfirmationNotification />
     </ModalLayout>
   </Modal>
+{/if}
+
+{#if $isToastRaisedAboveModal}
+  <div
+    id={RAISED_TOASTS_ID}
+    class={cn(
+      "fixed top-0 left-0 z-[55] flex justify-center mt-1 px-2 pointer-events-none",
+      isRightDrawerOpen
+        ? "right-[28rem] 2k:right-[32rem] app-framed:right-[calc(28rem+var(--app-shell-gap))] 2k:app-framed:right-[calc(32rem+var(--app-shell-gap))]"
+        : "right-0"
+    )}
+    data-testid="modal-raised-toasts"
+  >
+    <div
+      class="flex items-center h-12 min-w-0 max-w-[32rem] rounded-md bg-bgs2 border border-brs3 shadow-lg pointer-events-auto"
+    >
+      <TopNavToasts isRaised={true} />
+    </div>
+  </div>
 {/if}
 
 <svelte:document onvisibilitychange={visibilityChangeListener} />

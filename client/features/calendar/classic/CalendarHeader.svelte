@@ -40,7 +40,8 @@
   function goToPrevious() {
     if (
       selectedView === TimeScaleUnit.YEAR ||
-      selectedView === TimeScaleUnit.WEEK
+      selectedView === TimeScaleUnit.WEEK ||
+      selectedView === TimeScaleUnit.PART
     ) {
       onGoToPrevious?.();
     } else {
@@ -61,7 +62,8 @@
   function goToNext() {
     if (
       selectedView === TimeScaleUnit.YEAR ||
-      selectedView === TimeScaleUnit.WEEK
+      selectedView === TimeScaleUnit.WEEK ||
+      selectedView === TimeScaleUnit.PART
     ) {
       onGoToNext?.();
     } else {
@@ -126,7 +128,11 @@
     {:else if selectedView === TimeScaleUnit.MONTH}
       {currentMonth} {currentYear}
     {:else}
-      <DatePicker bind:date={selectedDate} variant="inline-with-icon" />
+      <DatePicker
+        bind:date={selectedDate}
+        variant="inline-with-icon"
+        onChange={() => onDateChange?.()}
+      />
     {/if}
   </h2>
   <div class="h-full w-10">

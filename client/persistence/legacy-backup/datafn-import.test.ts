@@ -136,12 +136,15 @@ describe("legacy backup DataFn import", () => {
           parentId: "goal:root",
           parentPath: "goal:root",
           subObjectivesLayout: "TREE",
-          isAncestorInactive: true,
           trashedAt: "2026-01-03T00:00:00.000Z",
           trashedBy: "user:1"
         })
       ])
     );
+    // DataFn derives isAncestorInactive; the legacy isParentInactive is not imported.
+    expect(
+      payload.resources.objective?.find((record) => record.id === "goal:child")
+    ).not.toHaveProperty("isAncestorInactive");
     expect(payload.resources.task).toEqual([
       expect.objectContaining({
         id: "task:1",

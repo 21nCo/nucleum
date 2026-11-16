@@ -1,4 +1,5 @@
 import { Size } from "@21n/ui/elements/size.enum";
+import { Placement } from "@21n/ui/elements/direction.enum";
 import { Action } from "@nucleum/client/config/action.enum";
 import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
@@ -47,7 +48,8 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     modalParams: {
       title: "Appearance Settings",
       layout: {
-        size: Size.lg
+        size: Size.lg,
+        alignment: Placement.Right
       }
     }
   },

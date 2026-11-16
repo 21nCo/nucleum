@@ -155,6 +155,10 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     });
   });
 
+  /**
+   * Selects Appearance in the Settings sidebar, which closes Settings and opens
+   * the Appearance drawer, and waits for its Interface panel. Returns the drawer.
+   */
   async function openInterfaceSettings(page: import("@playwright/test").Page) {
     await openSettings(page);
     await expect(
@@ -166,9 +170,33 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       .getByTestId("settings-sidebar")
       .getByRole("button", { name: /^Appearance$/i })
       .click({ timeout: 5_000 });
-    const panel = page.getByTestId("appearance-interface-settings");
+    const drawer = page.getByTestId("modal-appearance-settings");
+    await expect(drawer).toBeVisible({ timeout: 10_000 });
+    const panel = drawer.getByTestId("appearance-interface-settings");
     await expect(panel).toBeVisible({ timeout: 10_000 });
     await panel.scrollIntoViewIfNeeded();
+    return drawer;
+  }
+
+  /** Closes the Appearance drawer through its close button. */
+  async function closeAppearanceDrawer(
+    drawer: import("@playwright/test").Locator
+  ) {
+    await drawer.getByTestId("modal-close").click({ timeout: 5_000 });
+    await expect(drawer).toBeHidden({ timeout: 5_000 });
+  }
+
+  /** Switches the open Settings modal to Keyboard shortcuts and waits for its panel. */
+  async function showKeyboardShortcutsPanel(
+    page: import("@playwright/test").Page
+  ) {
+    await page
+      .getByTestId("settings-sidebar")
+      .getByRole("button", { name: /^Keyboard shortcuts$/i })
+      .click({ timeout: 5_000 });
+    const panel = page.getByTestId("keyboard-shortcut-settings");
+    await expect(panel).toBeVisible({ timeout: 10_000 });
+    return panel;
   }
 
   async function openShortcutSettings(page: import("@playwright/test").Page) {
@@ -178,12 +206,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     ).toBeVisible({
       timeout: 10_000
     });
-    await page
-      .getByTestId("settings-sidebar")
-      .getByRole("button", { name: /^Keyboard shortcuts$/i })
-      .click({ timeout: 5_000 });
-    const panel = page.getByTestId("keyboard-shortcut-settings");
-    await expect(panel).toBeVisible({ timeout: 10_000 });
+    const panel = await showKeyboardShortcutsPanel(page);
     await panel.scrollIntoViewIfNeeded();
   }
 
@@ -272,25 +295,13 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       timeout: 10_000
     });
 
-    const lightSchemeVisible = await page
-      .getByText("Light color scheme", { exact: true })
-      .first()
-      .isVisible()
-      .catch(() => false);
-
-    if (!lightSchemeVisible) {
-      const syncToggle = page
-        .getByText("Sync theme with system", { exact: true })
-        .first()
-        .locator("xpath=ancestor::*[.//label][1]//label");
-      await syncToggle.click({ timeout: 5_000 });
-    }
-
-    await expect(
-      page.getByText("Light color scheme", { exact: true }).first()
-    ).toBeVisible({
-      timeout: 10_000
-    });
+    const section = page.getByTestId("color-scheme-section");
+    const lightPicker = section.getByTestId("color-scheme-light-picker");
+    await section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]')
+      .setChecked(true, { force: true });
+    await expect(lightPicker).toBeVisible({ timeout: 10_000 });
 
     const lightThemes = [
       { name: "Blue", id: "colorscheme:clean_tidyblue_light" },
@@ -304,29 +315,296 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     ];
 
     for (const theme of lightThemes) {
-      const btn = page
-        .getByRole("button", { name: theme.name, exact: true })
-        .first();
-      await btn.scrollIntoViewIfNeeded();
-      await btn.click({ timeout: 5_000 });
+      await lightPicker.click({ timeout: 5_000 });
+      await page
+        .getByRole("option", { name: theme.name, exact: true })
+        .first()
+        .click({ timeout: 5_000 });
+      await expect(lightPicker).toContainText(theme.name, { timeout: 5_000 });
       await expect(
-        page.getByRole("button", { name: theme.name, exact: true }).first()
-      ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
+        lightPicker.locator(`[data-scheme-swatch="${theme.id}"]`)
+      ).toBeVisible({ timeout: 5_000 });
     }
 
+    await lightPicker.click({ timeout: 5_000 });
     await page
-      .getByRole("button", { name: "Blue", exact: true })
+      .getByRole("option", { name: "Blue", exact: true })
       .first()
       .click({ timeout: 5_000 });
-    await expect(
-      page.getByRole("button", { name: "Blue", exact: true }).first()
-    ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
+    await expect(lightPicker).toContainText("Blue", { timeout: 5_000 });
 
     await closeSettings(page);
     await openAppearance(page);
     await expect(
-      page.getByRole("button", { name: "Blue", exact: true }).first()
-    ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
+      page
+        .getByTestId("color-scheme-section")
+        .locator('[data-scheme-swatch="colorscheme:clean_tidyblue_light"]')
+        .first()
+    ).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("Appearance: applying a profile with a mixed scheme pair shows separate light and dark pickers", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await openAppearance(page);
+
+    const section = page.getByTestId("color-scheme-section");
+    const familyPicker = section.getByTestId("color-scheme-family-picker");
+    const lightPicker = section.getByTestId("color-scheme-light-picker");
+    const darkPicker = section.getByTestId("color-scheme-dark-picker");
+    const mixedSwitch = section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]');
+
+    await mixedSwitch.setChecked(true, { force: true });
+    await lightPicker.click({ timeout: 5_000 });
+    await page
+      .getByRole("option", { name: "Red", exact: true })
+      .first()
+      .click({ timeout: 5_000 });
+    await darkPicker.click({ timeout: 5_000 });
+    await page
+      .getByRole("option", { name: "Blue", exact: true })
+      .first()
+      .click({ timeout: 5_000 });
+    await expect(
+      lightPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyred_light"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(
+      darkPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyblue_dark"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    const profiles = page.getByTestId("appearance-profiles");
+    const name = `E2E mixed schemes ${Date.now()}`;
+    await profiles.getByTestId("appearance-profile-save-new").click();
+    await page.getByTestId("appearance-profile-name").fill(name);
+    await page.getByTestId("appearance-profile-name").press("Enter");
+    const chip = profiles
+      .getByTestId("appearance-profile-option")
+      .filter({ hasText: name });
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+
+    await mixedSwitch.setChecked(false, { force: true });
+    await expect(familyPicker).toContainText("Red", { timeout: 5_000 });
+    await expect(lightPicker).toBeHidden();
+    await expect(
+      profiles.getByTestId("appearance-profile-modified")
+    ).toBeVisible({ timeout: 5_000 });
+
+    await chip.click({ timeout: 5_000 });
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      profiles.getByTestId("appearance-profile-modified")
+    ).toBeHidden({ timeout: 5_000 });
+    await expect(familyPicker).toBeHidden();
+    await expect(mixedSwitch).toBeChecked();
+    await expect(
+      lightPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyred_light"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(
+      darkPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyblue_dark"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    await closeSettings(page);
+    await openAppearance(page);
+    await expect(familyPicker).toBeHidden();
+    await expect(
+      lightPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyred_light"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(
+      darkPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyblue_dark"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    await profiles
+      .locator("[data-profile-id]")
+      .filter({ hasText: name })
+      .locator("..")
+      .getByTestId("appearance-profile-menu")
+      .click();
+    await page.locator('[data-context-menu-item-id="delete"]').click();
+    await expect(chip).toHaveCount(0);
+    await mixedSwitch.setChecked(false, { force: true });
+    await expect(familyPicker).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("Appearance: separate light and dark pickers search by the scheme name they show", async ({
+    page
+  }) => {
+    test.setTimeout(60_000);
+    await ensureInAppOnHome(page);
+    await openAppearance(page);
+
+    const section = page.getByTestId("color-scheme-section");
+    const familyPicker = section.getByTestId("color-scheme-family-picker");
+    const lightPicker = section.getByTestId("color-scheme-light-picker");
+    const darkPicker = section.getByTestId("color-scheme-dark-picker");
+    const mixedSwitch = section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]');
+    const list = page.getByTestId("color-scheme-family-list");
+    const search = list.getByTestId("color-scheme-search");
+    const options = list.getByTestId("color-scheme-family-option");
+
+    await mixedSwitch.setChecked(true, { force: true });
+    await expect(lightPicker).toBeVisible({ timeout: 10_000 });
+
+    await lightPicker.click({ timeout: 5_000 });
+    await search.fill("default");
+    await expect(list).toContainText("No colour schemes found");
+    await search.fill("blue");
+    await expect(options).toHaveCount(1);
+    await expect(options.first()).toHaveText("Blue");
+    await options.first().click({ timeout: 5_000 });
+    await expect(
+      lightPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyblue_light"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    await darkPicker.click({ timeout: 5_000 });
+    await search.fill("oxide");
+    await expect(options).toHaveCount(1);
+    await expect(options.first()).toHaveText("Oxide");
+    await options.first().click({ timeout: 5_000 });
+    await expect(
+      darkPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyoxide_dark"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    await mixedSwitch.setChecked(false, { force: true });
+    await expect(familyPicker).toContainText("Default", { timeout: 5_000 });
+  });
+
+  test("Appearance: Escape and keyboard picks close only the colour scheme list", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await openAppearance(page);
+
+    const drawer = page.getByTestId("modal-appearance-settings");
+    const section = page.getByTestId("color-scheme-section");
+    const mixedSwitch = section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]');
+    const list = page.getByTestId("color-scheme-family-list");
+    const search = list.getByTestId("color-scheme-search");
+    const modes = [
+      { isMixed: false, name: /^Colour scheme / },
+      { isMixed: true, name: /^Light colour scheme / },
+      { isMixed: true, name: /^Dark colour scheme / }
+    ];
+
+    for (const { isMixed, name } of modes) {
+      await mixedSwitch.setChecked(isMixed, { force: true });
+      const picker = section.getByRole("button", { name });
+      await expect(picker).toBeVisible({ timeout: 5_000 });
+      await expect(picker).toHaveAttribute("aria-expanded", "false");
+
+      await picker.focus();
+      await page.keyboard.press("Enter");
+      await expect(list).toBeVisible({ timeout: 5_000 });
+      await expect(picker).toHaveAttribute("aria-expanded", "true");
+      await expect(search).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(list).toBeHidden({ timeout: 5_000 });
+      await expect(drawer).toBeVisible();
+      await expect(picker).toBeFocused();
+
+      await page.keyboard.press("Enter");
+      await expect(list).toBeVisible({ timeout: 5_000 });
+      await list.getByTestId("color-scheme-family-option").first().focus();
+      await page.keyboard.press("Escape");
+      await expect(list).toBeHidden({ timeout: 5_000 });
+      await expect(drawer).toBeVisible();
+      await expect(picker).toBeFocused();
+
+      await page.keyboard.press("Enter");
+      await expect(list).toBeVisible({ timeout: 5_000 });
+      await list.getByRole("option", { name: "Red", exact: true }).focus();
+      await page.keyboard.press("Enter");
+      await expect(list).toBeHidden({ timeout: 5_000 });
+      const pickedName = new RegExp(`${name.source}Red$`);
+      await expect(
+        section.getByRole("button", { name: pickedName })
+      ).toBeFocused();
+      await expect(drawer).toBeVisible();
+    }
+  });
+
+  test("Appearance: arrow keys move through the filtered colour scheme list", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await openAppearance(page);
+
+    const drawer = page.getByTestId("modal-appearance-settings");
+    const section = page.getByTestId("color-scheme-section");
+    const mixedSwitch = section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]');
+    const list = page.getByTestId("color-scheme-family-list");
+    const search = list.getByTestId("color-scheme-search");
+    const options = list.getByRole("option");
+    const modes = [
+      { isMixed: false, name: /^Colour scheme / },
+      { isMixed: true, name: /^Light colour scheme / },
+      { isMixed: true, name: /^Dark colour scheme / }
+    ];
+
+    for (const { isMixed, name } of modes) {
+      await mixedSwitch.setChecked(isMixed, { force: true });
+      const picker = section.getByRole("button", { name });
+      await picker.focus();
+      await page.keyboard.press("Enter");
+      await expect(search).toBeFocused();
+      await page.keyboard.type("o");
+      const count = await options.count();
+      expect(count).toBeGreaterThan(2);
+
+      for (let index = 0; index < count; index++) {
+        await page.keyboard.press("ArrowDown");
+        await expect(options.nth(index)).toBeFocused();
+      }
+      await page.keyboard.press("ArrowDown");
+      await expect(options.nth(count - 1)).toBeFocused();
+      await page.keyboard.press("Home");
+      await expect(options.first()).toBeFocused();
+      await page.keyboard.press("End");
+      await expect(options.nth(count - 1)).toBeFocused();
+      await page.keyboard.press("Home");
+      await page.keyboard.press("ArrowUp");
+      await expect(search).toBeFocused();
+      await expect(list).toBeVisible();
+
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("ArrowDown");
+      const second = (await options.nth(1).innerText()).trim();
+      await page.keyboard.press("Enter");
+      await expect(list).toBeHidden({ timeout: 5_000 });
+      await expect(
+        section.getByRole("button", {
+          name: new RegExp(`${name.source}${second}$`)
+        })
+      ).toBeFocused();
+      await expect(drawer).toBeVisible();
+    }
   });
 
   test("Appearance: switch between light and dark themes and verify theme layer updates", async ({
@@ -336,18 +614,10 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await ensureInAppOnHome(page);
     await openAppearance(page);
 
-    const lightSchemeVisible = await page
-      .getByText("Light color scheme", { exact: true })
+    await page
+      .getByRole("checkbox", { name: "Sync theme with system" })
       .first()
-      .isVisible()
-      .catch(() => false);
-
-    if (lightSchemeVisible) {
-      const syncToggle = page
-        .getByRole("button", { name: "Sync theme with system", exact: true })
-        .first();
-      await syncToggle.click({ timeout: 5_000 });
-    }
+      .setChecked(false, { force: true });
 
     const themeGroup = page.getByText("Theme", { exact: true }).first();
     await expect(themeGroup).toBeVisible({ timeout: 10_000 });
@@ -603,7 +873,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await openInterfaceSettings(page);
+    const appearanceDrawer = await openInterfaceSettings(page);
 
     const menuBarContainer = page.getByTestId("toggle-hide-menu-bar");
     await menuBarContainer.waitFor({ state: "visible", timeout: 5_000 });
@@ -618,13 +888,8 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     }
     await expect(menuBarCheckbox).toBeChecked({ timeout: 5_000 });
 
-    await page
-      .getByTestId("settings-sidebar")
-      .getByRole("button", { name: /^Keyboard shortcuts$/i })
-      .click({ timeout: 5_000 });
-    await expect(page.getByTestId("keyboard-shortcut-settings")).toBeVisible({
-      timeout: 10_000
-    });
+    await closeAppearanceDrawer(appearanceDrawer);
+    await openShortcutSettings(page);
 
     await page
       .getByRole("button", { name: /^See hot keys$/i })
@@ -749,7 +1014,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await page.keyboard.press("Escape");
 
     if (!menuBarWasChecked) {
-      await openInterfaceSettings(page);
+      const restoreDrawer = await openInterfaceSettings(page);
       await page
         .getByTestId("toggle-hide-menu-bar")
         .locator("label:has(input[type='checkbox'])")
@@ -759,10 +1024,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
           .getByTestId("toggle-hide-menu-bar")
           .locator('input[type="checkbox"]')
       ).not.toBeChecked({ timeout: 5_000 });
-      await page
-        .locator("#cp")
-        .getByTestId("modal-close")
-        .click({ timeout: 5_000 });
+      await closeAppearanceDrawer(restoreDrawer);
     }
   });
 

@@ -25,7 +25,13 @@
   import SpaceNavItem from "@nucleum/features/spaces/SpaceNavItem.svelte";
   import SpaceAddPanel from "@nucleum/features/spaces/SpaceAddPanel.svelte";
   import SpaceResourceRenderer from "@nucleum/features/spaces/SpaceResourceRenderer.svelte";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
+  import {
+    readSpaceSelection,
+    rememberSpaceSelection,
+    type SpaceSideNavRole
+  } from "@nucleum/features/spaces/space-selection";
   import {
     collectResourceItems,
     findItem,
@@ -53,7 +59,12 @@
   const items = $derived($store?.items ?? []);
   const isEditMode = $derived(Boolean($store?.isInEditMode));
 
-  let selectedItemId = $state<string | null>(null);
+  const selectionRole: SpaceSideNavRole = isEmbedded ? "embedded" : "page";
+  const remembered = readSpaceSelection(spaceId, selectionRole);
+  let selectedItemId = $state<string | null>(
+    remembered?.selectedItemId ?? null
+  );
+  let isClosedByUser = $state(remembered?.isClosedByUser ?? false);
   let activeHeadingId = $state<string | undefined>(undefined);
   let targetSectionId = $state<string | null>(null);
   let collapsedIds = $state(new Set<string>());
@@ -123,7 +134,15 @@
   });
 
   $effect(() => {
+    rememberSpaceSelection(spaceId, selectionRole, {
+      selectedItemId,
+      isClosedByUser
+    });
+  });
+
+  $effect(() => {
     if (!isTargetsLoaded) return;
+    if (isClosedByUser && !selectedItemId) return;
     const current = selectedItemId
       ? findItem(items, selectedItemId)
       : undefined;
@@ -151,13 +170,53 @@
     return collectResourceItems(list).find(isAutoOpenable);
   }
 
+  /**
+   * Lists the record items whose rows the side nav shows, in tree order: only
+   * a section shows its children, and only while it is not collapsed.
+   */
+  function collectShownResourceItems(
+    list: ISpaceNavItem[]
+  ): ISpaceResourceNavItem[] {
+    return list.flatMap((item) => {
+      if (item.type === SpaceNavItemType.RESOURCE)
+        return [item as ISpaceResourceNavItem];
+      if (item.type === SpaceNavItemType.SECTION && !collapsedIds.has(item.id))
+        return collectShownResourceItems(item.children ?? []);
+      return [];
+    });
+  }
+
   function cancelHeadingScroll() {
     scrollRequest++;
     cancelScroll?.();
     cancelScroll = undefined;
   }
 
+  function closeItem() {
+    isClosedByUser = true;
+    selectedItemId = null;
+    activeHeadingId = undefined;
+    cancelHeadingScroll();
+  }
+
+  const itemListViews = useContextZoneSubViews(
+    () => ({
+      values: collectShownResourceItems(items)
+        .filter(isAutoOpenable)
+        .map((item) => item.id),
+      active: selectedItemId ?? undefined,
+      select: (id) => {
+        const item = findItem(items, id);
+        if (item?.type === SpaceNavItemType.RESOURCE)
+          openItem(item as ISpaceResourceNavItem);
+      }
+    }),
+    { axis: "vertical" }
+  );
+
   function openItem(item: ISpaceResourceNavItem) {
+    itemListViews.touch();
+    isClosedByUser = false;
     selectedItemId = item.id;
     activeHeadingId = undefined;
     cancelHeadingScroll();
@@ -165,6 +224,7 @@
 
   /** Opens a page and scrolls its content to a heading. */
   async function openHeading(item: ISpaceResourceNavItem, headingId: string) {
+    isClosedByUser = false;
     selectedItemId = item.id;
     activeHeadingId = headingId;
     cancelHeadingScroll();
@@ -407,6 +467,7 @@
     <SpaceResourceRenderer
       resourceId={selectedResource?.resourceId}
       resourceType={selectedResource?.resourceType}
+      onClose={closeItem}
     />
   </main>
 </div>
