@@ -56,3 +56,27 @@ describe("first block guard", () => {
     ]);
   });
 });
+
+describe("resolveNoteContentStart", () => {
+  it("creates a starter block only for an empty stored note", async () => {
+    const { resolveNoteContentStart } = await import("./first-block");
+    expect(
+      resolveNoteContentStart({ mdChildOrder: [], hasBlocks: false })
+    ).toEqual({ kind: "create" });
+  });
+
+  it("loads the stored blocks when storage has a block order", async () => {
+    const { resolveNoteContentStart } = await import("./first-block");
+    expect(
+      resolveNoteContentStart({ mdChildOrder: ["node:b"], hasBlocks: true })
+    ).toEqual({ kind: "load", mdChildOrder: ["node:b"] });
+  });
+
+  it("holds when blocks exist without an order or storage couldn't be read", async () => {
+    const { resolveNoteContentStart } = await import("./first-block");
+    expect(
+      resolveNoteContentStart({ mdChildOrder: [], hasBlocks: true })
+    ).toEqual({ kind: "hold" });
+    expect(resolveNoteContentStart(undefined)).toEqual({ kind: "hold" });
+  });
+});

@@ -10,6 +10,7 @@
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import {
     hierarchyFactorLimit,
+    loadNoteBlocks,
     type IActiveNodeStore
   } from "@nucleum/features/memory/node/node.store";
 
@@ -32,8 +33,8 @@
   import { wordCounter } from "@nucleum/features/memory/node/content/word-counter.action";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import {
-    canCreateFirstBlock,
-    readStoredNoteBlocks
+    readStoredNoteBlocks,
+    resolveNoteContentStart
   } from "@nucleum/features/memory/node/content/first-block";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -106,48 +107,57 @@
   let focusEventSub: any;
 
   /**
-   * Whether the stored note has no blocks. The copy on this page can lack
-   * them (narrow select, or a local store still downloading); writing a
-   * starter block then would replace the note's real content.
+   * Reads what storage holds for a note whose page copy has no blocks. The
+   * copy can lack them (narrow select, or a local store still downloading);
+   * writing a starter block then would replace the note's real content.
    */
-  async function isNoteEmptyInStorage(id: IRecordId) {
+  async function readNoteContentStart(id: IRecordId) {
     try {
-      const stored = await readStoredNoteBlocks(id);
-      if (canCreateFirstBlock(stored)) return true;
-      logger.warn({
-        at: "NodeContent.firstBlock.skipped",
-        id,
-        storedBlockCount: stored.mdChildOrder.length,
-        hasBlocks: stored.hasBlocks
-      });
-      return false;
+      const start = resolveNoteContentStart(await readStoredNoteBlocks(id));
+      if (start.kind !== "create") {
+        logger.warn({
+          at: "NodeContent.firstBlock.skipped",
+          id,
+          start: start.kind
+        });
+      }
+      return start;
     } catch (error) {
       logger.error({ at: "NodeContent.firstBlock.read", id, error });
-      return false;
+      return resolveNoteContentStart(undefined);
     }
   }
 
   onMount(async () => {
     if (
       $node.contentType === NodeType.NODULAR_MARKDOWN &&
-      (!Array.isArray($node.mdChildOrder) || $node.mdChildOrder.length < 1) &&
-      (await isNoteEmptyInStorage($node.id))
+      (!Array.isArray($node.mdChildOrder) || $node.mdChildOrder.length < 1)
     ) {
-      const id = generateResourceId(Resource.node);
-      const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
-        body: ""
-      });
-      if (createdBlock?.[0]) {
-        await node.modify(
-          {
-            mdChildOrder: [createdBlock[0].id]
-          },
-          {
-            isPreventBackPropagation: true
-          }
-        );
-        $node.mdChildOrder = [createdBlock[0].id];
-        $node.children = [createdBlock[0]] as unknown as typeof $node.children;
+      const start = await readNoteContentStart($node.id);
+      if (start.kind === "hold") return;
+      if (start.kind === "load") {
+        const children = await loadNoteBlocks(start.mdChildOrder, $node.id);
+        $node.mdChildOrder = start.mdChildOrder;
+        $node.children = children as unknown as typeof $node.children;
+      } else {
+        const id = generateResourceId(Resource.node);
+        const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
+          body: ""
+        });
+        if (createdBlock?.[0]) {
+          await node.modify(
+            {
+              mdChildOrder: [createdBlock[0].id]
+            },
+            {
+              isPreventBackPropagation: true
+            }
+          );
+          $node.mdChildOrder = [createdBlock[0].id];
+          $node.children = [
+            createdBlock[0]
+          ] as unknown as typeof $node.children;
+        }
       }
     }
     isInitialContentReady = true;

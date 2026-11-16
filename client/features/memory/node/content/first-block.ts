@@ -56,3 +56,27 @@ export async function readStoredNoteBlocks(
 export function canCreateFirstBlock(stored: StoredNoteBlocks) {
   return stored.mdChildOrder.length === 0 && !stored.hasBlocks;
 }
+
+/**
+ * How a markdown note whose page copy has no blocks should start: with a
+ * starter block when storage holds none, by loading the stored blocks when
+ * storage has a block order, or held (the editor stays unmounted, since an
+ * empty editor seeds a block of its own) when blocks exist without an order
+ * or storage couldn't be read.
+ */
+export type NoteContentStart =
+  | { kind: "create" }
+  | { kind: "load"; mdChildOrder: IRecordId[] }
+  | { kind: "hold" };
+
+/** Chooses how a note with no blocks on its page should start; see {@link NoteContentStart}. */
+export function resolveNoteContentStart(
+  stored: StoredNoteBlocks | undefined
+): NoteContentStart {
+  if (!stored) return { kind: "hold" };
+  if (canCreateFirstBlock(stored)) return { kind: "create" };
+  if (stored.mdChildOrder.length > 0) {
+    return { kind: "load", mdChildOrder: stored.mdChildOrder };
+  }
+  return { kind: "hold" };
+}
