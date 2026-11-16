@@ -1,0 +1,41 @@
+client/features/collections/Collection.svelte
+  s_f058f999ab46b7::t_164bc97250a496 906-909
+client/features/focus/goals/GoalLeftPanel.svelte
+  s_f058f999ab46b7::t_3005e2b0c967f8 71-73
+client/features/records/identity/ResourceIdentity.svelte
+  s_f058f999ab46b7::t_769977ad1ef75f 104,130
+client/features/spaces/SpaceAddPanel.svelte
+  s_f058f999ab46b7::t_3748fd78b78d08 9-22,60-69,71,73-74,77-80,86,111-131,160-161,163-164,166-169,171-172,174,176-177,182,183-184
+client/features/spaces/SpaceBody.svelte
+  s_f058f999ab46b7::t_af24d8929dae30 65-83,144-145,147-151,163,174,178,180-181,211-228
+client/features/spaces/SpaceNavItem.svelte
+  s_f058f999ab46b7::t_e55ede796533b4 2-4,50,84,87,155,198-199,318-321,323-331,356,416-425,428-433,435-440,442,444-453,455
+client/shell/leftPanel/appMenuSwitcher/AppMenuPinnedSpaces.svelte
+  s_0b0647615a23f7::t_fcfe256427a4ff 165
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte
+  s_f058f999ab46b7::t_16bd5a0f68a2dc 271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8eff9bac4e393d9cb494eae9a0cff43947f3d9a0",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
