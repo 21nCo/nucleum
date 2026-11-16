@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Size } from "@21n/ui/elements/size.enum";
   import { cn } from "@21n/ui/environment/presentation";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
 
   let {
     selectedDate = $bindable(new Date()),
@@ -73,7 +73,9 @@
         startDate.setDate(startDate.getDate() - 7);
         newWeeks.push(getWeekData(new Date(startDate)));
       }
+      const anchor = resolveVisibleWeekAnchor();
       weeks = [...newWeeks.reverse(), ...currentWeeks];
+      void keepVisibleWeekAfterPrepend(anchor);
     } else {
       const lastWeek = currentWeeks[currentWeeks.length - 1];
       const startDate = new Date(lastWeek.startDate);
@@ -83,6 +85,37 @@
       }
       weeks = [...currentWeeks, ...newWeeks];
     }
+  }
+
+  /** The week element on screen and its offset from the scroll position. */
+  function resolveVisibleWeekAnchor() {
+    if (!containerRef?.clientWidth) return undefined;
+    const index = Math.round(
+      containerRef.scrollLeft / containerRef.clientWidth
+    );
+    const element = containerRef.children[index] as HTMLElement | undefined;
+    return element
+      ? { element, offset: element.offsetLeft - containerRef.scrollLeft }
+      : undefined;
+  }
+
+  /**
+   * Keeps the same week on screen after weeks are added before it, so the
+   * viewport, header and reported dates stay on the week the user was
+   * looking at. Measures where that week moved, so it holds whether or not
+   * the browser already adjusted the scroll position itself.
+   */
+  async function keepVisibleWeekAfterPrepend(
+    anchor: ReturnType<typeof resolveVisibleWeekAnchor>
+  ) {
+    await tick();
+    if (!anchor || !containerRef || !headerRef) return;
+    const scrollLeft = anchor.element.offsetLeft - anchor.offset;
+    if (scrollLeft === containerRef.scrollLeft) return;
+    isExplicitNavigation = true;
+    containerRef.scrollLeft = scrollLeft;
+    headerRef.scrollLeft = containerRef.scrollLeft;
+    lastScrollLeft = containerRef.scrollLeft;
   }
 
   function onScroll() {
