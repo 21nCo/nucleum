@@ -1,0 +1,36 @@
+client/datafn/paged-list.store.test.ts
+  s_f058f999ab46b7::t_e0dc41a701e60f 1-284
+client/datafn/paged-list.store.ts
+  s_f058f999ab46b7::t_bb62b37dcd7fbb 158
+  s_0d85e5b70dc887::t_b06d0c07284401 1-157,159-223
+client/datafn/package.json
+  s_f058f999ab46b7::t_7f3c846041d2b3 41
+client/features/focus/tasks/TaskLibrary.svelte
+  s_f058f999ab46b7::t_58c909c21b2abc 70-73,117,121-126,130-131,136-150,153-156,162,164-165,169,171,187-189,339-340
+client/surfaces/library/LibraryRecordsPane.svelte
+  s_f058f999ab46b7::t_6216d08d904e97 83-86,182-187,191-192,197-215,253,449-450,805,818
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f3daef71b4bfb81e2a7322a46768b821edf83527",
+  "prompts": {},
+  "sessions": {
+    "s_0d85e5b70dc887": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "37e3656b-fb3d-4769-b9a9-5d99c965fb6b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
