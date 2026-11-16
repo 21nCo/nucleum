@@ -69,6 +69,47 @@ const renamedEnumContracts = new Map([
 /** Runtime enums whose members were intentionally changed after the baseline, keyed by baseline path and pinned to their audited members. */
 const changedEnumContracts = new Map([
   [
+    "client/persistence/persistence.type.ts",
+    [
+      {
+        name: "ClientStorageKey",
+        members: {
+          ENV: "env",
+          PRODUCT: "product",
+          IS_EXTENSION_LOGIN: "isExtensionLogin",
+          EMBED_OAUTH: "embedOAuth",
+          APP_DATA: "appData",
+          STOKEN: "stoken",
+          USER: "user",
+          AUTHFN_TOKEN: "authfnToken",
+          AUTHFN_WIDGET_TOKEN: "authfnWidgetToken",
+          REGION: "region",
+          USER_REGION_MAP: "userRegionMap",
+          USER_INFO: "userInfo",
+          USER_PLAN: "userPlan",
+          GUEST: "guest",
+          SPACE_IN_CONTEXT: "spaceInContext",
+          OFFLINE_SESSION_ID: "offlineSessionId",
+          DAP_ID: "dapId",
+          INTERCOM_ID: "intercomId",
+          OFFLINE_MODE: "offlineMode",
+          DATAFN_OFFLINABILITY: "datafnOfflinability",
+          MARKDOWN_PARENT_REPAIR_AT: "markdownParentRepairAt",
+          DATAFN_E2EE_SETTINGS: "datafnE2eeSettings",
+          DATAFN_E2EE_LOCAL_KEYS: "datafnE2eeLocalKeys",
+          LEGACY_LOCAL_DATA_RECOVERY: "legacyLocalDataRecovery",
+          LOW_DATA_MODE: "lowDataMode",
+          GUEST_TOOLBAR_STATE: "guestToolbarState",
+          FALLBACKS_RUN_STATUS: "fallbacksRunStatus",
+          RECENTS: "recents",
+          EXTENSION_BOOTUP: "extensionBootup",
+          LAST_INDEXED_AT: "lastIndexedAt",
+          TABLES: "tables"
+        }
+      }
+    ]
+  ],
+  [
     "client/datafn/resource.type.ts",
     [
       {
