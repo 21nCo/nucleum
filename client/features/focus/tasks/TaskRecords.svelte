@@ -25,6 +25,7 @@
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { Action } from "@nucleum/client/config/action.enum";
   import TasksGroupedByObjective from "./TasksGroupedByGoal.svelte";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     data,
     arrangement = Arrangement.LIST,
@@ -36,7 +37,8 @@
     searchQuery = "",
     isPreventAddNew = false,
     date = undefined,
-    onCreate = undefined
+    onCreate = undefined,
+    isGrowWithRows = false
   }: {
     data: ITaskThumb[];
     arrangement?: Arrangement;
@@ -49,6 +51,13 @@
     isPreventAddNew?: boolean;
     date?: Date | undefined;
     onCreate?: ((event: CustomEvent<void>) => void) | undefined;
+    /**
+     * Inside a flex column scroll container: fills the container like
+     * `h-full` while empty, so the empty state still fills and centres, but
+     * grows with its rows, so whatever follows the records sits after the
+     * last row.
+     */
+    isGrowWithRows?: boolean;
   } = $props();
 
   let isShowCreateTaskWizard = $state(false);
@@ -175,7 +184,12 @@
   }
 </script>
 
-<div class="flex flex-col gap-2 w-full h-full">
+<div
+  class={cn(
+    "flex flex-col gap-2 w-full",
+    isGrowWithRows ? "basis-full" : "h-full"
+  )}
+>
   {#if isShowCreateTaskWizard}
     <div class="flex w-full mb-2">
       <CreateTaskInlineWizard
