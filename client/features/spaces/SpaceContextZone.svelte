@@ -1,6 +1,7 @@
 <script lang="ts">
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import { SpaceView } from "@nucleum/features/spaces/space.type";
   import type { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
 
@@ -32,7 +33,7 @@
           label: "View",
           options: views,
           value: view,
-          onChange: (value) => onViewChange(value as SpaceView)
+          onChange: (value: ISelectValue) => onViewChange(value as SpaceView)
         }
       },
       {
