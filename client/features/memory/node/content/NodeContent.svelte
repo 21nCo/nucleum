@@ -140,7 +140,8 @@
    * downloading): an editor mounted with missing blocks would save a shorter
    * order, or seed a block of its own, over the stored one. In direct mode
    * the server is the only store, so a block it doesn't return no longer
-   * exists, and the note opens with the blocks that do.
+   * exists, and the note opens with the blocks that do (or, when none
+   * remain, as an empty note with a starter block).
    */
   async function loadStoredNoteBlocks(
     id: IRecordId,
@@ -151,7 +152,7 @@
       if (hasEveryStoredBlock(mdChildOrder, children)) {
         return { mdChildOrder, children };
       }
-      if (get(datafnRuntime)?.mode === "sync-direct" && children.length > 0) {
+      if (get(datafnRuntime)?.mode === "sync-direct") {
         return {
           mdChildOrder: children.map((child) => child.id),
           children
@@ -187,9 +188,11 @@
     if (start.kind === "load") {
       const loaded = await loadStoredNoteBlocks($node.id, start.mdChildOrder);
       if (!loaded) return false;
-      $node.mdChildOrder = loaded.mdChildOrder;
-      $node.children = loaded.children as unknown as typeof $node.children;
-      return true;
+      if (loaded.children.length > 0) {
+        $node.mdChildOrder = loaded.mdChildOrder;
+        $node.children = loaded.children as unknown as typeof $node.children;
+        return true;
+      }
     }
     const id = generateResourceId(Resource.node);
     const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
