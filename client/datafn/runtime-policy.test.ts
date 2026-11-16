@@ -25,12 +25,23 @@ describe("resolveDatafnOfflinabilityPreference", () => {
   beforeEach(() => stored.clear());
   afterEach(() => vi.unstubAllGlobals());
 
-  it("starts a new device in direct mode and saves that choice", async () => {
+  it("starts a new device in direct mode without saving that default", async () => {
     stubDatabases(async () => [{ name: "other-db" }]);
     await expect(
       resolveDatafnOfflinabilityPreference({ storageDbName: dbName })
     ).resolves.toBe(false);
-    expect(stored.get(ClientStorageKey.DATAFN_OFFLINABILITY)).toBe("false");
+    expect(stored.has(ClientStorageKey.DATAFN_OFFLINABILITY)).toBe(false);
+  });
+
+  it("keeps offline storage for a later namespace that has a local copy", async () => {
+    stubDatabases(async () => [{ name: dbName }]);
+    await expect(
+      resolveDatafnOfflinabilityPreference({ storageDbName: "guest-db" })
+    ).resolves.toBe(false);
+    await expect(
+      resolveDatafnOfflinabilityPreference({ storageDbName: dbName })
+    ).resolves.toBe(true);
+    expect(stored.get(ClientStorageKey.DATAFN_OFFLINABILITY)).toBe("true");
   });
 
   it("keeps offline storage when the local copy already exists", async () => {

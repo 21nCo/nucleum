@@ -56,8 +56,11 @@ export function resolveDatafnMode(input: InitializeNucleumDatafnInput) {
  *
  * When none is saved yet and `storageDbName` is given, a device that already
  * holds that local copy keeps offline storage (its data may include changes
- * not yet synced); otherwise the default applies. That first decision is
- * saved so every later reader sees the same value.
+ * not yet synced), and that decision is saved. Otherwise the default applies
+ * without being saved: the saved preference covers the whole device, and a
+ * default chosen for one namespace with no local copy must not later put
+ * another namespace that has one (a guest before sign-in, another account)
+ * in direct mode, where its unsynced changes would stay hidden.
  */
 export async function resolveDatafnOfflinabilityPreference(input?: {
   storageDbName?: string | null;
@@ -68,14 +71,11 @@ export async function resolveDatafnOfflinabilityPreference(input?: {
   const value = await clientStorage.get(ClientStorageKey.DATAFN_OFFLINABILITY);
   if (value !== null) return value !== "false";
   if (!input?.storageDbName) return datafnOfflinabilityDefault;
-  const isEnabled =
-    (await hasIndexedDbDatabase(input.storageDbName)) ||
-    datafnOfflinabilityDefault;
-  await clientStorage.set(
-    ClientStorageKey.DATAFN_OFFLINABILITY,
-    isEnabled.toString()
-  );
-  return isEnabled;
+  if (!(await hasIndexedDbDatabase(input.storageDbName))) {
+    return datafnOfflinabilityDefault;
+  }
+  await clientStorage.set(ClientStorageKey.DATAFN_OFFLINABILITY, "true");
+  return true;
 }
 
 /**
