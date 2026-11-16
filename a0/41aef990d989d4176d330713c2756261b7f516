@@ -1,0 +1,53 @@
+client/composition/package.json
+  s_f058f999ab46b7::t_2058d875bd8884 11
+client/datafn/package.json
+  s_f058f999ab46b7::t_783d348396dd60 8
+client/extensions/package.json
+  s_f058f999ab46b7::t_d095ace7eb89d5 10
+client/features/package.json
+  s_f058f999ab46b7::t_04da6759b4aa27 159
+client/package.json
+  s_f058f999ab46b7::t_b29bde92b7844f 14
+client/persistence/package.json
+  s_f058f999ab46b7::t_64f0fe9a43e046 10
+client/products/package.json
+  s_f058f999ab46b7::t_07418880ad12ba 7
+client/shared-state/package.json
+  s_f058f999ab46b7::t_d8a539a6e80296 20
+client/shell/package.json
+  s_f058f999ab46b7::t_c11cc1a934dffa 11
+client/surfaces/package.json
+  s_f058f999ab46b7::t_6907a6ffd9e6c1 12
+package-lock.json
+  s_c09b1b45b7c1ed::t_c0d08e368fb363 2895,2942,2972,2987,3011,3065,3081,3104,3124,3153,5164-5173,5175-5177,5180,5186-5188,5195-5197,5209-5217,5261,33747,33766-33768
+package.json
+  s_f058f999ab46b7::t_b80ee33167160e 110,113-115
+schema/package.json
+  s_f058f999ab46b7::t_fd5c31204abc5c 7
+services/account/package.json
+  s_f058f999ab46b7::t_3a87f488d944bd 64-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a041aef990d989d4176d330713c2756261b7f516",
+  "prompts": {},
+  "sessions": {
+    "s_c09b1b45b7c1ed": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f437b444-75ac-4f8b-8c35-0aeb974f4352",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
