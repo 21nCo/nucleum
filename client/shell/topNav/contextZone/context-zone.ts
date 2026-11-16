@@ -65,12 +65,22 @@ const entries = writable<ContextZoneEntry[]>([]);
 const viewSources = writable<
   { key: number; pane: ContextZonePane; source: { views?: ContextZoneViews } }[]
 >([]);
+const subViewSources = writable<ContextZoneSubViewSource[]>([]);
 const panes = writable<{ key: number; pane: ContextZonePane }[]>([]);
 const activePaneId = writable<string | undefined>(undefined);
 const visibleLayers = writable<ReadonlySet<number> | undefined>(undefined);
 const hostCount = writable(0);
 const entryWidth = writable<number | undefined>(undefined);
 let nextKey = 0;
+let lastSubViewUse = 0;
+
+function markSubViewsUsed(key: number) {
+  lastSubViewUse += 1;
+  const usedAt = lastSubViewUse;
+  subViewSources.update((list) =>
+    list.map((item) => (item.key === key ? { ...item, usedAt } : item))
+  );
+}
 
 /**
  * Picks the entry shown in the context zone: the newest entry of the pane the
@@ -202,6 +212,53 @@ export function resolveContextZoneViews(
   return newest?.source.views ?? entry?.fallbackViews;
 }
 
+/** One in-page sub switcher registered for keyboard stepping. */
+export type ContextZoneSubViewSource = {
+  key: number;
+  pane: ContextZonePane;
+  source: { views?: ContextZoneViews };
+  usedAt: number;
+};
+
+/** Handle returned when a page registers an in-page sub switcher. */
+export type ContextZoneSubViewRegistration = {
+  /** Marks the switcher as the one the keyboard steps next. */
+  touch: () => void;
+  /** Removes the switcher. */
+  release: () => void;
+};
+
+/**
+ * Picks the in-page sub switcher the keyboard steps: among the switchers of
+ * the shown pane that have views, the one used most recently (picked by the
+ * keyboard or by the user in the switcher), otherwise the newest registered.
+ * Switchers on layers outside `visible`, such as a page under a full-screen
+ * overlay, never count, also when no pane is shown.
+ */
+export function resolveContextZoneSubViewSource(
+  sources: ContextZoneSubViewSource[],
+  pane: ContextZonePane | undefined,
+  visible?: ReadonlySet<number>
+): ContextZoneSubViewSource | undefined {
+  const candidates = sources.filter(
+    (item) =>
+      item.source.views &&
+      (!visible || visible.has(item.pane.layer)) &&
+      (!pane || item.pane.id === pane.id)
+  );
+  if (candidates.length === 0) return undefined;
+  return candidates
+    .slice(1)
+    .reduce(
+      (latest, item) =>
+        item.usedAt > latest.usedAt ||
+        (item.usedAt === latest.usedAt && item.key > latest.key)
+          ? item
+          : latest,
+      candidates[0]
+    );
+}
+
 /** Mounted panes on visible layers, one per pane id, in mount order. */
 export function resolveVisiblePanes(
   mounted: { key: number; pane: ContextZonePane }[],
@@ -292,6 +349,52 @@ export const contextZone = {
     viewSources.update((list) => [...list, { key, pane, source }]);
     return () =>
       viewSources.update((list) => list.filter((x) => x.key !== key));
+  },
+  /**
+   * Registers an in-page sub switcher, such as the bird view mode or the
+   * calendar scale, that Option+Shift+Arrow steps through. Call `touch` when
+   * the user picks a view in it, so the keyboard follows that switcher.
+   */
+  registerSubViews(
+    pane: ContextZonePane,
+    source: { views?: ContextZoneViews }
+  ): ContextZoneSubViewRegistration {
+    const key = ++nextKey;
+    subViewSources.update((list) => [
+      ...list,
+      { key, pane, source, usedAt: 0 }
+    ]);
+    return {
+      touch: () => markSubViewsUsed(key),
+      release: () =>
+        subViewSources.update((list) => list.filter((x) => x.key !== key))
+    };
+  },
+  /** Sub switcher views the keyboard steps in the pane the zone describes. */
+  resolveSubViews() {
+    return resolveContextZoneSubViewSource(
+      get(subViewSources),
+      get(contextZone.pane),
+      get(visibleLayers)
+    )?.source.views;
+  },
+  /**
+   * Moves the in-page sub switcher `delta` views along, wrapping at both
+   * ends; returns whether a view was selected.
+   */
+  stepSub(delta: number) {
+    const source = resolveContextZoneSubViewSource(
+      get(subViewSources),
+      get(contextZone.pane),
+      get(visibleLayers)
+    );
+    const views = source?.source.views;
+    if (!source || !views) return false;
+    const next = stepCycleValue(views.values, views.active, delta);
+    if (next === undefined || next === views.active) return false;
+    markSubViewsUsed(source.key);
+    views.select(next);
+    return true;
   },
   /** Records a mounted pane; returns its release function. */
   registerPane(pane: ContextZonePane) {
