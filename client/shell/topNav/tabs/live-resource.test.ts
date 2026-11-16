@@ -19,7 +19,13 @@ vi.mock("@datafn/svelte", () => ({
   toSvelteStore: () => signal
 }));
 vi.mock("@nucleum/datafn/resource-query.utils", () => ({
-  normalizeResourceRecord: (_resource: string, record: object) => record
+  normalizeResourceRecord: (
+    resource: string,
+    record: { label?: string; event?: string }
+  ) =>
+    resource === "event"
+      ? { ...record, label: record.label ?? record.event }
+      : record
 }));
 vi.mock("@nucleum/shared-state/commands/command-host", () => ({
   requireCommandHost: () => ({
@@ -119,6 +125,35 @@ describe("liveResource", () => {
     unsubscribe();
     expect(value.isResolved).toBe(true);
     expect(value.resource).toBeUndefined();
+  });
+
+  it("clears a record that a later settled result no longer holds", async () => {
+    signal.set({ data: [{ id: "node:a", label: "Alpha" }] });
+    const store = liveResource("node:a");
+    const unsubscribe = store.subscribe(() => {});
+    await Promise.resolve();
+    signalValue = [];
+    signal.set({ data: [], loading: true });
+    expect(get(store).resource?.label).toBe("Alpha");
+    signal.set({ data: [], loading: false, error: new Error("offline") });
+    expect(get(store).resource?.label).toBe("Alpha");
+    signal.set({ data: [], loading: false });
+    const value = get(store);
+    unsubscribe();
+    expect(value.isResolved).toBe(true);
+    expect(value.resource).toBeUndefined();
+  });
+
+  it("derives a legacy event's label from each new record", async () => {
+    signal.set({ data: [{ id: "event:a", event: "Old" }] });
+    const store = liveResource("event:a");
+    const unsubscribe = store.subscribe(() => {});
+    await Promise.resolve();
+    expect(get(store).resource?.label).toBe("Old");
+    signal.set({ data: [{ id: "event:a", event: "New" }] });
+    const value = get(store);
+    unsubscribe();
+    expect(value.resource?.label).toBe("New");
   });
 
   it("ignores values that arrive after unsubscribing", () => {
