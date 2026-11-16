@@ -36,7 +36,11 @@ export function hasAriaModalOnFront() {
   ).some(isShown);
 }
 
-function isShown(element: HTMLElement) {
+/**
+ * Whether an element is shown: not hidden, inert, `visibility: hidden` or
+ * inside an ancestor with `display: none`.
+ */
+export function isShown(element: HTMLElement) {
   if (element.closest("[hidden], [inert]")) return false;
   if (getComputedStyle(element).visibility === "hidden") return false;
   for (

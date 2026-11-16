@@ -100,9 +100,27 @@ describe("ShortcutRunner list item keys", () => {
 
     expect(mocks.stepSub).toHaveBeenCalledWith(1, {
       axis: "vertical",
-      isModalOpen: true
+      isModalOpen: true,
+      isOnFront: expect.any(Function)
     });
     expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("keeps the browser default when another modal is stacked over the list's modal", () => {
+    document.body.innerHTML =
+      '<div data-blank-modal="0"><ul id="list"></ul></div><div data-blank-modal="1"></div>';
+    const list = document.getElementById("list")!;
+    // Like the context zone: the modal list counts only when it is in front.
+    mocks.stepSub.mockImplementation(
+      (_delta: number, query?: unknown) =>
+        !!(query as { isOnFront?: (element: Element) => boolean })?.isOnFront?.(
+          list
+        )
+    );
+    const event = press(document.body, "ArrowDown", listKey);
+
+    expect(mocks.stepSub).toHaveBeenCalledTimes(1);
+    expect(event.defaultPrevented).toBe(false);
   });
 
   it("does not step the page's list while a dialog is open", () => {

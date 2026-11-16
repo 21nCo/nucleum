@@ -53,6 +53,32 @@ describe("resolveContextZoneSubViewSource by axis and modal", () => {
     ).toBe(1);
   });
 
+  it("uses a modal switcher only when the query finds its element in front", () => {
+    const front = document.createElement("div");
+    const behind = document.createElement("div");
+    const sources = [
+      source(1, { axis: "vertical", isInModal: true, element: () => behind }),
+      source(2, { axis: "vertical", isInModal: true }),
+      source(3, { axis: "vertical", isInModal: true, element: () => front })
+    ];
+    const query = {
+      axis: "vertical",
+      isModalOpen: true,
+      isOnFront: (element: Element) => element === front
+    } as const;
+    expect(
+      resolveContextZoneSubViewSource(sources, undefined, undefined, query)?.key
+    ).toBe(3);
+    expect(
+      resolveContextZoneSubViewSource(
+        sources.slice(0, 2),
+        undefined,
+        undefined,
+        query
+      )
+    ).toBeUndefined();
+  });
+
   it("ignores modal switchers when no modal is in front", () => {
     expect(
       resolveContextZoneSubViewSource(

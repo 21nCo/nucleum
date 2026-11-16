@@ -125,6 +125,9 @@
     return !!requireCommandHost().resolveAction(item)?.component;
   }
 
+  /** The settings list, so the keyboard knows which modal holds it. */
+  let listElement: HTMLElement | undefined = $state();
+
   const settingListViews = useContextZoneSubViews(
     () => ({
       values: (config ?? [])
@@ -133,7 +136,7 @@
       active: selected || undefined,
       select: selectSetting
     }),
-    { axis: "vertical", isInModal: isModal }
+    { axis: "vertical", isInModal: isModal, element: () => listElement }
   );
   async function runAction(slug: string) {
     if (!slug) {
@@ -172,7 +175,10 @@
         />
       </BackButton>
     </div>
-    <div class="flex flex-col overflow-auto gap-8 w-full">
+    <div
+      class="flex flex-col overflow-auto gap-8 w-full"
+      bind:this={listElement}
+    >
       <ProfileCpSection
         context="modal"
         parentBackgroundIndex={2}

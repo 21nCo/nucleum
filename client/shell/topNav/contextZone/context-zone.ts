@@ -224,6 +224,11 @@ export type ContextZoneSubViewOptions = {
   axis?: ContextZoneSwitcherAxis;
   /** The switcher is inside a modal, so it steps only while a modal is in front. */
   isInModal?: boolean;
+  /**
+   * An element of the switcher, so the keyboard can tell whether the layer
+   * that holds it is in front (see `ContextZoneSubViewQuery.isOnFront`).
+   */
+  element?: () => Element | null | undefined;
 };
 
 /** One in-page sub switcher registered for keyboard stepping. */
@@ -239,6 +244,12 @@ export type ContextZoneSubViewQuery = {
   axis?: ContextZoneSwitcherAxis;
   /** A modal is in front, so only switchers inside a modal count. */
   isModalOpen?: boolean;
+  /**
+   * While a modal is in front, a switcher inside a modal counts only when it
+   * has an element this accepts, such as one inside the front modal with no
+   * other layer over it.
+   */
+  isOnFront?: (element: Element) => boolean;
 };
 
 /** Handle returned when a page registers an in-page sub switcher. */
@@ -256,7 +267,8 @@ export type ContextZoneSubViewRegistration = {
  * Switchers on layers outside `visible`, such as a page under a full-screen
  * overlay, never count, also when no pane is shown. Only switchers on the
  * query's axis (horizontal by default) count; while a modal is in front only
- * switchers inside a modal count, otherwise only switchers outside one.
+ * switchers inside a modal count (and only those the query's `isOnFront`
+ * accepts, when it has one), otherwise only switchers outside one.
  */
 export function resolveContextZoneSubViewSource(
   sources: ContextZoneSubViewSource[],
@@ -268,7 +280,12 @@ export function resolveContextZoneSubViewSource(
   const candidates = sources.filter((item) => {
     if (!item.source.views || (item.axis ?? "horizontal") !== axis)
       return false;
-    if (query.isModalOpen) return !!item.isInModal;
+    if (query.isModalOpen) {
+      if (!item.isInModal) return false;
+      if (!query.isOnFront) return true;
+      const element = item.element?.();
+      return !!element && query.isOnFront(element);
+    }
     return (
       !item.isInModal &&
       (!visible || visible.has(item.pane.layer)) &&
