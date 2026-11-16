@@ -11,7 +11,10 @@ vi.mock("@nucleum/datafn/datafn.store", () => ({
   datafn: { event: { query, mutate } },
   datafnRuntime: writable({ namespace: "ns" })
 }));
-vi.mock("@nucleum/datafn/maintenance-schedule", () => ({
+vi.mock("@nucleum/datafn/maintenance-schedule", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@nucleum/datafn/maintenance-schedule")
+  >()),
   isMaintenanceDue: async () => true,
   recordMaintenanceRun
 }));

@@ -1,6 +1,7 @@
 import { get } from "svelte/store";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import {
+  assertMaintenanceWritesSucceeded,
   isMaintenanceDue,
   recordMaintenanceRun
 } from "@nucleum/datafn/maintenance-schedule";
@@ -47,15 +48,6 @@ export function resolveLiftedEventTimes(
   return Object.keys(lifted).length > 0 ? lifted : undefined;
 }
 
-/** Whether a DataFn mutation result reports a rejected write. */
-function isFailedMutation(result: unknown) {
-  return (
-    typeof result === "object" &&
-    result !== null &&
-    (result as { ok?: unknown }).ok === false
-  );
-}
-
 /**
  * Lifts the times of events whose `field` is empty, one page at a time in
  * id order, until the last page. Repaired events leave the filter, so each
@@ -92,11 +84,10 @@ async function liftEventTimesWhereEmpty(
         : [];
     });
     if (writes.length > 0) {
-      const outcome = await datafn.event.mutate(writes as any);
-      const outcomes = Array.isArray(outcome) ? outcome : [outcome];
-      if (outcomes.some(isFailedMutation)) {
-        throw new Error("Some legacy event times could not be saved");
-      }
+      assertMaintenanceWritesSucceeded(
+        await datafn.event.mutate(writes as any),
+        "repairLegacyEventTimes"
+      );
       repaired += writes.length;
     }
     unrepairable += records.length - writes.length;

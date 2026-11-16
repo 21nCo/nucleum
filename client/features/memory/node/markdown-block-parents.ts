@@ -1,6 +1,7 @@
 import { get } from "svelte/store";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import {
+  assertMaintenanceWritesSucceeded,
   isMaintenanceDue,
   recordMaintenanceRun
 } from "@nucleum/datafn/maintenance-schedule";
@@ -212,7 +213,7 @@ async function runMarkdownBlockParentRepair(): Promise<number> {
     return [{ id: record.id, mdParent }];
   });
   for (let index = 0; index < blocks.length; index += repairBatchSize) {
-    await datafn.node.mutate(
+    const outcome = await datafn.node.mutate(
       blocks.slice(index, index + repairBatchSize).map((block) => ({
         operation: "merge",
         id: block.id,
@@ -225,6 +226,7 @@ async function runMarkdownBlockParentRepair(): Promise<number> {
         system: true
       }))
     );
+    assertMaintenanceWritesSucceeded(outcome, "repairMarkdownBlockParents");
   }
   if (blocks.length > 0) {
     logger.info({

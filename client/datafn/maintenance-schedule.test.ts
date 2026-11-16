@@ -12,8 +12,11 @@ vi.mock("@nucleum/persistence/client-storage", () => ({
   }
 }));
 
-const { isMaintenanceDue, recordMaintenanceRun } =
-  await import("./maintenance-schedule");
+const {
+  assertMaintenanceWritesSucceeded,
+  isMaintenanceDue,
+  recordMaintenanceRun
+} = await import("./maintenance-schedule");
 
 const key = ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT;
 const day = 24 * 60 * 60 * 1000;
@@ -51,5 +54,20 @@ describe("maintenance schedule", () => {
     expect(
       await isMaintenanceDue({ key, namespace: "a", intervalMs: day, now: 1 })
     ).toBe(true);
+  });
+
+  it("fails a run when any write in an outcome was rejected", () => {
+    expect(() =>
+      assertMaintenanceWritesSucceeded([{ ok: true }, { ok: false }], "task")
+    ).toThrow("task: a write was rejected");
+    expect(() =>
+      assertMaintenanceWritesSucceeded({ ok: false }, "task")
+    ).toThrow();
+    expect(() =>
+      assertMaintenanceWritesSucceeded([{ ok: true }], "task")
+    ).not.toThrow();
+    expect(() =>
+      assertMaintenanceWritesSucceeded(undefined, "task")
+    ).not.toThrow();
   });
 });

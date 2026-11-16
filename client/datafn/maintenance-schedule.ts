@@ -44,3 +44,22 @@ export async function recordMaintenanceRun(params: {
     .set(params.key, JSON.stringify(lastRuns))
     .catch(() => undefined);
 }
+
+/**
+ * Throws when a DataFn mutation outcome (a result or a list of results)
+ * reports a rejected write. Writes can be rejected without throwing; a
+ * maintenance run must fail then, so it is not recorded and runs again.
+ */
+export function assertMaintenanceWritesSucceeded(
+  outcome: unknown,
+  task: string
+) {
+  const outcomes = Array.isArray(outcome) ? outcome : [outcome];
+  const isRejected = outcomes.some(
+    (result) =>
+      typeof result === "object" &&
+      result !== null &&
+      (result as { ok?: unknown }).ok === false
+  );
+  if (isRejected) throw new Error(`${task}: a write was rejected`);
+}
