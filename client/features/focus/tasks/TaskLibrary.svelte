@@ -67,6 +67,10 @@
   import { time } from "@datafn/client";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
+  import {
+    createPagedListStore,
+    PAGED_LIST_PAGE_SIZE
+  } from "@nucleum/datafn/paged-list.store";
 
   let {
     objectiveId = undefined,
@@ -88,7 +92,6 @@
 
   const instance = generateMiniRandomId();
   let tasks = $state<ITaskThumb[]>([]);
-  let taskLimit = $state(50);
   let isLoadMoreVisible = $state(false);
   let loadMoreMarker = $state<HTMLDivElement | undefined>(undefined);
   let searchQuery = $state("");
@@ -111,43 +114,61 @@
   let bulkEditChangeUnsub = $state<(() => void) | undefined>(undefined);
   const isSearchActive = $derived(Boolean(searchQuery.trim()));
   const signalQuery = $derived.by(() => resolveSignalQuery());
-  const signalLimit = $derived(
+  const isPaged = $derived(
     selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH &&
       selectedSubType !== TaskSubTypeForSwitcher.BY_DATE
-      ? taskLimit
-      : undefined
   );
+  const taskQuery = $derived.by(() => ({
+    select: ["*", "objective.*"],
+    filters: signalQuery.filters,
+    metadata: resolveQueryMetadata(),
+    ...(signalQuery.temporal ? { temporal: signalQuery.temporal } : {})
+  }));
   const taskStore = $derived.by(() =>
     toSvelteStore(
       datafn.task.signal({
-        select: ["*", "objective.*"],
-        filters: signalQuery.filters,
-        metadata: resolveQueryMetadata(),
-        ...(signalQuery.temporal ? { temporal: signalQuery.temporal } : {}),
-        limit: signalLimit
+        ...taskQuery,
+        limit: isPaged ? PAGED_LIST_PAGE_SIZE : undefined
       }),
       { initialData: [] as ITaskThumb[] }
     )
   );
+  /** Later pages of the current query; a new query starts a fresh pager. */
+  const taskPager = $derived.by(() => {
+    const query = taskQuery;
+    return createPagedListStore<ITaskThumb>({
+      fetchPage: async ({ offset, limit }) => {
+        const result = await datafn.task.query({ ...query, limit, offset });
+        return (result.data ?? []) as ITaskThumb[];
+      }
+    });
+  });
+  $effect(() => {
+    if (!isPaged) return;
+    const records = ($taskStore.data ?? []) as ITaskThumb[];
+    taskPager.setFirstPage(records);
+  });
   /**
    * Loads the next page while the load-more marker is on screen, once the
-   * current page has finished loading and came back full. The check runs
-   * after the next layout, so a page that just pushed the marker off screen
-   * doesn't trigger another load before the observer reports it.
+   * first page and any page in flight have finished loading and more may
+   * exist. The check runs after the next layout, so a page that just pushed
+   * the marker off screen doesn't trigger another load before the observer
+   * reports it.
    */
   $effect(() => {
     if (
       !isLoadMoreVisible ||
       isSearchActive ||
+      !isPaged ||
       $taskStore.loading ||
-      signalLimit === undefined ||
-      ($taskStore.data?.length ?? 0) < signalLimit
+      $taskPager.isLoading ||
+      !$taskPager.hasMore
     ) {
       return;
     }
-    const limit = signalLimit;
+    const pager = taskPager;
     const frame = requestAnimationFrame(() => {
-      if (limit === signalLimit && isLoadMoreMarkerOnScreen()) {
+      if (pager === taskPager && isLoadMoreMarkerOnScreen()) {
         refresh({ isPagination: true });
       }
     });
@@ -163,7 +184,9 @@
   }
 
   const signalTasks = $derived.by(() =>
-    normalizeTasks(($taskStore.data ?? []) as ITaskThumb[])
+    normalizeTasks(
+      isPaged ? $taskPager.items : (($taskStore.data ?? []) as ITaskThumb[])
+    )
   );
   const displayedTasks = $derived(isSearchActive ? tasks : signalTasks);
   const displayedIsRefreshing = $derived(
@@ -313,8 +336,8 @@
     scrollToDate?: boolean;
   }) {
     if (!isSearchActive) {
-      if (params?.isPagination) taskLimit += 50;
-      else taskLimit = 50;
+      if (params?.isPagination) taskPager.loadMore();
+      else taskPager.reset();
       if (params?.scrollToDate) scrollToDate();
       return;
     }

@@ -38,6 +38,7 @@
     "./e2ee.type": "./e2ee.type.ts",
     "./optimisticKv.type": "./optimisticKv.type.ts",
     "./observable-store": "./observable-store.ts",
+    "./paged-list.store": "./paged-list.store.ts",
     "./resource-query.utils": "./resource-query.utils.ts",
     "./resource-error": "./resource-error.ts",
     "./link.type": "./link.type.ts",

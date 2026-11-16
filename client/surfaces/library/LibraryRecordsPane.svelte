@@ -80,6 +80,10 @@
   import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import { datafnHeavyComputedSignalOptions } from "@nucleum/datafn/signalCache";
+  import {
+    createPagedListStore,
+    PAGED_LIST_PAGE_SIZE
+  } from "@nucleum/datafn/paged-list.store";
 
   let {
     resource,
@@ -105,7 +109,6 @@
   let isArchivedFilterSelected = $state(false);
   let data = $state<any[]>([]);
   let starredData = $state<any[]>([]);
-  let recordLimit = $state(50);
   let searchType = $state<SearchType>(SearchType.FULL_TEXT);
   let selectedSubType = $state<SubType>(
     untrack(() => subType ?? LIBRARY_DEFAULT_SUBTYPE) as SubType
@@ -176,18 +179,40 @@
       subType: resolveSelectedSubType()
     })
   );
+  const listRequest = $derived.by(() => ({
+    select: resolveExpandedSelect(listQuery.resource),
+    filters: listQuery.filters,
+    metadata: resolveQueryMetadata(),
+    sort: resolveSort(listQuery.resource)
+  }));
   const recordStore = $derived.by(() =>
     toSvelteStore(
       datafn.table(listQuery.resource).signal({
-        select: resolveExpandedSelect(listQuery.resource),
-        filters: listQuery.filters,
-        metadata: resolveQueryMetadata(),
-        sort: resolveSort(listQuery.resource),
-        limit: recordLimit
+        ...listRequest,
+        limit: PAGED_LIST_PAGE_SIZE
       }),
       { initialData: [] as any[] }
     )
   );
+  /** Later pages of the current list query; a new query starts a fresh pager. */
+  const recordPager = $derived.by(() => {
+    const table = datafn.table(listQuery.resource);
+    const request = listRequest;
+    return createPagedListStore<any>({
+      fetchPage: async ({ offset, limit }) => {
+        const result = await table.query({
+          ...request,
+          limit,
+          offset
+        } as any);
+        return result.data ?? [];
+      }
+    });
+  });
+  $effect(() => {
+    if (isCustom) return;
+    recordPager.setFirstPage($recordStore.data ?? []);
+  });
   const starredStore = $derived.by(() =>
     !canStarLibraryResource(listQuery.resource)
       ? readable({ data: [] as any[] })
@@ -225,7 +250,7 @@
       ? isSearchResultPending
         ? []
         : data
-      : normalizeLibraryRecords($recordStore.data ?? [])
+      : normalizeLibraryRecords($recordPager.items)
   );
   const displayedStarredData = $derived(
     isSearchActive
@@ -421,8 +446,8 @@
   async function refresh(isPagination?: boolean) {
     if (isCustom) return;
     if (!isSearchActive) {
-      if (isPagination) recordLimit += 50;
-      else recordLimit = 50;
+      if (isPagination) recordPager.loadMore();
+      else recordPager.reset();
       return;
     }
 
@@ -777,7 +802,7 @@
             : Size.md}
           isShowLoadingPulseAtTheEnd={displayedData.length <
             displayedTotalCount &&
-            recordLimit < displayedTotalCount &&
+            $recordPager.hasMore &&
             !searchQuery}
           arrangement={resolvedArrangement}
         />
@@ -790,7 +815,7 @@
             if (
               displayedData.length > 0 &&
               displayedData.length < displayedTotalCount &&
-              recordLimit < displayedTotalCount
+              (isSearchActive || $recordPager.hasMore)
             ) {
               refresh(true);
             }
