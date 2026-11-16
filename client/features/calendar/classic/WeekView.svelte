@@ -87,30 +87,40 @@
     }
   }
 
-  /** The week element on screen and its offset from the scroll position. */
+  /** The week on screen (by start date) and its offset from the scroll position. */
   function resolveVisibleWeekAnchor() {
     if (!containerRef?.clientWidth) return undefined;
     const index = Math.round(
       containerRef.scrollLeft / containerRef.clientWidth
     );
     const element = containerRef.children[index] as HTMLElement | undefined;
-    return element
-      ? { element, offset: element.offsetLeft - containerRef.scrollLeft }
+    const week = weeks[index];
+    return element && week
+      ? {
+          startTime: week.startDate.getTime(),
+          offset: element.offsetLeft - containerRef.scrollLeft
+        }
       : undefined;
   }
 
   /**
    * Keeps the same week on screen after weeks are added before it, so the
    * viewport, header and reported dates stay on the week the user was
-   * looking at. Measures where that week moved, so it holds whether or not
-   * the browser already adjusted the scroll position itself.
+   * looking at. Finds that week again by its start date (the week elements
+   * are reused by position) and measures where it is now, so it holds
+   * whether or not the browser already adjusted the scroll position itself.
    */
   async function keepVisibleWeekAfterPrepend(
     anchor: ReturnType<typeof resolveVisibleWeekAnchor>
   ) {
     await tick();
     if (!anchor || !containerRef || !headerRef) return;
-    const scrollLeft = anchor.element.offsetLeft - anchor.offset;
+    const index = weeks.findIndex(
+      (week) => week.startDate.getTime() === anchor.startTime
+    );
+    const element = containerRef.children[index] as HTMLElement | undefined;
+    if (!element) return;
+    const scrollLeft = element.offsetLeft - anchor.offset;
     if (scrollLeft === containerRef.scrollLeft) return;
     isExplicitNavigation = true;
     containerRef.scrollLeft = scrollLeft;

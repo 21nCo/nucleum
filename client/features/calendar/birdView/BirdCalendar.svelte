@@ -27,6 +27,22 @@
   let selectedPanel = $state(CalendarColumnPanel.Timeline);
   let birdviewRef = $state<Birdview>();
 
+  /**
+   * Moves one step back or forward from the header. The Year view moves the
+   * header date a year and scrolls to it, so the header follows the
+   * columns; other views move the columns one column.
+   */
+  function goBy(isForward: boolean) {
+    if (scale !== TimeScaleUnit.YEAR) {
+      birdviewRef?.step(isForward);
+      return;
+    }
+    const date = new Date(selectedDate);
+    date.setFullYear(date.getFullYear() + (isForward ? 1 : -1));
+    selectedDate = date;
+    birdviewRef?.scrollToDate(date);
+  }
+
   const switchOptions = [
     {
       label: "Parts",
@@ -80,8 +96,8 @@
       bind:selectedDate
       bind:selectedView={scale}
       onDateChange={() => birdviewRef?.scrollToDate(selectedDate)}
-      onGoToPrevious={() => birdviewRef?.step(false)}
-      onGoToNext={() => birdviewRef?.step(true)}
+      onGoToPrevious={() => goBy(false)}
+      onGoToNext={() => goBy(true)}
     />
   {/snippet}
   {#snippet headerRightOptions()}
