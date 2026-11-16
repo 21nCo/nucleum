@@ -132,7 +132,7 @@
 
         const daysInMonth = new Date(
           Date.UTC(relevantYear, currentMonth + 1, 0)
-        ).getDate();
+        ).getUTCDate();
         for (let day = 1; day <= daysInMonth; day++) {
           const date = new Date(Date.UTC(relevantYear, currentMonth, day))
             .toISOString()
@@ -620,10 +620,17 @@
     scrollDateSlotIntoView(slot);
   }
 
-  /** Moves the columns one column back or forward. */
+  /**
+   * Moves the columns one column back or forward the way a wheel or drag
+   * step does, loading more columns when the step reaches the end of the
+   * loaded range.
+   */
   export function step(isForward: boolean) {
     if (!panelsContainer?.children.length) return;
-    return scrollLookAlike(isForward);
+    return waitUntilDisenganged({
+      deltaX: isForward ? 1 : -1,
+      isWheelEvent: true
+    });
   }
 
   function checkifNotToday(itemsInView: any[]): boolean {

@@ -40,7 +40,8 @@
   function goToPrevious() {
     if (
       selectedView === TimeScaleUnit.YEAR ||
-      selectedView === TimeScaleUnit.WEEK
+      selectedView === TimeScaleUnit.WEEK ||
+      selectedView === TimeScaleUnit.PART
     ) {
       onGoToPrevious?.();
     } else {
@@ -61,7 +62,8 @@
   function goToNext() {
     if (
       selectedView === TimeScaleUnit.YEAR ||
-      selectedView === TimeScaleUnit.WEEK
+      selectedView === TimeScaleUnit.WEEK ||
+      selectedView === TimeScaleUnit.PART
     ) {
       onGoToNext?.();
     } else {
