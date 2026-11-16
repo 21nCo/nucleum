@@ -1,12 +1,3 @@
-<script lang="ts" module>
-  let panelSwitcherCounter = 0;
-
-  export const resolvePanelSwitcherId = () => {
-    panelSwitcherCounter += 1;
-    return `panel-switcher-${panelSwitcherCounter}`;
-  };
-</script>
-
 <script lang="ts">
   import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
   import type { Snippet } from "svelte";
@@ -29,13 +20,9 @@
   import view from "@21n/ui/environment/view.store";
   import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
   import { InputStyle } from "@21n/ui/elements/input/input.type";
-  import { isTextElement } from "@21n/ui/actions/interaction-dom";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import TrainPanelSwitcher from "@21n/ui/elements/switcher/train/TrainPanelSwitcher.svelte";
-  import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
-  import { elementLogger as logger } from "@21n/ui/environment/element-environment.store";
 
-  const PANEL_SWITCHER_ATTR = "data-panel-switcher-id";
   let {
     items,
     value = $bindable(),
@@ -57,7 +44,6 @@
     isBgBar = false,
     isRearrangeableByDefault = false,
     isEnableTitleAction = false,
-    isPreventTabShortcut = false,
     tempTitleWithActionDisabled = false,
     left = undefined,
     right = undefined,
@@ -88,7 +74,6 @@
     isBgBar?: boolean;
     isRearrangeableByDefault?: boolean;
     isEnableTitleAction?: boolean;
-    isPreventTabShortcut?: boolean;
     tempTitleWithActionDisabled?: boolean;
     left?: Snippet | undefined;
     right?: Snippet | undefined;
@@ -110,7 +95,6 @@
   );
   let _items = $state<ISelectItem[]>([]);
   const titleValue = "$title";
-  const switcherId = resolvePanelSwitcherId();
   function emitSwitch(nextValue: ISelectValue) {
     const switchEvent = new CustomEvent<ISelectValue>("switch", {
       detail: nextValue
@@ -168,7 +152,6 @@
     $view.isConstrainedWidth && isRenderDropdownForCW
   );
   onMount(() => {
-    parent?.setAttribute(PANEL_SWITCHER_ATTR, switcherId);
     if (
       value === undefined ||
       items.find((x) =>
@@ -178,7 +161,6 @@
       value = _items[0]?.value;
   });
 
-  let parent = $state<any>();
   let child = $state<any>();
   function conditionalTransition(node: any) {
     if (isEnableAnimationForTitle) {
@@ -187,25 +169,6 @@
     return emptyTranstition();
   }
 
-  const isTopmostPanelSwitcher = () => {
-    if (typeof document === "undefined") return false;
-    if (!parent || !parent.isConnected) return false;
-    const switchers = Array.from(
-      document.querySelectorAll(`[${PANEL_SWITCHER_ATTR}]`)
-    ).filter(
-      (element): element is HTMLElement => element instanceof HTMLElement
-    );
-    const visibleSwitchers = switchers.filter((element) => {
-      if (!element.isConnected) return false;
-      const style = getComputedStyle(element);
-      if (style.display === "none" || style.visibility === "hidden")
-        return false;
-      const rect = element.getBoundingClientRect();
-      return rect.width > 0 && rect.height > 0;
-    });
-    if (!visibleSwitchers.length) return false;
-    return visibleSwitchers[visibleSwitchers.length - 1] === parent;
-  };
 </script>
 
 {#if style === PanelSwitcherStyle.TRAIN && !isRenderAsDropdown}
@@ -234,7 +197,6 @@
 {:else}
   {#key isInEditMode}
     <div
-      bind:this={parent}
       class={cn(
         "relative panel-switcher flex items-center shrink-0",
         style === PanelSwitcherStyle.SNAKE && {
@@ -371,66 +333,3 @@
     </div>
   {/key}
 {/if}
-
-<svelte:document
-  onkeydown={(event) => {
-    try {
-      const isBackwardKey = event.key === KeyboardKey.ARROW_LEFT;
-      const isForwardKey = event.key === KeyboardKey.ARROW_RIGHT;
-      if (isPreventTabShortcut || (!isBackwardKey && !isForwardKey)) return;
-      if (!isTopmostPanelSwitcher() || isTextElement(event.target)) return;
-      const isBackward = isBackwardKey;
-      event.preventDefault();
-      event.stopPropagation();
-
-      const isTitleActive = isEnableTitleAction && value === titleValue;
-      if (isBackward) {
-        if (isTitleActive) {
-          const previous = _items[_items.length - 1]?.value;
-          if (previous) dispatchSwitch(previous);
-          return;
-        }
-        const currentIndex = _items.findIndex((item) => item.value === value);
-        if (currentIndex === -1) {
-          const fallback = _items[_items.length - 1]?.value;
-          if (fallback) dispatchSwitch(fallback);
-          return;
-        }
-        if (currentIndex === 0) {
-          if (isEnableTitleAction) {
-            dispatchSwitch(titleValue);
-            return;
-          }
-          const previous = _items[_items.length - 1]?.value;
-          if (previous) dispatchSwitch(previous);
-          return;
-        }
-        const previous = _items[currentIndex - 1]?.value;
-        if (previous) dispatchSwitch(previous);
-        return;
-      }
-
-      if (isTitleActive) {
-        const next = _items[0]?.value;
-        if (next) dispatchSwitch(next);
-        return;
-      }
-
-      const currentIndex = _items.findIndex((item) => item.value === value);
-      if (currentIndex === -1 || currentIndex + 1 >= _items.length) {
-        if (isEnableTitleAction) {
-          dispatchSwitch(titleValue);
-          return;
-        }
-        const next = _items[0]?.value;
-        if (next) dispatchSwitch(next);
-        return;
-      }
-
-      const next = _items[currentIndex + 1]?.value;
-      if (next) dispatchSwitch(next);
-    } catch (error) {
-      logger.error({ at: "PanelSwitcher - number shortcut listener", error });
-    }
-  }}
-/>

@@ -155,8 +155,8 @@
   },
   "dependencies": {
     "@antv/g6": "^5.0.26",
-    "@datafn/client": "0.1.0",
-    "@datafn/svelte": "0.1.0",
+    "@datafn/client": "0.1.5",
+    "@datafn/svelte": "0.1.1",
     "@nucleum/datafn": "*",
     "@nucleum/schema": "*",
     "dayjs": "^1.11.10",

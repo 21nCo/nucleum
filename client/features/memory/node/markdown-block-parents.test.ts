@@ -206,7 +206,6 @@ describe("repairMarkdownBlockParents", () => {
           mdParent: [noteId],
           parent: noteId,
           parentPath: noteId,
-          isAncestorInactive: true,
           mdChildOrder: [orphanId]
         }
       },

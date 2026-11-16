@@ -17,6 +17,11 @@ export type ColorScheme = {
   isArchived?: boolean;
   isActiveFgFg: boolean;
   isNeverFgFg: boolean;
+  /**
+   * Whether the scheme defines a separate frame palette (`f*` tokens) for the
+   * app chrome and a content copy (`c*` tokens) restored inside it.
+   */
+  hasFramePalette?: boolean;
   id: string;
 };
 

@@ -61,6 +61,7 @@
   {#if isSignedIn}
     <button
       class="flex flex-col justify-between items-center w-full h-full"
+      data-testid="account-profile-section"
       {onclick}
     >
       <div class="flex w-full justify-end text-b4 text-fgs3 px-3 pt-2">
