@@ -187,7 +187,7 @@ export function createLibraryQuery(context: LibraryQueryContext) {
     const { isArchivedFilterSelected } = context;
     return {
       filters: isArchivedFilterSelected
-        ? { ...(filters ?? {}), isArchived: true }
+        ? { ...filters, isArchived: true }
         : filters,
       metadata: resolveQueryMetadata()
     };
