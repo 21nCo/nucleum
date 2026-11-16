@@ -8,6 +8,8 @@ import {
   resolveAppearanceProfilesState,
   resolveApplyProfilePatch,
   resolveCurrentAppearance,
+  resolveDeleteProfilePatch,
+  resolveSaveProfilePatch,
   snapshotAppearance
 } from "./appearance-profiles";
 import { seedUserPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
@@ -143,5 +145,41 @@ describe("appearance profiles", () => {
         lightColorSchemeId: Number(stored.lightColorSchemeId) as never
       })
     ).toBe(Number.isNaN(Number(stored.lightColorSchemeId)));
+  });
+
+  it("saves a new profile and marks it applied in one patch, keeping the other profiles", () => {
+    const patch = resolveSaveProfilePatch(
+      { appearanceProfiles: { night: roundedDark, gone: null } },
+      "fresh",
+      "  ",
+      roundedDark.settings,
+      5
+    );
+    expect(patch).toEqual({
+      appearanceProfiles: {
+        night: roundedDark,
+        gone: null,
+        fresh: {
+          name: "Untitled profile",
+          settings: roundedDark.settings,
+          createdAt: 5
+        }
+      },
+      appliedAppearanceProfileId: "fresh"
+    });
+  });
+
+  it("deletes a profile as a tombstone and clears the applied id only when it was applied", () => {
+    const preferences = {
+      appearanceProfiles: { night: roundedDark, day: roundedDark },
+      appliedAppearanceProfileId: "night"
+    };
+    expect(resolveDeleteProfilePatch(preferences, "night")).toEqual({
+      appearanceProfiles: { night: null, day: roundedDark },
+      appliedAppearanceProfileId: null
+    });
+    expect(resolveDeleteProfilePatch(preferences, "day")).toEqual({
+      appearanceProfiles: { night: roundedDark, day: null }
+    });
   });
 });

@@ -41,6 +41,11 @@ test.describe("settings - appearance profiles @settings", () => {
     const otherStyle = originalStyle === "rounded" ? "boxed" : "rounded";
 
     await profiles.getByTestId("appearance-profile-save-new").click();
+    await page.getByTestId("appearance-profile-name").press("Escape");
+    await expect(page.getByTestId("appearance-profile-name")).toBeHidden();
+    await expect(profiles).toBeVisible();
+
+    await profiles.getByTestId("appearance-profile-save-new").click();
     await page.getByTestId("appearance-profile-name").fill(name);
     await page.getByTestId("appearance-profile-name").press("Enter");
     const chip = profiles

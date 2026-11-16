@@ -157,6 +157,55 @@ export function resolveApplyProfilePatch(
   };
 }
 
+/**
+ * Preference patch that writes one stored profile entry. Profiles are written
+ * as the whole `appearanceProfiles` map, so sync merges them map-level: the
+ * patch carries the latest local map with only this entry changed.
+ */
+export function resolveProfileEntryPatch(
+  preferences: Pick<IUserGlobalPreferences, "appearanceProfiles">,
+  id: string,
+  profile: StoredAppearanceProfile | null
+): Partial<IUserGlobalPreferences> {
+  return {
+    appearanceProfiles: { ...preferences.appearanceProfiles, [id]: profile }
+  };
+}
+
+/** Preference patch that saves settings as a new user profile and marks it applied. */
+export function resolveSaveProfilePatch(
+  preferences: Pick<IUserGlobalPreferences, "appearanceProfiles">,
+  id: string,
+  name: string,
+  settings: AppearanceProfileSettings,
+  createdAt: number
+): Partial<IUserGlobalPreferences> {
+  return {
+    ...resolveProfileEntryPatch(preferences, id, {
+      name: name.trim() || "Untitled profile",
+      settings,
+      createdAt
+    }),
+    appliedAppearanceProfileId: id
+  };
+}
+
+/** Preference patch that tombstones a user profile and clears it if applied. */
+export function resolveDeleteProfilePatch(
+  preferences: Pick<
+    IUserGlobalPreferences,
+    "appearanceProfiles" | "appliedAppearanceProfileId"
+  >,
+  id: string
+): Partial<IUserGlobalPreferences> {
+  return {
+    ...resolveProfileEntryPatch(preferences, id, null),
+    ...(preferences.appliedAppearanceProfileId === id
+      ? { appliedAppearanceProfileId: null }
+      : {})
+  };
+}
+
 /** Live profile state derived from the synced preferences and the shown appearance. */
 export const appearanceProfiles = derived(
   [userPreferences, appearance],
@@ -182,9 +231,9 @@ function findProfile(id: string) {
 }
 
 function writeProfile(id: string, profile: StoredAppearanceProfile | null) {
-  return userPreferences.modify({
-    appearanceProfiles: { ...storedProfiles(), [id]: profile }
-  });
+  return userPreferences.modify(
+    resolveProfileEntryPatch(userPreferences.get(), id, profile)
+  );
 }
 
 /** Applies a profile to the current appearance. */
@@ -198,18 +247,15 @@ export function applyAppearanceProfile(id: string) {
 
 /** Saves the current appearance as a new user profile and marks it applied. */
 export function saveAppearanceProfileAsNew(name: string) {
-  const id = generateSimpleRandomId();
-  return userPreferences.modify({
-    appearanceProfiles: {
-      ...storedProfiles(),
-      [id]: {
-        name: name.trim() || "Untitled profile",
-        settings: currentAppearance(),
-        createdAt: Date.now()
-      }
-    },
-    appliedAppearanceProfileId: id
-  });
+  return userPreferences.modify(
+    resolveSaveProfilePatch(
+      userPreferences.get(),
+      generateSimpleRandomId(),
+      name,
+      currentAppearance(),
+      Date.now()
+    )
+  );
 }
 
 /** Overwrites a user profile with the current appearance. */
@@ -233,9 +279,7 @@ export function renameAppearanceProfile(id: string, name: string) {
 /** Deletes a user profile, keeping a tombstone, and clears it if applied. */
 export function deleteAppearanceProfile(id: string) {
   if (!storedProfiles()[id]) return;
-  const isApplied = userPreferences.get().appliedAppearanceProfileId === id;
-  return userPreferences.modify({
-    appearanceProfiles: { ...storedProfiles(), [id]: null },
-    ...(isApplied ? { appliedAppearanceProfileId: null } : {})
-  });
+  return userPreferences.modify(
+    resolveDeleteProfilePatch(userPreferences.get(), id)
+  );
 }
