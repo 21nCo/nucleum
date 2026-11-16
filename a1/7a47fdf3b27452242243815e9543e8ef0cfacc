@@ -1,0 +1,429 @@
+apps/e2e-playwright/tests/focus/active-session/session-finished-modal.spec.ts
+  s_f058f999ab46b7::t_76bd7e9c745538 1-86
+apps/e2e-playwright/tests/shared/help.spec.ts
+  s_f058f999ab46b7::t_2ad19431226ee5 1-66
+apps/e2e-playwright/tests/shared/maximize.spec.ts
+  s_f058f999ab46b7::t_3afbc77901d58c 1-250
+apps/e2e-playwright/tests/shared/settings/access-tokens.spec.ts
+  s_f058f999ab46b7::t_1dabef506ff453 1-259
+apps/e2e-playwright/tests/shared/settings/backup.spec.ts
+  s_f058f999ab46b7::t_7533332e695d2e 1-38
+apps/e2e-playwright/tests/shared/settings/settings.spec.ts
+  s_f058f999ab46b7::t_a5148d6539c1f1 149,158-162,171,173-175,178-186,189-190,193-195,197-207,209-210,415,421,435,449,460,470,483,503,513,520,530,620,629,644-646,770,780,784,789,805,814,816,866,868,882-883,904,906,915,924,930,944,953,958,970,979,984,991,998,1005,1022,1027,1040,1066,1071
+apps/e2e-playwright/tests/shared/toasts.spec.ts
+  s_f058f999ab46b7::t_fbe0e98b6a933e 1-362
+client/composition/chrome/WiredTopNav.svelte
+  s_f058f999ab46b7::t_4173dad10f3dbc 37
+client/composition/global-commands.ts
+  s_f058f999ab46b7::t_1cfceab159bef8 58
+client/composition/layers/UserLayout.svelte
+  s_f058f999ab46b7::t_5049a8291343f2 6,59-61
+client/composition/package.json
+  s_f058f999ab46b7::t_e3d3e52a6ea50e 11-12
+client/datafn/datafn-clone-up.datafn.test.ts
+  s_f058f999ab46b7::t_98e55f0cd9b74b 1-179
+client/datafn/datafn.store.ts
+  s_f058f999ab46b7::t_90bbc0d78abb3f 435,442-447
+client/datafn/package.json
+  s_f058f999ab46b7::t_6e6be7b34f5a97 8
+client/extensions/package.json
+  s_f058f999ab46b7::t_f08a1aee9eaed7 10
+client/features/calendar/CalendarLayout.svelte
+  s_f058f999ab46b7::t_26cb2ab3570afd 5,31-34,69-70,72-75,103-156,176-177,302
+client/features/calendar/CalendarLayoutOverflowMenu.test.ts
+  s_f058f999ab46b7::t_d15395a1020018 1-466
+client/features/calendar/calendar-overflow-menu.test.ts
+  s_f058f999ab46b7::t_f3bca50456cbea 1-97
+client/features/calendar/calendar-overflow-menu.ts
+  s_f058f999ab46b7::t_edcf1d42b8ea79 1-61
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_4398fb171ae45e 51,81,187-191,384-388
+client/features/collections/properties/propertyConfig/selectProperty/SelectOptionsEditor.svelte
+  s_f058f999ab46b7::t_0bc2cb8825e927 52,112-116,118,218
+client/features/focus/session-close.test.ts
+  s_f058f999ab46b7::t_8c5c908d348b07 1-292
+client/features/focus/session.store.ts
+  s_f058f999ab46b7::t_aafe6c6d59a83c 51,62-65,685-702,704-710,746-748,760-775,900,915,920,1370,1386-1387,1400
+client/features/memory/node/node.store.ts
+  s_f058f999ab46b7::t_927fd553c0f8cf 331-336,338-342,344-348,350-354
+client/features/package.json
+  s_f058f999ab46b7::t_6bd265594d9efe 158-159
+client/features/records/ResourcePanelSwitcher.svelte
+  s_f058f999ab46b7::t_2fe22a989f152d 20-23,62,200,212-213
+client/features/spaces/SpaceResourceRenderer.close.test.ts
+  s_f058f999ab46b7::t_43f725a8b030e3 1-54
+client/features/spaces/SpaceResourceRenderer.svelte
+  s_f058f999ab46b7::t_634fa163a21e2f 18-19,23-24,29-33
+client/features/spaces/SpaceSideNav.selection-memory.test.ts
+  s_f058f999ab46b7::t_613d18111c0d15 1-176
+client/features/spaces/SpaceSideNav.svelte
+  s_f058f999ab46b7::t_5d6bd090ceea15 29-33,61-66,135-141,144,178-184,186,194,437
+client/features/spaces/space-selection.ts
+  s_f058f999ab46b7::t_cc15d509673a23 1-40
+client/package.json
+  s_f058f999ab46b7::t_52d86ef76daf3d 14
+client/persistence/legacy-backup/datafn-import.test.ts
+  s_f058f999ab46b7::t_1d288da529f6c7 144-147
+client/persistence/package.json
+  s_f058f999ab46b7::t_ee3b186f28a9f0 10
+client/products/memotron/base/MemoryBase.svelte
+  s_f058f999ab46b7::t_e6e109e43507e1 12,14-17,19,42,53
+client/products/package.json
+  s_f058f999ab46b7::t_8e681038c1872d 7-8
+client/runtime/account/access-tokens.test.ts
+  s_f058f999ab46b7::t_c693ecf2eef32e 1-239
+client/runtime/account/access-tokens.ts
+  s_f058f999ab46b7::t_082c3ae7a23972 1-252
+client/shared-state/app-context/app-store.type.ts
+  s_f058f999ab46b7::t_e260737bb8aaf6 148-153
+client/shared-state/app-context/app.store.ts
+  s_f058f999ab46b7::t_2d5221a7b96ad6 143
+client/shared-state/files/filefn-client.test.ts
+  s_f058f999ab46b7::t_73850528de6ced 1-772
+client/shared-state/files/filefn-client.ts
+  s_f058f999ab46b7::t_8544cbb723923a 1-387
+client/shared-state/notifications/notification.store.pause.test.ts
+  s_f058f999ab46b7::t_570a90ae57b5ef 1-59
+client/shared-state/notifications/notification.store.ts
+  s_f058f999ab46b7::t_968e12adae13c3 21-26,28,31-52,60,64,68-71,73-89,91-97,121,168,170,172-173
+client/shared-state/package.json
+  s_f058f999ab46b7::t_366330da121151 20-21
+client/shared-state/preferences/ui-state/uiState.type.ts
+  s_f058f999ab46b7::t_c33d7a6c3f8ed5 47-51
+client/shared-state/resources/in-place-resource.ts
+  s_f058f999ab46b7::t_d4a6f2ba046c09 5-10,13-14,16-17,22-31
+client/shell/layers/themeLayer/ThemeLayer.svelte
+  s_f058f999ab46b7::t_00bf753904baba 10,282,298-351
+client/shell/layers/themeLayer/fonts.config.ts
+  s_f058f999ab46b7::t_acfdf11c24c4b0 41-42
+client/shell/leftPanel/LeftBottomBar.svelte
+  s_f058f999ab46b7::t_ad73c7153688bc 28
+client/shell/leftPanel/LeftNav.svelte
+  s_f058f999ab46b7::t_dd6dd4c30940a2 24
+client/shell/leftPanel/LeftNavFixed.svelte
+  s_f058f999ab46b7::t_0b11ec37097fac 77,89
+client/shell/leftPanel/appMenuSwitcher/AppMenuPinnedSpaces.svelte
+  s_f058f999ab46b7::t_917eeb4f622172 169-174,189-192
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte
+  s_f058f999ab46b7::t_e286599b41e7d0 19-22,287-289
+client/shell/modal/Modal.svelte
+  s_f058f999ab46b7::t_993e70e70d32ac 1-5,11-14,29-30,106-281,313,315-321,323-332
+client/shell/modal/Modal.test.ts
+  s_f058f999ab46b7::t_95907137e8e5f3 1-379
+client/shell/modal/ModalLayout.svelte
+  s_f058f999ab46b7::t_1c3f0aa8489a41 45-47,128,151-152,155
+client/shell/navigation/NavigationLayout.svelte
+  s_f058f999ab46b7::t_7f495a46099208 150-152
+client/shell/navigation/components/ResourceInlineCloseButton.svelte
+  s_f058f999ab46b7::t_bc9025776096c2 5-8,17-18,24-28,34,49-50
+client/shell/navigation/components/ResourceInlineCloseButton.test.ts
+  s_f058f999ab46b7::t_935123b9a6d46a 1-28
+client/shell/navigation/full-screen-minimize.test.ts
+  s_f058f999ab46b7::t_7cd958d3600085 2-5,7-11,24,29,32-33,40-50,53-145,147-266
+client/shell/navigation/full-screen-origin.ts
+  s_f058f999ab46b7::t_98d4fc20f302e1 1-38
+client/shell/navigation/global-commands.ts
+  s_f058f999ab46b7::t_fdd109c5d43078 14,102,112
+client/shell/navigation/navigation.ts
+  s_f058f999ab46b7::t_3f3702b9dc9ef1 2-5,196-214,688-690,698,753,767,770,855-861,876-883,1053,1105,1124,1128-1131,1142-1164,1174-1177
+client/shell/navigation/top-bar-control.test.ts
+  s_f058f999ab46b7::t_de979782ed42c0 1-119
+client/shell/navigation/top-layer-minimize.test.ts
+  s_f058f999ab46b7::t_24891617f10ff2 1-104
+client/shell/navigation/top-layer.ts
+  s_f058f999ab46b7::t_9dda4b4169c955 3-6,102-146,155-167,191
+client/shell/overlays/ModalLayer.svelte
+  s_f058f999ab46b7::t_51bdf16cf9e2e4 30,41-46,52-64,70,78,97,115,117,149-150,153,207,245-263
+client/shell/overlays/ModalLayer.test.ts
+  s_f058f999ab46b7::t_57657295cefb7b 1-75
+client/shell/overlays/raised-toasts.layer.test.ts
+  s_f058f999ab46b7::t_b460c874bfbc2e 1-248
+client/shell/overlays/raised-toasts.test.ts
+  s_f058f999ab46b7::t_8a6a0c9e912f57 1-33
+client/shell/overlays/raised-toasts.ts
+  s_f058f999ab46b7::t_b6ddd672add6e2 1-52
+client/shell/package.json
+  s_f058f999ab46b7::t_80dd5b587597c8 11-12
+client/shell/paint/Panel.svelte
+  s_f058f999ab46b7::t_e2ad542a9ba5a7 72
+client/shell/shortcuts/ShortcutRunner.svelte
+  s_f058f999ab46b7::t_98a0825cdcb5d6 7-8,10,38-39,44,79,101-103,119
+client/shell/shortcuts/ShortcutRunner.test.ts
+  s_f058f999ab46b7::t_79b906b30b8afa 1-81
+client/shell/shortcuts/front-layer.ts
+  s_f058f999ab46b7::t_1d083be2865123 1-26
+client/shell/sync/InlineSyncingFeedback.svelte
+  s_f058f999ab46b7::t_a74c2dc171311e 5-6,23-27,29
+client/shell/sync/sync-visibility.test.ts
+  s_f058f999ab46b7::t_2fd1508558dd00 1-105
+client/shell/sync/sync-visibility.ts
+  s_f058f999ab46b7::t_d2bc96504fa411 1-63
+client/shell/topNav/NavigatorPill.svelte
+  s_f058f999ab46b7::t_a732dfe435e8f9 102
+client/shell/topNav/TopBarCloseButton.svelte
+  s_f058f999ab46b7::t_3fb4ee5f72bcb1 11,17-18,42
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_44709c01e105aa 30,50-51,54-55,117-118,154,157-160,169-171,173,292,295,304-309,315,335-336,349,351-353,411,416-433,435,446
+client/shell/topNav/TopNavLeftLogo.svelte
+  s_f058f999ab46b7::t_ffebce71d231dc 64
+client/shell/topNav/TopNavLeftMenuItem.svelte
+  s_f058f999ab46b7::t_b77aae638b60c0 127,160
+client/shell/topNav/TopNavToasts.svelte
+  s_f058f999ab46b7::t_6f203f6bbcb9b9 11-13,15-20,23-25,28-34,40-45,48-70,74,77-78,80-82,84-96,102,106,108-115,118-125,130-134,139-152,157-162
+client/shell/topNav/TopNavToasts.test.ts
+  s_f058f999ab46b7::t_a752cad51bb4cd 1-115
+client/shell/topNav/contextZone/ContextZoneContent.svelte
+  s_f058f999ab46b7::t_4317b44dd484d0 4,36-50,55,58,61,64
+client/shell/topNav/top-bar-dropdown.ts
+  s_f058f999ab46b7::t_5005e74c4df65c 7-12,34
+client/surfaces/account/access-tokens/AccessTokensSection.svelte
+  s_f058f999ab46b7::t_3f976c63c13b03 1-465
+client/surfaces/account/access-tokens/AccessTokensSection.test.ts
+  s_f058f999ab46b7::t_4c7d37734c05c9 1-636
+client/surfaces/account/profile/ProfileCPSection.svelte
+  s_f058f999ab46b7::t_c8872930c87df2 64
+client/surfaces/account/profile/ProfilePicture.svelte
+  s_f058f999ab46b7::t_07215ed3397940 113
+client/surfaces/commandBar/CommandBar.svelte
+  s_f058f999ab46b7::t_7d290facdbacab 56,149-150,176,221,249,264
+client/surfaces/commands/action-runner.ts
+  s_f058f999ab46b7::t_eac4043d052758 155-157
+client/surfaces/help/Help.svelte
+  s_f058f999ab46b7::t_379c51dacb06f8 19,21,23-28,51-81,84-101
+client/surfaces/help/diagnostics/Troubleshoot.svelte
+  s_f058f999ab46b7::t_c32cb6fb2cbc97 2-6,8-12,14-15,17-42,45-46,49-57,59-64,67-71,74-87,89-97
+client/surfaces/help/diagnostics/diagnostic-report.test.ts
+  s_f058f999ab46b7::t_b18fe3b5718954 1-370
+client/surfaces/help/diagnostics/diagnostic-report.ts
+  s_f058f999ab46b7::t_a0d247d5412a97 1-367
+client/surfaces/help/global-commands.ts
+  s_f058f999ab46b7::t_19bec92bbe7a7d 11,330-344
+client/surfaces/help/help-sections.test.ts
+  s_f058f999ab46b7::t_01112016d11980 1-106
+client/surfaces/help/help-sections.ts
+  s_f058f999ab46b7::t_a9b326f16df130 1-48
+client/surfaces/package.json
+  s_f058f999ab46b7::t_7820c963b679ff 12-13
+client/surfaces/settings/SettingsAsModal.svelte
+  s_f058f999ab46b7::t_0e1c7a03251ec2 22-31,47-103,109,176
+client/surfaces/settings/SettingsAsModal.test.ts
+  s_f058f999ab46b7::t_36097b13fee019 1-260
+client/surfaces/settings/account/AccountSettings.svelte
+  s_f058f999ab46b7::t_94ca23b3070b0a 24,565-568
+client/surfaces/settings/account/AccountSettings.test.ts
+  s_f058f999ab46b7::t_916f71a8fd0355 1-94
+client/surfaces/settings/appearance/AppearanceSettings.svelte
+  s_f058f999ab46b7::t_8a8cdca1e32869 18-20,150-152
+client/surfaces/settings/appearance/InterfaceSettings.svelte
+  s_f058f999ab46b7::t_f01ae1ad8c19a3 3-4,12-13,18-22,31-34,36-86,88
+client/surfaces/settings/appearance/TypefaceSelector.svelte
+  s_f058f999ab46b7::t_404c2580ce343b 73
+client/surfaces/settings/asPage/SettingsAsPage.svelte
+  s_f058f999ab46b7::t_68b80952baa124 13-18,44
+client/surfaces/settings/data/BackupAndRestore.svelte
+  s_f058f999ab46b7::t_bc9175bf8f1714 29-33,53-56,58-83,85-95,97-111,125-128,185-191
+client/surfaces/settings/data/data-settings-feedback.test.ts
+  s_f058f999ab46b7::t_d3081085147174 1-104
+client/surfaces/settings/data/data-settings-feedback.ts
+  s_f058f999ab46b7::t_b77786f836f848 4,14-68
+client/surfaces/settings/settings-actions.ts
+  s_f058f999ab46b7::t_bbd43437ab8766 2,51-52
+client/surfaces/settings/shortcuts/ShortcutSettings.svelte
+  s_f058f999ab46b7::t_442066f977fb7b 17
+client/theme/appearance.type.ts
+  s_f058f999ab46b7::t_63a8ad0c0e2527 20-24
+client/theme/colorschemes.json
+  s_f058f999ab46b7::t_a61a84a5a16625 557-692
+client/theme/frame-palette.js
+  s_f058f999ab46b7::t_d389a00a9b019a 1-73
+client/theme/frame-palette.test.ts
+  s_f058f999ab46b7::t_ef05af331e1e70 1-114
+client/theme/tidigit.tailwind.js
+  s_f058f999ab46b7::t_8393bf2d0fccaf 7-8,30-34,39,44-55,278-279,331-333
+client/ui/actions/focus-trap.action.ts
+  s_f058f999ab46b7::t_223b2f484e2f04 11-12
+client/ui/actions/interaction-dom.ts
+  s_f058f999ab46b7::t_f4a069d803904d 49-58
+client/ui/actions/popover-keep-open.test.ts
+  s_f058f999ab46b7::t_1fc5dbb1208043 1-65
+client/ui/actions/popover.action.ts
+  s_f058f999ab46b7::t_39ec8a1f023f22 9-12,850
+client/ui/actions/popover.type.ts
+  s_f058f999ab46b7::t_7f2e91e1280d45 29-34
+client/ui/elements/contextMenu/ContextMenuAction.svelte
+  s_f058f999ab46b7::t_67a9841b2dd02f 74-165
+client/ui/elements/contextMenu/ContextMenuActionShow.test.ts
+  s_f058f999ab46b7::t_e8cc25358b238d 1-358
+client/ui/elements/contextMenu/ContextMenuOptionGroup.svelte
+  s_f058f999ab46b7::t_1f5e2ef23333e8 10-13,31-33,40-41,47-51,56,58-59,61-69,75-76,80-81,107,109-110
+client/ui/elements/contextMenu/ContextMenuOptionGroup.test.ts
+  s_f058f999ab46b7::t_ddd3d33e0fe27e 58,78-190
+client/ui/elements/contextMenu/ContextMenuOptionList.svelte
+  s_f058f999ab46b7::t_fd8c7ce7c622f1 9-14,19-21,25,28-35,39-46,51-52,55-56,58,61-62,65,67-68,75-76,78
+client/ui/elements/contextMenu/ContextMenuOptionSubmenu.test.ts
+  s_f058f999ab46b7::t_0a6925cbbf5914 1-189
+client/ui/elements/contextMenu/context-menu-option.test.ts
+  s_f058f999ab46b7::t_93ecb90174d485 4-7,54-105
+client/ui/elements/contextMenu/context-menu-option.ts
+  s_f058f999ab46b7::t_8f6b577f378a91 1-4,44-122
+client/ui/elements/modal/ModalHeader.svelte
+  s_f058f999ab46b7::t_c234b1daeb973c 10,15-16,37-38
+cubic.yaml
+  s_f058f999ab46b7::t_6a99b27c8e6a64 1-45
+docs/architecture/data-and-sync.md
+  s_f058f999ab46b7::t_dd4b6575efbdfa 13-14,45,48,57,59-61,75
+docs/architecture/type-ownership-inventory.json
+  s_f058f999ab46b7::t_c19fa5ccebbf8b 7692-7693,7695
+package-lock.json
+  s_f058f999ab46b7::t_3fb35ab36b9c46 2892,2939-2940,2969,2984,3008-3009,3033-3057,3062,3078-3079,3101-3102,3121-3122,3150-3151,3902-3904,3907,4019-4021,4024,4028-4030,4033-4034,4038-4040,4044,4048-4050,4053,4057-4059,4063-4064,4066-4068,4072,4074-4105,4108-4124,4148-4169,4171-4173,4176-4177,4179-4181,4190-4192,4195-4198,4206-4208,4211-4216,4224-4226,4229-4240,4248-4250,4253-4257,4265-4267,4270-4279,4287-4289,4292-4295,4303-4305,4308-4313,4321-4323,4326-4330,4400-4416,4418-4420,4423-4446,4454-4456,4459-4461,4469-4471,4474-4478,4486-4488,4491,4514-4516,4519,5134-5136,5140-5141,5150-5161,5163-5165,5168,5174-5176,5183-5185,5188-5191,5197-5233,5235-5237,5240,6303-6339,12984-12986,12989,13011-13013,13016-13017,13025-13027,13030-13031,13039-13041,13044-13045,13053-13055,13657-13662,13705-13707,13710,13712-13720,13722-13742,13755-13757,13760-13772,13785-13787,13790-13809,17042-17044,17047,17049,17051-17083,33778,33785,33787,33790-33794,33797-33800,33811-33814,33824,33920-33934,33947-33961,34067-34105
+package.json
+  s_f058f999ab46b7::t_46969853275906 106-108,110
+schema/features.ts
+  s_f058f999ab46b7::t_a7575f80cc0647 134-139,157-159,349
+schema/file-record.datafn.test.ts
+  s_f058f999ab46b7::t_88b714aa8d8d1d 1-193
+schema/interfaces.test.ts
+  s_f058f999ab46b7::t_071dd7d5a3a4e5 1-424
+schema/interfaces.ts
+  s_f058f999ab46b7::t_20741491e5980c 1-512
+schema/package.json
+  s_f058f999ab46b7::t_ea2cc29e50a87f 7,13
+schema/preferences-kv-merge.datafn.test.ts
+  s_f058f999ab46b7::t_bdf908017cdf0a 1-87
+services/account/.env.example
+  s_f058f999ab46b7::t_2de421d5f5360b 19-28
+services/account/README.md
+  s_f058f999ab46b7::t_e199a25c0d9621 85-113,365-367
+services/account/config/environments.json
+  s_f058f999ab46b7::t_1e07b764b061a0 33-36,78-79,123-124,155-156,186-187
+services/account/drizzle.datafn.config.ts
+  s_f058f999ab46b7::t_f8c082c32824aa 19
+services/account/drizzle.filefn.config.ts
+  s_f058f999ab46b7::t_e584c8f27c02cd 1-15
+services/account/drizzle/datafn/0003_file_filefn_fields.sql
+  s_f058f999ab46b7::t_f7dfb892cb492c 1-2
+services/account/drizzle/datafn/0004_account_file_deletions.sql
+  s_f058f999ab46b7::t_7ba4084ac78822 1-12
+services/account/drizzle/datafn/0005_datafn_ancestor_inactive_not_null.sql
+  s_f058f999ab46b7::t_59489a264e4db6 1-6
+services/account/drizzle/datafn/meta/0003_snapshot.json
+  s_f058f999ab46b7::t_d51daa26aa60dc 1-6173
+services/account/drizzle/datafn/meta/0004_snapshot.json
+  s_f058f999ab46b7::t_7ebeffe8ac9457 1-6251
+services/account/drizzle/datafn/meta/0005_snapshot.json
+  s_f058f999ab46b7::t_91f61b28558d2b 1-6251
+services/account/drizzle/datafn/meta/_journal.json
+  s_f058f999ab46b7::t_0692877ac55351 25-45
+services/account/drizzle/filefn/0000_initial_filefn.sql
+  s_f058f999ab46b7::t_8ec96fcd8c8d33 1-115
+services/account/drizzle/filefn/0001_upload_parts_unique.sql
+  s_f058f999ab46b7::t_06195888c8018e 1-5
+services/account/drizzle/filefn/meta/0000_snapshot.json
+  s_f058f999ab46b7::t_91f50c96dda46b 1-807
+services/account/drizzle/filefn/meta/0001_snapshot.json
+  s_f058f999ab46b7::t_ca931987df6faa 1-807
+services/account/drizzle/filefn/meta/_journal.json
+  s_f058f999ab46b7::t_0d31147753cc80 1-20
+services/account/package.json
+  s_f058f999ab46b7::t_ffa16db8ede0a2 17-18,20-22,48-49,52,54,57-61,64-67,78-81,91
+services/account/scripts/deploy.mjs
+  s_f058f999ab46b7::t_f2f51052fde9de 15-16,18-19,22,64,67-79
+services/account/scripts/wrangler-config.mjs
+  s_f058f999ab46b7::t_bfe66e61a877b0 173-175,278-285
+services/account/src/app.ts
+  s_f058f999ab46b7::t_a7d0d82aee5c37 20-21,37-41,43-44,57-67,104-111,174-197,212-213,222-231,233,246-247,263-270,301-304,318-321,353,363-381
+services/account/src/auth.ts
+  s_f058f999ab46b7::t_6c4ae48f777fcd 25,69,88
+services/account/src/datafn/app-scopes.test.ts
+  s_f058f999ab46b7::t_2918a4a3fa9d57 1-1257
+services/account/src/datafn/app-scopes.ts
+  s_f058f999ab46b7::t_04f7fb60d26b17 1-1052
+services/account/src/datafn/file-deletions.schema.ts
+  s_f058f999ab46b7::t_99f954ee5e51db 1-22
+services/account/src/datafn/file-deletions.test.ts
+  s_f058f999ab46b7::t_c972ca47d40f25 1-717
+services/account/src/datafn/file-deletions.ts
+  s_f058f999ab46b7::t_6ef078267ad815 1-567
+services/account/src/datafn/resource-ownership.ts
+  s_f058f999ab46b7::t_931e54226ae546 1-129
+services/account/src/datafn/server.ts
+  s_f058f999ab46b7::t_4b97217335432e 9,15-19,25-32,59-65,98-101,119-151,176,178-189,191-198,220-226,289-327
+services/account/src/db/datafn-node.ts
+  s_f058f999ab46b7::t_1a1ec35134832a 5,29
+services/account/src/db/generated/datafn/datafn-schema.drizzle.ts
+  s_f058f999ab46b7::t_a041ecd49cdd13 139,146,211,257,462
+services/account/src/db/generated/datafn/datafn-types.ts
+  s_f058f999ab46b7::t_cd14a291f29980 89,96,139,172,315
+services/account/src/db/generated/filefn/filefn-schema.ts
+  s_f058f999ab46b7::t_7497a4cbcfeaeb 1-160
+services/account/src/db/sync-cloudflare.ts
+  s_f058f999ab46b7::t_19b2b69d221953 5,34
+services/account/src/db/sync-schema.ts
+  s_f058f999ab46b7::t_3d45c7e2767cd9 2-3,5-6
+services/account/src/files/database.ts
+  s_f058f999ab46b7::t_98a38ee03b6084 1-66
+services/account/src/files/deferred.ts
+  s_f058f999ab46b7::t_25c653585822bf 1-98
+services/account/src/files/routes.ts
+  s_f058f999ab46b7::t_71dad094642f92 1-232
+services/account/src/files/server.ts
+  s_f058f999ab46b7::t_05d64b7ec3ee01 1-125
+services/account/src/files/session-scopes.test.ts
+  s_f058f999ab46b7::t_f061140beed1b8 1-75
+services/account/src/files/storage.ts
+  s_f058f999ab46b7::t_6f89e371b0738f 1-94
+services/account/src/http/observability.ts
+  s_f058f999ab46b7::t_bb1cd2a22ef104 14,57,129-132
+services/account/src/node.ts
+  s_f058f999ab46b7::t_3805b633911980 9-14,22,35-42,45,92-96
+services/account/src/testing/harness.ts
+  s_f058f999ab46b7::t_03a52033753690 12-17,39,61,129,165
+services/account/src/testing/run-datafn-migrations.ts
+  s_f058f999ab46b7::t_a465aff2b6f3eb 8,134
+services/account/src/testing/run-filefn-migrations.ts
+  s_f058f999ab46b7::t_99dcd7677aab23 1-192
+services/account/src/worker.ts
+  s_f058f999ab46b7::t_e950d8ec24c4a0 6-14,37-40,65-69,85-93,105,112-116,119-131
+services/account/superfunctions.config.mjs
+  s_f058f999ab46b7::t_d3f2894d57da11 2-16,27
+services/account/superfunctions.config.ts
+  s_f058f999ab46b7::t_d2888b47f03923 2-16,27
+shared/utils/clipboard.ts
+  s_f058f999ab46b7::t_9f6c6575018158 1-3
+tests/fixtures/components/ContextZoneContentInlineStub.svelte
+  s_f058f999ab46b7::t_71f86703d57ecc 1-8
+tests/fixtures/components/RightDrawerHarness.svelte
+  s_f058f999ab46b7::t_3f1d0a442326c9 1-23
+tests/fixtures/components/SettingThumbnailStub.svelte
+  s_f058f999ab46b7::t_8026a939bcf27a 1-2,5-6
+tests/fixtures/components/TopBarToastHostProbe.svelte
+  s_f058f999ab46b7::t_5a0d339be48191 1-18
+tests/projects/account.vitest.config.ts
+  s_f058f999ab46b7::t_e84bedb567a5ad 1-19
+tests/unit/account-service/files-config.spec.ts
+  s_f058f999ab46b7::t_558cb6b309af61 1-140
+tests/unit/account-service/files-routes.spec.ts
+  s_f058f999ab46b7::t_2299ab9e295504 1-744
+tests/unit/account-service/files-runtime.spec.ts
+  s_f058f999ab46b7::t_6b7a88f9732c1b 1-499
+tests/vitest.workspace.ts
+  s_f058f999ab46b7::t_7815f8bd0f368e 9
+tools/check/type-ownership.mjs
+  s_f058f999ab46b7::t_e181fb167866f3 45-53,153-154,261
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a17a47fdf3b27452242243815e9543e8ef0cfacc",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
