@@ -73,7 +73,8 @@
 {#snippet panelSwitcher(
   size: Size.sm | Size.md,
   isIconOnlyMode: boolean,
-  isTrackFilled?: boolean
+  isTrackFilled?: boolean,
+  isIndicatorOnTop?: boolean
 )}
   <BoxSwitcher
     isTablist={true}
@@ -81,7 +82,7 @@
     options={panels}
     {size}
     isAccentColor={true}
-    isActiveIndicatorOnTop={false}
+    isActiveIndicatorOnTop={isIndicatorOnTop ?? false}
     {isTrackFilled}
     selected={$resourceStore.panel}
     onSelect={(e) => $resourceStore.switchPanel(e.detail)}
@@ -217,7 +218,8 @@
           {@render panelSwitcher(
             $view.isConstrainedWidth ? Size.sm : Size.md,
             $view.isConstrainedWidth,
-            false
+            false,
+            !$shape.isFramed
           )}
           <div
             class="flex items-center h-full cw:border-r border-l border-brs2 ml-3 app-framed:border-transparent app-framed:gap-1 app-framed:pr-1"

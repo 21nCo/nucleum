@@ -4,12 +4,14 @@
   import { untrack, type Snippet } from "svelte";
   import {
     contextZone,
-    getContextZonePane
+    getContextZonePane,
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     children,
-    cycle = undefined,
+    views = undefined,
+    fallbackViews = undefined,
     surface = undefined,
     title = undefined,
     fallback = undefined,
@@ -17,8 +19,13 @@
   }: {
     /** Controls shown in the top bar context zone for this pane. */
     children: Snippet;
-    /** Selects the next tab or view of this entry. */
-    cycle?: () => void;
+    /** Views the keyboard can move between while this entry shows. */
+    views?: ContextZoneViews;
+    /**
+     * Views the keyboard moves between while this entry shows, used only
+     * when no page switcher on this pane registers views.
+     */
+    fallbackViews?: ContextZoneViews;
     /** Background class of the context tab, matching the page below. */
     surface?: string;
     /** Replaces the page identity's title while this entry shows. */
@@ -37,12 +44,14 @@
   // page that unmounts as Minimize returns to a space would otherwise read
   // its released store and stop the space from rendering.
   let shownContent = $state.raw(untrack(() => children));
-  let shownCycle = $state.raw(untrack(() => cycle));
+  let shownViews = $state.raw(untrack(() => views));
+  let shownFallbackViews = $state.raw(untrack(() => fallbackViews));
   let shownSurface = $state.raw(untrack(() => surface));
   let shownTitle = $state.raw(untrack(() => title));
   $effect.pre(() => {
     shownContent = children;
-    shownCycle = cycle;
+    shownViews = views;
+    shownFallbackViews = fallbackViews;
     shownSurface = surface;
     shownTitle = title;
   });
@@ -53,8 +62,11 @@
       get content() {
         return shownContent;
       },
-      get cycle() {
-        return shownCycle;
+      get views() {
+        return shownViews;
+      },
+      get fallbackViews() {
+        return shownFallbackViews;
       },
       get surface() {
         return shownSurface;

@@ -27,7 +27,7 @@
   import { Product } from "@nucleum/client/config/product.type";
   import Switch from "@21n/ui/elements/toggle/Switch.svelte";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
-  import { nextCycleValue } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import type { ContextZoneViews } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   const bgIndex = 2;
   const isNucleusContext = $derived($appStore.product === Product.NUCLEUM);
@@ -95,17 +95,16 @@
     return pagesList[0]?.id ?? undefined;
   }
 
-  function cyclePage() {
-    const next = nextCycleValue(
-      pages.map((page) => page.value),
-      $selectedPageId
-    );
-    if (!next) return;
-    $selectedPageId = next;
-    uiState.setState(UIState.analyticsPage, next, {
-      scope: UIStateScope.DEVICE
-    });
-  }
+  const pageViews = $derived<ContextZoneViews>({
+    values: pages.map((page) => String(page.value)),
+    active: $selectedPageId,
+    select: (value) => {
+      $selectedPageId = value;
+      uiState.setState(UIState.analyticsPage, value, {
+        scope: UIStateScope.DEVICE
+      });
+    }
+  });
 
   function setAnalyticsEditMode(nextValue: boolean) {
     isAnalyticsEditMode = nextValue;
@@ -222,7 +221,7 @@
             </div>
           </div>
         {:else}
-          <ContextZoneContent cycle={cyclePage}>
+          <ContextZoneContent views={pageViews}>
             <div class="h-full flex items-center" data-testid="overview-tabs">
               {@render pagesBar(true)}
             </div>
