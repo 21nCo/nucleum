@@ -49,7 +49,7 @@
   import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
   import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import {
-    normalizeTaskNumberFields,
+    createTaskNumberFieldNormalizer,
     resolveTaskDueDateFilters,
     resolveTaskWithoutDueDateFilter,
     resolveTaskWithoutObjectiveFilter
@@ -384,9 +384,12 @@
     }
   }
 
+  /** Converts direct-mode numeric strings, keeping each row's copy across re-derives. */
+  const normalizeTaskNumber = createTaskNumberFieldNormalizer();
+
   function normalizeTasks(records: ITaskThumb[]) {
     let result = records
-      .map(normalizeTaskNumberFields)
+      .map(normalizeTaskNumber)
       .filter(resolveStatusFilter());
     if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
       result = result.filter((x: any) => {

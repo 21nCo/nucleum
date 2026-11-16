@@ -63,20 +63,13 @@ const TASK_NUMBER_FIELDS = [
   "minutes"
 ] as const;
 
-/** Converted copies by source record, so a record read again keeps its copy's identity. */
-const normalizedTaskRecords = new WeakMap<object, object>();
-
 /**
  * Turns the numeric strings of a task's number fields into numbers. In
  * direct mode Postgres returns `numeric` columns as strings, so
  * `new Date(task.dateUnix)` is invalid and `"0"` reads as a set date.
- * Returns the same record when nothing needs converting, and the same copy
- * each time it is given the same record, so list rows keep their identity
- * (and any in-progress edit) when the list re-derives.
+ * Returns the same record when nothing needs converting.
  */
 export function normalizeTaskNumberFields<T extends object>(record: T): T {
-  const cached = normalizedTaskRecords.get(record);
-  if (cached) return cached as T;
   let result: T | undefined;
   for (const field of TASK_NUMBER_FIELDS) {
     const value = (record as Record<string, unknown>)[field];
@@ -86,7 +79,22 @@ export function normalizeTaskNumberFields<T extends object>(record: T): T {
     result ??= { ...record };
     (result as Record<string, unknown>)[field] = number;
   }
-  if (!result) return record;
-  normalizedTaskRecords.set(record, result);
-  return result;
+  return result ?? record;
+}
+
+/**
+ * Creates a {@link normalizeTaskNumberFields} that returns the same copy each
+ * time it is given the same record, so a list's rows keep their identity
+ * (and any in-progress edit) when the list re-derives. Each list creates its
+ * own, so lists never share copies.
+ */
+export function createTaskNumberFieldNormalizer() {
+  const copies = new WeakMap<object, object>();
+  return function normalize<T extends object>(record: T): T {
+    const cached = copies.get(record);
+    if (cached) return cached as T;
+    const result = normalizeTaskNumberFields(record);
+    if (result !== record) copies.set(record, result);
+    return result;
+  };
 }

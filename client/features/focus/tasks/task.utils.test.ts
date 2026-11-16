@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { evaluateFilter } from "@datafn/core";
 import {
+  createTaskNumberFieldNormalizer,
   normalizeTaskNumberFields,
   resolveTaskWithoutDueDateFilter,
   resolveTaskWithoutObjectiveFilter
@@ -80,18 +81,33 @@ describe("client/features/focus/tasks/task.utils", () => {
       expect(normalizeTaskNumberFields(record)).toBe(record);
     });
 
-    it("returns the same copy for the same record", () => {
-      const record = { id: "a", dateUnix: "7" };
-      expect(normalizeTaskNumberFields(record)).toBe(
-        normalizeTaskNumberFields(record)
-      );
-    });
-
     it("does not change the record it is given", () => {
       const record = { id: "a", dateUnix: "7" };
       const result = normalizeTaskNumberFields(record);
       expect(result).not.toBe(record);
       expect(record.dateUnix).toBe("7");
+    });
+  });
+
+  describe("createTaskNumberFieldNormalizer", () => {
+    it("returns the same copy for the same record", () => {
+      const normalize = createTaskNumberFieldNormalizer();
+      const record = { id: "a", dateUnix: "7" };
+      expect(normalize(record)).toBe(normalize(record));
+      expect(normalize(record).dateUnix).toBe(7);
+    });
+
+    it("returns records that need no conversion as they are", () => {
+      const normalize = createTaskNumberFieldNormalizer();
+      const record = { id: "a", dateUnix: 7 };
+      expect(normalize(record)).toBe(record);
+    });
+
+    it("does not share copies between normalizers", () => {
+      const record = { id: "a", dateUnix: "7" };
+      expect(createTaskNumberFieldNormalizer()(record)).not.toBe(
+        createTaskNumberFieldNormalizer()(record)
+      );
     });
   });
 });
