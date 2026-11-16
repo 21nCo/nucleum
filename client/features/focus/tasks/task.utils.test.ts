@@ -7,6 +7,9 @@ import {
   resolveTaskWithoutObjectiveFilter
 } from "./task.utils";
 
+/** A task as a direct-mode read returns it: number fields may be numeric strings. */
+type DirectModeTask = { id: string; dateUnix: number | string };
+
 describe("client/features/focus/tasks/task.utils", () => {
   describe("resolveTaskWithoutDueDateFilter", () => {
     const filters = { dateUnix: resolveTaskWithoutDueDateFilter() };
@@ -65,9 +68,8 @@ describe("client/features/focus/tasks/task.utils", () => {
     });
 
     it("turns a zero date string into 0 so it reads as no date", () => {
-      expect(
-        normalizeTaskNumberFields({ id: "a", dateUnix: "0" }).dateUnix
-      ).toBe(0);
+      const record: DirectModeTask = { id: "a", dateUnix: "0" };
+      expect(normalizeTaskNumberFields(record).dateUnix).toBe(0);
     });
 
     it("leaves numbers, nulls, blanks and non-numeric strings alone", () => {
@@ -92,7 +94,7 @@ describe("client/features/focus/tasks/task.utils", () => {
   describe("createTaskNumberFieldNormalizer", () => {
     it("returns the same copy for the same record", () => {
       const normalize = createTaskNumberFieldNormalizer();
-      const record = { id: "a", dateUnix: "7" };
+      const record: DirectModeTask = { id: "a", dateUnix: "7" };
       expect(normalize(record)).toBe(normalize(record));
       expect(normalize(record).dateUnix).toBe(7);
     });
