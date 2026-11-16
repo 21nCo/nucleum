@@ -48,7 +48,12 @@
   import { fly } from "svelte/transition";
   import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
   import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
-  import { resolveTaskDueDateFilters } from "@nucleum/features/focus/tasks/task.utils";
+  import {
+    createTaskNumberFieldNormalizer,
+    resolveTaskDueDateFilters,
+    resolveTaskWithoutDueDateFilter,
+    resolveTaskWithoutObjectiveFilter
+  } from "@nucleum/features/focus/tasks/task.utils";
   import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
 
   import { intersection } from "@21n/ui/actions/intersection.action";
@@ -379,8 +384,13 @@
     }
   }
 
+  /** Converts direct-mode numeric strings, keeping each row's copy across re-derives. */
+  const normalizeTaskNumber = createTaskNumberFieldNormalizer();
+
   function normalizeTasks(records: ITaskThumb[]) {
-    let result = records.filter(resolveStatusFilter());
+    let result = records
+      .map(normalizeTaskNumber)
+      .filter(resolveStatusFilter());
     if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
       result = result.filter((x: any) => {
         return (
@@ -434,7 +444,9 @@
   function resolveBaseFilters() {
     return {
       isArchived: isArchivedFilterSelected ? true : undefined,
-      objectiveId: isHideObjectiveTasksFilterSelected ? false : undefined,
+      objectiveId: isHideObjectiveTasksFilterSelected
+        ? resolveTaskWithoutObjectiveFilter()
+        : undefined,
       isChecked: dueDateFilter === TaskDueDateFilter.OVERDUE ? false : undefined
     };
   }
@@ -502,7 +514,7 @@
         $lt: typeof dayStart === "number" ? dayStart : Date.now()
       };
     } else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
-      return false;
+      return resolveTaskWithoutDueDateFilter();
   }
 
   function resolveAccessPoint() {

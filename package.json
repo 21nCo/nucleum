@@ -107,9 +107,12 @@
   "overrides": {
     "@babel/traverse": "7.29.0",
     "@datafn/svelte": {
-      "@datafn/core": "0.1.2"
+      "@datafn/core": "0.1.3"
     },
     "@parcel/watcher": "2.1.0",
+    "@searchfn/datafn-provider": {
+      "@datafn/core": "0.1.3"
+    },
     "@superfunctions/observability": "0.0.3"
   }
 }

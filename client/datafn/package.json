@@ -5,11 +5,14 @@
   "type": "module",
   "dependencies": {
     "@21n/shared-utils": "*",
-    "@datafn/client": "0.1.5",
+    "@datafn/client": "0.1.10",
     "@nucleum/persistence": "*",
     "@nucleum/schema": "*",
     "@searchfn/adapter-indexeddb": "0.1.0",
     "@searchfn/datafn-provider": "0.4.0"
+  },
+  "devDependencies": {
+    "@datafn/server": "0.2.6"
   },
   "peerDependencies": {
     "@nucleum/client": "*",

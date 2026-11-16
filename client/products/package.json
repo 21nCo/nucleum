@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@datafn/client": "0.1.5",
+    "@datafn/client": "0.1.10",
     "@datafn/svelte": "0.1.1",
     "@huggingface/transformers": "^3.0.2",
     "@nucleum/datafn": "*",

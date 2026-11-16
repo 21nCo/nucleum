@@ -14,6 +14,7 @@
   import CalendarColumnPanelSelector from "../column/CalendarColumnPanelSelector.svelte";
   import { resolveCalendarColumnPanels } from "../calendar.utils";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
 
   let {
     panel = $bindable(CalendarLayout.Bird),
@@ -70,6 +71,17 @@
       value: TimeScaleUnit.YEAR
     }
   ];
+  const scaleSubViews = useContextZoneSubViews(() =>
+    isDev
+      ? {
+          values: switchOptions.map((option) => option.value),
+          active: scale,
+          select: (value) => {
+            scale = value as TimeScaleUnit;
+          }
+        }
+      : undefined
+  );
 </script>
 
 <CalendarLayoutView
@@ -85,6 +97,7 @@
         options={switchOptions}
         size={Size.sm}
         bind:selected={scale}
+        onSelect={() => scaleSubViews.touch()}
         parentBgIndex={2}
         isExpandOnActiveForIcon={true}
         style={OptionSelectorStyle.ICON}

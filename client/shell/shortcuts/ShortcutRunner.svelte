@@ -7,7 +7,10 @@
     isRightDrawerOnFront,
     isTextElement
   } from "@21n/ui/actions/interaction-dom";
-  import { isLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
+  import {
+    isLayerOnFront,
+    isViewKeyLayerOnFront
+  } from "@nucleum/shell/shortcuts/front-layer";
   import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { get } from "svelte/store";
@@ -24,6 +27,7 @@
     selectContextViewAt,
     stepContextView
   } from "@nucleum/shell/shortcuts/context-view-step";
+  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -73,6 +77,11 @@
       stepContextViewByKey(event, viewStep);
       return;
     }
+    const subViewStep = SUB_VIEW_STEPS[shortcut.action];
+    if (subViewStep !== undefined) {
+      stepSubViewByKey(event, subViewStep);
+      return;
+    }
     requireCommandHost().runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
@@ -92,6 +101,26 @@
   function stepContextViewByKey(event: KeyboardEvent, delta: number) {
     if (event.defaultPrevented) return;
     if (!stepContextView(delta)) return;
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  const SUB_VIEW_STEPS: Partial<Record<string, number>> = {
+    [Action.PREVIOUS_SUB_VIEW]: -1,
+    [Action.NEXT_SUB_VIEW]: 1
+  };
+
+  /**
+   * Steps the shown page's in-page sub switcher for Option+Shift+Left /
+   * Option+Shift+Right with the same guards as the view keys: skips a key
+   * another handler already consumed and a modal, dialog, popover or
+   * `aria-modal` layer in front, and keeps the browser default unless a view
+   * was selected.
+   */
+  function stepSubViewByKey(event: KeyboardEvent, delta: number) {
+    if (event.defaultPrevented) return;
+    if (isViewKeyLayerOnFront()) return;
+    if (!contextZone.stepSub(delta)) return;
     event.stopPropagation();
     event.preventDefault();
   }
