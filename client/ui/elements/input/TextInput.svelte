@@ -33,7 +33,7 @@
     isShowSaveControl = false,
     isShowClearControl = false,
     saveControlLabel = "Save",
-    cancelControlLabel = "Cancel",
+    cancelControlLabel = undefined,
     isPreventDefaultOnEnter = false,
     isRounded = false,
     height = undefined,
@@ -73,7 +73,7 @@
     isShowSaveControl?: boolean;
     isShowClearControl?: boolean;
     saveControlLabel?: string;
-    cancelControlLabel?: string;
+    cancelControlLabel?: string | undefined;
     isPreventDefaultOnEnter?: boolean;
     isRounded?: boolean;
     height?: string | undefined;
@@ -105,6 +105,9 @@
       | undefined;
   } = $props();
 
+  const resolvedCancelControlLabel = $derived(
+    cancelControlLabel ?? (isShowSaveControl ? "Cancel" : "Clear")
+  );
   let isFocused = $state(false);
   let inputRef = $state<any>();
   let isValidLink = $state(false);
@@ -516,7 +519,7 @@
             <button
               type="button"
               id="input-cancel-control"
-              aria-label={cancelControlLabel}
+              aria-label={resolvedCancelControlLabel}
               onclick={(event) => {
                 event.stopPropagation();
                 if (isShowClearControl) emitClear();

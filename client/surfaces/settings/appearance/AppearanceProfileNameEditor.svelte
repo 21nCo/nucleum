@@ -70,6 +70,7 @@
     hasControls={true}
     isShowSaveControl={name.trim() !== ""}
     isShowClearControl={true}
+    cancelControlLabel="Cancel"
     isPreventKeyboardToolbar={true}
     testId="appearance-profile-name"
     onEnter={submitOnEnter}
