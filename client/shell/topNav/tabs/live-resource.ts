@@ -2,7 +2,7 @@ import { readable, type Readable } from "svelte/store";
 import { toSvelteStore } from "@datafn/svelte";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import { resolveResource } from "@nucleum/datafn/resource-query.utils";
+import { normalizeResourceRecord } from "@nucleum/datafn/resource-query.utils";
 import {
   determineResourceType,
   isRecordId
@@ -33,7 +33,6 @@ export function liveResource(item: IRecordId | string): Readable<LiveResource> {
   };
   return readable(initial, (set) => {
     let state = initial;
-    let isActive = true;
     const update = (patch: Partial<LiveResource>) => {
       state = { ...state, ...patch };
       set(state);
@@ -54,43 +53,40 @@ export function liveResource(item: IRecordId | string): Readable<LiveResource> {
       resourceType,
       action: requireCommandHost().resolveAction(resourceType)
     });
-    const unsubscribe =
-      resourceType === Resource.unknown
-        ? undefined
-        : toSvelteStore<unknown[]>(
-            datafn.table(resourceType).signal({
-              filters: { id: item },
-              limit: 1,
-              metadata: { includeTrashed: true, includeArchived: true }
-            }),
-            { initialData: [] }
-          ).subscribe((value) => {
-            const record = value.data?.[0];
-            if (record && typeof record === "object") {
-              update({
-                resource: { ...state.resource, ...record },
-                isResolved: true
-              });
-            }
-          });
-    resolveResource(item)
-      .catch((error) => {
-        logger.error({ at: "liveResource", item, error });
-        return undefined;
-      })
-      .then((resolved) => {
-        if (!isActive) return;
+    if (resourceType === Resource.unknown) {
+      update({ isResolved: true });
+      return;
+    }
+    // One live read by id: it both resolves the record and follows its edits.
+    // The store's first value is emitted before the signal has fetched, so
+    // only a later empty, settled value means the record is missing.
+    let isFirstValue = true;
+    const unsubscribe = toSvelteStore<unknown[]>(
+      datafn.table(resourceType).signal({
+        filters: { id: item },
+        limit: 1,
+        metadata: { includeTrashed: true, includeArchived: true }
+      }),
+      { initialData: [] }
+    ).subscribe((value) => {
+      const record = value.data?.[0];
+      if (record && typeof record === "object") {
         update({
-          resource: resolved
-            ? { ...resolved, ...(state.resource ?? {}) }
-            : state.resource,
+          resource: normalizeResourceRecord(resourceType, {
+            ...state.resource,
+            ...record
+          }),
           isResolved: true
         });
-      });
-    return () => {
-      isActive = false;
-      unsubscribe?.();
-    };
+      } else if (!isFirstValue && !value.loading && !state.isResolved) {
+        if (value.error) {
+          logger.error({ at: "liveResource", item, error: value.error });
+        }
+        update({ isResolved: true });
+      }
+      isFirstValue = false;
+    });
+    return unsubscribe;
   });
 }
 

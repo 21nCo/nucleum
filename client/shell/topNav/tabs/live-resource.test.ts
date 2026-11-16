@@ -1,8 +1,10 @@
 import { get, writable } from "svelte/store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const resolveResource = vi.fn();
-const signal = writable<{ data: unknown[] }>({ data: [] });
+const signal = writable<{ data: unknown[]; loading?: boolean; error?: unknown }>({
+  data: [],
+  loading: false
+});
 
 vi.mock("@nucleum/datafn/datafn.store", () => ({
   datafn: { table: () => ({ signal: () => ({}) }) }
@@ -11,7 +13,7 @@ vi.mock("@datafn/svelte", () => ({
   toSvelteStore: () => signal
 }));
 vi.mock("@nucleum/datafn/resource-query.utils", () => ({
-  resolveResource: (id: string) => resolveResource(id)
+  normalizeResourceRecord: (_resource: string, record: object) => record
 }));
 vi.mock("@nucleum/shared-state/commands/command-host", () => ({
   requireCommandHost: () => ({
@@ -41,8 +43,7 @@ async function settle<T>(store: {
 
 describe("liveResource", () => {
   beforeEach(() => {
-    resolveResource.mockReset();
-    signal.set({ data: [] });
+    signal.set({ data: [], loading: false });
   });
 
   it("labels a page action with its label and icon", () => {
@@ -51,22 +52,38 @@ describe("liveResource", () => {
     expect(value.resource).toEqual({ label: "Calendar", icon: "calendar" });
   });
 
-  it("resolves a record", async () => {
-    resolveResource.mockResolvedValue({ id: "node:a", label: "Alpha" });
+  it("resolves a record from its signal", async () => {
+    signal.set({ data: [{ id: "node:a", label: "Alpha" }] });
     const value = await settle(liveResource("node:a"));
     expect(value.isResolved).toBe(true);
     expect(value.resource?.label).toBe("Alpha");
   });
 
+  it("stays unresolved until the signal has fetched", () => {
+    const states: boolean[] = [];
+    const unsubscribe = liveResource("node:gone").subscribe((value) =>
+      states.push(value.isResolved)
+    );
+    expect(states.at(-1)).toBe(false);
+    signal.set({ data: [], loading: true });
+    expect(states.at(-1)).toBe(false);
+    signal.set({ data: [], loading: false });
+    unsubscribe();
+    expect(states.at(-1)).toBe(true);
+  });
+
   it("ends resolved without a resource for a missing record", async () => {
-    resolveResource.mockResolvedValue(undefined);
-    const value = await settle(liveResource("node:gone"));
+    const store = liveResource("node:gone");
+    const unsubscribe = store.subscribe(() => {});
+    signal.set({ data: [], loading: false });
+    const value = get(store);
+    unsubscribe();
     expect(value.isResolved).toBe(true);
     expect(value.resource).toBeUndefined();
   });
 
   it("follows record changes from the signal", async () => {
-    resolveResource.mockResolvedValue({ id: "node:a", label: "Alpha" });
+    signal.set({ data: [{ id: "node:a", label: "Alpha" }] });
     const labels: (string | undefined)[] = [];
     const unsubscribe = liveResource("node:a").subscribe((value) =>
       labels.push(value.resource?.label)
@@ -78,26 +95,23 @@ describe("liveResource", () => {
     expect(labels.at(-1)).toBe("Beta");
   });
 
-  it("ends resolved without a resource when resolving fails", async () => {
-    resolveResource.mockRejectedValue(new Error("offline"));
-    const value = await settle(liveResource("node:a"));
+  it("ends resolved without a resource when the read fails", () => {
+    const store = liveResource("node:a");
+    const unsubscribe = store.subscribe(() => {});
+    signal.set({ data: [], loading: false, error: new Error("offline") });
+    const value = get(store);
+    unsubscribe();
     expect(value.isResolved).toBe(true);
     expect(value.resource).toBeUndefined();
   });
 
-  it("ignores a resolution that arrives after unsubscribing", async () => {
-    let finish: (value: unknown) => void = () => {};
-    resolveResource.mockReturnValue(
-      new Promise((resolve) => (finish = resolve))
-    );
+  it("ignores values that arrive after unsubscribing", () => {
     const values: { isResolved: boolean }[] = [];
     const unsubscribe = liveResource("node:a").subscribe((value) =>
       values.push(value)
     );
     unsubscribe();
-    finish({ id: "node:a", label: "Late" });
-    await Promise.resolve();
-    await Promise.resolve();
+    signal.set({ data: [{ id: "node:a", label: "Late" }] });
     expect(values.every((value) => !value.isResolved)).toBe(true);
   });
 });
