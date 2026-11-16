@@ -247,12 +247,16 @@ export function resolveContextZoneSubViewSource(
       (!pane || item.pane.id === pane.id)
   );
   if (candidates.length === 0) return undefined;
-  return candidates.reduce((latest, item) =>
-    item.usedAt > latest.usedAt ||
-    (item.usedAt === latest.usedAt && item.key > latest.key)
-      ? item
-      : latest
-  );
+  return candidates
+    .slice(1)
+    .reduce(
+      (latest, item) =>
+        item.usedAt > latest.usedAt ||
+        (item.usedAt === latest.usedAt && item.key > latest.key)
+          ? item
+          : latest,
+      candidates[0]
+    );
 }
 
 /** Mounted panes on visible layers, one per pane id, in mount order. */
@@ -356,7 +360,10 @@ export const contextZone = {
     source: { views?: ContextZoneViews }
   ): ContextZoneSubViewRegistration {
     const key = ++nextKey;
-    subViewSources.update((list) => [...list, { key, pane, source, usedAt: 0 }]);
+    subViewSources.update((list) => [
+      ...list,
+      { key, pane, source, usedAt: 0 }
+    ]);
     return {
       touch: () => markSubViewsUsed(key),
       release: () =>

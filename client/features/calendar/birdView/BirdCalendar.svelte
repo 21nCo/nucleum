@@ -15,7 +15,6 @@
   import { resolveCalendarColumnPanels } from "../calendar.utils";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
-  import { untrack } from "svelte";
 
   let {
     panel = $bindable(CalendarLayout.Bird),
@@ -83,16 +82,6 @@
         }
       : undefined
   );
-  // Touch on a pick, not on mount, so the newest switcher stays the fallback.
-  let scaleTouchArmed = false;
-  $effect(() => {
-    scale;
-    if (!scaleTouchArmed) {
-      scaleTouchArmed = true;
-      return;
-    }
-    untrack(() => scaleSubViews.touch());
-  });
 </script>
 
 <CalendarLayoutView
@@ -108,6 +97,7 @@
         options={switchOptions}
         size={Size.sm}
         bind:selected={scale}
+        onSelect={() => scaleSubViews.touch()}
         parentBgIndex={2}
         isExpandOnActiveForIcon={true}
         style={OptionSelectorStyle.ICON}
