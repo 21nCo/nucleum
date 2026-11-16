@@ -209,6 +209,16 @@ export class ActiveResourceStore<
    * owner releases. Pass a getter when the view's mode can change while it
    * stays mounted, so a release hands back the mode it has then.
    */
+  /**
+   * The access mode of the newest mounted view of `id` (see {@link retain}),
+   * which is the mode the shared store should hold; undefined when no view
+   * of it is mounted.
+   */
+  static resolveOwnerAccessMode(id: IRecordId): AccessMode | undefined {
+    const owners = activeResourceOwners.get(id.toString()) ?? [];
+    return owners[owners.length - 1]?.accessMode();
+  }
+
   static retain(
     id: IRecordId,
     accessMode?: AccessMode | (() => AccessMode | undefined)

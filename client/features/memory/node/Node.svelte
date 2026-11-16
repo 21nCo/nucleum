@@ -98,16 +98,21 @@
       untrack(() => initialize());
     }
   });
-  /** Sets the loaded node's access mode to `mode` when it differs. */
-  function applyAccessMode(mode: typeof accessMode) {
+  /**
+   * Sets the loaded node's access mode to that of the newest mounted view of
+   * it (this one's when it is the only one), so a view that finishes loading
+   * late doesn't overwrite the mode of a view opened after it.
+   */
+  function applyAccessMode() {
+    const mode = ActiveNodeStore.resolveOwnerAccessMode(id) ?? accessMode;
     if ($node && $node.accessMode !== mode) {
       node.update((current) => ({ ...current, accessMode: mode }));
     }
   }
   /** Keep the loaded node's access mode current without re-fetching it. */
   $effect(() => {
-    const mode = accessMode;
-    untrack(() => applyAccessMode(mode));
+    accessMode;
+    untrack(() => applyAccessMode());
   });
   navigation.clearAllTooltips();
 
@@ -125,7 +130,7 @@
       isLoading = false;
       return;
     }
-    applyAccessMode(accessMode);
+    applyAccessMode();
     nodeContext.parent = $node?.parent;
     nodeContext.contentType = $node?.contentType;
     isLoading = false;
