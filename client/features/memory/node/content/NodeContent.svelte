@@ -33,6 +33,7 @@
   import { wordCounter } from "@nucleum/features/memory/node/content/word-counter.action";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import {
+    hasEveryStoredBlock,
     readStoredNoteBlocks,
     resolveNoteContentStart
   } from "@nucleum/features/memory/node/content/first-block";
@@ -128,6 +129,31 @@
     }
   }
 
+  /**
+   * Loads a note's stored blocks for the editor, or undefined when any block
+   * in the stored order can't be read yet (e.g. a local store still
+   * downloading): an editor mounted with missing blocks would save a shorter
+   * order, or seed a block of its own, over the stored one.
+   */
+  async function loadStoredNoteBlocks(
+    id: IRecordId,
+    mdChildOrder: IRecordId[]
+  ) {
+    try {
+      const children = await loadNoteBlocks(mdChildOrder, id);
+      if (hasEveryStoredBlock(mdChildOrder, children)) return children;
+      logger.warn({
+        at: "NodeContent.firstBlock.incomplete",
+        id,
+        stored: mdChildOrder.length,
+        loaded: children.length
+      });
+    } catch (error) {
+      logger.error({ at: "NodeContent.firstBlock.load", id, error });
+    }
+    return undefined;
+  }
+
   onMount(async () => {
     if (
       $node.contentType === NodeType.NODULAR_MARKDOWN &&
@@ -136,7 +162,11 @@
       const start = await readNoteContentStart($node.id);
       if (start.kind === "hold") return;
       if (start.kind === "load") {
-        const children = await loadNoteBlocks(start.mdChildOrder, $node.id);
+        const children = await loadStoredNoteBlocks(
+          $node.id,
+          start.mdChildOrder
+        );
+        if (!children) return;
         $node.mdChildOrder = start.mdChildOrder;
         $node.children = children as unknown as typeof $node.children;
       } else {

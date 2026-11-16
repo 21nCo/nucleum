@@ -80,3 +80,20 @@ describe("resolveNoteContentStart", () => {
     expect(resolveNoteContentStart(undefined)).toEqual({ kind: "hold" });
   });
 });
+
+describe("hasEveryStoredBlock", () => {
+  it("is true only when every stored block id was loaded", async () => {
+    const { hasEveryStoredBlock } = await import("./first-block");
+    expect(
+      hasEveryStoredBlock(
+        ["node:a", "node:b"],
+        [{ id: "node:a" }, { id: "node:b" }]
+      )
+    ).toBe(true);
+    expect(hasEveryStoredBlock(["node:a", "node:b"], [{ id: "node:a" }])).toBe(
+      false
+    );
+    expect(hasEveryStoredBlock(["node:a"], [])).toBe(false);
+    expect(hasEveryStoredBlock([], [])).toBe(false);
+  });
+});

@@ -80,3 +80,15 @@ export function resolveNoteContentStart(
   }
   return { kind: "hold" };
 }
+
+/** Whether every block id in a stored order was loaded (top level). */
+export function hasEveryStoredBlock(
+  mdChildOrder: IRecordId[],
+  loaded: Array<{ id?: unknown }>
+) {
+  const loadedIds = new Set(loaded.map((block) => String(block?.id)));
+  return (
+    mdChildOrder.length > 0 &&
+    mdChildOrder.every((id) => loadedIds.has(String(id)))
+  );
+}
