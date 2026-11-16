@@ -3,23 +3,50 @@ import {
   requireE2EProduct,
   resolveSurfaceContract
 } from "../../config/e2e.config";
+import type { Page } from "@playwright/test";
 import { ensureInAppOnHome } from "../utils/helpers";
 import {
   blockExternalAuthRequests,
   openNodeRecordFromLibraryById
 } from "../memory/memory-test-helpers";
+import {
+  getResourceThumbnail,
+  openResourceBrowser
+} from "../utils/resource-matrix";
 
 let e2eSeed: E2ESeed;
 
+/**
+ * Opens a seeded record page to give the super bar a context: a node where
+ * the product has the Nodes library, otherwise a collection, which every
+ * product has. Returns the record's name, which the pill shows.
+ */
+async function openSeededRecordPage(page: Page, projectName: string) {
+  const label = `E2E super bar ${Date.now()}`;
+  if (resolveSurfaceContract(requireE2EProduct(projectName), "library.nodes")) {
+    const node = await e2eSeed.memory.node({ label });
+    await openNodeRecordFromLibraryById(page, node.id);
+    return label;
+  }
+  const collection = await e2eSeed.collections.collection({ label });
+  await openResourceBrowser(page, projectName, "collection");
+  const thumb = getResourceThumbnail(page, collection.id);
+  await expect(thumb).toBeVisible({ timeout: 20_000 });
+  await thumb.click({ timeout: 5_000 });
+  await expect
+    .poll(
+      () =>
+        new URL(page.url()).searchParams
+          .get("page")
+          ?.startsWith("collection:") ?? false,
+      { timeout: 10_000 }
+    )
+    .toBe(true);
+  return label;
+}
+
 test.describe("super bar context and modes", () => {
-  test.beforeEach(async ({ page, seed }, testInfo) => {
-    test.skip(
-      !resolveSurfaceContract(
-        requireE2EProduct(testInfo.project.name),
-        "library.nodes"
-      ),
-      "The context is a node opened from the Nodes library, and this product has no nodes"
-    );
+  test.beforeEach(async ({ page, seed }) => {
     e2eSeed = seed;
     await blockExternalAuthRequests(page);
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -30,9 +57,7 @@ test.describe("super bar context and modes", () => {
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    const label = `E2E super bar ${Date.now()}`;
-    const node = await e2eSeed.memory.node({ label });
-    await openNodeRecordFromLibraryById(page, node.id);
+    const label = await openSeededRecordPage(page, test.info().project.name);
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
 
     await page.keyboard.press("ControlOrMeta+k");
