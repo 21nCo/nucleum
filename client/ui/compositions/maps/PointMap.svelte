@@ -134,8 +134,8 @@
     try {
       const mapInstance = map;
       if (!mapInstance || !data || data.length === 0) return;
+      pendingHeatmap = isShowHeatmap;
       if (!mapInstance.isStyleLoaded()) {
-        pendingHeatmap = isShowHeatmap;
         if (isUpdatePending) return;
         isUpdatePending = true;
         mapInstance.once("idle", () => {
