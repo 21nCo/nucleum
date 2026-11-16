@@ -25,7 +25,7 @@ function appStyleOption(page: Page, style: string) {
 }
 
 test.describe("settings - appearance profiles @settings", () => {
-  test("save, modify, update, persist across reload, and delete a profile", async ({
+  test("save, modify, update, persist across reload, rename, and delete a profile", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -83,9 +83,36 @@ test.describe("settings - appearance profiles @settings", () => {
       "true"
     );
 
+    const renamed = `${name} renamed`;
     await profiles
       .locator(`[data-profile-id]`)
       .filter({ hasText: name })
+      .locator("..")
+      .getByTestId("appearance-profile-menu")
+      .click();
+    await page.locator('[data-context-menu-item-id="rename"]').focus();
+    await page.keyboard.press("Enter");
+    const nameInput = page.getByTestId("appearance-profile-name");
+    await expect(nameInput).toBeVisible();
+    await expect(nameInput).toHaveValue(name);
+    await expect
+      .poll(() =>
+        nameInput.evaluate((input: HTMLInputElement) =>
+          input.value.slice(input.selectionStart ?? 0, input.selectionEnd ?? 0)
+        )
+      )
+      .toBe(name);
+    await page.keyboard.type(renamed);
+    await page.keyboard.press("Enter");
+    await expect(nameInput).toBeHidden();
+    const renamedChip = profiles
+      .getByTestId("appearance-profile-option")
+      .filter({ hasText: renamed });
+    await expect(renamedChip).toHaveAttribute("aria-pressed", "true");
+
+    await profiles
+      .locator(`[data-profile-id]`)
+      .filter({ hasText: renamed })
       .locator("..")
       .getByTestId("appearance-profile-menu")
       .click();
