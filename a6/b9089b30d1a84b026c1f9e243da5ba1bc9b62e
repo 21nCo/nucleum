@@ -1,0 +1,27 @@
+client/datafn/package.json
+  s_f058f999ab46b7::t_1769e32c49381e 14-16
+client/shared-state/package.json
+  s_f058f999ab46b7::t_3d346fefcb8a89 26-28
+package-lock.json
+  s_f058f999ab46b7::t_d46fcd11f3b8a7 2978-2980,3113-3115,5201-5203,33754-33756,33777
+schema/package.json
+  s_f058f999ab46b7::t_f9b4396f690bb4 9-11
+services/account/package.json
+  s_f058f999ab46b7::t_c273d40057f179 66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a6b9089b30d1a84b026c1f9e243da5ba1bc9b62e",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
