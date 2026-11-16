@@ -17,10 +17,14 @@
   },
   "dependencies": {
     "@21n/shared-utils": "*",
-    "@datafn/client": "0.1.0",
+    "@datafn/client": "0.1.10",
+    "@filefn/client": "0.2.0",
     "@nucleum/schema": "*",
     "svelte": "^5.55.0",
     "pdfjs-dist": "^4.1.392"
+  },
+  "devDependencies": {
+    "@datafn/server": "0.2.6"
   },
   "peerDependencies": {
     "@21n/theme": "*",

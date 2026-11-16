@@ -19,10 +19,10 @@ import {
 } from "@authfn/social-oauth";
 import type { Adapter, ConditionalKVStoreAdapter, RuntimeStores } from "@superfunctions/db";
 import type { SuperfunctionObservability } from "@superfunctions/observability";
-import { createAccountLookupStore } from "./lookup/dynamodb.js";
 import { ACCOUNT_AUTH_NAMESPACE } from "./auth/constants.js";
 import { sendAccountDebugLog } from "./debug-sink.js";
 import { createAccountAuthPlugins } from "./auth/plugins.js";
+import { accountScopeRegistry } from "./datafn/app-scopes.js";
 
 export interface CreateAccountAuthInput {
   database: Adapter;
@@ -66,6 +66,7 @@ export function accountAuthfn(
       }
     },
     plugins: createAccountAuthPlugins(),
+    scopes: accountScopeRegistry,
     openApi: {
       title: "Nucleus Account API",
       version: "2026-04-24"
@@ -84,7 +85,7 @@ export function createAccountAuth(input: CreateAccountAuthInput): AuthFnServer {
   const multiRegion = {
     regions,
     defaultRegionId: defaultRegion.regionId,
-    lookupStore: input.regionLookupStore ?? createAccountLookupStore(),
+    lookupStore: input.regionLookupStore,
     observability: input.observability
   };
   return accountAuthfn(regions).createServer({

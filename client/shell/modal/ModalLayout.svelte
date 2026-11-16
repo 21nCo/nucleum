@@ -42,6 +42,9 @@
     children?: Snippet | undefined;
   } = $props();
   const size = $derived(params.layout?.size ?? Size.md);
+  const isRightDrawer = $derived(
+    params.layout?.alignment === Placement.Right && !$view.isConstrainedWidth
+  );
   let footerRef = $state<any>();
   onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
@@ -122,7 +125,7 @@
     class={cn(
       "relative modal flex flex-col items-center justify-between rounded-md embed-ios:bg-bgs1 cw:w-full cw:h-full",
       {
-        "dark:border border-brs3": !$view.isConstrainedWidth,
+        "dark:border border-brs3": !$view.isConstrainedWidth && !isRightDrawer,
         "otop:pt-12": !resource || params.title,
         "w-full h-full": !params.layout?.isDynamicSize
       },
@@ -145,9 +148,11 @@
       <ModalHeader
         title={params.title}
         onClose={() => handleClose()}
-        isShowClose={$context.embed === Embed.HANDSET && size !== Size.xs
+        isShowClose={($context.embed === Embed.HANDSET && size !== Size.xs) ||
+          isRightDrawer
           ? true
           : params.layout?.isShowClose}
+        closeTestId={isRightDrawer ? "modal-close" : undefined}
       />
     {/if}
 

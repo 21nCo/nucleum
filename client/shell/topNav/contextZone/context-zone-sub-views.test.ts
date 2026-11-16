@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   BASE_CONTEXT_ZONE_PANE,
+  ContextZoneLayer,
   contextZone,
   resolveContextZoneSubViewSource,
   type ContextZoneSubViewRegistration
@@ -21,6 +22,7 @@ function registerSub(values: string[], active: string, paneId = "base") {
 afterEach(() => {
   registrations.forEach((registration) => registration.release());
   registrations = [];
+  contextZone.setVisibleLayers(undefined);
 });
 
 describe("resolveContextZoneSubViewSource", () => {
@@ -57,6 +59,20 @@ describe("resolveContextZoneSubViewSource", () => {
       )
     ).toBeUndefined();
   });
+
+  it("skips switchers on layers that are not visible, also without a pane", () => {
+    const overlayOnly = new Set<number>([ContextZoneLayer.OVERLAY]);
+    expect(
+      resolveContextZoneSubViewSource([source(1, 3)], undefined, overlayOnly)
+    ).toBeUndefined();
+    expect(
+      resolveContextZoneSubViewSource(
+        [source(1, 3)],
+        undefined,
+        new Set<number>([ContextZoneLayer.BASE])
+      )?.key
+    ).toBe(1);
+  });
 });
 
 describe("contextZone sub views", () => {
@@ -73,6 +89,19 @@ describe("contextZone sub views", () => {
     first.registration.touch();
     expect(contextZone.stepSub(1)).toBe(true);
     expect(first.select).toHaveBeenCalledWith("timeline");
+  });
+
+  it("leaves a base switcher alone while a full-screen overlay covers it", () => {
+    const { select } = registerSub(["day", "week", "month"], "day");
+    // A full-screen overlay shows no context zone pane and hides the base.
+    contextZone.setVisibleLayers([ContextZoneLayer.OVERLAY]);
+    expect(contextZone.resolveSubViews()).toBeUndefined();
+    expect(contextZone.stepSub(1)).toBe(false);
+    expect(select).not.toHaveBeenCalled();
+
+    contextZone.setVisibleLayers([ContextZoneLayer.BASE]);
+    expect(contextZone.stepSub(1)).toBe(true);
+    expect(select).toHaveBeenCalledWith("week");
   });
 
   it("does nothing without sub switchers or after release", () => {

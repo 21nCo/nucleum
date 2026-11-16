@@ -11,6 +11,13 @@ export type IUserGlobalPreferences = {
   // theme: AppSkin;
   // colorScheme: ColorScheme;
   appearance: UserAppearanceSettings;
+  /**
+   * User appearance profiles keyed by id. A `null` entry is a deleted profile,
+   * kept so one-level merges and sync do not bring it back.
+   */
+  appearanceProfiles?: Record<string, StoredAppearanceProfile | null>;
+  /** Id of the profile applied last, user or built-in. */
+  appliedAppearanceProfileId?: string | null;
   birthday?: Date;
   dayStartHour: number;
   dayStartMinute: number;
@@ -53,6 +60,24 @@ export type IUserGlobalPreferences = {
     isGridCreated: boolean;
     grid: any[];
   };
+};
+
+/** Appearance fields a profile captures and restores. */
+export type AppearanceProfileSettings = Pick<
+  UserAppearanceSettings,
+  | "isSyncWithSystem"
+  | "lightColorSchemeId"
+  | "darkColorSchemeId"
+  | "userThemeSetting"
+  | "typeface"
+  | "appStyle"
+>;
+
+/** A user appearance profile as stored in the synced preferences record. */
+export type StoredAppearanceProfile = {
+  name: string;
+  settings: AppearanceProfileSettings;
+  createdAt: number;
 };
 
 export type UserAppearanceSettings = {

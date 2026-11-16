@@ -249,9 +249,6 @@ function transformLegacyRecord(
     result.trashedBy =
       result.trashedBy ?? normalizeRecordId(trashInformation.deletedBy);
   }
-  if (record.isParentInactive !== undefined) {
-    result.isAncestorInactive = record.isParentInactive;
-  }
 
   if (resource === "objective") {
     const parents = normalizeRecordIdArray(record.parent);
@@ -288,6 +285,25 @@ function transformLegacyRecord(
       result.objectiveId ?? resolveRecordId(record.goalId, record.objectiveId);
     if (sourceStore === "PointLog") {
       if (!transformLegacyPointLog(result, record)) return undefined;
+    }
+  }
+
+  if (resource === "event") {
+    const value =
+      typeof record.value === "object" && record.value !== null
+        ? (record.value as Record<string, unknown>)
+        : undefined;
+    if (
+      typeof result.startUnix !== "number" &&
+      typeof value?.startUnix === "number"
+    ) {
+      result.startUnix = value.startUnix;
+    }
+    if (
+      typeof result.endUnix !== "number" &&
+      typeof value?.endUnix === "number"
+    ) {
+      result.endUnix = value.endUnix;
     }
   }
 

@@ -116,7 +116,7 @@
           resources,
           limit: 20,
           limitPerResource: 20,
-          source: "local",
+          source: "auto",
           prefix: true,
           fuzzy: 0.2
         }),

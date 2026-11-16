@@ -10,9 +10,14 @@
   import SpaceHeader from "@nucleum/features/spaces/SpaceHeader.svelte";
   import SpaceSideNav from "@nucleum/features/spaces/SpaceSideNav.svelte";
   import SpaceWall from "@nucleum/features/spaces/SpaceWall.svelte";
-  import SpaceContextZone from "@nucleum/features/spaces/SpaceContextZone.svelte";
+  import SpaceContextZone, {
+    SPACE_VIEW_OPTIONS
+  } from "@nucleum/features/spaces/SpaceContextZone.svelte";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
-  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    contextZone,
+    type ContextZoneViews
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     spaceId,
@@ -94,10 +99,20 @@
   function changeView(next: SpaceView) {
     viewStore.updateView(next);
   }
+
+  // The keys move the space layout only when no page switcher on this pane,
+  // such as the tabs of a resource shown inside the space, registers views.
+  const layoutViews = $derived<ContextZoneViews>({
+    values: SPACE_VIEW_OPTIONS.map((option) => option.value),
+    active: view,
+    select: (value) => {
+      if (value !== view) changeView(value as SpaceView);
+    }
+  });
 </script>
 
 {#if isLoaded && !$store?.isMissing}
-  <ContextZoneContent isInlineFallback={false}>
+  <ContextZoneContent isInlineFallback={false} fallbackViews={layoutViews}>
     <SpaceContextZone
       store={viewStore}
       {view}

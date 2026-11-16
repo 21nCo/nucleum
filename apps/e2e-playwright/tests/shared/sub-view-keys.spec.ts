@@ -47,7 +47,8 @@ test.describe("sub view keys", () => {
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
 
     await page.keyboard.press("Alt+Shift+ArrowRight");
-    await expect(page).not.toHaveURL(/\/library\/collection\/all/);
+    // "Simple" is the label of the untyped collection type.
+    await expect(page).toHaveURL(/\/library\/collection\/untyped/);
     await page.keyboard.press("Alt+Shift+ArrowLeft");
     await expect(page).toHaveURL(/\/library\/collection\/all/);
   });

@@ -10,6 +10,7 @@
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import {
     hierarchyFactorLimit,
+    loadNoteBlocks,
     type IActiveNodeStore
   } from "@nucleum/features/memory/node/node.store";
 
@@ -31,6 +32,11 @@
   import { BlockAction } from "@nucleum/features/memory/markdown/md.type";
   import { wordCounter } from "@nucleum/features/memory/node/content/word-counter.action";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
+  import {
+    hasEveryStoredBlock,
+    readStoredNoteBlocks,
+    resolveNoteContentStart
+  } from "@nucleum/features/memory/node/content/first-block";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { Size } from "@21n/ui/elements/size.enum";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
@@ -69,6 +75,13 @@
   let refreshId = $state<number | undefined>(undefined);
   let markdownRef = $state<any>(undefined);
   let isInitialContentReady = $state(false);
+  /**
+   * Whether the note opened without some blocks of its order (see
+   * {@link prepareOrderedNoteContent}): it is then shown read-only and its
+   * handlers (content, structure, block actions, mentions) write nothing, so
+   * no edit can save an order without them.
+   */
+  let isOpenedIncomplete = $state(false);
   const dev_isEnableBottomDivider = false;
 
   const calendarContentContext = getContext<any>(Context.CALENDAR_CONTENT);
@@ -85,7 +98,7 @@
       event,
       data
     });
-    if (!event) return;
+    if (!event || isOpenedIncomplete) return;
     if (event === "mention") {
       if (!data.item || !data.location) return;
       await node.mention(data.location, data.item.id);
@@ -100,29 +113,162 @@
   setContext(Context.CONTENT, contentContext);
 
   let focusEventSub: any;
+  let isDestroyed = false;
+  const noteContentRetryLimit = 10;
+  const noteContentRetryDelayMs = 3000;
+
+  /**
+   * Reads what storage holds for a note whose page copy has no blocks. The
+   * copy can lack them (narrow select, or a local store still downloading);
+   * writing a starter block then would replace the note's real content.
+   */
+  async function readNoteContentStart(id: IRecordId) {
+    try {
+      const start = resolveNoteContentStart(await readStoredNoteBlocks(id));
+      if (start.kind !== "create") {
+        logger.warn({
+          at: "NodeContent.firstBlock.skipped",
+          id,
+          start: start.kind
+        });
+      }
+      return start;
+    } catch (error) {
+      logger.error({ at: "NodeContent.firstBlock.read", id, error });
+      return resolveNoteContentStart(undefined);
+    }
+  }
+
+  /**
+   * Loads a note's stored blocks for the editor, or undefined when any block
+   * in the stored order can't be read yet (e.g. a local store still
+   * downloading): an editor mounted with missing blocks would save a shorter
+   * order, or seed a block of its own, over the stored one. This holds in
+   * every mode: a block missing from a direct read may not have reached the
+   * server yet, or may not be readable by this user, so it is never treated
+   * as deleted.
+   */
+  async function loadStoredNoteBlocks(
+    id: IRecordId,
+    mdChildOrder: IRecordId[]
+  ) {
+    try {
+      const children = await loadNoteBlocks(mdChildOrder, id);
+      if (hasEveryStoredBlock(mdChildOrder, children)) {
+        return { mdChildOrder, children };
+      }
+      logger.warn({
+        at: "NodeContent.firstBlock.incomplete",
+        id,
+        stored: mdChildOrder.length,
+        loaded: children.length
+      });
+    } catch (error) {
+      logger.error({ at: "NodeContent.firstBlock.load", id, error });
+    }
+    return undefined;
+  }
+
+  /**
+   * Puts loaded blocks on the page copy, or returns false when they couldn't
+   * all be loaded.
+   */
+  function applyStoredNoteBlocks(
+    loaded: Awaited<ReturnType<typeof loadStoredNoteBlocks>>
+  ) {
+    if (!loaded) return false;
+    $node.mdChildOrder = loaded.mdChildOrder;
+    $node.children = loaded.children as unknown as typeof $node.children;
+    return true;
+  }
+
+  /**
+   * Checks that a note whose page copy has a block order also has every
+   * block in it, at every level, and reloads them from storage when it
+   * doesn't, so a gap that closes (a local store still downloading) never
+   * reaches the editor. A gap that is still there on the last attempt opens
+   * the note read-only with its page copy: the order can name a block no
+   * longer stored anywhere (legacy imports copied their children lists as
+   * they were), so the note is shown rather than left blank, but a missing
+   * block is never taken as deleted, so nothing it shows can be saved.
+   * Reopening the note checks again. Orders holding block records instead
+   * of ids are taken as loaded.
+   */
+  async function prepareOrderedNoteContent(
+    mdChildOrder: unknown[],
+    isLastAttempt: boolean
+  ) {
+    if (!mdChildOrder.every((id) => typeof id === "string")) return true;
+    const order = mdChildOrder as IRecordId[];
+    if (
+      hasEveryStoredBlock(order, ($node.children ?? []) as { id?: unknown }[])
+    ) {
+      return true;
+    }
+    const loaded = await loadStoredNoteBlocks($node.id, order);
+    if (loaded || !isLastAttempt) return applyStoredNoteBlocks(loaded);
+    logger.warn({ at: "NodeContent.blocks.openedIncomplete", id: $node.id });
+    isOpenedIncomplete = true;
+    return true;
+  }
+
+  /**
+   * Gets a markdown note ready for the editor: every block of its block
+   * order loaded (see {@link prepareOrderedNoteContent}), a starter block
+   * for an empty note, or its stored blocks when its page copy has none.
+   * Returns false when the note has to wait (blocks not readable yet), so
+   * the editor isn't mounted and nothing is written.
+   */
+  async function prepareNoteContent(isLastAttempt: boolean) {
+    if ($node.contentType !== NodeType.NODULAR_MARKDOWN) return true;
+    if (Array.isArray($node.mdChildOrder) && $node.mdChildOrder.length > 0) {
+      return prepareOrderedNoteContent($node.mdChildOrder, isLastAttempt);
+    }
+    const start = await readNoteContentStart($node.id);
+    if (start.kind === "hold") return false;
+    if (start.kind === "load") {
+      return applyStoredNoteBlocks(
+        await loadStoredNoteBlocks($node.id, start.mdChildOrder)
+      );
+    }
+    const id = generateResourceId(Resource.node);
+    const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
+      body: ""
+    });
+    if (createdBlock?.[0]) {
+      await node.modify(
+        {
+          mdChildOrder: [createdBlock[0].id]
+        },
+        {
+          isPreventBackPropagation: true
+        }
+      );
+      $node.mdChildOrder = [createdBlock[0].id];
+      $node.children = [createdBlock[0]] as unknown as typeof $node.children;
+    }
+    return true;
+  }
+
+  /**
+   * Retries {@link prepareNoteContent} a few times while the note waits for
+   * its blocks (e.g. a local store still downloading), until the page closes.
+   */
+  async function prepareNoteContentWithRetry() {
+    for (let attempt = 0; attempt < noteContentRetryLimit; attempt++) {
+      if (isDestroyed) return false;
+      if (await prepareNoteContent(attempt === noteContentRetryLimit - 1)) {
+        return true;
+      }
+      await new Promise((resolve) =>
+        setTimeout(resolve, noteContentRetryDelayMs)
+      );
+    }
+    return false;
+  }
 
   onMount(async () => {
-    if (
-      $node.contentType === NodeType.NODULAR_MARKDOWN &&
-      (!Array.isArray($node.mdChildOrder) || $node.mdChildOrder.length < 1)
-    ) {
-      const id = generateResourceId(Resource.node);
-      const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
-        body: ""
-      });
-      if (createdBlock?.[0]) {
-        await node.modify(
-          {
-            mdChildOrder: [createdBlock[0].id]
-          },
-          {
-            isPreventBackPropagation: true
-          }
-        );
-        $node.mdChildOrder = [createdBlock[0].id];
-        $node.children = [createdBlock[0]] as unknown as typeof $node.children;
-      }
-    }
+    if (!(await prepareNoteContentWithRetry()) || isDestroyed) return;
     isInitialContentReady = true;
     if (!node.eventStore?.subscribe) return;
     focusEventSub = node.eventStore.subscribe((x: any) => {
@@ -169,6 +315,7 @@
   }
 
   onDestroy(() => {
+    isDestroyed = true;
     if (focusEventSub && typeof focusEventSub === "function") {
       focusEventSub();
     }
@@ -182,6 +329,7 @@
 
   function onMarkdownContentChange(e: CustomEvent) {
     logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
+    if (isOpenedIncomplete) return;
     const block = e.detail.block;
     if (!block.source && !block.id) return;
     const id = block.id ?? block.source;
@@ -240,6 +388,7 @@
 
   function onReStructure(e: CustomEvent) {
     logger.log({ at: "NodeContent - onReStructure", ...e.detail });
+    if (isOpenedIncomplete) return;
     try {
       const differences = shallowDiff(previousRootStructure, e.detail.root);
       if (isValidArrayWithData(differences)) {
@@ -328,6 +477,7 @@
       action: e.detail.action,
       detail: e.detail
     });
+    if (isOpenedIncomplete) return;
     switch (e.detail.action) {
       case BlockAction.INSERT:
         onInsert(e);
@@ -429,7 +579,7 @@
           node={$node}
           {mdId}
           params={{
-            isReadOnly: isReadOnlyMode,
+            isReadOnly: isReadOnlyMode || isOpenedIncomplete,
             isPreventFocusOnLoad: $context.isTouchDevice
           }}
           bind:md={$node.md}

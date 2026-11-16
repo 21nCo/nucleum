@@ -29,8 +29,9 @@ describe("resolveContextZoneSubViewSource by axis and modal", () => {
     const sources = [source(1), source(2, { axis: "vertical" })];
     expect(resolveContextZoneSubViewSource(sources, undefined)?.key).toBe(1);
     expect(
-      resolveContextZoneSubViewSource(sources, undefined, { axis: "vertical" })
-        ?.key
+      resolveContextZoneSubViewSource(sources, undefined, undefined, {
+        axis: "vertical"
+      })?.key
     ).toBe(2);
   });
 
@@ -40,14 +41,15 @@ describe("resolveContextZoneSubViewSource by axis and modal", () => {
       source(2, { axis: "vertical", isInModal: true })
     ];
     expect(
-      resolveContextZoneSubViewSource(sources, undefined, {
+      resolveContextZoneSubViewSource(sources, undefined, undefined, {
         axis: "vertical",
         isModalOpen: true
       })?.key
     ).toBe(2);
     expect(
-      resolveContextZoneSubViewSource(sources, undefined, { axis: "vertical" })
-        ?.key
+      resolveContextZoneSubViewSource(sources, undefined, undefined, {
+        axis: "vertical"
+      })?.key
     ).toBe(1);
   });
 
@@ -55,6 +57,7 @@ describe("resolveContextZoneSubViewSource by axis and modal", () => {
     expect(
       resolveContextZoneSubViewSource(
         [source(1, { axis: "vertical", isInModal: true })],
+        undefined,
         undefined,
         { axis: "vertical" }
       )

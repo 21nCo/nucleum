@@ -31,7 +31,10 @@ export const fileTransport = {
       logger.error({ at: "getSignedUrl", error: e });
     }
   },
-  /** Executes the existing fetchSignedUrlForGet transport operation. */
+  /**
+   * Re-signs a stored file URL for reading. Runs in the background while
+   * images render, so a network failure is not shown as an app alert.
+   */
   async fetchSignedUrlForGet(key: string) {
     const response = resolveJsonResponse(
       await performApiCall(
@@ -41,7 +44,7 @@ export const fileTransport = {
           method: "GET",
           key
         },
-        { isFileApi: true }
+        { isFileApi: true, isSilent: true }
       )
     );
     return await response?.json();

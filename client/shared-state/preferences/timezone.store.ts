@@ -11,6 +11,7 @@ import {
   resolveTemporalDateParts,
   resolveTemporalLocalTime,
   resolveTemporalPeriodRange,
+  TIMEZONE_CHANGE_RESOURCE_NAME,
   type DatafnTemporalScale
 } from "@datafn/client";
 import {
@@ -19,6 +20,29 @@ import {
   type Subscriber,
   type Unsubscriber
 } from "svelte/store";
+
+/**
+ * Whether a DataFn event can change the timezone history: a write to it, or
+ * a sync that brought its records. Other writes don't need a re-read.
+ */
+export function isTimezoneChangeEvent(event: {
+  type?: string;
+  resource?: string;
+  context?: unknown;
+}) {
+  if (event.type === "mutation_applied") {
+    return event.resource === TIMEZONE_CHANGE_RESOURCE_NAME;
+  }
+  if (event.type === "sync_applied") {
+    const resources = (event.context as { resources?: unknown } | undefined)
+      ?.resources;
+    return (
+      !Array.isArray(resources) ||
+      resources.includes(TIMEZONE_CHANGE_RESOURCE_NAME)
+    );
+  }
+  return false;
+}
 
 export type DfqlRangeFilter<T = number> = {
   $gte: T;
@@ -62,10 +86,7 @@ class TimezoneStore {
         void this.refresh({ isSkipEnsureSubscriptions: true });
       }),
       datafn.subscribe((event) => {
-        if (
-          event.type === "mutation_applied" ||
-          event.type === "sync_applied"
-        ) {
+        if (isTimezoneChangeEvent(event)) {
           void this.refresh({ isSkipEnsureSubscriptions: true });
         }
       })

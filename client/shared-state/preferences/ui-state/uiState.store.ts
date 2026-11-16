@@ -34,6 +34,44 @@ const uiStateSignal = datafn.kv.signal<IUIStateStore>(Resource.uiState, {
 const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
 const pendingUiStateValues: OptimisticKvEntries = new Map();
 let pendingUiStateNamespace = datafn.currentNamespace();
+/** Changes made in the same tick, saved together as one kv merge. */
+let queuedUiStateChanges: Partial<IUIStateStore> | null = null;
+let queuedUiStateTokens: Array<Map<string, symbol>> = [];
+let queuedUiStateMutation: Promise<unknown> | null = null;
+
+function queueUiStateMerge(
+  changes: Partial<IUIStateStore>,
+  tokens: Map<string, symbol>
+) {
+  if (!queuedUiStateChanges) {
+    queuedUiStateChanges = {};
+    queuedUiStateTokens = [];
+    queuedUiStateMutation = new Promise((resolve) => {
+      queueMicrotask(() => {
+        const payload = queuedUiStateChanges ?? {};
+        const batchTokens = queuedUiStateTokens;
+        queuedUiStateChanges = null;
+        queuedUiStateTokens = [];
+        queuedUiStateMutation = null;
+        const mutation = datafn.kv.merge(Resource.uiState, payload);
+        const rollbackPendingValues = () => {
+          batchTokens.forEach((batchToken) =>
+            removeOptimisticKvEntries(pendingUiStateValues, batchToken)
+          );
+          refreshUiStateLocal();
+        };
+        void mutation.then((result) => {
+          if (!result.ok) rollbackPendingValues();
+        }, rollbackPendingValues);
+        resolve(mutation);
+      });
+    });
+  }
+  Object.assign(queuedUiStateChanges!, changes);
+  queuedUiStateTokens.push(tokens);
+  return queuedUiStateMutation as ReturnType<typeof datafn.kv.merge>;
+}
+
 const legacyUiStateKeys = new Map([
   ["manualLogRecentGoals", UIState.manualLogRecentObjectives],
   ["goalPanelSelection", UIState.objectivePanelSelection]
@@ -215,19 +253,15 @@ export const uiState = {
     this.modify({ [key]: value });
     logger.log({ context: "uiState.store - setResourceState", key, value });
   },
+  /**
+   * Updates UI state at once locally and saves it with the other changes
+   * made in the same tick as one merge, instead of one write per call.
+   */
   modify(n: Partial<IUIStateStore>) {
     scopePendingUiStateValues();
     const mutationTokens = addOptimisticKvEntries(pendingUiStateValues, n);
     uiStateLocal.update((current) => ({ ...current, ...n }));
-    const mutation = datafn.kv.merge(Resource.uiState, n);
-    const rollbackPendingValues = () => {
-      removeOptimisticKvEntries(pendingUiStateValues, mutationTokens);
-      refreshUiStateLocal();
-    };
-    void mutation.then((result) => {
-      if (!result.ok) rollbackPendingValues();
-    }, rollbackPendingValues);
-    return mutation;
+    return queueUiStateMerge(n, mutationTokens);
   },
   loader(data: IUIStateStore) {
     if (!data || typeof data !== "object" || Array.isArray(data)) return;
