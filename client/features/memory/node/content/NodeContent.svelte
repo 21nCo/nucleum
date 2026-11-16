@@ -78,7 +78,8 @@
   /**
    * Whether the note opened without some blocks of its order (see
    * {@link prepareOrderedNoteContent}): it is then shown read-only and its
-   * handlers write nothing, so no edit can save an order without them.
+   * handlers (content, structure, block actions, mentions) write nothing, so
+   * no edit can save an order without them.
    */
   let isOpenedIncomplete = $state(false);
   const dev_isEnableBottomDivider = false;
@@ -97,7 +98,7 @@
       event,
       data
     });
-    if (!event) return;
+    if (!event || isOpenedIncomplete) return;
     if (event === "mention") {
       if (!data.item || !data.location) return;
       await node.mention(data.location, data.item.id);
