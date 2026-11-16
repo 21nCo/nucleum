@@ -766,6 +766,16 @@
       use:intersection={{
         rootMargin: "100px",
         callback: () => {
+          // Page only once the current page has loaded and was full; the
+          // sentinel is visible before the first page arrives.
+          if (
+            !isSearchActive &&
+            ($taskStore.loading ||
+              signalLimit === undefined ||
+              ($taskStore.data?.length ?? 0) < signalLimit)
+          ) {
+            return;
+          }
           refresh({ isPagination: true });
         }
       }}
