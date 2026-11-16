@@ -25,6 +25,8 @@
   import { ColorStrength } from "@21n/theme/appearance.type";
   import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
   import { onDestroy, onMount } from "svelte";
+  import { get } from "svelte/store";
+  import { datafnRuntime } from "@nucleum/datafn/datafn.store";
 
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -106,6 +108,9 @@
   setContext(Context.CONTENT, contentContext);
 
   let focusEventSub: any;
+  let isDestroyed = false;
+  const noteContentRetryLimit = 10;
+  const noteContentRetryDelayMs = 3000;
 
   /**
    * Reads what storage holds for a note whose page copy has no blocks. The
@@ -133,7 +138,9 @@
    * Loads a note's stored blocks for the editor, or undefined when any block
    * in the stored order can't be read yet (e.g. a local store still
    * downloading): an editor mounted with missing blocks would save a shorter
-   * order, or seed a block of its own, over the stored one.
+   * order, or seed a block of its own, over the stored one. In direct mode
+   * the server is the only store, so a block it doesn't return no longer
+   * exists, and the note opens with the blocks that do.
    */
   async function loadStoredNoteBlocks(
     id: IRecordId,
@@ -141,7 +148,15 @@
   ) {
     try {
       const children = await loadNoteBlocks(mdChildOrder, id);
-      if (hasEveryStoredBlock(mdChildOrder, children)) return children;
+      if (hasEveryStoredBlock(mdChildOrder, children)) {
+        return { mdChildOrder, children };
+      }
+      if (get(datafnRuntime)?.mode === "sync-direct" && children.length > 0) {
+        return {
+          mdChildOrder: children.map((child) => child.id),
+          children
+        };
+      }
       logger.warn({
         at: "NodeContent.firstBlock.incomplete",
         id,
@@ -154,42 +169,64 @@
     return undefined;
   }
 
-  onMount(async () => {
+  /**
+   * Gets a markdown note whose page copy has no blocks ready for the editor:
+   * a starter block for an empty note, or its stored blocks. Returns false
+   * when the note has to wait (blocks not readable yet), so the editor isn't
+   * mounted and nothing is written.
+   */
+  async function prepareNoteContent() {
     if (
-      $node.contentType === NodeType.NODULAR_MARKDOWN &&
-      (!Array.isArray($node.mdChildOrder) || $node.mdChildOrder.length < 1)
+      $node.contentType !== NodeType.NODULAR_MARKDOWN ||
+      (Array.isArray($node.mdChildOrder) && $node.mdChildOrder.length > 0)
     ) {
-      const start = await readNoteContentStart($node.id);
-      if (start.kind === "hold") return;
-      if (start.kind === "load") {
-        const children = await loadStoredNoteBlocks(
-          $node.id,
-          start.mdChildOrder
-        );
-        if (!children) return;
-        $node.mdChildOrder = start.mdChildOrder;
-        $node.children = children as unknown as typeof $node.children;
-      } else {
-        const id = generateResourceId(Resource.node);
-        const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
-          body: ""
-        });
-        if (createdBlock?.[0]) {
-          await node.modify(
-            {
-              mdChildOrder: [createdBlock[0].id]
-            },
-            {
-              isPreventBackPropagation: true
-            }
-          );
-          $node.mdChildOrder = [createdBlock[0].id];
-          $node.children = [
-            createdBlock[0]
-          ] as unknown as typeof $node.children;
-        }
-      }
+      return true;
     }
+    const start = await readNoteContentStart($node.id);
+    if (start.kind === "hold") return false;
+    if (start.kind === "load") {
+      const loaded = await loadStoredNoteBlocks($node.id, start.mdChildOrder);
+      if (!loaded) return false;
+      $node.mdChildOrder = loaded.mdChildOrder;
+      $node.children = loaded.children as unknown as typeof $node.children;
+      return true;
+    }
+    const id = generateResourceId(Resource.node);
+    const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
+      body: ""
+    });
+    if (createdBlock?.[0]) {
+      await node.modify(
+        {
+          mdChildOrder: [createdBlock[0].id]
+        },
+        {
+          isPreventBackPropagation: true
+        }
+      );
+      $node.mdChildOrder = [createdBlock[0].id];
+      $node.children = [createdBlock[0]] as unknown as typeof $node.children;
+    }
+    return true;
+  }
+
+  /**
+   * Retries {@link prepareNoteContent} a few times while the note waits for
+   * its blocks (e.g. a local store still downloading), until the page closes.
+   */
+  async function prepareNoteContentWithRetry() {
+    for (let attempt = 0; attempt < noteContentRetryLimit; attempt++) {
+      if (isDestroyed) return false;
+      if (await prepareNoteContent()) return true;
+      await new Promise((resolve) =>
+        setTimeout(resolve, noteContentRetryDelayMs)
+      );
+    }
+    return false;
+  }
+
+  onMount(async () => {
+    if (!(await prepareNoteContentWithRetry()) || isDestroyed) return;
     isInitialContentReady = true;
     if (!node.eventStore?.subscribe) return;
     focusEventSub = node.eventStore.subscribe((x: any) => {
@@ -236,6 +273,7 @@
   }
 
   onDestroy(() => {
+    isDestroyed = true;
     if (focusEventSub && typeof focusEventSub === "function") {
       focusEventSub();
     }
