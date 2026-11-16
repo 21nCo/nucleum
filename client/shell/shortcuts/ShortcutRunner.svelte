@@ -18,8 +18,12 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
-  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { Action } from "@nucleum/client/config/action.enum";
   import { resolveContextViewIndex } from "@nucleum/shell/shortcuts/context-view-keys";
+  import {
+    selectContextViewAt,
+    stepContextView
+  } from "@nucleum/shell/shortcuts/context-view-step";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -64,20 +68,43 @@
       selectContextViewByNumber(event);
       return;
     }
+    const viewStep = CONTEXT_VIEW_STEPS[shortcut.action];
+    if (viewStep !== undefined) {
+      stepContextViewByKey(event, viewStep);
+      return;
+    }
     requireCommandHost().runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
   };
 
+  const CONTEXT_VIEW_STEPS: Partial<Record<string, number>> = {
+    [Action.PREVIOUS_CONTEXT_VIEW]: -1,
+    [Action.NEXT_CONTEXT_VIEW]: 1
+  };
+
   /**
-   * Selects the top bar view numbered by a plain 1 to 9 key, unless a modal,
-   * dialog or popover is in front.
+   * Steps the shown page's views for Option+Left / Option+Right. Skips a key
+   * another handler already consumed (such as a Space nav tree move), and
+   * keeps the browser default (Alt+Left/Right history on Windows and Linux)
+   * unless a view was selected.
+   */
+  function stepContextViewByKey(event: KeyboardEvent, delta: number) {
+    if (event.defaultPrevented) return;
+    if (!stepContextView(delta)) return;
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  /**
+   * Selects the top bar view numbered by a plain 1 to 9 key, unless another
+   * handler consumed the key or a modal, dialog or popover is in front.
    */
   function selectContextViewByNumber(event: KeyboardEvent) {
+    if (event.defaultPrevented) return;
     const index = resolveContextViewIndex(event);
     if (index === undefined) return;
-    if (isLayerOnFront()) return;
-    if (contextZone.selectAt(index)) event.preventDefault();
+    if (selectContextViewAt(index)) event.preventDefault();
   }
 
   function isFormField(target: EventTarget | null) {

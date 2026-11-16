@@ -11,7 +11,7 @@ import Navigator from "@nucleum/shell/navigator/Navigator.svelte";
 import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
-import { isLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
+import { stepContextView } from "@nucleum/shell/shortcuts/context-view-step";
 import { requestNavigatorFocus } from "@nucleum/shell/navigator/navigator-focus";
 import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
 
@@ -99,8 +99,7 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
-      if (isLayerOnFront()) return;
-      contextZone.step(-1);
+      stepContextView(-1);
     }
   },
   next_context_view: {
@@ -109,8 +108,7 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
-      if (isLayerOnFront()) return;
-      contextZone.step(1);
+      stepContextView(1);
     }
   },
   rhombus: {
