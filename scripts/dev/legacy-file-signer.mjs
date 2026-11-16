@@ -9,7 +9,10 @@
  * presigning makes no AWS call, and the browser only reads the object.
  *
  * Dev only: binds to 127.0.0.1, signs reads only, only for legacy buckets,
- * and answers CORS for the local app origin.
+ * and answers CORS for the local app origin. Requests must name this server
+ * by its loopback host (so a page that rebinds its own hostname to
+ * 127.0.0.1 is refused), come from an allowed origin when they carry one, and
+ * send JSON, which browsers can't do across origins without a preflight.
  *
  * Usage:
  *   AWS_PROFILE=data node scripts/dev/legacy-file-signer.mjs [--port 8791]
@@ -67,13 +70,36 @@ function send(res, origin, status, body, requestedHeaders) {
   res.end(body === undefined ? "" : JSON.stringify(body));
 }
 
+const allowedHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
+
+/** Whether a request names this server directly and comes from an allowed page. */
+export function isTrustedRequest(headers) {
+  if (!allowedHosts.has(String(headers.host ?? "").toLowerCase())) return false;
+  const origin = headers.origin;
+  return origin === undefined || allowedOrigins.has(origin);
+}
+
 const server = http.createServer((req, res) => {
   const origin = req.headers.origin;
+  if (!isTrustedRequest(req.headers)) {
+    return send(res, undefined, 403, { error: "forbidden" });
+  }
   if (req.method === "OPTIONS") {
-    return send(res, origin, 204, undefined, req.headers["access-control-request-headers"]);
+    return send(
+      res,
+      origin,
+      204,
+      undefined,
+      req.headers["access-control-request-headers"]
+    );
   }
   if (req.method !== "POST" || !req.url?.startsWith("/utils/n/getsignedurl")) {
     return send(res, origin, 404, { error: "not found" });
+  }
+  if (
+    !String(req.headers["content-type"] ?? "").startsWith("application/json")
+  ) {
+    return send(res, origin, 415, { error: "expected application/json" });
   }
   let raw = "";
   req.on("data", (chunk) => {
@@ -84,7 +110,9 @@ const server = http.createServer((req, res) => {
     try {
       const body = JSON.parse(raw || "{}");
       if (body.method !== "GET") {
-        return send(res, origin, 400, { error: "only GET signing is served locally" });
+        return send(res, origin, 400, {
+          error: "only GET signing is served locally"
+        });
       }
       const target = parseLegacyKey(body.key);
       if (!target) return send(res, origin, 400, { error: "unsupported key" });
@@ -95,11 +123,19 @@ const server = http.createServer((req, res) => {
       );
       send(res, origin, 200, { getUrl });
     } catch (error) {
-      send(res, origin, 500, { error: String(error?.message ?? error) });
+      console.error("signing failed", error?.name ?? "error");
+      send(res, origin, 500, { error: "signing failed" });
     }
   });
 });
 
-server.listen(port, "127.0.0.1", () => {
-  console.log(`legacy file signer on http://127.0.0.1:${port} (profile ${profile})`);
-});
+if (
+  process.argv[1] &&
+  import.meta.url === new URL(`file://${process.argv[1]}`).href
+) {
+  server.listen(port, "127.0.0.1", () => {
+    console.log(
+      `legacy file signer on http://127.0.0.1:${port} (profile ${profile})`
+    );
+  });
+}
