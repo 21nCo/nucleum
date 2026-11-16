@@ -1,0 +1,33 @@
+client/shell/navigation/cycle-context-view.test.ts
+  s_1f58eda84cd1a5::t_08b552b9126433 1-66
+client/shell/navigation/global-commands.ts
+  s_1f58eda84cd1a5::t_556e145e346e18 92
+client/shell/shortcuts/ShortcutRunner.svelte
+  s_1f58eda84cd1a5::t_4998031154030b 100-102
+client/shell/topNav/contextZone/context-zone.ts
+  s_a14f47adf526b5::t_31112b3cddd283 320-323,328-330,341-342
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7c95b6723aea806d571c266bd0df2f2efa598de9",
+  "prompts": {},
+  "sessions": {
+    "s_1f58eda84cd1a5": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e36d-f9c4-7471-a385-73c1cdccf748",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_a14f47adf526b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9055b578-4438-470e-a39b-83abd1350b07",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
