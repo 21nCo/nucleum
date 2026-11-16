@@ -1,4 +1,8 @@
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
+import {
+  requireE2EProduct,
+  resolveSurfaceContract
+} from "../../config/e2e.config";
 import { ensureInAppOnHome } from "../utils/helpers";
 import {
   blockExternalAuthRequests,
@@ -8,7 +12,14 @@ import {
 let e2eSeed: E2ESeed;
 
 test.describe("super bar context and modes", () => {
-  test.beforeEach(async ({ page, seed }) => {
+  test.beforeEach(async ({ page, seed }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The context is a node opened from the Nodes library, and this product has no nodes"
+    );
     e2eSeed = seed;
     await blockExternalAuthRequests(page);
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -19,30 +30,36 @@ test.describe("super bar context and modes", () => {
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    const node = await e2eSeed.memory.node({
-      label: `E2E super bar ${Date.now()}`
-    });
+    const label = `E2E super bar ${Date.now()}`;
+    const node = await e2eSeed.memory.node({ label });
     await openNodeRecordFromLibraryById(page, node.id);
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
 
     await page.keyboard.press("ControlOrMeta+k");
     const input = page.getByTestId("command-bar-input");
     await expect(input).toBeFocused();
-    await expect(page.getByTestId("super-bar-context-pill")).toContainText(
-      "This node"
-    );
+    await expect(page.getByTestId("super-bar-context-name")).toHaveText(label);
+    await page.screenshot({
+      path: test.info().outputPath("super-bar-context-pill.png")
+    });
     await expect(page.getByTestId("super-bar-group-context")).toBeVisible();
 
     await input.press("Backspace");
     await expect(page.getByTestId("super-bar-context-pill")).toHaveCount(0);
     await expect(page.getByTestId("super-bar-group-context")).toHaveCount(0);
     await expect(input).toBeVisible();
+    await page.screenshot({
+      path: test.info().outputPath("super-bar-global.png")
+    });
 
     await input.pressSequentially(">set");
     await expect(page.getByTestId("super-bar-mode-chip")).toBeVisible();
     await expect(input).toHaveValue("set");
     await expect(page.getByTestId("super-bar-group-command")).toBeVisible();
     await expect(page.getByTestId("super-bar-group-result")).toHaveCount(0);
+    await page.screenshot({
+      path: test.info().outputPath("super-bar-commands-mode.png")
+    });
 
     await input.press("Escape");
     await expect(input).toBeHidden();

@@ -32,8 +32,11 @@
     type SuperBarScope
   } from "@nucleum/surfaces/commandBar/super-bar";
   import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
-  import { properCase } from "@21n/shared-utils/text.utils";
+  import { isValidString, properCase } from "@21n/shared-utils/text.utils";
   import Icon from "@21n/ui/elements/Icon.svelte";
+  import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";
+  import type { Resource } from "@nucleum/datafn/resource.enum";
+  import { liveResource } from "@nucleum/shell/topNav/tabs/live-resource";
 
   let {
     command = undefined,
@@ -57,8 +60,27 @@
   let isContextDismissed = $state(false);
   let isCommandsMode = $state(false);
   const activeContext = contextActions.active;
-  const contextLabel = $derived(
-    $activeContext ? properCase($activeContext.resource) : ""
+  const contextRecord = $derived(
+    $activeContext?.id ? liveResource($activeContext.id) : undefined
+  );
+  const contextIcon = $derived(
+    $activeContext
+      ? resolveResourceIcon($activeContext.resource as Resource)
+      : undefined
+  );
+  /** Record name, "Untitled" for a nameless record, or the resource type. */
+  const contextName = $derived.by(() => {
+    const record = contextRecord ? $contextRecord?.resource : undefined;
+    if (isValidString(record?.label)) return record.label as string;
+    if (record) return "Untitled";
+    return $activeContext
+      ? `This ${$activeContext.resource.toLowerCase()}`
+      : "";
+  });
+  const contextTitle = $derived(
+    $activeContext
+      ? `${properCase($activeContext.resource)}: ${contextName}`
+      : ""
   );
   const isContextShown = $derived(
     !!$activeContext &&
@@ -159,6 +181,7 @@
     if (!nextSearchAction) return;
     value = "";
     searchAction = nextSearchAction;
+    isCommandsMode = false;
     isPerformingSearchAction = true;
     placeholder =
       typeof nextSearchAction.searchActionParams?.placeholder === "function"
@@ -253,8 +276,14 @@
       <span
         class="flex items-center gap-1 shrink-0 ml-4 -mr-2 pl-2 pr-1 py-1 rounded-md bg-bgs2 text-b3 text-fgs2"
         data-testid="super-bar-context-pill"
+        title={contextTitle}
       >
-        This {contextLabel.toLowerCase()}
+        {#if contextIcon}
+          <Icon icon={contextIcon} size={Size.xs} />
+        {/if}
+        <span class="truncate max-w-48" data-testid="super-bar-context-name"
+          >{contextName}</span
+        >
         <button
           type="button"
           class="flex items-center justify-center w-5 h-5 rounded hover:bg-bgs3"

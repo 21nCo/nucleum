@@ -1,14 +1,27 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { tick } from "svelte";
+import { readable } from "svelte/store";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const hide = vi.hoisted(() => vi.fn());
+const recordLabels = vi.hoisted(() => new Map<string, string>());
 
 vi.mock("@nucleum/shared-state/commands/command-host", () => ({
   requireCommandHost: () => ({
     resolveAction: () => null,
     runAction: vi.fn()
   })
+}));
+vi.mock("@nucleum/shell/topNav/tabs/live-resource", () => ({
+  liveResource: (id: string) =>
+    readable({
+      resource: recordLabels.has(id)
+        ? { label: recordLabels.get(id) }
+        : undefined,
+      action: undefined,
+      resourceType: "node",
+      isResolved: recordLabels.has(id)
+    })
 }));
 vi.mock("@nucleum/shared-state/shortcuts/shortcuts.store", () => ({
   keyboardShortcuts: {
@@ -33,6 +46,8 @@ vi.mock("@nucleum/shell/overlays/modal.store", async (importOriginal) => {
 import CommandBar from "@nucleum/surfaces/commandBar/CommandBar.svelte";
 import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
 import { BASE_CONTEXT_ZONE_PANE } from "@nucleum/shell/topNav/contextZone/context-zone";
+import { ActionType } from "@nucleum/client/config/action.type";
+import { appStore } from "@nucleum/shared-state/app-context/app.store";
 
 let release: (() => void) | undefined;
 
@@ -52,6 +67,10 @@ function registerNodeContext() {
 describe("CommandBar context and modes", () => {
   beforeAll(() => {
     Element.prototype.scrollIntoView = vi.fn();
+    Element.prototype.animate = vi.fn(() => ({
+      cancel: () => undefined,
+      finished: Promise.resolve()
+    })) as never;
     vi.stubGlobal("matchMedia", () => ({
       matches: false,
       addEventListener: () => undefined,
@@ -63,16 +82,29 @@ describe("CommandBar context and modes", () => {
     release?.();
     release = undefined;
     hide.mockClear();
+    recordLabels.clear();
   });
 
-  it("shows the resource context as a pill", async () => {
+  it("shows the resource context as a pill with its icon and name", async () => {
+    recordLabels.set("node:1", "Launch plan");
     registerNodeContext();
     const { getByTestId, queryByTestId } = render(CommandBar);
     await tick();
-    expect(getByTestId("super-bar-context-pill").textContent).toContain(
-      "This node"
+    const pill = getByTestId("super-bar-context-pill");
+    expect(getByTestId("super-bar-context-name").textContent).toBe(
+      "Launch plan"
     );
+    expect(pill.title).toBe("Node: Launch plan");
+    // The resource icon before the name, then the remove cross.
+    expect(pill.querySelectorAll("svg")).toHaveLength(2);
     expect(queryByTestId("super-bar-group-context")).toBeTruthy();
+  });
+
+  it("names the pill by its resource type until the record resolves", async () => {
+    registerNodeContext();
+    const { getByTestId } = render(CommandBar);
+    await tick();
+    expect(getByTestId("super-bar-context-name").textContent).toBe("This node");
   });
 
   it("removes the pill with Backspace on an empty input", async () => {
@@ -102,5 +134,39 @@ describe("CommandBar context and modes", () => {
     await fireEvent.keyDown(input, { key: "Backspace" });
     await tick();
     expect(queryByTestId("super-bar-mode-chip")).toBeNull();
+  });
+
+  it("leaves commands mode when a command starts a search action", async () => {
+    appStore.initActions(
+      [
+        {
+          action: "pickTag",
+          label: "Pick a tag",
+          type: ActionType.SEARCH_CMD,
+          searchActionParams: { placeholder: "Search tags" }
+        } as never
+      ],
+      []
+    );
+    registerNodeContext();
+    const { getByTestId, queryByTestId } = render(CommandBar);
+    await tick();
+    const input = getByTestId("command-bar-input") as HTMLInputElement;
+    await fireEvent.input(input, { target: { value: ">pick a tag" } });
+    await tick();
+    expect(getByTestId("super-bar-mode-chip")).toBeTruthy();
+
+    await fireEvent.keyDown(input, { key: "Enter" });
+    await tick();
+    expect(queryByTestId("super-bar-mode-chip")).toBeNull();
+    expect(queryByTestId("super-bar-context-pill")).toBeNull();
+    expect(input.placeholder).toBe("Search tags");
+
+    await fireEvent.keyDown(input, { key: "Backspace" });
+    await tick();
+    expect(queryByTestId("super-bar-mode-chip")).toBeNull();
+    expect(input.placeholder).not.toBe("Search tags");
+    expect(getByTestId("super-bar-context-pill")).toBeTruthy();
+    expect(hide).not.toHaveBeenCalled();
   });
 });
