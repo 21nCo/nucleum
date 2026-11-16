@@ -1,0 +1,41 @@
+client/surfaces/settings/appearance/AppearanceProfiles.svelte
+  s_0d85e5b70dc887::t_15bd4de123a307 18-22,26-36,62-63,72-73
+client/surfaces/settings/appearance/AppearanceProfiles.test.ts
+  s_0d85e5b70dc887::t_5809d8b5625c1d 1-209
+client/surfaces/settings/appearance/appearance-profile-name-write.ts
+  s_0a7d6fdc858990::t_ea9d0daebbc50b 1-33
+apps/e2e-playwright/tests/shared/settings/appearance-profiles.spec.ts
+  s_0d85e5b70dc887::t_fe2d827357b066 105-110
+client/surfaces/settings/appearance/AppearanceProfileCard.svelte
+  s_0d85e5b70dc887::t_2d7de8c27d6bfb 32
+client/surfaces/settings/appearance/AppearanceProfileNameEditor.svelte
+  s_0d85e5b70dc887::t_bad51443c9f0b9 11,21,29,31-37,43
+client/surfaces/settings/appearance/appearance-profile-name-write.test.ts
+  s_0d85e5b70dc887::t_891bb55398abc8 1-39
+client/ui/elements/input/TextInput.svelte
+  s_0d85e5b70dc887::t_960d10aca9e149 35-36,75-76,509,519
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ba723677f6e6f2c4fad862e752f7dfec3d6601f5",
+  "prompts": {},
+  "sessions": {
+    "s_0a7d6fdc858990": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ed2deba7-1dd5-49d5-8d61-c97f1d59e1f3",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_0d85e5b70dc887": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "37e3656b-fb3d-4769-b9a9-5d99c965fb6b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
