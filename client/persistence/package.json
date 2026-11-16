@@ -7,7 +7,7 @@
     "./*": "./*"
   },
   "dependencies": {
-    "@datafn/client": "0.1.5",
+    "@datafn/client": "0.1.10",
     "@nucleum/schema": "*",
     "@surrealdb/wasm": "1.4.1",
     "dexie": "^3.2.6",

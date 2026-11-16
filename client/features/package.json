@@ -156,7 +156,7 @@
   },
   "dependencies": {
     "@antv/g6": "^5.0.26",
-    "@datafn/client": "0.1.5",
+    "@datafn/client": "0.1.10",
     "@datafn/svelte": "0.1.1",
     "@nucleum/datafn": "*",
     "@nucleum/schema": "*",
