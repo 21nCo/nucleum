@@ -1,0 +1,93 @@
+apps/e2e-playwright/tests/shared/maximize.spec.ts
+  s_f058f999ab46b7::t_04c66c08c32b0b 1-250
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_22b8aa6666d658 51,81,187-191,384-388
+client/features/records/ResourcePanelSwitcher.svelte
+  s_f058f999ab46b7::t_5d02d680eaa1c5 20-23,62,199,211-212
+client/features/spaces/SpaceResourceRenderer.close.test.ts
+  s_f058f999ab46b7::t_e44922e3390609 1-54
+client/features/spaces/SpaceResourceRenderer.svelte
+  s_f058f999ab46b7::t_cd41a0a1908cba 18-19,23-24,29-33
+client/features/spaces/SpaceSideNav.selection-memory.test.ts
+  s_f058f999ab46b7::t_8d3c1b480e58a5 1-176
+client/features/spaces/SpaceSideNav.svelte
+  s_f058f999ab46b7::t_4807378b06ab14 29-33,61-66,135-141,144,178-184,186,194,437
+client/features/spaces/space-selection.ts
+  s_f058f999ab46b7::t_df788352f9429d 1-40
+client/shared-state/app-context/app-store.type.ts
+  s_f058f999ab46b7::t_98aece98ca211c 148-153
+client/shared-state/resources/in-place-resource.ts
+  s_f058f999ab46b7::t_3be3ccf8c091f7 5-10,13-14,16-17,22-31
+client/shell/navigation/components/ResourceInlineCloseButton.svelte
+  s_f058f999ab46b7::t_5357eca3e6cd40 5-8,17-18,24-28,34,49-50
+client/shell/navigation/components/ResourceInlineCloseButton.test.ts
+  s_f058f999ab46b7::t_e2c49c270137c6 1-28
+client/shell/navigation/full-screen-minimize.test.ts
+  s_f058f999ab46b7::t_c65b0474f0c752 1-268
+client/shell/navigation/full-screen-origin.ts
+  s_f058f999ab46b7::t_67943ce54324ff 1-38
+client/shell/navigation/navigation.ts
+  s_f058f999ab46b7::t_6dc18c5effb066 2-5,196-214,688-690,698,767,770,855-861,876-883,1053,1105,1124,1128-1131,1142-1164,1174-1177
+client/shell/navigation/top-bar-control.test.ts
+  s_f058f999ab46b7::t_1209ef8ecafb2f 1-119
+client/shell/navigation/top-layer-minimize.test.ts
+  s_f058f999ab46b7::t_bfb04d3da832be 1-104
+client/shell/navigation/top-layer.ts
+  s_f058f999ab46b7::t_4185b7a97e8250 3-6,102-146,155-167,191
+client/shell/topNav/TopBarCloseButton.svelte
+  s_f058f999ab46b7::t_b7525271b055dc 11,17-18,42
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_17279619f526cb 50-51,54-55,117-118,154,157-160,173,304-309,315,349,351-353,411,416-433,435
+client/shell/topNav/contextZone/ContextZoneContent.svelte
+  s_f058f999ab46b7::t_a4c480f48752a6 4,35-49,54,57,60,63
+services/account/drizzle.datafn.config.ts
+  s_f058f999ab46b7::t_71ad622e9e8d7b 19
+services/account/drizzle/datafn/0004_account_file_deletions.sql
+  s_f058f999ab46b7::t_8ced75335e9f6b 1-12
+services/account/drizzle/datafn/meta/0004_snapshot.json
+  s_f058f999ab46b7::t_e89df7db51577d 2,2923,3304,5580,6160-6237
+services/account/drizzle/datafn/meta/0005_snapshot.json
+  s_f058f999ab46b7::t_44c54b12c5bb4a 1-6251
+services/account/drizzle/datafn/meta/_journal.json
+  s_f058f999ab46b7::t_a2fcea6f857915 36-44
+services/account/package.json
+  s_f058f999ab46b7::t_c6df110ca7ca62 17-18
+services/account/src/app.ts
+  s_f058f999ab46b7::t_54854e2c977abe 37-41,105-111,174-197,212-213,222-230,247
+services/account/src/datafn/file-deletions.schema.ts
+  s_f058f999ab46b7::t_b49f865c318fc7 1-22
+services/account/src/datafn/file-deletions.test.ts
+  s_f058f999ab46b7::t_9bacb2186fa002 1-717
+services/account/src/datafn/file-deletions.ts
+  s_f058f999ab46b7::t_7b85e1539685f7 1-567
+services/account/src/datafn/server.ts
+  s_f058f999ab46b7::t_be6bcb9ca88c20 25,59-65,136-151,191-198,221-224
+services/account/src/db/datafn-node.ts
+  s_f058f999ab46b7::t_6e3c2954ae0741 5,29
+services/account/src/db/sync-cloudflare.ts
+  s_f058f999ab46b7::t_4c513a8aa5d726 5,34
+services/account/src/db/sync-schema.ts
+  s_f058f999ab46b7::t_0458acf75af796 1-6
+services/account/src/testing/harness.ts
+  s_f058f999ab46b7::t_f21223ea237a4c 12-17,39,61,129,165
+services/account/src/testing/run-datafn-migrations.ts
+  s_f058f999ab46b7::t_8f599f073e4eb9 8,134
+tools/check/type-ownership.mjs
+  s_f058f999ab46b7::t_89ad41f048617b 153-154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cdce0c35cdfb3d884791c45f814faab82db79e16",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
