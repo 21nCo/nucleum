@@ -1,5 +1,6 @@
 import { clientStorage } from "@nucleum/persistence/client-storage";
 import type { ClientStorageKey } from "@nucleum/persistence/persistence.type";
+import { logger } from "@nucleum/client/runtime/logging/logger";
 
 /** Reads the per-namespace last-run times stored under `key`. */
 async function readLastRuns(
@@ -62,4 +63,36 @@ export function assertMaintenanceWritesSucceeded(
       (result as { ok?: unknown }).ok === false
   );
   if (isRejected) throw new Error(`${task}: a write was rejected`);
+}
+
+/**
+ * Runs a start-up maintenance task for `namespace` when it is due, and
+ * records the run only once `run` succeeds, so a failed attempt is retried on
+ * the next start. Errors are logged under `task`.
+ *
+ * @returns What `run` returned, or `fallback` when it didn't run or failed.
+ */
+export async function runMaintenanceIfDue<T>(params: {
+  key: ClientStorageKey;
+  namespace: string | undefined;
+  intervalMs: number;
+  task: string;
+  run: () => Promise<T>;
+  fallback: T;
+  now?: number;
+}): Promise<T> {
+  const { key, namespace, intervalMs, task, run, fallback } = params;
+  const now = params.now ?? Date.now();
+  if (!namespace) return fallback;
+  if (!(await isMaintenanceDue({ key, namespace, intervalMs, now }))) {
+    return fallback;
+  }
+  try {
+    const result = await run();
+    await recordMaintenanceRun({ key, namespace, now });
+    return result;
+  } catch (error) {
+    logger.error({ at: task, error });
+    return fallback;
+  }
 }

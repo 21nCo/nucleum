@@ -2,13 +2,12 @@ import { get } from "svelte/store";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import {
   assertMaintenanceWritesSucceeded,
-  isMaintenanceDue,
-  recordMaintenanceRun
+  runMaintenanceIfDue
 } from "@nucleum/datafn/maintenance-schedule";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 
-const repairIntervalMs = 24 * 60 * 60 * 1000;
+const repairIntervalMs = 7 * 24 * 60 * 60 * 1000;
 const repairPageSize = 200;
 
 type LegacyEventRecord = {
@@ -52,7 +51,8 @@ export function resolveLiftedEventTimes(
  * Lifts the times of events whose `field` is empty, one page at a time in
  * id order, until the last page. Repaired events leave the filter, so each
  * page starts after the events that had nothing to lift; every page either
- * repairs records or moves past them, so the scan always ends. Throws when a write is rejected, so the run is
+ * repairs records or moves past them, so the scan always ends; an event
+ * that comes back after being written fails the run instead of looping. Throws when a write is rejected, so the run is
  * not recorded and is retried on the next start.
  */
 async function liftEventTimesWhereEmpty(
@@ -60,6 +60,7 @@ async function liftEventTimesWhereEmpty(
 ): Promise<number> {
   let repaired = 0;
   let unrepairable = 0;
+  const written = new Set<string>();
   for (;;) {
     const result = await datafn.event.query({
       select: ["id", "startUnix", "endUnix", "value"],
@@ -83,6 +84,10 @@ async function liftEventTimesWhereEmpty(
           ]
         : [];
     });
+    if (writes.some((write) => written.has(write.id))) {
+      throw new Error("A repaired event was read back without its time");
+    }
+    writes.forEach((write) => written.add(write.id));
     if (writes.length > 0) {
       assertMaintenanceWritesSucceeded(
         await datafn.event.mutate(writes as any),
@@ -116,33 +121,20 @@ async function runLegacyEventTimeRepair(): Promise<number> {
 }
 
 /**
- * Runs the legacy event-time repair at most once a day per namespace,
- * recording the run only once it succeeds, so a failed attempt is retried on
- * the next start. Runs in every mode: direct mode reads and writes the
- * server's copy.
+ * Runs the legacy event-time repair at most once a week per namespace (the
+ * data is shared by an account's devices, and in direct mode each page is a
+ * server request), recording the run only once it succeeds, so a failed
+ * attempt is retried on the next start. Runs in every mode: direct mode
+ * reads and writes the server's copy.
  */
-export async function repairLegacyEventTimesIfDue(
-  now = Date.now()
-): Promise<number> {
-  const namespace = get(datafnRuntime)?.namespace;
-  if (!namespace) return 0;
-  const key = ClientStorageKey.LEGACY_EVENT_TIME_REPAIR_AT;
-  if (
-    !(await isMaintenanceDue({
-      key,
-      namespace,
-      intervalMs: repairIntervalMs,
-      now
-    }))
-  ) {
-    return 0;
-  }
-  try {
-    const repaired = await runLegacyEventTimeRepair();
-    await recordMaintenanceRun({ key, namespace, now });
-    return repaired;
-  } catch (error) {
-    logger.error({ at: "repairLegacyEventTimes", error });
-    return 0;
-  }
+export function repairLegacyEventTimesIfDue(now = Date.now()) {
+  return runMaintenanceIfDue({
+    key: ClientStorageKey.LEGACY_EVENT_TIME_REPAIR_AT,
+    namespace: get(datafnRuntime)?.namespace,
+    intervalMs: repairIntervalMs,
+    task: "repairLegacyEventTimes",
+    run: runLegacyEventTimeRepair,
+    fallback: 0,
+    now
+  });
 }

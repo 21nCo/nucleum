@@ -3,7 +3,7 @@ import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import {
   assertMaintenanceWritesSucceeded,
   isMaintenanceDue,
-  recordMaintenanceRun
+  runMaintenanceIfDue
 } from "@nucleum/datafn/maintenance-schedule";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -121,21 +121,15 @@ export async function repairMarkdownBlockParentsIfDue(
   now = Date.now()
 ): Promise<number> {
   if (!(await shouldRepairMarkdownBlockParents(now))) return 0;
-  const namespace = get(datafnRuntime)?.namespace;
-  try {
-    const repaired = await runMarkdownBlockParentRepair();
-    if (namespace) {
-      await recordMaintenanceRun({
-        key: ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT,
-        namespace,
-        now
-      });
-    }
-    return repaired;
-  } catch (error) {
-    logger.error({ at: "repairMarkdownBlockParents", error });
-    return 0;
-  }
+  return runMaintenanceIfDue({
+    key: ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT,
+    namespace: get(datafnRuntime)?.namespace,
+    intervalMs: repairIntervalMs,
+    task: "repairMarkdownBlockParents",
+    run: runMarkdownBlockParentRepair,
+    fallback: 0,
+    now
+  });
 }
 
 /**
