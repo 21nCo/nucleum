@@ -1,0 +1,31 @@
+client/features/memory/node/markdown-block-parents.ts
+  s_f058f999ab46b7::t_8eaeec3b3573cb 105
+client/surfaces/library/library-query.ts
+  s_f058f999ab46b7::t_6d91f01f97f2cd 172-176
+client/shell/topNav/tabs/live-resource.test.ts
+  s_f058f999ab46b7::t_a16091b2e40dc0 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a14dd08a3238bd82648f489d2586b926b40ab2a8",
+  "prompts": {},
+  "sessions": {
+    "s_61238560bd889b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e36d-6fef-7b10-a11c-ecc69ab38fdf",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
