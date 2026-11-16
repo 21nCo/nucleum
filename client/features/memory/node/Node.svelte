@@ -84,10 +84,27 @@
 
   let isLoading = $state(false);
   let error = $state<any>(undefined);
+  // Load the node when it (or the split view) changes. initialize() reads
+  // other state such as accessMode synchronously, so it runs untracked:
+  // otherwise an access-mode change shortly after opening re-fetched the
+  // whole node, its links and clips a second time.
+  let initializedId: string | undefined;
   $effect(() => {
     if (id && (isFromSplitView || !isRenderSplitView)) {
-      initialize();
+      // Once per id: layout flags can flip while the page settles.
+      if (initializedId === id) return;
+      initializedId = id;
+      untrack(() => initialize());
     }
+  });
+  // Keep the loaded node's access mode current without re-fetching it.
+  $effect(() => {
+    const mode = accessMode;
+    untrack(() => {
+      if ($node && $node.accessMode !== mode) {
+        node.update((current) => ({ ...current, accessMode: mode }));
+      }
+    });
   });
   navigation.clearAllTooltips();
 
@@ -134,7 +151,8 @@
   $effect(() => ActiveNodeStore.retain(id, () => accessMode));
 
   const debouncedInitialize = debouncer(initialize, 1500);
-  let hasReceivedInitialPropertySignal = false;
+  // The latest-changed property seen so far ("none" when there are none).
+  let lastPropertyKey: string | undefined;
 
   const propertyStore = toSvelteStore(
     datafn.property.signal({
@@ -147,13 +165,21 @@
     })
   );
 
+  // Re-initialise when a property actually changes (to show new property
+  // values). Compare the latest property instead of counting emissions: the
+  // store emits its empty initial value and then the loaded one, which used to
+  // look like a change and re-fetched the whole node 1.5 s after opening.
   $effect(() => {
-    $propertyStore.data;
+    if ($propertyStore.loading) return;
+    const latest = ($propertyStore.data as any[] | undefined)?.[0];
+    const key = latest ? `${latest.id}:${latest.updatedAt}` : "none";
     untrack(() => {
-      if (!hasReceivedInitialPropertySignal) {
-        hasReceivedInitialPropertySignal = true;
+      if (lastPropertyKey === undefined) {
+        lastPropertyKey = key;
         return;
       }
+      if (key === lastPropertyKey) return;
+      lastPropertyKey = key;
       debouncedInitialize();
     });
   });
