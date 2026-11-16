@@ -99,12 +99,18 @@
     }
   });
   /**
+   * Registers this view as a mounted view of the node. Declared before the
+   * access-mode effect, so this view is registered when that effect first
+   * runs.
+   */
+  $effect(() => ActiveNodeStore.retain(id, () => accessMode));
+  /**
    * Sets the loaded node's access mode to that of the newest mounted view of
    * it (this one's when it is the only one), so a view that finishes loading
    * late doesn't overwrite the mode of a view opened after it.
    */
   function applyAccessMode() {
-    const mode = ActiveNodeStore.resolveOwnerAccessMode(id) ?? accessMode;
+    const mode = ActiveNodeStore.resolveOwnerAccessMode(id);
     if ($node && $node.accessMode !== mode) {
       node.update((current) => ({ ...current, accessMode: mode }));
     }
@@ -156,8 +162,6 @@
   onDestroy(() => {
     releaseDnDPage?.();
   });
-
-  $effect(() => ActiveNodeStore.retain(id, () => accessMode));
 
   const debouncedInitialize = debouncer(initialize, 1500);
   /** The latest-changed property seen so far ("none" when there are none). */
