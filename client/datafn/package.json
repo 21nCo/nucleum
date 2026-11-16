@@ -11,6 +11,9 @@
     "@searchfn/adapter-indexeddb": "0.1.0",
     "@searchfn/datafn-provider": "0.4.0"
   },
+  "devDependencies": {
+    "@datafn/server": "0.2.6"
+  },
   "peerDependencies": {
     "@nucleum/client": "*",
     "svelte": "^5.55.0"
