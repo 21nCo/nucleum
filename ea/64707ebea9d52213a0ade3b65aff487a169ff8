@@ -1,0 +1,39 @@
+apps/e2e-playwright/tests/memory/nodes/record-page.spec.ts
+  s_f058f999ab46b7::t_0dc86cbfe9b05c 99-113,410,430,453
+client/features/collections/properties/PropertiesListView.svelte
+  s_f058f999ab46b7::t_f62c7b56ace82c 52-56,67,102,255-257
+client/features/collections/properties/PropertiesPane.svelte
+  s_f058f999ab46b7::t_11da797ae81c1e 33,49,56-60,119-131,322-350,418
+client/features/memory/node/Node.svelte
+  s_f058f999ab46b7::t_d59c56a6179dc5 35-38,82-96,196
+client/features/memory/node/base/NonMediaNode.svelte
+  s_f058f999ab46b7::t_0f05ac9656878a 32,56,62-67,186-188,194-200,208-210,212-216,339,361-366
+client/features/memory/node/node-layout.test.ts
+  s_f058f999ab46b7::t_97667b0e11cba0 5,60-97
+client/features/memory/node/node-layout.ts
+  s_f058f999ab46b7::t_c849111e3c10a8 47-86
+client/features/memory/node/node.store.ts
+  s_f058f999ab46b7::t_55c4b96c80bff0 1050-1051,1302,1350,1423,1430
+client/features/memory/node/rightPanel/NodeDefaultRightPane.svelte
+  s_f058f999ab46b7::t_50a318a872246a 2,24,35-36,39-43,50-56,62-63,78-83,102-103,105,116-128,130-136,140,145-197
+client/features/memory/node/rightPanel/NodeRightPaneContent.svelte
+  s_f058f999ab46b7::t_9b24d8b1d55738 32-34
+client/features/records/overview/OverviewSection.svelte
+  s_f058f999ab46b7::t_c3169e78fb37aa 1-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ea64707ebea9d52213a0ade3b65aff487a169ff8",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

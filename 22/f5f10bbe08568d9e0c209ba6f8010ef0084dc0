@@ -1,0 +1,33 @@
+client/features/collections/Collection.svelte
+  s_f058f999ab46b7::t_910e62c1453255 653-656,658,661-686,688-692,694-703,705-717,720-753,755,757-759,762-843,856-859,862-875,877-878,881-891,893-939
+client/features/memory/markdown/TableOfContents.svelte
+  s_f058f999ab46b7::t_b80ec9cfc164fc 25-26,31-35,114-119,145-148
+client/features/memory/node/base/NonMediaNode.svelte
+  s_f058f999ab46b7::t_6368b15a044131 187-188,196-202,222-223
+client/features/memory/node/content/MediaContent.svelte
+  s_f058f999ab46b7::t_acb33b2391c1ce 19-20,32-43,81,85-88,106
+client/features/memory/node/node-layout.test.ts
+  s_f058f999ab46b7::t_c59ee728937251 65-66,70-71
+client/features/memory/node/node-layout.ts
+  s_f058f999ab46b7::t_e2af60031053a9 57
+client/features/memory/node/node.store.ts
+  s_f058f999ab46b7::t_eca923d1d469e0 1426
+client/features/memory/node/rightPanel/MediaNodeRightPane.svelte
+  s_f058f999ab46b7::t_b924dd9d03ba93 27-33,35-37,43,45-47,53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "22f5f10bbe08568d9e0c209ba6f8010ef0084dc0",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

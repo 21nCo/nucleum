@@ -1,0 +1,39 @@
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_eef3adfd78acd6 43,91
+client/features/focus/goals/GoalPanelSwitcher.svelte
+  s_f058f999ab46b7::t_5f0c14c55e70ea 103-114,159,161,164-180
+client/features/focus/goals/info/GoalInfoPanel.svelte
+  s_f058f999ab46b7::t_687eb042ac0135 39-40,51-62,119,122,130
+client/features/records/ResourcePanelSwitcher.svelte
+  s_f058f999ab46b7::t_9212e0a271f959 65,130
+client/features/records/ResourceViewSwitcher.svelte
+  s_f058f999ab46b7::t_b3fed866655653 14
+client/features/spaces/SpaceBody.svelte
+  s_f058f999ab46b7::t_b81510049a4d3c 18,45,156-162,201
+client/features/spaces/SpaceContextZone.svelte
+  s_f058f999ab46b7::t_84a1d54337ff22 75
+client/features/spaces/SpaceNavItem.svelte
+  s_f058f999ab46b7::t_f8ab4cc3ab63cc 252,256,296-297
+client/features/spaces/SpaceSideNav.svelte
+  s_f058f999ab46b7::t_5e70b9519c763d 185-198
+client/features/spaces/SpaceTopBarTitle.svelte
+  s_f058f999ab46b7::t_17d69fb304e00a 24-26,31-34,112-145
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_f17247a041e19a 282,286,304
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f30d943074f29b0d4c13492bdcec7142bc061330",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
