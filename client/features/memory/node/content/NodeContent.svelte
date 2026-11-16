@@ -75,6 +75,12 @@
   let refreshId = $state<number | undefined>(undefined);
   let markdownRef = $state<any>(undefined);
   let isInitialContentReady = $state(false);
+  /**
+   * Whether the note opened without some blocks of its order (see
+   * {@link prepareOrderedNoteContent}): it is then shown read-only and its
+   * handlers write nothing, so no edit can save an order without them.
+   */
+  let isOpenedIncomplete = $state(false);
   const dev_isEnableBottomDivider = false;
 
   const calendarContentContext = getContext<any>(Context.CALENDAR_CONTENT);
@@ -179,11 +185,12 @@
    * Checks that a note whose page copy has a block order also has every
    * block in it, at every level, and reloads them from storage when it
    * doesn't, so a gap that closes (a local store still downloading) never
-   * reaches the editor. A gap that is still there on the last attempt is
-   * kept: the order can name a block no longer stored anywhere (legacy
-   * imports copied their children lists as they were), and such a note
-   * opened with the blocks that exist before these checks, so it does so
-   * again rather than staying closed. Orders holding block records instead
+   * reaches the editor. A gap that is still there on the last attempt opens
+   * the note read-only with its page copy: the order can name a block no
+   * longer stored anywhere (legacy imports copied their children lists as
+   * they were), so the note is shown rather than left blank, but a missing
+   * block is never taken as deleted, so nothing it shows can be saved.
+   * Reopening the note checks again. Orders holding block records instead
    * of ids are taken as loaded.
    */
   async function prepareOrderedNoteContent(
@@ -200,6 +207,7 @@
     const loaded = await loadStoredNoteBlocks($node.id, order);
     if (loaded || !isLastAttempt) return applyStoredNoteBlocks(loaded);
     logger.warn({ at: "NodeContent.blocks.openedIncomplete", id: $node.id });
+    isOpenedIncomplete = true;
     return true;
   }
 
@@ -320,6 +328,7 @@
 
   function onMarkdownContentChange(e: CustomEvent) {
     logger.log({ at: "NodeContent - onMarkdownContentChange", ...e.detail });
+    if (isOpenedIncomplete) return;
     const block = e.detail.block;
     if (!block.source && !block.id) return;
     const id = block.id ?? block.source;
@@ -378,6 +387,7 @@
 
   function onReStructure(e: CustomEvent) {
     logger.log({ at: "NodeContent - onReStructure", ...e.detail });
+    if (isOpenedIncomplete) return;
     try {
       const differences = shallowDiff(previousRootStructure, e.detail.root);
       if (isValidArrayWithData(differences)) {
@@ -466,6 +476,7 @@
       action: e.detail.action,
       detail: e.detail
     });
+    if (isOpenedIncomplete) return;
     switch (e.detail.action) {
       case BlockAction.INSERT:
         onInsert(e);
@@ -567,7 +578,7 @@
           node={$node}
           {mdId}
           params={{
-            isReadOnly: isReadOnlyMode,
+            isReadOnly: isReadOnlyMode || isOpenedIncomplete,
             isPreventFocusOnLoad: $context.isTouchDevice
           }}
           bind:md={$node.md}
