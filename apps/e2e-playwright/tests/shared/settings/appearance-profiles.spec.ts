@@ -102,6 +102,12 @@ test.describe("settings - appearance profiles @settings", () => {
         )
       )
       .toBe(name);
+    await expect(
+      profiles.getByRole("button", { name: "Save", exact: true })
+    ).toBeVisible();
+    await expect(
+      profiles.getByRole("button", { name: "Cancel", exact: true })
+    ).toBeVisible();
     await page.keyboard.type(renamed);
     await page.keyboard.press("Enter");
     await expect(nameInput).toBeHidden();

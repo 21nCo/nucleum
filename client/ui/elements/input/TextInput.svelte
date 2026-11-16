@@ -32,6 +32,8 @@
     hasControls = false,
     isShowSaveControl = false,
     isShowClearControl = false,
+    saveControlLabel = "Save",
+    cancelControlLabel = "Cancel",
     isPreventDefaultOnEnter = false,
     isRounded = false,
     height = undefined,
@@ -70,6 +72,8 @@
     hasControls?: boolean;
     isShowSaveControl?: boolean;
     isShowClearControl?: boolean;
+    saveControlLabel?: string;
+    cancelControlLabel?: string;
     isPreventDefaultOnEnter?: boolean;
     isRounded?: boolean;
     height?: string | undefined;
@@ -502,6 +506,7 @@
             <button
               type="button"
               id="input-save-control"
+              aria-label={saveControlLabel}
               onclick={(event) => emitSave(event)}
             >
               <Icon icon="check" />
@@ -511,6 +516,7 @@
             <button
               type="button"
               id="input-cancel-control"
+              aria-label={cancelControlLabel}
               onclick={(event) => {
                 event.stopPropagation();
                 if (isShowClearControl) emitClear();

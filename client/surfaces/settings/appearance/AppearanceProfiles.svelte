@@ -15,10 +15,25 @@
     saveAppearanceProfileAsNew,
     updateAppearanceProfile
   } from "@nucleum/shared-state/appearance/appearance-profiles";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+  import {
+    runProfileNameWrite,
+    type ProfileNameWriteResult
+  } from "@nucleum/surfaces/settings/appearance/appearance-profile-name-write";
 
   type NameEditor = { mode: "new" } | { mode: "rename"; id: string };
 
-  let editor = $state<NameEditor | null>(null);
+  let editor = $state.raw<NameEditor | null>(null);
+
+  async function submitName(
+    write: () => PromiseLike<ProfileNameWriteResult> | ProfileNameWriteResult
+  ) {
+    const target = editor;
+    const isDone = await runProfileNameWrite(write, (message) =>
+      toasts.error(message)
+    );
+    if (isDone && editor === target) editor = null;
+  }
 
   const applied = $derived($appearanceProfiles.applied);
   const isModified = $derived($appearanceProfiles.isModified);
@@ -44,10 +59,8 @@
           onApply={() => applyAppearanceProfile(profile.id)}
           onRename={() => (editor = { mode: "rename", id: profile.id })}
           onDelete={() => deleteAppearanceProfile(profile.id)}
-          onSubmitName={(name) => {
-            renameAppearanceProfile(profile.id, name);
-            editor = null;
-          }}
+          onSubmitName={(name) =>
+            submitName(() => renameAppearanceProfile(profile.id, name))}
           onCancelEdit={() => (editor = null)}
         />
       {/each}
@@ -56,10 +69,8 @@
           class="flex items-center w-full p-2 rounded-md border border-dashed border-brs2 bg-bgs2"
         >
           <AppearanceProfileNameEditor
-            onSubmit={(name) => {
-              saveAppearanceProfileAsNew(name);
-              editor = null;
-            }}
+            onSubmit={(name) =>
+              submitName(() => saveAppearanceProfileAsNew(name))}
             onCancel={() => (editor = null)}
           />
         </div>

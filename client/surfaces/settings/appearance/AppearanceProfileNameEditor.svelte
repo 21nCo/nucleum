@@ -8,7 +8,7 @@
     onCancel
   }: {
     initialName?: string;
-    onSubmit: (name: string) => void;
+    onSubmit: (name: string) => Promise<unknown> | void;
     onCancel: () => void;
   } = $props();
 
@@ -18,6 +18,7 @@
   // elsewhere (such as a menu item) receives that key's keyup, so only an
   // Enter that was also pressed down inside the editor submits.
   let isEnterPressedInside = false;
+  let isSubmitting = false;
 
   $effect(() => {
     const input = container?.querySelector("input");
@@ -25,16 +26,21 @@
     input?.select();
   });
 
-  function submit() {
+  async function submit() {
     const trimmed = name.trim();
-    if (!trimmed) return;
-    onSubmit(trimmed);
+    if (!trimmed || isSubmitting) return;
+    isSubmitting = true;
+    try {
+      await onSubmit(trimmed);
+    } finally {
+      isSubmitting = false;
+    }
   }
 
   function submitOnEnter() {
     if (!isEnterPressedInside) return;
     isEnterPressedInside = false;
-    submit();
+    void submit();
   }
 
   function handleKeydownCapture(event: KeyboardEvent) {

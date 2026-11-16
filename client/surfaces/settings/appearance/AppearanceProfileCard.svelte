@@ -29,7 +29,7 @@
     onApply: () => void;
     onRename?: (() => void) | undefined;
     onDelete?: (() => void) | undefined;
-    onSubmitName?: ((name: string) => void) | undefined;
+    onSubmitName?: ((name: string) => Promise<unknown> | void) | undefined;
     onCancelEdit?: (() => void) | undefined;
   } = $props();
 
