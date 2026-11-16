@@ -39,11 +39,36 @@
     container?.querySelector("input")?.focus();
   });
 
+  function optionToFocus(key: string, target: EventTarget | null) {
+    const options = Array.from(
+      container?.querySelectorAll<HTMLElement>('[role="option"]') ?? []
+    );
+    const index = options.indexOf(target as HTMLElement);
+    if (key === "ArrowDown") {
+      return options[Math.min(index + 1, options.length - 1)];
+    }
+    if (index < 0) return undefined;
+    if (key === "ArrowUp") {
+      return index === 0
+        ? container?.querySelector("input")
+        : options[index - 1];
+    }
+    if (key === "Home") return options[0];
+    if (key === "End") return options.at(-1);
+    return undefined;
+  }
+
   function onKeydown(event: KeyboardEvent) {
-    if (event.key !== "Escape") return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      onClose?.();
+      return;
+    }
+    const next = optionToFocus(event.key, event.target);
+    if (!next) return;
     event.preventDefault();
-    event.stopPropagation();
-    onClose?.();
+    next.focus();
   }
 </script>
 

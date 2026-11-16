@@ -139,8 +139,9 @@ export function colorSchemeVariantLabel(
 }
 
 /**
- * The families a light or dark picker offers: one per scheme of that variant,
- * keeping the first family that uses it. Picking both variants keeps them all.
+ * The families a light or dark picker offers: one per defined scheme of that
+ * variant, keeping the first family that uses it. Picking both variants keeps
+ * them all.
  */
 export function colorSchemeVariantFamilies(
   families: ResolvedColorSchemeFamily[],
@@ -149,8 +150,9 @@ export function colorSchemeVariantFamilies(
   if (variant === "both") return families;
   const seen = new Set<string>();
   return families.filter((family) => {
+    const scheme = variant === "light" ? family.light : family.dark;
     const id = variant === "light" ? family.lightId : family.darkId;
-    if (!id || seen.has(id)) return false;
+    if (!scheme || !id || seen.has(id)) return false;
     seen.add(id);
     return true;
   });

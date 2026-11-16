@@ -3,7 +3,10 @@ import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ColorScheme } from "@21n/theme/appearance.type";
 import {
+  ColorSchemeCategory,
+  colorSchemeVariantFamilies,
   findColorSchemeFamily,
+  groupColorSchemeFamilies,
   resolveColorSchemeFamilies
 } from "@21n/theme/colorscheme-catalog";
 import colorSchemes from "@21n/theme/colorschemes.json";
@@ -12,6 +15,13 @@ import ColorSchemeFamilyPicker from "./ColorSchemeFamilyPicker.svelte";
 const families = resolveColorSchemeFamilies(
   colorSchemes as unknown as ColorScheme[]
 );
+
+function searchInput() {
+  const search = screen.getByTestId("color-scheme-search");
+  return search.matches("input")
+    ? search
+    : (search.querySelector("input") as HTMLElement);
+}
 
 async function flush() {
   for (let i = 0; i < 3; i++) {
@@ -135,5 +145,136 @@ describe.each(cases)(
       await open(trigger);
       expect(screen.getByTestId("color-scheme-family-list")).toBeTruthy();
     });
+
+    it("moves between filtered options with the arrow keys across groups and stops at the ends", async () => {
+      const trigger = renderPicker();
+      await open(trigger);
+      const input = searchInput();
+      await fireEvent.input(input, { target: { value: "o" } });
+      await flush();
+      const expected = groupColorSchemeFamilies(
+        colorSchemeVariantFamilies(families, variant),
+        "o",
+        variant
+      );
+      const ids = expected.flatMap((group) =>
+        group.families.map((family) => family.id)
+      );
+      const options = screen.getAllByTestId("color-scheme-family-option");
+      expect(options.map((option) => option.dataset.familyId)).toEqual(ids);
+      expect(expected.length).toBeGreaterThan(1);
+
+      await fireEvent.keyDown(input, { key: "ArrowDown" });
+      expect(document.activeElement).toBe(options[0]);
+      for (const option of options.slice(1)) {
+        await fireEvent.keyDown(document.activeElement as HTMLElement, {
+          key: "ArrowDown"
+        });
+        expect(document.activeElement).toBe(option);
+      }
+      await fireEvent.keyDown(document.activeElement as HTMLElement, {
+        key: "ArrowDown"
+      });
+      expect(document.activeElement).toBe(options.at(-1));
+
+      await fireEvent.keyDown(options.at(-1) as HTMLElement, { key: "Home" });
+      expect(document.activeElement).toBe(options[0]);
+      await fireEvent.keyDown(options[0], { key: "End" });
+      expect(document.activeElement).toBe(options.at(-1));
+      await fireEvent.keyDown(options.at(-1) as HTMLElement, {
+        key: "ArrowUp"
+      });
+      expect(document.activeElement).toBe(options.at(-2));
+
+      options[0].focus();
+      await fireEvent.keyDown(options[0], { key: "ArrowUp" });
+      expect(document.activeElement).toBe(input);
+      expect(screen.getByTestId("color-scheme-family-list")).toBeTruthy();
+    });
+
+    it("keeps Escape and selection working after arrow navigation", async () => {
+      const onSelect = vi.fn();
+      const trigger = renderPicker(onSelect);
+      await open(trigger);
+      await fireEvent.keyDown(searchInput(), { key: "ArrowDown" });
+      await fireEvent.keyDown(document.activeElement as HTMLElement, {
+        key: "Escape"
+      });
+      await flush();
+      expect(screen.queryByTestId("color-scheme-family-list")).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+      expect(modalEscape).not.toHaveBeenCalled();
+
+      await open(trigger);
+      await fireEvent.keyDown(searchInput(), { key: "ArrowDown" });
+      await fireEvent.keyDown(document.activeElement as HTMLElement, {
+        key: "ArrowDown"
+      });
+      const focused = document.activeElement as HTMLElement;
+      expect(focused).toBe(
+        screen.getAllByTestId("color-scheme-family-option")[1]
+      );
+      await fireEvent.click(focused);
+      await flush();
+      expect(onSelect).toHaveBeenCalledWith(
+        families.find((family) => family.id === focused.dataset.familyId)
+      );
+      expect(document.activeElement).toBe(trigger);
+    });
   }
 );
+
+describe("ColorSchemeFamilyPicker with partially defined families", () => {
+  const scheme = (id: string, isDark = false) =>
+    ({ id, isDark, label: id, colors: {} }) as unknown as ColorScheme;
+  const partial = resolveColorSchemeFamilies(
+    [scheme("a-light"), scheme("b-dark", true)],
+    [
+      {
+        id: "a",
+        label: "A",
+        category: ColorSchemeCategory.Nucleum,
+        lightId: "a-light",
+        darkId: "a-dark"
+      },
+      {
+        id: "b",
+        label: "B",
+        category: ColorSchemeCategory.Developer,
+        lightId: "b-light",
+        darkId: "b-dark"
+      }
+    ]
+  );
+
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="popovers"></div>';
+  });
+
+  it.each([
+    { variant: "light" as const, ids: ["a"] },
+    { variant: "dark" as const, ids: ["b"] }
+  ])(
+    "offers only families whose $variant scheme is defined",
+    async ({ variant, ids }) => {
+      const onSelect = vi.fn();
+      render(ColorSchemeFamilyPicker, {
+        props: {
+          label: "Scheme",
+          variant,
+          testId: "partial-picker",
+          families: partial,
+          selected: undefined,
+          onSelect
+        }
+      });
+      await fireEvent.click(screen.getByTestId("partial-picker"));
+      await flush();
+      const options = screen.getAllByTestId("color-scheme-family-option");
+      expect(options.map((option) => option.dataset.familyId)).toEqual(ids);
+      await fireEvent.click(options[0]);
+      const picked = onSelect.mock.calls[0][0];
+      expect(variant === "light" ? picked.light : picked.dark).toBeDefined();
+    }
+  );
+});

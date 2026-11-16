@@ -547,6 +547,66 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     }
   });
 
+  test("Appearance: arrow keys move through the filtered colour scheme list", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await openAppearance(page);
+
+    const drawer = page.getByTestId("modal-appearance-settings");
+    const section = page.getByTestId("color-scheme-section");
+    const mixedSwitch = section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]');
+    const list = page.getByTestId("color-scheme-family-list");
+    const search = list.getByTestId("color-scheme-search");
+    const options = list.getByRole("option");
+    const modes = [
+      { isMixed: false, name: /^Colour scheme / },
+      { isMixed: true, name: /^Light colour scheme / },
+      { isMixed: true, name: /^Dark colour scheme / }
+    ];
+
+    for (const { isMixed, name } of modes) {
+      await mixedSwitch.setChecked(isMixed, { force: true });
+      const picker = section.getByRole("button", { name });
+      await picker.focus();
+      await page.keyboard.press("Enter");
+      await expect(search).toBeFocused();
+      await page.keyboard.type("o");
+      const count = await options.count();
+      expect(count).toBeGreaterThan(2);
+
+      for (let index = 0; index < count; index++) {
+        await page.keyboard.press("ArrowDown");
+        await expect(options.nth(index)).toBeFocused();
+      }
+      await page.keyboard.press("ArrowDown");
+      await expect(options.nth(count - 1)).toBeFocused();
+      await page.keyboard.press("Home");
+      await expect(options.first()).toBeFocused();
+      await page.keyboard.press("End");
+      await expect(options.nth(count - 1)).toBeFocused();
+      await page.keyboard.press("Home");
+      await page.keyboard.press("ArrowUp");
+      await expect(search).toBeFocused();
+      await expect(list).toBeVisible();
+
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("ArrowDown");
+      const second = (await options.nth(1).innerText()).trim();
+      await page.keyboard.press("Enter");
+      await expect(list).toBeHidden({ timeout: 5_000 });
+      await expect(
+        section.getByRole("button", {
+          name: new RegExp(`${name.source}${second}$`)
+        })
+      ).toBeFocused();
+      await expect(drawer).toBeVisible();
+    }
+  });
+
   test("Appearance: switch between light and dark themes and verify theme layer updates", async ({
     page
   }) => {

@@ -166,6 +166,70 @@ describe("colour scheme catalog", () => {
   });
 });
 
+describe("colorSchemeVariantFamilies with partially defined families", () => {
+  const families = resolveColorSchemeFamilies(
+    [scheme("a-light"), scheme("b-dark", true), scheme("c-light")],
+    [
+      {
+        id: "a",
+        label: "A",
+        category: ColorSchemeCategory.Nucleum,
+        lightId: "a-light",
+        darkId: "a-dark"
+      },
+      {
+        id: "b",
+        label: "B",
+        category: ColorSchemeCategory.Developer,
+        lightId: "b-light",
+        darkId: "b-dark"
+      },
+      {
+        id: "c",
+        label: "C",
+        category: ColorSchemeCategory.Studio,
+        lightId: "c-light",
+        darkId: "b-dark"
+      }
+    ]
+  );
+  const ids = (list: { id: string }[]) => list.map((family) => family.id);
+
+  it("offers a light picker only families whose light scheme is defined", () => {
+    const light = colorSchemeVariantFamilies(families, "light");
+    expect(ids(light)).toEqual(["a", "c"]);
+    expect(light.every((family) => family.light)).toBe(true);
+    const search = (query: string) =>
+      groupColorSchemeFamilies(light, query, "light").flatMap((group) =>
+        ids(group.families)
+      );
+    expect(search("b")).toEqual([]);
+    expect(search("developer")).toEqual([]);
+    expect(search("a-light")).toEqual(["a"]);
+  });
+
+  it("offers a dark picker only families whose dark scheme is defined, once per scheme", () => {
+    const dark = colorSchemeVariantFamilies(families, "dark");
+    expect(ids(dark)).toEqual(["b"]);
+    expect(dark.every((family) => family.dark)).toBe(true);
+    const search = (query: string) =>
+      groupColorSchemeFamilies(dark, query, "dark").flatMap((group) =>
+        ids(group.families)
+      );
+    expect(search("a-dark")).toEqual([]);
+    expect(search("nucleum")).toEqual([]);
+    expect(search("b-dark")).toEqual(["b"]);
+  });
+
+  it("keeps every resolved family when picking both variants", () => {
+    expect(ids(colorSchemeVariantFamilies(families, "both"))).toEqual([
+      "a",
+      "b",
+      "c"
+    ]);
+  });
+});
+
 describe("findColorSchemeFamilyForMixedPair", () => {
   const families = resolveColorSchemeFamilies(
     colorSchemes as unknown as ColorScheme[]
