@@ -1,0 +1,29 @@
+client/features/calendar/birdView/BirdCalendar.sub-views.test.ts
+  s_aa793b0a8d1ac8::t_4f5e571c65d79c 1-108
+client/features/calendar/birdView/BirdCalendar.svelte
+  s_aa793b0a8d1ac8::t_aeee60a33e126a 100
+client/features/memory/node/birdView/NodeBirdView.svelte
+  s_aa793b0a8d1ac8::t_de82bd5e8ed7d3 511,538
+client/features/memory/node/birdView/NodeBirdView.sub-views.test.ts
+  s_aa793b0a8d1ac8::t_aead8f57abb58a 1-118
+client/shell/topNav/contextZone/context-zone.ts
+  s_aa793b0a8d1ac8::t_0e51e208f747db 250-259,363-366
+tests/fixtures/components/CalendarLayoutHeaderLeftStub.svelte
+  s_aa793b0a8d1ac8::t_44dfaf628af9a5 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "361cbff306deae77895048950cb45e9ecfea1e2a",
+  "prompts": {},
+  "sessions": {
+    "s_aa793b0a8d1ac8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "027b6086-1840-4196-8460-0ca79d822514",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
