@@ -43,6 +43,24 @@ const emptyIndicatorSignal: DatafnSignal<ICalendarIndicatorData[]> = {
 };
 
 /**
+ * A key that changes only when the indicators' visible period changes, so a
+ * date change inside the same month, quarter or year reuses the queries
+ * instead of rebuilding them. Uses local calendar parts (DataFn's "user"
+ * timezone is the local one); weeks and days key by the day, which at worst
+ * rebuilds a week's indicators once per day change.
+ */
+export function resolveIndicatorPeriodKey(date: Date, scale: TimeScaleUnit) {
+  const year = date.getFullYear();
+  if (scale === TimeScaleUnit.YEAR) return `${scale}:${year}`;
+  if (scale === TimeScaleUnit.QUARTER) {
+    return `${scale}:${year}-q${Math.floor(date.getMonth() / 3)}`;
+  }
+  if (scale === TimeScaleUnit.MONTH)
+    return `${scale}:${year}-${date.getMonth()}`;
+  return `${scale}:${year}-${date.getMonth()}-${date.getDate()}`;
+}
+
+/**
  * Creates the combined DataFn signal that feeds classic calendar tile indicators
  * for the selected resources and visible time scale.
  */
@@ -122,10 +140,7 @@ export function createClassicCalendarIndicatorSignal({
             contentType: { $in: [...rootNodeTypeList] },
             creationContext: { $is_empty: true }
           },
-          temporal: time.period(
-            "createdAt",
-            { scale: temporalScale, at: date }
-          )
+          temporal: time.period("createdAt", { scale: temporalScale, at: date })
         },
         datafnHeavyComputedSignalOptions
       )
@@ -151,10 +166,7 @@ export function createClassicCalendarIndicatorSignal({
           filters: {
             metaType: NodeMetaType.CALENDAR_NOTES
           },
-          temporal: time.period(
-            "date",
-            { scale: temporalScale, at: date }
-          )
+          temporal: time.period("date", { scale: temporalScale, at: date })
         },
         datafnHeavyComputedSignalOptions
       )

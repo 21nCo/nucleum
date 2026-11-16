@@ -20,9 +20,11 @@
   import { Display } from "@21n/ui/elements/display.enum";
   import YearView from "@nucleum/features/calendar/classic/YearView.svelte";
   import { toSvelteStore } from "@datafn/svelte";
+  import { untrack } from "svelte";
   import {
     areIndicatorDataEqual,
-    createClassicCalendarIndicatorSignal
+    createClassicCalendarIndicatorSignal,
+    resolveIndicatorPeriodKey
   } from "@nucleum/features/calendar/classic/indicator/classicCalendarIndicator.signal";
   let {
     panel = $bindable(CalendarLayout.Classic),
@@ -40,9 +42,15 @@
   let width = $derived(resolveSavedWidthSelection(selectedView));
   let yearViewRefreshId = $state(new Date().getTime());
   const resourcesForIndicators = $derived(resolveResourcesForIndicators());
+  // Rebuilt only when the visible period changes, not on every date change
+  // inside it (each rebuild re-queries a whole period per resource).
+  const indicatorPeriodKey = $derived(
+    resolveIndicatorPeriodKey(selectedDate, selectedView)
+  );
   const indicatorStore = $derived.by(() => {
     if (selectedView === TimeScaleUnit.DAY) return undefined;
-    const date = selectedDate;
+    indicatorPeriodKey;
+    const date = untrack(() => selectedDate);
     const scale = selectedView;
     const resources = resourcesForIndicators;
     return toSvelteStore(
