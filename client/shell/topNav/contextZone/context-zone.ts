@@ -232,13 +232,19 @@ export type ContextZoneSubViewRegistration = {
  * Picks the in-page sub switcher the keyboard steps: among the switchers of
  * the shown pane that have views, the one used most recently (picked by the
  * keyboard or by the user in the switcher), otherwise the newest registered.
+ * Switchers on layers outside `visible`, such as a page under a full-screen
+ * overlay, never count, also when no pane is shown.
  */
 export function resolveContextZoneSubViewSource(
   sources: ContextZoneSubViewSource[],
-  pane: ContextZonePane | undefined
+  pane: ContextZonePane | undefined,
+  visible?: ReadonlySet<number>
 ): ContextZoneSubViewSource | undefined {
   const candidates = sources.filter(
-    (item) => item.source.views && (!pane || item.pane.id === pane.id)
+    (item) =>
+      item.source.views &&
+      (!visible || visible.has(item.pane.layer)) &&
+      (!pane || item.pane.id === pane.id)
   );
   if (candidates.length === 0) return undefined;
   return candidates.reduce((latest, item) =>
@@ -361,7 +367,8 @@ export const contextZone = {
   resolveSubViews() {
     return resolveContextZoneSubViewSource(
       get(subViewSources),
-      get(contextZone.pane)
+      get(contextZone.pane),
+      get(visibleLayers)
     )?.source.views;
   },
   /**
@@ -371,7 +378,8 @@ export const contextZone = {
   stepSub(delta: number) {
     const source = resolveContextZoneSubViewSource(
       get(subViewSources),
-      get(contextZone.pane)
+      get(contextZone.pane),
+      get(visibleLayers)
     );
     const views = source?.source.views;
     if (!source || !views) return false;
