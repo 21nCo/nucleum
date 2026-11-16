@@ -60,10 +60,19 @@ export function parseLegacyKey(value) {
 /** The request headers the app sends with a signing request. */
 const allowedRequestHeaders = "content-type, authorization";
 
+/**
+ * The configured origin equal to `origin`, or undefined. CORS headers carry
+ * the configured string, never the request's own value.
+ */
+function resolveAllowedOrigin(origin) {
+  return [...allowedOrigins].find((allowed) => allowed === origin);
+}
+
 function send(res, origin, status, body) {
   const headers = { "Content-Type": "application/json" };
-  if (origin && allowedOrigins.has(origin)) {
-    headers["Access-Control-Allow-Origin"] = origin;
+  const allowedOrigin = resolveAllowedOrigin(origin);
+  if (allowedOrigin) {
+    headers["Access-Control-Allow-Origin"] = allowedOrigin;
     headers["Access-Control-Allow-Headers"] = allowedRequestHeaders;
     headers["Access-Control-Allow-Methods"] = "POST, OPTIONS";
     headers["Vary"] = "Origin";
