@@ -1,0 +1,35 @@
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_eef3adfd78acd6 47,101
+client/features/focus/goals/GoalPanelSwitcher.svelte
+  s_f058f999ab46b7::t_5f0c14c55e70ea 103-114,159,161,164-180
+client/features/focus/goals/info/GoalInfoPanel.svelte
+  s_f058f999ab46b7::t_687eb042ac0135 39-40,51-62,119,122,130
+client/features/records/ResourcePanelSwitcher.svelte
+  s_f058f999ab46b7::t_9212e0a271f959 65
+client/features/records/ResourceViewSwitcher.svelte
+  s_f058f999ab46b7::t_b3fed866655653 14
+client/features/spaces/SpaceBody.svelte
+  s_f058f999ab46b7::t_b81510049a4d3c 19,49,233-235,240,285
+client/features/spaces/SpaceNavItem.svelte
+  s_f058f999ab46b7::t_f8ab4cc3ab63cc 301,305,374-375
+client/features/spaces/SpaceSideNav.svelte
+  s_f058f999ab46b7::t_5e70b9519c763d 192-199,201-206
+client/features/spaces/SpaceTopBarTitle.svelte
+  s_f058f999ab46b7::t_17d69fb304e00a 15,16,21-22,27,28-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aa764c35276aad186c37a26828ac9c1a179fc2db",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
