@@ -17,7 +17,7 @@ import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
 import { resolveIndicatorColor } from "@nucleum/features/calendar/classic/indicator/classicCalendarIndicator.utils";
 
 type ClassicCalendarIndicatorSignalInput = {
-  resources: (Resource | MetaResource)[];
+  resources: readonly (Resource | MetaResource)[];
   date: Date;
   scale: TimeScaleUnit;
 };
@@ -58,6 +58,17 @@ export function resolveIndicatorPeriodKey(date: Date, scale: TimeScaleUnit) {
   if (scale === TimeScaleUnit.MONTH)
     return `${scale}:${year}-${date.getMonth()}`;
   return `${scale}:${year}-${date.getMonth()}-${date.getDate()}`;
+}
+
+/**
+ * Session fields the indicators read. The year view only draws a dot per day,
+ * so it skips `blocks` and `start`, which only feed the month view's focus and
+ * break split. `blocks` is the heaviest session field and the indicator
+ * equality check compares it by reference, so the year query leaves it out.
+ */
+export function resolveIndicatorSessionSelect(scale: TimeScaleUnit) {
+  const base = ["id", "updatedAt", "trashedAt", "isArchived", "startUnix"];
+  return scale === TimeScaleUnit.YEAR ? base : [...base, "blocks", "start"];
 }
 
 /**
@@ -102,15 +113,7 @@ export function createClassicCalendarIndicatorSignal({
       color: resolveIndicatorColor(Resource.session),
       signal: datafn.session.signal(
         {
-          select: [
-            "id",
-            "updatedAt",
-            "trashedAt",
-            "isArchived",
-            "startUnix",
-            "blocks",
-            "start"
-          ],
+          select: resolveIndicatorSessionSelect(scale),
           temporal: time.period("startUnix", { scale: temporalScale, at: date })
         },
         datafnHeavyComputedSignalOptions

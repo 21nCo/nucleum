@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
-import { resolveIndicatorPeriodKey } from "./classicCalendarIndicator.signal";
+import {
+  resolveIndicatorPeriodKey,
+  resolveIndicatorSessionSelect
+} from "./classicCalendarIndicator.signal";
 
 describe("calendar indicator period key", () => {
   it("stays the same for dates inside one year, month or quarter", () => {
@@ -35,5 +38,19 @@ describe("calendar indicator period key", () => {
     ).not.toBe(
       resolveIndicatorPeriodKey(new Date(2026, 2, 4), TimeScaleUnit.WEEK)
     );
+  });
+});
+
+describe("calendar indicator session fields", () => {
+  it("leaves out blocks and start for the year view", () => {
+    const fields = resolveIndicatorSessionSelect(TimeScaleUnit.YEAR);
+    expect(fields).toContain("startUnix");
+    expect(fields).not.toContain("blocks");
+    expect(fields).not.toContain("start");
+  });
+
+  it("keeps blocks and start for the month view's focus split", () => {
+    const fields = resolveIndicatorSessionSelect(TimeScaleUnit.MONTH);
+    expect(fields).toEqual(expect.arrayContaining(["blocks", "start"]));
   });
 });

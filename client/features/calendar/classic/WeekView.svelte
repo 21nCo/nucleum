@@ -181,9 +181,18 @@
   }
 
   onMount(() => {
-    const initialWeek = weeks[Math.floor(INITIAL_RANGE / 2)];
+    const initialIndex = Math.floor(INITIAL_RANGE / 2);
+    const initialWeek = weeks[initialIndex];
     if (initialWeek) {
       onVisibleDatesChange?.({ dates: initialWeek.dates });
+    }
+    // Open on the selected date's week (the middle of the loaded weeks), not
+    // the first loaded one, so the grid matches the header's date range.
+    if (containerRef && headerRef) {
+      isExplicitNavigation = true;
+      containerRef.scrollLeft = initialIndex * containerRef.clientWidth;
+      headerRef.scrollLeft = containerRef.scrollLeft;
+      lastScrollLeft = containerRef.scrollLeft;
     }
   });
 

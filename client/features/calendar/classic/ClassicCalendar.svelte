@@ -12,7 +12,6 @@
   import { resizable } from "@21n/ui/actions/resize.action";
   import { debouncer } from "@21n/shared-utils/debounce";
   import { cn } from "@21n/ui/environment/presentation";
-  import { MetaResource, Resource } from "@nucleum/datafn/resource.enum";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import { Product } from "@nucleum/client/config/product.type";
   import MemotronTempCalendarColumn from "@nucleum/features/calendar/column/MemotronTempCalendarColumn.svelte";
@@ -26,6 +25,7 @@
     createClassicCalendarIndicatorSignal,
     resolveIndicatorPeriodKey
   } from "@nucleum/features/calendar/classic/indicator/classicCalendarIndicator.signal";
+  import { resolveIndicatorResources } from "@nucleum/features/calendar/classic/indicator/classicCalendarIndicator.utils";
   let {
     panel = $bindable(CalendarLayout.Classic),
     selectedView = $bindable(TimeScaleUnit.YEAR)
@@ -41,14 +41,23 @@
   let visibleWeekDates = $state<Date[] | undefined>(undefined);
   let width = $derived(resolveSavedWidthSelection(selectedView));
   let yearViewRefreshId = $state(new Date().getTime());
-  const resourcesForIndicators = $derived(resolveResourcesForIndicators());
+  // Same array for the same product, so app store changes that leave the
+  // product alone do not rebuild the indicator queries.
+  const resourcesForIndicators = $derived(
+    resolveIndicatorResources($appStore.product)
+  );
   // Rebuilt only when the visible period changes, not on every date change
   // inside it (each rebuild re-queries a whole period per resource).
   const indicatorPeriodKey = $derived(
     resolveIndicatorPeriodKey(selectedDate, selectedView)
   );
   const indicatorStore = $derived.by(() => {
-    if (selectedView === TimeScaleUnit.DAY) return undefined;
+    // The day and week views draw no tile indicators.
+    if (
+      selectedView === TimeScaleUnit.DAY ||
+      selectedView === TimeScaleUnit.WEEK
+    )
+      return undefined;
     indicatorPeriodKey;
     const date = untrack(() => selectedDate);
     const scale = selectedView;
@@ -129,25 +138,6 @@
       subVariables: [selectedView.toString()]
     });
   }, 1000);
-
-  function resolveResourcesForIndicators(): (Resource | MetaResource)[] {
-    const product = $appStore.product;
-    switch (product) {
-      case Product.POINTRON:
-        return [Resource.task, Resource.session];
-      case Product.MEMOTRON:
-        return [Resource.node, MetaResource.calendarNotes];
-      case Product.NUCLEUM:
-        return [
-          Resource.task,
-          Resource.session,
-          Resource.node,
-          MetaResource.calendarNotes
-        ];
-      default:
-        return [];
-    }
-  }
 
   function handleScaleSelection(event: CustomEvent) {
     selectedView = event.detail;
@@ -238,6 +228,13 @@
             onDateChange();
           }}
           onWeekSelect={handleWeekSelect}
+        />
+      {:else if selectedView === TimeScaleUnit.WEEK}
+        <WeekView
+          bind:this={weekViewRef}
+          bind:selectedDate
+          onMonthChange={handleMonthChange}
+          onVisibleDatesChange={handleVisibleDatesChange}
         />
       {:else if selectedView === TimeScaleUnit.YEAR}
         {#key yearViewRefreshId}
