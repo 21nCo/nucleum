@@ -1,0 +1,30 @@
+client/features/calendar/classic/WeekView.svelte
+  s_f058f999ab46b7::t_3658439fad5873 184-185,189-195
+  s_f058f999ab46b7::t_fa144676a5aa29 196
+client/features/calendar/classic/ClassicCalendar.svelte
+  s_f058f999ab46b7::t_f3830f80c4071d 29,48-52,59-64,243-249
+client/features/calendar/classic/indicator/classicCalendarIndicator.period.test.ts
+  s_f058f999ab46b7::t_b5c98c37b8512a 3-6,43-56
+client/features/calendar/classic/indicator/classicCalendarIndicator.signal.ts
+  s_f058f999ab46b7::t_42708b0b43034d 20,63-73,116
+client/features/calendar/classic/indicator/classicCalendarIndicator.utils.test.ts
+  s_f058f999ab46b7::t_339cbb0a261039 1-37
+client/features/calendar/classic/indicator/classicCalendarIndicator.utils.ts
+  s_f058f999ab46b7::t_399263d6552ad6 2-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "46c9edbd83155e2127ef498a3285f87e1d8e1946",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
