@@ -97,8 +97,9 @@
   }
 
   /**
-   * Selects the top bar view numbered by a plain 1 to 9 key, unless another
-   * handler consumed the key or a modal, dialog or popover is in front.
+   * Selects the shown page's view numbered by a plain 1 to 9 key, unless
+   * another handler consumed the key or a modal, dialog, popover or
+   * `aria-modal` layer is in front.
    */
   function selectContextViewByNumber(event: KeyboardEvent) {
     if (event.defaultPrevented) return;

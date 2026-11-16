@@ -317,13 +317,17 @@ export const contextZone = {
       get(visibleLayers)
     );
   },
-  /** Selects the next view of the shown entry, wrapping to the first. */
+  /**
+   * Selects the next view of the shown page, wrapping to the first. Key and
+   * command callers go through `stepContextView`, which skips covered pages.
+   */
   cycle() {
     contextZone.step(1);
   },
   /**
-   * Moves the shown entry `delta` views along, wrapping at both ends; returns
-   * whether a view was selected.
+   * Moves the shown page `delta` views along (the shown entry's views, else
+   * the newest page switcher on the shown pane), wrapping at both ends;
+   * returns whether a view was selected.
    */
   step(delta: number) {
     const views = contextZone.resolveViews();
@@ -334,7 +338,8 @@ export const contextZone = {
     return true;
   },
   /**
-   * Selects the view at `index` (zero based) of the shown entry; returns
+   * Selects the view at `index` (zero based) of the shown page (the shown
+   * entry's views, else the newest page switcher on the shown pane); returns
    * whether a view was selected.
    */
   selectAt(index: number) {
