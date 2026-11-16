@@ -1,0 +1,23 @@
+apps/e2e-playwright/tests/shared/super-bar-context.spec.ts
+  s_0b0647615a23f7::t_9fbe6388749da4 2-5,15-22,33-34,41-44,51-53,60-62
+client/surfaces/commandBar/CommandBar.context.test.ts
+  s_0b0647615a23f7::t_d93df6ca12cb66 3,7,15-25,49-50,70-73,85,88-89,93-95,97-99,103-109,138-171
+client/surfaces/commandBar/CommandBar.svelte
+  s_0b0647615a23f7::t_15a7dfc8b033e8 35,37-39,63-83,184,279,281-286
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "253c4d734b8dd730ffd0c0d91bddb7ea40491649",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
