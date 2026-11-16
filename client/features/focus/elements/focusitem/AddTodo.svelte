@@ -79,7 +79,7 @@
           isChecked: false
         }
       },
-      source: "local",
+      source: "auto",
       prefix: true,
       fuzzy: 0.2
     });

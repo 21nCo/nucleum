@@ -551,7 +551,7 @@
   <div class="flex items-center justify-center w-full h-80 bg-bgs2">
     <Icon icon="svg-spinners:3-dots-fade" size={Size.xl} />
   </div>
-{:else}
+{:else if !$mdStore.params?.isReadOnly}
   <EmbedContentPlaceholder
     subType={body?.subType && body.subType !== NodeType.UNKNOWN
       ? body.subType

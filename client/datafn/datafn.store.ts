@@ -201,7 +201,13 @@ export async function initializeNucleumDatafn(
   const namespace = resolveDatafnNamespace({ account: input.account, dapId });
   let isOfflinabilityEnabled =
     input.isOfflinabilityEnabled ??
-    (await resolveDatafnOfflinabilityPreference());
+    (await resolveDatafnOfflinabilityPreference({
+      storageDbName: resolveDatafnStorageDbName({
+        product: input.product,
+        namespace,
+        env: input.env
+      })
+    }));
   const syncEligible = isSyncEligibleAccount(input);
   const shouldConfigureRemote =
     syncEligible && (!input.isOffline || isOfflinabilityEnabled === false);
@@ -432,13 +438,19 @@ export async function cloneUpAllDatafnData() {
   if (!runtime || runtime.mode !== "sync") {
     throw new Error("A synchronized DataFn runtime is required for clone-up");
   }
-  await datafn.sync.cloneUp({
+  const result = await datafn.sync.cloneUp({
     recordOperation: "replace",
     clearChangelogOnSuccess: true,
     setGlobalCursorOnSuccess: true,
     pullAfter: false
   });
   await refreshNucleumDatafnStatus();
+  if (!result.ok) {
+    const [first] = result.errors;
+    throw new Error(
+      `DataFn clone-up was rejected: ${first?.code ?? "PUSH_REJECTED"} ${first?.message ?? ""}`.trim()
+    );
+  }
 }
 
 export async function enableNucleumDatafnE2ee(password: string) {

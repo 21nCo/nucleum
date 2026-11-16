@@ -55,6 +55,7 @@ export const globalActions: IAction[] = [
   commandCommands.cmd,
   shellCommands.toggle_sidebar,
   helpCommands.troubleshoot,
+  helpCommands.diagnostics,
   accountCommands.bootstrap,
   calendarCommands.calendar,
   commandCommands.activate_search_box,
@@ -95,9 +96,12 @@ export const globalActions: IAction[] = [
   calendarCommands.calendar_settings,
   libraryCommands.browse,
   settingsCommands.offline_status,
+  settingsCommands.switch_appearance_profile,
   shellCommands.navigator,
   shellCommands.open_navigator,
   shellCommands.cycle_context_view,
+  shellCommands.previous_context_view,
+  shellCommands.next_context_view,
   calendarCommands.today,
   shellCommands.rhombus
 ];

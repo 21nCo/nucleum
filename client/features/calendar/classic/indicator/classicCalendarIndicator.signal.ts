@@ -17,7 +17,7 @@ import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
 import { resolveIndicatorColor } from "@nucleum/features/calendar/classic/indicator/classicCalendarIndicator.utils";
 
 type ClassicCalendarIndicatorSignalInput = {
-  resources: (Resource | MetaResource)[];
+  resources: readonly (Resource | MetaResource)[];
   date: Date;
   scale: TimeScaleUnit;
 };
@@ -41,6 +41,35 @@ const emptyIndicatorSignal: DatafnSignal<ICalendarIndicatorData[]> = {
   nextCursor: null,
   dispose: () => {}
 };
+
+/**
+ * A key that changes only when the indicators' visible period changes, so a
+ * date change inside the same month, quarter or year reuses the queries
+ * instead of rebuilding them. Uses local calendar parts (DataFn's "user"
+ * timezone is the local one); weeks and days key by the day, which at worst
+ * rebuilds a week's indicators once per day change.
+ */
+export function resolveIndicatorPeriodKey(date: Date, scale: TimeScaleUnit) {
+  const year = date.getFullYear();
+  if (scale === TimeScaleUnit.YEAR) return `${scale}:${year}`;
+  if (scale === TimeScaleUnit.QUARTER) {
+    return `${scale}:${year}-q${Math.floor(date.getMonth() / 3)}`;
+  }
+  if (scale === TimeScaleUnit.MONTH)
+    return `${scale}:${year}-${date.getMonth()}`;
+  return `${scale}:${year}-${date.getMonth()}-${date.getDate()}`;
+}
+
+/**
+ * Session fields the indicators read. The year view only draws a dot per day,
+ * so it skips `blocks` and `start`, which only feed the month view's focus and
+ * break split. `blocks` is the heaviest session field and the indicator
+ * equality check compares it by reference, so the year query leaves it out.
+ */
+export function resolveIndicatorSessionSelect(scale: TimeScaleUnit) {
+  const base = ["id", "updatedAt", "trashedAt", "isArchived", "startUnix"];
+  return scale === TimeScaleUnit.YEAR ? base : [...base, "blocks", "start"];
+}
 
 /**
  * Creates the combined DataFn signal that feeds classic calendar tile indicators
@@ -84,15 +113,7 @@ export function createClassicCalendarIndicatorSignal({
       color: resolveIndicatorColor(Resource.session),
       signal: datafn.session.signal(
         {
-          select: [
-            "id",
-            "updatedAt",
-            "trashedAt",
-            "isArchived",
-            "startUnix",
-            "blocks",
-            "start"
-          ],
+          select: resolveIndicatorSessionSelect(scale),
           temporal: time.period("startUnix", { scale: temporalScale, at: date })
         },
         datafnHeavyComputedSignalOptions
@@ -122,11 +143,7 @@ export function createClassicCalendarIndicatorSignal({
             contentType: { $in: [...rootNodeTypeList] },
             creationContext: { $is_empty: true }
           },
-          temporal: time.period(
-            "createdAt",
-            { scale: temporalScale, at: date },
-            { storage: "date" }
-          )
+          temporal: time.period("createdAt", { scale: temporalScale, at: date })
         },
         datafnHeavyComputedSignalOptions
       )
@@ -152,11 +169,7 @@ export function createClassicCalendarIndicatorSignal({
           filters: {
             metaType: NodeMetaType.CALENDAR_NOTES
           },
-          temporal: time.period(
-            "date",
-            { scale: temporalScale, at: date },
-            { storage: "date" }
-          )
+          temporal: time.period("date", { scale: temporalScale, at: date })
         },
         datafnHeavyComputedSignalOptions
       )

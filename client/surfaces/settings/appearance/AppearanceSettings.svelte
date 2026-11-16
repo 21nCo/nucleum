@@ -8,7 +8,6 @@
   import { AppSkin, Theme } from "@21n/theme/appearance.type";
   import { Size } from "@21n/ui/elements/size.enum";
   import appearance from "@nucleum/shared-state/appearance/appearance.store";
-  import { get } from "svelte/store";
   import SwitchInput from "@21n/ui/elements/toggle/SwitchInput.svelte";
   import InlineInfoBanner from "@21n/ui/elements/text/InlineInfoBanner.svelte";
   import ScrollView from "@21n/ui/compositions/scrollView/ScrollView.svelte";
@@ -21,6 +20,7 @@
   import InterfaceSettings from "@nucleum/surfaces/settings/appearance/InterfaceSettings.svelte";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
+  import AppearanceProfiles from "@nucleum/surfaces/settings/appearance/AppearanceProfiles.svelte";
   import {
     findColorSchemeFamily,
     findColorSchemeFamilyByPair,
@@ -46,13 +46,10 @@
       $appearance.darkColorSchemeId
     )
   );
-  let isMixedSchemes = $state(
-    !findColorSchemeFamilyByPair(
-      schemeFamilies,
-      get(appearance).lightColorSchemeId,
-      get(appearance).darkColorSchemeId
-    )
-  );
+  // Separate pickers stay shown while the user asks for them, and whenever the
+  // live pair (for example one set by an appearance profile) matches no family.
+  let prefersMixedSchemes = $state(false);
+  const isMixedSchemes = $derived(prefersMixedSchemes || !currentFamily);
   function switchTheme(theme: Theme | undefined) {
     if (!theme) return;
     appearance.modifyUserThemeSetting(theme);
@@ -64,6 +61,7 @@
 </script>
 
 <ScrollView class="flex flex-col gap-8" bottomSpacerSize={Size.sm}>
+  <AppearanceProfiles />
   <TypefaceSelector
     label={{ label: "Font", orientation: Orientation.Vertical }}
     value={$userPreferences.appearance.typeface || "Sen"}
@@ -124,8 +122,10 @@
           schemeFamilies,
           $appearance.lightColorSchemeId
         )}
-        onSelect={(family) =>
-          appearance.setColorSchemePair(family.lightId, undefined)}
+        onSelect={(family) => {
+          prefersMixedSchemes = true;
+          appearance.setColorSchemePair(family.lightId, undefined);
+        }}
       />
       <ColorSchemeFamilyPicker
         label="Dark colour scheme"
@@ -136,8 +136,10 @@
           schemeFamilies,
           $appearance.darkColorSchemeId
         )}
-        onSelect={(family) =>
-          appearance.setColorSchemePair(undefined, family.darkId)}
+        onSelect={(family) => {
+          prefersMixedSchemes = true;
+          appearance.setColorSchemePair(undefined, family.darkId);
+        }}
       />
     {/if}
     <div data-testid="toggle-mixed-color-schemes">
@@ -151,7 +153,7 @@
           }
         }}
         onChange={(event) => {
-          isMixedSchemes = event.detail;
+          prefersMixedSchemes = event.detail;
           if (!event.detail && !currentFamily) {
             const family = findColorSchemeFamily(
               schemeFamilies,

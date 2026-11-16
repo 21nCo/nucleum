@@ -29,7 +29,7 @@
       fields: ["label", "text", "notes"],
       limit: 1,
       limitPerResource: 1,
-      source: "local",
+      source: "auto",
       fuzzy: 0.2
     });
     const node = result.results?.map((entry: any) => entry.data) ?? [];

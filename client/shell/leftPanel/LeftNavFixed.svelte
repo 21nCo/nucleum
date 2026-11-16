@@ -74,7 +74,7 @@
 >
   <div
     class={cn(
-      "flex items-center justify-center h-full w-full bg-bgs2",
+      "app-chrome flex items-center justify-center h-full w-full bg-bgs2",
       $appStore.currentComponent?.panel && {
         "rounded-lg border-none": isRounded,
         "border-r border-bgs4 app-framed:border-r-0": !isRounded
@@ -86,7 +86,7 @@
       data-testid="leftnav-sidebar-toggle"
       aria-label="Toggle sidebar width"
       class={cn(
-        "relative flex flex-col items-center justify-between overflow-auto bg-bgs2",
+        "app-chrome relative flex flex-col items-center justify-between overflow-auto bg-bgs2",
         {
           "w-[5.5rem] min-w-[5.5rem] !cursor-w-resize": !isHideMenuLabels,
           "w-[3.5rem] min-w-[3.5rem] !cursor-e-resize": isHideMenuLabels

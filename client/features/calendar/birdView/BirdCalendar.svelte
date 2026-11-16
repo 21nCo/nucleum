@@ -25,6 +25,23 @@
   let selectedDate = $state(new Date());
   const isDev = import.meta.env?.DEV;
   let selectedPanel = $state(CalendarColumnPanel.Timeline);
+  let birdviewRef = $state<Birdview>();
+
+  /**
+   * Moves one step back or forward from the header. The Year view moves the
+   * header date a year and scrolls to it, so the header follows the
+   * columns; other views move the columns one column.
+   */
+  function goBy(isForward: boolean) {
+    if (scale !== TimeScaleUnit.YEAR) {
+      birdviewRef?.step(isForward);
+      return;
+    }
+    const date = new Date(selectedDate);
+    date.setFullYear(date.getFullYear() + (isForward ? 1 : -1));
+    selectedDate = date;
+    birdviewRef?.scrollToDate(date);
+  }
 
   const switchOptions = [
     {
@@ -55,7 +72,13 @@
   ];
 </script>
 
-<CalendarLayoutView bind:panel>
+<CalendarLayoutView
+  bind:panel
+  onGoToToday={() => {
+    selectedDate = new Date();
+    birdviewRef?.goToToday();
+  }}
+>
   {#snippet headerLeftOptions(_isCompact: boolean)}
     {#if isDev}
       <OptionSelector
@@ -72,9 +95,9 @@
     <CalendarHeader
       bind:selectedDate
       bind:selectedView={scale}
-      onDateChange={() => {}}
-      onGoToPrevious={() => {}}
-      onGoToNext={() => {}}
+      onDateChange={() => birdviewRef?.scrollToDate(selectedDate)}
+      onGoToPrevious={() => goBy(false)}
+      onGoToNext={() => goBy(true)}
     />
   {/snippet}
   {#snippet headerRightOptions()}
@@ -89,6 +112,6 @@
     /> -->
   {/snippet}
   <div class="w-full h-full max-h-full">
-    <Birdview mode={scale} />
+    <Birdview bind:this={birdviewRef} mode={scale} />
   </div>
 </CalendarLayoutView>
