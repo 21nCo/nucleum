@@ -22,6 +22,9 @@ export type ResolvedColorSchemeFamily = ColorSchemeFamily & {
   dark?: ColorScheme;
 };
 
+/** Which variants a picker sets: both from a family, or only the light or dark scheme. */
+export type ColorSchemeVariant = "both" | "light" | "dark";
+
 /** Families grouped under one picker heading. */
 export type ColorSchemeFamilyGroup = {
   category: ColorSchemeCategory;
@@ -122,16 +125,53 @@ export function resolveColorSchemeFamilies(
     .filter((family) => family.light || family.dark);
 }
 
-/** Groups resolved families by category in picker order, optionally filtered by a search query. */
+/**
+ * The name a picker shows for a family: the family label when picking both
+ * variants, otherwise the name of the light or dark scheme itself.
+ */
+export function colorSchemeVariantLabel(
+  family: ResolvedColorSchemeFamily,
+  variant: ColorSchemeVariant = "both"
+): string {
+  const scheme = variant === "light" ? family.light : family.dark;
+  if (variant === "both" || !scheme?.label) return family.label;
+  return scheme.label.charAt(0).toUpperCase() + scheme.label.slice(1);
+}
+
+/**
+ * The families a light or dark picker offers: one per scheme of that variant,
+ * keeping the first family that uses it. Picking both variants keeps them all.
+ */
+export function colorSchemeVariantFamilies(
+  families: ResolvedColorSchemeFamily[],
+  variant: ColorSchemeVariant = "both"
+): ResolvedColorSchemeFamily[] {
+  if (variant === "both") return families;
+  const seen = new Set<string>();
+  return families.filter((family) => {
+    const id = variant === "light" ? family.lightId : family.darkId;
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+/**
+ * Groups resolved families by category in picker order, optionally filtered by
+ * a search query over the name the picker shows for the variant and the category.
+ */
 export function groupColorSchemeFamilies(
   families: ResolvedColorSchemeFamily[],
-  query = ""
+  query = "",
+  variant: ColorSchemeVariant = "both"
 ): ColorSchemeFamilyGroup[] {
   const normalized = query.trim().toLowerCase();
   const matching = normalized
     ? families.filter(
         (family) =>
-          family.label.toLowerCase().includes(normalized) ||
+          colorSchemeVariantLabel(family, variant)
+            .toLowerCase()
+            .includes(normalized) ||
           family.category.toLowerCase().includes(normalized)
       )
     : families;

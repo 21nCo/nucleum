@@ -441,6 +441,55 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await expect(familyPicker).toBeVisible({ timeout: 5_000 });
   });
 
+  test("Appearance: separate light and dark pickers search by the scheme name they show", async ({
+    page
+  }) => {
+    test.setTimeout(60_000);
+    await ensureInAppOnHome(page);
+    await openAppearance(page);
+
+    const section = page.getByTestId("color-scheme-section");
+    const familyPicker = section.getByTestId("color-scheme-family-picker");
+    const lightPicker = section.getByTestId("color-scheme-light-picker");
+    const darkPicker = section.getByTestId("color-scheme-dark-picker");
+    const mixedSwitch = section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]');
+    const list = page.getByTestId("color-scheme-family-list");
+    const search = list.getByTestId("color-scheme-search");
+    const options = list.getByTestId("color-scheme-family-option");
+
+    await mixedSwitch.setChecked(true, { force: true });
+    await expect(lightPicker).toBeVisible({ timeout: 10_000 });
+
+    await lightPicker.click({ timeout: 5_000 });
+    await search.fill("default");
+    await expect(list).toContainText("No colour schemes found");
+    await search.fill("blue");
+    await expect(options).toHaveCount(1);
+    await expect(options.first()).toHaveText("Blue");
+    await options.first().click({ timeout: 5_000 });
+    await expect(
+      lightPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyblue_light"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    await darkPicker.click({ timeout: 5_000 });
+    await search.fill("oxide");
+    await expect(options).toHaveCount(1);
+    await expect(options.first()).toHaveText("Oxide");
+    await options.first().click({ timeout: 5_000 });
+    await expect(
+      darkPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyoxide_dark"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    await mixedSwitch.setChecked(false, { force: true });
+    await expect(familyPicker).toContainText("Default", { timeout: 5_000 });
+  });
+
   test("Appearance: switch between light and dark themes and verify theme layer updates", async ({
     page
   }) => {

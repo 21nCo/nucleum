@@ -3,6 +3,8 @@ import type { ColorScheme } from "./appearance.type";
 import {
   ColorSchemeCategory,
   colorSchemeFamilies,
+  colorSchemeVariantFamilies,
+  colorSchemeVariantLabel,
   findColorSchemeFamily,
   findColorSchemeFamilyByPair,
   groupColorSchemeFamilies,
@@ -132,5 +134,33 @@ describe("colour scheme catalog", () => {
     expect(
       colorSchemeFamilies.every((family) => family.lightId || family.darkId)
     ).toBe(true);
+  });
+
+  it("searches a light or dark picker by the scheme name it shows", () => {
+    const families = resolveColorSchemeFamilies(
+      colorSchemes as unknown as ColorScheme[]
+    );
+    const search = (variant: "light" | "dark", query: string) =>
+      groupColorSchemeFamilies(
+        colorSchemeVariantFamilies(families, variant),
+        query,
+        variant
+      ).flatMap((group) =>
+        group.families.map((family) => colorSchemeVariantLabel(family, variant))
+      );
+
+    const lightIds = colorSchemeVariantFamilies(families, "light").map(
+      (family) => family.lightId
+    );
+    expect(new Set(lightIds).size).toBe(lightIds.length);
+    expect(search("light", "blue")).toEqual(["Blue"]);
+    expect(search("light", "default")).toEqual([]);
+    expect(search("dark", "oxide")).toEqual(["Oxide"]);
+    expect(search("dark", "sol")).toEqual(["Solarized"]);
+    expect(
+      groupColorSchemeFamilies(families, "default").flatMap((group) =>
+        group.families.map((family) => family.id)
+      )
+    ).toEqual(["default"]);
   });
 });

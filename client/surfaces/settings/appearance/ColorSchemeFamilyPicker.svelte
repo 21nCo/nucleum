@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { ResolvedColorSchemeFamily } from "@21n/theme/colorscheme-catalog";
+  import {
+    colorSchemeVariantLabel,
+    type ColorSchemeVariant,
+    type ResolvedColorSchemeFamily
+  } from "@21n/theme/colorscheme-catalog";
   import { popover } from "@21n/ui/actions/popover.action";
   import { Placement } from "@21n/ui/elements/direction.enum";
   import Icon from "@21n/ui/elements/Icon.svelte";
@@ -20,19 +24,16 @@
     label: string;
     families: ResolvedColorSchemeFamily[];
     selected: ResolvedColorSchemeFamily | undefined;
-    variant?: "both" | "light" | "dark";
+    variant?: ColorSchemeVariant;
     testId?: string;
     onSelect: (family: ResolvedColorSchemeFamily) => void;
   } = $props();
 
   let openKey = $state(0);
 
-  const displayLabel = $derived.by(() => {
-    if (!selected) return "Custom";
-    const scheme = variant === "light" ? selected.light : selected.dark;
-    if (variant === "both" || !scheme?.label) return selected.label;
-    return scheme.label.charAt(0).toUpperCase() + scheme.label.slice(1);
-  });
+  const displayLabel = $derived(
+    selected ? colorSchemeVariantLabel(selected, variant) : "Custom"
+  );
 
   function pick(family: ResolvedColorSchemeFamily) {
     openKey += 1;

@@ -1,6 +1,9 @@
 <script lang="ts">
   import {
+    colorSchemeVariantFamilies,
+    colorSchemeVariantLabel,
     groupColorSchemeFamilies,
+    type ColorSchemeVariant,
     type ResolvedColorSchemeFamily
   } from "@21n/theme/colorscheme-catalog";
   import TextInput from "@21n/ui/elements/input/TextInput.svelte";
@@ -16,30 +19,15 @@
   }: {
     families: ResolvedColorSchemeFamily[];
     selectedFamilyId?: string | undefined;
-    variant?: "both" | "light" | "dark";
+    variant?: ColorSchemeVariant;
     onSelect: (family: ResolvedColorSchemeFamily) => void;
   } = $props();
 
   let query = $state("");
   let container = $state<HTMLDivElement | undefined>();
 
-  const available = $derived.by(() => {
-    if (variant === "both") return families;
-    const seen = new Set<string>();
-    return families.filter((family) => {
-      const id = variant === "light" ? family.lightId : family.darkId;
-      if (!id || seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    });
-  });
-
-  function resolveLabel(family: ResolvedColorSchemeFamily) {
-    const scheme = variant === "light" ? family.light : family.dark;
-    if (variant === "both" || !scheme?.label) return family.label;
-    return scheme.label.charAt(0).toUpperCase() + scheme.label.slice(1);
-  }
-  const groups = $derived(groupColorSchemeFamilies(available, query));
+  const available = $derived(colorSchemeVariantFamilies(families, variant));
+  const groups = $derived(groupColorSchemeFamilies(available, query, variant));
 
   $effect(() => {
     container?.querySelector("input")?.focus();
@@ -93,7 +81,9 @@
               <ColorSchemeSwatch scheme={family.dark} />
             {/if}
           </span>
-          <span class="flex-1 truncate text-fgs1">{resolveLabel(family)}</span>
+          <span class="flex-1 truncate text-fgs1"
+            >{colorSchemeVariantLabel(family, variant)}</span
+          >
         </button>
       {/each}
     {:else}
