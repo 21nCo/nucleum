@@ -17,6 +17,11 @@
 
   let mapContainer = $state<HTMLDivElement | null>(null);
   let map = $state<maplibregl.Map | null>(null);
+  // Sources and layers can only be added once the style has loaded; adding
+  // them earlier throws "Style is not done loading".
+  let isStyleReady = $state(false);
+  let isUpdatePending = false;
+  let pendingHeatmap = false;
 
   const popupCleanups = new Set<() => void>();
 
@@ -32,7 +37,7 @@
   });
 
   $effect(() => {
-    if (map && data) {
+    if (map && isStyleReady && data) {
       updateMapData(isShowHeatmap);
     }
   });
@@ -49,22 +54,95 @@
         zoom: 2
       });
 
-      map.on("load", () => {
-        try {
-          updateMapData(isShowHeatmap);
-        } catch (error) {
-          console.error("Error updating map data on load:", error);
-        }
+      const mapInstance = map;
+      mapInstance.on("load", () => {
+        isStyleReady = true;
       });
+      registerLayerHandlers(mapInstance);
     } catch (error) {
       console.error("Error initializing map:", error);
     }
+  }
+
+  /**
+   * Registers the layer's pointer handlers once. Layer-scoped listeners look
+   * the layer up when the event fires, so they keep working after
+   * `updateMapData` replaces the layer, without stacking duplicate popups.
+   */
+  function registerLayerHandlers(mapInstance: maplibregl.Map) {
+    mapInstance.on("click", "nodes-layer", (e) => {
+      try {
+        if (!e.features || !e.features[0]) return;
+
+        const feature = e.features[0];
+        if (feature.geometry.type !== "Point") return;
+
+        const coordinates = [...feature.geometry.coordinates] as [
+          number,
+          number
+        ];
+        const properties = feature.properties;
+
+        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+          coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        }
+
+        const popupContainer = document.createElement("div");
+
+        const point = data.find((point) => point.id === properties?.id);
+        if (!point || !renderPopup) return;
+        const dispose = renderPopup(popupContainer, point);
+        const popup = new maplibregl.Popup()
+          .setLngLat(coordinates)
+          .setDOMContent(popupContainer)
+          .addTo(mapInstance);
+        let disposed = false;
+        const cleanup = () => {
+          if (disposed) return;
+          disposed = true;
+          popup.remove();
+          if (dispose) dispose();
+          popupCleanups.delete(cleanup);
+        };
+        popupCleanups.add(cleanup);
+        popup.once("close", cleanup);
+      } catch (error) {
+        console.error("Error handling map click:", error);
+      }
+    });
+
+    mapInstance.on("mouseenter", "nodes-layer", () => {
+      try {
+        mapInstance.getCanvas().style.cursor = "pointer";
+      } catch (error) {
+        console.error("Error setting cursor:", error);
+      }
+    });
+
+    mapInstance.on("mouseleave", "nodes-layer", () => {
+      try {
+        mapInstance.getCanvas().style.cursor = "";
+      } catch (error) {
+        console.error("Error resetting cursor:", error);
+      }
+    });
   }
 
   function updateMapData(isShowHeatmap: boolean) {
     try {
       const mapInstance = map;
       if (!mapInstance || !data || data.length === 0) return;
+      if (!mapInstance.isStyleLoaded()) {
+        // The style is (re)loading; apply the latest data once it settles.
+        pendingHeatmap = isShowHeatmap;
+        if (isUpdatePending) return;
+        isUpdatePending = true;
+        mapInstance.once("idle", () => {
+          isUpdatePending = false;
+          updateMapData(pendingHeatmap);
+        });
+        return;
+      }
 
       if (mapInstance.getSource("nodes")) {
         try {
@@ -211,63 +289,6 @@
           }
         });
       }
-
-      mapInstance.on("click", "nodes-layer", (e) => {
-        try {
-          if (!e.features || !e.features[0]) return;
-
-          const feature = e.features[0];
-          if (feature.geometry.type !== "Point") return;
-
-          const coordinates = [...feature.geometry.coordinates] as [
-            number,
-            number
-          ];
-          const properties = feature.properties;
-
-          while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-          }
-
-          const popupContainer = document.createElement("div");
-
-          const point = data.find((point) => point.id === properties?.id);
-          if (!point || !renderPopup) return;
-          const dispose = renderPopup(popupContainer, point);
-          const popup = new maplibregl.Popup()
-            .setLngLat(coordinates)
-            .setDOMContent(popupContainer)
-            .addTo(mapInstance);
-          let disposed = false;
-          const cleanup = () => {
-            if (disposed) return;
-            disposed = true;
-            popup.remove();
-            if (dispose) dispose();
-            popupCleanups.delete(cleanup);
-          };
-          popupCleanups.add(cleanup);
-          popup.once("close", cleanup);
-        } catch (error) {
-          console.error("Error handling map click:", error);
-        }
-      });
-
-      mapInstance.on("mouseenter", "nodes-layer", () => {
-        try {
-          mapInstance.getCanvas().style.cursor = "pointer";
-        } catch (error) {
-          console.error("Error setting cursor:", error);
-        }
-      });
-
-      mapInstance.on("mouseleave", "nodes-layer", () => {
-        try {
-          mapInstance.getCanvas().style.cursor = "";
-        } catch (error) {
-          console.error("Error resetting cursor:", error);
-        }
-      });
 
       if (data.length > 0) {
         try {
