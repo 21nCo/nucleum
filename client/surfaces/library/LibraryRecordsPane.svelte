@@ -854,9 +854,9 @@
           callback: () => {
             isLoadMoreVisible = true;
             if (
+              isSearchActive &&
               displayedData.length > 0 &&
-              displayedData.length < displayedTotalCount &&
-              (isSearchActive || $recordPager.hasMore)
+              displayedData.length < displayedTotalCount
             ) {
               refresh(true);
             }
