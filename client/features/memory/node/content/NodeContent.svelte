@@ -178,10 +178,18 @@
   /**
    * Checks that a note whose page copy has a block order also has every
    * block in it, at every level, and reloads them from storage when it
-   * doesn't. Orders holding block records instead of ids are taken as
-   * loaded.
+   * doesn't, so a gap that closes (a local store still downloading) never
+   * reaches the editor. A gap that is still there on the last attempt is
+   * kept: the order can name a block no longer stored anywhere (legacy
+   * imports copied their children lists as they were), and such a note
+   * opened with the blocks that exist before these checks, so it does so
+   * again rather than staying closed. Orders holding block records instead
+   * of ids are taken as loaded.
    */
-  async function prepareOrderedNoteContent(mdChildOrder: unknown[]) {
+  async function prepareOrderedNoteContent(
+    mdChildOrder: unknown[],
+    isLastAttempt: boolean
+  ) {
     if (!mdChildOrder.every((id) => typeof id === "string")) return true;
     const order = mdChildOrder as IRecordId[];
     if (
@@ -189,20 +197,23 @@
     ) {
       return true;
     }
-    return applyStoredNoteBlocks(await loadStoredNoteBlocks($node.id, order));
+    const loaded = await loadStoredNoteBlocks($node.id, order);
+    if (loaded || !isLastAttempt) return applyStoredNoteBlocks(loaded);
+    logger.warn({ at: "NodeContent.blocks.openedIncomplete", id: $node.id });
+    return true;
   }
 
   /**
    * Gets a markdown note ready for the editor: every block of its block
-   * order loaded, a starter block for an empty note, or its stored blocks
-   * when its page copy has none. Returns false when the note has to wait
-   * (blocks not readable yet), so the editor isn't mounted and nothing is
-   * written.
+   * order loaded (see {@link prepareOrderedNoteContent}), a starter block
+   * for an empty note, or its stored blocks when its page copy has none.
+   * Returns false when the note has to wait (blocks not readable yet), so
+   * the editor isn't mounted and nothing is written.
    */
-  async function prepareNoteContent() {
+  async function prepareNoteContent(isLastAttempt: boolean) {
     if ($node.contentType !== NodeType.NODULAR_MARKDOWN) return true;
     if (Array.isArray($node.mdChildOrder) && $node.mdChildOrder.length > 0) {
-      return prepareOrderedNoteContent($node.mdChildOrder);
+      return prepareOrderedNoteContent($node.mdChildOrder, isLastAttempt);
     }
     const start = await readNoteContentStart($node.id);
     if (start.kind === "hold") return false;
@@ -237,7 +248,9 @@
   async function prepareNoteContentWithRetry() {
     for (let attempt = 0; attempt < noteContentRetryLimit; attempt++) {
       if (isDestroyed) return false;
-      if (await prepareNoteContent()) return true;
+      if (await prepareNoteContent(attempt === noteContentRetryLimit - 1)) {
+        return true;
+      }
       await new Promise((resolve) =>
         setTimeout(resolve, noteContentRetryDelayMs)
       );
