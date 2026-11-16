@@ -158,6 +158,5 @@ export const dateField = <
 export const commonShareFields = [
   booleanField("isStarred", false, false),
   booleanField("isLocked", false, false),
-  booleanField("isAncestorInactive", false, false),
   stringField("importId")
 ] as const;

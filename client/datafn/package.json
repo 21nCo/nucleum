@@ -5,7 +5,7 @@
   "type": "module",
   "dependencies": {
     "@21n/shared-utils": "*",
-    "@datafn/client": "0.1.0",
+    "@datafn/client": "0.1.5",
     "@nucleum/persistence": "*",
     "@nucleum/schema": "*",
     "@searchfn/adapter-indexeddb": "0.1.0",

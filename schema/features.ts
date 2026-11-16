@@ -346,8 +346,7 @@ const task = {
     numberField("minutes"),
     dateField("completedAt"),
     numberField("completedAtUnix", false, true),
-    stringField("objectiveId", false, true),
-    booleanField("isAncestorInactive", false, false)
+    stringField("objectiveId", false, true)
   ],
   indices: { base: ["dateUnix", "objectiveId"], search: ["label"] }
 } as const satisfies DatafnResourceDefinition;
