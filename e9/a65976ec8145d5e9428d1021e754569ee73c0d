@@ -1,0 +1,21 @@
+apps/e2e-playwright/tests/shared/settings/appearance-profiles.spec.ts
+  s_c46023f77f7e71::t_7e162e0c97a842 28,86,93-118
+client/surfaces/settings/appearance/AppearanceProfileNameEditor.svelte
+  s_c46023f77f7e71::t_375967e3d7a1d7 17-20,34-45,57,69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e9a65976ec8145d5e9428d1021e754569ee73c0d",
+  "prompts": {},
+  "sessions": {
+    "s_c46023f77f7e71": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a8c9aec569395ab1e",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
