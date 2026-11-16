@@ -118,10 +118,12 @@
   let initPromise = $state<Promise<void>>(initialize());
   let previousParentValue: string | undefined = undefined;
 
-  const parentStore = toSvelteStore<Array<{ parent?: unknown }>>(
+  // `parent` is the htree inverse relation, which the server rejects as a
+  // bare select; the parent link itself is the `parentId` field.
+  const parentStore = toSvelteStore<Array<{ parentId?: unknown }>>(
     datafn.objective.signal({
       filters: { id },
-      select: ["id", "parent"],
+      select: ["id", "parentId"],
       limit: 1,
       metadata: {
         includeTrashed: true,
@@ -133,7 +135,7 @@
 
   $effect(() => {
     const record = $parentStore.data[0];
-    const parentValue = JSON.stringify(record?.parent ?? null);
+    const parentValue = JSON.stringify(record?.parentId ?? null);
     untrack(() => {
       if (previousParentValue === undefined) {
         previousParentValue = parentValue;
