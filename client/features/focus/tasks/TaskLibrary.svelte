@@ -90,6 +90,7 @@
   let tasks = $state<ITaskThumb[]>([]);
   let taskLimit = $state(50);
   let isLoadMoreVisible = $state(false);
+  let loadMoreMarker = $state<HTMLDivElement | undefined>(undefined);
   let searchQuery = $state("");
   let searchInputRef = $state<InlineSearchBar | undefined>(undefined);
   let isArchivedFilterSelected = $state(false);
@@ -130,7 +131,9 @@
   );
   /**
    * Loads the next page while the load-more marker is on screen, once the
-   * current page has finished loading and came back full.
+   * current page has finished loading and came back full. The check runs
+   * after the next layout, so a page that just pushed the marker off screen
+   * doesn't trigger another load before the observer reports it.
    */
   $effect(() => {
     if (
@@ -142,8 +145,23 @@
     ) {
       return;
     }
-    untrack(() => refresh({ isPagination: true }));
+    const limit = signalLimit;
+    const frame = requestAnimationFrame(() => {
+      if (limit === signalLimit && isLoadMoreMarkerOnScreen()) {
+        refresh({ isPagination: true });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   });
+
+  /** Whether the load-more marker is within the observer's 100px margin of the viewport. */
+  function isLoadMoreMarkerOnScreen() {
+    const rect = loadMoreMarker?.getBoundingClientRect();
+    return Boolean(
+      rect && rect.top < window.innerHeight + 100 && rect.bottom > -100
+    );
+  }
+
   const signalTasks = $derived.by(() =>
     normalizeTasks(($taskStore.data ?? []) as ITaskThumb[])
   );
@@ -780,6 +798,7 @@
       }}
     />
     <div
+      bind:this={loadMoreMarker}
       use:intersection={{
         rootMargin: "100px",
         callback: () => {
