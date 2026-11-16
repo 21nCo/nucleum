@@ -9,7 +9,6 @@ import { logger } from "@nucleum/client/runtime/logging/logger";
 
 const repairIntervalMs = 24 * 60 * 60 * 1000;
 const repairPageSize = 200;
-const maxRepairPages = 50;
 
 type LegacyEventRecord = {
   id?: unknown;
@@ -58,9 +57,10 @@ function isFailedMutation(result: unknown) {
 }
 
 /**
- * Lifts the times of events whose `field` is empty, one page at a time.
- * Repaired events leave the filter, so each page starts after the events
- * that had nothing to lift. Throws when a write is rejected, so the run is
+ * Lifts the times of events whose `field` is empty, one page at a time in
+ * id order, until the last page. Repaired events leave the filter, so each
+ * page starts after the events that had nothing to lift; every page either
+ * repairs records or moves past them, so the scan always ends. Throws when a write is rejected, so the run is
  * not recorded and is retried on the next start.
  */
 async function liftEventTimesWhereEmpty(
@@ -68,10 +68,11 @@ async function liftEventTimesWhereEmpty(
 ): Promise<number> {
   let repaired = 0;
   let unrepairable = 0;
-  for (let page = 0; page < maxRepairPages; page++) {
+  for (;;) {
     const result = await datafn.event.query({
       select: ["id", "startUnix", "endUnix", "value"],
       filters: { [field]: { $is_null: true } },
+      sort: ["id"],
       metadata: { includeTrashed: true, includeArchived: true },
       limit: repairPageSize,
       offset: unrepairable
