@@ -183,7 +183,7 @@
     select: resolveExpandedSelect(listQuery.resource),
     filters: listQuery.filters,
     metadata: resolveQueryMetadata(),
-    sort: resolveSort(listQuery.resource)
+    sort: [...resolveSort(listQuery.resource), "id"]
   }));
   const recordStore = $derived.by(() =>
     toSvelteStore(

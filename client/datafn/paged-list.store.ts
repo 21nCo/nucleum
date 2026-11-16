@@ -62,6 +62,11 @@ export function mergePagedRecords<T extends PagedListRecord>(
  * briefly missing, and one pulled into the first page is shown once because
  * pages are merged by id with the first page winning. A fresh store per query
  * resets paging; `reset` does the same for the current query.
+ *
+ * Callers must give the live first page a `limit` of `pageSize` and run
+ * `fetchPage` with the same filters, sort, select and metadata as that
+ * signal, and the sort must end in a unique field (such as `id`) so that
+ * separate offset requests neither overlap nor skip tied records.
  */
 export function createPagedListStore<T extends PagedListRecord>(options: {
   fetchPage: (request: PagedListPageRequest) => Promise<T[]>;

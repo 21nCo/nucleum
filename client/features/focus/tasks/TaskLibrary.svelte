@@ -122,6 +122,7 @@
     select: ["*", "objective.*"],
     filters: signalQuery.filters,
     metadata: resolveQueryMetadata(),
+    sort: ["id"],
     ...(signalQuery.temporal ? { temporal: signalQuery.temporal } : {})
   }));
   const taskStore = $derived.by(() =>
