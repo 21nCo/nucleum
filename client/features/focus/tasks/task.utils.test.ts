@@ -80,6 +80,13 @@ describe("client/features/focus/tasks/task.utils", () => {
       expect(normalizeTaskNumberFields(record)).toBe(record);
     });
 
+    it("returns the same copy for the same record", () => {
+      const record = { id: "a", dateUnix: "7" };
+      expect(normalizeTaskNumberFields(record)).toBe(
+        normalizeTaskNumberFields(record)
+      );
+    });
+
     it("does not change the record it is given", () => {
       const record = { id: "a", dateUnix: "7" };
       const result = normalizeTaskNumberFields(record);

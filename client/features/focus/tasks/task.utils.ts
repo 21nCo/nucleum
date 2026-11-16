@@ -63,13 +63,20 @@ const TASK_NUMBER_FIELDS = [
   "minutes"
 ] as const;
 
+/** Converted copies by source record, so a record read again keeps its copy's identity. */
+const normalizedTaskRecords = new WeakMap<object, object>();
+
 /**
  * Turns the numeric strings of a task's number fields into numbers. In
  * direct mode Postgres returns `numeric` columns as strings, so
  * `new Date(task.dateUnix)` is invalid and `"0"` reads as a set date.
- * Returns the same record when nothing needs converting.
+ * Returns the same record when nothing needs converting, and the same copy
+ * each time it is given the same record, so list rows keep their identity
+ * (and any in-progress edit) when the list re-derives.
  */
 export function normalizeTaskNumberFields<T extends object>(record: T): T {
+  const cached = normalizedTaskRecords.get(record);
+  if (cached) return cached as T;
   let result: T | undefined;
   for (const field of TASK_NUMBER_FIELDS) {
     const value = (record as Record<string, unknown>)[field];
@@ -79,5 +86,7 @@ export function normalizeTaskNumberFields<T extends object>(record: T): T {
     result ??= { ...record };
     (result as Record<string, unknown>)[field] = number;
   }
-  return result ?? record;
+  if (!result) return record;
+  normalizedTaskRecords.set(record, result);
+  return result;
 }
