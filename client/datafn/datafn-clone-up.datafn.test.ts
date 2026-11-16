@@ -89,7 +89,7 @@ async function pullNoteIntoNucleum(target: DatafnServer, onPush?: PushHook) {
       contentType: NodeType.SIMPLE_TEXT
     }
   });
-  expect(created.ok).toBe(true);
+  expect(created).toMatchObject({ ok: true });
   await deviceA.sync.schedulePush();
 
   const storage = new MemoryStorageAdapter();
