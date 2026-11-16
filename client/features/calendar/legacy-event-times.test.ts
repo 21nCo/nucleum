@@ -11,11 +11,26 @@ describe("resolveLiftedEventTimes", () => {
     });
   });
 
+  it("lifts a missing end even when the start is already top-level", () => {
+    expect(
+      resolveLiftedEventTimes({
+        startUnix: 10,
+        value: { startUnix: 10, endUnix: 99 }
+      })
+    ).toEqual({ endUnix: 99 });
+  });
+
   it("leaves top-level times alone and skips events with nothing to lift", () => {
     expect(
       resolveLiftedEventTimes({ startUnix: 5, value: { startUnix: 10 } })
     ).toBeUndefined();
-    expect(resolveLiftedEventTimes({ value: { endUnix: 20 } })).toBeUndefined();
+    expect(
+      resolveLiftedEventTimes({
+        startUnix: 10,
+        endUnix: 30,
+        value: { endUnix: 20 }
+      })
+    ).toBeUndefined();
     expect(resolveLiftedEventTimes({ value: "text" })).toBeUndefined();
     expect(resolveLiftedEventTimes({})).toBeUndefined();
   });

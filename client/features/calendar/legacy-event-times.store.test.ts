@@ -40,6 +40,16 @@ describe("repairLegacyEventTimesIfDue", () => {
       },
       {
         operation: "insert",
+        id: "event:multiday",
+        record: {
+          id: "event:multiday",
+          label: "Multi-day",
+          startUnix: 1_000,
+          value: { startUnix: 1_000, endUnix: 90_000 }
+        }
+      },
+      {
+        operation: "insert",
         id: "event:current",
         record: { id: "event:current", label: "Current", startUnix: 1_500 }
       }
@@ -59,8 +69,13 @@ describe("repairLegacyEventTimesIfDue", () => {
     expect(await findIds()).not.toContain("event:legacy");
 
     const now = Date.now();
-    expect(await repairLegacyEventTimesIfDue(now)).toBe(1);
+    expect(await repairLegacyEventTimesIfDue(now)).toBe(2);
     expect(await findIds()).toContain("event:legacy");
+    const multiDay = await datafn.event.query({
+      select: ["id", "endUnix"],
+      filters: { id: "event:multiday" }
+    });
+    expect((multiDay.data?.[0] as any)?.endUnix).toBe(90_000);
     expect(await repairLegacyEventTimesIfDue(now + 60_000)).toBe(0);
   });
 });

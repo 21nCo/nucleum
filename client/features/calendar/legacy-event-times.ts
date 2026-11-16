@@ -20,8 +20,10 @@ type LegacyEventRecord = {
 
 /**
  * The top-level times a legacy event is missing but still keeps inside
- * `value`, or undefined when there is nothing to lift. Calendar queries
- * filter on the top-level fields, and servers can't filter inside JSON.
+ * `value`, or undefined when there is nothing to lift. Each time is lifted
+ * on its own, so an event that has a top-level start but kept its end only
+ * in `value` gets its end back. Calendar queries filter on the top-level
+ * fields, and servers can't filter inside JSON.
  */
 export function resolveLiftedEventTimes(
   record: LegacyEventRecord
@@ -43,26 +45,33 @@ export function resolveLiftedEventTimes(
   ) {
     lifted.endUnix = value.endUnix;
   }
-  return lifted.startUnix === undefined ? undefined : lifted;
+  return Object.keys(lifted).length > 0 ? lifted : undefined;
+}
+
+/** Whether a DataFn mutation result reports a rejected write. */
+function isFailedMutation(result: unknown) {
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    (result as { ok?: unknown }).ok === false
+  );
 }
 
 /**
- * Lifts `value.startUnix`/`value.endUnix` to the top-level fields of events
- * stored before imports did it, so calendar queries find them again. Writes
- * go through DataFn as system changes, so they sync; the repair is
- * idempotent and reads only events without a top-level start time. Repaired
- * events leave that filter, so each page starts after the events that had
- * nothing to lift.
- *
- * @returns The number of events repaired.
+ * Lifts the times of events whose `field` is empty, one page at a time.
+ * Repaired events leave the filter, so each page starts after the events
+ * that had nothing to lift. Throws when a write is rejected, so the run is
+ * not recorded and is retried on the next start.
  */
-async function runLegacyEventTimeRepair(): Promise<number> {
+async function liftEventTimesWhereEmpty(
+  field: "startUnix" | "endUnix"
+): Promise<number> {
   let repaired = 0;
   let unrepairable = 0;
   for (let page = 0; page < maxRepairPages; page++) {
     const result = await datafn.event.query({
       select: ["id", "startUnix", "endUnix", "value"],
-      filters: { startUnix: { $is_null: true } },
+      filters: { [field]: { $is_null: true } },
       metadata: { includeTrashed: true, includeArchived: true },
       limit: repairPageSize,
       offset: unrepairable
@@ -70,7 +79,7 @@ async function runLegacyEventTimeRepair(): Promise<number> {
     const records = (result.data ?? []) as LegacyEventRecord[];
     const writes = records.flatMap((record) => {
       const lifted = resolveLiftedEventTimes(record);
-      return typeof record.id === "string" && lifted
+      return typeof record.id === "string" && lifted?.[field] !== undefined
         ? [
             {
               operation: "merge" as const,
@@ -82,12 +91,32 @@ async function runLegacyEventTimeRepair(): Promise<number> {
         : [];
     });
     if (writes.length > 0) {
-      await datafn.event.mutate(writes as any);
+      const outcome = await datafn.event.mutate(writes as any);
+      const outcomes = Array.isArray(outcome) ? outcome : [outcome];
+      if (outcomes.some(isFailedMutation)) {
+        throw new Error("Some legacy event times could not be saved");
+      }
       repaired += writes.length;
     }
     unrepairable += records.length - writes.length;
     if (records.length < repairPageSize) break;
   }
+  return repaired;
+}
+
+/**
+ * Lifts `value.startUnix`/`value.endUnix` to the top-level fields of events
+ * stored before imports did it, so calendar queries find them again (and
+ * multi-day events keep their end). Writes go through DataFn as system
+ * changes, so they sync; the repair is idempotent and reads only events
+ * missing a top-level start or end time.
+ *
+ * @returns The number of events repaired.
+ */
+async function runLegacyEventTimeRepair(): Promise<number> {
+  const repaired =
+    (await liftEventTimesWhereEmpty("startUnix")) +
+    (await liftEventTimesWhereEmpty("endUnix"));
   if (repaired > 0) {
     logger.info({ at: "repairLegacyEventTimes", repaired });
   }
