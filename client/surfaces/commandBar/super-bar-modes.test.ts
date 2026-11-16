@@ -35,3 +35,37 @@ describe("buildSuperBarEntries in commands mode", () => {
     );
   });
 });
+
+describe("buildSuperBarEntries keys in commands mode", () => {
+  it("keeps one row per action and variant and every distinct command", () => {
+    const commands = [
+      { action: "open", cmdLabel: "Open", label: "Open" },
+      { action: "open", cmdLabel: "Open", label: "Open" },
+      { action: "open", variant: "pane", cmdLabel: "Open", label: "Open" },
+      { action: "star", cmdLabel: "Star", label: "Star" },
+      { action: "star", cmdLabel: "Star again", label: "Star again" },
+      ...["a", "b", "c", "d", "e", "f"].map((action) => ({
+        action,
+        cmdLabel: action,
+        label: action
+      }))
+    ] as never[];
+    const entries = buildSuperBarEntries({
+      query: "o",
+      scope: "all",
+      contextActions: [],
+      commands,
+      results: [],
+      isCommandsOnly: true
+    });
+    const keys = entries.map((entry) => entry.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(keys).toEqual([
+      "command:open:",
+      "command:open:pane",
+      "command:star:",
+      ...["a", "b", "c", "d", "e", "f"].map((action) => `command:${action}:`)
+    ]);
+    expect(entries[2]).toMatchObject({ action: { cmdLabel: "Star" } });
+  });
+});
