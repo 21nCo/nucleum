@@ -139,20 +139,34 @@ export function colorSchemeVariantLabel(
 }
 
 /**
- * The families a light or dark picker offers: one per defined scheme of that
- * variant, keeping the first family that uses it. Picking both variants keeps
- * them all.
+ * Whether a picker for the variant can offer or apply the family: its light
+ * scheme for light, its dark scheme for dark, and both schemes for both.
+ */
+export function isColorSchemeFamilyAvailable(
+  family: ResolvedColorSchemeFamily,
+  variant: ColorSchemeVariant = "both"
+): boolean {
+  if (variant === "light") return !!family.light;
+  if (variant === "dark") return !!family.dark;
+  return !!family.light && !!family.dark;
+}
+
+/**
+ * The families a picker offers: those available for its variant, and for a
+ * light or dark picker one per scheme, keeping the first family that uses it.
  */
 export function colorSchemeVariantFamilies(
   families: ResolvedColorSchemeFamily[],
   variant: ColorSchemeVariant = "both"
 ): ResolvedColorSchemeFamily[] {
-  if (variant === "both") return families;
+  const available = families.filter((family) =>
+    isColorSchemeFamilyAvailable(family, variant)
+  );
+  if (variant === "both") return available;
   const seen = new Set<string>();
-  return families.filter((family) => {
-    const scheme = variant === "light" ? family.light : family.dark;
+  return available.filter((family) => {
     const id = variant === "light" ? family.lightId : family.darkId;
-    if (!scheme || !id || seen.has(id)) return false;
+    if (!id || seen.has(id)) return false;
     seen.add(id);
     return true;
   });
@@ -185,41 +199,53 @@ export function groupColorSchemeFamilies(
     .filter((group) => group.families.length > 0);
 }
 
-/** The family whose light and dark schemes are exactly the given pair. */
+/** The available family whose light and dark schemes are exactly the given pair. */
 export function findColorSchemeFamilyByPair(
   families: ResolvedColorSchemeFamily[],
   lightId: string | undefined,
   darkId: string | undefined
 ): ResolvedColorSchemeFamily | undefined {
   return families.find(
-    (family) => family.lightId === lightId && family.darkId === darkId
+    (family) =>
+      isColorSchemeFamilyAvailable(family) &&
+      family.lightId === lightId &&
+      family.darkId === darkId
   );
 }
 
-/** The first family that uses a scheme id as its light or dark variant. */
+/**
+ * The first family available for the variant that uses a scheme id: as its
+ * light scheme for light, its dark scheme for dark, and either for both.
+ */
 export function findColorSchemeFamily(
   families: ResolvedColorSchemeFamily[],
-  schemeId: string | undefined
+  schemeId: string | undefined,
+  variant: ColorSchemeVariant = "both"
 ): ResolvedColorSchemeFamily | undefined {
   if (!schemeId) return undefined;
   return families.find(
-    (family) => family.lightId === schemeId || family.darkId === schemeId
+    (family) =>
+      isColorSchemeFamilyAvailable(family, variant) &&
+      ((variant !== "dark" && family.lightId === schemeId) ||
+        (variant !== "light" && family.darkId === schemeId))
   );
 }
 
 /**
  * The family to apply when separate light and dark schemes are turned off:
- * the family of the light scheme, else of the dark scheme, else Default.
+ * the family of the light scheme, else of the dark scheme, else Default, else
+ * the first family, counting only families with both schemes defined.
  */
 export function findColorSchemeFamilyForMixedPair(
   families: ResolvedColorSchemeFamily[],
   lightId: string | undefined,
   darkId: string | undefined
 ): ResolvedColorSchemeFamily | undefined {
+  const available = colorSchemeVariantFamilies(families);
   return (
-    findColorSchemeFamily(families, lightId) ??
-    findColorSchemeFamily(families, darkId) ??
-    families.find((family) => family.id === "default") ??
-    families[0]
+    findColorSchemeFamily(available, lightId) ??
+    findColorSchemeFamily(available, darkId) ??
+    available.find((family) => family.id === "default") ??
+    available[0]
   );
 }

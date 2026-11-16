@@ -277,4 +277,19 @@ describe("ColorSchemeFamilyPicker with partially defined families", () => {
       expect(variant === "light" ? picked.light : picked.dark).toBeDefined();
     }
   );
+
+  it("offers no partial family when picking both variants", async () => {
+    render(ColorSchemeFamilyPicker, {
+      props: {
+        label: "Scheme",
+        testId: "partial-picker",
+        families: partial,
+        selected: undefined,
+        onSelect: vi.fn()
+      }
+    });
+    await fireEvent.click(screen.getByTestId("partial-picker"));
+    await flush();
+    expect(screen.queryAllByTestId("color-scheme-family-option")).toEqual([]);
+  });
 });

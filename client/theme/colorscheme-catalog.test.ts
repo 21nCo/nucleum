@@ -9,6 +9,7 @@ import {
   findColorSchemeFamilyByPair,
   findColorSchemeFamilyForMixedPair,
   groupColorSchemeFamilies,
+  isColorSchemeFamilyAvailable,
   resolveColorSchemeFamilies
 } from "./colorscheme-catalog";
 import colorSchemes from "./colorschemes.json";
@@ -221,12 +222,8 @@ describe("colorSchemeVariantFamilies with partially defined families", () => {
     expect(search("b-dark")).toEqual(["b"]);
   });
 
-  it("keeps every resolved family when picking both variants", () => {
-    expect(ids(colorSchemeVariantFamilies(families, "both"))).toEqual([
-      "a",
-      "b",
-      "c"
-    ]);
+  it("offers a combined picker only families with both schemes defined", () => {
+    expect(ids(colorSchemeVariantFamilies(families, "both"))).toEqual(["c"]);
   });
 });
 
@@ -259,6 +256,148 @@ describe("findColorSchemeFamilyForMixedPair", () => {
   it("finds nothing without families", () => {
     expect(
       findColorSchemeFamilyForMixedPair([], "colorscheme:x", "colorscheme:y")
+    ).toBeUndefined();
+  });
+});
+
+describe("colour scheme family availability with light-only and dark-only families", () => {
+  const families = resolveColorSchemeFamilies(
+    [
+      scheme("lo-light"),
+      scheme("do-dark", true),
+      scheme("full-light"),
+      scheme("full-dark", true)
+    ],
+    [
+      {
+        id: "light-only",
+        label: "Lumen",
+        category: ColorSchemeCategory.Nucleum,
+        lightId: "lo-light",
+        darkId: "lo-dark"
+      },
+      {
+        id: "dark-only",
+        label: "Dusk",
+        category: ColorSchemeCategory.Developer,
+        lightId: "do-light",
+        darkId: "do-dark"
+      },
+      {
+        id: "full",
+        label: "Full",
+        category: ColorSchemeCategory.Studio,
+        lightId: "full-light",
+        darkId: "full-dark"
+      }
+    ]
+  );
+  const ids = (list: { id: string }[]) => list.map((family) => family.id);
+  const byId = (id: string) => families.find((family) => family.id === id)!;
+
+  it("keeps partial families resolved but marks them available per variant", () => {
+    expect(ids(families)).toEqual(["light-only", "dark-only", "full"]);
+    expect(
+      families.map((family) => [
+        isColorSchemeFamilyAvailable(family, "light"),
+        isColorSchemeFamilyAvailable(family, "dark"),
+        isColorSchemeFamilyAvailable(family)
+      ])
+    ).toEqual([
+      [true, false, false],
+      [false, true, false],
+      [true, true, true]
+    ]);
+  });
+
+  it("leaves partial families out of the combined list and its search", () => {
+    const both = colorSchemeVariantFamilies(families, "both");
+    expect(ids(both)).toEqual(["full"]);
+    const search = (query: string) =>
+      groupColorSchemeFamilies(both, query, "both").flatMap((group) =>
+        ids(group.families)
+      );
+    expect(search("lumen")).toEqual([]);
+    expect(search("dusk")).toEqual([]);
+    expect(search("developer")).toEqual([]);
+    expect(search("nucleum")).toEqual([]);
+    expect(search("full")).toEqual(["full"]);
+  });
+
+  it("still offers the defined side to the light and dark pickers", () => {
+    expect(ids(colorSchemeVariantFamilies(families, "light"))).toEqual([
+      "light-only",
+      "full"
+    ]);
+    expect(ids(colorSchemeVariantFamilies(families, "dark"))).toEqual([
+      "dark-only",
+      "full"
+    ]);
+  });
+
+  it("never matches a partial family as the current pair", () => {
+    expect(
+      findColorSchemeFamilyByPair(families, "lo-light", "lo-dark")
+    ).toBeUndefined();
+    expect(
+      findColorSchemeFamilyByPair(families, "do-light", "do-dark")
+    ).toBeUndefined();
+    expect(
+      findColorSchemeFamilyByPair(families, "full-light", "full-dark")?.id
+    ).toBe("full");
+  });
+
+  it("finds a family for a picker only on its defined side", () => {
+    expect(findColorSchemeFamily(families, "lo-light", "light")?.id).toBe(
+      "light-only"
+    );
+    expect(findColorSchemeFamily(families, "lo-dark", "dark")).toBeUndefined();
+    expect(findColorSchemeFamily(families, "do-dark", "dark")?.id).toBe(
+      "dark-only"
+    );
+    expect(findColorSchemeFamily(families, "do-light", "light")).toBeUndefined();
+    expect(findColorSchemeFamily(families, "full-dark", "light")).toBeUndefined();
+    expect(findColorSchemeFamily(families, "lo-light")).toBeUndefined();
+  });
+
+  it("never falls back to a partial family when separate schemes are turned off", () => {
+    const familyFor = (lightId?: string, darkId?: string) =>
+      findColorSchemeFamilyForMixedPair(families, lightId, darkId)?.id;
+    expect(familyFor("lo-light", "do-dark")).toBe("full");
+    expect(familyFor("do-light", "lo-dark")).toBe("full");
+    expect(familyFor("lo-light", "full-dark")).toBe("full");
+    expect(familyFor(undefined, undefined)).toBe("full");
+    expect(
+      findColorSchemeFamilyForMixedPair(
+        resolveColorSchemeFamilies(
+          [scheme("d-light"), scheme("x-dark", true)],
+          [
+            {
+              id: "default",
+              label: "Default",
+              category: ColorSchemeCategory.Nucleum,
+              lightId: "d-light",
+              darkId: "d-dark"
+            },
+            {
+              id: "x",
+              label: "X",
+              category: ColorSchemeCategory.Studio,
+              lightId: "d-light",
+              darkId: "x-dark"
+            }
+          ]
+        ),
+        "d-light",
+        "d-dark"
+      )?.id
+    ).toBe("x");
+    expect(
+      findColorSchemeFamilyForMixedPair(
+        [byId("light-only"), byId("dark-only")],
+        "lo-light",
+        "do-dark"
+      )
     ).toBeUndefined();
   });
 });

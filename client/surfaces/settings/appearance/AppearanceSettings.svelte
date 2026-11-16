@@ -133,7 +133,8 @@
         families={schemeFamilies}
         selected={findColorSchemeFamily(
           schemeFamilies,
-          $appearance.lightColorSchemeId
+          $appearance.lightColorSchemeId,
+          "light"
         )}
         onSelect={(family) => {
           prefersMixedSchemes = true;
@@ -147,7 +148,8 @@
         families={schemeFamilies}
         selected={findColorSchemeFamily(
           schemeFamilies,
-          $appearance.darkColorSchemeId
+          $appearance.darkColorSchemeId,
+          "dark"
         )}
         onSelect={(family) => {
           prefersMixedSchemes = true;
