@@ -5,11 +5,15 @@ import {
 
 /** Whether an open popover is visible and takes pointer input. */
 export function hasOpenPopover() {
-  return Array.from(document.querySelectorAll(".popover")).some(
-    (element) =>
-      !element.classList.contains("pointer-events-none") &&
-      element.getClientRects().length > 0 &&
-      getComputedStyle(element).visibility !== "hidden"
+  return Array.from(document.querySelectorAll(".popover")).some(isOpenPopover);
+}
+
+/** Whether a popover element is visible and takes pointer input. */
+export function isOpenPopover(element: Element) {
+  return (
+    !element.classList.contains("pointer-events-none") &&
+    element.getClientRects().length > 0 &&
+    getComputedStyle(element).visibility !== "hidden"
   );
 }
 
@@ -36,7 +40,11 @@ export function hasAriaModalOnFront() {
   ).some(isShown);
 }
 
-function isShown(element: HTMLElement) {
+/**
+ * Whether an element is shown: not hidden, inert, `visibility: hidden` or
+ * inside an ancestor with `display: none`.
+ */
+export function isShown(element: HTMLElement) {
   if (element.closest("[hidden], [inert]")) return false;
   if (getComputedStyle(element).visibility === "hidden") return false;
   for (

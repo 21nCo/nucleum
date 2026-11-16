@@ -27,6 +27,7 @@
     selectContextViewAt,
     stepContextView
   } from "@nucleum/shell/shortcuts/context-view-step";
+  import { stepListItem } from "@nucleum/shell/shortcuts/list-item-step";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
@@ -82,6 +83,11 @@
       stepSubViewByKey(event, subViewStep);
       return;
     }
+    const listStep = LIST_ITEM_STEPS[shortcut.action];
+    if (listStep !== undefined) {
+      stepListItemByKey(event, listStep);
+      return;
+    }
     requireCommandHost().runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
@@ -121,6 +127,24 @@
     if (event.defaultPrevented) return;
     if (isViewKeyLayerOnFront()) return;
     if (!contextZone.stepSub(delta)) return;
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  const LIST_ITEM_STEPS: Partial<Record<string, number>> = {
+    [Action.PREVIOUS_LIST_ITEM]: -1,
+    [Action.NEXT_LIST_ITEM]: 1
+  };
+
+  /**
+   * Steps the vertical list of the page in front for Option+Up / Option+Down.
+   * Skips a key another handler already consumed (such as a Space nav row
+   * move), and keeps the browser default (Option+Up/Down scrolls a page on
+   * macOS) unless an item was selected.
+   */
+  function stepListItemByKey(event: KeyboardEvent, delta: number) {
+    if (event.defaultPrevented) return;
+    if (!stepListItem(delta)) return;
     event.stopPropagation();
     event.preventDefault();
   }

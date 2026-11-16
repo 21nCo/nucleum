@@ -12,6 +12,7 @@ import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 import { stepContextView } from "@nucleum/shell/shortcuts/context-view-step";
 import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
+import { stepListItem } from "@nucleum/shell/shortcuts/list-item-step";
 import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 import { requestNavigatorFocus } from "@nucleum/shell/navigator/navigator-focus";
 import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
@@ -120,6 +121,24 @@ export const shellCommands = {
     fn: async () => {
       if (isViewKeyLayerOnFront()) return;
       contextZone.stepSub(-1);
+    }
+  },
+  previous_list_item: {
+    action: Action.PREVIOUS_LIST_ITEM,
+    label: "Previous list item",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      stepListItem(-1);
+    }
+  },
+  next_list_item: {
+    action: Action.NEXT_LIST_ITEM,
+    label: "Next list item",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      stepListItem(1);
     }
   },
   next_sub_view: {

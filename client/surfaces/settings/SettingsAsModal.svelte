@@ -23,6 +23,7 @@
   import view from "@21n/ui/environment/view.store";
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { AccessMode } from "@nucleum/datafn/resource.type";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   let {
     isModal = false
   }: {
@@ -101,6 +102,42 @@
     requireCommandHost().runAction(Action.APPEARANCE_SETTINGS);
     return true;
   }
+
+  /** Opens a setting from the list, as a click on it does. */
+  function selectSetting(item: string) {
+    if (openInRightModal(item)) return;
+    selected = item;
+    const action = requireCommandHost().resolveAction(item);
+    if (action?.component) pageAction = action;
+    navigation.toggleSearchParam({
+      [AppSearchParam.SETTING]: item
+    });
+  }
+
+  /**
+   * Whether Option+Up/Down stops on a setting: it opens a page inside
+   * Settings. Appearance on wide screens is skipped, because choosing it
+   * closes Settings and opens its own drawer.
+   */
+  function isListStop(item: string) {
+    if (item === Action.APPEARANCE_SETTINGS && !$view.isConstrainedWidth)
+      return false;
+    return !!requireCommandHost().resolveAction(item)?.component;
+  }
+
+  /** The settings list, so the keyboard knows which modal holds it. */
+  let listElement: HTMLElement | undefined = $state();
+
+  const settingListViews = useContextZoneSubViews(
+    () => ({
+      values: (config ?? [])
+        .flatMap((section) => section.children ?? [])
+        .filter(isListStop),
+      active: selected || undefined,
+      select: selectSetting
+    }),
+    { axis: "vertical", isInModal: isModal, element: () => listElement }
+  );
   async function runAction(slug: string) {
     if (!slug) {
       pageAction = null;
@@ -138,7 +175,10 @@
         />
       </BackButton>
     </div>
-    <div class="flex flex-col overflow-auto gap-8 w-full">
+    <div
+      class="flex flex-col overflow-auto gap-8 w-full"
+      bind:this={listElement}
+    >
       <ProfileCpSection
         context="modal"
         parentBackgroundIndex={2}
@@ -173,13 +213,8 @@
                       isActive={selected === item}
                       width="w-40"
                       onclick={() => {
-                        if (openInRightModal(item)) return;
-                        selected = item;
-                        const action = requireCommandHost().resolveAction(item);
-                        if (action?.component) pageAction = action;
-                        navigation.toggleSearchParam({
-                          [AppSearchParam.SETTING]: item
-                        });
+                        settingListViews.touch();
+                        selectSetting(item);
                       }}
                     />
                   {/each}

@@ -212,12 +212,44 @@ export function resolveContextZoneViews(
   return newest?.source.views ?? entry?.fallbackViews;
 }
 
+/**
+ * Direction of an in-page switcher: horizontal switchers (view modes,
+ * calendar scale) step with Option+Shift+Left/Right, vertical lists (settings
+ * list, side navs) with Option+Up/Down.
+ */
+export type ContextZoneSwitcherAxis = "horizontal" | "vertical";
+
+/** Where an in-page switcher lives and which keys step it. */
+export type ContextZoneSubViewOptions = {
+  axis?: ContextZoneSwitcherAxis;
+  /** The switcher is inside a modal, so it steps only while a modal is in front. */
+  isInModal?: boolean;
+  /**
+   * An element of the switcher, so the keyboard can tell whether the layer
+   * that holds it is in front (see `ContextZoneSubViewQuery.isOnFront`).
+   */
+  element?: () => Element | null | undefined;
+};
+
 /** One in-page sub switcher registered for keyboard stepping. */
 export type ContextZoneSubViewSource = {
   key: number;
   pane: ContextZonePane;
   source: { views?: ContextZoneViews };
   usedAt: number;
+} & ContextZoneSubViewOptions;
+
+/** Which switchers the keyboard is looking for. */
+export type ContextZoneSubViewQuery = {
+  axis?: ContextZoneSwitcherAxis;
+  /** A modal is in front, so only switchers inside a modal count. */
+  isModalOpen?: boolean;
+  /**
+   * While a modal is in front, a switcher inside a modal counts only when it
+   * has an element this accepts, such as one inside the front modal with no
+   * other layer over it.
+   */
+  isOnFront?: (element: Element) => boolean;
 };
 
 /** Handle returned when a page registers an in-page sub switcher. */
@@ -233,19 +265,33 @@ export type ContextZoneSubViewRegistration = {
  * the shown pane that have views, the one used most recently (picked by the
  * keyboard or by the user in the switcher), otherwise the newest registered.
  * Switchers on layers outside `visible`, such as a page under a full-screen
- * overlay, never count, also when no pane is shown.
+ * overlay, never count, also when no pane is shown. Only switchers on the
+ * query's axis (horizontal by default) count; while a modal is in front only
+ * switchers inside a modal count (and only those the query's `isOnFront`
+ * accepts, when it has one), otherwise only switchers outside one.
  */
 export function resolveContextZoneSubViewSource(
   sources: ContextZoneSubViewSource[],
   pane: ContextZonePane | undefined,
-  visible?: ReadonlySet<number>
+  visible?: ReadonlySet<number>,
+  query: ContextZoneSubViewQuery = {}
 ): ContextZoneSubViewSource | undefined {
-  const candidates = sources.filter(
-    (item) =>
-      item.source.views &&
+  const axis = query.axis ?? "horizontal";
+  const candidates = sources.filter((item) => {
+    if (!item.source.views || (item.axis ?? "horizontal") !== axis)
+      return false;
+    if (query.isModalOpen) {
+      if (!item.isInModal) return false;
+      if (!query.isOnFront) return true;
+      const element = item.element?.();
+      return !!element && query.isOnFront(element);
+    }
+    return (
+      !item.isInModal &&
       (!visible || visible.has(item.pane.layer)) &&
       (!pane || item.pane.id === pane.id)
-  );
+    );
+  });
   if (candidates.length === 0) return undefined;
   return candidates
     .slice(1)
@@ -357,12 +403,13 @@ export const contextZone = {
    */
   registerSubViews(
     pane: ContextZonePane,
-    source: { views?: ContextZoneViews }
+    source: { views?: ContextZoneViews },
+    options: ContextZoneSubViewOptions = {}
   ): ContextZoneSubViewRegistration {
     const key = ++nextKey;
     subViewSources.update((list) => [
       ...list,
-      { key, pane, source, usedAt: 0 }
+      { key, pane, source, usedAt: 0, ...options }
     ]);
     return {
       touch: () => markSubViewsUsed(key),
@@ -371,22 +418,24 @@ export const contextZone = {
     };
   },
   /** Sub switcher views the keyboard steps in the pane the zone describes. */
-  resolveSubViews() {
+  resolveSubViews(query: ContextZoneSubViewQuery = {}) {
     return resolveContextZoneSubViewSource(
       get(subViewSources),
       get(contextZone.pane),
-      get(visibleLayers)
+      get(visibleLayers),
+      query
     )?.source.views;
   },
   /**
    * Moves the in-page sub switcher `delta` views along, wrapping at both
    * ends; returns whether a view was selected.
    */
-  stepSub(delta: number) {
+  stepSub(delta: number, query: ContextZoneSubViewQuery = {}) {
     const source = resolveContextZoneSubViewSource(
       get(subViewSources),
       get(contextZone.pane),
-      get(visibleLayers)
+      get(visibleLayers),
+      query
     );
     const views = source?.source.views;
     if (!source || !views) return false;

@@ -61,6 +61,16 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
     code: KeyboardKey.ARROW_RIGHT,
     modifiers: [ModifierKey.ALT, ModifierKey.SHIFT]
   },
+  [Action.PREVIOUS_LIST_ITEM]: {
+    key: KeyboardKey.ARROW_UP,
+    code: KeyboardKey.ARROW_UP,
+    modifiers: [ModifierKey.ALT]
+  },
+  [Action.NEXT_LIST_ITEM]: {
+    key: KeyboardKey.ARROW_DOWN,
+    code: KeyboardKey.ARROW_DOWN,
+    modifiers: [ModifierKey.ALT]
+  },
   [Action.CMD]: {
     key: "k",
     modifiers: [ModifierKey.META]

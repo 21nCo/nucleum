@@ -25,6 +25,7 @@
   import SpaceNavItem from "@nucleum/features/spaces/SpaceNavItem.svelte";
   import SpaceAddPanel from "@nucleum/features/spaces/SpaceAddPanel.svelte";
   import SpaceResourceRenderer from "@nucleum/features/spaces/SpaceResourceRenderer.svelte";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
   import {
     readSpaceSelection,
@@ -169,6 +170,22 @@
     return collectResourceItems(list).find(isAutoOpenable);
   }
 
+  /**
+   * Lists the record items whose rows the side nav shows, in tree order: only
+   * a section shows its children, and only while it is not collapsed.
+   */
+  function collectShownResourceItems(
+    list: ISpaceNavItem[]
+  ): ISpaceResourceNavItem[] {
+    return list.flatMap((item) => {
+      if (item.type === SpaceNavItemType.RESOURCE)
+        return [item as ISpaceResourceNavItem];
+      if (item.type === SpaceNavItemType.SECTION && !collapsedIds.has(item.id))
+        return collectShownResourceItems(item.children ?? []);
+      return [];
+    });
+  }
+
   function cancelHeadingScroll() {
     scrollRequest++;
     cancelScroll?.();
@@ -182,7 +199,23 @@
     cancelHeadingScroll();
   }
 
+  const itemListViews = useContextZoneSubViews(
+    () => ({
+      values: collectShownResourceItems(items)
+        .filter(isAutoOpenable)
+        .map((item) => item.id),
+      active: selectedItemId ?? undefined,
+      select: (id) => {
+        const item = findItem(items, id);
+        if (item?.type === SpaceNavItemType.RESOURCE)
+          openItem(item as ISpaceResourceNavItem);
+      }
+    }),
+    { axis: "vertical" }
+  );
+
   function openItem(item: ISpaceResourceNavItem) {
+    itemListViews.touch();
     isClosedByUser = false;
     selectedItemId = item.id;
     activeHeadingId = undefined;

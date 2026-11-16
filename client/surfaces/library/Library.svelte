@@ -11,6 +11,7 @@
     resolveLibrarySideViewOrder,
     resolveLibrarySwitcherSections
   } from "@nucleum/surfaces/library/resource-switcher.utils";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
     resourceAction,
@@ -101,6 +102,11 @@
     active: selectedResource,
     select: (value) => selectResourceFromSwitcher(value as Resource)
   });
+
+  useContextZoneSubViews(
+    () => (isSwitcherInTopBar ? undefined : sidePanelViews),
+    { axis: "vertical" }
+  );
 
   $effect(() => {
     if (isSwitcherInTopBar) return;
