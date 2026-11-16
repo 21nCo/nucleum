@@ -208,7 +208,7 @@ export class ActiveResourceStore<
    */
   static resolveOwnerAccessMode(id: IRecordId): AccessMode | undefined {
     const owners = activeResourceOwners.get(id.toString()) ?? [];
-    return owners[owners.length - 1]?.accessMode();
+    return owners.at(-1)?.accessMode();
   }
 
   /**
