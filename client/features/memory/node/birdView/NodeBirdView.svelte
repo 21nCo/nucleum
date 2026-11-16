@@ -48,7 +48,6 @@
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
-  import { untrack } from "svelte";
   let { node }: { node: IActiveNodeStore } = $props();
   let selectedView = $state(NodeBirdViewMode.Graph);
   const birdSubViews = useContextZoneSubViews(() => ({
@@ -58,10 +57,6 @@
       selectedView = value as NodeBirdViewMode;
     }
   }));
-  $effect(() => {
-    selectedView;
-    untrack(() => birdSubViews.touch());
-  });
   let depth = $state(
     $page.url?.searchParams?.get(AppSearchParam.DEPTH)
       ? parseInt($page.url?.searchParams?.get(AppSearchParam.DEPTH) ?? "1")
@@ -513,6 +508,7 @@
               }
             ]}
             bind:value={selectedView}
+            onSelect={() => birdSubViews.touch()}
             style={InputStyle.PLAIN}
             isDisableSearch={true}
           />
@@ -539,6 +535,7 @@
           style={PanelSwitcherStyle.TRAIN}
           activeItemStrength={PanelSwitcherActiveItemStrength.STRONG}
           bind:value={selectedView}
+          onSwitch={() => birdSubViews.touch()}
         />
       {/if}
     </div>

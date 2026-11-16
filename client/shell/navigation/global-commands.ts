@@ -10,8 +10,10 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import Navigator from "@nucleum/shell/navigator/Navigator.svelte";
 import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
+import { stepContextView } from "@nucleum/shell/shortcuts/context-view-step";
+import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
+import { stepListItem } from "@nucleum/shell/shortcuts/list-item-step";
 import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
-import { resolveModalOnFront } from "@21n/ui/actions/interaction-dom";
 import { requestNavigatorFocus } from "@nucleum/shell/navigator/navigator-focus";
 import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
 
@@ -90,7 +92,7 @@ export const shellCommands = {
     label: "Next view tab",
     type: ActionType.FUNCTION,
     fn: async () => {
-      contextZone.cycle();
+      stepContextView(1);
     }
   },
   previous_context_view: {
@@ -99,8 +101,7 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
-      if (resolveModalOnFront()) return;
-      contextZone.step(-1);
+      stepContextView(-1);
     }
   },
   next_context_view: {
@@ -109,8 +110,7 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
-      if (resolveModalOnFront()) return;
-      contextZone.step(1);
+      stepContextView(1);
     }
   },
   previous_sub_view: {
@@ -119,7 +119,7 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
-      if (resolveModalOnFront()) return;
+      if (isViewKeyLayerOnFront()) return;
       contextZone.stepSub(-1);
     }
   },
@@ -129,10 +129,7 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
-      contextZone.stepSub(-1, {
-        axis: "vertical",
-        isModalOpen: !!resolveModalOnFront()
-      });
+      stepListItem(-1);
     }
   },
   next_list_item: {
@@ -141,10 +138,7 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
-      contextZone.stepSub(1, {
-        axis: "vertical",
-        isModalOpen: !!resolveModalOnFront()
-      });
+      stepListItem(1);
     }
   },
   next_sub_view: {
@@ -153,7 +147,7 @@ export const shellCommands = {
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async () => {
-      if (resolveModalOnFront()) return;
+      if (isViewKeyLayerOnFront()) return;
       contextZone.stepSub(1);
     }
   },

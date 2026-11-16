@@ -9,7 +9,12 @@ import { createSearchProvider } from "@searchfn/datafn-provider";
 import { createMemoryRuntimeStores, memoryAdapter } from "@superfunctions/db/adapters/memory";
 import type { Adapter, KVStoreAdapter } from "@superfunctions/db";
 import { resolveNucleumDatafnSearchResourceFields } from "@nucleum/schema";
-import { buildAccountServices, registerCoreRoutes } from "../app.js";
+import {
+  buildAccountServices,
+  registerCoreRoutes,
+  type AccountFilesInfra,
+  type AccountServices
+} from "../app.js";
 import {
   registerTestRoutes,
   type AccountTestControlSurface
@@ -31,6 +36,7 @@ export interface AccountTestHarness {
   regionLookupStore: InMemoryRegionLookupStore;
   oauth: MockOAuthConfig;
   regions: AuthFnMultiRegionRegionConfig[];
+  services: AccountServices;
   authEvents(): AuthFnEvent[];
   logEvents(): unknown[];
   reset(): Promise<void>;
@@ -52,6 +58,7 @@ export function createAccountTestHarness(
     regionLookupStore?: InMemoryRegionLookupStore;
     enableRateLimit?: boolean;
     corsOrigins?: string[];
+    files?: AccountFilesInfra;
   } = {}
 ): AccountTestHarness {
   const regionId = input.regionId ?? "local";
@@ -119,6 +126,7 @@ export function createAccountTestHarness(
       syncDatabase: datafnDatabase,
       stores,
       logger: logger.logger,
+      files: input.files,
       syncSearchProvider: createSearchProvider(new MetadataFilteringMemoryAdapter(), {
         resourceFields: resolveNucleumDatafnSearchResourceFields()
       })
@@ -154,6 +162,7 @@ export function createAccountTestHarness(
     regionLookupStore,
     oauth,
     regions,
+    services,
     authEvents: () => authEvents.map((event) => ({ ...event })),
     logEvents: () => logger.events(),
     reset: async () => {

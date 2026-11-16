@@ -44,6 +44,11 @@ export enum UIState {
   recentFocusItems = "recentFocusItems",
   focusItemsPickFromPanel = "focusItemsPickFromPanel",
   objectivePanelSelection = "objectivePanelSelection",
+  /**
+   * Id of the focus session most recently closed on this device, so a reload or
+   * another window does not reopen a session whose reset is still being written
+   */
+  closedFocusSessionId = "closedFocusSessionId",
   //Memotron
   /**
    * List of recently used capture shortcuts on capture page

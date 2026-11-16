@@ -4,6 +4,12 @@ import modalEvent from "@nucleum/shell/overlays/modal.store";
 export type TopBarDropdownParams = {
   isOpen: boolean;
   onDismiss: () => void;
+  /**
+   * Also stops the Escape that closes the dropdown from propagating past the
+   * window capture phase, so bubbling listeners such as an open modal's close
+   * never see it. Other capture listeners on window still run.
+   */
+  isEscapeContained?: boolean;
 };
 
 /**
@@ -25,6 +31,7 @@ export function topBarDropdown(
     if (!current.isOpen) return;
     if (event.key === "Escape") {
       event.preventDefault();
+      if (current.isEscapeContained) event.stopPropagation();
       current.onDismiss();
       return;
     }

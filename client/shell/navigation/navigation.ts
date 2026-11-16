@@ -1,4 +1,8 @@
 import { isRecordId } from "@nucleum/datafn/resource.utils";
+import {
+  isPageFullScreenOwner,
+  isPageOpenedInFullScreen
+} from "@nucleum/shell/navigation/full-screen-origin";
 import { get, type Readable } from "svelte/store";
 
 import {
@@ -34,7 +38,6 @@ import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { resolveNavigationLinkTarget } from "@nucleum/shell/navigation/link-target";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
-import { isCommandModeLayout } from "@nucleum/shell/navigation/command-mode-layout";
 import { resolveLegacyFullParamPath } from "@nucleum/shell/navigation/legacy-full-param";
 import { navigatorHistory } from "@nucleum/shell/navigator/navigator-history.store";
 import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
@@ -188,6 +191,25 @@ let currentEntry:
 function isFullScreenOverlayOpen(searchParams: URLSearchParams) {
   const overlay = searchParams.get(AccessMode.OVERLAY);
   return !!overlay && overlay === fullScreen.get().path;
+}
+
+/**
+ * Search params of a page opened in full screen, after the open applies its
+ * own search params, such as closing the overlay it was maximized from.
+ */
+function resolveOpenedPageParams(
+  url: URL,
+  id: IRecordId,
+  searchParams?: Record<string, string | boolean | number | null>
+) {
+  const next = new URLSearchParams(url.search);
+  next.set(AccessMode.PAGE, id.toString());
+  next.set(AppSearchParam.MAX, "true");
+  Object.entries(searchParams ?? {}).forEach(([key, value]) => {
+    if (value === null) next.delete(key);
+    else next.set(key, String(value));
+  });
+  return next;
 }
 
 let endedEntry: { pageId: string; position?: AccessTrailPosition } | undefined;
@@ -663,7 +685,9 @@ export const navigation = {
   },
   /**
    * Link target that opens `id` in `accessMode` from the current URL, with the
-   * same record state cleared as opening it through `openResource`.
+   * same record state cleared as opening it through `openResource`. A link
+   * never carries the full screen origin marker, which belongs only to the
+   * history entry a full screen open pushed.
    */
   resolveResourceHref(id: IRecordId, accessMode: AccessMode) {
     const url = clearOpenedRecordParams(
@@ -671,6 +695,7 @@ export const navigation = {
       id,
       accessMode
     );
+    url.searchParams.delete(AppSearchParam.MAX_OPENED);
     url.searchParams.set(accessMode, id.toString());
     return `${url.pathname}${url.search}${url.hash}`;
   },
@@ -725,11 +750,7 @@ export const navigation = {
       else accessMode = AccessMode.BESIDE_BASE;
     }
     if (
-      (get(view).isPortrait ||
-        isCommandModeLayout(
-          get(appStore).interactionMode,
-          get(context).embed
-        )) &&
+      get(view).isPortrait &&
       (accessMode === AccessMode.BESIDE_BASE ||
         accessMode === AccessMode.BESIDE_PAGE)
     ) {
@@ -743,8 +764,10 @@ export const navigation = {
     let navigatorLayer: AccessMode | undefined;
     let isPushHistory = false;
     let historyState: AccessTrailHistoryState | undefined;
+    let isSamePageOpen = false;
     if (accessMode === AccessMode.PAGE) {
       const openPage = url.searchParams.get(AccessMode.PAGE);
+      isSamePageOpen = openPage === id.toString();
       const isOpenPageTrailEnded =
         !!openPage &&
         openPage === id.toString() &&
@@ -829,6 +852,13 @@ export const navigation = {
       id,
       accessMode ?? AppSearchParam.SELECTED
     );
+    const isMaxOpened =
+      accessMode === AccessMode.PAGE &&
+      !!params?.isFullScreen &&
+      isPushHistory &&
+      isPageFullScreenOwner(
+        resolveOpenedPageParams(url, id, params?.searchParams)
+      );
     navigation.toggleSearchParam(
       {
         ...(accessMode
@@ -842,6 +872,14 @@ export const navigation = {
             }),
         ...(accessMode === AccessMode.PAGE && params?.isFullScreen
           ? { [AppSearchParam.MAX]: true }
+          : {}),
+        // Reopening the open page in its own history entry, such as selecting
+        // it in the navigator, keeps where a full screen open came from.
+        ...(accessMode === AccessMode.PAGE &&
+        !(isSamePageOpen && !isPushHistory)
+          ? {
+              [AppSearchParam.MAX_OPENED]: isMaxOpened ? true : null
+            }
           : {}),
         ...(params?.searchParams ?? {}),
         ...(isCloseBesideNavigator && besideNavigatorLayer
@@ -1012,6 +1050,7 @@ export const navigation = {
             `${AccessMode.PAGE}At`,
             AccessMode.BESIDE_PAGE,
             `${AccessMode.BESIDE_PAGE}At`,
+            AppSearchParam.MAX_OPENED,
             ...(isFullScreenOverlayOpen(url.searchParams)
               ? []
               : [AppSearchParam.MAX])
@@ -1063,6 +1102,7 @@ export const navigation = {
       removeSearchParam(`${mode}At`);
     });
     removeSearchParam(AppSearchParam.MAX);
+    removeSearchParam(AppSearchParam.MAX_OPENED);
     navigation.gotoPath(url.href);
 
     function removeSearchParam(param: string) {
@@ -1081,11 +1121,14 @@ export const navigation = {
     logger.log({ at: "toggleFullScreen", currentMode, resourceId });
     const searchParams = new URLSearchParams(window.location.search);
     if (isFullScreenPage(resourceId, searchParams)) {
-      navigation.exitFullScreen();
+      navigation.minimizeFullScreen();
       return;
     }
     if (searchParams.get(AccessMode.PAGE) === resourceId?.toString()) {
-      navigation.toggleSearchParam({ [AppSearchParam.MAX]: true });
+      navigation.toggleSearchParam({
+        [AppSearchParam.MAX]: true,
+        [AppSearchParam.MAX_OPENED]: null
+      });
       return;
     }
     navigation.openResource(resourceId, AccessMode.PAGE, {
@@ -1097,6 +1140,29 @@ export const navigation = {
     });
   },
   /**
+   * Minimizes a full screen page. A page opened straight into full screen
+   * closes: when its history entry was pushed by that open, going back
+   * returns to the exact view it was opened from, such as a space with its
+   * side nav or a page with a beside page; otherwise the page closes to the
+   * base page. A page that was already open only leaves full screen.
+   */
+  minimizeFullScreen: () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (!isPageOpenedInFullScreen(searchParams)) {
+      navigation.exitFullScreen();
+      return;
+    }
+    const openPage = searchParams.get(AccessMode.PAGE);
+    if (currentEntry?.pageId === openPage && currentEntry.state) {
+      window.history.back();
+      return;
+    }
+    navigation.closeResource({
+      accessMode: AccessMode.PAGE,
+      isHistoryBack: true
+    });
+  },
+  /**
    * Turns full screen off without closing the page. Over a full screen
    * overlay, that overlay leaves full screen too and hands over to its player.
    */
@@ -1105,7 +1171,10 @@ export const navigation = {
       fullScreen.hide();
       return;
     }
-    navigation.toggleSearchParam([AppSearchParam.MAX]);
+    navigation.toggleSearchParam([
+      AppSearchParam.MAX,
+      AppSearchParam.MAX_OPENED
+    ]);
   },
   setCurrentPath: (path: string) => {
     appStore.update((n: IAppStore) => {

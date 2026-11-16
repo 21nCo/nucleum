@@ -1,8 +1,5 @@
 <script lang="ts">
-  import type {
-    IContextMenuGroup,
-    IContextMenuItem
-  } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import type { IContextMenuGroup, IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
   import { Size } from "@21n/ui/elements/size.enum";
   import { bg, cn } from "@21n/ui/environment/presentation";
   import Divider from "@21n/ui/elements/Divider.svelte";
@@ -32,9 +29,7 @@
     onClose?: (() => void) | undefined;
   } = $props();
   let menuRef = $state<HTMLDivElement>();
-  const menu = $derived<IContextMenuGroup[]>(
-    menuResolver ? menuResolver() : []
-  );
+  const menu = $derived<IContextMenuGroup[]>(menuResolver ? menuResolver() : []);
 
   function resolveItemSize() {
     return size === Size.xl ? Size.lg : size;
@@ -118,10 +113,7 @@
       })}
     >
       {#if group.option}
-        <ContextMenuOptionGroup
-          option={group.option}
-          size={resolveItemSize()}
-        />
+        <ContextMenuOptionGroup option={group.option} size={resolveItemSize()} />
       {:else}
         {#each group.items as item}
           <ContextMenuItem

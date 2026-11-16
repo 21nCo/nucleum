@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { getTableConfig } from "drizzle-orm/pg-core";
 import { schema } from "../db/generated/datafn/datafn-schema.drizzle";
+import { accountFileDeletions } from "../datafn/file-deletions.schema";
 
 const dockerExecutable = [
   "/usr/bin/docker",
@@ -130,7 +131,7 @@ try {
       ).split("\n")
     );
     let columns = 0;
-    for (const table of Object.values(schema)) {
+    for (const table of [...Object.values(schema), accountFileDeletions]) {
       const config = getTableConfig(table);
       for (const column of config.columns) {
         assert(

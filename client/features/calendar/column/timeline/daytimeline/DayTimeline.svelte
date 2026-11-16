@@ -12,7 +12,7 @@
   import { time } from "@datafn/client";
   import { toSvelteStore } from "@datafn/svelte";
   import { resolveExpandedSessionItems } from "@nucleum/features/focus/logs/session-items.utils";
-  import { resolveCalendarEventOverlapFilters } from "@nucleum/features/calendar/calendar.utils";
+  import { createCalendarEventsStore } from "@nucleum/features/calendar/calendar-events.store";
 
   let {
     date,
@@ -34,15 +34,9 @@
       { initialData: [] }
     )
   );
-  const eventStore = $derived.by(() =>
-    toSvelteStore<ICalendarEvent[]>(
-      datafn.event.signal({
-        filters: resolveCalendarEventOverlapFilters(
-          datafn.temporal.resolveRangeSync({ scale: "day", at: date })
-        ),
-        sort: ["startUnix"]
-      }),
-      { initialData: [] }
+  const eventStore = $derived(
+    createCalendarEventsStore<ICalendarEvent>(
+      datafn.temporal.resolveRangeSync({ scale: "day", at: date })
     )
   );
   const timelineEntries = $derived(

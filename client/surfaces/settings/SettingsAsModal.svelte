@@ -19,7 +19,17 @@
   import { page } from "$app/stores";
   import { requireSurfaceProductConfig } from "@nucleum/shared-state/product/surface-config-host";
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
+  import modalEvent from "@nucleum/shell/overlays/modal.store";
+  import view from "@21n/ui/environment/view.store";
+  import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
+  import { AccessMode } from "@nucleum/datafn/resource.type";
   import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
+  let {
+    isModal = false
+  }: {
+    /** Whether Settings is hosted in a modal rather than rendered as a page. */
+    isModal?: boolean;
+  } = $props();
   const ComponentResolver = requireActionRenderer();
   let selected: string = $state("");
   let parentBgIndex: number = 2;
@@ -35,7 +45,67 @@
   $effect(() => {
     if (settingSearchParam) runAction(settingSearchParam);
   });
+  const layerParams = [...Object.values(AccessMode), "full"];
+  /** Whether a path or a shell layer value names the Settings route. */
+  function isSettingsTarget(value: string) {
+    const settingsPath = `/${Action.SETTINGS}`;
+    const head = `/${value.toLowerCase().replace(/^\/+/, "")}`.split(
+      /[:?#]/
+    )[0];
+    return head === settingsPath || head.startsWith(`${settingsPath}/`);
+  }
+  /**
+   * The automatic handoff only follows a return path that stays inside the
+   * app: a single-slash relative path on this origin that neither is Settings
+   * nor opens it in a shell layer (any access mode param, or the legacy full
+   * param). Anything else (an external or protocol-relative URL, a scheme, or
+   * a Settings target) falls back to the product home.
+   */
+  function appReturnPath(path: string | null) {
+    if (!path?.startsWith("/") || path.startsWith("//")) return null;
+    const base = "https://return-to.invalid";
+    try {
+      const url = new URL(path, base);
+      if (url.origin !== base) return null;
+      if (isSettingsTarget(decodeURIComponent(url.pathname))) return null;
+      const layers = layerParams.flatMap((param) =>
+        url.searchParams.getAll(param)
+      );
+      if (layers.some(isSettingsTarget)) return null;
+    } catch {
+      return null;
+    }
+    return path;
+  }
+  /**
+   * Appearance previews live in its own right-side modal on wide screens, so
+   * selecting it closes Settings and opens that modal instead of rendering it
+   * inside Settings. Settings hosted in a modal is hidden; Settings rendered as
+   * the page (portrait) is replaced by its in-app return path, else the
+   * product's home, so the app shows beside the drawer and Back does not reopen
+   * Settings. Returns whether it handed off.
+   */
+  function openInRightModal(slug: string) {
+    if (slug !== Action.APPEARANCE_SETTINGS || $view.isConstrainedWidth)
+      return false;
+    if (isModal) {
+      if (settingSearchParam)
+        navigation.toggleSearchParam([AppSearchParam.SETTING]);
+      modalEvent.hide(Action.SETTINGS, "SettingsAsModal");
+    } else {
+      const product = requireProductConfig();
+      const home = $view.isPortrait ? product.homePathPt : product.homePath;
+      navigation.gotoPath(appReturnPath(backPath) ?? `/${home}`, {
+        replaceState: true
+      });
+    }
+    requireCommandHost().runAction(Action.APPEARANCE_SETTINGS);
+    return true;
+  }
+
+  /** Opens a setting from the list, as a click on it does. */
   function selectSetting(item: string) {
+    if (openInRightModal(item)) return;
     selected = item;
     const action = requireCommandHost().resolveAction(item);
     if (action?.component) pageAction = action;
@@ -44,22 +114,36 @@
     });
   }
 
+  /**
+   * Whether Option+Up/Down stops on a setting: it opens a page inside
+   * Settings. Appearance on wide screens is skipped, because choosing it
+   * closes Settings and opens its own drawer.
+   */
+  function isListStop(item: string) {
+    if (item === Action.APPEARANCE_SETTINGS && !$view.isConstrainedWidth)
+      return false;
+    return !!requireCommandHost().resolveAction(item)?.component;
+  }
+
+  /** The settings list, so the keyboard knows which modal holds it. */
+  let listElement: HTMLElement | undefined = $state();
+
   const settingListViews = useContextZoneSubViews(
     () => ({
       values: (config ?? [])
         .flatMap((section) => section.children ?? [])
-        .filter((item) => !!requireCommandHost().resolveAction(item)?.component),
+        .filter(isListStop),
       active: selected || undefined,
       select: selectSetting
     }),
-    { axis: "vertical", isInModal: true }
+    { axis: "vertical", isInModal: isModal, element: () => listElement }
   );
-
   async function runAction(slug: string) {
     if (!slug) {
       pageAction = null;
       return;
     }
+    if (openInRightModal(slug)) return;
     selected = slug;
     const action = requireCommandHost().resolveAction(slug);
     if (action?.component) {
@@ -91,7 +175,10 @@
         />
       </BackButton>
     </div>
-    <div class="flex flex-col overflow-auto gap-8 w-full">
+    <div
+      class="flex flex-col overflow-auto gap-8 w-full"
+      bind:this={listElement}
+    >
       <ProfileCpSection
         context="modal"
         parentBackgroundIndex={2}

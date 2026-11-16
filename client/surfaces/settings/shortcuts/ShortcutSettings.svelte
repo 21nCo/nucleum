@@ -14,7 +14,7 @@
   let keyMap = keyboardShortcuts.fetchConfiguratbleShortcuts();
 </script>
 
-<div class="flex flex-col gap-4 w-full">
+<div class="flex flex-col gap-4 w-full" data-testid="keyboard-shortcut-settings">
   {#if $context.embed === Embed.HANDSET || $context.embed === Embed.TABLET}
     <InlineInfoBanner
       content="We are sorry. Configuring shortcuts is not currently available on mobile or tablet. Please use desktop or web app to configure your shortcuts."

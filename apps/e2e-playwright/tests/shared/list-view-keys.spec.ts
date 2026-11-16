@@ -53,4 +53,29 @@ test.describe("list view keys", () => {
       .toBe(first);
     await expect(page.getByTestId("settings-sidebar")).toBeVisible();
   });
+
+  test("Option arrow down skips Appearance on wide screens and keeps Settings open", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await openSettings(page);
+    await expect(page.getByTestId("settings-sidebar")).toBeVisible();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+
+    const setting = () => new URL(page.url()).searchParams.get("setting");
+    const seen = new Set<string | null>();
+    let previous = setting();
+    for (let step = 0; step < 12; step++) {
+      await page.keyboard.press("Alt+ArrowDown");
+      await expect
+        .poll(setting, { message: `setting changes on step ${step + 1}` })
+        .not.toBe(previous);
+      previous = setting();
+      seen.add(previous);
+      await expect(page.getByTestId("settings-sidebar")).toBeVisible();
+    }
+    expect(seen.size).toBeGreaterThan(1);
+    expect(seen).not.toContain("appearance-settings");
+  });
 });

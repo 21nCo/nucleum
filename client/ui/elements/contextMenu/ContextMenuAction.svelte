@@ -71,6 +71,98 @@
     triggerEventDown("hideSecondaryMenu", {});
   }
 
+  /**
+   * Opens the menu as if its trigger were clicked, so a click closes it, and
+   * moves focus into it: onto its checked option when it has one. When the
+   * menu closes, focus that was left in it returns to the trigger, then
+   * `onClose` runs. Returns false when it did not open the menu, including
+   * for a trigger that does not open on click.
+   */
+  export function show(onClose?: () => void): boolean {
+    const trigger = contextMenuPopoverRef as HTMLElement | undefined;
+    const isClickTrigger =
+      !triggerMethod || triggerMethod === PopoverTriggerMethod.CLICK;
+    if (!trigger || !isClickTrigger || isPopoverVisible || findMenu(trigger))
+      return false;
+    const onChange = (event: Event) => {
+      if ((event as CustomEvent<{ open?: boolean }>).detail?.open) {
+        focusMenu(trigger);
+        return;
+      }
+      trigger.removeEventListener("change", onChange);
+      if (isFocusLost(trigger) && trigger.isConnected) trigger.focus();
+      onClose?.();
+    };
+    trigger.addEventListener("change", onChange);
+    trigger.click();
+    return true;
+  }
+
+  /**
+   * The trigger's own Document or ShadowRoot, which may belong to another
+   * window (a same-origin iframe), so it is detected without instanceof.
+   */
+  function rootOf(trigger: HTMLElement): Document | ShadowRoot | null {
+    const root = trigger.getRootNode();
+    return "getElementById" in root ? (root as Document | ShadowRoot) : null;
+  }
+
+  /**
+   * Finds the open menu where the popover renders it: beside the trigger in
+   * its root, or in a popover container of the trigger's or the app document.
+   */
+  function findMenu(trigger: HTMLElement): HTMLElement | null {
+    return (
+      rootOf(trigger)?.getElementById(id) ??
+      trigger.ownerDocument.getElementById(id) ??
+      document.getElementById(id)
+    );
+  }
+
+  function focusMenu(trigger: HTMLElement) {
+    const menu = findMenu(trigger);
+    const target =
+      menu?.querySelector<HTMLElement>(
+        '[aria-checked="true"]:not([disabled])'
+      ) ?? menu?.querySelector<HTMLElement>("button:not([disabled])");
+    target?.focus();
+  }
+
+  /**
+   * True when the closed menu took focus with it, so nothing holds it now.
+   * Follows the live focus chain down from the top same-origin document
+   * through each focused frame and open shadow root. A document off that
+   * chain can still report the element it last focused, so it is not read.
+   * Focus counts as lost only when the chain ends on the body of a document
+   * the trigger sits in, so focus the user moved anywhere else, including
+   * into another frame, is never taken back.
+   */
+  function isFocusLost(trigger: HTMLElement): boolean {
+    let doc = trigger.ownerDocument;
+    const triggerDocuments = new Set([doc]);
+    let frame = doc.defaultView?.frameElement;
+    while (frame) {
+      doc = frame.ownerDocument;
+      triggerDocuments.add(doc);
+      frame = doc.defaultView?.frameElement;
+    }
+    let active = doc.activeElement;
+    while (active) {
+      if ("contentDocument" in active) {
+        const inner = (active as HTMLIFrameElement).contentDocument;
+        if (!inner) return false;
+        doc = inner;
+        active = inner.activeElement;
+      } else if (active.shadowRoot?.activeElement) {
+        active = active.shadowRoot.activeElement;
+      } else break;
+    }
+    return (
+      triggerDocuments.has(doc) &&
+      (!active || active === doc.body || active === doc.documentElement)
+    );
+  }
+
   const { setEventContext, getEventContext } =
     createEventPropagator("contextMenuAction");
   setEventContext();

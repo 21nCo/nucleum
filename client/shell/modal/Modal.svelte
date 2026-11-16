@@ -1,9 +1,17 @@
+<script module lang="ts">
+  /** How many open drawers currently hold each background element inert. */
+  const inertHolds = new WeakMap<HTMLElement, number>();
+</script>
+
 <script lang="ts">
   import type { Snippet } from "svelte";
   import modalEvent from "@nucleum/shell/overlays/modal.store";
   import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
   import { fade } from "svelte/transition";
-  import ModalHeader from "@21n/ui/elements/modal/ModalHeader.svelte";
+  import {
+    focusableElements,
+    focusTrap as trapFocus
+  } from "@21n/ui/actions/focus-trap.action";
   import { generateUID } from "@21n/shared-utils/legacy-id";
   import { Size } from "@21n/ui/elements/size.enum";
   import { Orientation, Placement } from "@21n/ui/elements/direction.enum";
@@ -18,12 +26,13 @@
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import context from "@nucleum/client/runtime/context.store";
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
+  import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
+  import { RAISED_TOASTS_ID } from "@nucleum/shell/overlays/raised-toasts";
   let {
     index = 0,
     show = $bindable(true),
     title = "",
     isShowOverlay = true,
-    isOnRight = false,
     alignment = Placement.Center,
     isDismissable = true,
     isUseDialog = false,
@@ -38,7 +47,6 @@
     show?: boolean;
     title?: string;
     isShowOverlay?: boolean;
-    isOnRight?: boolean;
     alignment?: Placement;
     isDismissable?: boolean;
     isUseDialog?: boolean;
@@ -49,7 +57,6 @@
     id?: string;
     children?: Snippet | undefined;
   } = $props();
-  void isOnRight;
   let dialog = $state<HTMLDialogElement | undefined>();
   let focusTrap = $state<HTMLDivElement | undefined>();
   $effect(() => {
@@ -96,6 +103,182 @@
     dialog?.showModal();
   }
 
+  /** The shared containers that popovers render into. */
+  function popoverContainers() {
+    return ["popovers", "secondary-popovers"]
+      .map((containerId) => document.getElementById(containerId))
+      .filter((container): container is HTMLElement => !!container);
+  }
+
+  /** Popovers rendered into the shared popover containers. */
+  function popoverElements() {
+    return popoverContainers()
+      .flatMap((container) => [...container.children])
+      .filter(
+        (element): element is HTMLElement => element instanceof HTMLElement
+      );
+  }
+
+  /**
+   * Containers that stay live behind a drawer, so the popovers and tooltips it
+   * opens work and the toasts raised above it stay usable.
+   */
+  const LIVE_CONTAINER_IDS = [
+    "popovers",
+    "secondary-popovers",
+    "tooltips",
+    RAISED_TOASTS_ID
+  ];
+
+  function setInert(element: HTMLElement, isInert: boolean) {
+    element.inert = isInert;
+    element.toggleAttribute("inert", isInert);
+  }
+
+  /**
+   * Holds `element` inert for one drawer. An element already inert for another
+   * reason is left alone; returns whether this drawer took a hold.
+   */
+  function holdInert(element: HTMLElement) {
+    const holds = inertHolds.get(element) ?? 0;
+    if (!holds && element.hasAttribute("inert")) return false;
+    inertHolds.set(element, holds + 1);
+    setInert(element, true);
+    return true;
+  }
+
+  /** Releases one drawer's hold, restoring `element` when none remain. */
+  function releaseInert(element: HTMLElement) {
+    const holds = (inertHolds.get(element) ?? 1) - 1;
+    if (holds > 0) {
+      inertHolds.set(element, holds);
+      return;
+    }
+    inertHolds.delete(element);
+    setInert(element, false);
+  }
+
+  /**
+   * Makes the app behind `overlay` inert: every sibling of it and of its
+   * ancestors, except the live popover and tooltip containers, the toasts
+   * raised above the modal layer and modals opened above it. Returns the
+   * elements it made inert.
+   */
+  function inertBackground(overlay: HTMLElement) {
+    const changed: HTMLElement[] = [];
+    for (
+      let node: HTMLElement = overlay;
+      node.parentElement && node.parentElement !== document.documentElement;
+      node = node.parentElement
+    ) {
+      for (const sibling of node.parentElement.children) {
+        const isAbove =
+          sibling.matches("[data-blank-modal]") &&
+          !!(
+            overlay.compareDocumentPosition(sibling) &
+            Node.DOCUMENT_POSITION_FOLLOWING
+          );
+        if (
+          sibling === node ||
+          !(sibling instanceof HTMLElement) ||
+          LIVE_CONTAINER_IDS.includes(sibling.id) ||
+          isAbove
+        )
+          continue;
+        if (holdInert(sibling)) changed.push(sibling);
+      }
+    }
+    return changed;
+  }
+
+  /**
+   * Keeps the app behind a right-side drawer non-interactive while the drawer
+   * is the front modal. The app behind it and popovers already open are made
+   * inert, so they take no focus or pointer input; the popover containers stay
+   * live for the popovers the drawer opens. Focus enters the drawer and, on
+   * close, returns to the opener or, when the opener is gone, to the modal
+   * left on front or else the first control of the app. The toasts raised above
+   * the modal layer share the drawer's scope. Keys from the drawer and its popovers reach their own
+   * handlers first; then Tab cycles through them unless a control handled it,
+   * and keys other than `Escape` stop before document and window listeners.
+   * Keys from outside them are blocked, and Tab is pulled back in.
+   */
+  function isolateDrawer(node: HTMLElement) {
+    const trap = trapFocus(node);
+    trap.release();
+    const background = popoverElements();
+    const heldPopovers = background.filter(holdInert);
+    const inertApp = node.parentElement
+      ? inertBackground(node.parentElement)
+      : [];
+    const raisedToasts = () => {
+      const host = document.getElementById(RAISED_TOASTS_ID);
+      return host ? [host] : [];
+    };
+    const owned = () => [
+      node,
+      ...popoverElements().filter((popover) => !background.includes(popover)),
+      ...raisedToasts()
+    ];
+    const isOwned = (target: EventTarget | null) =>
+      owned().some((scope) => scope.contains(target as Node));
+    const isOnFront = () => resolveModalOnFront()?.id === id;
+    const cycleTab = (event: KeyboardEvent, isInside: boolean) => {
+      const elements = owned().flatMap(focusableElements);
+      const index = isInside
+        ? elements.indexOf(document.activeElement as HTMLElement)
+        : -1;
+      const next = event.shiftKey
+        ? elements[(index <= 0 ? elements.length : index) - 1]
+        : (elements[index + 1] ?? elements[0]);
+      event.preventDefault();
+      (next ?? node).focus();
+    };
+    const guardOutside = (event: KeyboardEvent) => {
+      if (!isOnFront() || event.defaultPrevented || isOwned(event.target))
+        return;
+      if (event.key === "Tab") cycleTab(event, false);
+      else if (event.key !== KeyboardKey.ESCAPE) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    const keepInside = (event: KeyboardEvent) => {
+      if (!isOnFront() || !isOwned(event.target)) return;
+      if (event.key === "Tab" && !event.defaultPrevented) cycleTab(event, true);
+      if (event.key !== KeyboardKey.ESCAPE) event.stopPropagation();
+    };
+    const root = document.documentElement;
+    window.addEventListener("keydown", guardOutside, true);
+    root.addEventListener("keydown", keepInside);
+    return {
+      destroy() {
+        window.removeEventListener("keydown", guardOutside, true);
+        root.removeEventListener("keydown", keepInside);
+        for (const element of [...heldPopovers, ...inertApp])
+          releaseInert(element);
+        trap.destroy();
+        queueMicrotask(() => {
+          const active = document.activeElement;
+          const isFocusKept =
+            active instanceof HTMLElement &&
+            active !== document.body &&
+            active.isConnected &&
+            !node.contains(active);
+          const opener = trap.opener;
+          const hasOpener = opener?.isConnected && opener !== document.body;
+          if (hasOpener || isFocusKept) return;
+          const front = resolveModalOnFront();
+          const scopes =
+            front instanceof HTMLElement
+              ? [front]
+              : inertApp.filter((element) => element.isConnected);
+          (scopes.flatMap(focusableElements)[0] ?? front)?.focus();
+        });
+      }
+    };
+  }
+
   function resolveSizeClasses() {
     if (isDynamicSize) {
       return {};
@@ -127,20 +310,26 @@
 </script>
 
 {#if show}
-  {#if alignment === Placement.Right}
+  {#if alignment === Placement.Right && !$view.isConstrainedWidth}
     <div
-      class="popover-container fixed right-8 bg-bgs2 z-50 rounded-md overflow-y-auto"
-      style="height:min-content;bottom: 5%;"
+      class="pop-overlay fixed inset-0 z-50"
+      {id}
+      data-blank-modal={index}
+      data-modal-size={size}
+      transition:fade={{ duration: 100 }}
+      onclick={overlayClicked}
+      role="presentation"
     >
-      {#if title}
-        <ModalHeader
-          {title}
-          onClose={() => {
-            show = false;
-          }}
-        />
-      {/if}
-      <div class="popover-body w-full overflow-y-auto">
+      <div
+        id={id + "-modal"}
+        data-testid={`modal-${id}`}
+        data-modal-placement="right"
+        role="dialog"
+        aria-label={title || undefined}
+        tabindex="-1"
+        use:isolateDrawer
+        class="absolute top-0 right-0 flex flex-col h-full w-[28rem] 2k:w-[32rem] max-w-full bg-bgs1 border-l border-brs3 shadow-xl cursor-default outline-none app-framed:top-[var(--app-shell-gap)] app-framed:right-[var(--app-shell-gap)] app-framed:h-[calc(100%-2*var(--app-shell-gap))] app-framed:border app-framed:rounded-[var(--app-panel-radius)] overflow-hidden"
+      >
         <ColorLayer>
           {@render children?.()}
         </ColorLayer>
@@ -243,10 +432,6 @@
 {/if}
 
 <style>
-  .popover-container {
-    transform: translate3d(0, 0, 0);
-  }
-
   dialog.overlay::backdrop {
     backdrop-filter: blur(10px) grayscale(100%);
   }

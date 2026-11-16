@@ -7,7 +7,10 @@
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import ResourceSwitcher from "@nucleum/surfaces/library/resourceSwitcher/ResourceSwitcher.svelte";
-  import { resolveLibrarySwitcherSections } from "@nucleum/surfaces/library/resource-switcher.utils";
+  import {
+    resolveLibrarySideViewOrder,
+    resolveLibrarySwitcherSections
+  } from "@nucleum/surfaces/library/resource-switcher.utils";
   import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
@@ -85,15 +88,15 @@
       })
   );
   const contextZonePane = getContextZonePane();
-  const sidePanelOrder = $derived([
-    ...new Set(
+  const sidePanelOrder = $derived(
+    resolveLibrarySideViewOrder(
       resolveLibrarySwitcherSections(
         $appStore.product,
         resources,
         import.meta.env.DEV
-      ).flatMap((section) => section.items.map((item) => String(item.value)))
+      )
     )
-  ]);
+  );
   const sidePanelViews = $derived<ContextZoneViews>({
     values: sidePanelOrder,
     active: selectedResource,

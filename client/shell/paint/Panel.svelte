@@ -15,7 +15,6 @@
   import { Display } from "@21n/ui/elements/display.enum";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
-  import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
   import { tooltip } from "@21n/ui/actions/popover.action";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import type { InputLabelInfoToolTip } from "@21n/ui/elements/input/input.type";
@@ -70,8 +69,7 @@
   const isShowCollapseButton = $derived(
     $view.display !== Display.TK &&
       !$view.isConstrainedWidth &&
-      panelSize !== Size.xl &&
-      $appStore.interactionMode !== InteractionMode.AGENT
+      panelSize !== Size.xl
   );
   const isExtraLargeScreen = $derived(
     $view.landscapiness > 1.7 && $view.scale > 1.8
