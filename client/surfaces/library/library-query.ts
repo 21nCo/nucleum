@@ -162,6 +162,23 @@ export function createLibraryQuery(context: LibraryQueryContext) {
     };
   }
 
+  /**
+   * Filters and metadata that count the records the status filter shows,
+   * letting DataFn count them (`count: true`) instead of downloading every
+   * matching row. Without metadata, DataFn already leaves out trashed,
+   * archived and ancestor-inactive records (= activeResourceFilter); the
+   * archived view includes archived records and keeps only those.
+   */
+  function resolveCountQuery(filters: any) {
+    const { isArchivedFilterSelected } = context;
+    return {
+      filters: isArchivedFilterSelected
+        ? { ...(filters ?? {}), isArchived: true }
+        : filters,
+      metadata: resolveQueryMetadata()
+    };
+  }
+
   async function queryLibraryRecordCount(params: {
     filters: any;
     subType?: NodeType | CollectionType;
@@ -169,12 +186,13 @@ export function createLibraryQuery(context: LibraryQueryContext) {
   }) {
     const query = resolveLibraryQuery(params);
     const result = await datafn.table(query.resource).query({
-      select: ["id", "isArchived", "trashedAt", "isAncestorInactive"],
-      filters: query.filters,
-      metadata: resolveQueryMetadata(),
+      ...resolveCountQuery(query.filters),
+      count: true,
+      select: ["id"],
+      limit: 1,
       signal: params.signal
     } as any);
-    return (result.data ?? []).filter(resolveStatusFilter()).length;
+    return typeof result?.count === "number" ? result.count : 0;
   }
 
   function resolveSelectedSubType() {
@@ -232,6 +250,7 @@ export function createLibraryQuery(context: LibraryQueryContext) {
     resolveFilters,
     resolveBaseFilters,
     queryLibraryRecordCount,
+    resolveCountQuery,
     resolveSelectedSubType,
     resolveLibraryQuery
   };

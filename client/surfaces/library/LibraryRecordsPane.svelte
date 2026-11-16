@@ -125,7 +125,6 @@
   const {
     queryLibraryRecords,
     normalizeLibraryRecords,
-    resolveStatusFilter,
     resolveQueryMetadata,
     resolveSearchFields,
     resolveSort,
@@ -134,6 +133,7 @@
     resolveFilters,
     resolveBaseFilters,
     queryLibraryRecordCount,
+    resolveCountQuery,
     resolveSelectedSubType,
     resolveLibraryQuery
   } = createLibraryQuery({
@@ -202,17 +202,19 @@
     )
   );
   const countQuery = $derived.by(() => listQuery);
+  // Counted by DataFn (count: true) rather than by downloading every row.
   const countStore = $derived.by(() =>
     toSvelteStore(
-      datafn.table(countQuery.resource).signal(
+      datafn.resourceCountsSignal(
         {
-          select: ["id", "isArchived", "trashedAt", "isAncestorInactive"],
-          filters: countQuery.filters,
-          metadata: resolveQueryMetadata()
+          resources: [countQuery.resource],
+          queriesByResource: {
+            [countQuery.resource]: resolveCountQuery(countQuery.filters)
+          }
         },
         datafnHeavyComputedSignalOptions
       ),
-      { initialData: [] as any[] }
+      { initialData: {} as Record<string, number> }
     )
   );
   const displayedData = $derived(
@@ -234,7 +236,7 @@
       ? isSearchResultPending
         ? 0
         : totalCountAfterFilter
-      : ($countStore.data ?? []).filter(resolveStatusFilter()).length
+      : ($countStore.data?.[countQuery.resource] ?? 0)
   );
   const displayedIsInitialLoading = $derived(
     isSearchActive
