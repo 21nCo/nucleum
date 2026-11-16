@@ -31,6 +31,8 @@ export enum ClientStorageKey {
   DATAFN_OFFLINABILITY = "datafnOfflinability",
   /** Last markdown block-parent repair, per DataFn namespace. */
   MARKDOWN_PARENT_REPAIR_AT = "markdownParentRepairAt",
+  /** Last legacy event-time repair, per DataFn namespace. */
+  LEGACY_EVENT_TIME_REPAIR_AT = "legacyEventTimeRepairAt",
   DATAFN_E2EE_SETTINGS = "datafnE2eeSettings",
   DATAFN_E2EE_LOCAL_KEYS = "datafnE2eeLocalKeys",
   LEGACY_LOCAL_DATA_RECOVERY = "legacyLocalDataRecovery",

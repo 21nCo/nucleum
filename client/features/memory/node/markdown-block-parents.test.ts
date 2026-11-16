@@ -12,6 +12,7 @@ import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import {
   repairMarkdownBlockParents,
+  repairMarkdownBlockParentsIfDue,
   shouldRepairMarkdownBlockParents
 } from "@nucleum/features/memory/node/markdown-block-parents";
 import { datafnRuntime } from "@nucleum/datafn/datafn.store";
@@ -292,10 +293,11 @@ describe("repairMarkdownBlockParents", () => {
     });
   });
 
-  it("runs at most once a day per namespace, and never in direct mode", async () => {
+  it("runs at most once a day per namespace after a successful run, and never in direct mode", async () => {
     await boot();
     const start = Date.now();
     expect(await shouldRepairMarkdownBlockParents(start)).toBe(true);
+    await repairMarkdownBlockParentsIfDue(start);
     expect(await shouldRepairMarkdownBlockParents(start + 60_000)).toBe(false);
     expect(
       await shouldRepairMarkdownBlockParents(start + 25 * 60 * 60 * 1000)

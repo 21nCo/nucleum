@@ -28,6 +28,7 @@
     "./resource.type": "./resource.type.ts",
     "./resource.utils": "./resource.utils.ts",
     "./resource-selection": "./resource-selection.ts",
+    "./maintenance-schedule": "./maintenance-schedule.ts",
     "./runtime-policy": "./runtime-policy.ts",
     "./remote-transport": "./remote-transport.ts",
     "./storage-lifecycle": "./storage-lifecycle.ts",
