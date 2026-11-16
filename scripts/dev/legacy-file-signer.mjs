@@ -57,12 +57,14 @@ export function parseLegacyKey(value) {
   return { bucket, key, region: match[1] };
 }
 
-function send(res, origin, status, body, requestedHeaders) {
+/** The request headers the app sends with a signing request. */
+const allowedRequestHeaders = "content-type, authorization";
+
+function send(res, origin, status, body) {
   const headers = { "Content-Type": "application/json" };
   if (origin && allowedOrigins.has(origin)) {
     headers["Access-Control-Allow-Origin"] = origin;
-    headers["Access-Control-Allow-Headers"] =
-      requestedHeaders || "content-type, authorization";
+    headers["Access-Control-Allow-Headers"] = allowedRequestHeaders;
     headers["Access-Control-Allow-Methods"] = "POST, OPTIONS";
     headers["Vary"] = "Origin";
   }
@@ -85,13 +87,7 @@ const server = http.createServer((req, res) => {
     return send(res, undefined, 403, { error: "forbidden" });
   }
   if (req.method === "OPTIONS") {
-    return send(
-      res,
-      origin,
-      204,
-      undefined,
-      req.headers["access-control-request-headers"]
-    );
+    return send(res, origin, 204, undefined);
   }
   if (req.method !== "POST" || !req.url?.startsWith("/utils/n/getsignedurl")) {
     return send(res, origin, 404, { error: "not found" });
