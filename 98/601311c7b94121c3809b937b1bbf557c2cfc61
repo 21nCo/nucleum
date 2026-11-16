@@ -1,0 +1,27 @@
+client/datafn/maintenance-schedule.test.ts
+  s_f058f999ab46b7::t_76108f3cd9ee67 79,103-146
+client/datafn/maintenance-schedule.ts
+  s_f058f999ab46b7::t_650502e6b69d3a 73-78,84,87,91-92,98-102,104-105
+client/features/calendar/legacy-event-times.retry.test.ts
+  s_f058f999ab46b7::t_1a7c9802ff41c6 10-18,68,92-120
+client/features/calendar/legacy-event-times.ts
+  s_f058f999ab46b7::t_ad04cfb083b2be 11-15,63-64,70,98,120-122,124-125,143
+client/features/memory/node/markdown-block-parents.ts
+  s_f058f999ab46b7::t_a65f5d1e307119 135,170-176,224
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "98601311c7b94121c3809b937b1bbf557c2cfc61",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

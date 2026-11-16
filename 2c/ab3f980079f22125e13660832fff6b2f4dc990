@@ -1,0 +1,21 @@
+client/datafn/runtime-policy.test.ts
+  s_f058f999ab46b7::t_376d234c9d7271 28,33-44
+client/datafn/runtime-policy.ts
+  s_f058f999ab46b7::t_c8f6931ef8570e 59-63,74-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2cab3f980079f22125e13660832fff6b2f4dc990",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

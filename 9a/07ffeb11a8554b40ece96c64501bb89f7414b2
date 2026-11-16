@@ -1,0 +1,21 @@
+client/composition/SubAtomLogo.svelte
+  s_f058f999ab46b7::t_d91bcecbe23f40 59-61,84
+client/surfaces/onboarding/Onboarding.svelte
+  s_f058f999ab46b7::t_c56615115e1fbf 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a07ffeb11a8554b40ece96c64501bb89f7414b2",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

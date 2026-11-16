@@ -1,0 +1,21 @@
+client/features/calendar/legacy-event-times.retry.test.ts
+  s_f058f999ab46b7::t_059f1496d78775 21-44,47-49
+client/features/calendar/legacy-event-times.ts
+  s_f058f999ab46b7::t_54bf7c052d8be1 60-63,71,75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c6f6279f10810d12c9ab13e43a70c8c3060507a",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

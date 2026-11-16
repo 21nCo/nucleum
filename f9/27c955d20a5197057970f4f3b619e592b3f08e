@@ -1,0 +1,27 @@
+client/runtime/files/file-transport.ts
+  s_f058f999ab46b7::t_04cfc7ee965363 34-37,47
+client/runtime/network/http-operation.ts
+  s_f058f999ab46b7::t_dd47c189b01444 33-34,93-98
+client/runtime/network/legacy-api.ts
+  s_f058f999ab46b7::t_cbd27c6de604a9 23-24,57-58
+client/runtime/network/legacy-network.test.ts
+  s_f058f999ab46b7::t_d9f2fc65f7eeac 47-49,532-548
+client/shared-state/files/file.store.ts
+  s_f058f999ab46b7::t_cd4e7fa9e12a23 5-8,21-24,130,134-152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f927c955d20a5197057970f4f3b619e592b3f08e",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+client/ui/compositions/maps/PointMap.svelte
+  s_f058f999ab46b7::t_fef2c5638597e3 20-24,40,57-59,61,67-130,135-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9056fd8bb0e9892c20b1b2fdba6c97a57e968b1e",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
