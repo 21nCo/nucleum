@@ -1,0 +1,23 @@
+client/features/focus/tasks/TaskLibrary.svelte
+  s_f058f999ab46b7::t_652aaf20b51eeb 51-56,388-390,444-446,514
+client/features/focus/tasks/task.utils.test.ts
+  s_f058f999ab46b7::t_ff0f6225cf6b56 1-90
+client/features/focus/tasks/task.utils.ts
+  s_f058f999ab46b7::t_cad4769a08196d 37-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "71bf833464eb9d33bdbbba7379449efb9d473ce0",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
