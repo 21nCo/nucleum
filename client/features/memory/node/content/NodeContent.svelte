@@ -163,26 +163,53 @@
   }
 
   /**
-   * Gets a markdown note whose page copy has no blocks ready for the editor:
-   * a starter block for an empty note, or its stored blocks. Returns false
-   * when the note has to wait (blocks not readable yet), so the editor isn't
-   * mounted and nothing is written.
+   * Puts loaded blocks on the page copy, or returns false when they couldn't
+   * all be loaded.
    */
-  async function prepareNoteContent() {
+  function applyStoredNoteBlocks(
+    loaded: Awaited<ReturnType<typeof loadStoredNoteBlocks>>
+  ) {
+    if (!loaded) return false;
+    $node.mdChildOrder = loaded.mdChildOrder;
+    $node.children = loaded.children as unknown as typeof $node.children;
+    return true;
+  }
+
+  /**
+   * Checks that a note whose page copy has a block order also has every
+   * block in it, at every level, and reloads them from storage when it
+   * doesn't. Orders holding block records instead of ids are taken as
+   * loaded.
+   */
+  async function prepareOrderedNoteContent(mdChildOrder: unknown[]) {
+    if (!mdChildOrder.every((id) => typeof id === "string")) return true;
+    const order = mdChildOrder as IRecordId[];
     if (
-      $node.contentType !== NodeType.NODULAR_MARKDOWN ||
-      (Array.isArray($node.mdChildOrder) && $node.mdChildOrder.length > 0)
+      hasEveryStoredBlock(order, ($node.children ?? []) as { id?: unknown }[])
     ) {
       return true;
+    }
+    return applyStoredNoteBlocks(await loadStoredNoteBlocks($node.id, order));
+  }
+
+  /**
+   * Gets a markdown note ready for the editor: every block of its block
+   * order loaded, a starter block for an empty note, or its stored blocks
+   * when its page copy has none. Returns false when the note has to wait
+   * (blocks not readable yet), so the editor isn't mounted and nothing is
+   * written.
+   */
+  async function prepareNoteContent() {
+    if ($node.contentType !== NodeType.NODULAR_MARKDOWN) return true;
+    if (Array.isArray($node.mdChildOrder) && $node.mdChildOrder.length > 0) {
+      return prepareOrderedNoteContent($node.mdChildOrder);
     }
     const start = await readNoteContentStart($node.id);
     if (start.kind === "hold") return false;
     if (start.kind === "load") {
-      const loaded = await loadStoredNoteBlocks($node.id, start.mdChildOrder);
-      if (!loaded) return false;
-      $node.mdChildOrder = loaded.mdChildOrder;
-      $node.children = loaded.children as unknown as typeof $node.children;
-      return true;
+      return applyStoredNoteBlocks(
+        await loadStoredNoteBlocks($node.id, start.mdChildOrder)
+      );
     }
     const id = generateResourceId(Resource.node);
     const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
