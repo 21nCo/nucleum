@@ -193,20 +193,33 @@ export function createLibraryQuery(context: LibraryQueryContext) {
     };
   }
 
+  /**
+   * Counts the records a library view shows. Servers answer `count: true`;
+   * local stores that don't report a count fall back to counting the
+   * matching rows.
+   */
   async function queryLibraryRecordCount(params: {
     filters: any;
     subType?: NodeType | CollectionType;
     signal?: AbortSignal;
   }) {
     const query = resolveLibraryQuery(params);
-    const result = await datafn.table(query.resource).query({
+    const table = datafn.table(query.resource);
+    const result = await table.query({
       ...resolveCountQuery(query.filters),
       count: true,
       select: ["id"],
       limit: 1,
       signal: params.signal
     } as any);
-    return typeof result?.count === "number" ? result.count : 0;
+    if (typeof result?.count === "number") return result.count;
+    const rows = await table.query({
+      select: ["id", "isArchived", "trashedAt", "isAncestorInactive"],
+      filters: query.filters,
+      metadata: resolveQueryMetadata(),
+      signal: params.signal
+    } as any);
+    return (rows.data ?? []).filter(resolveStatusFilter()).length;
   }
 
   function resolveSelectedSubType() {

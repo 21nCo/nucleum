@@ -43,6 +43,19 @@ describe("library record counts", () => {
     expect(input.metadata).toBeUndefined();
   });
 
+  it("counts matching rows when the store reports no count", async () => {
+    query
+      .mockResolvedValueOnce({ data: [{ id: "task:1" }] })
+      .mockResolvedValueOnce({
+        data: [{ id: "task:1" }, { id: "task:2" }, { id: "task:3" }]
+      });
+    const count = await libraryQuery(false).queryLibraryRecordCount({
+      filters: {}
+    });
+    expect(count).toBe(3);
+    expect(query.mock.calls[1][0].count).toBeUndefined();
+  });
+
   it("counts only archived records in the archived view", async () => {
     await libraryQuery(true).queryLibraryRecordCount({ filters: {} });
     const input = query.mock.calls[0][0];
