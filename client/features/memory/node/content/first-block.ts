@@ -81,14 +81,38 @@ export function resolveNoteContentStart(
   return { kind: "hold" };
 }
 
-/** Whether every block id in a stored order was loaded (top level). */
+type LoadedBlock = {
+  id?: unknown;
+  mdChildOrder?: unknown;
+  children?: unknown;
+};
+
+/**
+ * Whether every block a stored order references was loaded, at every
+ * level: each id in `mdChildOrder` is among `loaded`, and each loaded block
+ * with its own order has all of those blocks among its children. A missing
+ * block anywhere would be dropped from the note by the next structural edit.
+ */
 export function hasEveryStoredBlock(
   mdChildOrder: IRecordId[],
-  loaded: Array<{ id?: unknown }>
-) {
-  const loadedIds = new Set(loaded.map((block) => String(block?.id)));
-  return (
-    mdChildOrder.length > 0 &&
-    mdChildOrder.every((id) => loadedIds.has(String(id)))
-  );
+  loaded: LoadedBlock[]
+): boolean {
+  if (mdChildOrder.length === 0) return false;
+  const byId = new Map(loaded.map((block) => [String(block?.id), block]));
+  return mdChildOrder.every((id) => {
+    const block = byId.get(String(id));
+    if (!block) return false;
+    const order = Array.isArray(block.mdChildOrder)
+      ? (block.mdChildOrder.filter(
+          (value) => typeof value === "string"
+        ) as IRecordId[])
+      : [];
+    return (
+      order.length === 0 ||
+      hasEveryStoredBlock(
+        order,
+        Array.isArray(block.children) ? (block.children as LoadedBlock[]) : []
+      )
+    );
+  });
 }

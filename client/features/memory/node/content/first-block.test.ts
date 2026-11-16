@@ -96,4 +96,17 @@ describe("hasEveryStoredBlock", () => {
     expect(hasEveryStoredBlock(["node:a"], [])).toBe(false);
     expect(hasEveryStoredBlock([], [])).toBe(false);
   });
+
+  it("checks blocks nested under headings too", async () => {
+    const { hasEveryStoredBlock } = await import("./first-block");
+    const heading = (children: object[]) => ({
+      id: "node:h",
+      mdChildOrder: ["node:b"],
+      children
+    });
+    expect(hasEveryStoredBlock(["node:h"], [heading([{ id: "node:b" }])])).toBe(
+      true
+    );
+    expect(hasEveryStoredBlock(["node:h"], [heading([])])).toBe(false);
+  });
 });
