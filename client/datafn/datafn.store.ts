@@ -201,7 +201,13 @@ export async function initializeNucleumDatafn(
   const namespace = resolveDatafnNamespace({ account: input.account, dapId });
   let isOfflinabilityEnabled =
     input.isOfflinabilityEnabled ??
-    (await resolveDatafnOfflinabilityPreference());
+    (await resolveDatafnOfflinabilityPreference({
+      storageDbName: resolveDatafnStorageDbName({
+        product: input.product,
+        namespace,
+        env: input.env
+      })
+    }));
   const syncEligible = isSyncEligibleAccount(input);
   const shouldConfigureRemote =
     syncEligible && (!input.isOffline || isOfflinabilityEnabled === false);

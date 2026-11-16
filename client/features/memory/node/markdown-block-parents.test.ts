@@ -10,7 +10,12 @@ import { Product } from "@nucleum/client/config/product.type";
 import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
 import { appStore } from "@nucleum/shared-state/app-context/app.store";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-import { repairMarkdownBlockParents } from "@nucleum/features/memory/node/markdown-block-parents";
+import {
+  repairMarkdownBlockParents,
+  repairMarkdownBlockParentsIfDue,
+  shouldRepairMarkdownBlockParents
+} from "@nucleum/features/memory/node/markdown-block-parents";
+import { datafnRuntime } from "@nucleum/datafn/datafn.store";
 
 describe("repairMarkdownBlockParents", () => {
   afterEach(async () => {
@@ -139,7 +144,12 @@ describe("repairMarkdownBlockParents", () => {
       {
         operation: "insert",
         id: clipId,
-        record: { id: clipId, label: "Clip", body: "", contentType: NodeType.SIMPLE_TEXT }
+        record: {
+          id: clipId,
+          label: "Clip",
+          body: "",
+          contentType: NodeType.SIMPLE_TEXT
+        }
       },
       {
         operation: "insert",
@@ -281,5 +291,26 @@ describe("repairMarkdownBlockParents", () => {
       parent: headingOneId,
       parentPath: `${noteId}-${headingOneId}`
     });
+  });
+
+  it("runs at most once a day per namespace after a successful run, and never in direct mode", async () => {
+    await boot();
+    const start = Date.now();
+    expect(await shouldRepairMarkdownBlockParents(start)).toBe(true);
+    await repairMarkdownBlockParentsIfDue(start);
+    expect(await shouldRepairMarkdownBlockParents(start + 60_000)).toBe(false);
+    expect(
+      await shouldRepairMarkdownBlockParents(start + 25 * 60 * 60 * 1000)
+    ).toBe(true);
+
+    const runtime = get(datafnRuntime);
+    datafnRuntime.set({ ...runtime!, mode: "sync-direct" } as any);
+    try {
+      expect(
+        await shouldRepairMarkdownBlockParents(start + 72 * 60 * 60 * 1000)
+      ).toBe(false);
+    } finally {
+      datafnRuntime.set(runtime);
+    }
   });
 });

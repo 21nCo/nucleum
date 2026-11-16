@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./calendar/calendar.utils": "./calendar/calendar.utils.ts",
+    "./calendar/legacy-event-times": "./calendar/legacy-event-times.ts",
     "./calendar/column/CalendarColumnTasksPanel.svelte": "./calendar/column/CalendarColumnTasksPanel.svelte",
     "./calendar/events/EventThumbnail.svelte": "./calendar/events/EventThumbnail.svelte",
     "./calendar/events/event.type": "./calendar/events/event.type.ts",

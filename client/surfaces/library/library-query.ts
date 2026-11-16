@@ -10,6 +10,20 @@ import {
 import context from "@nucleum/client/runtime/context.store";
 import type { SubType } from "@nucleum/surfaces/library/library.type";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
+import { nucleumDatafnSchema } from "@nucleum/schema";
+
+/**
+ * Whether records of `resource` can be starred. Querying `isStarred` on a
+ * resource without the field (events, tasks, files…) is rejected by the
+ * server, so the starred section is only queried where it exists.
+ */
+export function canStarLibraryResource(resource: Resource | string) {
+  return nucleumDatafnSchema.resources.some(
+    (entry) =>
+      entry.name === resource &&
+      entry.fields.some((field) => field.name === "isStarred")
+  );
+}
 
 /** Live view inputs keep reactive query policy owned by the library surface. */
 interface LibraryQueryContext {
@@ -162,19 +176,50 @@ export function createLibraryQuery(context: LibraryQueryContext) {
     };
   }
 
+  /**
+   * Filters and metadata that count the records the status filter shows,
+   * letting DataFn count them (`count: true`) instead of downloading every
+   * matching row. Without metadata, DataFn already leaves out trashed,
+   * archived and ancestor-inactive records (= activeResourceFilter); the
+   * archived view includes archived records and keeps only those.
+   */
+  function resolveCountQuery(filters: any) {
+    const { isArchivedFilterSelected } = context;
+    return {
+      filters: isArchivedFilterSelected
+        ? { ...filters, isArchived: true }
+        : filters,
+      metadata: resolveQueryMetadata()
+    };
+  }
+
+  /**
+   * Counts the records a library view shows. Servers answer `count: true`;
+   * local stores that don't report a count fall back to counting the
+   * matching rows.
+   */
   async function queryLibraryRecordCount(params: {
     filters: any;
     subType?: NodeType | CollectionType;
     signal?: AbortSignal;
   }) {
     const query = resolveLibraryQuery(params);
-    const result = await datafn.table(query.resource).query({
+    const table = datafn.table(query.resource);
+    const result = await table.query({
+      ...resolveCountQuery(query.filters),
+      count: true,
+      select: ["id"],
+      limit: 1,
+      signal: params.signal
+    } as any);
+    if (typeof result?.count === "number") return result.count;
+    const rows = await table.query({
       select: ["id", "isArchived", "trashedAt", "isAncestorInactive"],
       filters: query.filters,
       metadata: resolveQueryMetadata(),
       signal: params.signal
     } as any);
-    return (result.data ?? []).filter(resolveStatusFilter()).length;
+    return (rows.data ?? []).filter(resolveStatusFilter()).length;
   }
 
   function resolveSelectedSubType() {
@@ -232,6 +277,7 @@ export function createLibraryQuery(context: LibraryQueryContext) {
     resolveFilters,
     resolveBaseFilters,
     queryLibraryRecordCount,
+    resolveCountQuery,
     resolveSelectedSubType,
     resolveLibraryQuery
   };

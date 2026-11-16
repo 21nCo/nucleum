@@ -15,7 +15,8 @@ function normalizeEventRecord<T extends Record<string, any>>(record: T): T {
   };
 }
 
-function normalizeResourceRecord(
+/** Lifts legacy event fields so every reader sees the same record shape. */
+export function normalizeResourceRecord(
   resource: Resource,
   record: Record<string, any>
 ) {

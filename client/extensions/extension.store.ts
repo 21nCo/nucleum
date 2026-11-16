@@ -211,7 +211,7 @@ export class ExtensionStore {
         select: selectParams.select,
         prefix: true,
         fuzzy: 0.2,
-        source: "local",
+        source: "auto",
         signal
       })) as { results?: { data: unknown }[] };
       return (result.results ?? []).map((entry: any) => entry.data);

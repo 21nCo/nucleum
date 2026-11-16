@@ -256,6 +256,11 @@ function nestExpandedNodeChildren(
   return roots.length > 0 ? roots : children;
 }
 
+/** Loads a note's blocks, nested as the editor expects, from its stored block order. */
+export function loadNoteBlocks(mdChildOrder: IRecordId[], noteId: IRecordId) {
+  return expandNodeMdChildOrder(mdChildOrder, noteId);
+}
+
 async function fetchNode(id: IRecordId) {
   const response = (await selectNode(id, [
     "*",

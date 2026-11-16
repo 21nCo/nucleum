@@ -288,6 +288,25 @@ function transformLegacyRecord(
     }
   }
 
+  if (resource === "event") {
+    const value =
+      typeof record.value === "object" && record.value !== null
+        ? (record.value as Record<string, unknown>)
+        : undefined;
+    if (
+      typeof result.startUnix !== "number" &&
+      typeof value?.startUnix === "number"
+    ) {
+      result.startUnix = value.startUnix;
+    }
+    if (
+      typeof result.endUnix !== "number" &&
+      typeof value?.endUnix === "number"
+    ) {
+      result.endUnix = value.endUnix;
+    }
+  }
+
   if (resource === "collection" && typeof result.resource === "string") {
     result.resource =
       resolveLegacyResourceName(result.resource) ?? result.resource;

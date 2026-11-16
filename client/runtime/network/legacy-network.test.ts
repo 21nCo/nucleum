@@ -44,10 +44,9 @@ vi.mock(
   "@nucleum/client/runtime/account/session-token",
   () => moduleMocks.account
 );
-vi.mock(
-  "@nucleum/client/runtime/account/session-recovery-host",
-  () => ({ recoverInvalidSession: moduleMocks.account.signout })
-);
+vi.mock("@nucleum/client/runtime/account/session-recovery-host", () => ({
+  recoverInvalidSession: moduleMocks.account.signout
+}));
 vi.mock("@21n/ui/actions/popover-position", () => moduleMocks.browser);
 vi.mock("@21n/ui/actions/interaction-dom", () => moduleMocks.browser);
 vi.mock("@21n/shared-utils/browser-platform", () => moduleMocks.browser);
@@ -528,6 +527,23 @@ describe("client/runtime/network/legacy-network", () => {
     ).rejects.toThrow("Network error. Please check your internet connection.");
 
     expect(moduleMocks.browser.dispatchCustomEvent).toHaveBeenCalled();
+  });
+
+  it("doesn't dispatch alerts for silent background requests", async () => {
+    (fetch as any).mockRejectedValue(new TypeError("Failed to fetch"));
+    moduleMocks.browser.dispatchCustomEvent.mockClear();
+
+    await expect(
+      performHttpNetworkOperation({
+        url: "https://files.memotron.test/utils/n/getsignedurl",
+        method: "POST",
+        headers: {},
+        body: undefined,
+        isSilent: true
+      })
+    ).rejects.toThrow("Network error. Please check your internet connection.");
+
+    expect(moduleMocks.browser.dispatchCustomEvent).not.toHaveBeenCalled();
   });
 
   it("determines offline status from storage and navigator", async () => {

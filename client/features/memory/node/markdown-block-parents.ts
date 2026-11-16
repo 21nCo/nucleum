@@ -1,4 +1,11 @@
-import { datafn } from "@nucleum/datafn/datafn.store";
+import { get } from "svelte/store";
+import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
+import {
+  assertMaintenanceWritesSucceeded,
+  isMaintenanceDue,
+  runMaintenanceIfDue
+} from "@nucleum/datafn/maintenance-schedule";
+import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import { headingNodeTypes } from "@nucleum/features/memory/node/node.type";
@@ -22,7 +29,7 @@ type BlockRecord = {
 function isHeadingBlock(block: BlockRecord | undefined) {
   return Boolean(
     block?.contentType &&
-      (headingNodeTypes as readonly string[]).includes(block.contentType)
+    (headingNodeTypes as readonly string[]).includes(block.contentType)
   );
 }
 
@@ -85,6 +92,55 @@ function collectNoteBlockHeadings(
   return headingsById;
 }
 
+const repairIntervalMs = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether the repair should run now. It mends blocks written into a local
+ * store (imports, older clients), so it is skipped in direct mode, where the
+ * server holds the data; and it runs at most once a day per namespace after a
+ * successful run, since blocks it can't attribute would otherwise be rescanned
+ * on every start.
+ */
+export async function shouldRepairMarkdownBlockParents(now = Date.now()) {
+  const namespace = resolveRepairNamespace();
+  if (!namespace) return false;
+  return isMaintenanceDue({
+    key: ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT,
+    namespace,
+    intervalMs: repairIntervalMs,
+    now
+  });
+}
+
+/** The namespace the repair runs in, or undefined in direct mode or before DataFn starts. */
+function resolveRepairNamespace() {
+  const runtime = get(datafnRuntime);
+  return runtime && runtime.mode !== "sync-direct"
+    ? runtime.namespace
+    : undefined;
+}
+
+/**
+ * Runs the repair at start-up under the same rules as
+ * {@link shouldRepairMarkdownBlockParents} (not in direct mode, at most daily
+ * per namespace), recording the run only once it succeeds, so a failed
+ * attempt is retried on the next start.
+ */
+export async function repairMarkdownBlockParentsIfDue(
+  now = Date.now()
+): Promise<number> {
+  return runMaintenanceIfDue({
+    key: ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT,
+    namespace: resolveRepairNamespace(),
+    currentNamespace: resolveRepairNamespace,
+    intervalMs: repairIntervalMs,
+    task: "repairMarkdownBlockParents",
+    run: runMarkdownBlockParentRepair,
+    fallback: 0,
+    now
+  });
+}
+
 /**
  * Restores the parent chain of markdown blocks that were saved without one.
  *
@@ -104,76 +160,88 @@ function collectNoteBlockHeadings(
  */
 export async function repairMarkdownBlockParents(): Promise<number> {
   try {
-    const orphanResult = await datafn.node.query({
-      select: ["id", "creationContext"],
-      filters: {
-        creationContext: { $is_not_empty: true },
-        mdParent: { $is_empty: true }
-      },
-      metadata: repairQueryMetadata
-    });
-    const orphans = (orphanResult.data ?? []).filter(
-      (record): record is { id: IRecordId; creationContext: IRecordId } =>
-        typeof record?.id === "string" &&
-        typeof record?.creationContext === "string"
-    );
-    if (orphans.length === 0) return 0;
-
-    const contextIds = [
-      ...new Set(orphans.map((record) => record.creationContext))
-    ];
-    const notes = await queryInBatches(
-      contextIds,
-      (batch) => ({
-        id: { $in: batch },
-        contentType: NodeType.NODULAR_MARKDOWN
-      }),
-      ["id", "mdChildOrder"]
-    );
-    if (notes.length === 0) return 0;
-
-    const noteBlocks = await queryInBatches(
-      notes.map((note) => note.id),
-      (batch) => ({ creationContext: { $in: batch } }),
-      ["id", "creationContext", "contentType", "mdChildOrder"]
-    );
-    const blocksById = new Map(noteBlocks.map((block) => [block.id, block]));
-    const treeByNote = new Map(
-      notes.map((note) => [note.id, collectNoteBlockHeadings(note, blocksById)])
-    );
-
-    const blocks = orphans.flatMap((record) => {
-      const headings = treeByNote.get(record.creationContext)?.get(record.id);
-      if (!headings) return [];
-      const mdParent = isHeadingBlock(blocksById.get(record.id))
-        ? [record.creationContext, ...headings]
-        : [record.creationContext];
-      return [{ id: record.id, mdParent }];
-    });
-    for (let index = 0; index < blocks.length; index += repairBatchSize) {
-      await datafn.node.mutate(
-        blocks.slice(index, index + repairBatchSize).map((block) => ({
-          operation: "merge",
-          id: block.id,
-          record: {
-            id: block.id,
-            mdParent: block.mdParent,
-            parent: block.mdParent[block.mdParent.length - 1],
-            parentPath: block.mdParent.join("-")
-          },
-          system: true
-        }))
-      );
-    }
-    if (blocks.length > 0) {
-      logger.info({
-        at: "repairMarkdownBlockParents",
-        repaired: blocks.length
-      });
-    }
-    return blocks.length;
+    return await runMarkdownBlockParentRepair();
   } catch (error) {
     logger.error({ at: "repairMarkdownBlockParents", error });
     return 0;
   }
+}
+
+/**
+ * The repair itself; throws when a read or write fails, or when
+ * `assertCurrent` reports that DataFn moved to another namespace.
+ */
+async function runMarkdownBlockParentRepair(
+  assertCurrent: () => void = () => undefined
+): Promise<number> {
+  const orphanResult = await datafn.node.query({
+    select: ["id", "creationContext"],
+    filters: {
+      creationContext: { $is_not_empty: true },
+      mdParent: { $is_empty: true }
+    },
+    metadata: repairQueryMetadata
+  });
+  const orphans = (orphanResult.data ?? []).filter(
+    (record): record is { id: IRecordId; creationContext: IRecordId } =>
+      typeof record?.id === "string" &&
+      typeof record?.creationContext === "string"
+  );
+  if (orphans.length === 0) return 0;
+
+  const contextIds = [
+    ...new Set(orphans.map((record) => record.creationContext))
+  ];
+  const notes = await queryInBatches(
+    contextIds,
+    (batch) => ({
+      id: { $in: batch },
+      contentType: NodeType.NODULAR_MARKDOWN
+    }),
+    ["id", "mdChildOrder"]
+  );
+  if (notes.length === 0) return 0;
+
+  const noteBlocks = await queryInBatches(
+    notes.map((note) => note.id),
+    (batch) => ({ creationContext: { $in: batch } }),
+    ["id", "creationContext", "contentType", "mdChildOrder"]
+  );
+  const blocksById = new Map(noteBlocks.map((block) => [block.id, block]));
+  const treeByNote = new Map(
+    notes.map((note) => [note.id, collectNoteBlockHeadings(note, blocksById)])
+  );
+
+  const blocks = orphans.flatMap((record) => {
+    const headings = treeByNote.get(record.creationContext)?.get(record.id);
+    if (!headings) return [];
+    const mdParent = isHeadingBlock(blocksById.get(record.id))
+      ? [record.creationContext, ...headings]
+      : [record.creationContext];
+    return [{ id: record.id, mdParent }];
+  });
+  for (let index = 0; index < blocks.length; index += repairBatchSize) {
+    assertCurrent();
+    const outcome = await datafn.node.mutate(
+      blocks.slice(index, index + repairBatchSize).map((block) => ({
+        operation: "merge",
+        id: block.id,
+        record: {
+          id: block.id,
+          mdParent: block.mdParent,
+          parent: block.mdParent[block.mdParent.length - 1],
+          parentPath: block.mdParent.join("-")
+        },
+        system: true
+      }))
+    );
+    assertMaintenanceWritesSucceeded(outcome, "repairMarkdownBlockParents");
+  }
+  if (blocks.length > 0) {
+    logger.info({
+      at: "repairMarkdownBlockParents",
+      repaired: blocks.length
+    });
+  }
+  return blocks.length;
 }

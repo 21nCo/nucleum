@@ -11,7 +11,7 @@
   import { resourceAction } from "@nucleum/datafn/resource.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
-  import { repairMarkdownBlockParents } from "@nucleum/features/memory/node/markdown-block-parents";
+  import { repairMarkdownBlockParentsIfDue } from "@nucleum/features/memory/node/markdown-block-parents";
   import { safeRequestIdleCallback } from "@21n/shared-utils/idle-callback";
   let { children }: { children?: Snippet } = $props();
   let isLiteMode = $state($context.isEmbed && $context.isSheet);
@@ -20,7 +20,7 @@
     if (isLiteMode) return;
     $appLoadingState.isLocalLoaded = true;
     safeRequestIdleCallback(() => {
-      void repairMarkdownBlockParents();
+      void repairMarkdownBlockParentsIfDue();
     });
   }
 </script>

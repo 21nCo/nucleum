@@ -20,6 +20,8 @@ export async function performApiCall(
   body: any = {},
   params?: {
     isFileApi?: boolean;
+    /** Don't raise the app-wide network alert (for background requests). */
+    isSilent?: boolean;
   }
 ): Promise<any> {
   const isExtEnv = isExtensionEnvironment();
@@ -52,7 +54,8 @@ export async function performApiCall(
     legacyApi: {
       endpoint,
       isFileApi: Boolean(params?.isFileApi)
-    }
+    },
+    isSilent: params?.isSilent
   });
   async function getAppLoadContext() {
     const deviceFingerprint = await generateFingerprint();
