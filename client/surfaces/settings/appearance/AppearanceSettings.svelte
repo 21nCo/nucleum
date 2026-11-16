@@ -24,6 +24,7 @@
   import {
     findColorSchemeFamily,
     findColorSchemeFamilyByPair,
+    findColorSchemeFamilyForMixedPair,
     resolveColorSchemeFamilies
   } from "@21n/theme/colorscheme-catalog";
   import type { ColorScheme } from "@21n/theme/appearance.type";
@@ -50,6 +51,18 @@
   // live pair (for example one set by an appearance profile) matches no family.
   let prefersMixedSchemes = $state(false);
   const isMixedSchemes = $derived(prefersMixedSchemes || !currentFamily);
+  let mixedSwitchKey = $state(0);
+  function setMixedSchemes(isMixed: boolean) {
+    prefersMixedSchemes = isMixed;
+    if (isMixed || currentFamily) return;
+    const family = findColorSchemeFamilyForMixedPair(
+      schemeFamilies,
+      $appearance.lightColorSchemeId,
+      $appearance.darkColorSchemeId
+    );
+    if (family) appearance.setColorSchemePair(family.lightId, family.darkId);
+    if (!currentFamily) mixedSwitchKey += 1;
+  }
   function switchTheme(theme: Theme | undefined) {
     if (!theme) return;
     appearance.modifyUserThemeSetting(theme);
@@ -143,27 +156,19 @@
       />
     {/if}
     <div data-testid="toggle-mixed-color-schemes">
-      <SwitchInput
-        checked={isMixedSchemes}
-        isExpanded={true}
-        label={{
-          label: "Use different light and dark schemes",
-          tooltip: {
-            body: "Pick the light and dark colour schemes separately instead of as one family."
-          }
-        }}
-        onChange={(event) => {
-          prefersMixedSchemes = event.detail;
-          if (!event.detail && !currentFamily) {
-            const family = findColorSchemeFamily(
-              schemeFamilies,
-              $appearance.lightColorSchemeId
-            );
-            if (family)
-              appearance.setColorSchemePair(family.lightId, family.darkId);
-          }
-        }}
-      />
+      {#key mixedSwitchKey}
+        <SwitchInput
+          checked={isMixedSchemes}
+          isExpanded={true}
+          label={{
+            label: "Use different light and dark schemes",
+            tooltip: {
+              body: "Pick the light and dark colour schemes separately instead of as one family."
+            }
+          }}
+          onChange={(event) => setMixedSchemes(event.detail)}
+        />
+      {/key}
     </div>
   </div>
   <!-- {#if $appStore.isDebugMode}

@@ -490,6 +490,63 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await expect(familyPicker).toContainText("Default", { timeout: 5_000 });
   });
 
+  test("Appearance: Escape and keyboard picks close only the colour scheme list", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await openAppearance(page);
+
+    const drawer = page.getByTestId("modal-appearance-settings");
+    const section = page.getByTestId("color-scheme-section");
+    const mixedSwitch = section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]');
+    const list = page.getByTestId("color-scheme-family-list");
+    const search = list.getByTestId("color-scheme-search");
+    const modes = [
+      { isMixed: false, name: /^Colour scheme / },
+      { isMixed: true, name: /^Light colour scheme / },
+      { isMixed: true, name: /^Dark colour scheme / }
+    ];
+
+    for (const { isMixed, name } of modes) {
+      await mixedSwitch.setChecked(isMixed, { force: true });
+      const picker = section.getByRole("button", { name });
+      await expect(picker).toBeVisible({ timeout: 5_000 });
+      await expect(picker).toHaveAttribute("aria-expanded", "false");
+
+      await picker.focus();
+      await page.keyboard.press("Enter");
+      await expect(list).toBeVisible({ timeout: 5_000 });
+      await expect(picker).toHaveAttribute("aria-expanded", "true");
+      await expect(search).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(list).toBeHidden({ timeout: 5_000 });
+      await expect(drawer).toBeVisible();
+      await expect(picker).toBeFocused();
+
+      await page.keyboard.press("Enter");
+      await expect(list).toBeVisible({ timeout: 5_000 });
+      await list.getByTestId("color-scheme-family-option").first().focus();
+      await page.keyboard.press("Escape");
+      await expect(list).toBeHidden({ timeout: 5_000 });
+      await expect(drawer).toBeVisible();
+      await expect(picker).toBeFocused();
+
+      await page.keyboard.press("Enter");
+      await expect(list).toBeVisible({ timeout: 5_000 });
+      await list.getByRole("option", { name: "Red", exact: true }).focus();
+      await page.keyboard.press("Enter");
+      await expect(list).toBeHidden({ timeout: 5_000 });
+      const pickedName = new RegExp(`${name.source}Red$`);
+      await expect(
+        section.getByRole("button", { name: pickedName })
+      ).toBeFocused();
+      await expect(drawer).toBeVisible();
+    }
+  });
+
   test("Appearance: switch between light and dark themes and verify theme layer updates", async ({
     page
   }) => {

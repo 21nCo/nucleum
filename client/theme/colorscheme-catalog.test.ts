@@ -7,6 +7,7 @@ import {
   colorSchemeVariantLabel,
   findColorSchemeFamily,
   findColorSchemeFamilyByPair,
+  findColorSchemeFamilyForMixedPair,
   groupColorSchemeFamilies,
   resolveColorSchemeFamilies
 } from "./colorscheme-catalog";
@@ -162,5 +163,38 @@ describe("colour scheme catalog", () => {
         group.families.map((family) => family.id)
       )
     ).toEqual(["default"]);
+  });
+});
+
+describe("findColorSchemeFamilyForMixedPair", () => {
+  const families = resolveColorSchemeFamilies(
+    colorSchemes as unknown as ColorScheme[]
+  );
+  const familyFor = (lightId?: string, darkId?: string) =>
+    findColorSchemeFamilyForMixedPair(families, lightId, darkId)?.id;
+
+  it("uses the family of the light scheme first", () => {
+    expect(
+      familyFor(
+        "colorscheme:clean_tidyred_light",
+        "colorscheme:clean_tidyblue_dark"
+      )
+    ).toBe("red");
+  });
+
+  it("falls back to the family of the dark scheme for an unknown light id", () => {
+    expect(
+      familyFor("colorscheme:unknown_light", "colorscheme:clean_tidyred_dark")
+    ).toBe("red");
+  });
+
+  it("falls back to Default when neither scheme is in a family", () => {
+    expect(familyFor("colorscheme:unknown_light", undefined)).toBe("default");
+  });
+
+  it("finds nothing without families", () => {
+    expect(
+      findColorSchemeFamilyForMixedPair([], "colorscheme:x", "colorscheme:y")
+    ).toBeUndefined();
   });
 });

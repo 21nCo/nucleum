@@ -204,3 +204,20 @@ export function findColorSchemeFamily(
     (family) => family.lightId === schemeId || family.darkId === schemeId
   );
 }
+
+/**
+ * The family to apply when separate light and dark schemes are turned off:
+ * the family of the light scheme, else of the dark scheme, else Default.
+ */
+export function findColorSchemeFamilyForMixedPair(
+  families: ResolvedColorSchemeFamily[],
+  lightId: string | undefined,
+  darkId: string | undefined
+): ResolvedColorSchemeFamily | undefined {
+  return (
+    findColorSchemeFamily(families, lightId) ??
+    findColorSchemeFamily(families, darkId) ??
+    families.find((family) => family.id === "default") ??
+    families[0]
+  );
+}
