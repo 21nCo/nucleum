@@ -120,10 +120,11 @@ export async function shouldRepairMarkdownBlockParents(now = Date.now()) {
 export async function repairMarkdownBlockParentsIfDue(
   now = Date.now()
 ): Promise<number> {
-  if (!(await shouldRepairMarkdownBlockParents(now))) return 0;
+  const runtime = get(datafnRuntime);
+  if (!runtime || runtime.mode === "sync-direct") return 0;
   return runMaintenanceIfDue({
     key: ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT,
-    namespace: get(datafnRuntime)?.namespace,
+    namespace: runtime.namespace,
     intervalMs: repairIntervalMs,
     task: "repairMarkdownBlockParents",
     run: runMarkdownBlockParentRepair,

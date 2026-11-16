@@ -25,8 +25,6 @@
   import { ColorStrength } from "@21n/theme/appearance.type";
   import { formatDatetime } from "@21n/shared-utils/datetime/date-formatting";
   import { onDestroy, onMount } from "svelte";
-  import { get } from "svelte/store";
-  import { datafnRuntime } from "@nucleum/datafn/datafn.store";
 
   import { userPreferences } from "@nucleum/shared-state/preferences/user-preferences.store";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -138,10 +136,10 @@
    * Loads a note's stored blocks for the editor, or undefined when any block
    * in the stored order can't be read yet (e.g. a local store still
    * downloading): an editor mounted with missing blocks would save a shorter
-   * order, or seed a block of its own, over the stored one. In direct mode
-   * the server is the only store, so a block it doesn't return no longer
-   * exists, and the note opens with the blocks that do (or, when none
-   * remain, as an empty note with a starter block).
+   * order, or seed a block of its own, over the stored one. This holds in
+   * every mode: a block missing from a direct read may not have reached the
+   * server yet, or may not be readable by this user, so it is never treated
+   * as deleted.
    */
   async function loadStoredNoteBlocks(
     id: IRecordId,
@@ -151,12 +149,6 @@
       const children = await loadNoteBlocks(mdChildOrder, id);
       if (hasEveryStoredBlock(mdChildOrder, children)) {
         return { mdChildOrder, children };
-      }
-      if (get(datafnRuntime)?.mode === "sync-direct") {
-        return {
-          mdChildOrder: children.map((child) => child.id),
-          children
-        };
       }
       logger.warn({
         at: "NodeContent.firstBlock.incomplete",
@@ -188,11 +180,9 @@
     if (start.kind === "load") {
       const loaded = await loadStoredNoteBlocks($node.id, start.mdChildOrder);
       if (!loaded) return false;
-      if (loaded.children.length > 0) {
-        $node.mdChildOrder = loaded.mdChildOrder;
-        $node.children = loaded.children as unknown as typeof $node.children;
-        return true;
-      }
+      $node.mdChildOrder = loaded.mdChildOrder;
+      $node.children = loaded.children as unknown as typeof $node.children;
+      return true;
     }
     const id = generateResourceId(Resource.node);
     const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
