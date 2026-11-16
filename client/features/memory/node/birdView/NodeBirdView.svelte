@@ -58,8 +58,14 @@
       selectedView = value as NodeBirdViewMode;
     }
   }));
+  // Touch on a pick, not on mount, so the newest switcher stays the fallback.
+  let viewTouchArmed = false;
   $effect(() => {
     selectedView;
+    if (!viewTouchArmed) {
+      viewTouchArmed = true;
+      return;
+    }
     untrack(() => birdSubViews.touch());
   });
   let depth = $state(

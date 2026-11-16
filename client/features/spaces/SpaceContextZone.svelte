@@ -1,7 +1,17 @@
+<script lang="ts" module>
+  import { SpaceView } from "@nucleum/features/spaces/space.type";
+
+  /** Space layouts in menu order, which the view keys follow too. */
+  export const SPACE_VIEW_OPTIONS = [
+    { value: SpaceView.SIDENAV, label: "Side nav", icon: "sidebar" },
+    { value: SpaceView.WALL, label: "Wall", icon: "widget" }
+  ];
+</script>
+
 <script lang="ts">
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
-  import { SpaceView } from "@nucleum/features/spaces/space.type";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import type { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
 
   let {
@@ -18,11 +28,6 @@
     onViewChange: (view: SpaceView) => void;
   } = $props();
 
-  const views = [
-    { value: SpaceView.SIDENAV, label: "Side nav", icon: "sidebar" },
-    { value: SpaceView.WALL, label: "Wall", icon: "widget" }
-  ];
-
   function resolveMenu() {
     return [
       {
@@ -30,9 +35,9 @@
         items: [],
         option: {
           label: "View",
-          options: views,
+          options: SPACE_VIEW_OPTIONS,
           value: view,
-          onChange: (value) => onViewChange(value as SpaceView)
+          onChange: (value: ISelectValue) => onViewChange(value as SpaceView)
         }
       },
       {

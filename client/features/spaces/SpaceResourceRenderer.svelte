@@ -15,15 +15,22 @@
 
   let {
     resourceId = undefined,
-    resourceType = undefined
+    resourceType = undefined,
+    onClose = undefined
   }: {
     resourceId?: IRecordId | undefined;
     resourceType?: Resource | undefined;
+    /** Closes the shown item, leaving the space with no item open. */
+    onClose?: (() => void) | undefined;
   } = $props();
 
   const container = writable<IContainer | undefined>(undefined);
   setContext<Writable<IContainer | undefined>>(Context.CONTAINER, container);
-  setInPlaceResource();
+  setInPlaceResource({
+    get onClose() {
+      return onClose ? () => onClose?.() : undefined;
+    }
+  });
 </script>
 
 <div

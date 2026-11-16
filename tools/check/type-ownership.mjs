@@ -42,6 +42,15 @@ const retiredEnumContracts = new Map([
   [
     "client/features/spaces/combination/combination.type.ts",
     [{ name: "CombinationType" }]
+  ],
+  [
+    "client/types/interaction-mode.type.ts",
+    [
+      {
+        name: "InteractionMode",
+        retiredPath: "client/ui/elements/keyboard/interaction-mode.type.ts"
+      }
+    ]
   ]
 ]);
 
@@ -59,6 +68,48 @@ const renamedEnumContracts = new Map([
 
 /** Runtime enums whose members were intentionally changed after the baseline, keyed by baseline path and pinned to their audited members. */
 const changedEnumContracts = new Map([
+  [
+    "client/persistence/persistence.type.ts",
+    [
+      {
+        name: "ClientStorageKey",
+        members: {
+          ENV: "env",
+          PRODUCT: "product",
+          IS_EXTENSION_LOGIN: "isExtensionLogin",
+          EMBED_OAUTH: "embedOAuth",
+          APP_DATA: "appData",
+          STOKEN: "stoken",
+          USER: "user",
+          AUTHFN_TOKEN: "authfnToken",
+          AUTHFN_WIDGET_TOKEN: "authfnWidgetToken",
+          REGION: "region",
+          USER_REGION_MAP: "userRegionMap",
+          USER_INFO: "userInfo",
+          USER_PLAN: "userPlan",
+          GUEST: "guest",
+          SPACE_IN_CONTEXT: "spaceInContext",
+          OFFLINE_SESSION_ID: "offlineSessionId",
+          DAP_ID: "dapId",
+          INTERCOM_ID: "intercomId",
+          OFFLINE_MODE: "offlineMode",
+          DATAFN_OFFLINABILITY: "datafnOfflinability",
+          MARKDOWN_PARENT_REPAIR_AT: "markdownParentRepairAt",
+          LEGACY_EVENT_TIME_REPAIR_AT: "legacyEventTimeRepairAt",
+          DATAFN_E2EE_SETTINGS: "datafnE2eeSettings",
+          DATAFN_E2EE_LOCAL_KEYS: "datafnE2eeLocalKeys",
+          LEGACY_LOCAL_DATA_RECOVERY: "legacyLocalDataRecovery",
+          LOW_DATA_MODE: "lowDataMode",
+          GUEST_TOOLBAR_STATE: "guestToolbarState",
+          FALLBACKS_RUN_STATUS: "fallbacksRunStatus",
+          RECENTS: "recents",
+          EXTENSION_BOOTUP: "extensionBootup",
+          LAST_INDEXED_AT: "lastIndexedAt",
+          TABLES: "tables"
+        }
+      }
+    ]
+  ],
   [
     "client/datafn/resource.type.ts",
     [
@@ -116,7 +167,6 @@ const changedEnumContracts = new Map([
           BACK: "back",
           EDIT: "edit",
           TYPE: "type",
-          TAB: "tab",
           PANEL: "panel",
           VIEW: "view",
           LINK: "link",
@@ -142,7 +192,8 @@ const changedEnumContracts = new Map([
           NODE_VIEW: "nodeView",
           SEARCH: "search",
           RIGHT: "right",
-          MAX: "max"
+          MAX: "max",
+          MAX_OPENED: "maxOpened"
         }
       }
     ]
@@ -156,7 +207,6 @@ const changedEnumContracts = new Map([
           CMD: "CMD",
           CLOSE: "CLOSE",
           CREATE: "create",
-          MODE_OF_INTERACTION: "MODE_OF_INTERACTION",
           EDIT_MODE: "EDIT_MODE",
           USER_LOGIN: "USER_LOGIN",
           USER_SIGNUP: "USER_SIGNUP",
@@ -252,6 +302,7 @@ const changedEnumContracts = new Map([
           recentFocusItems: "recentFocusItems",
           focusItemsPickFromPanel: "focusItemsPickFromPanel",
           objectivePanelSelection: "objectivePanelSelection",
+          closedFocusSessionId: "closedFocusSessionId",
           captureShortcutRecents: "captureShortcutRecents",
           openNodesUponSave: "openNodesUponSave",
           memotronOverviewPanel: "memotronOverviewPanel",

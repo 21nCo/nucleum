@@ -27,6 +27,11 @@
   import SpaceResourceRenderer from "@nucleum/features/spaces/SpaceResourceRenderer.svelte";
   import { scrollToHeading } from "@nucleum/features/spaces/space-heading-scroll";
   import {
+    readSpaceSelection,
+    rememberSpaceSelection,
+    type SpaceSideNavRole
+  } from "@nucleum/features/spaces/space-selection";
+  import {
     collectResourceItems,
     findItem,
     findParentId,
@@ -53,7 +58,12 @@
   const items = $derived($store?.items ?? []);
   const isEditMode = $derived(Boolean($store?.isInEditMode));
 
-  let selectedItemId = $state<string | null>(null);
+  const selectionRole: SpaceSideNavRole = isEmbedded ? "embedded" : "page";
+  const remembered = readSpaceSelection(spaceId, selectionRole);
+  let selectedItemId = $state<string | null>(
+    remembered?.selectedItemId ?? null
+  );
+  let isClosedByUser = $state(remembered?.isClosedByUser ?? false);
   let activeHeadingId = $state<string | undefined>(undefined);
   let targetSectionId = $state<string | null>(null);
   let collapsedIds = $state(new Set<string>());
@@ -123,7 +133,15 @@
   });
 
   $effect(() => {
+    rememberSpaceSelection(spaceId, selectionRole, {
+      selectedItemId,
+      isClosedByUser
+    });
+  });
+
+  $effect(() => {
     if (!isTargetsLoaded) return;
+    if (isClosedByUser && !selectedItemId) return;
     const current = selectedItemId
       ? findItem(items, selectedItemId)
       : undefined;
@@ -157,7 +175,15 @@
     cancelScroll = undefined;
   }
 
+  function closeItem() {
+    isClosedByUser = true;
+    selectedItemId = null;
+    activeHeadingId = undefined;
+    cancelHeadingScroll();
+  }
+
   function openItem(item: ISpaceResourceNavItem) {
+    isClosedByUser = false;
     selectedItemId = item.id;
     activeHeadingId = undefined;
     cancelHeadingScroll();
@@ -165,6 +191,7 @@
 
   /** Opens a page and scrolls its content to a heading. */
   async function openHeading(item: ISpaceResourceNavItem, headingId: string) {
+    isClosedByUser = false;
     selectedItemId = item.id;
     activeHeadingId = headingId;
     cancelHeadingScroll();
@@ -407,6 +434,7 @@
     <SpaceResourceRenderer
       resourceId={selectedResource?.resourceId}
       resourceType={selectedResource?.resourceType}
+      onClose={closeItem}
     />
   </main>
 </div>

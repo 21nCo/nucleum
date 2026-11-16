@@ -25,6 +25,12 @@ export type ContextZoneRegistration = {
   /** Views the keyboard can move between while this entry shows. */
   views?: ContextZoneViews;
   /**
+   * Views the keyboard moves between while this entry shows, used only when
+   * no page switcher on its pane registers views, such as a space layout
+   * below the tabs of a resource shown inside the space.
+   */
+  fallbackViews?: ContextZoneViews;
+  /**
    * Background class of the context tab while this entry shows, matching the
    * page or pane below, such as "bg-bgs2". Defaults to the page background.
    */
@@ -123,7 +129,7 @@ export function stepCycleValue<T>(
 ) {
   if (values.length === 0) return undefined;
   const index = current === undefined ? -1 : values.indexOf(current);
-  if (index === -1) return delta >= 0 ? values[0] : values[values.length - 1];
+  if (index === -1) return delta >= 0 ? values[0] : values.at(-1);
   const length = values.length;
   return values[(((index + delta) % length) + length) % length];
 }
@@ -177,25 +183,33 @@ export function resolveContextZonePaneEntry<
 /**
  * Picks the views the keyboard moves between: the shown entry's views,
  * otherwise the views of the newest page switcher registered for the shown
- * pane, such as a switcher in a side panel.
+ * pane, such as a switcher in a side panel, otherwise the shown entry's
+ * fallback views. Switchers on layers outside `visible`, such as a page under
+ * a full-screen overlay, never count, also when no pane is shown.
  */
 export function resolveContextZoneViews(
-  entry: { views?: ContextZoneViews } | undefined,
+  entry:
+    { views?: ContextZoneViews; fallbackViews?: ContextZoneViews } | undefined,
   sources: {
     key: number;
     pane: ContextZonePane;
     source: { views?: ContextZoneViews };
   }[],
-  pane: ContextZonePane | undefined
+  pane: ContextZonePane | undefined,
+  visible?: ReadonlySet<number>
 ): ContextZoneViews | undefined {
   if (entry?.views) return entry.views;
   const candidates = sources.filter(
-    (item) => item.source.views && (!pane || item.pane.id === pane.id)
+    (item) =>
+      item.source.views &&
+      (!visible || visible.has(item.pane.layer)) &&
+      (!pane || item.pane.id === pane.id)
   );
-  if (candidates.length === 0) return undefined;
-  return candidates.reduce((latest, item) =>
-    item.key > latest.key ? item : latest
-  ).source.views;
+  let newest: (typeof candidates)[number] | undefined;
+  for (const item of candidates) {
+    if (!newest || item.key > newest.key) newest = item;
+  }
+  return newest?.source.views ?? entry?.fallbackViews;
 }
 
 /** One in-page sub switcher registered for keyboard stepping. */
@@ -304,6 +318,10 @@ export const contextZone = {
       {
         content: { get: () => registration.content, enumerable: true },
         views: { get: () => registration.views, enumerable: true },
+        fallbackViews: {
+          get: () => registration.fallbackViews,
+          enumerable: true
+        },
         surface: { get: () => registration.surface, enumerable: true },
         title: { get: () => registration.title, enumerable: true }
       }
@@ -395,16 +413,22 @@ export const contextZone = {
     return resolveContextZoneViews(
       get(contextZone.active),
       get(viewSources),
-      get(contextZone.pane)
+      get(contextZone.pane),
+      get(visibleLayers)
     );
   },
-  /** Selects the next view of the shown entry, wrapping to the first. */
+  /**
+   * Selects the next view of the shown page, wrapping to the first. Key and
+   * command callers go through `stepContextView`, which skips covered pages.
+   */
   cycle() {
     contextZone.step(1);
   },
   /**
-   * Moves the shown entry `delta` views along, wrapping at both ends; returns
-   * whether a view was selected.
+   * Moves the shown page `delta` views along (the shown entry's views, else
+   * the newest page switcher on the shown pane, else the shown entry's
+   * fallback views), wrapping at both ends;
+   * returns whether a view was selected.
    */
   step(delta: number) {
     const views = contextZone.resolveViews();
@@ -415,7 +439,9 @@ export const contextZone = {
     return true;
   },
   /**
-   * Selects the view at `index` (zero based) of the shown entry; returns
+   * Selects the view at `index` (zero based) of the shown page (the shown
+   * entry's views, else the newest page switcher on the shown pane, else the
+   * shown entry's fallback views); returns
    * whether a view was selected.
    */
   selectAt(index: number) {

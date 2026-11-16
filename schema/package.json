@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@datafn/core": "0.1.0"
+    "@datafn/core": "0.1.2"
   },
   "exports": {
     ".": "./index.ts",
     "./datafn": "./datafn.ts",
     "./features": "./features.ts",
+    "./interfaces": "./interfaces.ts",
     "./fields": "./fields.ts",
     "./search.provider": "./search.provider.ts",
     "./resource.enum": "./resource.enum.ts",

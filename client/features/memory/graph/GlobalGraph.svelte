@@ -92,9 +92,24 @@
       { initialData: [] }
     )
   );
-  const graphNodes = $derived(
-    resolveGraphNodes([...$linkedNodesStore.data, ...$rootNodesStore.data])
-  );
+  /**
+   * Built in an effect, not a $derived: each node's label is rendered by
+   * mounting a component and calling flushSync, and flushing inside a derived
+   * re-runs effects that read this value while it is still being computed
+   * (Svelte's derived_references_self). The microtask runs the flush after
+   * the current effect pass instead of inside it.
+   */
+  let graphNodes = $state.raw<ReturnType<typeof resolveGraphNodes>>([]);
+  $effect(() => {
+    const nodes = [...$linkedNodesStore.data, ...$rootNodesStore.data];
+    let isCancelled = false;
+    queueMicrotask(() => {
+      if (!isCancelled) graphNodes = resolveGraphNodes(nodes);
+    });
+    return () => {
+      isCancelled = true;
+    };
+  });
   const unfilteredData = $derived({
     nodes: graphNodes,
     edges: graphEdges

@@ -13,7 +13,6 @@ const settings: IAction[] = [
   settingsActions[Action.PYOD],
   settingsActions[Action.DEVELOPER],
   aiSettingsAction as IAction,
-  settingsActions[Action.MODE_OF_INTERACTION],
   settingsActions[Action.APPEARANCE_SETTINGS],
   pointronSettingsActions.session,
   pointronSettingsActions.analytics,

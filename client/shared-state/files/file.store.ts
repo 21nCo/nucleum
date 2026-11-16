@@ -2,7 +2,10 @@ import { fileTransport } from "@nucleum/client/runtime/files/file-transport";
 import context from "@nucleum/client/runtime/context.store";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
-import { getBucketNameandKey, isUrlExpired } from "@nucleum/client/runtime/files/signed-url";
+import {
+  getBucketNameandKey,
+  isUrlExpired
+} from "@nucleum/client/runtime/files/signed-url";
 import { get } from "svelte/store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { isRecordId } from "@nucleum/datafn/resource.utils";
@@ -14,6 +17,10 @@ import { datafn } from "@nucleum/datafn/datafn.store";
 function resolveBlobPart(data: Uint8Array<ArrayBufferLike>) {
   return Uint8Array.from(data).buffer;
 }
+
+/** How long to stop re-signing file URLs after the signing API failed. */
+const resignPauseMs = 5 * 60 * 1000;
+let resignPausedUntil = 0;
 
 class FileStore {
   private async select(fileId: IRecordId) {
@@ -120,19 +127,27 @@ class FileStore {
   ): Promise<IFile | undefined> {
     if (typeof file !== "object" || !("url" in file) || !file.url) return;
 
-    if (
+    const isThumbnail = Boolean(
       params?.isUseThumbnailIfAvailable &&
       file.thumbnailUrl &&
       isUrlExpired(file.thumbnailUrl)
-    ) {
-      let key = getBucketNameandKey(file.thumbnailUrl);
-      let signedUrl = await fileTransport.fetchSignedUrlForGet(key);
-      return { ...file, thumbnailUrl: signedUrl?.getUrl };
-    } else if (isUrlExpired(file.url)) {
-      let key = getBucketNameandKey(file.url);
-      let signedUrl = await fileTransport.fetchSignedUrlForGet(key);
-      return { ...file, url: signedUrl?.getUrl };
-    } else return file;
+    );
+    if (!isThumbnail && !isUrlExpired(file.url)) return file;
+    if (Date.now() < resignPausedUntil) return file;
+    const urlToResign = isThumbnail ? file.thumbnailUrl! : file.url;
+    try {
+      const signedUrl = await fileTransport.fetchSignedUrlForGet(
+        getBucketNameandKey(urlToResign)
+      );
+      if (!signedUrl?.getUrl) return file;
+      return isThumbnail
+        ? { ...file, thumbnailUrl: signedUrl.getUrl }
+        : { ...file, url: signedUrl.getUrl };
+    } catch (error) {
+      resignPausedUntil = Date.now() + resignPauseMs;
+      logger.warn({ at: "fileStore.updateUrlIfExpired", error });
+      return file;
+    }
   }
 
   /**

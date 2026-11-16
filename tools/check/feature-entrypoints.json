@@ -1,5 +1,6 @@
 [
   "client/features/calendar/calendar.utils.ts",
+  "client/features/calendar/legacy-event-times.ts",
   "client/features/calendar/column/CalendarColumnTasksPanel.svelte",
   "client/features/calendar/events/EventThumbnail.svelte",
   "client/features/calendar/events/event.type.ts",
@@ -51,7 +52,6 @@
   "client/features/focus/logs/manualLog/QuickAddDurationsEditor.svelte",
   "client/features/focus/logs/session-items.utils.ts",
   "client/features/focus/player/FocusPlayer.svelte",
-  "client/features/focus/player/FocusPlayerCommandModeWidget.svelte",
   "client/features/focus/player/FocusTopNavWidget.svelte",
   "client/features/focus/pointronConstants.type.ts",
   "client/features/focus/preferences.store.ts",

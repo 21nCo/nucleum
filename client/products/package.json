@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@datafn/client": "0.1.0",
-    "@datafn/svelte": "0.1.0",
+    "@datafn/client": "0.1.5",
+    "@datafn/svelte": "0.1.1",
     "@huggingface/transformers": "^3.0.2",
     "@nucleum/datafn": "*",
     "@nucleum/features": "*",

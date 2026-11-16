@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   BASE_CONTEXT_ZONE_PANE,
   contextZone,
+  ContextZoneLayer,
+  resolveContextZoneViews,
   stepCycleValue,
   type ContextZoneViews
 } from "./context-zone";
@@ -98,5 +100,123 @@ describe("contextZone side panel views", () => {
     });
     unregister();
     expect(contextZone.step(1)).toBe(false);
+  });
+});
+
+describe("contextZone page views on covered layers", () => {
+  const besideBase = { id: "beside-base", layer: ContextZoneLayer.BESIDE_BASE };
+
+  afterEach(() => contextZone.setVisibleLayers(undefined));
+
+  function registerBesideBaseViews() {
+    const select = vi.fn();
+    release.push(
+      contextZone.registerViews(besideBase, {
+        views: { values: ["view", "chat"], active: "view", select }
+      })
+    );
+    return select;
+  }
+
+  it("ignores page switchers on hidden layers when no pane is shown", () => {
+    const views = { values: ["a"], active: "a", select: vi.fn() };
+    const sources = [{ key: 1, pane: besideBase, source: { views } }];
+    expect(
+      resolveContextZoneViews(
+        undefined,
+        sources,
+        undefined,
+        new Set([ContextZoneLayer.OVERLAY])
+      )
+    ).toBeUndefined();
+    expect(
+      resolveContextZoneViews(
+        undefined,
+        sources,
+        undefined,
+        new Set([ContextZoneLayer.BASE, ContextZoneLayer.BESIDE_BASE])
+      )
+    ).toBe(views);
+  });
+
+  it("does not switch a page covered by a full-screen overlay", () => {
+    const select = registerBesideBaseViews();
+    contextZone.setVisibleLayers([ContextZoneLayer.OVERLAY]);
+    expect(contextZone.resolveViews()).toBeUndefined();
+    expect(contextZone.step(1)).toBe(false);
+    expect(contextZone.selectAt(1)).toBe(false);
+    expect(select).not.toHaveBeenCalled();
+  });
+
+  it("switches the page again once the overlay closes", () => {
+    const select = registerBesideBaseViews();
+    contextZone.setVisibleLayers([ContextZoneLayer.OVERLAY]);
+    contextZone.setVisibleLayers([
+      ContextZoneLayer.BASE,
+      ContextZoneLayer.BESIDE_BASE
+    ]);
+    expect(contextZone.step(1)).toBe(true);
+    expect(select).toHaveBeenLastCalledWith("chat");
+    expect(contextZone.selectAt(1)).toBe(true);
+  });
+});
+
+describe("contextZone fallback views", () => {
+  afterEach(() => contextZone.setVisibleLayers(undefined));
+
+  function registerFallback(values: string[], active: string) {
+    const select = vi.fn();
+    release.push(
+      contextZone.register(BASE_CONTEXT_ZONE_PANE, {
+        content,
+        fallbackViews: { values, active, select }
+      })
+    );
+    return select;
+  }
+
+  it("steps and selects the entry's fallback views with no page switcher", () => {
+    const select = registerFallback(["sidenav", "wall"], "wall");
+    expect(contextZone.step(1)).toBe(true);
+    expect(select).toHaveBeenLastCalledWith("sidenav");
+    expect(contextZone.step(-1)).toBe(true);
+    expect(select).toHaveBeenLastCalledWith("sidenav");
+    expect(contextZone.selectAt(0)).toBe(true);
+    expect(select).toHaveBeenCalledTimes(3);
+    expect(contextZone.selectAt(2)).toBe(false);
+  });
+
+  it("prefers a page switcher on the same pane over fallback views", () => {
+    const layout = registerFallback(["sidenav", "wall"], "sidenav");
+    const tabs = vi.fn();
+    const unregister = contextZone.registerViews(BASE_CONTEXT_ZONE_PANE, {
+      views: { values: ["view", "chat"], active: "view", select: tabs }
+    });
+    expect(contextZone.step(1)).toBe(true);
+    expect(contextZone.selectAt(1)).toBe(true);
+    expect(tabs).toHaveBeenCalledTimes(2);
+    expect(layout).not.toHaveBeenCalled();
+    unregister();
+    expect(contextZone.step(1)).toBe(true);
+    expect(layout).toHaveBeenLastCalledWith("wall");
+  });
+
+  it("prefers the entry's own views over its fallback views", () => {
+    const views = { values: ["a"], active: "a", select: vi.fn() };
+    const fallbackViews = { values: ["b"], active: "b", select: vi.fn() };
+    expect(
+      resolveContextZoneViews({ views, fallbackViews }, [], undefined)
+    ).toBe(views);
+    expect(resolveContextZoneViews({ fallbackViews }, [], undefined)).toBe(
+      fallbackViews
+    );
+  });
+
+  it("does not switch fallback views of a covered page", () => {
+    const select = registerFallback(["sidenav", "wall"], "sidenav");
+    contextZone.setVisibleLayers([ContextZoneLayer.OVERLAY]);
+    expect(contextZone.step(1)).toBe(false);
+    expect(contextZone.selectAt(1)).toBe(false);
+    expect(select).not.toHaveBeenCalled();
   });
 });
