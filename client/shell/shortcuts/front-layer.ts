@@ -24,3 +24,36 @@ export function isLayerOnFront() {
     hasOpenPopover()
   );
 }
+
+/**
+ * Whether an element marked `aria-modal="true"` is shown, such as the right
+ * panel sheet at a narrow width, which makes the page behind it inert. One
+ * that is hidden, inert or inside a hidden or inert ancestor is not in front.
+ */
+export function hasAriaModalOnFront() {
+  return Array.from(
+    document.querySelectorAll<HTMLElement>('[aria-modal="true"]')
+  ).some(isShown);
+}
+
+function isShown(element: HTMLElement) {
+  if (element.closest("[hidden], [inert]")) return false;
+  if (getComputedStyle(element).visibility === "hidden") return false;
+  for (
+    let node: HTMLElement | null = element;
+    node;
+    node = node.parentElement
+  ) {
+    if (getComputedStyle(node).display === "none") return false;
+  }
+  return true;
+}
+
+/**
+ * Whether the context view keys (Option arrows and 1 to 9) must leave the
+ * shown page alone: a modal, dialog, popover or `aria-modal` layer is in
+ * front. Escape keeps `isLayerOnFront`, so a sheet still closes on Escape.
+ */
+export function isViewKeyLayerOnFront() {
+  return isLayerOnFront() || hasAriaModalOnFront();
+}

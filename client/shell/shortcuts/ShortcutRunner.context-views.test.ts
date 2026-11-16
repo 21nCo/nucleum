@@ -127,4 +127,70 @@ describe("ShortcutRunner context view keys", () => {
     expect(mocks.selectAt).toHaveBeenCalledWith(1);
     expect(event.defaultPrevented).toBe(true);
   });
+
+  describe("with an aria-modal sheet", () => {
+    // The right panel renders this sheet at a narrow width and makes the page
+    // behind it inert; suspending it hides it under a layer opened over it.
+    function showSheet({ isSuspended = false } = {}) {
+      const sheet = document.createElement("div");
+      sheet.setAttribute("role", "dialog");
+      sheet.setAttribute("aria-modal", "true");
+      if (isSuspended) {
+        sheet.hidden = true;
+        sheet.style.display = "none";
+      }
+      const close = document.createElement("button");
+      close.textContent = "Close";
+      sheet.append(close);
+      document.body.append(sheet);
+      return { sheet, close };
+    }
+
+    it("leaves Option arrows and number keys to the sheet in front", () => {
+      const { close } = showSheet();
+
+      const right = press(close, "ArrowRight", { altKey: true });
+      const two = press(close, "2");
+
+      expect(mocks.step).not.toHaveBeenCalled();
+      expect(mocks.selectAt).not.toHaveBeenCalled();
+      expect(right.defaultPrevented).toBe(false);
+      expect(two.defaultPrevented).toBe(false);
+    });
+
+    it("switches views again while the sheet is suspended", () => {
+      showSheet({ isSuspended: true });
+
+      const right = press(document.body, "ArrowRight", { altKey: true });
+      const two = press(document.body, "2");
+
+      expect(mocks.step).toHaveBeenCalledWith(1);
+      expect(mocks.selectAt).toHaveBeenCalledWith(1);
+      expect(right.defaultPrevented).toBe(true);
+      expect(two.defaultPrevented).toBe(true);
+    });
+
+    it("switches views again once the sheet is removed", () => {
+      const { sheet } = showSheet();
+      sheet.remove();
+
+      press(document.body, "ArrowRight", { altKey: true });
+      press(document.body, "2");
+
+      expect(mocks.step).toHaveBeenCalledWith(1);
+      expect(mocks.selectAt).toHaveBeenCalledWith(1);
+    });
+
+    it("ignores a sheet inside an inert ancestor", () => {
+      const { sheet } = showSheet();
+      const wrapper = document.createElement("div");
+      wrapper.setAttribute("inert", "");
+      document.body.append(wrapper);
+      wrapper.append(sheet);
+
+      press(document.body, "2");
+
+      expect(mocks.selectAt).toHaveBeenCalledWith(1);
+    });
+  });
 });
