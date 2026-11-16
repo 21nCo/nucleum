@@ -50,3 +50,13 @@ describe("library record counts", () => {
     expect(input.metadata).toEqual({ includeArchived: true });
   });
 });
+
+describe("canStarLibraryResource", () => {
+  it("is true only for resources with an isStarred field", async () => {
+    const { canStarLibraryResource } = await import("./library-query");
+    expect(canStarLibraryResource("node")).toBe(true);
+    expect(canStarLibraryResource("collection")).toBe(true);
+    expect(canStarLibraryResource("event")).toBe(false);
+    expect(canStarLibraryResource("task")).toBe(false);
+  });
+});

@@ -10,6 +10,20 @@ import {
 import context from "@nucleum/client/runtime/context.store";
 import type { SubType } from "@nucleum/surfaces/library/library.type";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
+import { nucleumDatafnSchema } from "@nucleum/schema";
+
+/**
+ * Whether records of `resource` can be starred. Querying `isStarred` on a
+ * resource without the field (events, tasks, files…) is rejected by the
+ * server, so the starred section is only queried where it exists.
+ */
+export function canStarLibraryResource(resource: Resource | string) {
+  return nucleumDatafnSchema.resources.some(
+    (entry) =>
+      entry.name === resource &&
+      entry.fields.some((field) => field.name === "isStarred")
+  );
+}
 
 /** Live view inputs keep reactive query policy owned by the library surface. */
 interface LibraryQueryContext {

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { createLibraryQuery } from "./library-query";
+  import { canStarLibraryResource, createLibraryQuery } from "./library-query";
+  import { readable } from "svelte/store";
   import {
     LIBRARY_DEFAULT_SUBTYPE,
     resolveLibrarySubTypeOptions
@@ -188,18 +189,20 @@
     )
   );
   const starredStore = $derived.by(() =>
-    toSvelteStore(
-      datafn.table(listQuery.resource).signal({
-        select: resolveExpandedSelect(listQuery.resource),
-        filters: {
-          ...listQuery.filters,
-          isStarred: true
-        },
-        metadata: resolveQueryMetadata(),
-        sort: resolveSort(listQuery.resource)
-      }),
-      { initialData: [] as any[] }
-    )
+    !canStarLibraryResource(listQuery.resource)
+      ? readable({ data: [] as any[] })
+      : toSvelteStore(
+          datafn.table(listQuery.resource).signal({
+            select: resolveExpandedSelect(listQuery.resource),
+            filters: {
+              ...listQuery.filters,
+              isStarred: true
+            },
+            metadata: resolveQueryMetadata(),
+            sort: resolveSort(listQuery.resource)
+          }),
+          { initialData: [] as any[] }
+        )
   );
   const countQuery = $derived.by(() => listQuery);
   // Counted by DataFn (count: true) rather than by downloading every row.
