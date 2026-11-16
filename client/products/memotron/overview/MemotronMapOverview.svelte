@@ -23,7 +23,9 @@
   let isShowHeatmap = $state(false);
   const nodeStore = toSvelteStore<INode[]>(
     datafn.node.signal({
-      select: ["id", "label", "contentType", "metadata", "createdAt", "url"]
+      select: ["id", "label", "contentType", "metadata", "createdAt", "url"],
+      // A location lives in metadata; nodes without metadata can't have one.
+      filters: { metadata: { $is_not_empty: true } }
     }),
     { initialData: [] }
   );
