@@ -133,8 +133,6 @@ class FileStore {
       isUrlExpired(file.thumbnailUrl)
     );
     if (!isThumbnail && !isUrlExpired(file.url)) return file;
-    // After a failed re-sign, keep stored URLs for a while instead of
-    // sending one failing request per image.
     if (Date.now() < resignPausedUntil) return file;
     const urlToResign = isThumbnail ? file.thumbnailUrl! : file.url;
     try {

@@ -30,9 +30,11 @@
     accessPoint?: ResourceAccessPoint;
     onClick?: (() => void) | undefined;
   } = $props();
-  // Derived, not set from an effect: the effect also read `_label` (in a
-  // debug log), and resolveNodeLabel returns a new object each time, so it
-  // re-ran itself until Svelte aborted and the Library list stopped updating.
+  /**
+   * Derived, not set from an effect: the effect also read `_label` (in a
+   * debug log), and resolveNodeLabel returns a new object each time, so it
+   * re-ran itself until Svelte aborted and the Library list stopped updating.
+   */
   const _label = $derived<
     | string
     | {

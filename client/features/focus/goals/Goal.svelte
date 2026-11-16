@@ -118,8 +118,10 @@
   let initPromise = $state<Promise<void>>(initialize());
   let previousParentValue: string | undefined = undefined;
 
-  // `parent` is the htree inverse relation, which the server rejects as a
-  // bare select; the parent link itself is the `parentId` field.
+  /**
+   * `parent` is the htree inverse relation, which the server rejects as a
+   * bare select; the parent link itself is the `parentId` field.
+   */
   const parentStore = toSvelteStore<Array<{ parentId?: unknown }>>(
     datafn.objective.signal({
       filters: { id },

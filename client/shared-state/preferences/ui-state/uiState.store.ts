@@ -34,7 +34,7 @@ const uiStateSignal = datafn.kv.signal<IUIStateStore>(Resource.uiState, {
 const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
 const pendingUiStateValues: OptimisticKvEntries = new Map();
 let pendingUiStateNamespace = datafn.currentNamespace();
-// Changes made in the same tick, saved together as one kv merge.
+/** Changes made in the same tick, saved together as one kv merge. */
 let queuedUiStateChanges: Partial<IUIStateStore> | null = null;
 let queuedUiStateTokens: Array<Map<string, symbol>> = [];
 let queuedUiStateMutation: Promise<unknown> | null = null;

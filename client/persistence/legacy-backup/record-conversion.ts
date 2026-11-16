@@ -289,8 +289,6 @@ function transformLegacyRecord(
   }
 
   if (resource === "event") {
-    // Legacy events kept their times inside `value`; queries filter on the
-    // top-level fields (servers can't filter inside JSON).
     const value =
       typeof record.value === "object" && record.value !== null
         ? (record.value as Record<string, unknown>)

@@ -17,8 +17,10 @@
 
   let mapContainer = $state<HTMLDivElement | null>(null);
   let map = $state<maplibregl.Map | null>(null);
-  // Sources and layers can only be added once the style has loaded; adding
-  // them earlier throws "Style is not done loading".
+  /**
+   * Sources and layers can only be added once the style has loaded; adding
+   * them earlier throws "Style is not done loading".
+   */
   let isStyleReady = $state(false);
   let isUpdatePending = false;
   let pendingHeatmap = false;
@@ -133,7 +135,6 @@
       const mapInstance = map;
       if (!mapInstance || !data || data.length === 0) return;
       if (!mapInstance.isStyleLoaded()) {
-        // The style is (re)loading; apply the latest data once it settles.
         pendingHeatmap = isShowHeatmap;
         if (isUpdatePending) return;
         isUpdatePending = true;

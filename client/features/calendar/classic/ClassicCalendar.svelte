@@ -41,18 +41,21 @@
   let visibleWeekDates = $state<Date[] | undefined>(undefined);
   let width = $derived(resolveSavedWidthSelection(selectedView));
   let yearViewRefreshId = $state(new Date().getTime());
-  // Same array for the same product, so app store changes that leave the
-  // product alone do not rebuild the indicator queries.
+  /**
+   * Same array for the same product, so app store changes that leave the
+   * product alone do not rebuild the indicator queries.
+   */
   const resourcesForIndicators = $derived(
     resolveIndicatorResources($appStore.product)
   );
-  // Rebuilt only when the visible period changes, not on every date change
-  // inside it (each rebuild re-queries a whole period per resource).
+  /**
+   * Rebuilt only when the visible period changes, not on every date change
+   * inside it (each rebuild re-queries a whole period per resource).
+   */
   const indicatorPeriodKey = $derived(
     resolveIndicatorPeriodKey(selectedDate, selectedView)
   );
   const indicatorStore = $derived.by(() => {
-    // The day and week views draw no tile indicators.
     if (
       selectedView === TimeScaleUnit.DAY ||
       selectedView === TimeScaleUnit.WEEK

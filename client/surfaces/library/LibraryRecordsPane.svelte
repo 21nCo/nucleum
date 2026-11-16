@@ -205,7 +205,7 @@
         )
   );
   const countQuery = $derived.by(() => listQuery);
-  // Counted by DataFn (count: true) rather than by downloading every row.
+  /** Counted by DataFn (count: true) rather than by downloading every row. */
   const countStore = $derived.by(() =>
     toSvelteStore(
       datafn.resourceCountsSignal(
