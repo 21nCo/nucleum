@@ -98,14 +98,16 @@
       untrack(() => initialize());
     }
   });
+  /** Sets the loaded node's access mode to `mode` when it differs. */
+  function applyAccessMode(mode: typeof accessMode) {
+    if ($node && $node.accessMode !== mode) {
+      node.update((current) => ({ ...current, accessMode: mode }));
+    }
+  }
   /** Keep the loaded node's access mode current without re-fetching it. */
   $effect(() => {
     const mode = accessMode;
-    untrack(() => {
-      if ($node && $node.accessMode !== mode) {
-        node.update((current) => ({ ...current, accessMode: mode }));
-      }
-    });
+    untrack(() => applyAccessMode(mode));
   });
   navigation.clearAllTooltips();
 
@@ -123,6 +125,7 @@
       isLoading = false;
       return;
     }
+    applyAccessMode(accessMode);
     nodeContext.parent = $node?.parent;
     nodeContext.contentType = $node?.contentType;
     isLoading = false;
