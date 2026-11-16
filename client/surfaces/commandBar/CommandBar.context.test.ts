@@ -4,7 +4,9 @@ import { readable } from "svelte/store";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const hide = vi.hoisted(() => vi.fn());
-const recordLabels = vi.hoisted(() => new Map<string, string>());
+const records = vi.hoisted(
+  () => new Map<string, { label?: string; text?: string }>()
+);
 
 vi.mock("@nucleum/shared-state/commands/command-host", () => ({
   requireCommandHost: () => ({
@@ -12,17 +14,19 @@ vi.mock("@nucleum/shared-state/commands/command-host", () => ({
     runAction: vi.fn()
   })
 }));
-vi.mock("@nucleum/shell/topNav/tabs/live-resource", () => ({
-  liveResource: (id: string) =>
-    readable({
-      resource: recordLabels.has(id)
-        ? { label: recordLabels.get(id) }
-        : undefined,
-      action: undefined,
-      resourceType: "node",
-      isResolved: recordLabels.has(id)
-    })
-}));
+vi.mock("@nucleum/shell/topNav/tabs/live-resource", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    liveResource: (id: string) =>
+      readable({
+        resource: records.get(id),
+        action: undefined,
+        resourceType: "node",
+        isResolved: records.has(id)
+      })
+  };
+});
 vi.mock("@nucleum/shared-state/shortcuts/shortcuts.store", () => ({
   keyboardShortcuts: {
     resolveShortcut: () => ({ shortcut: undefined, modifiers: [] }),
@@ -82,11 +86,11 @@ describe("CommandBar context and modes", () => {
     release?.();
     release = undefined;
     hide.mockClear();
-    recordLabels.clear();
+    records.clear();
   });
 
   it("shows the resource context as a pill with its icon and name", async () => {
-    recordLabels.set("node:1", "Launch plan");
+    records.set("node:1", { label: "Launch plan" });
     registerNodeContext();
     const { getByTestId, queryByTestId } = render(CommandBar);
     await tick();
@@ -98,6 +102,27 @@ describe("CommandBar context and modes", () => {
     // The resource icon before the name, then the remove cross.
     expect(pill.querySelectorAll("svg")).toHaveLength(2);
     expect(queryByTestId("super-bar-group-context")).toBeTruthy();
+  });
+
+  it("names a text-only record by its first text line, as its tab does", async () => {
+    records.set("node:1", { label: "", text: "# Launch plan\nsecond line" });
+    registerNodeContext();
+    const { getByTestId } = render(CommandBar);
+    await tick();
+    expect(getByTestId("super-bar-context-name").textContent).toBe(
+      "Launch plan"
+    );
+    expect(getByTestId("super-bar-context-pill").title).toBe(
+      "Node: Launch plan"
+    );
+  });
+
+  it("names a resolved record with no label or text Untitled", async () => {
+    records.set("node:1", {});
+    registerNodeContext();
+    const { getByTestId } = render(CommandBar);
+    await tick();
+    expect(getByTestId("super-bar-context-name").textContent).toBe("Untitled");
   });
 
   it("names the pill by its resource type until the record resolves", async () => {

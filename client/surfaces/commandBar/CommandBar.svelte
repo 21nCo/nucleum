@@ -32,11 +32,14 @@
     type SuperBarScope
   } from "@nucleum/surfaces/commandBar/super-bar";
   import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
-  import { isValidString, properCase } from "@21n/shared-utils/text.utils";
+  import { properCase } from "@21n/shared-utils/text.utils";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { resolveResourceIcon } from "@nucleum/datafn/resource.utils";
   import type { Resource } from "@nucleum/datafn/resource.enum";
-  import { liveResource } from "@nucleum/shell/topNav/tabs/live-resource";
+  import {
+    liveResource,
+    resolvePlainResourceLabel
+  } from "@nucleum/shell/topNav/tabs/live-resource";
 
   let {
     command = undefined,
@@ -68,11 +71,13 @@
       ? resolveResourceIcon($activeContext.resource as Resource)
       : undefined
   );
-  /** Record name, "Untitled" for a nameless record, or the resource type. */
+  /**
+   * Record name as the shell's tabs show it (label, else first text line, else
+   * "Untitled"), or the resource type until the record resolves.
+   */
   const contextName = $derived.by(() => {
     const record = contextRecord ? $contextRecord?.resource : undefined;
-    if (isValidString(record?.label)) return record.label as string;
-    if (record) return "Untitled";
+    if (record) return resolvePlainResourceLabel(record);
     return $activeContext
       ? `This ${$activeContext.resource.toLowerCase()}`
       : "";
