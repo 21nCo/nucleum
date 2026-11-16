@@ -167,7 +167,9 @@ export function resolveContextZonePaneEntry<
 /**
  * Picks the views the keyboard moves between: the shown entry's views,
  * otherwise the views of the newest page switcher registered for the shown
- * pane, such as a switcher in a side panel.
+ * pane, such as a switcher in a side panel. Switchers on layers outside
+ * `visible`, such as a page under a full-screen overlay, never count, also
+ * when no pane is shown.
  */
 export function resolveContextZoneViews(
   entry: { views?: ContextZoneViews } | undefined,
@@ -176,11 +178,15 @@ export function resolveContextZoneViews(
     pane: ContextZonePane;
     source: { views?: ContextZoneViews };
   }[],
-  pane: ContextZonePane | undefined
+  pane: ContextZonePane | undefined,
+  visible?: ReadonlySet<number>
 ): ContextZoneViews | undefined {
   if (entry?.views) return entry.views;
   const candidates = sources.filter(
-    (item) => item.source.views && (!pane || item.pane.id === pane.id)
+    (item) =>
+      item.source.views &&
+      (!visible || visible.has(item.pane.layer)) &&
+      (!pane || item.pane.id === pane.id)
   );
   if (candidates.length === 0) return undefined;
   return candidates.reduce((latest, item) =>
@@ -307,7 +313,8 @@ export const contextZone = {
     return resolveContextZoneViews(
       get(contextZone.active),
       get(viewSources),
-      get(contextZone.pane)
+      get(contextZone.pane),
+      get(visibleLayers)
     );
   },
   /** Selects the next view of the shown entry, wrapping to the first. */
