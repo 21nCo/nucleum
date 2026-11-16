@@ -40,7 +40,7 @@
               contentType: NodeType.IMAGE
             }
           },
-          source: "local",
+          source: "auto",
           prefix: true,
           fuzzy: 0.2
         });

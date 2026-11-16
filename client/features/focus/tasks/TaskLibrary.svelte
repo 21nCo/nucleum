@@ -89,6 +89,7 @@
   const instance = generateMiniRandomId();
   let tasks = $state<ITaskThumb[]>([]);
   let taskLimit = $state(50);
+  let isLoadMoreVisible = $state(false);
   let searchQuery = $state("");
   let searchInputRef = $state<InlineSearchBar | undefined>(undefined);
   let isArchivedFilterSelected = $state(false);
@@ -127,6 +128,22 @@
       { initialData: [] as ITaskThumb[] }
     )
   );
+  /**
+   * Loads the next page while the load-more marker is on screen, once the
+   * current page has finished loading and came back full.
+   */
+  $effect(() => {
+    if (
+      !isLoadMoreVisible ||
+      isSearchActive ||
+      $taskStore.loading ||
+      signalLimit === undefined ||
+      ($taskStore.data?.length ?? 0) < signalLimit
+    ) {
+      return;
+    }
+    untrack(() => refresh({ isPagination: true }));
+  });
   const signalTasks = $derived.by(() =>
     normalizeTasks(($taskStore.data ?? []) as ITaskThumb[])
   );
@@ -353,7 +370,7 @@
         select: ["*", "objective.*"],
         limit: params.limit,
         limitPerResource: params.limit,
-        source: "local",
+        source: "auto",
         prefix: true,
         fuzzy: 0.2
       });
@@ -766,17 +783,11 @@
       use:intersection={{
         rootMargin: "100px",
         callback: () => {
-          // Page only once the current page has loaded and was full; the
-          // sentinel is visible before the first page arrives.
-          if (
-            !isSearchActive &&
-            ($taskStore.loading ||
-              signalLimit === undefined ||
-              ($taskStore.data?.length ?? 0) < signalLimit)
-          ) {
-            return;
-          }
-          refresh({ isPagination: true });
+          isLoadMoreVisible = true;
+          if (isSearchActive) refresh({ isPagination: true });
+        },
+        onLeave: () => {
+          isLoadMoreVisible = false;
         }
       }}
     />
