@@ -18,7 +18,6 @@
     onclick = undefined
   }: {
     context?:
-      | "cmd-page"
       | "cp-profile"
       | "account-settings"
       | "topbar"
@@ -97,7 +96,6 @@
   class={cn(" flex justify-center items-center bg-bgs3", {
     "rounded-full w-7 h-7 lp:w-6 lp:h-6": context === "topbar",
     "rounded-full w-16 h-16": context === "cp-profile",
-    "rounded-md w-20 h-20": context === "cmd-page",
     "rounded-full w-10 h-10": context === "mobile-topbar",
     "rounded-md w-full border-4": context === "account-settings",
     "border-transparent": context === "account-settings" && !isEditing,
@@ -112,7 +110,7 @@
       id={fileId}
       isLazyLoad={false}
       class={cn("object-cover w-full h-full", {
-        "rounded-md": context === "cmd-page" || context === "account-settings",
+        "rounded-md": context === "account-settings",
         "rounded-full":
           context === "cp-profile" ||
           context === "topbar" ||
@@ -131,7 +129,6 @@
   {:else if profilePictureUrl}
     <img
       class={cn("w-full h-full", {
-        "rounded-md": context === "cmd-page",
         "rounded-full":
           context === "cp-profile" ||
           context === "account-settings" ||

@@ -7,10 +7,13 @@
   let {
     title,
     isShowClose = false,
+    closeTestId = undefined,
     onClose = undefined
   }: {
     title: string;
     isShowClose?: boolean;
+    /** Test id for the close button. */
+    closeTestId?: string;
     onClose?: ((event: CustomEvent<void>) => void) | undefined;
   } = $props();
 
@@ -31,6 +34,8 @@
     <div class="w-full flex justify-end text-b2">
       <Button
         icon="cross"
+        ariaLabel="Close"
+        testId={closeTestId}
         style={ButtonStyle.OUTLINED}
         onclick={() => emitClose()}
       />

@@ -141,7 +141,6 @@ export const products: Record<string, IAppConfigBase> = {
       },
       {
         children: [
-          Action.MODE_OF_INTERACTION,
           Action.APPEARANCE_SETTINGS,
           "analytics-settings",
           "session-settings",
@@ -195,7 +194,6 @@ export const products: Record<string, IAppConfigBase> = {
       },
       {
         children: [
-          Action.MODE_OF_INTERACTION,
           Action.APPEARANCE_SETTINGS,
           MemotronAction.NODE_SETTINGS,
           Action.DATETIME_SETTINGS,
@@ -240,7 +238,6 @@ export const products: Record<string, IAppConfigBase> = {
       },
       {
         children: [
-          Action.MODE_OF_INTERACTION,
           Action.APPEARANCE_SETTINGS,
           "analytics-settings",
           "session-settings",

@@ -2,7 +2,7 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import type { Snippet } from "svelte";
+  import { tick, type Snippet } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import type {
     ISelectItem,
@@ -28,6 +28,10 @@
     contextZone,
     type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    claimCalendarOverflowMenuReopen,
+    requestCalendarOverflowMenuReopen
+  } from "@nucleum/features/calendar/calendar-overflow-menu";
   let {
     panel = $bindable(CalendarLayout.Classic),
     children = undefined,
@@ -62,10 +66,13 @@
   const LOOSE_GAP_PX = 28;
   let fullControlsWidth = $state(0);
   let controlGroupCount = $state(0);
+  const overflowMenuReopen = claimCalendarOverflowMenuReopen();
+  let isHoldingCompact = $state(false);
   const isCompact = $derived(
-    fullControlsWidth > 0 &&
-      $entryWidth !== undefined &&
-      $entryWidth < fullControlsWidth
+    isHoldingCompact ||
+      (fullControlsWidth > 0 &&
+        $entryWidth !== undefined &&
+        $entryWidth < fullControlsWidth)
   );
   const isLoose = $derived(
     !isCompact &&
@@ -93,6 +100,60 @@
     return () => observer.disconnect();
   });
 
+  let overflowMenuRef = $state<ContextMenuAction | undefined>(undefined);
+
+  /**
+   * Ends the compact hold. The hold starts only after the inline controls
+   * were measured, so the layout returns to its measured presentation. When
+   * that removes the focused overflow trigger, focus moves to the layout
+   * switcher's current option instead of dropping to the page.
+   */
+  function releaseCompact() {
+    const focused = focusedInControlsRoot();
+    isHoldingCompact = false;
+    void tick().then(() => {
+      if (focused && !focused.isConnected) focusLayoutSwitcher();
+    });
+  }
+
+  /** The focused element as seen from the controls' own Document or ShadowRoot. */
+  function focusedInControlsRoot(): Element | null {
+    const root = controlsRef?.getRootNode() as Partial<DocumentOrShadowRoot>;
+    return (
+      root?.activeElement ?? controlsRef?.ownerDocument.activeElement ?? null
+    );
+  }
+
+  function focusLayoutSwitcher() {
+    if (!controlsRef?.isConnected) return;
+    const label = panelOptions.find((option) => option.value === panel)?.label;
+    const buttons = Array.from(
+      controlsRef.querySelectorAll<HTMLElement>(
+        '[data-testid="calendar-layout-switcher"] button'
+      )
+    );
+    (
+      buttons.find((button) => button.getAttribute("aria-label") === label) ??
+      buttons[0]
+    )?.focus();
+  }
+
+  $effect(() => {
+    const menu = overflowMenuRef;
+    if (!overflowMenuReopen.isPending || fullControlsWidth === 0) return;
+    const isReopening = overflowMenuReopen.settle(menu !== undefined);
+    isHoldingCompact = isReopening || overflowMenuReopen.isPending;
+    if (!isReopening || !menu) return;
+    const frame = requestAnimationFrame(() => {
+      if (!overflowMenuReopen.isWithinWindow() || !menu.show(releaseCompact))
+        releaseCompact();
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      releaseCompact();
+    };
+  });
+
   function openCalendarSettings() {
     requireCommandHost().runAction(Action.CALENDAR_SETTINGS, {
       componentParams: {
@@ -112,6 +173,8 @@
               options: panelOptions,
               value: panel,
               onChange: (value: ISelectValue) => {
+                if (value === panel) return;
+                requestCalendarOverflowMenuReopen();
                 panel = value as CalendarLayout;
                 onPanelSwitch(new CustomEvent("select", { detail: value }));
               }
@@ -236,6 +299,7 @@
         {#if isCompact}
           {@render headerRightOptions?.()}
           <ContextMenuAction
+            bind:this={overflowMenuRef}
             id="calendarContextZoneMenu"
             testId="calendar-overflow-menu"
             menuResolver={resolveOverflowMenu}

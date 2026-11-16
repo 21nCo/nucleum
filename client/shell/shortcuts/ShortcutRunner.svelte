@@ -1,14 +1,13 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import {
-    isTextElement,
-    resolveDialogOnFront,
-    resolveModalOnFront
+    isRightDrawerOnFront,
+    isTextElement
   } from "@21n/ui/actions/interaction-dom";
+  import { isLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
   import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { get } from "svelte/store";
@@ -17,11 +16,6 @@
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-  import { Action } from "@nucleum/client/config/action.enum";
-  import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-  import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
@@ -41,10 +35,13 @@
    *
    * Pressing `Escape` when text element is required in cases like command bar modal, search modal etc. If this is causing issue, kindly stop propagation on keyDown event from the source if its Esc key.
    *
+   * While a right-side drawer is on front only `Escape` passes, so shortcuts do not act on the app behind it.
+   *
    * @param event
    */
   const shortcutListener = (event: KeyboardEvent) => {
     if ($context.embed === Embed.HANDSET) return;
+    if (event.key !== KeyboardKey.ESCAPE && isRightDrawerOnFront()) return;
     const target = event.target || event.srcElement;
     const isTextInputSource = isTextElement(target);
     const isSystemShortcut = checkIfSystemShortcut(event);
@@ -67,17 +64,6 @@
       selectContextViewByNumber(event);
       return;
     }
-    const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      scope: UIStateScope.PRODUCT
-    });
-    if (
-      interactionMode === InteractionMode.AGENT &&
-      shortcut.action === Action.CMD
-    ) {
-      navigation.toggleSearchParam([AppSearchParam.TAB]);
-      event.preventDefault();
-      return;
-    }
     requireCommandHost().runAction(shortcut.action);
     event.stopPropagation();
     event.preventDefault();
@@ -90,18 +76,8 @@
   function selectContextViewByNumber(event: KeyboardEvent) {
     const index = resolveContextViewIndex(event);
     if (index === undefined) return;
-    if (resolveModalOnFront() || resolveDialogOnFront() || hasOpenPopover())
-      return;
+    if (isLayerOnFront()) return;
     if (contextZone.selectAt(index)) event.preventDefault();
-  }
-
-  function hasOpenPopover() {
-    return Array.from(document.querySelectorAll(".popover")).some(
-      (element) =>
-        !element.classList.contains("pointer-events-none") &&
-        element.getClientRects().length > 0 &&
-        getComputedStyle(element).visibility !== "hidden"
-    );
   }
 
   function isFormField(target: EventTarget | null) {
@@ -122,8 +98,9 @@
   /**
    * Closes the top layer on a plain Escape: overlay, then right panel, then
    * bulk selection, then the resource page. While a text editor has focus,
-   * Escape only releases that focus, so keyboard shortcuts work next. Runs after the event bubbles so
-   * editors, modals, dialogs and popovers that handle Escape stop it first;
+   * Escape only releases that focus, so keyboard shortcuts work next. Runs
+   * after the event bubbles so editors, modals, dialogs and popovers that
+   * handle Escape stop it first;
    * the selection size is read in the capture phase, before selection
    * handlers clear it.
    */
@@ -139,8 +116,7 @@
       return;
     }
     if (isFormField(event.target)) return;
-    if (resolveModalOnFront() || resolveDialogOnFront() || hasOpenPopover())
-      return;
+    if (isLayerOnFront()) return;
     closeTopLayer({ bulkCount });
   };
 </script>
