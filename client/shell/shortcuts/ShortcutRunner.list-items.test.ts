@@ -123,6 +123,31 @@ describe("ShortcutRunner list item keys", () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
+  it.each([
+    ["a popover open on the inert page behind the modal", true, true],
+    ["a live popover over the modal", false, false]
+  ])(
+    "steps the modal list or keeps the browser default with %s",
+    (_case, isPageInert, isStepped) => {
+      document.body.innerHTML = `<main${isPageInert ? " inert" : ""}><div class="popover"></div></main><div data-blank-modal="0"><ul id="list"></ul></div>`;
+      const popover = document.querySelector<HTMLElement>(".popover")!;
+      // jsdom lays out nothing, so give the popover a box to count as shown.
+      popover.getClientRects = () =>
+        [{ width: 10, height: 10 }] as unknown as DOMRectList;
+      const list = document.getElementById("list")!;
+      mocks.stepSub.mockImplementation(
+        (_delta: number, query?: unknown) =>
+          !!(
+            query as { isOnFront?: (element: Element) => boolean }
+          )?.isOnFront?.(list)
+      );
+      const event = press(document.body, "ArrowDown", listKey);
+
+      expect(mocks.stepSub).toHaveBeenCalledTimes(1);
+      expect(event.defaultPrevented).toBe(isStepped);
+    }
+  );
+
   it("does not step the page's list while a dialog is open", () => {
     document.body.innerHTML = "<dialog open></dialog>";
     const event = press(document.body, "ArrowUp", listKey);

@@ -5,11 +5,15 @@ import {
 
 /** Whether an open popover is visible and takes pointer input. */
 export function hasOpenPopover() {
-  return Array.from(document.querySelectorAll(".popover")).some(
-    (element) =>
-      !element.classList.contains("pointer-events-none") &&
-      element.getClientRects().length > 0 &&
-      getComputedStyle(element).visibility !== "hidden"
+  return Array.from(document.querySelectorAll(".popover")).some(isOpenPopover);
+}
+
+/** Whether a popover element is visible and takes pointer input. */
+export function isOpenPopover(element: Element) {
+  return (
+    !element.classList.contains("pointer-events-none") &&
+    element.getClientRects().length > 0 &&
+    getComputedStyle(element).visibility !== "hidden"
   );
 }
 

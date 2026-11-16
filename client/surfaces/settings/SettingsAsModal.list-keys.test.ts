@@ -213,6 +213,17 @@ describe("SettingsAsModal settings list keys with layers in front", () => {
     expect(mocks.toggleSearchParam).not.toHaveBeenCalled();
   });
 
+  it("steps the list while a popover stays open on the inert page behind Settings", () => {
+    const page = addLayer('<main inert><div class="popover"></div></main>');
+    const popover = page.querySelector<HTMLElement>(".popover")!;
+    popover.getClientRects = () =>
+      [{ width: 10, height: 10 }] as unknown as DOMRectList;
+    renderInModal();
+
+    expect(stepListItem(1)).toBe(true);
+    expect(openedSettings()).toEqual(["datetime-settings"]);
+  });
+
   it("leaves the list alone while a dialog or aria-modal layer is over Settings", () => {
     renderInModal({ isInDialog: true });
     const dialog = addLayer("<dialog open></dialog>");

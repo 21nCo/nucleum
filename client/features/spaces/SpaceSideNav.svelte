@@ -170,6 +170,22 @@
     return collectResourceItems(list).find(isAutoOpenable);
   }
 
+  /**
+   * Lists the record items whose rows the side nav shows, in tree order: only
+   * a section shows its children, and only while it is not collapsed.
+   */
+  function collectShownResourceItems(
+    list: ISpaceNavItem[]
+  ): ISpaceResourceNavItem[] {
+    return list.flatMap((item) => {
+      if (item.type === SpaceNavItemType.RESOURCE)
+        return [item as ISpaceResourceNavItem];
+      if (item.type === SpaceNavItemType.SECTION && !collapsedIds.has(item.id))
+        return collectShownResourceItems(item.children ?? []);
+      return [];
+    });
+  }
+
   function cancelHeadingScroll() {
     scrollRequest++;
     cancelScroll?.();
@@ -185,7 +201,7 @@
 
   const itemListViews = useContextZoneSubViews(
     () => ({
-      values: collectResourceItems(items)
+      values: collectShownResourceItems(items)
         .filter(isAutoOpenable)
         .map((item) => item.id),
       active: selectedItemId ?? undefined,

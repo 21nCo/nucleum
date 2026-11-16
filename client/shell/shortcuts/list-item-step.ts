@@ -1,7 +1,7 @@
 import { resolveModalOnFront } from "@21n/ui/actions/interaction-dom";
 import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 import {
-  hasOpenPopover,
+  isOpenPopover,
   isShown,
   isViewKeyLayerOnFront
 } from "@nucleum/shell/shortcuts/front-layer";
@@ -26,13 +26,20 @@ export function stepListItem(delta: number) {
 
 /**
  * Whether `element` is in front inside a modal: the front modal holds it, no
- * popover is open, and no open dialog or shown `aria-modal` layer that does
- * not hold it is in front of it. Layers behind the modal are inert, so they
- * do not count; the modal's own dialog holds the element.
+ * popover is open over it, and no open dialog or shown `aria-modal` layer that
+ * does not hold it is in front of it. Layers behind the modal are inert, so
+ * they do not count, also a popover left open on the page behind; the modal's
+ * own dialog holds the element.
  */
 export function isInFrontModal(element: Element) {
   if (!resolveModalOnFront()?.contains(element)) return false;
-  if (hasOpenPopover()) return false;
+  const popovers = Array.from(document.querySelectorAll(".popover"));
+  if (
+    popovers.some(
+      (popover) => isOpenPopover(popover) && !popover.closest("[inert]")
+    )
+  )
+    return false;
   const isOver = (layer: Element) =>
     !layer.contains(element) && !layer.closest("[inert]");
   const dialogs = Array.from(document.querySelectorAll("dialog[open]"));
