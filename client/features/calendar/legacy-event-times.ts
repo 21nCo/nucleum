@@ -8,7 +8,11 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 
 const repairIntervalMs = 7 * 24 * 60 * 60 * 1000;
-const repairPageSize = 200;
+/**
+ * Rows per repair page. Direct mode sends each page to the account service,
+ * whose DataFn server rejects queries over its `maxLimit` (100 by default).
+ */
+const repairPageSize = 100;
 
 type LegacyEventRecord = {
   id?: unknown;
@@ -56,12 +60,14 @@ export function resolveLiftedEventTimes(
  * not recorded and is retried on the next start.
  */
 async function liftEventTimesWhereEmpty(
-  field: "startUnix" | "endUnix"
+  field: "startUnix" | "endUnix",
+  assertCurrent: () => void
 ): Promise<number> {
   let repaired = 0;
   let unrepairable = 0;
   const written = new Set<string>();
   for (;;) {
+    assertCurrent();
     const result = await datafn.event.query({
       select: ["id", "startUnix", "endUnix", "value"],
       filters: { [field]: { $is_null: true } },
@@ -89,6 +95,7 @@ async function liftEventTimesWhereEmpty(
     }
     writes.forEach((write) => written.add(write.id));
     if (writes.length > 0) {
+      assertCurrent();
       assertMaintenanceWritesSucceeded(
         await datafn.event.mutate(writes as any),
         "repairLegacyEventTimes"
@@ -110,10 +117,12 @@ async function liftEventTimesWhereEmpty(
  *
  * @returns The number of events repaired.
  */
-async function runLegacyEventTimeRepair(): Promise<number> {
+async function runLegacyEventTimeRepair(
+  assertCurrent: () => void
+): Promise<number> {
   const repaired =
-    (await liftEventTimesWhereEmpty("startUnix")) +
-    (await liftEventTimesWhereEmpty("endUnix"));
+    (await liftEventTimesWhereEmpty("startUnix", assertCurrent)) +
+    (await liftEventTimesWhereEmpty("endUnix", assertCurrent));
   if (repaired > 0) {
     logger.info({ at: "repairLegacyEventTimes", repaired });
   }
@@ -131,6 +140,7 @@ export function repairLegacyEventTimesIfDue(now = Date.now()) {
   return runMaintenanceIfDue({
     key: ClientStorageKey.LEGACY_EVENT_TIME_REPAIR_AT,
     namespace: get(datafnRuntime)?.namespace,
+    currentNamespace: () => get(datafnRuntime)?.namespace,
     intervalMs: repairIntervalMs,
     task: "repairLegacyEventTimes",
     run: runLegacyEventTimeRepair,

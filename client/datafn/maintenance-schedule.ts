@@ -70,25 +70,39 @@ export function assertMaintenanceWritesSucceeded(
  * records the run only once `run` succeeds, so a failed attempt is retried on
  * the next start. Errors are logged under `task`.
  *
+ * DataFn can switch to another namespace while a run is in progress (a
+ * re-initialisation for another account or mode). `run` gets an
+ * `assertCurrent` check to call before each read and write, which throws once
+ * `currentNamespace()` no longer returns `namespace`, so a run never reads one
+ * namespace and writes another; the run then fails and is not recorded.
+ *
  * @returns What `run` returned, or `fallback` when it didn't run or failed.
  */
 export async function runMaintenanceIfDue<T>(params: {
   key: ClientStorageKey;
   namespace: string | undefined;
+  currentNamespace: () => string | null | undefined;
   intervalMs: number;
   task: string;
-  run: () => Promise<T>;
+  run: (assertCurrent: () => void) => Promise<T>;
   fallback: T;
   now?: number;
 }): Promise<T> {
-  const { key, namespace, intervalMs, task, run, fallback } = params;
+  const { key, namespace, currentNamespace, intervalMs, task, run, fallback } =
+    params;
   const now = params.now ?? Date.now();
   if (!namespace) return fallback;
   if (!(await isMaintenanceDue({ key, namespace, intervalMs, now }))) {
     return fallback;
   }
+  const assertCurrent = () => {
+    if (currentNamespace() !== namespace) {
+      throw new Error(`${task}: the DataFn namespace changed during the run`);
+    }
+  };
   try {
-    const result = await run();
+    const result = await run(assertCurrent);
+    assertCurrent();
     await recordMaintenanceRun({ key, namespace, now });
     return result;
   } catch (error) {

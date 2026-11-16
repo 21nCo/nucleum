@@ -132,6 +132,7 @@ export async function repairMarkdownBlockParentsIfDue(
   return runMaintenanceIfDue({
     key: ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT,
     namespace: resolveRepairNamespace(),
+    currentNamespace: resolveRepairNamespace,
     intervalMs: repairIntervalMs,
     task: "repairMarkdownBlockParents",
     run: runMarkdownBlockParentRepair,
@@ -166,8 +167,13 @@ export async function repairMarkdownBlockParents(): Promise<number> {
   }
 }
 
-/** The repair itself; throws when a read or write fails. */
-async function runMarkdownBlockParentRepair(): Promise<number> {
+/**
+ * The repair itself; throws when a read or write fails, or when
+ * `assertCurrent` reports that DataFn moved to another namespace.
+ */
+async function runMarkdownBlockParentRepair(
+  assertCurrent: () => void = () => undefined
+): Promise<number> {
   const orphanResult = await datafn.node.query({
     select: ["id", "creationContext"],
     filters: {
@@ -215,6 +221,7 @@ async function runMarkdownBlockParentRepair(): Promise<number> {
     return [{ id: record.id, mdParent }];
   });
   for (let index = 0; index < blocks.length; index += repairBatchSize) {
+    assertCurrent();
     const outcome = await datafn.node.mutate(
       blocks.slice(index, index + repairBatchSize).map((block) => ({
         operation: "merge",

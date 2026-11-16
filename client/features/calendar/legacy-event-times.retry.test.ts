@@ -7,10 +7,15 @@ const { query, mutate, storage } = vi.hoisted(() => ({
   storage: new Map<string, string>()
 }));
 
-vi.mock("@nucleum/datafn/datafn.store", () => ({
-  datafn: { event: { query, mutate } },
-  datafnRuntime: writable({ namespace: "ns" })
-}));
+const runtime = vi.hoisted(() => ({ store: undefined as any }));
+
+vi.mock("@nucleum/datafn/datafn.store", () => {
+  runtime.store = writable({ namespace: "ns" });
+  return {
+    datafn: { event: { query, mutate } },
+    datafnRuntime: runtime.store
+  };
+});
 vi.mock("@nucleum/persistence/client-storage", () => ({
   clientStorage: {
     get: async (key: string) => storage.get(key) ?? null,
@@ -57,11 +62,10 @@ describe("legacy event-time repair failures", () => {
     mutate.mockReset();
     storage.clear();
     mutate.mockResolvedValue([{ ok: true }]);
-    const pageSize = 200;
     query.mockImplementation(async (input: any) =>
       "startUnix" in input.filters
         ? {
-            data: Array.from({ length: pageSize }, (_, index) => ({
+            data: Array.from({ length: input.limit }, (_, index) => ({
               id: `event:${index}`,
               value: { startUnix: 1 }
             }))
@@ -84,5 +88,34 @@ describe("legacy event-time repair failures", () => {
     expect(await repairLegacyEventTimesIfDue()).toBe(0);
     expect(mutate).toHaveBeenCalledTimes(1);
     expect(isRunRecorded()).toBe(false);
+  });
+
+  it("asks for pages within the account service's query limit", async () => {
+    query.mockReset();
+    mutate.mockReset();
+    storage.clear();
+    query.mockResolvedValue({ data: [] });
+    await repairLegacyEventTimesIfDue();
+    expect(query).toHaveBeenCalled();
+    for (const [input] of query.mock.calls) {
+      expect(input.limit).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it("stops without writing when DataFn moves to another namespace", async () => {
+    query.mockReset();
+    mutate.mockReset();
+    storage.clear();
+    query.mockImplementation(async () => {
+      runtime.store.set({ namespace: "other" });
+      return { data: [{ id: "event:a", value: { startUnix: 1 } }] };
+    });
+    try {
+      expect(await repairLegacyEventTimesIfDue()).toBe(0);
+      expect(mutate).not.toHaveBeenCalled();
+      expect(isRunRecorded()).toBe(false);
+    } finally {
+      runtime.store.set({ namespace: "ns" });
+    }
   });
 });

@@ -76,6 +76,7 @@ describe("maintenance schedule", () => {
     const params = {
       key,
       namespace: "a",
+      currentNamespace: () => "a",
       intervalMs: day,
       task: "t",
       fallback: -1
@@ -98,5 +99,49 @@ describe("maintenance schedule", () => {
     expect(
       await runMaintenanceIfDue({ ...params, now: 3, run: async () => 6 })
     ).toBe(-1);
+  });
+
+  it("fails and doesn't record a run when the namespace changes during it", async () => {
+    let current = "a";
+    const writes: string[] = [];
+    const params = {
+      key,
+      namespace: "a",
+      currentNamespace: () => current,
+      intervalMs: day,
+      task: "t",
+      fallback: -1,
+      now: 0
+    };
+    expect(
+      await runMaintenanceIfDue({
+        ...params,
+        run: async (assertCurrent) => {
+          assertCurrent();
+          writes.push("first");
+          current = "b";
+          assertCurrent();
+          writes.push("second");
+          return 1;
+        }
+      })
+    ).toBe(-1);
+    expect(writes).toEqual(["first"]);
+    expect(
+      await isMaintenanceDue({ key, namespace: "a", intervalMs: day, now: 1 })
+    ).toBe(true);
+    current = "a";
+    expect(
+      await runMaintenanceIfDue({
+        ...params,
+        run: async () => {
+          current = "b";
+          return 1;
+        }
+      })
+    ).toBe(-1);
+    expect(
+      await isMaintenanceDue({ key, namespace: "a", intervalMs: day, now: 1 })
+    ).toBe(true);
   });
 });
