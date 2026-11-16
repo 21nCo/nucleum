@@ -807,6 +807,7 @@
       subType={selectedSubType}
       isRefreshing={displayedIsRefreshing}
       {searchQuery}
+      isGrowWithRows={true}
       onCreate={() => {
         requireCommandHost().runAction(PointronAction.CREATE_TASK_INLINE, {
           componentParams: {

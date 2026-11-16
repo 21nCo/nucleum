@@ -125,6 +125,8 @@
   let searchRefreshRunId = 0;
   let activeSearchSignature = $state("");
   let resolvedSearchSignature = $state("");
+  let loadMoreMarker = $state<HTMLDivElement | undefined>(undefined);
+  let isLoadMoreVisible = $state(false);
 
   const {
     queryLibraryRecords,
@@ -213,6 +215,43 @@
     if (isCustom) return;
     recordPager.setFirstPage($recordStore.data ?? []);
   });
+  /**
+   * Loads the next page while the load-more marker is on screen, once the
+   * first page and any page in flight have finished loading and more may
+   * exist. The observer reports only changes, so a page that leaves the
+   * marker on screen would otherwise stall the list. The check runs after
+   * the next layout, so a page that just pushed the marker off screen
+   * doesn't trigger another load before the observer reports it.
+   */
+  $effect(() => {
+    if (
+      !isLoadMoreVisible ||
+      isCustom ||
+      isSearchActive ||
+      $recordStore.loading ||
+      $recordPager.isLoading ||
+      !$recordPager.hasMore ||
+      displayedData.length === 0 ||
+      displayedData.length >= displayedTotalCount
+    ) {
+      return;
+    }
+    const pager = recordPager;
+    const frame = requestAnimationFrame(() => {
+      if (pager === recordPager && isLoadMoreMarkerOnScreen()) {
+        refresh(true);
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  });
+
+  /** Whether the load-more marker is within the observer's 100px margin of the viewport. */
+  function isLoadMoreMarkerOnScreen() {
+    const rect = loadMoreMarker?.getBoundingClientRect();
+    return Boolean(
+      rect && rect.top < window.innerHeight + 100 && rect.bottom > -100
+    );
+  }
   const starredStore = $derived.by(() =>
     !canStarLibraryResource(listQuery.resource)
       ? readable({ data: [] as any[] })
@@ -808,10 +847,12 @@
         />
       </div>
       <div
+        bind:this={loadMoreMarker}
         class="flex w-full justify-center text-b2 text-fgs3"
         use:intersection={{
           rootMargin: "100px",
           callback: () => {
+            isLoadMoreVisible = true;
             if (
               displayedData.length > 0 &&
               displayedData.length < displayedTotalCount &&
@@ -819,6 +860,9 @@
             ) {
               refresh(true);
             }
+          },
+          onLeave: () => {
+            isLoadMoreVisible = false;
           }
         }}
       >
