@@ -107,6 +107,6 @@
       "@datafn/core": "0.1.2"
     },
     "@parcel/watcher": "2.1.0",
-    "@superfunctions/observability": "0.0.2"
+    "@superfunctions/observability": "0.0.3"
   }
 }

@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@21n/fonts": "^1.0.1",
-    "@datafn/client": "0.1.4",
+    "@datafn/client": "0.1.5",
     "@datafn/svelte": "0.1.1",
     "@nucleum/datafn": "*",
     "@nucleum/features": "*",
