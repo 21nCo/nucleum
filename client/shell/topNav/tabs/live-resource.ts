@@ -22,7 +22,10 @@ export type LiveResource = {
 
 /**
  * Follows the label source of a record id or a page action slug: the record,
- * kept live through its DataFn signal, or the action label and icon.
+ * kept live through its DataFn signal, or the action label and icon. One live
+ * read by id both resolves the record and follows its edits. A record counts
+ * as missing only once its signal holds a settled result (or failed): a fresh
+ * signal's first value is emitted before it has fetched anything.
  */
 export function liveResource(item: IRecordId | string): Readable<LiveResource> {
   const initial: LiveResource = {
@@ -57,18 +60,14 @@ export function liveResource(item: IRecordId | string): Readable<LiveResource> {
       update({ isResolved: true });
       return;
     }
-    // One live read by id: it both resolves the record and follows its edits.
-    // The store's first value is emitted before the signal has fetched, so
-    // only a later empty, settled value means the record is missing.
-    let isFirstValue = true;
-    const unsubscribe = toSvelteStore<unknown[]>(
-      datafn.table(resourceType).signal({
-        filters: { id: item },
-        limit: 1,
-        metadata: { includeTrashed: true, includeArchived: true }
-      }),
-      { initialData: [] }
-    ).subscribe((value) => {
+    const signal = datafn.table(resourceType).signal({
+      filters: { id: item },
+      limit: 1,
+      metadata: { includeTrashed: true, includeArchived: true }
+    });
+    const unsubscribe = toSvelteStore<unknown[]>(signal, {
+      initialData: []
+    }).subscribe((value) => {
       const record = value.data?.[0];
       if (record && typeof record === "object") {
         update({
@@ -78,13 +77,16 @@ export function liveResource(item: IRecordId | string): Readable<LiveResource> {
           }),
           isResolved: true
         });
-      } else if (!isFirstValue && !value.loading && !state.isResolved) {
+      } else if (
+        !state.isResolved &&
+        !value.loading &&
+        (signal.get() !== undefined || value.error)
+      ) {
         if (value.error) {
           logger.error({ at: "liveResource", item, error: value.error });
         }
         update({ isResolved: true });
       }
-      isFirstValue = false;
     });
     return unsubscribe;
   });

@@ -1,13 +1,19 @@
 import { get, writable } from "svelte/store";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const signal = writable<{ data: unknown[]; loading?: boolean; error?: unknown }>({
+const signal = writable<{
+  data: unknown[];
+  loading?: boolean;
+  error?: unknown;
+}>({
   data: [],
   loading: false
 });
 
+let signalValue: unknown[] | undefined;
+
 vi.mock("@nucleum/datafn/datafn.store", () => ({
-  datafn: { table: () => ({ signal: () => ({}) }) }
+  datafn: { table: () => ({ signal: () => ({ get: () => signalValue }) }) }
 }));
 vi.mock("@datafn/svelte", () => ({
   toSvelteStore: () => signal
@@ -43,6 +49,7 @@ async function settle<T>(store: {
 
 describe("liveResource", () => {
   beforeEach(() => {
+    signalValue = undefined;
     signal.set({ data: [], loading: false });
   });
 
@@ -67,14 +74,23 @@ describe("liveResource", () => {
     expect(states.at(-1)).toBe(false);
     signal.set({ data: [], loading: true });
     expect(states.at(-1)).toBe(false);
+    signalValue = [];
     signal.set({ data: [], loading: false });
     unsubscribe();
     expect(states.at(-1)).toBe(true);
   });
 
+  it("resolves at once from a signal that already settled empty", () => {
+    signalValue = [];
+    const value = get(liveResource("node:gone"));
+    expect(value.isResolved).toBe(true);
+    expect(value.resource).toBeUndefined();
+  });
+
   it("ends resolved without a resource for a missing record", async () => {
     const store = liveResource("node:gone");
     const unsubscribe = store.subscribe(() => {});
+    signalValue = [];
     signal.set({ data: [], loading: false });
     const value = get(store);
     unsubscribe();
