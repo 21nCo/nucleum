@@ -25,6 +25,7 @@
   let selectedDate = $state(new Date());
   const isDev = import.meta.env?.DEV;
   let selectedPanel = $state(CalendarColumnPanel.Timeline);
+  let birdviewRef = $state<Birdview>();
 
   const switchOptions = [
     {
@@ -55,7 +56,13 @@
   ];
 </script>
 
-<CalendarLayoutView bind:panel>
+<CalendarLayoutView
+  bind:panel
+  onGoToToday={() => {
+    selectedDate = new Date();
+    birdviewRef?.goToToday();
+  }}
+>
   {#snippet headerLeftOptions(_isCompact: boolean)}
     {#if isDev}
       <OptionSelector
@@ -72,9 +79,9 @@
     <CalendarHeader
       bind:selectedDate
       bind:selectedView={scale}
-      onDateChange={() => {}}
-      onGoToPrevious={() => {}}
-      onGoToNext={() => {}}
+      onDateChange={() => birdviewRef?.scrollToDate(selectedDate)}
+      onGoToPrevious={() => birdviewRef?.step(false)}
+      onGoToNext={() => birdviewRef?.step(true)}
     />
   {/snippet}
   {#snippet headerRightOptions()}
@@ -89,6 +96,6 @@
     /> -->
   {/snippet}
   <div class="w-full h-full max-h-full">
-    <Birdview mode={scale} />
+    <Birdview bind:this={birdviewRef} mode={scale} />
   </div>
 </CalendarLayoutView>

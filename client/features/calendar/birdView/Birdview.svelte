@@ -14,7 +14,8 @@
     monthNames,
     currentDate,
     getISOfromDateString,
-    getFirstAlphabetPosition
+    getFirstAlphabetPosition,
+    resolveBirdviewDateSlot
   } from "@nucleum/features/calendar/birdView/Birdview.utils";
   import Day from "@nucleum/features/calendar/birdView/Day.svelte";
   import Month from "@nucleum/features/calendar/birdView/Month.svelte";
@@ -569,62 +570,60 @@
       handleMouseDownOthers(event);
     }
   }
-  async function goToToday() {
-    let paddedCurrmonthIndex =
-      (currentMonthIndex < 9 ? "0" : "") + (currentMonthIndex + 1);
-    let paddedCurrDate =
-      currentDate.getDate() < 10 ? "0" : "" + currentDate.getDate();
-    let date: string | number;
-    let index: number;
+  /** Scrolls the columns to today, as the calendar's Today control does. */
+  export function goToToday() {
+    return scrollToDate(new Date());
+  }
+
+  /**
+   * Scrolls the columns to the slot showing `date`, reloading the columns
+   * around it first when it is outside the loaded range.
+   */
+  export async function scrollToDate(date: Date) {
+    const slot = resolveBirdviewDateSlot(date, mode);
+    if (!slot) return;
     prevDateInViewForward = null;
     prevDateInViewReverse = null;
+    const year = date.getFullYear();
+    let isReloaded = false;
     switch (mode) {
       case TimeScaleUnit.PART:
-        date = currentYear + "-" + paddedCurrmonthIndex + "-" + paddedCurrDate;
-        index = zonesData.findIndex((x) => {
-          x.date == date;
-        });
-        if (index == -1) {
-          zonesData = generateZonesData(new Date().toISOString());
-          instaceId = new Date().getTime();
-          await tick();
+        if (!zonesData.some((x) => `${x.date}-0` === slot)) {
+          const day = new Date(Date.UTC(year, date.getMonth(), date.getDate()));
+          zonesData = generateZonesData(day.toISOString());
+          isReloaded = true;
         }
-        scrollDateSlotIntoView(
-          currentYear + "-" + paddedCurrmonthIndex + "-" + paddedCurrDate + "-0"
-        );
         break;
       case TimeScaleUnit.DAY:
-        date = currentYear + "-" + paddedCurrmonthIndex + "-" + paddedCurrDate;
-        index = daysData.findIndex((x) => {
-          x == date;
-        });
-        if (index == -1) {
-          daysData = generateDaysData(currentYear, currentMonthIndex);
-          instaceId = new Date().getTime();
-          await tick();
+        if (!daysData.includes(slot)) {
+          daysData = generateDaysData(year, date.getMonth());
+          isReloaded = true;
         }
-        scrollDateSlotIntoView(
-          currentYear + "-" + paddedCurrmonthIndex + "-" + paddedCurrDate
-        );
         break;
       case TimeScaleUnit.MONTH:
-        date = currentYear;
-        index = monthsData.findIndex((x) => {
-          x == date;
-        });
-        if (index == -1) {
-          monthsData = generateMonthsData(currentYear);
-          instaceId = new Date().getTime();
-          await tick();
+        if (!monthsData.includes(year)) {
+          monthsData = generateMonthsData(year);
+          isReloaded = true;
         }
-        scrollDateSlotIntoView(currentYear + "-" + paddedCurrmonthIndex);
         break;
       case TimeScaleUnit.YEAR:
-        scrollDateSlotIntoView(String(currentYear));
-        break;
-      default:
+        if (!yearsData.includes(year)) {
+          yearsData = generateYearsData(year);
+          isReloaded = true;
+        }
         break;
     }
+    if (isReloaded) {
+      instaceId = new Date().getTime();
+      await tick();
+    }
+    scrollDateSlotIntoView(slot);
+  }
+
+  /** Moves the columns one column back or forward. */
+  export function step(isForward: boolean) {
+    if (!panelsContainer?.children.length) return;
+    return scrollLookAlike(isForward);
   }
 
   function checkifNotToday(itemsInView: any[]): boolean {
