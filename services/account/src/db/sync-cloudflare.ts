@@ -2,7 +2,7 @@ import { drizzleAdapter } from "@superfunctions/db/adapters/drizzle";
 import type { Adapter } from "@superfunctions/db";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import * as datafnSchema from "./generated/datafn/datafn-schema.drizzle.js";
+import * as syncSchema from "./sync-schema.js";
 import type { AccountWorkerEnv } from "../worker-env.js";
 import { requireSecureRemotePostgresUrl } from "./postgres-security.js";
 
@@ -31,7 +31,7 @@ export function createCloudflareSyncDatabase(
     prepare: false
   });
   const db = drizzle(sql, {
-    schema: datafnSchema
+    schema: syncSchema
   });
 
   return {

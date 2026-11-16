@@ -22,6 +22,7 @@ import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import { createSyncSearchProvider } from './search-provider.js';
 import { resolveAccountUserNamespace } from './namespace.js';
 import { readPositiveIntegerEnv } from './env.js';
+import type { CapturedFileDeletions, FileDeletionCascade } from './file-deletions.js';
 import {
   authorizeAppScopes,
   filterScopedResponseBody,
@@ -55,6 +56,13 @@ export interface CreateSyncServerInput {
   regionId?: string;
   observability?: SuperfunctionObservability;
   searchProvider?: SearchProvider;
+  /**
+   * Deletes the FileFn file behind each `file` record a write by a session
+   * holding every app scope permanently deletes, and retries owed deletions
+   * after authenticated requests. Omitted, records are deleted without
+   * touching FileFn.
+   */
+  fileDeletions?: FileDeletionCascade;
 }
 
 export type SyncServer = DatafnServer<SyncContext>;
@@ -125,6 +133,22 @@ export function createSyncServer(
     };
   };
   const regionHeader = input.regionId ?? process.env.ACCOUNT_REGION_ID;
+  const capturedFileDeletions = new WeakMap<object, CapturedFileDeletions>();
+  const settleFileDeletions = async (
+    hook: DatafnRouteHookInput<SyncContext>
+  ): Promise<Response> => {
+    if (!input.fileDeletions) return hook.response;
+    const captured = capturedFileDeletions.get(hook.context);
+    if (captured) {
+      capturedFileDeletions.delete(hook.context);
+      const body: unknown = captured.requested.length > 0
+        ? await hook.response.clone().json().catch(() => undefined)
+        : undefined;
+      await input.fileDeletions.settle(captured, body);
+    }
+    if (hook.context.session) input.fileDeletions.sweep();
+    return hook.response;
+  };
   return app.createServer<SyncContext>({
     database: input.database,
     stores: input.stores,
@@ -164,7 +188,14 @@ export function createSyncServer(
           if (!allowed) return false;
         }
         if (!MUTATING_DATAFN_ACTIONS.has(action)) return true;
-        return Boolean(await authorizeMutationRequest(input.auth, ctx.request));
+        if (!(await authorizeMutationRequest(input.auth, ctx.request))) return false;
+        if (input.fileDeletions && hasFullAppAccess(access)) {
+          const captured = await input.fileDeletions.capture(
+            action, payload, ctx.session.actorId
+          );
+          if (captured) capturedFileDeletions.set(ctx, captured);
+        }
+        return true;
       }
       if (!ctx.publicLink) return false;
       return true;
@@ -187,7 +218,10 @@ export function createSyncServer(
       ? undefined
       : input.rateLimit ?? createDefaultRateLimit(input.stores),
     routeHooks: {
-      afterResponse: (hook) => filterScopedResponse(hook, scopeStore),
+      afterResponse: [
+        settleFileDeletions,
+        (hook) => filterScopedResponse(hook, scopeStore)
+      ],
       ...(regionHeader ? { headers: { 'x-datafn-region': regionHeader } } : {})
     },
     observability: input.observability
