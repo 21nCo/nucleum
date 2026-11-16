@@ -202,14 +202,6 @@ export class ActiveResourceStore<
   }
 
   /**
-   * Marks the store of `id` as used by a mounted view open in `accessMode`,
-   * such as a resource shown both on the base page and on the page covering
-   * it. The returned function releases it: the store takes back the access
-   * mode of the newest view still mounted, and is dropped after its last
-   * owner releases. Pass a getter when the view's mode can change while it
-   * stays mounted, so a release hands back the mode it has then.
-   */
-  /**
    * The access mode of the newest mounted view of `id` (see {@link retain}),
    * which is the mode the shared store should hold; undefined when no view
    * of it is mounted.
@@ -219,6 +211,14 @@ export class ActiveResourceStore<
     return owners[owners.length - 1]?.accessMode();
   }
 
+  /**
+   * Marks the store of `id` as used by a mounted view open in `accessMode`,
+   * such as a resource shown both on the base page and on the page covering
+   * it. The returned function releases it: the store takes back the access
+   * mode of the newest view still mounted, and is dropped after its last
+   * owner releases. Pass a getter when the view's mode can change while it
+   * stays mounted, so a release hands back the mode it has then.
+   */
   static retain(
     id: IRecordId,
     accessMode?: AccessMode | (() => AccessMode | undefined)
