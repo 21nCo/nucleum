@@ -1,0 +1,19 @@
+scripts/dev/legacy-file-signer.mjs
+  s_f058f999ab46b7::t_e629447981f864 60-63,67,90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "667e7a969334a4ccfe4b21b264c5a0bd79425fca",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
