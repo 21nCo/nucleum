@@ -102,29 +102,36 @@ const repairIntervalMs = 24 * 60 * 60 * 1000;
  * on every start.
  */
 export async function shouldRepairMarkdownBlockParents(now = Date.now()) {
-  const runtime = get(datafnRuntime);
-  if (!runtime || runtime.mode === "sync-direct") return false;
+  const namespace = resolveRepairNamespace();
+  if (!namespace) return false;
   return isMaintenanceDue({
     key: ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT,
-    namespace: runtime.namespace,
+    namespace,
     intervalMs: repairIntervalMs,
     now
   });
 }
 
+/** The namespace the repair runs in, or undefined in direct mode or before DataFn starts. */
+function resolveRepairNamespace() {
+  const runtime = get(datafnRuntime);
+  return runtime && runtime.mode !== "sync-direct"
+    ? runtime.namespace
+    : undefined;
+}
+
 /**
- * Runs the repair at start-up when {@link shouldRepairMarkdownBlockParents}
- * allows, and records the run only once it succeeds, so a failed attempt is
- * retried on the next start.
+ * Runs the repair at start-up under the same rules as
+ * {@link shouldRepairMarkdownBlockParents} (not in direct mode, at most daily
+ * per namespace), recording the run only once it succeeds, so a failed
+ * attempt is retried on the next start.
  */
 export async function repairMarkdownBlockParentsIfDue(
   now = Date.now()
 ): Promise<number> {
-  const runtime = get(datafnRuntime);
-  if (!runtime || runtime.mode === "sync-direct") return 0;
   return runMaintenanceIfDue({
     key: ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT,
-    namespace: runtime.namespace,
+    namespace: resolveRepairNamespace(),
     intervalMs: repairIntervalMs,
     task: "repairMarkdownBlockParents",
     run: runMarkdownBlockParentRepair,
