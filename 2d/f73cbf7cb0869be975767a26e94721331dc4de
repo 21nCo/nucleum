@@ -1,0 +1,25 @@
+client/surfaces/settings/appearance/AppearanceProfileNameEditor.svelte
+  s_a763d6bce2b15c::t_fb854aca19a1eb 21-22,47-50,52,55-63,69,79,88
+client/surfaces/settings/appearance/AppearanceProfiles.test.ts
+  s_a763d6bce2b15c::t_de9cea358b236b 209-297
+client/ui/elements/input/TextInput.controls.test.ts
+  s_a763d6bce2b15c::t_af5939e05db8d1 40-52
+client/ui/elements/input/TextInput.svelte
+  s_a763d6bce2b15c::t_1123dd2e5454e8 5-8,48,89,499
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2df73cbf7cb0869be975767a26e94721331dc4de",
+  "prompts": {},
+  "sessions": {
+    "s_a763d6bce2b15c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a91e46dd9abcccba2",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
