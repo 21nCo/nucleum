@@ -1,4 +1,7 @@
-import { datafn } from "@nucleum/datafn/datafn.store";
+import { get } from "svelte/store";
+import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
+import { clientStorage } from "@nucleum/persistence/client-storage";
+import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import { headingNodeTypes } from "@nucleum/features/memory/node/node.type";
@@ -22,7 +25,7 @@ type BlockRecord = {
 function isHeadingBlock(block: BlockRecord | undefined) {
   return Boolean(
     block?.contentType &&
-      (headingNodeTypes as readonly string[]).includes(block.contentType)
+    (headingNodeTypes as readonly string[]).includes(block.contentType)
   );
 }
 
@@ -102,6 +105,43 @@ function collectNoteBlockHeadings(
  *
  * @returns The number of blocks repaired.
  */
+const repairIntervalMs = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether the repair should run now. It mends blocks written into a local
+ * store (imports, older clients), so it is skipped in direct mode, where the
+ * server holds the data; and it runs at most once a day per namespace, since
+ * blocks it can't attribute would otherwise be rescanned on every start.
+ */
+export async function shouldRepairMarkdownBlockParents(now = Date.now()) {
+  const runtime = get(datafnRuntime);
+  if (!runtime || runtime.mode === "sync-direct") return false;
+  const stored = await clientStorage
+    .get(ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT)
+    .catch(() => null);
+  let lastRuns: Record<string, number> = {};
+  try {
+    lastRuns = stored ? JSON.parse(stored) : {};
+  } catch {
+    lastRuns = {};
+  }
+  const lastRun = lastRuns[runtime.namespace];
+  if (typeof lastRun === "number" && now - lastRun < repairIntervalMs) {
+    return false;
+  }
+  lastRuns[runtime.namespace] = now;
+  await clientStorage
+    .set(ClientStorageKey.MARKDOWN_PARENT_REPAIR_AT, JSON.stringify(lastRuns))
+    .catch(() => undefined);
+  return true;
+}
+
+/** Runs the repair at start-up when {@link shouldRepairMarkdownBlockParents} allows. */
+export async function repairMarkdownBlockParentsIfDue(): Promise<number> {
+  if (!(await shouldRepairMarkdownBlockParents())) return 0;
+  return repairMarkdownBlockParents();
+}
+
 export async function repairMarkdownBlockParents(): Promise<number> {
   try {
     const orphanResult = await datafn.node.query({
