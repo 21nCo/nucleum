@@ -297,12 +297,10 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
 
     const section = page.getByTestId("color-scheme-section");
     const lightPicker = section.getByTestId("color-scheme-light-picker");
-    if (!(await lightPicker.isVisible().catch(() => false))) {
-      await section
-        .getByTestId("toggle-mixed-color-schemes")
-        .locator('input[type="checkbox"]')
-        .setChecked(true, { force: true });
-    }
+    await section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]')
+      .setChecked(true, { force: true });
     await expect(lightPicker).toBeVisible({ timeout: 10_000 });
 
     const lightThemes = [
@@ -343,6 +341,104 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
         .locator('[data-scheme-swatch="colorscheme:clean_tidyblue_light"]')
         .first()
     ).toBeVisible({ timeout: 5_000 });
+  });
+
+  test("Appearance: applying a profile with a mixed scheme pair shows separate light and dark pickers", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await openAppearance(page);
+
+    const section = page.getByTestId("color-scheme-section");
+    const familyPicker = section.getByTestId("color-scheme-family-picker");
+    const lightPicker = section.getByTestId("color-scheme-light-picker");
+    const darkPicker = section.getByTestId("color-scheme-dark-picker");
+    const mixedSwitch = section
+      .getByTestId("toggle-mixed-color-schemes")
+      .locator('input[type="checkbox"]');
+
+    await mixedSwitch.setChecked(true, { force: true });
+    await lightPicker.click({ timeout: 5_000 });
+    await page
+      .getByRole("option", { name: "Red", exact: true })
+      .first()
+      .click({ timeout: 5_000 });
+    await darkPicker.click({ timeout: 5_000 });
+    await page
+      .getByRole("option", { name: "Blue", exact: true })
+      .first()
+      .click({ timeout: 5_000 });
+    await expect(
+      lightPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyred_light"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(
+      darkPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyblue_dark"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    const profiles = page.getByTestId("appearance-profiles");
+    const name = `E2E mixed schemes ${Date.now()}`;
+    await profiles.getByTestId("appearance-profile-save-new").click();
+    await page.getByTestId("appearance-profile-name").fill(name);
+    await page.getByTestId("appearance-profile-name").press("Enter");
+    const chip = profiles
+      .getByTestId("appearance-profile-option")
+      .filter({ hasText: name });
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+
+    await mixedSwitch.setChecked(false, { force: true });
+    await expect(familyPicker).toContainText("Red", { timeout: 5_000 });
+    await expect(lightPicker).toBeHidden();
+    await expect(
+      profiles.getByTestId("appearance-profile-modified")
+    ).toBeVisible({ timeout: 5_000 });
+
+    await chip.click({ timeout: 5_000 });
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      profiles.getByTestId("appearance-profile-modified")
+    ).toBeHidden({ timeout: 5_000 });
+    await expect(familyPicker).toBeHidden();
+    await expect(mixedSwitch).toBeChecked();
+    await expect(
+      lightPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyred_light"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(
+      darkPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyblue_dark"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    await closeSettings(page);
+    await openAppearance(page);
+    await expect(familyPicker).toBeHidden();
+    await expect(
+      lightPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyred_light"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+    await expect(
+      darkPicker.locator(
+        '[data-scheme-swatch="colorscheme:clean_tidyblue_dark"]'
+      )
+    ).toBeVisible({ timeout: 5_000 });
+
+    await profiles
+      .locator("[data-profile-id]")
+      .filter({ hasText: name })
+      .locator("..")
+      .getByTestId("appearance-profile-menu")
+      .click();
+    await page.locator('[data-context-menu-item-id="delete"]').click();
+    await expect(chip).toHaveCount(0);
+    await mixedSwitch.setChecked(false, { force: true });
+    await expect(familyPicker).toBeVisible({ timeout: 5_000 });
   });
 
   test("Appearance: switch between light and dark themes and verify theme layer updates", async ({
