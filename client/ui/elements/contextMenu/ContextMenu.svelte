@@ -9,6 +9,7 @@
   import ContextMenuOptionGroup from "@21n/ui/elements/contextMenu/ContextMenuOptionGroup.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import view from "@21n/ui/environment/view.store";
+  import { isTextElement } from "@21n/ui/actions/interaction-dom";
   let {
     menuResolver,
     size = Size.md,
@@ -29,6 +30,10 @@
     onClose?: (() => void) | undefined;
   } = $props();
   let menuRef = $state<HTMLDivElement>();
+  $effect(() => {
+    window.addEventListener("keydown", onWindowKeydown, true);
+    return () => window.removeEventListener("keydown", onWindowKeydown, true);
+  });
   const menu = $derived<IContextMenuGroup[]>(menuResolver ? menuResolver() : []);
 
   function resolveItemSize() {
@@ -45,6 +50,8 @@
   /**
    * Moves focus through the menu items with Up and Down while the menu is
    * shown, and closes it on Escape. Enter and Space activate the focused item.
+   * It listens on the window in the capture phase, so the keys reach the menu
+   * before a drawer that keeps its keys inside or closes on Escape.
    */
   function onWindowKeydown(event: KeyboardEvent) {
     if (!menuRef || menuRef.getClientRects().length === 0) return;
@@ -57,6 +64,7 @@
       return;
     }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    if (isTextElement(event.target)) return;
     const buttons = resolveMenuButtons();
     if (buttons.length === 0) return;
     const step = event.key === "ArrowDown" ? 1 : -1;
@@ -72,8 +80,6 @@
     buttons[next].focus();
   }
 </script>
-
-<svelte:window onkeydown={onWindowKeydown} />
 
 <div
   bind:this={menuRef}

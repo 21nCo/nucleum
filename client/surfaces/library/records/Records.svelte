@@ -201,10 +201,35 @@
     });
   }
 
+  /**
+   * Access point id the item's thumbnail selects with: node and goal
+   * thumbnails pass their own id, which only the Library and the resource
+   * browser drop, so elsewhere each of them has a selection context of its own.
+   */
+  function resolveThumbnailAccessPointId(item: RecordItem) {
+    const resourceType = determineResourceType(item.id);
+    return resourceType === Resource.node ||
+      resourceType === Resource.objective
+      ? item.id
+      : undefined;
+  }
+
+  function resolveItemSelectionContext(item: RecordItem) {
+    return resolveResourceSelectionContext(
+      item.id,
+      accessPoint,
+      resolveThumbnailAccessPointId(item)
+    );
+  }
+
   function toggleFromKeyboard(element: HTMLElement) {
     const item = resolveElementItem(element);
     if (!item) return;
-    toggleResourceSelection(item.id, accessPoint);
+    toggleResourceSelection(
+      item.id,
+      accessPoint,
+      resolveThumbnailAccessPointId(item)
+    );
   }
 
   let rangeBaseIds: IRecordId[] = [];
@@ -213,11 +238,23 @@
       accessPoint !== ResourceAccessPoint.MAP &&
       !isPreventDefault
   );
+  /** Ranges need one selection context shared by every item in the list. */
+  const isRangeSelectable = $derived(
+    isSelectable &&
+      data.every(
+        (item) => resolveItemSelectionContext(item).accessPointId === undefined
+      )
+  );
 
-  function hasSelectionInList() {
-    const { selectedIds } = bulkEditStore.getState();
-    return selectedIds.some((id) =>
-      data.some((item) => resourceInList(item.id)(id))
+  /**
+   * Whether the selection context the list's thumbnails select in holds a
+   * selection, which Escape clears before the highlight. Lists sharing that
+   * context, such as Starred and the rest of the Library, share the answer.
+   */
+  function hasSelectionInContext() {
+    if (bulkEditStore.getState().selectedIds.length === 0) return false;
+    return data.some((item) =>
+      bulkEditStore.matchesContext(resolveItemSelectionContext(item))
     );
   }
 
@@ -235,9 +272,12 @@
         (item): item is RecordItem =>
           !!item && determineResourceType(item.id) === resourceType
       );
-    const context = resolveResourceSelectionContext(anchor.id, accessPoint);
-    if (!bulkEditStore.matchesContext(context)) {
-      toggleResourceSelection(anchor.id, accessPoint);
+    if (!bulkEditStore.matchesContext(resolveItemSelectionContext(anchor))) {
+      toggleResourceSelection(
+        anchor.id,
+        accessPoint,
+        resolveThumbnailAccessPointId(anchor)
+      );
       rangeBaseIds = [];
     } else if (isNewRange) {
       rangeBaseIds = bulkEditStore.getState().selectedIds;
@@ -255,8 +295,8 @@
     itemSelector: "[id^='thumbnail-'][data-id]",
     onOpen: openFromKeyboard,
     onToggle: isSelectable ? toggleFromKeyboard : undefined,
-    onExtend: isSelectable ? extendFromKeyboard : undefined,
-    hasSelection: hasSelectionInList
+    onExtend: isRangeSelectable ? extendFromKeyboard : undefined,
+    hasSelection: hasSelectionInContext
   }}
 >
   <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->

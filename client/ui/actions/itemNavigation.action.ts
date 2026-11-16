@@ -86,6 +86,7 @@ function resolveFrontLayer() {
 
 function isReachable(entry: ItemNavigationEntry, layer: Element | null) {
   if (!isVisible(entry.node)) return false;
+  if (entry.node.closest("[inert], [aria-hidden='true']")) return false;
   return layer ? layer.contains(entry.node) : true;
 }
 
@@ -129,14 +130,96 @@ function clearHighlight(entry: ItemNavigationEntry) {
   paintHighlight(entry);
 }
 
-function isFocusOutside(entry: ItemNavigationEntry) {
-  const active = document.activeElement;
+/** Controls that use the arrow, Enter or Space keys themselves. */
+const keyedControlSelector = [
+  "select",
+  "audio[controls]",
+  "video[controls]",
+  "[role='listbox']",
+  "[role='option']",
+  "[role='menu']",
+  "[role='menubar']",
+  "[role='menuitem']",
+  "[role='menuitemcheckbox']",
+  "[role='menuitemradio']",
+  "[role='radio']",
+  "[role='radiogroup']",
+  "[role='slider']",
+  "[role='spinbutton']",
+  "[role='scrollbar']",
+  "[role='combobox']",
+  "[role='tree']",
+  "[role='treeitem']",
+  "[role='grid']",
+  "[role='gridcell']",
+  "[role='textbox']"
+].join(", ");
+
+/** Interactive elements whose own Enter or Space action must not be taken. */
+const interactiveSelector = [
+  "a[href]",
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "summary",
+  "[contenteditable='true']",
+  "[role='button']",
+  "[role='checkbox']",
+  "[role='switch']",
+  "[role='link']",
+  "[tabindex]:not([tabindex='-1'])"
+].join(", ");
+
+/**
+ * Whether the focused element uses the arrow, Enter and Space keys itself,
+ * such as a text field, a select or a menu, so the list leaves them alone. A
+ * plain button or link, such as the tab that opened the list, does not.
+ */
+function isKeyedControl(target: EventTarget | null) {
+  if (isTextElement(target)) return true;
+  return target instanceof Element && !!target.closest(keyedControlSelector);
+}
+
+/**
+ * Whether the key comes from a control inside the list other than the
+ * highlighted item, such as a task's checkbox, whose Enter and Space act on
+ * that control.
+ */
+function isOtherControlInList(
+  entry: ItemNavigationEntry,
+  target: EventTarget | null,
+  highlighted: HTMLElement
+) {
+  if (!(target instanceof Element)) return false;
+  const control = target.closest(interactiveSelector);
   return (
-    !!active &&
-    active !== document.body &&
-    active !== document.documentElement &&
-    !entry.node.contains(active)
+    !!control &&
+    control !== entry.node &&
+    entry.node.contains(control) &&
+    !control.contains(highlighted)
   );
+}
+
+/**
+ * Blurs a control left focused inside the list, such as another item's
+ * checkbox, once the highlight moves to an item that does not hold it, so
+ * Enter and Space act on the highlighted item and not on that control.
+ */
+function releaseStaleFocus(entry: ItemNavigationEntry, highlighted: HTMLElement) {
+  const active = document.activeElement;
+  if (
+    active instanceof HTMLElement &&
+    entry.node.contains(active) &&
+    !highlighted.contains(active)
+  )
+    active.blur();
+}
+
+function hideHighlight(entry: ItemNavigationEntry) {
+  if (!entry.isShown) return;
+  entry.isShown = false;
+  paintHighlight(entry);
 }
 
 function moveHighlight(
@@ -177,6 +260,7 @@ function moveHighlight(
   entry.highlightedKey = resolveItemKey(next);
   entry.isShown = true;
   paintHighlight(entry);
+  releaseStaleFocus(entry, next);
   next.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
@@ -188,10 +272,14 @@ function resolveHighlighted(entry: ItemNavigationEntry) {
 }
 
 function onKeydown(event: KeyboardEvent) {
+  if (event.key === "Tab") {
+    for (const entry of entries) hideHighlight(entry);
+    return;
+  }
   if (event.defaultPrevented || event.altKey) return;
-  if (isTextElement(event.target) || hasOpenPopover()) return;
+  if (isKeyedControl(event.target) || hasOpenPopover()) return;
   const entry = resolveActiveEntry();
-  if (!entry || isFocusOutside(entry)) return;
+  if (!entry) return;
   if (isItemNavigationKey(event.key)) {
     if (event.metaKey || event.ctrlKey) return;
     moveHighlight(entry, event, event.key);
@@ -210,7 +298,8 @@ function onKeydown(event: KeyboardEvent) {
     return;
   }
   const highlighted = resolveHighlighted(entry);
-  if (!highlighted) return;
+  if (!highlighted || isOtherControlInList(entry, event.target, highlighted))
+    return;
   if (isMenuKey(event)) {
     event.preventDefault();
     event.stopPropagation();
@@ -220,8 +309,7 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key === "Enter" && !event.shiftKey && entry.config.onOpen) {
     event.preventDefault();
     event.stopPropagation();
-    entry.isShown = false;
-    paintHighlight(entry);
+    hideHighlight(entry);
     entry.config.onOpen(highlighted, event);
     return;
   }
@@ -299,9 +387,14 @@ function stopListening() {
  * Enter opens the highlighted item and hides the highlight until the next
  * arrow, which resumes from that item. Space toggles its selection, Shift+arrows
  * extend the selection, and the period, ContextMenu or Shift+F10 key dispatches
- * `itemmenu` on the item so it can open its menu. Escape clears the highlight once no selection is
- * left. Only the list the user last clicked in, or else the most recently
- * mounted visible list, responds, and lists behind a modal or dialog do not.
+ * `itemmenu` on the item so it can open its menu. Escape clears the highlight
+ * once no selection is left. Only the list the user last clicked in, or else
+ * the most recently mounted visible list, responds; lists behind a modal or
+ * dialog or inside an inert or hidden layer do not. Keys from a text field or
+ * a control that uses them itself (a select, menu, listbox or slider) are
+ * left alone, and Enter, Space and the menu keys from another control inside
+ * the list act on that control. Tab hides the highlight, so Enter and Space
+ * reach the control focus moves to; the next arrow brings it back.
  * A click inside another scrolling area keeps the arrow keys for that area
  * until a list is clicked or mounted, the area closes, or the page path changes.
  */

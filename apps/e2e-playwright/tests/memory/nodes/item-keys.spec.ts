@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { expect, test, type E2ESeed } from "../../fixtures/e2e-test";
-import { ensureInAppOnHome } from "../../utils/helpers";
+import { ensureInAppOnHome, LibraryTab } from "../../utils/helpers";
 import {
   blockExternalAuthRequests,
   openNodesLibrary
@@ -21,7 +21,6 @@ async function openSeededLibrary(page: Page) {
       hasText: "E2E item keys node"
     })
   ).toHaveCount(3, { timeout: 20_000 });
-  await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
 }
 
 async function highlightedId(page: Page) {
@@ -55,6 +54,33 @@ test.describe("nodes - item keys", () => {
     });
     await expect(page).toHaveURL(new RegExp(encodeURIComponent(first)));
     await expect(highlighted(page)).toHaveCount(0);
+  });
+
+  test("arrow keys reach the list while the Library tab that opened it keeps focus", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await openSeededLibrary(page);
+
+    const nodesTab = page
+      .getByRole("tab", { name: LibraryTab.Nodes })
+      .or(page.getByRole("button", { name: LibraryTab.Nodes }))
+      .first();
+    await nodesTab.click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            !!document.activeElement &&
+            document.activeElement !== document.body
+        )
+      )
+      .toBe(true);
+
+    await page.keyboard.press("ArrowDown");
+    const first = await highlightedId(page);
+    await page.keyboard.press("ArrowRight");
+    await expect(highlighted(page)).not.toHaveAttribute("data-id", first);
   });
 
   test("Space and Shift arrows add to the selection, and Escape clears the selection before the highlight", async ({

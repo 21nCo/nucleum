@@ -3,7 +3,7 @@ import {
   isItemNavigationKey,
   resolveItemNavigationIndex,
   resolveItemRange,
-  resolveItemRows,
+  resolveItemRow,
   type ItemNavigationRect
 } from "./item-navigation";
 
@@ -24,7 +24,10 @@ describe("item navigation", () => {
   });
 
   it("groups items into visual rows", () => {
-    expect(resolveItemRows(grid(3, 7))).toEqual([[0, 1, 2], [3, 4, 5], [6]]);
+    const items = grid(3, 7);
+    expect(resolveItemRow(items, 1)).toEqual([0, 1, 2]);
+    expect(resolveItemRow(items, 3)).toEqual([3, 4, 5]);
+    expect(resolveItemRow(items, 6)).toEqual([6]);
   });
 
   it("highlights the first item on the first press", () => {
@@ -65,5 +68,52 @@ describe("item navigation", () => {
   it("returns an inclusive range in either direction", () => {
     expect(resolveItemRange(2, 4)).toEqual([2, 3, 4]);
     expect(resolveItemRange(4, 2)).toEqual([2, 3, 4]);
+  });
+
+  describe("masonry columns of mixed heights", () => {
+    // Three columns 200px wide. A, B and C start the columns; E sits under
+    // the short B, so it starts before the tall A and C end.
+    const masonry: ItemNavigationRect[] = [
+      { top: 0, left: 0, width: 200, height: 300 }, // 0 A
+      { top: 0, left: 210, width: 200, height: 100 }, // 1 B
+      { top: 0, left: 420, width: 200, height: 200 }, // 2 C
+      { top: 110, left: 210, width: 200, height: 400 }, // 3 E
+      { top: 210, left: 420, width: 200, height: 100 }, // 4 F
+      { top: 310, left: 0, width: 200, height: 100 } // 5 G
+    ];
+
+    it("moves Down and Up within a column to the item directly below or above", () => {
+      expect(resolveItemNavigationIndex(masonry, 1, "ArrowDown")).toBe(3);
+      expect(resolveItemNavigationIndex(masonry, 3, "ArrowUp")).toBe(1);
+      expect(resolveItemNavigationIndex(masonry, 2, "ArrowDown")).toBe(4);
+      expect(resolveItemNavigationIndex(masonry, 0, "ArrowDown")).toBe(5);
+      expect(resolveItemNavigationIndex(masonry, 5, "ArrowUp")).toBe(0);
+    });
+
+    it("goes to the nearest item below another column, and stops when none is below", () => {
+      expect(resolveItemNavigationIndex(masonry, 4, "ArrowDown")).toBe(5);
+      expect(resolveItemNavigationIndex(masonry, 3, "ArrowDown")).toBe(3);
+    });
+
+    it("moves Left and Right to the nearest item beside it", () => {
+      expect(resolveItemNavigationIndex(masonry, 0, "ArrowRight")).toBe(1);
+      expect(resolveItemNavigationIndex(masonry, 3, "ArrowLeft")).toBe(5);
+      expect(resolveItemNavigationIndex(masonry, 4, "ArrowLeft")).toBe(3);
+      expect(resolveItemNavigationIndex(masonry, 3, "ArrowRight")).toBe(4);
+      expect(resolveItemNavigationIndex(masonry, 5, "ArrowRight")).toBe(3);
+      expect(resolveItemNavigationIndex(masonry, 1, "ArrowLeft")).toBe(0);
+    });
+  });
+
+  it("moves Down from a short item past a taller neighbour in its row", () => {
+    const rows: ItemNavigationRect[] = [
+      { top: 0, left: 0, width: 200, height: 200 },
+      { top: 0, left: 210, width: 200, height: 100 },
+      { top: 210, left: 0, width: 200, height: 100 },
+      { top: 210, left: 210, width: 200, height: 100 }
+    ];
+    expect(resolveItemNavigationIndex(rows, 1, "ArrowDown")).toBe(3);
+    expect(resolveItemNavigationIndex(rows, 0, "ArrowDown")).toBe(2);
+    expect(resolveItemNavigationIndex(rows, 3, "ArrowLeft")).toBe(2);
   });
 });
