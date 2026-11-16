@@ -12,25 +12,47 @@ type CalendarEventRange = {
 const defaultCalendarEventDurationMs = 60 * 60 * 1000;
 
 /**
- * Builds a half-open event overlap filter on the top-level event times.
+ * The filters that together select events overlapping a range, half-open on
+ * the top-level event times: events with an end that overlap it, and
+ * open-ended events (no end) that start within the default duration before
+ * it ends. DataFn servers reject `$or`, so these run as separate queries
+ * whose results are merged with `mergeCalendarEventResults`.
+ *
  * Legacy events that kept their times in `value` get them lifted to the
  * top-level fields on import; servers can't filter inside JSON, so a
- * `value.*` branch here would make the whole query fail in direct mode.
+ * `value.*` filter here would make the whole query fail in direct mode.
  */
 export function resolveCalendarEventOverlapFilters(range: CalendarEventRange) {
   const openEndedStart = range.start - defaultCalendarEventDurationMs;
-  return {
-    $or: [
-      {
-        startUnix: { $lt: range.end },
-        endUnix: { $gt: range.start }
-      },
-      {
-        startUnix: { $gt: openEndedStart, $lt: range.end },
-        endUnix: { $is_null: true }
-      }
-    ]
-  };
+  return [
+    {
+      startUnix: { $lt: range.end },
+      endUnix: { $gt: range.start }
+    },
+    {
+      startUnix: { $gt: openEndedStart, $lt: range.end },
+      endUnix: { $is_null: true }
+    }
+  ];
+}
+
+/** Merges per-filter event results: each id once, ordered by start time. */
+export function mergeCalendarEventResults<
+  T extends { id?: unknown; startUnix?: unknown }
+>(results: readonly (readonly T[] | null | undefined)[]): T[] {
+  const byId = new Map<unknown, T>();
+  const withoutId: T[] = [];
+  for (const records of results) {
+    for (const record of records ?? []) {
+      if (record?.id === undefined) withoutId.push(record);
+      else if (!byId.has(record.id)) byId.set(record.id, record);
+    }
+  }
+  const startOf = (record: T) =>
+    typeof record.startUnix === "number" ? record.startUnix : Infinity;
+  return [...byId.values(), ...withoutId].sort(
+    (a, b) => startOf(a) - startOf(b)
+  );
 }
 
 /**
