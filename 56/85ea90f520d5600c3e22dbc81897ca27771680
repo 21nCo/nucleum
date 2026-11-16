@@ -1,0 +1,23 @@
+client/features/focus/tasks/TaskLibrary.svelte
+  s_f058f999ab46b7::t_d370276c6d8ec5 810
+client/features/focus/tasks/TaskRecords.svelte
+  s_f058f999ab46b7::t_e2a50b0a849eff 28,40-41,54-60,187-192
+client/surfaces/library/LibraryRecordsPane.svelte
+  s_f058f999ab46b7::t_626eb20f37a33d 128-129,218-254,850,855,863-865
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5685ea90f520d5600c3e22dbc81897ca27771680",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
