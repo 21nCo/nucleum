@@ -18,7 +18,8 @@
   // elsewhere (such as a menu item) receives that key's keyup, so only an
   // Enter that was also pressed down inside the editor submits.
   let isEnterPressedInside = false;
-  let isSubmitting = false;
+  let isEscapeComposing = false;
+  let isSubmitting = $state(false);
 
   $effect(() => {
     const input = container?.querySelector("input");
@@ -43,15 +44,29 @@
     void submit();
   }
 
+  function isComposing(event: KeyboardEvent) {
+    return event.isComposing || event.keyCode === 229;
+  }
+
   function handleKeydownCapture(event: KeyboardEvent) {
-    if (event.key === "Enter" && !event.isComposing) {
+    if (event.key === "Enter" && !isComposing(event)) {
       isEnterPressedInside = true;
     }
+    if (event.key === "Escape") {
+      isEscapeComposing = isComposing(event);
+    }
+  }
+
+  function handleKeyupCapture(event: KeyboardEvent) {
+    if (event.key !== "Escape" || !isEscapeComposing) return;
+    isEscapeComposing = false;
+    event.stopPropagation();
   }
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key !== "Escape") return;
     event.stopPropagation();
+    if (isComposing(event)) return;
     onCancel();
   }
 </script>
@@ -61,6 +76,7 @@
   class="flex-1 min-w-0"
   role="presentation"
   onkeydowncapture={handleKeydownCapture}
+  onkeyupcapture={handleKeyupCapture}
   onkeydown={handleKeydown}
 >
   <TextInput
@@ -69,6 +85,7 @@
     size={Size.sm}
     hasControls={true}
     isShowSaveControl={name.trim() !== ""}
+    isReadOnly={isSubmitting}
     isShowClearControl={true}
     cancelControlLabel="Cancel"
     isPreventKeyboardToolbar={true}

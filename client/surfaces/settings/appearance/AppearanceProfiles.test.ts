@@ -206,4 +206,93 @@ describe("AppearanceProfiles name editor", () => {
     await waitFor(() => expect(nameInput()).toBeNull());
     expect(mocks.toastError).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["new profile", openNewEditor, () => mocks.saveAppearanceProfileAsNew],
+    ["rename", openRenameEditor, () => mocks.renameAppearanceProfile]
+  ])(
+    "locks the %s draft while its write is pending and closes on success",
+    async (_label, openEditor, writeMock) => {
+      let resolveWrite!: (result: { ok: boolean }) => void;
+      writeMock().mockReturnValueOnce(
+        new Promise((resolve) => (resolveWrite = resolve))
+      );
+      render(AppearanceProfiles);
+      await openEditor();
+      await typeName("Work");
+
+      await save();
+      await tick();
+      expect(nameInput()?.readOnly).toBe(true);
+      await save();
+      expect(writeMock()).toHaveBeenCalledTimes(1);
+
+      resolveWrite({ ok: true });
+      await waitFor(() => expect(nameInput()).toBeNull());
+      expect(mocks.toastError).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    ["new profile", openNewEditor, () => mocks.saveAppearanceProfileAsNew],
+    ["rename", openRenameEditor, () => mocks.renameAppearanceProfile]
+  ])(
+    "unlocks the %s draft after a pending write fails and retries with the kept name",
+    async (_label, openEditor, writeMock) => {
+      let resolveWrite!: (result: { ok: boolean }) => void;
+      writeMock()
+        .mockReturnValueOnce(new Promise((resolve) => (resolveWrite = resolve)))
+        .mockResolvedValueOnce({ ok: true });
+      render(AppearanceProfiles);
+      await openEditor();
+      await typeName("Work");
+
+      await save();
+      await tick();
+      expect(nameInput()?.readOnly).toBe(true);
+
+      resolveWrite({ ok: false });
+      await waitFor(() => expect(nameInput()?.readOnly).toBe(false));
+      expect(nameInput()?.value).toBe("Work");
+      expect(mocks.toastError).toHaveBeenCalledWith(
+        PROFILE_NAME_SAVE_FAILED_MESSAGE
+      );
+
+      await save();
+      await waitFor(() => expect(nameInput()).toBeNull());
+      expect(writeMock()).toHaveBeenCalledTimes(2);
+      expect(writeMock().mock.calls[1].at(-1)).toBe("Work");
+    }
+  );
+
+  it("keeps the editor and draft when Escape cancels an IME composition", async () => {
+    const outsideKeydown = vi.fn();
+    const outsideKeyup = vi.fn();
+    document.addEventListener("keydown", outsideKeydown);
+    document.addEventListener("keyup", outsideKeyup);
+    try {
+      render(AppearanceProfiles);
+      await openNewEditor();
+      await typeName("Work");
+      const input = nameInput()!;
+      input.focus();
+
+      await fireEvent.keyDown(input, { key: "Escape", isComposing: true });
+      await fireEvent.keyUp(input, { key: "Escape" });
+      await fireEvent.keyDown(input, { key: "Escape", keyCode: 229 });
+      await tick();
+      expect(nameInput()?.value).toBe("Work");
+      expect(document.activeElement).toBe(nameInput());
+      expect(outsideKeydown).not.toHaveBeenCalled();
+      expect(outsideKeyup).not.toHaveBeenCalled();
+
+      await fireEvent.keyDown(nameInput()!, { key: "Escape" });
+      await tick();
+      expect(nameInput()).toBeNull();
+      expect(outsideKeydown).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener("keydown", outsideKeydown);
+      document.removeEventListener("keyup", outsideKeyup);
+    }
+  });
 });

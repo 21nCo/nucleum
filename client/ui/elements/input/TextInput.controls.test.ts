@@ -37,4 +37,17 @@ describe("TextInput controls", () => {
     expect(screen.getByRole("button", { name: "Discard name" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Save name" })).toBeNull();
   });
+
+  it("makes the text input read-only only when asked", () => {
+    const { unmount } = render(TextInput, { value: "Draft", testId: "field" });
+    expect((screen.getByTestId("field") as HTMLInputElement).readOnly).toBe(
+      false
+    );
+    unmount();
+
+    render(TextInput, { value: "Draft", testId: "field", isReadOnly: true });
+    expect((screen.getByTestId("field") as HTMLInputElement).readOnly).toBe(
+      true
+    );
+  });
 });

@@ -2,7 +2,10 @@
   import { tick, type Snippet, type Component } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import Icon from "@21n/ui/elements/Icon.svelte";
-  import { InputStyle, type InputLabel } from "@21n/ui/elements/input/input.type";
+  import {
+    InputStyle,
+    type InputLabel
+  } from "@21n/ui/elements/input/input.type";
   import InputBaseElement from "@21n/ui/elements/InputBaseElement.svelte";
   import { isValidHyperlink } from "@21n/shared-utils/url.utils";
   import Link from "@21n/ui/elements/text/Link.svelte";
@@ -42,6 +45,7 @@
     isAccentBackground = false,
     testId = undefined,
     isDisabled = false,
+    isReadOnly = false,
     children = undefined,
     onBlur = undefined,
     onCancel = undefined,
@@ -82,6 +86,7 @@
     isAccentBackground?: boolean;
     testId?: string | undefined;
     isDisabled?: boolean;
+    isReadOnly?: boolean;
     children?: Snippet | undefined;
     onBlur?: ((event: CustomEvent<void>) => void) | undefined;
     onCancel?:
@@ -491,6 +496,7 @@
           }}
           {placeholder}
           disabled={isDisabled}
+          readonly={isReadOnly}
           bind:this={inputRef}
           autocomplete="off"
           tabindex={isDisabled ? -1 : 0}
