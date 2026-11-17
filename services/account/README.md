@@ -130,7 +130,7 @@ In `remote` and `both` modes each regional Worker gets:
 - the `FileProcessingContainer` container and Durable Object, and the
   `FILEFN_PROCESSING_DATABASE_URL` Secrets Store binding
   (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`), a URL
-  with `sslmode=verify-full` or `sslrootcert=system`.
+  with the exact lowercase `sslmode=verify-full` or `sslrootcert=system`.
 
 Before switching an environment, create both queues per region, add each
 region's database URL to the Secrets Store and build the container's base
@@ -141,6 +141,8 @@ On Node (`npm run dev`), `FILEFN_PROCESSING_MODE=remote` or `both` runs the
 same processors in the service process after each upload responds, limited
 to what its prebuilt sharp decodes: PDF previews and OCR, and HEIC conversion
 and OCR, need the container (see `services/file-processing/README.md`).
+TIDY-540 does not deliver PDF and HEIC processing on Node; the gap is recorded
+as `node-inline-processing-native-codecs` in TIDY-552.
 
 An hourly cron (`0 * * * *`) runs in every mode: it deletes upload sessions
 that expired before completing and retries FileFn deletions still owed for

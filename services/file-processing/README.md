@@ -30,7 +30,9 @@ no PDF loader and no HEVC decoder. It probes `sharp.format`
 (`detectNucleumCodecs`) and runs only what that sharp decodes: usually the
 image thumbnail and image OCR. It leaves out `pdf-preview`, PDF OCR,
 `heic-convert` and HEIC OCR, logging them once at the first upload. Full PDF
-and HEIC processing needs the container.
+and HEIC processing needs the container; on Node, PDFs and HEIC photos get no
+preview, conversion or OCR. TIDY-540 does not deliver that path: the gap is
+recorded as `node-inline-processing-native-codecs` in TIDY-552.
 
 ## Container image
 
@@ -39,8 +41,11 @@ pinned by `FILEFN_PROCESSING_BASE_IMAGE`), which has sharp built against
 Debian's libvips with its PDF loader, tesseract and the job server
 (`POST /jobs`, `GET /health`). It adds libheif's HEVC decoder, the
 database module (`src/database.mjs`, over the account service's generated
-FileFn schema; `src/postgres.mjs` refuses a non-loopback
-`FILEFN_DATABASE_URL` without `sslmode=verify-full` or `sslrootcert=system`) and `src/container.mjs`, which starts the FILE-9 server with
+FileFn schema; `src/postgres.mjs` refuses, through `src/postgres-url.mjs`,
+a non-loopback `FILEFN_DATABASE_URL` without the exact lowercase
+`sslmode=verify-full` or `sslrootcert=system`, the only spellings postgres.js
+turns into certificate-verifying TLS) and `src/container.mjs`, which starts
+the FILE-9 server with
 the processors above. The build context is the repository root.
 
 Build the base image once per host before Wrangler builds this one:
@@ -56,8 +61,9 @@ container with:
 - `FILEFN_DATABASE_URL`: the Worker's `FILEFN_PROCESSING_DATABASE_URL` Secrets
   Store binding (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`),
   a direct URL of the region's account Postgres, since Hyperdrive serves only
-  Workers. It must verify the server certificate (`sslmode=verify-full` or
-  `sslrootcert=system`); the Durable Object refuses to start the container
+  Workers. It must verify the server certificate (exact `sslmode=verify-full`
+  or `sslrootcert=system`); the Durable Object applies the same rule
+  (`@21n/file-processing/postgres-url`) and refuses to start the container
   otherwise.
 
 The image sets `FILEFN_DATABASE`, `FILEFN_NAMESPACE=filefn`,

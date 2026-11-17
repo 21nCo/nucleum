@@ -5,6 +5,7 @@ import {
   unsupportedNucleumProcessing
 } from "../../../services/file-processing/src/processors.mjs";
 import { openFileFnDatabase } from "../../../services/file-processing/src/postgres.mjs";
+import { createRequire } from "node:module";
 import { describe, expect, it, vi } from "vitest";
 import * as filefnSchema from "../../../services/account/src/db/generated/filefn/filefn-schema";
 
@@ -77,7 +78,13 @@ describe("processing container database", () => {
   it.each([
     ["a plaintext remote URL", "postgres://db.example/files"],
     ["sslmode=require, which skips the certificate check", "postgres://db.example/files?sslmode=require"],
-    ["repeated TLS parameters", "postgres://db.example/files?sslmode=verify-full&sslmode=disable"]
+    ["repeated TLS parameters", "postgres://db.example/files?sslmode=verify-full&sslmode=disable"],
+    ["sslrootcert=SYSTEM, which postgres.js sends in plaintext", "postgres://db.example/files?sslrootcert=SYSTEM"],
+    [
+      "sslrootcert=SYSTEM with sslmode=require, which skips the certificate check",
+      "postgres://db.example/files?sslrootcert=SYSTEM&sslmode=require"
+    ],
+    ["a non-exact sslmode spelling", "postgres://db.example/files?sslmode=Verify-Full"]
   ])("refuses %s before connecting", (_label, url) => {
     expect(() => openFileFnDatabase({ FILEFN_DATABASE_URL: url }, filefnSchema)).toThrow(
       /FILEFN_CONTAINER_CONFIG_INVALID/
@@ -87,9 +94,26 @@ describe("processing container database", () => {
   it.each([
     "postgres://db.example/files?sslmode=verify-full",
     "postgres://db.example/files?sslrootcert=system",
+    "postgres://db.example/files?sslrootcert=system&sslmode=require",
     "postgres://127.0.0.1:5432/files"
   ])("opens %s", async (url) => {
     const database = openFileFnDatabase({ FILEFN_DATABASE_URL: url }, filefnSchema);
     await database.close();
+  });
+
+  it.each([
+    "postgres://db.example/files?sslmode=verify-full",
+    "postgres://db.example/files?sslrootcert=system",
+    "postgres://db.example/files?sslrootcert=system&sslmode=require"
+  ])("accepts the remote URL %s only because the container's postgres.js verifies its certificate", async (url) => {
+    // The driver the container declares, resolved the way the container resolves it.
+    const postgres = createRequire(new URL("../../../services/file-processing/package.json", import.meta.url))(
+      "postgres"
+    ) as (url: string) => { options: { ssl: unknown }; end: () => Promise<void> };
+    const database = openFileFnDatabase({ FILEFN_DATABASE_URL: url }, filefnSchema);
+    await database.close();
+    const sql = postgres(url);
+    expect(sql.options.ssl).toBe("verify-full");
+    await sql.end();
   });
 });

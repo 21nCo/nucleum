@@ -4,6 +4,7 @@ import { createNucleumProcessors, detectNucleumCodecs, NUCLEUM_PROCESSOR_NAMES }
 import { createFileFn, createProcessingJobHandler, type FileFnRuntime, type Processor } from '@filefn/server';
 import { memoryAdapter } from '@superfunctions/db/adapters/memory';
 import { Hono } from 'hono';
+import postgres from 'postgres';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AccountServices, CreateAccountAppInput } from '../app.js';
 import { createFileDeferredWork } from './deferred.js';
@@ -526,7 +527,14 @@ describe('processing container environment', () => {
 
   it.each([
     ['plaintext', 'postgres://db.example/files'],
-    ['sslmode=require (no certificate check)', 'postgres://db.example/files?sslmode=require']
+    ['sslmode=require (no certificate check)', 'postgres://db.example/files?sslmode=require'],
+    // postgres.js turns only the exact lowercase `system` into verify-full.
+    ['sslrootcert=SYSTEM (plaintext in postgres.js)', 'postgres://db.example/files?sslrootcert=SYSTEM'],
+    [
+      'sslrootcert=SYSTEM with sslmode=require (no certificate check)',
+      'postgres://db.example/files?sslrootcert=SYSTEM&sslmode=require'
+    ],
+    ['a non-exact sslmode spelling', 'postgres://db.example/files?sslmode=VERIFY-FULL']
   ])('refuses to start the container with a remote database URL over %s', async (_label, url) => {
     await expect(
       resolveFileProcessingContainerEnv({ ...R2_ENV, FILEFN_PROCESSING_DATABASE_URL: url }, 'insouth')
@@ -536,10 +544,23 @@ describe('processing container environment', () => {
   it.each([
     'postgres://db.example/files?sslmode=verify-full',
     'postgres://db.example/files?sslrootcert=system',
+    'postgres://db.example/files?sslrootcert=system&sslmode=require',
     'postgres://localhost:5432/files'
   ])('passes on the verified or loopback database URL %s', async (url) => {
     const env = await resolveFileProcessingContainerEnv({ ...R2_ENV, FILEFN_PROCESSING_DATABASE_URL: url }, 'insouth');
     expect(env.FILEFN_DATABASE_URL).toBe(url);
+  });
+
+  it.each([
+    'postgres://db.example/files?sslmode=verify-full',
+    'postgres://db.example/files?sslrootcert=system',
+    'postgres://db.example/files?sslrootcert=system&sslmode=require'
+  ])('accepts the remote URL %s only because postgres.js verifies its certificate', async (url) => {
+    await resolveFileProcessingContainerEnv({ ...R2_ENV, FILEFN_PROCESSING_DATABASE_URL: url }, 'insouth');
+    // postgres() parses lazily and opens no connection here.
+    const sql = postgres(url);
+    expect(sql.options.ssl).toBe('verify-full');
+    await sql.end();
   });
 });
 

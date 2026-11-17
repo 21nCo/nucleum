@@ -1,4 +1,5 @@
 import { NUCLEUM_PROCESSOR_DESCRIPTORS } from "@21n/file-processing/descriptors";
+import { requireVerifiedPostgresUrl } from "@21n/file-processing/postgres-url";
 import {
   createCloudflareFlowFnProvider,
   type CloudflareQueueBinding
@@ -10,7 +11,6 @@ import {
   type ProcessingQueueMessage,
   type Processor
 } from "@filefn/server";
-import { requireSecureRemotePostgresUrl } from "../db/postgres-security.js";
 import { FILEFN_R2_ENV_KEYS, readAccountFileStorageConfig } from "./storage.js";
 
 /**
@@ -242,8 +242,9 @@ const PROCESSING_DATABASE_URL_KEY = "FILEFN_PROCESSING_DATABASE_URL";
  * (`FILEFN_PROCESSING_DATABASE_URL`, passed as `FILEFN_DATABASE_URL`). Each
  * value is a plain variable or a Secrets Store binding. A missing value, or
  * a database URL that does not verify a remote server's certificate
- * (`sslmode=verify-full` or `sslrootcert=system`), throws, so the container
- * never starts without its storage or over an unverified connection.
+ * (exact `sslmode=verify-full` or `sslrootcert=system`, the container's own
+ * rule), throws, so the container never starts without its storage or over
+ * an unverified connection.
  */
 export async function resolveFileProcessingContainerEnv(
   env: Record<string, unknown>,
@@ -259,7 +260,7 @@ export async function resolveFileProcessingContainerEnv(
   if (missing.length > 0 || !storage) {
     throw new Error(`File processing container needs ${missing.join(", ")}`);
   }
-  requireSecureRemotePostgresUrl(values[PROCESSING_DATABASE_URL_KEY]!);
+  requireVerifiedPostgresUrl(values[PROCESSING_DATABASE_URL_KEY]!);
   return {
     FILEFN_R2_ACCOUNT_ID: storage.accountId,
     FILEFN_R2_ACCESS_KEY_ID: storage.accessKeyId,

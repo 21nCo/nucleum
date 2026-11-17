@@ -12,6 +12,10 @@
     "./descriptors": {
       "types": "./src/descriptors.d.ts",
       "default": "./src/descriptors.mjs"
+    },
+    "./postgres-url": {
+      "types": "./src/postgres-url.d.ts",
+      "default": "./src/postgres-url.mjs"
     }
   },
   "scripts": {
