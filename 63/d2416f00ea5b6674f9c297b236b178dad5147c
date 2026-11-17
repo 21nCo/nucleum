@@ -1,0 +1,19 @@
+client/features/calendar/CalendarLayoutFullWidth.test.ts
+  s_e40a0d7cc5cf4e::t_930db2a0983089 67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "63d2416f00ea5b6674f9c297b236b178dad5147c",
+  "prompts": {},
+  "sessions": {
+    "s_e40a0d7cc5cf4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5dac4a51-af0f-4154-9a07-0b321617105f",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

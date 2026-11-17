@@ -1,0 +1,23 @@
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_e753f4ab224de9::t_f4880365ffc456 143-152,155
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_e753f4ab224de9::t_11c47a8a6967d1 3,88-130
+client/features/calendar/CalendarLayout.svelte
+  s_e753f4ab224de9::t_9ee76e5ac192e7 162-163,171,173,176-182,186-201
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ebb12b56e3299caa5bb59416568f335818198a49",
+  "prompts": {},
+  "sessions": {
+    "s_e753f4ab224de9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9b413bb-78e4-461c-b7a1-7e3598c6e221",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

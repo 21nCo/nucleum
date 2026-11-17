@@ -1,0 +1,35 @@
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_ace82070dcb8c7::t_e82a9f542785c7 74-76
+client/features/calendar/CalendarLayout.svelte
+  s_ace82070dcb8c7::t_0c49ffa221e294 28,52-53,57,137-142,299,425
+client/features/calendar/CalendarLayoutScaleMenu.test.ts
+  s_ace82070dcb8c7::t_27bb6bf5a96fe8 1-177
+client/features/calendar/birdView/BirdCalendar.svelte
+  s_ace82070dcb8c7::t_faf64236223432 117-118
+client/features/calendar/classic/ClassicCalendar.svelte
+  s_ace82070dcb8c7::t_324c13d0656967 185,191
+client/features/calendar/classic/ClassicCalendarHeaderLeftOptions.svelte
+  s_ace82070dcb8c7::t_87a9abda548995 131
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_ace82070dcb8c7::t_5536926c116d1e 12,76,80-87,89-96,102-105,108-109,133-135,228-232,238-239,288,328,368-370
+client/ui/elements/switcher/switcher-overflow.test.ts
+  s_ace82070dcb8c7::t_9ba4fba1ba6304 2-5,72-122
+client/ui/elements/switcher/switcher-overflow.ts
+  s_ace82070dcb8c7::t_c29d98d22a9eee 15-27,31-36,38,44-46,48-50,54-67,71,73-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00790de0f28cf50c8049f43ba092963897d77474",
+  "prompts": {},
+  "sessions": {
+    "s_ace82070dcb8c7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32377d70-4569-4b72-b877-f60e4a5990c1",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
