@@ -6,15 +6,11 @@ This repository contains GitHub Actions workflows for deploying projects in the 
 
 ### Turbo Deploy (`turbo-deploy.yml`)
 
-Unified deployment workflow for all products in the turbo repo using AWS CDK.
+Legacy deployment workflow for all products in the turbo repo using AWS CDK.
 
 **Deployment Strategy:**
-- **dev branch push** → Auto-deploys ALL products to dev environment
-- **pre/live environments** → Manual deployment only (for safety)
-
-**Trigger Methods:**
-1. **Auto-Deploy**: Push to `dev` branch deploys all products to dev environment
-2. **Manual Deploy**: Use GitHub Actions UI for specific product/environment combinations
+- Runs only when started by hand from the GitHub Actions UI, for every environment (dev, pre, live).
+- Pushes to `dev` do not start it. Dev deploys go through Frontend Cloudflare Deploy (`frontend-cloudflare-deploy.yml`).
 
 **Manual Dispatch Options:**
 - `project`: Choose which project to deploy (nucleus, memotron, pointron, gathery, all)
@@ -91,14 +87,6 @@ nucleus/
 
 ## Usage Examples
 
-### Auto-Deploy All Products to Dev
-
-**Push to dev branch:**
-```bash
-git push origin dev
-```
-This will automatically deploy ALL products (nucleus, memotron, pointron, gathery) to the dev environment.
-
 ### Manual Deploy Single Product
 
 **Deploy Nucleus to Pre Environment:**
@@ -129,7 +117,7 @@ This will automatically deploy ALL products (nucleus, memotron, pointron, gather
 
 ## Workflow Features
 
-- **🚀 Smart Deployment Strategy**: Auto-deploy all products to dev, manual control for pre/live
+- **🚀 Manual Deployment**: Started by hand for any product and environment
 - **🎯 Matrix Strategy**: Parallel builds and deployments for efficiency
 - **🔐 Environment-based Secrets**: Project-specific secrets with fallback support
 - **📦 Multi-project Support**: Deploy single project, multiple projects, or all at once
