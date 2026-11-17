@@ -224,10 +224,8 @@
    * Drops every measured width when the controls' content changes, as on a
    * fresh mount: the full controls show once, are measured with the new
    * content, and the least compact level that fits is picked again from
-   * widths measured with it. Only full controls already on screen are
-   * measured here; compact ones are measured once the full controls show. A
-   * compact hold for a reopening menu, an open menu or focus in the controls
-   * defers this until it ends.
+   * widths measured with it. A compact hold for a reopening menu, an open
+   * menu or focus in the controls defers this until it ends.
    */
   $effect(() => {
     const key = contentKey;
@@ -241,21 +239,15 @@
       )
         return;
       measuredContentKey = key;
-      const isFullShown = level === 0;
       groupWidths = {};
       fullControlsWidth = 0;
-      if (isFullShown) measure(0);
+      if (level === 0) measure(0);
     });
   });
 
-  /**
-   * Measures the full controls; only the uncompacted controls show them all.
-   * The rendered level is checked too, since a measure can run before the
-   * top bar shows the level it was asked for.
-   */
+  /** Measures the full controls; only the uncompacted controls show them all. */
   function measureFullControls(shownLevel: number) {
-    if (!controlsRef || shownLevel !== 0 || controlsRef.dataset.level !== "0")
-      return;
+    if (!controlsRef || shownLevel !== 0) return;
     const groups = controlsRef.children.length;
     const gap = parseFloat(getComputedStyle(controlsRef).columnGap) || 0;
     controlGroupCount = groups;
@@ -263,7 +255,13 @@
       controlsRef.scrollWidth - Math.max(0, groups - 1) * (gap - TIGHT_GAP_PX);
   }
 
+  /**
+   * Measures the controls shown at a level. A measure can run before the top
+   * bar shows that level, while a group's name and its content can still
+   * belong to different levels, so it waits until the level is rendered.
+   */
   function measure(shownLevel: number) {
+    if (controlsRef?.dataset.level !== String(shownLevel)) return;
     measureGroups();
     measureFullControls(shownLevel);
   }

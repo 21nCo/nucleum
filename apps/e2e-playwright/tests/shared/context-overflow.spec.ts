@@ -159,6 +159,52 @@ test.describe("context zone overflow", () => {
     }
   });
 
+  test("calendar controls keep the least compact level that fits after the date changes", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "nucleum",
+      "The calendar layout switcher in the top bar is a Nucleum surface"
+    );
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await ensureInAppOnHome(page);
+    await navigateToSurface(
+      page,
+      "calendar.layout.classic",
+      testInfo.project.name
+    );
+    const controls = page.getByTestId("calendar-context-controls");
+    await expect(controls).toBeVisible({ timeout: 15_000 });
+    await controls.getByRole("button", { name: "Year", exact: true }).click();
+
+    let narrowestInlineScale: number | undefined;
+    for (let width = 1600; width >= 900; width -= 10) {
+      await page.setViewportSize({ width, height: 900 });
+      const level = await settledCalendarLevel(page);
+      if (level === "4") break;
+      if (level === "3") narrowestInlineScale = width;
+    }
+    expect(narrowestInlineScale).toBeDefined();
+    await page.setViewportSize({ width: narrowestInlineScale!, height: 900 });
+    await expect(controls).toHaveAttribute("data-level", "3");
+
+    const date = controls.locator('[data-calendar-group="date-short"]');
+    const year = (await date.textContent()) ?? "";
+    await controls
+      .getByRole("button", { name: "Next calendar period" })
+      .click();
+    await expect(date).not.toHaveText(year);
+    await page.evaluate(() =>
+      (document.activeElement as HTMLElement | null)?.blur()
+    );
+
+    expect(await settledCalendarLevel(page)).toBe("3");
+    await expect(
+      controls.locator('[data-calendar-group="scale"]')
+    ).toBeVisible();
+  });
+
   test("a short page title keeps its natural width and a long one truncates down to 8rem", async ({
     page
   }) => {
@@ -215,6 +261,22 @@ test.describe("context zone overflow", () => {
     expect((await identityLayout(page)).width).toBeGreaterThanOrEqual(127.5);
   });
 });
+
+/** The calendar controls' level once the top bar has laid out and measured them. */
+function settledCalendarLevel(page: Page) {
+  return page.getByTestId("calendar-context-controls").evaluate(
+    (element) =>
+      new Promise<string | undefined>((resolve) => {
+        const frame = (count: number) =>
+          requestAnimationFrame(() =>
+            count === 0
+              ? resolve((element as HTMLElement).dataset.level)
+              : frame(count - 1)
+          );
+        frame(2);
+      })
+  );
+}
 
 function identityLayout(page: Page) {
   return page.getByTestId("top-bar-page-identity").evaluate((element) => {
