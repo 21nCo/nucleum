@@ -6,6 +6,7 @@ import { OperatingSystem } from "@nucleum/client/runtime/context.type";
 const mocks = vi.hoisted(() => ({
   runAction: vi.fn(),
   closeTopLayer: vi.fn(),
+  publish: vi.fn(),
   registered: new Set(["calendar", "page-f"])
 }));
 
@@ -37,18 +38,22 @@ vi.mock("@nucleum/shared-state/commands/command-host", () => ({
 vi.mock("@nucleum/shell/navigation/top-layer", () => ({
   closeTopLayer: mocks.closeTopLayer
 }));
+vi.mock("@nucleum/shared-state/events/app-events.store", () => ({
+  appEvents: { publish: mocks.publish }
+}));
 
 import { configureShortcutHost } from "@nucleum/shared-state/shortcuts/shortcut-host";
 import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
 import ShortcutRunner from "./ShortcutRunner.svelte";
 
-function press(key: string) {
+function press(key: string, init: KeyboardEventInit = {}, target?: Element) {
   const event = new KeyboardEvent("keydown", {
     key,
     bubbles: true,
-    cancelable: true
+    cancelable: true,
+    ...init
   });
-  document.body.dispatchEvent(event);
+  (target ?? document.body).dispatchEvent(event);
   return event;
 }
 
@@ -76,6 +81,34 @@ describe("ShortcutRunner with G chords", () => {
 
     press("Escape");
     expect(mocks.closeTopLayer).toHaveBeenCalledTimes(1);
+  });
+
+  it("still passes Cmd+Escape on to close a resource or modal after G", () => {
+    press("g");
+    const escape = press("Escape", { metaKey: true });
+
+    expect(escape.defaultPrevented).toBe(false);
+    expect(mocks.publish.mock.calls.map(([name]) => name)).toEqual(["Escape"]);
+  });
+
+  it("leaves Escape to an open dialog after G", () => {
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("open", "");
+    dialog.innerHTML = `<button>OK</button>`;
+    document.body.append(dialog);
+    const layerKeys = vi.fn();
+    dialog.addEventListener("keydown", layerKeys);
+    const button = dialog.querySelector("button")!;
+
+    press("g", {}, button);
+    const escape = press("Escape", {}, button);
+
+    expect(escape.defaultPrevented).toBe(false);
+    expect(layerKeys.mock.calls.map(([event]) => event.key)).toEqual([
+      "g",
+      "Escape"
+    ]);
+    expect(mocks.closeTopLayer).not.toHaveBeenCalled();
   });
 
   it("runs no page shortcut for a chord the product does not register", () => {

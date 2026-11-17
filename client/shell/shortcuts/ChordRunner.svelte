@@ -8,8 +8,10 @@
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
+  import { isLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
   import {
     CHORD_TIMEOUT_MS,
+    hasModifier,
     isChordEditableTarget,
     isChordStart,
     resolveChordSpaceIndex
@@ -68,8 +70,10 @@
    * Runs the second key of a chord such as G then C, in the capture phase so
    * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
    * pinned space in that app menu position. Typing in a field or a right-side
-   * drawer opened meanwhile ends the chord and leaves the key to them. Escape
-   * ends the chord and is consumed, so the shell does not also close a layer.
+   * drawer opened meanwhile ends the chord and leaves the key to them. A plain
+   * Escape on the page ends the chord and is consumed, so the shell does not
+   * also close the top layer; inside a modal, dialog or popover, or with a
+   * modifier (Cmd+Escape), Escape ends the chord and passes on unchanged.
    * A chord the product does not register ends without running anything and
    * its key is consumed too. Any other key that is not a chord ends the chord
    * and passes on unchanged.
@@ -86,7 +90,7 @@
     )
       return;
     if (event.key === KeyboardKey.ESCAPE) {
-      consume(event);
+      if (!hasModifier(event) && !isLayerOnFront()) consume(event);
       return;
     }
     const spaceIndex = resolveChordSpaceIndex(prefix, event);

@@ -18,7 +18,8 @@ export type ChordKeyEvent = {
   shiftKey: boolean;
 };
 
-const hasModifier = (event: ChordKeyEvent) =>
+/** Whether Cmd, Ctrl, Option or Shift is held. */
+export const hasModifier = (event: ChordKeyEvent) =>
   event.metaKey || event.ctrlKey || event.altKey || event.shiftKey;
 
 /** Whether a key press is a plain G, which starts a chord. */
