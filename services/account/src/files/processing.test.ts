@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { crc32, deflateSync } from 'node:zlib';
 import { createNucleumProcessors, detectNucleumCodecs, NUCLEUM_PROCESSOR_NAMES } from '@21n/file-processing';
 import { createFileFn, createProcessingJobHandler, type FileFnRuntime, type Processor } from '@filefn/server';
@@ -562,7 +563,60 @@ describe('processing container environment', () => {
     expect(sql.options.ssl).toBe('verify-full');
     await sql.end();
   });
+
+  it.each(DRIVER_PARITY_URLS)(
+    'decides %s on the hosts and TLS mode the container\'s postgres.js parses (accepted: %s)',
+    async (url, accepted) => {
+      expect(await containerDriverVerifies(url)).toBe(accepted);
+      const resolved = resolveFileProcessingContainerEnv({ ...R2_ENV, FILEFN_PROCESSING_DATABASE_URL: url }, 'insouth');
+      if (accepted) {
+        expect((await resolved).FILEFN_DATABASE_URL).toBe(url);
+      } else {
+        await expect(resolved).rejects.toThrow(/FILEFN_CONTAINER_CONFIG_INVALID/);
+      }
+    }
+  );
 });
+
+const DRIVER_PARITY_URLS: Array<[string, boolean]> = [
+  // [url, accepted]: accepted exactly when postgres.js uses ssl=verify-full or connects only to loopback.
+  ['postgres://u:p@db.example/files', false],
+  ['postgres://u:p@db.example/files?sslmode=verify-full', true],
+  ['postgres://u:p@db.example/files?ssl=verify-full', true],
+  ['postgres://u:p@db.example/files?sslrootcert=SYSTEM', false],
+  ['postgres://u:p@localhost:5432/files', true],
+  ['postgres://u:p@LOCALHOST/files', false],
+  ['postgres://u:p@127.0.0.1/files', true],
+  ['postgres://u@[::1]:5432/files', false],
+  // postgres.js takes the host list after the FIRST @; WHATWG URL splits at the last.
+  ['postgres://a@evil.example,b@localhost/db', false],
+  ['postgres://u:p@ss,w@localhost/db', false],
+  ['postgres://a@evil.example,b@localhost/db?sslrootcert=system', true],
+  ['postgres://u:p%40x@db.example/files', false],
+  ['postgres://u:p%40x@localhost/files', true],
+  ['postgres://u@localhost%2Cevil.example/files', false],
+  ['postgres://u@localhost,127.0.0.1:5433/files', true],
+  ['postgres://u@LOCALHOST,localhost/files', false],
+  ['postgres://u@localhost,db.example/files', false],
+  ['postgres://u@localhost,db.example/files?sslmode=verify-full', true],
+  ['postgres://u@db.example,localhost/files?sslmode=require', false]
+];
+
+/** The independent oracle: what the container's own postgres.js parses from `url`. */
+async function containerDriverVerifies(url: string): Promise<boolean> {
+  const containerPostgres = createRequire(new URL('../../../file-processing/package.json', import.meta.url))(
+    'postgres'
+  ) as (url: string) => { options: { ssl: unknown; host: string[] }; end: () => Promise<void> };
+  let sql;
+  try {
+    sql = containerPostgres(url);
+  } catch {
+    return false;
+  }
+  const { ssl, host } = sql.options;
+  await sql.end();
+  return ssl === 'verify-full' || host.every((entry) => entry === 'localhost' || entry === '127.0.0.1');
+}
 
 describe('scheduled file cleanup', () => {
   it('cleans expired upload sessions and retries owed deletions', async () => {

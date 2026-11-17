@@ -41,10 +41,13 @@ pinned by `FILEFN_PROCESSING_BASE_IMAGE`), which has sharp built against
 Debian's libvips with its PDF loader, tesseract and the job server
 (`POST /jobs`, `GET /health`). It adds libheif's HEVC decoder, the
 database module (`src/database.mjs`, over the account service's generated
-FileFn schema; `src/postgres.mjs` refuses, through `src/postgres-url.mjs`,
-a non-loopback `FILEFN_DATABASE_URL` without the exact lowercase
-`sslmode=verify-full` or `sslrootcert=system`, the only spellings postgres.js
-turns into certificate-verifying TLS) and `src/container.mjs`, which starts
+FileFn schema; `src/postgres.mjs` refuses a `FILEFN_DATABASE_URL` unless
+every host postgres.js would connect to is loopback or postgres.js would use
+`ssl=verify-full`, which it does only for the exact lowercase
+`sslmode=verify-full` or `sslrootcert=system`. `src/postgres-url.mjs` derives
+the host list and TLS mode with postgres.js's own URL steps (host list after
+the first `@`, comma-separated), and the container checks the parsed options
+of its client again before using it) and `src/container.mjs`, which starts
 the FILE-9 server with
 the processors above. The build context is the repository root.
 
@@ -62,7 +65,8 @@ container with:
   Store binding (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`),
   a direct URL of the region's account Postgres, since Hyperdrive serves only
   Workers. It must verify the server certificate (exact `sslmode=verify-full`
-  or `sslrootcert=system`); the Durable Object applies the same rule
+  or `sslrootcert=system`) unless every host is loopback; the Durable Object
+  applies the same rule
   (`@21n/file-processing/postgres-url`) and refuses to start the container
   otherwise.
 

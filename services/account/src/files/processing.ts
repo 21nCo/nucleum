@@ -241,9 +241,10 @@ const PROCESSING_DATABASE_URL_KEY = "FILEFN_PROCESSING_DATABASE_URL";
  * bucket replaced by `regionId`) and the region's FileFn database URL
  * (`FILEFN_PROCESSING_DATABASE_URL`, passed as `FILEFN_DATABASE_URL`). Each
  * value is a plain variable or a Secrets Store binding. A missing value, or
- * a database URL that does not verify a remote server's certificate
- * (exact `sslmode=verify-full` or `sslrootcert=system`, the container's own
- * rule), throws, so the container never starts without its storage or over
+ * a database URL that postgres.js would not open with certificate-verifying
+ * TLS (exact `sslmode=verify-full` or `sslrootcert=system`) while any of its
+ * hosts, derived the way postgres.js derives them, is not loopback (the
+ * container's own rule), throws, so the container never starts without its storage or over
  * an unverified connection.
  */
 export async function resolveFileProcessingContainerEnv(
