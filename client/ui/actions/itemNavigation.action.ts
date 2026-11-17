@@ -64,7 +64,7 @@ function resolveItems(entry: ItemNavigationEntry) {
 }
 
 function resolveItemKey(element: HTMLElement) {
-  return element.getAttribute("data-id") ?? element.id;
+  return element.dataset.id ?? element.id;
 }
 
 function isVisible(node: HTMLElement) {
@@ -95,7 +95,7 @@ function resolveActiveEntry(): ItemNavigationEntry | undefined {
   if (
     suppressedBy?.isConnected &&
     suppressedBy.getClientRects().length > 0 &&
-    suppressedAt === location.pathname
+    suppressedAt === location.href
   )
     return undefined;
   suppressedBy = undefined;
@@ -259,6 +259,7 @@ function moveHighlight(
   }
   entry.highlightedKey = resolveItemKey(next);
   entry.isShown = true;
+  for (const other of entries) if (other !== entry) hideHighlight(other);
   paintHighlight(entry);
   releaseStaleFocus(entry, next);
   next.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -271,6 +272,49 @@ function resolveHighlighted(entry: ItemNavigationEntry) {
   );
 }
 
+function claimKey(event: KeyboardEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+/** Escape clears the list's selection first, then the highlight. */
+function handleEscape(entry: ItemNavigationEntry, event: KeyboardEvent) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+  if (entry.config.hasSelection?.()) {
+    entry.anchorKey = undefined;
+    return;
+  }
+  if (!entry.isShown) return;
+  clearHighlight(entry);
+  claimKey(event);
+}
+
+function isPlainSpace(event: KeyboardEvent) {
+  return (
+    event.key === " " && !event.metaKey && !event.ctrlKey && !event.shiftKey
+  );
+}
+
+/** The menu keys, Enter and Space, which act on the highlighted item. */
+function handleItemKey(entry: ItemNavigationEntry, event: KeyboardEvent) {
+  const highlighted = resolveHighlighted(entry);
+  if (!highlighted || isOtherControlInList(entry, event.target, highlighted))
+    return;
+  const { onOpen, onToggle } = entry.config;
+  if (isMenuKey(event)) {
+    claimKey(event);
+    highlighted.dispatchEvent(new CustomEvent(itemMenuEvent));
+  } else if (event.key === "Enter" && !event.shiftKey && onOpen) {
+    claimKey(event);
+    hideHighlight(entry);
+    onOpen(highlighted, event);
+  } else if (isPlainSpace(event) && onToggle) {
+    claimKey(event);
+    entry.anchorKey = undefined;
+    onToggle(highlighted);
+  }
+}
+
 function onKeydown(event: KeyboardEvent) {
   if (event.key === "Tab") {
     for (const entry of entries) hideHighlight(entry);
@@ -281,49 +325,12 @@ function onKeydown(event: KeyboardEvent) {
   const entry = resolveActiveEntry();
   if (!entry) return;
   if (isItemNavigationKey(event.key)) {
-    if (event.metaKey || event.ctrlKey) return;
-    moveHighlight(entry, event, event.key);
-    return;
-  }
-  if (event.key === "Escape") {
-    if (event.metaKey || event.ctrlKey || event.shiftKey) return;
-    if (entry.config.hasSelection?.()) {
-      entry.anchorKey = undefined;
-      return;
-    }
-    if (!entry.isShown) return;
-    clearHighlight(entry);
-    event.preventDefault();
-    event.stopPropagation();
-    return;
-  }
-  const highlighted = resolveHighlighted(entry);
-  if (!highlighted || isOtherControlInList(entry, event.target, highlighted))
-    return;
-  if (isMenuKey(event)) {
-    event.preventDefault();
-    event.stopPropagation();
-    highlighted.dispatchEvent(new CustomEvent(itemMenuEvent));
-    return;
-  }
-  if (event.key === "Enter" && !event.shiftKey && entry.config.onOpen) {
-    event.preventDefault();
-    event.stopPropagation();
-    hideHighlight(entry);
-    entry.config.onOpen(highlighted, event);
-    return;
-  }
-  if (
-    event.key === " " &&
-    !event.metaKey &&
-    !event.ctrlKey &&
-    !event.shiftKey &&
-    entry.config.onToggle
-  ) {
-    event.preventDefault();
-    event.stopPropagation();
-    entry.anchorKey = undefined;
-    entry.config.onToggle(highlighted);
+    if (!event.metaKey && !event.ctrlKey)
+      moveHighlight(entry, event, event.key);
+  } else if (event.key === "Escape") {
+    handleEscape(entry, event);
+  } else {
+    handleItemKey(entry, event);
   }
 }
 
@@ -350,20 +357,35 @@ function resolveOtherScrollArea(target: Node) {
   return undefined;
 }
 
+/**
+ * Whether a pointer pressed a control outside every list and every popover,
+ * such as a toolbar button or checkbox, whose own Enter and Space then win
+ * over the highlighted item until the next arrow.
+ */
+function isOutsideControl(target: Node) {
+  const element = target instanceof Element ? target : target.parentElement;
+  return (
+    !!element?.closest(interactiveSelector) && !element.closest(".popover")
+  );
+}
+
 function onPointerDown(event: PointerEvent) {
   if (!(event.target instanceof Node)) return;
   const target = event.target;
   const entry = entries.find((candidate) => candidate.node.contains(target));
   if (!entry) {
+    if (isOutsideControl(target))
+      for (const other of entries) hideHighlight(other);
     const area = resolveOtherScrollArea(target);
     if (area) {
       suppressedBy = area;
-      suppressedAt = location.pathname;
+      suppressedAt = location.href;
     }
     return;
   }
   suppressedBy = undefined;
   lastInteracted = entry;
+  for (const other of entries) if (other !== entry) hideHighlight(other);
   clearHighlight(entry);
 }
 
@@ -393,10 +415,11 @@ function stopListening() {
  * dialog or inside an inert or hidden layer do not. Keys from a text field or
  * a control that uses them itself (a select, menu, listbox or slider) are
  * left alone, and Enter, Space and the menu keys from another control inside
- * the list act on that control. Tab hides the highlight, so Enter and Space
- * reach the control focus moves to; the next arrow brings it back.
+ * the list act on that control. Tab, or a click on a control outside the
+ * lists, hides the highlight, so Enter and Space reach that control; the next
+ * arrow brings it back. Only one list shows a highlight at a time.
  * A click inside another scrolling area keeps the arrow keys for that area
- * until a list is clicked or mounted, the area closes, or the page path changes.
+ * until a list is clicked or mounted, the area closes, or the URL changes.
  */
 export function itemNavigation(
   node: HTMLElement,

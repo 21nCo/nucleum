@@ -10,19 +10,19 @@ export type ItemNavigationRect = {
 export type ItemNavigationKey =
   "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 
-const itemNavigationKeys: readonly string[] = [
+const itemNavigationKeys: ReadonlySet<string> = new Set([
   "ArrowUp",
   "ArrowDown",
   "ArrowLeft",
   "ArrowRight"
-];
+]);
 
 /** Pixels two boxes may share at an edge and still count as side by side. */
 const edgeTolerance = 1;
 
 /** Whether a key moves the item highlight. */
 export function isItemNavigationKey(key: string): key is ItemNavigationKey {
-  return itemNavigationKeys.includes(key);
+  return itemNavigationKeys.has(key);
 }
 
 function overlap(startA: number, endA: number, startB: number, endB: number) {
@@ -92,7 +92,7 @@ function resolveSideIndex(
       Math.abs(centerY(rects[best]) - centerY(rect))
       ? index
       : best;
-  });
+  }, candidates[0]);
 }
 
 function resolveVerticalIndex(
@@ -122,16 +122,20 @@ function resolveVerticalIndex(
       if (Math.abs(difference) > edgeTolerance)
         return difference < 0 ? index : best;
       return centerDistance(index) < centerDistance(best) ? index : best;
-    });
+    }, inColumn[0]);
   }
-  const nearest = candidates.reduce((best, index) =>
-    gap(rects[index]) < gap(rects[best]) ? index : best
+  const nearest = candidates.reduce(
+    (best, index) => (gap(rects[index]) < gap(rects[best]) ? index : best),
+    candidates[0]
   );
-  return resolveItemRow(rects, nearest)
-    .filter((index) => candidates.includes(index))
-    .reduce((best, index) =>
-      centerDistance(index) < centerDistance(best) ? index : best
-    );
+  const row = resolveItemRow(rects, nearest).filter((index) =>
+    candidates.includes(index)
+  );
+  return row.reduce(
+    (best, index) =>
+      centerDistance(index) < centerDistance(best) ? index : best,
+    row[0]
+  );
 }
 
 /**

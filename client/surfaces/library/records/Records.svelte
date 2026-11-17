@@ -24,6 +24,7 @@
   import type { IFile } from "@nucleum/shared-state/files/file.type";
   import {
     determineResourceType,
+    resourceIdToElementId,
     resourceInList
   } from "@nucleum/datafn/resource.utils";
   import NodeItems from "@nucleum/features/memory/node/NodeRecords.svelte";
@@ -161,17 +162,29 @@
     return event instanceof MouseEvent ? event : undefined;
   }
 
+  /**
+   * Whether a click adds the item to the selection: the selection is in the
+   * list's context, or in the item's own context that Space selects in, which
+   * can differ from the list's, such as a node's in a list of every resource.
+   */
+  function isClickInSelectionContext(item: RecordItem) {
+    const { context } = bulkEditStore.getState();
+    if (!context) return false;
+    return (
+      stringify(context, { isPreventReplacer: true }) ===
+        stringify(multiSelectContext, { isPreventReplacer: true }) ||
+      (isSelectable &&
+        bulkEditStore.matchesContext(resolveItemSelectionContext(item)))
+    );
+  }
+
   function handleClick(e: MouseEvent | CustomEvent, item: RecordItem) {
     if (isPreventDefault) {
       const clickEvent = new CustomEvent<any>("click", { detail: item });
       onRecordClick?.(clickEvent);
       return;
     }
-    const state = bulkEditStore.getState();
-    const isMatchingContext = state.context
-      ? stringify(state.context, { isPreventReplacer: true }) ===
-        stringify(multiSelectContext, { isPreventReplacer: true })
-      : false;
+    const isMatchingContext = isClickInSelectionContext(item);
     const result = isMatchingContext
       ? bulkEditStore.clickHandler(item.id)
       : false;
@@ -445,7 +458,12 @@
             onClick={(e) => handleClick(e, item)}
           />
         {:else if resource === Resource.file}
-          <button class="h-40" onclick={(e) => handleClick(e, item)}>
+          <button
+            id={resourceIdToElementId("thumbnail", item.id, accessPoint)}
+            data-id={item.id}
+            class="h-40"
+            onclick={(e) => handleClick(e, item)}
+          >
             <FileView
               file={asFile(item)}
               isLazyLoad={true}

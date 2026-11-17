@@ -1,6 +1,7 @@
 import { render } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
+import { itemNavigation } from "@21n/ui/actions/itemNavigation.action";
 import {
   isItemNavigationKey,
   resolveItemNavigationIndex,
@@ -39,9 +40,9 @@ describe("item navigation", () => {
     expect(resolveItemNavigationIndex(grid(3, 7), undefined, "ArrowLeft")).toBe(
       0
     );
-    expect(resolveItemNavigationIndex([], undefined, "ArrowDown")).toBe(
-      undefined
-    );
+    expect(
+      resolveItemNavigationIndex([], undefined, "ArrowDown")
+    ).toBeUndefined();
   });
 
   it("moves Up and Down through a single-column list", () => {
@@ -120,7 +121,8 @@ describe("item navigation", () => {
   });
 });
 
-vi.mock("@21n/ui/actions/popover.action", () => ({
+vi.mock("@21n/ui/actions/popover.action", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@21n/ui/actions/popover.action")>()),
   popover: () => ({ update: () => undefined, destroy: () => undefined }),
   tooltip: () => ({ update: () => undefined, destroy: () => undefined })
 }));
@@ -235,7 +237,7 @@ describe("context menu keys in a shadow root or a frame", () => {
     press(item(shadow, "move"), "ArrowDown");
     expect(shadow.activeElement).toBe(item(shadow, "delete"));
     press(item(shadow, "delete"), "ArrowDown");
-    expect(shadow.activeElement).toBe(item(shadow, "rename"));
+    expect(shadow.activeElement).toBe(radio(shadow, "side"));
     press(item(shadow, "rename"), "ArrowUp");
     expect(shadow.activeElement).toBe(item(shadow, "delete"));
 
@@ -261,11 +263,290 @@ describe("context menu keys in a shadow root or a frame", () => {
     press(item(frameDocument, "move"), "ArrowUp");
     expect(frameDocument.activeElement).toBe(item(frameDocument, "rename"));
     press(item(frameDocument, "rename"), "ArrowUp");
-    expect(frameDocument.activeElement).toBe(item(frameDocument, "delete"));
+    expect(frameDocument.activeElement).toBe(radio(frameDocument, "side"));
     press(item(frameDocument, "delete"), "ArrowDown");
     expect(frameDocument.activeElement).toBe(item(frameDocument, "rename"));
 
     press(item(frameDocument, "rename"), "Escape");
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+function pressKey(target: Element, key: string) {
+  const event = new KeyboardEvent("keydown", {
+    key,
+    bubbles: true,
+    composed: true,
+    cancelable: true
+  });
+  target.dispatchEvent(event);
+  return event;
+}
+
+function stubMatchMedia() {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn(() => ({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    }))
+  );
+}
+
+describe("context menu keys with option groups and popovers above the menu", () => {
+  const items = [
+    { value: "rename", label: "Rename" },
+    { value: "insert", label: "Insert" },
+    { value: "delete", label: "Delete" }
+  ];
+  const option = {
+    label: "View",
+    options: [
+      { value: "side", label: "Side nav" },
+      { value: "wall", label: "Wall" }
+    ],
+    value: "side",
+    onChange: () => undefined
+  };
+  const find = (root: ParentNode, selector: string) =>
+    root.querySelector<HTMLElement>(selector)!;
+  const menuItem = (root: ParentNode, value: string) =>
+    find(root, `[data-context-menu-item-id="${value}"]`);
+  const optionRadio = (root: ParentNode, value: string) =>
+    find(root, `[role="radio"][data-option-value="${value}"]`);
+
+  function addTrigger() {
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    return trigger;
+  }
+
+  async function open(trigger: HTMLElement) {
+    const opened = new Promise<void>((resolve) =>
+      trigger.addEventListener("change", (event) => {
+        if ((event as CustomEvent<{ open: boolean }>).detail.open) resolve();
+      })
+    );
+    trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await opened;
+  }
+
+  beforeEach(() => {
+    stubMatchMedia();
+    vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
+      {}
+    ] as unknown as DOMRectList);
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("reaches an option group from the trigger and from items, one stop per group", () => {
+    const trigger = addTrigger();
+    const target = document.createElement("div");
+    document.body.append(target);
+    render(ContextMenu, {
+      target,
+      props: {
+        menuResolver: () => [
+          { group: "view", items: [], option },
+          { group: "main", items }
+        ]
+      }
+    });
+
+    trigger.focus();
+    pressKey(trigger, "ArrowDown");
+    expect(document.activeElement).toBe(optionRadio(target, "side"));
+    menuItem(target, "rename").focus();
+    pressKey(menuItem(target, "rename"), "ArrowUp");
+    expect(document.activeElement).toBe(optionRadio(target, "side"));
+  });
+
+  it("reaches the options of a menu that has only an option group", () => {
+    const trigger = addTrigger();
+    const target = document.createElement("div");
+    document.body.append(target);
+    render(ContextMenu, {
+      target,
+      props: { menuResolver: () => [{ group: "view", items: [], option }] }
+    });
+
+    trigger.focus();
+    const down = pressKey(trigger, "ArrowDown");
+    expect(down.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(optionRadio(target, "side"));
+  });
+
+  it("leaves the keys of a popover opened from a menu item to that popover", async () => {
+    document.body.innerHTML =
+      '<div id="popovers"></div><div id="secondary-popovers"></div>';
+    const { popover } = await vi.importActual<
+      typeof import("@21n/ui/actions/popover.action")
+    >("@21n/ui/actions/popover.action");
+    const trigger = addTrigger();
+    const onClose = vi.fn();
+    const parent = popover(trigger, {
+      id: "parent-menu",
+      content: ContextMenu as never,
+      componentProps: {
+        menuResolver: () => [{ group: "main", items }],
+        onClose
+      }
+    });
+    await open(trigger);
+    const menu = document.getElementById("parent-menu")!;
+    const insert = menuItem(menu, "insert");
+    const browser = document.createElement("div");
+    browser.innerHTML = "<button>Heading</button><button>List</button>";
+    const secondary = popover(insert, {
+      id: "block-browser",
+      content: browser,
+      isSecondary: true
+    });
+    await open(insert);
+    const heading = find(browser, "button");
+
+    heading.focus();
+    const down = pressKey(heading, "ArrowDown");
+    expect(down.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(heading);
+
+    insert.focus();
+    expect(pressKey(insert, "ArrowDown").defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(menuItem(menu, "delete"));
+
+    expect(pressKey(heading, "Escape").defaultPrevented).toBe(true);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    secondary.destroy();
+    parent.destroy();
+  });
+});
+
+describe("item navigation list keys", () => {
+  const actions: { destroy: () => void }[] = [];
+  const shown = () =>
+    Array.from(document.querySelectorAll("[data-item-highlighted]")).map(
+      (element) => element.getAttribute("data-id")
+    );
+
+  function mountList(
+    ids: string[],
+    config: Partial<Parameters<typeof itemNavigation>[1]> = {}
+  ) {
+    const node = document.createElement("div");
+    ids.forEach((id, index) => {
+      const element = document.createElement("div");
+      element.id = `thumbnail-${id}`;
+      element.dataset.id = id;
+      element.getBoundingClientRect = () =>
+        ({ top: index * 50, left: 0, width: 100, height: 40 }) as DOMRect;
+      node.append(element);
+    });
+    document.body.append(node);
+    actions.push(
+      itemNavigation(node, {
+        itemSelector: "[id^='thumbnail-'][data-id]",
+        ...config
+      })
+    );
+    return node;
+  }
+
+  function pointerDown(target: Element) {
+    target.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+  }
+
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
+      {}
+    ] as unknown as DOMRectList);
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  afterEach(() => {
+    while (actions.length > 0) actions.pop()!.destroy();
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+  });
+
+  it("leaves Enter, Space and the menu key to an outside control a pointer pressed, until the next arrow", () => {
+    const onOpen = vi.fn();
+    const onToggle = vi.fn();
+    const onMenu = vi.fn();
+    const list = mountList(["a", "b", "c"], { onOpen, onToggle });
+    list.addEventListener("itemmenu", onMenu, true);
+    pressKey(document.body, "ArrowDown");
+    expect(shown()).toEqual(["a"]);
+
+    const button = document.createElement("button");
+    const checkbox = document.createElement("button");
+    checkbox.setAttribute("role", "checkbox");
+    document.body.append(button, checkbox);
+    for (const control of [button, checkbox]) {
+      pointerDown(control);
+      control.focus();
+      for (const key of ["Enter", " ", "."])
+        expect(pressKey(control, key).defaultPrevented).toBe(false);
+    }
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(onMenu).not.toHaveBeenCalled();
+    expect(shown()).toEqual([]);
+
+    pressKey(checkbox, "ArrowDown");
+    expect(shown()).toEqual(["b"]);
+    expect(pressKey(checkbox, "Enter").defaultPrevented).toBe(true);
+    expect(onOpen).toHaveBeenCalledWith(
+      list.querySelector("[data-id='b']"),
+      expect.anything()
+    );
+  });
+
+  it("hands the arrows back from another scrolling pane once the URL changes, query or hash included", () => {
+    mountList(["a", "b"]);
+    const pane = document.createElement("div");
+    pane.style.overflowY = "auto";
+    Object.defineProperty(pane, "scrollHeight", { value: 500 });
+    Object.defineProperty(pane, "clientHeight", { value: 100 });
+    const text = document.createElement("p");
+    pane.append(text);
+    document.body.append(pane);
+    const start = location.href;
+
+    try {
+      pointerDown(text);
+      expect(pressKey(document.body, "ArrowDown").defaultPrevented).toBe(false);
+      history.pushState({}, "", "?view=wall");
+      expect(pressKey(document.body, "ArrowDown").defaultPrevented).toBe(true);
+
+      pointerDown(text);
+      expect(pressKey(document.body, "ArrowDown").defaultPrevented).toBe(false);
+      history.pushState({}, "", "#note");
+      expect(pressKey(document.body, "ArrowDown").defaultPrevented).toBe(true);
+    } finally {
+      history.replaceState({}, "", start);
+    }
+  });
+
+  it("shows one highlight across lists when another list is mounted or clicked", () => {
+    const first = mountList(["a1", "a2"]);
+    pressKey(document.body, "ArrowDown");
+    expect(shown()).toEqual(["a1"]);
+
+    const second = mountList(["b1", "b2"]);
+    pressKey(document.body, "ArrowDown");
+    expect(shown()).toEqual(["b1"]);
+
+    pointerDown(first.firstElementChild!);
+    pressKey(document.body, "ArrowDown");
+    expect(shown()).toEqual(["a1"]);
+
+    pointerDown(second.firstElementChild!);
+    expect(shown()).toEqual([]);
   });
 });

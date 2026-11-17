@@ -353,6 +353,35 @@ function resolveRootElementById(
   return null;
 }
 
+/** A shown popover or menu, with the element that opened it. */
+export interface PopoverLayer {
+  element: HTMLElement;
+  trigger?: Element;
+}
+
+/**
+ * Popovers and menus shown now, oldest first, so a key handler such as a
+ * context menu's can tell which layer a key belongs to. Hover-only popovers
+ * take no keys and are left out.
+ */
+export const popoverLayers: PopoverLayer[] = [];
+
+/** Adds a layer and drops layers whose element has left the page. */
+export function addPopoverLayer(layer: PopoverLayer) {
+  removePopoverLayer((element) => !element.isConnected);
+  popoverLayers.push(layer);
+}
+
+export function removePopoverLayer(
+  match: HTMLElement | ((element: HTMLElement) => boolean)
+) {
+  for (let index = popoverLayers.length - 1; index >= 0; index--) {
+    const { element } = popoverLayers[index];
+    if (typeof match === "function" ? match(element) : element === match)
+      popoverLayers.splice(index, 1);
+  }
+}
+
 type Content = string | HTMLElement | PopoverComponentConstructor;
 
 interface PopoverParams {
@@ -464,6 +493,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       container.innerHTML = "";
       container?.appendChild(popoverElement);
     }
+    if (!isHoverOnlyTrigger())
+      addPopoverLayer({ element: popoverElement, trigger: node });
 
     if (typeof content === "string") {
       popoverElement.textContent = content;
@@ -769,6 +800,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     try {
       clearHoverDelayTimeout();
       if (popoverElement && !popoverElement.isConnected) {
+        removePopoverLayer(popoverElement);
         popoverElement = null;
         if (component) {
           void unmount(component);
@@ -789,6 +821,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     // console.log("hidePopover", e);
     clearHoverDelayTimeout();
     if (popoverElement) {
+      removePopoverLayer(popoverElement);
       try {
         if (typeof popoverElement.remove === "function") {
           popoverElement.remove();

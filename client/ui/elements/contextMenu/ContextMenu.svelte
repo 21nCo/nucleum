@@ -1,6 +1,13 @@
 <script lang="ts" module>
-  /** Menus shown now, in the order they opened. */
-  const openMenus: HTMLElement[] = [];
+  import {
+    addPopoverLayer,
+    popoverLayers,
+    removePopoverLayer,
+    type PopoverLayer
+  } from "@21n/ui/actions/popover.action";
+
+  /** Menus shown now, each with the popover layer it sits in. */
+  const openMenus: { menu: HTMLElement; layer: HTMLElement }[] = [];
 
   /** Controls that use the arrow keys themselves. */
   const arrowControlSelector = [
@@ -43,43 +50,86 @@
     return isElement(origin) ? origin : null;
   }
 
+  /** The next element out: the parent, or the host of a shadow root. */
+  function resolveOuterElement(node: Element): Element | null {
+    const root = node.getRootNode() as Document | ShadowRoot;
+    return "host" in root && isElement(root.host) ? root.host : null;
+  }
+
+  /** Whether the container holds the node, across shadow roots. */
+  function containsAcross(container: Element, node: Element) {
+    for (let current: Element | null = node; current; ) {
+      if (container.contains(current)) return true;
+      current = resolveOuterElement(current);
+    }
+    return false;
+  }
+
   /** Inside an inert or hidden layer, across shadow roots. */
   function isInHiddenLayer(node: Element) {
-    let current: Element | null = node;
-    while (current) {
+    for (let current: Element | null = node; current; ) {
       if (current.closest("[inert], [aria-hidden='true']")) return true;
-      const root = current.getRootNode() as Document | ShadowRoot;
-      current = "host" in root && isElement(root.host) ? root.host : null;
+      current = resolveOuterElement(current);
     }
     return false;
   }
 
   /** Shown, and not inside an inert or hidden layer such as a covered page. */
-  function isReachableMenu(menu: HTMLElement) {
+  function isReachableLayer(element: HTMLElement) {
     return (
-      menu.isConnected &&
-      menu.getClientRects().length > 0 &&
-      !isInHiddenLayer(menu)
+      element.isConnected &&
+      element.getClientRects().length > 0 &&
+      !isInHiddenLayer(element)
     );
   }
 
-  /**
-   * The menu that owns a key: the menu the target sits in, else the most
-   * recently opened reachable menu of the same window. A target in a
-   * secondary popover, such as an option submenu, is not in a menu, so it
-   * counts as the latter.
-   */
-  function resolveKeyOwner(target: Element | null, view: Window | null) {
-    const container = target
-      ? openMenus.find((menu) => menu.contains(target))
-      : undefined;
-    if (container) return container;
-    for (let index = openMenus.length - 1; index >= 0; index--) {
-      const menu = openMenus[index];
-      if (menu.ownerDocument.defaultView !== view) continue;
-      if (isReachableMenu(menu)) return menu;
+  /** The newest layer that matches, among the given or all shown layers. */
+  function findNewestLayer(
+    match: (layer: PopoverLayer) => boolean,
+    layers: PopoverLayer[] = popoverLayers
+  ) {
+    for (let index = layers.length - 1; index >= 0; index--) {
+      if (match(layers[index])) return layers[index];
     }
     return undefined;
+  }
+
+  /**
+   * The popover layer a key belongs to: the newest shown layer that holds the
+   * target, else the newest one opened from it, else the newest shown layer
+   * of the same window. A menu outside any popover is a layer of its own, and
+   * a popover opened from a menu item, such as an option submenu or a block
+   * browser, is a layer above the menu.
+   */
+  function resolveKeyLayer(target: Element | null, view: Window | null) {
+    const layers = popoverLayers.filter(({ element }) =>
+      isReachableLayer(element)
+    );
+    const newest = (match: (layer: PopoverLayer) => boolean) =>
+      findNewestLayer(match, layers)?.element;
+    return (
+      (target &&
+        (newest(({ element }) => containsAcross(element, target)) ??
+          newest(
+            ({ trigger }) => !!trigger && containsAcross(trigger, target)
+          ))) ||
+      newest(({ element }) => element.ownerDocument.defaultView === view)
+    );
+  }
+
+  /** Whether a layer was opened from the menu, directly or through others. */
+  function isOpenedFromMenu(layer: HTMLElement, menu: HTMLElement) {
+    const seen = new Set<HTMLElement>();
+    let current = popoverLayers.find(({ element }) => element === layer);
+    while (current?.trigger && !seen.has(current.element)) {
+      seen.add(current.element);
+      const trigger: Element = current.trigger;
+      if (containsAcross(menu, trigger)) return true;
+      current = findNewestLayer(({ element }) =>
+        containsAcross(element, trigger)
+      );
+    }
+    return false;
   }
 
   function isArrowControl(target: Element | null) {
@@ -122,17 +172,27 @@
     closePopover?: (() => void) | undefined;
   } = $props();
   let menuRef = $state<HTMLDivElement>();
+  /** The popover the menu sits in, or the menu itself outside any popover. */
+  let menuLayer: HTMLElement | undefined;
   $effect(() => {
     const node = menuRef;
     if (!node) return;
-    openMenus.push(node);
+    const host = findNewestLayer(({ element }) =>
+      containsAcross(element, node)
+    );
+    const layer = host?.element ?? node;
+    if (!host) addPopoverLayer({ element: node });
+    menuLayer = layer;
+    const entry = { menu: node, layer };
+    openMenus.push(entry);
     // The menu's own window, which differs from this bundle's in a frame.
     const view = node.ownerDocument.defaultView ?? window;
     view.addEventListener("keydown", onKeydown, true);
     return () => {
       view.removeEventListener("keydown", onKeydown, true);
-      const index = openMenus.indexOf(node);
-      if (index >= 0) openMenus.splice(index, 1);
+      openMenus.splice(openMenus.indexOf(entry), 1);
+      if (!host) removePopoverLayer(node);
+      menuLayer = undefined;
     };
   });
   const menu = $derived<IContextMenuGroup[]>(menuResolver ? menuResolver() : []);
@@ -141,33 +201,65 @@
     return size === Size.xl ? Size.lg : size;
   }
 
+  /**
+   * The stops Up and Down move through: the items, and one per option group,
+   * the radio that takes focus in it, so the group's own arrows pick options.
+   */
   function resolveMenuButtons() {
     if (!menuRef) return [];
     return Array.from(
-      menuRef.querySelectorAll<HTMLButtonElement>("button.contextmenuitem")
+      menuRef.querySelectorAll<HTMLButtonElement>(
+        "button.contextmenuitem, [role='radio'][tabindex='0']"
+      )
     ).filter((button) => !button.disabled);
   }
 
   /**
-   * Moves focus through the menu items with Up and Down while the menu is
-   * shown, and closes it on Escape. Enter and Space activate the focused item.
-   * It listens on the window in the capture phase, so the keys reach the menu
-   * before a drawer that keeps its keys inside or closes on Escape. Only the
-   * front menu takes them: the menu holding the focus, else the most recently
-   * opened reachable one. Arrows from a control that uses them, such as an
+   * Whether the menu takes a key: the key belongs to the menu's layer and was
+   * pressed in the menu, on its trigger or outside every layer, not on other
+   * content of the popover. Escape also closes the menu from a layer opened
+   * from one of its items, such as an option submenu, when no menu of its
+   * own sits in that layer to close it.
+   */
+  function isKeyForMenu(event: KeyboardEvent, target: Element | null) {
+    if (!menuRef || !menuLayer) return false;
+    const layer = resolveKeyLayer(target, menuRef.ownerDocument.defaultView);
+    if (!layer) return false;
+    if (layer !== menuLayer) {
+      return (
+        event.key === "Escape" &&
+        !openMenus.some((entry) => entry.layer === layer) &&
+        isOpenedFromMenu(layer, menuRef)
+      );
+    }
+    return (
+      !target ||
+      menuLayer === menuRef ||
+      containsAcross(menuRef, target) ||
+      !containsAcross(menuLayer, target)
+    );
+  }
+
+  /**
+   * Moves focus through the menu items and option groups with Up and Down
+   * while the menu is shown, and closes it on Escape. Enter and Space
+   * activate the focused item. It listens on the window in the capture
+   * phase, so the keys reach the menu before a drawer that keeps its keys
+   * inside or closes on Escape. A key goes to the front popover layer that
+   * holds it (see resolveKeyLayer), so a popover opened from a menu item
+   * keeps its own keys. Arrows from a control that uses them, such as an
    * option group's radios or a text field, stay with that control. Targets
    * and focus are read from the menu's own root, so this also holds for a
    * menu in a shadow root or a frame.
    */
   function onKeydown(event: KeyboardEvent) {
-    if (!menuRef || !isReachableMenu(menuRef)) return;
+    if (!menuRef || !isReachableLayer(menuRef)) return;
     if (event.defaultPrevented || event.metaKey || event.ctrlKey) return;
     if (event.altKey) return;
     const isArrow = event.key === "ArrowDown" || event.key === "ArrowUp";
     if (event.key !== "Escape" && !isArrow) return;
     const target = resolveKeyTarget(event);
-    if (resolveKeyOwner(target, menuRef.ownerDocument.defaultView) !== menuRef)
-      return;
+    if (!isKeyForMenu(event, target)) return;
     if (event.key === "Escape") {
       const close = onClose ?? closePopover;
       if (!close) return;
