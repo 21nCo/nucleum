@@ -50,8 +50,6 @@ const services = buildAccountServices({
         return fileDatabase.adapter;
       },
       storage: (regionId) => createAccountFileStorage(process.env, regionId),
-      // Without a queue, remote processing runs in this process after the
-      // response, tracked through `defer` so shutdown waits for it.
       runtime: fileDeferredWork.runtime,
       processing: () => {
         inlineProcessing ??= createInlineFileProcessing({

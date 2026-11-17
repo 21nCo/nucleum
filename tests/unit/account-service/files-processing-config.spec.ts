@@ -99,7 +99,6 @@ describe("account Worker config for file processing", () => {
       new RegExp(`FILEFN_CONTAINER_MAX_CONCURRENT_JOBS=${FILE_PROCESSING_CONSUMER.maxConcurrency}\\b`)
     );
     expect(dockerfile).toContain(`EXPOSE ${FILE_PROCESSING_CONTAINER_PORT}`);
-    // Image paths are relative to services/account/.wrangler, where the config is written.
     const wranglerDir = path.join(serviceRoot, ".wrangler");
     expect(path.resolve(wranglerDir, FILE_PROCESSING_IMAGE)).toBe(path.join(repoRoot, "services/file-processing/Dockerfile"));
     expect(path.resolve(wranglerDir, FILE_PROCESSING_IMAGE_BUILD_CONTEXT)).toBe(repoRoot);
@@ -111,7 +110,6 @@ describe("account Worker config for file processing", () => {
 
 describe("account Worker bundle with file processing", () => {
   it("bundles the queue producer and container class but no processor implementation", async () => {
-    // Wrangler's esbuild settings for the Worker entry; `npm run worker:build` is covered elsewhere.
     const { build } = await import("esbuild");
     const result = await build({
       entryPoints: [path.join(serviceRoot, "src/worker.ts")],
@@ -123,7 +121,6 @@ describe("account Worker bundle with file processing", () => {
       target: "es2022",
       conditions: ["workerd", "worker", "browser"],
       mainFields: ["module", "main"],
-      // nodejs_compat provides the Node built-ins.
       external: ["cloudflare:*", "node:*", ...builtinModules],
       logLevel: "silent"
     });

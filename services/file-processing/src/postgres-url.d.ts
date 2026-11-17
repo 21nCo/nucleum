@@ -14,7 +14,8 @@ export declare function isVerifiedPostgresTarget(target: { hosts: readonly strin
 
 /**
  * Throws unless postgres.js would connect to the URL with certificate-verifying
- * TLS (exact `sslmode=verify-full` or `sslrootcert=system`), or every host it
+ * TLS (exact lowercase `sslmode=verify-full`, `ssl=verify-full` or
+ * `sslrootcert=system`), or every host it
  * would connect to is loopback.
  */
 export declare function requireVerifiedPostgresUrl(value: string): void;

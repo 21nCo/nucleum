@@ -31,7 +31,6 @@ const workerHooks = vi.hoisted(() => ({
   override: undefined as undefined | ((input: unknown) => unknown)
 }));
 
-// Records the infra the Worker entry builds for each invocation; a test may replace the services.
 vi.mock('../app.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../app.js')>();
   return {
@@ -42,7 +41,6 @@ vi.mock('../app.js', async (importOriginal) => {
     })
   };
 });
-// The container class needs the Workers runtime; the entry tests reach containers through their binding.
 vi.mock('./processing-container.js', () => ({ FileProcessingContainer: class {} }));
 
 const R2_ENDPOINT = 'https://r2.test';
@@ -306,7 +304,6 @@ describe('account Worker processing producer per mode', () => {
         idempotencyKey: `processing:${fileId}:${versionId}:${EXPECTED_KEY_SUFFIX}`,
         jobId: expect.any(String)
       });
-      // Nothing runs in the Worker: the container makes the artifacts.
       expect(await files.artifacts(fileId)).toEqual([]);
     }
   );
@@ -349,7 +346,6 @@ describe('account Node processing (local development)', () => {
   it('remote: leaves out what the prebuilt sharp cannot decode, so a PDF records no placeholder preview', async () => {
     const deferred = createFileDeferredWork();
     const log = logger();
-    // The npm prebuilt sharp: no PDF loader, HEIF only for AVIF.
     const prebuilt = { pdf: { input: { buffer: false } }, heif: { input: { buffer: true, fileSuffix: ['.avif'] } } };
     const processors = await loadInlineNucleumProcessors(log, prebuilt);
     expect(processors.map((processor) => processor.name)).toEqual(['thumbnail', 'ocr']);
@@ -375,7 +371,6 @@ describe('account Node processing (local development)', () => {
     async () => {
       const deferred = createFileDeferredWork();
       const ocrProvider = { recognize: vi.fn(async () => ({ text: 'recognized', confidence: 90 })) };
-      // Every processor, as if the codecs were present.
       const processing = await createInlineFileProcessing({
         mode: 'remote',
         loadProcessors: async () => createNucleumProcessors({ ocrProvider }) as Processor[]
@@ -399,7 +394,6 @@ describe('processing queue consumer', () => {
     const files = createFilesHarness(createQueuedFileProcessing({ mode: 'remote', queue }));
     const { fileId } = await files.upload('photo.png', 'image/png', await pngBytes());
 
-    // A fake container: the FILE-9 job server contract over the same database and bucket.
     const containerFileFn = createFileFn({
       database: files.database,
       storage: files.storage,
@@ -529,7 +523,6 @@ describe('processing container environment', () => {
   it.each([
     ['plaintext', 'postgres://db.example/files'],
     ['sslmode=require (no certificate check)', 'postgres://db.example/files?sslmode=require'],
-    // postgres.js turns only the exact lowercase `system` into verify-full.
     ['sslrootcert=SYSTEM (plaintext in postgres.js)', 'postgres://db.example/files?sslrootcert=SYSTEM'],
     [
       'sslrootcert=SYSTEM with sslmode=require (no certificate check)',
@@ -558,7 +551,6 @@ describe('processing container environment', () => {
     'postgres://db.example/files?sslrootcert=system&sslmode=require'
   ])('accepts the remote URL %s only because postgres.js verifies its certificate', async (url) => {
     await resolveFileProcessingContainerEnv({ ...R2_ENV, FILEFN_PROCESSING_DATABASE_URL: url }, 'insouth');
-    // postgres() parses lazily and opens no connection here.
     const sql = postgres(url);
     expect(sql.options.ssl).toBe('verify-full');
     await sql.end();
@@ -578,8 +570,12 @@ describe('processing container environment', () => {
   );
 });
 
+/**
+ * [url, accepted]: accepted exactly when postgres.js uses ssl=verify-full or
+ * connects only to loopback. postgres.js takes the host list after the FIRST
+ * `@`, where WHATWG URL splits userinfo at the last.
+ */
 const DRIVER_PARITY_URLS: Array<[string, boolean]> = [
-  // [url, accepted]: accepted exactly when postgres.js uses ssl=verify-full or connects only to loopback.
   ['postgres://u:p@db.example/files', false],
   ['postgres://u:p@db.example/files?sslmode=verify-full', true],
   ['postgres://u:p@db.example/files?ssl=verify-full', true],
@@ -588,7 +584,6 @@ const DRIVER_PARITY_URLS: Array<[string, boolean]> = [
   ['postgres://u:p@LOCALHOST/files', false],
   ['postgres://u:p@127.0.0.1/files', true],
   ['postgres://u@[::1]:5432/files', false],
-  // postgres.js takes the host list after the FIRST @; WHATWG URL splits at the last.
   ['postgres://a@evil.example,b@localhost/db', false],
   ['postgres://u:p@ss,w@localhost/db', false],
   ['postgres://a@evil.example,b@localhost/db?sslrootcert=system', true],
@@ -634,7 +629,6 @@ describe('scheduled file cleanup', () => {
   it('deletes an upload session that expired before completing through the account FileFn', async () => {
     const files = createFilesHarness();
     const uploadSessionId = await files.startUpload('late.png', 'image/png', 10);
-    // Upload sessions expire after 24 hours.
     vi.useFakeTimers({ now: Date.now() + 25 * 60 * 60 * 1000, toFake: ['Date'] });
     try {
       await runScheduledFileCleanup(
@@ -688,7 +682,6 @@ describe('account Worker entry', () => {
   });
 
   afterEach(() => {
-    // The entry copies its bindings to process.env, as the Worker shim does.
     for (const key of Object.keys(process.env)) if (!(key in processEnv)) delete process.env[key];
     Object.assign(process.env, processEnv);
   });

@@ -106,7 +106,6 @@ describe("processing container database", () => {
     "postgres://db.example/files?sslrootcert=system",
     "postgres://db.example/files?sslrootcert=system&sslmode=require"
   ])("accepts the remote URL %s only because the container's postgres.js verifies its certificate", async (url) => {
-    // The driver the container declares, resolved the way the container resolves it.
     const postgres = createRequire(new URL("../../../services/file-processing/package.json", import.meta.url))(
       "postgres"
     ) as (url: string) => { options: { ssl: unknown }; end: () => Promise<void> };
@@ -159,8 +158,12 @@ describe("processing container database", () => {
   });
 });
 
+/**
+ * [url, accepted]: accepted exactly when postgres.js uses ssl=verify-full or
+ * connects only to loopback. postgres.js takes the host list after the FIRST
+ * `@`, where WHATWG URL splits userinfo at the last.
+ */
 const DRIVER_PARITY_URLS: Array<[string, boolean]> = [
-  // [url, accepted]: accepted exactly when postgres.js uses ssl=verify-full or connects only to loopback.
   ["postgres://u:p@db.example/files", false],
   ["postgres://u:p@db.example/files?sslmode=verify-full", true],
   ["postgres://u:p@db.example/files?ssl=verify-full", true],
@@ -169,7 +172,6 @@ const DRIVER_PARITY_URLS: Array<[string, boolean]> = [
   ["postgres://u:p@LOCALHOST/files", false],
   ["postgres://u:p@127.0.0.1/files", true],
   ["postgres://u@[::1]:5432/files", false],
-  // postgres.js takes the host list after the FIRST @; WHATWG URL splits at the last.
   ["postgres://a@evil.example,b@localhost/db", false],
   ["postgres://u:p@ss,w@localhost/db", false],
   ["postgres://a@evil.example,b@localhost/db?sslrootcert=system", true],

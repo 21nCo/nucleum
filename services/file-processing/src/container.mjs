@@ -1,7 +1,6 @@
 import { pathToFileURL } from 'node:url';
 import { createFileFn, createProcessingJobHandler } from '@filefn/server';
 import { createR2StorageAdapter } from '@superfunctions/storage-r2';
-// The FILE-9 container entry in the base image (`filefn/processing/container`).
 import {
   createJobServer,
   createTesseractCliOCRProvider,
@@ -11,8 +10,9 @@ import {
 import { createNucleumProcessors } from './processors.mjs';
 
 /**
- * Starts the FILE-9 job server (`POST /jobs`, `GET /health`) with Nucleum's
- * processors instead of the image's defaults. Configuration is the FILE-9
+ * Starts the FILE-9 job server (`POST /jobs`, `GET /health`), imported from
+ * the base image's container entry (`filefn/processing/container`), with
+ * Nucleum's processors instead of the image's defaults. Configuration is the FILE-9
  * environment (`FILEFN_R2_*`, `FILEFN_DATABASE`, `FILEFN_NAMESPACE`,
  * `FILEFN_PROCESSING_MAX_RETRIES`, ...); `FILEFN_PROCESSORS` is ignored.
  */

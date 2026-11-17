@@ -29,7 +29,8 @@ The account service on Node loads the npm prebuilt sharp, whose libvips has
 no PDF loader and no HEVC decoder. It probes `sharp.format`
 (`detectNucleumCodecs`) and runs only what that sharp decodes: usually the
 image thumbnail and image OCR. It leaves out `pdf-preview`, PDF OCR,
-`heic-convert` and HEIC OCR, logging them once at the first upload. Full PDF
+`heic-convert` and HEIC OCR, logging them once when the service first
+resolves FileFn (the first `/files` request or `file` deletion cascade). Full PDF
 and HEIC processing needs the container; on Node, PDFs and HEIC photos get no
 preview, conversion or OCR. TIDY-540 does not deliver that path: the gap is
 recorded as `node-inline-processing-native-codecs` in TIDY-552.
@@ -44,7 +45,7 @@ database module (`src/database.mjs`, over the account service's generated
 FileFn schema; `src/postgres.mjs` refuses a `FILEFN_DATABASE_URL` unless
 every host postgres.js would connect to is loopback or postgres.js would use
 `ssl=verify-full`, which it does only for the exact lowercase
-`sslmode=verify-full` or `sslrootcert=system`. `src/postgres-url.mjs` derives
+`sslmode=verify-full`, `ssl=verify-full` or `sslrootcert=system`. `src/postgres-url.mjs` derives
 the host list and TLS mode with postgres.js's own URL steps (host list after
 the first `@`, comma-separated), and the container checks the parsed options
 of its client again before using it) and `src/container.mjs`, which starts
@@ -64,8 +65,9 @@ container with:
 - `FILEFN_DATABASE_URL`: the Worker's `FILEFN_PROCESSING_DATABASE_URL` Secrets
   Store binding (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`),
   a direct URL of the region's account Postgres, since Hyperdrive serves only
-  Workers. It must verify the server certificate (exact `sslmode=verify-full`
-  or `sslrootcert=system`) unless every host is loopback; the Durable Object
+  Workers. It must verify the server certificate (exact lowercase
+  `sslmode=verify-full`, `ssl=verify-full` or `sslrootcert=system`) unless
+  every host is loopback; the Durable Object
   applies the same rule
   (`@21n/file-processing/postgres-url`) and refuses to start the container
   otherwise.

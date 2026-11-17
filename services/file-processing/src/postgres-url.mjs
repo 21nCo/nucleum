@@ -1,5 +1,8 @@
-// postgres.js cuts every host entry at its first `:`, so a bracketed IPv6
-// literal such as [::1] never reaches it intact and is not treated as loopback.
+/**
+ * Hosts treated as loopback. postgres.js cuts every host entry at its first
+ * `:`, so a bracketed IPv6 literal such as [::1] never reaches it intact and
+ * is not treated as loopback.
+ */
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1']);
 
 const INVALID = 'FILEFN_CONTAINER_CONFIG_INVALID';
@@ -11,7 +14,8 @@ const INVALID = 'FILEFN_CONTAINER_CONFIG_INVALID';
  * splits userinfo), percent-decoded and split on commas, each entry cut at
  * `:`; query parameters come from the URL with that list replaced by its
  * first entry, the last value of a repeated name wins, `sslmode` becomes
- * `ssl`, and the exact lowercase `sslrootcert=system` forces `verify-full`.
+ * `ssl` (so `sslmode=verify-full` and a plain `ssl=verify-full` both give
+ * `verify-full`), and the exact lowercase `sslrootcert=system` forces it.
  * Only the URL is considered, never PG* environment fallbacks.
  */
 export function postgresUrlTarget(value) {
@@ -44,7 +48,8 @@ export function isVerifiedPostgresTarget({ hosts, ssl }) {
  * The processing container's Postgres TLS rule, decided on the host list and
  * TLS mode postgres.js itself derives (postgresUrlTarget): every host must be
  * loopback, or postgres.js must connect with `ssl=verify-full`, which it does
- * only for the exact lowercase `sslmode=verify-full` or `sslrootcert=system`.
+ * only for the exact lowercase `sslmode=verify-full`, `ssl=verify-full` or
+ * `sslrootcert=system`.
  * Plaintext, `sslmode=require` (no certificate check), other spellings and
  * repeated TLS parameters are refused. The container also checks the options
  * of the client it builds (openFileFnDatabase). Worker-safe: no imports.
@@ -66,7 +71,7 @@ export function requireVerifiedPostgresUrl(value) {
   }
   if (!isVerifiedPostgresTarget(target)) {
     throw new Error(
-      `${INVALID}: a remote FILEFN_DATABASE_URL must use sslmode=verify-full or sslrootcert=system (exact lowercase values), unless every host is loopback`
+      `${INVALID}: a remote FILEFN_DATABASE_URL must use sslmode=verify-full, ssl=verify-full or sslrootcert=system (exact lowercase values), unless every host is loopback`
     );
   }
 }

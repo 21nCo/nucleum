@@ -130,7 +130,8 @@ In `remote` and `both` modes each regional Worker gets:
 - the `FileProcessingContainer` container and Durable Object, and the
   `FILEFN_PROCESSING_DATABASE_URL` Secrets Store binding
   (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`), a URL
-  with the exact lowercase `sslmode=verify-full` or `sslrootcert=system`.
+  with the exact lowercase `sslmode=verify-full`, `ssl=verify-full` or
+  `sslrootcert=system`.
 
 Before switching an environment, create both queues per region, add each
 region's database URL to the Secrets Store and build the container's base
