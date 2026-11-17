@@ -125,6 +125,7 @@
     try {
       if (!data || !captureStore) return;
       isSaveInProgress = true;
+      feedback = undefined;
       const nodeIdCheck = await performAlreadySavedCheck();
       if (nodeIdCheck) {
         savedNode = nodeIdCheck;
@@ -153,10 +154,13 @@
         })) as unknown as INode;
       } else if (data.file) {
         result = await captureStore.saveFile(data.file, nodeType, {
-          isOpenOnSave: false
+          isOpenOnSave: false,
+          isErrorToastSuppressed: true
         });
       } else if (data.multipleFiles && data.multipleFiles.files.length > 1) {
-        await captureStore.saveMultipleFiles(data.multipleFiles.files);
+        await captureStore.saveMultipleFiles(data.multipleFiles.files, {
+          isErrorToastSuppressed: true
+        });
       }
       if (result) {
         savedNode = result as INodeThumb;
@@ -360,6 +364,9 @@
 </script>
 
 <div class="flex flex-col justify-between items-center w-full h-full">
+  {#if !isSaveInProgress && !savedNodeId && feedback?.type === AlertType.ERROR}
+    <InlineFeedbackText {feedback} isAutoDissappear={false} />
+  {/if}
   {#if isSaveInProgress}
     <EmptyStatusView isLoadingState={true} loadingText="Saving..." />
   {:else if !savedNodeId && !$context.isStandaloneSheet}

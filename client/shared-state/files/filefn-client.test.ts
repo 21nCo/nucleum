@@ -347,7 +347,7 @@ function stageBeforeReload(userId: string) {
     rootDir: `filefn-pending-uploads-${userId}`
   }).stagePendingUpload({
     uploadSessionId: "offline_reloaded",
-    fileId: "file-reloaded",
+    fileId: "file_reloaded",
     policy: "attachment",
     fileName: "reloaded.txt",
     size: 5,
@@ -624,7 +624,7 @@ describe("FileFn client runtime", () => {
       rootDir: "filefn-pending-uploads-user-a"
     }).stagePendingUpload({
       uploadSessionId: "offline_reloaded",
-      fileId: "file-reloaded",
+      fileId: "file_reloaded",
       policy: "attachment",
       fileName: "reloaded.txt",
       size: 5,
