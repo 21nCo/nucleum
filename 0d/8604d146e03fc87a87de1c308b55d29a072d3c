@@ -1,0 +1,138 @@
+package-lock.json
+  s_f058f999ab46b7::t_1279adca652e42 39-41,3886,3900,4993,5024,5044,5068,5096,5119,17011,18211,18604,18618,19159,19269,19427,20574,21722,22338,22427,22576,22590,23368,23714,23786,23827,23837,24843,24853,25354,25709,27707,27861,28192,28467,28670,29827,30366,30382,30392,31051,31428,32213,32260,32307,33469,33479
+package.json
+  s_f058f999ab46b7::t_33685ffab816f8 34-36
+scripts/dev/legacy-file-signer.mjs
+  s_f058f999ab46b7::t_8c41748f95a69f 12-15,84-92,95-97,104-108,118-120,131-132,137-146
+  s_f058f999ab46b7::t_e629447981f864 60-62,71,76,99
+  s_f058f999ab46b7::t_9ab70e70ce73d9 63-70,73-75
+client/features/calendar/classic/ClassicCalendar.svelte
+  s_f058f999ab46b7::t_ab9dc36febf174 44-47,51-54
+client/features/focus/goals/Goal.svelte
+  s_f058f999ab46b7::t_c9937bb3a9e70f 121-124
+client/features/memory/graph/GlobalGraph.svelte
+  s_f058f999ab46b7::t_97166880422e4c 95-101
+client/features/memory/node/Node.svelte
+  s_f058f999ab46b7::t_db859b9c45080d 88-93,118,167,181-186
+  s_f058f999ab46b7::t_3039d63fd04161 114-117
+  s_f058f999ab46b7::t_efa00850c5a545 107-112,120-121,139
+  s_f058f999ab46b7::t_85217a4c8730fc 101-106,113
+client/features/memory/node/title/NodeTitleLabelPart.svelte
+  s_f058f999ab46b7::t_85dcc1ad9d3beb 33-37
+client/shared-state/preferences/ui-state/uiState.store.ts
+  s_f058f999ab46b7::t_63cd5b67c23e25 37
+client/surfaces/library/LibraryRecordsPane.svelte
+  s_f058f999ab46b7::t_55299c9e698e2a 208
+client/ui/compositions/maps/PointMap.svelte
+  s_f058f999ab46b7::t_95c5877d830343 20-23
+  s_f058f999ab46b7::t_97662b05649358 137
+client/features/memory/node/content/NodeContent.svelte
+  s_f058f999ab46b7::t_afd0d1e1ba3552 13,37-38,121-123,125,127-135,138,245
+  s_f058f999ab46b7::t_ca55d4788f41d3 36,142-145,150-156,160-171
+  s_f058f999ab46b7::t_e2cdeeb92536f4 116-118,157-159,172,196,206-207,227-229,233-244,246-248,250-259,263-271,318
+  s_f058f999ab46b7::t_6470badfc95bbe 146-149
+  s_f058f999ab46b7::t_6e55e4970312be 173-174,176-187,196,201-202,204,213-216,221,223-224,226,230-232
+  s_2409648105d207::t_9a51aa3e5c647f 188,195,197-200,208-210,212,217-220,222,225,260-262
+  s_f058f999ab46b7::t_d3b278d4f7062a 78-80,83-84,189-194,211,332,391,480,582
+  s_f058f999ab46b7::t_0670ec9d5a29cf 81-82,101
+client/features/memory/node/content/first-block.test.ts
+  s_f058f999ab46b7::t_3fdc53eb37b7b8 59-82
+  s_f058f999ab46b7::t_547a3f478d71bf 83-98,112
+  s_f058f999ab46b7::t_19529c7cbfce57 99-111
+client/features/memory/node/content/first-block.ts
+  s_f058f999ab46b7::t_c443232c7801e1 59-82
+  s_f058f999ab46b7::t_0d5e9da6e14383 83,96-97,118
+  s_f058f999ab46b7::t_44a568a6181091 84-95,98-117
+client/features/memory/node/node.store.ts
+  s_f058f999ab46b7::t_bab769f52b4594 259-263
+client/features/calendar/legacy-event-times.retry.test.ts
+  s_f058f999ab46b7::t_6922a3ddf0f63a 1-3,5-6,8-9,26-27,33-34,59,80,84-89,120-121
+  s_f058f999ab46b7::t_059f1496d78775 35-38,40-54,56-58,81-82
+  s_f058f999ab46b7::t_f941bd34da9d1b 4,7,19-25,28-32,39,55,60-64,65-67,69-79,83,90
+  s_f058f999ab46b7::t_1a7c9802ff41c6 10-18,68,92-120
+client/features/calendar/legacy-event-times.store.test.ts
+  s_f058f999ab46b7::t_e1a34e1ea633f0 41-50,72,74-78
+client/features/calendar/legacy-event-times.test.ts
+  s_f058f999ab46b7::t_989f028de4deb3 14-22,27-33
+client/features/calendar/legacy-event-times.ts
+  s_f058f999ab46b7::t_07f13b995e4471 26-29,51-53,60,62,65,73,82,108-119,123
+  s_f058f999ab46b7::t_54bf7c052d8be1 55-57,69,74
+  s_f058f999ab46b7::t_d9659b876c28c1 4,99-102
+  s_f058f999ab46b7::t_ee9509e5802dcf 5,10,58-59,68,93-96,133-137,139-142,144-149
+  s_f058f999ab46b7::t_ad04cfb083b2be 11-15,63-64,70,98,120-122,124-125,143
+client/features/focus/tasks/TaskLibrary.svelte
+  s_f058f999ab46b7::t_94749a3331a6f8 93,134-136,148-154,156-164,801
+client/datafn/maintenance-schedule.test.ts
+  s_f058f999ab46b7::t_b3107b51ba840a 15-17,20,59-73
+  s_f058f999ab46b7::t_01714bd96e118c 18-19,74-78,80-102
+  s_f058f999ab46b7::t_76108f3cd9ee67 79,103-146
+client/datafn/maintenance-schedule.ts
+  s_f058f999ab46b7::t_7eac56d44d3adf 48-66
+  s_f058f999ab46b7::t_97ae4ad0f7be31 3,67-72,79-83,85-86,88-90,93-97,103,106-112
+  s_f058f999ab46b7::t_650502e6b69d3a 73-78,84,87,91-92,98-102,104-105
+client/features/memory/node/markdown-block-parents.ts
+  s_f058f999ab46b7::t_5d032ec1fc8a09 4,225,238
+  s_f058f999ab46b7::t_9a953a9d8b420d 6,132-133,136-141
+  s_f058f999ab46b7::t_24d2a8e366f95d 105-106,109,115-122,124-127,134
+  s_f058f999ab46b7::t_a65f5d1e307119 135,170-176,224
+client/datafn/runtime-policy.test.ts
+  s_f058f999ab46b7::t_376d234c9d7271 28,33-44
+client/datafn/runtime-policy.ts
+  s_f058f999ab46b7::t_c8f6931ef8570e 59-63,74-78
+client/features/calendar/birdView/Birdview.svelte
+  s_f058f999ab46b7::t_3be3657d9c10b0 135,623-627,630-633
+client/features/calendar/classic/CalendarHeader.svelte
+  s_f058f999ab46b7::t_706ad367bcfe08 43-44,65-66
+  s_f058f999ab46b7::t_be445dcda1a28f 131-135
+client/features/calendar/classic/WeekView.svelte
+  s_f058f999ab46b7::t_2a90d9308bc14d 4,76,78,91-96,103-108,112-117,124-130
+  s_f058f999ab46b7::t_b96e0738fee56e 90,97-102,109-111,118-123
+client/shell/topNav/tabs/live-resource.test.ts
+  s_f058f999ab46b7::t_5f446ae09d5ed5 22-28,130-158
+client/shell/topNav/tabs/live-resource.ts
+  s_f058f999ab46b7::t_aa0190d36ca3c4 28-31,77,79-80,84-85,87-89,91,93-94
+client/surfaces/library/library-query.ts
+  s_f058f999ab46b7::t_e7dbe6dedb30bc 190
+client/features/calendar/birdView/BirdCalendar.svelte
+  s_f058f999ab46b7::t_ee209f40ff6d05 30-45,99-100
+client/features/memory/markdown/embed/EmbedContent.svelte
+  s_ed8fef588751d2::t_78ee5e796abf19 554
+client/shared-state/resources/active-resource.store.test.ts
+  s_f058f999ab46b7::t_09bc5cc9b0d666 16-31
+client/shared-state/resources/active-resource.store.ts
+  s_f058f999ab46b7::t_f74bf44d21fa28 204-210,212-213
+  s_f058f999ab46b7::t_eeb963355ffa70 214-221
+  s_f058f999ab46b7::t_35b8520d1833f4 211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0d8604d146e03fc87a87de1c308b55d29a072d3c",
+  "prompts": {},
+  "sessions": {
+    "s_2409648105d207": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d70d3597-81a1-4d05-8bd3-05ad69afb585",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_ed8fef588751d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aab4d627eccd948a8",
+        "model": "unknown"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+client/surfaces/library/LibraryRecordsPane.svelte
+  s_f058f999ab46b7::t_096caecdb080ec 2-3,192-205
+client/surfaces/library/library-query.test.ts
+  s_f058f999ab46b7::t_a3a03d81676750 53-62
+client/surfaces/library/library-query.ts
+  s_f058f999ab46b7::t_c2c633ecc79dd3 13-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f296277fb993c00aadcb289e0b74c87a7a7f21eb",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

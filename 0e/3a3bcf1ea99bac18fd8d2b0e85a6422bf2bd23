@@ -1,0 +1,19 @@
+apps/e2e-playwright/tests/shared/super-bar-context.spec.ts
+  s_0b0647615a23f7::t_47addbf2ba2b13 6,12-15,19-47,49,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0e3a3bcf1ea99bac18fd8d2b0e85a6422bf2bd23",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

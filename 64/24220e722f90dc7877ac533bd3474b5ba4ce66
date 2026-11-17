@@ -1,0 +1,25 @@
+client/features/calendar/calendar.utils.test.ts
+  s_f058f999ab46b7::t_389d6db01387a5 1-14
+client/features/calendar/calendar.utils.ts
+  s_f058f999ab46b7::t_0fac0f8000f606 15-18
+client/persistence/legacy-backup/record-conversion.test.ts
+  s_f058f999ab46b7::t_ec8bf15fdecc8a 1-34
+client/persistence/legacy-backup/record-conversion.ts
+  s_f058f999ab46b7::t_d68840955e20f4 294-314
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6424220e722f90dc7877ac533bd3474b5ba4ce66",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

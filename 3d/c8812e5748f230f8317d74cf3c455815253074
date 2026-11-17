@@ -1,0 +1,27 @@
+client/features/calendar/calendar-events.store.ts
+  s_f058f999ab46b7::t_3c48ab3e44d5d4 1-32
+client/features/calendar/calendar.utils.test.ts
+  s_f058f999ab46b7::t_cc17695511bcfb 2-5,7-8,13-36
+client/features/calendar/calendar.utils.ts
+  s_f058f999ab46b7::t_293b3b88e7ed2f 15-20,23,27-55
+client/features/calendar/column/CalendarColumnEventsPanel.svelte
+  s_f058f999ab46b7::t_ad08000c600333 10,20-22
+client/features/calendar/column/timeline/daytimeline/DayTimeline.svelte
+  s_f058f999ab46b7::t_7bdddddd6b1199 15,37-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3dc8812e5748f230f8317d74cf3c455815253074",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

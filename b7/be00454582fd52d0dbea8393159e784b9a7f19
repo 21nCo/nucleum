@@ -1,0 +1,23 @@
+client/features/spaces/SpaceSideNav.selection-memory.test.ts
+  s_1fc6e790734c37::t_00f00088c48c9c 9-11,13-14,62-63,70-71,79-80,82,86,92-109,122-133,139-140,143,148-149,152,157,160-174
+client/features/spaces/SpaceSideNav.svelte
+  s_1fc6e790734c37::t_84a1ed5132d3a8 31-32,61-62,136-139
+client/features/spaces/space-selection.ts
+  s_1fc6e790734c37::t_5470c7e706f1d7 8-13,16-19,21-23,25-26,31,34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b7be00454582fd52d0dbea8393159e784b9a7f19",
+  "prompts": {},
+  "sessions": {
+    "s_1fc6e790734c37": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a2961bdd77a0ab7c4",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

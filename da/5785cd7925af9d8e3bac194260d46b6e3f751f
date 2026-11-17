@@ -1,0 +1,21 @@
+client/surfaces/commandBar/CommandBar.context.test.ts
+  s_0b0647615a23f7::t_73bbb6013cb594 7-9,17-29,89,93,107-127
+client/surfaces/commandBar/CommandBar.svelte
+  s_0b0647615a23f7::t_072cc86bae9ac6 35,39-42,74-77,80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da5785cd7925af9d8e3bac194260d46b6e3f751f",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

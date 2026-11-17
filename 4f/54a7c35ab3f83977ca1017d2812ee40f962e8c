@@ -1,0 +1,39 @@
+client/shell/shortcuts/front-layer.ts
+  s_f058f999ab46b7::t_b5afb0ba16e9d3 39-43
+client/surfaces/settings/SettingsAsModal.svelte
+  s_f058f999ab46b7::t_c938dcc9f77cd3 128-130,139,178-181
+client/shell/topNav/contextZone/context-zone.ts
+  s_a2745a9d37d1f5::t_c2623ca6759a6b 227-231,247-252,270-271,283-288
+client/shell/shortcuts/ShortcutRunner.list-items.test.ts
+  s_a2745a9d37d1f5::t_661bcf337da1d4 103-104,109-125
+client/shell/shortcuts/list-item-step.ts
+  s_a2745a9d37d1f5::t_dfbb0ad9e11d65 3-7,11-14,17-42
+client/shell/topNav/contextZone/context-zone-list-views.test.ts
+  s_a2745a9d37d1f5::t_340b5b6c99e1f3 56-81
+client/surfaces/settings/SettingsAsModal.list-keys.test.ts
+  s_a2745a9d37d1f5::t_5dd6231c3be96b 4,149-228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4f54a7c35ab3f83977ca1017d2812ee40f962e8c",
+  "prompts": {},
+  "sessions": {
+    "s_a2745a9d37d1f5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a736ac672ab9e1906",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

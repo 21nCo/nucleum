@@ -1,0 +1,51 @@
+client/features/collections/Collection.svelte
+  s_f058f999ab46b7::t_164bc97250a496 904-907
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_338e715092f3ac 245
+client/features/focus/goals/GoalLeftPanel.svelte
+  s_f058f999ab46b7::t_3005e2b0c967f8 71-73
+client/features/records/ContextZoneEditableTitle.svelte
+  s_f058f999ab46b7::t_9becb2c5f46055 237-238
+client/features/records/EditableTopBarTitle.svelte
+  s_f058f999ab46b7::t_459bdd5ded93ec 92
+client/features/records/identity/ResourceIdentity.svelte
+  s_f058f999ab46b7::t_769977ad1ef75f 101-106,112-118
+client/features/spaces/SpaceAddPanel.svelte
+  s_f058f999ab46b7::t_3748fd78b78d08 9-23,57-98,124-134,136-162,164
+client/features/spaces/SpaceBody.svelte
+  s_f058f999ab46b7::t_af24d8929dae30 65-83,144-145,147-151,163,174,178,180-181,211-228
+client/features/spaces/SpaceContextZone.svelte
+  s_f058f999ab46b7::t_b6b54ee982f65c 3-4,66-75
+client/features/spaces/SpaceHeader.svelte
+  s_f058f999ab46b7::t_40f5d645c1f8cc 5,118-119,121,123-124,126
+client/features/spaces/SpaceNavItem.svelte
+  s_f058f999ab46b7::t_e55ede796533b4 2-4,50,80-83,151,194-195,314-327,330,333-344,351,408-417,420-425,427-432,434,436-445,447
+client/shell/leftPanel/appMenuSwitcher/AppMenuPinnedSpaces.svelte
+  s_0b0647615a23f7::t_fcfe256427a4ff 165
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte
+  s_f058f999ab46b7::t_16bd5a0f68a2dc 265
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "030e12131c459195bc9eda010cc267186eef27d7",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    },
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

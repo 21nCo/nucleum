@@ -1,0 +1,19 @@
+client/surfaces/commandBar/CommandBar.opening-command.test.ts
+  s_0b0647615a23f7::t_aa9b6706959064 1-115
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bd56f95a03b6f9d594024b77066f8ee8ab59a194",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

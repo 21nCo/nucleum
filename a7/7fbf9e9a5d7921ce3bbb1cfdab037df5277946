@@ -1,0 +1,23 @@
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_5a77543b0d189b 376-377
+client/ui/elements/InputBaseElement.svelte
+  s_f058f999ab46b7::t_72571c0f838238 67-70
+client/ui/elements/text/formLabel/FormControlLabelWrapper.svelte
+  s_f058f999ab46b7::t_5e58773ef944c2 14,23-27,33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a77fbf9e9a5d7921ce3bbb1cfdab037df5277946",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

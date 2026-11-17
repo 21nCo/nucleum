@@ -1,0 +1,25 @@
+client/features/memory/node/content/NodeContent.svelte
+  s_f058f999ab46b7::t_afd0d1e1ba3552 13,36-37,110-112,114,116-124,127,134,136-160
+client/features/memory/node/content/first-block.test.ts
+  s_f058f999ab46b7::t_3fdc53eb37b7b8 59-82
+client/features/memory/node/content/first-block.ts
+  s_f058f999ab46b7::t_c443232c7801e1 59-82
+client/features/memory/node/node.store.ts
+  s_f058f999ab46b7::t_bab769f52b4594 259-263
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "eb9c9ebbe9e30259dcc8db8d4298f4cde7a59bc0",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

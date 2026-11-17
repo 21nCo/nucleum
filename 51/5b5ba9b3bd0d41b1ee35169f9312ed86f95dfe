@@ -1,0 +1,19 @@
+client/features/memory/node/content/NodeContent.svelte
+  s_f058f999ab46b7::t_d3b278d4f7062a 78-83,188-193,210,331,390,479,581
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "515b5ba9b3bd0d41b1ee35169f9312ed86f95dfe",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

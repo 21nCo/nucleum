@@ -1,0 +1,19 @@
+client/features/spaces/SpaceContextZone.svelte
+  s_f058f999ab46b7::t_1dc54a3100bc31 4,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a77c7739f77ecdf0be68f44dcc105dc969eaaf00",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
