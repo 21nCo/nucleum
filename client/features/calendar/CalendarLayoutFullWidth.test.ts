@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/svelte";
+import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
@@ -57,6 +57,16 @@ vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
 
 import CalendarLayoutView from "@nucleum/features/calendar/CalendarLayout.svelte";
 
+function overflowTrigger() {
+  return document.querySelector<HTMLElement>(
+    '[data-testid="calendar-overflow-menu"]'
+  )!;
+}
+
+function openMenu() {
+  return document.querySelector("#popovers #calendarContextZoneMenu");
+}
+
 function controlsLevel() {
   return document
     .querySelector<HTMLElement>('[data-testid="calendar-context-controls"]')
@@ -103,6 +113,11 @@ describe("CalendarLayout full controls after their content changes", () => {
       }
     });
     mocks.entryWidth.set(300);
+    const popovers = document.createElement("div");
+    popovers.id = "popovers";
+    const secondary = document.createElement("div");
+    secondary.id = "secondary-popovers";
+    document.body.append(popovers, secondary);
   });
 
   afterEach(() => {
@@ -159,5 +174,44 @@ describe("CalendarLayout full controls after their content changes", () => {
 
     expect(controlsLevel()).toBe("4");
     expect(fullWidthReads).toBe(reads);
+  });
+
+  it("keeps the open overflow menu while its content changes and measures once it closes", async () => {
+    const { rerender } = render(CalendarLayoutView, {
+      props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+    });
+    await waitFor(() => expect(controlsLevel()).toBe("4"));
+    await fireEvent.click(overflowTrigger());
+    await waitFor(() => expect(openMenu()).toBeTruthy());
+    const trigger = overflowTrigger();
+
+    fullWidth = 250;
+    await rerender({ contentKey: "DAY|Nov 8" });
+    await settle();
+    expect(controlsLevel()).toBe("4");
+    expect(openMenu()).toBeTruthy();
+    expect(overflowTrigger()).toBe(trigger);
+
+    await fireEvent.click(trigger);
+    await waitFor(() => expect(openMenu()).toBeNull());
+    await waitFor(() => expect(controlsLevel()).toBe("0"));
+  });
+
+  it("waits for focus to leave the controls before showing the full controls", async () => {
+    const { rerender } = render(CalendarLayoutView, {
+      props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+    });
+    await waitFor(() => expect(controlsLevel()).toBe("4"));
+    const trigger = overflowTrigger();
+    trigger.focus();
+
+    fullWidth = 250;
+    await rerender({ contentKey: "WEEK|Nov 15" });
+    await settle();
+    expect(controlsLevel()).toBe("4");
+    expect(document.activeElement).toBe(trigger);
+
+    trigger.blur();
+    await waitFor(() => expect(controlsLevel()).toBe("0"));
   });
 });

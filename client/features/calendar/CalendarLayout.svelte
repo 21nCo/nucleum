@@ -165,18 +165,58 @@
   }
 
   let measuredContentKey: string | undefined = undefined;
+  let isOverflowMenuOpen = $state(false);
+  let isFocusWithin = $state(false);
+
+  /**
+   * Whether the controls are in use: their menu is open or they hold focus.
+   * Showing the full controls then would close the menu or move the focused
+   * control, so a pending measurement waits until the interaction ends.
+   */
+  const isInUse = $derived((isCompact && isOverflowMenuOpen) || isFocusWithin);
+
+  /** Rechecks focus, which can leave the controls with their focused element. */
+  function isStillInUse() {
+    const focused = focusedInControlsRoot();
+    return (
+      (isCompact && isOverflowMenuOpen) ||
+      (!!focused && !!controlsRef?.contains(focused))
+    );
+  }
+
+  function onOverflowMenuChange(event: Event) {
+    const isOpen = (event as CustomEvent<{ open?: unknown }>).detail?.open;
+    if (typeof isOpen === "boolean") isOverflowMenuOpen = isOpen;
+  }
+
+  function onControlsFocusOut(event: FocusEvent) {
+    const next = event.relatedTarget;
+    if (next instanceof Node && controlsRef?.contains(next)) return;
+    isFocusWithin = false;
+  }
+
+  $effect(() => {
+    if (!isCompact) untrack(() => (isOverflowMenuOpen = false));
+  });
 
   /**
    * Drops the full controls' width when their content changes while they
    * are compact: the full controls then show once, are measured with the
    * new content, and the least compact level that fits is picked again.
-   * A compact hold for a reopening menu defers this until it ends.
+   * A compact hold for a reopening menu, an open menu or focus in the
+   * controls defers this until it ends.
    */
   $effect(() => {
     const key = contentKey;
     const isHolding = isHoldingCompact;
+    const isDeferred = isInUse;
     untrack(() => {
-      if (key === measuredContentKey || isHolding) return;
+      if (
+        key === measuredContentKey ||
+        isHolding ||
+        (isDeferred && isStillInUse())
+      )
+        return;
       measuredContentKey = key;
       if (level !== 0) fullControlsWidth = 0;
     });
@@ -414,6 +454,8 @@
       data-compact={isCompact ? "true" : undefined}
       data-tight={isTight ? "true" : undefined}
       data-level={level}
+      onfocusin={() => (isFocusWithin = true)}
+      onfocusout={onControlsFocusOut}
     >
       {#if isLayoutSwitcher && level < 3}
         <div
@@ -449,6 +491,7 @@
       <div
         class="flex items-center h-full shrink-0"
         data-calendar-group={isCompact ? "right" : "trailing"}
+        onchangecapture={onOverflowMenuChange}
       >
         {#if isCompact}
           {@render headerRightOptions?.()}
