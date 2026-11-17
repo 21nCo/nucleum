@@ -1,0 +1,21 @@
+client/surfaces/commandBar/super-bar-modes.test.ts
+  s_a394385272af6a::t_434f9b782b5ea3 38-71
+client/surfaces/commandBar/super-bar.ts
+  s_a394385272af6a::t_ee6e49c2284a64 146-163,180,200,207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f40d97fc3fab5f5a89007a4fc8776769a4f50571",
+  "prompts": {},
+  "sessions": {
+    "s_a394385272af6a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_a394385272af6a",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

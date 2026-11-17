@@ -1,0 +1,27 @@
+client/shell/shortcuts/ChordRunner.svelte
+  s_b66d0e9dd4fae0::t_19c6a846ec3de2 5,13,57,70-75,83,88-91,94,102-111,114
+client/shell/shortcuts/ChordRunner.test.ts
+  s_b66d0e9dd4fae0::t_0886043b8e6f1c 110,114-122,128,130,134-173
+client/shell/shortcuts/ShortcutRunner.chords.test.ts
+  s_b66d0e9dd4fae0::t_f26bc8d93b226e 1-97
+client/shell/shortcuts/chord-keys.test.ts
+  s_b66d0e9dd4fae0::t_6f315c659bbfe3 2-6,44-81
+client/shell/shortcuts/chord-keys.ts
+  s_b66d0e9dd4fae0::t_93c9a6568225fd 1-2,42-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7d0b0219145b28cf79f048c9a89a2e983c7c62df",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

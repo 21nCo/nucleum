@@ -1,0 +1,25 @@
+client/features/memory/capture/upload-failure-feedback.test.ts
+  s_aa793b0a8d1ac8::t_e16dfba0acf42f 14,17-18,26-31,39,126,138-139,141
+client/features/memory/node/PreviewImageUploader.svelte
+  s_aa793b0a8d1ac8::t_93c96f290f002d 2-5,119
+client/shared-state/files/file-upload.lifecycle.test.ts
+  s_aa793b0a8d1ac8::t_eb97f56bdef2a0 246,513-540
+client/shared-state/files/filefn-client.ts
+  s_aa793b0a8d1ac8::t_4db8969a3b801e 372-376,403-427,429-436,438-457,474,488,540-542,578,593-595
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7aca05a1866bbde27d520a084395a883efb358bb",
+  "prompts": {},
+  "sessions": {
+    "s_aa793b0a8d1ac8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "027b6086-1840-4196-8460-0ca79d822514",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

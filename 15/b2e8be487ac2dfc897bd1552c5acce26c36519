@@ -1,0 +1,23 @@
+client/features/memory/capture/upload-failure-feedback.test.ts
+  s_f180f9a2ac11e4::t_a13b2027efe2e9 7,100-117,124-133
+client/features/memory/capture/ShareContentSaver.svelte
+  s_f180f9a2ac11e4::t_32c019129b6a24 128
+client/shared-state/files/filefn-client.ts
+  s_f180f9a2ac11e4::t_d5ae0f45fea06b 404-406,408,410-421,423-433,435-441,444,450,453,455,459,461-476,498,617
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "15b2e8be487ac2dfc897bd1552c5acce26c36519",
+  "prompts": {},
+  "sessions": {
+    "s_f180f9a2ac11e4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e59d8d2d-2ce1-459b-9c27-36c81f6d1a74",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

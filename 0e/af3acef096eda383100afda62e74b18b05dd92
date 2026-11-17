@@ -1,0 +1,29 @@
+client/composition/layers/UserBaseLayer.svelte
+  s_b66d0e9dd4fae0::t_29a2672732291f 37,405
+client/shared-state/shortcuts/shortcuts.chords.test.ts
+  s_b66d0e9dd4fae0::t_ea43708e76c61a 1-105
+client/shared-state/shortcuts/shortcuts.store.ts
+  s_b66d0e9dd4fae0::t_22e8010e62cf2e 81-82,84-90,94-98
+client/shell/shortcuts/ChordRunner.svelte
+  s_b66d0e9dd4fae0::t_b5e1f873f2bba0 1-101
+client/shell/shortcuts/ChordRunner.test.ts
+  s_b66d0e9dd4fae0::t_727c70b8923b0c 1-184
+client/shell/shortcuts/ShortcutRunner.svelte
+  s_b66d0e9dd4fae0::t_7122baf128c17f 40-43,65-68,79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0eaf3acef096eda383100afda62e74b18b05dd92",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

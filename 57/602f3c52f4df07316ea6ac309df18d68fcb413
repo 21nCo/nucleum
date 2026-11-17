@@ -1,0 +1,31 @@
+client/shell/shortcuts/ChordRunner.svelte
+  s_0b0647615a23f7::t_166cb21e4e3584 13,16,33-54,57,72-74,84-85,92
+client/shell/shortcuts/ChordRunner.test.ts
+  s_0b0647615a23f7::t_88bec95955443d 2,41-43,147,151-153,158,160-161,163,181-198
+client/shell/shortcuts/ShortcutRunner.svelte
+  s_0b0647615a23f7::t_bf37b7edc88654 32,219
+client/shell/shortcuts/chord-keys.test.ts
+  s_0b0647615a23f7::t_86f54355225d93 2,31-38
+client/shell/shortcuts/chord-keys.ts
+  s_0b0647615a23f7::t_e286f3dfba5fda 4-8,19-26,35-36
+client/shell/shortcuts/pinned-space-chord.test.ts
+  s_0b0647615a23f7::t_e5c56f92e28075 1-42
+client/shell/shortcuts/pinned-space-chord.ts
+  s_0b0647615a23f7::t_a225968a456ce3 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "57602f3c52f4df07316ea6ac309df18d68fcb413",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+apps/e2e-playwright/tests/memory/capture-file-upload.spec.ts
+  s_0b0647615a23f7::t_e19205ffc394de 17-20,29-31
+client/features/memory/markdown/Block.svelte
+  s_0b0647615a23f7::t_13d4a069da473d 55,793-797,925-927
+client/features/memory/node/PreviewImageUploader.svelte
+  s_0b0647615a23f7::t_1ab00d66fda5d3 97-98
+client/shared-state/files/file-upload.filefn.test.ts
+  s_0b0647615a23f7::t_9530238b4627f6 32-33,35-40,47-58,93,114,120,498-501,507,511,516-556
+client/shared-state/files/file-upload.lifecycle.test.ts
+  s_0b0647615a23f7::t_7518729da911de 36-38,44-46,48-49,107-156,217,226-227,237-238,331-458
+client/shared-state/files/file-upload.ts
+  s_0b0647615a23f7::t_37133ef2b3ee2b 2,7,26-32,44-56,113-115,139-145,154-156,283-290,292-293,299,323-330,333,339-356,365,367-375,378-395,409-414,417,427,448
+client/shared-state/files/filefn-client.ts
+  s_0b0647615a23f7::t_7e57379e5db399 3,23,31-39,42,52-53,156-159,191,205,207-208,211-215,235-236,238-245,301-303,305-316,320-322,324-334,338-341,343,345-422
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "88431bc58ee03f316170e711e25fd3cd5ad7edb4",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

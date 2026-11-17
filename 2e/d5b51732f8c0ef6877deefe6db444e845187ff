@@ -1,0 +1,19 @@
+client/shell/shortcuts/ChordRunner.test.ts
+  s_0b0647615a23f7::t_04a929741e2e63 10-12,45,160,165-167,185,196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2ed5b51732f8c0ef6877deefe6db444e845187ff",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+client/features/spaces/SpaceSideNav.list-keys.test.ts
+  s_0b0647615a23f7::t_003a88efad0221 1-182
+client/features/spaces/SpaceSideNav.svelte
+  s_0b0647615a23f7::t_9fe18ef48cbd96 173-188,204
+client/shell/shortcuts/ShortcutRunner.list-items.test.ts
+  s_0b0647615a23f7::t_79cd049b599417 126-150
+client/shell/shortcuts/front-layer.ts
+  s_0b0647615a23f7::t_570e0557942a40 8-16
+client/shell/shortcuts/list-item-step.ts
+  s_0b0647615a23f7::t_602f09b6d592f0 4,29-32,36-42
+client/surfaces/settings/SettingsAsModal.list-keys.test.ts
+  s_0b0647615a23f7::t_ddf90a1762ff60 216-226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "adc26b26313064aa567c61d250aaa5636e972f94",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
