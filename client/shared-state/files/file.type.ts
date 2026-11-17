@@ -1,4 +1,5 @@
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
+import type { IFileProcessing } from "@nucleum/shared-state/files/file-processing";
 import type {
   IResource,
   IResourceLabeled,
@@ -15,6 +16,9 @@ type IFileBase = IResourceLabeled & {
   thumbnailUrl?: string | null;
   thumbnailData?: Uint8Array;
   isMeta?: boolean;
+  /** FileFn file in the regional account database. */
+  fileId?: string;
+  processing?: IFileProcessing;
 };
 
 export type IFileCapture = IFileBase & {

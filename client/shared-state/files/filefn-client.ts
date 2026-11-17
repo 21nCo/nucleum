@@ -83,12 +83,12 @@ export function resolveFileFnOfflineDir(userId: string): string {
  * its tab closes.
  *
  * Known limit (owner amendment 2026-11-14, deferred to TIDY-544 and FILE-15):
- * the lock covers only this startup replay. @filefn/client 0.2.0 also starts
+ * the lock covers only this startup replay. @filefn/client 0.3.0 also starts
  * its replay on the first use of the offline queue (an offline upload, a
  * pending local descriptor or a local render), so a tab that waits for the
  * lock replays outside it once it uses the queue, and without Web Locks every
  * client replays. Delivery then stays at least once, as in @filefn/client
- * 0.2.0: two tabs replaying one staged upload can create two upload sessions.
+ * 0.3.0: two tabs replaying one staged upload can create two upload sessions.
  *
  * Teardown aborts the client's in-flight requests, rejects every later call
  * with an AbortError before it does any work, and rejects the pending `done()`
@@ -96,7 +96,7 @@ export function resolveFileFnOfflineDir(userId: string): string {
  * staged, in the account's offline queue stay there for the account's next
  * client to replay; a handle's `abort()` after teardown does not delete them.
  *
- * Known limit: @filefn/client 0.2.0 has no dispose and cannot restart the
+ * Known limit: @filefn/client 0.3.0 has no dispose and cannot restart the
  * replay of an existing OfflineSync, so every client that started its replay
  * keeps its window `online` listener after teardown. On a reconnect it reads
  * each staged upload, reaches only the torn-down transport, which rejects with
@@ -241,7 +241,7 @@ function startOfflineReplayWhenOwner(
 }
 
 /**
- * Starts the client's offline queue replay. @filefn/client 0.2.0 creates and
+ * Starts the client's offline queue replay. @filefn/client 0.3.0 creates and
  * starts its OfflineSync only on the first use of the offline queue, so this
  * makes that first use with a local lookup that matches no staged upload and
  * sends no request. Later uses reuse the same OfflineSync, so a client never
@@ -353,6 +353,7 @@ function guardFileFnClient(
       guard(() => client.downloadUrl(fileId, options)),
     downloadArtifact: (fileId, artifactId) =>
       guard(() => client.downloadArtifact(fileId, artifactId)),
+    uploadArtifact: (input) => guard(() => client.uploadArtifact(input)),
     resolveRenderable: (input) => guard(() => client.resolveRenderable(input)),
     deleteFile: (fileId) => guard(() => client.deleteFile(fileId)),
     getPendingLocalDescriptor: (fileId) =>

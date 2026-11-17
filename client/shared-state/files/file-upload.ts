@@ -1,8 +1,5 @@
-import { UserDataMode } from "@nucleum/client/runtime/account/account.type";
-
-import { getBucketNameandKey } from "@nucleum/client/runtime/files/signed-url";
-
 import { type IRecordId } from "@nucleum/schema/legacy/data.type";
+import { generateFileId, type FileFnClient } from "@filefn/client";
 
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -10,14 +7,35 @@ import { datafn } from "@nucleum/datafn/datafn.store";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { Resource } from "@nucleum/datafn/resource.enum";
 
-import { compressImageToTargetSize } from "@nucleum/client/runtime/media/image-codec";
 import { convertHeicToPng } from "@nucleum/client/runtime/media/image-codec";
-import { generateImagePreviewFromPdf } from "@nucleum/shared-state/files/pdf-preview";
+import {
+  DEVICE_THUMBNAIL_KIND,
+  elapsedMs,
+  generateThumbnail,
+  isDeviceProcessingMode,
+  isHeicFile,
+  processOnDevice,
+  recordFileProcessing,
+  resolveFileProcessingMode,
+  type DeviceArtifact,
+  type IFileProcessing
+} from "@nucleum/shared-state/files/file-processing";
+import {
+  getFileFnClient,
+  resolveFileFnAccountScope
+} from "@nucleum/shared-state/files/filefn-client";
+import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 
 import account from "@nucleum/client/runtime/account/account.store";
 import { fileTransport } from "@nucleum/client/runtime/files/file-transport";
+
+/** FileFn upload policies the account service registers (Nucleus policies). */
+const DURABLE_UPLOAD_POLICY = "nucleus-durable-default";
+const TEMPORARY_UPLOAD_POLICY = "nucleus-temporary-default";
+
 /** Uploads and stores file content independently of account lifecycle. */
 export const fileUpload = {
+  /** Legacy signed upload URL, used only by `uploadFile` (see there). */
   getSignedUrl(contentType: string, fileName: string, isTemp: boolean) {
     const acc = account.get();
     const userId = acc.userInfo?.id.split(":")[1] ?? "";
@@ -29,6 +47,8 @@ export const fileUpload = {
     );
   },
   /**
+   * Legacy signed-URL upload, kept only for Pointron import's
+   * `tempUploadToS3` until TIDY-553 moves it to FileFn.
    * @deprecated - use uploadFileV2 instead
    * @param contentType
    * @param fileName
@@ -56,165 +76,61 @@ export const fileUpload = {
       return signedUrlResponse;
     } else return null;
   },
+  /**
+   * Uploads a file and saves its DataFn `file` record, returning `[record]`.
+   *
+   * A signed-in cloud account that is online uploads through FileFn under a
+   * client-chosen `fileId`, and the record keeps that `fileId` instead of a
+   * URL. When the environment's `fileProcessingMode` is `local` or `both`, a
+   * HEIC photo is converted to PNG and a thumbnail is made on the device, and
+   * both upload as client artifacts of the file version; `remote` leaves them
+   * to the account service. A thumbnail the caller passes is uploaded in every
+   * mode. A local-only account, or a cloud account that is offline, keeps the
+   * bytes on the record as before (moved to the FileFn offline queue by
+   * TIDY-544).
+   *
+   * A failed upload or record save is shown to the user as an error toast and
+   * rethrown: a failed online upload no longer falls back to keeping the file
+   * on the device.
+   */
   async uploadFileV2(
     contentType: string,
     fileName: string,
     blob: Blob,
     params: {
       isTemp?: boolean;
-      isReturnUrl?: boolean;
-      isExtensionEnv?: boolean;
-      isPreventSync?: boolean;
-      isMeta?: boolean;
       thumbnailBlob?: Blob;
       isGenerateThumbnail?: boolean;
     } = {}
   ) {
+    const displayName = fileName;
+    fileName = fileName
+      .replace(/\s+/g, "_")
+      .replace(/[()@#$%&*!?<>{}[\]\\\/\^~`+=;:,'"|]/g, "_");
     try {
-      const accountData = account.get();
       const id = generateResourceId(Resource.file, {
         id: contentType.split("/")[0] + "_" + generateSimpleRandomId()
       });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
-      fileName = fileName
-        .replace(/\s+/g, "_")
-        .replace(/[()@#$%&*!?<>{}[\]\\\/\^~`+=;:,'"|]/g, "_");
-
-      const isHeicFile = fileName.toLowerCase().endsWith(".heic");
-      if (isHeicFile) {
-        try {
-          const { convertedBlob } = await convertHeicToPng(blob);
-          blob = convertedBlob;
-          contentType = "image/png";
-          fileName = fileName.replace(/\.heic$/i, ".png");
-          logger.log({
-            at: "uploadFileV2",
-            message: "Converted HEIC to PNG",
-            originalFileName: fileName,
-            newContentType: contentType
-          });
-        } catch (error) {
-          logger.error({
-            at: "uploadFileV2",
-            error,
-            message: "HEIC conversion failed"
-          });
-          throw new Error(
-            "Failed to convert HEIC file. Please try a different format."
-          );
-        }
+      const input = { id, contentType, fileName, blob, ...params };
+      if (resolveFileFnAccountScope(account.get()) && !isDeviceOffline()) {
+        return await uploadThroughFileFn(input);
       }
-
-      let thumbnailBlob: Blob | undefined = params.thumbnailBlob;
-      if (params.isGenerateThumbnail && !thumbnailBlob) {
-        if (contentType.includes("image")) {
-          thumbnailBlob = await compressImageToTargetSize(blob);
-        } else if (contentType.includes("pdf")) {
-          const result = await generateImagePreviewFromPdf(blob);
-          if (result) thumbnailBlob = result as Blob;
-        }
-      }
-      if (accountData.dataMode === UserDataMode.LOCAL || params.isPreventSync) {
-        return await this.saveLocalFile({
-          id,
-          fileName,
-          contentType,
-          blob,
-          thumbnailBlob,
-          isMeta: params.isMeta,
-          isExtensionEnv: params.isExtensionEnv,
-          isReturnUrl: params.isReturnUrl
-        });
-      } else {
-        const signedUrlResponse = await this.getSignedUrl(
-          contentType,
-          fileName,
-          params.isTemp ?? false
-        );
-        if (!signedUrlResponse || !signedUrlResponse.uploadURL) {
-          return await this.saveLocalFile({
-            id,
-            fileName,
-            contentType,
-            blob,
-            thumbnailBlob,
-            isMeta: params.isMeta,
-            isExtensionEnv: params.isExtensionEnv,
-            isReturnUrl: params.isReturnUrl
-          });
-        }
-
-        await fileTransport.uploadFile(
-          signedUrlResponse.uploadURL,
-          contentType,
-          blob
-        );
-        const key = getBucketNameandKey(signedUrlResponse.uploadURL);
-        const signedGetUrl =
-          await fileTransport.fetchSignedUrlForGet(key);
-        const url = signedGetUrl?.getUrl;
-        let thumbnailUrl: string | undefined;
-        if (thumbnailBlob) {
-          const signedThumbnailUrlResponse = await this.getSignedUrl(
-            "image/jpeg",
-            "thumbnail_" + fileName,
-            params.isTemp ?? false
-          );
-          const thumbnailUploadUrl = signedThumbnailUrlResponse?.uploadURL;
-          if (thumbnailUploadUrl) {
-            await fileTransport.uploadFile(
-              thumbnailUploadUrl,
-              "image/jpeg",
-              thumbnailBlob
-            );
-            const thumbnailKey = getBucketNameandKey(thumbnailUploadUrl);
-            const signedThumbnailGetUrl =
-              await fileTransport.fetchSignedUrlForGet(thumbnailKey);
-            thumbnailUrl = signedThumbnailGetUrl?.getUrl;
-          }
-        }
-        const file = {
-          id,
-          label: fileName,
-          type: contentType,
-          url,
-          size: blob.size,
-          isMeta: params.isMeta,
-          thumbnailUrl
-        };
-        if (params.isReturnUrl) {
-          return url;
-        } else if (params.isExtensionEnv) {
-          return file;
-        }
-        const mutationResult = (await datafn.file.mutate({
-          operation: "insert",
-          id,
-          record: file
-        })) as { ok?: boolean; error?: unknown };
-        if (mutationResult.ok === false) {
-          throw mutationResult.error ?? new Error("File metadata save failed");
-        }
-        return [file];
-      }
-    } catch (e) {
-      logger.error({ at: "uploadFileV2", error: e });
-      throw e;
+      return await saveOnDevice(input);
+    } catch (error) {
+      logger.error({ at: "uploadFileV2", error });
+      toasts.error(`Couldn't upload ${displayName}. Please try again.`);
+      throw error;
     }
   },
+  /** Saves the file's bytes and thumbnail on its DataFn record. */
   async saveLocalFile(params: {
     id: IRecordId;
     fileName: string;
     contentType: string;
     blob: Blob;
     thumbnailBlob?: Blob;
-    isMeta?: boolean;
-    isExtensionEnv?: boolean;
-    isReturnUrl?: boolean;
   }) {
-    if (params.isReturnUrl) {
-      return URL.createObjectURL(params.blob);
-    }
     const arrayBuffer = await params.blob.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
     let thumbnailUint8Array: Uint8Array | undefined;
@@ -229,12 +145,8 @@ export const fileUpload = {
       type: params.contentType,
       data: uint8Array,
       size: uint8Array.length,
-      isMeta: params.isMeta,
       thumbnailData: thumbnailUint8Array
     };
-    if (params.isExtensionEnv) {
-      return file;
-    }
     const mutationResult = (await datafn.file.mutate({
       operation: "insert",
       id: params.id,
@@ -262,3 +174,198 @@ export const fileUpload = {
     return [url, customName, itemLocalURL];
   }
 };
+
+type FileUploadInput = {
+  id: IRecordId;
+  contentType: string;
+  fileName: string;
+  blob: Blob;
+  isTemp?: boolean;
+  thumbnailBlob?: Blob;
+  isGenerateThumbnail?: boolean;
+};
+
+/** True when the browser reports no network connection. */
+function isDeviceOffline() {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
+
+/**
+ * Keeps the file's bytes on its DataFn record, converting a HEIC photo to PNG
+ * and making a thumbnail on the device first.
+ */
+async function saveOnDevice(input: FileUploadInput) {
+  let { blob, contentType, fileName } = input;
+  const artifacts: IFileProcessing["artifacts"] = {};
+  if (isHeicFile(fileName, contentType)) {
+    const startedAt = performance.now();
+    try {
+      blob = (await convertHeicToPng(blob)).convertedBlob;
+    } catch (error) {
+      logger.error({ at: "uploadFileV2", error, message: "HEIC conversion failed" });
+      throw new Error(
+        "Failed to convert HEIC file. Please try a different format."
+      );
+    }
+    contentType = "image/png";
+    fileName = fileName.replace(/\.heic$/i, ".png");
+    artifacts.converted = { durationMs: elapsedMs(startedAt) };
+  }
+  let thumbnailBlob = input.thumbnailBlob;
+  if (input.isGenerateThumbnail && !thumbnailBlob) {
+    const startedAt = performance.now();
+    thumbnailBlob = await generateThumbnail(blob, contentType);
+    if (thumbnailBlob) {
+      artifacts[DEVICE_THUMBNAIL_KIND] = { durationMs: elapsedMs(startedAt) };
+    }
+  }
+  recordFileProcessing({
+    mode: "local",
+    contentType,
+    deviceDurationMs: sumDurations(artifacts),
+    artifacts
+  });
+  return fileUpload.saveLocalFile({
+    id: input.id,
+    fileName,
+    contentType,
+    blob,
+    thumbnailBlob
+  });
+}
+
+/**
+ * Uploads the original through FileFn under a client-chosen `fileId` while
+ * the device processes it (unless the mode is `remote`), uploads the device
+ * artifacts, then saves the DataFn record with `fileId` and `processing`.
+ * A record that cannot be saved deletes the uploaded file, so no FileFn file
+ * is left that no record references.
+ */
+async function uploadThroughFileFn(input: FileUploadInput) {
+  const client = await getFileFnClient();
+  if (!client) {
+    throw new Error("FileFn is unavailable for the signed-in account");
+  }
+  const mode = resolveFileProcessingMode();
+  const file =
+    input.blob.type === input.contentType
+      ? input.blob
+      : new Blob([input.blob], { type: input.contentType });
+  const handle = client.uploadFile({
+    policy: input.isTemp ? TEMPORARY_UPLOAD_POLICY : DURABLE_UPLOAD_POLICY,
+    file,
+    fileName: input.fileName,
+    fileId: generateFileId()
+  });
+  const deviceProcessing = isDeviceProcessingMode(mode)
+    ? processOnDevice({
+        blob: input.blob,
+        contentType: input.contentType,
+        fileName: input.fileName,
+        isGenerateThumbnail: Boolean(
+          input.isGenerateThumbnail && !input.thumbnailBlob
+        )
+      })
+    : Promise.resolve<DeviceArtifact[]>([]);
+  const [uploaded, deviceArtifacts] = await Promise.all([
+    handle.done(),
+    deviceProcessing
+  ]);
+  const artifacts = input.thumbnailBlob
+    ? [
+        ...deviceArtifacts,
+        { kind: DEVICE_THUMBNAIL_KIND, data: input.thumbnailBlob }
+      ]
+    : deviceArtifacts;
+  const processing: IFileProcessing = {
+    mode,
+    artifacts: await uploadArtifacts(client, uploaded, artifacts)
+  };
+  recordFileProcessing({
+    mode,
+    fileId: uploaded.fileId,
+    contentType: input.contentType,
+    deviceDurationMs: sumDurations(processing.artifacts),
+    artifacts: processing.artifacts
+  });
+  const record = {
+    id: input.id,
+    label: input.fileName,
+    name: input.fileName,
+    type: input.contentType,
+    size: input.blob.size,
+    fileId: uploaded.fileId,
+    processing
+  };
+  try {
+    const result = (await datafn.file.mutate({
+      operation: "insert",
+      id: input.id,
+      record
+    })) as { ok?: boolean; error?: unknown };
+    if (result.ok === false) {
+      throw result.error ?? new Error("File metadata save failed");
+    }
+  } catch (error) {
+    await discardUploadedFile(client, uploaded.fileId);
+    throw error;
+  }
+  return [record];
+}
+
+/**
+ * Uploads device artifacts of a file version, returning the kinds that
+ * uploaded with their durations. A failed artifact is logged and left out:
+ * the original is already stored, and remote processing can make it.
+ */
+async function uploadArtifacts(
+  client: FileFnClient,
+  uploaded: { fileId: string; versionId: string },
+  artifacts: DeviceArtifact[]
+) {
+  const present: IFileProcessing["artifacts"] = {};
+  await Promise.all(
+    artifacts.map(async (artifact) => {
+      try {
+        await client.uploadArtifact({
+          fileId: uploaded.fileId,
+          versionId: uploaded.versionId,
+          kind: artifact.kind,
+          data: artifact.data,
+          mimeType:
+            artifact.data.type ||
+            (artifact.kind === "converted" ? "image/png" : "image/jpeg"),
+          durationMs: artifact.durationMs
+        });
+        present[artifact.kind] =
+          artifact.durationMs === undefined
+            ? {}
+            : { durationMs: artifact.durationMs };
+      } catch (error) {
+        logger.warn({
+          at: "uploadFileV2.artifact",
+          fileId: uploaded.fileId,
+          kind: artifact.kind,
+          error
+        });
+      }
+    })
+  );
+  return present;
+}
+
+/** Deletes an uploaded file whose record could not be saved. */
+async function discardUploadedFile(client: FileFnClient, fileId: string) {
+  try {
+    await client.deleteFile(fileId);
+  } catch (error) {
+    logger.warn({ at: "uploadFileV2.discard", fileId, error });
+  }
+}
+
+function sumDurations(artifacts: IFileProcessing["artifacts"]) {
+  return Object.values(artifacts).reduce(
+    (total, artifact) => total + (artifact?.durationMs ?? 0),
+    0
+  );
+}

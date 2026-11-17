@@ -93,6 +93,7 @@
         "VITE_STATIC_URL": "https://cms-cdn.21n.dev",
         "VITE_API_URL": "https://api.21n.dev",
         "VITE_FILE_API_URL": "https://files.21n.dev",
+        "VITE_FILE_PROCESSING_MODE": "local",
         "VITE_IPINFO_TOKEN": "8b7af6433568ef"
       }
     },
