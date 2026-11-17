@@ -472,7 +472,12 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     } else if (typeof content === "function") {
       component = mount(content, {
         target: popoverElement,
-        props: { ...componentProps, isPopoverContext: true }
+        props: {
+          ...componentProps,
+          isPopoverContext: true,
+          // A dedicated name, so content that already takes onClose keeps it.
+          closePopover: () => hidePopover("close")
+        }
       });
     }
 

@@ -4,6 +4,7 @@ import { DatafnSeedTransport } from "../../fixtures/datafn-seed";
 import { expect, test, type E2ESeed } from "../../fixtures/e2e-test";
 import { ensureInAppOnHome, LibraryTab } from "../../utils/helpers";
 import { resolveRepoFsImportPath } from "../../utils/repo-fs";
+import { openSettings } from "../../utils/settings";
 import {
   blockExternalAuthRequests,
   openNodesLibrary
@@ -257,6 +258,51 @@ test.describe("nodes - item keys", () => {
       await expect(menu).toBeHidden();
     } finally {
       await deleteSpace(page, spaceId);
+    }
+  });
+
+  test("Escape closes a menu that a popover hosts directly, before the Settings dialog", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    await openSettings(page);
+    await page
+      .getByTestId("settings-sidebar")
+      .getByRole("button", { name: /^Appearance$/i })
+      .click({ timeout: 5_000 });
+    const profiles = page.getByTestId("appearance-profiles");
+    await expect(profiles).toBeVisible({ timeout: 10_000 });
+
+    const name = `E2E item keys ${Date.now()}`;
+    await profiles.getByTestId("appearance-profile-save-new").click();
+    await page.getByTestId("appearance-profile-name").fill(name);
+    await page.getByTestId("appearance-profile-name").press("Enter");
+    const menuTrigger = profiles
+      .locator("[data-profile-id]")
+      .filter({ hasText: name })
+      .locator("..")
+      .getByTestId("appearance-profile-menu");
+    const rename = page.locator('[data-context-menu-item-id="rename"]');
+    const remove = page.locator('[data-context-menu-item-id="delete"]');
+    try {
+      await menuTrigger.click();
+      await expect(rename).toBeVisible({ timeout: 10_000 });
+      await page.keyboard.press("ArrowDown");
+      await expect(rename).toBeFocused();
+      await page.keyboard.press("Escape");
+      await expect(rename).toBeHidden({ timeout: 10_000 });
+      await expect(profiles).toBeVisible();
+    } finally {
+      if (await profiles.isVisible()) {
+        if (!(await remove.isVisible())) await menuTrigger.click();
+        await remove.click();
+        await expect(
+          profiles
+            .getByTestId("appearance-profile-option")
+            .filter({ hasText: name })
+        ).toHaveCount(0);
+      }
     }
   });
 

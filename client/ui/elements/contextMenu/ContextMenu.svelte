@@ -71,7 +71,8 @@
     parentBgIndex = 1,
     isFullWidth = $view.isConstrainedWidth,
     bottomRender = undefined,
-    onClose = undefined
+    onClose = undefined,
+    closePopover = undefined
   }: {
     menuResolver: () => IContextMenuGroup[];
     size?: Size.sm | Size.md | Size.lg | Size.xl;
@@ -81,6 +82,8 @@
     isFullWidth?: boolean;
     bottomRender?: string | undefined;
     onClose?: (() => void) | undefined;
+    /** Passed by the popover action that mounts the menu. */
+    closePopover?: (() => void) | undefined;
   } = $props();
   let menuRef = $state<HTMLDivElement>();
   $effect(() => {
@@ -124,10 +127,11 @@
     if (event.key !== "Escape" && !isArrow) return;
     if (resolveKeyOwner(event.target) !== menuRef) return;
     if (event.key === "Escape") {
-      if (!onClose) return;
+      const close = onClose ?? closePopover;
+      if (!close) return;
       event.preventDefault();
       event.stopPropagation();
-      onClose();
+      close();
       return;
     }
     if (isArrowControl(event.target)) return;
