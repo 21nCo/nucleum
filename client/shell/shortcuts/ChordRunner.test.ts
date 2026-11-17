@@ -107,20 +107,69 @@ describe("ChordRunner", () => {
     expect(mocks.runAction).not.toHaveBeenCalled();
   });
 
-  it("passes on the second key of a chord the product does not register", () => {
+  it("consumes the second key of a chord the product does not register", () => {
     press("g");
     const second = press("f");
+
+    expect(mocks.runAction).not.toHaveBeenCalled();
+    expect(second.defaultPrevented).toBe(true);
+    expect(pageKeys).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes on a second key that is no chord", () => {
+    press("g");
+    const second = press("x");
 
     expect(mocks.runAction).not.toHaveBeenCalled();
     expect(second.defaultPrevented).toBe(false);
     expect(pageKeys).toHaveBeenCalledTimes(2);
   });
 
-  it("cancels the chord on Escape", () => {
+  it("cancels the chord on Escape and consumes the Escape", () => {
     press("g");
-    press("Escape");
+    const escape = press("Escape");
     press("c");
 
+    expect(mocks.runAction).not.toHaveBeenCalled();
+    expect(escape.defaultPrevented).toBe(true);
+    expect(pageKeys.mock.calls.map(([event]) => event.key)).toEqual(["g", "c"]);
+  });
+
+  it("passes Escape on without a pending chord", () => {
+    const escape = press("Escape");
+
+    expect(escape.defaultPrevented).toBe(false);
+    expect(pageKeys).toHaveBeenCalledTimes(1);
+  });
+
+  it("leaves Escape to a field after G", () => {
+    const input = document.createElement("input");
+    document.body.append(input);
+    press("g");
+    const escape = press("Escape", {}, input);
+
+    expect(escape.defaultPrevented).toBe(false);
+    expect(pageKeys).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([
+    ["a plaintext-only editor", `<div contenteditable="plaintext-only"></div>`],
+    ["a child of an editor", `<div contenteditable="true"><p></p></div>`]
+  ])("neither starts nor finishes a chord in %s", (_name, html) => {
+    const host = document.createElement("div");
+    host.innerHTML = html;
+    document.body.append(host);
+    const target = host.querySelector("p") ?? host.firstElementChild!;
+
+    const start = press("g", {}, target);
+    press("c");
+    expect(start.defaultPrevented).toBe(false);
+    expect(mocks.runAction).not.toHaveBeenCalled();
+
+    press("g");
+    const typed = press("c", {}, target);
+    press("c");
+    expect(typed.defaultPrevented).toBe(false);
     expect(mocks.runAction).not.toHaveBeenCalled();
   });
 

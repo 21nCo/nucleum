@@ -2,10 +2,7 @@
 
 <script lang="ts">
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
-  import {
-    isRightDrawerOnFront,
-    isTextElement
-  } from "@21n/ui/actions/interaction-dom";
+  import { isRightDrawerOnFront } from "@21n/ui/actions/interaction-dom";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
   import context from "@nucleum/client/runtime/context.store";
@@ -13,6 +10,7 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import {
     CHORD_TIMEOUT_MS,
+    isChordEditableTarget,
     isChordStart,
     resolveChordSpaceIndex
   } from "@nucleum/shell/shortcuts/chord-keys";
@@ -56,7 +54,7 @@
   const startListener = (event: KeyboardEvent) => {
     if (!isChordStart(event)) return;
     if ($context.embed === Embed.HANDSET) return;
-    if (isTextElement(event.target)) return;
+    if (isChordEditableTarget(event.target)) return;
     if (isRightDrawerOnFront()) return;
     if (keyboardShortcuts.resolveShortcut(event, { isRegistered }).shortcut)
       return;
@@ -69,9 +67,12 @@
   /**
    * Runs the second key of a chord such as G then C, in the capture phase so
    * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
-   * pinned space in that app menu position. Escape, typing in a field, a
-   * right-side drawer opened meanwhile or any key that is not a chord ends the
-   * chord and passes on unchanged.
+   * pinned space in that app menu position. Typing in a field or a right-side
+   * drawer opened meanwhile ends the chord and leaves the key to them. Escape
+   * ends the chord and is consumed, so the shell does not also close a layer.
+   * A chord the product does not register ends without running anything and
+   * its key is consumed too. Any other key that is not a chord ends the chord
+   * and passes on unchanged.
    */
   const captureListener = (event: KeyboardEvent) => {
     if (pendingPrefix === undefined) return;
@@ -79,16 +80,18 @@
     const prefix = pendingPrefix;
     clearChord();
     if (
-      event.key === KeyboardKey.ESCAPE ||
-      isTextElement(event.target) ||
+      isChordEditableTarget(event.target) ||
       $context.embed === Embed.HANDSET ||
       isRightDrawerOnFront()
     )
       return;
+    if (event.key === KeyboardKey.ESCAPE) {
+      consume(event);
+      return;
+    }
     const spaceIndex = resolveChordSpaceIndex(prefix, event);
     if (spaceIndex !== undefined) {
-      event.stopPropagation();
-      event.preventDefault();
+      consume(event);
       void openPinnedSpace(spaceIndex);
       return;
     }
@@ -96,11 +99,19 @@
       prefix,
       isRegistered
     });
-    if (!shortcut) return;
-    requireCommandHost().runAction(shortcut.action);
+    if (shortcut) {
+      consume(event);
+      requireCommandHost().runAction(shortcut.action);
+      return;
+    }
+    if (keyboardShortcuts.resolveShortcut(event, { prefix }).shortcut)
+      consume(event);
+  };
+
+  function consume(event: KeyboardEvent) {
     event.stopPropagation();
     event.preventDefault();
-  };
+  }
 
   $effect(() => clearChord);
 </script>

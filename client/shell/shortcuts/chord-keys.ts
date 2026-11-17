@@ -1,3 +1,5 @@
+import { isTextElement } from "@21n/ui/actions/interaction-dom";
+
 /** How long a chord prefix such as G waits for its second key. */
 export const CHORD_TIMEOUT_MS = 1500;
 
@@ -36,4 +38,17 @@ export function resolveChordSpaceIndex(
   if (hasModifier(event)) return undefined;
   if (!/^[1-9]$/.test(event.key)) return undefined;
   return Number(event.key) - 1;
+}
+
+/**
+ * Whether a key goes to something the user types in, so G neither starts nor
+ * completes a chord there: inputs and text areas, and any element that is
+ * editable, including plaintext-only editors and children of an editor.
+ */
+export function isChordEditableTarget(target: EventTarget | null): boolean {
+  if (isTextElement(target)) return true;
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const editor = target.closest("[contenteditable]");
+  return !!editor && editor.getAttribute("contenteditable") !== "false";
 }
