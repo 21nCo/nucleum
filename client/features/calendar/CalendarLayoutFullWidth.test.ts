@@ -64,10 +64,7 @@ function controlsLevel() {
 }
 
 async function settle() {
-  for (let index = 0; index < 5; index += 1) {
-    await tick();
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
+  for (let index = 0; index < 10; index += 1) await tick();
 }
 
 describe("CalendarLayout full controls after their content changes", () => {
