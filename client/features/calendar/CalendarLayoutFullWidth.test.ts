@@ -56,6 +56,7 @@ vi.mock("@nucleum/shared-state/preferences/ui-state/uiState.store", () => ({
 }));
 
 import CalendarLayoutView from "@nucleum/features/calendar/CalendarLayout.svelte";
+import { requestCalendarOverflowMenuReopen } from "@nucleum/features/calendar/calendar-overflow-menu";
 
 function overflowTrigger() {
   return document.querySelector<HTMLElement>(
@@ -71,6 +72,61 @@ function controlsLevel() {
   return document
     .querySelector<HTMLElement>('[data-testid="calendar-context-controls"]')
     ?.getAttribute("data-level");
+}
+
+/**
+ * Gives each control group a fixed width, and the controls the width of the
+ * groups they show, as a browser lays them out. The compact scale (150) is
+ * narrower than the full one (200), so level 3 fits a 330px budget
+ * (150 + 100 + 40 + two 12px gaps = 314) only with the compact width.
+ */
+function mockGroupWidths(onFullWidthRead: (groups: string[]) => void) {
+  const groups: Record<string, number> = {
+    layout: 100,
+    "scale-full": 200,
+    scale: 150,
+    date: 200,
+    "date-short": 100,
+    trailing: 100,
+    right: 40
+  };
+  const groupWidth = (element: Element) =>
+    groups[(element as HTMLElement).dataset.calendarGroup ?? ""] ?? 0;
+  const boundingRect = HTMLElement.prototype.getBoundingClientRect;
+  HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+    const width = groupWidth(this);
+    return {
+      width,
+      height: 0,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => ({})
+    } as DOMRect;
+  };
+  Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
+    configurable: true,
+    get(this: HTMLElement) {
+      if (this.dataset.testid !== "calendar-context-controls") return 0;
+      const children = Array.from(this.children);
+      onFullWidthRead(
+        children.map((child) => (child as HTMLElement).dataset.calendarGroup!)
+      );
+      return (
+        children.reduce((sum, child) => sum + groupWidth(child), 0) +
+        12 * Math.max(0, children.length - 1)
+      );
+    }
+  });
+  return {
+    groups,
+    restore: () => {
+      HTMLElement.prototype.getBoundingClientRect = boundingRect;
+    }
+  };
 }
 
 async function settle() {
@@ -259,5 +315,151 @@ describe("CalendarLayout full controls after their content changes", () => {
     } finally {
       HTMLElement.prototype.getBoundingClientRect = boundingRect;
     }
+  });
+  describe("with a compact scale narrower than the full one", () => {
+    let widths: ReturnType<typeof mockGroupWidths>;
+    let readGroups: string[][];
+
+    beforeEach(() => {
+      readGroups = [];
+      widths = mockGroupWidths((groups) => {
+        fullWidthReads += 1;
+        readGroups.push(groups);
+      });
+      mocks.entryWidth.set(330);
+    });
+
+    afterEach(() => widths.restore());
+
+    it("measures the compact scale again after a content change and shows level 3 where it fits", async () => {
+      widths.groups.scale = 170;
+      const { rerender } = render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("4"));
+      await settle();
+      expect(controlsLevel()).toBe("4");
+
+      widths.groups.scale = 150;
+      const reads = fullWidthReads;
+      await rerender({ contentKey: "DAY|Nov 8" });
+
+      await waitFor(() => expect(controlsLevel()).toBe("3"));
+      expect(fullWidthReads).toBeGreaterThan(reads);
+      const settledReads = fullWidthReads;
+      await settle();
+      expect(controlsLevel()).toBe("3");
+      expect(fullWidthReads).toBe(settledReads);
+    });
+
+    it("measures the full controls in their own layout after a content change", async () => {
+      mocks.entryWidth.set(450);
+      const { rerender } = render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("2"));
+      await settle();
+      readGroups = [];
+
+      await rerender({ contentKey: "WEEK|Nov 15" });
+      await settle();
+
+      expect(readGroups.length).toBeGreaterThan(0);
+      for (const groups of readGroups)
+        expect(groups).toEqual(["layout", "scale-full", "date", "trailing"]);
+      expect(controlsLevel()).toBe("2");
+    });
+
+    it("measures the compact scale once and stays at level 4 when level 3 still does not fit", async () => {
+      mocks.entryWidth.set(300);
+      render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("4"));
+      await settle();
+
+      expect(controlsLevel()).toBe("4");
+      expect(
+        document.querySelector('[data-calendar-group="scale-menu"]')
+      ).toBeTruthy();
+    });
+
+    it("waits for the open overflow menu to close before measuring the changed content", async () => {
+      widths.groups.scale = 170;
+      const { rerender } = render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("4"));
+      await fireEvent.click(overflowTrigger());
+      await waitFor(() => expect(openMenu()).toBeTruthy());
+      const trigger = overflowTrigger();
+      const reads = fullWidthReads;
+
+      widths.groups.scale = 150;
+      await rerender({ contentKey: "DAY|Nov 8" });
+      await settle();
+      expect(controlsLevel()).toBe("4");
+      expect(openMenu()).toBeTruthy();
+      expect(overflowTrigger()).toBe(trigger);
+      expect(fullWidthReads).toBe(reads);
+
+      await fireEvent.click(trigger);
+      await waitFor(() => expect(openMenu()).toBeNull());
+      await waitFor(() => expect(controlsLevel()).toBe("3"));
+      expect(fullWidthReads).toBeGreaterThan(reads);
+    });
+
+    it("waits for focus to leave the controls before measuring the changed content", async () => {
+      widths.groups.scale = 170;
+      const { rerender } = render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("4"));
+      const trigger = overflowTrigger();
+      trigger.focus();
+      const reads = fullWidthReads;
+
+      widths.groups.scale = 150;
+      await rerender({ contentKey: "WEEK|Nov 15" });
+      await settle();
+      expect(controlsLevel()).toBe("4");
+      expect(document.activeElement).toBe(trigger);
+      expect(fullWidthReads).toBe(reads);
+
+      trigger.blur();
+      await waitFor(() => expect(controlsLevel()).toBe("3"));
+      expect(fullWidthReads).toBeGreaterThan(reads);
+    });
+
+    it("holds the reopened menu through a content change and measures once it closes", async () => {
+      widths.groups.scale = 170;
+      requestCalendarOverflowMenuReopen();
+      const { rerender } = render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+      });
+      await waitFor(() => expect(openMenu()).toBeTruthy());
+      expect(controlsLevel()).toBe("4");
+      const trigger = overflowTrigger();
+      const reads = fullWidthReads;
+
+      widths.groups.scale = 150;
+      await rerender({ contentKey: "DAY|Nov 8" });
+      await settle();
+      expect(controlsLevel()).toBe("4");
+      expect(openMenu()).toBeTruthy();
+      expect(overflowTrigger()).toBe(trigger);
+      expect(fullWidthReads).toBe(reads);
+
+      await fireEvent.click(trigger);
+      await waitFor(() => expect(openMenu()).toBeNull());
+      await settle();
+      expect(document.activeElement).toBe(trigger);
+      expect(controlsLevel()).toBe("4");
+      expect(fullWidthReads).toBe(reads);
+
+      trigger.blur();
+      await waitFor(() => expect(controlsLevel()).toBe("3"));
+      expect(fullWidthReads).toBeGreaterThan(reads);
+    });
   });
 });

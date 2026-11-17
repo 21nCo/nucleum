@@ -132,8 +132,31 @@
     }
     return 4;
   });
+  let isOverflowMenuOpen = $state(false);
+  let isFocusWithin = $state(false);
+
+  /**
+   * Whether level 4 was picked without a width for the compact scale. Level
+   * 4 shows the scale in the menu, so the inline scale of levels 1 to 3 is
+   * not measured there and its full width stands in for it. The controls then
+   * show level 3 for one pass to measure the compact scale and pick their
+   * level again. A compact hold, an open menu or focus in the controls defers
+   * this pass, since it would move the scale out of the menu.
+   */
+  const isMeasuringCompactScale = $derived(
+    measuredLevel === 4 &&
+      groupWidths.scale === undefined &&
+      Object.values(groupWidths).some((width) => width > 0) &&
+      !isHoldingCompact &&
+      !isOverflowMenuOpen &&
+      !isFocusWithin
+  );
   const level = $derived(
-    isHoldingCompact ? Math.max(measuredLevel, HOLD_LEVEL) : measuredLevel
+    isHoldingCompact
+      ? Math.max(measuredLevel, HOLD_LEVEL)
+      : isMeasuringCompactScale
+        ? 3
+        : measuredLevel
   );
   const isCompact = $derived(level >= 1);
   const isShortDate = $derived(level >= 2);
@@ -165,8 +188,6 @@
   }
 
   let measuredContentKey: string | undefined = undefined;
-  let isOverflowMenuOpen = $state(false);
-  let isFocusWithin = $state(false);
 
   /**
    * Whether the controls are in use: their menu is open or they hold focus.
@@ -203,8 +224,10 @@
    * Drops every measured width when the controls' content changes, as on a
    * fresh mount: the full controls show once, are measured with the new
    * content, and the least compact level that fits is picked again from
-   * widths measured with it. A compact hold for a reopening menu, an open
-   * menu or focus in the controls defers this until it ends.
+   * widths measured with it. Only full controls already on screen are
+   * measured here; compact ones are measured once the full controls show. A
+   * compact hold for a reopening menu, an open menu or focus in the controls
+   * defers this until it ends.
    */
   $effect(() => {
     const key = contentKey;
@@ -218,15 +241,21 @@
       )
         return;
       measuredContentKey = key;
+      const isFullShown = level === 0;
       groupWidths = {};
       fullControlsWidth = 0;
-      if (level === 0) measure(0);
+      if (isFullShown) measure(0);
     });
   });
 
-  /** Measures the full controls; only the uncompacted controls show them all. */
+  /**
+   * Measures the full controls; only the uncompacted controls show them all.
+   * The rendered level is checked too, since a measure can run before the
+   * top bar shows the level it was asked for.
+   */
   function measureFullControls(shownLevel: number) {
-    if (!controlsRef || shownLevel !== 0) return;
+    if (!controlsRef || shownLevel !== 0 || controlsRef.dataset.level !== "0")
+      return;
     const groups = controlsRef.children.length;
     const gap = parseFloat(getComputedStyle(controlsRef).columnGap) || 0;
     controlGroupCount = groups;
