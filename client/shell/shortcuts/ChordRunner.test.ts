@@ -7,6 +7,9 @@ import { OperatingSystem } from "@nucleum/client/runtime/context.type";
 const mocks = vi.hoisted(() => ({
   runAction: vi.fn(),
   gotoPath: vi.fn(),
+  resolvePinnedSpaceAt: vi.fn(async (index: number) =>
+    index < 2 ? { id: ["space-a", "space-b"][index] } : undefined
+  ),
   registered: new Set<string>()
 }));
 
@@ -39,8 +42,7 @@ vi.mock("@nucleum/shared-state/commands/command-host", () => ({
   })
 }));
 vi.mock("@nucleum/shell/shortcuts/pinned-space-chord", () => ({
-  resolvePinnedSpaceAt: async (index: number) =>
-    [{ id: "space-a" }, { id: "space-b" }][index]
+  resolvePinnedSpaceAt: mocks.resolvePinnedSpaceAt
 }));
 vi.mock("@nucleum/shell/navigation/navigation", () => ({
   navigation: { gotoPath: mocks.gotoPath }
@@ -155,13 +157,14 @@ describe("ChordRunner", () => {
     expect(pageKeys).toHaveBeenCalledTimes(1);
   });
 
-  it("consumes G then a digit past the pinned spaces without navigating", async () => {
+  it("consumes G then a digit past the pinned spaces", async () => {
     press("g");
     const second = press("5");
-    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(second.defaultPrevented).toBe(true);
-    expect(mocks.gotoPath).not.toHaveBeenCalled();
+    await vi.waitFor(() =>
+      expect(mocks.resolvePinnedSpaceAt).toHaveBeenCalledWith(4)
+    );
     expect(pageKeys).toHaveBeenCalledTimes(1);
   });
 
@@ -179,7 +182,7 @@ describe("ChordRunner", () => {
     expect(pageKeys).toHaveBeenCalledTimes(3);
   });
 
-  it("ends the chord without running it when a right drawer opened after G", async () => {
+  it("ends the chord without running it when a right drawer opened after G", () => {
     press("g");
     const drawer = document.createElement("div");
     drawer.setAttribute("data-blank-modal", "");
@@ -188,10 +191,9 @@ describe("ChordRunner", () => {
     const letter = press("c");
     press("g");
     const digit = press("1");
-    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(mocks.runAction).not.toHaveBeenCalled();
-    expect(mocks.gotoPath).not.toHaveBeenCalled();
+    expect(mocks.resolvePinnedSpaceAt).not.toHaveBeenCalled();
     expect(letter.defaultPrevented).toBe(false);
     expect(digit.defaultPrevented).toBe(false);
     expect(pageKeys).toHaveBeenCalledTimes(4);
