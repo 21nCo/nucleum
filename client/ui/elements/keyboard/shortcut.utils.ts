@@ -5,8 +5,12 @@ export function resolveShortcutText(params: {
   key: string;
   os: string;
   modifiers?: ModifierKey[];
-}) {
-  const { key, modifiers, os } = params;
+  prefix?: string;
+}): string {
+  const { key, modifiers, os, prefix } = params;
+  if (prefix) {
+    return `${prefix.toUpperCase()} ${resolveShortcutText({ key, modifiers, os })}`;
+  }
   let modifierLabels: string[] = [];
   logger.log({ key, modifiers, os });
   if (modifiers && modifiers.length > 0) {

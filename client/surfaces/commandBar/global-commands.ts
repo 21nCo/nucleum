@@ -5,6 +5,7 @@ import { Placement } from "@21n/ui/elements/direction.enum";
 import { Action } from "@nucleum/client/config/action.enum";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
+import { resolveNewCommands } from "@nucleum/surfaces/commandBar/new-commands";
 
 /** Commands owned by command; assembled in application composition. */
 export const commandCommands = {
@@ -21,6 +22,24 @@ export const commandCommands = {
         ignoreSafeArea: true,
         isDynamicSize: true,
         alignment: Placement.TopCenter
+      }
+    }
+  },
+  new_commands: {
+    action: Action.NEW_COMMANDS,
+    type: ActionType.SEARCH_CMD,
+    label: "New",
+    cmdLabel: "New",
+    icon: "plus",
+    isMeta: true,
+    searchActionParams: {
+      placeholder: "Create something new",
+      searchCallback: async (query: string) =>
+        resolveNewCommands(query, (slug) =>
+          requireCommandHost().resolveAction(slug)
+        ),
+      callback: async (item: { id: string }) => {
+        requireCommandHost().runAction(item.id);
       }
     }
   },

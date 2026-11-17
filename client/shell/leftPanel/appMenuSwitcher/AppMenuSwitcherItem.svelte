@@ -111,8 +111,10 @@
 
   function resolveHotKey() {
     const shortcut = keyboardShortcuts.resolveShortcutForAction(item.action);
-    if (!shortcut) return;
-    return shortcut.key;
+    if (!shortcut?.key) return;
+    return shortcut.prefix
+      ? `${shortcut.prefix} ${shortcut.key}`
+      : shortcut.key;
   }
 
   function resolveIconSize(layoutContext: LayoutContext) {
@@ -335,7 +337,7 @@
       {#if hotKey}
         <span
           class={cn(
-            "flex justify-center items-center w-5 h-5 text-b4 rounded-md",
+            "flex justify-center items-center min-w-5 h-5 px-1 text-b4 rounded-md whitespace-nowrap",
             {
               "bg-aps2 text-fgs1": isActive,
               "bg-bgs3": !isActive

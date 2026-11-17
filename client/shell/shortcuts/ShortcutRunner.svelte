@@ -29,6 +29,7 @@
   } from "@nucleum/shell/shortcuts/context-view-step";
   import { stepListItem } from "@nucleum/shell/shortcuts/list-item-step";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import ChordRunner from "@nucleum/shell/shortcuts/ChordRunner.svelte";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -36,6 +37,10 @@
       (event.key === KeyboardKey.ENTER && event.metaKey === true)
     );
   }
+
+  /** Skips shortcuts whose command the product does not register. */
+  const isRegistered = (action: string) =>
+    !!requireCommandHost().resolveAction(action);
 
   /**
    * Listens to keyboard events and runs the shortcut if the event is a shortcut.
@@ -59,7 +64,9 @@
       return;
     }
     if (isTextInputSource && event.metaKey === false) return;
-    const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
+    const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event, {
+      isRegistered
+    });
     logger.log({
       at: "shortcutListener",
       isTextInputSource,
@@ -209,3 +216,4 @@
   }}
   onkeydowncapture={escapeCaptureListener}
 />
+<ChordRunner />
