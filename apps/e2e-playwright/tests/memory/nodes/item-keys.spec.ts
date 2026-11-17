@@ -273,6 +273,37 @@ test.describe("nodes - item keys", () => {
     });
   });
 
+  test("Escape returns focus into a menu trigger a click opened", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await openSeededLibrary(page);
+
+    const item = page
+      .locator("[id^='thumbnail-'][data-id]")
+      .filter({ hasText: "E2E item keys node" })
+      .first();
+    await item.hover();
+    const trigger = item.getByTestId("thumbnail-context-menu-trigger");
+    await trigger.click();
+    const select = page.getByRole("button", { name: "Select", exact: true });
+    await expect(select).toBeVisible({ timeout: 10_000 });
+
+    await page.keyboard.press("ArrowDown");
+    await expect(select).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(select).toBeHidden({ timeout: 10_000 });
+    await expect
+      .poll(() =>
+        trigger.evaluate(
+          (element) =>
+            document.activeElement !== document.body &&
+            element.contains(document.activeElement)
+        )
+      )
+      .toBe(true);
+  });
+
   test("arrow keys on a menu's option radios pick the option, and Escape closes the menu", async ({
     page
   }) => {
