@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, waitFor } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import account from "@nucleum/client/runtime/account/account.store";
+import context from "@nucleum/client/runtime/context.store";
 import {
   UserDataMode,
   UserSessionType
@@ -68,21 +69,27 @@ afterEach(() => {
   upload.shownFailures.length = 0;
   upload.uploadFileV2.mockClear();
   drop.onDrop = undefined;
+  context.update((ctx) => ({ ...ctx, isStandaloneSheet: false }));
 });
 
 describe("a failed upload is shown once to the user", () => {
-  it("in a shared single file save", async () => {
-    render(ShareContentSaver, {
+  it.each([
+    ["in the app", false],
+    ["in the standalone share sheet, which shows no toasts", true]
+  ])("in a shared single file save %s", async (_where, isStandaloneSheet) => {
+    context.update((ctx) => ({ ...ctx, isStandaloneSheet }));
+    const { findAllByText } = render(ShareContentSaver, {
       data: { file: image() },
       nodeType: NodeType.IMAGE
     });
 
-    await waitFor(() => expect(upload.uploadFileV2).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(upload.shownFailures).toEqual(["photo.jpg"]));
+    expect(await findAllByText("Failed to save")).toHaveLength(1);
+    expect(upload.uploadFileV2).toHaveBeenCalledTimes(1);
+    expect(upload.shownFailures).toEqual([]);
   });
 
   it("in a shared multiple file save", async () => {
-    const { getByRole } = render(ShareContentSaver, {
+    const { getByRole, findAllByText } = render(ShareContentSaver, {
       data: {
         multipleFiles: {
           files: [
@@ -99,8 +106,9 @@ describe("a failed upload is shown once to the user", () => {
 
     await fireEvent.click(getByRole("button", { name: /Save 2 as nodes/ }));
 
-    await waitFor(() => expect(upload.uploadFileV2).toHaveBeenCalled());
-    await waitFor(() => expect(upload.shownFailures).toEqual(["one.jpg"]));
+    expect(await findAllByText("Failed to save")).toHaveLength(1);
+    expect(upload.uploadFileV2).toHaveBeenCalledTimes(1);
+    expect(upload.shownFailures).toEqual([]);
   });
 
   it("in a preview image save", async () => {
