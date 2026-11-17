@@ -437,6 +437,89 @@ describe("context menu keys with option groups and popovers above the menu", () 
     secondary.destroy();
     parent.destroy();
   });
+
+  async function openChildMenu(hide: (wrapper: HTMLElement) => void) {
+    document.body.innerHTML =
+      '<div id="popovers"></div><div id="secondary-popovers"></div>';
+    const { popover } = await vi.importActual<
+      typeof import("@21n/ui/actions/popover.action")
+    >("@21n/ui/actions/popover.action");
+    const trigger = addTrigger();
+    const onClose = vi.fn();
+    const childClose = vi.fn();
+    const parent = popover(trigger, {
+      id: "parent-menu",
+      content: ContextMenu as never,
+      componentProps: {
+        menuResolver: () => [{ group: "main", items }],
+        onClose
+      }
+    });
+    await open(trigger);
+    const insert = menuItem(document.getElementById("parent-menu")!, "insert");
+    const child = document.createElement("div");
+    child.innerHTML = "<button>Heading</button><div></div>";
+    const wrapper = child.querySelector("div")!;
+    hide(wrapper);
+    render(ContextMenu, {
+      target: wrapper,
+      props: {
+        menuResolver: () => [{ group: "child", items }],
+        onClose: childClose
+      }
+    });
+    const secondary = popover(insert, {
+      id: "child-popover",
+      content: child,
+      isSecondary: true
+    });
+    await open(insert);
+    return {
+      heading: find(child, "button"),
+      childItem: menuItem(child, "rename"),
+      onClose,
+      childClose,
+      destroy: () => {
+        secondary.destroy();
+        parent.destroy();
+      }
+    };
+  }
+
+  it.each([
+    [
+      "aria-hidden",
+      (wrapper: HTMLElement) => wrapper.setAttribute("aria-hidden", "true")
+    ],
+    [
+      "visibility:hidden",
+      (wrapper: HTMLElement) => (wrapper.style.visibility = "hidden")
+    ]
+  ])(
+    "closes the parent menu on Escape from a child popover whose menu is %s",
+    async (_, hide) => {
+      const { heading, onClose, childClose, destroy } =
+        await openChildMenu(hide);
+
+      heading.focus();
+      expect(pressKey(heading, "Escape").defaultPrevented).toBe(true);
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(childClose).not.toHaveBeenCalled();
+      destroy();
+    }
+  );
+
+  it("leaves Escape to a shown menu in a child popover", async () => {
+    const { childItem, onClose, childClose, destroy } = await openChildMenu(
+      () => undefined
+    );
+
+    childItem.focus();
+    expect(pressKey(childItem, "Escape").defaultPrevented).toBe(true);
+    expect(childClose).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    destroy();
+  });
 });
 
 describe("item navigation list keys", () => {

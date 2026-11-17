@@ -74,11 +74,20 @@
     return false;
   }
 
-  /** Shown, and not inside an inert or hidden layer such as a covered page. */
+  /**
+   * Whether a layer or menu can take keys: shown, not hidden by visibility
+   * (which keeps its boxes), and not inside an inert or hidden layer such as
+   * a covered page. Layer selection, the open menus and each menu's own
+   * listener all use this one check, so a hidden menu neither takes a key nor
+   * keeps it from the menu below.
+   */
   function isReachableLayer(element: HTMLElement) {
+    const view = element.ownerDocument.defaultView;
     return (
       element.isConnected &&
       element.getClientRects().length > 0 &&
+      (view?.getComputedStyle(element).visibility ?? "visible") ===
+        "visible" &&
       !isInHiddenLayer(element)
     );
   }
@@ -244,7 +253,7 @@
    * pressed in the menu, on its trigger or outside every layer, not on other
    * content of the popover. Escape also closes the menu from a layer opened
    * from one of its items, such as an option submenu, when no menu of its
-   * own sits in that layer to close it.
+   * own that can take keys sits in that layer to close it.
    */
   function isKeyForMenu(event: KeyboardEvent, target: Element | null) {
     if (!menuRef) return false;
@@ -254,7 +263,9 @@
     if (layer !== menuLayer) {
       return (
         event.key === "Escape" &&
-        !openMenus.some((menu) => resolveMenuLayer(menu) === layer) &&
+        !openMenus.some(
+          (menu) => isReachableLayer(menu) && resolveMenuLayer(menu) === layer
+        ) &&
         isOpenedFromMenu(layer, menuRef)
       );
     }
