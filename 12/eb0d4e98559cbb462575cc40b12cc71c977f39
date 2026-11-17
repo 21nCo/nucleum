@@ -1,0 +1,31 @@
+apps/e2e-playwright/tests/memory/filefn-image-render.spec.ts
+  s_0b0647615a23f7::t_14c1d24f170611 1-128
+client/shared-state/files/file-url.test.ts
+  s_0b0647615a23f7::t_4d2bd9e5bc6c92 1-188
+client/shared-state/files/file-url.ts
+  s_0b0647615a23f7::t_b53af1c3ee4142 1-140
+client/shared-state/files/file.store.test.ts
+  s_0b0647615a23f7::t_a5aa0effeb4a8e 2,4-7,10-11,13-14,16-17,20,22-23,25,27-34,37-50,52-54,56-60,62-66,68-71,73-76,78-107,110-135
+client/shared-state/files/file.store.ts
+  s_0b0647615a23f7::t_602ab3a2ce3bea 11,25-29,35-38,57-61,63,73,76-84,88,106-114,144-152,168-171,186,194-195,201-213
+client/shared-state/package.json
+  s_0b0647615a23f7::t_881aabb0cf53f6 22,24-25
+package-lock.json
+  s_0b0647615a23f7::t_2196293784d2d8 3115,6338-6343
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "12eb0d4e98559cbb462575cc40b12cc71c977f39",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
