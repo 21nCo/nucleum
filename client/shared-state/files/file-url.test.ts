@@ -6,6 +6,7 @@ type Owner = { userId: string; epoch: number };
 const fileFn = vi.hoisted(() => ({
   owner: { userId: "user-a", epoch: 1 } as Owner | null,
   afterCapture: undefined as (() => void) | undefined,
+  afterConfirm: undefined as (() => void) | undefined,
   resolveRenderable: vi.fn(),
   listArtifacts: vi.fn(),
   downloadArtifact: vi.fn()
@@ -23,7 +24,13 @@ vi.mock("@nucleum/shared-state/files/filefn-client", () => ({
     if (owner.epoch !== fileFn.owner?.epoch) {
       throw new DOMException("The FileFn client was torn down", "AbortError");
     }
+    const afterConfirm = fileFn.afterConfirm;
+    fileFn.afterConfirm = undefined;
+    if (afterConfirm) queueMicrotask(afterConfirm);
   },
+  isFileFnOwnerCurrent: (owner: Owner) =>
+    owner.userId === fileFn.owner?.userId &&
+    owner.epoch === fileFn.owner?.epoch,
   getOwnedFileFnClient: async () => ({
     client: {
       resolveRenderable: fileFn.resolveRenderable,
@@ -82,6 +89,7 @@ describe("resolveFileUrl", () => {
     signed = 0;
     fileFn.owner = { userId: "user-a", epoch: 1 };
     fileFn.afterCapture = undefined;
+    fileFn.afterConfirm = undefined;
     fileFn.listArtifacts.mockReset();
     fileFn.downloadArtifact.mockReset();
     fileFn.resolveRenderable.mockReset();
@@ -249,6 +257,36 @@ describe("resolveFileUrl", () => {
 
       expect(await lookup).toBeUndefined();
     });
+
+    it.each([
+      ["an account switch", accountSwitch],
+      ["a sign-out", signOut]
+    ])(
+      "returns no cached URL after %s that follows the final confirmation",
+      async (_, endGeneration) => {
+        expect(await resolveFileUrl("file-1", "full")).toBe(
+          signedUrl("file-1/original", 1)
+        );
+
+        fileFn.afterConfirm = endGeneration;
+
+        expect(await resolveFileUrl("file-1", "full")).toBeUndefined();
+        expect(fileFn.resolveRenderable).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it.each([
+      ["an account switch", accountSwitch],
+      ["a sign-out", signOut]
+    ])(
+      "returns no freshly resolved URL after %s that follows the final confirmation",
+      async (_, endGeneration) => {
+        fileFn.afterConfirm = endGeneration;
+
+        expect(await resolveFileUrl("file-1", "full")).toBeUndefined();
+        expect(fileFn.resolveRenderable).toHaveBeenCalledTimes(1);
+      }
+    );
   });
 
   describe("a HEIC original", () => {

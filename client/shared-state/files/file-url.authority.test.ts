@@ -71,6 +71,41 @@ function serveRenders(gate?: Promise<void>) {
   return fetchMock;
 }
 
+/**
+ * Microtasks after the final confirmation's stored region read at which that
+ * confirmation has passed and the lookup has not returned yet.
+ */
+const AFTER_CONFIRMATION_MICROTASKS = 3;
+
+function afterMicrotasks(count: number, run: () => void) {
+  if (count === 0) run();
+  else queueMicrotask(() => afterMicrotasks(count - 1, run));
+}
+
+/**
+ * Applies an account change once the given stored region read, counted from
+ * now, has resolved and the final confirmation of a lookup has passed.
+ */
+function changeAccountAfterConfirmation(read: number, next: UserAccount) {
+  const get = clientStorage.get.bind(clientStorage);
+  let reads = 0;
+  vi.spyOn(clientStorage, "get").mockImplementation((key) => {
+    reads += 1;
+    const value = get(key);
+    if (reads === read) {
+      void value.then(() =>
+        afterMicrotasks(AFTER_CONFIRMATION_MICROTASKS, () => account.set(next))
+      );
+    }
+    return value;
+  });
+}
+
+const accountChanges: [string, UserAccount][] = [
+  ["an account switch", cloudAccountWithoutRegion("user-b")],
+  ["a sign-out", signedOut]
+];
+
 describe("resolveFileUrl across FileFn authorities", () => {
   beforeEach(() => {
     vi.stubEnv("VITE_ACCOUNT_BASE_URL_TEMPLATE", ACCOUNT_URL_TEMPLATE);
@@ -78,6 +113,7 @@ describe("resolveFileUrl across FileFn authorities", () => {
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     account.set(signedOut);
     await clientStorage.remove(ClientStorageKey.REGION);
     clearFileUrlCache();
@@ -128,6 +164,42 @@ describe("resolveFileUrl across FileFn authorities", () => {
       "account-useast-dev.nucleum.app"
     );
   });
+
+  it.each(accountChanges)(
+    "returns no fresh URL after %s that follows the final confirmation",
+    async (_, next) => {
+      let openGate: () => void = () => {};
+      const fetchMock = serveRenders(
+        new Promise<void>((resolve) => {
+          openGate = resolve;
+        })
+      );
+      await clientStorage.set(ClientStorageKey.REGION, "useast");
+      account.set(cloudAccountWithoutRegion("user-a"));
+
+      const lookup = resolveFileUrl("file-1", "full");
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      changeAccountAfterConfirmation(1, next);
+      openGate();
+
+      expect(await lookup).toBeUndefined();
+    }
+  );
+
+  it.each(accountChanges)(
+    "returns no cached URL after %s that follows the final confirmation",
+    async (_, next) => {
+      const fetchMock = serveRenders();
+      await clientStorage.set(ClientStorageKey.REGION, "useast");
+      account.set(cloudAccountWithoutRegion("user-a"));
+      await resolveFileUrl("file-1", "full");
+
+      changeAccountAfterConfirmation(2, next);
+
+      expect(await resolveFileUrl("file-1", "full")).toBeUndefined();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    }
+  );
 
   it("still serves a repeated lookup from the cache while the authority stays", async () => {
     const fetchMock = serveRenders();

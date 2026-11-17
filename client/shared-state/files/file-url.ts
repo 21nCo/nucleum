@@ -5,6 +5,7 @@ import {
   captureSettledFileFnOwner,
   confirmFileFnOwner,
   getOwnedFileFnClient,
+  isFileFnOwnerCurrent,
   type FileFnOwner
 } from "@nucleum/shared-state/files/filefn-client";
 
@@ -49,11 +50,11 @@ let cacheOwnerKey: string | undefined;
  * and variant until shortly before the URL expires, concurrent lookups share
  * one request, and the cache belongs to one FileFn owner: a sign-out, another
  * account or another authority clears it, and a lookup returns its URL only
- * once the account's current authority is settled and still belongs to the
- * owner it started under, so a URL is never shown to another account. The
- * full variant of a HEIC or HEIF original is its converted image, or the
- * original, asked for again after the retry interval, while FileFn has none;
- * the download variant is the original.
+ * once the account's current authority is settled, checking in the same
+ * synchronous step as it returns that the URL's owner is still current, so a
+ * URL is never shown to another account. The full variant of a HEIC or HEIF
+ * original is its converted image, or the original, asked for again after the
+ * retry interval, while FileFn has none; the download variant is the original.
  */
 export async function resolveFileUrl(
   fileId: string,
@@ -79,7 +80,12 @@ export async function resolveFileUrl(
       ? cached
       : startFileUrlLookup(owner, key, fileId, variant);
   const url = await entry.url;
-  return (await isCurrentFileFnOwner(owner)) ? url : undefined;
+  try {
+    await confirmFileFnOwner(owner);
+  } catch {
+    return undefined;
+  }
+  return isFileFnOwnerCurrent(owner) ? url : undefined;
 }
 
 /** Drops every cached URL; the next lookup of each variant resolves it again. */
@@ -111,15 +117,6 @@ function startFileUrlLookup(
   );
   cache.set(key, entry);
   return entry;
-}
-
-async function isCurrentFileFnOwner(owner: FileFnOwner) {
-  try {
-    await confirmFileFnOwner(owner);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 async function fetchFileUrl(
