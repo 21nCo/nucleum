@@ -461,7 +461,7 @@
           <button
             id={resourceIdToElementId("thumbnail", item.id, accessPoint)}
             data-id={item.id}
-            class="h-40"
+            class="relative h-40"
             onclick={(e) => handleClick(e, item)}
           >
             <FileView

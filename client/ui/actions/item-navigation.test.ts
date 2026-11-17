@@ -539,7 +539,13 @@ describe("item navigation list keys", () => {
     expect(shown()).toEqual(["a1"]);
 
     const second = mountList(["b1", "b2"]);
+    expect(shown()).toEqual([]);
     pressKey(document.body, "ArrowDown");
+    expect(shown()).toEqual(["b1"]);
+
+    pointerDown(second.lastElementChild!);
+    mountList(["c1"], {});
+    expect(pressKey(document.body, "ArrowDown").defaultPrevented).toBe(true);
     expect(shown()).toEqual(["b1"]);
 
     pointerDown(first.firstElementChild!);

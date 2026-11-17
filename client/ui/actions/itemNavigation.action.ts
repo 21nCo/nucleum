@@ -389,6 +389,18 @@ function onPointerDown(event: PointerEvent) {
   clearHighlight(entry);
 }
 
+/**
+ * Hides the other lists' highlights when a newly shown list takes the keys,
+ * which it does unless the list last clicked in can still take them, so the
+ * visible highlight is always the one the keys act on.
+ */
+function hideHighlightsOnHandoff(entry: ItemNavigationEntry) {
+  const layer = resolveFrontLayer();
+  if (!isReachable(entry, layer)) return;
+  if (lastInteracted && isReachable(lastInteracted, layer)) return;
+  for (const other of entries) if (other !== entry) hideHighlight(other);
+}
+
 function startListening() {
   if (isListening) return;
   isListening = true;
@@ -438,6 +450,7 @@ export function itemNavigation(
   entry.observer.observe(node, { childList: true, subtree: true });
   entries.push(entry);
   suppressedBy = undefined;
+  hideHighlightsOnHandoff(entry);
   startListening();
   return {
     update(nextConfig: ItemNavigationConfig) {
