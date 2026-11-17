@@ -87,7 +87,8 @@
       if (all.length === 1) {
         let file = all[0];
         await captureStore.saveFile(file, undefined, {
-          source: captureSource()
+          source: captureSource(),
+          isErrorToastSuppressed: true
         });
       } else if (all.length > 1) {
         multipleFilesData = resolveMultipleFilesData(all, MAX_FILE_SIZE_MB);

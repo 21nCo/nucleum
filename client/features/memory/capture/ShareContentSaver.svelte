@@ -153,10 +153,13 @@
         })) as unknown as INode;
       } else if (data.file) {
         result = await captureStore.saveFile(data.file, nodeType, {
-          isOpenOnSave: false
+          isOpenOnSave: false,
+          isErrorToastSuppressed: true
         });
       } else if (data.multipleFiles && data.multipleFiles.files.length > 1) {
-        await captureStore.saveMultipleFiles(data.multipleFiles.files);
+        await captureStore.saveMultipleFiles(data.multipleFiles.files, {
+          isErrorToastSuppressed: true
+        });
       }
       if (result) {
         savedNode = result as INodeThumb;
