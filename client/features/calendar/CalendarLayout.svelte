@@ -159,8 +159,8 @@
   }
 
   /** Measures the full controls; only the uncompacted controls show them all. */
-  function measureFullControls() {
-    if (!controlsRef || level !== 0) return;
+  function measureFullControls(shownLevel: number) {
+    if (!controlsRef || shownLevel !== 0) return;
     const groups = controlsRef.children.length;
     const gap = parseFloat(getComputedStyle(controlsRef).columnGap) || 0;
     controlGroupCount = groups;
@@ -168,21 +168,37 @@
       controlsRef.scrollWidth - Math.max(0, groups - 1) * (gap - TIGHT_GAP_PX);
   }
 
-  function measure() {
+  function measure(shownLevel: number) {
     measureGroups();
-    measureFullControls();
+    measureFullControls(shownLevel);
   }
 
+  /**
+   * Measures the controls whenever the level changes. A group whose width
+   * stays the same on a new level (such as a date with no shorter form)
+   * never resizes, so the observer alone would not measure it under its new
+   * name. The controls render in the top bar, which can update after this
+   * effect runs, so they are measured again on the next frame.
+   */
   $effect(() => {
     if (!controlsRef) return;
     const element = controlsRef;
-    void level;
-    const observer = new ResizeObserver(() => measure());
-    observer.observe(element);
-    for (const child of element.children) observer.observe(child);
-    void tick().then(() => untrack(measure));
-    untrack(measure);
-    return () => observer.disconnect();
+    const shownLevel = level;
+    const observer = new ResizeObserver(() => measure(level));
+    const observeGroups = () => {
+      observer.observe(element);
+      for (const child of element.children) observer.observe(child);
+    };
+    observeGroups();
+    untrack(() => measure(shownLevel));
+    const frame = requestAnimationFrame(() => {
+      observeGroups();
+      measure(level);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   });
 
   let overflowMenuRef = $state<ContextMenuAction | undefined>(undefined);

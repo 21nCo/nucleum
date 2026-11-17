@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
-import { ensureInAppOnHome } from "../utils/helpers";
+import { ensureInAppOnHome, navigateToSurface } from "../utils/helpers";
 import {
   blockExternalAuthRequests,
   openNodeRecordFromLibraryById
@@ -84,5 +84,48 @@ test.describe("context zone overflow", () => {
     await expect(
       overviewTabs.getByRole("button", { name: "Graph", exact: true })
     ).toBeVisible();
+  });
+
+  test("calendar controls step down instead of running past the top bar", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "nucleum",
+      "The calendar layout switcher in the top bar is a Nucleum surface"
+    );
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await ensureInAppOnHome(page);
+    await navigateToSurface(
+      page,
+      "calendar.layout.classic",
+      testInfo.project.name
+    );
+    const controls = page.getByTestId("calendar-context-controls");
+    await expect(controls).toBeVisible({ timeout: 15_000 });
+    // The year label has no shorter form, so shortening the date frees no
+    // room and the controls must take the next step down.
+    await controls.getByRole("button", { name: "Year", exact: true }).click();
+
+    for (let width = 1600; width >= 1200; width -= 50) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect
+        .poll(
+          () =>
+            controls.evaluate((element) => {
+              const tab = element.closest(
+                '[data-testid="top-bar-context-tab"]'
+              );
+              const last = element.lastElementChild;
+              if (!tab || !last) return Number.POSITIVE_INFINITY;
+              return Math.round(
+                last.getBoundingClientRect().right -
+                  tab.getBoundingClientRect().right
+              );
+            }),
+          { message: `controls stay inside the top bar at ${width}px` }
+        )
+        .toBeLessThanOrEqual(1);
+    }
   });
 });

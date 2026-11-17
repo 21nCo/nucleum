@@ -140,13 +140,19 @@
     return () => observer.disconnect();
   });
 
+  /**
+   * Measures the options once the measuring copy for these values has
+   * rendered. Taking them as arguments makes the calling effect re-run when
+   * they change; a bare read such as `void options` is dropped when the
+   * TypeScript is compiled, so the effect would never re-run.
+   */
+  function measureOptionsAfterRender(..._changed: unknown[]) {
+    void tick().then(measureOptions);
+  }
+
   $effect(() => {
     if (!isOverflowToMenu) return;
-    void options;
-    void selected;
-    void $shape;
-    void size;
-    tick().then(measureOptions);
+    measureOptionsAfterRender(options, selected, $shape, size);
   });
 
   $effect(() => {
