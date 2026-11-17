@@ -178,7 +178,7 @@
    * stays the same on a new level (such as a date with no shorter form)
    * never resizes, so the observer alone would not measure it under its new
    * name. The controls render in the top bar, which can update after this
-   * effect runs, so they are measured again on the next frame.
+   * effect runs, so they are measured again once pending updates apply.
    */
   $effect(() => {
     if (!controlsRef) return;
@@ -191,12 +191,14 @@
     };
     observeGroups();
     untrack(() => measure(shownLevel));
-    const frame = requestAnimationFrame(() => {
+    let isActive = true;
+    void tick().then(() => {
+      if (!isActive) return;
       observeGroups();
       measure(level);
     });
     return () => {
-      cancelAnimationFrame(frame);
+      isActive = false;
       observer.disconnect();
     };
   });
