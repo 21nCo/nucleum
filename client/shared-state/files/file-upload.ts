@@ -23,8 +23,9 @@ import {
 } from "@nucleum/shared-state/files/file-processing";
 import {
   getFileFnClient,
+  isFileFnClientLive,
   isFileFnTeardownError,
-  isSameFileFnAccountScope,
+  refreshFileFnClientAuthority,
   resolveFileFnAccountScope
 } from "@nucleum/shared-state/files/filefn-client";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
@@ -252,17 +253,18 @@ async function saveOnDevice(input: FileUploadInput) {
  * In `local` mode nothing remote makes a HEIC photo's converted variant, so a
  * HEIC upload there fails when the device cannot convert it or the converted
  * artifact does not upload. That failure, or a record that cannot be saved,
- * deletes the uploaded file, so no FileFn file is left that no record
- * references.
+ * deletes the uploaded file.
  *
- * The upload belongs to the account that started it. When an account or
- * authority change tears the FileFn client down, or the signed-in account
- * (user or region) is no longer the one captured at the start, the upload
- * fails without saving a record, because the global DataFn store would then
- * save it in the other account.
+ * The record is saved only while the FileFn client that stored the original
+ * is still live. Once processing and artifact uploads settle, the client is
+ * re-bound to the account's current authority; when a sign-out, another
+ * account or another authority (including a changed stored region) has torn
+ * it down, the upload fails without saving a record, because the global
+ * DataFn store would then save it in the other account. The delete then goes
+ * through the torn-down client, which rejects, so in that case the uploaded
+ * original stays in FileFn without a record (cleanup deferred to TIDY-552).
  */
 async function uploadThroughFileFn(input: FileUploadInput) {
-  const scope = resolveFileFnAccountScope(account.get());
   const client = await getFileFnClient();
   if (!client) {
     throw new Error("FileFn is unavailable for the signed-in account");
@@ -338,10 +340,12 @@ async function uploadThroughFileFn(input: FileUploadInput) {
     processing
   };
   try {
-    if (
-      !isSameFileFnAccountScope(scope, resolveFileFnAccountScope(account.get()))
-    ) {
-      throw new Error("The signed-in account changed during the upload");
+    await refreshFileFnClientAuthority();
+    if (!isFileFnClientLive(client)) {
+      throw new DOMException(
+        "The FileFn client was torn down before the file record was saved",
+        "AbortError"
+      );
     }
     const result = (await datafn.file.mutate({
       operation: "insert",

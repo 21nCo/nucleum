@@ -37,6 +37,7 @@ let currentEntry: FileFnClientEntry | null = null;
 let isBoundToAccount = false;
 let syncGeneration = 0;
 let latestSync: Promise<void> = Promise.resolve();
+const clientTeardowns = new WeakMap<FileFnClient, AbortSignal>();
 
 /**
  * Returns the cloud account a FileFn client belongs to, or null for a
@@ -106,16 +107,21 @@ export function resolveFileFnOfflineDir(userId: string): string {
  * holds it. Removing them needs an SDK dispose (TIDY-553).
  */
 export async function getFileFnClient(): Promise<FileFnClient | null> {
-  if (!isBoundToAccount) {
-    isBoundToAccount = true;
-    account.subscribe(syncFileFnClient);
-  }
-  syncFileFnClient(account.get());
+  syncWithAccount();
   await settleFileFnClientSync();
   const entry = currentEntry;
   if (!entry) return null;
   const client = await entry.client;
   return currentEntry === entry ? client : getFileFnClient();
+}
+
+/** Binds the client to the account state once, then syncs it with the account. */
+function syncWithAccount() {
+  if (!isBoundToAccount) {
+    isBoundToAccount = true;
+    account.subscribe(syncFileFnClient);
+  }
+  syncFileFnClient(account.get());
 }
 
 function settleFileFnClientSync(): Promise<void> {
@@ -272,13 +278,25 @@ export function isFileFnTeardownError(error: unknown): boolean {
   );
 }
 
-/** True when two FileFn account scopes name the same user and region. */
-export function isSameFileFnAccountScope(
-  a: FileFnAccountScope | null,
-  b: FileFnAccountScope | null
-): boolean {
-  if (!a || !b) return a === b;
-  return a.userId === b.userId && a.region === b.region;
+/**
+ * True while a FileFn client that getFileFnClient returned is not torn down,
+ * so a caller can fence work by the lifetime of the client that did it. Any
+ * other client is not live.
+ */
+export function isFileFnClientLive(client: FileFnClient): boolean {
+  const teardown = clientTeardowns.get(client);
+  return teardown !== undefined && !teardown.aborted;
+}
+
+/**
+ * Binds the FileFn client to the signed-in account's current authority, as
+ * the next getFileFnClient call would, without waiting for a new client. It
+ * reads the stored region when the session carries none, so a change of that
+ * region, which no account change announces, also tears the client down.
+ */
+export async function refreshFileFnClientAuthority(): Promise<void> {
+  syncWithAccount();
+  await settleFileFnClientSync().catch(() => undefined);
 }
 
 /**
@@ -350,7 +368,7 @@ function guardFileFnClient(
     if (teardown.aborted) return Promise.reject(teardown.reason as unknown);
     return untilTornDown(run(), teardown);
   };
-  return {
+  const guarded: FileFnClient = {
     uploadFile: (input) => {
       if (teardown.aborted) {
         return {
@@ -381,6 +399,8 @@ function guardFileFnClient(
     getPendingLocalDescriptor: (fileId) =>
       guard(() => client.getPendingLocalDescriptor(fileId))
   };
+  clientTeardowns.set(guarded, teardown);
+  return guarded;
 }
 
 /**
