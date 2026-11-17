@@ -243,6 +243,7 @@ afterEach(async () => {
   await clientStorage.remove(ClientStorageKey.REGION);
   account.set(initialAccount);
   toasts.reset();
+  localStorage.clear();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -507,6 +508,34 @@ describe("uploadFileV2 owned by the account that started it", () => {
       expect(sdk.deleted).toEqual([sdk.uploads[0].fileId])
     );
     expect(recordInserts.inserts).toBe(0);
+  });
+
+  it("deletes the file after a reload when the device has no private storage", async () => {
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      onLine: true,
+      locks: undefined,
+      storage: undefined
+    });
+    account.set(cloudAccount("user-a", "useast"));
+    const { upload, finishProcessing } =
+      await startUploadWithPendingProcessing();
+    account.set(signedOut);
+    finishProcessing();
+    await expect(upload).rejects.toMatchObject({ name: "AbortError" });
+    const fileId = sdk.uploads[0].fileId;
+
+    // A reload starts a new page with fresh modules.
+    vi.resetModules();
+    const { default: reloadedAccount } =
+      await import("@nucleum/client/runtime/account/account.store");
+    const reloaded = await import("./filefn-client");
+    reloadedAccount.set(cloudAccount("user-a", "useast"));
+    await reloaded.getFileFnClient();
+
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([fileId]));
+    expect(recordInserts.inserts).toBe(0);
+    reloadedAccount.set(signedOut);
   });
 
   it.each([

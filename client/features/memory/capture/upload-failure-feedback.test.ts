@@ -11,8 +11,11 @@ import {
 /** The upload's failure toasts, shown unless the caller suppresses them. */
 const upload = vi.hoisted(() => {
   const shownFailures: string[] = [];
+  const shownErrors = new WeakSet<object>();
   return {
     shownFailures,
+    isUploadFailureShown: (error: unknown) =>
+      typeof error === "object" && error !== null && shownErrors.has(error),
     uploadFileV2: vi.fn(
       async (
         _contentType: string,
@@ -20,8 +23,12 @@ const upload = vi.hoisted(() => {
         _blob: Blob,
         params?: { isErrorToastSuppressed?: boolean }
       ) => {
-        if (!params?.isErrorToastSuppressed) shownFailures.push(fileName);
-        throw new Error("upload failed");
+        const error = new Error("upload failed");
+        if (!params?.isErrorToastSuppressed) {
+          shownFailures.push(fileName);
+          shownErrors.add(error);
+        }
+        throw error;
       }
     )
   };
@@ -29,7 +36,7 @@ const upload = vi.hoisted(() => {
 
 vi.mock("@nucleum/shared-state/files/file-upload", () => ({
   fileUpload: { uploadFileV2: upload.uploadFileV2 },
-  isUploadFailureShown: () => false
+  isUploadFailureShown: upload.isUploadFailureShown
 }));
 vi.mock("@nucleum/shell/navigation/navigation", () => ({
   navigation: { closeResource: vi.fn(), openResource: vi.fn() }
@@ -116,7 +123,7 @@ describe("a failed upload is shown once to the user", () => {
       dataMode: UserDataMode.LOCAL,
       sessionType: UserSessionType.RETURNING
     });
-    const { getByRole } = render(PreviewImageUploader, {
+    const { getByRole, queryByText } = render(PreviewImageUploader, {
       nodeId: "node:preview" as never
     });
     drop.onDrop?.([image()], [image()], []);
@@ -128,6 +135,9 @@ describe("a failed upload is shown once to the user", () => {
     await fireEvent.click(save);
 
     await waitFor(() => expect(upload.uploadFileV2).toHaveBeenCalledTimes(1));
+    // Let the failed save settle before checking what it shows.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(upload.shownFailures).toEqual(["photo.jpg"]);
+    expect(queryByText("Failed to save preview image")).toBeNull();
   });
 });

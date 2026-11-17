@@ -369,10 +369,11 @@ export async function confirmFileFnOwner(owner: FileFnOwner): Promise<void> {
  * Deletes a file that no record will reference through the owner's client.
  * When the owner's generation has ended or the delete fails, it records the
  * delete for the owner at the file's authority: in the owner's private origin
- * storage, which sign-out keeps, else in memory for this session. Each later
- * client of the owner sends it, through a client of that authority, when the
- * client is created, at once when it is current, and on every reconnect, so
- * the file is never deleted through another account.
+ * storage, else in local storage, both of which sign-out and a reload keep,
+ * else in memory for this session. Each later client of the owner sends it,
+ * through a client of that authority, when the client is created, at once
+ * when it is current, and on every reconnect, so the file is never deleted
+ * through another account.
  */
 export async function discardFileFnFile(
   owner: FileFnOwner,
@@ -399,15 +400,61 @@ export async function discardFileFnFile(
   }
 }
 
-/** Pending deletes of this session without device storage, by account and authority. */
-const sessionPendingDeletes = new Map<string, Map<string, Set<string>>>();
+/**
+ * Pending deletes recorded without device file storage, by account and
+ * authority. They are kept in local storage, which a reload keeps, else in
+ * memory for this session. Each change is a synchronous read and write.
+ */
+const fallbackPendingDeletes = new Map<string, Map<string, Set<string>>>();
 
-function getSessionPendingDeletes(userId: string, baseUrl: string) {
-  const byAuthority = sessionPendingDeletes.get(userId) ?? new Map();
-  sessionPendingDeletes.set(userId, byAuthority);
-  const fileIds: Set<string> = byAuthority.get(baseUrl) ?? new Set();
+function getFallbackPendingDeletes(userId: string): Map<string, Set<string>> {
+  const byAuthority = new Map<string, Set<string>>();
+  const add = (authority: string, fileIds: Iterable<string>) =>
+    byAuthority.set(
+      authority,
+      new Set([...(byAuthority.get(authority) ?? []), ...fileIds])
+    );
+  fallbackPendingDeletes.get(userId)?.forEach((ids, at) => add(at, ids));
+  try {
+    const stored = JSON.parse(
+      globalThis.localStorage?.getItem(getPendingDeleteKey(userId)) ?? "{}"
+    ) as Record<string, string[]>;
+    Object.entries(stored).forEach(([at, ids]) => add(at, ids));
+  } catch (error) {
+    logger.warn({ at: "filefn.client.pendingDelete", error });
+  }
+  return byAuthority;
+}
+
+function updateFallbackPendingDeletes(
+  userId: string,
+  baseUrl: string,
+  update: (fileIds: Set<string>) => void
+) {
+  const byAuthority = getFallbackPendingDeletes(userId);
+  const fileIds = byAuthority.get(baseUrl) ?? new Set<string>();
+  update(fileIds);
   byAuthority.set(baseUrl, fileIds);
-  return fileIds;
+  const stored = Object.fromEntries(
+    [...byAuthority]
+      .filter(([, ids]) => ids.size > 0)
+      .map(([at, ids]) => [at, [...ids]])
+  );
+  try {
+    const storage = globalThis.localStorage;
+    if (!storage) throw new Error("No local storage");
+    const key = getPendingDeleteKey(userId);
+    if (Object.keys(stored).length === 0) storage.removeItem(key);
+    else storage.setItem(key, JSON.stringify(stored));
+    fallbackPendingDeletes.delete(userId);
+  } catch (error) {
+    logger.warn({ at: "filefn.client.pendingDelete", error });
+    fallbackPendingDeletes.set(userId, byAuthority);
+  }
+}
+
+function getPendingDeleteKey(userId: string) {
+  return `${PENDING_DELETE_DIR_PREFIX}-${encodeURIComponent(userId)}`;
 }
 
 async function recordPendingDelete(
@@ -424,7 +471,7 @@ async function recordPendingDelete(
   } catch (error) {
     logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
   }
-  getSessionPendingDeletes(userId, baseUrl).add(fileId);
+  updateFallbackPendingDeletes(userId, baseUrl, (ids) => ids.add(fileId));
 }
 
 /**
@@ -438,7 +485,7 @@ async function drainAccountPendingDeletes(
   client: FileFnClient,
   teardown: AbortSignal
 ) {
-  const authorities = new Set(sessionPendingDeletes.get(userId)?.keys());
+  const authorities = new Set(getFallbackPendingDeletes(userId).keys());
   const userDir = await getPendingDeleteUserDir(userId, false);
   if (userDir) {
     for await (const name of listEntryNames(userDir)) {
@@ -490,10 +537,9 @@ async function getPendingDeleteUserDir(
   if (!storage?.getDirectory) return null;
   try {
     const root = await storage.getDirectory();
-    return await root.getDirectoryHandle(
-      `${PENDING_DELETE_DIR_PREFIX}-${encodeURIComponent(userId)}`,
-      { create }
-    );
+    return await root.getDirectoryHandle(getPendingDeleteKey(userId), {
+      create
+    });
   } catch (error) {
     if (create) throw error;
     return null;
@@ -529,8 +575,7 @@ async function replayPendingDeletes(
   getClient: () => Promise<FileFnClient>
 ) {
   const dir = await getPendingDeleteDir(userId, baseUrl, false);
-  const sessionFileIds = getSessionPendingDeletes(userId, baseUrl);
-  const fileIds = new Set(sessionFileIds);
+  const fileIds = new Set(getFallbackPendingDeletes(userId).get(baseUrl));
   if (dir) {
     for await (const name of listEntryNames(dir)) {
       fileIds.add(decodeURIComponent(name));
@@ -545,7 +590,9 @@ async function replayPendingDeletes(
           throw error;
         }
       });
-      sessionFileIds.delete(fileId);
+      updateFallbackPendingDeletes(userId, baseUrl, (ids) =>
+        ids.delete(fileId)
+      );
       await dir?.removeEntry(encodeURIComponent(fileId)).catch(() => undefined);
     } catch (error) {
       logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
