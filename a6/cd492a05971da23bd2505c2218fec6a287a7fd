@@ -1,0 +1,25 @@
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_b66d0e9dd4fae0::t_b0299f10f0398d 62-90,189-207,209-210,212,233-268
+client/shell/topNav/TopNav.svelte
+  s_b66d0e9dd4fae0::t_8f55d598395c49 216-219,225-247,257-292
+client/shell/topNav/contextZone/PageIdentity.svelte
+  s_b66d0e9dd4fae0::t_ffbb4fe5be10c0 130-134,138
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_b66d0e9dd4fae0::t_4582afe90d4736 217-229,231-303,306-355,358-360,362-365
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a6cd492a05971da23bd2505c2218fec6a287a7fd",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

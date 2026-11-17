@@ -1,0 +1,21 @@
+client/ui/actions/item-navigation.test.ts
+  s_0b0647615a23f7::t_aec84e48035239 701-715
+client/ui/elements/contextMenu/ContextMenuAction.svelte
+  s_0b0647615a23f7::t_58f7e7ef55ad37 184-195,198-201,205,208-209,212-222
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3f4fe85bb1537a91a7a54e8960560944c5fd3052",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

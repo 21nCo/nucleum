@@ -1,0 +1,35 @@
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_e753f4ab224de9::t_d52151ce1a1203 38-41,47,90,130-167,169-185
+client/features/calendar/birdView/BirdCalendar.svelte
+  s_f35b422006faeb::t_b950bb34d23c90 5-6,87-106,110,117-118,130,132
+client/shell/topNav/contextZone/PageIdentity.svelte
+  s_e753f4ab224de9::t_d2306679b4a61e 8,63-126,131-135
+client/ui/elements/contextMenu/ContextMenuItemWithSecondary.svelte
+  s_f35b422006faeb::t_f2725642c18f47 12,18-22,43,59,61
+client/ui/elements/contextMenu/ContextMenuOptionGroup.svelte
+  s_f35b422006faeb::t_bd3d0c024cdbd9 101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "76eeaa38718c578189271733f21f9d7b853e409a",
+  "prompts": {},
+  "sessions": {
+    "s_e753f4ab224de9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9b413bb-78e4-461c-b7a1-7e3598c6e221",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f35b422006faeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "679baf05-05c3-434b-8d43-45dfc1b3d785",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
