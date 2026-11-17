@@ -15,6 +15,14 @@
       label: requireCommandHost().resolveAction(x.action)?.label
     }))
     .filter((x) => x.label !== undefined);
+  const prefix = data.find((x) => x.shortcut.prefix)?.shortcut.prefix;
+  if (prefix) {
+    data.push({
+      id: "pinned-spaces",
+      shortcut: { action: "pinned-spaces", prefix, key: "1-9" },
+      label: "Pinned space 1 to 9"
+    });
+  }
 </script>
 
 <Table2
