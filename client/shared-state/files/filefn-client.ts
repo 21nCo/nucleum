@@ -260,6 +260,28 @@ function createTeardownError() {
 }
 
 /**
+ * True for the AbortError a FileFn client rejects with once it is torn down
+ * for an account or authority change, so a caller can stop instead of
+ * treating it as an ordinary request failure.
+ */
+export function isFileFnTeardownError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
+}
+
+/** True when two FileFn account scopes name the same user and region. */
+export function isSameFileFnAccountScope(
+  a: FileFnAccountScope | null,
+  b: FileFnAccountScope | null
+): boolean {
+  if (!a || !b) return a === b;
+  return a.userId === b.userId && a.region === b.region;
+}
+
+/**
  * Settles with the promise, or rejects with the teardown reason once the
  * client is torn down, whichever comes first.
  */

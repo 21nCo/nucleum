@@ -23,6 +23,8 @@ import {
 } from "@nucleum/shared-state/files/file-processing";
 import {
   getFileFnClient,
+  isFileFnTeardownError,
+  isSameFileFnAccountScope,
   resolveFileFnAccountScope
 } from "@nucleum/shared-state/files/filefn-client";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
@@ -91,7 +93,8 @@ export const fileUpload = {
    * on the device. In `local` mode a HEIC photo that cannot be converted fails
    * the upload too, and the uploaded original is deleted. A caller that shows
    * its own error, or uploads a file the user did not choose, passes
-   * `isErrorToastSuppressed` and the error is only rethrown.
+   * `isErrorToastSuppressed` and the error is only rethrown. Toasts render
+   * Markdown as HTML, so the file name is escaped to show as literal text.
    */
   async uploadFileV2(
     contentType: string,
@@ -122,7 +125,6 @@ export const fileUpload = {
     } catch (error) {
       logger.error({ at: "uploadFileV2", error });
       if (!isErrorToastSuppressed) {
-        // Toasts render Markdown as HTML, so the file name must show as literal text.
         toasts.error(
           `Couldn't upload ${escapeMarkdownText(displayName)}. Please try again.`
         );
@@ -252,8 +254,15 @@ async function saveOnDevice(input: FileUploadInput) {
  * artifact does not upload. That failure, or a record that cannot be saved,
  * deletes the uploaded file, so no FileFn file is left that no record
  * references.
+ *
+ * The upload belongs to the account that started it. When an account or
+ * authority change tears the FileFn client down, or the signed-in account
+ * (user or region) is no longer the one captured at the start, the upload
+ * fails without saving a record, because the global DataFn store would then
+ * save it in the other account.
  */
 async function uploadThroughFileFn(input: FileUploadInput) {
+  const scope = resolveFileFnAccountScope(account.get());
   const client = await getFileFnClient();
   if (!client) {
     throw new Error("FileFn is unavailable for the signed-in account");
@@ -329,6 +338,11 @@ async function uploadThroughFileFn(input: FileUploadInput) {
     processing
   };
   try {
+    if (
+      !isSameFileFnAccountScope(scope, resolveFileFnAccountScope(account.get()))
+    ) {
+      throw new Error("The signed-in account changed during the upload");
+    }
     const result = (await datafn.file.mutate({
       operation: "insert",
       id: input.id,
@@ -355,10 +369,12 @@ const LOCAL_REQUIRED_ARTIFACT_KINDS: readonly DeviceArtifact["kind"][] = [
 
 /**
  * Uploads device artifacts of a file version, returning the kinds that
- * uploaded with their durations. A failed artifact of a kind in
- * `requiredKinds` throws once every upload has settled. Any other failed
- * artifact is logged and left out: the original is already stored, and the
- * file still shows without it (remote processing makes it in `both` mode).
+ * uploaded with their durations. Once every upload has settled, a client
+ * teardown rejection from any artifact is rethrown, because the account that
+ * owns the upload is gone, and a failed artifact of a kind in `requiredKinds`
+ * throws. Any other failed artifact is logged and left out: the original is
+ * already stored, and the file still shows without it (remote processing
+ * makes it in `both` mode).
  */
 async function uploadArtifacts(
   client: FileFnClient,
@@ -368,6 +384,7 @@ async function uploadArtifacts(
 ) {
   const present: IFileProcessing["artifacts"] = {};
   const requiredFailures: { kind: string; error: unknown }[] = [];
+  const teardownErrors: unknown[] = [];
   await Promise.all(
     artifacts.map(async (artifact) => {
       try {
@@ -392,12 +409,15 @@ async function uploadArtifacts(
           kind: artifact.kind,
           error
         });
-        if (requiredKinds.includes(artifact.kind)) {
+        if (isFileFnTeardownError(error)) {
+          teardownErrors.push(error);
+        } else if (requiredKinds.includes(artifact.kind)) {
           requiredFailures.push({ kind: artifact.kind, error });
         }
       }
     })
   );
+  if (teardownErrors.length > 0) throw teardownErrors[0];
   const [requiredFailure] = requiredFailures;
   if (requiredFailure) {
     throw new Error(`The ${requiredFailure.kind} artifact did not upload`, {

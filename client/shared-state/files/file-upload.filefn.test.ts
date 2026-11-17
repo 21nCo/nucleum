@@ -475,6 +475,45 @@ describe("uploadFileV2 failures", () => {
     ]);
   });
 
+  it("stops without a record when the FileFn client is torn down during an artifact upload", async () => {
+    const teardown = new DOMException(
+      "The FileFn client was torn down",
+      "AbortError"
+    );
+    fileFn.uploadArtifact.mockRejectedValueOnce(teardown);
+
+    await expect(
+      fileUpload.uploadFileV2("image/jpeg", "e.jpg", image(), {
+        isGenerateThumbnail: true
+      })
+    ).rejects.toBe(teardown);
+
+    expect(fileFn.uploadArtifact).toHaveBeenCalledTimes(1);
+    expect(recordInserts.inserts).toBe(0);
+    expect((await datafn.file.query({})).data ?? []).toHaveLength(0);
+    expect(get(toasts)).toHaveLength(1);
+  });
+
+  it("stops without a record when the signed-in account changes before the record is saved", async () => {
+    fileFn.done.mockImplementationOnce(async () => {
+      account.set({
+        ...cloudAccount,
+        userId: "other-user",
+        userInfo: { ...cloudAccount.userInfo, id: "user:other-user" }
+      });
+      return { fileId: fileFn.uploads.at(-1)?.fileId, versionId: "ver_1" };
+    });
+
+    await expect(
+      fileUpload.uploadFileV2("image/jpeg", "f.jpg", image())
+    ).rejects.toThrow("The signed-in account changed during the upload");
+
+    expect(recordInserts.inserts).toBe(0);
+    expect((await datafn.file.query({})).data ?? []).toHaveLength(0);
+    expect(fileFn.deleted).toEqual([fileFn.uploads[0].fileId]);
+    expect(get(toasts)).toHaveLength(1);
+  });
+
   it("rethrows without a toast when the caller shows its own error", async () => {
     fileFn.done.mockRejectedValueOnce(new Error("upload failed"));
 
