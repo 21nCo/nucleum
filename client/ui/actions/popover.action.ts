@@ -688,9 +688,11 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       adjustedPlacement === Placement.Right
     ) {
       if (isStartAligned) {
+        const viewportHeight =
+          window.visualViewport?.height ?? window.innerHeight;
         const top = Math.min(
           triggerRect.top - offsetInPx,
-          documentHeight - popRect.height - 6
+          viewportHeight - popRect.height - 6
         );
         popoverElement.style.top = `${Math.max(6, top)}px`;
       } else if (triggerRect.top < popRect.height / 2) {

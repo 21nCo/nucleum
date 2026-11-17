@@ -164,6 +164,12 @@
 
 <CalendarLayoutView
   overflowMenu={() => scaleOptionsRef?.resolveScaleMenuGroup() ?? []}
+  contentKey={[
+    selectedView,
+    selectedDate.toDateString(),
+    visibleWeekDates?.[0]?.toDateString(),
+    visibleWeekDates?.[6]?.toDateString()
+  ].join("|")}
   bind:panel
   onGoToToday={() => {
     if (

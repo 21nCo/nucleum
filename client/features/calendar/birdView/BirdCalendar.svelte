@@ -108,6 +108,7 @@
 
 <CalendarLayoutView
   overflowMenu={resolveScaleMenuGroup}
+  contentKey={`${scale}|${selectedDate.toDateString()}`}
   bind:panel
   onGoToToday={() => {
     selectedDate = new Date();

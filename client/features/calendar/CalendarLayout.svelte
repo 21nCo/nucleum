@@ -40,6 +40,7 @@
     headerLeftOptions = undefined,
     headerRightOptions = undefined,
     overflowMenu = undefined,
+    contentKey = undefined,
     onGoToToday = undefined
   }: {
     panel?: CalendarLayout;
@@ -54,6 +55,11 @@
     headerRightOptions?: Snippet | undefined;
     /** Extra calendar menu groups shown while the controls are tight. */
     overflowMenu?: (() => IContextMenuGroup[]) | undefined;
+    /**
+     * Changes whenever the date, scale or layout shown in the controls
+     * changes, so compact controls measure the full controls again.
+     */
+    contentKey?: string | undefined;
     onGoToToday?: (() => void) | undefined;
   } = $props();
   const panelOptions: ISelectItem[] = [
@@ -157,6 +163,24 @@
     }
     if (isChanged) groupWidths = next;
   }
+
+  let measuredContentKey: string | undefined = undefined;
+
+  /**
+   * Drops the full controls' width when their content changes while they
+   * are compact: the full controls then show once, are measured with the
+   * new content, and the least compact level that fits is picked again.
+   * A compact hold for a reopening menu defers this until it ends.
+   */
+  $effect(() => {
+    const key = contentKey;
+    const isHolding = isHoldingCompact;
+    untrack(() => {
+      if (key === measuredContentKey || isHolding) return;
+      measuredContentKey = key;
+      if (level !== 0) fullControlsWidth = 0;
+    });
+  });
 
   /** Measures the full controls; only the uncompacted controls show them all. */
   function measureFullControls(shownLevel: number) {
