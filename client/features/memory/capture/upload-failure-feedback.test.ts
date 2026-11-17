@@ -4,6 +4,7 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import account from "@nucleum/client/runtime/account/account.store";
 import context from "@nucleum/client/runtime/context.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
+import { ActiveCaptureStore } from "./capture.store";
 import {
   UserDataMode,
   UserSessionType
@@ -96,27 +97,40 @@ describe("a failed upload is shown once to the user", () => {
     expect(upload.shownFailures).toEqual([]);
   });
 
-  it("in a shared multiple file save", async () => {
-    const { getByRole, findAllByText } = render(ShareContentSaver, {
-      data: {
-        multipleFiles: {
-          files: [
-            { file: image("one.jpg"), contentType: NodeType.IMAGE },
-            { file: image("two.jpg"), contentType: NodeType.IMAGE }
-          ],
-          totalCount: 2,
-          sizeExceededCount: 0
-        }
-      },
-      nodeType: NodeType.IMAGE,
-      saveAsNodeFilesCount: 2
-    });
+  it("in a shared multiple file save, until a retry succeeds", async () => {
+    const { getByRole, findAllByText, findByRole, queryByText } = render(
+      ShareContentSaver,
+      {
+        data: {
+          multipleFiles: {
+            files: [
+              { file: image("one.jpg"), contentType: NodeType.IMAGE },
+              { file: image("two.jpg"), contentType: NodeType.IMAGE }
+            ],
+            totalCount: 2,
+            sizeExceededCount: 0
+          }
+        },
+        nodeType: NodeType.IMAGE,
+        saveAsNodeFilesCount: 2
+      }
+    );
 
     await fireEvent.click(getByRole("button", { name: /Save 2 as nodes/ }));
 
     expect(await findAllByText("Failed to save")).toHaveLength(1);
     expect(upload.uploadFileV2).toHaveBeenCalledTimes(1);
     expect(upload.shownFailures).toEqual([]);
+
+    const retry = vi
+      .spyOn(ActiveCaptureStore.prototype, "saveMultipleFiles")
+      .mockResolvedValueOnce([]);
+    await fireEvent.click(getByRole("button", { name: /Save 2 as nodes/ }));
+    await findByRole("button", { name: /Save 2 as nodes/ });
+
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(queryByText("Failed to save")).toBeNull();
+    retry.mockRestore();
   });
 
   it("in a preview image save", async () => {

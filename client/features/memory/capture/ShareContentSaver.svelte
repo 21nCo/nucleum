@@ -125,6 +125,7 @@
     try {
       if (!data || !captureStore) return;
       isSaveInProgress = true;
+      feedback = undefined;
       const nodeIdCheck = await performAlreadySavedCheck();
       if (nodeIdCheck) {
         savedNode = nodeIdCheck;

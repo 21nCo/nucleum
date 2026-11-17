@@ -401,55 +401,79 @@ export async function discardFileFnFile(
 }
 
 /**
- * Pending deletes recorded without device file storage, by account and
- * authority. They are kept in local storage, which a reload keeps, else in
- * memory for this session. Each change is a synchronous read and write.
+ * Pending deletes recorded without device file storage, each its own entry:
+ * in local storage, which a reload keeps and where tabs add and remove
+ * entries without overwriting each other, else in memory for this session.
  */
-const fallbackPendingDeletes = new Map<string, Map<string, Set<string>>>();
+const memoryPendingDeletes = new Set<string>();
 
+function getFallbackPendingDeleteKey(
+  userId: string,
+  baseUrl: string,
+  fileId: string
+) {
+  return [baseUrl, fileId].reduce(
+    (key, part) => `${key}:${encodeURIComponent(part)}`,
+    getPendingDeleteKey(userId)
+  );
+}
+
+/** Returns the account's pending deletes without device file storage. */
 function getFallbackPendingDeletes(userId: string): Map<string, Set<string>> {
-  const byAuthority = new Map<string, Set<string>>();
-  const add = (authority: string, fileIds: Iterable<string>) =>
-    byAuthority.set(
-      authority,
-      new Set([...(byAuthority.get(authority) ?? []), ...fileIds])
-    );
-  fallbackPendingDeletes.get(userId)?.forEach((ids, at) => add(at, ids));
+  const keys = new Set(memoryPendingDeletes);
   try {
-    const stored = JSON.parse(
-      globalThis.localStorage?.getItem(getPendingDeleteKey(userId)) ?? "{}"
-    ) as Record<string, string[]>;
-    Object.entries(stored).forEach(([at, ids]) => add(at, ids));
+    const storage = globalThis.localStorage;
+    for (let index = 0; index < (storage?.length ?? 0); index++) {
+      const key = storage?.key(index);
+      if (key) keys.add(key);
+    }
   } catch (error) {
     logger.warn({ at: "filefn.client.pendingDelete", error });
+  }
+  const prefix = `${getPendingDeleteKey(userId)}:`;
+  const byAuthority = new Map<string, Set<string>>();
+  for (const key of keys) {
+    if (!key.startsWith(prefix)) continue;
+    const [authority, fileId] = key
+      .slice(prefix.length)
+      .split(":")
+      .map(decodeURIComponent);
+    if (!authority || !fileId) continue;
+    byAuthority.set(
+      authority,
+      (byAuthority.get(authority) ?? new Set()).add(fileId)
+    );
   }
   return byAuthority;
 }
 
-function updateFallbackPendingDeletes(
+function addFallbackPendingDelete(
   userId: string,
   baseUrl: string,
-  update: (fileIds: Set<string>) => void
+  fileId: string
 ) {
-  const byAuthority = getFallbackPendingDeletes(userId);
-  const fileIds = byAuthority.get(baseUrl) ?? new Set<string>();
-  update(fileIds);
-  byAuthority.set(baseUrl, fileIds);
-  const stored = Object.fromEntries(
-    [...byAuthority]
-      .filter(([, ids]) => ids.size > 0)
-      .map(([at, ids]) => [at, [...ids]])
-  );
+  const key = getFallbackPendingDeleteKey(userId, baseUrl, fileId);
   try {
     const storage = globalThis.localStorage;
     if (!storage) throw new Error("No local storage");
-    const key = getPendingDeleteKey(userId);
-    if (Object.keys(stored).length === 0) storage.removeItem(key);
-    else storage.setItem(key, JSON.stringify(stored));
-    fallbackPendingDeletes.delete(userId);
+    storage.setItem(key, "1");
   } catch (error) {
-    logger.warn({ at: "filefn.client.pendingDelete", error });
-    fallbackPendingDeletes.set(userId, byAuthority);
+    logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
+    memoryPendingDeletes.add(key);
+  }
+}
+
+function removeFallbackPendingDelete(
+  userId: string,
+  baseUrl: string,
+  fileId: string
+) {
+  const key = getFallbackPendingDeleteKey(userId, baseUrl, fileId);
+  memoryPendingDeletes.delete(key);
+  try {
+    globalThis.localStorage?.removeItem(key);
+  } catch (error) {
+    logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
   }
 }
 
@@ -471,7 +495,7 @@ async function recordPendingDelete(
   } catch (error) {
     logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
   }
-  updateFallbackPendingDeletes(userId, baseUrl, (ids) => ids.add(fileId));
+  addFallbackPendingDelete(userId, baseUrl, fileId);
 }
 
 /**
@@ -590,9 +614,7 @@ async function replayPendingDeletes(
           throw error;
         }
       });
-      updateFallbackPendingDeletes(userId, baseUrl, (ids) =>
-        ids.delete(fileId)
-      );
+      removeFallbackPendingDelete(userId, baseUrl, fileId);
       await dir?.removeEntry(encodeURIComponent(fileId)).catch(() => undefined);
     } catch (error) {
       logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
