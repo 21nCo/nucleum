@@ -58,6 +58,7 @@ describe("popover start-aligned placement", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     HTMLElement.prototype.getBoundingClientRect = boundingRect;
     delete (document.documentElement as any).clientWidth;
     delete (document.documentElement as any).scrollHeight;
@@ -92,6 +93,16 @@ describe("popover start-aligned placement", () => {
     const top = parseFloat(element.style.top);
     expect(top + SUBMENU_HEIGHT).toBeLessThanOrEqual(window.innerHeight);
     expect(top).toBeGreaterThanOrEqual(6);
+    action.destroy();
+  });
+
+  it("keeps a submenu inside a pinch-zoomed visual viewport", async () => {
+    vi.stubGlobal("visualViewport", { offsetTop: 300, height: 400 });
+    const { action, element } = await openSubmenu(400);
+
+    const top = parseFloat(element.style.top);
+    expect(top).toBeGreaterThanOrEqual(300);
+    expect(top + SUBMENU_HEIGHT).toBeLessThanOrEqual(700);
     action.destroy();
   });
 
