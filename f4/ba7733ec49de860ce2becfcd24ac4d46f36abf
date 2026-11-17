@@ -1,0 +1,21 @@
+client/shared-state/files/file-url.authority.test.ts
+  s_ace82070dcb8c7::t_666a277174646d 15-16,206-237
+client/shared-state/files/filefn-client.ts
+  s_ace82070dcb8c7::t_f8475931fcaa4c 353-358
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f4ba7733ec49de860ce2becfcd24ac4d46f36abf",
+  "prompts": {},
+  "sessions": {
+    "s_ace82070dcb8c7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32377d70-4569-4b72-b877-f60e4a5990c1",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
