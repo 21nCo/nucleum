@@ -98,6 +98,7 @@
 
   const weekDates = $derived(getWeekDates(selectedDate));
   const currentMonth = $derived(monthName(selectedDate.getMonth()));
+  const currentYear = $derived(selectedDate.getFullYear());
   const weekLabel = $derived(
     visibleWeekDates && visibleWeekDates.length >= 7
       ? formatWeekRange(
@@ -128,7 +129,6 @@
       isShortDate && year === new Date().getFullYear() ? "" : `, ${year}`;
     return `${startMonth} ${start.getDate()} - ${endPart}${yearPart}`;
   }
-  const currentYear = $derived(selectedDate.getFullYear());
 </script>
 
 <div class="flex items-center justify-center">
