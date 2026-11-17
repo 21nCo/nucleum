@@ -151,8 +151,7 @@ describe("context menu keys in a shadow root or a frame", () => {
   ];
 
   function press(target: Element, key: string) {
-    const view = target.ownerDocument.defaultView as Window &
-      typeof globalThis;
+    const view = target.ownerDocument.defaultView as Window & typeof globalThis;
     const event = new view.KeyboardEvent("keydown", {
       key,
       bubbles: true,
