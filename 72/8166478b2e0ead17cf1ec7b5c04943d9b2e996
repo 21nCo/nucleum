@@ -1,0 +1,25 @@
+client/shared-state/files/file-url.test.ts
+  s_b66d0e9dd4fae0::t_2227ee65fca1ef 2-4,7-11,15-26,28-32,84-86,208-341
+client/shared-state/files/file-url.ts
+  s_b66d0e9dd4fae0::t_e637a76051b83e 1,5,11-18,31-33,51-54,75-94,111,114-120,138-142,144-145,149-174
+client/shared-state/files/file.store.test.ts
+  s_b66d0e9dd4fae0::t_c3d2b7155a7648 110,118-119
+client/shared-state/files/file.store.ts
+  s_b66d0e9dd4fae0::t_bc005994122d75 108-109,112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "728166478b2e0ead17cf1ec7b5c04943d9b2e996",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
