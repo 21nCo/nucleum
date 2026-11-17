@@ -1,6 +1,4 @@
 <script lang="ts" module>
-  import { isTextElement } from "@21n/ui/actions/interaction-dom";
-
   /** Menus shown now, in the order they opened. */
   const openMenus: HTMLElement[] = [];
 
@@ -20,35 +18,73 @@
     "[role='tablist']"
   ].join(", ");
 
+  const textSelector = [
+    "input",
+    "textarea",
+    "[contenteditable='']",
+    "[contenteditable='true']",
+    "[contenteditable='plaintext-only']"
+  ].join(", ");
+
+  /** An element from any window, such as a same-origin frame's. */
+  function isElement(value: unknown): value is Element {
+    return (
+      !!value && typeof value === "object" && (value as Node).nodeType === 1
+    );
+  }
+
+  /**
+   * The element the key was pressed on. A listener on the window sees a key
+   * pressed inside a shadow root as coming from the shadow host, so this reads
+   * the composed path instead.
+   */
+  function resolveKeyTarget(event: KeyboardEvent): Element | null {
+    const origin = event.composedPath?.()[0] ?? event.target;
+    return isElement(origin) ? origin : null;
+  }
+
+  /** Inside an inert or hidden layer, across shadow roots. */
+  function isInHiddenLayer(node: Element) {
+    let current: Element | null = node;
+    while (current) {
+      if (current.closest("[inert], [aria-hidden='true']")) return true;
+      const root = current.getRootNode() as Document | ShadowRoot;
+      current = "host" in root && isElement(root.host) ? root.host : null;
+    }
+    return false;
+  }
+
   /** Shown, and not inside an inert or hidden layer such as a covered page. */
   function isReachableMenu(menu: HTMLElement) {
     return (
       menu.isConnected &&
       menu.getClientRects().length > 0 &&
-      !menu.closest("[inert], [aria-hidden='true']")
+      !isInHiddenLayer(menu)
     );
   }
 
   /**
    * The menu that owns a key: the menu the target sits in, else the most
-   * recently opened reachable menu. A target in a secondary popover, such as
-   * an option submenu, is not in a menu, so it counts as the latter.
+   * recently opened reachable menu of the same window. A target in a
+   * secondary popover, such as an option submenu, is not in a menu, so it
+   * counts as the latter.
    */
-  function resolveKeyOwner(target: EventTarget | null) {
-    const container =
-      target instanceof Element
-        ? openMenus.find((menu) => menu.contains(target))
-        : undefined;
+  function resolveKeyOwner(target: Element | null, view: Window | null) {
+    const container = target
+      ? openMenus.find((menu) => menu.contains(target))
+      : undefined;
     if (container) return container;
     for (let index = openMenus.length - 1; index >= 0; index--) {
-      if (isReachableMenu(openMenus[index])) return openMenus[index];
+      const menu = openMenus[index];
+      if (menu.ownerDocument.defaultView !== view) continue;
+      if (isReachableMenu(menu)) return menu;
     }
     return undefined;
   }
 
-  function isArrowControl(target: EventTarget | null) {
-    if (isTextElement(target)) return true;
-    return target instanceof Element && !!target.closest(arrowControlSelector);
+  function isArrowControl(target: Element | null) {
+    if (!target) return false;
+    return !!target.closest(`${textSelector}, ${arrowControlSelector}`);
   }
 </script>
 
@@ -90,9 +126,11 @@
     const node = menuRef;
     if (!node) return;
     openMenus.push(node);
-    window.addEventListener("keydown", onWindowKeydown, true);
+    // The menu's own window, which differs from this bundle's in a frame.
+    const view = node.ownerDocument.defaultView ?? window;
+    view.addEventListener("keydown", onKeydown, true);
     return () => {
-      window.removeEventListener("keydown", onWindowKeydown, true);
+      view.removeEventListener("keydown", onKeydown, true);
       const index = openMenus.indexOf(node);
       if (index >= 0) openMenus.splice(index, 1);
     };
@@ -117,15 +155,19 @@
    * before a drawer that keeps its keys inside or closes on Escape. Only the
    * front menu takes them: the menu holding the focus, else the most recently
    * opened reachable one. Arrows from a control that uses them, such as an
-   * option group's radios or a text field, stay with that control.
+   * option group's radios or a text field, stay with that control. Targets
+   * and focus are read from the menu's own root, so this also holds for a
+   * menu in a shadow root or a frame.
    */
-  function onWindowKeydown(event: KeyboardEvent) {
+  function onKeydown(event: KeyboardEvent) {
     if (!menuRef || !isReachableMenu(menuRef)) return;
     if (event.defaultPrevented || event.metaKey || event.ctrlKey) return;
     if (event.altKey) return;
     const isArrow = event.key === "ArrowDown" || event.key === "ArrowUp";
     if (event.key !== "Escape" && !isArrow) return;
-    if (resolveKeyOwner(event.target) !== menuRef) return;
+    const target = resolveKeyTarget(event);
+    if (resolveKeyOwner(target, menuRef.ownerDocument.defaultView) !== menuRef)
+      return;
     if (event.key === "Escape") {
       const close = onClose ?? closePopover;
       if (!close) return;
@@ -134,11 +176,12 @@
       close();
       return;
     }
-    if (isArrowControl(event.target)) return;
+    if (isArrowControl(target)) return;
     const buttons = resolveMenuButtons();
     if (buttons.length === 0) return;
     const step = event.key === "ArrowDown" ? 1 : -1;
-    const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    const root = menuRef.getRootNode() as Document | ShadowRoot;
+    const index = buttons.indexOf(root.activeElement as HTMLButtonElement);
     const next =
       index < 0
         ? step === 1

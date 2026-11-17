@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { render } from "@testing-library/svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
 import {
   isItemNavigationKey,
   resolveItemNavigationIndex,
@@ -115,5 +117,156 @@ describe("item navigation", () => {
     expect(resolveItemNavigationIndex(rows, 1, "ArrowDown")).toBe(3);
     expect(resolveItemNavigationIndex(rows, 0, "ArrowDown")).toBe(2);
     expect(resolveItemNavigationIndex(rows, 3, "ArrowLeft")).toBe(2);
+  });
+});
+
+vi.mock("@21n/ui/actions/popover.action", () => ({
+  popover: () => ({ update: () => undefined, destroy: () => undefined }),
+  tooltip: () => ({ update: () => undefined, destroy: () => undefined })
+}));
+
+describe("context menu keys in a shadow root or a frame", () => {
+  const menuResolver = () => [
+    {
+      group: "view",
+      items: [],
+      option: {
+        label: "View",
+        options: [
+          { value: "side", label: "Side nav" },
+          { value: "wall", label: "Wall" }
+        ],
+        value: "side",
+        onChange: () => undefined
+      }
+    },
+    {
+      group: "main",
+      items: [
+        { value: "rename", label: "Rename" },
+        { value: "move", label: "Move" },
+        { value: "delete", label: "Delete" }
+      ]
+    }
+  ];
+
+  function press(target: Element, key: string) {
+    const view = target.ownerDocument.defaultView as Window &
+      typeof globalThis;
+    const event = new view.KeyboardEvent("keydown", {
+      key,
+      bubbles: true,
+      composed: true,
+      cancelable: true
+    });
+    target.dispatchEvent(event);
+    return event;
+  }
+
+  function item(root: ParentNode, value: string) {
+    return root.querySelector<HTMLButtonElement>(
+      `[data-context-menu-item-id="${value}"]`
+    )!;
+  }
+
+  function radio(root: ParentNode, value: string) {
+    return root.querySelector<HTMLElement>(
+      `[role="radio"][data-option-value="${value}"]`
+    )!;
+  }
+
+  function stubShown(view: Window & typeof globalThis) {
+    vi.spyOn(view.Element.prototype, "getClientRects").mockReturnValue([
+      {}
+    ] as unknown as DOMRectList);
+  }
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }))
+    );
+    stubShown(window);
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  function renderInShadowRoot(props: Record<string, unknown>) {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const shadow = host.attachShadow({ mode: "open" });
+    const target = document.createElement("div");
+    shadow.append(target);
+    render(ContextMenu, { target, props: { menuResolver, ...props } });
+    return shadow;
+  }
+
+  it("leaves arrows on an option radio in a shadow root to the option group", () => {
+    const onChange = vi.fn();
+    const shadow = renderInShadowRoot({
+      menuResolver: () => {
+        const groups = menuResolver();
+        groups[0].option!.onChange = onChange;
+        return groups;
+      }
+    });
+    const side = radio(shadow, "side");
+    side.focus();
+    expect(shadow.activeElement).toBe(side);
+
+    press(side, "ArrowDown");
+
+    expect(onChange).toHaveBeenCalledWith("wall");
+    expect(shadow.activeElement).toBe(radio(shadow, "wall"));
+  });
+
+  it("moves focus between items with wrap-around and closes on Escape in a shadow root", () => {
+    const onClose = vi.fn();
+    const shadow = renderInShadowRoot({ onClose });
+    item(shadow, "move").focus();
+
+    press(item(shadow, "move"), "ArrowDown");
+    expect(shadow.activeElement).toBe(item(shadow, "delete"));
+    press(item(shadow, "delete"), "ArrowDown");
+    expect(shadow.activeElement).toBe(item(shadow, "rename"));
+    press(item(shadow, "rename"), "ArrowUp");
+    expect(shadow.activeElement).toBe(item(shadow, "delete"));
+
+    const escape = press(item(shadow, "delete"), "Escape");
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(escape.defaultPrevented).toBe(true);
+  });
+
+  it("moves focus and closes on Escape for a menu in a same-origin frame", () => {
+    const frame = document.createElement("iframe");
+    document.body.append(frame);
+    const frameWindow = frame.contentWindow as Window & typeof globalThis;
+    const frameDocument = frame.contentDocument!;
+    stubShown(frameWindow);
+    const target = frameDocument.createElement("div");
+    frameDocument.body.append(target);
+    const onClose = vi.fn();
+    render(ContextMenu, { target, props: { menuResolver, onClose } });
+
+    item(frameDocument, "move").focus();
+    expect(frameDocument.activeElement).toBe(item(frameDocument, "move"));
+
+    press(item(frameDocument, "move"), "ArrowUp");
+    expect(frameDocument.activeElement).toBe(item(frameDocument, "rename"));
+    press(item(frameDocument, "rename"), "ArrowUp");
+    expect(frameDocument.activeElement).toBe(item(frameDocument, "delete"));
+    press(item(frameDocument, "delete"), "ArrowDown");
+    expect(frameDocument.activeElement).toBe(item(frameDocument, "rename"));
+
+    press(item(frameDocument, "rename"), "Escape");
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
