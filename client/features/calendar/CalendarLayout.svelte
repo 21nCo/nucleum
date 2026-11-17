@@ -200,11 +200,11 @@
   });
 
   /**
-   * Drops the full controls' width when their content changes while they
-   * are compact: the full controls then show once, are measured with the
-   * new content, and the least compact level that fits is picked again.
-   * A compact hold for a reopening menu, an open menu or focus in the
-   * controls defers this until it ends.
+   * Drops every measured width when the controls' content changes, as on a
+   * fresh mount: the full controls show once, are measured with the new
+   * content, and the least compact level that fits is picked again from
+   * widths measured with it. A compact hold for a reopening menu, an open
+   * menu or focus in the controls defers this until it ends.
    */
   $effect(() => {
     const key = contentKey;
@@ -218,7 +218,9 @@
       )
         return;
       measuredContentKey = key;
-      if (level !== 0) fullControlsWidth = 0;
+      groupWidths = {};
+      fullControlsWidth = 0;
+      if (level === 0) measure(0);
     });
   });
 

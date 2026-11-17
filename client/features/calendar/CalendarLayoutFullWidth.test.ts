@@ -214,4 +214,50 @@ describe("CalendarLayout full controls after their content changes", () => {
     trigger.blur();
     await waitFor(() => expect(controlsLevel()).toBe("0"));
   });
+
+  it("restores the inline scale once a shorter scale label fits, even when the full controls do not", async () => {
+    const groups: Record<string, number> = {
+      layout: 100,
+      "scale-full": 200,
+      scale: 150,
+      date: 200,
+      "date-short": 100,
+      right: 40
+    };
+    const boundingRect = HTMLElement.prototype.getBoundingClientRect;
+    HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+      const width = groups[this.dataset.calendarGroup ?? ""] ?? 0;
+      return {
+        width,
+        height: 0,
+        top: 0,
+        left: 0,
+        right: width,
+        bottom: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => ({})
+      } as DOMRect;
+    };
+    try {
+      fullWidth = 600;
+      mocks.entryWidth.set(450);
+      const { rerender } = render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "WEEK|Nov 8" }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("2"));
+      mocks.entryWidth.set(300);
+      await waitFor(() => expect(controlsLevel()).toBe("4"));
+
+      groups["scale-full"] = 130;
+      groups.scale = 80;
+      await rerender({ contentKey: "DAY|Nov 8" });
+
+      await waitFor(() => expect(controlsLevel()).toBe("3"));
+      await settle();
+      expect(controlsLevel()).toBe("3");
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = boundingRect;
+    }
+  });
 });
