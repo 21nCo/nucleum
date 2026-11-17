@@ -25,6 +25,7 @@
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
   import { Placement } from "@21n/ui/elements/direction.enum";
+  import view from "@21n/ui/environment/view.store";
   import {
     contextZone,
     type ContextZoneViews
@@ -48,11 +49,12 @@
     header?: Snippet<[boolean]> | undefined;
     /**
      * Left header controls; receives whether the controls are compact and
-     * whether they are tight (compact controls that still do not fit).
+     * whether the scale moves into the calendar menu (compact controls that
+     * still do not fit, on a top bar wide enough to open the scale submenu).
      */
     headerLeftOptions?: Snippet<[boolean, boolean]> | undefined;
     headerRightOptions?: Snippet | undefined;
-    /** Extra calendar menu groups shown while the controls are tight. */
+    /** Extra calendar menu groups shown while the scale is in the menu. */
     overflowMenu?: (() => IContextMenuGroup[]) | undefined;
     onGoToToday?: (() => void) | undefined;
   } = $props();
@@ -132,6 +134,12 @@
   const isCompact = $derived(level >= 1);
   const isShortDate = $derived(level >= 2);
   const isTight = $derived(level >= 4);
+  /**
+   * The scale moves into the menu only while the menu opens as a popover. At
+   * a constrained width the menu opens as a sheet, under which its scale
+   * submenu cannot show, so the scale stays in the controls.
+   */
+  const isScaleInMenu = $derived(isTight && !$view.isConstrainedWidth);
   const isLoose = $derived(
     level === 0 &&
       fullControlsWidth > 0 &&
@@ -288,7 +296,7 @@
         : [];
     return [
       ...layoutGroup,
-      ...(isTight ? (overflowMenu?.() ?? []) : []),
+      ...(isScaleInMenu ? (overflowMenu?.() ?? []) : []),
       {
         group: "calendar",
         items: [
@@ -414,7 +422,7 @@
             ? "scale-menu"
             : "scale"}
       >
-        {@render headerLeftOptions?.(isCompact, isTight)}
+        {@render headerLeftOptions?.(isCompact, isScaleInMenu)}
       </div>
       <div
         class="flex items-center h-full shrink-0"

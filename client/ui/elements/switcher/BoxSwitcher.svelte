@@ -9,7 +9,7 @@
   import { onMount, tick } from "svelte";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
-  import { resolveSwitcherVisibleOptions } from "@21n/ui/elements/switcher/switcher-overflow";
+  import { resolveSwitcherOverflow } from "@21n/ui/elements/switcher/switcher-overflow";
   import { tooltip } from "@21n/ui/actions/popover.action";
   import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
 
@@ -73,32 +73,40 @@
   let fullWidth = $state(0);
   let optionWidths = $state<number[]>([]);
   let moreWidth = $state(0);
+  let activeCompactWidth = $state<number | undefined>(undefined);
   let trackGap = $state(0);
   let trackPadding = $state(0);
 
+  /** Whether an option shows an icon, so it can show without its label. */
+  function hasRenderedIcon(option: ISelectItem | undefined) {
+    return typeof option?.icon === "string" && option.icon !== "";
+  }
+
+  const activeOption = $derived(
+    options.find((option) => option.value === selected)
+  );
   const budgetWidth = $derived(overflowWidth ?? availableWidth);
-  const visibleIndexes = $derived.by(() => {
-    if (!isOverflowToMenu || optionWidths.length !== options.length)
-      return options.map((_, index) => index);
-    if (overflowWidth === undefined && availableWidth <= 0)
-      return options.map((_, index) => index);
-    return resolveSwitcherVisibleOptions({
+  const overflow = $derived.by(() => {
+    const all = {
+      visible: options.map((_, index) => index),
+      isActiveCompact: false
+    };
+    if (!isOverflowToMenu || optionWidths.length !== options.length) return all;
+    if (overflowWidth === undefined && availableWidth <= 0) return all;
+    return resolveSwitcherOverflow({
       widths: optionWidths,
       activeIndex: options.findIndex((option) => option.value === selected),
       available: budgetWidth,
       moreWidth,
       gap: trackGap,
-      padding: trackPadding
+      padding: trackPadding,
+      activeCompactWidth: hasRenderedIcon(activeOption)
+        ? activeCompactWidth
+        : undefined
     });
   });
-  const isActiveLabelHidden = $derived.by(() => {
-    if (!isOverflowToMenu || visibleIndexes.length !== 1) return false;
-    if (visibleIndexes.length === options.length) return false;
-    const active = visibleIndexes[0];
-    return (
-      trackPadding + optionWidths[active] + trackGap + moreWidth > budgetWidth
-    );
-  });
+  const visibleIndexes = $derived(overflow.visible);
+  const isActiveLabelHidden = $derived(overflow.isActiveCompact);
   const visibleOptions = $derived(
     visibleIndexes.map((index) => options[index])
   );
@@ -122,6 +130,9 @@
       track
         .querySelector<HTMLElement>("[data-switcher-more]")
         ?.getBoundingClientRect().width ?? 0;
+    activeCompactWidth = track
+      .querySelector<HTMLElement>("[data-switcher-compact]")
+      ?.getBoundingClientRect().width;
     fullWidth = Math.ceil(
       trackPadding +
         optionWidths.reduce((sum, width) => sum + width, 0) +
@@ -214,13 +225,18 @@
   </span>
 {/snippet}
 
-{#snippet optionButtons(items: ISelectItem[], isMeasure: boolean)}
+{#snippet optionButtons(
+  items: ISelectItem[],
+  isMeasure: boolean,
+  isCompactMeasure = false
+)}
   {#each items as option (option.value)}
     {@const isSelected = selected === option.value}
     <button
       type="button"
       tabindex={isMeasure ? -1 : undefined}
-      data-switcher-option={isMeasure ? "" : undefined}
+      data-switcher-option={isMeasure && !isCompactMeasure ? "" : undefined}
+      data-switcher-compact={isCompactMeasure ? "" : undefined}
       role={isTablist && !isMeasure ? "tab" : undefined}
       aria-selected={isTablist ? isSelected : undefined}
       aria-label={option.label}
@@ -269,7 +285,7 @@
           })}
         />
       {/if}
-      {#if !isIconOnlyMode && option.label && (!isExpandOnActiveForIcon || selected === option.value) && !(isSelected && isActiveLabelHidden && !isMeasure && option.icon)}
+      {#if !isIconOnlyMode && option.label && (!isExpandOnActiveForIcon || selected === option.value) && !(hasRenderedIcon(option) && (isCompactMeasure || (isSelected && isActiveLabelHidden && !isMeasure)))}
         <span class="whitespace-nowrap">
           {option.label}
         </span>
@@ -309,7 +325,7 @@
         <ContextMenuAction
           id="switcherMore"
           testId="switcher-more"
-          tooltip={`${hiddenOptions.length} more`}
+          tooltip={`+${hiddenOptions.length} more`}
           menuResolver={resolveMoreMenu}
           {size}
           actionSize={size}
@@ -349,6 +365,9 @@
         : undefined}
     >
       {@render optionButtons(items, isMeasure)}
+      {#if isMeasure && activeOption && hasRenderedIcon(activeOption)}
+        {@render optionButtons([activeOption], true, true)}
+      {/if}
       {#if isMeasure}
         <span
           data-switcher-more

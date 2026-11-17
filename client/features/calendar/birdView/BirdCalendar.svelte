@@ -114,8 +114,8 @@
     birdviewRef?.goToToday();
   }}
 >
-  {#snippet headerLeftOptions(_isCompact: boolean, isTight: boolean)}
-    {#if isDev && !isTight}
+  {#snippet headerLeftOptions(_isCompact: boolean, isScaleInMenu: boolean)}
+    {#if isDev && !isScaleInMenu}
       <OptionSelector
         options={switchOptions}
         size={Size.sm}

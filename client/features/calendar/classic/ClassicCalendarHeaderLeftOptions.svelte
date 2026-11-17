@@ -128,7 +128,7 @@
 </script>
 
 <div class="flex items-center gap-2">
-  {#if $view.isConstrainedWidth || !isScaleInMenu}
+  {#if !isScaleInMenu}
     <div>
       {#if $view.isConstrainedWidth}
         <DropDown

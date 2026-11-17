@@ -71,7 +71,9 @@ test.describe("context zone overflow", () => {
     await openNodeRecordFromLibraryById(page, node.id);
     const more = page.getByTestId("switcher-more");
     await expect(more).toBeVisible({ timeout: 15_000 });
-    await expect(more).toHaveAccessibleName(/^\d+ more$/);
+    const visibleLabel = (await more.innerText()).trim();
+    expect(visibleLabel).toMatch(/^\+\d+$/);
+    await expect(more).toHaveAccessibleName(`${visibleLabel} more`);
     await expect(
       page.getByRole("tablist").getByTestId("switcher-more")
     ).toHaveCount(0);
