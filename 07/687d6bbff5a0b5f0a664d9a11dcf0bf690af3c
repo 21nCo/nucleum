@@ -1,0 +1,27 @@
+client/features/memory/capture/CameraCapture.svelte
+  s_0b0647615a23f7::t_0319c970804265 141-142
+client/features/memory/capture/FileUploader.svelte
+  s_0b0647615a23f7::t_94f30815096acd 90-91
+client/features/memory/capture/ShareContentSaver.svelte
+  s_0b0647615a23f7::t_54252eaef76bfa 156-157,160-162
+client/features/memory/capture/capture.store.ts
+  s_0b0647615a23f7::t_f14f4f9267f4b8 670,694-695,833,881-882,1020,1036-1037
+client/features/memory/capture/capture.store.upload-toast.test.ts
+  s_0b0647615a23f7::t_db1ed84aecf468 1-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "07687d6bbff5a0b5f0a664d9a11dcf0bf690af3c",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
