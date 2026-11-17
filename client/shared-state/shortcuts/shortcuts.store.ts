@@ -78,14 +78,24 @@ export const keyboardShortcuts = {
   /**
    * Resolves the shortcut for a key press. With `prefix`, only chords started
    * by that prefix key match; without it, only shortcuts without a prefix do.
+   * With `isRegistered`, shortcuts whose action it rejects (a command the
+   * product does not register) are skipped.
    */
-  resolveShortcut(event: KeyboardEvent, prefix?: string) {
+  resolveShortcut(
+    event: KeyboardEvent,
+    {
+      prefix,
+      isRegistered
+    }: { prefix?: string; isRegistered?: (action: string) => boolean } = {}
+  ) {
     if (!event?.key) return { shortcut: undefined, modifiers: [] };
     const modifiers = resolveModifiers(event);
     const keyMap = this.fetchKeyMap();
-    const shortcut = keyMap.find((s: any) => {
-      return this.checkShortcut(event, s, prefix);
-    });
+    const shortcut = keyMap.find(
+      (s) =>
+        this.checkShortcut(event, s, prefix) &&
+        (isRegistered?.(s.action) ?? true)
+    );
     logger.log({ event, modifiers, shortcut, keyMap });
     return { shortcut, modifiers };
   },

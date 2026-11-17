@@ -34,6 +34,7 @@
   import ModalLayer from "@nucleum/shell/overlays/ModalLayer.svelte";
   import AnalyticsLayer from "@nucleum/composition/layers/telemetry/AnalyticsLayer.svelte";
   import ShortcutRunner from "@nucleum/shell/shortcuts/ShortcutRunner.svelte";
+  import ChordRunner from "@nucleum/shell/shortcuts/ChordRunner.svelte";
   import Intercom from "@nucleum/surfaces/help/support/Intercom.svelte";
   import { installVisibilitySync } from "@nucleum/datafn/visibility-sync";
   import { safeRequestIdleCallback } from "@21n/shared-utils/idle-callback";
@@ -401,5 +402,6 @@
   />
   <ModalLayer />
   <ShortcutRunner />
+  <ChordRunner />
 {/if}
 <Intercom />
