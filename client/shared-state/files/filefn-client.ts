@@ -138,11 +138,17 @@ function syncWithAccount() {
   syncFileFnClient(account.get());
 }
 
-function settleFileFnClientSync(): Promise<void> {
-  const sync = latestSync;
-  return sync.then(() =>
-    sync === latestSync ? undefined : settleFileFnClientSync()
-  );
+/**
+ * Waits until the latest sync has settled: it returns only when no newer sync
+ * started while it waited, so the caller's next synchronous step sees the
+ * client bound to the account's current authority.
+ */
+async function settleFileFnClientSync(): Promise<void> {
+  let sync: Promise<void>;
+  do {
+    sync = latestSync;
+    await sync;
+  } while (sync !== latestSync);
 }
 
 /**
@@ -323,6 +329,21 @@ function createTeardownError() {
  */
 export function captureFileFnOwner(): FileFnOwner | null {
   syncWithAccount();
+  const scope = resolveFileFnAccountScope(account.get());
+  return scope ? { userId: scope.userId, epoch: ownerEpoch } : null;
+}
+
+/**
+ * Captures the signed-in cloud account and FileFn client generation once the
+ * client is bound to the account's current authority, reading the stored
+ * region when the session carries none, or null when no cloud account is
+ * signed in. A stored region that cannot be read rejects. Unlike
+ * captureFileFnOwner, an authority change that is still being read has
+ * already ended the previous generation when it returns.
+ */
+export async function captureSettledFileFnOwner(): Promise<FileFnOwner | null> {
+  syncWithAccount();
+  await settleFileFnClientSync();
   const scope = resolveFileFnAccountScope(account.get());
   return scope ? { userId: scope.userId, epoch: ownerEpoch } : null;
 }

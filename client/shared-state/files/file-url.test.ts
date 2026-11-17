@@ -10,7 +10,7 @@ const fileFn = vi.hoisted(() => ({
 }));
 
 vi.mock("@nucleum/shared-state/files/filefn-client", () => ({
-  captureFileFnOwner: () => fileFn.owner,
+  captureSettledFileFnOwner: async () => fileFn.owner,
   getOwnedFileFnClient: async () => ({
     client: { resolveRenderable: fileFn.resolveRenderable },
     baseUrl: "https://account.test/files"

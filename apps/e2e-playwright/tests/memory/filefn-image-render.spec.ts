@@ -30,10 +30,14 @@ function recordRenderUrls(page: Page) {
     }
     const intent = url.searchParams.get("intent");
     if (intent !== "thumbnail" && intent !== "full") return;
-    const body = (await response.json().catch(() => null)) as {
-      source?: { url?: string };
-    } | null;
-    if (body?.source?.url) urls[intent].push(body.source.url);
+    // The route answers { ok, data: RenderDescriptor, requestId }; a bare
+    // descriptor is read too.
+    type Descriptor = { source?: { url?: string } };
+    const body = (await response.json().catch(() => null)) as
+      | (Descriptor & { data?: Descriptor })
+      | null;
+    const sourceUrl = body?.data?.source?.url ?? body?.source?.url;
+    if (sourceUrl) urls[intent].push(sourceUrl);
   });
   return urls;
 }

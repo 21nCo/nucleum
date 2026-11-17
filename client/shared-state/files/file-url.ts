@@ -1,7 +1,7 @@
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
-  captureFileFnOwner,
+  captureSettledFileFnOwner,
   getOwnedFileFnClient,
   type FileFnOwner
 } from "@nucleum/shared-state/files/filefn-client";
@@ -40,17 +40,23 @@ let cacheOwnerKey: string | undefined;
  * account or another authority clears it, so a URL is never shown to another
  * account.
  */
-export function resolveFileUrl(
+export async function resolveFileUrl(
   fileId: string,
   variant: FileUrlVariant
 ): Promise<string | undefined> {
-  const owner = captureFileFnOwner();
+  let owner: FileFnOwner | null;
+  try {
+    owner = await captureSettledFileFnOwner();
+  } catch (error: unknown) {
+    logger.warn({ at: "fileUrl.resolve", fileId, variant, error });
+    return undefined;
+  }
   const ownerKey = owner ? `${owner.userId}:${owner.epoch}` : undefined;
   if (ownerKey !== cacheOwnerKey) {
     cache.clear();
     cacheOwnerKey = ownerKey;
   }
-  if (!owner) return Promise.resolve(undefined);
+  if (!owner) return undefined;
   const key = `${variant}:${fileId}`;
   const cached = cache.get(key);
   if (cached && Date.now() < cached.refreshAt) return cached.url;

@@ -1,0 +1,119 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import account from "@nucleum/client/runtime/account/account.store";
+import {
+  UserDataMode,
+  UserSessionType,
+  type UserAccount
+} from "@nucleum/client/runtime/account/account.type";
+import { clientStorage } from "@nucleum/persistence/client-storage";
+import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
+
+// Runs the real FileFn client runtime, so the cache sees the owner the
+// account's current authority binds, not a stub of it.
+const { clearFileUrlCache, resolveFileUrl } = await import(
+  "@nucleum/shared-state/files/file-url"
+);
+
+const ACCOUNT_URL_TEMPLATE = "https://account-{region}-dev.nucleum.app";
+
+const signedOut: UserAccount = {
+  dataMode: UserDataMode.NONE,
+  sessionType: UserSessionType.UNDETERMINED
+};
+
+/** A cloud account whose session carries no region. */
+function cloudAccountWithoutRegion(userId: string): UserAccount {
+  return {
+    dataMode: UserDataMode.CLOUD,
+    sessionType: UserSessionType.RETURNING,
+    userId,
+    userInfo: {
+      id: `user:${userId}`,
+      email: `${userId}@example.test`,
+      nickName: userId,
+      joinDate: new Date(0),
+      lastLogin: new Date(0)
+    }
+  };
+}
+
+/** Answers each render request with a URL of the authority it reached. */
+function serveRenders() {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const url = new URL(input instanceof Request ? input.url : String(input));
+    const fileId = url.pathname.split("/").at(-2);
+    const intent = url.searchParams.get("intent");
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        data: {
+          fileId,
+          versionId: "v1",
+          intent,
+          state: "ready",
+          mimeType: "image/png",
+          name: "photo.png",
+          size: 10,
+          source: {
+            mode: "original",
+            url: `https://${url.host}/r2/${fileId}?X-Amz-Expires=900`
+          }
+        },
+        requestId: "req-1"
+      }),
+      { status: 200, headers: { "content-type": "application/json" } }
+    );
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
+describe("resolveFileUrl across FileFn authorities", () => {
+  beforeEach(() => {
+    vi.stubEnv("VITE_ACCOUNT_BASE_URL_TEMPLATE", ACCOUNT_URL_TEMPLATE);
+    clearFileUrlCache();
+  });
+
+  afterEach(async () => {
+    account.set(signedOut);
+    await clientStorage.remove(ClientStorageKey.REGION);
+    clearFileUrlCache();
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("does not serve a URL of the previous authority after the stored region changes", async () => {
+    const fetchMock = serveRenders();
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccountWithoutRegion("user-a"));
+    const before = await resolveFileUrl("file-1", "full");
+    expect(before).toBe(
+      "https://account-useast-dev.nucleum.app/r2/file-1?X-Amz-Expires=900"
+    );
+
+    await clientStorage.set(ClientStorageKey.REGION, "euwest");
+    const after = await resolveFileUrl("file-1", "full");
+
+    expect(after).toBe(
+      "https://account-euwest-dev.nucleum.app/r2/file-1?X-Amz-Expires=900"
+    );
+    expect(
+      fetchMock.mock.calls.map(([input]) => new URL(String(input)).host)
+    ).toEqual([
+      "account-useast-dev.nucleum.app",
+      "account-euwest-dev.nucleum.app"
+    ]);
+  });
+
+  it("still serves a repeated lookup from the cache while the authority stays", async () => {
+    const fetchMock = serveRenders();
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccountWithoutRegion("user-a"));
+
+    const first = await resolveFileUrl("file-1", "thumbnail");
+    const second = await resolveFileUrl("file-1", "thumbnail");
+
+    expect(second).toBe(first);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
