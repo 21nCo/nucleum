@@ -353,6 +353,42 @@ function resolveRootElementById(
   return null;
 }
 
+/** A shown popover or menu, with the element that opened it. */
+export interface PopoverLayer {
+  element: HTMLElement;
+  trigger?: Element;
+}
+
+/**
+ * Popovers and menus shown now, oldest first, so a key handler such as a
+ * context menu's can tell which layer a key belongs to. Hover-only popovers
+ * take no keys and are left out.
+ */
+export const popoverLayers: PopoverLayer[] = [];
+
+/**
+ * Adds a layer and drops popover layers whose element has left the page. A
+ * menu's own layer, which has no trigger, stays while the menu is moved
+ * between containers; the menu removes it when it unmounts.
+ */
+export function addPopoverLayer(layer: PopoverLayer) {
+  for (let index = popoverLayers.length - 1; index >= 0; index--) {
+    const { element, trigger } = popoverLayers[index];
+    if (trigger && !element.isConnected) popoverLayers.splice(index, 1);
+  }
+  popoverLayers.push(layer);
+}
+
+export function removePopoverLayer(
+  match: HTMLElement | ((element: HTMLElement) => boolean)
+) {
+  for (let index = popoverLayers.length - 1; index >= 0; index--) {
+    const { element } = popoverLayers[index];
+    if (typeof match === "function" ? match(element) : element === match)
+      popoverLayers.splice(index, 1);
+  }
+}
+
 type Content = string | HTMLElement | PopoverComponentConstructor;
 
 interface PopoverParams {
@@ -464,6 +500,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       container.innerHTML = "";
       container?.appendChild(popoverElement);
     }
+    if (!isHoverOnlyTrigger())
+      addPopoverLayer({ element: popoverElement, trigger: node });
 
     if (typeof content === "string") {
       popoverElement.textContent = content;
@@ -472,7 +510,12 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     } else if (typeof content === "function") {
       component = mount(content, {
         target: popoverElement,
-        props: { ...componentProps, isPopoverContext: true }
+        props: {
+          ...componentProps,
+          isPopoverContext: true,
+          // A dedicated name, so content that already takes onClose keeps it.
+          closePopover: () => hidePopover("close")
+        }
       });
     }
 
@@ -764,6 +807,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     try {
       clearHoverDelayTimeout();
       if (popoverElement && !popoverElement.isConnected) {
+        removePopoverLayer(popoverElement);
         popoverElement = null;
         if (component) {
           void unmount(component);
@@ -784,6 +828,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     // console.log("hidePopover", e);
     clearHoverDelayTimeout();
     if (popoverElement) {
+      removePopoverLayer(popoverElement);
       try {
         if (typeof popoverElement.remove === "function") {
           popoverElement.remove();

@@ -181,6 +181,45 @@
     hide();
   }
 
+  /** The element that held focus when the menu opened. */
+  let openerFocus: HTMLElement | undefined;
+
+  /** The focused element of the trigger's root, unless that is the page. */
+  function resolveFocused(trigger: HTMLElement) {
+    const active = rootOf(trigger)?.activeElement as HTMLElement | null;
+    const { body, documentElement } = trigger.ownerDocument;
+    return active && active !== body && active !== documentElement
+      ? active
+      : undefined;
+  }
+
+  /**
+   * Closes the menu on its Escape key. Focus the menu held, which closing it
+   * removes, returns to the element that held focus when the menu opened:
+   * the trigger, when a click, Enter or Space on it opened the menu. A menu
+   * opened while nothing held focus, such as by a list's period key, leaves
+   * focus with the page, and focus the user moved elsewhere stays there.
+   */
+  function closeFromMenu() {
+    const trigger = contextMenuPopoverRef as HTMLElement | undefined;
+    const opener = openerFocus;
+    const hadFocus = !!trigger && !isFocusLost(trigger);
+    hide();
+    if (hadFocus && trigger && isFocusLost(trigger) && opener?.isConnected)
+      opener.focus();
+  }
+
+  $effect(() => {
+    const trigger = contextMenuPopoverRef as HTMLElement | undefined;
+    if (!trigger) return;
+    const onChange = (event: Event) => {
+      const isOpen = (event as CustomEvent<{ open?: boolean }>).detail?.open;
+      openerFocus = isOpen ? resolveFocused(trigger) : undefined;
+    };
+    trigger.addEventListener("change", onChange);
+    return () => trigger.removeEventListener("change", onChange);
+  });
+
   function onPopoverChange(e: Event) {
     isPopoverVisible =
       (e as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
@@ -198,7 +237,14 @@
     triggerMethod: triggerMethod
       ? [triggerMethod]
       : [PopoverTriggerMethod.CLICK],
-    componentProps: { size, heading, menuResolver, onSelect, parentBgIndex },
+    componentProps: {
+      size,
+      heading,
+      menuResolver,
+      onSelect,
+      parentBgIndex,
+      onClose: closeFromMenu
+    },
     groupId: "contextMenuPopover-" + id,
     id,
     isRenderAsSibling
