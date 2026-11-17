@@ -112,20 +112,23 @@ function isSameIdSet(left: IRecordId[], right: IRecordId[]) {
  * Returns a function that selects a Shift+arrow range on top of what was
  * selected before the range started (`isNewRange`). A selection change made
  * elsewhere between presses, such as a click or a menu's Select, joins that
- * base, so the next press neither drops a new pick nor restores a removed one.
+ * base: earlier picks still selected stay, picks added elsewhere join and
+ * picks removed elsewhere leave, so the next press neither drops a new pick
+ * nor restores a removed one.
  */
 export function createRangeSelection() {
   let baseIds: IRecordId[] = [];
-  let rangeIds: IRecordId[] = [];
   let writtenIds: IRecordId[] = [];
   return (ids: IRecordId[], isNewRange: boolean) => {
     const selectedIds = bulkEditStore.getState().selectedIds;
     if (isNewRange) {
       baseIds = selectedIds;
     } else if (!isSameIdSet(selectedIds, writtenIds)) {
-      baseIds = selectedIds.filter((id) => !rangeIds.some(resourceInList(id)));
+      baseIds = [
+        ...baseIds.filter((id) => selectedIds.some(resourceInList(id))),
+        ...selectedIds.filter((id) => !writtenIds.some(resourceInList(id)))
+      ];
     }
-    rangeIds = ids;
     writtenIds = [
       ...baseIds.filter((id) => !ids.some(resourceInList(id))),
       ...ids

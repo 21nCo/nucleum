@@ -838,4 +838,16 @@ describe("keyboard range selection", () => {
       ["node:a", "node:added", "node:base"].sort()
     );
   });
+
+  it("keeps an earlier pick inside the range when a change elsewhere precedes a shrinking press", () => {
+    const selectRange = createRangeSelection();
+    bulkEditStore.select(["node:a"]);
+    selectRange(["node:a", "node:b"], true);
+    bulkEditStore.select(["node:a", "node:b", "node:x"]);
+
+    selectRange(["node:b"], false);
+    expect([...bulkEditStore.getState().selectedIds].sort()).toEqual(
+      ["node:a", "node:b", "node:x"].sort()
+    );
+  });
 });
