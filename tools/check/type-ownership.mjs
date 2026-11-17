@@ -272,7 +272,8 @@ const changedEnumContracts = new Map([
           NEXT_LIST_ITEM: "next-list-item",
           RHOMBUS: "rhombus",
           TODAY: "today",
-          FEED: "feed"
+          FEED: "feed",
+          NEW_COMMANDS: "new-commands"
         }
       }
     ]

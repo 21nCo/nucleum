@@ -62,7 +62,7 @@
       label={{
         label: "Hide App menu bar on hot key",
         tooltip: {
-          body: "The hot key **Q** hides the app menu bar completely. When off, **Q** only hides the menu labels."
+          body: "The hot key **[** hides the app menu bar completely. When off, **[** only hides the menu labels."
         }
       }}
       isExpanded={true}
