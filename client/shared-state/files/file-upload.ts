@@ -26,6 +26,7 @@ import {
   resolveFileFnAccountScope
 } from "@nucleum/shared-state/files/filefn-client";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
+import { escapeMarkdownText } from "@21n/ui/elements/markdown/markdown.utils";
 
 import account from "@nucleum/client/runtime/account/account.store";
 import { fileTransport } from "@nucleum/client/runtime/files/file-transport";
@@ -121,7 +122,10 @@ export const fileUpload = {
     } catch (error) {
       logger.error({ at: "uploadFileV2", error });
       if (!isErrorToastSuppressed) {
-        toasts.error(`Couldn't upload ${displayName}. Please try again.`);
+        // Toasts render Markdown as HTML, so the file name must show as literal text.
+        toasts.error(
+          `Couldn't upload ${escapeMarkdownText(displayName)}. Please try again.`
+        );
       }
       throw error;
     }

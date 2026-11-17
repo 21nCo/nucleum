@@ -399,6 +399,21 @@ describe("uploadFileV2 failures", () => {
     ]);
   });
 
+  it("shows a hostile file name as literal text in the failure toast", async () => {
+    fileFn.done.mockRejectedValueOnce(new Error("upload failed"));
+    const name = "<img src=x onerror=alert(1)>*_[x](y)_*.jpg";
+
+    await expect(
+      fileUpload.uploadFileV2("image/jpeg", name, image())
+    ).rejects.toThrow("upload failed");
+
+    const [toast] = get(toasts);
+    expect(toast.message).not.toContain("<img");
+    expect(toast.message).toBe(
+      "Couldn't upload &#60;img src=x onerror=alert(1)&#62;&#42;&#95;&#91;x&#93;(y)&#95;&#42;.jpg. Please try again."
+    );
+  });
+
   it("shows the failure when the signed-in account has no FileFn client", async () => {
     fileFn.client = null;
     await expect(
@@ -427,7 +442,7 @@ describe("uploadFileV2 failures", () => {
     expect((await datafn.file.query({})).data ?? []).toHaveLength(0);
     expect(get(toasts)).toEqual([
       expect.objectContaining({
-        message: "Couldn't upload IMG_4.heic. Please try again."
+        message: "Couldn't upload IMG&#95;4.heic. Please try again."
       })
     ]);
   });
@@ -455,7 +470,7 @@ describe("uploadFileV2 failures", () => {
     expect((await datafn.file.query({})).data ?? []).toHaveLength(0);
     expect(get(toasts)).toEqual([
       expect.objectContaining({
-        message: "Couldn't upload IMG_6.heic. Please try again."
+        message: "Couldn't upload IMG&#95;6.heic. Please try again."
       })
     ]);
   });
