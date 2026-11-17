@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import account from "@nucleum/client/runtime/account/account.store";
 import context from "@nucleum/client/runtime/context.store";
+import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
   UserDataMode,
   UserSessionType
@@ -123,6 +124,7 @@ describe("a failed upload is shown once to the user", () => {
       dataMode: UserDataMode.LOCAL,
       sessionType: UserSessionType.RETURNING
     });
+    const loggedErrors = vi.spyOn(logger, "error");
     const { getByRole, queryByText } = render(PreviewImageUploader, {
       nodeId: "node:preview" as never
     });
@@ -135,9 +137,13 @@ describe("a failed upload is shown once to the user", () => {
     await fireEvent.click(save);
 
     await waitFor(() => expect(upload.uploadFileV2).toHaveBeenCalledTimes(1));
-    // Let the failed save settle before checking what it shows.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() =>
+      expect(loggedErrors).toHaveBeenCalledWith(
+        expect.objectContaining({ at: "PreviewImageUploader.handleSave" })
+      )
+    );
     expect(upload.shownFailures).toEqual(["photo.jpg"]);
     expect(queryByText("Failed to save preview image")).toBeNull();
+    loggedErrors.mockRestore();
   });
 });
