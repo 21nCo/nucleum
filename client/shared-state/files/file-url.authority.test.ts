@@ -89,6 +89,14 @@ function afterMicrotasks(count: number, run: () => void) {
  * now, has resolved and the final confirmation of a lookup has passed.
  */
 function changeAccountAfterConfirmation(read: number, next: UserAccount) {
+  changeAfterConfirmation(read, () => account.set(next));
+}
+
+/**
+ * Runs a change once the given stored region read, counted from now, has
+ * resolved and the final confirmation of a lookup has passed.
+ */
+function changeAfterConfirmation(read: number, change: () => void) {
   const get = clientStorage.get.bind(clientStorage);
   let reads = 0;
   vi.spyOn(clientStorage, "get").mockImplementation((key) => {
@@ -96,11 +104,17 @@ function changeAccountAfterConfirmation(read: number, next: UserAccount) {
     const value = get(key);
     if (reads === read) {
       void value.then(() =>
-        afterMicrotasks(AFTER_CONFIRMATION_MICROTASKS, () => account.set(next))
+        afterMicrotasks(AFTER_CONFIRMATION_MICROTASKS, change)
       );
     }
     return value;
   });
+}
+
+/** Stores another region and publishes the same account without a region. */
+function moveStoredRegion(userId: string, region: string) {
+  void clientStorage.set(ClientStorageKey.REGION, region);
+  account.set(cloudAccountWithoutRegion(userId));
 }
 
 const accountChanges: [string, UserAccount][] = [
@@ -202,6 +216,36 @@ describe("resolveFileUrl across FileFn authorities", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     }
   );
+
+  it("returns no fresh URL when the stored region changes after the final confirmation", async () => {
+    let openGate: () => void = () => {};
+    const fetchMock = serveRenders(
+      new Promise<void>((resolve) => {
+        openGate = resolve;
+      })
+    );
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccountWithoutRegion("user-a"));
+
+    const lookup = resolveFileUrl("file-1", "full");
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    changeAfterConfirmation(1, () => moveStoredRegion("user-a", "euwest"));
+    openGate();
+
+    expect(await lookup).toBeUndefined();
+  });
+
+  it("returns no cached URL when the stored region changes after the final confirmation", async () => {
+    const fetchMock = serveRenders();
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccountWithoutRegion("user-a"));
+    await resolveFileUrl("file-1", "full");
+
+    changeAfterConfirmation(2, () => moveStoredRegion("user-a", "euwest"));
+
+    expect(await resolveFileUrl("file-1", "full")).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 
   it("returns every concurrent lookup's URL while the authority stays", async () => {
     serveRenders();

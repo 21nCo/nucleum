@@ -28,6 +28,11 @@ vi.mock("@nucleum/shared-state/files/filefn-client", () => ({
     fileFn.afterConfirm = undefined;
     if (afterConfirm) queueMicrotask(afterConfirm);
   },
+  settleFileFnOwner: async (owner: Owner) => {
+    if (owner.epoch !== fileFn.owner?.epoch) {
+      throw new DOMException("The FileFn client was torn down", "AbortError");
+    }
+  },
   isFileFnOwnerCurrent: (owner: Owner) =>
     owner.userId === fileFn.owner?.userId &&
     owner.epoch === fileFn.owner?.epoch,

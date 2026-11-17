@@ -6,6 +6,7 @@ import {
   confirmFileFnOwner,
   getOwnedFileFnClient,
   isFileFnOwnerCurrent,
+  settleFileFnOwner,
   type FileFnOwner
 } from "@nucleum/shared-state/files/filefn-client";
 
@@ -51,10 +52,11 @@ let cacheOwnerKey: string | undefined;
  * one request, and the cache belongs to one FileFn owner: a sign-out, another
  * account or another authority clears it, and a lookup returns its URL only
  * once the account's current authority is settled, checking in the same
- * synchronous step as it returns that the URL's owner is still current, so a
- * URL is never shown to another account. The full variant of a HEIC or HEIF
- * original is its converted image, or the original, asked for again after the
- * retry interval, while FileFn has none; the download variant is the original.
+ * synchronous step as it returns that the URL's owner is still current with
+ * no newer authority read pending, so a URL is never shown to another account
+ * or authority. The full variant of a HEIC or HEIF original is its converted
+ * image, or the original, asked for again after the retry interval, while
+ * FileFn has none; the download variant is the original.
  */
 export async function resolveFileUrl(
   fileId: string,
@@ -82,10 +84,11 @@ export async function resolveFileUrl(
   const url = await entry.url;
   try {
     await confirmFileFnOwner(owner);
+    while (!isFileFnOwnerCurrent(owner)) await settleFileFnOwner(owner);
   } catch {
     return undefined;
   }
-  return isFileFnOwnerCurrent(owner) ? url : undefined;
+  return url;
 }
 
 /** Drops every cached URL; the next lookup of each variant resolves it again. */

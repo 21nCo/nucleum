@@ -49,6 +49,8 @@ let currentEntry: FileFnClientEntry | null = null;
 let isBoundToAccount = false;
 let syncGeneration = 0;
 let latestSync: Promise<void> = Promise.resolve();
+/** Whether the latest sync is still reading the stored region. */
+let isAuthorityPending = false;
 let ownerEpoch = 0;
 let ownerUserId: string | undefined;
 const pendingDeleteDrains = new Map<string, Promise<void>>();
@@ -166,11 +168,13 @@ function syncFileFnClient(value: UserAccount | null | undefined) {
   }
   if (currentEntry?.userId !== scope?.userId) tearDownFileFnClient();
   if (!scope?.region) {
+    isAuthorityPending = Boolean(scope);
     latestSync = scope
       ? bindToStoredRegion(scope.userId, generation)
       : Promise.resolve();
     return;
   }
+  isAuthorityPending = false;
   bindFileFnClient(scope.userId, scope.region);
   latestSync = Promise.resolve();
 }
@@ -179,6 +183,7 @@ function bindToStoredRegion(userId: string, generation: number) {
   const sync = clientStorage.get(ClientStorageKey.REGION).then((stored) => {
     if (generation === syncGeneration) {
       bindFileFnClient(userId, stored ?? "insouth");
+      isAuthorityPending = false;
     }
   });
   sync.catch((error: unknown) => {
@@ -349,15 +354,12 @@ export async function captureSettledFileFnOwner(): Promise<FileFnOwner | null> {
 }
 
 /**
- * Returns, without waiting, whether the owner's generation is current: the
- * owner's account is still signed in and no sign-out, other account or other
- * authority has torn its client down. A stored region read still pending does
- * not end the generation; a read that finds another authority does, once it
- * binds. A caller that checks it in the same synchronous step as it hands out
- * a result, after confirmFileFnOwner settled the authority, never hands it to
- * another owner.
+ * Returns whether the owner's generation has not ended: the owner's account is
+ * still signed in and no sign-out, other account or other authority has torn
+ * its client down. A stored region read still pending does not end it; a
+ * read that finds another authority does, once it binds.
  */
-export function isFileFnOwnerCurrent(owner: FileFnOwner): boolean {
+function isFileFnOwnerLive(owner: FileFnOwner): boolean {
   return (
     owner.epoch === ownerEpoch &&
     resolveFileFnAccountScope(account.get())?.userId === owner.userId
@@ -365,11 +367,33 @@ export function isFileFnOwnerCurrent(owner: FileFnOwner): boolean {
 }
 
 /**
- * Throws the teardown AbortError unless the owner's generation is current
- * (see isFileFnOwnerCurrent).
+ * Returns, without waiting, whether the owner's generation has not ended and
+ * its authority is settled: no stored region read that could still change
+ * the authority is pending. A caller that checks it in the same synchronous
+ * step as it hands out a result never hands it to another owner or authority;
+ * while it is false and the generation lives, settleFileFnOwner waits for the
+ * pending read.
+ */
+export function isFileFnOwnerCurrent(owner: FileFnOwner): boolean {
+  return !isAuthorityPending && isFileFnOwnerLive(owner);
+}
+
+/**
+ * Throws the teardown AbortError once the owner's generation has ended: a
+ * sign-out, another account or another authority tore its client down.
  */
 export function assertFileFnOwner(owner: FileFnOwner): void {
-  if (!isFileFnOwnerCurrent(owner)) throw createTeardownError();
+  if (!isFileFnOwnerLive(owner)) throw createTeardownError();
+}
+
+/**
+ * Waits for the authority syncs already started, without starting another,
+ * then throws when the owner's generation has ended. A stored region that
+ * cannot be read rejects.
+ */
+export async function settleFileFnOwner(owner: FileFnOwner): Promise<void> {
+  await settleFileFnClientSync();
+  assertFileFnOwner(owner);
 }
 
 /**
@@ -398,8 +422,7 @@ export async function getOwnedFileFnClient(
  */
 export async function confirmFileFnOwner(owner: FileFnOwner): Promise<void> {
   syncWithAccount();
-  await settleFileFnClientSync();
-  assertFileFnOwner(owner);
+  await settleFileFnOwner(owner);
 }
 
 /**
