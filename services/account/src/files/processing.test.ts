@@ -6,7 +6,7 @@ import { createFileFn, createProcessingJobHandler, type FileFnRuntime, type Proc
 import { memoryAdapter } from '@superfunctions/db/adapters/memory';
 import { Hono } from 'hono';
 import postgres from 'postgres';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AccountServices, CreateAccountAppInput } from '../app.js';
 import { createFileDeferredWork } from './deferred.js';
 import { loadInlineNucleumProcessors } from './inline-processors.js';
@@ -14,6 +14,7 @@ import {
   createFileProcessingConsumer,
   createInlineFileProcessing,
   createQueuedFileProcessing,
+  FILE_PROCESSING_MAX_RETRIES,
   FILE_PROCESSING_RETRY_DELAY_SECONDS,
   MAX_FILE_PROCESSING_RETRY_DELAY_SECONDS,
   readFileProcessingMode,
@@ -433,6 +434,8 @@ describe('processing queue consumer', () => {
   it.each([
     ['a completed outcome', () => Response.json({ outcome: { status: 'completed', artifactsCreated: 1 } }), 'ack', undefined],
     ['a dropped outcome', () => Response.json({ outcome: { status: 'dropped', reason: 'version-deleted' } }), 'ack', undefined],
+    ['a duplicate outcome', () => Response.json({ outcome: { status: 'duplicate' } }), 'ack', undefined],
+    ['a failed outcome', () => Response.json({ outcome: { status: 'failed', errors: ['ocr: boom'] } }), 'retry', FILE_PROCESSING_RETRY_DELAY_SECONDS],
     ['a retry outcome', () => Response.json({ outcome: { status: 'retry' } }), 'retry', FILE_PROCESSING_RETRY_DELAY_SECONDS],
     ['an unreadable 200 body', () => new Response('not json', { status: 200 }), 'retry', FILE_PROCESSING_RETRY_DELAY_SECONDS],
     ['400 (malformed job)', () => new Response('{}', { status: 400 }), 'ack', undefined],
@@ -462,6 +465,54 @@ describe('processing queue consumer', () => {
       expect(delivered.ack).not.toHaveBeenCalled();
       expect(delivered.retry).toHaveBeenCalledWith({ delaySeconds });
     }
+  });
+
+  it('dead-letters a job whose processor fails on the last delivery, with its errors logged', async () => {
+    const queue = createQueue();
+    const files = createFilesHarness(createQueuedFileProcessing({ mode: 'remote', queue }));
+    await files.upload('photo.png', 'image/png', await pngBytes());
+    const containerFileFn = createFileFn({
+      database: files.database,
+      storage: files.storage,
+      namespace: 'filefn',
+      processing: {
+        enabled: true,
+        processors: createNucleumProcessors({
+          ocrProvider: {
+            recognize: async () => {
+              throw new Error('ocr engine down');
+            }
+          }
+        }) as Processor[]
+      }
+    });
+    const handler = createProcessingJobHandler(containerFileFn, { maxRetries: FILE_PROCESSING_MAX_RETRIES });
+    const container = {
+      fetch: async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { job: unknown; attempts: number };
+        return Response.json({ outcome: await handler.handle(body.job, { attempts: body.attempts }) });
+      }
+    };
+    const log = logger();
+    const consumer = createFileProcessingConsumer({ container: () => container, logger: log });
+
+    const deliveries = Array.from({ length: FILE_PROCESSING_MAX_RETRIES + 1 }, (_, index) =>
+      message(queue.sent[0], index + 1)
+    );
+    for (const delivered of deliveries) await consumer.queue({ messages: [delivered] });
+
+    for (const delivered of deliveries) {
+      expect(delivered.ack).not.toHaveBeenCalled();
+      expect(delivered.retry).toHaveBeenCalledWith({ delaySeconds: FILE_PROCESSING_RETRY_DELAY_SECONDS });
+    }
+    expect(log.error).toHaveBeenCalledTimes(1);
+    expect(log.error).toHaveBeenCalledWith(
+      'nucleus file processing job failed',
+      expect.objectContaining({
+        attempts: FILE_PROCESSING_MAX_RETRIES + 1,
+        errors: [expect.stringContaining('ocr engine down')]
+      })
+    );
   });
 
   it('retries a job when the container is unreachable and still forwards the rest of the batch', async () => {
@@ -676,6 +727,12 @@ describe('account Worker entry', () => {
     ...env
   });
 
+  let worker: typeof import('../worker.js').default;
+
+  beforeAll(async () => {
+    worker = (await import('../worker.js')).default;
+  }, 60_000);
+
   beforeEach(() => {
     workerHooks.inputs.length = 0;
     workerHooks.override = undefined;
@@ -687,7 +744,6 @@ describe('account Worker entry', () => {
   });
 
   it('remote: a request scope enqueues completed uploads on the FILEFN_PROCESSING_QUEUE binding', async () => {
-    const { default: worker } = await import('../worker.js');
     const queue = createQueue();
     await worker.fetch(
       new Request(`${ORIGIN}/__not-a-route`),
@@ -695,6 +751,7 @@ describe('account Worker entry', () => {
       ctx()
     );
 
+    expect(workerHooks.inputs).toHaveLength(1);
     const [input] = workerHooks.inputs as CreateAccountAppInput[];
     const processing = await input!.infra.files!.processing!();
     const files = createFilesHarness(processing);
@@ -705,15 +762,14 @@ describe('account Worker entry', () => {
   });
 
   it('local: a request scope has no server processing', async () => {
-    const { default: worker } = await import('../worker.js');
     await worker.fetch(new Request(`${ORIGIN}/__not-a-route`), workerEnv({ FILEFN_PROCESSING_MODE: 'local' }), ctx());
 
+    expect(workerHooks.inputs).toHaveLength(1);
     const [input] = workerHooks.inputs as CreateAccountAppInput[];
     expect(await input!.infra.files!.processing!()).toBeUndefined();
   });
 
   it('queue() forwards each job to the region container named by the binding and acknowledges it', async () => {
-    const { default: worker } = await import('../worker.js');
     const stub = { fetch: vi.fn(async () => Response.json({ outcome: { status: 'completed', artifactsCreated: 1 } })) };
     const containers = { idFromName: vi.fn((name: string) => `id:${name}`), get: vi.fn(() => stub) };
     const delivered = message({ fileId: 'f', versionId: 'v', idempotencyKey: 'k' });
@@ -730,7 +786,6 @@ describe('account Worker entry', () => {
   });
 
   it('queue() refuses jobs without the FILEFN_PROCESSING_CONTAINER binding', async () => {
-    const { default: worker } = await import('../worker.js');
     const delivered = message({ fileId: 'f', versionId: 'v', idempotencyKey: 'k' });
     await expect(
       worker.queue({ messages: [delivered] } as unknown as MessageBatch, workerEnv({ FILEFN_PROCESSING_MODE: 'remote' }))
@@ -739,7 +794,6 @@ describe('account Worker entry', () => {
   });
 
   it('scheduled() runs session cleanup and deletion retries in local mode, then closes the scope', async () => {
-    const { default: worker } = await import('../worker.js');
     const cleanupExpiredSessions = vi.fn(async () => ({ deletedSessions: 1, abortedMultipart: 1 }));
     const retryFileDeletions = vi.fn(async () => ({ deleted: 0, kept: 0, retrying: 0 }));
     const close = vi.fn(async () => {});

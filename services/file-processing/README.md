@@ -58,6 +58,10 @@ Build the base image once per host before Wrangler builds this one:
 npm --workspace @21n/file-processing run image:base
 ```
 
+The script runs docker from an absolute path: `DOCKER_BIN` when set, otherwise
+the first of `/usr/local/bin/docker`, `/opt/homebrew/bin/docker`,
+`/usr/bin/docker` and Docker Desktop's bundled binary on macOS.
+
 The account Worker's `FileProcessingContainer` Durable Object starts the
 container with:
 

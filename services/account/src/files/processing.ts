@@ -39,7 +39,12 @@ export const FILE_PROCESSING_RETRY_DELAY_SECONDS = 30;
 /** Port the processing container's job server listens on. */
 export const FILE_PROCESSING_CONTAINER_PORT = 8080;
 
-const CONTAINER_JOBS_URL = "http://file-processing.container/jobs";
+/**
+ * The container's job endpoint. `@cloudflare/containers` sends a request for
+ * an `https` URL to the container port over plain HTTP (`containerFetch`
+ * rewrites the scheme), so this stays inside the Durable Object's container.
+ */
+const CONTAINER_JOBS_URL = "https://file-processing.container/jobs";
 /** Longest delay Cloudflare Queues accepts for `message.retry` (12 hours). */
 export const MAX_FILE_PROCESSING_RETRY_DELAY_SECONDS = 43_200;
 
@@ -141,15 +146,21 @@ export interface FileProcessingLogger {
  * retries it from the answer:
  *
  * - 200 with an outcome: acknowledged, unless the outcome is `retry`, which
- *   is retried after `FILE_PROCESSING_RETRY_DELAY_SECONDS`;
+ *   is retried after `FILE_PROCESSING_RETRY_DELAY_SECONDS`, or `failed`;
+ * - a `failed` outcome (a processor failed on the last delivery, which FileFn
+ *   records as `processing.failed`): logged with its errors and retried, so
+ *   the exhausted message moves to the queue's dead-letter queue. The
+ *   container's `FILEFN_PROCESSING_MAX_RETRIES` equals the queue's
+ *   `max_retries` (`FILE_PROCESSING_MAX_RETRIES`), so that delivery is the
+ *   queue's last;
  * - 400 or 413: acknowledged and logged, since sending it again cannot work;
  * - 503: retried after its `Retry-After` seconds, at most the 12 hours
  *   Cloudflare Queues allows;
  * - any other answer, an unreadable 200 body or an unreachable container:
  *   retried after `FILE_PROCESSING_RETRY_DELAY_SECONDS`.
  *
- * A job that keeps failing goes to the queue's dead-letter queue once its
- * retries run out.
+ * A job that keeps failing, or ends `failed`, goes to the queue's
+ * dead-letter queue once its retries run out.
  */
 export function createFileProcessingConsumer(input: {
   container: () => FileProcessingContainer;
@@ -183,11 +194,14 @@ async function forwardJob(
     return;
   }
   if (response.status === 200) {
-    const status = await readOutcomeStatus(response);
-    if (status === undefined) {
+    const outcome = await readOutcome(response);
+    if (outcome === undefined) {
       logger.warn("nucleus file processing answer unreadable", context);
       message.retry({ delaySeconds: FILE_PROCESSING_RETRY_DELAY_SECONDS });
-    } else if (status === "retry") {
+    } else if (outcome.status === "retry") {
+      message.retry({ delaySeconds: FILE_PROCESSING_RETRY_DELAY_SECONDS });
+    } else if (outcome.status === "failed") {
+      logger.error("nucleus file processing job failed", { ...context, errors: outcome.errors });
       message.retry({ delaySeconds: FILE_PROCESSING_RETRY_DELAY_SECONDS });
     } else {
       message.ack();
@@ -207,11 +221,17 @@ async function forwardJob(
   message.retry({ delaySeconds });
 }
 
-async function readOutcomeStatus(response: Response): Promise<string | undefined> {
+async function readOutcome(
+  response: Response
+): Promise<{ status: string; errors: unknown } | undefined> {
   try {
-    const body = (await response.json()) as { outcome?: { status?: unknown } } | null;
+    const body = (await response.json()) as {
+      outcome?: { status?: unknown; errors?: unknown };
+    } | null;
     const status = body?.outcome?.status;
-    return typeof status === "string" && status ? status : undefined;
+    return typeof status === "string" && status
+      ? { status, errors: body?.outcome?.errors }
+      : undefined;
   } catch {
     return undefined;
   }
