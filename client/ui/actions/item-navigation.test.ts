@@ -698,6 +698,21 @@ describe("context menu Escape returns focus to the trigger", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it("leaves focus with the page when Escape closes a menu opened while nothing held focus", async () => {
+    const { getByRole } = render(ContextMenuAction, {
+      props: { id: "escapeFromPage", menuResolver }
+    });
+    const trigger = getByRole("button", { name: "Actions" });
+    trigger.click();
+    await waitFor(() => expect(menuItem("rename")).not.toBeNull());
+    pressKey(document.body, "ArrowDown");
+    expect(document.activeElement).toBe(menuItem("rename"));
+
+    pressKey(menuItem("rename")!, "Escape");
+    await waitFor(() => expect(menuItem("rename")).toBeNull());
+    expect(document.activeElement).toBe(document.body);
+  });
+
   it("leaves focus the user moved elsewhere when Escape closes the menu", async () => {
     await openByClick("escapeElsewhere");
     const field = document.createElement("button");
