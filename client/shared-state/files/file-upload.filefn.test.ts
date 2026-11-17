@@ -115,7 +115,11 @@ beforeEach(async () => {
   fileFn.client = {
     uploadFile: (input: UploadInput) => {
       fileFn.uploads.push(input);
-      return { uploadSessionId: "ses_1", fileId: input.fileId, done: fileFn.done };
+      return {
+        uploadSessionId: "ses_1",
+        fileId: input.fileId,
+        done: fileFn.done
+      };
     },
     uploadArtifact: fileFn.uploadArtifact,
     deleteFile: async (fileId: string) => {
@@ -222,9 +226,14 @@ describe("uploadFileV2 through FileFn", () => {
   it("uploads the original HEIC and its converted PNG and thumbnail in both mode", async () => {
     vi.stubEnv("VITE_FILE_PROCESSING_MODE", "both");
     const heic = new Blob(["heic bytes"], { type: "image/heic" });
-    const [file] = await fileUpload.uploadFileV2("image/heic", "IMG_1.HEIC", heic, {
-      isGenerateThumbnail: true
-    });
+    const [file] = await fileUpload.uploadFileV2(
+      "image/heic",
+      "IMG_1.HEIC",
+      heic,
+      {
+        isGenerateThumbnail: true
+      }
+    );
 
     expect(fileFn.uploads[0].file.type).toBe("image/heic");
     expect(codec.convertHeicToPng).toHaveBeenCalledWith(heic);
@@ -307,11 +316,41 @@ describe("uploadFileV2 through FileFn", () => {
     expect(fileFn.uploads[0].policy).toBe("nucleus-temporary-default");
   });
 
+  it("keeps the HEIC upload without a converted artifact when conversion fails in both mode", async () => {
+    vi.stubEnv("VITE_FILE_PROCESSING_MODE", "both");
+    codec.convertHeicToPng.mockRejectedValueOnce(new Error("decoder failed"));
+    const heic = new Blob(["heic bytes"], { type: "image/heic" });
+    const [file] = await fileUpload.uploadFileV2(
+      "image/heic",
+      "IMG_3.heic",
+      heic,
+      {
+        isGenerateThumbnail: true
+      }
+    );
+
+    expect(fileFn.deleted).toEqual([]);
+    expect(fileFn.artifacts.map((artifact) => artifact.kind)).not.toContain(
+      "converted"
+    );
+    const record = await savedRecord(file.id);
+    expect(record?.fileId).toBe(fileFn.uploads[0].fileId);
+    expect(
+      (record?.processing as { artifacts: object }).artifacts
+    ).not.toHaveProperty("converted");
+    expect(get(toasts)).toEqual([]);
+  });
+
   it("keeps the record when an artifact upload fails, without that kind", async () => {
     fileFn.uploadArtifact.mockRejectedValueOnce(new Error("404"));
-    const [file] = await fileUpload.uploadFileV2("image/jpeg", "b.jpg", image(), {
-      isGenerateThumbnail: true
-    });
+    const [file] = await fileUpload.uploadFileV2(
+      "image/jpeg",
+      "b.jpg",
+      image(),
+      {
+        isGenerateThumbnail: true
+      }
+    );
     const record = await savedRecord(file.id);
     expect(record?.fileId).toBe(fileFn.uploads[0].fileId);
     expect(record?.processing).toEqual({ mode: "local", artifacts: {} });
@@ -344,8 +383,47 @@ describe("uploadFileV2 failures", () => {
     expect(get(toasts)).toHaveLength(1);
   });
 
+  it("fails visibly and deletes the upload when HEIC conversion fails in local mode", async () => {
+    codec.convertHeicToPng.mockRejectedValueOnce(new Error("decoder failed"));
+
+    await expect(
+      fileUpload.uploadFileV2(
+        "image/heic",
+        "IMG_4.heic",
+        new Blob(["heic"], { type: "image/heic" }),
+        { isGenerateThumbnail: true }
+      )
+    ).rejects.toThrow("Failed to convert HEIC file");
+
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(fileFn.deleted).toEqual([fileFn.uploads[0].fileId]);
+    expect(fileFn.uploadArtifact).not.toHaveBeenCalled();
+    expect(recordInserts.inserts).toBe(0);
+    expect((await datafn.file.query({})).data ?? []).toHaveLength(0);
+    expect(get(toasts)).toEqual([
+      expect.objectContaining({
+        message: "Couldn't upload IMG_4.heic. Please try again."
+      })
+    ]);
+  });
+
+  it("rethrows without a toast when the caller shows its own error", async () => {
+    fileFn.done.mockRejectedValueOnce(new Error("upload failed"));
+
+    await expect(
+      fileUpload.uploadFileV2("image/jpeg", "cover.jpg", image(), {
+        isErrorToastSuppressed: true
+      })
+    ).rejects.toThrow("upload failed");
+
+    expect(get(toasts)).toEqual([]);
+  });
+
   it("deletes the uploaded file and shows the failure when the record cannot be saved", async () => {
-    recordInserts.rejectWith = { ok: false, error: new Error("record rejected") };
+    recordInserts.rejectWith = {
+      ok: false,
+      error: new Error("record rejected")
+    };
 
     await expect(
       fileUpload.uploadFileV2("image/jpeg", "d.jpg", image())

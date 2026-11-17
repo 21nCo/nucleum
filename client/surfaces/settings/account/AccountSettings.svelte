@@ -269,7 +269,8 @@
         const response = await fileUpload.uploadFileV2(
           file.type,
           file.name,
-          new Blob([file], { type: file.type })
+          new Blob([file], { type: file.type }),
+          { isErrorToastSuppressed: true }
         );
         if (
           isValidArrayWithData(response) &&

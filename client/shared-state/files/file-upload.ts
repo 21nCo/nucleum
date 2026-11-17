@@ -12,6 +12,7 @@ import {
   DEVICE_THUMBNAIL_KIND,
   elapsedMs,
   generateThumbnail,
+  HEIC_CONVERSION_FAILED_MESSAGE,
   isDeviceProcessingMode,
   isHeicFile,
   processOnDevice,
@@ -39,12 +40,7 @@ export const fileUpload = {
   getSignedUrl(contentType: string, fileName: string, isTemp: boolean) {
     const acc = account.get();
     const userId = acc.userInfo?.id.split(":")[1] ?? "";
-    return fileTransport.getSignedUrl(
-      userId,
-      contentType,
-      fileName,
-      isTemp
-    );
+    return fileTransport.getSignedUrl(userId, contentType, fileName, isTemp);
   },
   /**
    * Legacy signed-URL upload, kept only for Pointron import's
@@ -91,7 +87,10 @@ export const fileUpload = {
    *
    * A failed upload or record save is shown to the user as an error toast and
    * rethrown: a failed online upload no longer falls back to keeping the file
-   * on the device.
+   * on the device. In `local` mode a HEIC photo that cannot be converted fails
+   * the upload too, and the uploaded original is deleted. A caller that shows
+   * its own error, or uploads a file the user did not choose, passes
+   * `isErrorToastSuppressed` and the error is only rethrown.
    */
   async uploadFileV2(
     contentType: string,
@@ -101,8 +100,10 @@ export const fileUpload = {
       isTemp?: boolean;
       thumbnailBlob?: Blob;
       isGenerateThumbnail?: boolean;
+      isErrorToastSuppressed?: boolean;
     } = {}
   ) {
+    const { isErrorToastSuppressed, ...options } = params;
     const displayName = fileName;
     fileName = fileName
       .replace(/\s+/g, "_")
@@ -112,14 +113,16 @@ export const fileUpload = {
         id: contentType.split("/")[0] + "_" + generateSimpleRandomId()
       });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
-      const input = { id, contentType, fileName, blob, ...params };
+      const input = { id, contentType, fileName, blob, ...options };
       if (resolveFileFnAccountScope(account.get()) && !isDeviceOffline()) {
         return await uploadThroughFileFn(input);
       }
       return await saveOnDevice(input);
     } catch (error) {
       logger.error({ at: "uploadFileV2", error });
-      toasts.error(`Couldn't upload ${displayName}. Please try again.`);
+      if (!isErrorToastSuppressed) {
+        toasts.error(`Couldn't upload ${displayName}. Please try again.`);
+      }
       throw error;
     }
   },
@@ -202,10 +205,12 @@ async function saveOnDevice(input: FileUploadInput) {
     try {
       blob = (await convertHeicToPng(blob)).convertedBlob;
     } catch (error) {
-      logger.error({ at: "uploadFileV2", error, message: "HEIC conversion failed" });
-      throw new Error(
-        "Failed to convert HEIC file. Please try a different format."
-      );
+      logger.error({
+        at: "uploadFileV2",
+        error,
+        message: "HEIC conversion failed"
+      });
+      throw new Error(HEIC_CONVERSION_FAILED_MESSAGE, { cause: error });
     }
     contentType = "image/png";
     fileName = fileName.replace(/\.heic$/i, ".png");
@@ -238,8 +243,9 @@ async function saveOnDevice(input: FileUploadInput) {
  * Uploads the original through FileFn under a client-chosen `fileId` while
  * the device processes it (unless the mode is `remote`), uploads the device
  * artifacts, then saves the DataFn record with `fileId` and `processing`.
- * A record that cannot be saved deletes the uploaded file, so no FileFn file
- * is left that no record references.
+ * Device processing that fails (a HEIC conversion in `local` mode) or a
+ * record that cannot be saved deletes the uploaded file, so no FileFn file is
+ * left that no record references.
  */
 async function uploadThroughFileFn(input: FileUploadInput) {
   const client = await getFileFnClient();
@@ -264,13 +270,21 @@ async function uploadThroughFileFn(input: FileUploadInput) {
         fileName: input.fileName,
         isGenerateThumbnail: Boolean(
           input.isGenerateThumbnail && !input.thumbnailBlob
-        )
+        ),
+        isConversionRequired: mode === "local"
       })
     : Promise.resolve<DeviceArtifact[]>([]);
-  const [uploaded, deviceArtifacts] = await Promise.all([
+  const [upload, processed] = await Promise.allSettled([
     handle.done(),
     deviceProcessing
   ]);
+  if (upload.status === "rejected") throw upload.reason;
+  const uploaded = upload.value;
+  if (processed.status === "rejected") {
+    await discardUploadedFile(client, uploaded.fileId);
+    throw processed.reason;
+  }
+  const deviceArtifacts = processed.value;
   const artifacts = input.thumbnailBlob
     ? [
         ...deviceArtifacts,
@@ -354,7 +368,7 @@ async function uploadArtifacts(
   return present;
 }
 
-/** Deletes an uploaded file whose record could not be saved. */
+/** Deletes an uploaded file that no record will reference. */
 async function discardUploadedFile(client: FileFnClient, fileId: string) {
   try {
     await client.deleteFile(fileId);

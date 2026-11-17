@@ -96,16 +96,23 @@ export function elapsedMs(startedAt: number) {
   return Math.max(0, Math.round(performance.now() - startedAt));
 }
 
+/** Message of the error a required HEIC conversion that failed throws. */
+export const HEIC_CONVERSION_FAILED_MESSAGE =
+  "Failed to convert HEIC file. Please try a different format.";
+
 /**
  * Converts a HEIC photo to PNG and makes a thumbnail on the device, timing
- * each. The original stays the uploaded file, so a step that fails is logged
- * and left to remote processing instead of failing the upload.
+ * each. A failed thumbnail is logged and left out: the original stays usable.
+ * A failed HEIC conversion throws when `isConversionRequired` is set (`local`
+ * mode, where no remote processing makes a browser-readable variant), and is
+ * otherwise logged and left to remote processing (`both` mode).
  */
 export async function processOnDevice(input: {
   blob: Blob;
   contentType: string;
   fileName: string;
   isGenerateThumbnail: boolean;
+  isConversionRequired: boolean;
 }): Promise<DeviceArtifact[]> {
   const artifacts: DeviceArtifact[] = [];
   let source = input.blob;
@@ -122,6 +129,15 @@ export async function processOnDevice(input: {
       source = convertedBlob;
       sourceType = "image/png";
     } catch (error) {
+      if (input.isConversionRequired) {
+        logger.error({
+          at: "processOnDevice",
+          step: "converted",
+          message: "HEIC conversion failed",
+          error
+        });
+        throw new Error(HEIC_CONVERSION_FAILED_MESSAGE, { cause: error });
+      }
       logger.warn({ at: "processOnDevice", step: "converted", error });
     }
   }
