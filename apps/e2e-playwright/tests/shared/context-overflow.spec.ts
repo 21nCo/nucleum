@@ -59,6 +59,35 @@ test.describe("context zone overflow", () => {
     await expect(selectedTab(page)).toHaveAttribute("aria-label", label);
   });
 
+  test("the More menu of a node's view tabs opens and picks a hidden tab from the keyboard", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 900, height: 900 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E overflow keys ${Date.now()}`
+    });
+    await openNodeRecordFromLibraryById(page, node.id);
+    const more = page.getByTestId("switcher-more");
+    await expect(more).toBeVisible({ timeout: 15_000 });
+    await expect(more).toHaveAccessibleName(/^\d+ more$/);
+    await expect(
+      page.getByRole("tablist").getByTestId("switcher-more")
+    ).toHaveCount(0);
+
+    await more.focus();
+    await page.keyboard.press("Enter");
+    const items = page.locator(".popover button.contextmenuitem");
+    await expect(items.first()).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("ArrowDown");
+    const focused = page.locator(".popover button.contextmenuitem:focus");
+    await expect(focused).toHaveCount(1);
+    const label = (await focused.innerText()).trim();
+    await page.keyboard.press("Enter");
+    await expect(selectedTab(page)).toHaveAttribute("aria-label", label);
+  });
+
   test("Option arrows reach Overview tabs hidden in the More menu", async ({
     page
   }) => {
@@ -157,12 +186,30 @@ test.describe("context zone overflow", () => {
     await expect(identity).toContainText("E2E long page title", {
       timeout: 15_000
     });
-    await page.setViewportSize({ width: 900, height: 900 });
+    await expect(page.getByTestId("switcher-more")).toHaveCount(0);
+    const widest = (await identityLayout(page)).width;
+    let isTitleShrunkWithAllTabs = false;
+    for (let width = 1440; width >= 900; width -= 60) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect
+        .poll(() => titleAndMore(page), {
+          message: `no view tab moves into More at ${width}px while the title could give up its width`
+        })
+        .toMatchObject({ isTabHiddenBeforeTitleShrinks: false });
+      const state = await titleAndMore(page);
+      if (!state.isMoreShown && state.width < widest - 1) {
+        isTitleShrunkWithAllTabs = true;
+      }
+    }
+    expect(
+      isTitleShrunkWithAllTabs,
+      "the long title shrinks while every view tab stays in the row"
+    ).toBe(true);
     await expect
-      .poll(() => identityLayout(page), {
-        message: "a long title truncates at 900px"
+      .poll(() => titleAndMore(page), {
+        message: "at 900px the extra view tabs are in More"
       })
-      .toMatchObject({ isTruncated: true });
+      .toMatchObject({ isMoreShown: true, isTruncated: true });
     expect((await identityLayout(page)).width).toBeGreaterThanOrEqual(127.5);
   });
 });
@@ -182,4 +229,40 @@ function identityLayout(page: Page) {
       isTruncated: truncating
     };
   });
+}
+
+/**
+ * Where the long title stands against the view tabs. A tab may sit in More
+ * only when the title's width above 8rem could not make room for it: the
+ * tabs keep their order, so the first hidden tab is the next one to return.
+ */
+async function titleAndMore(page: Page) {
+  const layout = await identityLayout(page);
+  const tabs = await page
+    .getByTestId("resource-context-tabs")
+    .evaluate((element) => {
+      const shown = new Set(
+        [...element.querySelectorAll('[role="tab"]')].map((tab) =>
+          tab.getAttribute("aria-label")
+        )
+      );
+      const firstHidden = [
+        ...element.querySelectorAll<HTMLElement>("[data-switcher-option]")
+      ].find((option) => !shown.has(option.getAttribute("aria-label")));
+      return {
+        isMoreShown: !!element.querySelector('[data-testid="switcher-more"]'),
+        firstHiddenWidth: firstHidden?.getBoundingClientRect().width ?? 0
+      };
+    });
+  const minimum = await page.evaluate(
+    () => parseFloat(getComputedStyle(document.documentElement).fontSize) * 8
+  );
+  const slack = Math.max(0, layout.width - minimum);
+  return {
+    width: layout.width,
+    isTruncated: layout.isTruncated,
+    isMoreShown: tabs.isMoreShown,
+    isTabHiddenBeforeTitleShrinks:
+      tabs.isMoreShown && slack > tabs.firstHiddenWidth + 4
+  };
 }

@@ -127,10 +127,15 @@
 </script>
 
 {#if (live && !isMissing) || pageAction}
+  <!--
+    A long identity's shrink factor is large enough that it takes all of the
+    shrinking until it reaches the title minimum; only then do the controls
+    beside it give up space.
+  -->
   <div
     bind:this={identityRef}
     class={cn("flex items-center h-full max-w-[24rem] pl-2 pr-1 gap-1", {
-      "min-w-[8rem] shrink-[4]": isLong,
+      "min-w-[8rem] shrink-[1000]": isLong,
       "min-w-0 shrink-0": !isLong
     })}
     data-testid="top-bar-page-identity"

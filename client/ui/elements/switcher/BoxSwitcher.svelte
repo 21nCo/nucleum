@@ -214,128 +214,155 @@
   </span>
 {/snippet}
 
-{#snippet track(items: ISelectItem[], isMeasure: boolean)}
-  <div
-    role={isTablist && !isMeasure ? "tablist" : undefined}
-    data-switcher-track={isMeasure ? "" : undefined}
-    class={cn("grid grid-flow-col", {
-      "h-full": !$shape.isFramed,
-      "auto-cols-max w-full":
-        !$shape.isFramed && (!isExpandOnActiveForIcon || isIconOnlyMode),
-      "auto-cols-max":
-        $shape.isFramed && (!isExpandOnActiveForIcon || isIconOnlyMode),
-      "items-center gap-1 p-1": $shape.isFramed,
-      [bg(parentBgIndex + 1)]: $shape.isFramed && isTrackFilled,
-      "rounded-full": $shape.isRounded,
-      "rounded-lg": $shape.isFramed && !$shape.isRounded
-    })}
-    style:width={!isOverflowToMenu &&
-    !isIconOnlyMode &&
-    isExpandOnActiveForIcon &&
-    containerWidth > 0
-      ? `${containerWidth + framedTrackWidth}px`
-      : undefined}
-    style:grid-template-columns={isExpandOnActiveForIcon && !isOverflowToMenu
-      ? items.map((opt) => (opt.value === selected ? "1fr" : "auto")).join(" ")
-      : undefined}
-  >
-    {#each items as option (option.value)}
-      {@const isSelected = selected === option.value}
-      <button
-        type="button"
-        tabindex={isMeasure ? -1 : undefined}
-        data-switcher-option={isMeasure ? "" : undefined}
-        role={isTablist && !isMeasure ? "tab" : undefined}
-        aria-selected={isTablist ? isSelected : undefined}
-        aria-label={option.label}
-        class={cn(
-          "flex items-center justify-center gap-1 text-b2 transition-all duration-300",
-          {
-            "px-3": size === Size.sm,
-            "px-4": size === Size.md
-          },
-          !$shape.isFramed && {
-            "h-full": true,
-            "border-t": isActiveIndicatorOnTop,
-            "border-b": !isActiveIndicatorOnTop,
-            "border-transparent hover:border-brs3 text-fgs3": !isSelected,
-            "border-fgs2": isSelected && !isAccentColor,
-            "border-aps1 text-aps1": isSelected && isAccentColor,
-            [`${bg(parentBgIndex)}`]: isSelected,
-            [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
-          },
-          $shape.isFramed && {
-            [`h-8 ${$shape.radiusClass}`]: true,
-            "text-fgs3 hover:text-fgs1 hover:bg-bgs2-striped": !isSelected,
-            "bg-bgs1 shadow-sm": isSelected,
-            "text-fgs1": isSelected && !isAccentColor,
-            "text-aps1": isSelected && isAccentColor
-          }
-        )}
-        onclick={() => {
-          selected = option.value;
-          emitSelect(option.value);
-        }}
-        use:tooltip={{
-          text: option.label,
-          delay: isSelected || !isExpandOnActiveForIcon ? 1000 : 200
-        }}
-      >
-        {#if option.icon && typeof option.icon === "string"}
-          <Icon
-            icon={option.icon}
-            {size}
-            isFilled={isSelected}
-            class={cn({
-              "text-fgs1": isSelected && !isAccentColor,
-              "text-aps1": isSelected && isAccentColor,
-              "text-fgs2": !isSelected
-            })}
-          />
-        {/if}
-        {#if !isIconOnlyMode && option.label && (!isExpandOnActiveForIcon || selected === option.value) && !(isSelected && isActiveLabelHidden && !isMeasure && option.icon)}
-          <span class="whitespace-nowrap">
-            {option.label}
-          </span>
-        {/if}
-      </button>
-    {/each}
-    {#if isMeasure}
-      <span
-        data-switcher-more
-        class={cn("flex items-center justify-center", {
+{#snippet optionButtons(items: ISelectItem[], isMeasure: boolean)}
+  {#each items as option (option.value)}
+    {@const isSelected = selected === option.value}
+    <button
+      type="button"
+      tabindex={isMeasure ? -1 : undefined}
+      data-switcher-option={isMeasure ? "" : undefined}
+      role={isTablist && !isMeasure ? "tab" : undefined}
+      aria-selected={isTablist ? isSelected : undefined}
+      aria-label={option.label}
+      class={cn(
+        "flex items-center justify-center gap-1 text-b2 transition-all duration-300",
+        {
           "px-3": size === Size.sm,
-          "px-4": size === Size.md,
-          "h-8": $shape.isFramed
+          "px-4": size === Size.md
+        },
+        !$shape.isFramed && {
+          "h-full": true,
+          "border-t": isActiveIndicatorOnTop,
+          "border-b": !isActiveIndicatorOnTop,
+          "border-transparent hover:border-brs3 text-fgs3": !isSelected,
+          "border-fgs2": isSelected && !isAccentColor,
+          "border-aps1 text-aps1": isSelected && isAccentColor,
+          [`${bg(parentBgIndex)}`]: isSelected,
+          [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
+        },
+        $shape.isFramed && {
+          [`h-8 ${$shape.radiusClass}`]: true,
+          "text-fgs3 hover:text-fgs1 hover:bg-bgs2-striped": !isSelected,
+          "bg-bgs1 shadow-sm": isSelected,
+          "text-fgs1": isSelected && !isAccentColor,
+          "text-aps1": isSelected && isAccentColor
+        }
+      )}
+      onclick={() => {
+        selected = option.value;
+        emitSelect(option.value);
+      }}
+      use:tooltip={{
+        text: option.label,
+        delay: isSelected || !isExpandOnActiveForIcon ? 1000 : 200
+      }}
+    >
+      {#if option.icon && typeof option.icon === "string"}
+        <Icon
+          icon={option.icon}
+          {size}
+          isFilled={isSelected}
+          class={cn({
+            "text-fgs1": isSelected && !isAccentColor,
+            "text-aps1": isSelected && isAccentColor,
+            "text-fgs2": !isSelected
+          })}
+        />
+      {/if}
+      {#if !isIconOnlyMode && option.label && (!isExpandOnActiveForIcon || selected === option.value) && !(isSelected && isActiveLabelHidden && !isMeasure && option.icon)}
+        <span class="whitespace-nowrap">
+          {option.label}
+        </span>
+      {/if}
+    </button>
+  {/each}
+{/snippet}
+
+{#snippet track(items: ISelectItem[], isMeasure: boolean)}
+  {@const trackClass = cn("grid grid-flow-col", {
+    "h-full": !$shape.isFramed,
+    "auto-cols-max w-full":
+      !$shape.isFramed && (!isExpandOnActiveForIcon || isIconOnlyMode),
+    "auto-cols-max":
+      $shape.isFramed && (!isExpandOnActiveForIcon || isIconOnlyMode),
+    "items-center gap-1 p-1": $shape.isFramed,
+    [bg(parentBgIndex + 1)]: $shape.isFramed && isTrackFilled,
+    "rounded-full": $shape.isRounded,
+    "rounded-lg": $shape.isFramed && !$shape.isRounded
+  })}
+  {#if isOverflowToMenu && !isMeasure}
+    <!--
+      More sits beside the tablist, not inside it, so the tablist owns only
+      tabs and the arrow keys reach the More menu once it is open.
+    -->
+    <div class={trackClass}>
+      <div
+        role={isTablist ? "tablist" : undefined}
+        class={cn("grid grid-flow-col auto-cols-max", {
+          "h-full": !$shape.isFramed,
+          "items-center gap-1": $shape.isFramed
         })}
       >
-        {@render moreContent()}
-      </span>
-    {:else if isOverflowToMenu && hiddenOptions.length > 0}
-      <ContextMenuAction
-        id="switcherMore"
-        testId="switcher-more"
-        tooltip={`${hiddenOptions.length} more`}
-        menuResolver={resolveMoreMenu}
-        {size}
-        actionSize={size}
-        {parentBgIndex}
-        class={cn(
-          "flex items-center justify-center text-fgs2 hover:text-fgs1",
-          {
+        {@render optionButtons(items, false)}
+      </div>
+      {#if hiddenOptions.length > 0}
+        <ContextMenuAction
+          id="switcherMore"
+          testId="switcher-more"
+          tooltip={`${hiddenOptions.length} more`}
+          menuResolver={resolveMoreMenu}
+          {size}
+          actionSize={size}
+          {parentBgIndex}
+          class={cn(
+            "flex items-center justify-center text-fgs2 hover:text-fgs1",
+            {
+              "px-3": size === Size.sm,
+              "px-4": size === Size.md,
+              "h-full": !$shape.isFramed,
+              [`h-8 ${$shape.radiusClass} hover:bg-bgs2-striped`]:
+                $shape.isFramed
+            }
+          )}
+        >
+          {#snippet children()}
+            {@render moreContent()}
+          {/snippet}
+        </ContextMenuAction>
+      {/if}
+    </div>
+  {:else}
+    <div
+      role={isTablist && !isMeasure ? "tablist" : undefined}
+      data-switcher-track={isMeasure ? "" : undefined}
+      class={trackClass}
+      style:width={!isOverflowToMenu &&
+      !isIconOnlyMode &&
+      isExpandOnActiveForIcon &&
+      containerWidth > 0
+        ? `${containerWidth + framedTrackWidth}px`
+        : undefined}
+      style:grid-template-columns={isExpandOnActiveForIcon && !isOverflowToMenu
+        ? items
+            .map((opt) => (opt.value === selected ? "1fr" : "auto"))
+            .join(" ")
+        : undefined}
+    >
+      {@render optionButtons(items, isMeasure)}
+      {#if isMeasure}
+        <span
+          data-switcher-more
+          class={cn("flex items-center justify-center", {
             "px-3": size === Size.sm,
             "px-4": size === Size.md,
-            "h-full": !$shape.isFramed,
-            [`h-8 ${$shape.radiusClass} hover:bg-bgs2-striped`]: $shape.isFramed
-          }
-        )}
-      >
-        {#snippet children()}
+            "h-8": $shape.isFramed
+          })}
+        >
           {@render moreContent()}
-        {/snippet}
-      </ContextMenuAction>
-    {/if}
-  </div>
+        </span>
+      {/if}
+    </div>
+  {/if}
 {/snippet}
 
 {#if isOverflowToMenu}
