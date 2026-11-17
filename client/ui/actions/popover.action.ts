@@ -360,6 +360,13 @@ export interface PopoverLayer {
 }
 
 /**
+ * Stacking order of a submenu opened from a row inside a constrained-width
+ * sheet, which draws its overlay at 60 and itself at 70: above both, so the
+ * submenu's options stay visible and take the pointer.
+ */
+const CW_MODAL_SUBMENU_Z_INDEX = "80";
+
+/**
  * Popovers and menus shown now, oldest first, so a key handler such as a
  * context menu's can tell which layer a key belongs to. Hover-only popovers
  * take no keys and are left out.
@@ -488,7 +495,10 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     if (isHoverOnlyTrigger()) {
       popoverElement.classList.add("pointer-events-none");
     }
-    popoverElement.style.zIndex = "50";
+    popoverElement.style.zIndex =
+      isSecondary && node.closest(".popover.cw-modal")
+        ? CW_MODAL_SUBMENU_Z_INDEX
+        : "50";
     popoverElement.id = id;
     popoverElement.setAttribute("data-group-id", groupId);
     const container = isSecondary
