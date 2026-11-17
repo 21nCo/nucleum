@@ -10,6 +10,11 @@ import {
   createNodeFileDatabase,
   type AccountFileDatabase
 } from "./files/database.js";
+import { createFileDeferredWork } from "./files/deferred.js";
+import {
+  createInlineFileProcessing,
+  readFileProcessingMode
+} from "./files/processing.js";
 import { createAccountFileStorage } from "./files/storage.js";
 import { createAccountLookupStore } from "./lookup/dynamodb.js";
 import { createLogger } from "./logging.js";
@@ -24,6 +29,9 @@ const observability = createAccountObservability(logger, undefined, {
   requestContext: createAsyncLocalRequestContext()
 });
 const verifiedClientIps = new WeakMap<Request, string>();
+const fileDeferredWork = createFileDeferredWork(undefined, (error) => {
+  logger.error("nucleus account deferred file work failed", { error });
+});
 const services = buildAccountServices({
   infra: {
     database: database.adapter,
@@ -38,7 +46,16 @@ const services = buildAccountServices({
         fileDatabase ??= createNodeFileDatabase();
         return fileDatabase.adapter;
       },
-      storage: (regionId) => createAccountFileStorage(process.env, regionId)
+      storage: (regionId) => createAccountFileStorage(process.env, regionId),
+      // Without a queue, remote processing runs in this process after the
+      // response, tracked through `defer` so shutdown waits for it.
+      runtime: fileDeferredWork.runtime,
+      processing: () =>
+        createInlineFileProcessing({
+          mode: readFileProcessingMode(process.env.FILEFN_PROCESSING_MODE),
+          loadProcessors: async () =>
+            (await import("@21n/file-processing")).createNucleumProcessors()
+        })
     }
   },
   deployment: {
@@ -84,6 +101,7 @@ const shutdown = async () => {
       logger.error("nucleus account server close failed", { error });
     }
     try {
+      await fileDeferredWork.settled();
       await services.close();
     } finally {
       try {

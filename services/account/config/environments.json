@@ -76,6 +76,7 @@
       "secretsStoreId": "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID",
       "secretsStoreIdEnv": "ACCOUNT_DEV_SECRETS_STORE_ID",
       "filefnR2Bucket": "nucleus-files-dev-{region}",
+      "fileProcessingMode": "local",
       "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY", "FILEFN_R2_ACCOUNT_ID", "FILEFN_R2_ACCESS_KEY_ID", "FILEFN_R2_SECRET_ACCESS_KEY"],
       "cloudflareCredentialsEnv": {
         "accountId": "CLOUDFLARE_DEV_ACCOUNT_ID",
@@ -121,6 +122,7 @@
       "secretsStoreId": "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID",
       "secretsStoreIdEnv": "ACCOUNT_DEV_SECRETS_STORE_ID",
       "filefnR2Bucket": "nucleus-files-dev-{region}",
+      "fileProcessingMode": "local",
       "omitSecretsStoreBindings": ["DATAFN_OPENSEARCH_URL", "DATAFN_OPENSEARCH_API_KEY", "FILEFN_R2_ACCOUNT_ID", "FILEFN_R2_ACCESS_KEY_ID", "FILEFN_R2_SECRET_ACCESS_KEY"],
       "cloudflareCredentialsEnv": {
         "accountId": "CLOUDFLARE_DEV_ACCOUNT_ID",
@@ -153,6 +155,7 @@
       "cacheKvNamespaceId": "72bb56e048d941ec92aad94df99d9e36",
       "cachePrefix": "authfn:nucleus_account_pre:",
       "filefnR2Bucket": "nucleus-files-pre-{region}",
+      "fileProcessingMode": "local",
       "omitSecretsStoreBindings": ["FILEFN_R2_ACCOUNT_ID", "FILEFN_R2_ACCESS_KEY_ID", "FILEFN_R2_SECRET_ACCESS_KEY"],
       "cookiePrefix": "nucleus_pre",
       "latencyDebug": false,
@@ -184,6 +187,7 @@
       "cacheKvNamespaceId": "18a83200ea7542fa9b6929257711065b",
       "cachePrefix": "authfn:nucleus_account_live:",
       "filefnR2Bucket": "nucleus-files-live-{region}",
+      "fileProcessingMode": "local",
       "omitSecretsStoreBindings": ["FILEFN_R2_ACCOUNT_ID", "FILEFN_R2_ACCESS_KEY_ID", "FILEFN_R2_SECRET_ACCESS_KEY"],
       "cookiePrefix": "nucleus",
       "latencyDebug": false,

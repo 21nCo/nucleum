@@ -1,0 +1,4 @@
+# Build context is the repository root; send only what the image copies.
+*
+!services/file-processing/src/
+!services/account/src/db/generated/filefn/filefn-schema.ts

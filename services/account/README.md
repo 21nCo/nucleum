@@ -111,6 +111,38 @@ account origin. Every environment lists the three R2
 secrets in `omitSecretsStoreBindings` until its buckets and Secrets Store
 entries are provisioned; remove them there, then run `secrets:sync:<env>`.
 
+### File processing
+
+`fileProcessingMode` in `config/environments.json` (rendered as the
+`FILEFN_PROCESSING_MODE` var) selects where uploads are processed: `local`
+(the default, on the device only), `remote` (the region's queue and
+processing container) or `both`. Every environment is `local` today.
+
+In `remote` and `both` modes each regional Worker gets:
+
+- the `FILEFN_PROCESSING_QUEUE` producer on
+  `nucleus-account-<env>-<region>-file-processing`, where FileFn enqueues one
+  `filefn.processing` job per completed upload;
+- a consumer on that queue that forwards each job to the region's container
+  (`services/file-processing`) and acknowledges or retries it from the
+  container's answer; a job still failing after 3 retries goes to
+  `nucleus-account-<env>-<region>-file-processing-dlq`;
+- the `FileProcessingContainer` container and Durable Object, and the
+  `FILEFN_PROCESSING_DATABASE_URL` Secrets Store binding
+  (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`).
+
+Before switching an environment, create both queues per region, add each
+region's database URL to the Secrets Store and build the container's base
+image (`npm --workspace @21n/file-processing run image:base`). Switching back
+to `local` needs a `deleted_classes` migration for `FileProcessingContainer`.
+
+On Node (`npm run dev`), `FILEFN_PROCESSING_MODE=remote` or `both` runs the
+same processors in the service process after each upload responds.
+
+An hourly cron (`0 * * * *`) runs in every mode: it deletes upload sessions
+that expired before completing and retries FileFn deletions still owed for
+permanently deleted `file` records.
+
 ## Running Local Apps Against Account Backends
 
 All local browser flows should go through Caddy so cookies, OAuth redirects, and
