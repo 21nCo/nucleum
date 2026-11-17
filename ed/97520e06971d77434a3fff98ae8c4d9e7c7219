@@ -1,0 +1,27 @@
+client/shared-state/files/file-url.authority.test.ts
+  s_0b0647615a23f7::t_b65f4bfd73bcc7 1-119
+apps/e2e-playwright/tests/memory/filefn-image-render.spec.ts
+  s_0b0647615a23f7::t_9e8a4f1a838e4e 33-40
+client/shared-state/files/file-url.test.ts
+  s_0b0647615a23f7::t_36d694cc0ecd0c 13
+client/shared-state/files/file-url.ts
+  s_0b0647615a23f7::t_40b88fb41d1094 4,43,47-53,59
+client/shared-state/files/filefn-client.ts
+  s_0b0647615a23f7::t_542037e9711ffd 141-151,336-350
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ed97520e06971d77434a3fff98ae8c4d9e7c7219",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
