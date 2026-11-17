@@ -212,7 +212,7 @@ function tearDownFileFnClient() {
 /**
  * Creates an account's FileFn client. The SDK's HEIC preprocessing is off, so
  * the original keeps its bytes and the processing mode owns conversion. The
- * client sends the account's pending deletes at its authority now and on
+ * client sends the account's pending deletes, at every authority, now and on
  * every reconnect until it is torn down.
  */
 async function createAccountFileFnClient(
@@ -220,8 +220,36 @@ async function createAccountFileFnClient(
   baseUrl: string,
   teardown: AbortSignal
 ): Promise<FileFnClient> {
+  const client = await createSdkClient(baseUrl, teardown, {
+    enabled: true,
+    opfsDir: resolveFileFnOfflineDir(userId)
+  });
+  const guarded = guardFileFnClient(client, teardown);
+  if (!teardown.aborted) {
+    startOfflineReplayWhenOwner(userId, client, teardown);
+    const drain = () =>
+      void drainAccountPendingDeletes(userId, baseUrl, guarded, teardown).catch(
+        (error: unknown) => {
+          logger.error({ at: "filefn.client.pendingDelete", error });
+        }
+      );
+    drain();
+    globalThis.addEventListener?.("online", drain, { signal: teardown });
+  }
+  return guarded;
+}
+
+/**
+ * Creates an SDK client at an authority, authenticated as the signed-in
+ * account, whose requests end when the teardown signal aborts.
+ */
+async function createSdkClient(
+  baseUrl: string,
+  teardown: AbortSignal,
+  offline: { enabled: boolean; opfsDir?: string }
+): Promise<FileFnClient> {
   const transport = await createNucleumAuthFnTransportAuth();
-  const client = createFileFnClient({
+  return createFileFnClient({
     baseUrl,
     credentials: (await transport.getCredentials?.()) ?? "include",
     fetch: createTeardownFetch(teardown),
@@ -231,20 +259,9 @@ async function createAccountFileFnClient(
         new Headers((await transport.getRequestHeaders?.()) ?? undefined)
       );
     },
-    offline: {
-      enabled: true,
-      opfsDir: resolveFileFnOfflineDir(userId)
-    },
+    offline,
     preprocessing: { heic: { enabled: false } }
   });
-  const guarded = guardFileFnClient(client, teardown);
-  if (!teardown.aborted) {
-    startOfflineReplayWhenOwner(userId, client, teardown);
-    const drain = () => void drainPendingDeletes(userId, baseUrl, guarded);
-    drain();
-    globalThis.addEventListener?.("online", drain, { signal: teardown });
-  }
-  return guarded;
 }
 
 /**
@@ -351,10 +368,11 @@ export async function confirmFileFnOwner(owner: FileFnOwner): Promise<void> {
 /**
  * Deletes a file that no record will reference through the owner's client.
  * When the owner's generation has ended or the delete fails, it records the
- * delete in the owner's private origin storage, which sign-out keeps. The
- * owner's client of the same authority sends it at once when it is current,
- * else when it is created, and again on every reconnect, so the file is never
- * deleted through another account.
+ * delete for the owner at the file's authority: in the owner's private origin
+ * storage, which sign-out keeps, else in memory for this session. Each later
+ * client of the owner sends it, through a client of that authority, when the
+ * client is created, at once when it is current, and on every reconnect, so
+ * the file is never deleted through another account.
  */
 export async function discardFileFnFile(
   owner: FileFnOwner,
@@ -368,33 +386,118 @@ export async function discardFileFnFile(
   } catch (error) {
     logger.warn({ at: "filefn.client.discard", fileId, error });
   }
-  const dir = await getPendingDeleteDir(owner.userId, owned.baseUrl, true);
-  if (!dir) throw new Error("No device storage records the pending delete");
-  await dir.getFileHandle(encodeURIComponent(fileId), { create: true });
+  await recordPendingDelete(owner.userId, owned.baseUrl, fileId);
   const entry = currentEntry;
-  if (entry?.userId === owner.userId && entry.baseUrl === owned.baseUrl) {
+  if (entry?.userId === owner.userId) {
     const client = await entry.client;
-    await drainPendingDeletes(owner.userId, owned.baseUrl, client);
+    await drainAccountPendingDeletes(
+      owner.userId,
+      entry.baseUrl,
+      client,
+      entry.controller.signal
+    );
+  }
+}
+
+/** Pending deletes of this session without device storage, by account and authority. */
+const sessionPendingDeletes = new Map<string, Map<string, Set<string>>>();
+
+function getSessionPendingDeletes(userId: string, baseUrl: string) {
+  const byAuthority = sessionPendingDeletes.get(userId) ?? new Map();
+  sessionPendingDeletes.set(userId, byAuthority);
+  const fileIds: Set<string> = byAuthority.get(baseUrl) ?? new Set();
+  byAuthority.set(baseUrl, fileIds);
+  return fileIds;
+}
+
+async function recordPendingDelete(
+  userId: string,
+  baseUrl: string,
+  fileId: string
+) {
+  try {
+    const dir = await getPendingDeleteDir(userId, baseUrl, true);
+    if (dir) {
+      await dir.getFileHandle(encodeURIComponent(fileId), { create: true });
+      return;
+    }
+  } catch (error) {
+    logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
+  }
+  getSessionPendingDeletes(userId, baseUrl).add(fileId);
+}
+
+/**
+ * Sends the account's pending deletes at every authority that has one: at
+ * the client's own authority through it, at another through a client of that
+ * authority made for the account and ended with the client's teardown.
+ */
+async function drainAccountPendingDeletes(
+  userId: string,
+  baseUrl: string,
+  client: FileFnClient,
+  teardown: AbortSignal
+) {
+  const authorities = new Set(sessionPendingDeletes.get(userId)?.keys());
+  const userDir = await getPendingDeleteUserDir(userId, false);
+  if (userDir) {
+    for await (const name of listEntryNames(userDir)) {
+      authorities.add(decodeURIComponent(name));
+    }
+  }
+  for (const authority of authorities) {
+    if (teardown.aborted) return;
+    await drainPendingDeletes(userId, authority, async () =>
+      authority === baseUrl
+        ? client
+        : guardFileFnClient(
+            await createSdkClient(authority, teardown, { enabled: false }),
+            teardown
+          )
+    );
   }
 }
 
 /**
- * Sends the account's pending deletes at an authority through its client,
- * one drain at a time per account and authority.
+ * Sends the account's pending deletes at an authority through a client of
+ * that authority, one drain at a time per account and authority.
  */
 function drainPendingDeletes(
   userId: string,
   baseUrl: string,
-  client: FileFnClient
+  getClient: () => Promise<FileFnClient>
 ): Promise<void> {
   const key = `${userId}:${baseUrl}`;
   const drain = (pendingDeleteDrains.get(key) ?? Promise.resolve())
-    .then(() => replayPendingDeletes(userId, baseUrl, client))
+    .then(() => replayPendingDeletes(userId, baseUrl, getClient))
     .catch((error: unknown) => {
       logger.error({ at: "filefn.client.pendingDelete", error });
     });
   pendingDeleteDrains.set(key, drain);
   return drain;
+}
+
+function listEntryNames(dir: FileSystemDirectoryHandle) {
+  return (dir as unknown as { keys(): AsyncIterable<string> }).keys();
+}
+
+/** Returns the directory of an account's pending deletes on the device. */
+async function getPendingDeleteUserDir(
+  userId: string,
+  create: boolean
+): Promise<FileSystemDirectoryHandle | null> {
+  const storage = globalThis.navigator?.storage;
+  if (!storage?.getDirectory) return null;
+  try {
+    const root = await storage.getDirectory();
+    return await root.getDirectoryHandle(
+      `${PENDING_DELETE_DIR_PREFIX}-${encodeURIComponent(userId)}`,
+      { create }
+    );
+  } catch (error) {
+    if (create) throw error;
+    return null;
+  }
 }
 
 /** Returns the directory of an account's pending deletes at an authority. */
@@ -403,14 +506,9 @@ async function getPendingDeleteDir(
   baseUrl: string,
   create: boolean
 ): Promise<FileSystemDirectoryHandle | null> {
-  const storage = globalThis.navigator?.storage;
-  if (!storage?.getDirectory) return null;
+  const userDir = await getPendingDeleteUserDir(userId, create);
+  if (!userDir) return null;
   try {
-    const root = await storage.getDirectory();
-    const userDir = await root.getDirectoryHandle(
-      `${PENDING_DELETE_DIR_PREFIX}-${encodeURIComponent(userId)}`,
-      { create }
-    );
     return await userDir.getDirectoryHandle(encodeURIComponent(baseUrl), {
       create
     });
@@ -421,32 +519,34 @@ async function getPendingDeleteDir(
 }
 
 /**
- * Sends the account's pending deletes at the client's authority, dropping
- * each one that succeeds or finds the file already gone and keeping each
- * other failure for the next drain.
+ * Sends the account's pending deletes at an authority, dropping each one
+ * that succeeds or finds the file already gone and keeping each other
+ * failure for the next drain. The client is made only when one is pending.
  */
 async function replayPendingDeletes(
   userId: string,
   baseUrl: string,
-  client: FileFnClient
+  getClient: () => Promise<FileFnClient>
 ) {
   const dir = await getPendingDeleteDir(userId, baseUrl, false);
-  if (!dir) return;
-  const names: string[] = [];
-  for await (const name of (
-    dir as unknown as { keys(): AsyncIterable<string> }
-  ).keys()) {
-    names.push(name);
+  const sessionFileIds = getSessionPendingDeletes(userId, baseUrl);
+  const fileIds = new Set(sessionFileIds);
+  if (dir) {
+    for await (const name of listEntryNames(dir)) {
+      fileIds.add(decodeURIComponent(name));
+    }
   }
-  for (const name of names) {
-    const fileId = decodeURIComponent(name);
+  if (fileIds.size === 0) return;
+  const client = await getClient();
+  for (const fileId of fileIds) {
     try {
       await client.deleteFile(fileId).catch((error: unknown) => {
         if (!(error instanceof FileFnHttpError && error.status === 404)) {
           throw error;
         }
       });
-      await dir.removeEntry(name);
+      sessionFileIds.delete(fileId);
+      await dir?.removeEntry(encodeURIComponent(fileId)).catch(() => undefined);
     } catch (error) {
       logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
     }

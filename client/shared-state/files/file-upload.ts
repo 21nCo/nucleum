@@ -3,7 +3,8 @@ import { generateFileId } from "@filefn/client";
 
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import { datafn } from "@nucleum/datafn/datafn.store";
+import { get } from "svelte/store";
+import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { resolveDatafnNamespace } from "@nucleum/datafn/runtime-policy";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { Resource } from "@nucleum/datafn/resource.enum";
@@ -283,8 +284,10 @@ async function saveOnDevice(input: FileUploadInput) {
  * The upload belongs to its owner, the account and FileFn client generation
  * captured when it started. Its client never follows a replacement, and the
  * record is saved only when, after re-binding the authority, the owner's
- * generation is still current and DataFn is in the owner's namespace, both
- * checked just before the insert, which binds to that DataFn context. A
+ * generation is still current, DataFn is in the owner's namespace and its
+ * remote, if it has one, is at the file's FileFn authority, all checked just
+ * before the insert, which binds to that DataFn context. A DataFn without a
+ * remote syncs no record until it binds the account's authority again. A
  * sign-out, another account, another authority or an unreadable stored region
  * fails the upload without a record; the file is then deleted through the
  * owner's client, or the delete is recorded for the owner's next client.
@@ -353,7 +356,7 @@ async function uploadThroughFileFn(owner: UploadOwner, input: FileUploadInput) {
       artifacts: processing.artifacts
     });
     await confirmFileFnOwner(owner);
-    assertDatafnOwner(owner);
+    assertDatafnOwner(owner, owned);
     const result = (await datafn.file.mutate({
       operation: "insert",
       id: input.id,
@@ -381,15 +384,30 @@ async function uploadThroughFileFn(owner: UploadOwner, input: FileUploadInput) {
 type UploadOwner = FileFnOwner & { namespace: string };
 
 /**
- * Throws an AbortError unless the owner's FileFn generation is current and
- * DataFn is in the owner's namespace, so the record is never saved in another
- * account's data.
+ * Throws an AbortError unless the owner's FileFn generation is current,
+ * DataFn is in the owner's namespace, and DataFn's remote, when it has one,
+ * is the account authority the file is stored at, so the record is never
+ * saved in another account's data or synced to another region.
  */
-function assertDatafnOwner(owner: UploadOwner) {
+function assertDatafnOwner(owner: UploadOwner, owned: OwnedFileFnClient) {
   assertFileFnOwner(owner);
-  if (datafn.currentNamespace() !== owner.namespace) {
+  const runtime = get(datafnRuntime);
+  if (
+    datafn.currentNamespace() !== owner.namespace ||
+    runtime?.namespace !== owner.namespace
+  ) {
     throw new DOMException(
       "DataFn left the account that started the upload",
+      "AbortError"
+    );
+  }
+  if (
+    runtime.remoteUrl &&
+    runtime.remoteUrl.replace(/\/datafn\/?$/, "") !==
+      owned.baseUrl.replace(/\/files\/?$/, "")
+  ) {
+    throw new DOMException(
+      "DataFn syncs to another account authority than the file's",
       "AbortError"
     );
   }

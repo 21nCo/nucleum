@@ -17,6 +17,7 @@ import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import {
   datafn,
+  datafnRuntime,
   destroyNucleumDatafn,
   initializeNucleumDatafn
 } from "@nucleum/datafn/datafn.store";
@@ -34,6 +35,7 @@ const sdk = vi.hoisted(() => ({
   uploads: [] as UploadInput[],
   artifacts: [] as UploadArtifactInput[],
   deleted: [] as string[],
+  deletedAt: [] as string[],
   configs: [] as unknown[],
   isRealSdk: false,
   failedDeletes: 0
@@ -74,6 +76,7 @@ vi.mock("@filefn/client", async (importOriginal) => {
             throw new Error("network down");
           }
           sdk.deleted.push(fileId);
+          sdk.deletedAt.push(`${config.baseUrl} ${fileId}`);
         },
         getPendingLocalDescriptor: async () => null
       };
@@ -228,6 +231,7 @@ beforeEach(async () => {
   sdk.uploads = [];
   sdk.artifacts = [];
   sdk.deleted = [];
+  sdk.deletedAt = [];
   sdk.configs = [];
   sdk.isRealSdk = false;
   sdk.failedDeletes = 0;
@@ -329,7 +333,7 @@ describe("uploadFileV2 fenced by the FileFn client lifetime", () => {
           fileId: sdk.uploads[0].fileId
         })
       ]);
-      expect(sdk.deleted).toEqual([]);
+      expect(sdk.deleted).not.toContain(sdk.uploads[0].fileId);
       expect(get(toasts)).toHaveLength(0);
     }
   );
@@ -463,6 +467,89 @@ describe("uploadFileV2 owned by the account that started it", () => {
     );
     expect(recordInserts.inserts).toBe(0);
   });
+
+  it("deletes the file at its original authority after the owner moves to another region", async () => {
+    installFakeOpfs();
+    account.set(cloudAccount("user-a", "useast"));
+    const { upload, finishProcessing } =
+      await startUploadWithPendingProcessing();
+
+    account.set(cloudAccount("user-a", "euwest"));
+    finishProcessing();
+
+    await expect(upload).rejects.toMatchObject({ name: "AbortError" });
+    await vi.waitFor(() =>
+      expect(sdk.deletedAt).toEqual([
+        `https://account-useast-dev.nucleum.app/files ${sdk.uploads[0].fileId}`
+      ])
+    );
+    expect(recordInserts.inserts).toBe(0);
+  });
+
+  it("retries the delete through the owner's next client when the device has no private storage", async () => {
+    vi.stubGlobal("navigator", {
+      ...globalThis.navigator,
+      onLine: true,
+      locks: undefined,
+      storage: undefined
+    });
+    account.set(cloudAccount("user-a", "useast"));
+    const { upload, finishProcessing } =
+      await startUploadWithPendingProcessing();
+
+    account.set(signedOut);
+    finishProcessing();
+    await expect(upload).rejects.toMatchObject({ name: "AbortError" });
+    expect(sdk.deleted).toEqual([]);
+
+    account.set(cloudAccount("user-a", "useast"));
+    await vi.waitFor(() =>
+      expect(sdk.deleted).toEqual([sdk.uploads[0].fileId])
+    );
+    expect(recordInserts.inserts).toBe(0);
+  });
+
+  it.each([
+    {
+      outcome: "no record",
+      authority: "another region",
+      region: "useast",
+      saved: 0
+    },
+    {
+      outcome: "the record",
+      authority: "the file's region",
+      region: "euwest",
+      saved: 1
+    }
+  ])(
+    "saves $outcome when DataFn syncs to $authority",
+    async ({ region, saved }) => {
+      account.set(cloudAccount("user-a", "euwest"));
+      datafnRuntime.update(
+        (runtime) =>
+          runtime && {
+            ...runtime,
+            remoteUrl: `https://account-${region}-dev.nucleum.app/datafn`
+          }
+      );
+      const upload = fileUpload.uploadFileV2(
+        "image/jpeg",
+        "photo.jpg",
+        new Blob(["original image bytes"], { type: "image/jpeg" })
+      );
+
+      if (saved) await upload;
+      else await expect(upload).rejects.toMatchObject({ name: "AbortError" });
+      expect(sdk.baseUrls).toEqual([
+        "https://account-euwest-dev.nucleum.app/files"
+      ]);
+      expect(recordInserts.inserts).toBe(saved);
+      expect(await savedFiles()).toHaveLength(saved);
+      expect(sdk.deleted).toEqual(saved ? [] : [sdk.uploads[0].fileId]);
+      expect(get(toasts)).toHaveLength(1 - saved);
+    }
+  );
 
   it("sends the original HEIC bytes through the real SDK in every mode", async () => {
     sdk.isRealSdk = true;
