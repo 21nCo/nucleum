@@ -49,6 +49,8 @@ let currentEntry: FileFnClientEntry | null = null;
 let isBoundToAccount = false;
 let syncGeneration = 0;
 let latestSync: Promise<void> = Promise.resolve();
+/** Whether the latest sync is still reading the stored region. */
+let isAuthorityPending = false;
 let ownerEpoch = 0;
 let ownerUserId: string | undefined;
 const pendingDeleteDrains = new Map<string, Promise<void>>();
@@ -138,11 +140,17 @@ function syncWithAccount() {
   syncFileFnClient(account.get());
 }
 
-function settleFileFnClientSync(): Promise<void> {
-  const sync = latestSync;
-  return sync.then(() =>
-    sync === latestSync ? undefined : settleFileFnClientSync()
-  );
+/**
+ * Waits until the latest sync has settled: it returns only when no newer sync
+ * started while it waited, so the caller's next synchronous step sees the
+ * client bound to the account's current authority.
+ */
+async function settleFileFnClientSync(): Promise<void> {
+  let sync: Promise<void>;
+  do {
+    sync = latestSync;
+    await sync;
+  } while (sync !== latestSync);
 }
 
 /**
@@ -160,11 +168,13 @@ function syncFileFnClient(value: UserAccount | null | undefined) {
   }
   if (currentEntry?.userId !== scope?.userId) tearDownFileFnClient();
   if (!scope?.region) {
+    isAuthorityPending = Boolean(scope);
     latestSync = scope
       ? bindToStoredRegion(scope.userId, generation)
       : Promise.resolve();
     return;
   }
+  isAuthorityPending = false;
   bindFileFnClient(scope.userId, scope.region);
   latestSync = Promise.resolve();
 }
@@ -173,6 +183,7 @@ function bindToStoredRegion(userId: string, generation: number) {
   const sync = clientStorage.get(ClientStorageKey.REGION).then((stored) => {
     if (generation === syncGeneration) {
       bindFileFnClient(userId, stored ?? "insouth");
+      isAuthorityPending = false;
     }
   });
   sync.catch((error: unknown) => {
@@ -328,11 +339,61 @@ export function captureFileFnOwner(): FileFnOwner | null {
 }
 
 /**
+ * Captures the signed-in cloud account and FileFn client generation once the
+ * client is bound to the account's current authority, reading the stored
+ * region when the session carries none, or null when no cloud account is
+ * signed in. A stored region that cannot be read rejects. Unlike
+ * captureFileFnOwner, an authority change that is still being read has
+ * already ended the previous generation when it returns.
+ */
+export async function captureSettledFileFnOwner(): Promise<FileFnOwner | null> {
+  syncWithAccount();
+  await settleFileFnClientSync();
+  const scope = resolveFileFnAccountScope(account.get());
+  return scope ? { userId: scope.userId, epoch: ownerEpoch } : null;
+}
+
+/**
+ * Returns whether the owner's generation has not ended: the owner's account is
+ * still signed in and no sign-out, other account or other authority has torn
+ * its client down. A stored region read still pending does not end it; a
+ * read that finds another authority does, once it binds.
+ */
+function isFileFnOwnerLive(owner: FileFnOwner): boolean {
+  return (
+    owner.epoch === ownerEpoch &&
+    resolveFileFnAccountScope(account.get())?.userId === owner.userId
+  );
+}
+
+/**
+ * Returns, without waiting, whether the owner's generation has not ended and
+ * its authority is settled: no stored region read that could still change
+ * the authority is pending. A caller that checks it in the same synchronous
+ * step as it hands out a result never hands it to another owner or authority;
+ * while it is false and the generation lives, settleFileFnOwner waits for the
+ * pending read.
+ */
+export function isFileFnOwnerCurrent(owner: FileFnOwner): boolean {
+  return !isAuthorityPending && isFileFnOwnerLive(owner);
+}
+
+/**
  * Throws the teardown AbortError once the owner's generation has ended: a
  * sign-out, another account or another authority tore its client down.
  */
 export function assertFileFnOwner(owner: FileFnOwner): void {
-  if (owner.epoch !== ownerEpoch) throw createTeardownError();
+  if (!isFileFnOwnerLive(owner)) throw createTeardownError();
+}
+
+/**
+ * Waits for the authority syncs already started, without starting another,
+ * then throws when the owner's generation has ended. A stored region that
+ * cannot be read rejects.
+ */
+export async function settleFileFnOwner(owner: FileFnOwner): Promise<void> {
+  await settleFileFnClientSync();
+  assertFileFnOwner(owner);
 }
 
 /**
@@ -361,8 +422,7 @@ export async function getOwnedFileFnClient(
  */
 export async function confirmFileFnOwner(owner: FileFnOwner): Promise<void> {
   syncWithAccount();
-  await settleFileFnClientSync();
-  assertFileFnOwner(owner);
+  await settleFileFnOwner(owner);
 }
 
 /**

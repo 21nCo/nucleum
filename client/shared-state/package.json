@@ -19,9 +19,10 @@
     "@21n/shared-utils": "*",
     "@datafn/client": "0.1.10",
     "@filefn/client": "0.3.0",
+    "@filefn/viewer": "0.1.1",
     "@nucleum/schema": "*",
-    "svelte": "^5.55.0",
-    "pdfjs-dist": "^4.1.392"
+    "pdfjs-dist": "^4.1.392",
+    "svelte": "^5.55.0"
   },
   "devDependencies": {
     "@datafn/server": "0.2.6"

@@ -31,24 +31,6 @@ export const fileTransport = {
       logger.error({ at: "getSignedUrl", error: e });
     }
   },
-  /**
-   * Re-signs a stored file URL for reading. Runs in the background while
-   * images render, so a network failure is not shown as an app alert.
-   */
-  async fetchSignedUrlForGet(key: string) {
-    const response = resolveJsonResponse(
-      await performApiCall(
-        "utils/n/getsignedurl",
-        "POST",
-        {
-          method: "GET",
-          key
-        },
-        { isFileApi: true, isSilent: true }
-      )
-    );
-    return await response?.json();
-  },
   /** Executes the existing uploadFile transport operation. */
   async uploadFile(uploadUrl: string, contentType: string, blob: any) {
     const result = await fetch(uploadUrl, {
