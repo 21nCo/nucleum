@@ -341,6 +341,31 @@ describe("uploadFileV2 through FileFn", () => {
     expect(get(toasts)).toEqual([]);
   });
 
+  it("keeps the HEIC upload without a converted artifact when its upload fails in both mode", async () => {
+    vi.stubEnv("VITE_FILE_PROCESSING_MODE", "both");
+    fileFn.uploadArtifact.mockImplementation(
+      async (input: UploadArtifactInput) => {
+        if (input.kind === "converted") throw new Error("404");
+        fileFn.artifacts.push(input);
+        return { artifactId: `art_${input.kind}` };
+      }
+    );
+    const [file] = await fileUpload.uploadFileV2(
+      "image/heic",
+      "IMG_5.heic",
+      new Blob(["heic bytes"], { type: "image/heic" }),
+      { isGenerateThumbnail: true }
+    );
+
+    expect(fileFn.deleted).toEqual([]);
+    const record = await savedRecord(file.id);
+    expect(record?.fileId).toBe(fileFn.uploads[0].fileId);
+    expect(
+      Object.keys((record?.processing as { artifacts: object }).artifacts)
+    ).toEqual(["thumbnail-medium"]);
+    expect(get(toasts)).toEqual([]);
+  });
+
   it("keeps the record when an artifact upload fails, without that kind", async () => {
     fileFn.uploadArtifact.mockRejectedValueOnce(new Error("404"));
     const [file] = await fileUpload.uploadFileV2(
@@ -403,6 +428,34 @@ describe("uploadFileV2 failures", () => {
     expect(get(toasts)).toEqual([
       expect.objectContaining({
         message: "Couldn't upload IMG_4.heic. Please try again."
+      })
+    ]);
+  });
+
+  it("fails visibly and deletes the upload when the converted artifact does not upload in local mode", async () => {
+    fileFn.uploadArtifact.mockImplementation(
+      async (input: UploadArtifactInput) => {
+        if (input.kind === "converted") throw new Error("404");
+        fileFn.artifacts.push(input);
+        return { artifactId: `art_${input.kind}` };
+      }
+    );
+
+    await expect(
+      fileUpload.uploadFileV2(
+        "image/heic",
+        "IMG_6.heic",
+        new Blob(["heic"], { type: "image/heic" }),
+        { isGenerateThumbnail: true }
+      )
+    ).rejects.toThrow("The converted artifact did not upload");
+
+    expect(fileFn.deleted).toEqual([fileFn.uploads[0].fileId]);
+    expect(recordInserts.inserts).toBe(0);
+    expect((await datafn.file.query({})).data ?? []).toHaveLength(0);
+    expect(get(toasts)).toEqual([
+      expect.objectContaining({
+        message: "Couldn't upload IMG_6.heic. Please try again."
       })
     ]);
   });

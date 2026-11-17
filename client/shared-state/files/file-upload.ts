@@ -243,9 +243,11 @@ async function saveOnDevice(input: FileUploadInput) {
  * Uploads the original through FileFn under a client-chosen `fileId` while
  * the device processes it (unless the mode is `remote`), uploads the device
  * artifacts, then saves the DataFn record with `fileId` and `processing`.
- * Device processing that fails (a HEIC conversion in `local` mode) or a
- * record that cannot be saved deletes the uploaded file, so no FileFn file is
- * left that no record references.
+ * In `local` mode nothing remote makes a HEIC photo's converted variant, so a
+ * HEIC upload there fails when the device cannot convert it or the converted
+ * artifact does not upload. That failure, or a record that cannot be saved,
+ * deletes the uploaded file, so no FileFn file is left that no record
+ * references.
  */
 async function uploadThroughFileFn(input: FileUploadInput) {
   const client = await getFileFnClient();
@@ -291,10 +293,21 @@ async function uploadThroughFileFn(input: FileUploadInput) {
         { kind: DEVICE_THUMBNAIL_KIND, data: input.thumbnailBlob }
       ]
     : deviceArtifacts;
-  const processing: IFileProcessing = {
-    mode,
-    artifacts: await uploadArtifacts(client, uploaded, artifacts)
-  };
+  let processing: IFileProcessing;
+  try {
+    processing = {
+      mode,
+      artifacts: await uploadArtifacts(
+        client,
+        uploaded,
+        artifacts,
+        mode === "local" ? LOCAL_REQUIRED_ARTIFACT_KINDS : []
+      )
+    };
+  } catch (error) {
+    await discardUploadedFile(client, uploaded.fileId);
+    throw error;
+  }
   recordFileProcessing({
     mode,
     fileId: uploaded.fileId,
@@ -328,16 +341,29 @@ async function uploadThroughFileFn(input: FileUploadInput) {
 }
 
 /**
+ * Artifact kinds that must upload in `local` mode, where no remote processing
+ * makes them: without the converted PNG a HEIC photo has no variant a browser
+ * can show.
+ */
+const LOCAL_REQUIRED_ARTIFACT_KINDS: readonly DeviceArtifact["kind"][] = [
+  "converted"
+];
+
+/**
  * Uploads device artifacts of a file version, returning the kinds that
- * uploaded with their durations. A failed artifact is logged and left out:
- * the original is already stored, and remote processing can make it.
+ * uploaded with their durations. A failed artifact of a kind in
+ * `requiredKinds` throws once every upload has settled. Any other failed
+ * artifact is logged and left out: the original is already stored, and the
+ * file still shows without it (remote processing makes it in `both` mode).
  */
 async function uploadArtifacts(
   client: FileFnClient,
   uploaded: { fileId: string; versionId: string },
-  artifacts: DeviceArtifact[]
+  artifacts: DeviceArtifact[],
+  requiredKinds: readonly DeviceArtifact["kind"][]
 ) {
   const present: IFileProcessing["artifacts"] = {};
+  const requiredFailures: { kind: string; error: unknown }[] = [];
   await Promise.all(
     artifacts.map(async (artifact) => {
       try {
@@ -362,9 +388,18 @@ async function uploadArtifacts(
           kind: artifact.kind,
           error
         });
+        if (requiredKinds.includes(artifact.kind)) {
+          requiredFailures.push({ kind: artifact.kind, error });
+        }
       }
     })
   );
+  const [requiredFailure] = requiredFailures;
+  if (requiredFailure) {
+    throw new Error(`The ${requiredFailure.kind} artifact did not upload`, {
+      cause: requiredFailure.error
+    });
+  }
   return present;
 }
 
