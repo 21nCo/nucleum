@@ -10,9 +10,8 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 
 // Runs the real FileFn client runtime, so the cache sees the owner the
 // account's current authority binds, not a stub of it.
-const { clearFileUrlCache, resolveFileUrl } = await import(
-  "@nucleum/shared-state/files/file-url"
-);
+const { clearFileUrlCache, resolveFileUrl } =
+  await import("@nucleum/shared-state/files/file-url");
 
 const ACCOUNT_URL_TEMPLATE = "https://account-{region}-dev.nucleum.app";
 
@@ -37,9 +36,13 @@ function cloudAccountWithoutRegion(userId: string): UserAccount {
   };
 }
 
-/** Answers each render request with a URL of the authority it reached. */
-function serveRenders() {
+/**
+ * Answers each render request with a URL of the authority it reached, after
+ * the optional gate opens.
+ */
+function serveRenders(gate?: Promise<void>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    await gate;
     const url = new URL(input instanceof Request ? input.url : String(input));
     const fileId = url.pathname.split("/").at(-2);
     const intent = url.searchParams.get("intent");
@@ -103,6 +106,27 @@ describe("resolveFileUrl across FileFn authorities", () => {
       "account-useast-dev.nucleum.app",
       "account-euwest-dev.nucleum.app"
     ]);
+  });
+
+  it("does not return a URL of the previous authority when the stored region changes during the lookup", async () => {
+    let openGate: () => void = () => {};
+    const fetchMock = serveRenders(
+      new Promise<void>((resolve) => {
+        openGate = resolve;
+      })
+    );
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccountWithoutRegion("user-a"));
+
+    const lookup = resolveFileUrl("file-1", "full");
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await clientStorage.set(ClientStorageKey.REGION, "euwest");
+    openGate();
+
+    expect(await lookup).toBeUndefined();
+    expect(new URL(String(fetchMock.mock.calls[0][0])).host).toBe(
+      "account-useast-dev.nucleum.app"
+    );
   });
 
   it("still serves a repeated lookup from the cache while the authority stays", async () => {

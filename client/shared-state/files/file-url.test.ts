@@ -19,7 +19,7 @@ vi.mock("@nucleum/shared-state/files/filefn-client", () => ({
     afterCapture?.();
     return owner;
   },
-  assertFileFnOwner: (owner: Owner) => {
+  confirmFileFnOwner: async (owner: Owner) => {
     if (owner.epoch !== fileFn.owner?.epoch) {
       throw new DOMException("The FileFn client was torn down", "AbortError");
     }
@@ -319,13 +319,22 @@ describe("resolveFileUrl", () => {
       expect(fileFn.listArtifacts).toHaveBeenCalledTimes(1);
     });
 
-    it("views the original in full when there is no converted image", async () => {
+    it("views the original in full until a converted image exists, then the conversion", async () => {
       fileFn.listArtifacts.mockResolvedValue([
         artifact("thumbnail-small", "image/jpeg")
       ]);
 
       expect(await resolveFileUrl("file-1", "full")).toBe(heicUrl);
       expect(fileFn.downloadArtifact).not.toHaveBeenCalled();
+
+      fileFn.listArtifacts.mockResolvedValue([
+        artifact("thumbnail-small", "image/jpeg"),
+        artifact("converted", "image/png")
+      ]);
+      vi.advanceTimersByTime(FILE_URL_RETRY_MS - 1);
+      expect(await resolveFileUrl("file-1", "full")).toBe(heicUrl);
+      vi.advanceTimersByTime(1);
+      expect(await resolveFileUrl("file-1", "full")).toBe(pngUrl);
     });
 
     it("does not list artifacts for a browser-decodable original", async () => {

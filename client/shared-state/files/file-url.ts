@@ -2,8 +2,8 @@ import type { FileFnClient } from "@filefn/client";
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
-  assertFileFnOwner,
   captureSettledFileFnOwner,
+  confirmFileFnOwner,
   getOwnedFileFnClient,
   type FileFnOwner
 } from "@nucleum/shared-state/files/filefn-client";
@@ -48,10 +48,12 @@ let cacheOwnerKey: string | undefined;
  * signed-in account's FileFn client. The result is kept in memory per file
  * and variant until shortly before the URL expires, concurrent lookups share
  * one request, and the cache belongs to one FileFn owner: a sign-out, another
- * account or another authority clears it, and a lookup that the owner's
- * generation ended during returns undefined, so a URL is never shown to
- * another account. The full variant of a HEIC or HEIF original is its
- * converted image when FileFn has one; the download variant is the original.
+ * account or another authority clears it, and a lookup returns its URL only
+ * once the account's current authority is settled and still belongs to the
+ * owner it started under, so a URL is never shown to another account. The
+ * full variant of a HEIC or HEIF original is its converted image, or the
+ * original, asked for again after the retry interval, while FileFn has none;
+ * the download variant is the original.
  */
 export async function resolveFileUrl(
   fileId: string,
@@ -77,7 +79,7 @@ export async function resolveFileUrl(
       ? cached
       : startFileUrlLookup(owner, key, fileId, variant);
   const url = await entry.url;
-  return isCurrentFileFnOwner(owner) ? url : undefined;
+  return (await isCurrentFileFnOwner(owner)) ? url : undefined;
 }
 
 /** Drops every cached URL; the next lookup of each variant resolves it again. */
@@ -111,9 +113,9 @@ function startFileUrlLookup(
   return entry;
 }
 
-function isCurrentFileFnOwner(owner: FileFnOwner) {
+async function isCurrentFileFnOwner(owner: FileFnOwner) {
   try {
-    assertFileFnOwner(owner);
+    await confirmFileFnOwner(owner);
     return true;
   } catch {
     return false;
@@ -135,14 +137,29 @@ async function fetchFileUrl(
   if (!source.url) {
     return { url: undefined, refreshAt: Date.now() + FILE_URL_RETRY_MS };
   }
-  const url =
-    variant === "full" && isUndecodableImage(source.mimeType)
-      ? ((await resolveConvertedUrl(owned.client, fileId, source.versionId)) ??
-        source.url)
-      : source.url;
+  if (variant !== "full" || !isUndecodableImage(source.mimeType)) {
+    return {
+      url: toAbsoluteUrl(source.url, owned.baseUrl),
+      refreshAt: resolveRefreshAt(source.url, requestedAt)
+    };
+  }
+  const converted = await resolveConvertedUrl(
+    owned.client,
+    fileId,
+    source.versionId
+  );
+  if (!converted) {
+    return {
+      url: toAbsoluteUrl(source.url, owned.baseUrl),
+      refreshAt: Math.min(
+        resolveRefreshAt(source.url, requestedAt),
+        Date.now() + FILE_URL_RETRY_MS
+      )
+    };
+  }
   return {
-    url: toAbsoluteUrl(url, owned.baseUrl),
-    refreshAt: resolveRefreshAt(url, requestedAt)
+    url: toAbsoluteUrl(converted, owned.baseUrl),
+    refreshAt: resolveRefreshAt(converted, requestedAt)
   };
 }
 
