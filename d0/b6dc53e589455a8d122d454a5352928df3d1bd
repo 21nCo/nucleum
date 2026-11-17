@@ -1,0 +1,33 @@
+client/shared-state/files/file-url.authority.test.ts
+  s_f35b422006faeb::t_6fa431923d7f84 74-108,116,168-203
+client/shared-state/files/file-url.test.ts
+  s_e753f4ab224de9::t_6dd4781600c3e4 9,27-29,31-33,92,260-289
+client/shared-state/files/file-url.ts
+  s_f35b422006faeb::t_e4f0729c7751f7 8,53-57,83-88
+client/shared-state/files/filefn-client.ts
+  s_e753f4ab224de9::t_cd03792c050c06 52-53,171,177,186,357-373,376
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d0b6dc53e589455a8d122d454a5352928df3d1bd",
+  "prompts": {},
+  "sessions": {
+    "s_e753f4ab224de9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9b413bb-78e4-461c-b7a1-7e3598c6e221",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f35b422006faeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "679baf05-05c3-434b-8d43-45dfc1b3d785",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
