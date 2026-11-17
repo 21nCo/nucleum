@@ -1,0 +1,19 @@
+apps/e2e-playwright/tests/memory/nodes/item-keys.spec.ts
+  s_b66d0e9dd4fae0::t_e3847a4cd39be0 276-306
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c32eb540971c75951957c1ca1aea88dbb2f24f82",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
