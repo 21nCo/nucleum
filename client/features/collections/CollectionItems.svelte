@@ -11,11 +11,11 @@
   import { itemNavigation } from "@21n/ui/actions/itemNavigation.action";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
+  import { resolveBulkSelectionAccessPointId } from "@nucleum/datafn/resource.utils";
   import {
-    resolveBulkSelectionAccessPointId,
-    resourceInList
-  } from "@nucleum/datafn/resource.utils";
-  import { toggleResourceSelection } from "@nucleum/features/records/resource.actions";
+    createRangeSelection,
+    toggleResourceSelection
+  } from "@nucleum/features/records/resource.actions";
   const Records = requireRecordRenderer();
 
   let {
@@ -73,7 +73,7 @@
     resolveBulkSelectionAccessPointId(selectionAccessPoint, accessPointId) ===
       accessPointId
   );
-  let rangeBaseIds: IRecordId[] = [];
+  const selectRange = createRangeSelection();
 
   function resolveElementNode(element: HTMLElement) {
     const id = element.getAttribute("data-id");
@@ -103,14 +103,12 @@
       .filter((item): item is INodeThumb => !!item);
     if (!bulkEditStore.matchesContext(nodeSelectionContext)) {
       toggleResourceSelection(anchor.id, selectionAccessPoint, accessPointId);
-      rangeBaseIds = [];
-    } else if (isNewRange) {
-      rangeBaseIds = bulkEditStore.getState().selectedIds;
+      isNewRange = true;
     }
-    const base = rangeBaseIds.filter(
-      (id) => !nodes.some((item) => resourceInList(item.id)(id))
+    selectRange(
+      nodes.map((item) => item.id),
+      isNewRange
     );
-    bulkEditStore.select([...base, ...nodes.map((item) => item.id)]);
   }
 
   function hasSelectionInContext() {

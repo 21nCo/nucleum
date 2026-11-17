@@ -181,6 +181,19 @@
     hide();
   }
 
+  /**
+   * Closes the menu on its Escape key. Focus the menu held, which closing it
+   * removes, returns to the trigger however the menu was opened; focus the
+   * user moved elsewhere stays there.
+   */
+  function closeFromMenu() {
+    const trigger = contextMenuPopoverRef as HTMLElement | undefined;
+    const hadFocus = !!trigger && !isFocusLost(trigger);
+    hide();
+    if (hadFocus && trigger && trigger.isConnected && isFocusLost(trigger))
+      trigger.focus();
+  }
+
   function onPopoverChange(e: Event) {
     isPopoverVisible =
       (e as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
@@ -204,7 +217,7 @@
       menuResolver,
       onSelect,
       parentBgIndex,
-      onClose: hide
+      onClose: closeFromMenu
     },
     groupId: "contextMenuPopover-" + id,
     id,

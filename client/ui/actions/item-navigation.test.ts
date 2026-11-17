@@ -1,6 +1,9 @@
-import { render } from "@testing-library/svelte";
+import { render, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
+import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
+import { createRangeSelection } from "@nucleum/features/records/resource.actions";
+import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
 import { itemNavigation } from "@21n/ui/actions/itemNavigation.action";
 import {
   isItemNavigationKey,
@@ -121,11 +124,20 @@ describe("item navigation", () => {
   });
 });
 
-vi.mock("@21n/ui/actions/popover.action", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@21n/ui/actions/popover.action")>()),
-  popover: () => ({ update: () => undefined, destroy: () => undefined }),
-  tooltip: () => ({ update: () => undefined, destroy: () => undefined })
-}));
+const popoverMode = vi.hoisted(() => ({ isActual: false }));
+
+vi.mock("@21n/ui/actions/popover.action", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@21n/ui/actions/popover.action")>();
+  return {
+    ...actual,
+    popover: (...args: Parameters<typeof actual.popover>) =>
+      popoverMode.isActual
+        ? actual.popover(...args)
+        : { update: () => undefined, destroy: () => undefined },
+    tooltip: () => ({ update: () => undefined, destroy: () => undefined })
+  };
+});
 
 describe("context menu keys in a shadow root or a frame", () => {
   const menuResolver = () => [
@@ -554,5 +566,261 @@ describe("item navigation list keys", () => {
 
     pointerDown(second.firstElementChild!);
     expect(shown()).toEqual([]);
+  });
+});
+
+describe("context menu keys after the menu moves between layers", () => {
+  const items = [
+    { value: "rename", label: "Rename" },
+    { value: "move", label: "Move" },
+    { value: "delete", label: "Delete" }
+  ];
+  const menuItem = (root: ParentNode, value: string) =>
+    root.querySelector<HTMLElement>(`[data-context-menu-item-id="${value}"]`)!;
+
+  beforeEach(() => {
+    stubMatchMedia();
+    vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
+      {}
+    ] as unknown as DOMRectList);
+    document.body.innerHTML = '<div id="popovers"></div>';
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps Up, Down and Escape for a mounted menu a popover takes in, and after it leaves", async () => {
+    const { popover } = await vi.importActual<
+      typeof import("@21n/ui/actions/popover.action")
+    >("@21n/ui/actions/popover.action");
+    const content = document.createElement("div");
+    document.body.append(content);
+    const onClose = vi.fn();
+    render(ContextMenu, {
+      target: content,
+      props: { menuResolver: () => [{ group: "main", items }], onClose }
+    });
+    menuItem(content, "rename").focus();
+    pressKey(menuItem(content, "rename"), "ArrowDown");
+    expect(document.activeElement).toBe(menuItem(content, "move"));
+
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    const action = popover(trigger, { id: "moved-menu", content });
+    const opened = new Promise<void>((resolve) =>
+      trigger.addEventListener("change", (event) => {
+        if ((event as CustomEvent<{ open: boolean }>).detail.open) resolve();
+      })
+    );
+    trigger.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await opened;
+    expect(document.getElementById("moved-menu")?.contains(content)).toBe(true);
+
+    menuItem(content, "move").focus();
+    const down = pressKey(menuItem(content, "move"), "ArrowDown");
+    expect(down.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(menuItem(content, "delete"));
+    pressKey(menuItem(content, "delete"), "ArrowDown");
+    expect(document.activeElement).toBe(menuItem(content, "rename"));
+    trigger.focus();
+    expect(pressKey(trigger, "ArrowUp").defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(menuItem(content, "delete"));
+    expect(
+      pressKey(menuItem(content, "delete"), "Escape").defaultPrevented
+    ).toBe(true);
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    trigger.dispatchEvent(new CustomEvent("hide"));
+    action.destroy();
+    document.body.append(content);
+    menuItem(content, "rename").focus();
+    pressKey(menuItem(content, "rename"), "ArrowUp");
+    expect(document.activeElement).toBe(menuItem(content, "delete"));
+    expect(
+      pressKey(menuItem(content, "delete"), "Escape").defaultPrevented
+    ).toBe(true);
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("context menu Escape returns focus to the trigger", () => {
+  const menuResolver = () => [
+    {
+      group: "main",
+      items: [
+        { value: "rename", label: "Rename" },
+        { value: "move", label: "Move" }
+      ]
+    }
+  ];
+  const menuItem = (value: string) =>
+    document.querySelector<HTMLElement>(
+      `#popovers [data-context-menu-item-id="${value}"]`
+    );
+
+  beforeEach(() => {
+    popoverMode.isActual = true;
+    stubMatchMedia();
+    vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
+      {}
+    ] as unknown as DOMRectList);
+    document.body.innerHTML = '<div id="popovers"></div>';
+  });
+
+  afterEach(() => {
+    popoverMode.isActual = false;
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  async function openByClick(id: string) {
+    const { getByRole } = render(ContextMenuAction, {
+      props: { id, menuResolver }
+    });
+    const trigger = getByRole("button", { name: "Actions" });
+    trigger.focus();
+    trigger.click();
+    await waitFor(() => expect(menuItem("rename")).not.toBeNull());
+    return trigger;
+  }
+
+  it("returns focus to the trigger of a menu opened by a click when Escape closes it from an item", async () => {
+    const trigger = await openByClick("escapeFocus");
+    pressKey(trigger, "ArrowDown");
+    expect(document.activeElement).toBe(menuItem("rename"));
+
+    expect(pressKey(menuItem("rename")!, "Escape").defaultPrevented).toBe(true);
+    await waitFor(() => expect(menuItem("rename")).toBeNull());
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("leaves focus the user moved elsewhere when Escape closes the menu", async () => {
+    await openByClick("escapeElsewhere");
+    const field = document.createElement("button");
+    document.body.append(field);
+    field.focus();
+
+    pressKey(field, "Escape");
+    await waitFor(() => expect(menuItem("rename")).toBeNull());
+    expect(document.activeElement).toBe(field);
+  });
+});
+
+describe("item navigation list reachability and native key owners", () => {
+  const actions: { destroy: () => void }[] = [];
+  const shown = () =>
+    Array.from(document.querySelectorAll("[data-item-highlighted]")).map(
+      (element) => element.getAttribute("data-id")
+    );
+
+  function mountList(ids: string[]) {
+    const node = document.createElement("div");
+    ids.forEach((id, index) => {
+      const element = document.createElement("div");
+      element.id = `thumbnail-${id}`;
+      element.dataset.id = id;
+      element.getBoundingClientRect = () =>
+        ({ top: index * 50, left: 0, width: 100, height: 40 }) as DOMRect;
+      node.append(element);
+    });
+    document.body.append(node);
+    actions.push(
+      itemNavigation(node, { itemSelector: "[id^='thumbnail-'][data-id]" })
+    );
+    return node;
+  }
+
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
+      {}
+    ] as unknown as DOMRectList);
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  afterEach(() => {
+    while (actions.length > 0) actions.pop()!.destroy();
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+  });
+
+  it("skips a visibility:hidden list and hidden items in a visible list", () => {
+    mountList(["a", "b", "c"]);
+    const hiddenList = mountList(["h1", "h2"]);
+    hiddenList.style.visibility = "hidden";
+    document.querySelector<HTMLElement>("[data-id='b']")!.style.visibility =
+      "hidden";
+
+    pressKey(document.body, "ArrowDown");
+    expect(shown()).toEqual(["a"]);
+    pressKey(document.body, "ArrowDown");
+    expect(shown()).toEqual(["c"]);
+  });
+
+  it("leaves the arrows to an editable element in any editing mode and to its descendants", () => {
+    mountList(["a", "b"]);
+    const editor = document.createElement("div");
+    editor.setAttribute("contenteditable", "plaintext-only");
+    const word = document.createElement("span");
+    editor.append(word);
+    document.body.append(editor);
+    for (const element of [editor, word])
+      Object.defineProperty(element, "isContentEditable", { value: true });
+
+    for (const target of [editor, word])
+      for (const key of ["ArrowLeft", "ArrowDown"])
+        expect(pressKey(target, key).defaultPrevented).toBe(false);
+    expect(shown()).toEqual([]);
+
+    const tab = document.createElement("button");
+    document.body.append(tab);
+    tab.focus();
+    expect(pressKey(tab, "ArrowDown").defaultPrevented).toBe(true);
+    expect(shown()).toEqual(["a"]);
+  });
+
+  it("leaves the arrows to a text field inside a shadow root", () => {
+    mountList(["a", "b"]);
+    const host = document.createElement("div");
+    document.body.append(host);
+    const input = document.createElement("input");
+    host.attachShadow({ mode: "open" }).append(input);
+    input.focus();
+
+    for (const key of ["ArrowDown", "ArrowRight"])
+      expect(pressKey(input, key).defaultPrevented).toBe(false);
+    expect(shown()).toEqual([]);
+  });
+});
+
+describe("keyboard range selection", () => {
+  afterEach(() => {
+    bulkEditStore.clear();
+  });
+
+  it("keeps picks made elsewhere between presses and does not restore removed ones", () => {
+    const selectRange = createRangeSelection();
+    bulkEditStore.select(["node:base", "node:gone"]);
+    selectRange(["node:a", "node:b"], true);
+    expect(bulkEditStore.getState().selectedIds).toEqual([
+      "node:base",
+      "node:gone",
+      "node:a",
+      "node:b"
+    ]);
+
+    bulkEditStore.select(["node:base", "node:a", "node:b", "node:added"]);
+    selectRange(["node:a", "node:b", "node:c"], false);
+    expect([...bulkEditStore.getState().selectedIds].sort()).toEqual(
+      ["node:a", "node:added", "node:b", "node:base", "node:c"].sort()
+    );
+
+    selectRange(["node:a"], false);
+    expect([...bulkEditStore.getState().selectedIds].sort()).toEqual(
+      ["node:a", "node:added", "node:base"].sort()
+    );
   });
 });

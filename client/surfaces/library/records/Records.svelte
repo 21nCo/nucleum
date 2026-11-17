@@ -24,8 +24,7 @@
   import type { IFile } from "@nucleum/shared-state/files/file.type";
   import {
     determineResourceType,
-    resourceIdToElementId,
-    resourceInList
+    resourceIdToElementId
   } from "@nucleum/datafn/resource.utils";
   import NodeItems from "@nucleum/features/memory/node/NodeRecords.svelte";
   import LibraryLoadingPulse from "@nucleum/surfaces/library/LibraryLoadingPulse.svelte";
@@ -41,10 +40,10 @@
   import { stringify } from "@21n/shared-utils/json.utils";
   import { itemNavigation } from "@21n/ui/actions/itemNavigation.action";
   import {
+    createRangeSelection,
     resolveResourceSelectionContext,
     toggleResourceSelection
   } from "@nucleum/features/records/resource.actions";
-  import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteDataStore } from "@datafn/svelte";
@@ -245,7 +244,7 @@
     );
   }
 
-  let rangeBaseIds: IRecordId[] = [];
+  const selectRange = createRangeSelection();
   const isSelectable = $derived(
     accessPoint !== ResourceAccessPoint.PICKER &&
       accessPoint !== ResourceAccessPoint.MAP &&
@@ -291,14 +290,12 @@
         accessPoint,
         resolveThumbnailAccessPointId(anchor)
       );
-      rangeBaseIds = [];
-    } else if (isNewRange) {
-      rangeBaseIds = bulkEditStore.getState().selectedIds;
+      isNewRange = true;
     }
-    const base = rangeBaseIds.filter(
-      (id) => !items.some((item) => resourceInList(item.id)(id))
+    selectRange(
+      items.map((item) => item.id),
+      isNewRange
     );
-    bulkEditStore.select([...base, ...items.map((item) => item.id)]);
   }
 </script>
 

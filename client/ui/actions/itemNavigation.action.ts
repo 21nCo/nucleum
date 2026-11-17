@@ -57,10 +57,21 @@ let suppressedBy: Element | undefined;
 let suppressedAt: string | undefined;
 let isListening = false;
 
+/**
+ * Laid out and not hidden by visibility, which keeps an element's boxes, so a
+ * visibility:hidden list or item takes neither the keys nor the highlight.
+ */
+function isShownElement(element: Element) {
+  return (
+    element.getClientRects().length > 0 &&
+    getComputedStyle(element).visibility === "visible"
+  );
+}
+
 function resolveItems(entry: ItemNavigationEntry) {
   return Array.from(
     entry.node.querySelectorAll<HTMLElement>(entry.config.itemSelector)
-  ).filter((element) => element.getClientRects().length > 0);
+  ).filter(isShownElement);
 }
 
 function resolveItemKey(element: HTMLElement) {
@@ -68,7 +79,7 @@ function resolveItemKey(element: HTMLElement) {
 }
 
 function isVisible(node: HTMLElement) {
-  return node.isConnected && node.getClientRects().length > 0;
+  return node.isConnected && isShownElement(node);
 }
 
 function hasOpenPopover() {
@@ -172,13 +183,45 @@ const interactiveSelector = [
 ].join(", ");
 
 /**
+ * The element a key was pressed on. A window listener sees a key pressed in a
+ * shadow root as coming from the shadow host, so this reads the composed path.
+ */
+function resolveKeyTarget(event: Event): EventTarget | null {
+  return event.composedPath?.()[0] ?? event.target;
+}
+
+/** The nearest element matching the selector, across shadow roots. */
+function closestAcross(target: EventTarget | null, selector: string) {
+  let element = target instanceof Element ? target : null;
+  while (element) {
+    const match = element.closest(selector);
+    if (match) return match;
+    const root = element.getRootNode();
+    element = root instanceof ShadowRoot ? root.host : null;
+  }
+  return null;
+}
+
+/** Whether the node holds the element, across shadow roots. */
+function containsAcross(node: Element, element: Element) {
+  for (let current: Element | null = element; current;) {
+    if (node.contains(current)) return true;
+    const root = current.getRootNode();
+    current = root instanceof ShadowRoot ? root.host : null;
+  }
+  return false;
+}
+
+/**
  * Whether the focused element uses the arrow, Enter and Space keys itself,
- * such as a text field, a select or a menu, so the list leaves them alone. A
+ * such as a text field, an editable element (contenteditable in any editing
+ * mode, or inside one), a select or a menu, so the list leaves them alone. A
  * plain button or link, such as the tab that opened the list, does not.
  */
 function isKeyedControl(target: EventTarget | null) {
   if (isTextElement(target)) return true;
-  return target instanceof Element && !!target.closest(keyedControlSelector);
+  if (target instanceof HTMLElement && target.isContentEditable) return true;
+  return !!closestAcross(target, keyedControlSelector);
 }
 
 /**
@@ -191,12 +234,11 @@ function isOtherControlInList(
   target: EventTarget | null,
   highlighted: HTMLElement
 ) {
-  if (!(target instanceof Element)) return false;
-  const control = target.closest(interactiveSelector);
+  const control = closestAcross(target, interactiveSelector);
   return (
     !!control &&
     control !== entry.node &&
-    entry.node.contains(control) &&
+    containsAcross(entry.node, control) &&
     !control.contains(highlighted)
   );
 }
@@ -298,7 +340,10 @@ function isPlainSpace(event: KeyboardEvent) {
 /** The menu keys, Enter and Space, which act on the highlighted item. */
 function handleItemKey(entry: ItemNavigationEntry, event: KeyboardEvent) {
   const highlighted = resolveHighlighted(entry);
-  if (!highlighted || isOtherControlInList(entry, event.target, highlighted))
+  if (
+    !highlighted ||
+    isOtherControlInList(entry, resolveKeyTarget(event), highlighted)
+  )
     return;
   const { onOpen, onToggle } = entry.config;
   if (isMenuKey(event)) {
@@ -321,7 +366,7 @@ function onKeydown(event: KeyboardEvent) {
     return;
   }
   if (event.defaultPrevented || event.altKey) return;
-  if (isKeyedControl(event.target) || hasOpenPopover()) return;
+  if (isKeyedControl(resolveKeyTarget(event)) || hasOpenPopover()) return;
   const entry = resolveActiveEntry();
   if (!entry) return;
   if (isItemNavigationKey(event.key)) {

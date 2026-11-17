@@ -366,9 +366,16 @@ export interface PopoverLayer {
  */
 export const popoverLayers: PopoverLayer[] = [];
 
-/** Adds a layer and drops layers whose element has left the page. */
+/**
+ * Adds a layer and drops popover layers whose element has left the page. A
+ * menu's own layer, which has no trigger, stays while the menu is moved
+ * between containers; the menu removes it when it unmounts.
+ */
 export function addPopoverLayer(layer: PopoverLayer) {
-  removePopoverLayer((element) => !element.isConnected);
+  for (let index = popoverLayers.length - 1; index >= 0; index--) {
+    const { element, trigger } = popoverLayers[index];
+    if (trigger && !element.isConnected) popoverLayers.splice(index, 1);
+  }
   popoverLayers.push(layer);
 }
 
