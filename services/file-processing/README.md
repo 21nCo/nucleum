@@ -13,15 +13,24 @@ container runs, and the account service runs in process on Node:
 | Processor | Reads | Writes |
 | --- | --- | --- |
 | `thumbnail` | PNG, JPEG, WebP, GIF, TIFF | `thumbnail-medium`: 512 px WebP |
-| `pdf-preview` | PDF | `pdf-preview-page-1-medium`: the first page as 512 px WebP |
+| `pdf-preview` | PDF | `pdf-preview-page-1-medium`: the first page as 512 px WebP; a page sharp cannot render fails the run instead of recording a placeholder |
 | `heic-convert` | HEIC, HEIF | `converted`: PNG; `thumbnail-medium`: 512 px WebP |
-| `ocr` | images and PDFs (first 20 pages) | `ocr-text` |
+| `ocr` | images (HEIC and HEIF through their PNG) and PDFs (first 20 pages) | `ocr-text` |
 
 `src/descriptors.mjs` (`@21n/file-processing/descriptors`) names them without
 loading sharp, for the Worker: the producer and the container must configure
 the same processor names, since FileFn builds each job's idempotency key from
 the producer's. A kind the device already uploaded (`both` mode) is skipped.
 Audio and video are not processed.
+
+### On Node
+
+The account service on Node loads the npm prebuilt sharp, whose libvips has
+no PDF loader and no HEVC decoder. It probes `sharp.format`
+(`detectNucleumCodecs`) and runs only what that sharp decodes: usually the
+image thumbnail and image OCR. It leaves out `pdf-preview`, PDF OCR,
+`heic-convert` and HEIC OCR, logging them once at the first upload. Full PDF
+and HEIC processing needs the container.
 
 ## Container image
 
@@ -30,7 +39,8 @@ pinned by `FILEFN_PROCESSING_BASE_IMAGE`), which has sharp built against
 Debian's libvips with its PDF loader, tesseract and the job server
 (`POST /jobs`, `GET /health`). It adds libheif's HEVC decoder, the
 database module (`src/database.mjs`, over the account service's generated
-FileFn schema) and `src/container.mjs`, which starts the FILE-9 server with
+FileFn schema; `src/postgres.mjs` refuses a non-loopback
+`FILEFN_DATABASE_URL` without `sslmode=verify-full` or `sslrootcert=system`) and `src/container.mjs`, which starts the FILE-9 server with
 the processors above. The build context is the repository root.
 
 Build the base image once per host before Wrangler builds this one:
@@ -46,7 +56,9 @@ container with:
 - `FILEFN_DATABASE_URL`: the Worker's `FILEFN_PROCESSING_DATABASE_URL` Secrets
   Store binding (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`),
   a direct URL of the region's account Postgres, since Hyperdrive serves only
-  Workers.
+  Workers. It must verify the server certificate (`sslmode=verify-full` or
+  `sslrootcert=system`); the Durable Object refuses to start the container
+  otherwise.
 
 The image sets `FILEFN_DATABASE`, `FILEFN_NAMESPACE=filefn`,
 `FILEFN_PROCESSING_MAX_RETRIES=3` (the consumer's `max_retries`) and

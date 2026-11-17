@@ -1,16 +1,19 @@
 import { randomUUID } from 'node:crypto';
-import { createNucleumProcessors, NUCLEUM_PROCESSOR_NAMES } from '@21n/file-processing';
+import { crc32, deflateSync } from 'node:zlib';
+import { createNucleumProcessors, detectNucleumCodecs, NUCLEUM_PROCESSOR_NAMES } from '@21n/file-processing';
 import { createFileFn, createProcessingJobHandler, type FileFnRuntime, type Processor } from '@filefn/server';
 import { memoryAdapter } from '@superfunctions/db/adapters/memory';
 import { Hono } from 'hono';
-import sharp from 'sharp';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AccountServices, CreateAccountAppInput } from '../app.js';
 import { createFileDeferredWork } from './deferred.js';
+import { loadInlineNucleumProcessors } from './inline-processors.js';
 import {
   createFileProcessingConsumer,
   createInlineFileProcessing,
   createQueuedFileProcessing,
   FILE_PROCESSING_RETRY_DELAY_SECONDS,
+  MAX_FILE_PROCESSING_RETRY_DELAY_SECONDS,
   readFileProcessingMode,
   resolveFileProcessingContainerEnv,
   runScheduledFileCleanup,
@@ -20,6 +23,25 @@ import {
 import { registerAccountFileRoutes } from './routes.js';
 import { createAccountFileFn, type AccountFileAuth } from './server.js';
 import { createAccountFileStorage } from './storage.js';
+
+const workerHooks = vi.hoisted(() => ({
+  inputs: [] as unknown[],
+  override: undefined as undefined | ((input: unknown) => unknown)
+}));
+
+// Records the infra the Worker entry builds for each invocation; a test may replace the services.
+vi.mock('../app.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../app.js')>();
+  return {
+    ...actual,
+    buildAccountServices: vi.fn((input: CreateAccountAppInput) => {
+      workerHooks.inputs.push(input);
+      return (workerHooks.override?.(input) as AccountServices | undefined) ?? actual.buildAccountServices(input);
+    })
+  };
+});
+// The container class needs the Workers runtime; the entry tests reach containers through their binding.
+vi.mock('./processing-container.js', () => ({ FileProcessingContainer: class {} }));
 
 const R2_ENDPOINT = 'https://r2.test';
 const ORIGIN = 'http://account.test';
@@ -191,9 +213,53 @@ function createFilesHarness(processing?: AccountFileProcessing, runtime?: FileFn
   };
 }
 
+/** A 1024x768 solid PNG, encoded here so the account tests need no image library. */
 async function pngBytes(): Promise<Uint8Array<ArrayBuffer>> {
-  const png = await sharp({ create: { width: 1024, height: 768, channels: 3, background: '#3366cc' } }).png().toBuffer();
+  const width = 1024;
+  const height = 768;
+  const row = Buffer.alloc(1 + width * 3);
+  for (let x = 0; x < width; x += 1) row.set([0x33, 0x66, 0xcc], 1 + x * 3);
+  const chunk = (type: string, data: Buffer) => {
+    const typed = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.byteLength);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(typed));
+    return Buffer.concat([length, typed, crc]);
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header.set([8, 2, 0, 0, 0], 8);
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header),
+    chunk('IDAT', deflateSync(Buffer.concat(Array.from({ length: height }, () => row)))),
+    chunk('IEND', Buffer.alloc(0))
+  ]);
   return new Uint8Array(png);
+}
+
+/** A one-page PDF with a line of text. */
+function pdfBytes(): Uint8Array<ArrayBuffer> {
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    '<< /Length 43 >>\nstream\nBT /F1 24 Tf 72 700 Td (Hello FileFn) Tj ET\nendstream',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
+  ];
+  let body = '%PDF-1.4\n';
+  const offsets: number[] = [];
+  objects.forEach((object, index) => {
+    offsets.push(body.length);
+    body += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xref = body.length;
+  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  body += offsets.map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('');
+  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return new Uint8Array(Buffer.from(body, 'latin1'));
 }
 
 const EXPECTED_KEY_SUFFIX = [...NUCLEUM_PROCESSOR_NAMES].sort().join(',');
@@ -277,6 +343,52 @@ describe('account Node processing (local development)', () => {
     });
     expect(ocrProvider.recognize).toHaveBeenCalledTimes(1);
   });
+
+  it('remote: leaves out what the prebuilt sharp cannot decode, so a PDF records no placeholder preview', async () => {
+    const deferred = createFileDeferredWork();
+    const log = logger();
+    // The npm prebuilt sharp: no PDF loader, HEIF only for AVIF.
+    const prebuilt = { pdf: { input: { buffer: false } }, heif: { input: { buffer: true, fileSuffix: ['.avif'] } } };
+    const processors = await loadInlineNucleumProcessors(log, prebuilt);
+    expect(processors.map((processor) => processor.name)).toEqual(['thumbnail', 'ocr']);
+    expect(processors.find((processor) => processor.name === 'ocr')?.supportedMimeTypes).not.toContain(
+      'application/pdf'
+    );
+    expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('cannot decode'), {
+      unsupported: ['pdf-preview', 'ocr of PDFs', 'heic-convert', 'ocr of HEIC photos']
+    });
+
+    const files = createFilesHarness(
+      await createInlineFileProcessing({ mode: 'remote', loadProcessors: async () => processors }),
+      deferred.runtime
+    );
+    const { fileId } = await files.upload('report.pdf', 'application/pdf', pdfBytes());
+    await deferred.settled();
+
+    expect(await files.artifacts(fileId)).toEqual([]);
+  });
+
+  it.skipIf(detectNucleumCodecs().pdf)(
+    'remote: a PDF preview the loaded sharp cannot render fails instead of recording a placeholder',
+    async () => {
+      const deferred = createFileDeferredWork();
+      const ocrProvider = { recognize: vi.fn(async () => ({ text: 'recognized', confidence: 90 })) };
+      // Every processor, as if the codecs were present.
+      const processing = await createInlineFileProcessing({
+        mode: 'remote',
+        loadProcessors: async () => createNucleumProcessors({ ocrProvider }) as Processor[]
+      });
+      const files = createFilesHarness(processing, deferred.runtime);
+
+      const { fileId } = await files.upload('report.pdf', 'application/pdf', pdfBytes());
+      await deferred.settled();
+
+      expect((await files.artifacts(fileId)).map((artifact) => artifact.kind)).not.toContain(
+        'pdf-preview-page-1-medium'
+      );
+      expect(ocrProvider.recognize).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe('processing queue consumer', () => {
@@ -331,6 +443,12 @@ describe('processing queue consumer', () => {
     ['413 (job too large)', () => new Response('{}', { status: 413 }), 'ack', undefined],
     ['503 with Retry-After', () => new Response('{}', { status: 503, headers: { 'retry-after': '120' } }), 'retry', 120],
     ['503 without Retry-After', () => new Response('{}', { status: 503 }), 'retry', FILE_PROCESSING_RETRY_DELAY_SECONDS],
+    [
+      '503 with a Retry-After over the Queues limit',
+      () => new Response('{}', { status: 503, headers: { 'retry-after': '86400' } }),
+      'retry',
+      MAX_FILE_PROCESSING_RETRY_DELAY_SECONDS
+    ],
     ['401 (token)', () => new Response('{}', { status: 401 }), 'retry', FILE_PROCESSING_RETRY_DELAY_SECONDS],
     ['500 (job threw)', () => new Response('{}', { status: 500 }), 'retry', FILE_PROCESSING_RETRY_DELAY_SECONDS]
   ] as const)('answers %s with %s', async (_label, respond, action, delaySeconds) => {
@@ -382,7 +500,7 @@ describe('processing container environment', () => {
         FILEFN_R2_ACCESS_KEY_ID: secret('access'),
         FILEFN_R2_SECRET_ACCESS_KEY: secret('secret'),
         FILEFN_R2_BUCKET: 'nucleus-files-dev-{region}',
-        FILEFN_PROCESSING_DATABASE_URL: secret('postgres://db.example/files?sslmode=require'),
+        FILEFN_PROCESSING_DATABASE_URL: secret('postgres://db.example/files?sslmode=verify-full'),
         RESEND_API_KEY: secret('not passed on')
       },
       'euwest'
@@ -392,7 +510,7 @@ describe('processing container environment', () => {
       FILEFN_R2_ACCESS_KEY_ID: 'access',
       FILEFN_R2_SECRET_ACCESS_KEY: 'secret',
       FILEFN_R2_BUCKET: 'nucleus-files-dev-euwest',
-      FILEFN_DATABASE_URL: 'postgres://db.example/files?sslmode=require',
+      FILEFN_DATABASE_URL: 'postgres://db.example/files?sslmode=verify-full',
       PORT: '8080'
     });
   });
@@ -404,6 +522,24 @@ describe('processing container environment', () => {
         'insouth'
       )
     ).rejects.toThrow('File processing container needs FILEFN_R2_SECRET_ACCESS_KEY, FILEFN_PROCESSING_DATABASE_URL');
+  });
+
+  it.each([
+    ['plaintext', 'postgres://db.example/files'],
+    ['sslmode=require (no certificate check)', 'postgres://db.example/files?sslmode=require']
+  ])('refuses to start the container with a remote database URL over %s', async (_label, url) => {
+    await expect(
+      resolveFileProcessingContainerEnv({ ...R2_ENV, FILEFN_PROCESSING_DATABASE_URL: url }, 'insouth')
+    ).rejects.toThrow(/sslmode=verify-full or sslrootcert=system/);
+  });
+
+  it.each([
+    'postgres://db.example/files?sslmode=verify-full',
+    'postgres://db.example/files?sslrootcert=system',
+    'postgres://localhost:5432/files'
+  ])('passes on the verified or loopback database URL %s', async (url) => {
+    const env = await resolveFileProcessingContainerEnv({ ...R2_ENV, FILEFN_PROCESSING_DATABASE_URL: url }, 'insouth');
+    expect(env.FILEFN_DATABASE_URL).toBe(url);
   });
 });
 
@@ -459,5 +595,92 @@ describe('scheduled file cleanup', () => {
     const retryFileDeletions = vi.fn(async () => ({ deleted: 0, kept: 0, retrying: 0 }));
     await runScheduledFileCleanup({ getFileFn: async () => null, retryFileDeletions }, logger());
     expect(retryFileDeletions).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('account Worker entry', () => {
+  const processEnv = { ...process.env };
+  const ctx = () => ({ waitUntil: vi.fn(), passThroughOnException: vi.fn(), props: {} }) as unknown as ExecutionContext;
+  const workerEnv = (env: Record<string, unknown>) => ({
+    DATABASE_URL: 'postgres://localhost:5432/account',
+    ...R2_ENV,
+    ...env
+  });
+
+  beforeEach(() => {
+    workerHooks.inputs.length = 0;
+    workerHooks.override = undefined;
+  });
+
+  afterEach(() => {
+    // The entry copies its bindings to process.env, as the Worker shim does.
+    for (const key of Object.keys(process.env)) if (!(key in processEnv)) delete process.env[key];
+    Object.assign(process.env, processEnv);
+  });
+
+  it('remote: a request scope enqueues completed uploads on the FILEFN_PROCESSING_QUEUE binding', async () => {
+    const { default: worker } = await import('../worker.js');
+    const queue = createQueue();
+    await worker.fetch(
+      new Request(`${ORIGIN}/__not-a-route`),
+      workerEnv({ FILEFN_PROCESSING_MODE: 'remote', FILEFN_PROCESSING_QUEUE: queue }),
+      ctx()
+    );
+
+    const [input] = workerHooks.inputs as CreateAccountAppInput[];
+    const processing = await input!.infra.files!.processing!();
+    const files = createFilesHarness(processing);
+    const { fileId } = await files.upload('photo.png', 'image/png', await pngBytes());
+
+    expect(queue.send).toHaveBeenCalledTimes(1);
+    expect(queue.sent[0]).toMatchObject({ fileId, mimeType: 'image/png' });
+  });
+
+  it('local: a request scope has no server processing', async () => {
+    const { default: worker } = await import('../worker.js');
+    await worker.fetch(new Request(`${ORIGIN}/__not-a-route`), workerEnv({ FILEFN_PROCESSING_MODE: 'local' }), ctx());
+
+    const [input] = workerHooks.inputs as CreateAccountAppInput[];
+    expect(await input!.infra.files!.processing!()).toBeUndefined();
+  });
+
+  it('queue() forwards each job to the region container named by the binding and acknowledges it', async () => {
+    const { default: worker } = await import('../worker.js');
+    const stub = { fetch: vi.fn(async () => Response.json({ outcome: { status: 'completed', artifactsCreated: 1 } })) };
+    const containers = { idFromName: vi.fn((name: string) => `id:${name}`), get: vi.fn(() => stub) };
+    const delivered = message({ fileId: 'f', versionId: 'v', idempotencyKey: 'k' });
+
+    await worker.queue(
+      { messages: [delivered] } as unknown as MessageBatch,
+      workerEnv({ FILEFN_PROCESSING_MODE: 'remote', FILEFN_PROCESSING_CONTAINER: containers })
+    );
+
+    expect(containers.idFromName).toHaveBeenCalledWith('file-processing');
+    expect(containers.get).toHaveBeenCalledWith('id:file-processing');
+    expect(stub.fetch).toHaveBeenCalledWith(expect.stringMatching(/\/jobs$/), expect.objectContaining({ method: 'POST' }));
+    expect(delivered.ack).toHaveBeenCalledTimes(1);
+  });
+
+  it('queue() refuses jobs without the FILEFN_PROCESSING_CONTAINER binding', async () => {
+    const { default: worker } = await import('../worker.js');
+    const delivered = message({ fileId: 'f', versionId: 'v', idempotencyKey: 'k' });
+    await expect(
+      worker.queue({ messages: [delivered] } as unknown as MessageBatch, workerEnv({ FILEFN_PROCESSING_MODE: 'remote' }))
+    ).rejects.toThrow(/FILEFN_PROCESSING_CONTAINER/);
+    expect(delivered.ack).not.toHaveBeenCalled();
+  });
+
+  it('scheduled() runs session cleanup and deletion retries in local mode, then closes the scope', async () => {
+    const { default: worker } = await import('../worker.js');
+    const cleanupExpiredSessions = vi.fn(async () => ({ deletedSessions: 1, abortedMultipart: 1 }));
+    const retryFileDeletions = vi.fn(async () => ({ deleted: 0, kept: 0, retrying: 0 }));
+    const close = vi.fn(async () => {});
+    workerHooks.override = () => ({ getFileFn: async () => ({ cleanupExpiredSessions }), retryFileDeletions, close });
+
+    await worker.scheduled({} as ScheduledController, workerEnv({ FILEFN_PROCESSING_MODE: 'local' }), ctx());
+
+    expect(cleanupExpiredSessions).toHaveBeenCalledTimes(1);
+    expect(retryFileDeletions).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledTimes(1);
   });
 });

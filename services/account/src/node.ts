@@ -11,9 +11,11 @@ import {
   type AccountFileDatabase
 } from "./files/database.js";
 import { createFileDeferredWork } from "./files/deferred.js";
+import { loadInlineNucleumProcessors } from "./files/inline-processors.js";
 import {
   createInlineFileProcessing,
-  readFileProcessingMode
+  readFileProcessingMode,
+  type AccountFileProcessing
 } from "./files/processing.js";
 import { createAccountFileStorage } from "./files/storage.js";
 import { createAccountLookupStore } from "./lookup/dynamodb.js";
@@ -25,6 +27,7 @@ const logger = createLogger();
 const database = createNodeDatabase();
 let syncDatabase: ReturnType<typeof createNodeSyncDatabase> | undefined;
 let fileDatabase: AccountFileDatabase | undefined;
+let inlineProcessing: Promise<AccountFileProcessing | undefined> | undefined;
 const observability = createAccountObservability(logger, undefined, {
   requestContext: createAsyncLocalRequestContext()
 });
@@ -50,12 +53,16 @@ const services = buildAccountServices({
       // Without a queue, remote processing runs in this process after the
       // response, tracked through `defer` so shutdown waits for it.
       runtime: fileDeferredWork.runtime,
-      processing: () =>
-        createInlineFileProcessing({
+      processing: () => {
+        inlineProcessing ??= createInlineFileProcessing({
           mode: readFileProcessingMode(process.env.FILEFN_PROCESSING_MODE),
-          loadProcessors: async () =>
-            (await import("@21n/file-processing")).createNucleumProcessors()
-        })
+          loadProcessors: () => loadInlineNucleumProcessors(logger)
+        }).catch((error: unknown) => {
+          inlineProcessing = undefined;
+          throw error;
+        });
+        return inlineProcessing;
+      }
     }
   },
   deployment: {

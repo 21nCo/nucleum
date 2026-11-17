@@ -18,7 +18,7 @@ export const PDF_PREVIEW_KIND = 'pdf-preview-page-1-medium';
 /** Kind of a HEIC photo converted to PNG; the device makes the same kind. */
 export const CONVERTED_KIND = 'converted';
 
-/** Kind of the text recognized in an image or a PDF. */
+/** Kind of the text recognized in an image (HEIC photos through their PNG) or a PDF. */
 export const OCR_TEXT_KIND = 'ocr-text';
 
 export const HEIC_MIME_TYPES = ['image/heic', 'image/heif'];
@@ -34,7 +34,11 @@ export const NUCLEUM_PROCESSOR_DESCRIPTORS = Object.freeze([
   Object.freeze({ name: 'thumbnail', supportedMimeTypes: THUMBNAIL_MIME_TYPES, artifactKinds: [THUMBNAIL_KIND] }),
   Object.freeze({ name: 'pdf-preview', supportedMimeTypes: PDF_MIME_TYPES, artifactKinds: [PDF_PREVIEW_KIND] }),
   Object.freeze({ name: 'heic-convert', supportedMimeTypes: HEIC_MIME_TYPES, artifactKinds: [CONVERTED_KIND, THUMBNAIL_KIND] }),
-  Object.freeze({ name: 'ocr', supportedMimeTypes: [...OCR_IMAGE_MIME_TYPES, ...PDF_MIME_TYPES], artifactKinds: [OCR_TEXT_KIND] })
+  Object.freeze({
+    name: 'ocr',
+    supportedMimeTypes: [...OCR_IMAGE_MIME_TYPES, ...HEIC_MIME_TYPES, ...PDF_MIME_TYPES],
+    artifactKinds: [OCR_TEXT_KIND]
+  })
 ]);
 
 export const NUCLEUM_PROCESSOR_NAMES = Object.freeze(NUCLEUM_PROCESSOR_DESCRIPTORS.map((descriptor) => descriptor.name));

@@ -10,6 +10,7 @@ import {
   type ProcessingQueueMessage,
   type Processor
 } from "@filefn/server";
+import { requireSecureRemotePostgresUrl } from "../db/postgres-security.js";
 import { FILEFN_R2_ENV_KEYS, readAccountFileStorageConfig } from "./storage.js";
 
 /**
@@ -39,7 +40,8 @@ export const FILE_PROCESSING_RETRY_DELAY_SECONDS = 30;
 export const FILE_PROCESSING_CONTAINER_PORT = 8080;
 
 const CONTAINER_JOBS_URL = "http://file-processing.container/jobs";
-const MAX_RETRY_DELAY_SECONDS = 86_400;
+/** Longest delay Cloudflare Queues accepts for `message.retry` (12 hours). */
+export const MAX_FILE_PROCESSING_RETRY_DELAY_SECONDS = 43_200;
 
 /**
  * Reads `FILEFN_PROCESSING_MODE`. Unset or blank is `local`; any other value
@@ -141,7 +143,8 @@ export interface FileProcessingLogger {
  * - 200 with an outcome: acknowledged, unless the outcome is `retry`, which
  *   is retried after `FILE_PROCESSING_RETRY_DELAY_SECONDS`;
  * - 400 or 413: acknowledged and logged, since sending it again cannot work;
- * - 503: retried after its `Retry-After` seconds;
+ * - 503: retried after its `Retry-After` seconds, at most the 12 hours
+ *   Cloudflare Queues allows;
  * - any other answer, an unreadable 200 body or an unreachable container:
  *   retried after `FILE_PROCESSING_RETRY_DELAY_SECONDS`.
  *
@@ -219,7 +222,7 @@ function retryAfterSeconds(value: string | null): number {
   if (!Number.isSafeInteger(seconds) || seconds < 1) {
     return FILE_PROCESSING_RETRY_DELAY_SECONDS;
   }
-  return Math.min(seconds, MAX_RETRY_DELAY_SECONDS);
+  return Math.min(seconds, MAX_FILE_PROCESSING_RETRY_DELAY_SECONDS);
 }
 
 function jobReference(body: unknown): Record<string, unknown> | undefined {
@@ -237,8 +240,10 @@ const PROCESSING_DATABASE_URL_KEY = "FILEFN_PROCESSING_DATABASE_URL";
  * region's R2 credentials and bucket (`FILEFN_R2_*`, with `{region}` in the
  * bucket replaced by `regionId`) and the region's FileFn database URL
  * (`FILEFN_PROCESSING_DATABASE_URL`, passed as `FILEFN_DATABASE_URL`). Each
- * value is a plain variable or a Secrets Store binding. A missing value
- * throws, so the container never starts without its storage or database.
+ * value is a plain variable or a Secrets Store binding. A missing value, or
+ * a database URL that does not verify a remote server's certificate
+ * (`sslmode=verify-full` or `sslrootcert=system`), throws, so the container
+ * never starts without its storage or over an unverified connection.
  */
 export async function resolveFileProcessingContainerEnv(
   env: Record<string, unknown>,
@@ -254,6 +259,7 @@ export async function resolveFileProcessingContainerEnv(
   if (missing.length > 0 || !storage) {
     throw new Error(`File processing container needs ${missing.join(", ")}`);
   }
+  requireSecureRemotePostgresUrl(values[PROCESSING_DATABASE_URL_KEY]!);
   return {
     FILEFN_R2_ACCOUNT_ID: storage.accountId,
     FILEFN_R2_ACCESS_KEY_ID: storage.accessKeyId,
