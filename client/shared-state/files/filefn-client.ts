@@ -51,6 +51,7 @@ let syncGeneration = 0;
 let latestSync: Promise<void> = Promise.resolve();
 let ownerEpoch = 0;
 let ownerUserId: string | undefined;
+const pendingDeleteDrains = new Map<string, Promise<void>>();
 
 /**
  * Returns the cloud account a FileFn client belongs to, or null for a
@@ -211,7 +212,8 @@ function tearDownFileFnClient() {
 /**
  * Creates an account's FileFn client. The SDK's HEIC preprocessing is off, so
  * the original keeps its bytes and the processing mode owns conversion. The
- * client sends the account's pending deletes at its authority.
+ * client sends the account's pending deletes at its authority now and on
+ * every reconnect until it is torn down.
  */
 async function createAccountFileFnClient(
   userId: string,
@@ -238,9 +240,9 @@ async function createAccountFileFnClient(
   const guarded = guardFileFnClient(client, teardown);
   if (!teardown.aborted) {
     startOfflineReplayWhenOwner(userId, client, teardown);
-    replayPendingDeletes(userId, baseUrl, guarded).catch((error: unknown) => {
-      logger.error({ at: "filefn.client.pendingDelete", error });
-    });
+    const drain = () => void drainPendingDeletes(userId, baseUrl, guarded);
+    drain();
+    globalThis.addEventListener?.("online", drain, { signal: teardown });
   }
   return guarded;
 }
@@ -349,8 +351,9 @@ export async function confirmFileFnOwner(owner: FileFnOwner): Promise<void> {
 /**
  * Deletes a file that no record will reference through the owner's client.
  * When the owner's generation has ended or the delete fails, it records the
- * delete in the owner's private origin storage, which sign-out keeps, and the
- * owner's next client of the same authority sends it, so the file is never
+ * delete in the owner's private origin storage, which sign-out keeps. The
+ * owner's client of the same authority sends it at once when it is current,
+ * else when it is created, and again on every reconnect, so the file is never
  * deleted through another account.
  */
 export async function discardFileFnFile(
@@ -368,6 +371,30 @@ export async function discardFileFnFile(
   const dir = await getPendingDeleteDir(owner.userId, owned.baseUrl, true);
   if (!dir) throw new Error("No device storage records the pending delete");
   await dir.getFileHandle(encodeURIComponent(fileId), { create: true });
+  const entry = currentEntry;
+  if (entry?.userId === owner.userId && entry.baseUrl === owned.baseUrl) {
+    const client = await entry.client;
+    await drainPendingDeletes(owner.userId, owned.baseUrl, client);
+  }
+}
+
+/**
+ * Sends the account's pending deletes at an authority through its client,
+ * one drain at a time per account and authority.
+ */
+function drainPendingDeletes(
+  userId: string,
+  baseUrl: string,
+  client: FileFnClient
+): Promise<void> {
+  const key = `${userId}:${baseUrl}`;
+  const drain = (pendingDeleteDrains.get(key) ?? Promise.resolve())
+    .then(() => replayPendingDeletes(userId, baseUrl, client))
+    .catch((error: unknown) => {
+      logger.error({ at: "filefn.client.pendingDelete", error });
+    });
+  pendingDeleteDrains.set(key, drain);
+  return drain;
 }
 
 /** Returns the directory of an account's pending deletes at an authority. */
@@ -395,7 +422,8 @@ async function getPendingDeleteDir(
 
 /**
  * Sends the account's pending deletes at the client's authority, dropping
- * each one that succeeds or finds the file already gone.
+ * each one that succeeds or finds the file already gone and keeping each
+ * other failure for the next drain.
  */
 async function replayPendingDeletes(
   userId: string,
@@ -411,14 +439,17 @@ async function replayPendingDeletes(
     names.push(name);
   }
   for (const name of names) {
+    const fileId = decodeURIComponent(name);
     try {
-      await client.deleteFile(decodeURIComponent(name));
+      await client.deleteFile(fileId).catch((error: unknown) => {
+        if (!(error instanceof FileFnHttpError && error.status === 404)) {
+          throw error;
+        }
+      });
+      await dir.removeEntry(name);
     } catch (error) {
-      if (!(error instanceof FileFnHttpError && error.status === 404)) {
-        throw error;
-      }
+      logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
     }
-    await dir.removeEntry(name);
   }
 }
 

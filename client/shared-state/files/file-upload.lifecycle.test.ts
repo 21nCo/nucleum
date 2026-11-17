@@ -35,7 +35,8 @@ const sdk = vi.hoisted(() => ({
   artifacts: [] as UploadArtifactInput[],
   deleted: [] as string[],
   configs: [] as unknown[],
-  isRealSdk: false
+  isRealSdk: false,
+  failedDeletes: 0
 }));
 vi.mock("@filefn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@filefn/client")>();
@@ -68,6 +69,10 @@ vi.mock("@filefn/client", async (importOriginal) => {
           >;
         },
         deleteFile: async (fileId) => {
+          if (sdk.failedDeletes > 0) {
+            sdk.failedDeletes -= 1;
+            throw new Error("network down");
+          }
           sdk.deleted.push(fileId);
         },
         getPendingLocalDescriptor: async () => null
@@ -225,6 +230,7 @@ beforeEach(async () => {
   sdk.deleted = [];
   sdk.configs = [];
   sdk.isRealSdk = false;
+  sdk.failedDeletes = 0;
 });
 
 afterEach(async () => {
@@ -415,6 +421,46 @@ describe("uploadFileV2 owned by the account that started it", () => {
 
     account.set(cloudAccount("user-a", "useast"));
     await vi.waitFor(() => expect(sdk.deleted).toContain(ownerFileId));
+    expect(recordInserts.inserts).toBe(0);
+  });
+
+  it("deletes the file through the owner's replacement client that already exists", async () => {
+    installFakeOpfs();
+    account.set(cloudAccount("user-a", "useast"));
+    const { upload, finishProcessing } =
+      await startUploadWithPendingProcessing();
+
+    account.set(signedOut);
+    account.set(cloudAccount("user-a", "useast"));
+    await vi.waitFor(() => expect(sdk.baseUrls).toHaveLength(2));
+    finishProcessing();
+
+    await expect(upload).rejects.toMatchObject({ name: "AbortError" });
+    await vi.waitFor(() =>
+      expect(sdk.deleted).toEqual([sdk.uploads[0].fileId])
+    );
+  });
+
+  it("retries a failed delete on reconnect through the live client", async () => {
+    installFakeOpfs();
+    vi.stubEnv("VITE_FILE_PROCESSING_MODE", "local");
+    codec.convertHeicToPng.mockRejectedValueOnce(new Error("decoder failed"));
+    sdk.failedDeletes = 2;
+    account.set(cloudAccount("user-a", "useast"));
+
+    await expect(
+      fileUpload.uploadFileV2(
+        "image/heic",
+        "IMG_2.heic",
+        new Blob(["heic bytes"], { type: "image/heic" })
+      )
+    ).rejects.toThrow();
+    expect(sdk.deleted).toEqual([]);
+
+    globalThis.dispatchEvent(new Event("online"));
+    await vi.waitFor(() =>
+      expect(sdk.deleted).toEqual([sdk.uploads[0].fileId])
+    );
     expect(recordInserts.inserts).toBe(0);
   });
 
