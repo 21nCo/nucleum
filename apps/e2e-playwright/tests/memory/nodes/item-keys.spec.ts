@@ -3,12 +3,64 @@ import type { Page, TestInfo } from "@playwright/test";
 import { DatafnSeedTransport } from "../../fixtures/datafn-seed";
 import { expect, test, type E2ESeed } from "../../fixtures/e2e-test";
 import { ensureInAppOnHome, LibraryTab } from "../../utils/helpers";
+import { resolveRepoFsImportPath } from "../../utils/repo-fs";
 import {
   blockExternalAuthRequests,
   openNodesLibrary
 } from "../memory-test-helpers";
 
 let e2eSeed: E2ESeed;
+
+const spaceStorePath = resolveRepoFsImportPath(
+  "client/features/spaces/space.store.ts"
+);
+const navigationPath = resolveRepoFsImportPath(
+  "client/shell/navigation/navigation.ts"
+);
+const datafnStorePath = resolveRepoFsImportPath(
+  "client/datafn/datafn.store.ts"
+);
+
+/**
+ * Whether the app server serves repo source modules, as the Vite dev server
+ * does; a static build answers those imports with HTML.
+ */
+async function isRepoSourceServed(page: Page) {
+  const response = await page.request.get(spaceStorePath);
+  return (
+    response.ok() &&
+    /javascript/.test(response.headers()["content-type"] ?? "")
+  );
+}
+
+/** Inserts an empty side nav space and opens it as the page. */
+async function openEmptySpace(page: Page) {
+  const spaceId = await page.evaluate(
+    async ({ spaceStorePath, navigationPath }) => {
+      const { insertSpace } = await import(spaceStorePath);
+      const { navigation } = await import(navigationPath);
+      const id = await insertSpace({
+        label: `E2E item keys space ${Date.now()}`,
+        items: []
+      });
+      if (id) navigation.openResource(id, "page");
+      return id as string | undefined;
+    },
+    { spaceStorePath, navigationPath }
+  );
+  expect(spaceId).toBeTruthy();
+  return spaceId as string;
+}
+
+async function deleteSpace(page: Page, spaceId: string) {
+  await page.evaluate(
+    async ({ datafnStorePath, spaceId }) => {
+      const { datafn } = await import(datafnStorePath);
+      await datafn.space.mutate({ operation: "delete", id: spaceId });
+    },
+    { datafnStorePath, spaceId }
+  );
+}
 
 const highlighted = (page: Page) =>
   page.locator("[id^='thumbnail-'][data-item-highlighted]");
@@ -173,6 +225,39 @@ test.describe("nodes - item keys", () => {
     await expect(page.getByText(/Selected: 1 node/i)).toBeVisible({
       timeout: 10_000
     });
+  });
+
+  test("arrow keys on a menu's option radios pick the option, and Escape closes the menu", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    test.skip(
+      !(await isRepoSourceServed(page)),
+      "The space setup imports repo source modules, which only the Vite dev server serves"
+    );
+    await ensureInAppOnHome(page);
+    const spaceId = await openEmptySpace(page);
+    try {
+      const trigger = page.getByTestId("space-actions-menu");
+      await trigger.click({ timeout: 20_000 });
+      const menu = page.locator("#spaceContextZoneMenu");
+      const sideNav = menu.locator("[role='radio'][data-option-value='sidenav']");
+      const wall = menu.locator("[role='radio'][data-option-value='wall']");
+      await expect(sideNav).toHaveAttribute("aria-checked", "true");
+
+      await sideNav.focus();
+      await page.keyboard.press("ArrowDown");
+      await expect(wall).toHaveAttribute("aria-checked", "true");
+      await expect(wall).toBeFocused();
+      await page.keyboard.press("ArrowUp");
+      await expect(sideNav).toHaveAttribute("aria-checked", "true");
+      await expect(sideNav).toBeFocused();
+
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeHidden();
+    } finally {
+      await deleteSpace(page, spaceId);
+    }
   });
 
   test("arrow keys, Space and Enter work in a node collection's list", async ({

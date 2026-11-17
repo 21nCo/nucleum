@@ -1,3 +1,57 @@
+<script lang="ts" module>
+  import { isTextElement } from "@21n/ui/actions/interaction-dom";
+
+  /** Menus shown now, in the order they opened. */
+  const openMenus: HTMLElement[] = [];
+
+  /** Controls that use the arrow keys themselves. */
+  const arrowControlSelector = [
+    "select",
+    "audio[controls]",
+    "video[controls]",
+    "[role='radiogroup']",
+    "[role='radio']",
+    "[role='listbox']",
+    "[role='slider']",
+    "[role='spinbutton']",
+    "[role='combobox']",
+    "[role='tree']",
+    "[role='grid']",
+    "[role='tablist']"
+  ].join(", ");
+
+  /** Shown, and not inside an inert or hidden layer such as a covered page. */
+  function isReachableMenu(menu: HTMLElement) {
+    return (
+      menu.isConnected &&
+      menu.getClientRects().length > 0 &&
+      !menu.closest("[inert], [aria-hidden='true']")
+    );
+  }
+
+  /**
+   * The menu that owns a key: the menu the target sits in, else the most
+   * recently opened reachable menu. A target in a secondary popover, such as
+   * an option submenu, is not in a menu, so it counts as the latter.
+   */
+  function resolveKeyOwner(target: EventTarget | null) {
+    const container =
+      target instanceof Element
+        ? openMenus.find((menu) => menu.contains(target))
+        : undefined;
+    if (container) return container;
+    for (let index = openMenus.length - 1; index >= 0; index--) {
+      if (isReachableMenu(openMenus[index])) return openMenus[index];
+    }
+    return undefined;
+  }
+
+  function isArrowControl(target: EventTarget | null) {
+    if (isTextElement(target)) return true;
+    return target instanceof Element && !!target.closest(arrowControlSelector);
+  }
+</script>
+
 <script lang="ts">
   import type { IContextMenuGroup, IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -9,7 +63,6 @@
   import ContextMenuOptionGroup from "@21n/ui/elements/contextMenu/ContextMenuOptionGroup.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import view from "@21n/ui/environment/view.store";
-  import { isTextElement } from "@21n/ui/actions/interaction-dom";
   let {
     menuResolver,
     size = Size.md,
@@ -31,8 +84,15 @@
   } = $props();
   let menuRef = $state<HTMLDivElement>();
   $effect(() => {
+    const node = menuRef;
+    if (!node) return;
+    openMenus.push(node);
     window.addEventListener("keydown", onWindowKeydown, true);
-    return () => window.removeEventListener("keydown", onWindowKeydown, true);
+    return () => {
+      window.removeEventListener("keydown", onWindowKeydown, true);
+      const index = openMenus.indexOf(node);
+      if (index >= 0) openMenus.splice(index, 1);
+    };
   });
   const menu = $derived<IContextMenuGroup[]>(menuResolver ? menuResolver() : []);
 
@@ -51,20 +111,26 @@
    * Moves focus through the menu items with Up and Down while the menu is
    * shown, and closes it on Escape. Enter and Space activate the focused item.
    * It listens on the window in the capture phase, so the keys reach the menu
-   * before a drawer that keeps its keys inside or closes on Escape.
+   * before a drawer that keeps its keys inside or closes on Escape. Only the
+   * front menu takes them: the menu holding the focus, else the most recently
+   * opened reachable one. Arrows from a control that uses them, such as an
+   * option group's radios or a text field, stay with that control.
    */
   function onWindowKeydown(event: KeyboardEvent) {
-    if (!menuRef || menuRef.getClientRects().length === 0) return;
+    if (!menuRef || !isReachableMenu(menuRef)) return;
     if (event.defaultPrevented || event.metaKey || event.ctrlKey) return;
     if (event.altKey) return;
-    if (event.key === "Escape" && onClose) {
+    const isArrow = event.key === "ArrowDown" || event.key === "ArrowUp";
+    if (event.key !== "Escape" && !isArrow) return;
+    if (resolveKeyOwner(event.target) !== menuRef) return;
+    if (event.key === "Escape") {
+      if (!onClose) return;
       event.preventDefault();
       event.stopPropagation();
       onClose();
       return;
     }
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    if (isTextElement(event.target)) return;
+    if (isArrowControl(event.target)) return;
     const buttons = resolveMenuButtons();
     if (buttons.length === 0) return;
     const step = event.key === "ArrowDown" ? 1 : -1;
