@@ -532,7 +532,7 @@ describe('processing container environment', () => {
   ])('refuses to start the container with a remote database URL over %s', async (_label, url) => {
     await expect(
       resolveFileProcessingContainerEnv({ ...R2_ENV, FILEFN_PROCESSING_DATABASE_URL: url }, 'insouth')
-    ).rejects.toThrow(/sslmode=verify-full or sslrootcert=system/);
+    ).rejects.toThrow(/sslmode=verify-full, ssl=verify-full or sslrootcert=system/);
   });
 
   it.each([
