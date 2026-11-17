@@ -1,0 +1,23 @@
+apps/e2e-playwright/tests/memory/nodes/item-keys.spec.ts
+  s_0b0647615a23f7::t_bea251fbe00473 7,264-308
+client/ui/actions/popover.action.ts
+  s_0b0647615a23f7::t_d2058cf6801f21 475-480
+client/ui/elements/contextMenu/ContextMenu.svelte
+  s_0b0647615a23f7::t_8cbc506cf48518 74-75,85-86,130-131,134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1184648a4dfc680395cbc7e70ffd6550e110d9d5",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+client/surfaces/settings/appearance/AppStyleSelector.svelte
+  s_f058f999ab46b7::t_10f407d55130a0 30-33
+client/surfaces/settings/appearance/AppStyleSelectorItem.svelte
+  s_f058f999ab46b7::t_18f34138d929f8 104-105,107-110
+  s_f058f999ab46b7::t_3dd486c914bfdc 32,36-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b930a9b84eeead373caf4d65ee1346f2ad56782",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

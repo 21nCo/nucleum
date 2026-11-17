@@ -1,0 +1,23 @@
+client/surfaces/library/records/Records.svelte
+  s_0b0647615a23f7::t_1b118f1fdc39a7 464
+client/ui/actions/item-navigation.test.ts
+  s_0b0647615a23f7::t_3ab337cf7a8d58 542,546-550
+client/ui/actions/itemNavigation.action.ts
+  s_0b0647615a23f7::t_676340a5756089 392-403,453
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ee9957d8dea005bba7edcbd0f6832769b3a66d8e",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

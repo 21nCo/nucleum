@@ -1,0 +1,29 @@
+client/app.css
+  s_f058f999ab46b7::t_d36cd820f1a777 245-246,249-250
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_b96b25e5829cf6 256
+client/shell/layers/themeLayer/ThemeLayer.svelte
+  s_f058f999ab46b7::t_5956490bf48d3a 347-348
+client/shell/topNav/TopNav.svelte
+  s_f058f999ab46b7::t_5d319f6f3910e0 386
+client/ui/elements/InputBaseElement.svelte
+  s_f058f999ab46b7::t_750235ec0e00e7 26,42-43,91-92
+client/ui/elements/input/TextInput.svelte
+  s_f058f999ab46b7::t_98ab60aac91d36 40,86-87,380
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8fa5422ad5095bd354d995b087f968d74adb51ea",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+client/ui/elements/feedback/animations/ResourcePageSkeleton.svelte
+  s_f058f999ab46b7::t_aca8ee81baf275 1-81
+client/features/collections/Collection.svelte
+  s_f058f999ab46b7::t_aea3371f5cee8f 2,12-15,650,899-905
+client/features/collections/collection.store.ts
+  s_f058f999ab46b7::t_7dc953fc8ed3e0 2,523-524,558-563,565-567,569-571,573-578,580,584-611
+client/features/focus/goals/Goal.svelte
+  s_f058f999ab46b7::t_aaf3257c105fe2 2,40-43,77-79,190,201,261-265
+client/features/focus/goals/goal.store.ts
+  s_f058f999ab46b7::t_a9a01bf0f62031 2,424-443,445-449,456
+client/features/memory/node/Node.svelte
+  s_f058f999ab46b7::t_a831340f5c30a5 2,181-185,207
+client/features/memory/node/node.store.ts
+  s_f058f999ab46b7::t_9e1906c16eaaef 6,1194-1196,1272-1291,1293-1301,1303-1309,1311-1323,1336-1338,1342-1348,1349,1351-1361
+client/features/records/resource-menu.test.ts
+  s_f058f999ab46b7::t_c80acd4568a62c 1-39
+client/features/records/resource-menu.ts
+  s_f058f999ab46b7::t_a52fa7b5eeeda6 1-62
+client/features/spaces/SpaceBody.svelte
+  s_f058f999ab46b7::t_fbe3fffef62d14 2,205-207,222-225,273
+client/features/spaces/SpaceContextZone.svelte
+  s_f058f999ab46b7::t_4b7fb1380b4857 39-40,44-55,57
+client/features/spaces/space-page-menu.test.ts
+  s_f058f999ab46b7::t_eeb4c9f9d33efe 22-27,65-66,69,73-95
+client/features/spaces/space-page-menu.ts
+  s_f058f999ab46b7::t_13eff68b8bb38d 3,6,25-26,36-39,45-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3757c2a862d158b042d56e0a790c568006908763",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

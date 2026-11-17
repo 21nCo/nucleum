@@ -1,0 +1,27 @@
+client/features/spaces/SpaceBody.context-views.test.ts
+  s_f058f999ab46b7::t_42dfbd415876ea 47-48,51-70,83-86,90
+client/features/spaces/SpaceSideNav.selection-memory.test.ts
+  s_f058f999ab46b7::t_79cf414e93147d 11-14,72-83,142,144-146,154,163,165,178
+client/shell/shortcuts/ShortcutRunner.context-views.test.ts
+  s_f058f999ab46b7::t_62571b9cd6b8b7 22-25,29,43-62
+client/shell/shortcuts/ShortcutRunner.covered-pane-views.test.ts
+  s_f058f999ab46b7::t_d9d12caa94a474 9-12,16
+client/shell/shortcuts/ShortcutRunner.sub-views.test.ts
+  s_f058f999ab46b7::t_157647ec60c9e5 23-26,30,44-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "208ffaa7a59ce338e22496249dc6656633947f45",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

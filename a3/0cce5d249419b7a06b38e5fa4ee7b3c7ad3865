@@ -1,0 +1,27 @@
+client/app.css
+  s_f058f999ab46b7::t_3d8a77168738f4 243-244,247-248,251-252
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_cbc29b630c5476 247-251
+client/shell/topNav/TopBarCloseButton.svelte
+  s_f058f999ab46b7::t_fd21c7fa990e8a 30,33-34
+client/shell/topNav/TopNavLeftLogo.svelte
+  s_f058f999ab46b7::t_7c325a5c4eec42 64
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_f058f999ab46b7::t_91e21f9c3fdcc3 56,236,280
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a30cce5d249419b7a06b38e5fa4ee7b3c7ad3865",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

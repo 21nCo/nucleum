@@ -1,0 +1,21 @@
+client/ui/actions/item-navigation.test.ts
+  s_b66d0e9dd4fae0::t_80bce8b3bcf625 440-522
+client/ui/elements/contextMenu/ContextMenu.svelte
+  s_b66d0e9dd4fae0::t_5beb4e988b1663 77-83,85,89-90,256,266-268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c86fc0282ef6b359fce9125104b0294b15e1b3cd",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

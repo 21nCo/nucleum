@@ -1,0 +1,45 @@
+client/features/collections/Collection.svelte
+  s_f058f999ab46b7::t_2608c23b717162 642-643,724-726,730
+client/features/collections/CollectionTitleBar.svelte
+  s_f058f999ab46b7::t_f68add761d1f57 69-70,85-89,104-130,224-246,249-250,251-252,257-259,261-262,269-274,276-277,287,293,298-299,308,310-314,370-374,387,604
+client/features/spaces/SpaceAddPanel.svelte
+  s_f058f999ab46b7::t_ec77927c102a63 35,55-56,170,185
+client/features/spaces/SpaceNavItem.svelte
+  s_f058f999ab46b7::t_4fe9e59e8fc68f 15-18,53,93-95,118-147,192-194,263,273-275,286-293,332,339,341,348-350
+client/features/spaces/SpaceNavItem.test.ts
+  s_f058f999ab46b7::t_953f3eef2fb088 20-32,36-39,50-53
+client/features/spaces/SpaceSideNav.svelte
+  s_f058f999ab46b7::t_5e92d7a365fec5 330-335,433-435,511-512
+client/features/spaces/space-item-create.ts
+  s_f058f999ab46b7::t_7a350d89697e28 1-23,25-83
+client/features/spaces/space-nav-item.test.setup.ts
+  s_f058f999ab46b7::t_8c5f145a5037f8 74
+client/features/spaces/space-nav.type.ts
+  s_f058f999ab46b7::t_5a12206b02a525 43-44
+client/features/spaces/space.actions.ts
+  s_f058f999ab46b7::t_1728c4b09c24d8 94-101
+client/features/spaces/space.store.ts
+  s_f058f999ab46b7::t_2750eb0214b74e 27-28,386-408
+client/features/spaces/space.type.ts
+  s_f058f999ab46b7::t_babf4e4c40cc42 21-22,46-52,69-72
+client/features/spaces/space.utils.ts
+  s_f058f999ab46b7::t_e951efe73ba9a0 283-295
+client/features/spaces/wall/space-wall.utils.ts
+  s_f058f999ab46b7::t_c06f30ff4dab17 31-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "14180b0cf30e6800ecf852b5f776fa2ccb466b4b",
+  "prompts": {},
+  "sessions": {
+    "s_f058f999ab46b7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fb025346-b9a2-48b2-b8e1-3df0ee912478",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
