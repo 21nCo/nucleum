@@ -49,8 +49,6 @@ let currentEntry: FileFnClientEntry | null = null;
 let isBoundToAccount = false;
 let syncGeneration = 0;
 let latestSync: Promise<void> = Promise.resolve();
-/** Whether the latest sync is still reading the stored region. */
-let isAuthorityPending = false;
 let ownerEpoch = 0;
 let ownerUserId: string | undefined;
 const pendingDeleteDrains = new Map<string, Promise<void>>();
@@ -168,13 +166,11 @@ function syncFileFnClient(value: UserAccount | null | undefined) {
   }
   if (currentEntry?.userId !== scope?.userId) tearDownFileFnClient();
   if (!scope?.region) {
-    isAuthorityPending = Boolean(scope);
     latestSync = scope
       ? bindToStoredRegion(scope.userId, generation)
       : Promise.resolve();
     return;
   }
-  isAuthorityPending = false;
   bindFileFnClient(scope.userId, scope.region);
   latestSync = Promise.resolve();
 }
@@ -183,7 +179,6 @@ function bindToStoredRegion(userId: string, generation: number) {
   const sync = clientStorage.get(ClientStorageKey.REGION).then((stored) => {
     if (generation === syncGeneration) {
       bindFileFnClient(userId, stored ?? "insouth");
-      isAuthorityPending = false;
     }
   });
   sync.catch((error: unknown) => {
@@ -355,14 +350,15 @@ export async function captureSettledFileFnOwner(): Promise<FileFnOwner | null> {
 
 /**
  * Returns, without waiting, whether the owner's generation is current: the
- * owner's account is still signed in, no sign-out, other account or other
- * authority has torn its client down, and no stored region read that could
- * change the authority is pending. A caller that checks it in the same
- * synchronous step as it hands out a result never hands it to another owner.
+ * owner's account is still signed in and no sign-out, other account or other
+ * authority has torn its client down. A stored region read still pending does
+ * not end the generation; a read that finds another authority does, once it
+ * binds. A caller that checks it in the same synchronous step as it hands out
+ * a result, after confirmFileFnOwner settled the authority, never hands it to
+ * another owner.
  */
 export function isFileFnOwnerCurrent(owner: FileFnOwner): boolean {
   return (
-    !isAuthorityPending &&
     owner.epoch === ownerEpoch &&
     resolveFileFnAccountScope(account.get())?.userId === owner.userId
   );

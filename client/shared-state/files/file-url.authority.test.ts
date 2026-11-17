@@ -12,6 +12,8 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 // account's current authority binds, not a stub of it.
 const { clearFileUrlCache, resolveFileUrl } =
   await import("@nucleum/shared-state/files/file-url");
+const { assertFileFnOwner, captureFileFnOwner, captureSettledFileFnOwner } =
+  await import("@nucleum/shared-state/files/filefn-client");
 
 const ACCOUNT_URL_TEMPLATE = "https://account-{region}-dev.nucleum.app";
 
@@ -200,6 +202,38 @@ describe("resolveFileUrl across FileFn authorities", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     }
   );
+
+  it("returns every concurrent lookup's URL while the authority stays", async () => {
+    serveRenders();
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccountWithoutRegion("user-a"));
+    await resolveFileUrl("file-1", "full");
+
+    const urls = await Promise.all([
+      resolveFileUrl("file-1", "full"),
+      resolveFileUrl("file-2", "full"),
+      resolveFileUrl("file-1", "thumbnail"),
+      resolveFileUrl("file-1", "full")
+    ]);
+
+    expect(urls).toEqual([
+      "https://account-useast-dev.nucleum.app/r2/file-1?X-Amz-Expires=900",
+      "https://account-useast-dev.nucleum.app/r2/file-2?X-Amz-Expires=900",
+      "https://account-useast-dev.nucleum.app/r2/file-1?X-Amz-Expires=900",
+      "https://account-useast-dev.nucleum.app/r2/file-1?X-Amz-Expires=900"
+    ]);
+  });
+
+  it("keeps an owner current while a re-sync of the same authority reads the stored region", async () => {
+    await clientStorage.set(ClientStorageKey.REGION, "useast");
+    account.set(cloudAccountWithoutRegion("user-a"));
+    const owner = await captureSettledFileFnOwner();
+    if (!owner) throw new Error("expected a FileFn owner");
+
+    expect(captureFileFnOwner()).toEqual(owner);
+
+    expect(() => assertFileFnOwner(owner)).not.toThrow();
+  });
 
   it("still serves a repeated lookup from the cache while the authority stays", async () => {
     const fetchMock = serveRenders();
