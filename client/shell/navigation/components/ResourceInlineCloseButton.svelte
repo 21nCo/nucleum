@@ -2,7 +2,10 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import Button from "@21n/ui/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import {
+    ButtonStyle,
+    ButtonVariant
+  } from "@21n/ui/elements/button/button.type";
 
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -11,18 +14,24 @@
     id,
     accessMode,
     parentBgIndex = 1,
-    additionalAccessModes = []
+    additionalAccessModes = [],
+    onClose = undefined
   }: {
     id: string;
     accessMode?: AccessMode;
     parentBgIndex?: number;
     additionalAccessModes?: AccessMode[];
+    /**
+     * Closes the resource within its host page, such as an item shown in a
+     * space; when set, the button shows in any mode and calls it instead.
+     */
+    onClose?: () => void;
   } = $props();
   const elementIdSuffix = generateSimpleRandomId();
   const elementId = $derived(`${id}-closeButton-${elementIdSuffix}`);
 </script>
 
-{#if accessMode === AccessMode.BESIDE_BASE || accessMode === AccessMode.BESIDE_PAGE || accessMode === AccessMode.SHEET || (accessMode !== undefined && additionalAccessModes.includes(accessMode))}
+{#if onClose || accessMode === AccessMode.BESIDE_BASE || accessMode === AccessMode.BESIDE_PAGE || accessMode === AccessMode.SHEET || (accessMode !== undefined && additionalAccessModes.includes(accessMode))}
   <div
     class="flex justify-center items-center"
     id={elementId}
@@ -37,7 +46,8 @@
       {parentBgIndex}
       size={Size.sm}
       onclick={() => {
-        navigation.closeResource({ id, accessMode });
+        if (onClose) onClose();
+        else navigation.closeResource({ id, accessMode });
       }}
     />
   </div>

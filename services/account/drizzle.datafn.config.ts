@@ -16,7 +16,7 @@ if (!rootCa) {
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/db/generated/datafn/datafn-schema.drizzle.ts",
+  schema: "./src/db/sync-schema.ts",
   out: "./drizzle/datafn",
   dbCredentials: rootCa
     ? pinnedCaCredentials(databaseUrl, rootCa)

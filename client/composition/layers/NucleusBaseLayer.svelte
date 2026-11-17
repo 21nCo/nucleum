@@ -22,7 +22,7 @@
   import { Action } from "@nucleum/client/config/action.enum";
   import { PointronAction } from "@nucleum/client/config/focus-action.enum";
   import type { TopNavPanelActionState } from "@nucleum/shell/topNav/panel-actions";
-  import { repairMarkdownBlockParents } from "@nucleum/features/memory/node/markdown-block-parents";
+  import { repairMarkdownBlockParentsIfDue } from "@nucleum/features/memory/node/markdown-block-parents";
   import { safeRequestIdleCallback } from "@21n/shared-utils/idle-callback";
   let { children }: { children?: Snippet } = $props();
   let isLiteMode = $state($context.isEmbed && $context.isSheet);
@@ -50,7 +50,7 @@
     // TODO
     $appLoadingState.isLocalLoaded = true;
     safeRequestIdleCallback(() => {
-      void repairMarkdownBlockParents();
+      void repairMarkdownBlockParentsIfDue();
     });
   }
 </script>

@@ -6,6 +6,7 @@
   import Text from "@21n/ui/elements/text/Text.svelte";
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import ContextMenuItem from "@21n/ui/elements/contextMenu/ContextMenuItem.svelte";
+  import ContextMenuOptionGroup from "@21n/ui/elements/contextMenu/ContextMenuOptionGroup.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
   import view from "@21n/ui/environment/view.store";
   let {
@@ -68,15 +69,19 @@
         "flex-row justify-around p-2 gap-2": group.isToggleGroup
       })}
     >
-      {#each group.items as item}
-        <ContextMenuItem
-          {item}
-          size={resolveItemSize()}
-          isToggleGroup={group.isToggleGroup}
-          {parentBgIndex}
-          onSelect={() => onSelect(item)}
-        />
-      {/each}
+      {#if group.option}
+        <ContextMenuOptionGroup option={group.option} size={resolveItemSize()} />
+      {:else}
+        {#each group.items as item}
+          <ContextMenuItem
+            {item}
+            size={resolveItemSize()}
+            isToggleGroup={group.isToggleGroup}
+            {parentBgIndex}
+            onSelect={() => onSelect(item)}
+          />
+        {/each}
+      {/if}
     </div>
     {#if index !== menu.length - 1}
       <Divider colorStrength={ColorStrength.Strong} />

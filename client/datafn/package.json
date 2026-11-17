@@ -5,11 +5,14 @@
   "type": "module",
   "dependencies": {
     "@21n/shared-utils": "*",
-    "@datafn/client": "0.1.0",
+    "@datafn/client": "0.1.10",
     "@nucleum/persistence": "*",
     "@nucleum/schema": "*",
     "@searchfn/adapter-indexeddb": "0.1.0",
     "@searchfn/datafn-provider": "0.4.0"
+  },
+  "devDependencies": {
+    "@datafn/server": "0.2.6"
   },
   "peerDependencies": {
     "@nucleum/client": "*",
@@ -28,6 +31,7 @@
     "./resource.type": "./resource.type.ts",
     "./resource.utils": "./resource.utils.ts",
     "./resource-selection": "./resource-selection.ts",
+    "./maintenance-schedule": "./maintenance-schedule.ts",
     "./runtime-policy": "./runtime-policy.ts",
     "./remote-transport": "./remote-transport.ts",
     "./storage-lifecycle": "./storage-lifecycle.ts",
@@ -37,6 +41,7 @@
     "./e2ee.type": "./e2ee.type.ts",
     "./optimisticKv.type": "./optimisticKv.type.ts",
     "./observable-store": "./observable-store.ts",
+    "./paged-list.store": "./paged-list.store.ts",
     "./resource-query.utils": "./resource-query.utils.ts",
     "./resource-error": "./resource-error.ts",
     "./link.type": "./link.type.ts",

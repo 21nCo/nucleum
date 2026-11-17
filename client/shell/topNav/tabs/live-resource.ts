@@ -2,7 +2,7 @@ import { readable, type Readable } from "svelte/store";
 import { toSvelteStore } from "@datafn/svelte";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import { resolveResource } from "@nucleum/datafn/resource-query.utils";
+import { normalizeResourceRecord } from "@nucleum/datafn/resource-query.utils";
 import {
   determineResourceType,
   isRecordId
@@ -22,7 +22,13 @@ export type LiveResource = {
 
 /**
  * Follows the label source of a record id or a page action slug: the record,
- * kept live through its DataFn signal, or the action label and icon.
+ * kept live through its DataFn signal, or the action label and icon. One live
+ * read by id both resolves the record and follows its edits. A record counts
+ * as missing only once its signal holds a settled result (or failed): a fresh
+ * signal's first value is emitted before it has fetched anything. A record
+ * that a later settled result no longer holds is cleared; a failed refresh
+ * keeps the last one. Fields derived from legacy ones (an event's label and
+ * times) are derived from each new record, not carried over.
  */
 export function liveResource(item: IRecordId | string): Readable<LiveResource> {
   const initial: LiveResource = {
@@ -33,7 +39,6 @@ export function liveResource(item: IRecordId | string): Readable<LiveResource> {
   };
   return readable(initial, (set) => {
     let state = initial;
-    let isActive = true;
     const update = (patch: Partial<LiveResource>) => {
       state = { ...state, ...patch };
       set(state);
@@ -54,43 +59,42 @@ export function liveResource(item: IRecordId | string): Readable<LiveResource> {
       resourceType,
       action: requireCommandHost().resolveAction(resourceType)
     });
-    const unsubscribe =
-      resourceType === Resource.unknown
-        ? undefined
-        : toSvelteStore<unknown[]>(
-            datafn.table(resourceType).signal({
-              filters: { id: item },
-              limit: 1,
-              metadata: { includeTrashed: true, includeArchived: true }
-            }),
-            { initialData: [] }
-          ).subscribe((value) => {
-            const record = value.data?.[0];
-            if (record && typeof record === "object") {
-              update({
-                resource: { ...state.resource, ...record },
-                isResolved: true
-              });
-            }
-          });
-    resolveResource(item)
-      .catch((error) => {
-        logger.error({ at: "liveResource", item, error });
-        return undefined;
-      })
-      .then((resolved) => {
-        if (!isActive) return;
+    if (resourceType === Resource.unknown) {
+      update({ isResolved: true });
+      return;
+    }
+    const signal = datafn.table(resourceType).signal({
+      filters: { id: item },
+      limit: 1,
+      metadata: { includeTrashed: true, includeArchived: true }
+    });
+    const unsubscribe = toSvelteStore<unknown[]>(signal, {
+      initialData: []
+    }).subscribe((value) => {
+      const record = value.data?.[0];
+      if (record && typeof record === "object") {
         update({
-          resource: resolved
-            ? { ...resolved, ...(state.resource ?? {}) }
-            : state.resource,
+          resource: {
+            ...state.resource,
+            ...normalizeResourceRecord(resourceType, record)
+          },
           isResolved: true
         });
-      });
-    return () => {
-      isActive = false;
-      unsubscribe?.();
-    };
+      } else if (
+        value.loading ||
+        (signal.get() === undefined && !value.error)
+      ) {
+        return;
+      } else if (value.error) {
+        if (!state.isResolved) {
+          logger.error({ at: "liveResource", item, error: value.error });
+          update({ isResolved: true });
+        }
+      } else if (!state.isResolved || state.resource !== undefined) {
+        update({ resource: undefined, isResolved: true });
+      }
+    });
+    return unsubscribe;
   });
 }
 
