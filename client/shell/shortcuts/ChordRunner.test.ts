@@ -1,5 +1,5 @@
 import { render } from "@testing-library/svelte";
-import { readable, writable } from "svelte/store";
+import { writable } from "svelte/store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
 import { OperatingSystem } from "@nucleum/client/runtime/context.type";
@@ -38,16 +38,9 @@ vi.mock("@nucleum/shared-state/commands/command-host", () => ({
     runAction: mocks.runAction
   })
 }));
-vi.mock("@nucleum/shell/navigation/app-menu.store", () => ({
-  appMenuStore: {
-    subscribe: readable({}).subscribe,
-    pinnedSpaces: () => ["space-a", "space-b"]
-  }
-}));
-vi.mock("@nucleum/shell/navigation/pinned-spaces", () => ({
-  toPinnedSpacesKey: (ids: string[]) => ids.join(","),
-  createPinnedSpacesStore: () => readable({ data: [] }),
-  orderPinnedSpaces: (ids: string[]) => ids.map((id) => ({ id }))
+vi.mock("@nucleum/shell/shortcuts/pinned-space-chord", () => ({
+  resolvePinnedSpaceAt: async (index: number) =>
+    [{ id: "space-a" }, { id: "space-b" }][index]
 }));
 vi.mock("@nucleum/shell/navigation/navigation", () => ({
   navigation: { gotoPath: mocks.gotoPath }
@@ -151,19 +144,23 @@ describe("ChordRunner", () => {
     expect(mocks.runAction).not.toHaveBeenCalled();
   });
 
-  it("opens the pinned space in the app menu position for G then a digit", () => {
+  it("opens the pinned space in the app menu position for G then a digit", async () => {
     press("g");
     const second = press("2");
 
-    expect(mocks.gotoPath).toHaveBeenCalledWith("/spaces/space-b");
+    await vi.waitFor(() =>
+      expect(mocks.gotoPath).toHaveBeenCalledWith("/spaces/space-b")
+    );
     expect(second.defaultPrevented).toBe(true);
     expect(pageKeys).toHaveBeenCalledTimes(1);
   });
 
-  it("consumes G then a digit past the pinned spaces without navigating", () => {
+  it("consumes G then a digit past the pinned spaces without navigating", async () => {
     press("g");
-    press("5");
+    const second = press("5");
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
+    expect(second.defaultPrevented).toBe(true);
     expect(mocks.gotoPath).not.toHaveBeenCalled();
     expect(pageKeys).toHaveBeenCalledTimes(1);
   });
@@ -180,5 +177,23 @@ describe("ChordRunner", () => {
     expect(digit.defaultPrevented).toBe(false);
     expect(mocks.gotoPath).not.toHaveBeenCalled();
     expect(pageKeys).toHaveBeenCalledTimes(3);
+  });
+
+  it("ends the chord without running it when a right drawer opened after G", async () => {
+    press("g");
+    const drawer = document.createElement("div");
+    drawer.setAttribute("data-blank-modal", "");
+    drawer.innerHTML = `<div data-modal-placement="right"></div>`;
+    document.body.append(drawer);
+    const letter = press("c");
+    press("g");
+    const digit = press("1");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mocks.runAction).not.toHaveBeenCalled();
+    expect(mocks.gotoPath).not.toHaveBeenCalled();
+    expect(letter.defaultPrevented).toBe(false);
+    expect(digit.defaultPrevented).toBe(false);
+    expect(pageKeys).toHaveBeenCalledTimes(4);
   });
 });

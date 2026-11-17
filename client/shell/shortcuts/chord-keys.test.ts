@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveChordSpaceIndex } from "./chord-keys";
+import { isChordStart, resolveChordSpaceIndex } from "./chord-keys";
 
 const press = (
   key: string,
@@ -27,5 +27,13 @@ describe("chord keys", () => {
     expect(
       resolveChordSpaceIndex("g", press("1", { metaKey: true }))
     ).toBeUndefined();
+  });
+
+  it("starts a chord only on a plain G", () => {
+    expect(isChordStart(press("g"))).toBe(true);
+    expect(isChordStart(press("G"))).toBe(true);
+    expect(isChordStart(press("g", { metaKey: true }))).toBe(false);
+    expect(isChordStart(press("G", { shiftKey: true }))).toBe(false);
+    expect(isChordStart(press("c"))).toBe(false);
   });
 });

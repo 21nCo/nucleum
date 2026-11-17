@@ -100,15 +100,6 @@ export const keyboardShortcuts = {
     return { shortcut, modifiers };
   },
 
-  /** Whether a plain key press starts a chord of the shortcut map. */
-  isChordPrefix(event: KeyboardEvent) {
-    if (resolveModifiers(event).length > 0) return false;
-    const key = event.key?.toLowerCase();
-    return this.fetchKeyMap().some(
-      (shortcut) => shortcut.prefix?.toLowerCase() === key
-    );
-  },
-
   checkShortcut(
     event: KeyboardEvent,
     shortcut: string | IKeyboardShortcut,

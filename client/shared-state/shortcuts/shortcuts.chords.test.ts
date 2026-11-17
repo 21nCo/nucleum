@@ -80,15 +80,6 @@ describe("shortcut chords", () => {
     ).toBe("calendar");
   });
 
-  it("treats only a plain prefix key as the start of a chord", () => {
-    expect(keyboardShortcuts.isChordPrefix(key({ key: "g" }))).toBe(true);
-    expect(keyboardShortcuts.isChordPrefix(key({ key: "G" }))).toBe(true);
-    expect(
-      keyboardShortcuts.isChordPrefix(key({ key: "g", metaKey: true }))
-    ).toBe(false);
-    expect(keyboardShortcuts.isChordPrefix(key({ key: "c" }))).toBe(false);
-  });
-
   it("leaves shortcuts without a prefix such as Option+Left unchanged", () => {
     const event = key({
       key: KeyboardKey.ARROW_LEFT,

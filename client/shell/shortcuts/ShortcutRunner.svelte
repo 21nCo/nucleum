@@ -29,6 +29,7 @@
   } from "@nucleum/shell/shortcuts/context-view-step";
   import { stepListItem } from "@nucleum/shell/shortcuts/list-item-step";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import ChordRunner from "@nucleum/shell/shortcuts/ChordRunner.svelte";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -215,3 +216,4 @@
   }}
   onkeydowncapture={escapeCaptureListener}
 />
+<ChordRunner />
