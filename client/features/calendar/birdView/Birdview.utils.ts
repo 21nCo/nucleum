@@ -1,3 +1,5 @@
+import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
+
 export const monthNames: string[] = [
   "Jan",
   "Feb",
@@ -88,4 +90,30 @@ export async function scrollDateSlotIntoView(dateSlot: string) {
     element.classList.remove("bg-aps2");
     if (exisitingBG != "") element.classList.add(exisitingBG);
   }, 2000);
+}
+
+/**
+ * The `data-date` slot that shows a date in a bird view mode, built from the
+ * date's local calendar parts: `YYYY-MM-DD-0` (first part of the day),
+ * `YYYY-MM-DD`, `YYYY-MM` or `YYYY`. Undefined for modes with no slots.
+ */
+export function resolveBirdviewDateSlot(
+  date: Date,
+  mode: TimeScaleUnit
+): string | undefined {
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  switch (mode) {
+    case TimeScaleUnit.PART:
+      return `${year}-${month}-${day}-0`;
+    case TimeScaleUnit.DAY:
+      return `${year}-${month}-${day}`;
+    case TimeScaleUnit.MONTH:
+      return `${year}-${month}`;
+    case TimeScaleUnit.YEAR:
+      return year;
+    default:
+      return undefined;
+  }
 }

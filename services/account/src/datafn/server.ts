@@ -6,17 +6,30 @@ import {
   type DataFnAction,
   type DatafnPublicLinksPlugin,
   type DatafnPublicLinkPrincipal,
+  type DatafnRouteHookInput,
   type RateLimitConfig,
   type DatafnServer,
   type SearchProvider
 } from '@datafn/server';
 import type { AuthFnSession } from 'authfn';
-import type { Adapter, RuntimeStores } from '@superfunctions/db';
+import {
+  wrapWithRowLevelNamespace,
+  type Adapter,
+  type RuntimeStores
+} from '@superfunctions/db';
 import type { SuperfunctionObservability } from '@superfunctions/observability';
 import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import { createSyncSearchProvider } from './search-provider.js';
 import { resolveAccountUserNamespace } from './namespace.js';
 import { readPositiveIntegerEnv } from './env.js';
+import type { CapturedFileDeletions, FileDeletionCascade } from './file-deletions.js';
+import {
+  authorizeAppScopes,
+  filterScopedResponseBody,
+  hasFullAppAccess,
+  resolveAppScopeAccess,
+  type AppScopeStore
+} from './app-scopes.js';
 
 export {
   resolveAccountUserNamespace,
@@ -43,6 +56,13 @@ export interface CreateSyncServerInput {
   regionId?: string;
   observability?: SuperfunctionObservability;
   searchProvider?: SearchProvider;
+  /**
+   * Deletes the FileFn file behind each `file` record a write by a session
+   * holding every app scope permanently deletes, and retries owed deletions
+   * after authenticated requests. Omitted, records are deleted without
+   * touching FileFn.
+   */
+  fileDeletions?: FileDeletionCascade;
 }
 
 export type SyncServer = DatafnServer<SyncContext>;
@@ -75,7 +95,10 @@ export function createSyncServer(
 ): Promise<SyncServer> {
   const app = syncApp;
   const runtimePublicLinks = createDatafnPublicLinksPlugin<AuthFnSession>({
-    authenticateOwner: (request) => authorizeMutationRequest(input.auth, request),
+    authenticateOwner: async (request) => {
+      const session = await authorizeMutationRequest(input.auth, request);
+      return session && isUnscopedUserSession(session) ? session : null;
+    },
     getOwnerActorId: (session) => session.actorId,
     getOwnerNamespace: (actorId) => resolveAccountUserNamespace(actorId),
     directory: input.stores?.directory,
@@ -93,6 +116,39 @@ export function createSyncServer(
       : [])
   ];
   const publicLinks = runtimePublicLinks;
+  const scopedDatabase = wrapWithRowLevelNamespace(input.database, {
+    enabled: true,
+    columnName: '__ns',
+    mandatory: true
+  });
+  const scopeStore = (session: AuthFnSession): AppScopeStore => {
+    const namespace = resolveAccountUserNamespace(session.actorId);
+    return {
+      findMany: (model, where) =>
+        scopedDatabase.findMany<Record<string, unknown>>({
+          model,
+          where: where.map((clause) => ({ ...clause })),
+          namespace
+        })
+    };
+  };
+  const regionHeader = input.regionId ?? process.env.ACCOUNT_REGION_ID;
+  const capturedFileDeletions = new WeakMap<object, CapturedFileDeletions>();
+  const settleFileDeletions = async (
+    hook: DatafnRouteHookInput<SyncContext>
+  ): Promise<Response> => {
+    if (!input.fileDeletions) return hook.response;
+    const captured = capturedFileDeletions.get(hook.context);
+    if (captured) {
+      capturedFileDeletions.delete(hook.context);
+      const body: unknown = captured.requested.length > 0
+        ? await hook.response.clone().json().catch(() => undefined)
+        : undefined;
+      await input.fileDeletions.settle(captured, body);
+    }
+    if (hook.context.session) input.fileDeletions.sweep();
+    return hook.response;
+  };
   return app.createServer<SyncContext>({
     database: input.database,
     stores: input.stores,
@@ -117,10 +173,29 @@ export function createSyncServer(
         regionId: input.regionId ?? process.env.ACCOUNT_REGION_ID
       };
     },
-    authorize: async (ctx, action) => {
+    authorize: async (ctx, action, payload) => {
       if (ctx.session) {
+        if (ctx.session.actorType !== 'user') return false;
+        const access = resolveAppScopeAccess(ctx.session);
+        if (!hasFullAppAccess(access)) {
+          const allowed = await authorizeAppScopes({
+            access,
+            action,
+            payload,
+            schema: nucleumDatafnSchema,
+            store: scopeStore(ctx.session)
+          });
+          if (!allowed) return false;
+        }
         if (!MUTATING_DATAFN_ACTIONS.has(action)) return true;
-        return Boolean(await authorizeMutationRequest(input.auth, ctx.request));
+        if (!(await authorizeMutationRequest(input.auth, ctx.request))) return false;
+        if (input.fileDeletions && hasFullAppAccess(access)) {
+          const captured = await input.fileDeletions.capture(
+            action, payload, ctx.session.actorId
+          );
+          if (captured) capturedFileDeletions.set(ctx, captured);
+        }
+        return true;
       }
       if (!ctx.publicLink) return false;
       return true;
@@ -142,13 +217,13 @@ export function createSyncServer(
     rateLimit: input.rateLimit === false
       ? undefined
       : input.rateLimit ?? createDefaultRateLimit(input.stores),
-    routeHooks: (input.regionId ?? process.env.ACCOUNT_REGION_ID)
-      ? {
-          headers: {
-            'x-datafn-region': input.regionId ?? process.env.ACCOUNT_REGION_ID ?? ''
-          }
-        }
-      : undefined,
+    routeHooks: {
+      afterResponse: [
+        settleFileDeletions,
+        (hook) => filterScopedResponse(hook, scopeStore)
+      ],
+      ...(regionHeader ? { headers: { 'x-datafn-region': regionHeader } } : {})
+    },
     observability: input.observability
   });
 }
@@ -210,4 +285,43 @@ async function authorizeMutationRequest(
   } catch {
     return null;
   }
+}
+
+/**
+ * Share-link management acts on any record in the namespace, so only user
+ * sessions that hold every app scope may create or revoke links.
+ */
+function isUnscopedUserSession(session: AuthFnSession): boolean {
+  return session.actorType === 'user' &&
+    hasFullAppAccess(resolveAppScopeAccess(session));
+}
+
+/**
+ * Filters DataFn query and transact responses for an app-scoped session:
+ * strips space items outside its read grant and drops view and link tag rows
+ * it may not read. Other responses pass through unchanged.
+ */
+async function filterScopedResponse(
+  hook: DatafnRouteHookInput<SyncContext>,
+  scopeStore: (session: AuthFnSession) => AppScopeStore
+): Promise<Response> {
+  const session = hook.context.session;
+  if (!session || (hook.action !== 'query' && hook.action !== 'transact')) {
+    return hook.response;
+  }
+  const grant = resolveAppScopeAccess(session).read;
+  if (grant === 'all' || !hook.response.ok) return hook.response;
+  const body: unknown = await hook.response.clone().json().catch(() => undefined);
+  if (body === undefined) return hook.response;
+  const filtered = await filterScopedResponseBody(
+    hook.action, hook.payload, body, grant, scopeStore(session), nucleumDatafnSchema
+  );
+  if (filtered === body) return hook.response;
+  const headers = new Headers(hook.response.headers);
+  headers.delete('content-length');
+  return new Response(JSON.stringify(filtered), {
+    status: hook.response.status,
+    statusText: hook.response.statusText,
+    headers
+  });
 }

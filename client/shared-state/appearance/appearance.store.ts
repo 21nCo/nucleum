@@ -157,6 +157,31 @@ function initAppearanceStore() {
       });
     },
 
+    /**
+     * Sets the light and dark colour schemes together, as picking a scheme
+     * family does. A missing or unknown id, or a light scheme given as the
+     * dark one (or the reverse), keeps that variant unchanged.
+     */
+    setColorSchemePair: (lightId?: string, darkId?: string) => {
+      const isVariant = (id: string | undefined, isDark: boolean) =>
+        !!id &&
+        colorSchemes.some((cs) => cs.id == id && !!cs.isDark === isDark);
+      const isLight = isVariant(lightId, false);
+      const isDark = isVariant(darkId, true);
+      if (!isLight && !isDark) return;
+      update((a) => {
+        let modified: AppearanceState = { ...a };
+        if (isLight && lightId) modified.lightColorSchemeId = lightId;
+        if (isDark && darkId) modified.darkColorSchemeId = darkId;
+        const activeTheme = modified.isSyncWithSystem
+          ? modified.systemTheme
+          : modified.userThemeSetting;
+        modified = switchTheme(activeTheme, modified);
+        persist(modified);
+        return modified;
+      });
+    },
+
     modifyUserThemeSetting: (theme: Theme) => {
       update((a) => {
         let modified: AppearanceState = { ...a, userThemeSetting: theme };

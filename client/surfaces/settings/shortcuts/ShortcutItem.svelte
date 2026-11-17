@@ -43,6 +43,7 @@
     value = resolveShortcutText({
       key: shortcut.key,
       modifiers: shortcut.modifiers,
+      prefix: shortcut.prefix,
       os: $context.os
     });
   });

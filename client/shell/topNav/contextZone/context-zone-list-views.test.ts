@@ -29,8 +29,9 @@ describe("resolveContextZoneSubViewSource by axis and modal", () => {
     const sources = [source(1), source(2, { axis: "vertical" })];
     expect(resolveContextZoneSubViewSource(sources, undefined)?.key).toBe(1);
     expect(
-      resolveContextZoneSubViewSource(sources, undefined, { axis: "vertical" })
-        ?.key
+      resolveContextZoneSubViewSource(sources, undefined, undefined, {
+        axis: "vertical"
+      })?.key
     ).toBe(2);
   });
 
@@ -40,21 +41,49 @@ describe("resolveContextZoneSubViewSource by axis and modal", () => {
       source(2, { axis: "vertical", isInModal: true })
     ];
     expect(
-      resolveContextZoneSubViewSource(sources, undefined, {
+      resolveContextZoneSubViewSource(sources, undefined, undefined, {
         axis: "vertical",
         isModalOpen: true
       })?.key
     ).toBe(2);
     expect(
-      resolveContextZoneSubViewSource(sources, undefined, { axis: "vertical" })
-        ?.key
+      resolveContextZoneSubViewSource(sources, undefined, undefined, {
+        axis: "vertical"
+      })?.key
     ).toBe(1);
+  });
+
+  it("uses a modal switcher only when the query finds its element in front", () => {
+    const front = document.createElement("div");
+    const behind = document.createElement("div");
+    const sources = [
+      source(1, { axis: "vertical", isInModal: true, element: () => behind }),
+      source(2, { axis: "vertical", isInModal: true }),
+      source(3, { axis: "vertical", isInModal: true, element: () => front })
+    ];
+    const query = {
+      axis: "vertical",
+      isModalOpen: true,
+      isOnFront: (element: Element) => element === front
+    } as const;
+    expect(
+      resolveContextZoneSubViewSource(sources, undefined, undefined, query)?.key
+    ).toBe(3);
+    expect(
+      resolveContextZoneSubViewSource(
+        sources.slice(0, 2),
+        undefined,
+        undefined,
+        query
+      )
+    ).toBeUndefined();
   });
 
   it("ignores modal switchers when no modal is in front", () => {
     expect(
       resolveContextZoneSubViewSource(
         [source(1, { axis: "vertical", isInModal: true })],
+        undefined,
         undefined,
         { axis: "vertical" }
       )

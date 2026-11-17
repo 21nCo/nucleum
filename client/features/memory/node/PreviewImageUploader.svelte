@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { fileUpload } from "@nucleum/shared-state/files/file-upload";
+  import {
+    fileUpload,
+    isUploadFailureShown
+  } from "@nucleum/shared-state/files/file-upload";
 
   import { fileDrop } from "@21n/ui/actions/fileDrop.action";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -113,7 +116,7 @@
       }
     } catch (e: any) {
       logger.error({ at: "PreviewImageUploader.handleSave", error: e });
-      error = "Failed to save preview image";
+      if (!isUploadFailureShown(e)) error = "Failed to save preview image";
     } finally {
       isSaving = false;
     }

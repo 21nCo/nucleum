@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "@21n/fonts": "^1.0.1",
-    "@datafn/client": "0.1.0",
-    "@datafn/svelte": "0.1.0",
+    "@datafn/client": "0.1.10",
+    "@datafn/svelte": "0.1.1",
     "@nucleum/datafn": "*",
     "@nucleum/schema": "*",
     "@nucleum/shared-state": "*",

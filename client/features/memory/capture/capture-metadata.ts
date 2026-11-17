@@ -47,7 +47,8 @@ export async function parseMetadata(file: File) {
               file.name,
               imageFile,
               {
-                isGenerateThumbnail: true
+                isGenerateThumbnail: true,
+                isErrorToastSuppressed: true
               }
             );
             if (imageUploadResponse) {

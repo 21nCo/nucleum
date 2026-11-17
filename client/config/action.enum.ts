@@ -3,7 +3,6 @@ export enum Action {
   CMD = "CMD",
   CLOSE = "CLOSE",
   CREATE = "create",
-  MODE_OF_INTERACTION = "MODE_OF_INTERACTION",
   EDIT_MODE = "EDIT_MODE",
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",
@@ -69,5 +68,6 @@ export enum Action {
   NEXT_LIST_ITEM = "next-list-item",
   RHOMBUS = "rhombus",
   TODAY = "today",
-  FEED = "feed"
+  FEED = "feed",
+  NEW_COMMANDS = "new-commands"
 }

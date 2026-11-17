@@ -16,10 +16,11 @@
   import view from "@21n/ui/environment/view.store";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import type { IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
-  import { page } from "$app/stores";
   import Icon from "@21n/ui/elements/Icon.svelte";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-  import { isInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
+  import {
+    isInPlaceResource,
+    resolveInPlaceResourceClose
+  } from "@nucleum/shared-state/resources/in-place-resource";
   import EditModeDone from "@21n/ui/elements/button/EditModeDoneButton.svelte";
   import { finishEditMode } from "@nucleum/shared-state/resources/edit-mode-finish";
 
@@ -64,10 +65,7 @@
     contextMenuResolver = undefined
   }: Props = $props();
   const isInPlace = isInPlaceResource();
-  const isMaximized = $derived(
-    $page.url.searchParams.get(AppSearchParam.MAX) === "true" &&
-      $page.url.searchParams.get(AccessMode.PAGE) === $resourceStore.id
-  );
+  const closeInPlace = resolveInPlaceResourceClose();
 
   let editModeWidth = $state(0);
   let trailingWidth = $state(0);
@@ -115,18 +113,6 @@
     {isIconOnlyMode}
     isOverflowToMenu={variant === "tabs"}
     overflowWidth={variant === "tabs" ? tabsWidth : undefined}
-  />
-{/snippet}
-
-{#snippet maximizeButton()}
-  <BoxButton
-    icon={isMaximized ? "exitfullscreen" : "fullscreen"}
-    tooltip={isMaximized ? "Minimize" : "Maximize"}
-    width="px-3"
-    parentBgIndex={2}
-    onclick={() => {
-      requireResourcePanelHost().maximize(accessMode, $resourceStore.id);
-    }}
   />
 {/snippet}
 
@@ -196,7 +182,6 @@
         class="flex items-center h-full ml-2 shrink-0"
         bind:offsetWidth={trailingWidth}
       >
-        {@render maximizeButton()}
         {@render actionsMenu(1)}
       </div>
     {/if}
@@ -245,7 +230,7 @@
             />
           </div>
         {:else}
-          {#if !isInPlace}
+          {#if !isInPlace || closeInPlace}
             <div
               class="flex cw:border-l border-r border--t border-brs2 text-fgs2 mr-3 app-framed:border-transparent app-framed:items-center"
             >
@@ -257,7 +242,8 @@
                 type={ButtonVariant.DANGER}
                 parentBgIndex={2}
                 onclick={() => {
-                  requireResourcePanelHost().close($resourceStore.id);
+                  if (closeInPlace) closeInPlace();
+                  else requireResourcePanelHost().close($resourceStore.id);
                 }}
               />
             </div>
@@ -285,7 +271,6 @@
               <div
                 class="flex items-center bg--bgs3 border--t border-brs2 h-full"
               >
-                {@render maximizeButton()}
                 {@render actionsMenu(1)}
               </div>
             {/if}

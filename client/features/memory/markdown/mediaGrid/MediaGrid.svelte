@@ -505,7 +505,7 @@
         isUploadInProgress = false;
         return;
       }
-      fileRecord = await uploadToS3(file);
+      fileRecord = (await uploadToS3(file)) as IFile;
     }
     console.log("fileRecord", fileRecord);
     let item: IMediaGridItem = {

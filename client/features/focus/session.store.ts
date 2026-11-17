@@ -48,6 +48,7 @@ import context from "@nucleum/client/runtime/context.store";
 import { PointronEvent } from "@nucleum/shared-state/events/focus-event.enum";
 import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 import { datafn } from "@nucleum/datafn/datafn.store";
+import { assertDatafnMutationSucceeded } from "@nucleum/datafn/mutation.utils";
 import { advancedCompositionDraft } from "@nucleum/features/focus/advanced/composition/advancedCompositionDraft.store";
 import { ObservableStore } from "@nucleum/datafn/observable-store";
 import {
@@ -58,7 +59,10 @@ import {
 import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-import { UIState } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+import {
+  UIState,
+  UIStateScope
+} from "@nucleum/shared-state/preferences/ui-state/uiState.type";
 import { removeDuplicatesFilter } from "@nucleum/datafn/resource.utils";
 import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
 import { StoreDataType } from "@nucleum/schema/legacy/store-data-type.enum";
@@ -678,8 +682,32 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     );
   }
 
-  async close() {
+  /**
+   * Closes the active session. A finished session's id is recorded on this
+   * device before the reset snapshot is written, so a reload or another window
+   * that still reads the finished snapshot does not reopen it.
+   */
+  close(): Promise<IActiveSessionStore> {
+    return new Promise((resolve) =>
+      resolve(this.closeSession({ isMarkClosed: true }))
+    );
+  }
+
+  /**
+   * Runs synchronously, so the modal is dismissed and the closed id is
+   * recorded before the caller continues. Pass `isMarkClosed: false` when the
+   * session log was not saved, so this device does not suppress the finished
+   * modal for that session.
+   */
+  private closeSession(params: { isMarkClosed: boolean }) {
     logger.log({ context: "session store close" });
+    const current = this.get();
+    if (
+      params.isMarkClosed &&
+      (current.state === SessionState.FINISHED ||
+        current.state === SessionState.PRE_FINISHED)
+    )
+      this.markSessionClosed(current.currentSessionId);
     focusItemsStore.reset(true);
     let session = this.reset();
     this.modify(session);
@@ -715,8 +743,9 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
         isResetTimer: false
       });
     } else if (
-      savedSessionStore.state === SessionState.FINISHED ||
-      savedSessionStore.state === SessionState.PRE_FINISHED
+      (savedSessionStore.state === SessionState.FINISHED ||
+        savedSessionStore.state === SessionState.PRE_FINISHED) &&
+      !this.isClosedSession(savedSessionStore)
     ) {
       this.shallowReset();
       requireCommandHost().runAction(PointronEvent.SESSION_FINISHED);
@@ -726,6 +755,22 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       this.modify(savedSessionStore, { isPersist: false });
     }
     this.propagateMessageToParent(savedSessionStore);
+  }
+
+  private markSessionClosed(sessionId: IRecordId | undefined) {
+    if (!sessionId) return;
+    uiState.setState(UIState.closedFocusSessionId, String(sessionId), {
+      scope: UIStateScope.DAP
+    });
+  }
+
+  private isClosedSession(session: IActiveSessionStore) {
+    if (!session.currentSessionId) return false;
+    return (
+      uiState.getState(UIState.closedFocusSessionId, {
+        scope: UIStateScope.DAP
+      }) === String(session.currentSessionId)
+    );
   }
 
   /**
@@ -852,6 +897,7 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
     let session = this.get();
     let currentFocus = get(currentFocusItem);
     let finishedSession: IActiveSessionStore | undefined;
+    let isLogged = false;
     if (!session.isQuickStartOn)
       fullPageLoadingScreen.show("Finishing session...");
     try {
@@ -866,11 +912,12 @@ class ActiveSessionStore extends ObservableStore<IActiveSessionStore> {
       finishedSession = this.resolveFinishedSession(end);
       this.modify(finishedSession, { isPersist: false });
       await sessionStore.finishFocus({ end: end.getTime() });
+      isLogged = true;
     } catch (err) {
       logger.error({ at: "finishSession", error: err });
     } finally {
       if (params?.isClose) {
-        this.close();
+        this.closeSession({ isMarkClosed: isLogged });
       } else if (!params?.isQuickStartSwitch) {
         this.shallowReset();
 
@@ -1320,7 +1367,7 @@ async function finishFocus(params?: { end?: number }) {
     focusItemStore,
     params
   );
-  await datafn.session.mutate([
+  const sessionResult = await datafn.session.mutate([
     {
       operation: "insert",
       id: session.id,
@@ -1336,7 +1383,8 @@ async function finishFocus(params?: { end?: number }) {
       context: PointronAction.FINISH_FOCUS_SESSION
     }
   ]);
-  await datafn.sessionLog.mutate(
+  assertDatafnMutationSucceeded(sessionResult);
+  const logResult = await datafn.sessionLog.mutate(
     logs.map((record) => ({
       operation: "insert",
       id: record.id,
@@ -1349,6 +1397,7 @@ async function finishFocus(params?: { end?: number }) {
       context: PointronAction.FINISH_FOCUS_SESSION
     }))
   );
+  assertDatafnMutationSucceeded(logResult);
   addToRecentFocusItems(logs);
 }
 

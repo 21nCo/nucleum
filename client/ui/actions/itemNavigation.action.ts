@@ -57,18 +57,29 @@ let suppressedBy: Element | undefined;
 let suppressedAt: string | undefined;
 let isListening = false;
 
+/**
+ * Laid out and not hidden by visibility, which keeps an element's boxes, so a
+ * visibility:hidden list or item takes neither the keys nor the highlight.
+ */
+function isShownElement(element: Element) {
+  return (
+    element.getClientRects().length > 0 &&
+    getComputedStyle(element).visibility === "visible"
+  );
+}
+
 function resolveItems(entry: ItemNavigationEntry) {
   return Array.from(
     entry.node.querySelectorAll<HTMLElement>(entry.config.itemSelector)
-  ).filter((element) => element.getClientRects().length > 0);
+  ).filter(isShownElement);
 }
 
 function resolveItemKey(element: HTMLElement) {
-  return element.getAttribute("data-id") ?? element.id;
+  return element.dataset.id ?? element.id;
 }
 
 function isVisible(node: HTMLElement) {
-  return node.isConnected && node.getClientRects().length > 0;
+  return node.isConnected && isShownElement(node);
 }
 
 function hasOpenPopover() {
@@ -86,6 +97,7 @@ function resolveFrontLayer() {
 
 function isReachable(entry: ItemNavigationEntry, layer: Element | null) {
   if (!isVisible(entry.node)) return false;
+  if (entry.node.closest("[inert], [aria-hidden='true']")) return false;
   return layer ? layer.contains(entry.node) : true;
 }
 
@@ -94,7 +106,7 @@ function resolveActiveEntry(): ItemNavigationEntry | undefined {
   if (
     suppressedBy?.isConnected &&
     suppressedBy.getClientRects().length > 0 &&
-    suppressedAt === location.pathname
+    suppressedAt === location.href
   )
     return undefined;
   suppressedBy = undefined;
@@ -129,14 +141,127 @@ function clearHighlight(entry: ItemNavigationEntry) {
   paintHighlight(entry);
 }
 
-function isFocusOutside(entry: ItemNavigationEntry) {
-  const active = document.activeElement;
+/** Controls that use the arrow, Enter or Space keys themselves. */
+const keyedControlSelector = [
+  "select",
+  "audio[controls]",
+  "video[controls]",
+  "[role='listbox']",
+  "[role='option']",
+  "[role='menu']",
+  "[role='menubar']",
+  "[role='menuitem']",
+  "[role='menuitemcheckbox']",
+  "[role='menuitemradio']",
+  "[role='radio']",
+  "[role='radiogroup']",
+  "[role='slider']",
+  "[role='spinbutton']",
+  "[role='scrollbar']",
+  "[role='combobox']",
+  "[role='tree']",
+  "[role='treeitem']",
+  "[role='grid']",
+  "[role='gridcell']",
+  "[role='textbox']"
+].join(", ");
+
+/** Interactive elements whose own Enter or Space action must not be taken. */
+const interactiveSelector = [
+  "a[href]",
+  "button",
+  "input",
+  "select",
+  "textarea",
+  "summary",
+  "[contenteditable='true']",
+  "[role='button']",
+  "[role='checkbox']",
+  "[role='switch']",
+  "[role='link']",
+  "[tabindex]:not([tabindex='-1'])"
+].join(", ");
+
+/**
+ * The element a key was pressed on. A window listener sees a key pressed in a
+ * shadow root as coming from the shadow host, so this reads the composed path.
+ */
+function resolveKeyTarget(event: Event): EventTarget | null {
+  return event.composedPath?.()[0] ?? event.target;
+}
+
+/** The nearest element matching the selector, across shadow roots. */
+function closestAcross(target: EventTarget | null, selector: string) {
+  let element = target instanceof Element ? target : null;
+  while (element) {
+    const match = element.closest(selector);
+    if (match) return match;
+    const root = element.getRootNode();
+    element = root instanceof ShadowRoot ? root.host : null;
+  }
+  return null;
+}
+
+/** Whether the node holds the element, across shadow roots. */
+function containsAcross(node: Element, element: Element) {
+  for (let current: Element | null = element; current;) {
+    if (node.contains(current)) return true;
+    const root = current.getRootNode();
+    current = root instanceof ShadowRoot ? root.host : null;
+  }
+  return false;
+}
+
+/**
+ * Whether the focused element uses the arrow, Enter and Space keys itself,
+ * such as a text field, an editable element (contenteditable in any editing
+ * mode, or inside one), a select or a menu, so the list leaves them alone. A
+ * plain button or link, such as the tab that opened the list, does not.
+ */
+function isKeyedControl(target: EventTarget | null) {
+  if (isTextElement(target)) return true;
+  if (target instanceof HTMLElement && target.isContentEditable) return true;
+  return !!closestAcross(target, keyedControlSelector);
+}
+
+/**
+ * Whether the key comes from a control inside the list other than the
+ * highlighted item, such as a task's checkbox, whose Enter and Space act on
+ * that control.
+ */
+function isOtherControlInList(
+  entry: ItemNavigationEntry,
+  target: EventTarget | null,
+  highlighted: HTMLElement
+) {
+  const control = closestAcross(target, interactiveSelector);
   return (
-    !!active &&
-    active !== document.body &&
-    active !== document.documentElement &&
-    !entry.node.contains(active)
+    !!control &&
+    control !== entry.node &&
+    containsAcross(entry.node, control) &&
+    !control.contains(highlighted)
   );
+}
+
+/**
+ * Blurs a control left focused inside the list, such as another item's
+ * checkbox, once the highlight moves to an item that does not hold it, so
+ * Enter and Space act on the highlighted item and not on that control.
+ */
+function releaseStaleFocus(entry: ItemNavigationEntry, highlighted: HTMLElement) {
+  const active = document.activeElement;
+  if (
+    active instanceof HTMLElement &&
+    entry.node.contains(active) &&
+    !highlighted.contains(active)
+  )
+    active.blur();
+}
+
+function hideHighlight(entry: ItemNavigationEntry) {
+  if (!entry.isShown) return;
+  entry.isShown = false;
+  paintHighlight(entry);
 }
 
 function moveHighlight(
@@ -176,7 +301,9 @@ function moveHighlight(
   }
   entry.highlightedKey = resolveItemKey(next);
   entry.isShown = true;
+  for (const other of entries) if (other !== entry) hideHighlight(other);
   paintHighlight(entry);
+  releaseStaleFocus(entry, next);
   next.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
@@ -187,55 +314,68 @@ function resolveHighlighted(entry: ItemNavigationEntry) {
   );
 }
 
-function onKeydown(event: KeyboardEvent) {
-  if (event.defaultPrevented || event.altKey) return;
-  if (isTextElement(event.target) || hasOpenPopover()) return;
-  const entry = resolveActiveEntry();
-  if (!entry || isFocusOutside(entry)) return;
-  if (isItemNavigationKey(event.key)) {
-    if (event.metaKey || event.ctrlKey) return;
-    moveHighlight(entry, event, event.key);
-    return;
-  }
-  if (event.key === "Escape") {
-    if (event.metaKey || event.ctrlKey || event.shiftKey) return;
-    if (entry.config.hasSelection?.()) {
-      entry.anchorKey = undefined;
-      return;
-    }
-    if (!entry.isShown) return;
-    clearHighlight(entry);
-    event.preventDefault();
-    event.stopPropagation();
-    return;
-  }
-  const highlighted = resolveHighlighted(entry);
-  if (!highlighted) return;
-  if (isMenuKey(event)) {
-    event.preventDefault();
-    event.stopPropagation();
-    highlighted.dispatchEvent(new CustomEvent(itemMenuEvent));
-    return;
-  }
-  if (event.key === "Enter" && !event.shiftKey && entry.config.onOpen) {
-    event.preventDefault();
-    event.stopPropagation();
-    entry.isShown = false;
-    paintHighlight(entry);
-    entry.config.onOpen(highlighted, event);
-    return;
-  }
-  if (
-    event.key === " " &&
-    !event.metaKey &&
-    !event.ctrlKey &&
-    !event.shiftKey &&
-    entry.config.onToggle
-  ) {
-    event.preventDefault();
-    event.stopPropagation();
+function claimKey(event: KeyboardEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+/** Escape clears the list's selection first, then the highlight. */
+function handleEscape(entry: ItemNavigationEntry, event: KeyboardEvent) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+  if (entry.config.hasSelection?.()) {
     entry.anchorKey = undefined;
-    entry.config.onToggle(highlighted);
+    return;
+  }
+  if (!entry.isShown) return;
+  clearHighlight(entry);
+  claimKey(event);
+}
+
+function isPlainSpace(event: KeyboardEvent) {
+  return (
+    event.key === " " && !event.metaKey && !event.ctrlKey && !event.shiftKey
+  );
+}
+
+/** The menu keys, Enter and Space, which act on the highlighted item. */
+function handleItemKey(entry: ItemNavigationEntry, event: KeyboardEvent) {
+  const highlighted = resolveHighlighted(entry);
+  if (
+    !highlighted ||
+    isOtherControlInList(entry, resolveKeyTarget(event), highlighted)
+  )
+    return;
+  const { onOpen, onToggle } = entry.config;
+  if (isMenuKey(event)) {
+    claimKey(event);
+    highlighted.dispatchEvent(new CustomEvent(itemMenuEvent));
+  } else if (event.key === "Enter" && !event.shiftKey && onOpen) {
+    claimKey(event);
+    hideHighlight(entry);
+    onOpen(highlighted, event);
+  } else if (isPlainSpace(event) && onToggle) {
+    claimKey(event);
+    entry.anchorKey = undefined;
+    onToggle(highlighted);
+  }
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === "Tab") {
+    for (const entry of entries) hideHighlight(entry);
+    return;
+  }
+  if (event.defaultPrevented || event.altKey) return;
+  if (isKeyedControl(resolveKeyTarget(event)) || hasOpenPopover()) return;
+  const entry = resolveActiveEntry();
+  if (!entry) return;
+  if (isItemNavigationKey(event.key)) {
+    if (!event.metaKey && !event.ctrlKey)
+      moveHighlight(entry, event, event.key);
+  } else if (event.key === "Escape") {
+    handleEscape(entry, event);
+  } else {
+    handleItemKey(entry, event);
   }
 }
 
@@ -262,21 +402,48 @@ function resolveOtherScrollArea(target: Node) {
   return undefined;
 }
 
+/**
+ * Whether a pointer pressed a control outside every list and every popover,
+ * such as a toolbar button or checkbox, whose own Enter and Space then win
+ * over the highlighted item until the next arrow.
+ */
+function isOutsideControl(target: Node) {
+  const element = target instanceof Element ? target : target.parentElement;
+  return (
+    !!element?.closest(interactiveSelector) && !element.closest(".popover")
+  );
+}
+
 function onPointerDown(event: PointerEvent) {
   if (!(event.target instanceof Node)) return;
   const target = event.target;
   const entry = entries.find((candidate) => candidate.node.contains(target));
   if (!entry) {
+    if (isOutsideControl(target))
+      for (const other of entries) hideHighlight(other);
     const area = resolveOtherScrollArea(target);
     if (area) {
       suppressedBy = area;
-      suppressedAt = location.pathname;
+      suppressedAt = location.href;
     }
     return;
   }
   suppressedBy = undefined;
   lastInteracted = entry;
+  for (const other of entries) if (other !== entry) hideHighlight(other);
   clearHighlight(entry);
+}
+
+/**
+ * Hides the other lists' highlights when a newly shown list takes the keys,
+ * which it does unless the list last clicked in can still take them, so the
+ * visible highlight is always the one the keys act on.
+ */
+function hideHighlightsOnHandoff(entry: ItemNavigationEntry) {
+  const layer = resolveFrontLayer();
+  if (!isReachable(entry, layer)) return;
+  if (lastInteracted && isReachable(lastInteracted, layer)) return;
+  for (const other of entries) if (other !== entry) hideHighlight(other);
 }
 
 function startListening() {
@@ -299,11 +466,17 @@ function stopListening() {
  * Enter opens the highlighted item and hides the highlight until the next
  * arrow, which resumes from that item. Space toggles its selection, Shift+arrows
  * extend the selection, and the period, ContextMenu or Shift+F10 key dispatches
- * `itemmenu` on the item so it can open its menu. Escape clears the highlight once no selection is
- * left. Only the list the user last clicked in, or else the most recently
- * mounted visible list, responds, and lists behind a modal or dialog do not.
+ * `itemmenu` on the item so it can open its menu. Escape clears the highlight
+ * once no selection is left. Only the list the user last clicked in, or else
+ * the most recently mounted visible list, responds; lists behind a modal or
+ * dialog or inside an inert or hidden layer do not. Keys from a text field or
+ * a control that uses them itself (a select, menu, listbox or slider) are
+ * left alone, and Enter, Space and the menu keys from another control inside
+ * the list act on that control. Tab, or a click on a control outside the
+ * lists, hides the highlight, so Enter and Space reach that control; the next
+ * arrow brings it back. Only one list shows a highlight at a time.
  * A click inside another scrolling area keeps the arrow keys for that area
- * until a list is clicked or mounted, the area closes, or the page path changes.
+ * until a list is clicked or mounted, the area closes, or the URL changes.
  */
 export function itemNavigation(
   node: HTMLElement,
@@ -322,6 +495,7 @@ export function itemNavigation(
   entry.observer.observe(node, { childList: true, subtree: true });
   entries.push(entry);
   suppressedBy = undefined;
+  hideHighlightsOnHandoff(entry);
   startListening();
   return {
     update(nextConfig: ItemNavigationConfig) {

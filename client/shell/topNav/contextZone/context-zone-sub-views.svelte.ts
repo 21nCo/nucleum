@@ -10,8 +10,9 @@ import {
  * Registers an in-page switcher with the context zone for as long as the
  * calling component is mounted, so the keyboard steps through its views:
  * Option+Shift+Left/Right for horizontal switchers, Option+Up/Down for
- * vertical lists (`options.axis`). Call it during component initialisation; `read` returns the current
- * views. Call `touch` when the user picks a view in the switcher.
+ * vertical lists (`options.axis`). Call it during component initialisation;
+ * `read` returns the current views. Call `touch` when the user picks a view in
+ * the switcher.
  */
 export function useContextZoneSubViews(
   read: () => ContextZoneViews | undefined,

@@ -24,7 +24,7 @@
   import type { IFile } from "@nucleum/shared-state/files/file.type";
   import {
     determineResourceType,
-    resourceInList
+    resourceIdToElementId
   } from "@nucleum/datafn/resource.utils";
   import NodeItems from "@nucleum/features/memory/node/NodeRecords.svelte";
   import LibraryLoadingPulse from "@nucleum/surfaces/library/LibraryLoadingPulse.svelte";
@@ -40,10 +40,10 @@
   import { stringify } from "@21n/shared-utils/json.utils";
   import { itemNavigation } from "@21n/ui/actions/itemNavigation.action";
   import {
+    createRangeSelection,
     resolveResourceSelectionContext,
     toggleResourceSelection
   } from "@nucleum/features/records/resource.actions";
-  import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteDataStore } from "@datafn/svelte";
@@ -161,17 +161,29 @@
     return event instanceof MouseEvent ? event : undefined;
   }
 
+  /**
+   * Whether a click adds the item to the selection: the selection is in the
+   * list's context, or in the item's own context that Space selects in, which
+   * can differ from the list's, such as a node's in a list of every resource.
+   */
+  function isClickInSelectionContext(item: RecordItem) {
+    const { context } = bulkEditStore.getState();
+    if (!context) return false;
+    return (
+      stringify(context, { isPreventReplacer: true }) ===
+        stringify(multiSelectContext, { isPreventReplacer: true }) ||
+      (isSelectable &&
+        bulkEditStore.matchesContext(resolveItemSelectionContext(item)))
+    );
+  }
+
   function handleClick(e: MouseEvent | CustomEvent, item: RecordItem) {
     if (isPreventDefault) {
       const clickEvent = new CustomEvent<any>("click", { detail: item });
       onRecordClick?.(clickEvent);
       return;
     }
-    const state = bulkEditStore.getState();
-    const isMatchingContext = state.context
-      ? stringify(state.context, { isPreventReplacer: true }) ===
-        stringify(multiSelectContext, { isPreventReplacer: true })
-      : false;
+    const isMatchingContext = isClickInSelectionContext(item);
     const result = isMatchingContext
       ? bulkEditStore.clickHandler(item.id)
       : false;
@@ -201,23 +213,60 @@
     });
   }
 
+  /**
+   * Access point id the item's thumbnail selects with: node and goal
+   * thumbnails pass their own id, which only the Library and the resource
+   * browser drop, so elsewhere each of them has a selection context of its own.
+   */
+  function resolveThumbnailAccessPointId(item: RecordItem) {
+    const resourceType = determineResourceType(item.id);
+    return resourceType === Resource.node ||
+      resourceType === Resource.objective
+      ? item.id
+      : undefined;
+  }
+
+  function resolveItemSelectionContext(item: RecordItem) {
+    return resolveResourceSelectionContext(
+      item.id,
+      accessPoint,
+      resolveThumbnailAccessPointId(item)
+    );
+  }
+
   function toggleFromKeyboard(element: HTMLElement) {
     const item = resolveElementItem(element);
     if (!item) return;
-    toggleResourceSelection(item.id, accessPoint);
+    toggleResourceSelection(
+      item.id,
+      accessPoint,
+      resolveThumbnailAccessPointId(item)
+    );
   }
 
-  let rangeBaseIds: IRecordId[] = [];
+  const selectRange = createRangeSelection();
   const isSelectable = $derived(
     accessPoint !== ResourceAccessPoint.PICKER &&
       accessPoint !== ResourceAccessPoint.MAP &&
       !isPreventDefault
   );
+  /** Ranges need one selection context shared by every item in the list. */
+  const isRangeSelectable = $derived(
+    isSelectable &&
+      data.every(
+        (item) => resolveItemSelectionContext(item).accessPointId === undefined
+      )
+  );
 
-  function hasSelectionInList() {
-    const { selectedIds } = bulkEditStore.getState();
-    return selectedIds.some((id) =>
-      data.some((item) => resourceInList(item.id)(id))
+  /**
+   * Whether the selection context the list's thumbnails select in holds a
+   * selection, which Escape clears before the highlight. Lists sharing that
+   * context, such as Starred and the rest of the Library, share the answer.
+   */
+  function hasSelectionInContext() {
+    if (bulkEditStore.getState().selectedIds.length === 0) return false;
+    return data.some((item) =>
+      bulkEditStore.matchesContext(resolveItemSelectionContext(item))
     );
   }
 
@@ -235,17 +284,18 @@
         (item): item is RecordItem =>
           !!item && determineResourceType(item.id) === resourceType
       );
-    const context = resolveResourceSelectionContext(anchor.id, accessPoint);
-    if (!bulkEditStore.matchesContext(context)) {
-      toggleResourceSelection(anchor.id, accessPoint);
-      rangeBaseIds = [];
-    } else if (isNewRange) {
-      rangeBaseIds = bulkEditStore.getState().selectedIds;
+    if (!bulkEditStore.matchesContext(resolveItemSelectionContext(anchor))) {
+      toggleResourceSelection(
+        anchor.id,
+        accessPoint,
+        resolveThumbnailAccessPointId(anchor)
+      );
+      isNewRange = true;
     }
-    const base = rangeBaseIds.filter(
-      (id) => !items.some((item) => resourceInList(item.id)(id))
+    selectRange(
+      items.map((item) => item.id),
+      isNewRange
     );
-    bulkEditStore.select([...base, ...items.map((item) => item.id)]);
   }
 </script>
 
@@ -255,8 +305,8 @@
     itemSelector: "[id^='thumbnail-'][data-id]",
     onOpen: openFromKeyboard,
     onToggle: isSelectable ? toggleFromKeyboard : undefined,
-    onExtend: isSelectable ? extendFromKeyboard : undefined,
-    hasSelection: hasSelectionInList
+    onExtend: isRangeSelectable ? extendFromKeyboard : undefined,
+    hasSelection: hasSelectionInContext
   }}
 >
   <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->
@@ -405,7 +455,12 @@
             onClick={(e) => handleClick(e, item)}
           />
         {:else if resource === Resource.file}
-          <button class="h-40" onclick={(e) => handleClick(e, item)}>
+          <button
+            id={resourceIdToElementId("thumbnail", item.id, accessPoint)}
+            data-id={item.id}
+            class="relative h-40"
+            onclick={(e) => handleClick(e, item)}
+          >
             <FileView
               file={asFile(item)}
               isLazyLoad={true}

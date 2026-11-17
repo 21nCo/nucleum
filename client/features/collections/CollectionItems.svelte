@@ -8,6 +8,14 @@
   import type { INodeThumb } from "@nucleum/features/memory/node/node.type";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import { requireRecordRenderer } from "@nucleum/shared-state/resources/record-renderer";
+  import { itemNavigation } from "@21n/ui/actions/itemNavigation.action";
+  import { navigation } from "@nucleum/shell/navigation/navigation";
+  import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
+  import { resolveBulkSelectionAccessPointId } from "@nucleum/datafn/resource.utils";
+  import {
+    createRangeSelection,
+    toggleResourceSelection
+  } from "@nucleum/features/records/resource.actions";
   const Records = requireRecordRenderer();
 
   let {
@@ -45,22 +53,97 @@
   function resolveNodeItems() {
     return items as unknown as INodeThumb[];
   }
+
+  /** Access point NodeRecords and its thumbnails select at. */
+  let selectionAccessPoint = $derived(
+    accessPoint ?? ResourceAccessPoint.BROWSER
+  );
+  /** The selection context NodeRecords activates for these items. */
+  let nodeSelectionContext = $derived({
+    resource: Resource.node,
+    accessPoint: selectionAccessPoint,
+    accessPointId
+  });
+  /**
+   * Keyboard selection goes through the item menu's Select, which resolves
+   * the access point id itself, so it is offered only where that resolves to
+   * the NodeRecords context.
+   */
+  let isSelectable = $derived(
+    resolveBulkSelectionAccessPointId(selectionAccessPoint, accessPointId) ===
+      accessPointId
+  );
+  const selectRange = createRangeSelection();
+
+  function resolveElementNode(element: HTMLElement) {
+    const id = element.getAttribute("data-id");
+    return resolveNodeItems().find((item) => item.id?.toString() === id);
+  }
+
+  function openFromKeyboard(element: HTMLElement, event: KeyboardEvent) {
+    const item = resolveElementNode(element);
+    if (item) navigation.resourceClickHandler(event, item.id);
+  }
+
+  function toggleFromKeyboard(element: HTMLElement) {
+    const item = resolveElementNode(element);
+    if (!item) return;
+    toggleResourceSelection(item.id, selectionAccessPoint, accessPointId);
+  }
+
+  function extendFromKeyboard(
+    elements: HTMLElement[],
+    isNewRange: boolean,
+    anchorElement: HTMLElement
+  ) {
+    const anchor = resolveElementNode(anchorElement);
+    if (!anchor) return;
+    const nodes = elements
+      .map(resolveElementNode)
+      .filter((item): item is INodeThumb => !!item);
+    if (!bulkEditStore.matchesContext(nodeSelectionContext)) {
+      toggleResourceSelection(anchor.id, selectionAccessPoint, accessPointId);
+      isNewRange = true;
+    }
+    selectRange(
+      nodes.map((item) => item.id),
+      isNewRange
+    );
+  }
+
+  function hasSelectionInContext() {
+    return (
+      bulkEditStore.getState().selectedIds.length > 0 &&
+      bulkEditStore.matchesContext(nodeSelectionContext)
+    );
+  }
 </script>
 
 {#if isMasonryAvailable}
-  <NodeRecords
-    nodes={resolveNodeItems()}
-    {arrangement}
-    {isHidePreview}
-    {isHideTitle}
-    {density}
-    {isDraggable}
-    {accessPointId}
-    {accessPoint}
-    {isApplyCustomColor}
-    {visibleProps}
-    {parentBgIndex}
-  />
+  <div
+    class="w-full h-full"
+    use:itemNavigation={{
+      itemSelector: "[id^='thumbnail-'][data-id]",
+      onOpen: openFromKeyboard,
+      onToggle: isSelectable ? toggleFromKeyboard : undefined,
+      onExtend: isSelectable ? extendFromKeyboard : undefined,
+      hasSelection: hasSelectionInContext
+    }}
+  >
+    <NodeRecords
+      nodes={resolveNodeItems()}
+      {arrangement}
+      {isHidePreview}
+      {isHideTitle}
+      {density}
+      {isDraggable}
+      {accessPointId}
+      {accessPoint}
+      {isApplyCustomColor}
+      {visibleProps}
+      {parentBgIndex}
+    />
+  </div>
 {:else}
   <Records
     {resource}
