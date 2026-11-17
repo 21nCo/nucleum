@@ -1,0 +1,35 @@
+services/account/README.md
+  s_0b0647615a23f7::t_7ac03f3c627ec2 133,144-145
+services/account/src/files/processing.test.ts
+  s_0b0647615a23f7::t_9338e74ad1aef8 7,530-537,547,553-564
+services/account/src/files/processing.ts
+  s_0b0647615a23f7::t_9ad892d62f2122 2,245-247,263
+services/file-processing/README.md
+  s_0b0647615a23f7::t_74bd9f47172cd4 33-35,44-48,64-66
+services/file-processing/package.json
+  s_0b0647615a23f7::t_b509675327d769 15-18
+services/file-processing/src/postgres-url.d.ts
+  s_0b0647615a23f7::t_6589fcd5cfb860 1-6
+services/file-processing/src/postgres-url.mjs
+  s_0b0647615a23f7::t_60116cb3fd1647 1-38
+services/file-processing/src/postgres.mjs
+  s_0b0647615a23f7::t_531ac4ba4e47b5 4,6,17
+tests/unit/file-processing/processors.spec.ts
+  s_0b0647615a23f7::t_767a6352c49863 8,81-87,97,103-118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "68a351191a6ef791025898afd65e3d97d256c480",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
