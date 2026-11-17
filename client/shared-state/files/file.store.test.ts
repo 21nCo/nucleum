@@ -107,7 +107,7 @@ describe("fileStore with FileFn records", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("downloads a FileFn record from its full variant URL", async () => {
+  it("downloads a FileFn record's original from its download variant URL", async () => {
     fetchMock.mockResolvedValue(new Response("bytes"));
     const downloadFromBlob = vi
       .spyOn(fileStore, "downloadFromBlob")
@@ -115,8 +115,8 @@ describe("fileStore with FileFn records", () => {
 
     await fileStore.download(fileFnRecord({ url: legacySignedUrl }));
 
-    expect(mocks.resolveFileUrl.mock.calls).toEqual([["ff-1", "full"]]);
-    expect(fetchMock).toHaveBeenCalledWith("https://r2.test/ff-1/full");
+    expect(mocks.resolveFileUrl.mock.calls).toEqual([["ff-1", "download"]]);
+    expect(fetchMock).toHaveBeenCalledWith("https://r2.test/ff-1/download");
     expect(downloadFromBlob).toHaveBeenCalledTimes(1);
     const [blob, params] = downloadFromBlob.mock.calls[0];
     expect(await blob.text()).toBe("bytes");

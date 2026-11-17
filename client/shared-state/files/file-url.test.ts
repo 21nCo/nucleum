@@ -1,18 +1,35 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { RenderDescriptor } from "@filefn/client";
+import type { ArtifactDescriptor, RenderDescriptor } from "@filefn/client";
+
+type Owner = { userId: string; epoch: number };
 
 const fileFn = vi.hoisted(() => ({
-  owner: { userId: "user-a", epoch: 1 } as {
-    userId: string;
-    epoch: number;
-  } | null,
-  resolveRenderable: vi.fn()
+  owner: { userId: "user-a", epoch: 1 } as Owner | null,
+  afterCapture: undefined as (() => void) | undefined,
+  resolveRenderable: vi.fn(),
+  listArtifacts: vi.fn(),
+  downloadArtifact: vi.fn()
 }));
 
 vi.mock("@nucleum/shared-state/files/filefn-client", () => ({
-  captureSettledFileFnOwner: async () => fileFn.owner,
+  captureSettledFileFnOwner: async () => {
+    const owner = fileFn.owner;
+    const afterCapture = fileFn.afterCapture;
+    fileFn.afterCapture = undefined;
+    afterCapture?.();
+    return owner;
+  },
+  assertFileFnOwner: (owner: Owner) => {
+    if (owner.epoch !== fileFn.owner?.epoch) {
+      throw new DOMException("The FileFn client was torn down", "AbortError");
+    }
+  },
   getOwnedFileFnClient: async () => ({
-    client: { resolveRenderable: fileFn.resolveRenderable },
+    client: {
+      resolveRenderable: fileFn.resolveRenderable,
+      listArtifacts: fileFn.listArtifacts,
+      downloadArtifact: fileFn.downloadArtifact
+    },
     baseUrl: "https://account.test/files"
   })
 }));
@@ -64,6 +81,9 @@ describe("resolveFileUrl", () => {
     vi.setSystemTime(new Date("2026-11-17T12:00:00Z"));
     signed = 0;
     fileFn.owner = { userId: "user-a", epoch: 1 };
+    fileFn.afterCapture = undefined;
+    fileFn.listArtifacts.mockReset();
+    fileFn.downloadArtifact.mockReset();
     fileFn.resolveRenderable.mockReset();
     fileFn.resolveRenderable.mockImplementation(async (input) =>
       readyDescriptor(input)
@@ -184,5 +204,139 @@ describe("resolveFileUrl", () => {
     expect(await resolveFileUrl("file-1", "full")).toBe(
       "https://account.test/files/proxy/files/file-1/download"
     );
+  });
+
+  describe("when the owner's generation ends before a lookup returns", () => {
+    const accountSwitch = () => {
+      fileFn.owner = { userId: "user-b", epoch: 2 };
+    };
+    const signOut = () => {
+      fileFn.owner = null;
+    };
+
+    it.each([
+      ["an account switch", accountSwitch],
+      ["a sign-out", signOut]
+    ])("returns no cached URL after %s", async (_, endGeneration) => {
+      expect(await resolveFileUrl("file-1", "full")).toBe(
+        signedUrl("file-1/original", 1)
+      );
+
+      fileFn.afterCapture = endGeneration;
+
+      expect(await resolveFileUrl("file-1", "full")).toBeUndefined();
+      expect(fileFn.resolveRenderable).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      ["an account switch", accountSwitch],
+      ["a sign-out", signOut]
+    ])("returns no freshly resolved URL after %s", async (_, endGeneration) => {
+      let respond: (descriptor: RenderDescriptor) => void = () => {};
+      fileFn.resolveRenderable.mockImplementationOnce(
+        () =>
+          new Promise<RenderDescriptor>((resolve) => {
+            respond = resolve;
+          })
+      );
+
+      const lookup = resolveFileUrl("file-1", "full");
+      await vi.waitFor(() =>
+        expect(fileFn.resolveRenderable).toHaveBeenCalledTimes(1)
+      );
+      endGeneration();
+      respond(readyDescriptor({ fileId: "file-1", intent: "full" }));
+
+      expect(await lookup).toBeUndefined();
+    });
+  });
+
+  describe("a HEIC original", () => {
+    const heicUrl = signedUrl("file-1/original.heic", 0);
+    const pngUrl = signedUrl("file-1/converted.png", 0);
+    const jpegThumbnailUrl = signedUrl("file-1/thumbnail.jpg", 0);
+
+    function artifact(
+      kind: string,
+      mimeType: string,
+      versionId = "v1"
+    ): ArtifactDescriptor {
+      return {
+        artifactId: `${kind}-${versionId}`,
+        fileId: "file-1",
+        versionId,
+        kind,
+        mimeType,
+        size: 10,
+        createdAt: "2026-11-17T12:00:00Z"
+      };
+    }
+
+    beforeEach(() => {
+      fileFn.resolveRenderable.mockImplementation(
+        async (input: { fileId: string; intent: RenderDescriptor["intent"] }) =>
+          ({
+            fileId: input.fileId,
+            versionId: "v1",
+            intent: input.intent,
+            state: "ready",
+            mimeType:
+              input.intent === "thumbnail" ? "image/jpeg" : "image/heic",
+            name: "photo.heic",
+            size: 10,
+            source:
+              input.intent === "thumbnail"
+                ? {
+                    mode: "artifact",
+                    artifactId: "thumbnail-small-v1",
+                    artifactKind: "thumbnail-small",
+                    url: jpegThumbnailUrl
+                  }
+                : { mode: "original", url: heicUrl }
+          }) satisfies RenderDescriptor
+      );
+      fileFn.downloadArtifact.mockImplementation(
+        async (_fileId: string, artifactId: string) =>
+          artifactId === "converted-v1" ? pngUrl : undefined
+      );
+    });
+
+    it("views its converted PNG in full, its JPEG thumbnail as thumbnail and downloads the original", async () => {
+      fileFn.listArtifacts.mockResolvedValue([
+        artifact("converted", "image/png", "v0"),
+        artifact("thumbnail-small", "image/jpeg"),
+        artifact("converted", "image/png")
+      ]);
+
+      expect(await resolveFileUrl("file-1", "full")).toBe(pngUrl);
+      expect(await resolveFileUrl("file-1", "thumbnail")).toBe(
+        jpegThumbnailUrl
+      );
+      expect(await resolveFileUrl("file-1", "download")).toBe(heicUrl);
+      expect(fileFn.downloadArtifact.mock.calls).toEqual([
+        ["file-1", "converted-v1"]
+      ]);
+      expect(fileFn.listArtifacts).toHaveBeenCalledTimes(1);
+    });
+
+    it("views the original in full when there is no converted image", async () => {
+      fileFn.listArtifacts.mockResolvedValue([
+        artifact("thumbnail-small", "image/jpeg")
+      ]);
+
+      expect(await resolveFileUrl("file-1", "full")).toBe(heicUrl);
+      expect(fileFn.downloadArtifact).not.toHaveBeenCalled();
+    });
+
+    it("does not list artifacts for a browser-decodable original", async () => {
+      fileFn.resolveRenderable.mockImplementation(async (input) =>
+        readyDescriptor(input)
+      );
+
+      expect(await resolveFileUrl("file-1", "full")).toBe(
+        signedUrl("file-1/original", 1)
+      );
+      expect(fileFn.listArtifacts).not.toHaveBeenCalled();
+    });
   });
 });

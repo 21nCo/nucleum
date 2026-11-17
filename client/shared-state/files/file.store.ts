@@ -105,10 +105,11 @@ class FileStore {
 
   /**
    * Returns the URL a record downloads from: FileFn's URL of the original
-   * for a FileFn record, which never reads a legacy URL, else the stored URL.
+   * bytes for a FileFn record, which never reads a legacy URL, else the
+   * stored URL.
    */
   private resolveDownloadUrl(file: IFile): Promise<string | undefined> {
-    if (file.fileId) return resolveFileUrl(file.fileId, "full");
+    if (file.fileId) return resolveFileUrl(file.fileId, "download");
     return Promise.resolve(file.url ?? undefined);
   }
 

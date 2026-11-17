@@ -1,13 +1,21 @@
+import type { FileFnClient } from "@filefn/client";
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
+  assertFileFnOwner,
   captureSettledFileFnOwner,
   getOwnedFileFnClient,
   type FileFnOwner
 } from "@nucleum/shared-state/files/filefn-client";
 
-/** A renderable variant of a FileFn file. */
-export type FileUrlVariant = Extract<RenderIntent, "thumbnail" | "full">;
+/**
+ * A variant of a FileFn file: the thumbnail and full image a browser renders,
+ * or the original bytes a download saves.
+ */
+export type FileUrlVariant = Extract<
+  RenderIntent,
+  "thumbnail" | "full" | "download"
+>;
 
 /** A cached URL is resolved again this long before it expires. */
 export const FILE_URL_REFRESH_MARGIN_MS = 60_000;
@@ -19,6 +27,9 @@ export const FILE_URL_DEFAULT_TTL_MS = 5 * 60_000;
  * so a grid of files does not ask FileFn again on every render.
  */
 export const FILE_URL_RETRY_MS = 30_000;
+
+/** Image types browsers cannot decode, whose full image is their conversion. */
+const UNDECODABLE_IMAGE_TYPES = new Set(["image/heic", "image/heif"]);
 
 type FileUrlEntry = {
   /** Time after which a lookup resolves the variant again. */
@@ -37,8 +48,10 @@ let cacheOwnerKey: string | undefined;
  * signed-in account's FileFn client. The result is kept in memory per file
  * and variant until shortly before the URL expires, concurrent lookups share
  * one request, and the cache belongs to one FileFn owner: a sign-out, another
- * account or another authority clears it, so a URL is never shown to another
- * account.
+ * account or another authority clears it, and a lookup that the owner's
+ * generation ended during returns undefined, so a URL is never shown to
+ * another account. The full variant of a HEIC or HEIF original is its
+ * converted image when FileFn has one; the download variant is the original.
  */
 export async function resolveFileUrl(
   fileId: string,
@@ -59,7 +72,26 @@ export async function resolveFileUrl(
   if (!owner) return undefined;
   const key = `${variant}:${fileId}`;
   const cached = cache.get(key);
-  if (cached && Date.now() < cached.refreshAt) return cached.url;
+  const entry =
+    cached && Date.now() < cached.refreshAt
+      ? cached
+      : startFileUrlLookup(owner, key, fileId, variant);
+  const url = await entry.url;
+  return isCurrentFileFnOwner(owner) ? url : undefined;
+}
+
+/** Drops every cached URL; the next lookup of each variant resolves it again. */
+export function clearFileUrlCache() {
+  cache.clear();
+  cacheOwnerKey = undefined;
+}
+
+function startFileUrlLookup(
+  owner: FileFnOwner,
+  key: string,
+  fileId: string,
+  variant: FileUrlVariant
+): FileUrlEntry {
   const entry: FileUrlEntry = {
     refreshAt: Number.POSITIVE_INFINITY,
     url: Promise.resolve(undefined)
@@ -76,13 +108,16 @@ export async function resolveFileUrl(
     }
   );
   cache.set(key, entry);
-  return entry.url;
+  return entry;
 }
 
-/** Drops every cached URL; the next lookup of each variant resolves it again. */
-export function clearFileUrlCache() {
-  cache.clear();
-  cacheOwnerKey = undefined;
+function isCurrentFileFnOwner(owner: FileFnOwner) {
+  try {
+    assertFileFnOwner(owner);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function fetchFileUrl(
@@ -100,10 +135,41 @@ async function fetchFileUrl(
   if (!source.url) {
     return { url: undefined, refreshAt: Date.now() + FILE_URL_RETRY_MS };
   }
+  const url =
+    variant === "full" && isUndecodableImage(source.mimeType)
+      ? ((await resolveConvertedUrl(owned.client, fileId, source.versionId)) ??
+        source.url)
+      : source.url;
   return {
-    url: toAbsoluteUrl(source.url, owned.baseUrl),
-    refreshAt: resolveRefreshAt(source.url, requestedAt)
+    url: toAbsoluteUrl(url, owned.baseUrl),
+    refreshAt: resolveRefreshAt(url, requestedAt)
   };
+}
+
+/**
+ * Returns a URL of the version's browser-decodable converted image, or
+ * undefined when FileFn has none.
+ */
+async function resolveConvertedUrl(
+  client: FileFnClient,
+  fileId: string,
+  versionId: string
+): Promise<string | undefined> {
+  const artifacts = await client.listArtifacts(fileId);
+  const converted = artifacts.find(
+    (artifact) =>
+      artifact.kind === "converted" &&
+      artifact.versionId === versionId &&
+      !isUndecodableImage(artifact.mimeType)
+  );
+  if (!converted) return undefined;
+  return client.downloadArtifact(fileId, converted.artifactId);
+}
+
+function isUndecodableImage(mimeType: string) {
+  return UNDECODABLE_IMAGE_TYPES.has(
+    mimeType.split(";")[0].trim().toLowerCase()
+  );
 }
 
 /**
