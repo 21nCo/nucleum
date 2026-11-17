@@ -98,6 +98,7 @@
   {:else}
     <ContextMenuItemWithSecondary
       {size}
+      isOptionGroupRow
       item={{
         value: `option-${option.label}`,
         label: `${option.label}: ${currentLabel}`,

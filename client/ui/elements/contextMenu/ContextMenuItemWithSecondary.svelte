@@ -9,11 +9,17 @@
   let {
     item,
     size = Size.md,
+    isOptionGroupRow = false,
     onAction = undefined,
     onSelect = undefined
   }: {
     item: IContextMenuItem;
     size?: Size.sm | Size.md | Size.lg;
+    /**
+     * Option-group submenu row: spans the menu width and opens its submenu
+     * top-aligned beside it.
+     */
+    isOptionGroupRow?: boolean;
     onAction?: ((event: CustomEvent<unknown>) => void) | undefined;
     onSelect?: ((event: CustomEvent<unknown>) => void) | undefined;
   } = $props();
@@ -34,7 +40,7 @@
 
 <button
   use:popover={{
-    placement: Placement.RightStart,
+    placement: isOptionGroupRow ? Placement.RightStart : Placement.Right,
     offsetInPx: 12,
     triggerMethod: [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
     content: item.secondStepComponent?.component,
@@ -50,8 +56,9 @@
   }}
   onchange={handlePopoverChange}
   class={cn(
-    "contextmenuitem flex w-full items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
+    "contextmenuitem flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
     {
+      "w-full": isOptionGroupRow,
       "p-1.5": size === Size.sm,
       "p-2": size === Size.md,
       "px-3 py-2": size === Size.lg,
