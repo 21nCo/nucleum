@@ -1,0 +1,19 @@
+client/features/memory/capture/upload-failure-feedback.test.ts
+  s_aa793b0a8d1ac8::t_78bd9d0619a8f2 6,127,140-144,147
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6dd9688d2193eb8b32dc94347ae3fafa00109a57",
+  "prompts": {},
+  "sessions": {
+    "s_aa793b0a8d1ac8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "027b6086-1840-4196-8460-0ca79d822514",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

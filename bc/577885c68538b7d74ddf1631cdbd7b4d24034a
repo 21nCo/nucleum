@@ -1,0 +1,21 @@
+client/features/memory/capture/ShareContentSaver.svelte
+  s_b66d0e9dd4fae0::t_27638fa35c3dd9 156-157,160-162,366-368
+client/features/memory/capture/upload-failure-feedback.test.ts
+  s_b66d0e9dd4fae0::t_62f6c5410a0373 5,72,76-81,86-88,92,109-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bc577885c68538b7d74ddf1631cdbd7b4d24034a",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
