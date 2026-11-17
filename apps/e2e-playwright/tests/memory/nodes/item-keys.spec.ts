@@ -1,5 +1,6 @@
-import type { Page } from "@playwright/test";
+import type { Page, TestInfo } from "@playwright/test";
 
+import { DatafnSeedTransport } from "../../fixtures/datafn-seed";
 import { expect, test, type E2ESeed } from "../../fixtures/e2e-test";
 import { ensureInAppOnHome, LibraryTab } from "../../utils/helpers";
 import {
@@ -21,6 +22,45 @@ async function openSeededLibrary(page: Page) {
       hasText: "E2E item keys node"
     })
   ).toHaveCount(3, { timeout: 20_000 });
+}
+
+/**
+ * Seeds a node collection holding three seeded nodes and opens it. The
+ * relations go away with the records the seed fixture deletes.
+ */
+async function openSeededNodeCollection(page: Page, testInfo: TestInfo) {
+  await ensureInAppOnHome(page);
+  const nodes = await e2eSeed.memory.nodes(3, {
+    prefix: "E2E collection item keys node"
+  });
+  const collection = await e2eSeed.collections.collection({
+    prefix: "E2E item keys collection",
+    resource: "node"
+  });
+  await new DatafnSeedTransport(page, testInfo).mutate(
+    "node",
+    nodes.map((node, index) => ({
+      operation: "relate" as const,
+      id: node.id,
+      relations: {
+        collections: [
+          { $ref: collection.id, fromResource: "node", sortOrder: index }
+        ]
+      }
+    })),
+    { trackInserts: false }
+  );
+  await page.goto(
+    `/collection_browse?selected=${encodeURIComponent(
+      collection.id
+    )}&selectedAt=${Date.now()}`,
+    { waitUntil: "domcontentloaded" }
+  );
+  const items = page
+    .locator("[id^='thumbnail-'][data-id]")
+    .filter({ hasText: "E2E collection item keys node" });
+  await expect(items).toHaveCount(3, { timeout: 20_000 });
+  return nodes.map((node) => node.id);
 }
 
 async function highlightedId(page: Page) {
@@ -133,5 +173,42 @@ test.describe("nodes - item keys", () => {
     await expect(page.getByText(/Selected: 1 node/i)).toBeVisible({
       timeout: 10_000
     });
+  });
+
+  test("arrow keys, Space and Enter work in a node collection's list", async ({
+    page
+  }, testInfo) => {
+    test.setTimeout(90_000);
+    const nodeIds = await openSeededNodeCollection(page, testInfo);
+
+    await page.keyboard.press("ArrowDown");
+    const first = await highlightedId(page);
+    expect(nodeIds).toContain(first);
+    await page.keyboard.press("ArrowDown");
+    await expect(highlighted(page)).not.toHaveAttribute("data-id", first);
+    await page.keyboard.press("ArrowUp");
+    await expect(highlighted(page)).toHaveAttribute("data-id", first);
+
+    await page.keyboard.press("Space");
+    await expect(page.getByText(/Selected: 1 node/i)).toBeVisible({
+      timeout: 10_000
+    });
+    await page.keyboard.press("Shift+ArrowDown");
+    await expect(page.getByText(/Selected: 2 nodes/i)).toBeVisible({
+      timeout: 10_000
+    });
+    await page.keyboard.press("Escape");
+    await expect(page.getByText(/Selected: \d+ nodes?/i)).toBeHidden({
+      timeout: 10_000
+    });
+    await expect(highlighted(page)).toHaveCount(1);
+
+    await page.keyboard.press("ArrowUp");
+    await expect(highlighted(page)).toHaveAttribute("data-id", first);
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(new RegExp(encodeURIComponent(first)), {
+      timeout: 20_000
+    });
+    await expect(highlighted(page)).toHaveCount(0);
   });
 });
