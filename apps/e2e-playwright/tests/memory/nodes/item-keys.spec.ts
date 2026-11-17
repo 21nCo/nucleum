@@ -21,6 +21,9 @@ const navigationPath = resolveRepoFsImportPath(
 const datafnStorePath = resolveRepoFsImportPath(
   "client/datafn/datafn.store.ts"
 );
+const bulkEditStorePath = resolveRepoFsImportPath(
+  "client/shared-state/resources/bulkedit.store.ts"
+);
 
 /**
  * Whether the app server serves repo source modules, as the Vite dev server
@@ -200,6 +203,48 @@ test.describe("nodes - item keys", () => {
     await expect(highlighted(page)).toHaveCount(1);
     await page.keyboard.press("Escape");
     await expect(highlighted(page)).toHaveCount(0);
+  });
+
+  test("Shift arrows do not restore a pick removed elsewhere between presses", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    test.skip(
+      !(await isRepoSourceServed(page)),
+      "The selection change imports repo source modules, which only the Vite dev server serves"
+    );
+    await openSeededLibrary(page);
+
+    await page.keyboard.press("ArrowDown");
+    const first = await highlightedId(page);
+    await page.keyboard.press("Space");
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Shift+ArrowRight");
+    await expect(page.getByText(/Selected: 3 nodes/i)).toBeVisible({
+      timeout: 10_000
+    });
+
+    await page.evaluate(
+      async ({ bulkEditStorePath, first }) => {
+        const { bulkEditStore } = await import(
+          /* @vite-ignore */ bulkEditStorePath
+        );
+        bulkEditStore.select(
+          bulkEditStore
+            .getState()
+            .selectedIds.filter((id: string) => id !== first)
+        );
+      },
+      { bulkEditStorePath, first }
+    );
+    await expect(page.getByText(/Selected: 2 nodes/i)).toBeVisible({
+      timeout: 10_000
+    });
+
+    await page.keyboard.press("Shift+ArrowLeft");
+    await expect(page.getByText(/Selected: 1 node/i)).toBeVisible({
+      timeout: 10_000
+    });
   });
 
   test("period opens the highlighted item's menu and the menu works from the keyboard", async ({
