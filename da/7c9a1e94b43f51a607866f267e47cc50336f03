@@ -1,0 +1,21 @@
+client/ui/actions/popover-rightstart.test.ts
+  s_0b0647615a23f7::t_13b0aec80608ff 61,99-108
+client/ui/actions/popover.action.ts
+  s_0b0647615a23f7::t_886478295fd264 691-694,697,699
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "da7c9a1e94b43f51a607866f267e47cc50336f03",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
