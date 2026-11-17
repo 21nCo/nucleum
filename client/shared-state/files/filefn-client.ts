@@ -1,5 +1,6 @@
 import {
   createFileFnClient,
+  FileFnHttpError,
   generateFileId,
   type FileFnClient,
   type UploadHandle,
@@ -19,6 +20,7 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 const FILEFN_OFFLINE_DIR_PREFIX = "filefn-pending-uploads";
 const OFFLINE_REPLAY_START_FILE_ID = "";
 const OFFLINE_REPLAY_LOCK_PREFIX = "filefn-offline-replay";
+const PENDING_DELETE_DIR_PREFIX = "filefn-pending-deletes";
 
 /** Signed-in cloud account that owns a FileFn client. */
 export type FileFnAccountScope = {
@@ -26,8 +28,18 @@ export type FileFnAccountScope = {
   region: string | null;
 };
 
+/**
+ * The signed-in account and FileFn client generation an operation belongs to.
+ * A sign-out, another account or another authority ends the generation.
+ */
+export type FileFnOwner = { userId: string; epoch: number };
+
+/** A FileFn client of an owner, with the authority it stores files under. */
+export type OwnedFileFnClient = { client: FileFnClient; baseUrl: string };
+
 type FileFnClientEntry = {
   userId: string;
+  baseUrl: string;
   key: string;
   controller: AbortController;
   client: Promise<FileFnClient>;
@@ -37,7 +49,8 @@ let currentEntry: FileFnClientEntry | null = null;
 let isBoundToAccount = false;
 let syncGeneration = 0;
 let latestSync: Promise<void> = Promise.resolve();
-const clientTeardowns = new WeakMap<FileFnClient, AbortSignal>();
+let ownerEpoch = 0;
+let ownerUserId: string | undefined;
 
 /**
  * Returns the cloud account a FileFn client belongs to, or null for a
@@ -140,6 +153,10 @@ function settleFileFnClientSync(): Promise<void> {
 function syncFileFnClient(value: UserAccount | null | undefined) {
   const generation = ++syncGeneration;
   const scope = resolveFileFnAccountScope(value);
+  if (ownerUserId !== scope?.userId) {
+    ownerUserId = scope?.userId;
+    ownerEpoch += 1;
+  }
   if (currentEntry?.userId !== scope?.userId) tearDownFileFnClient();
   if (!scope?.region) {
     latestSync = scope
@@ -171,6 +188,7 @@ function bindFileFnClient(userId: string, region: string) {
   const controller = new AbortController();
   const entry: FileFnClientEntry = {
     userId,
+    baseUrl,
     key,
     controller,
     client: createAccountFileFnClient(userId, baseUrl, controller.signal)
@@ -184,10 +202,17 @@ function bindFileFnClient(userId: string, region: string) {
 
 function tearDownFileFnClient() {
   const entry = currentEntry;
+  if (!entry) return;
   currentEntry = null;
-  entry?.controller.abort(createTeardownError());
+  ownerEpoch += 1;
+  entry.controller.abort(createTeardownError());
 }
 
+/**
+ * Creates an account's FileFn client. The SDK's HEIC preprocessing is off, so
+ * the original keeps its bytes and the processing mode owns conversion. The
+ * client sends the account's pending deletes at its authority.
+ */
 async function createAccountFileFnClient(
   userId: string,
   baseUrl: string,
@@ -207,10 +232,17 @@ async function createAccountFileFnClient(
     offline: {
       enabled: true,
       opfsDir: resolveFileFnOfflineDir(userId)
-    }
+    },
+    preprocessing: { heic: { enabled: false } }
   });
-  if (!teardown.aborted) startOfflineReplayWhenOwner(userId, client, teardown);
-  return guardFileFnClient(client, teardown);
+  const guarded = guardFileFnClient(client, teardown);
+  if (!teardown.aborted) {
+    startOfflineReplayWhenOwner(userId, client, teardown);
+    replayPendingDeletes(userId, baseUrl, guarded).catch((error: unknown) => {
+      logger.error({ at: "filefn.client.pendingDelete", error });
+    });
+  }
+  return guarded;
 }
 
 /**
@@ -266,37 +298,128 @@ function createTeardownError() {
 }
 
 /**
- * True for the AbortError a FileFn client rejects with once it is torn down
- * for an account or authority change, so a caller can stop instead of
- * treating it as an ordinary request failure.
+ * Captures, without waiting, the signed-in cloud account and FileFn client
+ * generation an operation belongs to, or null when no cloud account is
+ * signed in.
  */
-export function isFileFnTeardownError(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    (error as { name?: unknown }).name === "AbortError"
-  );
-}
-
-/**
- * True while a FileFn client that getFileFnClient returned is not torn down,
- * so a caller can fence work by the lifetime of the client that did it. Any
- * other client is not live.
- */
-export function isFileFnClientLive(client: FileFnClient): boolean {
-  const teardown = clientTeardowns.get(client);
-  return teardown !== undefined && !teardown.aborted;
-}
-
-/**
- * Binds the FileFn client to the signed-in account's current authority, as
- * the next getFileFnClient call would, without waiting for a new client. It
- * reads the stored region when the session carries none, so a change of that
- * region, which no account change announces, also tears the client down.
- */
-export async function refreshFileFnClientAuthority(): Promise<void> {
+export function captureFileFnOwner(): FileFnOwner | null {
   syncWithAccount();
-  await settleFileFnClientSync().catch(() => undefined);
+  const scope = resolveFileFnAccountScope(account.get());
+  return scope ? { userId: scope.userId, epoch: ownerEpoch } : null;
+}
+
+/**
+ * Throws the teardown AbortError once the owner's generation has ended: a
+ * sign-out, another account or another authority tore its client down.
+ */
+export function assertFileFnOwner(owner: FileFnOwner): void {
+  if (owner.epoch !== ownerEpoch) throw createTeardownError();
+}
+
+/**
+ * Returns the owner's FileFn client. Unlike getFileFnClient, it never
+ * follows a replacement client: it rejects with the teardown AbortError when
+ * the owner's generation ends before the client is ready.
+ */
+export async function getOwnedFileFnClient(
+  owner: FileFnOwner
+): Promise<OwnedFileFnClient> {
+  await settleFileFnClientSync();
+  assertFileFnOwner(owner);
+  const entry = currentEntry;
+  if (!entry)
+    throw new Error("FileFn is unavailable for the signed-in account");
+  const client = await entry.client;
+  assertFileFnOwner(owner);
+  return { client, baseUrl: entry.baseUrl };
+}
+
+/**
+ * Re-binds the FileFn client to the signed-in account's current authority,
+ * reading the stored region when the session carries none, then throws when
+ * the owner's generation has ended. A stored region that cannot be read
+ * rejects, so an unverified authority never passes.
+ */
+export async function confirmFileFnOwner(owner: FileFnOwner): Promise<void> {
+  syncWithAccount();
+  await settleFileFnClientSync();
+  assertFileFnOwner(owner);
+}
+
+/**
+ * Deletes a file that no record will reference through the owner's client.
+ * When the owner's generation has ended or the delete fails, it records the
+ * delete in the owner's private origin storage, which sign-out keeps, and the
+ * owner's next client of the same authority sends it, so the file is never
+ * deleted through another account.
+ */
+export async function discardFileFnFile(
+  owner: FileFnOwner,
+  owned: OwnedFileFnClient,
+  fileId: string
+): Promise<void> {
+  try {
+    assertFileFnOwner(owner);
+    await owned.client.deleteFile(fileId);
+    return;
+  } catch (error) {
+    logger.warn({ at: "filefn.client.discard", fileId, error });
+  }
+  const dir = await getPendingDeleteDir(owner.userId, owned.baseUrl, true);
+  if (!dir) throw new Error("No device storage records the pending delete");
+  await dir.getFileHandle(encodeURIComponent(fileId), { create: true });
+}
+
+/** Returns the directory of an account's pending deletes at an authority. */
+async function getPendingDeleteDir(
+  userId: string,
+  baseUrl: string,
+  create: boolean
+): Promise<FileSystemDirectoryHandle | null> {
+  const storage = globalThis.navigator?.storage;
+  if (!storage?.getDirectory) return null;
+  try {
+    const root = await storage.getDirectory();
+    const userDir = await root.getDirectoryHandle(
+      `${PENDING_DELETE_DIR_PREFIX}-${encodeURIComponent(userId)}`,
+      { create }
+    );
+    return await userDir.getDirectoryHandle(encodeURIComponent(baseUrl), {
+      create
+    });
+  } catch (error) {
+    if (create) throw error;
+    return null;
+  }
+}
+
+/**
+ * Sends the account's pending deletes at the client's authority, dropping
+ * each one that succeeds or finds the file already gone.
+ */
+async function replayPendingDeletes(
+  userId: string,
+  baseUrl: string,
+  client: FileFnClient
+) {
+  const dir = await getPendingDeleteDir(userId, baseUrl, false);
+  if (!dir) return;
+  const names: string[] = [];
+  for await (const name of (
+    dir as unknown as { keys(): AsyncIterable<string> }
+  ).keys()) {
+    names.push(name);
+  }
+  for (const name of names) {
+    try {
+      await client.deleteFile(decodeURIComponent(name));
+    } catch (error) {
+      if (!(error instanceof FileFnHttpError && error.status === 404)) {
+        throw error;
+      }
+    }
+    await dir.removeEntry(name);
+  }
 }
 
 /**
@@ -399,7 +522,6 @@ function guardFileFnClient(
     getPendingLocalDescriptor: (fileId) =>
       guard(() => client.getPendingLocalDescriptor(fileId))
   };
-  clientTeardowns.set(guarded, teardown);
   return guarded;
 }
 

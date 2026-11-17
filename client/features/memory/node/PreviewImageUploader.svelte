@@ -94,7 +94,8 @@
         selectedFile.name,
         new Blob([selectedFile], { type: selectedFile.type }),
         {
-          isGenerateThumbnail: true
+          isGenerateThumbnail: true,
+          isErrorToastSuppressed: true
         }
       );
       if (response && response.length > 0) {

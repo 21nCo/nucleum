@@ -14,7 +14,10 @@ const IMAGE_PNG = Buffer.from(
   "base64"
 );
 
-/** Waits until the named node's Library thumbnail shows a decoded image. */
+/**
+ * Waits until the named node's Library thumbnail shows the decoded thumbnail,
+ * not FileView's 1 x 1 GIF loading placeholder.
+ */
 async function expectImageThumbnail(page: Page, label: string) {
   const image = getResourceThumbnailByLabel(page, label).locator("img").first();
   await expect(image).toBeVisible({ timeout: 20_000 });
@@ -23,7 +26,9 @@ async function expectImageThumbnail(page: Page, label: string) {
       () =>
         image.evaluate(
           (element: HTMLImageElement) =>
-            element.complete && element.naturalWidth > 0
+            element.complete &&
+            element.naturalWidth > 1 &&
+            !element.currentSrc.startsWith("data:image/gif")
         ),
       { message: "thumbnail image decoded", timeout: 20_000 }
     )

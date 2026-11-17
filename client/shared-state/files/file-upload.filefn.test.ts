@@ -29,17 +29,33 @@ const fileFn = vi.hoisted(() => ({
   deleted: [] as string[],
   done: vi.fn(),
   uploadArtifact: vi.fn(),
-  client: null as unknown
+  client: null as unknown,
+  isTornDown: false
 }));
+/** Throws the teardown AbortError once a test has torn the owner down. */
+function assertMockOwner() {
+  if (fileFn.isTornDown) {
+    throw new DOMException("The FileFn client was torn down", "AbortError");
+  }
+}
 vi.mock(
   "@nucleum/shared-state/files/filefn-client",
   async (importOriginal) => ({
     ...(await importOriginal<
       typeof import("@nucleum/shared-state/files/filefn-client")
     >()),
-    getFileFnClient: async () => fileFn.client,
-    refreshFileFnClientAuthority: async () => undefined,
-    isFileFnClientLive: (client: unknown) => client === fileFn.client
+    captureFileFnOwner: () => ({ userId: "upload-user", epoch: 1 }),
+    getOwnedFileFnClient: async () => {
+      if (!fileFn.client) throw new Error("FileFn is unavailable");
+      return { client: fileFn.client, baseUrl: "https://files.test" };
+    },
+    assertFileFnOwner: () => assertMockOwner(),
+    confirmFileFnOwner: async () => assertMockOwner(),
+    discardFileFnFile: async (
+      _owner: unknown,
+      owned: { client: { deleteFile(fileId: string): Promise<void> } },
+      fileId: string
+    ) => owned.client.deleteFile(fileId)
   })
 );
 
@@ -74,7 +90,7 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   };
 });
 
-const { fileUpload } = await import("./file-upload");
+const { fileUpload, isUploadFailureShown } = await import("./file-upload");
 const { resolveFileProcessingMode } = await import("./file-processing");
 
 const initialAccount = account.get();
@@ -95,12 +111,13 @@ const cloudAccount = {
 beforeEach(async () => {
   await initializeNucleumDatafn({
     product: Product.MEMOTRON,
-    account: { dataMode: UserDataMode.LOCAL, userId: "file-upload-filefn" },
+    account: { dataMode: UserDataMode.LOCAL, userId: "upload-user" },
     dapId: "fixture",
     env: `test-${crypto.randomUUID()}`
   });
   account.set(cloudAccount);
   recordInserts.inserts = 0;
+  fileFn.isTornDown = false;
   fileFn.uploads = [];
   fileFn.artifacts = [];
   fileFn.deleted = [];
@@ -478,21 +495,62 @@ describe("uploadFileV2 failures", () => {
   });
 
   it("stops without a record when the FileFn client is torn down during an artifact upload", async () => {
-    const teardown = new DOMException(
-      "The FileFn client was torn down",
-      "AbortError"
-    );
-    fileFn.uploadArtifact.mockRejectedValueOnce(teardown);
+    fileFn.uploadArtifact.mockImplementationOnce(async () => {
+      fileFn.isTornDown = true;
+      throw new DOMException("The FileFn client was torn down", "AbortError");
+    });
 
     await expect(
       fileUpload.uploadFileV2("image/jpeg", "e.jpg", image(), {
         isGenerateThumbnail: true
       })
-    ).rejects.toBe(teardown);
+    ).rejects.toThrow("The FileFn client was torn down");
 
     expect(fileFn.uploadArtifact).toHaveBeenCalledTimes(1);
     expect(recordInserts.inserts).toBe(0);
+    expect(fileFn.deleted).toEqual([fileFn.uploads[0].fileId]);
     expect((await datafn.file.query({})).data ?? []).toHaveLength(0);
+    expect(get(toasts)).toHaveLength(1);
+  });
+
+  it("keeps the record when a live client's thumbnail upload is aborted", async () => {
+    fileFn.uploadArtifact.mockRejectedValueOnce(
+      new DOMException("The request was aborted", "AbortError")
+    );
+
+    const [file] = await fileUpload.uploadFileV2(
+      "image/jpeg",
+      "f.jpg",
+      image(),
+      {
+        isGenerateThumbnail: true
+      }
+    );
+
+    const record = await savedRecord(file.id);
+    expect(record?.fileId).toBe(fileFn.uploads[0].fileId);
+    expect(record?.processing).toEqual({ mode: "local", artifacts: {} });
+    expect(fileFn.deleted).toEqual([]);
+    expect(get(toasts)).toEqual([]);
+  });
+
+  it("marks a failure it showed so a caller does not show it again", async () => {
+    const failure = new Error("upload failed");
+    fileFn.done.mockRejectedValueOnce(failure);
+    await expect(
+      fileUpload.uploadFileV2("image/jpeg", "g.jpg", image())
+    ).rejects.toBe(failure);
+    expect(isUploadFailureShown(failure)).toBe(true);
+
+    const quiet = new Error("upload failed quietly");
+    fileFn.done.mockRejectedValueOnce(quiet);
+    await expect(
+      fileUpload.uploadFileV2("image/jpeg", "h.jpg", image(), {
+        isErrorToastSuppressed: true
+      })
+    ).rejects.toBe(quiet);
+    expect(isUploadFailureShown(quiet)).toBe(false);
+    expect(isUploadFailureShown(new Error("elsewhere"))).toBe(false);
     expect(get(toasts)).toHaveLength(1);
   });
 

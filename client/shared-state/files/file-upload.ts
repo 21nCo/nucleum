@@ -1,9 +1,10 @@
 import { type IRecordId } from "@nucleum/schema/legacy/data.type";
-import { generateFileId, type FileFnClient } from "@filefn/client";
+import { generateFileId } from "@filefn/client";
 
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { datafn } from "@nucleum/datafn/datafn.store";
+import { resolveDatafnNamespace } from "@nucleum/datafn/runtime-policy";
 import { generateResourceId } from "@nucleum/datafn/id.utils";
 import { Resource } from "@nucleum/datafn/resource.enum";
 
@@ -22,11 +23,13 @@ import {
   type IFileProcessing
 } from "@nucleum/shared-state/files/file-processing";
 import {
-  getFileFnClient,
-  isFileFnClientLive,
-  isFileFnTeardownError,
-  refreshFileFnClientAuthority,
-  resolveFileFnAccountScope
+  assertFileFnOwner,
+  captureFileFnOwner,
+  confirmFileFnOwner,
+  discardFileFnFile,
+  getOwnedFileFnClient,
+  type FileFnOwner,
+  type OwnedFileFnClient
 } from "@nucleum/shared-state/files/filefn-client";
 import { toasts } from "@nucleum/shared-state/notifications/notification.store";
 import { escapeMarkdownText } from "@21n/ui/elements/markdown/markdown.utils";
@@ -37,6 +40,19 @@ import { fileTransport } from "@nucleum/client/runtime/files/file-transport";
 /** FileFn upload policies the account service registers (Nucleus policies). */
 const DURABLE_UPLOAD_POLICY = "nucleus-durable-default";
 const TEMPORARY_UPLOAD_POLICY = "nucleus-temporary-default";
+
+/** Upload failures uploadFileV2 has already shown to the user. */
+const shownUploadFailures = new WeakSet<object>();
+
+/**
+ * True when uploadFileV2 has already shown this failure to the user, so a
+ * caller shows its own message only for failures outside the upload.
+ */
+export function isUploadFailureShown(error: unknown): boolean {
+  return typeof error === "object" && error !== null
+    ? shownUploadFailures.has(error)
+    : false;
+}
 
 /** Uploads and stores file content independently of account lifecycle. */
 export const fileUpload = {
@@ -94,8 +110,9 @@ export const fileUpload = {
    * on the device. In `local` mode a HEIC photo that cannot be converted fails
    * the upload too, and the uploaded original is deleted. A caller that shows
    * its own error, or uploads a file the user did not choose, passes
-   * `isErrorToastSuppressed` and the error is only rethrown. Toasts render
-   * Markdown as HTML, so the file name is escaped to show as literal text.
+   * `isErrorToastSuppressed` and the error is only rethrown; otherwise
+   * isUploadFailureShown marks it as shown. Toasts render Markdown as HTML, so
+   * the file name is escaped to show as literal text.
    */
   async uploadFileV2(
     contentType: string,
@@ -119,8 +136,13 @@ export const fileUpload = {
       });
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
       const input = { id, contentType, fileName, blob, ...options };
-      if (resolveFileFnAccountScope(account.get()) && !isDeviceOffline()) {
-        return await uploadThroughFileFn(input);
+      const owner = captureFileFnOwner();
+      if (owner && !isDeviceOffline()) {
+        const namespace = resolveDatafnNamespace({
+          account: account.get(),
+          dapId: ""
+        });
+        return await uploadThroughFileFn({ ...owner, namespace }, input);
       }
       return await saveOnDevice(input);
     } catch (error) {
@@ -129,6 +151,9 @@ export const fileUpload = {
         toasts.error(
           `Couldn't upload ${escapeMarkdownText(displayName)}. Please try again.`
         );
+        if (typeof error === "object" && error !== null) {
+          shownUploadFailures.add(error);
+        }
       }
       throw error;
     }
@@ -255,26 +280,23 @@ async function saveOnDevice(input: FileUploadInput) {
  * artifact does not upload. That failure, or a record that cannot be saved,
  * deletes the uploaded file.
  *
- * The record is saved only while the FileFn client that stored the original
- * is still live. Once processing and artifact uploads settle, the client is
- * re-bound to the account's current authority; when a sign-out, another
- * account or another authority (including a changed stored region) has torn
- * it down, the upload fails without saving a record, because the global
- * DataFn store would then save it in the other account. The delete then goes
- * through the torn-down client, which rejects, so in that case the uploaded
- * original stays in FileFn without a record (cleanup deferred to TIDY-552).
+ * The upload belongs to its owner, the account and FileFn client generation
+ * captured when it started. Its client never follows a replacement, and the
+ * record is saved only when, after re-binding the authority, the owner's
+ * generation is still current and DataFn is in the owner's namespace, both
+ * checked just before the insert, which binds to that DataFn context. A
+ * sign-out, another account, another authority or an unreadable stored region
+ * fails the upload without a record; the file is then deleted through the
+ * owner's client, or the delete is recorded for the owner's next client.
  */
-async function uploadThroughFileFn(input: FileUploadInput) {
-  const client = await getFileFnClient();
-  if (!client) {
-    throw new Error("FileFn is unavailable for the signed-in account");
-  }
+async function uploadThroughFileFn(owner: UploadOwner, input: FileUploadInput) {
+  const owned = await getOwnedFileFnClient(owner);
   const mode = resolveFileProcessingMode();
   const file =
     input.blob.type === input.contentType
       ? input.blob
       : new Blob([input.blob], { type: input.contentType });
-  const handle = client.uploadFile({
+  const handle = owned.client.uploadFile({
     policy: input.isTemp ? TEMPORARY_UPLOAD_POLICY : DURABLE_UPLOAD_POLICY,
     file,
     fileName: input.fileName,
@@ -297,56 +319,41 @@ async function uploadThroughFileFn(input: FileUploadInput) {
   ]);
   if (upload.status === "rejected") throw upload.reason;
   const uploaded = upload.value;
-  if (processed.status === "rejected") {
-    await discardUploadedFile(client, uploaded.fileId);
-    throw processed.reason;
-  }
-  const deviceArtifacts = processed.value;
-  const artifacts = input.thumbnailBlob
-    ? [
-        ...deviceArtifacts,
-        { kind: DEVICE_THUMBNAIL_KIND, data: input.thumbnailBlob }
-      ]
-    : deviceArtifacts;
-  let processing: IFileProcessing;
   try {
-    processing = {
+    if (processed.status === "rejected") throw processed.reason;
+    const artifacts = input.thumbnailBlob
+      ? [
+          ...processed.value,
+          { kind: DEVICE_THUMBNAIL_KIND, data: input.thumbnailBlob }
+        ]
+      : processed.value;
+    const processing: IFileProcessing = {
       mode,
       artifacts: await uploadArtifacts(
-        client,
+        owned,
         uploaded,
         artifacts,
         mode === "local" ? LOCAL_REQUIRED_ARTIFACT_KINDS : []
       )
     };
-  } catch (error) {
-    await discardUploadedFile(client, uploaded.fileId);
-    throw error;
-  }
-  recordFileProcessing({
-    mode,
-    fileId: uploaded.fileId,
-    contentType: input.contentType,
-    deviceDurationMs: sumDurations(processing.artifacts),
-    artifacts: processing.artifacts
-  });
-  const record = {
-    id: input.id,
-    label: input.fileName,
-    name: input.fileName,
-    type: input.contentType,
-    size: input.blob.size,
-    fileId: uploaded.fileId,
-    processing
-  };
-  try {
-    await refreshFileFnClientAuthority();
-    if (!isFileFnClientLive(client)) {
-      throw new DOMException(
-        "The FileFn client was torn down before the file record was saved",
-        "AbortError"
-      );
-    }
+    const record = {
+      id: input.id,
+      label: input.fileName,
+      name: input.fileName,
+      type: input.contentType,
+      size: input.blob.size,
+      fileId: uploaded.fileId,
+      processing
+    };
+    recordFileProcessing({
+      mode,
+      fileId: uploaded.fileId,
+      contentType: input.contentType,
+      deviceDurationMs: sumDurations(processing.artifacts),
+      artifacts: processing.artifacts
+    });
+    await confirmFileFnOwner(owner);
+    assertDatafnOwner(owner);
     const result = (await datafn.file.mutate({
       operation: "insert",
       id: input.id,
@@ -355,11 +362,37 @@ async function uploadThroughFileFn(input: FileUploadInput) {
     if (result.ok === false) {
       throw result.error ?? new Error("File metadata save failed");
     }
+    return [record];
   } catch (error) {
-    await discardUploadedFile(client, uploaded.fileId);
+    await discardFileFnFile(owner, owned, uploaded.fileId).catch(
+      (discardError: unknown) => {
+        logger.error({
+          at: "uploadFileV2.discard",
+          fileId: uploaded.fileId,
+          error: discardError
+        });
+      }
+    );
     throw error;
   }
-  return [record];
+}
+
+/** An upload's FileFn owner and the DataFn namespace of its account. */
+type UploadOwner = FileFnOwner & { namespace: string };
+
+/**
+ * Throws an AbortError unless the owner's FileFn generation is current and
+ * DataFn is in the owner's namespace, so the record is never saved in another
+ * account's data.
+ */
+function assertDatafnOwner(owner: UploadOwner) {
+  assertFileFnOwner(owner);
+  if (datafn.currentNamespace() !== owner.namespace) {
+    throw new DOMException(
+      "DataFn left the account that started the upload",
+      "AbortError"
+    );
+  }
 }
 
 /**
@@ -373,26 +406,25 @@ const LOCAL_REQUIRED_ARTIFACT_KINDS: readonly DeviceArtifact["kind"][] = [
 
 /**
  * Uploads device artifacts of a file version, returning the kinds that
- * uploaded with their durations. Once every upload has settled, a client
- * teardown rejection from any artifact is rethrown, because the account that
- * owns the upload is gone, and a failed artifact of a kind in `requiredKinds`
- * throws. Any other failed artifact is logged and left out: the original is
- * already stored, and the file still shows without it (remote processing
- * makes it in `both` mode).
+ * uploaded with their durations. Once every upload has settled, a failed
+ * artifact of a kind in `requiredKinds` throws. Any other failed artifact,
+ * including an AbortError, is logged and left out: the original is already
+ * stored, and the file still shows without it (remote processing makes it in
+ * `both` mode). A torn-down client stops the upload at the owner check
+ * before the record is saved.
  */
 async function uploadArtifacts(
-  client: FileFnClient,
+  owned: OwnedFileFnClient,
   uploaded: { fileId: string; versionId: string },
   artifacts: DeviceArtifact[],
   requiredKinds: readonly DeviceArtifact["kind"][]
 ) {
   const present: IFileProcessing["artifacts"] = {};
   const requiredFailures: { kind: string; error: unknown }[] = [];
-  const teardownErrors: unknown[] = [];
   await Promise.all(
     artifacts.map(async (artifact) => {
       try {
-        await client.uploadArtifact({
+        await owned.client.uploadArtifact({
           fileId: uploaded.fileId,
           versionId: uploaded.versionId,
           kind: artifact.kind,
@@ -413,15 +445,12 @@ async function uploadArtifacts(
           kind: artifact.kind,
           error
         });
-        if (isFileFnTeardownError(error)) {
-          teardownErrors.push(error);
-        } else if (requiredKinds.includes(artifact.kind)) {
+        if (requiredKinds.includes(artifact.kind)) {
           requiredFailures.push({ kind: artifact.kind, error });
         }
       }
     })
   );
-  if (teardownErrors.length > 0) throw teardownErrors[0];
   const [requiredFailure] = requiredFailures;
   if (requiredFailure) {
     throw new Error(`The ${requiredFailure.kind} artifact did not upload`, {
@@ -429,15 +458,6 @@ async function uploadArtifacts(
     });
   }
   return present;
-}
-
-/** Deletes an uploaded file that no record will reference. */
-async function discardUploadedFile(client: FileFnClient, fileId: string) {
-  try {
-    await client.deleteFile(fileId);
-  } catch (error) {
-    logger.warn({ at: "uploadFileV2.discard", fileId, error });
-  }
 }
 
 function sumDurations(artifacts: IFileProcessing["artifacts"]) {
