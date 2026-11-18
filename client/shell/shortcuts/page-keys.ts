@@ -1,11 +1,10 @@
-import { derived, get } from "svelte/store";
+import { get } from "svelte/store";
 import { isTextElement } from "@21n/ui/actions/interaction-dom";
 import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
 import {
   contextZone,
   type ContextZonePane
 } from "@nucleum/shell/topNav/contextZone/context-zone";
-import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
 
 const chordEndingKeys = new WeakSet<KeyboardEvent>();
 
@@ -56,13 +55,3 @@ export function isKeyTargetPane(
   const active = get(contextZone.activePaneId) ?? get(contextZone.pane)?.id;
   return active === undefined || active === pane.id;
 }
-
-/**
- * Id of the resource whose menu items page letters run: the newest actions
- * registered for the pane the user works in, such as an item opened inside a
- * space rather than the space. Other resources' menus do not show the letters.
- */
-export const pageLetterTargetId = derived(
-  contextActions.active,
-  (entry) => entry?.id
-);

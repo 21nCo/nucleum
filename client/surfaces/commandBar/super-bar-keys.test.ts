@@ -26,13 +26,11 @@ describe("super bar context action keys", () => {
 });
 
 describe("page letters with an item open inside a space", () => {
-  it("run the item's menu item and show no hints on the space", async () => {
+  it("run the item's menu item, which is the target the space menu checks", async () => {
     const { render } = await import("@testing-library/svelte");
     const { get } = await import("svelte/store");
     const { contextActions } =
       await import("@nucleum/shell/topNav/contextZone/context-actions");
-    const { pageLetterTargetId } =
-      await import("@nucleum/shell/shortcuts/page-keys");
     const { default: ContextActionKeys } =
       await import("./ContextActionKeys.svelte");
     const starred: string[] = [];
@@ -62,7 +60,7 @@ describe("page letters with an item open inside a space", () => {
     });
     const view = render(ContextActionKeys);
     try {
-      expect(get(pageLetterTargetId)).toBe("node:1");
+      expect(get(contextActions.active)?.id).toBe("node:1");
       window.dispatchEvent(
         new KeyboardEvent("keydown", { key: "s", cancelable: true })
       );
@@ -70,7 +68,7 @@ describe("page letters with an item open inside a space", () => {
       expect(starred).toEqual(["node:1"]);
 
       unregisterItem();
-      expect(get(pageLetterTargetId)).toBe("space:1");
+      expect(get(contextActions.active)?.id).toBe("space:1");
       window.dispatchEvent(
         new KeyboardEvent("keydown", { key: "s", cancelable: true })
       );

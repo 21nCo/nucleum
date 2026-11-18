@@ -17,7 +17,7 @@
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import { resolveSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
   import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
-  import { pageLetterTargetId } from "@nucleum/shell/shortcuts/page-keys";
+  import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import {
     contextZone,
@@ -119,6 +119,13 @@
     );
   }
 
+  /**
+   * Page letters run the newest actions registered for the pane, such as an
+   * item opened inside the space, so the space menu shows them only while
+   * they act on the space.
+   */
+  const letterTarget = contextActions.active;
+
   function changeView(next: SpaceView) {
     viewStore.updateView(next);
   }
@@ -150,7 +157,7 @@
       isPinned={isRootPinned}
       onTogglePin={toggleRootPin}
       onViewChange={changeView}
-      isKeyed={!isEmbedded && $pageLetterTargetId === rootId}
+      isKeyed={!isEmbedded && $letterTarget?.id === rootId}
     />
   </ContextZoneContent>
 {/if}
