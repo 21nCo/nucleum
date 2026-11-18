@@ -458,6 +458,25 @@ describe("files a signed-in cloud account captures offline", () => {
     expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]);
   });
 
+  it("fails an offline capture that resumes after replay may have dropped its staged file, saving no record", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const stage = OPFSStore.prototype.stagePendingUpload;
+    vi.spyOn(OPFSStore.prototype, "stagePendingUpload").mockImplementation(
+      async function (this: InstanceType<typeof OPFSStore>, pending) {
+        await stage.call(this, pending);
+        const resumedAt = Date.now() + 25 * 60 * 60_000;
+        vi.spyOn(Date, "now").mockReturnValue(resumedAt);
+      }
+    );
+
+    await expect(capturePhoto()).rejects.toThrow();
+
+    const saved = (await datafn.file.query({})) as { data?: unknown[] };
+    expect(saved.data ?? []).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]);
+  });
+
   it("keeps the bytes on the record when the device has no private file system", async () => {
     const { storage: _storage, ...withoutStorage } = globalThis.navigator;
     vi.stubGlobal("navigator", { ...withoutStorage, onLine: false });
@@ -617,7 +636,7 @@ describe("files a signed-in cloud account captures offline", () => {
     ]);
   });
 
-  it("keeps an offline capture for the authority it was captured at once the account's region changes", async () => {
+  it("uploads an offline capture that never started at the account's new authority once its region changes", async () => {
     await bootData(cloudAccount("user-a"));
     isOnline = false;
     const record = await capturePhoto();
@@ -634,9 +653,11 @@ describe("files a signed-in cloud account captures offline", () => {
     await vi.waitFor(() => expect(passes.length).toBeGreaterThan(0));
     await Promise.all(passes);
 
-    expect(sdk.started).toEqual([]);
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
     expect(sdk.deletes).toEqual([]);
-    expect(opfs.list(ACCOUNT_QUEUE)).toEqual([`queued_${record.fileId}`]);
   });
 
   it.each([

@@ -30,7 +30,8 @@ import {
   isFileQueueSupported,
   markQueuedFileCommitted,
   resolveAccountFileQueueDir,
-  TEMPORARY_UPLOAD_POLICY
+  TEMPORARY_UPLOAD_POLICY,
+  UNCOMMITTED_GRACE_MS
 } from "@nucleum/shared-state/files/file-queue";
 import {
   assertFileFnOwner,
@@ -245,6 +246,7 @@ function isDeviceOffline() {
  * record keeps that `fileId` without bytes; the queue uploads the file once
  * the account is online. A record that cannot be saved, or a sign-out,
  * another account or DataFn leaving the namespace while the file was staged,
+ * or a capture resumed past half the queue's grace for unsaved files,
  * removes the file from the queue and fails the capture.
  * The file is marked committed only once its record is saved, so the queue
  * never uploads a file whose record did not save (the replay marks a file
@@ -299,6 +301,7 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     size: blob.size,
     processing: { mode: "local", artifacts } satisfies IFileProcessing
   };
+  const saveBy = Date.now() + UNCOMMITTED_GRACE_MS / 2;
   const fileId = await stageOnDevice(queueDir, {
     fileId: generateFileId(),
     fileName,
@@ -328,9 +331,9 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
   const record = { ...metadata, fileId };
   try {
     assertScope();
-    if (!isQueueOwnerCurrent(owner)) {
+    if (!isQueueOwnerCurrent(owner) || Date.now() > saveBy) {
       throw new DOMException(
-        "DataFn left the account that captured the file",
+        "The capture outlived its account or its staged file",
         "AbortError"
       );
     }

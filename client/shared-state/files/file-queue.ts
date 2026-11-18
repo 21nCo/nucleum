@@ -397,9 +397,9 @@ async function readThumbnail(
  * view falls back to the original), else the original. Returns null when no
  * queue holds the file, so the caller resolves it through FileFn. Each call
  * makes a new object URL, as the record bytes did: the view that renders it
- * revokes it once it no longer shows it. A download, which no view revokes,
- * shares one held URL per file, revoked once the file leaves the queue or a
- * lookup reads other queues (see releaseQueuedFileUrls).
+ * revokes it once it no longer shows it.
+ * A download shares one held URL per file, revoked when it leaves the queue
+ * or a lookup reads other queues (see releaseQueuedFileUrls).
  */
 export async function resolveQueuedFileUrl(
   dirs: readonly string[],
@@ -492,7 +492,7 @@ const replays = new Map<
 const RETRY_DELAYS_MS = [5_000, 30_000, 120_000, 600_000];
 const retryCounts = new Map<string, number>();
 /** How long an account's file without a record may still be saving. */
-const UNCOMMITTED_GRACE_MS = 24 * 60 * 60_000;
+export const UNCOMMITTED_GRACE_MS = 24 * 60 * 60_000;
 
 /**
  * What a pass did with an entry: finished with it for now, left it to upload
@@ -535,10 +535,9 @@ type ReplayPass = {
  * the entry for the claiming account's next replay, whose upload continues
  * the same session or finds it completed.
  *
- * With references (an account's queue), a file is left untouched unless the
- * replay is at the authority it was captured at (its claim) and its upload
- * started at (marked before it does, so a reload keeps it); an unclaimed
- * file that never started is the replay's. Each decision reads the records
+ * With references (an account's queue), a file whose upload started (marked
+ * with its authority first) is left untouched at any other authority; one
+ * that never started is the replay's. Each decision reads the records
  * fully brought up to date since the pass last uploaded, and again after
  * each upload before the file is removed. A file uploads only while a record
  * of the account references it, which also commits one whose mark was lost.
@@ -685,10 +684,8 @@ async function replayAccountEntry(
   const { fileId, uploadSessionId: entryName } = pending;
   const started = await readEntryText(dir, entryName, STARTED_FILE, true);
   const bound =
-    (await readClaim(dir, entryName, true)) ?? parseJson(started, isClaim);
-  if (bound ? !isSameClaim(bound, references.owner) : started !== undefined) {
-    return "done";
-  }
+    started === undefined ? references.owner : parseJson(started, isClaim);
+  if (!bound || !isSameClaim(bound, references.owner)) return "done";
   const isReferenced = await isReferencedNow(pass, references, fileId);
   if (isReferenced === undefined) return "stop";
   if (!isReferenced) {

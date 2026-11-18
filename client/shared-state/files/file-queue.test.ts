@@ -679,7 +679,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
   });
 
-  it("uploads a file only at the authority it was captured at", async () => {
+  it("uploads a file that never started at the account's current authority, whatever authority it was captured at", async () => {
     installDevice();
     const tab = await openTab();
     await tab.enqueueFile(QUEUE, {
@@ -691,26 +691,22 @@ describe("FileFn OPFS queue of an account's records", () => {
     });
     await tab.markQueuedFileCommitted(QUEUE, FILE_ID);
     const atB = createClient({ isImmediate: true });
+    const { references, discarded } = createReferences(
+      new Set([FILE_ID]),
+      [],
+      AUTHORITY_B
+    );
+
     await tab.replayFileQueue(
       QUEUE,
       atB.client,
       new AbortController().signal,
       undefined,
-      createReferences(new Set([FILE_ID]), [], AUTHORITY_B).references
-    );
-    expect(atB.uploads).toEqual([]);
-    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
-
-    const atA = createClient({ isImmediate: true });
-    await tab.replayFileQueue(
-      QUEUE,
-      atA.client,
-      new AbortController().signal,
-      undefined,
-      createReferences(new Set([FILE_ID])).references
+      references
     );
 
-    expect(atA.uploads).toEqual([expect.objectContaining({ fileId: FILE_ID })]);
+    expect(atB.uploads).toEqual([expect.objectContaining({ fileId: FILE_ID })]);
+    expect(discarded).toEqual([]);
     expect(opfs.list(QUEUE)).toEqual([]);
   });
 
