@@ -39,6 +39,7 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
+const STARTED_FILE = "started";
 
 /** FileFn upload policies the account service registers (Nucleus policies). */
 export const DURABLE_UPLOAD_POLICY = "nucleus-durable-default";
@@ -76,10 +77,12 @@ export type QueuedFilePublisher = {
 
 /**
  * The records of the account whose queue replays (see replayFileQueue):
- * whether one references a file, undefined while they cannot be read, and
- * the delete of an uploaded file whose record was deleted during its upload.
+ * bringing them up to date with the account's authority (false while they
+ * cannot be), whether one references a file, undefined while they cannot be
+ * read, and the delete of an uploaded file whose record was deleted.
  */
 export type QueuedFileReferences = {
+  sync(): Promise<boolean>;
   isReferenced(fileId: string): Promise<boolean | undefined>;
   discard(fileId: string): Promise<void>;
 };
@@ -451,10 +454,12 @@ const replays = new Map<
  * the same session or finds it completed.
  *
  * With references (an account's queue), a file uploads only while a record
- * of the account references it, which also commits one whose mark was lost:
- * a committed file whose record was deleted is removed without an upload,
- * and one deleted during its upload is discarded. A pass stops while the
- * records cannot be read.
+ * of the account references it, which also commits one whose mark was lost,
+ * as the records are once brought up to date at the start of the pass, and
+ * again after each upload before the file is removed. A committed file whose
+ * record was deleted is removed without an upload, and one whose upload
+ * started (marked before it does, so a reload keeps it) is discarded first.
+ * A pass stops while the records cannot be brought up to date or read.
  */
 export function replayFileQueue(
   dir: string,
@@ -514,7 +519,9 @@ async function drainQueue(
 ) {
   if (!isFileQueueSupported()) return;
   const store = getStore(dir);
-  for (const entryName of await store.listPendingUploads()) {
+  const entryNames = await store.listPendingUploads();
+  if (!entryNames.length || (references && !(await references.sync()))) return;
+  for (const entryName of entryNames) {
     if (signal.aborted || globalThis.navigator?.onLine === false) return;
     if (!entryName.startsWith(ENTRY_PREFIX)) continue;
     const pending = await store.getPendingUpload(entryName);
@@ -525,7 +532,11 @@ async function drainQueue(
       const isReferenced = await references.isReferenced(fileId);
       if (isReferenced === undefined) return;
       if (!isReferenced) {
-        if (isCommitted) await dequeueFile(dir, fileId);
+        if (!isCommitted) continue;
+        if (await hasEntryFile(dir, entryName, STARTED_FILE)) {
+          await references.discard(fileId);
+        }
+        await dequeueFile(dir, fileId);
         continue;
       }
       if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
@@ -537,6 +548,7 @@ async function drainQueue(
     if (publisher && !publisher.isReady()) return;
     try {
       if (publisher) await claimEntry(dir, entryName, publisher.owner);
+      if (references) await writeEntryFile(dir, entryName, STARTED_FILE, "");
       const result = await uploadQueuedFile(client, store, {
         ...pending,
         fileId
@@ -545,6 +557,7 @@ async function drainQueue(
       if (publisher) {
         await publishEntry(dir, entryName, publisher, result);
       } else {
+        if (references && !(await references.sync())) return;
         const isReferenced = await references?.isReferenced(fileId);
         if (references && isReferenced === undefined) return;
         if (isReferenced === false) await references?.discard(fileId);

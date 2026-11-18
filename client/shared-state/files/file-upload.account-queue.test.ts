@@ -75,6 +75,55 @@ vi.mock("@filefn/client", async (importOriginal) => {
   };
 });
 
+/**
+ * The account's DataFn authority. The device's DataFn runs local-only, so a
+ * fake of its sync stands in: DataFn syncs with `url`, and each pull runs
+ * `onPull` (which applies what the pull brings) and then applies, or fails
+ * when `isFailing`.
+ */
+const authority = vi.hoisted(() => ({
+  url: "https://account-useast-dev.nucleum.app/datafn",
+  pulls: 0,
+  isFailing: false,
+  onPull: null as null | ((pull: number) => Promise<void>)
+}));
+vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
+  const { derived } = await import("svelte/store");
+  const handlers = new Set<(event: never) => void>();
+  const emit = (type: string, context: Record<string, unknown>) => {
+    for (const handler of handlers) {
+      handler({ type, timestampMs: Date.now(), context } as never);
+    }
+  };
+  const pullNow = async () => {
+    const pull = ++authority.pulls;
+    emit("sync_started", { phase: "pull" });
+    await authority.onPull?.(pull);
+    if (authority.isFailing) emit("sync_failed", { phase: "pull" });
+    else emit("sync_applied", { phase: "pull", cursors: { file: `${pull}` } });
+  };
+  const datafn = new Proxy(actual.datafn, {
+    get(target, key) {
+      if (key === "subscribe") {
+        return (handler: (event: never) => void) => {
+          handlers.add(handler);
+          return () => handlers.delete(handler);
+        };
+      }
+      if (key === "sync") return { ...target.sync, pullNow };
+      return Reflect.get(target, key);
+    }
+  });
+  const datafnRuntime = derived(actual.datafnRuntime, (runtime) =>
+    runtime
+      ? { ...runtime, mode: "sync" as const, remoteUrl: authority.url }
+      : null
+  );
+  return { ...actual, datafn, datafnRuntime };
+});
+
 const { fileUpload } = await import("./file-upload");
 const { resolveFileUrl } = await import("./file-url");
 const { captureFileQueueUploader } = await import("./filefn-client");
@@ -217,6 +266,10 @@ beforeEach(() => {
   sdk.deletes = [];
   sdk.baseUrls = [];
   sdk.hold = null;
+  authority.url = "https://account-useast-dev.nucleum.app/datafn";
+  authority.pulls = 0;
+  authority.isFailing = false;
+  authority.onPull = null;
 });
 
 afterEach(async () => {
@@ -483,4 +536,81 @@ describe("files a signed-in cloud account captures offline", () => {
       expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:queued");
     }
   );
+
+  it("never uploads an offline capture whose record the pull on reconnect shows was deleted on another device", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    authority.onPull = async () => {
+      if (await savedRecord(record.id)) await deleteRecord(record.id);
+    };
+
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deletes).toEqual([]);
+  });
+
+  it("deletes the uploaded file when the pull after its upload shows its record was deleted on another device", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    authority.onPull = async () => {
+      if (sdk.uploads.length) await deleteRecord(record.id);
+    };
+
+    goOnline();
+
+    await vi.waitFor(() => expect(sdk.deletes).toEqual([record.fileId]));
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.uploads).toHaveLength(1);
+  });
+
+  it("keeps an offline capture and uploads nothing while DataFn cannot pull the account's records", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    authority.isFailing = true;
+    const passes = trackReplayPasses();
+
+    goOnline();
+    await vi.waitFor(() => expect(passes).toHaveLength(1));
+    await passes[0];
+
+    expect(authority.pulls).toBe(1);
+    expect(sdk.started).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toEqual([`queued_${record.fileId}`]);
+
+    authority.isFailing = false;
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+  });
+
+  it("keeps an offline capture while DataFn syncs with another authority than the FileFn client's, and uploads it once DataFn rebinds", async () => {
+    authority.url = "https://account-euwest-dev.nucleum.app/datafn";
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const passes = trackReplayPasses();
+
+    goOnline();
+    await vi.waitFor(() => expect(passes).toHaveLength(1));
+    await passes[0];
+
+    expect(sdk.started).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toEqual([`queued_${record.fileId}`]);
+
+    authority.url = "https://account-useast-dev.nucleum.app/datafn";
+    await openData("user-a");
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+  });
 });

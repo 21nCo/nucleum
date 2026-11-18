@@ -295,13 +295,24 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
   const { userId, baseUrl, client, signal } = uploader;
   if (signal.aborted || globalThis.navigator?.onLine === false) return;
   const namespace = `user:${userId}`;
-  const isInNamespace = () =>
-    !signal.aborted &&
-    datafn.currentNamespace() === namespace &&
-    get(datafnRuntime)?.namespace === namespace;
+  const isAccountRecords = () => {
+    const runtime = get(datafnRuntime);
+    return (
+      !signal.aborted &&
+      datafn.currentNamespace() === namespace &&
+      runtime?.namespace === namespace &&
+      runtime.remoteUrl?.replace(/\/datafn\/?$/, "") ===
+        baseUrl.replace(/\/files\/?$/, "")
+    );
+  };
   const references: QueuedFileReferences = {
+    async sync() {
+      if (!isAccountRecords()) return false;
+      if (!get(datafnRuntime)?.storage) return true;
+      return pullAccountFileRecords(datafn, isAccountRecords, signal);
+    },
     async isReferenced(fileId) {
-      if (!isInNamespace()) return undefined;
+      if (!isAccountRecords()) return undefined;
       const result = await datafn.file.query({
         filters: { fileId },
         limit: 1,
@@ -311,7 +322,7 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
           includeAncestorInactive: true
         }
       });
-      if (!isInNamespace() || !Array.isArray(result.data)) return undefined;
+      if (!isAccountRecords() || !Array.isArray(result.data)) return undefined;
       return result.data.length > 0;
     },
     async discard(fileId) {
@@ -329,6 +340,64 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
     references
   ).catch((error: unknown) => {
     logger.error({ at: "filefn.client.queue", error });
+  });
+}
+
+/** How long a queue replay waits for DataFn to pull the account's records. */
+const ACCOUNT_PULL_TIMEOUT_MS = 120_000;
+
+/**
+ * Pulls the account's records into the device's DataFn copy. Resolves true
+ * once a pull that started after this call applied the file records, and
+ * false once one fails, the records stop being the account's (`isCurrent`),
+ * the signal aborts or no pull ends in time. A pull already running when it
+ * is called may have read the records before, so it is waited out and
+ * followed by another. A pull that left the file records out, while they
+ * are still being cloned, is followed by the one DataFn starts once they are.
+ */
+export function pullAccountFileRecords(
+  client: Pick<typeof datafn, "subscribe"> & {
+    sync: Pick<typeof datafn.sync, "pullNow">;
+  },
+  isCurrent: () => boolean,
+  signal: AbortSignal
+): Promise<boolean> {
+  if (!isCurrent()) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    let isOwnPull = false;
+    const pull = () => void client.sync.pullNow().catch(() => undefined);
+    const stops = [
+      client.subscribe((event) => {
+        const context = event.context as
+          { phase?: unknown; cursors?: Record<string, unknown> } | undefined;
+        if (context?.phase !== "pull") return;
+        if (event.type === "sync_started") isOwnPull = true;
+        if (event.type !== "sync_applied" && event.type !== "sync_failed") {
+          return;
+        }
+        if (!isOwnPull) {
+          setTimeout(pull, 0);
+        } else if (event.type === "sync_failed") {
+          finish(false);
+        } else if (context.cursors && "file" in context.cursors) {
+          finish(isCurrent());
+        }
+        isOwnPull = false;
+      }),
+      datafnRuntime.subscribe(() => {
+        if (!isCurrent()) finish(false);
+      })
+    ];
+    const timeout = setTimeout(() => finish(false), ACCOUNT_PULL_TIMEOUT_MS);
+    const abort = () => finish(false);
+    signal.addEventListener("abort", abort, { once: true });
+    function finish(isPulled: boolean) {
+      for (const stop of stops) stop();
+      clearTimeout(timeout);
+      signal.removeEventListener("abort", abort);
+      resolve(isPulled);
+    }
+    pull();
   });
 }
 

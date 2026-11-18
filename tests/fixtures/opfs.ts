@@ -14,10 +14,13 @@ function notFound(name: string) {
   return new DOMException(`${name} was not found`, "NotFoundError");
 }
 
+/**
+ * Copies a written chunk. An ArrayBuffer is recognised by its tag, as test
+ * globals may mix ArrayBuffers of several realms.
+ */
 async function toBytes(chunk: unknown): Promise<Uint8Array> {
   if (typeof chunk === "string") return new TextEncoder().encode(chunk);
   if (chunk instanceof Uint8Array) return Uint8Array.from(chunk);
-  // Checked by tag, as test globals may mix ArrayBuffers of several realms.
   if (Object.prototype.toString.call(chunk) === "[object ArrayBuffer]") {
     return new Uint8Array((chunk as ArrayBuffer).slice(0));
   }

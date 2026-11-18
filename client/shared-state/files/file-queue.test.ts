@@ -122,7 +122,6 @@ describe("FileFn OPFS queue", () => {
     expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
     const shown = await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full");
     expect(shown).toMatch(/^blob:/);
-    // A view revokes the URL it rendered, so the next view gets its own.
     expect(await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full")).not.toBe(
       shown
     );
@@ -310,12 +309,23 @@ describe("FileFn OPFS queue", () => {
 });
 
 describe("FileFn OPFS queue of an account's records", () => {
-  /** The account's records, as the referenced `fileId`s, or unreadable. */
-  function createReferences(referenced: Set<string> | "unreadable") {
+  /**
+   * The account's records, as the referenced `fileId`s, or unreadable. Each
+   * pull that brings them up to date runs `pulls` in turn (the last one again
+   * once they run out) and succeeds unless that returns false.
+   */
+  function createReferences(
+    referenced: Set<string> | "unreadable",
+    pulls: (() => boolean | void)[] = []
+  ) {
     const discarded: string[] = [];
+    let pullCount = 0;
     return {
       discarded,
       references: {
+        sync: async () =>
+          (pulls[Math.min(pullCount++, pulls.length - 1)]?.() ?? true) !==
+          false,
         isReferenced: async (fileId: string) =>
           referenced === "unreadable" ? undefined : referenced.has(fileId),
         discard: async (fileId: string) => {
@@ -389,6 +399,135 @@ describe("FileFn OPFS queue of an account's records", () => {
     );
 
     expect(fileFn.uploads).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  it("removes a committed file without uploading it when the pull before the upload brings its record's deletion", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const referenced = new Set([FILE_ID]);
+    const { references, discarded } = createReferences(referenced, [
+      () => void referenced.delete(FILE_ID)
+    ]);
+
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(discarded).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("uploads and removes nothing while the account's records cannot be brought up to date", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const { references } = createReferences(new Set(), [() => false]);
+
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  it("discards an uploaded file when the pull after its upload brings its record's deletion", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const referenced = new Set([FILE_ID]);
+    const { references, discarded } = createReferences(referenced, [
+      () => true,
+      () => void referenced.delete(FILE_ID)
+    ]);
+
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(fileFn.uploads).toEqual([
+      expect.objectContaining({ fileId: FILE_ID })
+    ]);
+    expect(discarded).toEqual([FILE_ID]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("discards a file whose upload ended before its removal was decided once its record is gone after a reload", async () => {
+    installDevice();
+    const first = await openTab();
+    await enqueuePhoto(first);
+    const fileFn = createClient({ isImmediate: true });
+    await first.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      createReferences(new Set([FILE_ID]), [() => true, () => false]).references
+    );
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+
+    const reloaded = await openTab();
+    const { references, discarded } = createReferences(new Set());
+    await reloaded.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(discarded).toEqual([FILE_ID]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("keeps a file whose discard fails, to discard it on the next replay", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const referenced = new Set([FILE_ID]);
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      createReferences(referenced, [() => true, () => false]).references
+    );
+    const { references } = createReferences(new Set());
+    references.discard = async () => {
+      throw new Error("offline");
+    };
+
+    await expect(
+      tab.replayFileQueue(
+        QUEUE,
+        fileFn.client,
+        new AbortController().signal,
+        undefined,
+        references
+      )
+    ).rejects.toThrow("offline");
+
     expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
   });
 });
