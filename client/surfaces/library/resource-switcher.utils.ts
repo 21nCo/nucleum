@@ -111,3 +111,22 @@ export function resolveLibrarySwitcherSections(
     )
   }));
 }
+
+/**
+ * Values the context view keys step through for the side panel switcher:
+ * every section's enabled types once, in section order. Disabled (Planned)
+ * types are left out because the switcher does not select them either.
+ */
+export function resolveLibrarySideViewOrder(
+  sections: LibrarySwitcherSection[]
+): string[] {
+  return [
+    ...new Set(
+      sections.flatMap((section) =>
+        section.items
+          .filter((item) => !item.isDisabled)
+          .map((item) => String(item.value))
+      )
+    )
+  ];
+}

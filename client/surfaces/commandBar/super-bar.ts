@@ -29,6 +29,18 @@ export type SuperBarEntry =
 /** Commands shown above the search results while a query is typed. */
 export const SUPER_BAR_COMMAND_LIMIT = 5;
 
+/** Prefix that narrows the super bar to commands only. */
+export const SUPER_BAR_COMMANDS_PREFIX = ">";
+
+/**
+ * Reads a typed `>` prefix: returns the query without it when the input
+ * starts with the prefix, otherwise undefined.
+ */
+export function resolveCommandsPrefix(value: string): string | undefined {
+  if (!value.startsWith(SUPER_BAR_COMMANDS_PREFIX)) return undefined;
+  return value.slice(SUPER_BAR_COMMANDS_PREFIX.length).trimStart();
+}
+
 function resolveContextItemLabel(item: IContextMenuItem) {
   if (item.type === ContextMenuType.SWITCH) {
     const label = item.label ?? properCase(enumToString(String(item.value)));
@@ -140,6 +152,24 @@ export function toSuperBarSearchHit(
   };
 }
 
+function toCommandEntry(action: ICommandAction): SuperBarEntry {
+  return {
+    kind: "command",
+    key: `command:${action.action}:${action.variant ?? ""}`,
+    action
+  };
+}
+
+/** Keeps the first entry for each key, so the keyed rows stay unique. */
+function uniqueByKey(entries: SuperBarEntry[]): SuperBarEntry[] {
+  const seen = new Set<string>();
+  return entries.filter((entry) => {
+    if (seen.has(entry.key)) return false;
+    seen.add(entry.key);
+    return true;
+  });
+}
+
 /**
  * Orders the super bar rows: the open resource's actions, then commands, then
  * search results, without duplicate rows. While typing, commands are capped
@@ -151,8 +181,13 @@ export function buildSuperBarEntries(params: {
   contextActions: ContextActionItem[];
   commands: ICommandAction[];
   results: ResourceSearchHit[];
+  /** Lists every matching command and nothing else. */
+  isCommandsOnly?: boolean;
 }): SuperBarEntry[] {
   const isTyping = params.query.trim().length > 0;
+  if (params.isCommandsOnly) {
+    return uniqueByKey(params.commands.map(toCommandEntry));
+  }
   if (params.scope === "search") {
     return params.results.map((hit) => ({
       kind: "result",
@@ -163,7 +198,6 @@ export function buildSuperBarEntries(params: {
   const commands = isTyping
     ? params.commands.slice(0, SUPER_BAR_COMMAND_LIMIT)
     : params.commands;
-  const seen = new Set<string>();
   const entries: SuperBarEntry[] = [
     ...filterContextActions(params.contextActions, params.query).map(
       (action): SuperBarEntry => ({
@@ -172,22 +206,14 @@ export function buildSuperBarEntries(params: {
         action
       })
     ),
-    ...commands.map((action): SuperBarEntry => ({
-      kind: "command",
-      key: `command:${action.action}:${action.variant ?? ""}`,
-      action
-    })),
+    ...commands.map(toCommandEntry),
     ...(isTyping ? params.results : []).map((hit): SuperBarEntry => ({
       kind: "result",
       key: `result:${hit.id}`,
       hit
     }))
   ];
-  return entries.filter((entry) => {
-    if (seen.has(entry.key)) return false;
-    seen.add(entry.key);
-    return true;
-  });
+  return uniqueByKey(entries);
 }
 
 /**

@@ -256,6 +256,11 @@ function nestExpandedNodeChildren(
   return roots.length > 0 ? roots : children;
 }
 
+/** Loads a note's blocks, nested as the editor expects, from its stored block order. */
+export function loadNoteBlocks(mdChildOrder: IRecordId[], noteId: IRecordId) {
+  return expandNodeMdChildOrder(mdChildOrder, noteId);
+}
+
 async function fetchNode(id: IRecordId) {
   const response = (await selectNode(id, [
     "*",
@@ -328,78 +333,30 @@ export async function downloadNode(node: IRecordId | INode) {
   }
 }
 
-async function resolveNodeDependencies(ids: IRecordId[]) {
-  const [childrenResult, ...mdChildrenResult] = (await datafn.query([
-    {
-      resource: Resource.node,
-      select: ["id"],
-      filters: {
-        parent: { $in: ids.map((id) => id.toString()) }
-      },
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true,
-        includeAncestorInactive: true
-      }
-    },
-    ...ids.map((id) => ({
-      resource: Resource.node,
-      select: ["id"],
-      filters: {
-        mdParent: {
-          $contains: id.toString()
-        }
-      },
-      metadata: {
-        includeTrashed: true,
-        includeArchived: true,
-        includeAncestorInactive: true
-      }
-    }))
-  ])) as Array<{ data?: Record<string, unknown>[] }>;
-  return [
-    ...((childrenResult.data ?? []).map(normalizeNodeRecord) ?? []),
-    ...mdChildrenResult.flatMap(
-      (result) => result.data?.map(normalizeNodeRecord) ?? []
-    )
-  ];
-}
+/**
+ * Node lifecycle hook for archive. DataFn maintains `isAncestorInactive` on
+ * descendant nodes through the `parent` relation's `inheritsInactive`, so the
+ * hook writes nothing.
+ */
+export async function onNodeArchive(_ids: IRecordId[]): Promise<void> {}
 
-async function onNodeParentChange(ids: IRecordId[], status: boolean) {
-  try {
-    const children = await resolveNodeDependencies(ids);
-    if (!children || children.length === 0) return;
-    const childrenIds = children.map((g: INode) => g.id)?.filter(Boolean);
-    if (!childrenIds || childrenIds.length === 0) return;
-    await datafn.node.mutate(
-      childrenIds.map((id) => ({
-        operation: "merge",
-        id,
-        record: {
-          isAncestorInactive: status
-        }
-      }))
-    );
-  } catch (e) {
-    logger.error({ at: "onParentChange - node", error: e });
-  }
-}
+/**
+ * Node lifecycle hook for unarchive. DataFn clears `isAncestorInactive` on
+ * descendant nodes, so the hook writes nothing.
+ */
+export async function onNodeUnarchive(_ids: IRecordId[]): Promise<void> {}
 
-export async function onNodeArchive(ids: IRecordId[]) {
-  return onNodeParentChange(ids, true);
-}
+/**
+ * Node lifecycle hook for trash. DataFn maintains `isAncestorInactive` on
+ * descendant nodes, so the hook writes nothing.
+ */
+export async function onNodeTrash(_ids: IRecordId[]): Promise<void> {}
 
-export async function onNodeUnarchive(ids: IRecordId[]) {
-  return onNodeParentChange(ids, false);
-}
-
-export async function onNodeTrash(ids: IRecordId[]) {
-  return onNodeParentChange(ids, true);
-}
-
-export async function onNodeRestore(ids: IRecordId[]) {
-  return onNodeParentChange(ids, false);
-}
+/**
+ * Node lifecycle hook for restore. DataFn clears `isAncestorInactive` on
+ * descendant nodes, so the hook writes nothing.
+ */
+export async function onNodeRestore(_ids: IRecordId[]): Promise<void> {}
 
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 

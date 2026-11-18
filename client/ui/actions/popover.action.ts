@@ -6,7 +6,10 @@ import {
   type ComponentType
 } from "svelte";
 import { Placement } from "@21n/ui/elements/direction.enum";
-import { PopoverTriggerMethod } from "@21n/ui/actions/popover.type";
+import {
+  POPOVER_KEEP_OPEN_ATTRIBUTE,
+  PopoverTriggerMethod
+} from "@21n/ui/actions/popover.type";
 import { detectTouchDevice } from "@21n/shared-utils/browser-platform";
 import { getEventPath } from "@21n/ui/actions/interaction-dom";
 import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
@@ -350,6 +353,49 @@ function resolveRootElementById(
   return null;
 }
 
+/** A shown popover or menu, with the element that opened it. */
+export interface PopoverLayer {
+  element: HTMLElement;
+  trigger?: Element;
+}
+
+/**
+ * Stacking order of a submenu opened from a row inside a constrained-width
+ * sheet, which draws its overlay at 60 and itself at 70: above both, so the
+ * submenu's options stay visible and take the pointer.
+ */
+const CW_MODAL_SUBMENU_Z_INDEX = "80";
+
+/**
+ * Popovers and menus shown now, oldest first, so a key handler such as a
+ * context menu's can tell which layer a key belongs to. Hover-only popovers
+ * take no keys and are left out.
+ */
+export const popoverLayers: PopoverLayer[] = [];
+
+/**
+ * Adds a layer and drops popover layers whose element has left the page. A
+ * menu's own layer, which has no trigger, stays while the menu is moved
+ * between containers; the menu removes it when it unmounts.
+ */
+export function addPopoverLayer(layer: PopoverLayer) {
+  for (let index = popoverLayers.length - 1; index >= 0; index--) {
+    const { element, trigger } = popoverLayers[index];
+    if (trigger && !element.isConnected) popoverLayers.splice(index, 1);
+  }
+  popoverLayers.push(layer);
+}
+
+export function removePopoverLayer(
+  match: HTMLElement | ((element: HTMLElement) => boolean)
+) {
+  for (let index = popoverLayers.length - 1; index >= 0; index--) {
+    const { element } = popoverLayers[index];
+    if (typeof match === "function" ? match(element) : element === match)
+      popoverLayers.splice(index, 1);
+  }
+}
+
 type Content = string | HTMLElement | PopoverComponentConstructor;
 
 interface PopoverParams {
@@ -449,7 +495,10 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     if (isHoverOnlyTrigger()) {
       popoverElement.classList.add("pointer-events-none");
     }
-    popoverElement.style.zIndex = "50";
+    popoverElement.style.zIndex =
+      isSecondary && node.closest(".popover.cw-modal")
+        ? CW_MODAL_SUBMENU_Z_INDEX
+        : "50";
     popoverElement.id = id;
     popoverElement.setAttribute("data-group-id", groupId);
     const container = isSecondary
@@ -461,6 +510,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       container.innerHTML = "";
       container?.appendChild(popoverElement);
     }
+    if (!isHoverOnlyTrigger())
+      addPopoverLayer({ element: popoverElement, trigger: node });
 
     if (typeof content === "string") {
       popoverElement.textContent = content;
@@ -469,7 +520,12 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     } else if (typeof content === "function") {
       component = mount(content, {
         target: popoverElement,
-        props: { ...componentProps, isPopoverContext: true }
+        props: {
+          ...componentProps,
+          isPopoverContext: true,
+          // A dedicated name, so content that already takes onClose keeps it.
+          closePopover: () => hidePopover("close")
+        }
       });
     }
 
@@ -545,7 +601,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       return;
     }
 
-    let adjustedPlacement = placement;
+    const isStartAligned = placement === Placement.RightStart;
+    let adjustedPlacement = isStartAligned ? Placement.Right : placement;
     resetPosition();
     adjustIfNotEnoughTop();
     adjustIfNotEnoughBottom();
@@ -630,7 +687,17 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       adjustedPlacement === Placement.Left ||
       adjustedPlacement === Placement.Right
     ) {
-      if (triggerRect.top < popRect.height / 2) {
+      if (isStartAligned) {
+        const viewport = window.visualViewport;
+        const visibleTop = viewport?.offsetTop ?? 0;
+        const visibleBottom =
+          visibleTop + (viewport?.height ?? window.innerHeight);
+        const top = Math.min(
+          triggerRect.top - offsetInPx,
+          visibleBottom - popRect.height - 6
+        );
+        popoverElement.style.top = `${Math.max(visibleTop + 6, top)}px`;
+      } else if (triggerRect.top < popRect.height / 2) {
         popoverElement.style.top = "6px";
       } else if (documentHeight - triggerRect.bottom < popRect.height / 2) {
         popoverElement.style.bottom = "6px";
@@ -761,6 +828,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     try {
       clearHoverDelayTimeout();
       if (popoverElement && !popoverElement.isConnected) {
+        removePopoverLayer(popoverElement);
         popoverElement = null;
         if (component) {
           void unmount(component);
@@ -781,6 +849,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     // console.log("hidePopover", e);
     clearHoverDelayTimeout();
     if (popoverElement) {
+      removePopoverLayer(popoverElement);
       try {
         if (typeof popoverElement.remove === "function") {
           popoverElement.remove();
@@ -844,6 +913,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     const target =
       targetNode instanceof Element ? targetNode : targetNode.parentElement;
     if (!target) return;
+    if (target.closest(`[${POPOVER_KEEP_OPEN_ATTRIBUTE}]`)) return;
     const path = event.composedPath?.() ?? getEventPath(event);
     if (target.tagName.toLowerCase() === "path") {
       const svgParent = target.closest("svg");

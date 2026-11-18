@@ -31,21 +31,6 @@ export const fileTransport = {
       logger.error({ at: "getSignedUrl", error: e });
     }
   },
-  /** Executes the existing fetchSignedUrlForGet transport operation. */
-  async fetchSignedUrlForGet(key: string) {
-    const response = resolveJsonResponse(
-      await performApiCall(
-        "utils/n/getsignedurl",
-        "POST",
-        {
-          method: "GET",
-          key
-        },
-        { isFileApi: true }
-      )
-    );
-    return await response?.json();
-  },
   /** Executes the existing uploadFile transport operation. */
   async uploadFile(uploadUrl: string, contentType: string, blob: any) {
     const result = await fetch(uploadUrl, {

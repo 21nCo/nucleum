@@ -1,15 +1,17 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import type { Snippet } from "svelte";
+  import { untrack, type Snippet } from "svelte";
   import {
     contextZone,
-    getContextZonePane
+    getContextZonePane,
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     children,
-    cycle = undefined,
+    views = undefined,
+    fallbackViews = undefined,
     surface = undefined,
     title = undefined,
     fallback = undefined,
@@ -17,8 +19,13 @@
   }: {
     /** Controls shown in the top bar context zone for this pane. */
     children: Snippet;
-    /** Selects the next tab or view of this entry. */
-    cycle?: () => void;
+    /** Views the keyboard can move between while this entry shows. */
+    views?: ContextZoneViews;
+    /**
+     * Views the keyboard moves between while this entry shows, used only
+     * when no page switcher on this pane registers views.
+     */
+    fallbackViews?: ContextZoneViews;
     /** Background class of the context tab, matching the page below. */
     surface?: string;
     /** Replaces the page identity's title while this entry shows. */
@@ -32,20 +39,40 @@
   const pane = getContextZonePane();
   const isHosted = contextZone.isHosted;
 
+  // The top bar reads copies of the props, so it never re-evaluates values
+  // derived inside this pane once the pane unmounts. For example, a node
+  // page that unmounts as Minimize returns to a space would otherwise read
+  // its released store and stop the space from rendering.
+  let shownContent = $state.raw(untrack(() => children));
+  let shownViews = $state.raw(untrack(() => views));
+  let shownFallbackViews = $state.raw(untrack(() => fallbackViews));
+  let shownSurface = $state.raw(untrack(() => surface));
+  let shownTitle = $state.raw(untrack(() => title));
+  $effect.pre(() => {
+    shownContent = children;
+    shownViews = views;
+    shownFallbackViews = fallbackViews;
+    shownSurface = surface;
+    shownTitle = title;
+  });
+
   $effect(() => {
     if (!$isHosted) return;
     return contextZone.register(pane, {
       get content() {
-        return children;
+        return shownContent;
       },
-      get cycle() {
-        return cycle;
+      get views() {
+        return shownViews;
+      },
+      get fallbackViews() {
+        return shownFallbackViews;
       },
       get surface() {
-        return surface;
+        return shownSurface;
       },
       get title() {
-        return title;
+        return shownTitle;
       }
     });
   });

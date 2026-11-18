@@ -10,6 +10,9 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import Navigator from "@nucleum/shell/navigator/Navigator.svelte";
 import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
 import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
+import { stepContextView } from "@nucleum/shell/shortcuts/context-view-step";
+import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
+import { stepListItem } from "@nucleum/shell/shortcuts/list-item-step";
 import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 import { requestNavigatorFocus } from "@nucleum/shell/navigator/navigator-focus";
 import { resolveNavigatorLayer } from "@nucleum/shell/navigator/navigator-layer";
@@ -89,7 +92,63 @@ export const shellCommands = {
     label: "Next view tab",
     type: ActionType.FUNCTION,
     fn: async () => {
-      contextZone.cycle();
+      stepContextView(1);
+    }
+  },
+  previous_context_view: {
+    action: Action.PREVIOUS_CONTEXT_VIEW,
+    label: "Previous view",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      stepContextView(-1);
+    }
+  },
+  next_context_view: {
+    action: Action.NEXT_CONTEXT_VIEW,
+    label: "Next view",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      stepContextView(1);
+    }
+  },
+  previous_sub_view: {
+    action: Action.PREVIOUS_SUB_VIEW,
+    label: "Previous sub view",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      if (isViewKeyLayerOnFront()) return;
+      contextZone.stepSub(-1);
+    }
+  },
+  previous_list_item: {
+    action: Action.PREVIOUS_LIST_ITEM,
+    label: "Previous list item",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      stepListItem(-1);
+    }
+  },
+  next_list_item: {
+    action: Action.NEXT_LIST_ITEM,
+    label: "Next list item",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      stepListItem(1);
+    }
+  },
+  next_sub_view: {
+    action: Action.NEXT_SUB_VIEW,
+    label: "Next sub view",
+    isMeta: true,
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      if (isViewKeyLayerOnFront()) return;
+      contextZone.stepSub(1);
     }
   },
   rhombus: {

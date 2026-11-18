@@ -52,6 +52,91 @@ type ResourceLifecycleHooks = {
   onRestore?: (ids: IRecordId[]) => Promise<unknown> | unknown;
 };
 
+/** Bulk selection context of a resource shown at an access point. */
+export function resolveResourceSelectionContext(
+  id: IRecordId,
+  accessPoint: ResourceAccessPoint,
+  accessPointId?: IRecordId
+) {
+  return {
+    resource: determineResourceType(id),
+    accessPoint,
+    accessPointId: resolveBulkSelectionAccessPointId(accessPoint, accessPointId)
+  };
+}
+
+/**
+ * Activates bulk selection for a resource's access point when another context
+ * holds it, then adds the resource to the selection or removes it.
+ */
+export function toggleResourceSelection(
+  id: IRecordId,
+  accessPoint: ResourceAccessPoint,
+  accessPointId?: IRecordId
+) {
+  const multiSelectContext = resolveResourceSelectionContext(
+    id,
+    accessPoint,
+    accessPointId
+  );
+  if (!bulkEditStore.matchesContext(multiSelectContext)) {
+    bulkEditStore.activate(multiSelectContext, {
+      onAction: (ids, action, data) => {
+        const bulkEditor = new BulkEditor(
+          multiSelectContext.resource,
+          bulkEditStore
+        );
+        bulkEditor.run(action, data);
+      },
+      subContext: multiSelectContext.accessPointId?.toString()
+    });
+  }
+  const currentSelection = bulkEditStore.getState().selectedIds;
+  if (currentSelection.some(resourceInList(id))) {
+    bulkEditStore.select(
+      currentSelection.filter((y) => !isSameResource(y, id))
+    );
+  } else {
+    bulkEditStore.select([...currentSelection, id]);
+  }
+}
+
+function isSameIdSet(left: IRecordId[], right: IRecordId[]) {
+  return (
+    left.length === right.length &&
+    left.every((id) => right.some(resourceInList(id)))
+  );
+}
+
+/**
+ * Returns a function that selects a Shift+arrow range on top of what was
+ * selected before the range started (`isNewRange`). A selection change made
+ * elsewhere between presses, such as a click or a menu's Select, joins that
+ * base: earlier picks still selected stay, picks added elsewhere join and
+ * picks removed elsewhere leave, so the next press neither drops a new pick
+ * nor restores a removed one.
+ */
+export function createRangeSelection() {
+  let baseIds: IRecordId[] = [];
+  let writtenIds: IRecordId[] = [];
+  return (ids: IRecordId[], isNewRange: boolean) => {
+    const selectedIds = bulkEditStore.getState().selectedIds;
+    if (isNewRange) {
+      baseIds = selectedIds;
+    } else if (!isSameIdSet(selectedIds, writtenIds)) {
+      baseIds = [
+        ...baseIds.filter((id) => selectedIds.some(resourceInList(id))),
+        ...selectedIds.filter((id) => !writtenIds.some(resourceInList(id)))
+      ];
+    }
+    writtenIds = [
+      ...baseIds.filter((id) => !ids.some(resourceInList(id))),
+      ...ids
+    ];
+    bulkEditStore.select(writtenIds);
+  };
+}
+
 export class ResourceActions<T extends IActionableResource> {
   accessPoint?: ResourceAccessPoint;
   accessMode?: AccessMode;
@@ -227,31 +312,11 @@ export class ResourceActions<T extends IActionableResource> {
     accessPoint: ResourceAccessPoint,
     accessPointId?: IRecordId
   ): IContextMenuItem {
-    const resolvedAccessPointId = resolveBulkSelectionAccessPointId(
+    const multiSelectContext = resolveResourceSelectionContext(
+      this.resource.id,
       accessPoint,
       accessPointId
     );
-    const multiSelectContext = {
-      resource: determineResourceType(this.resource.id),
-      accessPoint,
-      accessPointId: resolvedAccessPointId
-    };
-
-    const resolveEditor = () => {
-      if (!bulkEditStore.matchesContext(multiSelectContext)) {
-        bulkEditStore.activate(multiSelectContext, {
-          onAction: (ids, action, data) => {
-            const bulkEditor = new BulkEditor(
-              multiSelectContext.resource,
-              bulkEditStore
-            );
-            bulkEditor.run(action, data);
-          },
-          subContext: resolvedAccessPointId?.toString()
-        });
-      }
-    };
-
     const state = bulkEditStore.getState();
     const selectedItems = state.selectedIds;
     const isSameSelectionContext =
@@ -265,16 +330,7 @@ export class ResourceActions<T extends IActionableResource> {
       value: ResourceActionType.SELECT,
       icon: "check-circle",
       callback: async () => {
-        resolveEditor();
-        const currentState = bulkEditStore.getState();
-        const currentSelection = currentState.selectedIds;
-        if (currentSelection.some(resourceInList(this.resource.id))) {
-          bulkEditStore.select(
-            currentSelection.filter((y) => !isSameResource(y, this.resource.id))
-          );
-        } else {
-          bulkEditStore.select([...currentSelection, this.resource.id]);
-        }
+        toggleResourceSelection(this.resource.id, accessPoint, accessPointId);
       }
     };
   }

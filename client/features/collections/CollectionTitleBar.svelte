@@ -50,6 +50,7 @@
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import EditModeDone from "@21n/ui/elements/button/EditModeDoneButton.svelte";
   import view from "@21n/ui/environment/view.store";
+  import { resolveInPlaceResourceClose } from "@nucleum/shared-state/resources/in-place-resource";
 
   let {
     searchQuery = $bindable(""),
@@ -79,6 +80,7 @@
     additionalContent?: Snippet | undefined;
   } = $props();
   const isContextZoneHosted = contextZone.isHosted;
+  const closeInPlace = resolveInPlaceResourceClose();
   const isActionsInContextZone = $derived(
     isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
@@ -193,7 +195,11 @@
     <AddResourceAction {onAdd} variant="default" />
   {/if}
   {#if isCloseShown}
-    <ResourceInlineCloseButton {accessMode} id={$collection.id} />
+    <ResourceInlineCloseButton
+      {accessMode}
+      id={$collection.id}
+      onClose={closeInPlace}
+    />
   {/if}
 {/snippet}
 
@@ -374,7 +380,11 @@
         id="collectionContextMenu"
         size={Size.lg}
       />
-      <ResourceInlineCloseButton {accessMode} id={$collection.id} />
+      <ResourceInlineCloseButton
+        {accessMode}
+        id={$collection.id}
+        onClose={closeInPlace}
+      />
     </div>
   {:else if accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <span

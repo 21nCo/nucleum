@@ -86,12 +86,14 @@ export interface File {
   readonly createdBy?: string | null;
   data?: unknown;
   duration?: number;
+  fileId?: string;
   id: string;
   isArchived?: boolean;
   isMeta?: boolean;
   label?: string;
   metadata?: unknown;
   name?: string;
+  processing?: Record<string, unknown>;
   size: number;
   thumbnailData?: unknown;
   thumbnailUrl?: string;
@@ -134,7 +136,7 @@ export interface Node {
   file?: string;
   id: string;
   importId?: string;
-  isAncestorInactive?: boolean;
+  readonly isAncestorInactive: boolean;
   isArchived?: boolean;
   isLocked?: boolean;
   isStarred?: boolean;
@@ -167,7 +169,7 @@ export interface Objective {
   endDate?: number;
   id: string;
   importId?: string;
-  isAncestorInactive?: boolean;
+  readonly isAncestorInactive: boolean;
   isArchived?: boolean;
   isLocked?: boolean;
   isPinnedForQuickFocus?: boolean;
@@ -310,7 +312,7 @@ export interface Task {
   dateUnix: number;
   estimated?: number;
   id: string;
-  isAncestorInactive?: boolean;
+  readonly isAncestorInactive: boolean;
   isArchived?: boolean;
   isChecked?: boolean;
   label?: string;

@@ -38,6 +38,7 @@
   import Intercom from "@nucleum/surfaces/help/support/Intercom.svelte";
   import { installVisibilitySync } from "@nucleum/datafn/visibility-sync";
   import { safeRequestIdleCallback } from "@21n/shared-utils/idle-callback";
+  import { repairLegacyEventTimesIfDue } from "@nucleum/features/calendar/legacy-event-times";
 
   import AppLoadingView from "../AppLoadingView.svelte";
   import DynamicMetadataLayer from "@nucleum/shell/layers/DynamicMetadataLayer.svelte";
@@ -188,6 +189,7 @@
       }
       await refreshNucleumDatafnStatus();
       await syncAccountPaidPlanFromExternalProvider();
+      if (!$context.isSheet) await repairLegacyEventTimesIfDue();
     });
   }
 

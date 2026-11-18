@@ -84,10 +84,41 @@
 
   let isLoading = $state(false);
   let error = $state<any>(undefined);
+  let initializedId: string | undefined;
+  /**
+   * Load the node when it (or the split view) changes. initialize() reads
+   * other state such as accessMode synchronously, so it runs untracked:
+   * otherwise an access-mode change shortly after opening re-fetched the
+   * whole node, its links and clips a second time.
+   */
   $effect(() => {
     if (id && (isFromSplitView || !isRenderSplitView)) {
-      initialize();
+      if (initializedId === id) return;
+      initializedId = id;
+      untrack(() => initialize());
     }
+  });
+  /**
+   * Registers this view as a mounted view of the node. Declared before the
+   * access-mode effect, so this view is registered when that effect first
+   * runs.
+   */
+  $effect(() => ActiveNodeStore.retain(id, () => accessMode));
+  /**
+   * Sets the loaded node's access mode to that of the newest mounted view of
+   * it (this one's when it is the only one), so a view that finishes loading
+   * late doesn't overwrite the mode of a view opened after it.
+   */
+  function applyAccessMode() {
+    const mode = ActiveNodeStore.resolveOwnerAccessMode(id);
+    if ($node && $node.accessMode !== mode) {
+      node.update((current) => ({ ...current, accessMode: mode }));
+    }
+  }
+  /** Keep the loaded node's access mode current without re-fetching it. */
+  $effect(() => {
+    accessMode;
+    untrack(() => applyAccessMode());
   });
   navigation.clearAllTooltips();
 
@@ -105,6 +136,7 @@
       isLoading = false;
       return;
     }
+    applyAccessMode();
     nodeContext.parent = $node?.parent;
     nodeContext.contentType = $node?.contentType;
     isLoading = false;
@@ -131,10 +163,9 @@
     releaseDnDPage?.();
   });
 
-  $effect(() => ActiveNodeStore.retain(id, () => accessMode));
-
   const debouncedInitialize = debouncer(initialize, 1500);
-  let hasReceivedInitialPropertySignal = false;
+  /** The latest-changed property seen so far ("none" when there are none). */
+  let lastPropertyKey: string | undefined;
 
   const propertyStore = toSvelteStore(
     datafn.property.signal({
@@ -147,13 +178,23 @@
     })
   );
 
+  /**
+   * Re-initialise when a property actually changes (to show new property
+   * values). Compare the latest property instead of counting emissions: the
+   * store emits its empty initial value and then the loaded one, which used to
+   * look like a change and re-fetched the whole node 1.5 s after opening.
+   */
   $effect(() => {
-    $propertyStore.data;
+    if ($propertyStore.loading) return;
+    const latest = ($propertyStore.data as any[] | undefined)?.[0];
+    const key = latest ? `${latest.id}:${latest.updatedAt}` : "none";
     untrack(() => {
-      if (!hasReceivedInitialPropertySignal) {
-        hasReceivedInitialPropertySignal = true;
+      if (lastPropertyKey === undefined) {
+        lastPropertyKey = key;
         return;
       }
+      if (key === lastPropertyKey) return;
+      lastPropertyKey = key;
       debouncedInitialize();
     });
   });

@@ -26,6 +26,9 @@ on:
         required: false
         default: insouth,useast,euwest
 
+env:
+  ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+
 jobs:
   detect:
     runs-on: ubuntu-latest

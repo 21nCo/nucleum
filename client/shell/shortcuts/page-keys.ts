@@ -1,48 +1,34 @@
 import { get } from "svelte/store";
-import {
-  isTextElement,
-  resolveDialogOnFront,
-  resolveModalOnFront
-} from "@21n/ui/actions/interaction-dom";
+import { isTextElement } from "@21n/ui/actions/interaction-dom";
+import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
 import {
   contextZone,
   type ContextZonePane
 } from "@nucleum/shell/topNav/contextZone/context-zone";
 
-function isShown(element: Element) {
-  return (
-    element.getClientRects().length > 0 &&
-    getComputedStyle(element).visibility !== "hidden"
-  );
-}
+const chordEndingKeys = new WeakSet<KeyboardEvent>();
 
-/** Whether a sheet that blocks the page, such as a modal right panel, is open. */
-function hasOpenModalSheet() {
-  return Array.from(document.querySelectorAll('[aria-modal="true"]')).some(
-    isShown
-  );
-}
-
-/** Whether a popover, such as a context menu, is open in front of the page. */
-export function hasOpenPopover() {
-  return Array.from(document.querySelectorAll(".popover")).some(
-    (element) =>
-      !element.classList.contains("pointer-events-none") &&
-      element.getClientRects().length > 0 &&
-      getComputedStyle(element).visibility !== "hidden"
-  );
+/**
+ * Marks the key that ended a pending G chord without matching one. The chord
+ * runner passes such a key on to the page, but it was meant as the chord's
+ * second key, so it must not also run a page's single-key action.
+ */
+export function markChordEndingKey(event: KeyboardEvent) {
+  chordEndingKeys.add(event);
 }
 
 /**
  * Whether a key press may run a page's single-key action: not handled yet,
  * not held down, no Cmd, Ctrl or Option (and no Shift unless `allowShift`),
- * not typed into a field or editor, and no modal, dialog or popover in front.
+ * not typed into a field or editor, not the key that ended a G chord, and no
+ * modal, dialog, popover or modal sheet in front.
  */
 export function isPlainPageKey(
   event: KeyboardEvent,
   options: { allowShift?: boolean } = {}
 ) {
   if (event.defaultPrevented || event.repeat) return false;
+  if (chordEndingKeys.has(event)) return false;
   if (event.metaKey || event.ctrlKey || event.altKey) return false;
   if (event.shiftKey && !options.allowShift) return false;
   if (isTextElement(event.target)) return false;
@@ -51,12 +37,7 @@ export function isPlainPageKey(
 
 /** Whether a modal, dialog, popover or modal sheet is in front of the page. */
 export function hasLayerInFront() {
-  return Boolean(
-    resolveModalOnFront() ||
-    resolveDialogOnFront() ||
-    hasOpenPopover() ||
-    hasOpenModalSheet()
-  );
+  return isViewKeyLayerOnFront();
 }
 
 /**

@@ -183,6 +183,16 @@ blockquote {
 }
 
 @layer utilities {
+  [data-item-highlighted]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    border: 2px solid rgba(var(--colors-aps1), 1);
+    border-radius: 0.375rem;
+  }
+
   .underline-dotted,
   .underline-dotted-primary {
     position: relative;

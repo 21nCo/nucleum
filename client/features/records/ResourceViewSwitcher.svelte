@@ -18,7 +18,8 @@
     contextZone,
     isContextZoneAccessMode,
     isResourceInContextZone,
-    nextCycleValue
+    getContextZonePane,
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
@@ -58,17 +59,28 @@
       : contextMenuResolver
   );
   const isContextZoneHosted = contextZone.isHosted;
+  const contextZoneEntryWidth = contextZone.entryWidth;
   const isInContextZone = $derived(
     isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
 
-  function cyclePanel() {
-    const next = nextCycleValue(
-      panels.map((panel) => panel.value),
-      $resourceStore.panel
-    );
-    if (next !== undefined) $resourceStore.switchPanel(next);
-  }
+  const views = $derived<ContextZoneViews>({
+    values: panels.map((panel) => String(panel.value)),
+    active: $resourceStore.panel,
+    select: (value) => {
+      if (value !== $resourceStore.panel) $resourceStore.switchPanel(value);
+    }
+  });
+  const contextZonePane = getContextZonePane();
+
+  $effect(() => {
+    if (isInContextZone || panels.length < 2) return;
+    return contextZone.registerViews(contextZonePane, {
+      get views() {
+        return views;
+      }
+    });
+  });
 </script>
 
 {#if contextMenuResolver && $resourceStore.id}
@@ -81,9 +93,10 @@
   />
 {/if}
 {#if isInContextZone}
-  <ContextZoneContent isInlineFallback={false} cycle={cyclePanel} {title}>
+  <ContextZoneContent isInlineFallback={false} {views} {title}>
     <ResourcePanelSwitcher
       variant="tabs"
+      entryWidth={$contextZoneEntryWidth}
       {resourceStore}
       {panels}
       {isConstrainedWidth}

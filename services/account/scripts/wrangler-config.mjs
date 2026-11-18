@@ -170,6 +170,9 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     kv('ACCOUNT_REGIONS_JSON', JSON.stringify(regionRecords)),
     kv('ACCOUNT_EMAIL_FROM', config.emailFrom)
   ];
+  if (envConfig.filefnR2Bucket) {
+    lines.push(kv('FILEFN_R2_BUCKET', fileFnR2Bucket(envConfig, regionId)));
+  }
 
   for (const [provider, redirectUris] of oauthRedirectUris) {
     lines.push(kv(`${provider.toUpperCase()}_OAUTH_REDIRECT_URIS`, redirectUris));
@@ -270,6 +273,14 @@ export function secretStoreBindingsForEnvironment(config, environment) {
       storeId,
       secretName: renderSecretName(template, environment)
     }));
+}
+
+/**
+ * The environment's FileFn R2 bucket for a region: `filefnR2Bucket` with
+ * `{region}` replaced, so every regional Worker writes to its own bucket.
+ */
+function fileFnR2Bucket(envConfig, regionId) {
+  return String(envConfig.filefnR2Bucket).replaceAll('{region}', regionId);
 }
 
 function renderSecretName(template, environment) {

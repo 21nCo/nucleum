@@ -15,6 +15,9 @@ concurrency:
   group: tests-${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+env:
+  ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+
 jobs:
   app-checks:
     runs-on: ubuntu-latest
