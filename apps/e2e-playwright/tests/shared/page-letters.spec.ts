@@ -68,22 +68,35 @@ test.describe("page letters", () => {
     await closeMenu();
 
     await page.keyboard.press("s");
+    await openMenu();
+    await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
+    await closeMenu();
     await expect
-      .poll(() => readIsStarred(page, node.id), { timeout: 10_000 })
+      .poll(() => readIsStarred(page, node.id), {
+        message: "S stars the open note in the datafn store",
+        timeout: 10_000
+      })
       .toBe(true);
 
     await page.reload();
+    await openNodeRecordFromLibraryById(page, node.id);
     await expect(menuTrigger).toBeVisible({ timeout: 15_000 });
     await openMenu();
     await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
     await closeMenu();
 
     await page.keyboard.press("s");
-    await expect
-      .poll(() => readIsStarred(page, node.id), { timeout: 10_000 })
-      .toBe(false);
     await openMenu();
-    await expect(star.first()).not.toContainText("Starred");
+    await expect(star.first()).not.toContainText("Starred", {
+      timeout: 10_000
+    });
+    await closeMenu();
+    await expect
+      .poll(() => readIsStarred(page, node.id), {
+        message: "S again unstars the open note in the datafn store",
+        timeout: 10_000
+      })
+      .toBe(false);
   });
 
   test("calendar letters switch the scale and Shift+T goes to today", async ({
