@@ -1,0 +1,33 @@
+apps/e2e-playwright/tests/memory/filefn-offline-capture.spec.ts
+  s_0b0647615a23f7::t_d6246e3003c294 2-7,169-170,173-175,178-182
+client/shared-state/files/file-queue.test.ts
+  s_0b0647615a23f7::t_79797a3668eb72 16-24,109,122,324-327,331-332,339-340,536-738,740-786,789-900
+client/shared-state/files/file-queue.ts
+  s_0b0647615a23f7::t_bcc3bad27ddabf 36,58-59,81-86,89-90,147-149,169,171-179,187,269-272,275-276,282-283,302-305,309-310,312,320-321,335-336,338-347,356-361,387,436-439,457-474,487-490,504-516,532,535,538-539,541,550-573,576-577,580,584,588-600,602-607,609-707,709-728,797-799,827-830,837-841,848-854
+client/shared-state/files/file-upload.account-queue.test.ts
+  s_0b0647615a23f7::t_655845331bf670 217-220,230,619-679
+client/shared-state/files/file-upload.ts
+  s_0b0647615a23f7::t_50b57e05ab39ca 38,177-178,196,254-259,262,289,291,308-309,324-325,330,362-379
+client/shared-state/files/filefn-client.pull.test.ts
+  s_0b0647615a23f7::t_01f7ad395ed9ee 15-21,43-46,53-62,67,73-74,135-138,144,149-150,158-189
+client/shared-state/files/filefn-client.ts
+  s_0b0647615a23f7::t_3093ab4979874f 24,310-311,354-359,377-382,388-389,559-572
+tests/fixtures/opfs.ts
+  s_0b0647615a23f7::t_8080a4218a1f10 104,107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "663aa47d7d16135dad28af700aa2e5f80d378a93",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
