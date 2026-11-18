@@ -21,6 +21,7 @@
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import {
     contextZone,
+    getContextZonePane,
     type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
@@ -120,11 +121,15 @@
   }
 
   /**
-   * Page letters run the newest actions registered for the pane, such as an
-   * item opened inside the space, so the space menu shows them only while
-   * they act on the space.
+   * Page letters run the newest actions registered for the pane the user
+   * works in, such as an item opened inside the space, so the space menu
+   * shows them only while they act on this space in this page or split.
    */
   const letterTarget = contextActions.active;
+  const pane = getContextZonePane();
+  const isLetterTarget = $derived(
+    $letterTarget?.id === rootId && $letterTarget.pane.id === pane.id
+  );
 
   function changeView(next: SpaceView) {
     viewStore.updateView(next);
@@ -141,7 +146,7 @@
   });
 </script>
 
-{#if isLoaded && !$store?.isMissing && !isEmbedded}
+{#if isLoaded && !$store?.isMissing}
   <ContextActions
     id={rootId}
     resource={Resource.space}
@@ -157,7 +162,7 @@
       isPinned={isRootPinned}
       onTogglePin={toggleRootPin}
       onViewChange={changeView}
-      isKeyed={!isEmbedded && $letterTarget?.id === rootId}
+      isKeyed={isLetterTarget}
     />
   </ContextZoneContent>
 {/if}

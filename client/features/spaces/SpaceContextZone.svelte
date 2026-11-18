@@ -34,7 +34,7 @@
     isKeyed?: boolean;
   } = $props();
 
-  /** Shows the single-key letters only where they run (not in a split). */
+  /** Shows the single-key letters only while they act on this space. */
   function withKeys(menu: IContextMenu) {
     return isKeyed ? withResourceActionKeys(menu) : menu;
   }
