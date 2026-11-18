@@ -25,6 +25,7 @@ on:
 
 env:
   NODE_OPTIONS: --max_old_space_size=4096
+  ONNXRUNTIME_NODE_INSTALL_CUDA: skip
   AWS_DEFAULT_REGION: us-east-1
 
 jobs:
