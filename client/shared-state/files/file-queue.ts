@@ -16,11 +16,15 @@ import { DEVICE_THUMBNAIL_KIND } from "@nucleum/shared-state/files/file-processi
  * entry named after its `fileId`, so staging the same file again (a migration
  * resumed after an interruption) overwrites it rather than adding another.
  *
- * An account's entry is removed once it uploads, as the account's record
- * already references it. A local entry also keeps the metadata of its
- * local-only record, which the upload publishes as a record of the account;
- * it then stays on the device, marked uploaded, so the local-only record still
- * renders after the account signs out.
+ * An entry uploads only once it is marked committed, after the record that
+ * references it is saved, so a file whose record never saved never reaches an
+ * account. An account's entry is removed once it uploads, as the account's
+ * record already references it. A local entry also keeps a copy of its
+ * local-only record as it currently is (see device-file-queue), which the
+ * upload publishes as a record of the account. The first account ready to
+ * upload it claims it, so only that account ever uploads it, and once
+ * published it stays on the device, marked uploaded, so the local-only record
+ * still renders after the account signs out.
  */
 
 const QUEUE_DIR_PREFIX = "nucleum-file-queue";
@@ -32,6 +36,9 @@ const THUMBNAIL_PREFIX = "thumbnail-";
 const THUMBNAIL_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const RECORD_FILE = "record.json";
 const UPLOADED_FILE = "uploaded";
+const COMMITTED_FILE = "committed";
+const CLAIM_FILE = "claim.json";
+const STALE_FILE = "stale";
 
 /** FileFn upload policies the account service registers (Nucleus policies). */
 export const DURABLE_UPLOAD_POLICY = "nucleus-durable-default";
@@ -49,27 +56,33 @@ export type QueuedFileInput = {
   record?: QueuedFileRecord;
 };
 
-/** Metadata of the DataFn `file` record a queued file belongs to. */
-export type QueuedFileRecord = {
-  id: string;
-  label?: string;
-  name?: string;
-  type?: string;
-  size?: number;
-  processing?: unknown;
-};
+/** The fields of the DataFn `file` record a queued local file belongs to. */
+export type QueuedFileRecord = { id: string } & Record<string, unknown>;
+
+/** The cloud account, at its FileFn authority, that a local file uploads to. */
+export type QueuedFileClaim = { userId: string; baseUrl: string };
 
 /**
  * Publishes the record of a local file that uploaded, so the account holds a
  * record of every local file it uploads. `isReady` is checked before each
  * upload; a pass stops while it is false, keeping the files for a later one.
+ * `owner` claims each local file before its upload.
  */
 export type QueuedFilePublisher = {
+  owner: QueuedFileClaim;
   isReady(): boolean;
-  publish(
-    record: QueuedFileRecord & { fileId: string },
-    uploaded: UploadResult
-  ): Promise<void>;
+  publish(record: QueuedFileRecord, uploaded: UploadResult): Promise<void>;
+};
+
+/** What a queue holds of a file, for reconciling it with its record. */
+export type QueuedFileEntry = {
+  fileId: string;
+  createdAt: string;
+  /** The ID of the record a local file was staged or last copied with. */
+  recordId?: string;
+  isCommitted: boolean;
+  isUploaded: boolean;
+  claim?: QueuedFileClaim;
 };
 
 /** Returns the queue of a cloud account's files captured offline. */
@@ -173,6 +186,64 @@ export async function dequeueFile(dir: string, fileId: string): Promise<void> {
   await getStore(dir).deletePendingUpload(entryName);
 }
 
+/**
+ * Marks a queued file committed once the record that references it is saved;
+ * only a committed file uploads.
+ */
+export async function markQueuedFileCommitted(
+  dir: string,
+  fileId: string
+): Promise<void> {
+  await writeEntryFile(dir, toEntryName(fileId), COMMITTED_FILE, "");
+}
+
+/**
+ * Replaces the copy of a local file's record with the record as it is now,
+ * which its upload publishes, and clears a stale mark.
+ */
+export async function writeQueuedFileRecord(
+  dir: string,
+  fileId: string,
+  record: QueuedFileRecord
+): Promise<void> {
+  const entryName = toEntryName(fileId);
+  await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(record));
+  const entry = await getEntryDir(dir, entryName);
+  await entry?.removeEntry(STALE_FILE).catch(() => undefined);
+}
+
+/**
+ * Marks a local file's record copy stale, when its record changed but could
+ * not be read again: the file does not upload until the copy is replaced.
+ */
+export async function markQueuedFileStale(
+  dir: string,
+  fileId: string
+): Promise<void> {
+  await writeEntryFile(dir, toEntryName(fileId), STALE_FILE, "");
+}
+
+/** Lists the files of a queue whose staging finished. */
+export async function listQueuedFiles(dir: string): Promise<QueuedFileEntry[]> {
+  if (!isFileQueueSupported()) return [];
+  const store = getStore(dir);
+  const entries: QueuedFileEntry[] = [];
+  for (const entryName of await store.listPendingUploads()) {
+    if (!entryName.startsWith(ENTRY_PREFIX)) continue;
+    const pending = await store.getPendingUpload(entryName);
+    if (!pending?.fileId) continue;
+    entries.push({
+      fileId: pending.fileId,
+      createdAt: pending.createdAt,
+      recordId: (await readQueuedRecord(dir, entryName))?.id,
+      isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
+      isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
+      claim: await readClaim(dir, entryName)
+    });
+  }
+  return entries;
+}
+
 async function getEntryDir(
   dir: string,
   entryName: string
@@ -219,18 +290,47 @@ async function readEntryText(
   }
 }
 
-async function readQueuedRecord(
+async function hasEntryFile(dir: string, entryName: string, name: string) {
+  return (await readEntryText(dir, entryName, name)) !== undefined;
+}
+
+/** Reads a JSON file of an entry, or undefined when it is missing or invalid. */
+async function readEntryJson<T>(
   dir: string,
-  entryName: string
-): Promise<QueuedFileRecord | undefined> {
-  const text = await readEntryText(dir, entryName, RECORD_FILE);
-  if (!text) return undefined;
+  entryName: string,
+  name: string,
+  isValid: (value: T) => boolean
+): Promise<T | undefined> {
+  const text = await readEntryText(dir, entryName, name);
   try {
-    const record = JSON.parse(text) as QueuedFileRecord;
-    return typeof record?.id === "string" ? record : undefined;
+    const value = text ? (JSON.parse(text) as T) : undefined;
+    return value && isValid(value) ? value : undefined;
   } catch {
     return undefined;
   }
+}
+
+function readClaim(dir: string, entryName: string) {
+  return readEntryJson<QueuedFileClaim>(
+    dir,
+    entryName,
+    CLAIM_FILE,
+    (claim) =>
+      typeof claim.userId === "string" && typeof claim.baseUrl === "string"
+  );
+}
+
+function isSameClaim(a: QueuedFileClaim, b: QueuedFileClaim) {
+  return a.userId === b.userId && a.baseUrl === b.baseUrl;
+}
+
+function readQueuedRecord(dir: string, entryName: string) {
+  return readEntryJson<QueuedFileRecord>(
+    dir,
+    entryName,
+    RECORD_FILE,
+    (record) => typeof record.id === "string"
+  );
 }
 
 async function readThumbnail(
@@ -298,7 +398,7 @@ export async function hasQueuedFiles(dirs: readonly string[]) {
         return true;
       }
     } catch {
-      // A queue never written has no directory.
+      continue;
     }
   }
   return false;
@@ -327,12 +427,17 @@ const replays = new Map<
  * the next replay (reconnect or next client), and a pass stops when its
  * client's signal aborts.
  *
- * With a publisher (the device's local queue), a file uploads only with the
- * record metadata it was staged with and while the publisher is ready; its
- * record is published after the upload and the entry is then marked uploaded
- * instead of removed, so it renders on the device and never uploads again.
- * A publish interrupted or failed leaves the entry for the next replay, whose
- * upload continues the same session or finds it completed.
+ * A file uploads only once it is committed (see markQueuedFileCommitted).
+ * With a publisher (the device's local queue), it also needs a current copy
+ * of its record (not marked stale), and uploads only while the publisher is
+ * ready and only for the account that claimed it: the first ready account
+ * claims it before the upload, so a sign-out or account switch during the
+ * upload leaves it to that account's next sign-in, never to another account.
+ * Its record, as copied when the upload ends, is published after the upload
+ * and the entry is then marked uploaded instead of removed, so it renders on
+ * the device and never uploads again. A publish interrupted or failed leaves
+ * the entry for the claiming account's next replay, whose upload continues
+ * the same session or finds it completed.
  */
 export function replayFileQueue(
   dir: string,
@@ -395,27 +500,20 @@ async function drainQueue(
     if (!entryName.startsWith(ENTRY_PREFIX)) continue;
     const pending = await store.getPendingUpload(entryName);
     const fileId = pending?.fileId;
-    // An entry without metadata is still being staged, or its staging was
-    // interrupted; the next replay reads it again.
     if (!pending || !fileId) continue;
-    let record: QueuedFileRecord | undefined;
-    if (publisher) {
-      if ((await readEntryText(dir, entryName, UPLOADED_FILE)) !== undefined) {
-        continue;
-      }
-      record = await readQueuedRecord(dir, entryName);
-      if (!record) continue;
-      if (!publisher.isReady()) return;
-    }
+    if (!(await hasEntryFile(dir, entryName, COMMITTED_FILE))) continue;
+    if (publisher && !(await isPublishable(dir, entryName, publisher)))
+      continue;
+    if (publisher && !publisher.isReady()) return;
     try {
+      if (publisher) await claimEntry(dir, entryName, publisher.owner);
       const result = await uploadQueuedFile(client, store, {
         ...pending,
         fileId
       });
       await uploadQueuedThumbnail(client, dir, entryName, result);
-      if (publisher && record) {
-        await publisher.publish({ ...record, fileId }, result);
-        await writeEntryFile(dir, entryName, UPLOADED_FILE, result.versionId);
+      if (publisher) {
+        await publishEntry(dir, entryName, publisher, result);
       } else {
         await store.deletePendingUpload(entryName);
       }
@@ -425,6 +523,55 @@ async function drainQueue(
       logger.warn({ at: "fileQueue.replay", fileId: pending.fileId, error });
     }
   }
+}
+
+/**
+ * Whether a local file can upload through the publisher's account: not yet
+ * uploaded, with a current copy of its record, and unclaimed or claimed by
+ * that account.
+ */
+async function isPublishable(
+  dir: string,
+  entryName: string,
+  publisher: QueuedFilePublisher
+) {
+  if (await hasEntryFile(dir, entryName, UPLOADED_FILE)) return false;
+  if (await hasEntryFile(dir, entryName, STALE_FILE)) return false;
+  if (!(await readQueuedRecord(dir, entryName))) return false;
+  const claim = await readClaim(dir, entryName);
+  return !claim || isSameClaim(claim, publisher.owner);
+}
+
+/**
+ * Publishes the record of a local file that uploaded, as its copy is now,
+ * then marks the file uploaded. A file whose record was removed or marked
+ * stale during the upload is left for the reconciliation of its record.
+ */
+async function publishEntry(
+  dir: string,
+  entryName: string,
+  publisher: QueuedFilePublisher,
+  uploaded: UploadResult
+) {
+  if (!(await isPublishable(dir, entryName, publisher))) return;
+  const record = await readQueuedRecord(dir, entryName);
+  if (!record) return;
+  await publisher.publish({ ...record, fileId: uploaded.fileId }, uploaded);
+  await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
+}
+
+async function claimEntry(
+  dir: string,
+  entryName: string,
+  owner: QueuedFileClaim
+) {
+  if (await readClaim(dir, entryName)) return;
+  await writeEntryFile(
+    dir,
+    entryName,
+    CLAIM_FILE,
+    JSON.stringify({ userId: owner.userId, baseUrl: owner.baseUrl })
+  );
 }
 
 /** FileFn codes of a session that can no longer take parts. */

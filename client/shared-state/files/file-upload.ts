@@ -29,6 +29,7 @@ import {
   dequeueFile,
   isFileQueueSupported,
   LOCAL_FILE_QUEUE_DIR,
+  markQueuedFileCommitted,
   resolveAccountFileQueueDir,
   TEMPORARY_UPLOAD_POLICY
 } from "@nucleum/shared-state/files/file-queue";
@@ -241,8 +242,11 @@ function isDeviceOffline() {
  * uploads the file once the account is online, or once a cloud account first
  * signs in. A record that cannot be saved, or whose DataFn moved to another
  * account's data while the file was staged, removes the file from the queue.
- * Once the record is saved, a cloud owner's queue is asked to upload, so a
- * reconnect during processing or staging does not leave the file queued. A
+ * The file is marked committed only once its record is saved, so the queue
+ * never uploads a file whose record did not save (a file whose mark was lost
+ * is marked when its namespace starts again; see device-file-queue). Then a
+ * cloud owner's queue is asked to upload, so a reconnect during processing or
+ * staging, which found nothing to upload, does not leave the file queued. A
  * local file keeps its record's metadata too, which its upload publishes in
  * the cloud account it first uploads to. Without the origin private file
  * system, or when staging fails, the bytes stay on the record as before, so
@@ -334,8 +338,9 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     });
     throw error;
   }
-  // A reconnect while the file was processed and staged found nothing to
-  // upload, so the account's queue is asked to upload it now.
+  await markQueuedFileCommitted(queueDir, fileId).catch((error: unknown) => {
+    logger.warn({ at: "uploadFileV2.commit", fileId, error });
+  });
   if (owner) {
     void uploadQueuedFiles().catch((error: unknown) => {
       logger.error({ at: "uploadFileV2.replay", fileId, error });

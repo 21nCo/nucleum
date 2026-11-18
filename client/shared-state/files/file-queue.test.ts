@@ -89,6 +89,7 @@ async function enqueuePhoto(queue: FileQueue) {
     blob: new Blob(["photo bytes"], { type: "image/png" }),
     thumbnailBlob: new Blob(["thumb bytes"], { type: "image/jpeg" })
   });
+  await queue.markQueuedFileCommitted(QUEUE, FILE_ID);
 }
 
 function fileFnError(code: string, status: number) {

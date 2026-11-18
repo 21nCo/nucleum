@@ -548,6 +548,19 @@ export async function discardFileFnFile(
 }
 
 /**
+ * Records the delete of a file the account will hold no record of, at the
+ * file's authority, for the account's next client to send (see
+ * discardFileFnFile): a local file the account claimed whose local-only
+ * record was deleted before its record was published.
+ */
+export async function recordFileFnPendingDelete(
+  account: { userId: string; baseUrl: string },
+  fileId: string
+): Promise<void> {
+  await recordPendingDelete(account.userId, account.baseUrl, fileId);
+}
+
+/**
  * Pending deletes recorded without device file storage, each its own entry:
  * in local storage, which a reload keeps and where tabs add and remove
  * entries without overwriting each other, else in memory for this session.
