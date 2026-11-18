@@ -1,0 +1,31 @@
+.circleci/config.yml
+  s_b66d0e9dd4fae0::t_bd8317abbafc1b 14-15,23
+.github/workflows/account-service-deploy.yml
+  s_b66d0e9dd4fae0::t_19a8d97f44c739 29-31
+.github/workflows/frontend-cloudflare-deploy.yml
+  s_b66d0e9dd4fae0::t_f86a033371a272 35-37
+.github/workflows/frontend-cloudflare-routes.yml
+  s_b66d0e9dd4fae0::t_d53f15df5c9fb8 29-31
+.github/workflows/tests-weekly.yml
+  s_b66d0e9dd4fae0::t_6067a370b76201 12-14
+.github/workflows/tests.yml
+  s_b66d0e9dd4fae0::t_2eb0e86464fc07 18-20
+.github/workflows/turbo-deploy.yml
+  s_b66d0e9dd4fae0::t_b1104971db7bec 28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0fd8a8761d012fe4a33501e48f7100aa04608d9d",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
