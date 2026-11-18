@@ -4,7 +4,7 @@
     ISelectValue
   } from "@21n/ui/elements/select/select.type";
   import { Size } from "@21n/ui/elements/size.enum";
-  import { cn } from "@21n/ui/environment/presentation";
+  import { bg, cn } from "@21n/ui/environment/presentation";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { POPOVER_KEEP_OPEN_ATTRIBUTE } from "@21n/ui/actions/popover.type";
   import {
@@ -31,7 +31,10 @@
      * so it passes a getter instead of a value snapshot.
      */
     resolveValue?: (() => ISelectValue | undefined) | undefined;
-    /** Keeps the parent menu open when an option in this submenu is picked. */
+    /**
+     * Shows the options as a submenu: draws its own menu panel and keeps the
+     * parent menu open when an option is picked.
+     */
     isSubmenu?: boolean;
     size?: Size.sm | Size.md | Size.lg;
     onChange: (value: ISelectValue) => void;
@@ -47,7 +50,10 @@
 </script>
 
 <div
-  class="flex flex-col"
+  class={cn("flex flex-col", {
+    [`gap-1 p-1 min-w-40 rounded-md border border-brs2 shadow-md ${bg(1)}`]:
+      isSubmenu
+  })}
   role="radiogroup"
   tabindex="-1"
   aria-label={label}

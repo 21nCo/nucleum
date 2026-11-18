@@ -2,6 +2,8 @@
   import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
   import { Size } from "@21n/ui/elements/size.enum";
+  import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
   import Birdview from "@nucleum/features/calendar/birdView/Birdview.svelte";
   import {
@@ -82,17 +84,39 @@
         }
       : undefined
   );
+
+  /** The scale as a calendar menu option group, for compact top bars. */
+  function resolveScaleMenuGroup(): IContextMenuGroup[] {
+    if (!isDev) return [];
+    return [
+      {
+        group: "scale",
+        items: [],
+        option: {
+          label: "Scale",
+          options: switchOptions,
+          value: scale,
+          onChange: (value: ISelectValue) => {
+            scale = value as TimeScaleUnit;
+            scaleSubViews.touch();
+          }
+        }
+      }
+    ];
+  }
 </script>
 
 <CalendarLayoutView
+  overflowMenu={resolveScaleMenuGroup}
+  contentKey={`${scale}|${selectedDate.toDateString()}`}
   bind:panel
   onGoToToday={() => {
     selectedDate = new Date();
     birdviewRef?.goToToday();
   }}
 >
-  {#snippet headerLeftOptions(_isCompact: boolean)}
-    {#if isDev}
+  {#snippet headerLeftOptions(_isCompact: boolean, isTight: boolean)}
+    {#if isDev && !isTight}
       <OptionSelector
         options={switchOptions}
         size={Size.sm}
@@ -104,8 +128,10 @@
       />
     {/if}
   {/snippet}
-  {#snippet header()}
+  {#snippet header(isShortDate: boolean, isDateHidden: boolean)}
     <CalendarHeader
+      {isShortDate}
+      {isDateHidden}
       bind:selectedDate
       bind:selectedView={scale}
       onDateChange={() => birdviewRef?.scrollToDate(selectedDate)}

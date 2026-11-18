@@ -38,6 +38,11 @@
      * only the close-edit-mode bar that stays at the bottom.
      */
     variant?: "floating" | "tabs" | "edit-bar";
+    /**
+     * Width the top bar can give the `tabs` variant; view tabs that do not
+     * fit move into a More menu.
+     */
+    entryWidth?: number | undefined;
     contextMenuResolver?:
       | (() =>
           | {
@@ -56,10 +61,29 @@
     onAction = undefined,
     isFloatingHidden = false,
     variant = "floating",
+    entryWidth = undefined,
     contextMenuResolver = undefined
   }: Props = $props();
   const isInPlace = isInPlaceResource();
   const closeInPlace = resolveInPlaceResourceClose();
+
+  let editModeWidth = $state(0);
+  let trailingWidth = $state(0);
+  const TRAILING_GAP_PX = 8;
+  const EDIT_MODE_GAP_PX = 12;
+  const tabsWidth = $derived(
+    entryWidth === undefined
+      ? undefined
+      : Math.max(
+          0,
+          entryWidth -
+            ($resourceStore.isInEditMode
+              ? editModeWidth + EDIT_MODE_GAP_PX
+              : 0) -
+            trailingWidth -
+            TRAILING_GAP_PX
+        )
+  );
 
   function resolveContextMenu() {
     return contextMenuResolver?.() ?? [];
@@ -87,6 +111,8 @@
     selected={$resourceStore.panel}
     onSelect={(e) => $resourceStore.switchPanel(e.detail)}
     {isIconOnlyMode}
+    isOverflowToMenu={variant === "tabs"}
+    overflowWidth={variant === "tabs" ? tabsWidth : undefined}
   />
 {/snippet}
 
@@ -123,10 +149,14 @@
 {/snippet}
 
 {#snippet viewTabs()}
-  <div class="flex items-center h-full" data-testid="resource-context-tabs">
+  <div
+    class="flex items-center h-full min-w-0"
+    data-testid="resource-context-tabs"
+  >
     {#if $resourceStore.isInEditMode}
       <div
         class="flex items-center h-full pr-3 mr-3 border-r border-brs3 app-framed:border-transparent"
+        bind:offsetWidth={editModeWidth}
       >
         <EditModeDone
           onDone={() =>
@@ -148,7 +178,10 @@
       />
     {:else}
       {@render panelSwitcher(Size.md, $shape.isFramed && isConstrainedWidth)}
-      <div class="flex items-center h-full ml-2">
+      <div
+        class="flex items-center h-full ml-2 shrink-0"
+        bind:offsetWidth={trailingWidth}
+      >
         {@render actionsMenu(1)}
       </div>
     {/if}

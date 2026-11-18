@@ -213,9 +213,35 @@
           !(child as HTMLElement).dataset.toastSlot
       )
       .reduce((total, child) => total + (child as HTMLElement).offsetWidth, 0);
-    const identity = tabInnerRef.scrollWidth - entryRef.scrollWidth;
+    const identity =
+      tabInnerRef.scrollWidth -
+      entryRef.scrollWidth -
+      measureIdentitySlack(resolveIdentity());
     contextZone.setEntryWidth(
       Math.max(0, Math.floor(zoneRef.clientWidth - others - identity - 1))
+    );
+  }
+
+  function resolveIdentity(): HTMLElement | null {
+    return (
+      tabInnerRef?.querySelector<HTMLElement>(
+        ":scope > [data-testid='top-bar-page-identity']"
+      ) ?? null
+    );
+  }
+
+  /**
+   * Width a shrinkable page identity (a long title) can give up before it
+   * reaches its minimum. The entry is measured with the identity at that
+   * minimum, so the title truncates before the controls give up space.
+   */
+  function measureIdentitySlack(identity: HTMLElement | null): number {
+    if (!identity) return 0;
+    const style = getComputedStyle(identity);
+    if (!(parseFloat(style.flexShrink) > 0)) return 0;
+    return Math.max(
+      0,
+      identity.getBoundingClientRect().width - (parseFloat(style.minWidth) || 0)
     );
   }
 
@@ -227,6 +253,42 @@
     if (entryRef) observer.observe(entryRef);
     measureEntryWidth();
     return () => observer.disconnect();
+  });
+
+  /**
+   * Re-measures the entry when the page identity is replaced, resizes or
+   * switches between keeping its width and shrinking (a class change, which
+   * does not resize it on its own).
+   */
+  $effect(() => {
+    if (!tabInnerRef) return;
+    const inner = tabInnerRef;
+    let identity: HTMLElement | null = null;
+    const resizeObserver = new ResizeObserver(() => measureEntryWidth());
+    const classObserver = new MutationObserver(() => measureEntryWidth());
+    const track = () => {
+      const next = resolveIdentity();
+      if (next === identity) return;
+      if (identity) resizeObserver.unobserve(identity);
+      classObserver.disconnect();
+      identity = next;
+      if (identity) {
+        resizeObserver.observe(identity);
+        classObserver.observe(identity, {
+          attributes: true,
+          attributeFilter: ["class"]
+        });
+      }
+      measureEntryWidth();
+    };
+    const childObserver = new MutationObserver(track);
+    childObserver.observe(inner, { childList: true });
+    track();
+    return () => {
+      childObserver.disconnect();
+      classObserver.disconnect();
+      resizeObserver.disconnect();
+    };
   });
   let isToastRoomy = $state(false);
   const isToastInZone = $derived(isToastMode && isToastRoomy);
