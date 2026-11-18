@@ -38,6 +38,7 @@ import {
   confirmFileFnOwner,
   discardFileFnFile,
   getOwnedFileFnClient,
+  uploadQueuedFiles,
   type FileFnOwner,
   type OwnedFileFnClient
 } from "@nucleum/shared-state/files/filefn-client";
@@ -240,8 +241,12 @@ function isDeviceOffline() {
  * uploads the file once the account is online, or once a cloud account first
  * signs in. A record that cannot be saved, or whose DataFn moved to another
  * account's data while the file was staged, removes the file from the queue.
- * Without the origin private file system, or when staging fails, the bytes
- * stay on the record as before, so the capture is never lost.
+ * Once the record is saved, a cloud owner's queue is asked to upload, so a
+ * reconnect during processing or staging does not leave the file queued. A
+ * local file keeps its record's metadata too, which its upload publishes in
+ * the cloud account it first uploads to. Without the origin private file
+ * system, or when staging fails, the bytes stay on the record as before, so
+ * the capture is never lost.
  */
 async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
   const namespace = datafn.currentNamespace();
@@ -274,13 +279,22 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
   const queueDir = owner
     ? resolveAccountFileQueueDir(owner.userId)
     : LOCAL_FILE_QUEUE_DIR;
+  const metadata = {
+    id: input.id,
+    label: fileName,
+    name: fileName,
+    type: contentType,
+    size: blob.size,
+    processing: { mode: "local", artifacts } satisfies IFileProcessing
+  };
   const fileId = await stageOnDevice(queueDir, {
     fileId: generateFileId(),
     fileName,
     contentType,
     blob,
     thumbnailBlob,
-    isTemp: input.isTemp
+    isTemp: input.isTemp,
+    record: owner ? undefined : metadata
   });
   recordFileProcessing({
     mode: "local",
@@ -298,15 +312,7 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
       thumbnailBlob
     });
   }
-  const record = {
-    id: input.id,
-    label: fileName,
-    name: fileName,
-    type: contentType,
-    size: blob.size,
-    fileId,
-    processing: { mode: "local", artifacts } satisfies IFileProcessing
-  };
+  const record = { ...metadata, fileId };
   try {
     if (datafn.currentNamespace() !== namespace) {
       throw new DOMException(
@@ -322,13 +328,20 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     if (result.ok === false) {
       throw result.error ?? new Error("File metadata save failed");
     }
-    return [record];
   } catch (error) {
     await dequeueFile(queueDir, fileId).catch((dequeueError: unknown) => {
       logger.error({ at: "uploadFileV2.dequeue", fileId, error: dequeueError });
     });
     throw error;
   }
+  // A reconnect while the file was processed and staged found nothing to
+  // upload, so the account's queue is asked to upload it now.
+  if (owner) {
+    void uploadQueuedFiles().catch((error: unknown) => {
+      logger.error({ at: "uploadFileV2.replay", fileId, error });
+    });
+  }
+  return [record];
 }
 
 /**

@@ -15,6 +15,12 @@ import { DEVICE_THUMBNAIL_KIND } from "@nucleum/shared-state/files/file-processi
  * cloud account that signs in uploads. Each file is one FileFn `OPFSStore`
  * entry named after its `fileId`, so staging the same file again (a migration
  * resumed after an interruption) overwrites it rather than adding another.
+ *
+ * An account's entry is removed once it uploads, as the account's record
+ * already references it. A local entry also keeps the metadata of its
+ * local-only record, which the upload publishes as a record of the account;
+ * it then stays on the device, marked uploaded, so the local-only record still
+ * renders after the account signs out.
  */
 
 const QUEUE_DIR_PREFIX = "nucleum-file-queue";
@@ -24,6 +30,8 @@ const QUEUE_LOCK_PREFIX = "nucleum-file-queue-replay";
 const ENTRY_PREFIX = "queued_";
 const THUMBNAIL_PREFIX = "thumbnail-";
 const THUMBNAIL_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const RECORD_FILE = "record.json";
+const UPLOADED_FILE = "uploaded";
 
 /** FileFn upload policies the account service registers (Nucleus policies). */
 export const DURABLE_UPLOAD_POLICY = "nucleus-durable-default";
@@ -37,11 +45,47 @@ export type QueuedFileInput = {
   blob: Blob;
   thumbnailBlob?: Blob;
   isTemp?: boolean;
+  /** The local-only record of a file in the local queue (see enqueueFile). */
+  record?: QueuedFileRecord;
+};
+
+/** Metadata of the DataFn `file` record a queued file belongs to. */
+export type QueuedFileRecord = {
+  id: string;
+  label?: string;
+  name?: string;
+  type?: string;
+  size?: number;
+  processing?: unknown;
+};
+
+/**
+ * Publishes the record of a local file that uploaded, so the account holds a
+ * record of every local file it uploads. `isReady` is checked before each
+ * upload; a pass stops while it is false, keeping the files for a later one.
+ */
+export type QueuedFilePublisher = {
+  isReady(): boolean;
+  publish(
+    record: QueuedFileRecord & { fileId: string },
+    uploaded: UploadResult
+  ): Promise<void>;
 };
 
 /** Returns the queue of a cloud account's files captured offline. */
 export function resolveAccountFileQueueDir(userId: string): string {
   return `${QUEUE_DIR_PREFIX}-account-${encodeURIComponent(userId)}`;
+}
+
+/**
+ * Returns the queues whose files a cloud account, or with none (null) the
+ * device, renders from the device: the account's own queue and the device's
+ * local queue.
+ */
+export function resolveFileQueueDirsOf(userId: string | null): string[] {
+  return userId
+    ? [resolveAccountFileQueueDir(userId), LOCAL_FILE_QUEUE_DIR]
+    : [LOCAL_FILE_QUEUE_DIR];
 }
 
 /** True when the device has the origin private file system the queue uses. */
@@ -67,7 +111,10 @@ function toEntryName(fileId: string) {
 /**
  * Keeps a file and its thumbnail in a queue until it uploads. Staging the
  * same `fileId` again replaces the entry. A thumbnail that cannot be kept is
- * logged and left out; the original is what the file needs.
+ * logged and left out; the original is what the file needs. The record
+ * metadata a local file is published with is written after the original, and
+ * a failure to write it removes the entry and rejects, so a local entry the
+ * replay reads always has both.
  */
 export async function enqueueFile(
   dir: string,
@@ -85,21 +132,32 @@ export async function enqueueFile(
     createdAt: new Date().toISOString(),
     retryCount: 0
   };
-  await getStore(dir).stagePendingUpload(pending);
+  const store = getStore(dir);
+  await store.stagePendingUpload(pending);
+  if (input.record) {
+    try {
+      await writeEntryFile(
+        dir,
+        entryName,
+        RECORD_FILE,
+        JSON.stringify(input.record)
+      );
+    } catch (error) {
+      await store.deletePendingUpload(entryName).catch(() => undefined);
+      throw error;
+    }
+  }
   if (!input.thumbnailBlob) return;
   try {
-    const entry = await getEntryDir(dir, entryName);
-    if (!entry) throw new Error("The staged file's entry is missing");
     const type = THUMBNAIL_TYPES.includes(input.thumbnailBlob.type)
       ? input.thumbnailBlob.type
       : "image/jpeg";
-    const handle = await entry.getFileHandle(
+    await writeEntryFile(
+      dir,
+      entryName,
       `${THUMBNAIL_PREFIX}${type.split("/")[1]}`,
-      { create: true }
+      await input.thumbnailBlob.arrayBuffer()
     );
-    const writable = await handle.createWritable();
-    await writable.write(await input.thumbnailBlob.arrayBuffer());
-    await writable.close();
   } catch (error) {
     logger.warn({
       at: "fileQueue.enqueue.thumbnail",
@@ -125,6 +183,53 @@ async function getEntryDir(
     return await queue.getDirectoryHandle(entryName);
   } catch {
     return null;
+  }
+}
+
+async function writeEntryFile(
+  dir: string,
+  entryName: string,
+  name: string,
+  data: string | ArrayBuffer
+) {
+  const entry = await getEntryDir(dir, entryName);
+  if (!entry) throw new Error("The staged file's entry is missing");
+  const handle = await entry.getFileHandle(name, { create: true });
+  const writable = await handle.createWritable();
+  await writable.write(data);
+  await writable.close();
+}
+
+/** Reads a file of an entry, or undefined when the entry has none. */
+async function readEntryText(
+  dir: string,
+  entryName: string,
+  name: string
+): Promise<string | undefined> {
+  const entry = await getEntryDir(dir, entryName);
+  if (!entry) return undefined;
+  try {
+    return await (
+      await entry.getFileHandle(name)
+    )
+      .getFile()
+      .then((file) => file.text());
+  } catch {
+    return undefined;
+  }
+}
+
+async function readQueuedRecord(
+  dir: string,
+  entryName: string
+): Promise<QueuedFileRecord | undefined> {
+  const text = await readEntryText(dir, entryName, RECORD_FILE);
+  if (!text) return undefined;
+  try {
+    const record = JSON.parse(text) as QueuedFileRecord;
+    return typeof record?.id === "string" ? record : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -199,7 +304,11 @@ export async function hasQueuedFiles(dirs: readonly string[]) {
   return false;
 }
 
-type ReplayRequest = { client: FileFnClient; signal: AbortSignal };
+type ReplayRequest = {
+  client: FileFnClient;
+  signal: AbortSignal;
+  publisher?: QueuedFilePublisher;
+};
 const replays = new Map<
   string,
   { next: ReplayRequest | null; done: Promise<void> }
@@ -217,15 +326,23 @@ const replays = new Map<
  * once FileFn has the file. A file stays queued while its upload fails, for
  * the next replay (reconnect or next client), and a pass stops when its
  * client's signal aborts.
+ *
+ * With a publisher (the device's local queue), a file uploads only with the
+ * record metadata it was staged with and while the publisher is ready; its
+ * record is published after the upload and the entry is then marked uploaded
+ * instead of removed, so it renders on the device and never uploads again.
+ * A publish interrupted or failed leaves the entry for the next replay, whose
+ * upload continues the same session or finds it completed.
  */
 export function replayFileQueue(
   dir: string,
   client: FileFnClient,
-  signal: AbortSignal
+  signal: AbortSignal,
+  publisher?: QueuedFilePublisher
 ): Promise<void> {
   const running = replays.get(dir);
   if (running) {
-    running.next = { client, signal };
+    running.next = { client, signal, publisher };
     return running.done;
   }
   const state = {
@@ -234,13 +351,13 @@ export function replayFileQueue(
   };
   state.done = (async () => {
     try {
-      let request: ReplayRequest | null = { client, signal };
+      let request: ReplayRequest | null = { client, signal, publisher };
       while (request) {
         state.next = null;
         const current: ReplayRequest = request;
         if (!current.signal.aborted) {
           await withQueueLock(dir, current.signal, () =>
-            drainQueue(dir, current.client, current.signal)
+            drainQueue(dir, current)
           );
         }
         request = state.next;
@@ -269,8 +386,7 @@ async function withQueueLock(
 
 async function drainQueue(
   dir: string,
-  client: FileFnClient,
-  signal: AbortSignal
+  { client, signal, publisher }: ReplayRequest
 ) {
   if (!isFileQueueSupported()) return;
   const store = getStore(dir);
@@ -282,13 +398,27 @@ async function drainQueue(
     // An entry without metadata is still being staged, or its staging was
     // interrupted; the next replay reads it again.
     if (!pending || !fileId) continue;
+    let record: QueuedFileRecord | undefined;
+    if (publisher) {
+      if ((await readEntryText(dir, entryName, UPLOADED_FILE)) !== undefined) {
+        continue;
+      }
+      record = await readQueuedRecord(dir, entryName);
+      if (!record) continue;
+      if (!publisher.isReady()) return;
+    }
     try {
       const result = await uploadQueuedFile(client, store, {
         ...pending,
         fileId
       });
       await uploadQueuedThumbnail(client, dir, entryName, result);
-      await store.deletePendingUpload(entryName);
+      if (publisher && record) {
+        await publisher.publish({ ...record, fileId }, result);
+        await writeEntryFile(dir, entryName, UPLOADED_FILE, result.versionId);
+      } else {
+        await store.deletePendingUpload(entryName);
+      }
       logger.info({ at: "fileQueue.replay", fileId: result.fileId });
     } catch (error) {
       if (signal.aborted) return;

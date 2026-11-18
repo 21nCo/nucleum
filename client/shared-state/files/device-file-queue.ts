@@ -1,3 +1,4 @@
+import { get } from "svelte/store";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
@@ -10,11 +11,15 @@ import {
   enqueueFile,
   hasQueuedFiles,
   isFileQueueSupported,
-  LOCAL_FILE_QUEUE_DIR
+  LOCAL_FILE_QUEUE_DIR,
+  replayFileQueue,
+  type QueuedFilePublisher
 } from "@nucleum/shared-state/files/file-queue";
 import {
+  captureFileQueueUploader,
   resolveFileQueueDirs,
-  uploadQueuedFiles
+  uploadQueuedFiles,
+  type FileQueueUploader
 } from "@nucleum/shared-state/files/filefn-client";
 import account from "@nucleum/client/runtime/account/account.store";
 
@@ -23,6 +28,18 @@ type DeviceFileRecord = DeviceFileBytesRecord & {
   name?: string;
   label?: string;
   type?: string;
+  size?: number;
+  processing?: unknown;
+};
+
+/** DataFn page size of the migration's record listing. */
+const RECORD_PAGE_SIZE = 200;
+
+/** Reads every `file` record, trashed, archived or under an inactive one too. */
+const ALL_RECORDS = {
+  includeTrashed: true,
+  includeArchived: true,
+  includeAncestorInactive: true
 };
 
 /**
@@ -74,13 +91,28 @@ export function createDeviceFileBytesHost(
   return {
     namespace,
     async listRecordIds() {
-      assertNamespace(namespace);
-      const result = await datafn.file.query({ select: ["id"] });
-      return (result.data ?? []).map((record) => String(record.id));
+      const ids: string[] = [];
+      for (;;) {
+        assertNamespace(namespace);
+        const result = await datafn.file.query({
+          select: ["id"],
+          sort: ["id"],
+          metadata: ALL_RECORDS,
+          limit: RECORD_PAGE_SIZE,
+          offset: ids.length
+        });
+        const page = (result.data ?? []).map((record) => String(record.id));
+        ids.push(...page);
+        if (page.length < RECORD_PAGE_SIZE) return ids;
+      }
     },
     async readRecord(id) {
       assertNamespace(namespace);
-      const result = await datafn.file.query({ filters: { id } });
+      const result = await datafn.file.query({
+        filters: { id },
+        limit: 1,
+        metadata: ALL_RECORDS
+      });
       const record = result.data?.[0] as DeviceFileRecord | undefined;
       if (!record) return undefined;
       return { ...record, data: toBytes(record.data) };
@@ -91,9 +123,18 @@ export function createDeviceFileBytesHost(
       if (!data) throw new Error("The record has no bytes to move");
       const contentType = file.type || "application/octet-stream";
       const thumbnail = toBytes(file.thumbnailData);
+      const fileName = file.name || file.label || "file";
       await enqueueFile(queueDir, {
         fileId,
-        fileName: file.name || file.label || "file",
+        fileName,
+        record: {
+          id: file.id,
+          label: file.label ?? fileName,
+          name: fileName,
+          type: contentType,
+          size: data.byteLength,
+          processing: file.processing
+        },
         contentType,
         blob: new Blob([data], { type: contentType }),
         thumbnailBlob: thumbnail
@@ -114,6 +155,80 @@ export function createDeviceFileBytesHost(
     },
     unstage: (fileId) => dequeueFile(queueDir, fileId)
   };
+}
+
+/**
+ * Returns the publisher of the device's local files for a cloud account: it
+ * is ready while DataFn is in the account's namespace and syncs, if it has a
+ * remote, to the account authority the files upload to, and publishes each
+ * uploaded file as a record of the account under its local-only record's ID,
+ * unless the account already holds that record (an earlier publish whose
+ * entry was not yet marked uploaded).
+ */
+export function createLocalFilePublisher(
+  uploader: Pick<FileQueueUploader, "userId" | "baseUrl" | "signal">
+): QueuedFilePublisher {
+  const namespace = `user:${uploader.userId}`;
+  const isReady = () => {
+    if (uploader.signal.aborted) return false;
+    const runtime = get(datafnRuntime);
+    if (
+      datafn.currentNamespace() !== namespace ||
+      runtime?.namespace !== namespace
+    ) {
+      return false;
+    }
+    return (
+      !runtime.remoteUrl ||
+      runtime.remoteUrl.replace(/\/datafn\/?$/, "") ===
+        uploader.baseUrl.replace(/\/files\/?$/, "")
+    );
+  };
+  return {
+    isReady,
+    async publish(record) {
+      const assertReady = () => {
+        if (!isReady()) {
+          throw new DOMException(
+            "DataFn left the account the local files upload to",
+            "AbortError"
+          );
+        }
+      };
+      assertReady();
+      const existing = await datafn.file.query({
+        filters: { id: record.id },
+        limit: 1,
+        metadata: ALL_RECORDS
+      });
+      if (existing.data?.[0]) return;
+      assertReady();
+      const result = (await datafn.file.mutate({
+        operation: "insert",
+        id: record.id,
+        record: { ...record }
+      })) as { ok?: boolean; error?: unknown };
+      if (result.ok === false) {
+        throw result.error ?? new Error("File record save failed");
+      }
+    }
+  };
+}
+
+/**
+ * Uploads the device's local files (a local-only user's) through the signed-in
+ * cloud account's client and publishes their records in the account, so the
+ * account holds a record of each file it receives; see replayFileQueue.
+ */
+export async function uploadLocalQueuedFiles(): Promise<void> {
+  const uploader = await captureFileQueueUploader();
+  if (!uploader) return;
+  await replayFileQueue(
+    LOCAL_FILE_QUEUE_DIR,
+    uploader.client,
+    uploader.signal,
+    createLocalFilePublisher(uploader)
+  );
 }
 
 const migratedNamespaces = new Set<string>();
@@ -143,6 +258,7 @@ async function uploadWhenQueued() {
   try {
     if (!(await hasQueuedFiles(resolveFileQueueDirs()))) return;
     await uploadQueuedFiles();
+    await uploadLocalQueuedFiles();
   } catch (error) {
     logger.error({ at: "deviceFileQueue.upload", error });
   }
@@ -152,9 +268,10 @@ async function uploadWhenQueued() {
  * Binds the FileFn OPFS queue to the app: each local-only (guest) DataFn
  * namespace that starts moves its records' bytes into the device's queue
  * once (see resolveMigrationQueueDir), and queued files upload when
- * a cloud account is signed in (a local-only user's on the first cloud
- * sign-in) and the device is online, at start, on an account change and on
- * reconnect. Returns the function that unbinds it.
+ * a cloud account is signed in and the device is online, at start, on a
+ * DataFn namespace or account change and on reconnect. A local-only user's
+ * files upload, with their records, on the first cloud sign-in once DataFn is
+ * in the account's namespace. Returns the function that unbinds it.
  */
 export function installDeviceFileQueue(): () => void {
   if (!isFileQueueSupported()) return () => undefined;

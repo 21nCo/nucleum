@@ -17,9 +17,9 @@ import { logger } from "@nucleum/client/runtime/logging/logger";
 import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import {
-  LOCAL_FILE_QUEUE_DIR,
   replayFileQueue,
-  resolveAccountFileQueueDir
+  resolveAccountFileQueueDir,
+  resolveFileQueueDirsOf
 } from "@nucleum/shared-state/files/file-queue";
 
 const FILEFN_OFFLINE_DIR_PREFIX = "filefn-pending-uploads";
@@ -262,59 +262,79 @@ async function createAccountFileFnClient(
  * device's local queue, or only the local queue without a cloud account.
  */
 export function resolveFileQueueDirs(): string[] {
-  const scope = resolveFileFnAccountScope(account.get());
-  return scope
-    ? [resolveAccountFileQueueDir(scope.userId), LOCAL_FILE_QUEUE_DIR]
-    : [LOCAL_FILE_QUEUE_DIR];
+  return resolveFileQueueDirsOf(
+    resolveFileFnAccountScope(account.get())?.userId ?? null
+  );
 }
 
 /**
- * Uploads the account's queued files and the device's local queue (files a
- * local-only user captured, which the first cloud account signed in uploads)
- * through the client, now when online and on every reconnect until the
- * client is torn down. See replayFileQueue for how tabs share the queue.
+ * Uploads the account's queued files through the client, now when online and
+ * on every reconnect until the client is torn down. See replayFileQueue for
+ * how tabs share the queue. The device's local queue uploads through
+ * uploadLocalQueuedFiles (device-file-queue), which publishes its records.
  */
 function startFileQueueReplay(
   userId: string,
   client: FileFnClient,
   teardown: AbortSignal
 ) {
-  const replay = () => replayFileQueues(userId, client, teardown);
+  const replay = () => replayAccountFileQueue(userId, client, teardown);
   replay();
   globalThis.addEventListener?.("online", replay, { signal: teardown });
 }
 
-function replayFileQueues(
+function replayAccountFileQueue(
   userId: string,
   client: FileFnClient,
   teardown: AbortSignal
 ) {
   if (teardown.aborted || globalThis.navigator?.onLine === false) return;
-  for (const dir of [
-    resolveAccountFileQueueDir(userId),
-    LOCAL_FILE_QUEUE_DIR
-  ]) {
-    replayFileQueue(dir, client, teardown).catch((error: unknown) => {
+  replayFileQueue(resolveAccountFileQueueDir(userId), client, teardown).catch(
+    (error: unknown) => {
       logger.error({ at: "filefn.client.queue", error });
-    });
-  }
+    }
+  );
 }
 
+/** The signed-in cloud account's current FileFn client and its lifetime. */
+export type FileQueueUploader = {
+  userId: string;
+  baseUrl: string;
+  client: FileFnClient;
+  /** Aborts when the client is torn down. */
+  signal: AbortSignal;
+};
+
 /**
- * Uploads the queued files of the signed-in cloud account and of the device
- * now, through its FileFn client, which this creates when there is none yet
- * (creating one starts its replay too). Does nothing offline or without a
- * cloud account.
+ * Returns the signed-in cloud account's current FileFn client, creating it
+ * when there is none yet (creating one starts its queue replay too), or null
+ * offline, without a cloud account, or when the client was replaced while it
+ * was created.
  */
-export async function uploadQueuedFiles(): Promise<void> {
-  if (globalThis.navigator?.onLine === false) return;
+export async function captureFileQueueUploader(): Promise<FileQueueUploader | null> {
+  if (globalThis.navigator?.onLine === false) return null;
   syncWithAccount();
   await settleFileFnClientSync();
   const entry = currentEntry;
-  if (!entry) return;
+  if (!entry) return null;
   const client = await entry.client;
-  if (currentEntry !== entry) return;
-  replayFileQueues(entry.userId, client, entry.controller.signal);
+  if (currentEntry !== entry || entry.controller.signal.aborted) return null;
+  return {
+    userId: entry.userId,
+    baseUrl: entry.baseUrl,
+    client,
+    signal: entry.controller.signal
+  };
+}
+
+/**
+ * Uploads the signed-in cloud account's queued files now, through its FileFn
+ * client. Does nothing offline or without a cloud account.
+ */
+export async function uploadQueuedFiles(): Promise<void> {
+  const uploader = await captureFileQueueUploader();
+  if (!uploader) return;
+  replayAccountFileQueue(uploader.userId, uploader.client, uploader.signal);
 }
 
 /**
@@ -426,7 +446,7 @@ export async function captureSettledFileFnOwner(): Promise<FileFnOwner | null> {
  * its client down. A stored region read still pending does not end it; a
  * read that finds another authority does, once it binds.
  */
-function isFileFnOwnerLive(owner: FileFnOwner): boolean {
+export function isFileFnOwnerLive(owner: FileFnOwner): boolean {
   return (
     owner.epoch === ownerEpoch &&
     resolveFileFnAccountScope(account.get())?.userId === owner.userId
