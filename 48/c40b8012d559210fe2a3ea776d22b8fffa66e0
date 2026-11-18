@@ -1,0 +1,21 @@
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_0b0647615a23f7::t_3c79d56315d49d 162-207,265-280
+client/features/calendar/CalendarLayout.svelte
+  s_0b0647615a23f7::t_b77e68530b02d0 227-228,244,248,250,258-262,264
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "48c40b8012d559210fe2a3ea776d22b8fffa66e0",
+  "prompts": {},
+  "sessions": {
+    "s_0b0647615a23f7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0aafa1b2-a7f2-4512-9059-2cef1b423535",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+services/account/src/files/inline-processors.ts
+  s_b66d0e9dd4fae0::t_2ec9f9d925530d 1-35
+services/account/src/files/processing.ts
+  s_b66d0e9dd4fae0::t_5dd0cd6a71cdf1 13,43-44,146-147,225,243-246,262
+services/account/src/node.ts
+  s_b66d0e9dd4fae0::t_a0141928ad59bd 14,17-18,30,56-57,59-65
+services/account/.env.example
+  s_b66d0e9dd4fae0::t_68480266c75604 29-30
+services/account/README.md
+  s_b66d0e9dd4fae0::t_ac6e03125e607c 132-133,141-143
+services/account/src/files/processing.test.ts
+  s_b66d0e9dd4fae0::t_25d470d853e47b 2-3,7-8,10,16,27-45,216,218-239,243-264,346-391,446-451,503,513,526-543,600-686
+services/file-processing/README.md
+  s_b66d0e9dd4fae0::t_54e0f4040f6f2a 16,18,26-34,42-43,59-61
+services/file-processing/src/database.mjs
+  s_b66d0e9dd4fae0::t_2eadfcc86a1eeb 3,11
+services/file-processing/src/descriptors.mjs
+  s_b66d0e9dd4fae0::t_bdc3af98dd6a9e 21,37-41
+services/file-processing/src/postgres.mjs
+  s_b66d0e9dd4fae0::t_5074da6b10e9b9 1-55
+services/file-processing/src/processors.d.ts
+  s_b66d0e9dd4fae0::t_7bd7153699373b 8-21,27-32
+services/file-processing/src/processors.mjs
+  s_b66d0e9dd4fae0::t_8860f7368a2422 30-55,62-63,66-68,72-77,81-86,89-96,98-100,104-123,170-172,174,178,180-191
+tests/unit/file-processing/processors.spec.ts
+  s_b66d0e9dd4fae0::t_5ebcafe3888421 1-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "52af8a0c9c344127ccff01ec8d74b286ff47f864",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
