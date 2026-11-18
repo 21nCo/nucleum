@@ -14,7 +14,9 @@ vi.mock("@nucleum/client/runtime/logging/logger", () => ({
   logger: { log: vi.fn(), error: mocks.error, warn: vi.fn() }
 }));
 
+import { get } from "svelte/store";
 import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
 import { registerEditModeFinisher } from "@nucleum/shared-state/resources/edit-mode-finish";
 import ContextActionKeys from "./ContextActionKeys.svelte";
 
@@ -135,5 +137,32 @@ describe("page letters with failing or delayed actions", () => {
     finishSave(true);
     await settle();
     expect(edits).toEqual(["node:1"]);
+  });
+
+  it("keeps the trash confirmation open when trash fails, and closes it after a retry", async () => {
+    let calls = 0;
+    release.push(
+      contextActions.register(BASE_CONTEXT_ZONE_PANE, {
+        id: "node:1",
+        resource: "node",
+        resolve: menu("delete", "Backspace", async () => {
+          calls++;
+          if (calls === 1) throw new Error("trash failed");
+        })
+      })
+    );
+    contextZone.activatePane(BASE_CONTEXT_ZONE_PANE.id);
+
+    await press("Backspace");
+    const confirm = get(confirmationNotification)?.confirmAction?.callback;
+    expect(calls).toBe(0);
+
+    await expect(confirm?.()).resolves.toBe(false);
+    expect(mocks.error).toHaveBeenCalledWith(
+      expect.objectContaining({ at: "ContextActionKeys", action: "delete" })
+    );
+    await expect(confirm?.()).resolves.toBe(true);
+    expect(calls).toBe(2);
+    confirmationNotification.set(undefined);
   });
 });

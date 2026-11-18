@@ -36,7 +36,8 @@
   /**
    * Ends the pending chord as soon as a modal, dialog, popover or modal sheet
    * opens, so one that opens and closes again before the second key, such as
-   * with the mouse, still ends it.
+   * with the mouse, still ends it. Popovers show and hide through their
+   * class or inline style.
    */
   function watchLayers() {
     if (typeof MutationObserver === "undefined") return;
@@ -47,7 +48,14 @@
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["open", "aria-modal", "class", "hidden", "inert"]
+      attributeFilter: [
+        "open",
+        "aria-modal",
+        "class",
+        "style",
+        "hidden",
+        "inert"
+      ]
     });
   }
 

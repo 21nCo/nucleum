@@ -110,6 +110,21 @@ describe("ShortcutRunner after a G chord ends", () => {
     expect(mocks.runAction).not.toHaveBeenCalledWith("calendar");
   });
 
+  it("ends the chord when a popover shows and hides through its style", async () => {
+    const popover = addLayer(
+      `<div class="popover" style="display: none"></div>`
+    ).firstElementChild as HTMLElement;
+    popover.getClientRects = () =>
+      (popover.style.display === "none" ? [] : [{}]) as unknown as DOMRectList;
+    press("g");
+    popover.style.display = "block";
+    await tick();
+    popover.style.display = "none";
+    await tick();
+    press("c");
+    expect(mocks.runAction).not.toHaveBeenCalledWith("calendar");
+  });
+
   it("still completes a chord when no layer opens", async () => {
     press("g");
     addLayer(`<span>page content</span>`);

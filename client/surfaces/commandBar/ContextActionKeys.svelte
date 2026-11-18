@@ -37,7 +37,8 @@
    * Runs the open resource's menu item whose single key was pressed, such as
    * S to star, for the pane the user worked in last. Keys are ignored while
    * typing, with a modifier held, or with a modal, dialog or popover in front.
-   * A failed action or save is logged, so the next press runs again. Edit
+   * A failed action or save is logged, so the next press runs again, and a
+   * failed confirmed action keeps its confirmation open to retry. Edit
    * runs after the open editor saves, and only if the resource still holds
    * the letters then.
    */
@@ -66,7 +67,13 @@
       runContextAction(action, {
         runCommand: (command) => requireCommandHost().runAction(command),
         onAction: entry.onAction
-      }).catch(report);
+      }).then(
+        () => true,
+        (error: unknown) => {
+          report(error);
+          return false;
+        }
+      );
     if (CONFIRMED_RESOURCE_ACTIONS.has(String(value))) {
       confirmationNotification.notify({
         title: `${action.label} this ${entry.resource}`,
@@ -74,9 +81,7 @@
         confirmAction: {
           label: action.label,
           variant: ButtonVariant.DANGER,
-          callback: async () => {
-            await run();
-          }
+          callback: run
         }
       });
       return;
