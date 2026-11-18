@@ -111,6 +111,44 @@ account origin. Every environment lists the three R2
 secrets in `omitSecretsStoreBindings` until its buckets and Secrets Store
 entries are provisioned; remove them there, then run `secrets:sync:<env>`.
 
+### File processing
+
+`fileProcessingMode` in `config/environments.json` (rendered as the
+`FILEFN_PROCESSING_MODE` var) selects where uploads are processed: `local`
+(the default, on the device only), `remote` (the region's queue and
+processing container) or `both`. Every environment is `local` today.
+
+In `remote` and `both` modes each regional Worker gets:
+
+- the `FILEFN_PROCESSING_QUEUE` producer on
+  `nucleus-account-<env>-<region>-file-processing`, where FileFn enqueues one
+  `filefn.processing` job per completed upload;
+- a consumer on that queue that forwards each job to the region's container
+  (`services/file-processing`) and acknowledges or retries it from the
+  container's answer; a job still failing after 3 retries goes to
+  `nucleus-account-<env>-<region>-file-processing-dlq`;
+- the `FileProcessingContainer` container and Durable Object, and the
+  `FILEFN_PROCESSING_DATABASE_URL` Secrets Store binding
+  (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`), a URL
+  with the exact lowercase `sslmode=verify-full`, `ssl=verify-full` or
+  `sslrootcert=system`.
+
+Before switching an environment, create both queues per region, add each
+region's database URL to the Secrets Store and build the container's base
+image (`npm --workspace @21n/file-processing run image:base`). Switching back
+to `local` needs a `deleted_classes` migration for `FileProcessingContainer`.
+
+On Node (`npm run dev`), `FILEFN_PROCESSING_MODE=remote` or `both` runs the
+same processors in the service process after each upload responds, limited
+to what its prebuilt sharp decodes: PDF previews and OCR, and HEIC conversion
+and OCR, need the container (see `services/file-processing/README.md`).
+TIDY-540 does not deliver PDF and HEIC processing on Node; the gap is recorded
+as `node-inline-processing-native-codecs` in TIDY-552.
+
+An hourly cron (`0 * * * *`) runs in every mode: it deletes upload sessions
+that expired before completing and retries FileFn deletions still owed for
+permanently deleted `file` records.
+
 ## Running Local Apps Against Account Backends
 
 All local browser flows should go through Caddy so cookies, OAuth redirects, and

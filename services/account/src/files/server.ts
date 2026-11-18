@@ -23,6 +23,7 @@ import {
   AuthFnUnauthenticatedError,
   type AuthFnServer
 } from "authfn";
+import type { AccountFileProcessing } from "./processing.js";
 import { hasFullAppAccess, resolveAppScopeAccess } from "../datafn/app-scopes.js";
 
 /** Path prefix the account service mounts FileFn under. */
@@ -56,6 +57,8 @@ export interface CreateAccountFileFnInput {
   stores?: RuntimeStores;
   /** Host hooks, such as the Worker `defer` that extends the request. */
   runtime?: FileFnRuntime;
+  /** Server processing of uploads; omitted, uploads are not processed. */
+  processing?: AccountFileProcessing;
 }
 
 /**
@@ -81,7 +84,8 @@ export function createAccountFileFn(input: CreateAccountFileFnInput): FileFn {
       resolveSession: createAccountFileSessionResolver(input.auth)
     },
     basePath: ACCOUNT_FILES_BASE_PATH,
-    runtime: input.runtime
+    runtime: input.runtime,
+    processing: input.processing
   });
 }
 

@@ -1,0 +1,33 @@
+{
+  "name": "@21n/file-processing",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Nucleum's FileFn processors and the processing container built from the FileFn (FILE-9) image",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/processors.d.ts",
+      "default": "./src/processors.mjs"
+    },
+    "./descriptors": {
+      "types": "./src/descriptors.d.ts",
+      "default": "./src/descriptors.mjs"
+    },
+    "./postgres-url": {
+      "types": "./src/postgres-url.d.ts",
+      "default": "./src/postgres-url.mjs"
+    }
+  },
+  "scripts": {
+    "image:base": "node scripts/build-base-image.mjs"
+  },
+  "dependencies": {
+    "@filefn/processing": "0.3.0",
+    "@filefn/server": "0.6.0",
+    "@superfunctions/db": "0.2.0",
+    "@superfunctions/storage-r2": "0.3.0",
+    "drizzle-orm": "^0.45.2",
+    "postgres": "^3.4.8",
+    "sharp": "^0.33.5"
+  }
+}

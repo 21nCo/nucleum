@@ -10,6 +10,13 @@ import {
   createNodeFileDatabase,
   type AccountFileDatabase
 } from "./files/database.js";
+import { createFileDeferredWork } from "./files/deferred.js";
+import { loadInlineNucleumProcessors } from "./files/inline-processors.js";
+import {
+  createInlineFileProcessing,
+  readFileProcessingMode,
+  type AccountFileProcessing
+} from "./files/processing.js";
 import { createAccountFileStorage } from "./files/storage.js";
 import { createAccountLookupStore } from "./lookup/dynamodb.js";
 import { createLogger } from "./logging.js";
@@ -20,10 +27,14 @@ const logger = createLogger();
 const database = createNodeDatabase();
 let syncDatabase: ReturnType<typeof createNodeSyncDatabase> | undefined;
 let fileDatabase: AccountFileDatabase | undefined;
+let inlineProcessing: Promise<AccountFileProcessing | undefined> | undefined;
 const observability = createAccountObservability(logger, undefined, {
   requestContext: createAsyncLocalRequestContext()
 });
 const verifiedClientIps = new WeakMap<Request, string>();
+const fileDeferredWork = createFileDeferredWork(undefined, (error) => {
+  logger.error("nucleus account deferred file work failed", { error });
+});
 const services = buildAccountServices({
   infra: {
     database: database.adapter,
@@ -38,7 +49,18 @@ const services = buildAccountServices({
         fileDatabase ??= createNodeFileDatabase();
         return fileDatabase.adapter;
       },
-      storage: (regionId) => createAccountFileStorage(process.env, regionId)
+      storage: (regionId) => createAccountFileStorage(process.env, regionId),
+      runtime: fileDeferredWork.runtime,
+      processing: () => {
+        inlineProcessing ??= createInlineFileProcessing({
+          mode: readFileProcessingMode(process.env.FILEFN_PROCESSING_MODE),
+          loadProcessors: () => loadInlineNucleumProcessors(logger)
+        }).catch((error: unknown) => {
+          inlineProcessing = undefined;
+          throw error;
+        });
+        return inlineProcessing;
+      }
     }
   },
   deployment: {
@@ -84,6 +106,7 @@ const shutdown = async () => {
       logger.error("nucleus account server close failed", { error });
     }
     try {
+      await fileDeferredWork.settled();
       await services.close();
     } finally {
       try {
