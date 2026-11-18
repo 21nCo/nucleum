@@ -1,5 +1,10 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { ensureInAppOnHome, isCloudAuthModeActive } from "../utils/helpers";
+import { isE2ECloudOnlyAuthMode } from "../../config/auth-mode";
+import {
+  ensureInAppOnHome,
+  getE2EAuthMode,
+  isCloudAuthModeActive
+} from "../utils/helpers";
 import { getResourceThumbnailByLabel } from "../utils/resource-matrix";
 import {
   blockExternalAuthRequests,
@@ -161,12 +166,20 @@ test.describe("memory - files kept on the device until they upload @creation", (
     context
   }) => {
     test.skip(
-      !isCloudAuthModeActive(),
-      "Uploading needs a signed-in cloud account"
+      !isCloudAuthModeActive() || isE2ECloudOnlyAuthMode(getE2EAuthMode()),
+      "Uploading an offline capture needs a cloud account with offline storage"
     );
     test.setTimeout(240_000);
+    await page.addInitScript(() =>
+      window.localStorage.setItem("datafnOfflinability", "true")
+    );
     const renderUrls = recordRenderUrls(page);
     await ensureInAppOnHome(page);
+    expect(
+      await page.evaluate(() =>
+        window.localStorage.getItem("datafnOfflinability")
+      )
+    ).toBe("true");
     const fileName = `e2e-offline-${Date.now()}.png`;
 
     await context.setOffline(true);

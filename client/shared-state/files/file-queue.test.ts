@@ -13,6 +13,15 @@ type FileQueue = typeof import("./file-queue");
 
 const QUEUE = "nucleum-file-queue-account-user-a";
 const FILE_ID = "file_queuedPhoto01";
+const SECOND_FILE_ID = "file_queuedPhoto02";
+const AUTHORITY_A = {
+  userId: "user-a",
+  baseUrl: "https://a.example.test/files"
+};
+const AUTHORITY_B = {
+  userId: "user-a",
+  baseUrl: "https://b.example.test/files"
+};
 
 let opfs: ReturnType<typeof createFakeOpfs>;
 
@@ -97,6 +106,7 @@ function fileFnError(code: string, status: number) {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   vi.stubGlobal("Blob", NodeBlob);
   vi.stubGlobal("File", NodeFile);
   let next = 0;
@@ -109,6 +119,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -310,19 +321,23 @@ describe("FileFn OPFS queue", () => {
 
 describe("FileFn OPFS queue of an account's records", () => {
   /**
-   * The account's records, as the referenced `fileId`s, or unreadable. Each
-   * pull that brings them up to date runs `pulls` in turn (the last one again
-   * once they run out) and succeeds unless that returns false.
+   * The account's records at the `owner` authority, as the referenced
+   * `fileId`s, or unreadable. Each pull that brings them up to date runs
+   * `pulls` in turn (the last one again once they run out) and succeeds
+   * unless that returns false.
    */
   function createReferences(
     referenced: Set<string> | "unreadable",
-    pulls: (() => boolean | void)[] = []
+    pulls: (() => boolean | void)[] = [],
+    owner = AUTHORITY_A
   ) {
     const discarded: string[] = [];
     let pullCount = 0;
     return {
       discarded,
       references: {
+        owner,
+        isCurrent: () => true,
         sync: async () =>
           (pulls[Math.min(pullCount++, pulls.length - 1)]?.() ?? true) !==
           false,
@@ -518,16 +533,369 @@ describe("FileFn OPFS queue of an account's records", () => {
       throw new Error("offline");
     };
 
-    await expect(
-      tab.replayFileQueue(
-        QUEUE,
-        fileFn.client,
-        new AbortController().signal,
-        undefined,
-        references
-      )
-    ).rejects.toThrow("offline");
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
 
     expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  /** Queues the photo and uploads it at authority A, stopping before its removal. */
+  async function startUploadAtA(queue: FileQueue) {
+    await enqueuePhoto(queue);
+    const fileFn = createClient({ isImmediate: true });
+    await queue.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      createReferences(new Set([FILE_ID]), [() => true, () => false]).references
+    );
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  }
+
+  /**
+   * Makes reading a file of any entry fail with a storage error other than a
+   * missing file, for the module instances opened afterwards.
+   */
+  function failReading(name: string) {
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      ({
+        ...dir,
+        getDirectoryHandle: async (
+          child: string,
+          options?: FileSystemGetDirectoryOptions
+        ) => wrap(await dir.getDirectoryHandle(child, options)),
+        getFileHandle: async (
+          child: string,
+          options?: FileSystemGetFileOptions
+        ) => {
+          if (child === name && !options?.create) {
+            throw new DOMException("Unreadable", "NotReadableError");
+          }
+          return dir.getFileHandle(child, options);
+        }
+      }) as FileSystemDirectoryHandle;
+    const { getDirectory } = navigator.storage;
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      storage: { getDirectory: async () => wrap(await getDirectory()) }
+    });
+  }
+
+  it("keeps a file whose upload started at another authority, neither discarding nor removing it", async () => {
+    installDevice();
+    await startUploadAtA(await openTab());
+    const atB = createClient({ isImmediate: true });
+    const { references, discarded } = createReferences(
+      new Set(),
+      [],
+      AUTHORITY_B
+    );
+
+    await (
+      await openTab()
+    ).replayFileQueue(
+      QUEUE,
+      atB.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(atB.uploads).toEqual([]);
+    expect(discarded).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  it("uploads a file only at the authority it was captured at", async () => {
+    installDevice();
+    const tab = await openTab();
+    await tab.enqueueFile(QUEUE, {
+      fileId: FILE_ID,
+      fileName: "photo.png",
+      contentType: "image/png",
+      blob: new Blob(["photo bytes"], { type: "image/png" }),
+      claim: AUTHORITY_A
+    });
+    await tab.markQueuedFileCommitted(QUEUE, FILE_ID);
+    const atB = createClient({ isImmediate: true });
+    await tab.replayFileQueue(
+      QUEUE,
+      atB.client,
+      new AbortController().signal,
+      undefined,
+      createReferences(new Set([FILE_ID]), [], AUTHORITY_B).references
+    );
+    expect(atB.uploads).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+
+    const atA = createClient({ isImmediate: true });
+    await tab.replayFileQueue(
+      QUEUE,
+      atA.client,
+      new AbortController().signal,
+      undefined,
+      createReferences(new Set([FILE_ID])).references
+    );
+
+    expect(atA.uploads).toEqual([expect.objectContaining({ fileId: FILE_ID })]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("starts no upload once the device goes offline after the file's record is checked", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const { references } = createReferences(new Set([FILE_ID]));
+    references.isReferenced = async () => {
+      (navigator as { onLine: boolean }).onLine = false;
+      return true;
+    };
+
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  it("brings the records up to date again after a failed upload before deciding the next file", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    await tab.enqueueFile(QUEUE, {
+      fileId: SECOND_FILE_ID,
+      fileName: "second.png",
+      contentType: "image/png",
+      blob: new Blob(["second bytes"], { type: "image/png" })
+    });
+    await tab.markQueuedFileCommitted(QUEUE, SECOND_FILE_ID);
+    const remote = new Set([FILE_ID, SECOND_FILE_ID]);
+    const local = new Set<string>();
+    const { references, discarded } = createReferences(local, [
+      () => {
+        local.clear();
+        for (const fileId of remote) local.add(fileId);
+      }
+    ]);
+    const uploads: string[] = [];
+    const client = {
+      uploadFile: (input: UploadInput) => {
+        uploads.push(input.fileId!);
+        return {
+          uploadSessionId: `ses_${uploads.length}`,
+          fileId: input.fileId!,
+          onProgress: () => undefined,
+          abort: () => undefined,
+          done: async () => {
+            remote.delete(SECOND_FILE_ID);
+            throw new Error("The connection dropped");
+          }
+        };
+      },
+      uploadArtifact: async () => ({})
+    } as unknown as FileFnClient;
+
+    await tab.replayFileQueue(
+      QUEUE,
+      client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(uploads).toEqual([FILE_ID]);
+    expect(discarded).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  it("keeps a started file whose marker cannot be read, without discarding it", async () => {
+    installDevice();
+    await startUploadAtA(await openTab());
+    failReading("started");
+    const { references, discarded } = createReferences(new Set());
+
+    await (
+      await openTab()
+    ).replayFileQueue(
+      QUEUE,
+      createClient({ isImmediate: true }).client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(discarded).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  it("removes an uploaded file whose thumbnail cannot be read once its record is checked again", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    failReading("thumbnail-jpeg");
+    const fileFn = createClient({ isImmediate: true });
+
+    await (
+      await openTab()
+    ).replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      createReferences(new Set([FILE_ID])).references
+    );
+
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(fileFn.artifacts).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("neither discards nor removes a file once the records stop being the owner's during the check", async () => {
+    installDevice();
+    await startUploadAtA(await openTab());
+    const { references, discarded } = createReferences(new Set());
+    let isCurrent = true;
+    references.isCurrent = () => isCurrent;
+    references.isReferenced = async () => {
+      isCurrent = false;
+      return false;
+    };
+
+    await (
+      await openTab()
+    ).replayFileQueue(
+      QUEUE,
+      createClient({ isImmediate: true }).client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(discarded).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  it("removes a file without a record that stayed uncommitted for over a day, without uploading it", async () => {
+    installDevice();
+    const tab = await openTab();
+    await stagePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const { references, discarded } = createReferences(new Set());
+    const dayLater = Date.now() + 25 * 60 * 60_000;
+    vi.spyOn(Date, "now").mockReturnValue(dayLater);
+
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(discarded).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("retries a pass whose records could not be brought up to date, without another trigger", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const { references } = createReferences(new Set([FILE_ID]), [
+      () => false,
+      () => true
+    ]);
+
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+    expect(fileFn.uploads).toEqual([]);
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
+    expect(fileFn.uploads).toHaveLength(1);
+  });
+
+  it("runs a replay requested while a pass that fails was running", async () => {
+    let rejectFirst!: (error: Error) => void;
+    let requests = 0;
+    installDevice({
+      locks: {
+        request: (_name: string, _options: unknown, run: () => unknown) =>
+          ++requests === 1
+            ? new Promise((_resolve, reject) => (rejectFirst = reject))
+            : run()
+      } as unknown as LockManager
+    });
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const { references } = createReferences(new Set([FILE_ID]));
+    const signal = new AbortController().signal;
+
+    const replay = tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      signal,
+      undefined,
+      references
+    );
+    void tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      signal,
+      undefined,
+      references
+    );
+    rejectFirst(new Error("The lock could not be taken"));
+    await replay;
+
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("replays a request made after one whose client was already torn down", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const { references } = createReferences(new Set([FILE_ID]));
+    const tornDown = new AbortController();
+    tornDown.abort();
+
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      tornDown.signal,
+      undefined,
+      references
+    );
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      references
+    );
+
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(opfs.list(QUEUE)).toEqual([]);
   });
 });

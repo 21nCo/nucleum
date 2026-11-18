@@ -214,7 +214,10 @@ function goOnline() {
   window.dispatchEvent(new Event("online"));
 }
 
-/** Records each queue replay pass, which runs under the queue's Web Lock. */
+/**
+ * Records each queue replay pass, which runs under the queue's Web Lock (not
+ * the lock a client's own offline replay holds until it is torn down).
+ */
 function trackReplayPasses() {
   const locks = createFakeLocks();
   const passes: Promise<unknown>[] = [];
@@ -224,7 +227,7 @@ function trackReplayPasses() {
       ...locks,
       request: (...args: Parameters<LockManager["request"]>) => {
         const pass = locks.request(...args);
-        passes.push(pass);
+        if (args[0].startsWith("nucleum-file-queue-replay")) passes.push(pass);
         return pass;
       }
     }
@@ -613,4 +616,65 @@ describe("files a signed-in cloud account captures offline", () => {
       expect.objectContaining({ fileId: record.fileId })
     ]);
   });
+
+  it("keeps an offline capture for the authority it was captured at once the account's region changes", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const passes = trackReplayPasses();
+    const moved = cloudAccount("user-a");
+    account.set({
+      ...moved,
+      userInfo: { ...moved.userInfo!, region: "euwest" }
+    });
+    authority.url = "https://account-euwest-dev.nucleum.app/datafn";
+    await openData("user-a");
+
+    goOnline();
+    await vi.waitFor(() => expect(passes.length).toBeGreaterThan(0));
+    await Promise.all(passes);
+
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toEqual([`queued_${record.fileId}`]);
+  });
+
+  it.each([
+    ["while its thumbnail is made", "thumbnail"],
+    ["while its staging fails", "staging"]
+  ])(
+    "fails an offline capture whose DataFn moved to another account %s, saving no record there",
+    async (_when, step) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const moveData = () => openData("user-b");
+      if (step === "thumbnail") {
+        codec.compressImageToTargetSize.mockImplementationOnce(async () => {
+          await moveData();
+          return new Blob(["thumb bytes"], { type: "image/jpeg" });
+        });
+      } else {
+        vi.spyOn(OPFSStore.prototype, "stagePendingUpload").mockImplementation(
+          async () => {
+            await moveData();
+            throw new Error("The device storage is full");
+          }
+        );
+      }
+
+      await expect(
+        fileUpload.uploadFileV2(
+          "image/png",
+          "photo.png",
+          new Blob(["photo bytes"], { type: "image/png" }),
+          { isGenerateThumbnail: true }
+        )
+      ).rejects.toThrow();
+
+      const saved = (await datafn.file.query({})) as { data?: unknown[] };
+      expect(datafn.currentNamespace()).toBe("user:user-b");
+      expect(saved.data ?? []).toEqual([]);
+      expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]);
+    }
+  );
 });

@@ -101,10 +101,10 @@ function dirHandle(dir: FakeDir, name: string): FileSystemDirectoryHandle {
       yield* [...dir.dirs.keys(), ...dir.files.keys()];
     },
     async *values() {
-      for (const child of [...dir.dirs.keys()]) {
+      for (const child of dir.dirs.keys()) {
         yield { kind: "directory", name: child };
       }
-      for (const child of [...dir.files.keys()]) {
+      for (const child of dir.files.keys()) {
         yield { kind: "file", name: child };
       }
     }

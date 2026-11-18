@@ -35,6 +35,7 @@ import {
 import {
   assertFileFnOwner,
   captureFileFnOwner,
+  captureFileQueueClaim,
   confirmFileFnOwner,
   discardFileFnFile,
   getOwnedFileFnClient,
@@ -173,6 +174,8 @@ export const fileUpload = {
     contentType: string;
     blob: Blob;
     thumbnailBlob?: Blob;
+    /** Throws when the record may no longer be saved, just before it is. */
+    assertScope?: () => void;
   }) {
     const arrayBuffer = await params.blob.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
@@ -190,6 +193,7 @@ export const fileUpload = {
       size: uint8Array.length,
       thumbnailData: thumbnailUint8Array
     };
+    params.assertScope?.();
     const mutationResult = (await datafn.file.mutate({
       operation: "insert",
       id: params.id,
@@ -247,11 +251,15 @@ function isDeviceOffline() {
  * whose mark was lost once it finds its record). Then the owner's queue is
  * asked to upload, so a reconnect during processing or staging, which found
  * nothing to upload, does not leave the file queued.
- * Without a cloud owner whose namespace DataFn is in, without the origin
- * private file system, or when staging fails, the bytes stay on the record as
- * before, so the capture is never lost.
+ * Without a cloud owner whose namespace DataFn is in and whose FileFn
+ * authority is bound (the file is queued for that authority), without the
+ * origin private file system, or when staging fails, the bytes stay on the
+ * record as before, so the capture is never lost. On either path, a cloud
+ * account or DataFn namespace other than the one the capture started in
+ * fails the capture before its record is saved.
  */
 async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
+  const assertScope = captureDeviceScope(owner);
   let { blob, contentType, fileName } = input;
   const artifacts: IFileProcessing["artifacts"] = {};
   if (isHeicFile(fileName, contentType)) {
@@ -278,8 +286,9 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
       artifacts[DEVICE_THUMBNAIL_KIND] = { durationMs: elapsedMs(startedAt) };
     }
   }
+  const claim = owner ? await captureFileQueueClaim(owner) : undefined;
   const queueDir =
-    owner && isQueueOwnerCurrent(owner)
+    claim && owner && isQueueOwnerCurrent(owner)
       ? resolveAccountFileQueueDir(owner.userId)
       : undefined;
   const metadata = {
@@ -296,7 +305,8 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     contentType,
     blob,
     thumbnailBlob,
-    isTemp: input.isTemp
+    isTemp: input.isTemp,
+    claim
   });
   recordFileProcessing({
     mode: "local",
@@ -311,11 +321,13 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
       fileName,
       contentType,
       blob,
-      thumbnailBlob
+      thumbnailBlob,
+      assertScope
     });
   }
   const record = { ...metadata, fileId };
   try {
+    assertScope();
     if (!isQueueOwnerCurrent(owner)) {
       throw new DOMException(
         "DataFn left the account that captured the file",
@@ -345,6 +357,24 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     });
   }
   return [record];
+}
+
+/**
+ * Captures the DataFn namespace and cloud account a capture starts in, and
+ * returns a check that throws once either changed, so a capture never saves
+ * its record in another account's data.
+ */
+function captureDeviceScope(owner: FileFnOwner | null) {
+  const namespace = datafn.currentNamespace();
+  return () => {
+    const userId = resolveFileFnAccountScope(account.get())?.userId;
+    if (datafn.currentNamespace() !== namespace || userId !== owner?.userId) {
+      throw new DOMException(
+        "The account that captured the file changed",
+        "AbortError"
+      );
+    }
+  };
 }
 
 /**

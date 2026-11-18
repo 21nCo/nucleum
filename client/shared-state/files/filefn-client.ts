@@ -21,6 +21,7 @@ import {
   replayFileQueue,
   resolveAccountFileQueueDir,
   resolveFileQueueDirsOf,
+  type QueuedFileClaim,
   type QueuedFileReferences
 } from "@nucleum/shared-state/files/file-queue";
 import { get } from "svelte/store";
@@ -306,6 +307,8 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
     );
   };
   const references: QueuedFileReferences = {
+    owner: { userId, baseUrl },
+    isCurrent: isAccountRecords,
     async sync() {
       if (!isAccountRecords()) return false;
       if (!get(datafnRuntime)?.storage) return true;
@@ -348,10 +351,12 @@ const ACCOUNT_PULL_TIMEOUT_MS = 120_000;
 
 /**
  * Pulls the account's records into the device's DataFn copy. Resolves true
- * once a pull that started after this call applied the file records, and
- * false once one fails, the records stop being the account's (`isCurrent`),
- * the signal aborts or no pull ends in time. A pull already running when it
- * is called may have read the records before, so it is waited out and
+ * once a pull that started after this call applied the file records and
+ * found no change left to bring, and false once one fails, the records stop
+ * being the account's (`isCurrent`), the signal aborts or no pull ends in
+ * time. A pull that brought changes may have stopped at its batch limit, so
+ * it is followed by another until one brings none. A pull already running
+ * when it is called may have read the records before, so it is waited out and
  * followed by another. A pull that left the file records out, while they
  * are still being cloned, is followed by the one DataFn starts once they are.
  */
@@ -369,13 +374,19 @@ export function pullAccountFileRecords(
     const stops = [
       client.subscribe((event) => {
         const context = event.context as
-          { phase?: unknown; cursors?: Record<string, unknown> } | undefined;
+          | {
+              phase?: unknown;
+              cursors?: Record<string, unknown>;
+              cursorDelta?: Record<string, unknown>;
+            }
+          | undefined;
         if (context?.phase !== "pull") return;
         if (event.type === "sync_started") isOwnPull = true;
         if (event.type !== "sync_applied" && event.type !== "sync_failed") {
           return;
         }
-        if (!isOwnPull) {
+        const isCaughtUp = !Object.keys(context.cursorDelta ?? {}).length;
+        if (!isOwnPull || (event.type === "sync_applied" && !isCaughtUp)) {
           setTimeout(pull, 0);
         } else if (event.type === "sync_failed") {
           finish(false);
@@ -543,6 +554,20 @@ export async function captureSettledFileFnOwner(): Promise<FileFnOwner | null> {
   await settleFileFnClientSync();
   const scope = resolveFileFnAccountScope(account.get());
   return scope ? { userId: scope.userId, epoch: ownerEpoch } : null;
+}
+
+/**
+ * Returns the authority the owner's files captured now are queued for: the
+ * owner and the FileFn authority its client is bound to once settled, or
+ * undefined when its generation ended or the authority cannot be read.
+ */
+export async function captureFileQueueClaim(
+  owner: FileFnOwner
+): Promise<QueuedFileClaim | undefined> {
+  await settleFileFnClientSync().catch(() => undefined);
+  const entry = currentEntry;
+  if (!entry || !isFileFnOwnerCurrent(owner)) return undefined;
+  return { userId: entry.userId, baseUrl: entry.baseUrl };
 }
 
 /**

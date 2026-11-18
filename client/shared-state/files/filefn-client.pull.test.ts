@@ -12,8 +12,13 @@ const namespace = "user:pull-test";
 let server: DatafnServer | undefined;
 const stops: (() => void)[] = [];
 
-/** An in-memory DataFn server for the Nucleum schema, counting its pulls. */
-async function startServer(options: { isFailing?: () => boolean } = {}) {
+/**
+ * An in-memory DataFn server for the Nucleum schema, counting its pulls. The
+ * first pull answers only once `firstPull` settles, when given.
+ */
+async function startServer(
+  options: { isFailing?: () => boolean; firstPull?: Promise<void> } = {}
+) {
   const target = await createDatafnServer({
     schema: nucleumDatafnSchema,
     database: memoryAdapter({ debug: false }),
@@ -35,26 +40,38 @@ async function startServer(options: { isFailing?: () => boolean } = {}) {
       pulls.push(failed);
       return failed;
     }
-    const pulled = target.router.handle(request);
+    const held = pulls.length === 0 ? options.firstPull : undefined;
+    const pulled = (held ?? Promise.resolve()).then(() =>
+      target.router.handle(request)
+    );
     pulls.push(pulled);
     return pulled;
   };
   return { fetch, pulls };
 }
 
-/** A device syncing with the server, holding its own copy of the records. */
-function createDevice(clientId: string, fetch: typeof globalThis.fetch) {
+/**
+ * A device syncing with the server, holding its own copy of the records, that
+ * pulls at most `pullBatchSize` changes `maxPullIterations` times per pull.
+ */
+function createDevice(
+  clientId: string,
+  fetch: typeof globalThis.fetch,
+  limits: { pullBatchSize?: number; maxPullIterations?: number } = {},
+  storage = new MemoryStorageAdapter()
+) {
   const client = createDatafnClient({
     schema: nucleumDatafnSchema,
     clientId,
     namespace,
-    storage: new MemoryStorageAdapter(),
+    storage,
     sync: {
       mode: "sync",
       remote,
       offlinability: true,
       ws: false,
-      http: { fetch }
+      http: { fetch },
+      ...limits
     }
   });
   stops.push(() => client.sync.stop());
@@ -115,22 +132,59 @@ describe("pulling an account's file records before its queue replays", () => {
   });
 
   it("waits out a pull already running and pulls again, as the running pull may have read the records before the call", async () => {
-    const { fetch, pulls } = await startServer();
+    let releaseFirstPull!: () => void;
+    const { fetch, pulls } = await startServer({
+      firstPull: new Promise((resolve) => (releaseFirstPull = resolve))
+    });
     const writer = createDevice("device-writer", fetch);
     const reader = createDevice("device-reader", fetch);
     const running = reader.sync.pullNow();
     await insertFile(writer, "file:later", "file_laterPhoto01");
+
+    const pulled = pullAccountFileRecords(
+      reader,
+      () => true,
+      new AbortController().signal
+    );
+    releaseFirstPull();
+    const isPulled = await pulled;
+    await running;
+
+    expect(isPulled).toBe(true);
+    expect(pulls.length).toBeGreaterThanOrEqual(2);
+    expect(await hasFile(reader, "file_laterPhoto01")).toBe(true);
+  });
+
+  it("resolves only once the file records are fully caught up when one pull stops at its batch limit", async () => {
+    const { fetch } = await startServer();
+    const writer = createDevice("device-writer", fetch);
+    const stored = new MemoryStorageAdapter();
+    const reader = createDevice(
+      "device-reader",
+      fetch,
+      { pullBatchSize: 10, maxPullIterations: 1 },
+      stored
+    );
+    await insertFile(writer, "file:first", "file_firstPhoto01");
+    expect(
+      await pullAccountFileRecords(
+        reader,
+        () => true,
+        new AbortController().signal
+      )
+    ).toBe(true);
+    for (let index = 1; index <= 25; index++) {
+      await insertFile(writer, `file:batch${index}`, `file_batchPhoto${index}`);
+    }
 
     const isPulled = await pullAccountFileRecords(
       reader,
       () => true,
       new AbortController().signal
     );
-    await running;
 
     expect(isPulled).toBe(true);
-    expect(pulls.length).toBeGreaterThanOrEqual(2);
-    expect(await hasFile(reader, "file_laterPhoto01")).toBe(true);
+    expect(await stored.countRecords("file")).toBe(26);
   });
 
   it("resolves false when the pull fails", async () => {
