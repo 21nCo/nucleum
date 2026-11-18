@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { AccessMode, ResourceAccessPoint } from "@nucleum/datafn/resource.type";
+import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+import type { IContextMenu } from "@21n/ui/elements/contextMenu/context-menu.type";
+import type { INode } from "@nucleum/features/memory/node/node.type";
+import { resolveNodeContextMenu } from "@nucleum/features/memory/node/node.store";
 import {
+  RESOURCE_ACTION_KEYS,
   resolveResourceActionKey,
   withResourceActionKeys
 } from "./resource-action-keys";
@@ -25,5 +31,68 @@ describe("resource action keys", () => {
     expect(keyed[0].items[0].hotKey).toBe("s");
     expect(keyed[0].items[1].hotKey).toBeUndefined();
     expect(menu[0].items[0].hotKey).toBeUndefined();
+  });
+});
+
+describe("letters on an open note's menu", () => {
+  const note = (contentType: NodeType) =>
+    ({
+      id: `node:${contentType.toLowerCase()}-letters`,
+      label: "Letters",
+      contentType,
+      isStarred: false
+    }) as unknown as INode;
+
+  /** Keys an open note's menu offers, as its "..." menu and super bar show them. */
+  function offeredKeys(menu: IContextMenu) {
+    return new Set(
+      withResourceActionKeys(menu).flatMap((group) =>
+        group.items.flatMap((item) => (item.hotKey ? [item.hotKey] : []))
+      )
+    );
+  }
+
+  const pageNote = () =>
+    offeredKeys(
+      resolveNodeContextMenu(
+        note(NodeType.NODULAR_MARKDOWN),
+        ResourceAccessPoint.SELF,
+        { accessMode: AccessMode.PAGE }
+      )
+    );
+
+  it("offers focus mode with its F letter on an open note", () => {
+    const menu = withResourceActionKeys(
+      resolveNodeContextMenu(
+        note(NodeType.NODULAR_MARKDOWN),
+        ResourceAccessPoint.SELF,
+        { accessMode: AccessMode.PAGE }
+      )
+    );
+    const focus = menu
+      .flatMap((group) => group.items)
+      .find((item) => item.hotKey === "f");
+    expect(focus?.label).toBe("Focus");
+  });
+
+  it("reaches a real menu item for every letter but U on open notes", () => {
+    const offered = new Set([
+      ...pageNote(),
+      ...offeredKeys(
+        resolveNodeContextMenu(
+          note(NodeType.NODULAR_MARKDOWN),
+          ResourceAccessPoint.SELF,
+          { accessMode: AccessMode.BESIDE_BASE }
+        )
+      ),
+      ...offeredKeys(
+        resolveNodeContextMenu(note(NodeType.IMAGE), ResourceAccessPoint.SELF, {
+          accessMode: AccessMode.PAGE
+        })
+      )
+    ]);
+    const mapped = new Set(Object.values(RESOURCE_ACTION_KEYS));
+    mapped.delete("u");
+    expect([...mapped].filter((key) => !offered.has(key))).toEqual([]);
   });
 });

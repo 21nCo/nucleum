@@ -13,13 +13,10 @@
   import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
   import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   import {
-    hasLayerInFront,
     isKeyTargetPane,
     isPlainPageKey
   } from "@nucleum/shell/shortcuts/page-keys";
-  import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { finishEditMode } from "@nucleum/shared-state/resources/edit-mode-finish";
-  import { Action } from "@nucleum/client/config/action.enum";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
@@ -73,39 +70,6 @@
     }
     void run();
   }
-
-  /**
-   * The edit mode shortcut (Cmd+E) toggles the open resource's own edit mode
-   * when it has one, also from inside its editor, so it can close edit mode;
-   * an open editor saves its pending changes first, as the Done button does.
-   * Otherwise the shortcut runner toggles the app's edit mode as before.
-   */
-  function onEditShortcut(event: KeyboardEvent) {
-    if (event.defaultPrevented || event.repeat) return;
-    if (!keyboardShortcuts.checkShortcut(event, Action.EDIT_MODE)) return;
-    if ($context.embed === Embed.HANDSET || hasLayerInFront()) return;
-    const entry = get(contextActions.active);
-    if (!entry || !isKeyTargetPane(entry.pane)) return;
-    let menu;
-    try {
-      menu = entry.resolve();
-    } catch (error) {
-      logger.error({ at: "ContextActionKeys - edit", error });
-      return;
-    }
-    const action = flattenContextActions(menu, {
-      hasActionHandler: Boolean(entry.onAction)
-    }).find((item) => item.item.value === ResourceActionType.EDIT);
-    if (!action) return;
-    event.preventDefault();
-    event.stopPropagation();
-    void finishEditMode(entry.id, () => {
-      void runContextAction(action, {
-        runCommand: (command) => requireCommandHost().runAction(command),
-        onAction: entry.onAction
-      });
-    });
-  }
 </script>
 
-<svelte:window onkeydown={onKeydown} onkeydowncapture={onEditShortcut} />
+<svelte:window onkeydown={onKeydown} />

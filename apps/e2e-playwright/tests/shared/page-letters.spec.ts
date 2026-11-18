@@ -1,11 +1,28 @@
+import type { Page } from "@playwright/test";
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
 import { ensureInAppOnHome } from "../utils/helpers";
+import { resolveRepoFsImportPath } from "../utils/repo-fs";
 import {
   blockExternalAuthRequests,
   openNodeRecordFromLibraryById
 } from "../memory/memory-test-helpers";
 
 let e2eSeed: E2ESeed;
+
+/** Reads a note's starred state from the app's datafn store. */
+async function readIsStarred(page: Page, id: string) {
+  return page.evaluate(
+    async ({ datafnStorePath, id }) => {
+      const { datafn } = await import(datafnStorePath);
+      const result = await datafn.node.query({ filters: { id } });
+      return Boolean(result.data?.[0]?.isStarred);
+    },
+    {
+      id,
+      datafnStorePath: resolveRepoFsImportPath("client/datafn/datafn.store.ts")
+    }
+  );
+}
 
 test.describe("page letters", () => {
   test.beforeEach(async ({ page, seed }) => {
@@ -28,25 +45,45 @@ test.describe("page letters", () => {
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
 
     const star = page.locator(".popover [data-context-menu-item-id='star']");
-    await menuTrigger.click();
-    await expect(star.first()).toBeVisible({ timeout: 10_000 });
-    const before = (await star.first().innerText()).trim();
-    await expect(star.first()).toContainText("S");
-    await page.keyboard.press("Escape");
-    await expect(star.first()).toBeHidden({ timeout: 10_000 });
+    const openMenu = async () => {
+      await page.evaluate(() =>
+        (document.activeElement as HTMLElement)?.blur()
+      );
+      await menuTrigger.click();
+      await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    };
+    const closeMenu = async () => {
+      await page.keyboard.press("Escape");
+      await expect(star.first()).toBeHidden({ timeout: 10_000 });
+      await page.evaluate(() =>
+        (document.activeElement as HTMLElement)?.blur()
+      );
+    };
 
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
-    await page.keyboard.press("s");
-    await menuTrigger.click();
-    await expect(star.first()).toBeVisible({ timeout: 10_000 });
-    await expect(star.first()).not.toHaveText(before);
-    await page.keyboard.press("Escape");
-    await expect(star.first()).toBeHidden({ timeout: 10_000 });
+    await openMenu();
+    await expect(
+      star.first().getByTestId("context-menu-item-hotkey")
+    ).toHaveText("S");
+    await expect(star.first()).not.toContainText("Starred");
+    await closeMenu();
 
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
     await page.keyboard.press("s");
-    await menuTrigger.click();
-    await expect(star.first()).toHaveText(before, { timeout: 10_000 });
+    await expect
+      .poll(() => readIsStarred(page, node.id), { timeout: 10_000 })
+      .toBe(true);
+
+    await page.reload();
+    await expect(menuTrigger).toBeVisible({ timeout: 15_000 });
+    await openMenu();
+    await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
+    await closeMenu();
+
+    await page.keyboard.press("s");
+    await expect
+      .poll(() => readIsStarred(page, node.id), { timeout: 10_000 })
+      .toBe(false);
+    await openMenu();
+    await expect(star.first()).not.toContainText("Starred");
   });
 
   test("calendar letters switch the scale and Shift+T goes to today", async ({

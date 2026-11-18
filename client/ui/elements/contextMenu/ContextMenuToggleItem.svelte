@@ -72,7 +72,10 @@
   />
   <span class="text-b3">{on ? item.activeLabel : item.label}</span>
   {#if item.hotKey}
-    <div class="absolute top-1 right-1">
+    <div
+      class="absolute top-1 right-1"
+      data-testid="context-menu-item-hotkey"
+    >
       <ShortcutText shortcut={{ key: item.hotKey }} size={Size.sm} />
     </div>
   {/if}

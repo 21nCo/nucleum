@@ -17,6 +17,7 @@
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import { resolveSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
   import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
+  import { pageLetterTargetId } from "@nucleum/shell/shortcuts/page-keys";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import {
     contextZone,
@@ -149,7 +150,7 @@
       isPinned={isRootPinned}
       onTogglePin={toggleRootPin}
       onViewChange={changeView}
-      isKeyed={!isEmbedded}
+      isKeyed={!isEmbedded && $pageLetterTargetId === rootId}
     />
   </ContextZoneContent>
 {/if}
