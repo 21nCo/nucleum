@@ -30,7 +30,7 @@ export const CONFIRMED_RESOURCE_ACTIONS: ReadonlySet<string> = new Set([
 
 /** Returns the single key for a resource menu item value, if it has one. */
 export function resolveResourceActionKey(
-  value: IContextMenuItem["value"]
+  value: IContextMenuItem["value"] | undefined
 ): string | undefined {
   return value == null ? undefined : RESOURCE_ACTION_KEYS[String(value)];
 }
