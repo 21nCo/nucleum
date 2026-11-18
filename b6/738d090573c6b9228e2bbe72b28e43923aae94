@@ -1,0 +1,23 @@
+client/features/spaces/SpaceBody.split-letters.test.ts
+  s_b24405d1733adb::t_12fc774dfee656 1-199
+client/features/spaces/SpaceBody.svelte
+  s_b24405d1733adb::t_b555158bd35c68 24,124-126,129-132,149,165
+client/features/spaces/SpaceContextZone.svelte
+  s_b24405d1733adb::t_60edd352de6a24 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b6738d090573c6b9228e2bbe72b28e43923aae94",
+  "prompts": {},
+  "sessions": {
+    "s_b24405d1733adb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9359e57e-ef20-4170-a55d-63e500783c67",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
