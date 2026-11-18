@@ -2,10 +2,16 @@ import type { FileFnClient } from "@filefn/client";
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
+  resolveFileQueueDirsOf,
+  resolveQueuedFileUrl
+} from "@nucleum/shared-state/files/file-queue";
+import {
+  captureFileFnOwner,
   captureSettledFileFnOwner,
   confirmFileFnOwner,
   getOwnedFileFnClient,
   isFileFnOwnerCurrent,
+  isFileFnOwnerLive,
   settleFileFnOwner,
   type FileFnOwner
 } from "@nucleum/shared-state/files/filefn-client";
@@ -57,11 +63,36 @@ let cacheOwnerKey: string | undefined;
  * or authority. The full variant of a HEIC or HEIF original is its converted
  * image, or the original, asked for again after the retry interval, while
  * FileFn has none; the download variant is the original.
+ *
+ * A file still in the FileFn OPFS queue of the signed-in account, or of the
+ * device's local queue, renders from its bytes on the device for every
+ * account mode, offline too: its thumbnail, or undefined when none was kept,
+ * and the original for the full and download variants. Those object URLs are
+ * not kept in the owner's cache. The queues read are those of the cloud
+ * account signed in when the lookup starts; when that account's generation
+ * has ended by the time the bytes are read (a sign-out, another account or
+ * another authority), the URL is revoked and undefined returned, so one
+ * account's queued bytes are never shown to another.
  */
 export async function resolveFileUrl(
   fileId: string,
   variant: FileUrlVariant
 ): Promise<string | undefined> {
+  try {
+    const queueOwner = captureFileFnOwner();
+    const queued = await resolveQueuedFileUrl(
+      resolveFileQueueDirsOf(queueOwner?.userId ?? null),
+      fileId,
+      variant
+    );
+    if (queued !== null) {
+      if (!queueOwner || isFileFnOwnerLive(queueOwner)) return queued;
+      if (queued) URL.revokeObjectURL(queued);
+      return undefined;
+    }
+  } catch (error: unknown) {
+    logger.warn({ at: "fileUrl.queued", fileId, variant, error });
+  }
   let owner: FileFnOwner | null;
   try {
     owner = await captureSettledFileFnOwner();

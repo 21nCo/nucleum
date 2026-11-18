@@ -16,6 +16,14 @@ import { resolveAccountBaseUrl } from "@nucleum/client/runtime/account/network";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
+import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
+import {
+  replayFileQueue,
+  resolveAccountFileQueueDir,
+  resolveFileQueueDirsOf,
+  type QueuedFileReferences
+} from "@nucleum/shared-state/files/file-queue";
+import { get } from "svelte/store";
 
 const FILEFN_OFFLINE_DIR_PREFIX = "filefn-pending-uploads";
 const OFFLINE_REPLAY_START_FILE_ID = "";
@@ -238,6 +246,7 @@ async function createAccountFileFnClient(
   const guarded = guardFileFnClient(client, teardown);
   if (!teardown.aborted) {
     startOfflineReplayWhenOwner(userId, client, teardown);
+    startFileQueueReplay(userId, baseUrl, guarded, teardown);
     const drain = () =>
       void drainAccountPendingDeletes(userId, baseUrl, guarded, teardown).catch(
         (error: unknown) => {
@@ -248,6 +257,120 @@ async function createAccountFileFnClient(
     globalThis.addEventListener?.("online", drain, { signal: teardown });
   }
   return guarded;
+}
+
+/**
+ * Returns the FileFn OPFS queues whose files the signed-in account shows from
+ * the device until they upload: the cloud account's own queue and the
+ * device's local queue, or only the local queue without a cloud account.
+ */
+export function resolveFileQueueDirs(): string[] {
+  return resolveFileQueueDirsOf(
+    resolveFileFnAccountScope(account.get())?.userId ?? null
+  );
+}
+
+/**
+ * Uploads the account's queued files through the client, now when online and
+ * on every reconnect until the client is torn down. See replayFileQueue for
+ * how tabs share the queue. A pass checks the account's records, so it runs
+ * only once DataFn is in the account's namespace, and again whenever it is.
+ */
+function startFileQueueReplay(
+  userId: string,
+  baseUrl: string,
+  client: FileFnClient,
+  teardown: AbortSignal
+) {
+  const replay = () =>
+    replayAccountFileQueue({ userId, baseUrl, client, signal: teardown });
+  const stop = datafnRuntime.subscribe((runtime) => {
+    if (runtime?.namespace === `user:${userId}`) replay();
+  });
+  teardown.addEventListener("abort", stop, { once: true });
+  globalThis.addEventListener?.("online", replay, { signal: teardown });
+}
+
+function replayAccountFileQueue(uploader: FileQueueUploader) {
+  const { userId, baseUrl, client, signal } = uploader;
+  if (signal.aborted || globalThis.navigator?.onLine === false) return;
+  const namespace = `user:${userId}`;
+  const isInNamespace = () =>
+    !signal.aborted &&
+    datafn.currentNamespace() === namespace &&
+    get(datafnRuntime)?.namespace === namespace;
+  const references: QueuedFileReferences = {
+    async isReferenced(fileId) {
+      if (!isInNamespace()) return undefined;
+      const result = await datafn.file.query({
+        filters: { fileId },
+        limit: 1,
+        metadata: {
+          includeTrashed: true,
+          includeArchived: true,
+          includeAncestorInactive: true
+        }
+      });
+      if (!isInNamespace() || !Array.isArray(result.data)) return undefined;
+      return result.data.length > 0;
+    },
+    async discard(fileId) {
+      await client.deleteFile(fileId).catch(async (error: unknown) => {
+        logger.warn({ at: "filefn.client.queue.discard", fileId, error });
+        await recordPendingDelete(userId, baseUrl, fileId);
+      });
+    }
+  };
+  replayFileQueue(
+    resolveAccountFileQueueDir(userId),
+    client,
+    signal,
+    undefined,
+    references
+  ).catch((error: unknown) => {
+    logger.error({ at: "filefn.client.queue", error });
+  });
+}
+
+/** The signed-in cloud account's current FileFn client and its lifetime. */
+export type FileQueueUploader = {
+  userId: string;
+  baseUrl: string;
+  client: FileFnClient;
+  /** Aborts when the client is torn down. */
+  signal: AbortSignal;
+};
+
+/**
+ * Returns the signed-in cloud account's current FileFn client, creating it
+ * when there is none yet (creating one starts its queue replay too), or null
+ * offline, without a cloud account, or when the client was replaced while it
+ * was created.
+ */
+export async function captureFileQueueUploader(): Promise<FileQueueUploader | null> {
+  if (globalThis.navigator?.onLine === false) return null;
+  syncWithAccount();
+  await settleFileFnClientSync();
+  const entry = currentEntry;
+  if (!entry) return null;
+  const client = await entry.client;
+  if (currentEntry !== entry || entry.controller.signal.aborted) return null;
+  return {
+    userId: entry.userId,
+    baseUrl: entry.baseUrl,
+    client,
+    signal: entry.controller.signal
+  };
+}
+
+/**
+ * Uploads the signed-in cloud account's queued files now, through its FileFn
+ * client. Does nothing offline or without a cloud account.
+ */
+export async function uploadQueuedFiles(): Promise<void> {
+  const uploader = await captureFileQueueUploader();
+  if (!uploader) return;
+  replayAccountFileQueue(uploader);
 }
 
 /**
@@ -359,7 +482,7 @@ export async function captureSettledFileFnOwner(): Promise<FileFnOwner | null> {
  * its client down. A stored region read still pending does not end it; a
  * read that finds another authority does, once it binds.
  */
-function isFileFnOwnerLive(owner: FileFnOwner): boolean {
+export function isFileFnOwnerLive(owner: FileFnOwner): boolean {
   return (
     owner.epoch === ownerEpoch &&
     resolveFileFnAccountScope(account.get())?.userId === owner.userId
@@ -458,6 +581,19 @@ export async function discardFileFnFile(
       entry.controller.signal
     );
   }
+}
+
+/**
+ * Records the delete of a file the account will hold no record of, at the
+ * file's authority, for the account's next client to send (see
+ * discardFileFnFile): a local file the account claimed whose local-only
+ * record was deleted before its record was published.
+ */
+export async function recordFileFnPendingDelete(
+  account: { userId: string; baseUrl: string },
+  fileId: string
+): Promise<void> {
+  await recordPendingDelete(account.userId, account.baseUrl, fileId);
 }
 
 /**
