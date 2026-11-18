@@ -12,14 +12,15 @@
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/svelte": "^5.3.1",
     "@testing-library/user-event": "^14.5.2",
-    "axe-core": "^4.9.1",
-    "fast-check": "^3.14.0",
     "@vitest/coverage-istanbul": "^2.1.9",
     "@vitest/coverage-v8": "^2.1.9",
+    "axe-core": "^4.9.1",
+    "esbuild": "^0.28.2",
+    "fast-check": "^3.14.0",
     "jsdom": "^24.0.0",
     "svelte": "^5.55.0",
-    "vite-tsconfig-paths": "^4.3.2",
-    "undici": "7.29.0"
+    "undici": "7.29.0",
+    "vite-tsconfig-paths": "^4.3.2"
   },
   "dependencies": {
     "@nucleum/datafn": "*",

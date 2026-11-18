@@ -11,6 +11,12 @@ export interface AccountWorkerEnv {
   ACCOUNT_RUNTIME_STORES?: DurableObjectNamespace;
   DATABASE_URL?: string;
   DATAFN_DATABASE_URL?: string;
+  /** `local` (default), `remote` or `both`; see `services/account/config/environments.json`. */
+  FILEFN_PROCESSING_MODE?: string;
+  /** The region's `filefn.processing` queue producer (`remote` and `both` modes). */
+  FILEFN_PROCESSING_QUEUE?: Queue;
+  /** The region's processing container Durable Object (`remote` and `both` modes). */
+  FILEFN_PROCESSING_CONTAINER?: DurableObjectNamespace;
   [key: string]: unknown;
 }
 

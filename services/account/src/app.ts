@@ -40,6 +40,7 @@ import {
   type FileDeletionRetryResult
 } from "./datafn/file-deletions.js";
 import { createAccountRequestObservationMiddleware } from "./http/observability.js";
+import type { AccountFileProcessing } from "./files/processing.js";
 import { createAccountFileFn } from "./files/server.js";
 import { registerAccountFileRoutes } from "./files/routes.js";
 
@@ -65,6 +66,14 @@ export interface AccountFilesInfra {
   database: AccountSyncDatabaseProvider;
   storage: (regionId: string) => StorageAdapter | null;
   runtime?: FileFnRuntime;
+  /**
+   * Server processing for the environment's `fileProcessingMode`; undefined
+   * (or no provider) leaves processing to the device.
+   */
+  processing?: () =>
+    | AccountFileProcessing
+    | undefined
+    | Promise<AccountFileProcessing | undefined>;
 }
 
 /** Deployment-specific configuration that varies per runtime (node, worker, tests). */
@@ -375,7 +384,8 @@ async function resolveFileFn(
     database: await resolveSyncDatabase(files.database),
     storage,
     stores: infra.stores,
-    runtime: files.runtime
+    runtime: files.runtime,
+    processing: await files.processing?.()
   });
 }
 

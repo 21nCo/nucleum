@@ -1,0 +1,881 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`account Worker config for file processing > renders the queue, consumer, container and cron for every region in both mode > dev both 1`] = `
+{
+  "dev-euwest": "FILEFN_PROCESSING_MODE = "both"
+[env.dev-euwest.triggers]
+crons = ["0 * * * *"]
+
+[[env.dev-euwest.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-dev-euwest-file-processing"
+
+[[env.dev-euwest.queues.consumers]]
+queue = "nucleus-account-dev-euwest-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-dev-euwest-file-processing-dlq"
+
+[[env.dev-euwest.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.dev-euwest.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.dev-euwest.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.dev-euwest.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_DEV_EUWEST_FILEFN_PROCESSING_DATABASE_URL"",
+  "dev-insouth": "FILEFN_PROCESSING_MODE = "both"
+[env.dev-insouth.triggers]
+crons = ["0 * * * *"]
+
+[[env.dev-insouth.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-dev-insouth-file-processing"
+
+[[env.dev-insouth.queues.consumers]]
+queue = "nucleus-account-dev-insouth-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-dev-insouth-file-processing-dlq"
+
+[[env.dev-insouth.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.dev-insouth.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.dev-insouth.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.dev-insouth.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_DEV_INSOUTH_FILEFN_PROCESSING_DATABASE_URL"",
+  "dev-useast": "FILEFN_PROCESSING_MODE = "both"
+[env.dev-useast.triggers]
+crons = ["0 * * * *"]
+
+[[env.dev-useast.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-dev-useast-file-processing"
+
+[[env.dev-useast.queues.consumers]]
+queue = "nucleus-account-dev-useast-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-dev-useast-file-processing-dlq"
+
+[[env.dev-useast.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.dev-useast.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.dev-useast.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.dev-useast.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_DEV_USEAST_FILEFN_PROCESSING_DATABASE_URL"",
+}
+`;
+
+exports[`account Worker config for file processing > renders the queue, consumer, container and cron for every region in both mode > live both 1`] = `
+{
+  "live-euwest": "FILEFN_PROCESSING_MODE = "both"
+[env.live-euwest.triggers]
+crons = ["0 * * * *"]
+
+[[env.live-euwest.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-live-euwest-file-processing"
+
+[[env.live-euwest.queues.consumers]]
+queue = "nucleus-account-live-euwest-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-live-euwest-file-processing-dlq"
+
+[[env.live-euwest.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.live-euwest.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.live-euwest.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.live-euwest.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_LIVE_EUWEST_FILEFN_PROCESSING_DATABASE_URL"",
+  "live-insouth": "FILEFN_PROCESSING_MODE = "both"
+[env.live-insouth.triggers]
+crons = ["0 * * * *"]
+
+[[env.live-insouth.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-live-insouth-file-processing"
+
+[[env.live-insouth.queues.consumers]]
+queue = "nucleus-account-live-insouth-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-live-insouth-file-processing-dlq"
+
+[[env.live-insouth.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.live-insouth.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.live-insouth.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.live-insouth.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_LIVE_INSOUTH_FILEFN_PROCESSING_DATABASE_URL"",
+  "live-useast": "FILEFN_PROCESSING_MODE = "both"
+[env.live-useast.triggers]
+crons = ["0 * * * *"]
+
+[[env.live-useast.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-live-useast-file-processing"
+
+[[env.live-useast.queues.consumers]]
+queue = "nucleus-account-live-useast-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-live-useast-file-processing-dlq"
+
+[[env.live-useast.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.live-useast.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.live-useast.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.live-useast.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_LIVE_USEAST_FILEFN_PROCESSING_DATABASE_URL"",
+}
+`;
+
+exports[`account Worker config for file processing > renders the queue, consumer, container and cron for every region in both mode > local both 1`] = `
+{
+  "local-euwest": "FILEFN_PROCESSING_MODE = "both"
+[env.local-euwest.triggers]
+crons = ["0 * * * *"]
+
+[[env.local-euwest.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-local-euwest-file-processing"
+
+[[env.local-euwest.queues.consumers]]
+queue = "nucleus-account-local-euwest-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-local-euwest-file-processing-dlq"
+
+[[env.local-euwest.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.local-euwest.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.local-euwest.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.local-euwest.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_LOCAL_EUWEST_FILEFN_PROCESSING_DATABASE_URL"",
+  "local-insouth": "FILEFN_PROCESSING_MODE = "both"
+[env.local-insouth.triggers]
+crons = ["0 * * * *"]
+
+[[env.local-insouth.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-local-insouth-file-processing"
+
+[[env.local-insouth.queues.consumers]]
+queue = "nucleus-account-local-insouth-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-local-insouth-file-processing-dlq"
+
+[[env.local-insouth.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.local-insouth.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.local-insouth.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.local-insouth.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_LOCAL_INSOUTH_FILEFN_PROCESSING_DATABASE_URL"",
+  "local-useast": "FILEFN_PROCESSING_MODE = "both"
+[env.local-useast.triggers]
+crons = ["0 * * * *"]
+
+[[env.local-useast.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-local-useast-file-processing"
+
+[[env.local-useast.queues.consumers]]
+queue = "nucleus-account-local-useast-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-local-useast-file-processing-dlq"
+
+[[env.local-useast.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.local-useast.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.local-useast.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.local-useast.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_LOCAL_USEAST_FILEFN_PROCESSING_DATABASE_URL"",
+}
+`;
+
+exports[`account Worker config for file processing > renders the queue, consumer, container and cron for every region in both mode > pre both 1`] = `
+{
+  "pre-euwest": "FILEFN_PROCESSING_MODE = "both"
+[env.pre-euwest.triggers]
+crons = ["0 * * * *"]
+
+[[env.pre-euwest.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-pre-euwest-file-processing"
+
+[[env.pre-euwest.queues.consumers]]
+queue = "nucleus-account-pre-euwest-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-pre-euwest-file-processing-dlq"
+
+[[env.pre-euwest.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.pre-euwest.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.pre-euwest.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.pre-euwest.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_PRE_EUWEST_FILEFN_PROCESSING_DATABASE_URL"",
+  "pre-insouth": "FILEFN_PROCESSING_MODE = "both"
+[env.pre-insouth.triggers]
+crons = ["0 * * * *"]
+
+[[env.pre-insouth.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-pre-insouth-file-processing"
+
+[[env.pre-insouth.queues.consumers]]
+queue = "nucleus-account-pre-insouth-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-pre-insouth-file-processing-dlq"
+
+[[env.pre-insouth.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.pre-insouth.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.pre-insouth.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.pre-insouth.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_PRE_INSOUTH_FILEFN_PROCESSING_DATABASE_URL"",
+  "pre-useast": "FILEFN_PROCESSING_MODE = "both"
+[env.pre-useast.triggers]
+crons = ["0 * * * *"]
+
+[[env.pre-useast.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-pre-useast-file-processing"
+
+[[env.pre-useast.queues.consumers]]
+queue = "nucleus-account-pre-useast-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-pre-useast-file-processing-dlq"
+
+[[env.pre-useast.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.pre-useast.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.pre-useast.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.pre-useast.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_PRE_USEAST_FILEFN_PROCESSING_DATABASE_URL"",
+}
+`;
+
+exports[`account Worker config for file processing > renders the queue, consumer, container and cron for every region in remote mode > dev remote 1`] = `
+{
+  "dev-euwest": "FILEFN_PROCESSING_MODE = "remote"
+[env.dev-euwest.triggers]
+crons = ["0 * * * *"]
+
+[[env.dev-euwest.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-dev-euwest-file-processing"
+
+[[env.dev-euwest.queues.consumers]]
+queue = "nucleus-account-dev-euwest-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-dev-euwest-file-processing-dlq"
+
+[[env.dev-euwest.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.dev-euwest.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.dev-euwest.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.dev-euwest.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_DEV_EUWEST_FILEFN_PROCESSING_DATABASE_URL"",
+  "dev-insouth": "FILEFN_PROCESSING_MODE = "remote"
+[env.dev-insouth.triggers]
+crons = ["0 * * * *"]
+
+[[env.dev-insouth.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-dev-insouth-file-processing"
+
+[[env.dev-insouth.queues.consumers]]
+queue = "nucleus-account-dev-insouth-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-dev-insouth-file-processing-dlq"
+
+[[env.dev-insouth.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.dev-insouth.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.dev-insouth.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.dev-insouth.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_DEV_INSOUTH_FILEFN_PROCESSING_DATABASE_URL"",
+  "dev-useast": "FILEFN_PROCESSING_MODE = "remote"
+[env.dev-useast.triggers]
+crons = ["0 * * * *"]
+
+[[env.dev-useast.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-dev-useast-file-processing"
+
+[[env.dev-useast.queues.consumers]]
+queue = "nucleus-account-dev-useast-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-dev-useast-file-processing-dlq"
+
+[[env.dev-useast.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.dev-useast.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.dev-useast.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.dev-useast.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_DEV_USEAST_FILEFN_PROCESSING_DATABASE_URL"",
+}
+`;
+
+exports[`account Worker config for file processing > renders the queue, consumer, container and cron for every region in remote mode > live remote 1`] = `
+{
+  "live-euwest": "FILEFN_PROCESSING_MODE = "remote"
+[env.live-euwest.triggers]
+crons = ["0 * * * *"]
+
+[[env.live-euwest.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-live-euwest-file-processing"
+
+[[env.live-euwest.queues.consumers]]
+queue = "nucleus-account-live-euwest-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-live-euwest-file-processing-dlq"
+
+[[env.live-euwest.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.live-euwest.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.live-euwest.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.live-euwest.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_LIVE_EUWEST_FILEFN_PROCESSING_DATABASE_URL"",
+  "live-insouth": "FILEFN_PROCESSING_MODE = "remote"
+[env.live-insouth.triggers]
+crons = ["0 * * * *"]
+
+[[env.live-insouth.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-live-insouth-file-processing"
+
+[[env.live-insouth.queues.consumers]]
+queue = "nucleus-account-live-insouth-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-live-insouth-file-processing-dlq"
+
+[[env.live-insouth.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.live-insouth.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.live-insouth.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.live-insouth.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_LIVE_INSOUTH_FILEFN_PROCESSING_DATABASE_URL"",
+  "live-useast": "FILEFN_PROCESSING_MODE = "remote"
+[env.live-useast.triggers]
+crons = ["0 * * * *"]
+
+[[env.live-useast.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-live-useast-file-processing"
+
+[[env.live-useast.queues.consumers]]
+queue = "nucleus-account-live-useast-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-live-useast-file-processing-dlq"
+
+[[env.live-useast.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.live-useast.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.live-useast.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.live-useast.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_LIVE_USEAST_FILEFN_PROCESSING_DATABASE_URL"",
+}
+`;
+
+exports[`account Worker config for file processing > renders the queue, consumer, container and cron for every region in remote mode > local remote 1`] = `
+{
+  "local-euwest": "FILEFN_PROCESSING_MODE = "remote"
+[env.local-euwest.triggers]
+crons = ["0 * * * *"]
+
+[[env.local-euwest.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-local-euwest-file-processing"
+
+[[env.local-euwest.queues.consumers]]
+queue = "nucleus-account-local-euwest-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-local-euwest-file-processing-dlq"
+
+[[env.local-euwest.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.local-euwest.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.local-euwest.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.local-euwest.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_LOCAL_EUWEST_FILEFN_PROCESSING_DATABASE_URL"",
+  "local-insouth": "FILEFN_PROCESSING_MODE = "remote"
+[env.local-insouth.triggers]
+crons = ["0 * * * *"]
+
+[[env.local-insouth.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-local-insouth-file-processing"
+
+[[env.local-insouth.queues.consumers]]
+queue = "nucleus-account-local-insouth-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-local-insouth-file-processing-dlq"
+
+[[env.local-insouth.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.local-insouth.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.local-insouth.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.local-insouth.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_LOCAL_INSOUTH_FILEFN_PROCESSING_DATABASE_URL"",
+  "local-useast": "FILEFN_PROCESSING_MODE = "remote"
+[env.local-useast.triggers]
+crons = ["0 * * * *"]
+
+[[env.local-useast.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-local-useast-file-processing"
+
+[[env.local-useast.queues.consumers]]
+queue = "nucleus-account-local-useast-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-local-useast-file-processing-dlq"
+
+[[env.local-useast.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.local-useast.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.local-useast.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.local-useast.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "REPLACE_WITH_21N_DEV_SECRETS_STORE_ID"
+secret_name = "NUCLEUS_ACCOUNT_LOCAL_USEAST_FILEFN_PROCESSING_DATABASE_URL"",
+}
+`;
+
+exports[`account Worker config for file processing > renders the queue, consumer, container and cron for every region in remote mode > pre remote 1`] = `
+{
+  "pre-euwest": "FILEFN_PROCESSING_MODE = "remote"
+[env.pre-euwest.triggers]
+crons = ["0 * * * *"]
+
+[[env.pre-euwest.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-pre-euwest-file-processing"
+
+[[env.pre-euwest.queues.consumers]]
+queue = "nucleus-account-pre-euwest-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-pre-euwest-file-processing-dlq"
+
+[[env.pre-euwest.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.pre-euwest.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.pre-euwest.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.pre-euwest.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_PRE_EUWEST_FILEFN_PROCESSING_DATABASE_URL"",
+  "pre-insouth": "FILEFN_PROCESSING_MODE = "remote"
+[env.pre-insouth.triggers]
+crons = ["0 * * * *"]
+
+[[env.pre-insouth.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-pre-insouth-file-processing"
+
+[[env.pre-insouth.queues.consumers]]
+queue = "nucleus-account-pre-insouth-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-pre-insouth-file-processing-dlq"
+
+[[env.pre-insouth.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.pre-insouth.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.pre-insouth.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.pre-insouth.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_PRE_INSOUTH_FILEFN_PROCESSING_DATABASE_URL"",
+  "pre-useast": "FILEFN_PROCESSING_MODE = "remote"
+[env.pre-useast.triggers]
+crons = ["0 * * * *"]
+
+[[env.pre-useast.queues.producers]]
+binding = "FILEFN_PROCESSING_QUEUE"
+queue = "nucleus-account-pre-useast-file-processing"
+
+[[env.pre-useast.queues.consumers]]
+queue = "nucleus-account-pre-useast-file-processing"
+max_batch_size = 1
+max_concurrency = 2
+max_retries = 3
+retry_delay = 30
+dead_letter_queue = "nucleus-account-pre-useast-file-processing-dlq"
+
+[[env.pre-useast.containers]]
+class_name = "FileProcessingContainer"
+image = "../../file-processing/Dockerfile"
+image_build_context = "../../.."
+max_instances = 1
+instance_type = "standard-1"
+
+[[env.pre-useast.durable_objects.bindings]]
+name = "FILEFN_PROCESSING_CONTAINER"
+class_name = "FileProcessingContainer"
+
+[[env.pre-useast.migrations]]
+tag = "v1-file-processing-container"
+new_sqlite_classes = ["FileProcessingContainer"]
+
+[[env.pre-useast.secrets_store_secrets]]
+binding = "FILEFN_PROCESSING_DATABASE_URL"
+store_id = "3bc19f61d4d8498d9fa50d7175085316"
+secret_name = "NUCLEUS_ACCOUNT_PRE_USEAST_FILEFN_PROCESSING_DATABASE_URL"",
+}
+`;
