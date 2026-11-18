@@ -1,4 +1,9 @@
-import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import {
+  Blob as NodeBlob,
+  File as NodeFile,
+  resolveObjectURL
+} from "node:buffer";
+import { URL as NodeURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   FileFnHttpError,
@@ -133,12 +138,12 @@ describe("FileFn OPFS queue", () => {
     expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
     const shown = await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full");
     expect(shown).toMatch(/^blob:/);
-    const thumbnail = await tab.resolveQueuedFileUrl(
-      [QUEUE],
-      FILE_ID,
-      "thumbnail"
+    expect(await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full")).not.toBe(
+      shown
     );
-    expect(thumbnail).toMatch(/^blob:/);
+    expect(
+      await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "thumbnail")
+    ).toMatch(/^blob:/);
     expect(
       await tab.resolveQueuedFileUrl([QUEUE], "file_notQueued01", "full")
     ).toBeNull();
@@ -166,59 +171,68 @@ describe("FileFn OPFS queue", () => {
       })
     ]);
     expect(opfs.list(QUEUE)).toEqual([]);
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith(shown);
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith(thumbnail);
     expect(await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full")).toBeNull();
   });
 
-  it("reuses one object URL per queued file and bytes across renders and downloads", async () => {
+  it("renders and downloads a queued file again after a view revokes the URL it was given", async () => {
+    vi.mocked(URL.createObjectURL).mockImplementation((blob) =>
+      NodeURL.createObjectURL(blob as NodeBlob)
+    );
+    vi.mocked(URL.revokeObjectURL).mockImplementation(NodeURL.revokeObjectURL);
     installDevice();
     const tab = await openTab();
     await enqueuePhoto(tab);
+    const read = (url: string | null | undefined) =>
+      resolveObjectURL(url ?? "")?.text();
 
-    const [full, concurrent] = await Promise.all([
-      tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full"),
-      tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full")
-    ]);
+    const shown = await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full");
     const download = await tab.resolveQueuedFileUrl(
       [QUEUE],
       FILE_ID,
       "download"
     );
-    const thumbnails = [
-      await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "thumbnail"),
-      await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "thumbnail")
-    ];
+    URL.revokeObjectURL(shown!);
+    const reopened = await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full");
 
-    expect(full).toMatch(/^blob:/);
-    expect([concurrent, download]).toEqual([full, full]);
-    expect(thumbnails[1]).toBe(thumbnails[0]);
-    expect(URL.createObjectURL).toHaveBeenCalledTimes(2);
-    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    expect(read(shown)).toBeUndefined();
+    expect(await read(reopened)).toBe("photo bytes");
+    expect(await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "download")).toBe(
+      download
+    );
+    expect(await read(download)).toBe("photo bytes");
+
+    await tab.dequeueFile(QUEUE, FILE_ID);
+    await Promise.resolve();
+    expect(read(download)).toBeUndefined();
+    expect(await read(reopened)).toBe("photo bytes");
   });
 
-  it("revokes a queued file's URLs when it is dequeued, its queue is released or a lookup reads other queues", async () => {
+  it("shares one download URL per queued file and revokes it when the file is dequeued, released or another queue is read", async () => {
     installDevice();
     const tab = await openTab();
     await enqueuePhoto(tab);
-    const resolve = (dirs: string[]) =>
-      tab.resolveQueuedFileUrl(dirs, FILE_ID, "full");
+    const download = (dirs = [QUEUE]) =>
+      tab.resolveQueuedFileUrl(dirs, FILE_ID, "download");
 
-    const first = await resolve([QUEUE]);
-    expect(await resolve(["nucleum-file-queue-local"])).toBeNull();
+    const [first, concurrent] = await Promise.all([download(), download()]);
+    expect(first).toMatch(/^blob:/);
+    expect([concurrent, await download()]).toEqual([first, first]);
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(await download(["nucleum-file-queue-local"])).toBeNull();
     await Promise.resolve();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(first);
 
-    const second = await resolve([QUEUE]);
+    const second = await download();
     expect(second).not.toBe(first);
     tab.releaseQueuedFileUrls((key) => key.startsWith(`${QUEUE}\n`));
     await Promise.resolve();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(second);
 
-    const third = await resolve([QUEUE]);
+    const third = await download();
     await tab.dequeueFile(QUEUE, FILE_ID);
+    await Promise.resolve();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith(third);
-    expect(await resolve([QUEUE])).toBeNull();
+    expect(await download()).toBeNull();
   });
 
   it("continues the same upload session after a reload interrupts the upload", async () => {

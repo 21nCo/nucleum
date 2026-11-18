@@ -206,7 +206,7 @@ export async function enqueueFile(
 export async function dequeueFile(dir: string, fileId: string): Promise<void> {
   const entryName = toEntryName(fileId);
   await getStore(dir).deletePendingUpload(entryName);
-  releaseQueuedFileUrls((key) => key.startsWith(`${dir}\n${entryName}\n`));
+  releaseQueuedFileUrls((key) => key === `${dir}\n${entryName}`);
 }
 
 /**
@@ -396,8 +396,10 @@ async function readThumbnail(
  * holds it: its thumbnail for `thumbnail` (undefined when none was kept, so a
  * view falls back to the original), else the original. Returns null when no
  * queue holds the file, so the caller resolves it through FileFn. Each call
- * for a file's bytes shares one held URL, revoked once the file leaves the
- * queue or a lookup reads other queues (see releaseQueuedFileUrls).
+ * makes a new object URL, as the record bytes did: the view that renders it
+ * revokes it once it no longer shows it. A download, which no view revokes,
+ * shares one held URL per file, revoked once the file leaves the queue or a
+ * lookup reads other queues (see releaseQueuedFileUrls).
  */
 export async function resolveQueuedFileUrl(
   dirs: readonly string[],
@@ -409,17 +411,18 @@ export async function resolveQueuedFileUrl(
   releaseQueuedFileUrls((key) => !dirs.includes(key.split("\n")[0]));
   for (const dir of dirs) {
     const entry = await getEntryDir(dir, entryName);
-    const prefix = `${dir}\n${entryName}\n`;
-    if (!entry) releaseQueuedFileUrls((key) => key.startsWith(prefix));
+    const key = `${dir}\n${entryName}`;
+    if (!entry) releaseQueuedFileUrls((held) => held === key);
     if (!entry) continue;
-    const key = prefix + String(variant === "thumbnail");
-    const held = heldUrls.get(key) ?? readUrl(dir, entry, entryName, variant);
-    heldUrls.set(key, held);
+    const isHeld = variant === "download";
+    const held =
+      (isHeld && heldUrls.get(key)) || readUrl(dir, entry, entryName, variant);
+    if (isHeld) heldUrls.set(key, held);
     try {
       const url = await held;
-      if (heldUrls.get(key) !== held) return null;
+      if (isHeld && heldUrls.get(key) !== held) return null;
       if (url !== null) return url;
-      heldUrls.delete(key);
+      if (heldUrls.get(key) === held) heldUrls.delete(key);
     } catch (error) {
       if (heldUrls.get(key) === held) heldUrls.delete(key);
       logger.warn({ at: "fileQueue.resolve", fileId, error });
@@ -448,7 +451,7 @@ async function readUrl(
 
 const heldUrls = new Map<string, Promise<string | undefined | null>>();
 
-/** Revokes held object URLs whose keys (queue, entry, variant) it selects. */
+/** Revokes the held download URLs whose keys (queue, entry) it selects. */
 export function releaseQueuedFileUrls(isReleased: (key: string) => boolean) {
   for (const [key, held] of heldUrls) {
     if (!isReleased(key)) continue;
@@ -666,7 +669,7 @@ async function replayEntry(
     await publishEntry(dir, entryName, publisher, result);
   } else {
     await store.deletePendingUpload(entryName);
-    releaseQueuedFileUrls((key) => key.startsWith(`${dir}\n${entryName}\n`));
+    releaseQueuedFileUrls((key) => key === `${dir}\n${entryName}`);
   }
   logger.info({ at: "fileQueue.replay", fileId: result.fileId });
   return "done";
