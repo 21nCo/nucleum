@@ -1,5 +1,9 @@
 import type { Page } from "@playwright/test";
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
+import {
+  requireE2EProduct,
+  resolveSurfaceContract
+} from "../../config/e2e.config";
 import { ensureInAppOnHome } from "../utils/helpers";
 import { resolveRepoFsImportPath } from "../utils/repo-fs";
 import {
@@ -9,6 +13,21 @@ import {
 
 let e2eSeed: E2ESeed;
 
+const datafnStorePath = resolveRepoFsImportPath(
+  "client/datafn/datafn.store.ts"
+);
+
+/**
+ * Whether the app server serves repo source modules, as the Vite dev server
+ * does; a static build answers those imports with HTML.
+ */
+async function isRepoSourceServed(page: Page) {
+  const response = await page.request.get(datafnStorePath);
+  return (
+    response.ok() && /javascript/.test(response.headers()["content-type"] ?? "")
+  );
+}
+
 /** Reads a note's starred state from the app's datafn store. */
 async function readIsStarred(page: Page, id: string) {
   return page.evaluate(
@@ -17,10 +36,7 @@ async function readIsStarred(page: Page, id: string) {
       const result = await datafn.node.query({ filters: { id } });
       return Boolean(result.data?.[0]?.isStarred);
     },
-    {
-      id,
-      datafnStorePath: resolveRepoFsImportPath("client/datafn/datafn.store.ts")
-    }
+    { id, datafnStorePath }
   );
 }
 
@@ -33,7 +49,18 @@ test.describe("page letters", () => {
 
   test("S stars the open resource and the menu shows the letters", async ({
     page
-  }) => {
+  }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The open resource is a note opened from the Nodes library, and this product has no nodes"
+    );
+    test.skip(
+      !(await isRepoSourceServed(page)),
+      "The starred state is read through repo source modules, which only the Vite dev server serves"
+    );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
     const node = await e2eSeed.memory.node({
@@ -79,6 +106,7 @@ test.describe("page letters", () => {
       .toBe(true);
 
     await page.reload();
+    await ensureInAppOnHome(page);
     await openNodeRecordFromLibraryById(page, node.id);
     await expect(menuTrigger).toBeVisible({ timeout: 15_000 });
     await openMenu();
