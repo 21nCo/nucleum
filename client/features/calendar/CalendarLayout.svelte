@@ -45,8 +45,11 @@
   }: {
     panel?: CalendarLayout;
     children?: Snippet | undefined;
-    /** Date header; receives whether the date should be short. */
-    header?: Snippet<[boolean]> | undefined;
+    /**
+     * Date header; receives whether the date should be short and whether
+     * only its previous and next buttons should show.
+     */
+    header?: Snippet<[boolean, boolean]> | undefined;
     /**
      * Left header controls; receives whether the controls are compact and
      * whether they are tight (compact controls that still do not fit).
@@ -90,7 +93,9 @@
   /**
    * Width the controls need at a level. Level 0 shows everything; level 1
    * moves Go to today and settings into the menu; level 2 shortens the date;
-   * level 3 also moves the layout switcher; level 4 also moves the scale.
+   * level 3 also moves the layout switcher; level 4 also moves the scale;
+   * level 5 also hides the date, keeping its previous and next buttons, and
+   * sets the groups side by side without gaps.
    */
   function requiredWidth(level: number) {
     const width = (key: string, fallback = 0) => groupWidths[key] ?? fallback;
@@ -98,12 +103,14 @@
     const date = width("date");
     const shortDate = width("date-short", date * 0.6);
     const scale = width("scale", width("scale-full"));
+    const scaleMenu = width("scale-menu");
     const right = width("right", MENU_WIDTH_PX);
     const keptLayout = isLayoutSwitcher ? 0 : layout;
     const groups = [
       [layout, scale, date, right],
       [layout, scale, shortDate, right],
-      [keptLayout, scale, shortDate, right]
+      [keptLayout, scale, shortDate, right],
+      [keptLayout, scaleMenu, shortDate, right]
     ][level - 1];
     const shown = groups.filter((value) => value > 0);
     return (
@@ -126,26 +133,28 @@
       return 0;
     if (!Object.values(groupWidths).some((width) => width > 0)) return 4;
     const available = $entryWidth;
-    for (const candidate of [1, 2, 3]) {
+    for (const candidate of [1, 2, 3, 4]) {
       if (candidate === 3 && !isLayoutSwitcher) continue;
       if (requiredWidth(candidate) <= available) return candidate;
     }
-    return 4;
+    return 5;
   });
   let isOverflowMenuOpen = $state(false);
   let isFocusWithin = $state(false);
 
   /**
-   * Whether level 4 was picked without a width for the compact scale. Level
-   * 4 shows the scale in the menu, so the inline scale of levels 1 to 3 is
-   * not measured there and its full width stands in for it. The controls then
-   * show level 3 for one pass to measure the compact scale and pick their
-   * level again. A compact hold, an open menu or focus in the controls defers
-   * this pass, since it would move the scale out of the menu.
+   * Whether level 4 or 5 was picked without a width for the compact scale or
+   * the short date. Those levels show the scale in the menu, and level 5
+   * hides the date, so these groups are not measured there and estimates
+   * stand in for them. The controls then show level 3 for one pass to measure
+   * them and pick their level again. A compact hold, an open menu or focus in
+   * the controls defers this pass, since it would move the scale out of the
+   * menu.
    */
   const isMeasuringCompactScale = $derived(
-    measuredLevel === 4 &&
-      groupWidths.scale === undefined &&
+    measuredLevel >= 4 &&
+      (groupWidths.scale === undefined ||
+        groupWidths["date-short"] === undefined) &&
       Object.values(groupWidths).some((width) => width > 0) &&
       !isHoldingCompact &&
       !isOverflowMenuOpen &&
@@ -161,6 +170,14 @@
   const isCompact = $derived(level >= 1);
   const isShortDate = $derived(level >= 2);
   const isTight = $derived(level >= 4);
+  const isDateHidden = $derived(level >= 5);
+  /**
+   * Whether the scale group is left out of the row: with the scale in the
+   * menu it is often empty, and an empty group would still take a gap.
+   */
+  const isScaleGroupHidden = $derived(
+    isTight && groupWidths["scale-menu"] === 0
+  );
   const isLoose = $derived(
     level === 0 &&
       fullControlsWidth > 0 &&
@@ -478,7 +495,7 @@
     <div
       bind:this={controlsRef}
       class="flex items-center h-full"
-      style:column-gap={`${isLoose ? LOOSE_GAP_PX : TIGHT_GAP_PX}px`}
+      style:column-gap={`${isDateHidden ? 0 : isLoose ? LOOSE_GAP_PX : TIGHT_GAP_PX}px`}
       data-testid="calendar-context-controls"
       data-compact={isCompact ? "true" : undefined}
       data-tight={isTight ? "true" : undefined}
@@ -503,6 +520,7 @@
       {/if}
       <div
         class="flex items-center h-full gap-3 shrink-0"
+        class:hidden={isScaleGroupHidden}
         data-calendar-group={level === 0
           ? "scale-full"
           : isTight
@@ -513,9 +531,13 @@
       </div>
       <div
         class="flex items-center h-full shrink-0"
-        data-calendar-group={isShortDate ? "date-short" : "date"}
+        data-calendar-group={isDateHidden
+          ? "date-arrows"
+          : isShortDate
+            ? "date-short"
+            : "date"}
       >
-        {@render header?.(isShortDate)}
+        {@render header?.(isShortDate, isDateHidden)}
       </div>
       <div
         class="flex items-center h-full shrink-0"
@@ -559,7 +581,7 @@
           {/if}
           {@render headerLeftOptions?.(false, false)}
         </div>
-        {@render header?.(false)}
+        {@render header?.(false, false)}
         <div class="flex gap--2 justify-end items-center h-full w-full">
           {@render trailingControls()}
         </div>

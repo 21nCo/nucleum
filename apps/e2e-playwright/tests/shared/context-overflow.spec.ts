@@ -205,6 +205,97 @@ test.describe("context zone overflow", () => {
     ).toBeVisible();
   });
 
+  test("calendar controls hide the date where the scale-in-menu controls do not fit, keeping Next period and the menu usable", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "nucleum",
+      "The calendar layout switcher in the top bar is a Nucleum surface"
+    );
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await ensureInAppOnHome(page);
+    await navigateToSurface(
+      page,
+      "calendar.layout.classic",
+      testInfo.project.name
+    );
+    const controls = page.getByTestId("calendar-context-controls");
+    await expect(controls).toBeVisible({ timeout: 15_000 });
+    await controls.getByRole("button", { name: "Year", exact: true }).click();
+
+    let dateHiddenWidth: number | undefined;
+    for (let width = 1200; width >= 900; width -= 10) {
+      await page.setViewportSize({ width, height: 900 });
+      if (!(await controls.isVisible())) break;
+      if ((await settledCalendarLevel(page)) === "5") {
+        dateHiddenWidth = width;
+        break;
+      }
+    }
+    expect(dateHiddenWidth).toBeDefined();
+    await expect(
+      controls.locator('[data-calendar-group="date-arrows"]')
+    ).toBeVisible();
+    const layout = await controls.evaluate((element) => {
+      const tab = element.closest('[data-testid="top-bar-context-tab"]');
+      const isHit = (selector: string) => {
+        const target = element.querySelector(selector);
+        if (!target) return false;
+        const box = target.getBoundingClientRect();
+        return target.contains(
+          document.elementFromPoint(
+            box.left + box.width / 2,
+            box.top + box.height / 2
+          )
+        );
+      };
+      return {
+        overflow: Math.round(
+          element.getBoundingClientRect().right -
+            (tab?.getBoundingClientRect().right ?? 0)
+        ),
+        isNextHit: isHit('[aria-label="Next calendar period"]'),
+        isMenuHit: isHit('[data-testid="calendar-overflow-menu"]')
+      };
+    });
+    expect(layout).toEqual({
+      overflow: expect.any(Number),
+      isNextHit: true,
+      isMenuHit: true
+    });
+    expect(layout.overflow).toBeLessThanOrEqual(0);
+    await controls
+      .getByRole("button", { name: "Next calendar period" })
+      .click();
+    await expect(controls).toHaveAttribute("data-level", "5");
+
+    await controls.getByTestId("calendar-overflow-menu").click();
+    const menu = page.locator("#popovers");
+    await expect(menu.getByText("Go to today")).toBeVisible();
+    const inlineScale = menu.getByRole("radiogroup", { name: "Scale" });
+    if (await inlineScale.count()) {
+      await inlineScale.getByRole("radio", { name: "Month" }).click();
+    } else {
+      await menu.getByRole("button", { name: /^Scale/ }).click();
+      await page
+        .locator("#secondary-popovers")
+        .getByRole("radio", { name: "Month" })
+        .click();
+    }
+    await expect(page).toHaveURL(/\/calendar\/classic\/month/);
+
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await page.evaluate(() =>
+      (document.activeElement as HTMLElement | null)?.blur()
+    );
+    await expect(
+      controls.locator('[data-calendar-group="date-arrows"]')
+    ).toHaveCount(0);
+    await expect(controls.getByRole("heading", { level: 2 })).toBeVisible();
+    await expect(controls).not.toHaveAttribute("data-level", /^[45]$/);
+  });
+
   test("a short page title keeps its natural width and a long one truncates down to 8rem", async ({
     page
   }) => {

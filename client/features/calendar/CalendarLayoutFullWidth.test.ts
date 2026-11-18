@@ -462,4 +462,200 @@ describe("CalendarLayout full controls after their content changes", () => {
       expect(fullWidthReads).toBeGreaterThan(reads);
     });
   });
+  describe("at a top bar too narrow for the scale-in-menu controls", () => {
+    let widths: ReturnType<typeof mockGroupWidths>;
+    const dateGroup = () =>
+      document
+        .querySelector<HTMLElement>(
+          '[data-testid="calendar-context-controls"] > [data-calendar-group^="date"]'
+        )
+        ?.getAttribute("data-calendar-group");
+    const scaleGroup = () =>
+      document.querySelector<HTMLElement>('[data-calendar-group="scale-menu"]');
+
+    beforeEach(() => {
+      widths = mockGroupWidths(() => (fullWidthReads += 1));
+      widths.groups["scale-menu"] = 0;
+      widths.groups["date-arrows"] = 80;
+    });
+
+    afterEach(() => widths.restore());
+
+    it("hides the date, keeping its buttons, where the scale-in-menu controls do not fit", async () => {
+      mocks.entryWidth.set(140);
+      render(CalendarLayoutView, {
+        props: {
+          panel: CalendarLayout.Classic,
+          contentKey: "YEAR|2026"
+        }
+      });
+
+      await waitFor(() => expect(controlsLevel()).toBe("5"));
+      await settle();
+      expect(controlsLevel()).toBe("5");
+      expect(dateGroup()).toBe("date-arrows");
+      expect(scaleGroup()?.classList.contains("hidden")).toBe(true);
+      expect(
+        document.querySelector<HTMLElement>(
+          '[data-testid="calendar-context-controls"]'
+        )?.style.columnGap
+      ).toBe("0px");
+      expect(overflowTrigger()).toBeTruthy();
+    });
+
+    it("shows the date again as the top bar widens", async () => {
+      mocks.entryWidth.set(140);
+      render(CalendarLayoutView, {
+        props: {
+          panel: CalendarLayout.Classic,
+          contentKey: "YEAR|2026"
+        }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("5"));
+
+      mocks.entryWidth.set(160);
+      await waitFor(() => expect(controlsLevel()).toBe("4"));
+      expect(dateGroup()).toBe("date-short");
+      expect(scaleGroup()?.classList.contains("hidden")).toBe(true);
+
+      mocks.entryWidth.set(330);
+      await waitFor(() => expect(controlsLevel()).toBe("3"));
+      expect(dateGroup()).toBe("date-short");
+      expect(scaleGroup()).toBeNull();
+    });
+
+    it("measures the short date before settling on hiding the date", async () => {
+      widths.groups["date-short"] = 60;
+      mocks.entryWidth.set(600);
+      render(CalendarLayoutView, {
+        props: {
+          panel: CalendarLayout.Classic,
+          contentKey: "YEAR|2026"
+        }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("1"));
+      await settle();
+
+      mocks.entryWidth.set(140);
+      await waitFor(() => expect(controlsLevel()).toBe("4"));
+      const reads = fullWidthReads;
+      await settle();
+      expect(controlsLevel()).toBe("4");
+      expect(dateGroup()).toBe("date-short");
+      expect(fullWidthReads).toBe(reads);
+    });
+
+    it("keeps the scale and the other controls in the menu while the date is hidden", async () => {
+      mocks.entryWidth.set(140);
+      const scaleMenu = vi.fn(() => [
+        {
+          group: "scale",
+          items: [],
+          option: {
+            label: "Scale",
+            options: [{ value: "MONTH", label: "Month" }],
+            value: "MONTH",
+            onChange: vi.fn()
+          }
+        }
+      ]);
+      render(CalendarLayoutView, {
+        props: {
+          panel: CalendarLayout.Classic,
+          contentKey: "YEAR|2026",
+          overflowMenu: scaleMenu
+        }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("5"));
+
+      await fireEvent.click(overflowTrigger());
+      const menu = await waitFor(() => {
+        const element = openMenu();
+        expect(element).toBeTruthy();
+        return element!;
+      });
+      const text = menu.textContent ?? "";
+      for (const label of [
+        "Layout",
+        "Scale",
+        "Go to today",
+        "Calendar settings"
+      ])
+        expect(text).toContain(label);
+      expect(scaleMenu).toHaveBeenCalled();
+    });
+
+    it("keeps the hidden date while the menu is open and the content changes", async () => {
+      mocks.entryWidth.set(140);
+      const { rerender } = render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "YEAR|2026" }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("5"));
+      await settle();
+      await fireEvent.click(overflowTrigger());
+      await waitFor(() => expect(openMenu()).toBeTruthy());
+      const trigger = overflowTrigger();
+      const reads = fullWidthReads;
+
+      await rerender({ contentKey: "YEAR|2027" });
+      await settle();
+      expect(controlsLevel()).toBe("5");
+      expect(openMenu()).toBeTruthy();
+      expect(overflowTrigger()).toBe(trigger);
+      expect(fullWidthReads).toBe(reads);
+
+      await fireEvent.click(trigger);
+      await waitFor(() => expect(openMenu()).toBeNull());
+      await waitFor(() => expect(fullWidthReads).toBeGreaterThan(reads));
+      await waitFor(() => expect(controlsLevel()).toBe("5"));
+      const settledReads = fullWidthReads;
+      await settle();
+      expect(controlsLevel()).toBe("5");
+      expect(fullWidthReads).toBe(settledReads);
+    });
+
+    it("keeps the hidden date while focus is in the controls and the content changes", async () => {
+      mocks.entryWidth.set(140);
+      const { rerender } = render(CalendarLayoutView, {
+        props: { panel: CalendarLayout.Classic, contentKey: "YEAR|2026" }
+      });
+      await waitFor(() => expect(controlsLevel()).toBe("5"));
+      await settle();
+      const trigger = overflowTrigger();
+      trigger.focus();
+      const reads = fullWidthReads;
+
+      await rerender({ contentKey: "YEAR|2027" });
+      await settle();
+      expect(controlsLevel()).toBe("5");
+      expect(document.activeElement).toBe(trigger);
+      expect(fullWidthReads).toBe(reads);
+
+      trigger.blur();
+      await waitFor(() => expect(fullWidthReads).toBeGreaterThan(reads));
+      await waitFor(() => expect(controlsLevel()).toBe("5"));
+      await settle();
+      expect(controlsLevel()).toBe("5");
+    });
+
+    it("holds the reopened menu at the hidden date and keeps it there once it closes", async () => {
+      mocks.entryWidth.set(140);
+      requestCalendarOverflowMenuReopen();
+      render(CalendarLayoutView, {
+        props: {
+          panel: CalendarLayout.Classic,
+          contentKey: "YEAR|2026"
+        }
+      });
+      await waitFor(() => expect(openMenu()).toBeTruthy());
+      expect(controlsLevel()).toBe("5");
+      const trigger = overflowTrigger();
+
+      await fireEvent.click(trigger);
+      await waitFor(() => expect(openMenu()).toBeNull());
+      await settle();
+      expect(overflowTrigger()).toBe(trigger);
+      expect(controlsLevel()).toBe("5");
+    });
+  });
 });

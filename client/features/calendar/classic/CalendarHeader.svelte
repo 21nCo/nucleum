@@ -12,7 +12,8 @@
     onDateChange = undefined,
     onGoToPrevious = undefined,
     onGoToNext = undefined,
-    isShortDate = false
+    isShortDate = false,
+    isDateHidden = false
   }: {
     selectedDate?: Date;
     selectedView?: TimeScaleUnit;
@@ -23,6 +24,8 @@
     onGoToNext?: (() => void) | undefined;
     /** Shortens month names so the header fits a narrow top bar. */
     isShortDate?: boolean;
+    /** Shows only the previous and next buttons, for the narrowest top bar. */
+    isDateHidden?: boolean;
   } = $props();
 
   const monthNames = [
@@ -139,25 +142,27 @@
       onclick={goToPrevious}
     />
   </div>
-  <h2
-    class={cn("text-h4 h-full  flex items-center justify-center px-3", {
-      "hover:bg-bgs2-striped": selectedView === TimeScaleUnit.DAY
-    })}
-  >
-    {#if selectedView === TimeScaleUnit.YEAR}
-      {currentYear}
-    {:else if selectedView === TimeScaleUnit.WEEK}
-      {weekLabel}
-    {:else if selectedView === TimeScaleUnit.MONTH}
-      {currentMonth} {currentYear}
-    {:else}
-      <DatePicker
-        bind:date={selectedDate}
-        variant="inline-with-icon"
-        onChange={() => onDateChange?.()}
-      />
-    {/if}
-  </h2>
+  {#if !isDateHidden}
+    <h2
+      class={cn("text-h4 h-full  flex items-center justify-center px-3", {
+        "hover:bg-bgs2-striped": selectedView === TimeScaleUnit.DAY
+      })}
+    >
+      {#if selectedView === TimeScaleUnit.YEAR}
+        {currentYear}
+      {:else if selectedView === TimeScaleUnit.WEEK}
+        {weekLabel}
+      {:else if selectedView === TimeScaleUnit.MONTH}
+        {currentMonth} {currentYear}
+      {:else}
+        <DatePicker
+          bind:date={selectedDate}
+          variant="inline-with-icon"
+          onChange={() => onDateChange?.()}
+        />
+      {/if}
+    </h2>
+  {/if}
   <div class="h-full w-10">
     <BoxButton
       icon="chevron-right"

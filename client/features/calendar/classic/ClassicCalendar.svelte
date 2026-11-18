@@ -198,9 +198,10 @@
       onScaleSelection={handleScaleSelection}
     />
   {/snippet}
-  {#snippet header(isShortDate: boolean)}
+  {#snippet header(isShortDate: boolean, isDateHidden: boolean)}
     <CalendarHeader
       {isShortDate}
+      {isDateHidden}
       bind:selectedDate
       bind:selectedView
       {visibleWeekDates}
