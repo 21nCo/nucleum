@@ -121,6 +121,16 @@
   }
 
   /**
+   * Whether this space and the root whose menu it shows loaded their records,
+   * so their actions can run. A failed reload keeps the earlier snapshot.
+   */
+  const hasLoadedRecords = $derived(
+    [$store, $viewStore].every(
+      (space) => !!space?.id && !space.isMissing && !space.isLoadFailed
+    )
+  );
+
+  /**
    * Page letters run the newest actions registered for the pane the user
    * works in, such as an item opened inside the space, so the space menu
    * shows them only while they act on this space in this page or split.
@@ -146,7 +156,7 @@
   });
 </script>
 
-{#if isLoaded && !$store?.isMissing}
+{#if isLoaded && hasLoadedRecords}
   <ContextActions
     id={rootId}
     resource={Resource.space}

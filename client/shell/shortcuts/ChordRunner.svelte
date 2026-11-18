@@ -23,11 +23,32 @@
 
   let pendingPrefix: string | undefined;
   let pendingTimer: ReturnType<typeof setTimeout> | undefined;
+  let layerWatch: MutationObserver | undefined;
 
   function clearChord() {
     pendingPrefix = undefined;
     if (pendingTimer) clearTimeout(pendingTimer);
     pendingTimer = undefined;
+    layerWatch?.disconnect();
+    layerWatch = undefined;
+  }
+
+  /**
+   * Ends the pending chord as soon as a modal, dialog, popover or modal sheet
+   * opens, so one that opens and closes again before the second key, such as
+   * with the mouse, still ends it.
+   */
+  function watchLayers() {
+    if (typeof MutationObserver === "undefined") return;
+    layerWatch = new MutationObserver(() => {
+      if (isRightDrawerOnFront() || isViewKeyLayerOnFront()) clearChord();
+    });
+    layerWatch.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["open", "aria-modal", "class", "hidden", "inert"]
+    });
   }
 
   /**
@@ -65,6 +86,7 @@
     clearChord();
     pendingPrefix = event.key.toLowerCase();
     pendingTimer = setTimeout(clearChord, CHORD_TIMEOUT_MS);
+    watchLayers();
     event.preventDefault();
   };
 
@@ -72,9 +94,10 @@
    * Runs the second key of a chord such as G then C, in the capture phase so
    * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
    * pinned space in that app menu position. Typing in a field, or a right-side
-   * drawer, modal, dialog, popover or modal sheet opened meanwhile, ends the
-   * chord and leaves the key to them. A plain Escape on the page ends the
-   * chord and is consumed, so the shell does not also close the top layer;
+   * drawer, modal, dialog, popover or modal sheet opened meanwhile (even one
+   * closed again), ends the chord and leaves the key to them. A plain Escape
+   * on the page ends the chord and is consumed, so the shell does not also
+   * close the top layer;
    * inside such a layer, or with a modifier (Cmd+Escape), Escape ends the
    * chord and passes on unchanged.
    * A chord the product does not register ends without running anything and

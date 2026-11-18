@@ -23,6 +23,20 @@ describe("resource action keys", () => {
     expect(resolveResourceActionKey(undefined)).toBeUndefined();
   });
 
+  it("gives no key to values named like object properties", () => {
+    for (const value of [
+      "toString",
+      "constructor",
+      "hasOwnProperty",
+      "__proto__"
+    ])
+      expect(resolveResourceActionKey(value)).toBeUndefined();
+    const keyed = withResourceActionKeys([
+      { group: "g", items: [{ value: "toString" }, { value: "star" }] }
+    ] as any);
+    expect(keyed[0].items.map((item) => item.hotKey)).toEqual([undefined, "s"]);
+  });
+
   it("adds hints without changing the original menu", () => {
     const menu = [
       { group: "g", items: [{ value: "star" }, { value: "lock" }] }

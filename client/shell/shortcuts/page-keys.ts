@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { isTextElement } from "@21n/ui/actions/interaction-dom";
+import { isChordEditableTarget } from "@nucleum/shell/shortcuts/chord-keys";
 import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
 import {
   contextZone,
@@ -18,9 +18,18 @@ export function markChordEndingKey(event: KeyboardEvent) {
 }
 
 /**
+ * Whether a key ended a pending G chord without matching one, so a plain
+ * single-key shortcut must not also run for it.
+ */
+export function isChordEndingKey(event: KeyboardEvent) {
+  return chordEndingKeys.has(event);
+}
+
+/**
  * Whether a key press may run a page's single-key action: not handled yet,
  * not held down, no Cmd, Ctrl or Option (and no Shift unless `allowShift`),
- * not typed into a field or editor, not the key that ended a G chord, and no
+ * not typed into a field or any editable element (including plaintext-only
+ * editors and children of an editor), not the key that ended a G chord, and no
  * modal, dialog, popover or modal sheet in front.
  */
 export function isPlainPageKey(
@@ -31,7 +40,7 @@ export function isPlainPageKey(
   if (chordEndingKeys.has(event)) return false;
   if (event.metaKey || event.ctrlKey || event.altKey) return false;
   if (event.shiftKey && !options.allowShift) return false;
-  if (isTextElement(event.target)) return false;
+  if (isChordEditableTarget(event.target)) return false;
   return !hasLayerInFront();
 }
 

@@ -28,11 +28,18 @@ export const CONFIRMED_RESOURCE_ACTIONS: ReadonlySet<string> = new Set([
   ResourceActionType.DELETE
 ]);
 
-/** Returns the single key for a resource menu item value, if it has one. */
+/**
+ * Returns the single key for a resource menu item value, if it has one. Only
+ * the map's own entries count, so a value such as "toString" has no key.
+ */
 export function resolveResourceActionKey(
   value: IContextMenuItem["value"] | undefined
 ): string | undefined {
-  return value == null ? undefined : RESOURCE_ACTION_KEYS[String(value)];
+  if (value == null) return undefined;
+  const name = String(value);
+  return Object.hasOwn(RESOURCE_ACTION_KEYS, name)
+    ? RESOURCE_ACTION_KEYS[name]
+    : undefined;
 }
 
 /** Copies a resource menu with each item's single key set as its hint. */

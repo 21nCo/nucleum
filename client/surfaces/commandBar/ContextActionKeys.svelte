@@ -2,7 +2,10 @@
 
 <script lang="ts">
   import { get } from "svelte/store";
-  import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+  import {
+    contextActions,
+    type ContextActionsEntry
+  } from "@nucleum/shell/topNav/contextZone/context-actions";
   import {
     findContextActionByKey,
     flattenContextActions,
@@ -22,10 +25,21 @@
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
 
+  /** Whether an entry still holds the letters of the pane the user works in. */
+  function isActiveTarget(entry: ContextActionsEntry) {
+    return (
+      get(contextActions.active)?.key === entry.key &&
+      isKeyTargetPane(entry.pane)
+    );
+  }
+
   /**
    * Runs the open resource's menu item whose single key was pressed, such as
    * S to star, for the pane the user worked in last. Keys are ignored while
    * typing, with a modifier held, or with a modal, dialog or popover in front.
+   * A failed action or save is logged, so the next press runs again. Edit
+   * runs after the open editor saves, and only if the resource still holds
+   * the letters then.
    */
   function onKeydown(event: KeyboardEvent) {
     if ($context.embed === Embed.HANDSET || !isPlainPageKey(event)) return;
@@ -45,12 +59,15 @@
     if (!action) return;
     event.preventDefault();
     event.stopPropagation();
+    const value = action.item.value;
+    const report = (error: unknown) =>
+      logger.error({ at: "ContextActionKeys", action: value, error });
     const run = () =>
       runContextAction(action, {
         runCommand: (command) => requireCommandHost().runAction(command),
         onAction: entry.onAction
-      });
-    if (CONFIRMED_RESOURCE_ACTIONS.has(String(action.item.value))) {
+      }).catch(report);
+    if (CONFIRMED_RESOURCE_ACTIONS.has(String(value))) {
       confirmationNotification.notify({
         title: `${action.label} this ${entry.resource}`,
         message: `Move this ${entry.resource} to trash? You can restore it from Trash.`,
@@ -64,8 +81,10 @@
       });
       return;
     }
-    if (action.item.value === ResourceActionType.EDIT) {
-      void finishEditMode(entry.id, () => void run());
+    if (value === ResourceActionType.EDIT) {
+      finishEditMode(entry.id, () => {
+        if (isActiveTarget(entry)) void run();
+      }).catch(report);
       return;
     }
     void run();

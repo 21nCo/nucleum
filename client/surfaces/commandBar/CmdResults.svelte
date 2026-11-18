@@ -370,12 +370,17 @@
         {/if}
         <span class="truncate">{entry.action.label}</span>
       </div>
-      {#if entry.action.item.hotKey}
-        <ShortcutText
-          shortcut={{ key: entry.action.item.hotKey }}
-          parentBgIndex={2}
-        />
-      {/if}
+      <div class="flex shrink-0 items-center gap-2">
+        {#if entry.action.item.hotKey}
+          <ShortcutText
+            shortcut={{ key: entry.action.item.hotKey }}
+            parentBgIndex={2}
+          />
+        {/if}
+        <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
+          {contextLabel.toLowerCase()}
+        </div>
+      </div>
     </ResultItem>
   {:else if entry.kind === "command"}
     <CmdResultItem

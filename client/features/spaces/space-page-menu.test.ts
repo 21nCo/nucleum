@@ -22,7 +22,8 @@ vi.mock("@nucleum/features/records/resource.actions", () => ({
   }
 }));
 
-const { resolveSpacePageMenu } = await import("./space-page-menu");
+const { isSpaceLoaded, resolveSpacePageMenu } =
+  await import("./space-page-menu");
 
 describe("space page menu", () => {
   it("reloads the space after star, archive and trash", async () => {
@@ -62,5 +63,31 @@ describe("space page menu", () => {
     expect(menu[0].items.find((item) => item.value === "pin")?.label).toBe(
       "Unpin from app menu"
     );
+  });
+
+  it.each([
+    ["a first load that failed", { isLoadFailed: true }],
+    ["a missing record", { isMissing: true }],
+    [
+      "a snapshot kept after a failed reload",
+      { id: "space:1", label: "Space", isLoadFailed: true }
+    ],
+    ["a nested space whose root did not load", { view: "sidenav" }]
+  ])("offers no star, archive or trash for %s", (_name, space) => {
+    expect(isSpaceLoaded(space as any)).toBe(false);
+    const menu = resolveSpacePageMenu(space as any, {
+      isPinned: false,
+      onRename: vi.fn(),
+      onTogglePin: vi.fn(),
+      onChanged: vi.fn()
+    });
+    expect(
+      menu.flatMap((group) => group.items).map((item) => item.value)
+    ).toEqual(["rename", "pin"]);
+  });
+
+  it("treats a space with an id and no load failure as loaded", () => {
+    expect(isSpaceLoaded({ id: "space:1" } as any)).toBe(true);
+    expect(isSpaceLoaded(undefined)).toBe(false);
   });
 });
