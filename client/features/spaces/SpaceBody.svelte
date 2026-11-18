@@ -13,9 +13,15 @@
   import SpaceContextZone, {
     SPACE_VIEW_OPTIONS
   } from "@nucleum/features/spaces/SpaceContextZone.svelte";
+  import { Resource } from "@nucleum/datafn/resource.enum";
+  import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
+  import { resolveSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
+  import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import {
     contextZone,
+    getContextZonePane,
     type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
@@ -96,6 +102,45 @@
     else appMenuStore.pinSpace(rootId);
   }
 
+  /**
+   * The open space's menu for the super bar and its single-key letters. An
+   * item opened inside the space registers its own menu later in the same
+   * pane, so it takes precedence until it closes.
+   */
+  function resolveSpaceMenu() {
+    if (!$viewStore) return [];
+    return withResourceActionKeys(
+      resolveSpacePageMenu($viewStore, {
+        isPinned: isRootPinned,
+        onRename: () => viewStore.setTitleEditing(true),
+        onTogglePin: toggleRootPin,
+        onChanged: () =>
+          viewStore.init(undefined, { isRecordedInRecents: false })
+      })
+    );
+  }
+
+  /**
+   * Whether this space and the root whose menu it shows loaded their records,
+   * so their actions can run. A failed reload keeps the earlier snapshot.
+   */
+  const hasLoadedRecords = $derived(
+    [$store, $viewStore].every(
+      (space) => !!space?.id && !space.isMissing && !space.isLoadFailed
+    )
+  );
+
+  /**
+   * Page letters run the newest actions registered for the pane the user
+   * works in, such as an item opened inside the space, so the space menu
+   * shows them only while they act on this space in this page or split.
+   */
+  const letterTarget = contextActions.active;
+  const pane = getContextZonePane();
+  const isLetterTarget = $derived(
+    $letterTarget?.id === rootId && $letterTarget.pane.id === pane.id
+  );
+
   function changeView(next: SpaceView) {
     viewStore.updateView(next);
   }
@@ -111,6 +156,14 @@
   });
 </script>
 
+{#if isLoaded && hasLoadedRecords}
+  <ContextActions
+    id={rootId}
+    resource={Resource.space}
+    resolve={resolveSpaceMenu}
+  />
+{/if}
+
 {#if isLoaded && !$store?.isMissing}
   <ContextZoneContent isInlineFallback={false} fallbackViews={layoutViews}>
     <SpaceContextZone
@@ -119,6 +172,7 @@
       isPinned={isRootPinned}
       onTogglePin={toggleRootPin}
       onViewChange={changeView}
+      isKeyed={isLetterTarget}
     />
   </ContextZoneContent>
 {/if}

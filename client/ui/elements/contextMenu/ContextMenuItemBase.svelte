@@ -6,6 +6,7 @@
   import { ContextMenuType, type IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
   import Badge from "@21n/ui/elements/text/Badge.svelte";
   import Switch from "@21n/ui/elements/toggle/Switch.svelte";
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
   let {
     item,
     checked = $bindable(false),
@@ -55,6 +56,11 @@
 </span>
 {#if item.secondStepComponent || item.action}
   <Icon icon="chevron-right" size={Size.sm} />
+{/if}
+{#if item.hotKey}
+  <span class="contents" data-testid="context-menu-item-hotkey">
+    <ShortcutText shortcut={{ key: item.hotKey }} parentBgIndex={2} />
+  </span>
 {/if}
 {#if item.badge && !item.action && !item.secondStepComponent}
   <Badge text={item.badge} />

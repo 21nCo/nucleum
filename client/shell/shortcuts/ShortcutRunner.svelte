@@ -30,6 +30,7 @@
   import { stepListItem } from "@nucleum/shell/shortcuts/list-item-step";
   import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
   import ChordRunner from "@nucleum/shell/shortcuts/ChordRunner.svelte";
+  import { isChordEndingKey } from "@nucleum/shell/shortcuts/page-keys";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -51,6 +52,9 @@
    *
    * While a right-side drawer is on front only `Escape` passes, so shortcuts do not act on the app behind it.
    *
+   * A key without Cmd, Ctrl or Option that ended a G chord without matching
+   * one was meant as the chord's second key, so it runs no shortcut of its own.
+   *
    * @param event
    */
   const shortcutListener = (event: KeyboardEvent) => {
@@ -64,6 +68,13 @@
       return;
     }
     if (isTextInputSource && event.metaKey === false) return;
+    if (
+      isChordEndingKey(event) &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey
+    )
+      return;
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event, {
       isRegistered
     });

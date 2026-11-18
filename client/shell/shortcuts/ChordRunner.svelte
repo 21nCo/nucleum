@@ -8,7 +8,8 @@
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { isLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
+  import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
+  import { markChordEndingKey } from "@nucleum/shell/shortcuts/page-keys";
   import {
     CHORD_TIMEOUT_MS,
     hasModifier,
@@ -22,11 +23,40 @@
 
   let pendingPrefix: string | undefined;
   let pendingTimer: ReturnType<typeof setTimeout> | undefined;
+  let layerWatch: MutationObserver | undefined;
 
   function clearChord() {
     pendingPrefix = undefined;
     if (pendingTimer) clearTimeout(pendingTimer);
     pendingTimer = undefined;
+    layerWatch?.disconnect();
+    layerWatch = undefined;
+  }
+
+  /**
+   * Ends the pending chord as soon as a modal, dialog, popover or modal sheet
+   * opens, so one that opens and closes again before the second key, such as
+   * with the mouse, still ends it. Popovers show and hide through their
+   * class or inline style.
+   */
+  function watchLayers() {
+    if (typeof MutationObserver === "undefined") return;
+    layerWatch = new MutationObserver(() => {
+      if (isRightDrawerOnFront() || isViewKeyLayerOnFront()) clearChord();
+    });
+    layerWatch.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: [
+        "open",
+        "aria-modal",
+        "class",
+        "style",
+        "hidden",
+        "inert"
+      ]
+    });
   }
 
   /**
@@ -51,32 +81,36 @@
   /**
    * Starts a chord for 1.5 seconds on a plain G that no shortcut without a
    * prefix takes, with the same guards as the shortcut runner: not on
-   * handsets, in a text field, or behind a right-side drawer.
+   * handsets, in a text field, behind a right-side drawer, or while a modal,
+   * dialog, popover or modal sheet is in front.
    */
   const startListener = (event: KeyboardEvent) => {
     if (!isChordStart(event)) return;
     if ($context.embed === Embed.HANDSET) return;
     if (isChordEditableTarget(event.target)) return;
-    if (isRightDrawerOnFront()) return;
+    if (isRightDrawerOnFront() || isViewKeyLayerOnFront()) return;
     if (keyboardShortcuts.resolveShortcut(event, { isRegistered }).shortcut)
       return;
     clearChord();
     pendingPrefix = event.key.toLowerCase();
     pendingTimer = setTimeout(clearChord, CHORD_TIMEOUT_MS);
+    watchLayers();
     event.preventDefault();
   };
 
   /**
    * Runs the second key of a chord such as G then C, in the capture phase so
    * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
-   * pinned space in that app menu position. Typing in a field or a right-side
-   * drawer opened meanwhile ends the chord and leaves the key to them. A plain
-   * Escape on the page ends the chord and is consumed, so the shell does not
-   * also close the top layer; inside a modal, dialog or popover, or with a
-   * modifier (Cmd+Escape), Escape ends the chord and passes on unchanged.
+   * pinned space in that app menu position. Typing in a field, or a right-side
+   * drawer, modal, dialog, popover or modal sheet opened meanwhile (even one
+   * closed again), ends the chord and leaves the key to them. A plain Escape
+   * on the page ends the chord and is consumed, so the shell does not also
+   * close the top layer;
+   * inside such a layer, or with a modifier (Cmd+Escape), Escape ends the
+   * chord and passes on unchanged.
    * A chord the product does not register ends without running anything and
    * its key is consumed too. Any other key that is not a chord ends the chord
-   * and passes on unchanged.
+   * and passes on, marked so it does not also run a page's single-key action.
    */
   const captureListener = (event: KeyboardEvent) => {
     if (pendingPrefix === undefined) return;
@@ -86,11 +120,12 @@
     if (
       isChordEditableTarget(event.target) ||
       $context.embed === Embed.HANDSET ||
-      isRightDrawerOnFront()
+      isRightDrawerOnFront() ||
+      isViewKeyLayerOnFront()
     )
       return;
     if (event.key === KeyboardKey.ESCAPE) {
-      if (!hasModifier(event) && !isLayerOnFront()) consume(event);
+      if (!hasModifier(event)) consume(event);
       return;
     }
     const spaceIndex = resolveChordSpaceIndex(prefix, event);
@@ -110,6 +145,7 @@
     }
     if (keyboardShortcuts.resolveShortcut(event, { prefix }).shortcut)
       consume(event);
+    else markChordEndingKey(event);
   };
 
   function consume(event: KeyboardEvent) {

@@ -33,6 +33,12 @@
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
   import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
+  import {
+    isKeyTargetPane,
+    isPlainPageKey
+  } from "@nucleum/shell/shortcuts/page-keys";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { isInRightPanel } from "@nucleum/shell/rightPanel/right-panel-visibility";
 
   let {
     scale,
@@ -82,6 +88,36 @@
     }
   });
 
+  /**
+   * T shows the timeline and O the overview, or notes where the product has
+   * no overview, when the day column offers them as panels. A column in the
+   * right panel (Today) leaves the keys to the page's calendar.
+   */
+  const keyPane = getContextZonePane();
+  const isPanelColumn = isInRightPanel();
+  let rootRef = $state<HTMLDivElement | undefined>();
+
+  function onPanelKey(event: KeyboardEvent) {
+    if (isPanelColumn || !isPlainPageKey(event)) return;
+    if (!isKeyTargetPane(keyPane, rootRef)) return;
+    const key = event.key.toLowerCase();
+    const values = panels.map((panel) => panel.value);
+    const target =
+      key === "t"
+        ? CalendarColumnPanel.Timeline
+        : key === "o"
+          ? values.includes(CalendarColumnPanel.Overview)
+            ? CalendarColumnPanel.Overview
+            : CalendarColumnPanel.Notes
+          : undefined;
+    if (!target || !values.includes(target)) return;
+    event.preventDefault();
+    selectedPanel = target;
+    uiState.setState(UIState.calendarColumnPanel, target, {
+      scope: UIStateScope.DEVICE
+    });
+  }
+
   function resolveLayout(width: number) {
     if (width > 1400) {
       return CalendarColumnLayout.FULL;
@@ -103,7 +139,10 @@
   }
 </script>
 
+<svelte:window onkeydown={onPanelKey} />
+
 <div
+  bind:this={rootRef}
   class="flex flex-col h-full w-full"
   id="mdcontainer-{mdId}"
   use:resizeListener={(e) => {
