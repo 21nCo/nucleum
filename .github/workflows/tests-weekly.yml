@@ -9,6 +9,9 @@ concurrency:
   group: weekly-tests-${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+env:
+  ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+
 jobs:
   vitest-fuzz:
     runs-on: ubuntu-latest

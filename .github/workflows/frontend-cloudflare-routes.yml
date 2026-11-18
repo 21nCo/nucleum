@@ -26,6 +26,9 @@ on:
           - pre
           - live
 
+env:
+  ONNXRUNTIME_NODE_INSTALL_CUDA: skip
+
 jobs:
   routes:
     runs-on: ubuntu-latest
