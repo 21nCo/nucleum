@@ -7,6 +7,7 @@ import {
   loadDatabase,
   readContainerConfig
 } from '../../filefn/processing/container/dist/main.js';
+import { readNucleumContainerConfig } from './container-config.mjs';
 import { createNucleumProcessors } from './processors.mjs';
 
 /**
@@ -14,10 +15,11 @@ import { createNucleumProcessors } from './processors.mjs';
  * the base image's container entry (`filefn/processing/container`), with
  * Nucleum's processors instead of the image's defaults. Configuration is the FILE-9
  * environment (`FILEFN_R2_*`, `FILEFN_DATABASE`, `FILEFN_NAMESPACE`,
- * `FILEFN_PROCESSING_MAX_RETRIES`, ...); `FILEFN_PROCESSORS` is ignored.
+ * `FILEFN_PROCESSING_MAX_RETRIES`, ...); `FILEFN_PROCESSORS` is ignored and not
+ * validated.
  */
 export async function startNucleumContainer(env) {
-  const config = readContainerConfig(env);
+  const config = readNucleumContainerConfig(env, readContainerConfig);
   const database = await loadDatabase(config.database, env);
   try {
     const fileFn = createFileFn({
