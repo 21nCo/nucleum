@@ -1,0 +1,23 @@
+client/features/spaces/SpaceBody.svelte
+  s_be9d3cf61d6133::t_9c0fc1bc7eb8e1 20,122-128,160
+client/shell/shortcuts/page-keys.ts
+  s_be9d3cf61d6133::t_35d2bea0f2bb10 1
+client/surfaces/commandBar/super-bar-keys.test.ts
+  s_be9d3cf61d6133::t_ea803356ecc1f8 29,63,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b8d7de6c04f16565074d347cd10680150051f474",
+  "prompts": {},
+  "sessions": {
+    "s_be9d3cf61d6133": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_be9d3cf61d6133",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
