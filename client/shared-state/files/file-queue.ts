@@ -206,6 +206,7 @@ export async function enqueueFile(
 export async function dequeueFile(dir: string, fileId: string): Promise<void> {
   const entryName = toEntryName(fileId);
   await getStore(dir).deletePendingUpload(entryName);
+  releaseQueuedFileUrls((key) => key.startsWith(`${dir}\n${entryName}\n`));
 }
 
 /**
@@ -395,8 +396,8 @@ async function readThumbnail(
  * holds it: its thumbnail for `thumbnail` (undefined when none was kept, so a
  * view falls back to the original), else the original. Returns null when no
  * queue holds the file, so the caller resolves it through FileFn. Each call
- * makes a new object URL, as the record bytes did: the view that renders it
- * revokes it once it no longer shows it.
+ * for a file's bytes shares one held URL, revoked once the file leaves the
+ * queue or a lookup reads other queues (see releaseQueuedFileUrls).
  */
 export async function resolveQueuedFileUrl(
   dirs: readonly string[],
@@ -405,25 +406,55 @@ export async function resolveQueuedFileUrl(
 ): Promise<string | undefined | null> {
   if (!isFileQueueSupported()) return null;
   const entryName = toEntryName(fileId);
+  releaseQueuedFileUrls((key) => !dirs.includes(key.split("\n")[0]));
   for (const dir of dirs) {
     const entry = await getEntryDir(dir, entryName);
+    const prefix = `${dir}\n${entryName}\n`;
+    if (!entry) releaseQueuedFileUrls((key) => key.startsWith(prefix));
     if (!entry) continue;
+    const key = prefix + String(variant === "thumbnail");
+    const held = heldUrls.get(key) ?? readUrl(dir, entry, entryName, variant);
+    heldUrls.set(key, held);
     try {
-      let blob: Blob | undefined;
-      if (variant === "thumbnail") {
-        blob = await readThumbnail(entry);
-      } else {
-        const pending = await getStore(dir).getPendingUpload(entryName);
-        if (!pending) continue;
-        blob = new Blob([pending.fileData], { type: pending.mimeType });
-      }
-      return blob ? URL.createObjectURL(blob) : undefined;
+      const url = await held;
+      if (heldUrls.get(key) !== held) return null;
+      if (url !== null) return url;
+      heldUrls.delete(key);
     } catch (error) {
+      if (heldUrls.get(key) === held) heldUrls.delete(key);
       logger.warn({ at: "fileQueue.resolve", fileId, error });
       return undefined;
     }
   }
   return null;
+}
+
+async function readUrl(
+  dir: string,
+  entry: FileSystemDirectoryHandle,
+  entryName: string,
+  variant: string
+) {
+  let blob: Blob | undefined;
+  if (variant === "thumbnail") {
+    blob = await readThumbnail(entry);
+  } else {
+    const pending = await getStore(dir).getPendingUpload(entryName);
+    if (!pending) return null;
+    blob = new Blob([pending.fileData], { type: pending.mimeType });
+  }
+  return blob ? URL.createObjectURL(blob) : undefined;
+}
+
+const heldUrls = new Map<string, Promise<string | undefined | null>>();
+
+/** Revokes held object URLs whose keys (queue, entry, variant) it selects. */
+export function releaseQueuedFileUrls(isReleased: (key: string) => boolean) {
+  for (const [key, held] of heldUrls) {
+    if (!isReleased(key)) continue;
+    heldUrls.delete(key);
+    void held.then((url) => url && URL.revokeObjectURL(url)).catch(String);
+  }
 }
 
 /** Returns whether any of the queues holds a file. */
@@ -635,6 +666,7 @@ async function replayEntry(
     await publishEntry(dir, entryName, publisher, result);
   } else {
     await store.deletePendingUpload(entryName);
+    releaseQueuedFileUrls((key) => key.startsWith(`${dir}\n${entryName}\n`));
   }
   logger.info({ at: "fileQueue.replay", fileId: result.fileId });
   return "done";

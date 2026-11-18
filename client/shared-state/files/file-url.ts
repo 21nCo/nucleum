@@ -2,6 +2,8 @@ import type { FileFnClient } from "@filefn/client";
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
+  releaseQueuedFileUrls,
+  resolveAccountFileQueueDir,
   resolveFileQueueDirsOf,
   resolveQueuedFileUrl
 } from "@nucleum/shared-state/files/file-queue";
@@ -71,7 +73,7 @@ let cacheOwnerKey: string | undefined;
  * not kept in the owner's cache. The queues read are those of the cloud
  * account signed in when the lookup starts; when that account's generation
  * has ended by the time the bytes are read (a sign-out, another account or
- * another authority), the URL is revoked and undefined returned, so one
+ * another authority), its URLs are revoked and undefined returned, so one
  * account's queued bytes are never shown to another.
  */
 export async function resolveFileUrl(
@@ -87,7 +89,8 @@ export async function resolveFileUrl(
     );
     if (queued !== null) {
       if (!queueOwner || isFileFnOwnerLive(queueOwner)) return queued;
-      if (queued) URL.revokeObjectURL(queued);
+      const dir = `${resolveAccountFileQueueDir(queueOwner.userId)}\n`;
+      releaseQueuedFileUrls((key) => key.startsWith(dir));
       return undefined;
     }
   } catch (error: unknown) {
