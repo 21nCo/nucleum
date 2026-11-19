@@ -1,0 +1,21 @@
+.gitignore
+  s_f0c15adaf5f968::t_d1ee1d9a838c6c 57
+AGENTS.md
+  s_f0c15adaf5f968::t_8363a12733627d 194,248-250,296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b76ee9837db81a53bf3b2e118082dcd429598d11",
+  "prompts": {},
+  "sessions": {
+    "s_f0c15adaf5f968": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1f382-e0bc-7592-a8f5-681ff7489018",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
