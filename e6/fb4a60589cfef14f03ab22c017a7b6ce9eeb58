@@ -1,0 +1,19 @@
+client/features/memory/capture/offline-cloud-capture.test.ts
+  s_f35b422006faeb::t_5111ab98a5aef6 85-93,167
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e6fb4a60589cfef14f03ab22c017a7b6ce9eeb58",
+  "prompts": {},
+  "sessions": {
+    "s_f35b422006faeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "679baf05-05c3-434b-8d43-45dfc1b3d785",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
