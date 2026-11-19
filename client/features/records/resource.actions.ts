@@ -360,6 +360,20 @@ export class ResourceActions<T extends IActionableResource> {
       }
     };
   }
+  /**
+   * Edit item of a resource edited inline, such as a note, which has no edit
+   * mode: `focus` puts the caret in its open editor.
+   */
+  editInline(focus: () => void): IContextMenuItem {
+    return {
+      label: "Edit",
+      value: ResourceActionType.EDIT,
+      icon: "edit",
+      callback: async () => {
+        focus();
+      }
+    };
+  }
   toggleReadMode(): IContextMenuItem {
     return {
       value: ResourceActionType.TOGGLE_READ_MODE,
@@ -420,23 +434,27 @@ export class ResourceActions<T extends IActionableResource> {
       }
     };
   }
+  /**
+   * Opens the resource in a split, or closes its split when it is already in
+   * one: beside the base page, or beside a page, where a split opened from a
+   * page goes.
+   */
   openAsSplit(): IContextMenuItem {
     const currentMode = determineResourceAccessMode(this.resource.id);
+    const splitMode =
+      currentMode === AccessMode.BESIDE_BASE ||
+      currentMode === AccessMode.BESIDE_PAGE
+        ? currentMode
+        : undefined;
     return {
       value: "open-as-split",
-      label:
-        currentMode === AccessMode.BESIDE_BASE
-          ? "Close split screen"
-          : "Open in split screen",
-      icon:
-        currentMode === AccessMode.BESIDE_BASE
-          ? "minus-circle"
-          : "split-screen",
+      label: splitMode ? "Close split screen" : "Open in split screen",
+      icon: splitMode ? "minus-circle" : "split-screen",
       callback: async () => {
-        if (currentMode === AccessMode.BESIDE_BASE) {
+        if (splitMode) {
           requireResourceActionHost().close({
             id: this.resource.id,
-            accessMode: AccessMode.BESIDE_BASE
+            accessMode: splitMode
           });
         } else {
           requireResourceActionHost().open(

@@ -401,17 +401,17 @@ export function resolveObjectiveContextMenu(
       objectiveActions.moveObjective
     );
   }
+  const ctx = get(context);
+  const viewStore = get(view);
   const openingActionGroup = {
     group: "open",
     items: [
-      ...(accessPoint !== ResourceAccessPoint.SELF
+      ...(accessPoint !== ResourceAccessPoint.SELF || !viewStore.isPortrait
         ? [resourceActions.openAsSplit()]
         : []),
       resourceActions.maximize()
     ]
   };
-  const ctx = get(context);
-  const viewStore = get(view);
   const isCurrentlyFocusing = activeSession.isCurrentFocusItem(objective.id);
   const focusGroup = {
     group: "focus",

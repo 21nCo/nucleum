@@ -159,6 +159,122 @@ test.describe("page letters", () => {
     await closeMenu();
   });
 
+  test("B opens the open note in a split and B there closes it", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The open resource is a note opened from the Nodes library, and this product has no nodes"
+    );
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E split letter ${Date.now()}`
+    });
+    await openNodeRecordFromLibraryById(page, node.id);
+    const menuTrigger = page.getByTestId("resource-record-context-menu");
+    // A split opened from a page goes beside that page.
+    const splitPane = page.locator("[data-context-zone-pane='besidePage']");
+    const splitId = () => new URL(page.url()).searchParams.get("besidePage");
+    await expect(menuTrigger).toBeVisible({ timeout: 15_000 });
+    await expect(splitPane).toHaveCount(0);
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+
+    await page.keyboard.press("b");
+    await expect(splitPane.locator("#mdContent")).toContainText(node.label, {
+      timeout: 15_000
+    });
+    await expect
+      .poll(splitId, {
+        message: "B opens the note in a split beside its page",
+        timeout: 10_000
+      })
+      .toBe(node.id);
+
+    const splitItem = page
+      .locator(".popover [data-context-menu-item-id='open-as-split']")
+      .first();
+    await expect(menuTrigger).toHaveCount(1);
+    await menuTrigger.click();
+    await expect(splitItem).toContainText("Close split screen");
+    await expect(splitItem.getByTestId("context-menu-item-hotkey")).toHaveText(
+      "B"
+    );
+    await page.keyboard.press("Escape");
+    await expect(splitItem).toBeHidden({ timeout: 10_000 });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+
+    await page.keyboard.press("b");
+    await expect(splitPane).toHaveCount(0, { timeout: 15_000 });
+    await expect
+      .poll(splitId, {
+        message: "B in the split closes it",
+        timeout: 10_000
+      })
+      .toBeNull();
+  });
+
+  test("E puts the caret in the open note's editor and Escape gives the letters back", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The open resource is a note opened from the Nodes library, and this product has no nodes"
+    );
+    test.skip(
+      !(await isRepoSourceServed(page)),
+      "The starred state is read through repo source modules, which only the Vite dev server serves"
+    );
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E edit letter ${Date.now()}`
+    });
+    await openNodeRecordFromLibraryById(page, node.id);
+    const menuTrigger = page.getByTestId("resource-record-context-menu");
+    await expect(menuTrigger).toBeVisible({ timeout: 15_000 });
+    const content = page.locator("#mdContent");
+    await expect(content).toBeVisible({ timeout: 15_000 });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    const focusedEditor = content.locator("[contenteditable]:focus");
+    await expect(focusedEditor).toHaveCount(0);
+
+    await page.keyboard.press("e");
+    await expect(focusedEditor).toHaveCount(1, { timeout: 10_000 });
+    const typed = `typed after E ${Date.now()}`;
+    await page.keyboard.type(typed);
+    await expect(content).toContainText(typed);
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator("[contenteditable]:focus")).toHaveCount(0);
+    await page.keyboard.press("s");
+    await expect
+      .poll(() => readIsStarred(page, node.id), {
+        message: "S after Escape stars the note",
+        timeout: 10_000
+      })
+      .toBe(true);
+    await menuTrigger.click();
+    await expect(
+      page.locator(".popover [data-context-menu-item-id='star']").first()
+    ).toContainText("Starred", { timeout: 10_000 });
+    await page.keyboard.press("Escape");
+    await expect(content).toContainText(typed);
+
+    await page.reload();
+    await ensureInAppOnHome(page);
+    await openNodeRecordFromLibraryById(page, node.id);
+    await expect(page.locator("#mdContent")).toContainText(typed, {
+      timeout: 15_000
+    });
+  });
+
   test("calendar letters switch the scale and Shift+T goes to today", async ({
     page
   }) => {

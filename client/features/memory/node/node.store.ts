@@ -21,8 +21,11 @@ import {
   isSameResource,
   isRecordId,
   removeDuplicatesFilter,
-  determineResourceType
+  determineResourceType,
+  isTrashedResource
 } from "@nucleum/datafn/resource.utils";
+import { focusNoteEditor } from "@nucleum/features/memory/markdown/note-editor-focus";
+import { BASE_CONTEXT_ZONE_PANE } from "@nucleum/shell/topNav/contextZone/context-zone";
 
 import context from "@nucleum/client/runtime/context.store";
 import { Embed } from "@nucleum/client/runtime/context.type";
@@ -1057,6 +1060,30 @@ class NodeActions {
   }
 }
 
+/** Modes of an open note whose menu offers Edit: a page and either split. */
+const NOTE_EDIT_ACCESS_MODES: ReadonlySet<AccessMode | undefined> = new Set([
+  AccessMode.PAGE,
+  AccessMode.BESIDE_BASE,
+  AccessMode.BESIDE_PAGE
+]);
+
+/**
+ * Whether an open note's menu offers Edit, which focuses its inline editor:
+ * a markdown note open as a page or in a split while its editor is editable,
+ * not in read mode, locked, archived or in trash.
+ */
+function canFocusNoteEditor(node: INode, accessMode: AccessMode | undefined) {
+  const activeNode = node as Partial<IActiveNode>;
+  return (
+    node.contentType === NodeType.NODULAR_MARKDOWN &&
+    NOTE_EDIT_ACCESS_MODES.has(accessMode) &&
+    !activeNode.isInReadOnlyMode &&
+    !activeNode.isLocked &&
+    !activeNode.isArchived &&
+    !isTrashedResource(activeNode)
+  );
+}
+
 export function resolveNodeContextMenu(
   node: INode,
   accessPoint: ResourceAccessPoint,
@@ -1066,6 +1093,8 @@ export function resolveNodeContextMenu(
     accessPointContext?: string;
     nodeView?: NodeView;
     isConstrainedWidth?: boolean;
+    /** Pane the menu's note is open in, whose editor its Edit item focuses. */
+    paneId?: string;
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, {
@@ -1103,18 +1132,6 @@ export function resolveNodeContextMenu(
   };
   if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
     commonGroups = [moreGroup];
-  } else if (
-    accessPoint === ResourceAccessPoint.SELF &&
-    params?.accessMode !== AccessMode.BESIDE_BASE &&
-    !viewStore.isPortrait
-  ) {
-    commonGroups = [
-      {
-        group: "open",
-        items: [resourceActions.maximize()]
-      },
-      moreGroup
-    ];
   } else if (
     accessPoint === ResourceAccessPoint.SELF &&
     params !== undefined &&
@@ -1278,8 +1295,16 @@ export function resolveNodeContextMenu(
         ? nodeActions.removeCoverPhoto()
         : nodeActions.setCoverPhoto()
       : undefined;
+  const editItems = canFocusNoteEditor(node, params?.accessMode)
+    ? [
+        resourceActions.editInline(() =>
+          focusNoteEditor(node.id, params?.paneId ?? BASE_CONTEXT_ZONE_PANE.id)
+        )
+      ]
+    : [];
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [
+        ...editItems,
         resourceActions.addToCollection(),
         resourceActions.link(),
         resourceActions.toggleReadMode(),
@@ -1290,6 +1315,7 @@ export function resolveNodeContextMenu(
         ...(coverPhotoAction ? [coverPhotoAction] : [])
       ]
     : [
+        ...editItems,
         resourceActions.addToCollection(),
         resourceActions.link(),
         resourceActions.toggleReadMode(),

@@ -17,6 +17,7 @@
     webNodeTypeList
   } from "@nucleum/features/memory/node/node.type";
   import { derived } from "svelte/store";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import type { IResourcePageWithPanels } from "@nucleum/datafn/resource.type";
   import type { ISelectValue } from "@21n/ui/elements/select/select.type";
@@ -33,6 +34,9 @@
     /** Hides the floating bar while the node content scrolls down. */
     isFloatingHidden?: boolean;
   } = $props();
+
+  /** Pane this view of the node is open in, whose editor Edit focuses. */
+  const contextZonePane = getContextZonePane();
 
   let isReadOnlyMode = $derived(
     $node.isInReadOnlyMode ||
@@ -109,7 +113,8 @@
   contextMenuResolver={() =>
     resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
       accessMode,
-      isConstrainedWidth
+      isConstrainedWidth,
+      paneId: contextZonePane.id
     })}
   onAction={onContextMenuAction}
 />

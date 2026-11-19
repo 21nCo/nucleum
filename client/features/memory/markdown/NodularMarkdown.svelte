@@ -23,6 +23,8 @@
   } from "@nucleum/datafn/resource.utils";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { registerNoteEditorFocus } from "@nucleum/features/memory/markdown/note-editor-focus";
 
   /**
    * Markdown in node form i.e. each block of the markdown stored as node record and nested under each node
@@ -384,6 +386,22 @@
   export function focusBlock(id?: IRecordId) {
     mdRef?.focus(id);
   }
+
+  const editorPane = getContextZonePane();
+  const editableNoteId = $derived(
+    node?.id != null && !params?.isReadOnly ? node.id.toString() : undefined
+  );
+
+  /**
+   * Lets the open note's Edit item, and its E key, put the caret in this
+   * editor through {@link focusBlock}, only in this pane and while editable.
+   */
+  $effect(() => {
+    if (!editableNoteId) return;
+    return registerNoteEditorFocus(editableNoteId, editorPane.id, () =>
+      focusBlock()
+    );
+  });
 
   function onRearrange(event: any) {
     if (!event.detail.md) return;
