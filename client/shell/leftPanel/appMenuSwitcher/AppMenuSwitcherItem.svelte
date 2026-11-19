@@ -16,7 +16,10 @@
   import { EmbedMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { shortcutHints } from "@nucleum/shared-state/shortcuts/shortcut-hints.store";
-  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
   import { popover } from "@21n/ui/actions/popover.action";
   import { hoverable } from "@21n/ui/actions/hover.action";
@@ -108,8 +111,10 @@
 
   function resolveHotKey() {
     const shortcut = keyboardShortcuts.resolveShortcutForAction(item.action);
-    if (!shortcut) return;
-    return shortcut.key;
+    if (!shortcut?.key) return;
+    return shortcut.prefix
+      ? `${shortcut.prefix} ${shortcut.key}`
+      : shortcut.key;
   }
 
   function resolveIconSize(layoutContext: LayoutContext) {
@@ -281,7 +286,9 @@
               },
               (layoutContext === LayoutContext.THIN ||
                 layoutContext === LayoutContext.THIN_WITH_LABEL) && {
-                "fill-aps1": isActive,
+                "fill-aps1 app-framed:fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))] app-framed:text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]":
+                  isActive,
+                "!fill-[rgb(var(--colors-onaps3,var(--colors-aps1)))] !text-[rgb(var(--colors-onaps3,var(--colors-aps1)))]": isActive && !isShowLabel,
                 "fill-fgs2":
                   !isActive &&
                   layoutContext === LayoutContext.THIN_WITH_LABEL &&
@@ -330,7 +337,7 @@
       {#if hotKey}
         <span
           class={cn(
-            "flex justify-center items-center w-5 h-5 text-b4 rounded-md",
+            "flex justify-center items-center min-w-5 h-5 px-1 text-b4 rounded-md whitespace-nowrap",
             {
               "bg-aps2 text-fgs1": isActive,
               "bg-bgs3": !isActive

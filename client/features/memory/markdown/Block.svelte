@@ -52,6 +52,7 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { fileDrop } from "@21n/ui/actions/fileDrop.action";
   import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
+  import { isUploadFailureShown } from "@nucleum/shared-state/files/file-upload";
   import { resolveFileUploadErrorMessage } from "@nucleum/features/memory/capture/upload-error.utils";
   import { generateResourceId } from "@nucleum/datafn/id.utils";
   import { Resource } from "@nucleum/datafn/resource.enum";
@@ -789,9 +790,11 @@
       progressState = undefined;
     } catch (e) {
       logger.error({ at: "handlePaste", error: e });
-      toasts.error(
-        (e as Error).message ?? "Failed to paste. Please try again."
-      );
+      if (!isUploadFailureShown(e)) {
+        toasts.error(
+          (e as Error).message ?? "Failed to paste. Please try again."
+        );
+      }
       progressState = undefined;
     }
   }
@@ -919,7 +922,9 @@
       processPasteOrDrop(newBlock, fileEmbed);
     } catch (e) {
       logger.error({ at: "handleFileDrop", error: e });
-      toasts.error("Failed to upload. Please try again.");
+      if (!isUploadFailureShown(e)) {
+        toasts.error("Failed to upload. Please try again.");
+      }
     } finally {
       progressState = undefined;
     }

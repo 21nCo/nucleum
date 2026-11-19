@@ -2,6 +2,8 @@
   import OptionSelector from "@21n/ui/elements/select/OptionSelector.svelte";
   import { OptionSelectorStyle } from "@21n/ui/elements/select/select.type";
   import { Size } from "@21n/ui/elements/size.enum";
+  import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
   import Birdview from "@nucleum/features/calendar/birdView/Birdview.svelte";
   import {
@@ -14,6 +16,7 @@
   import CalendarColumnPanelSelector from "../column/CalendarColumnPanelSelector.svelte";
   import { resolveCalendarColumnPanels } from "../calendar.utils";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
 
   let {
     panel = $bindable(CalendarLayout.Bird),
@@ -25,6 +28,23 @@
   let selectedDate = $state(new Date());
   const isDev = import.meta.env?.DEV;
   let selectedPanel = $state(CalendarColumnPanel.Timeline);
+  let birdviewRef = $state<Birdview>();
+
+  /**
+   * Moves one step back or forward from the header. The Year view moves the
+   * header date a year and scrolls to it, so the header follows the
+   * columns; other views move the columns one column.
+   */
+  function goBy(isForward: boolean) {
+    if (scale !== TimeScaleUnit.YEAR) {
+      birdviewRef?.step(isForward);
+      return;
+    }
+    const date = new Date(selectedDate);
+    date.setFullYear(date.getFullYear() + (isForward ? 1 : -1));
+    selectedDate = date;
+    birdviewRef?.scrollToDate(date);
+  }
 
   const switchOptions = [
     {
@@ -53,28 +73,70 @@
       value: TimeScaleUnit.YEAR
     }
   ];
+  const scaleSubViews = useContextZoneSubViews(() =>
+    isDev
+      ? {
+          values: switchOptions.map((option) => option.value),
+          active: scale,
+          select: (value) => {
+            scale = value as TimeScaleUnit;
+          }
+        }
+      : undefined
+  );
+
+  /** The scale as a calendar menu option group, for compact top bars. */
+  function resolveScaleMenuGroup(): IContextMenuGroup[] {
+    if (!isDev) return [];
+    return [
+      {
+        group: "scale",
+        items: [],
+        option: {
+          label: "Scale",
+          options: switchOptions,
+          value: scale,
+          onChange: (value: ISelectValue) => {
+            scale = value as TimeScaleUnit;
+            scaleSubViews.touch();
+          }
+        }
+      }
+    ];
+  }
 </script>
 
-<CalendarLayoutView bind:panel>
-  {#snippet headerLeftOptions(_isCompact: boolean)}
-    {#if isDev}
+<CalendarLayoutView
+  overflowMenu={resolveScaleMenuGroup}
+  contentKey={`${scale}|${selectedDate.toDateString()}`}
+  bind:panel
+  onGoToToday={() => {
+    selectedDate = new Date();
+    birdviewRef?.goToToday();
+  }}
+>
+  {#snippet headerLeftOptions(_isCompact: boolean, isTight: boolean)}
+    {#if isDev && !isTight}
       <OptionSelector
         options={switchOptions}
         size={Size.sm}
         bind:selected={scale}
+        onSelect={() => scaleSubViews.touch()}
         parentBgIndex={2}
         isExpandOnActiveForIcon={true}
         style={OptionSelectorStyle.ICON}
       />
     {/if}
   {/snippet}
-  {#snippet header()}
+  {#snippet header(isShortDate: boolean, isDateHidden: boolean)}
     <CalendarHeader
+      {isShortDate}
+      {isDateHidden}
       bind:selectedDate
       bind:selectedView={scale}
-      onDateChange={() => {}}
-      onGoToPrevious={() => {}}
-      onGoToNext={() => {}}
+      onDateChange={() => birdviewRef?.scrollToDate(selectedDate)}
+      onGoToPrevious={() => goBy(false)}
+      onGoToNext={() => goBy(true)}
     />
   {/snippet}
   {#snippet headerRightOptions()}
@@ -89,6 +151,6 @@
     /> -->
   {/snippet}
   <div class="w-full h-full max-h-full">
-    <Birdview mode={scale} />
+    <Birdview bind:this={birdviewRef} mode={scale} />
   </div>
 </CalendarLayoutView>

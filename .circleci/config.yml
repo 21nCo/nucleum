@@ -11,6 +11,8 @@ executors:
       - image: cimg/node:20.19
     resource_class: large
     working_directory: ~/project
+    environment:
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
   playwright-executor:
     docker:
       - image: mcr.microsoft.com/playwright:v1.62.1-noble
@@ -18,6 +20,7 @@ executors:
     working_directory: ~/project
     environment:
       NODE_ENV: test
+      ONNXRUNTIME_NODE_INSTALL_CUDA: skip
 
 # ── Reusable commands ─────────────────────────────────────────────────────────
 commands:

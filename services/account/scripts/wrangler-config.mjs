@@ -170,6 +170,11 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     kv('ACCOUNT_REGIONS_JSON', JSON.stringify(regionRecords)),
     kv('ACCOUNT_EMAIL_FROM', config.emailFrom)
   ];
+  if (envConfig.filefnR2Bucket) {
+    lines.push(kv('FILEFN_R2_BUCKET', fileFnR2Bucket(envConfig, regionId)));
+  }
+  const processingMode = fileProcessingMode(config, environment);
+  lines.push(kv('FILEFN_PROCESSING_MODE', processingMode));
 
   for (const [provider, redirectUris] of oauthRedirectUris) {
     lines.push(kv(`${provider.toUpperCase()}_OAUTH_REDIRECT_URIS`, redirectUris));
@@ -221,7 +226,118 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     lines.push(kv('store_id', binding.storeId));
     lines.push(kv('secret_name', binding.secretName));
   }
+  lines.push('');
+  lines.push(header(`env.${wranglerEnv}.triggers`));
+  lines.push(array('crons', [FILE_CLEANUP_CRON]));
+  if (processingMode !== 'local') {
+    lines.push('', ...renderFileProcessing(config, environment, regionId, wranglerEnv));
+  }
   return lines;
+}
+
+/** Hourly cron that runs the expired upload session and file deletion cleanup. */
+export const FILE_CLEANUP_CRON = '0 * * * *';
+
+/** File processing modes an environment's `fileProcessingMode` may name. */
+export const FILE_PROCESSING_MODES = ['local', 'remote', 'both'];
+
+/**
+ * Queue consumer settings for the processing container: one job per batch,
+ * at most as many at once as the container runs
+ * (`FILEFN_CONTAINER_MAX_CONCURRENT_JOBS` in services/file-processing/Dockerfile),
+ * and as many redeliveries as the container's `FILEFN_PROCESSING_MAX_RETRIES`.
+ */
+export const FILE_PROCESSING_CONSUMER = Object.freeze({
+  maxBatchSize: 1,
+  maxConcurrency: 2,
+  maxRetries: 3,
+  retryDelaySeconds: 30
+});
+
+/**
+ * Processing container image and build context, relative to the generated
+ * config in `services/account/.wrangler/`. The context is the repository
+ * root so the image can copy the account service's FileFn schema.
+ */
+export const FILE_PROCESSING_IMAGE = '../../file-processing/Dockerfile';
+export const FILE_PROCESSING_IMAGE_BUILD_CONTEXT = '../../..';
+
+/**
+ * The environment's `fileProcessingMode`: `local` (on the device, the default
+ * when unset), `remote` (the region's queue and processing container) or
+ * `both`. Any other value throws.
+ */
+export function fileProcessingMode(config, environment) {
+  const mode = readEnvironment(config, environment).fileProcessingMode ?? 'local';
+  if (!FILE_PROCESSING_MODES.includes(mode)) {
+    throw new Error(`${environment}: fileProcessingMode must be one of ${FILE_PROCESSING_MODES.join(', ')}, got ${JSON.stringify(mode)}`);
+  }
+  return mode;
+}
+
+/** Names of a region's processing queue and its dead-letter queue. */
+export function fileProcessingQueueNames(config, environment, regionId) {
+  const queue = `${workerName(config, environment, regionId)}-file-processing`;
+  return { queue, deadLetterQueue: `${queue}-dlq` };
+}
+
+/**
+ * A region's remote processing: the queue producer FileFn enqueues jobs on,
+ * the consumer that forwards them to the container, the container and its
+ * Durable Object, and the Secrets Store binding of the region's FileFn
+ * database URL the container connects to.
+ */
+function renderFileProcessing(config, environment, regionId, wranglerEnv) {
+  const { queue, deadLetterQueue } = fileProcessingQueueNames(config, environment, regionId);
+  const consumer = FILE_PROCESSING_CONSUMER;
+  const lines = [
+    arrayHeader(`env.${wranglerEnv}.queues.producers`),
+    kv('binding', 'FILEFN_PROCESSING_QUEUE'),
+    kv('queue', queue),
+    '',
+    arrayHeader(`env.${wranglerEnv}.queues.consumers`),
+    kv('queue', queue),
+    number('max_batch_size', consumer.maxBatchSize),
+    number('max_concurrency', consumer.maxConcurrency),
+    number('max_retries', consumer.maxRetries),
+    number('retry_delay', consumer.retryDelaySeconds),
+    kv('dead_letter_queue', deadLetterQueue),
+    '',
+    arrayHeader(`env.${wranglerEnv}.containers`),
+    kv('class_name', 'FileProcessingContainer'),
+    kv('image', FILE_PROCESSING_IMAGE),
+    kv('image_build_context', FILE_PROCESSING_IMAGE_BUILD_CONTEXT),
+    number('max_instances', 1),
+    kv('instance_type', 'standard-1'),
+    '',
+    arrayHeader(`env.${wranglerEnv}.durable_objects.bindings`),
+    kv('name', 'FILEFN_PROCESSING_CONTAINER'),
+    kv('class_name', 'FileProcessingContainer'),
+    '',
+    arrayHeader(`env.${wranglerEnv}.migrations`),
+    kv('tag', 'v1-file-processing-container'),
+    array('new_sqlite_classes', ['FileProcessingContainer'])
+  ];
+  const storeId = resolveSecretsStoreId(config, environment);
+  if (storeId) {
+    lines.push(
+      '',
+      arrayHeader(`env.${wranglerEnv}.secrets_store_secrets`),
+      kv('binding', 'FILEFN_PROCESSING_DATABASE_URL'),
+      kv('store_id', storeId),
+      kv('secret_name', fileProcessingDatabaseSecretName(environment, regionId))
+    );
+  }
+  return lines;
+}
+
+/**
+ * Secrets Store name of a region's FileFn database URL for the processing
+ * container: the regional Postgres the account Worker reaches through
+ * Hyperdrive, which the container connects to directly.
+ */
+export function fileProcessingDatabaseSecretName(environment, regionId) {
+  return `NUCLEUS_ACCOUNT_${environment}_${regionId}_FILEFN_PROCESSING_DATABASE_URL`.toUpperCase();
 }
 
 /**
@@ -270,6 +386,14 @@ export function secretStoreBindingsForEnvironment(config, environment) {
       storeId,
       secretName: renderSecretName(template, environment)
     }));
+}
+
+/**
+ * The environment's FileFn R2 bucket for a region: `filefnR2Bucket` with
+ * `{region}` replaced, so every regional Worker writes to its own bucket.
+ */
+function fileFnR2Bucket(envConfig, regionId) {
+  return String(envConfig.filefnR2Bucket).replaceAll('{region}', regionId);
 }
 
 function renderSecretName(template, environment) {
@@ -393,6 +517,10 @@ function arrayHeader(name) {
 function kv(key, value) {
   if (typeof value === 'boolean') return `${key} = ${value}`;
   return `${key} = ${JSON.stringify(String(value))}`;
+}
+
+function number(key, value) {
+  return `${key} = ${Number(value)}`;
 }
 
 function array(key, values) {

@@ -139,7 +139,8 @@
       const response = await fileUpload.uploadFileV2(
         file.type,
         file.name,
-        imageLocalURL
+        imageLocalURL,
+        { isErrorToastSuppressed: true }
       );
 
       if (response) {

@@ -5,31 +5,51 @@ import { PointronAction } from "@nucleum/client/config/focus-action.enum";
 import { MemotronAction } from "@nucleum/features/memory/memory-action.enum";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 
+const GO = "g";
+
 export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
+  [Action.HOME]: {
+    prefix: GO,
+    key: "h"
+  },
   [Action.CALENDAR]: {
+    prefix: GO,
     key: "c"
   },
-  [Action.LIBRARY]: {
-    key: "l"
-  },
-  [PointronAction.FOCUS]: {
-    key: "f"
-  },
-  focusModal: {
-    key: "f",
-    modifiers: [ModifierKey.SHIFT]
-  },
   [Action.OVERVIEW]: {
+    prefix: GO,
     key: "o"
   },
-  create: {
-    key: "n"
+  [Action.LIBRARY]: {
+    prefix: GO,
+    key: "l"
+  },
+  [Action.SETTINGS]: {
+    prefix: GO,
+    key: "s"
   },
   node_create: {
+    prefix: GO,
     key: "p"
   },
+  [PointronAction.FOCUS]: {
+    prefix: GO,
+    key: "f"
+  },
+  [Action.NEW_COMMANDS]: {
+    prefix: GO,
+    key: "n"
+  },
+  [Action.CREATE]: {
+    key: "n"
+  },
+  [Action.HOT_KEYS]: {
+    key: "?",
+    modifiers: [ModifierKey.SHIFT]
+  },
   [Action.TOGGLE_SIDEBAR]: {
-    key: "q"
+    key: "[",
+    code: "BracketLeft"
   },
   [Action.NAVIGATOR]: {
     key: "/"
@@ -38,8 +58,35 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
     key: "/",
     modifiers: [ModifierKey.META]
   },
-  [Action.CYCLE_CONTEXT_VIEW]: {
-    key: "v"
+  [Action.PREVIOUS_CONTEXT_VIEW]: {
+    key: KeyboardKey.ARROW_LEFT,
+    code: KeyboardKey.ARROW_LEFT,
+    modifiers: [ModifierKey.ALT]
+  },
+  [Action.NEXT_CONTEXT_VIEW]: {
+    key: KeyboardKey.ARROW_RIGHT,
+    code: KeyboardKey.ARROW_RIGHT,
+    modifiers: [ModifierKey.ALT]
+  },
+  [Action.PREVIOUS_SUB_VIEW]: {
+    key: KeyboardKey.ARROW_LEFT,
+    code: KeyboardKey.ARROW_LEFT,
+    modifiers: [ModifierKey.ALT, ModifierKey.SHIFT]
+  },
+  [Action.NEXT_SUB_VIEW]: {
+    key: KeyboardKey.ARROW_RIGHT,
+    code: KeyboardKey.ARROW_RIGHT,
+    modifiers: [ModifierKey.ALT, ModifierKey.SHIFT]
+  },
+  [Action.PREVIOUS_LIST_ITEM]: {
+    key: KeyboardKey.ARROW_UP,
+    code: KeyboardKey.ARROW_UP,
+    modifiers: [ModifierKey.ALT]
+  },
+  [Action.NEXT_LIST_ITEM]: {
+    key: KeyboardKey.ARROW_DOWN,
+    code: KeyboardKey.ARROW_DOWN,
+    modifiers: [ModifierKey.ALT]
   },
   [Action.CMD]: {
     key: "k",

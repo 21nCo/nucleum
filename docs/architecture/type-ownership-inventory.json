@@ -7689,12 +7689,10 @@
     },
     {
       "path": "client/types/interaction-mode.type.ts",
-      "disposition": "colocated",
-      "destinations": [
-        "client/ui/elements/keyboard/interaction-mode.type.ts"
-      ],
+      "disposition": "removed",
+      "destinations": [],
       "ownership": "frontend-wide",
-      "rationale": "Direct owner imports replace broad type-package coupling; runtime members and serialized shapes preserved.",
+      "rationale": "Interaction modes retired with Home-only mode and the Mode of interaction settings page; the persisted UI state value is ignored and every user gets the default layout.",
       "declarations": [
         "InteractionMode"
       ],

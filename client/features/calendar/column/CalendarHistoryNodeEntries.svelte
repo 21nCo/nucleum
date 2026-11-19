@@ -15,7 +15,7 @@
       return toSvelteStore<INodeThumb[]>(
         datafn.node.signal({
           select: ["*", "parent.*", "file.*"],
-          temporal: time.day("createdAt", date, { storage: "date" })
+          temporal: time.day("createdAt", date)
         }),
         { initialData: [] }
       );

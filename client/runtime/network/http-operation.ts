@@ -30,6 +30,8 @@ export async function performHttpNetworkOperation(params: {
     endpoint?: string;
     isFileApi?: boolean;
   };
+  /** Don't raise the app-wide network alert (for background requests). */
+  isSilent?: boolean;
 }) {
   const startedAt = Date.now();
   let inventoryContext: LegacyApiInventoryContext | undefined;
@@ -88,10 +90,12 @@ export async function performHttpNetworkOperation(params: {
       }
       logger.error({ at: "Network error", params, errorMessage });
 
-      dispatchCustomEvent(CUSTOM_ALERT_EVENT, {
-        error: "networkerror",
-        message: errorMessage
-      });
+      if (!params.isSilent) {
+        dispatchCustomEvent(CUSTOM_ALERT_EVENT, {
+          error: "networkerror",
+          message: errorMessage
+        });
+      }
       throw new Error("Network error. Please check your internet connection.");
     } else if (error instanceof Error) {
       logger.error({ at: "API call failed", error: error.message });

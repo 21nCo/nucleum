@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ShortcutText from "@21n/ui/elements/text/ShortcutText.svelte";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import { onDestroy, tick } from "svelte";
@@ -41,12 +42,18 @@
   let {
     search = "",
     scope = "all",
+    isContextShown = true,
+    isCommandsOnly = false,
     onClose = void 0,
     onSearchAction = void 0,
     selectedKind = $bindable()
   }: {
     search?: string;
     scope?: SuperBarScope;
+    /** Whether the open resource's actions are offered. */
+    isContextShown?: boolean;
+    /** Lists commands only, without context actions or search results. */
+    isCommandsOnly?: boolean;
     /** Kind of the selected row, so the bar can hint what Enter does. */
     selectedKind?: SuperBarEntry["kind"] | undefined;
     onClose?: () => void;
@@ -74,7 +81,13 @@
     return loadDefaultFilteredActions(allActions);
   });
   const contextItems = $derived.by(() => {
-    if (scope !== "all" || !$activeContextActions) return [];
+    if (
+      scope !== "all" ||
+      !isContextShown ||
+      isCommandsOnly ||
+      !$activeContextActions
+    )
+      return [];
     try {
       return flattenContextActions($activeContextActions.resolve(), {
         hasActionHandler: Boolean($activeContextActions.onAction)
@@ -93,7 +106,8 @@
       scope,
       contextActions: contextItems,
       commands: scope === "all" ? filteredActions : [],
-      results: resultsQuery === query ? results : []
+      results: resultsQuery === query ? results : [],
+      isCommandsOnly
     })
   );
   const selectedEntry = $derived(
@@ -103,14 +117,14 @@
     selectedKind = selectedEntry?.kind;
   });
   const hasPendingSearch = $derived(
-    !!query && (isSearching || resultsQuery !== query)
+    !!query && !isCommandsOnly && (isSearching || resultsQuery !== query)
   );
 
   $effect(() => {
     const value = query;
     selectedKey = null;
     cancelSearch();
-    if (!value) {
+    if (!value || isCommandsOnly) {
       results = [];
       resultsQuery = "";
       isSearching = false;
@@ -356,8 +370,16 @@
         {/if}
         <span class="truncate">{entry.action.label}</span>
       </div>
-      <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
-        {contextLabel.toLowerCase()}
+      <div class="flex shrink-0 items-center gap-2">
+        {#if entry.action.item.hotKey}
+          <ShortcutText
+            shortcut={{ key: entry.action.item.hotKey }}
+            parentBgIndex={2}
+          />
+        {/if}
+        <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
+          {contextLabel.toLowerCase()}
+        </div>
       </div>
     </ResultItem>
   {:else if entry.kind === "command"}

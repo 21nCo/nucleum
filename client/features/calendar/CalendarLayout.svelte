@@ -2,9 +2,12 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
-  import type { Snippet } from "svelte";
+  import { tick, untrack, type Snippet } from "svelte";
   import { Size } from "@21n/ui/elements/size.enum";
-  import type { ISelectItem } from "@21n/ui/elements/select/select.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "@21n/ui/elements/select/select.type";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
   import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
@@ -18,27 +21,53 @@
   import BackButton from "@nucleum/shell/navigation/components/BackButton.svelte";
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import BoxButton from "@21n/ui/elements/button/BoxButton.svelte";
+  import {
+    isKeyTargetPane,
+    isPlainPageKey
+  } from "@nucleum/shell/shortcuts/page-keys";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
+  import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
   import { Placement } from "@21n/ui/elements/direction.enum";
   import {
     contextZone,
-    nextCycleValue
+    getContextZonePane,
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    claimCalendarOverflowMenuReopen,
+    requestCalendarOverflowMenuReopen
+  } from "@nucleum/features/calendar/calendar-overflow-menu";
   let {
     panel = $bindable(CalendarLayout.Classic),
     children = undefined,
     header = undefined,
     headerLeftOptions = undefined,
     headerRightOptions = undefined,
+    overflowMenu = undefined,
+    contentKey = undefined,
     onGoToToday = undefined
   }: {
     panel?: CalendarLayout;
     children?: Snippet | undefined;
-    header?: Snippet | undefined;
-    /** Left header controls; receives whether the controls are compact. */
-    headerLeftOptions?: Snippet<[boolean]> | undefined;
+    /**
+     * Date header; receives whether the date should be short and whether
+     * only its previous and next buttons should show.
+     */
+    header?: Snippet<[boolean, boolean]> | undefined;
+    /**
+     * Left header controls; receives whether the controls are compact and
+     * whether they are tight (compact controls that still do not fit).
+     */
+    headerLeftOptions?: Snippet<[boolean, boolean]> | undefined;
     headerRightOptions?: Snippet | undefined;
+    /** Extra calendar menu groups shown while the controls are tight. */
+    overflowMenu?: (() => IContextMenuGroup[]) | undefined;
+    /**
+     * Changes whenever the date, scale or layout shown in the controls
+     * changes, so compact controls measure the full controls again.
+     */
+    contentKey?: string | undefined;
     onGoToToday?: (() => void) | undefined;
   } = $props();
   const panelOptions: ISelectItem[] = [
@@ -57,15 +86,105 @@
   let controlsRef = $state<HTMLDivElement | undefined>(undefined);
   const TIGHT_GAP_PX = 12;
   const LOOSE_GAP_PX = 28;
+  const MENU_WIDTH_PX = 40;
+  /** Most compact level a layout pick from the menu holds while it reopens. */
+  const HOLD_LEVEL = 3;
   let fullControlsWidth = $state(0);
   let controlGroupCount = $state(0);
-  const isCompact = $derived(
-    fullControlsWidth > 0 &&
-      $entryWidth !== undefined &&
-      $entryWidth < fullControlsWidth
+  let groupWidths = $state<Record<string, number>>({});
+  const overflowMenuReopen = claimCalendarOverflowMenuReopen();
+  let isHoldingCompact = $state(false);
+
+  /**
+   * Width the controls need at a level. Level 0 shows everything; level 1
+   * moves Go to today and settings into the menu; level 2 shortens the date;
+   * level 3 also moves the layout switcher; level 4 also moves the scale;
+   * level 5 also hides the date, keeping its previous and next buttons, and
+   * sets the groups side by side without gaps.
+   */
+  function requiredWidth(level: number) {
+    const width = (key: string, fallback = 0) => groupWidths[key] ?? fallback;
+    const layout = isLayoutSwitcher ? width("layout") : width("back");
+    const date = width("date");
+    const shortDate = width("date-short", date * 0.6);
+    const scale = width("scale", width("scale-full"));
+    const scaleMenu = width("scale-menu");
+    const right = width("right", MENU_WIDTH_PX);
+    const keptLayout = isLayoutSwitcher ? 0 : layout;
+    const groups = [
+      [layout, scale, date, right],
+      [layout, scale, shortDate, right],
+      [keptLayout, scale, shortDate, right],
+      [keptLayout, scaleMenu, shortDate, right]
+    ][level - 1];
+    const shown = groups.filter((value) => value > 0);
+    return (
+      shown.reduce((sum, value) => sum + value, 0) +
+      TIGHT_GAP_PX * Math.max(0, shown.length - 1)
+    );
+  }
+
+  /**
+   * The level the measured widths allow. The full controls are measured as a
+   * whole; the compact steps use each group's own width. Until the groups
+   * have a width, compact controls move everything they can into the menu.
+   */
+  const measuredLevel = $derived.by(() => {
+    if (
+      fullControlsWidth === 0 ||
+      $entryWidth === undefined ||
+      $entryWidth >= fullControlsWidth
+    )
+      return 0;
+    if (!Object.values(groupWidths).some((width) => width > 0)) return 4;
+    const available = $entryWidth;
+    for (const candidate of [1, 2, 3, 4]) {
+      if (candidate === 3 && !isLayoutSwitcher) continue;
+      if (requiredWidth(candidate) <= available) return candidate;
+    }
+    return 5;
+  });
+  let isOverflowMenuOpen = $state(false);
+  let isFocusWithin = $state(false);
+
+  /**
+   * Whether level 4 or 5 was picked without a width for the compact scale or
+   * the short date. Those levels show the scale in the menu, and level 5
+   * hides the date, so these groups are not measured there and estimates
+   * stand in for them. The controls then show level 3 for one pass to measure
+   * them and pick their level again. A compact hold, an open menu or focus in
+   * the controls defers this pass, since it would move the scale out of the
+   * menu.
+   */
+  const isMeasuringCompactScale = $derived(
+    measuredLevel >= 4 &&
+      (groupWidths.scale === undefined ||
+        groupWidths["date-short"] === undefined) &&
+      Object.values(groupWidths).some((width) => width > 0) &&
+      !isHoldingCompact &&
+      !isOverflowMenuOpen &&
+      !isFocusWithin
+  );
+  const level = $derived(
+    isHoldingCompact
+      ? Math.max(measuredLevel, HOLD_LEVEL)
+      : isMeasuringCompactScale
+        ? 3
+        : measuredLevel
+  );
+  const isCompact = $derived(level >= 1);
+  const isShortDate = $derived(level >= 2);
+  const isTight = $derived(level >= 4);
+  const isDateHidden = $derived(level >= 5);
+  /**
+   * Whether the scale group is left out of the row: with the scale in the
+   * menu it is often empty, and an empty group would still take a gap.
+   */
+  const isScaleGroupHidden = $derived(
+    isTight && groupWidths["scale-menu"] === 0
   );
   const isLoose = $derived(
-    !isCompact &&
+    level === 0 &&
       fullControlsWidth > 0 &&
       $entryWidth !== undefined &&
       $entryWidth >=
@@ -73,22 +192,197 @@
           Math.max(0, controlGroupCount - 1) * (LOOSE_GAP_PX - TIGHT_GAP_PX)
   );
 
+  function measureGroups() {
+    if (!controlsRef) return;
+    const next = { ...groupWidths };
+    let isChanged = false;
+    for (const child of controlsRef.querySelectorAll<HTMLElement>(
+      ":scope > [data-calendar-group]"
+    )) {
+      const key = child.dataset.calendarGroup!;
+      const width = Math.ceil(child.getBoundingClientRect().width);
+      if (next[key] !== width) {
+        next[key] = width;
+        isChanged = true;
+      }
+    }
+    if (isChanged) groupWidths = next;
+  }
+
+  let measuredContentKey: string | undefined = undefined;
+
+  /**
+   * Whether the controls are in use: their menu is open or they hold focus.
+   * Showing the full controls then would close the menu or move the focused
+   * control, so a pending measurement waits until the interaction ends.
+   */
+  const isInUse = $derived((isCompact && isOverflowMenuOpen) || isFocusWithin);
+
+  /** Rechecks focus, which can leave the controls with their focused element. */
+  function isStillInUse() {
+    const focused = focusedInControlsRoot();
+    return (
+      (isCompact && isOverflowMenuOpen) ||
+      (!!focused && !!controlsRef?.contains(focused))
+    );
+  }
+
+  function onOverflowMenuChange(event: Event) {
+    const isOpen = (event as CustomEvent<{ open?: unknown }>).detail?.open;
+    if (typeof isOpen === "boolean") isOverflowMenuOpen = isOpen;
+  }
+
+  function onControlsFocusOut(event: FocusEvent) {
+    const next = event.relatedTarget;
+    if (next instanceof Node && controlsRef?.contains(next)) return;
+    isFocusWithin = false;
+  }
+
   $effect(() => {
-    if (!controlsRef || isCompact) return;
-    const element = controlsRef;
-    const measure = () => {
-      if (isCompact) return;
-      const groups = element.children.length;
-      const gap = parseFloat(getComputedStyle(element).columnGap) || 0;
-      controlGroupCount = groups;
-      fullControlsWidth =
-        element.scrollWidth - Math.max(0, groups - 1) * (gap - TIGHT_GAP_PX);
-    };
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    measure();
-    return () => observer.disconnect();
+    if (!isCompact) untrack(() => (isOverflowMenuOpen = false));
   });
+
+  /**
+   * Drops every measured width when the controls' content changes, as on a
+   * fresh mount: the full controls show once, are measured with the new
+   * content, and the least compact level that fits is picked again from
+   * widths measured with it. A compact hold for a reopening menu, an open
+   * menu or focus in the controls defers this until it ends.
+   */
+  $effect(() => {
+    const key = contentKey;
+    const isHolding = isHoldingCompact;
+    const isDeferred = isInUse;
+    untrack(() => {
+      if (
+        key === measuredContentKey ||
+        isHolding ||
+        (isDeferred && isStillInUse())
+      )
+        return;
+      measuredContentKey = key;
+      groupWidths = {};
+      fullControlsWidth = 0;
+      if (level === 0) measure(0);
+    });
+  });
+
+  /** Measures the full controls; only the uncompacted controls show them all. */
+  function measureFullControls(shownLevel: number) {
+    if (!controlsRef || shownLevel !== 0) return;
+    const groups = controlsRef.children.length;
+    const gap = parseFloat(getComputedStyle(controlsRef).columnGap) || 0;
+    controlGroupCount = groups;
+    fullControlsWidth =
+      controlsRef.scrollWidth - Math.max(0, groups - 1) * (gap - TIGHT_GAP_PX);
+  }
+
+  /**
+   * Measures the controls shown at a level. A measure can run before the top
+   * bar shows that level, while a group's name and its content can still
+   * belong to different levels, so it waits until the level is rendered.
+   */
+  function measure(shownLevel: number) {
+    if (controlsRef?.dataset.level !== String(shownLevel)) return;
+    measureGroups();
+    measureFullControls(shownLevel);
+  }
+
+  /**
+   * Measures the controls whenever the level changes. A group whose width
+   * stays the same on a new level (such as a date with no shorter form)
+   * never resizes, so the observer alone would not measure it under its new
+   * name. The controls render in the top bar, which can update after this
+   * effect runs, so they are measured again once pending updates apply.
+   */
+  $effect(() => {
+    if (!controlsRef) return;
+    const element = controlsRef;
+    const shownLevel = level;
+    const observer = new ResizeObserver(() => measure(level));
+    const observeGroups = () => {
+      observer.observe(element);
+      for (const child of element.children) observer.observe(child);
+    };
+    observeGroups();
+    untrack(() => measure(shownLevel));
+    let isActive = true;
+    void tick().then(() => {
+      if (!isActive) return;
+      observeGroups();
+      measure(level);
+    });
+    return () => {
+      isActive = false;
+      observer.disconnect();
+    };
+  });
+
+  let overflowMenuRef = $state<ContextMenuAction | undefined>(undefined);
+
+  /**
+   * Ends the compact hold. The hold starts only after the inline controls
+   * were measured, so the layout returns to its measured presentation. When
+   * that removes the focused overflow trigger, focus moves to the layout
+   * switcher's current option instead of dropping to the page.
+   */
+  function releaseCompact() {
+    const focused = focusedInControlsRoot();
+    isHoldingCompact = false;
+    void tick().then(() => {
+      if (focused && !focused.isConnected) focusLayoutSwitcher();
+    });
+  }
+
+  /** The focused element as seen from the controls' own Document or ShadowRoot. */
+  function focusedInControlsRoot(): Element | null {
+    const root = controlsRef?.getRootNode() as Partial<DocumentOrShadowRoot>;
+    return (
+      root?.activeElement ?? controlsRef?.ownerDocument.activeElement ?? null
+    );
+  }
+
+  function focusLayoutSwitcher() {
+    if (!controlsRef?.isConnected) return;
+    const label = panelOptions.find((option) => option.value === panel)?.label;
+    const buttons = Array.from(
+      controlsRef.querySelectorAll<HTMLElement>(
+        '[data-testid="calendar-layout-switcher"] button'
+      )
+    );
+    (
+      buttons.find((button) => button.getAttribute("aria-label") === label) ??
+      buttons[0]
+    )?.focus();
+  }
+
+  $effect(() => {
+    const menu = overflowMenuRef;
+    if (!overflowMenuReopen.isPending || fullControlsWidth === 0) return;
+    const isReopening = overflowMenuReopen.settle(menu !== undefined);
+    isHoldingCompact = isReopening || overflowMenuReopen.isPending;
+    if (!isReopening || !menu) return;
+    const frame = requestAnimationFrame(() => {
+      if (!overflowMenuReopen.isWithinWindow() || !menu.show(releaseCompact))
+        releaseCompact();
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      releaseCompact();
+    };
+  });
+
+  const keyPane = getContextZonePane();
+  let rootRef = $state<HTMLDivElement | undefined>();
+
+  /** Shift+T goes to today. */
+  function onTodayKey(event: KeyboardEvent) {
+    if (!event.shiftKey || event.key.toLowerCase() !== "t") return;
+    if (!isPlainPageKey(event, { allowShift: true }) || !onGoToToday) return;
+    if (!isKeyTargetPane(keyPane, rootRef)) return;
+    event.preventDefault();
+    onGoToToday();
+  }
 
   function openCalendarSettings() {
     requireCommandHost().runAction(Action.CALENDAR_SETTINGS, {
@@ -99,24 +393,29 @@
   }
 
   function resolveOverflowMenu() {
-    const layoutGroup = isLayoutSwitcher
-      ? [
-          {
-            group: "layout",
-            items: panelOptions.map((option) => ({
-              value: option.value,
-              label: `${option.label} view`,
-              icon: option.value === panel ? "check" : "",
-              callback: async () => {
-                panel = option.value as CalendarLayout;
-                onPanelSwitch(new CustomEvent("select", { detail: option.value }));
+    const layoutGroup =
+      isLayoutSwitcher && level >= 3
+        ? [
+            {
+              group: "layout",
+              items: [],
+              option: {
+                label: "Layout",
+                options: panelOptions,
+                value: panel,
+                onChange: (value: ISelectValue) => {
+                  if (value === panel) return;
+                  requestCalendarOverflowMenuReopen();
+                  panel = value as CalendarLayout;
+                  onPanelSwitch(new CustomEvent("select", { detail: value }));
+                }
               }
-            }))
-          }
-        ]
-      : [];
+            }
+          ]
+        : [];
     return [
       ...layoutGroup,
+      ...(isTight ? (overflowMenu?.() ?? []) : []),
       {
         group: "calendar",
         items: [
@@ -140,15 +439,14 @@
     $appStore.product === Product.NUCLEUM && dev_enableBirdView
   );
 
-  function cycleLayout() {
-    const next = nextCycleValue(
-      panelOptions.map((option) => option.value as CalendarLayout),
-      panel
-    );
-    if (!next) return;
-    panel = next;
-    onPanelSwitch(new CustomEvent("select", { detail: next }));
-  }
+  const layoutViews = $derived<ContextZoneViews>({
+    values: panelOptions.map((option) => String(option.value)),
+    active: panel,
+    select: (value) => {
+      panel = value as CalendarLayout;
+      onPanelSwitch(new CustomEvent("select", { detail: value }));
+    }
+  });
 
   function onPanelSwitch(event: CustomEvent) {
     if (!event.detail || !Object.values(CalendarLayout).includes(event.detail))
@@ -158,6 +456,8 @@
     });
   }
 </script>
+
+<svelte:window onkeydown={onTodayKey} />
 
 {#snippet layoutSwitcher()}
   <div class="h-full" data-testid="calendar-layout-switcher">
@@ -209,30 +509,64 @@
 {#if $isContextZoneHosted}
   <ContextZoneContent
     isInlineFallback={false}
-    cycle={isLayoutSwitcher ? cycleLayout : undefined}
+    views={isLayoutSwitcher ? layoutViews : undefined}
   >
     <div
       bind:this={controlsRef}
       class="flex items-center h-full"
-      style:column-gap={`${isLoose ? LOOSE_GAP_PX : TIGHT_GAP_PX}px`}
+      style:column-gap={`${isDateHidden ? 0 : isLoose ? LOOSE_GAP_PX : TIGHT_GAP_PX}px`}
       data-testid="calendar-context-controls"
       data-compact={isCompact ? "true" : undefined}
+      data-tight={isTight ? "true" : undefined}
+      data-level={level}
+      onfocusin={() => (isFocusWithin = true)}
+      onfocusout={onControlsFocusOut}
     >
-      {#if isLayoutSwitcher && !isCompact}
-        {@render layoutSwitcher()}
+      {#if isLayoutSwitcher && level < 3}
+        <div
+          class="flex items-center h-full shrink-0"
+          data-calendar-group="layout"
+        >
+          {@render layoutSwitcher()}
+        </div>
       {:else if backPath !== null && !isLayoutSwitcher}
-        {@render backButton(false)}
+        <div
+          class="flex items-center h-full shrink-0"
+          data-calendar-group="back"
+        >
+          {@render backButton(false)}
+        </div>
       {/if}
-      <div class="flex items-center h-full gap-3 shrink-0">
-        {@render headerLeftOptions?.(isCompact)}
+      <div
+        class="flex items-center h-full gap-3 shrink-0"
+        class:hidden={isScaleGroupHidden}
+        data-calendar-group={level === 0
+          ? "scale-full"
+          : isTight
+            ? "scale-menu"
+            : "scale"}
+      >
+        {@render headerLeftOptions?.(isCompact, isTight)}
       </div>
-      <div class="flex items-center h-full shrink-0">
-        {@render header?.()}
+      <div
+        class="flex items-center h-full shrink-0"
+        data-calendar-group={isDateHidden
+          ? "date-arrows"
+          : isShortDate
+            ? "date-short"
+            : "date"}
+      >
+        {@render header?.(isShortDate, isDateHidden)}
       </div>
-      <div class="flex items-center h-full shrink-0">
+      <div
+        class="flex items-center h-full shrink-0"
+        data-calendar-group={isCompact ? "right" : "trailing"}
+        onchangecapture={onOverflowMenuChange}
+      >
         {#if isCompact}
           {@render headerRightOptions?.()}
           <ContextMenuAction
+            bind:this={overflowMenuRef}
             id="calendarContextZoneMenu"
             testId="calendar-overflow-menu"
             menuResolver={resolveOverflowMenu}
@@ -252,6 +586,7 @@
 {/if}
 
 <div
+  bind:this={rootRef}
   class="flex flex-col h-full w-full otop:pt-12"
   data-testid={`calendar-layout-${panel}`}
 >
@@ -264,9 +599,9 @@
           {:else}
             {@render backButton(true)}
           {/if}
-          {@render headerLeftOptions?.(false)}
+          {@render headerLeftOptions?.(false, false)}
         </div>
-        {@render header?.()}
+        {@render header?.(false, false)}
         <div class="flex gap--2 justify-end items-center h-full w-full">
           {@render trailingControls()}
         </div>

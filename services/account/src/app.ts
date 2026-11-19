@@ -17,6 +17,8 @@ import type {
   SocialOAuthPluginRuntimeConfig
 } from "@authfn/social-oauth";
 import type { Logger } from "@logfn/core";
+import type { FileFn, FileFnRuntime } from "@filefn/server";
+import type { StorageAdapter } from "@superfunctions/storage";
 import { createAccountAuth } from "./auth.js";
 import { registerAccountAuthRoutes } from "./auth/routes.js";
 import {
@@ -32,7 +34,15 @@ import { sendAccountDebugLog } from "./debug-sink.js";
 import { createSyncServer } from "./datafn/server.js";
 import type { SyncServer } from "./datafn/server.js";
 import { registerAccountDatafnRoutes } from "./datafn/routes.js";
+import {
+  createFileDeletionCascade,
+  type FileDeletionCascade,
+  type FileDeletionRetryResult
+} from "./datafn/file-deletions.js";
 import { createAccountRequestObservationMiddleware } from "./http/observability.js";
+import type { AccountFileProcessing } from "./files/processing.js";
+import { createAccountFileFn } from "./files/server.js";
+import { registerAccountFileRoutes } from "./files/routes.js";
 
 /** Required infrastructure dependencies for the account app. */
 export type AccountSyncDatabaseProvider =
@@ -45,6 +55,25 @@ export interface AccountInfra {
   stores: RuntimeStores;
   logger: Logger;
   syncSearchProvider?: SearchProvider;
+  files?: AccountFilesInfra;
+}
+
+/**
+ * FileFn dependencies. `storage` receives the resolved region ID so each
+ * region uses its own bucket, and returns null when storage is not configured.
+ */
+export interface AccountFilesInfra {
+  database: AccountSyncDatabaseProvider;
+  storage: (regionId: string) => StorageAdapter | null;
+  runtime?: FileFnRuntime;
+  /**
+   * Server processing for the environment's `fileProcessingMode`; undefined
+   * (or no provider) leaves processing to the device.
+   */
+  processing?: () =>
+    | AccountFileProcessing
+    | undefined
+    | Promise<AccountFileProcessing | undefined>;
 }
 
 /** Deployment-specific configuration that varies per runtime (node, worker, tests). */
@@ -81,6 +110,14 @@ export interface CreateAccountAppInput {
 export interface AccountServices {
   auth: AuthFnServer;
   getSyncServer: () => Promise<SyncServer>;
+  getFileFn: () => Promise<FileFn | null>;
+  /**
+   * Retries FileFn deletions still owed for permanently deleted `file`
+   * records. DataFn requests already retry them in the background once a
+   * minute; a scheduled job may also call this. Without file infrastructure
+   * it does nothing.
+   */
+  retryFileDeletions: (options?: { limit?: number }) => Promise<FileDeletionRetryResult>;
   regionId: string;
   corsOrigins: string[];
   observability: SuperfunctionObservability<AccountObservationEvent>;
@@ -143,6 +180,30 @@ export function buildAccountServices(
     rateLimit: authRateLimit,
     observability
   });
+  let fileFn: Promise<FileFn | null> | undefined;
+  const getFileFn = () => {
+    fileFn ??= resolveFileFn(infra, regionId, auth).catch((error) => {
+      fileFn = undefined;
+      throw error;
+    });
+    return fileFn;
+  };
+  const createFileDeletions = (
+    syncDatabase: Adapter
+  ): FileDeletionCascade | undefined =>
+    infra.files
+      ? createFileDeletionCascade({
+          database: syncDatabase,
+          getFileFn,
+          runtime: infra.files.runtime,
+          onError: (error, context) => {
+            infra.logger.error("nucleus account file deletion failed", {
+              error,
+              attempts: context.attempts
+            });
+          }
+        })
+      : undefined;
   let syncServer: Promise<SyncServer> | undefined;
   const getSyncServer = () => {
     syncServer ??= resolveSyncDatabase(infra.syncDatabase)
@@ -157,7 +218,8 @@ export function buildAccountServices(
           regionId,
           observability,
           searchProvider: infra.syncSearchProvider,
-          rateLimit: integrations.syncRateLimit
+          rateLimit: integrations.syncRateLimit,
+          fileDeletions: createFileDeletions(syncDatabase)
         })
       )
       .catch((error) => {
@@ -166,7 +228,18 @@ export function buildAccountServices(
       });
     return syncServer;
   };
+  const retryFileDeletions = async (
+    options?: { limit?: number }
+  ): Promise<FileDeletionRetryResult> => {
+    const fileDeletions = createFileDeletions(
+      await resolveSyncDatabase(infra.syncDatabase)
+    );
+    return fileDeletions
+      ? fileDeletions.retryDue(options)
+      : { deleted: 0, kept: 0, retrying: 0 };
+  };
   const close = async (): Promise<void> => {
+    fileFn = undefined;
     const current = syncServer;
     syncServer = undefined;
     if (!current) {
@@ -179,6 +252,8 @@ export function buildAccountServices(
   return {
     auth,
     getSyncServer,
+    getFileFn,
+    retryFileDeletions,
     regionId,
     corsOrigins,
     observability,
@@ -194,8 +269,14 @@ export function buildAccountServices(
  * OpenAPI, sync, and auth routes) onto an app for the given services.
  */
 export function registerCoreRoutes(app: Hono, services: AccountServices): void {
-  const { auth, getSyncServer, regionId, corsOrigins, observability } =
-    services;
+  const {
+    auth,
+    getSyncServer,
+    getFileFn,
+    regionId,
+    corsOrigins,
+    observability
+  } = services;
   const { logger } = services.infra;
   const { workerColo } = services.deployment;
 
@@ -226,7 +307,10 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
           "x-datafn-mutation-id",
           "x-datafn-public-link-token",
           "x-datafn-schema-hash",
-          "x-datafn-sync-cursor"
+          "x-datafn-sync-cursor",
+          "x-filefn-client-version",
+          "x-idempotency-key",
+          "x-upload-session-token"
         ],
         exposeHeaders: [
           "x-request-id",
@@ -240,7 +324,10 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
           "x-account-lookup-duration-ms",
           "x-account-region",
           "x-account-worker-colo",
-          "x-datafn-region"
+          "x-datafn-region",
+          "content-disposition",
+          "content-range",
+          "etag"
         ],
         credentials: true,
         maxAge: 600
@@ -272,6 +359,7 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
     app,
     getSyncServer
   });
+  registerAccountFileRoutes({ app, getFileFn });
   registerAccountAuthRoutes({ app, auth });
 }
 
@@ -279,6 +367,26 @@ export function createApp(input: CreateAccountAppInput): Hono {
   const app = new Hono();
   registerCoreRoutes(app, buildAccountServices(input));
   return app;
+}
+
+async function resolveFileFn(
+  infra: AccountInfra,
+  regionId: string,
+  auth: AuthFnServer
+): Promise<FileFn | null> {
+  const files = infra.files;
+  const storage = files?.storage(regionId);
+  if (!files || !storage) {
+    return null;
+  }
+  return createAccountFileFn({
+    auth,
+    database: await resolveSyncDatabase(files.database),
+    storage,
+    stores: infra.stores,
+    runtime: files.runtime,
+    processing: await files.processing?.()
+  });
 }
 
 async function resolveSyncDatabase(

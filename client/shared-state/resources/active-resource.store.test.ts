@@ -13,6 +13,22 @@ vi.mock("@nucleum/client/runtime/logging/logger", () => ({
 
 import { ActiveResourceStore } from "@nucleum/shared-state/resources/active-resource.store";
 
+describe("ActiveResourceStore.resolveOwnerAccessMode", () => {
+  it("reports the newest mounted view's current mode", () => {
+    const id = "node:owner-mode";
+    expect(ActiveResourceStore.resolveOwnerAccessMode(id)).toBeUndefined();
+    let pageMode = "page";
+    const releaseBase = ActiveResourceStore.retain(id, "base" as never);
+    const releasePage = ActiveResourceStore.retain(id, () => pageMode as never);
+    expect(ActiveResourceStore.resolveOwnerAccessMode(id)).toBe("page");
+    pageMode = "beside";
+    expect(ActiveResourceStore.resolveOwnerAccessMode(id)).toBe("beside");
+    releasePage();
+    expect(ActiveResourceStore.resolveOwnerAccessMode(id)).toBe("base");
+    releaseBase();
+  });
+});
+
 describe("ActiveResourceStore.retain", () => {
   it("keeps the store until the last mounted owner releases it", () => {
     const id = "node:retained";

@@ -1,14 +1,16 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { navigation } from "@nucleum/shell/navigation/navigation";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
 
   import {
-    isTextElement,
-    resolveDialogOnFront,
-    resolveModalOnFront
+    isRightDrawerOnFront,
+    isTextElement
   } from "@21n/ui/actions/interaction-dom";
+  import {
+    isLayerOnFront,
+    isViewKeyLayerOnFront
+  } from "@nucleum/shell/shortcuts/front-layer";
   import { closeTopLayer } from "@nucleum/shell/navigation/top-layer";
   import { bulkEditStore } from "@nucleum/shared-state/resources/bulkedit.store";
   import { get } from "svelte/store";
@@ -17,13 +19,18 @@
   import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
   import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
-  import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-  import { Action } from "@nucleum/client/config/action.enum";
-  import { InteractionMode } from "@21n/ui/elements/keyboard/interaction-mode.type";
-  import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
-  import { UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import context from "@nucleum/client/runtime/context.store";
   import { Embed } from "@nucleum/client/runtime/context.type";
+  import { Action } from "@nucleum/client/config/action.enum";
+  import { resolveContextViewIndex } from "@nucleum/shell/shortcuts/context-view-keys";
+  import {
+    selectContextViewAt,
+    stepContextView
+  } from "@nucleum/shell/shortcuts/context-view-step";
+  import { stepListItem } from "@nucleum/shell/shortcuts/list-item-step";
+  import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import ChordRunner from "@nucleum/shell/shortcuts/ChordRunner.svelte";
+  import { isChordEndingKey } from "@nucleum/shell/shortcuts/page-keys";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (
@@ -32,6 +39,10 @@
     );
   }
 
+  /** Skips shortcuts whose command the product does not register. */
+  const isRegistered = (action: string) =>
+    !!requireCommandHost().resolveAction(action);
+
   /**
    * Listens to keyboard events and runs the shortcut if the event is a shortcut.
    *
@@ -39,10 +50,16 @@
    *
    * Pressing `Escape` when text element is required in cases like command bar modal, search modal etc. If this is causing issue, kindly stop propagation on keyDown event from the source if its Esc key.
    *
+   * While a right-side drawer is on front only `Escape` passes, so shortcuts do not act on the app behind it.
+   *
+   * A key without Cmd, Ctrl or Option that ended a G chord without matching
+   * one was meant as the chord's second key, so it runs no shortcut of its own.
+   *
    * @param event
    */
   const shortcutListener = (event: KeyboardEvent) => {
     if ($context.embed === Embed.HANDSET) return;
+    if (event.key !== KeyboardKey.ESCAPE && isRightDrawerOnFront()) return;
     const target = event.target || event.srcElement;
     const isTextInputSource = isTextElement(target);
     const isSystemShortcut = checkIfSystemShortcut(event);
@@ -51,7 +68,16 @@
       return;
     }
     if (isTextInputSource && event.metaKey === false) return;
-    const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
+    if (
+      isChordEndingKey(event) &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey
+    )
+      return;
+    const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event, {
+      isRegistered
+    });
     logger.log({
       at: "shortcutListener",
       isTextInputSource,
@@ -61,16 +87,23 @@
       target,
       event
     });
-    if (!shortcut) return;
-    const interactionMode = uiState.getState(Action.MODE_OF_INTERACTION, {
-      scope: UIStateScope.PRODUCT
-    });
-    if (
-      interactionMode === InteractionMode.AGENT &&
-      shortcut.action === Action.CMD
-    ) {
-      navigation.toggleSearchParam([AppSearchParam.TAB]);
-      event.preventDefault();
+    if (!shortcut) {
+      selectContextViewByNumber(event);
+      return;
+    }
+    const viewStep = CONTEXT_VIEW_STEPS[shortcut.action];
+    if (viewStep !== undefined) {
+      stepContextViewByKey(event, viewStep);
+      return;
+    }
+    const subViewStep = SUB_VIEW_STEPS[shortcut.action];
+    if (subViewStep !== undefined) {
+      stepSubViewByKey(event, subViewStep);
+      return;
+    }
+    const listStep = LIST_ITEM_STEPS[shortcut.action];
+    if (listStep !== undefined) {
+      stepListItemByKey(event, listStep);
       return;
     }
     requireCommandHost().runAction(shortcut.action);
@@ -78,13 +111,72 @@
     event.preventDefault();
   };
 
-  function hasOpenPopover() {
-    return Array.from(document.querySelectorAll(".popover")).some(
-      (element) =>
-        !element.classList.contains("pointer-events-none") &&
-        element.getClientRects().length > 0 &&
-        getComputedStyle(element).visibility !== "hidden"
-    );
+  const CONTEXT_VIEW_STEPS: Partial<Record<string, number>> = {
+    [Action.PREVIOUS_CONTEXT_VIEW]: -1,
+    [Action.NEXT_CONTEXT_VIEW]: 1
+  };
+
+  /**
+   * Steps the shown page's views for Option+Left / Option+Right. Skips a key
+   * another handler already consumed (such as a Space nav tree move), and
+   * keeps the browser default (Alt+Left/Right history on Windows and Linux)
+   * unless a view was selected.
+   */
+  function stepContextViewByKey(event: KeyboardEvent, delta: number) {
+    if (event.defaultPrevented) return;
+    if (!stepContextView(delta)) return;
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  const SUB_VIEW_STEPS: Partial<Record<string, number>> = {
+    [Action.PREVIOUS_SUB_VIEW]: -1,
+    [Action.NEXT_SUB_VIEW]: 1
+  };
+
+  /**
+   * Steps the shown page's in-page sub switcher for Option+Shift+Left /
+   * Option+Shift+Right with the same guards as the view keys: skips a key
+   * another handler already consumed and a modal, dialog, popover or
+   * `aria-modal` layer in front, and keeps the browser default unless a view
+   * was selected.
+   */
+  function stepSubViewByKey(event: KeyboardEvent, delta: number) {
+    if (event.defaultPrevented) return;
+    if (isViewKeyLayerOnFront()) return;
+    if (!contextZone.stepSub(delta)) return;
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  const LIST_ITEM_STEPS: Partial<Record<string, number>> = {
+    [Action.PREVIOUS_LIST_ITEM]: -1,
+    [Action.NEXT_LIST_ITEM]: 1
+  };
+
+  /**
+   * Steps the vertical list of the page in front for Option+Up / Option+Down.
+   * Skips a key another handler already consumed (such as a Space nav row
+   * move), and keeps the browser default (Option+Up/Down scrolls a page on
+   * macOS) unless an item was selected.
+   */
+  function stepListItemByKey(event: KeyboardEvent, delta: number) {
+    if (event.defaultPrevented) return;
+    if (!stepListItem(delta)) return;
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  /**
+   * Selects the shown page's view numbered by a plain 1 to 9 key, unless
+   * another handler consumed the key or a modal, dialog, popover or
+   * `aria-modal` layer is in front.
+   */
+  function selectContextViewByNumber(event: KeyboardEvent) {
+    if (event.defaultPrevented) return;
+    const index = resolveContextViewIndex(event);
+    if (index === undefined) return;
+    if (selectContextViewAt(index)) event.preventDefault();
   }
 
   function isFormField(target: EventTarget | null) {
@@ -104,8 +196,10 @@
 
   /**
    * Closes the top layer on a plain Escape: overlay, then right panel, then
-   * bulk selection, then the resource page. Runs after the event bubbles so
-   * editors, modals, dialogs and popovers that handle Escape stop it first;
+   * bulk selection, then the resource page. While a text editor has focus,
+   * Escape only releases that focus, so keyboard shortcuts work next. Runs
+   * after the event bubbles so editors, modals, dialogs and popovers that
+   * handle Escape stop it first;
    * the selection size is read in the capture phase, before selection
    * handlers clear it.
    */
@@ -116,9 +210,12 @@
     if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey)
       return;
     if ($context.embed === Embed.HANDSET || event.defaultPrevented) return;
-    if (isFormField(event.target)) return;
-    if (resolveModalOnFront() || resolveDialogOnFront() || hasOpenPopover())
+    if (event.target instanceof HTMLElement && event.target.isContentEditable) {
+      event.target.blur();
       return;
+    }
+    if (isFormField(event.target)) return;
+    if (isLayerOnFront()) return;
     closeTopLayer({ bulkCount });
   };
 </script>
@@ -130,3 +227,4 @@
   }}
   onkeydowncapture={escapeCaptureListener}
 />
+<ChordRunner />

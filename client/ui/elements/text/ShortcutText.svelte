@@ -37,6 +37,7 @@
   const textReplacements = [
     { key: KeyboardKey.ESCAPE, text: "Esc" },
     { key: KeyboardKey.ENTER, text: "Enter" },
+    { key: KeyboardKey.BACKSPACE, text: "⌫" },
     { key: KeyboardKey.ARROW_RIGHT, text: "→" },
     { key: KeyboardKey.ARROW_LEFT, text: "←" },
     { key: KeyboardKey.ARROW_UP, text: "↑" },
@@ -65,6 +66,7 @@
     return resolveShortcutText({
       key: detail.key,
       modifiers: detail.modifiers,
+      prefix: detail.prefix,
       os: $context.os
     });
   });

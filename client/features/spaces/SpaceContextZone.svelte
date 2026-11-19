@@ -1,72 +1,71 @@
+<script lang="ts" module>
+  import { SpaceView } from "@nucleum/features/spaces/space.type";
+
+  /** Space layouts in menu order, which the view keys follow too. */
+  export const SPACE_VIEW_OPTIONS = [
+    { value: SpaceView.SIDENAV, label: "Side nav", icon: "sidebar" },
+    { value: SpaceView.WALL, label: "Wall", icon: "widget" }
+  ];
+</script>
+
 <script lang="ts">
-  import PanelSwitcher from "@21n/ui/elements/switcher/PanelSwitcher.svelte";
-  import {
-    PanelSwitcherActiveItemStrength,
-    PanelSwitcherStyle
-  } from "@21n/ui/elements/switcher/switcher.enum";
+  import type { IContextMenu } from "@21n/ui/elements/contextMenu/context-menu.type";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
-  import { SpaceView } from "@nucleum/features/spaces/space.type";
+  import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import type { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
+  import { resolveSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
 
   let {
     store,
     view,
     isPinned = false,
     onTogglePin,
-    onViewChange
+    onViewChange,
+    isKeyed = true
   }: {
     store: ActiveSpaceStore;
     view: SpaceView;
     isPinned?: boolean;
     onTogglePin: () => void;
     onViewChange: (view: SpaceView) => void;
+    /** Whether the space's single-key letters apply, shown in its menu. */
+    isKeyed?: boolean;
   } = $props();
 
-  const views = [
-    { value: SpaceView.SIDENAV, label: "Side nav", icon: "sidebar" },
-    { value: SpaceView.WALL, label: "Wall", icon: "widget" }
-  ];
+  /** Shows the single-key letters only while they act on this space. */
+  function withKeys(menu: IContextMenu) {
+    return isKeyed ? withResourceActionKeys(menu) : menu;
+  }
 
-  function resolveMenu() {
-    return [
-      {
-        group: "space",
-        items: [
-          {
-            value: "rename",
-            label: "Rename",
-            icon: "edit",
-            callback: async () => store.setTitleEditing(true)
-          },
-          {
-            value: "pin",
-            label: isPinned ? "Unpin from app menu" : "Pin to app menu",
-            icon: isPinned ? "unpin" : "pin",
-            callback: async () => onTogglePin()
-          }
-        ]
+  function resolveMenu(): IContextMenu {
+    const viewGroup = {
+      group: "view",
+      items: [],
+      option: {
+        label: "View",
+        options: SPACE_VIEW_OPTIONS,
+        value: view,
+        onChange: (value: ISelectValue) => onViewChange(value as SpaceView)
       }
+    };
+    if (!$store) return [viewGroup];
+    return [
+      viewGroup,
+      ...withKeys(
+        resolveSpacePageMenu($store, {
+          isPinned,
+          onRename: () => store.setTitleEditing(true),
+          onTogglePin,
+          onChanged: () => store.init(undefined, { isRecordedInRecents: false })
+        })
+      )
     ];
   }
 </script>
 
 <div class="flex items-center h-full min-w-0" data-testid="space-context-zone">
-  <div
-    class="flex items-center h-full shrink-0 px-2"
-    data-testid="space-view-switcher"
-  >
-    <PanelSwitcher
-      style={PanelSwitcherStyle.TRAIN}
-      items={views}
-      value={view}
-      size={Size.sm}
-      parentBgIndex={0}
-      isPreventTabShortcut={true}
-      activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
-      onSwitch={(event) => onViewChange(event.detail as SpaceView)}
-    />
-  </div>
   <div class="flex items-center h-full shrink-0">
     <ContextMenuAction
       id="spaceContextZoneMenu"

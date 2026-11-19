@@ -3,7 +3,6 @@ export enum Action {
   CMD = "CMD",
   CLOSE = "CLOSE",
   CREATE = "create",
-  MODE_OF_INTERACTION = "MODE_OF_INTERACTION",
   EDIT_MODE = "EDIT_MODE",
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",
@@ -61,7 +60,14 @@ export enum Action {
   NAVIGATOR = "navigator",
   OPEN_NAVIGATOR = "open-navigator",
   CYCLE_CONTEXT_VIEW = "cycle-context-view",
+  PREVIOUS_CONTEXT_VIEW = "previous-context-view",
+  NEXT_CONTEXT_VIEW = "next-context-view",
+  PREVIOUS_SUB_VIEW = "previous-sub-view",
+  NEXT_SUB_VIEW = "next-sub-view",
+  PREVIOUS_LIST_ITEM = "previous-list-item",
+  NEXT_LIST_ITEM = "next-list-item",
   RHOMBUS = "rhombus",
   TODAY = "today",
-  FEED = "feed"
+  FEED = "feed",
+  NEW_COMMANDS = "new-commands"
 }

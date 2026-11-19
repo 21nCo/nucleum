@@ -22,19 +22,10 @@ on:
           - dev
           - pre
           - live
-  push:
-    branches:
-      - dev
-    paths:
-      - 'package.json'
-      - 'package-lock.json'
-      - 'apps/**'
-      - 'shared/**'
-      - 'server/**'
-      - 'deployment/**'
 
 env:
   NODE_OPTIONS: --max_old_space_size=4096
+  ONNXRUNTIME_NODE_INSTALL_CUDA: skip
   AWS_DEFAULT_REGION: us-east-1
 
 jobs:
@@ -43,31 +34,21 @@ jobs:
     outputs:
       projects: ${{ steps.detect.outputs.projects }}
       environment: ${{ steps.detect.outputs.environment }}
-      deploy-type: ${{ steps.detect.outputs.deploy-type }}
     steps:
       - name: Detect deployment configuration
         id: detect
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Manual trigger
-            if [ "${{ github.event.inputs.project }}" = "all" ]; then
-              echo "projects=[\"nucleus\", \"memotron\", \"pointron\"]" >> $GITHUB_OUTPUT
-            else
-              echo "projects=[\"${{ github.event.inputs.project }}\"]" >> $GITHUB_OUTPUT
-            fi
-            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
-            echo "deploy-type=manual" >> $GITHUB_OUTPUT
+          if [ "${{ github.event.inputs.project }}" = "all" ]; then
+            echo "projects=[\"nucleus\", \"memotron\", \"pointron\"]" >> "$GITHUB_OUTPUT"
           else
-            # Auto-deploy all projects to dev on dev branch push
-            echo "projects=[\"nucleus\", \"memotron\", \"pointron\"]" >> $GITHUB_OUTPUT
-            echo "environment=dev" >> $GITHUB_OUTPUT
-            echo "deploy-type=auto" >> $GITHUB_OUTPUT
+            echo "projects=[\"${{ github.event.inputs.project }}\"]" >> "$GITHUB_OUTPUT"
           fi
+          echo "environment=${{ github.event.inputs.environment }}" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
     needs: detect-config
-    if: needs.detect-config.outputs.deploy-type == 'auto' || (needs.detect-config.outputs.deploy-type == 'manual' && contains(fromJson('["dev", "pre", "live"]'), needs.detect-config.outputs.environment))
+    if: contains(fromJson('["dev", "pre", "live"]'), needs.detect-config.outputs.environment)
     environment: ${{ needs.detect-config.outputs.environment }}
     strategy:
       matrix:

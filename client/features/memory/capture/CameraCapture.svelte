@@ -138,7 +138,8 @@
       const result = await captureStore.saveCameraCapture(blob, {
         deviceInfo,
         isMediaDeviceCapture: true,
-        source: captureSource()
+        source: captureSource(),
+        isErrorToastSuppressed: true
       });
       isSaving = false;
       const node = Array.isArray(result) ? result[0] : result;

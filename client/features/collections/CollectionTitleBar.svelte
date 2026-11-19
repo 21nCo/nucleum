@@ -39,6 +39,8 @@
   import ResourceInlineCloseButton from "@nucleum/shell/navigation/components/ResourceInlineCloseButton.svelte";
   import type { ICollection } from "@nucleum/features/collections/collection.type";
   import { tick } from "svelte";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
+  import { isInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import {
     contextZone,
@@ -48,6 +50,7 @@
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import EditModeDone from "@21n/ui/elements/button/EditModeDoneButton.svelte";
   import view from "@21n/ui/environment/view.store";
+  import { resolveInPlaceResourceClose } from "@nucleum/shared-state/resources/in-place-resource";
 
   let {
     searchQuery = $bindable(""),
@@ -77,6 +80,7 @@
     additionalContent?: Snippet | undefined;
   } = $props();
   const isContextZoneHosted = contextZone.isHosted;
+  const closeInPlace = resolveInPlaceResourceClose();
   const isActionsInContextZone = $derived(
     isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
@@ -144,6 +148,22 @@
   function resolveCollectionForContextMenu() {
     return $collection as unknown as ICollection;
   }
+
+  /**
+   * The collection's own menu, with the single-key letters shown and run while
+   * it is open as a page or split, where those keys apply.
+   */
+  const isInPlace = isInPlaceResource();
+  const isKeyedMenu = $derived(isContextZoneAccessMode(accessMode) || isInPlace);
+
+  function resolveKeyedCollectionMenu() {
+    const menu = resolveCollectionContextMenu(
+      resolveCollectionForContextMenu(),
+      ResourceAccessPoint.SELF,
+      { accessMode }
+    );
+    return isKeyedMenu ? withResourceActionKeys(menu) : menu;
+  }
 </script>
 
 {#snippet collectionActions(isCloseShown: boolean)}
@@ -166,14 +186,7 @@
   {/if}
   <ContextMenuAction
     testId="resource-record-context-menu"
-    menuResolver={() =>
-      resolveCollectionContextMenu(
-        resolveCollectionForContextMenu(),
-        ResourceAccessPoint.SELF,
-        {
-          accessMode: accessMode
-        }
-      )}
+    menuResolver={resolveKeyedCollectionMenu}
     position={Placement.BottomCenter}
     id="collectionContextMenu"
     size={Size.lg}
@@ -182,7 +195,11 @@
     <AddResourceAction {onAdd} variant="default" />
   {/if}
   {#if isCloseShown}
-    <ResourceInlineCloseButton {accessMode} id={$collection.id} />
+    <ResourceInlineCloseButton
+      {accessMode}
+      id={$collection.id}
+      onClose={closeInPlace}
+    />
   {/if}
 {/snippet}
 
@@ -204,13 +221,8 @@
   <ContextActions
     id={$collection.id.toString()}
     resource={Resource.collection}
-    resolve={() =>
-      resolveCollectionContextMenu(
-        resolveCollectionForContextMenu(),
-        ResourceAccessPoint.SELF,
-        { accessMode }
-      )}
-    isEnabled={isContextZoneAccessMode(accessMode)}
+    resolve={resolveKeyedCollectionMenu}
+    isEnabled={isKeyedMenu}
   />
 {/if}
 <div
@@ -363,19 +375,16 @@
     <div class="flex gap-2 justify-center items-center">
       <ContextMenuAction
         testId="resource-record-context-menu"
-        menuResolver={() =>
-          resolveCollectionContextMenu(
-            resolveCollectionForContextMenu(),
-            ResourceAccessPoint.SELF,
-            {
-              accessMode: accessMode
-            }
-          )}
+        menuResolver={resolveKeyedCollectionMenu}
         position={Placement.Left}
         id="collectionContextMenu"
         size={Size.lg}
       />
-      <ResourceInlineCloseButton {accessMode} id={$collection.id} />
+      <ResourceInlineCloseButton
+        {accessMode}
+        id={$collection.id}
+        onClose={closeInPlace}
+      />
     </div>
   {:else if accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <span

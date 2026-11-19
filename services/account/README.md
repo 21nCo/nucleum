@@ -82,6 +82,73 @@ DATAFN_DB_POOL_SIZE=5
 DATAFN_MAX_PAYLOAD_BYTES=5242880
 ```
 
+## Files
+
+The account service hosts FileFn under `/files/*`. AuthFn sessions resolve the
+FileFn principal (the session `actorId`), unauthenticated requests get `401`,
+and a principal reads and writes only its own files unless granted. Unsafe
+methods with a cookie session must send the `x-authfn-csrf` header. Uploads
+follow the Nucleus policies (100 MB cap, allowed media and document types).
+
+FileFn tables live in the regional DataFn Postgres (`drizzle/filefn`, applied
+with `npm --workspace @21n/account-service run filefn:migrate`; `scripts/deploy.mjs` does not run it, so apply it
+to each regional database before deploying `/files` there). File bytes go to one R2 bucket per region,
+configured by:
+
+- `FILEFN_R2_ACCOUNT_ID`, `FILEFN_R2_ACCESS_KEY_ID`,
+  `FILEFN_R2_SECRET_ACCESS_KEY`: R2 S3-API credentials. Workers read them from
+  the Secrets Store (`secretsStore.names` in `config/environments.json`).
+- `FILEFN_R2_BUCKET`: the bucket name; `{region}` is replaced with the
+  service's region ID. Workers get the rendered per-region name from
+  `filefnR2Bucket` in `config/environments.json`.
+
+Without all four values `/files/*` answers `503 FILEFN_UNAVAILABLE` and the
+rest of the service is unaffected. Every `/files` response carries
+`X-Content-Type-Options: nosniff` and `Content-Security-Policy: sandbox;
+default-src 'none'`, and file bytes from the proxy download routes are sent with
+`Content-Disposition: attachment`, so uploaded content never runs on the
+account origin. Every environment lists the three R2
+secrets in `omitSecretsStoreBindings` until its buckets and Secrets Store
+entries are provisioned; remove them there, then run `secrets:sync:<env>`.
+
+### File processing
+
+`fileProcessingMode` in `config/environments.json` (rendered as the
+`FILEFN_PROCESSING_MODE` var) selects where uploads are processed: `local`
+(the default, on the device only), `remote` (the region's queue and
+processing container) or `both`. Every environment is `local` today.
+
+In `remote` and `both` modes each regional Worker gets:
+
+- the `FILEFN_PROCESSING_QUEUE` producer on
+  `nucleus-account-<env>-<region>-file-processing`, where FileFn enqueues one
+  `filefn.processing` job per completed upload;
+- a consumer on that queue that forwards each job to the region's container
+  (`services/file-processing`) and acknowledges or retries it from the
+  container's answer; a job still failing after 3 retries goes to
+  `nucleus-account-<env>-<region>-file-processing-dlq`;
+- the `FileProcessingContainer` container and Durable Object, and the
+  `FILEFN_PROCESSING_DATABASE_URL` Secrets Store binding
+  (`NUCLEUS_ACCOUNT_<ENV>_<REGION>_FILEFN_PROCESSING_DATABASE_URL`), a URL
+  with the exact lowercase `sslmode=verify-full`, `ssl=verify-full` or
+  `sslrootcert=system`.
+
+Before switching an environment, create both queues per region, add each
+region's database URL to the Secrets Store and build the container's base
+image (`npm --workspace @21n/file-processing run image:base`). Switching back
+to `local` needs a `deleted_classes` migration for `FileProcessingContainer`.
+
+On Node (`npm run dev`), `FILEFN_PROCESSING_MODE=remote` or `both` runs the
+same processors in the service process after each upload responds, limited
+to what its prebuilt sharp decodes: PDF previews and OCR, and HEIC conversion
+and OCR, need the container (see `services/file-processing/README.md`).
+TIDY-540 does not deliver PDF and HEIC processing on Node; the gap is recorded
+as `node-inline-processing-native-codecs` in TIDY-552.
+
+An hourly cron (`0 * * * *`) runs in every mode: it deletes upload sessions
+that expired before completing and retries FileFn deletions still owed for
+permanently deleted `file` records.
+
 ## Running Local Apps Against Account Backends
 
 All local browser flows should go through Caddy so cookies, OAuth redirects, and
@@ -333,6 +400,9 @@ Secret names are generated from `services/account/config/environments.json`:
 - `NUCLEUS_ACCOUNT_{ENV}_APPLE_KEY_ID`
 - `NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_URL`
 - `NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_API_KEY`
+- `NUCLEUS_ACCOUNT_{ENV}_FILEFN_R2_ACCOUNT_ID`
+- `NUCLEUS_ACCOUNT_{ENV}_FILEFN_R2_ACCESS_KEY_ID`
+- `NUCLEUS_ACCOUNT_{ENV}_FILEFN_R2_SECRET_ACCESS_KEY`
 
 An environment can list binding names in `omitSecretsStoreBindings` to leave
 optional secrets out of its Worker config and `secrets:sync`. Local and dev

@@ -9,18 +9,35 @@
   import view from "@21n/ui/environment/view.store";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import Button from "@21n/ui/elements/button/Button.svelte";
+  import {
+    isKeyTargetPane,
+    isPlainPageKey
+  } from "@nucleum/shell/shortcuts/page-keys";
+  import {
+    getContextZonePane,
+    type ContextZonePane
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import type {
+    ISelectItem,
+    ISelectValue
+  } from "@21n/ui/elements/select/select.type";
   import { CalendarLayout } from "@nucleum/features/calendar/calendar.type";
   import {
     CALENDAR_HEATMAP_SCALE,
     resolveCalendarScales,
     type CalendarScale
   } from "@nucleum/features/calendar/calendar-route";
+  import { useContextZoneSubViews } from "@nucleum/shell/topNav/contextZone/context-zone-sub-views.svelte";
 
   let {
     selectedView = $bindable(TimeScaleUnit.MONTH),
     isRefreshing = false,
     parentBgIndex = 2,
     isScopeHidden = false,
+    keyPane = undefined,
+    keyRoot = undefined,
+    isScaleInMenu = false,
     onScaleSelection = undefined
   }: {
     selectedView?: TimeScaleUnit;
@@ -28,6 +45,15 @@
     parentBgIndex?: number;
     /** Hides the scope button, as when the controls are compact. */
     isScopeHidden?: boolean;
+    /** Pane of the calendar page, used to decide whether scale keys apply. */
+    keyPane?: ContextZonePane | undefined;
+    /** Element of the calendar page, used to skip keys while it is covered. */
+    keyRoot?: HTMLElement | undefined;
+    /**
+     * Hides the scale switcher so it fits a narrow top bar; the scale is then
+     * offered through `resolveScaleMenuGroup` in the calendar menu.
+     */
+    isScaleInMenu?: boolean;
     onScaleSelection?:
       | ((event: CustomEvent<TimeScaleUnit>) => void)
       | undefined;
@@ -76,8 +102,57 @@
     .map((scale) => optionsByScale[scale])
     .filter(Boolean);
 
+  const ownPane = getContextZonePane();
+  let rootRef = $state<HTMLDivElement | undefined>();
+
+  /**
+   * D, W, M, Y and E pick the scale whose switcher shows that letter. The
+   * calendar page passes its own pane and element, since these options may
+   * draw in the top bar, outside the page.
+   */
+  function onScaleKey(event: KeyboardEvent) {
+    if (!isPlainPageKey(event)) return;
+    if (!isKeyTargetPane(keyPane ?? ownPane, keyRoot ?? rootRef)) return;
+    const letter = `text:${event.key.toUpperCase()}`;
+    const option = switchOptions.find((item) => item?.icon === letter);
+    if (!option) return;
+    event.preventDefault();
+    handleScaleSelection(
+      new CustomEvent("select", { detail: option.value as TimeScaleUnit })
+    );
+  }
+
+  const scaleSubViews = useContextZoneSubViews(() => ({
+    values: switchOptions.map((option) => String(option?.value)),
+    active: selectedView,
+    select: (value) =>
+      handleScaleSelection(
+        new CustomEvent("select", { detail: value as TimeScaleUnit })
+      )
+  }));
+
+  /** The scale as a calendar menu option group, for compact top bars. */
+  export function resolveScaleMenuGroup(): IContextMenuGroup[] {
+    return [
+      {
+        group: "scale",
+        items: [],
+        option: {
+          label: "Scale",
+          options: switchOptions as ISelectItem[],
+          value: selectedView,
+          onChange: (value: ISelectValue) =>
+            handleScaleSelection(
+              new CustomEvent("select", { detail: value as TimeScaleUnit })
+            )
+        }
+      }
+    ];
+  }
+
   function handleScaleSelection(e: CustomEvent<TimeScaleUnit>) {
     if (!e.detail) return;
+    scaleSubViews.touch();
     selectedView = e.detail;
     uiState.setState(UIState.classicCalendarScale, selectedView, {
       scope: UIStateScope.DAP
@@ -86,30 +161,34 @@
   }
 </script>
 
-<div class="flex items-center gap-2">
-  <div>
-    {#if $view.isConstrainedWidth}
-      <DropDown
-        items={switchOptions}
-        value={selectedView}
-        isDisableSearch={true}
-        width="min-w-32"
-        size={Size.sm}
-        isEnforceWidth={true}
-        onSelect={handleScaleSelection}
-      />
-    {:else}
-      <OptionSelector
-        options={switchOptions}
-        selected={selectedView}
-        size={Size.sm}
-        {parentBgIndex}
-        isExpandOnActiveForIcon={true}
-        style={OptionSelectorStyle.ICON}
-        onSelect={handleScaleSelection}
-      />
-    {/if}
-  </div>
+<svelte:window onkeydown={onScaleKey} />
+
+<div bind:this={rootRef} class="flex items-center gap-2">
+  {#if !isScaleInMenu}
+    <div>
+      {#if $view.isConstrainedWidth}
+        <DropDown
+          items={switchOptions}
+          value={selectedView}
+          isDisableSearch={true}
+          width="min-w-32"
+          size={Size.sm}
+          isEnforceWidth={true}
+          onSelect={handleScaleSelection}
+        />
+      {:else}
+        <OptionSelector
+          options={switchOptions}
+          selected={selectedView}
+          size={Size.sm}
+          {parentBgIndex}
+          isExpandOnActiveForIcon={true}
+          style={OptionSelectorStyle.ICON}
+          onSelect={handleScaleSelection}
+        />
+      {/if}
+    </div>
+  {/if}
   {#if isDev && !isScopeHidden}
     <Button icon="scope" tooltip="Calendar scope" />
   {/if}

@@ -667,6 +667,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
       source?: CaptureSaveSource;
+      isErrorToastSuppressed?: boolean;
     }
   ) {
     contentType = contentType ?? resolveContentTypeForFile(file);
@@ -690,7 +691,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         file.name,
         new Blob([file], { type: file.type }),
         {
-          isGenerateThumbnail: true
+          isGenerateThumbnail: true,
+          isErrorToastSuppressed: params?.isErrorToastSuppressed
         }
       );
 
@@ -828,6 +830,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       creationContext?: IRecordId;
       uploadProgressId?: string;
       source?: CaptureSaveSource;
+      isErrorToastSuppressed?: boolean;
     }
   ) {
     if (!params?.isEmbedContext) this.setIsSaving(true);
@@ -875,7 +878,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           item.file.name,
           new Blob([item.file], { type: item.file.type }),
           {
-            isGenerateThumbnail: true
+            isGenerateThumbnail: true,
+            isErrorToastSuppressed: params?.isErrorToastSuppressed
           }
         );
         if (!response) continue;
@@ -1013,6 +1017,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       deviceInfo?: MediaDeviceInfo | null;
       isMediaDeviceCapture?: boolean;
       source?: CaptureSaveSource;
+      isErrorToastSuppressed?: boolean;
     }
   ) {
     logger.debug({
@@ -1028,7 +1033,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       `${fileName}.jpeg`,
       data,
       {
-        isGenerateThumbnail: true
+        isGenerateThumbnail: true,
+        isErrorToastSuppressed: params?.isErrorToastSuppressed
       }
     );
     if (!result) return;

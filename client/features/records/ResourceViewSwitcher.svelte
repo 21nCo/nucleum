@@ -10,13 +10,16 @@
   import view from "@21n/ui/environment/view.store";
   import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
+  import { isInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import {
     contextZone,
     isContextZoneAccessMode,
     isResourceInContextZone,
-    nextCycleValue
+    getContextZonePane,
+    type ContextZoneViews
   } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
@@ -48,39 +51,58 @@
     title?: Snippet;
   } = $props();
 
+  const isInPlace = isInPlaceResource();
+  const isKeyedMenu = $derived(isContextZoneAccessMode(accessMode) || isInPlace);
+  const keyedMenuResolver = $derived(
+    contextMenuResolver && isKeyedMenu
+      ? () => withResourceActionKeys(contextMenuResolver?.() ?? [])
+      : contextMenuResolver
+  );
   const isContextZoneHosted = contextZone.isHosted;
+  const contextZoneEntryWidth = contextZone.entryWidth;
   const isInContextZone = $derived(
     isResourceInContextZone($isContextZoneHosted, $view, accessMode)
   );
 
-  function cyclePanel() {
-    const next = nextCycleValue(
-      panels.map((panel) => panel.value),
-      $resourceStore.panel
-    );
-    if (next !== undefined) $resourceStore.switchPanel(next);
-  }
+  const views = $derived<ContextZoneViews>({
+    values: panels.map((panel) => String(panel.value)),
+    active: $resourceStore.panel,
+    select: (value) => {
+      if (value !== $resourceStore.panel) $resourceStore.switchPanel(value);
+    }
+  });
+  const contextZonePane = getContextZonePane();
+
+  $effect(() => {
+    if (isInContextZone || panels.length < 2) return;
+    return contextZone.registerViews(contextZonePane, {
+      get views() {
+        return views;
+      }
+    });
+  });
 </script>
 
 {#if contextMenuResolver && $resourceStore.id}
   <ContextActions
     id={$resourceStore.id.toString()}
     resource={determineResourceType($resourceStore.id)}
-    resolve={() => contextMenuResolver?.() ?? []}
+    resolve={() => keyedMenuResolver?.() ?? []}
     {onAction}
-    isEnabled={isContextZoneAccessMode(accessMode)}
+    isEnabled={isKeyedMenu}
   />
 {/if}
 {#if isInContextZone}
-  <ContextZoneContent isInlineFallback={false} cycle={cyclePanel} {title}>
+  <ContextZoneContent isInlineFallback={false} {views} {title}>
     <ResourcePanelSwitcher
       variant="tabs"
+      entryWidth={$contextZoneEntryWidth}
       {resourceStore}
       {panels}
       {isConstrainedWidth}
       {accessMode}
       {onAction}
-      {contextMenuResolver}
+      contextMenuResolver={keyedMenuResolver}
     />
   </ContextZoneContent>
   <ResourcePanelSwitcher
@@ -97,6 +119,6 @@
     {accessMode}
     {onAction}
     {isFloatingHidden}
-    {contextMenuResolver}
+    contextMenuResolver={keyedMenuResolver}
   />
 {/if}

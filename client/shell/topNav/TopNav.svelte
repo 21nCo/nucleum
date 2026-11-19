@@ -20,9 +20,6 @@
   import { requireProductConfig } from "@nucleum/shared-state/product/product-config-host";
   import { cn } from "@21n/ui/environment/presentation";
   import view from "@21n/ui/environment/view.store";
-  import Icon from "@21n/ui/elements/Icon.svelte";
-  import { Size } from "@21n/ui/elements/size.enum";
-  import { tooltip } from "@21n/ui/actions/popover.action";
   import TopNavLeftMenuItem from "@nucleum/shell/topNav/TopNavLeftMenuItem.svelte";
   import TopNavDateTime from "@nucleum/shell/topNav/TopNavDateTime.svelte";
   import TopNavToasts from "@nucleum/shell/topNav/TopNavToasts.svelte";
@@ -30,6 +27,7 @@
   import NavigatorPill from "@nucleum/shell/topNav/NavigatorPill.svelte";
   import PanelActionGroup from "@nucleum/shell/topNav/PanelActionGroup.svelte";
   import { isToastBesideActions } from "@nucleum/shell/topNav/toast-placement";
+  import { isToastRaisedAboveModal } from "@nucleum/shell/overlays/raised-toasts";
   import { isContextTabShown } from "@nucleum/shell/topNav/context-tab";
   import {
     isTopNavPanelBeside,
@@ -49,10 +47,12 @@
   import PageIdentity from "@nucleum/shell/topNav/contextZone/PageIdentity.svelte";
   import PaneSwitchButton from "@nucleum/shell/topNav/contextZone/PaneSwitchButton.svelte";
   import {
-    closeTopLayer,
-    resolveCloseControlLabel
+    closeTopBarLayer,
+    resolveTopBarControl
   } from "@nucleum/shell/navigation/top-layer";
   import { isHomeRoute } from "@nucleum/shell/navigation/layout-route";
+  import { isPageFullScreenOwner } from "@nucleum/shell/navigation/full-screen-origin";
+  import { fullScreen } from "@nucleum/shell/overlays/modal.store";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { accessTrail } from "@nucleum/shell/navigator/access-trail.store";
   import { resolveAccessTrailBack } from "@nucleum/shell/navigator/access-trail";
@@ -114,8 +114,8 @@
       !!searchParams.get(AccessMode.BESIDE_BASE)
   );
   const isCloseMode = $derived(isBulkMode || isResourceOpen);
-  const closeLabel = $derived(
-    resolveCloseControlLabel(searchParams, $bulkEditCount)
+  const closeControl = $derived(
+    resolveTopBarControl(searchParams, $bulkEditCount, $fullScreen.path)
   );
   const isPageOpen = $derived(!!searchParams.get(AccessMode.PAGE));
   const trailBack = $derived(
@@ -151,8 +151,12 @@
       ? resolveSpaceBaseBack($page.url, trailBack)
       : undefined
   );
-  const isPageFullScreen = $derived(
+  const isMaxOn = $derived(
     isPageOpen && !!searchParams.get(AppSearchParam.MAX)
+  );
+  /** Over a full screen overlay, the overlay owns full screen, not the page. */
+  const isPageFullScreen = $derived(
+    isPageFullScreenOwner(searchParams, $fullScreen.path)
   );
   const isHomePage = $derived(isHomeRoute($page.url));
   const openPanel = $derived(searchParams.get(AccessMode.PANEL));
@@ -162,9 +166,11 @@
     ...(isDev ? [{ action: Action.RHOMBUS, content: rhombusAction }] : []),
     { action: Action.NAVIGATOR, content: navigatorAction }
   ]);
-  const isToastMode = $derived($toasts.length > 0);
+  const isToastMode = $derived(
+    $toasts.length > 0 && !$isToastRaisedAboveModal
+  );
   const isAppMenuColumnVisible = $derived(
-    !isPageFullScreen &&
+    !isMaxOn &&
       !isHideLeftNavBar &&
       !$appStore.isMenuHidden &&
       productConfig.appMenu.length > 0
@@ -207,9 +213,35 @@
           !(child as HTMLElement).dataset.toastSlot
       )
       .reduce((total, child) => total + (child as HTMLElement).offsetWidth, 0);
-    const identity = tabInnerRef.scrollWidth - entryRef.scrollWidth;
+    const identity =
+      tabInnerRef.scrollWidth -
+      entryRef.scrollWidth -
+      measureIdentitySlack(resolveIdentity());
     contextZone.setEntryWidth(
       Math.max(0, Math.floor(zoneRef.clientWidth - others - identity - 1))
+    );
+  }
+
+  function resolveIdentity(): HTMLElement | null {
+    return (
+      tabInnerRef?.querySelector<HTMLElement>(
+        ":scope > [data-testid='top-bar-page-identity']"
+      ) ?? null
+    );
+  }
+
+  /**
+   * Width a shrinkable page identity (a long title) can give up before it
+   * reaches its minimum. The entry is measured with the identity at that
+   * minimum, so the title truncates before the controls give up space.
+   */
+  function measureIdentitySlack(identity: HTMLElement | null): number {
+    if (!identity) return 0;
+    const style = getComputedStyle(identity);
+    if (!(parseFloat(style.flexShrink) > 0)) return 0;
+    return Math.max(
+      0,
+      identity.getBoundingClientRect().width - (parseFloat(style.minWidth) || 0)
     );
   }
 
@@ -221,6 +253,42 @@
     if (entryRef) observer.observe(entryRef);
     measureEntryWidth();
     return () => observer.disconnect();
+  });
+
+  /**
+   * Re-measures the entry when the page identity is replaced, resizes or
+   * switches between keeping its width and shrinking (a class change, which
+   * does not resize it on its own).
+   */
+  $effect(() => {
+    if (!tabInnerRef) return;
+    const inner = tabInnerRef;
+    let identity: HTMLElement | null = null;
+    const resizeObserver = new ResizeObserver(() => measureEntryWidth());
+    const classObserver = new MutationObserver(() => measureEntryWidth());
+    const track = () => {
+      const next = resolveIdentity();
+      if (next === identity) return;
+      if (identity) resizeObserver.unobserve(identity);
+      classObserver.disconnect();
+      identity = next;
+      if (identity) {
+        resizeObserver.observe(identity);
+        classObserver.observe(identity, {
+          attributes: true,
+          attributeFilter: ["class"]
+        });
+      }
+      measureEntryWidth();
+    };
+    const childObserver = new MutationObserver(track);
+    childObserver.observe(inner, { childList: true });
+    track();
+    return () => {
+      childObserver.disconnect();
+      classObserver.disconnect();
+      resizeObserver.disconnect();
+    };
   });
   let isToastRoomy = $state(false);
   const isToastInZone = $derived(isToastMode && isToastRoomy);
@@ -283,10 +351,10 @@
   <NavigatorPill {state} />
 {/snippet}
 
-<div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
+<div class="app-chrome hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
   class={cn(
-    "flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata border-b border-brs3",
+    "app-chrome flex shrink-0 items-center w-full h-12 min-h-12 max-h-12 bg-bgs2 userdata border-b border-brs3",
     "app-framed:border-b-0 app-framed:h-[calc(3rem+2*var(--app-shell-gap))] app-framed:min-h-[calc(3rem+2*var(--app-shell-gap))] app-framed:max-h-[calc(3rem+2*var(--app-shell-gap))]"
   )}
   data-testid="top-bar"
@@ -295,14 +363,18 @@
   {#if $context.embed !== Embed.HANDSET}
     {#if isCloseMode}
       <TopBarCloseButton
-        label={closeLabel}
+        label={closeControl === "minimize"
+          ? "Minimize"
+          : closeControl === "clear-selection"
+            ? "Clear selection"
+            : "Close"}
+        icon={closeControl === "minimize" ? "exitfullscreen" : "cross"}
         menuColumn={isAppMenuColumnVisible
           ? isHideMenuLabels
             ? "icons"
             : "labels"
           : undefined}
-        onclick={() =>
-          closeTopLayer({ isIncludePanel: false, isIncludeFullScreen: false })}
+        onclick={() => closeTopBarLayer()}
       />
     {:else}
       {@render leftLogo?.()}
@@ -322,8 +394,8 @@
     {#if isContextTab}
       <div
         class={cn(
-          "context-tab relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
-          "app-framed:self-end app-framed:h-[calc(100%-var(--app-shell-gap))] app-framed:mb-0 app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
+          "app-content context-tab relative z-10 flex min-w-0 shrink h-[calc(100%+1px)] -mb-px border-r border-b border-brs3",
+          "app-framed:self-end app-framed:h-[calc(100%-var(--app-shell-gap)+1px)] app-framed:-mb-px app-framed:border-0 app-framed:rounded-t-[var(--app-tab-radius)]",
           tabSurface
         )}
         data-testid="top-bar-context-tab"
@@ -333,26 +405,14 @@
           bind:this={tabInnerRef}
           class="flex items-center h-full min-w-0 overflow-x-auto overflow-y-hidden pl-2 pr-4"
         >
-          {#if isPageFullScreen && !isBulkMode}
-            <div class="flex items-center h-full shrink-0 pl-1">
-              <button
-                type="button"
-                data-testid="top-bar-exit-full-screen"
-                aria-label="Exit full screen"
-                class="flex items-center justify-center h-8 w-8 rounded-md text-fgs2 hover:bg-bgs3 hover:text-fgs1"
-                use:tooltip={{ text: "Exit full screen" }}
-                onclick={() => navigation.exitFullScreen()}
-              >
-                <Icon icon="exitfullscreen" size={Size.md} />
-              </button>
-            </div>
-          {/if}
           {#if subject && !isBulkMode}
             <PageIdentity
               {subject}
-              backId={subjectBack?.id}
+              backId={isPageFullScreen ? undefined : subjectBack?.id}
               titleContent={$activeEntry?.title}
-              onBack={() => navigation.backInTrail()}
+              onBack={isPageFullScreen
+                ? undefined
+                : () => navigation.backInTrail()}
             />
             {#if $activeEntry}
               <div
@@ -410,25 +470,31 @@
   >
     {#if isToastMode && !isToastInZone}
       <TopNavToasts />
-    {:else}
+    {:else if !isPageFullScreen}
       {@render topnav?.()}
       <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
     {/if}
   </div>
-  <div
-    class="flex items-center h-full shrink-0 [&>*]:mx-1"
-    data-testid="top-bar-indicators"
-  >
-    <TrailLeftIndicator />
-    {@render offlineStatus?.({})}
-    <InlineSyncingFeedback
-      resource={Resource.everything}
-      isShorter={true}
-      text="Syncing..."
+  {#if !isPageFullScreen}
+    <div
+      class="flex items-center h-full shrink-0 [&>*]:mx-1"
+      data-testid="top-bar-indicators"
+    >
+      <TrailLeftIndicator />
+      {@render offlineStatus?.({})}
+      <InlineSyncingFeedback
+        resource={Resource.everything}
+        isShorter={true}
+        text="Syncing..."
+      />
+      {@render indicators?.()}
+    </div>
+    <PanelActionGroup
+      actions={groupedPanelActions}
+      {openPanel}
+      {isPanelBeside}
     />
-    {@render indicators?.()}
-  </div>
-  <PanelActionGroup actions={groupedPanelActions} {openPanel} {isPanelBeside} />
+  {/if}
 </div>
 
 <style>
@@ -439,7 +505,7 @@
     content: "";
     position: absolute;
     bottom: 0;
-    width: var(--app-tab-radius);
+    width: calc(var(--app-tab-radius) + 1px);
     height: var(--app-tab-radius);
     background-color: inherit;
     pointer-events: none;

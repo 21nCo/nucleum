@@ -11,7 +11,9 @@
     parentBgIndex = 2,
     onDateChange = undefined,
     onGoToPrevious = undefined,
-    onGoToNext = undefined
+    onGoToNext = undefined,
+    isShortDate = false,
+    isDateHidden = false
   }: {
     selectedDate?: Date;
     selectedView?: TimeScaleUnit;
@@ -20,6 +22,10 @@
     onDateChange?: (() => void) | undefined;
     onGoToPrevious?: (() => void) | undefined;
     onGoToNext?: (() => void) | undefined;
+    /** Shortens month names so the header fits a narrow top bar. */
+    isShortDate?: boolean;
+    /** Shows only the previous and next buttons, for the narrowest top bar. */
+    isDateHidden?: boolean;
   } = $props();
 
   const monthNames = [
@@ -40,7 +46,8 @@
   function goToPrevious() {
     if (
       selectedView === TimeScaleUnit.YEAR ||
-      selectedView === TimeScaleUnit.WEEK
+      selectedView === TimeScaleUnit.WEEK ||
+      selectedView === TimeScaleUnit.PART
     ) {
       onGoToPrevious?.();
     } else {
@@ -61,7 +68,8 @@
   function goToNext() {
     if (
       selectedView === TimeScaleUnit.YEAR ||
-      selectedView === TimeScaleUnit.WEEK
+      selectedView === TimeScaleUnit.WEEK ||
+      selectedView === TimeScaleUnit.PART
     ) {
       onGoToNext?.();
     } else {
@@ -92,8 +100,38 @@
   }
 
   const weekDates = $derived(getWeekDates(selectedDate));
-  const currentMonth = $derived(monthNames[selectedDate.getMonth()]);
+  const currentMonth = $derived(monthName(selectedDate.getMonth()));
   const currentYear = $derived(selectedDate.getFullYear());
+  const weekLabel = $derived(
+    visibleWeekDates && visibleWeekDates.length >= 7
+      ? formatWeekRange(
+          visibleWeekDates[0],
+          visibleWeekDates[6],
+          visibleWeekDates[6].getFullYear()
+        )
+      : formatWeekRange(weekDates[0], weekDates[6], currentYear)
+  );
+
+  function monthName(month: number) {
+    const name = monthNames[month];
+    return isShortDate ? name.slice(0, 3) : name;
+  }
+
+  /**
+   * Week range label. Short labels drop the repeated month and the current
+   * year, for example "Nov 8 - 14"; full labels keep both months and the year.
+   */
+  function formatWeekRange(start: Date, end: Date, year: number) {
+    const startMonth = monthName(start.getMonth());
+    const endMonth = monthName(end.getMonth());
+    const endPart =
+      isShortDate && start.getMonth() === end.getMonth()
+        ? `${end.getDate()}`
+        : `${endMonth} ${end.getDate()}`;
+    const yearPart =
+      isShortDate && year === new Date().getFullYear() ? "" : `, ${year}`;
+    return `${startMonth} ${start.getDate()} - ${endPart}${yearPart}`;
+  }
 </script>
 
 <div class="flex items-center justify-center">
@@ -104,31 +142,27 @@
       onclick={goToPrevious}
     />
   </div>
-  <h2
-    class={cn("text-h4 h-full  flex items-center justify-center px-3", {
-      "hover:bg-bgs2-striped": selectedView === TimeScaleUnit.DAY
-    })}
-  >
-    {#if selectedView === TimeScaleUnit.YEAR}
-      {currentYear}
-    {:else if selectedView === TimeScaleUnit.WEEK}
-      {#if visibleWeekDates && visibleWeekDates.length >= 7}
-        {monthNames[visibleWeekDates[0].getMonth()]}
-        {visibleWeekDates[0].getDate()} - {monthNames[
-          visibleWeekDates[6].getMonth()
-        ]}
-        {visibleWeekDates[6].getDate()}, {visibleWeekDates[6].getFullYear()}
+  {#if !isDateHidden}
+    <h2
+      class={cn("text-h4 h-full  flex items-center justify-center px-3", {
+        "hover:bg-bgs2-striped": selectedView === TimeScaleUnit.DAY
+      })}
+    >
+      {#if selectedView === TimeScaleUnit.YEAR}
+        {currentYear}
+      {:else if selectedView === TimeScaleUnit.WEEK}
+        {weekLabel}
+      {:else if selectedView === TimeScaleUnit.MONTH}
+        {currentMonth} {currentYear}
       {:else}
-        {monthNames[weekDates[0].getMonth()]}
-        {weekDates[0].getDate()} - {monthNames[weekDates[6].getMonth()]}
-        {weekDates[6].getDate()}, {currentYear}
+        <DatePicker
+          bind:date={selectedDate}
+          variant="inline-with-icon"
+          onChange={() => onDateChange?.()}
+        />
       {/if}
-    {:else if selectedView === TimeScaleUnit.MONTH}
-      {currentMonth} {currentYear}
-    {:else}
-      <DatePicker bind:date={selectedDate} variant="inline-with-icon" />
-    {/if}
-  </h2>
+    </h2>
+  {/if}
   <div class="h-full w-10">
     <BoxButton
       icon="chevron-right"

@@ -4,7 +4,10 @@
   import { onMount, untrack } from "svelte";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
-  import { UIState, UIStateScope } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
+  import {
+    UIState,
+    UIStateScope
+  } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { OverviewPanel } from "@nucleum/client/config/product.type";
   import { Action } from "@nucleum/client/config/action.enum";
   import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
@@ -14,7 +17,10 @@
   import BoxSwitcher from "@21n/ui/elements/switcher/BoxSwitcher.svelte";
   import { resolveNucleusOverviewItems } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
-  import { nextCycleValue } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import {
+    contextZone,
+    type ContextZoneViews
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   let {
     subPath = undefined,
@@ -22,13 +28,13 @@
   }: { subPath?: string[]; isRouted?: boolean } = $props();
 
   const items = resolveNucleusOverviewItems();
+  const entryWidth = contextZone.entryWidth;
   let selectedPanel = $state<OverviewPanel>(resolveInitialPanel());
   let appliedSubPath = untrack(() => subPath?.join("/"));
 
   function parsePanel(slug: string | undefined) {
     return items.find((item) => item.value === slug)?.value as
-      | OverviewPanel
-      | undefined;
+      OverviewPanel | undefined;
   }
 
   function resolveSavedState() {
@@ -68,17 +74,16 @@
     }
   }
 
-  function cyclePanel() {
-    const panel = parsePanel(
-      nextCycleValue(
-        items.map((item) => String(item.value)),
-        selectedPanel
-      )
-    );
-    if (!panel) return;
-    selectedPanel = panel;
-    savePanel(panel);
-  }
+  const panelViews = $derived<ContextZoneViews>({
+    values: items.map((item) => String(item.value)),
+    active: selectedPanel,
+    select: (value) => {
+      const panel = parsePanel(value);
+      if (!panel) return;
+      selectedPanel = panel;
+      savePanel(panel);
+    }
+  });
 
   function onPanelSelect(event: CustomEvent) {
     const panel = parsePanel(event.detail);
@@ -132,20 +137,22 @@
 </script>
 
 <div class="w-full h-full flex flex-col">
-  {#snippet overviewTabs()}
+  {#snippet overviewTabs(isInContextZone: boolean)}
     <BoxSwitcher
       options={items}
       bind:selected={selectedPanel}
       onSelect={onPanelSelect}
+      isOverflowToMenu={isInContextZone}
+      overflowWidth={isInContextZone ? $entryWidth : undefined}
     />
   {/snippet}
-  <ContextZoneContent cycle={cyclePanel}>
+  <ContextZoneContent views={panelViews}>
     <div class="h-full" data-testid="overview-tabs">
-      {@render overviewTabs()}
+      {@render overviewTabs(true)}
     </div>
     {#snippet fallback()}
       <div class="h-12 min-h-12 border-b border-brs3 pl-3">
-        {@render overviewTabs()}
+        {@render overviewTabs(false)}
       </div>
     {/snippet}
   </ContextZoneContent>

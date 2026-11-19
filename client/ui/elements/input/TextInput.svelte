@@ -32,6 +32,8 @@
     hasControls = false,
     isShowSaveControl = false,
     isShowClearControl = false,
+    saveControlLabel = "Save",
+    cancelControlLabel = undefined,
     isPreventDefaultOnEnter = false,
     isRounded = false,
     height = undefined,
@@ -40,6 +42,7 @@
     isAccentBackground = false,
     testId = undefined,
     isDisabled = false,
+    isReadOnly = false,
     children = undefined,
     onBlur = undefined,
     onCancel = undefined,
@@ -70,6 +73,8 @@
     hasControls?: boolean;
     isShowSaveControl?: boolean;
     isShowClearControl?: boolean;
+    saveControlLabel?: string;
+    cancelControlLabel?: string | undefined;
     isPreventDefaultOnEnter?: boolean;
     isRounded?: boolean;
     height?: string | undefined;
@@ -78,6 +83,7 @@
     isAccentBackground?: boolean;
     testId?: string | undefined;
     isDisabled?: boolean;
+    isReadOnly?: boolean;
     children?: Snippet | undefined;
     onBlur?: ((event: CustomEvent<void>) => void) | undefined;
     onCancel?:
@@ -101,6 +107,9 @@
       | undefined;
   } = $props();
 
+  const resolvedCancelControlLabel = $derived(
+    cancelControlLabel ?? (isShowSaveControl ? "Cancel" : "Clear")
+  );
   let isFocused = $state(false);
   let inputRef = $state<any>();
   let isValidLink = $state(false);
@@ -484,6 +493,7 @@
           }}
           {placeholder}
           disabled={isDisabled}
+          readonly={isReadOnly}
           bind:this={inputRef}
           autocomplete="off"
           tabindex={isDisabled ? -1 : 0}
@@ -502,6 +512,7 @@
             <button
               type="button"
               id="input-save-control"
+              aria-label={saveControlLabel}
               onclick={(event) => emitSave(event)}
             >
               <Icon icon="check" />
@@ -511,6 +522,7 @@
             <button
               type="button"
               id="input-cancel-control"
+              aria-label={resolvedCancelControlLabel}
               onclick={(event) => {
                 event.stopPropagation();
                 if (isShowClearControl) emitClear();
