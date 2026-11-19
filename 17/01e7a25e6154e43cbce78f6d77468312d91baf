@@ -1,0 +1,31 @@
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_b66d0e9dd4fae0::t_6250f699f519f5 208-298
+client/features/calendar/CalendarLayout.svelte
+  s_b66d0e9dd4fae0::t_b470a1806e4eed 48-52,96-98,106,112-113,136,140,146-152,155-157,173-180,498,523,534-538,540,584
+client/features/calendar/CalendarLayoutFullWidth.test.ts
+  s_b66d0e9dd4fae0::t_b3e64c646c3d1b 465-660
+client/features/calendar/birdView/BirdCalendar.svelte
+  s_b66d0e9dd4fae0::t_92d05564420638 131,134
+client/features/calendar/classic/CalendarHeader.svelte
+  s_b66d0e9dd4fae0::t_f1a3d6c7b4f5a6 15-16,27-28,145-165
+client/features/calendar/classic/CalendarHeaderDateHidden.test.ts
+  s_b66d0e9dd4fae0::t_ad340ef47dec02 1-38
+client/features/calendar/classic/ClassicCalendar.svelte
+  s_b66d0e9dd4fae0::t_0a018e04c674c6 201,204
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1701e7a25e6154e43cbce78f6d77468312d91baf",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+apps/e2e-playwright/tests/memory/filefn-offline-capture.spec.ts
+  s_b66d0e9dd4fae0::t_c903de69499211 1-210
+tests/fixtures/opfs.ts
+  s_b66d0e9dd4fae0::t_2063ad7be72f5d 1-175
+client/shared-state/files/file-queue.test.ts
+  s_b66d0e9dd4fae0::t_42478eadb9a2c4 1-414
+client/shared-state/files/file-upload.account-queue.test.ts
+  s_b66d0e9dd4fae0::t_66d754c1ccfd18 1-479
+client/shared-state/files/filefn-client.ts
+  s_b66d0e9dd4fae0::t_932056dc7bbce1 19-26,249,262-375,485,586-598
+client/shared-state/files/file-upload.ts
+  s_b66d0e9dd4fae0::t_4d4ad48abf451c 26-34,41-42,112-114,155,237-252,254,281-300,303,308-340,342-378
+client/shared-state/files/file-queue.ts
+  s_b66d0e9dd4fae0::t_e0673f6e28580b 1-679
+client/shared-state/files/file-url.ts
+  s_b66d0e9dd4fae0::t_2c010f35ee4c29 5-9,14,66-75,81-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aed15dc7a277700c2ef76ea6ef28185c83138432",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

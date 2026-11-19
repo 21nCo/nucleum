@@ -1,0 +1,23 @@
+client/shared-state/files/file-queue.test.ts
+  s_ace82070dcb8c7::t_853ebbf67ac16c 1-6,141-142,144-146,177-181,185-186,188,194-202,204-207,210,214-221,225,231,233,235
+client/shared-state/files/file-url.ts
+  s_ace82070dcb8c7::t_8735a0b50df724 74,90
+client/shared-state/files/file-queue.ts
+  s_ace82070dcb8c7::t_664d92d81fb84e 209,399-402,414-415,417-420,423,425,454,672
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "063f283e1a7344280a83a628359ffaca943ee6e0",
+  "prompts": {},
+  "sessions": {
+    "s_ace82070dcb8c7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32377d70-4569-4b72-b877-f60e4a5990c1",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

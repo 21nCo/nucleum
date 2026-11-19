@@ -1,0 +1,19 @@
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_2a55e5b35201df::t_5139ec898d8524 499-509
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0878e8475d5f516d01e61b93ec70f018a6a06e21",
+  "prompts": {},
+  "sessions": {
+    "s_2a55e5b35201df": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "82ef521a-8fda-45f1-a3e6-8221cd781ba1",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

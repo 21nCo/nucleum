@@ -1,0 +1,67 @@
+client/features/calendar/CalendarCW.svelte
+  s_f35b422006faeb::t_44e99199c1fa39 10-14,17-28,31-33
+client/features/calendar/CalendarCW.today-key.test.ts
+  s_dd0818888778fb::t_2fec97ee498ab2 1-77
+client/features/records/resource-action-keys.ts
+  s_f35b422006faeb::t_bd98a698d36d8b 31-34,38-42
+client/features/spaces/SpaceBody.failed-load.test.ts
+  s_f35b422006faeb::t_887333de6a940a 1-124
+client/features/spaces/SpaceBody.svelte
+  s_f35b422006faeb::t_18b29d926a4c5a 123-132,159
+client/shell/shortcuts/ChordRunner.svelte
+  s_f35b422006faeb::t_f7b862083c773b 26,32-51,89,97-100
+client/shell/shortcuts/ShortcutRunner.chord-ending.test.ts
+  s_f35b422006faeb::t_27215cf3fcb170 1-120
+client/shell/shortcuts/ShortcutRunner.svelte
+  s_f35b422006faeb::t_d5a442fd79a44e 33,55-57,71-77
+client/shell/shortcuts/page-keys.test.ts
+  s_f35b422006faeb::t_4911063efed4ec 1-61
+client/shell/shortcuts/page-keys.ts
+  s_f35b422006faeb::t_6701390e204da1 2,20-27,31-32,43
+client/surfaces/commandBar/ContextActionKeys.svelte
+  s_7c3b2299b1f2a6::t_e1070de63db2ba 5-8,28-35,40-42,62-64,69-70,84-87
+client/features/records/resource-action-keys.test.ts
+  s_f35b422006faeb::t_1d7f71f85b39e0 26-39
+client/features/spaces/space-page-menu.test.ts
+  s_f35b422006faeb::t_78f73a68943935 25-26,67-92
+client/features/spaces/space-page-menu.ts
+  s_f35b422006faeb::t_6756a6ca615a25 7,22-32,37,40,48-62,70
+client/surfaces/commandBar/CmdResults.svelte
+  s_f35b422006faeb::t_27d3fb0a328804 373-383
+client/surfaces/commandBar/CommandBar.context-badge.test.ts
+  s_f35b422006faeb::t_55fcdfac3bd9d1 1-111
+client/surfaces/commandBar/ContextActionKeys.async.test.ts
+  s_f35b422006faeb::t_7e8a4c325fd1db 1-139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e745f51304ace29a7cd164a448adfe60e3b1f719",
+  "prompts": {},
+  "sessions": {
+    "s_7c3b2299b1f2a6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e960-c549-7b22-b6b4-b1c5a3f225a9",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_dd0818888778fb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e960-d1a6-77d2-8140-8d75768d291e",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f35b422006faeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "679baf05-05c3-434b-8d43-45dfc1b3d785",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

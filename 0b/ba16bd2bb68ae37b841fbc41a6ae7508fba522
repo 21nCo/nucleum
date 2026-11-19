@@ -1,0 +1,19 @@
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_667eda9ff0196f::t_3b7fc6900ad89f 368,419
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0bba16bd2bb68ae37b841fbc41a6ae7508fba522",
+  "prompts": {},
+  "sessions": {
+    "s_667eda9ff0196f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_667eda9ff0196f",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
