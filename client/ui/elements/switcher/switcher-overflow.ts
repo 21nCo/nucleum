@@ -117,6 +117,7 @@ export function resolveSwitcherRow({
   const activeWidth = overflow.isActiveCompact
     ? (input.activeCompactWidth ?? 0)
     : (widths[activeIndex] ?? 0);
+  const smallest = padding + moreWidth + (hasActive ? activeWidth + gap : 0);
   const hasHidden = overflow.visible.length < widths.length;
   if (!hasHidden) {
     const shown = overflow.visible.map((index) =>
@@ -128,9 +129,11 @@ export function resolveSwitcherRow({
       padding +
       shown.reduce((sum, width) => sum + width, 0) +
       gap * Math.max(0, shown.length - 1);
-    if (rowWidth <= budget) return { ...overflow, isTrailingInMenu: false };
+    // Without a hidden option More only shows for the trailing controls, so
+    // they move into it only when that makes the content narrower.
+    if (rowWidth <= budget || smallest >= rowWidth + trailing)
+      return { ...overflow, isTrailingInMenu: false };
   }
-  const smallest = padding + moreWidth + (hasActive ? activeWidth + gap : 0);
   if (hasHidden && smallest <= budget)
     return { ...overflow, isTrailingInMenu: false };
   return {

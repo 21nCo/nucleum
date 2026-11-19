@@ -27,21 +27,51 @@
   let rowRef = $state<HTMLButtonElement>();
   let isOpenedByKeyboard = false;
   let isFocusInSubmenu = false;
+  /**
+   * Whether the submenu shows, read from the popover's change event, which
+   * does not bubble, so it is listened to on the row itself.
+   */
+  let isSubmenuShown = false;
   const isFocusedOnKeyboardOpen = $derived(
     !!item.secondStepComponent?.isFocusedOnKeyboardOpen
   );
+  const keyboardOpenKeys = ["ArrowRight", "Enter", " "];
 
   /** A click without a pointer (Enter, Space) opens the submenu by keyboard. */
   function handleClickCapture(event: MouseEvent) {
     isOpenedByKeyboard = event.detail === 0;
   }
 
+  /**
+   * For a submenu that takes focus on a keyboard open: Right arrow opens a
+   * closed submenu like Enter does, and Enter, Space or Right arrow on a
+   * submenu already shown, such as by hover, move focus into it without
+   * toggling it.
+   */
   function handleKeydown(event: KeyboardEvent) {
-    if (!isFocusedOnKeyboardOpen || event.key !== "ArrowRight") return;
-    if (event.altKey || event.ctrlKey || event.metaKey || isPopoverVisible)
+    if (!isFocusedOnKeyboardOpen || !keyboardOpenKeys.includes(event.key))
       return;
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+      return;
+    if (isSubmenuShown) {
+      event.preventDefault();
+      focusSubmenu();
+      return;
+    }
+    if (event.key !== "ArrowRight") return;
     event.preventDefault();
     rowRef?.click();
+  }
+
+  /** Focuses the first enabled item of the shown submenu. */
+  function focusSubmenu() {
+    if (!rowRef) return;
+    const doc = rowRef.ownerDocument;
+    const first = doc
+      .getElementById("contextMenuPopoverSecondaryScreen")
+      ?.querySelector<HTMLElement>("button:not([disabled])");
+    first?.focus();
+    isFocusInSubmenu = !!first && doc.activeElement === first;
   }
 
   /**
@@ -49,17 +79,13 @@
    * first item, and when it closes with focus lost, back to this row.
    */
   function handoffFocus(isOpen: boolean) {
+    isSubmenuShown = isOpen;
     if (!isFocusedOnKeyboardOpen || !rowRef) return;
-    const doc = rowRef.ownerDocument;
     if (isOpen) {
-      if (!isOpenedByKeyboard) return;
-      const submenu = doc
-        .getElementById("contextMenuPopoverSecondaryScreen")
-        ?.querySelector<HTMLElement>("button:not([disabled])");
-      submenu?.focus();
-      isFocusInSubmenu = !!submenu && doc.activeElement === submenu;
+      if (isOpenedByKeyboard) focusSubmenu();
       return;
     }
+    const doc = rowRef.ownerDocument;
     const active = doc.activeElement;
     const isFocusLost = !active || active === doc.body;
     if (isFocusInSubmenu && isFocusLost && rowRef.isConnected) rowRef.focus();

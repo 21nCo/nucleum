@@ -237,6 +237,26 @@ describe("switcher row with trailing controls", () => {
     });
   });
 
+  it("keeps the trailing controls when More alone would be wider than them", () => {
+    const only = {
+      widths: [100],
+      activeIndex: 0,
+      activeCompactWidth: 30,
+      moreWidth: 66,
+      trailingWidth: 48
+    };
+    expect(resolveSwitcherRow({ ...only, available: 77 })).toEqual({
+      visible: [0],
+      isActiveCompact: true,
+      isTrailingInMenu: false
+    });
+    expect(resolveSwitcherRow({ ...only, moreWidth: 47, available: 77 })).toEqual({
+      visible: [0],
+      isActiveCompact: true,
+      isTrailingInMenu: true
+    });
+  });
+
   it("never moves anything into More without trailing controls", () => {
     const { trailingWidth: _trailingWidth, ...options } = input;
     expect(resolveSwitcherRow({ ...options, available: 10 })).toEqual({
