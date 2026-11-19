@@ -1078,7 +1078,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     );
     await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(1));
 
-    expect(JSON.parse(readStarted()!)).toEqual(AUTHORITY_A);
+    expect(JSON.parse(readStarted()!)).toMatchObject(AUTHORITY_A);
     fileFn.finish();
     await done;
     expect(opfs.list(QUEUE)).toEqual([]);
@@ -1244,9 +1244,134 @@ describe("FileFn OPFS queue of an account's records", () => {
     release!();
     await firstDone;
 
-    expect(JSON.parse(readStarted()!)).toEqual(AUTHORITY_A);
+    expect(JSON.parse(readStarted()!)).toMatchObject(AUTHORITY_A);
     uploading.finish();
     await secondDone;
+  });
+
+  it("keeps the marker of another tab's sent upload when its own attempt stops after the check, without Web Locks", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    const first = await openTab();
+    const second = await openTab();
+    let release: (() => void) | undefined;
+    let isCurrent = true;
+    const held = createReferences(new Set([FILE_ID]));
+    held.references.isCurrent = () => isCurrent;
+    held.references.isReferenced = () =>
+      new Promise((resolve) => {
+        release = () => resolve(true);
+      });
+    const firstDone = replay(
+      first,
+      createClient({ isImmediate: true }).client,
+      held.references
+    );
+    await vi.waitFor(() => expect(release).toBeDefined());
+    const uploading = createClient();
+    const secondDone = replay(
+      second,
+      uploading.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+    await vi.waitFor(() => expect(uploading.uploads).toHaveLength(1));
+    const marker = readStarted();
+
+    isCurrent = false;
+    release!();
+    await firstDone;
+
+    expect(readStarted()).toBe(marker);
+    expect(JSON.parse(marker!)).toMatchObject(AUTHORITY_A);
+    uploading.finish();
+    await secondDone;
+  });
+
+  it.each([
+    ["sent no request", 0, true],
+    ["sent a request", 1, false]
+  ])(
+    "binds the file to its authority only when the torn-down client %s",
+    async (_, requests, isUploadedAtB) => {
+      installDevice();
+      await enqueuePhoto(await openTab());
+      const tab = await openTab();
+      const torn = createClient({
+        uploadError: new DOMException("The client was torn down", "AbortError")
+      });
+      const sent = { count: 0 };
+      tab.countSentRequests(torn.client, sent);
+      const markers: (string | undefined)[] = [];
+      const upload = torn.client.uploadFile;
+      torn.client.uploadFile = (input) => {
+        markers.push(readStarted());
+        sent.count += requests;
+        return upload(input);
+      };
+      await replay(
+        tab,
+        torn.client,
+        createReferences(new Set([FILE_ID])).references
+      );
+      expect(JSON.parse(markers[0]!)).toMatchObject(AUTHORITY_A);
+
+      const atB = createClient({ isImmediate: true });
+      const b = createReferences(new Set([FILE_ID]), [], AUTHORITY_B);
+      await replay(await openTab(), atB.client, b.references);
+
+      expect(atB.uploads).toHaveLength(isUploadedAtB ? 1 : 0);
+      expect(opfs.list(QUEUE)).toEqual(
+        isUploadedAtB ? [] : [`queued_${FILE_ID}`]
+      );
+    }
+  );
+
+  it("keeps a recent capture whose record and committed mark land while its record is checked", async () => {
+    installDevice();
+    const tab = await openTab();
+    await stagePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const { references, discarded } = createReferences(new Set());
+    references.isReferenced = async () => {
+      await tab.markQueuedFileCommitted(QUEUE, FILE_ID);
+      return false;
+    };
+
+    await replay(tab, fileFn.client, references);
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(discarded).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+  });
+
+  it("keeps a capture saving while an older file's grace deadline pass checks its record", async () => {
+    vi.useRealTimers();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    installDevice();
+    const tab = await openTab();
+    await stagePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const { references, discarded } = createReferences(new Set());
+    await replay(tab, fileFn.client, references);
+    await vi.advanceTimersByTimeAsync(tab.UNCOMMITTED_GRACE_MS - 60_000);
+    await tab.enqueueFile(QUEUE, {
+      fileId: SECOND_FILE_ID,
+      fileName: "second.png",
+      contentType: "image/png",
+      blob: new Blob(["second bytes"], { type: "image/png" })
+    });
+    references.isReferenced = async (fileId) => {
+      if (fileId === SECOND_FILE_ID) {
+        await tab.markQueuedFileCommitted(QUEUE, SECOND_FILE_ID);
+      }
+      return false;
+    };
+
+    await vi.advanceTimersByTimeAsync(2 * 60_000);
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(discarded).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${SECOND_FILE_ID}`]);
   });
 
   it("removes a recent file without a record at its grace deadline, without another trigger", async () => {

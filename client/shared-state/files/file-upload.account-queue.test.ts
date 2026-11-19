@@ -85,7 +85,9 @@ const authority = vi.hoisted(() => ({
   url: "https://account-useast-dev.nucleum.app/datafn",
   pulls: 0,
   isFailing: false,
-  onPull: null as null | ((pull: number) => Promise<void>)
+  onPull: null as null | ((pull: number) => Promise<void>),
+  /** Runs after each file query, before its result returns, when set. */
+  onFileQuery: null as null | ((input: unknown) => Promise<void>)
 }));
 vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
@@ -113,6 +115,20 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
         };
       }
       if (key === "sync") return { ...target.sync, pullNow };
+      if (key === "file" && authority.onFileQuery) {
+        const { onFileQuery } = authority;
+        const table = target.file;
+        return new Proxy(table, {
+          get: (_, name) =>
+            name === "query"
+              ? async (input: Parameters<typeof table.query>[0]) => {
+                  const result = await table.query(input);
+                  await onFileQuery(input);
+                  return result;
+                }
+              : Reflect.get(table, name)
+        });
+      }
       return Reflect.get(target, key);
     }
   });
@@ -273,6 +289,7 @@ beforeEach(() => {
   authority.pulls = 0;
   authority.isFailing = false;
   authority.onPull = null;
+  authority.onFileQuery = null;
 });
 
 afterEach(async () => {
@@ -655,6 +672,65 @@ describe("files a signed-in cloud account captures offline", () => {
 
     await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
     expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+    expect(sdk.deletes).toEqual([]);
+  });
+
+  it("uploads an offline capture whose record saves while a replay checks it, instead of removing it", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const resume = deferred<void>();
+    const stage = OPFSStore.prototype.stagePendingUpload;
+    vi.spyOn(OPFSStore.prototype, "stagePendingUpload").mockImplementation(
+      async function (this: InstanceType<typeof OPFSStore>, pending) {
+        await stage.call(this, pending);
+        await resume.promise;
+      }
+    );
+    const capture = capturePhoto();
+    authority.onFileQuery = async (input) => {
+      if (!(input as { filters?: { fileId?: string } }).filters?.fileId) return;
+      resume.resolve();
+      await capture;
+    };
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1));
+
+    goOnline();
+    const record = await capture;
+
+    await vi.waitFor(() =>
+      expect(sdk.uploads).toEqual([
+        expect.objectContaining({ fileId: record.fileId })
+      ])
+    );
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(sdk.deletes).toEqual([]);
+  });
+
+  it("uploads at the account's new authority an offline capture whose client was torn down before sending it", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const hold = deferred<void>();
+    sdk.hold = hold.promise;
+    goOnline();
+    await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
+
+    const moved = cloudAccount("user-a");
+    account.set({
+      ...moved,
+      userInfo: { ...moved.userInfo!, region: "euwest" }
+    });
+    authority.url = "https://account-euwest-dev.nucleum.app/datafn";
+    await openData("user-a");
+    hold.resolve();
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.started).toEqual([
+      expect.objectContaining({ fileId: record.fileId }),
       expect.objectContaining({ fileId: record.fileId })
     ]);
     expect(sdk.deletes).toEqual([]);

@@ -18,6 +18,7 @@ import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import {
+  countSentRequests,
   replayFileQueue,
   resolveAccountFileQueueDir,
   resolveFileQueueDirsOf,
@@ -240,11 +241,15 @@ async function createAccountFileFnClient(
   baseUrl: string,
   teardown: AbortSignal
 ): Promise<FileFnClient> {
-  const client = await createSdkClient(baseUrl, teardown, {
-    enabled: true,
-    opfsDir: resolveFileFnOfflineDir(userId)
-  });
+  const sent = { count: 0 };
+  const client = await createSdkClient(
+    baseUrl,
+    teardown,
+    { enabled: true, opfsDir: resolveFileFnOfflineDir(userId) },
+    sent
+  );
   const guarded = guardFileFnClient(client, teardown);
+  countSentRequests(guarded, sent);
   if (!teardown.aborted) {
     startOfflineReplayWhenOwner(userId, client, teardown);
     startFileQueueReplay(userId, baseUrl, guarded, teardown);
@@ -455,18 +460,20 @@ export async function uploadQueuedFiles(): Promise<void> {
 
 /**
  * Creates an SDK client at an authority, authenticated as the signed-in
- * account, whose requests end when the teardown signal aborts.
+ * account, whose requests end when the teardown signal aborts and add to
+ * `sent` once dispatched.
  */
 async function createSdkClient(
   baseUrl: string,
   teardown: AbortSignal,
-  offline: { enabled: boolean; opfsDir?: string }
+  offline: { enabled: boolean; opfsDir?: string },
+  sent = { count: 0 }
 ): Promise<FileFnClient> {
   const transport = await createNucleumAuthFnTransportAuth();
   return createFileFnClient({
     baseUrl,
     credentials: (await transport.getCredentials?.()) ?? "include",
-    fetch: createTeardownFetch(teardown),
+    fetch: createTeardownFetch(teardown, sent),
     getAuthHeaders: async () => {
       teardown.throwIfAborted();
       return Object.fromEntries(
@@ -1018,9 +1025,13 @@ function guardFileFnClient(
 /**
  * Sends requests through the global fetch until the client is torn down, then
  * aborts in-flight requests and rejects new ones with an AbortError, which the
- * offline queue keeps staged without spending a retry.
+ * offline queue keeps staged without spending a retry. Counts each request in
+ * `sent` as it is dispatched.
  */
-function createTeardownFetch(teardown: AbortSignal): typeof fetch {
+function createTeardownFetch(
+  teardown: AbortSignal,
+  sent: { count: number }
+): typeof fetch {
   return async (input, init) => {
     teardown.throwIfAborted();
     const linked = new AbortController();
@@ -1034,6 +1045,7 @@ function createTeardownFetch(teardown: AbortSignal): typeof fetch {
       return () => signal.removeEventListener("abort", forward);
     });
     try {
+      sent.count += 1;
       return await globalThis.fetch(input, { ...init, signal: linked.signal });
     } finally {
       for (const remove of detach) remove();
