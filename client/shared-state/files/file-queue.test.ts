@@ -13,6 +13,7 @@ import {
   type UploadResult
 } from "@filefn/client";
 import { createFakeLocks, createFakeOpfs } from "../../../tests/fixtures/opfs";
+import type { QueuedFileReferences } from "./file-queue";
 
 type FileQueue = typeof import("./file-queue");
 
@@ -959,5 +960,279 @@ describe("FileFn OPFS queue of an account's records", () => {
 
     expect(fileFn.uploads).toHaveLength(1);
     expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  /** Writes the photo's STARTED marker as left by an interrupted write. */
+  async function writeStarted(text: string) {
+    const root = await navigator.storage.getDirectory();
+    const queue = await root.getDirectoryHandle(QUEUE);
+    const entry = await queue.getDirectoryHandle(`queued_${FILE_ID}`);
+    const handle = await entry.getFileHandle("started", { create: true });
+    const writable = await handle.createWritable();
+    await writable.write(text);
+    await writable.close();
+  }
+
+  function readStarted() {
+    const bytes = opfs.read(QUEUE, `queued_${FILE_ID}`, "started");
+    return bytes && new TextDecoder().decode(bytes);
+  }
+
+  /**
+   * Runs `during` when a STARTED marker write closes, before it lands, then
+   * fails the write when `isFailed`.
+   */
+  function onMarkerWrite(during: () => void, isFailed = false) {
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      ({
+        ...dir,
+        getDirectoryHandle: async (
+          child: string,
+          options?: FileSystemGetDirectoryOptions
+        ) => wrap(await dir.getDirectoryHandle(child, options)),
+        getFileHandle: async (
+          child: string,
+          options?: FileSystemGetFileOptions
+        ) => {
+          const handle = await dir.getFileHandle(child, options);
+          if (child !== "started") return handle;
+          return {
+            ...handle,
+            createWritable: async () => {
+              const writable = await handle.createWritable();
+              return {
+                write: (data: string) => writable.write(data),
+                close: async () => {
+                  during();
+                  if (isFailed)
+                    throw new DOMException("Full", "QuotaExceededError");
+                  await writable.close();
+                }
+              };
+            }
+          };
+        }
+      }) as FileSystemDirectoryHandle;
+    const { getDirectory } = navigator.storage;
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      storage: { getDirectory: async () => wrap(await getDirectory()) }
+    });
+  }
+
+  function replay(
+    queue: FileQueue,
+    client: FileFnClient,
+    references: QueuedFileReferences,
+    signal = new AbortController().signal
+  ) {
+    return queue.replayFileQueue(QUEUE, client, signal, undefined, references);
+  }
+
+  it.each([
+    ["empty", ""],
+    ["corrupt", '{"userId":']
+  ])(
+    "uploads a referenced file whose STARTED marker an interrupted write left %s, after a reload",
+    async (_, text) => {
+      installDevice();
+      await enqueuePhoto(await openTab());
+      await writeStarted(text);
+      const fileFn = createClient({ isImmediate: true });
+      const { references, discarded } = createReferences(new Set([FILE_ID]));
+
+      await replay(await openTab(), fileFn.client, references);
+
+      expect(fileFn.uploads).toEqual([
+        expect.objectContaining({ fileId: FILE_ID })
+      ]);
+      expect(discarded).toEqual([]);
+      expect(opfs.list(QUEUE)).toEqual([]);
+    }
+  );
+
+  it("discards and removes an unreferenced file whose STARTED marker is corrupt", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    await writeStarted('{"userId":');
+    const fileFn = createClient({ isImmediate: true });
+    const { references, discarded } = createReferences(new Set());
+
+    await replay(await openTab(), fileFn.client, references);
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(discarded).toEqual([FILE_ID]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("rewrites a corrupt STARTED marker with the owner's authority before uploading", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    await writeStarted("");
+    const fileFn = createClient();
+    const tab = await openTab();
+    const done = replay(
+      tab,
+      fileFn.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(1));
+
+    expect(JSON.parse(readStarted()!)).toEqual(AUTHORITY_A);
+    fileFn.finish();
+    await done;
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("uploads a file whose STARTED marker could not be read once storage recovers", async () => {
+    installDevice();
+    await startUploadAtA(await openTab());
+    const { getDirectory } = navigator.storage;
+    failReading("started");
+    const fileFn = createClient({ isImmediate: true });
+    const { references } = createReferences(new Set([FILE_ID]));
+    await replay(await openTab(), fileFn.client, references);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+
+    vi.stubGlobal("navigator", { ...navigator, storage: { getDirectory } });
+    await replay(await openTab(), fileFn.client, references);
+
+    expect(fileFn.uploads).toEqual([
+      expect.objectContaining({ fileId: FILE_ID })
+    ]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("leaves no STARTED marker when its write fails, so another authority uploads the file", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    const { getDirectory } = navigator.storage;
+    onMarkerWrite(() => undefined, true);
+    const atA = createClient({ isImmediate: true });
+    await replay(
+      await openTab(),
+      atA.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+    expect(atA.uploads).toEqual([]);
+    expect(readStarted()).toBeUndefined();
+
+    vi.stubGlobal("navigator", { ...navigator, storage: { getDirectory } });
+    const atB = createClient({ isImmediate: true });
+    const b = createReferences(new Set([FILE_ID]), [], AUTHORITY_B);
+    await replay(await openTab(), atB.client, b.references);
+
+    expect(atB.uploads).toEqual([expect.objectContaining({ fileId: FILE_ID })]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("binds no authority to an attempt that went offline before its request, so another authority uploads the file", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const atA = createClient({ isImmediate: true });
+    const a = createReferences(new Set([FILE_ID]));
+    a.references.isReferenced = async () => {
+      (navigator as { onLine: boolean }).onLine = false;
+      return true;
+    };
+    await replay(tab, atA.client, a.references);
+    expect(atA.uploads).toEqual([]);
+
+    (navigator as { onLine: boolean }).onLine = true;
+    const atB = createClient({ isImmediate: true });
+    const b = createReferences(new Set([FILE_ID]), [], AUTHORITY_B);
+    await replay(await openTab(), atB.client, b.references);
+
+    expect(atB.uploads).toEqual([expect.objectContaining({ fileId: FILE_ID })]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it.each([
+    ["the device goes offline", "offline"],
+    ["the replay is cancelled", "abort"],
+    ["the records stop being the owner's", "switch"]
+  ] as const)(
+    "sends no request and removes the marker when %s while it is written",
+    async (_, change) => {
+      installDevice();
+      await enqueuePhoto(await openTab());
+      const controller = new AbortController();
+      const { references } = createReferences(new Set([FILE_ID]));
+      let isCurrent = true;
+      references.isCurrent = () => isCurrent;
+      onMarkerWrite(() => {
+        if (change === "offline")
+          (navigator as { onLine: boolean }).onLine = false;
+        if (change === "abort") controller.abort();
+        if (change === "switch") isCurrent = false;
+      });
+      const atA = createClient({ isImmediate: true });
+
+      await replay(await openTab(), atA.client, references, controller.signal);
+
+      expect(atA.uploads).toEqual([]);
+      expect(readStarted()).toBeUndefined();
+      expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+    }
+  );
+
+  it("removes a recent file without a record at its grace deadline, without another trigger", async () => {
+    installDevice();
+    const tab = await openTab();
+    await stagePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const start = Date.now();
+    await replay(tab, fileFn.client, createReferences(new Set()).references);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+
+    await vi.advanceTimersByTimeAsync(tab.UNCOMMITTED_GRACE_MS - 60_000);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+    vi.spyOn(Date, "now").mockReturnValue(
+      start + tab.UNCOMMITTED_GRACE_MS + 60_000
+    );
+    await vi.advanceTimersByTimeAsync(2 * 60_000);
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("uploads at its grace deadline a file whose record saved meanwhile", async () => {
+    installDevice();
+    const tab = await openTab();
+    await stagePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const referenced = new Set<string>();
+    await replay(tab, fileFn.client, createReferences(referenced).references);
+    referenced.add(FILE_ID);
+
+    await vi.advanceTimersByTimeAsync(tab.UNCOMMITTED_GRACE_MS + 60_000);
+
+    expect(fileFn.uploads).toEqual([
+      expect.objectContaining({ fileId: FILE_ID })
+    ]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("runs no pass at the grace deadline of a replay that was cancelled", async () => {
+    installDevice();
+    const tab = await openTab();
+    await stagePhoto(tab);
+    const fileFn = createClient({ isImmediate: true });
+    const controller = new AbortController();
+    const { references } = createReferences(new Set());
+    let syncs = 0;
+    references.sync = async () => ++syncs > 0;
+    await replay(tab, fileFn.client, references, controller.signal);
+    expect(syncs).toBe(1);
+
+    controller.abort();
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + 2 * tab.UNCOMMITTED_GRACE_MS
+    );
+    await vi.advanceTimersByTimeAsync(tab.UNCOMMITTED_GRACE_MS + 60_000);
+
+    expect(syncs).toBe(1);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
   });
 });

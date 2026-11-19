@@ -542,11 +542,11 @@ type ReplayPass = {
  * each upload before the file is removed. A file uploads only while a record
  * of the account references it, which also commits one whose mark was lost.
  * A committed file whose record was deleted, or an uncommitted one older
- * than a day, is removed without an upload, and one whose upload started is
- * discarded first; each discard and removal runs only while the records are
- * still the owner's at that authority, checked in the same step. A marker
- * that cannot be read keeps the file. A pass stops while the records cannot
- * be brought up to date or read.
+ * than a day, is removed without an upload (a pass runs at that deadline),
+ * and one whose upload started is discarded first; each discard and removal
+ * runs only while the records are still the owner's at that authority,
+ * checked in the same step. A marker that cannot be read keeps the file. A
+ * pass stops while the records cannot be brought up to date or read.
  */
 export function replayFileQueue(
   dir: string,
@@ -600,6 +600,34 @@ async function replayPass(dir: string, request: ReplayRequest) {
   const timer = setTimeout(() => {
     void replayFileQueue(dir, client, signal, publisher, references);
   }, RETRY_DELAYS_MS[count]);
+  signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
+}
+
+/** The timers that run a queue's pass at its earliest grace deadline. */
+const graceTimers = new Map<string, { at: number; signal: AbortSignal }>();
+
+/**
+ * Runs a pass over the queue once a recent file without a record outlives
+ * its grace, so it is removed without another trigger: one timer per queue,
+ * at the earliest deadline, outside the retry budget.
+ */
+function scheduleGraceDeadline(
+  { dir, request }: ReplayPass,
+  createdAt: string
+) {
+  const at = Date.parse(createdAt) + UNCOMMITTED_GRACE_MS + 1_000;
+  const current = graceTimers.get(dir);
+  if (!Number.isFinite(at) || request.signal.aborted) return;
+  if (current?.signal === request.signal && current.at <= at) return;
+  const { client, signal, publisher, references } = request;
+  const scheduled = { at, signal };
+  graceTimers.set(dir, scheduled);
+  const delay = Math.min(at - Date.now(), 2 ** 31 - 1);
+  const timer = setTimeout(() => {
+    if (graceTimers.get(dir) !== scheduled) return;
+    graceTimers.delete(dir);
+    void replayFileQueue(dir, client, signal, publisher, references);
+  }, delay);
   signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
 }
 
@@ -683,9 +711,10 @@ async function replayAccountEntry(
   const { dir } = pass;
   const { fileId, uploadSessionId: entryName } = pending;
   const started = await readEntryText(dir, entryName, STARTED_FILE, true);
-  const bound =
-    started === undefined ? references.owner : parseJson(started, isClaim);
-  if (!bound || !isSameClaim(bound, references.owner)) return "done";
+  // An empty or invalid marker (an interrupted write) is the owner's attempt.
+  const marked =
+    started === undefined ? undefined : parseJson(started, isClaim);
+  if (marked && !isSameClaim(marked, references.owner)) return "done";
   const isReferenced = await isReferencedNow(pass, references, fileId);
   if (isReferenced === undefined) return "stop";
   if (!isReferenced) {
@@ -693,15 +722,28 @@ async function replayAccountEntry(
       started === undefined &&
       !(await hasEntryFile(dir, entryName, COMMITTED_FILE)) &&
       !(Date.now() - Date.parse(pending.createdAt) >= UNCOMMITTED_GRACE_MS);
+    if (isPending) scheduleGraceDeadline(pass, pending.createdAt);
     if (isPending) return "done";
     return removeAccountEntry(pass, references, fileId, started !== undefined);
   }
   if (!(await hasEntryFile(dir, entryName, COMMITTED_FILE))) {
     await markQueuedFileCommitted(dir, fileId);
   }
-  const owner = JSON.stringify(references.owner);
-  await writeEntryFile(dir, entryName, STARTED_FILE, owner);
-  const result = await uploadEntry(pass, pending);
+  const result = await uploadEntry(pass, pending, {
+    write: async () => {
+      if (marked) return;
+      const owner = JSON.stringify(references.owner);
+      await writeEntryFile(dir, entryName, STARTED_FILE, owner);
+    },
+    isReady: () => !pass.request.signal.aborted && references.isCurrent(),
+    undo: async () => {
+      if (started !== undefined) return;
+      const entry = await getEntryDir(dir, entryName);
+      await entry?.removeEntry(STARTED_FILE).catch((error: unknown) => {
+        logger.warn({ at: "fileQueue.replay.started", fileId, error });
+      });
+    }
+  });
   const isStillReferenced = await isReferencedNow(pass, references, fileId);
   if (isStillReferenced === undefined) return "stop";
   logger.info({ at: "fileQueue.replay", fileId: result.fileId });
@@ -746,11 +788,12 @@ async function removeAccountEntry(
 /** Uploads a queued file and its thumbnail. */
 async function uploadEntry(
   pass: ReplayPass,
-  pending: PendingUpload & { fileId: string }
+  pending: PendingUpload & { fileId: string },
+  mark?: StartMark
 ) {
   pass.isSynced = false;
   const { client } = pass.request;
-  const result = await uploadQueuedFile(client, pass.store, pending);
+  const result = await uploadQueuedFile(client, pass.store, pending, mark);
   await uploadQueuedThumbnail(
     client,
     pass.dir,
@@ -809,6 +852,23 @@ async function claimEntry(
   );
 }
 
+/**
+ * Marks a file started at its owner's authority before the request, sent only
+ * while `isReady` (same step); an attempt sending none undoes its marker.
+ */
+type StartMark = {
+  write(): Promise<void>;
+  isReady(): boolean;
+  undo(): Promise<void>;
+};
+
+/** Throws while the device is offline or the attempt is no longer ready. */
+function assertSendable(mark?: StartMark) {
+  if (globalThis.navigator?.onLine === false || mark?.isReady() === false) {
+    throw new DOMException("The upload cannot start", "NetworkError");
+  }
+}
+
 /** FileFn codes of a session that can no longer take parts. */
 const ENDED_SESSION_CODES = new Set([
   "FILEFN_UPLOAD_EXPIRED",
@@ -823,12 +883,15 @@ const ENDED_SESSION_CODES = new Set([
 async function uploadQueuedFile(
   client: FileFnClient,
   store: OPFSStore,
-  pending: PendingUpload & { fileId: string }
+  pending: PendingUpload & { fileId: string },
+  mark?: StartMark
 ): Promise<UploadResult> {
+  let isSent = false;
   try {
-    if (globalThis.navigator?.onLine === false) {
-      throw new DOMException("The device is offline", "NetworkError");
-    }
+    assertSendable();
+    await mark?.write();
+    assertSendable(mark);
+    isSent = true;
     return await client
       .uploadFile({
         policy: pending.policy,
@@ -841,6 +904,7 @@ async function uploadQueuedFile(
       })
       .done();
   } catch (error) {
+    if (!isSent) await mark?.undo();
     if (!(error instanceof FileFnHttpError)) throw error;
     if (error.code === "FILEFN_UPLOAD_ALREADY_COMPLETED") {
       const file = await client.getFile(pending.fileId);
