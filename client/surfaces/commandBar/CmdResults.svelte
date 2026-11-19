@@ -18,6 +18,7 @@
   import type { ICommandAction } from "@nucleum/surfaces/commandBar/cmd.type";
   import {
     buildSuperBarEntries,
+    describePageKey,
     flattenContextActions,
     runContextAction,
     toSuperBarSearchHit,
@@ -29,6 +30,7 @@
     type ResourceSearchHit
   } from "@nucleum/shared-state/resources/resource-search";
   import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+  import { keyedContextActions } from "@nucleum/features/records/resource-action-keys";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
@@ -61,6 +63,7 @@
   } = $props();
 
   const activeContextActions = contextActions.active;
+  const keyedActions = keyedContextActions;
   let selectedKey = $state<string | null>(null);
   let results = $state<ResourceSearchHit[]>([]);
   let resultsQuery = $state("");
@@ -97,6 +100,14 @@
       return [];
     }
   });
+  /**
+   * Whether the listed actions' single keys run on the page now, so their
+   * rows show the letters; not while the user works in another pane, such as
+   * Calendar beside a split resource.
+   */
+  const isContextKeyed = $derived(
+    !!$activeContextActions && $keyedActions?.key === $activeContextActions.key
+  );
   const contextLabel = $derived(
     $activeContextActions ? properCase($activeContextActions.resource) : ""
   );
@@ -371,11 +382,14 @@
         <span class="truncate">{entry.action.label}</span>
       </div>
       <div class="flex shrink-0 items-center gap-2">
-        {#if entry.action.item.hotKey}
-          <ShortcutText
-            shortcut={{ key: entry.action.item.hotKey }}
-            parentBgIndex={2}
-          />
+        {#if entry.action.item.hotKey && isContextKeyed}
+          <span class="contents" data-testid="super-bar-context-hotkey">
+            <ShortcutText
+              shortcut={{ key: entry.action.item.hotKey }}
+              parentBgIndex={2}
+              label={describePageKey(entry.action.item.hotKey)}
+            />
+          </span>
         {/if}
         <div class="bg-bgs2 rounded-md text-b3 text-fgs2 px-2 py-1">
           {contextLabel.toLowerCase()}

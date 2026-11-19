@@ -76,7 +76,11 @@
       class="absolute top-1 right-1"
       data-testid="context-menu-item-hotkey"
     >
-      <ShortcutText shortcut={{ key: item.hotKey }} size={Size.sm} />
+      <ShortcutText
+        shortcut={{ key: item.hotKey }}
+        size={Size.sm}
+        parentBgIndex={parentBgIndex + 1}
+      />
     </div>
   {/if}
   {#if count}
