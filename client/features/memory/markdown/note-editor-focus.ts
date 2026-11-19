@@ -25,8 +25,9 @@ interface PendingNoteEditorFocus {
    */
   expiry: number;
   /**
-   * Whether bringing the editor back started a navigation, whose end resets
-   * focus, so only {@link runPendingNoteEditorFocus} after it may serve it.
+   * Whether bringing the editor back started a navigation that has not ended
+   * yet: its end resets focus, so the request is served only once the pane
+   * reports that end through {@link runPendingNoteEditorFocus}.
    */
   isAwaitingNavigation: boolean;
 }
@@ -57,11 +58,13 @@ function servePendingFocus(key: string) {
 
 /**
  * Registers how a note's editor in a pane takes focus, replacing an earlier
- * registration there. A focus request waiting for this editor whose reveal
- * started no navigation, such as closing the cover picker or a panel switch
- * that left the URL as it was, is served once the editor has rendered.
- * Returns the release, which removes the registration only while it is
- * still this one, so a remounted editor keeps its own.
+ * registration there. A focus request waiting for this editor is served
+ * once the editor has rendered when no navigation of its reveal is still
+ * running: its reveal started none, such as closing the cover picker or a
+ * panel switch that left the URL as it was, or that navigation already
+ * ended before the editor mounted. Returns the release, which removes the
+ * registration only while it is still this one, so a remounted editor keeps
+ * its own.
  */
 export function registerNoteEditorFocus(
   id: IRecordId,
@@ -85,9 +88,8 @@ export function registerNoteEditorFocus(
  * Puts the caret in a note's editor in one pane. While that pane shows no
  * editable editor of the note, such as under a side panel in a narrow pane
  * or the cover picker, runs `reveal` to bring the editor back and keeps the
- * request until the editor is shown: at once when it registers if `reveal`
- * started no navigation, otherwise from {@link runPendingNoteEditorFocus}
- * once that navigation has settled, as its end resets focus. The request
+ * request until the editor is shown and any navigation `reveal` started has
+ * ended, as its end resets focus, in whichever order those happen. The request
  * lapses {@link PENDING_FOCUS_TTL_MS} after it is made or after the shown
  * content has prepared its blocks, however long that takes, and is dropped
  * when the content cannot be edited. Does nothing without `reveal` then.
@@ -105,8 +107,6 @@ export function focusNoteEditor(
     return;
   }
   if (!reveal) return;
-  // Waits for a navigation until `reveal` says it started none, so an
-  // editor shown while it runs is not focused before that navigation ends.
   const request: PendingNoteEditorFocus = {
     expiry: Date.now() + PENDING_FOCUS_TTL_MS,
     isAwaitingNavigation: true
@@ -121,12 +121,19 @@ export function focusNoteEditor(
 }
 
 /**
- * Runs the focus request waiting for a pane's note editor after a navigation
- * has settled, if it has not expired and the editor is shown. Returns
- * whether it focused the editor.
+ * Records that a navigation has ended in a pane, for the focus request
+ * waiting there for a note's editor: serves it at once if the editor is
+ * shown and the request has not lapsed, otherwise lets the editor serve it
+ * when it registers. The pane's note view calls this, as it stays mounted
+ * while the editor mounts only once its content is prepared, maybe after
+ * the navigation ended. A navigation that never ends, such as a cancelled
+ * one, leaves the request to lapse. Returns whether it focused the editor.
  */
 export function runPendingNoteEditorFocus(id: IRecordId, paneId: string) {
-  return servePendingFocus(focuserKey(id, paneId));
+  const key = focuserKey(id, paneId);
+  const request = pendingFocus.get(key);
+  if (request) request.isAwaitingNavigation = false;
+  return servePendingFocus(key);
 }
 
 /**

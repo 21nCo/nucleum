@@ -26,11 +26,8 @@
   import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
   import {
     findFirstCaretBlockId,
-    registerNoteEditorFocus,
-    runPendingNoteEditorFocus
+    registerNoteEditorFocus
   } from "@nucleum/features/memory/markdown/note-editor-focus";
-  import { afterNavigate } from "$app/navigation";
-  import { navigating } from "$app/state";
 
   /**
    * Markdown in node form i.e. each block of the markdown stored as node record and nested under each node
@@ -410,19 +407,6 @@
       const blockId = findFirstCaretBlockId(_md?.blocks);
       if (blockId) focusBlock(blockId);
     });
-  });
-
-  /**
-   * Runs an Edit request whose panel switch brought this editor back once
-   * that navigation has settled, as SvelteKit resets focus when it ends. A
-   * mount during a navigation waits for that navigation's own callback. A
-   * request that started no navigation is served when this editor registers.
-   */
-  afterNavigate((navigation) => {
-    if (navigation.type === "enter" && navigating.type !== null) return;
-    if (editableNoteId) {
-      runPendingNoteEditorFocus(editableNoteId, editorPane.id);
-    }
   });
 
   function onRearrange(event: any) {

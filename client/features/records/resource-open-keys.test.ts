@@ -526,7 +526,6 @@ describe("E on a note whose editor a side panel hides", () => {
     const focus = vi.fn();
     editWith(reveal);
     expect(reveal).toHaveBeenCalledTimes(1);
-    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(false);
 
     release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
     // Mounting the editor is not enough: the navigation behind the reveal

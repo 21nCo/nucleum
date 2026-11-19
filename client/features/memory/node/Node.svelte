@@ -36,9 +36,12 @@
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
   import {
+    runPendingNoteEditorFocus,
     setNotePaneEditor,
     type NoteContentState
   } from "@nucleum/features/memory/markdown/note-editor-focus";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { afterNavigate } from "$app/navigation";
 
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
@@ -65,6 +68,16 @@
     setContentState(state) {
       contentState = state;
     }
+  });
+  const notePane = getContextZonePane();
+  /**
+   * Tells an Edit request in this pane that a navigation ended, such as the
+   * panel switch that brings its editor back, which resets focus as it ends.
+   * This view stays mounted while the editor mounts only once its content
+   * is prepared, so the end is recorded even when the editor shows later.
+   */
+  afterNavigate(() => {
+    runPendingNoteEditorFocus(id, notePane.id);
   });
   let isShowFloatingBar = $state(true);
 

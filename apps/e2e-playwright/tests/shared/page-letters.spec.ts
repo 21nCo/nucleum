@@ -16,6 +16,12 @@ let e2eSeed: E2ESeed;
 const datafnStorePath = resolveRepoFsImportPath(
   "client/datafn/datafn.store.ts"
 );
+const nodeStorePath = resolveRepoFsImportPath(
+  "client/features/memory/node/node.store.ts"
+);
+const markdownStorePath = resolveRepoFsImportPath(
+  "client/features/memory/markdown/markdown.store.ts"
+);
 
 /**
  * Whether the app server serves repo source modules, as the Vite dev server
@@ -342,6 +348,155 @@ test.describe("page letters", () => {
     const typedAgain = `typed after the menu ${Date.now()}`;
     await page.keyboard.type(typedAgain);
     await expect(content).toContainText(typedAgain);
+  });
+
+  test("E and Edit edit a narrow split's note whose editor mounts after its panel switch navigation ended", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The open resource is a note, and this product has no nodes"
+    );
+    test.skip(
+      !(await isRepoSourceServed(page)),
+      "The divider stored late is added through repo source modules, which only the Vite dev server serves"
+    );
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E late editor edit letter ${Date.now()}`
+    });
+    await page.goto(`/calendar?beside=${encodeURIComponent(node.id)}`);
+    const split = page.locator("[data-context-zone-pane='beside']");
+    const content = split.locator("#mdContent");
+    const editors = split.locator("#mdContent [contenteditable]");
+    const focusedText = content.locator(
+      ':scope > div[data-content="SIMPLE_TEXT"] [contenteditable]:focus'
+    );
+    const focusedEditor = page.locator("[contenteditable]:focus");
+    const menuTrigger = page.getByTestId("resource-record-context-menu");
+    const panelParam = `${node.id.slice(-5)}-panel`;
+    const lateDividerIds: string[] = [];
+    await expect(content).toBeVisible({ timeout: 15_000 });
+
+    async function openSidePanelWithLateDivider() {
+      await menuTrigger.click();
+      await page
+        .locator(".popover [data-context-menu-item-id='activity']")
+        .first()
+        .click();
+      await expect(content).toBeHidden({ timeout: 10_000 });
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get(panelParam))
+        .toBe("activity");
+      const lateDividerId = `${node.blockId}_late_divider${lateDividerIds.length}`;
+      lateDividerIds.push(lateDividerId);
+      await page.evaluate(
+        async ({ nodeStorePath, markdownStorePath, node, lateDividerId }) => {
+          const { ActiveNodeStore } = await import(nodeStorePath);
+          const { mdStores } = await import(markdownStorePath);
+          mdStores.forEach(
+            (store: { focus: { set(value: undefined): void } }) =>
+              store.focus.set(undefined)
+          );
+          ActiveNodeStore.resolve(node.id).update(
+            (current: Record<string, unknown>) => ({
+              ...current,
+              mdChildOrder: [lateDividerId, node.blockId],
+              children: []
+            })
+          );
+        },
+        { nodeStorePath, markdownStorePath, node, lateDividerId }
+      );
+      await page.evaluate(() =>
+        (document.activeElement as HTMLElement)?.blur()
+      );
+      await expect(focusedEditor).toHaveCount(0);
+      return lateDividerId;
+    }
+
+    async function storeLateDivider(lateDividerId: string) {
+      await page.evaluate(
+        async ({ datafnStorePath, node, lateDividerId }) => {
+          const { datafn } = await import(datafnStorePath);
+          await datafn.table("node").mutate([
+            {
+              operation: "insert",
+              id: lateDividerId,
+              record: {
+                id: lateDividerId,
+                label: "",
+                body: "",
+                contentType: "DIVIDER",
+                creationContext: node.id,
+                mdChildOrder: [],
+                mdParent: [node.id],
+                metaType: "",
+                parent: node.id,
+                parentPath: node.id,
+                text: ""
+              }
+            }
+          ]);
+        },
+        { datafnStorePath, node, lateDividerId }
+      );
+    }
+
+    async function expectTextFocusOnceLateEditorMounts(lateDividerId: string) {
+      await expect
+        .poll(() => new URL(page.url()).searchParams.get(panelParam))
+        .not.toBe("activity");
+      await expect(editors).toHaveCount(0);
+      await storeLateDivider(lateDividerId);
+      await expect(
+        content.locator(':scope > div[data-content="DIVIDER"]').first()
+      ).toBeVisible({ timeout: 15_000 });
+      await expect(focusedText).toHaveCount(1, { timeout: 10_000 });
+    }
+
+    try {
+      await test.step("E", async () => {
+        const lateDividerId = await openSidePanelWithLateDivider();
+        await page.keyboard.press("e");
+        await expectTextFocusOnceLateEditorMounts(lateDividerId);
+        const typed = `typed after a late E ${Date.now()}`;
+        await page.keyboard.type(typed);
+        await expect(content).toContainText(typed);
+      });
+
+      await test.step("Edit", async () => {
+        await page.keyboard.press("Escape");
+        await expect(focusedEditor).toHaveCount(0);
+        const lateDividerId = await openSidePanelWithLateDivider();
+        await menuTrigger.click();
+        await page
+          .locator(".popover [data-context-menu-item-id='edit']")
+          .first()
+          .click();
+        await expectTextFocusOnceLateEditorMounts(lateDividerId);
+        const typed = `typed after a late Edit ${Date.now()}`;
+        await page.keyboard.type(typed);
+        await expect(content).toContainText(typed);
+      });
+    } finally {
+      await page.evaluate(
+        async ({ datafnStorePath, lateDividerIds }) => {
+          const { datafn } = await import(datafnStorePath);
+          for (const id of lateDividerIds) {
+            await datafn.node
+              .mutate({ operation: "delete", id })
+              .catch(() => undefined);
+          }
+        },
+        { datafnStorePath, lateDividerIds }
+      );
+    }
   });
 
   test("Edit and E close the open note's cover picker and edit the note", async ({

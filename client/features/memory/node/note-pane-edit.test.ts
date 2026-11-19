@@ -156,8 +156,68 @@ describe("a focus request for a hidden editor whose content prepares slowly", ()
     now += 10 * TTL_MS;
     reportNoteContentState(NOTE_ID, PANE, "ready");
     release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    expect(focus).not.toHaveBeenCalled();
+    await tick();
+    expect(focus).toHaveBeenCalledTimes(1);
+    await tick();
+    expect(runPendingNoteEditorFocus(NOTE_ID, PANE)).toBe(false);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("focuses an editor registered before its navigation ended once, at that end", async () => {
+    const focus = vi.fn();
+    request(true);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    reportNoteContentState(NOTE_ID, PANE, "ready");
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    await tick();
+    expect(focus).not.toHaveBeenCalled();
     expect(runPendingNoteEditorFocus(NOTE_ID, PANE)).toBe(true);
     expect(focus).toHaveBeenCalledTimes(1);
+    await tick();
+    expect(runPendingNoteEditorFocus(NOTE_ID, PANE)).toBe(false);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("focuses only the pane that asked when a navigation ends in both panes before their editors mount", async () => {
+    const OTHER_PANE = "other-slow-pane";
+    const focus = vi.fn();
+    const otherFocus = vi.fn();
+    request(true);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    runPendingNoteEditorFocus(NOTE_ID, OTHER_PANE);
+    runPendingNoteEditorFocus(NOTE_ID, PANE);
+    reportNoteContentState(NOTE_ID, PANE, "ready");
+    release.push(
+      registerNoteEditorFocus(NOTE_ID, OTHER_PANE, otherFocus),
+      registerNoteEditorFocus(NOTE_ID, PANE, focus)
+    );
+    await tick();
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(otherFocus).not.toHaveBeenCalled();
+  });
+
+  it("never focuses for a navigation that does not end, such as a cancelled one", async () => {
+    const focus = vi.fn();
+    request(true);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    reportNoteContentState(NOTE_ID, PANE, "ready");
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    await tick();
+    now += TTL_MS + 1;
+    expect(runPendingNoteEditorFocus(NOTE_ID, PANE)).toBe(false);
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it("drops a request whose navigation ended when the content opens incomplete", async () => {
+    const focus = vi.fn();
+    request(true);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    runPendingNoteEditorFocus(NOTE_ID, PANE);
+    reportNoteContentState(NOTE_ID, PANE, "unavailable");
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    await tick();
+    expect(focus).not.toHaveBeenCalled();
   });
 
   it("drops the request when the content opens incomplete or gives up", async () => {
