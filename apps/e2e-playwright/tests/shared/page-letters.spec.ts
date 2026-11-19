@@ -87,12 +87,35 @@ test.describe("page letters", () => {
       );
     };
 
+    const menuHint = (value: string) =>
+      page
+        .locator(`.popover [data-context-menu-item-id='${value}']`)
+        .first()
+        .getByTestId("context-menu-item-hotkey");
+
     await openMenu();
-    await expect(
-      star.first().getByTestId("context-menu-item-hotkey")
-    ).toHaveText("S");
+    await expect(menuHint("star")).toHaveText("S");
+    await expect(menuHint("archive")).toHaveText("A");
+    await expect(menuHint("delete")).toHaveText("\u232B");
     await expect(star.first()).not.toContainText("Starred");
     await closeMenu();
+
+    await page.keyboard.press("ControlOrMeta+k");
+    await expect(page.getByTestId("command-bar-input")).toBeFocused();
+    await expect(page.getByTestId("super-bar-group-context")).toBeVisible();
+    const superBarStarHint = page.getByLabel("Press S on the page", {
+      exact: true
+    });
+    await expect(superBarStarHint).toHaveText("S");
+    await expect(superBarStarHint).toHaveAttribute(
+      "title",
+      "Press S on the page"
+    );
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("command-bar-input")).toBeHidden({
+      timeout: 10_000
+    });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
 
     await page.keyboard.press("s");
     await openMenu();
@@ -125,6 +148,15 @@ test.describe("page letters", () => {
         timeout: 10_000
       })
       .toBe(false);
+
+    await page.reload();
+    await ensureInAppOnHome(page);
+    await openNodeRecordFromLibraryById(page, node.id);
+    await expect(menuTrigger).toBeVisible({ timeout: 15_000 });
+    await openMenu();
+    await expect(menuHint("star")).toHaveText("S");
+    await expect(star.first()).not.toContainText("Starred");
+    await closeMenu();
   });
 
   test("calendar letters switch the scale and Shift+T goes to today", async ({
@@ -154,5 +186,11 @@ test.describe("page letters", () => {
 
     await page.keyboard.press("d");
     await expect(page).toHaveURL(/\/calendar\/classic\/day/);
+
+    await page.goto("/calendar/classic");
+    await expect(page).toHaveURL(/\/calendar\/classic\/day/, {
+      timeout: 15_000
+    });
+    await expect(controls).toBeVisible({ timeout: 15_000 });
   });
 });

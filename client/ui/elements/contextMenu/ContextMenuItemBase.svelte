@@ -11,11 +11,14 @@
     item,
     checked = $bindable(false),
     isRedAccent = false,
+    parentBgIndex = 1,
     onChange = undefined
   }: {
     item: IContextMenuItem;
     checked?: boolean;
     isRedAccent?: boolean;
+    /** Background index the menu was opened on; the menu surface is one above. */
+    parentBgIndex?: number;
     onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
   } = $props();
 
@@ -59,7 +62,10 @@
 {/if}
 {#if item.hotKey}
   <span class="contents" data-testid="context-menu-item-hotkey">
-    <ShortcutText shortcut={{ key: item.hotKey }} parentBgIndex={2} />
+    <ShortcutText
+      shortcut={{ key: item.hotKey }}
+      parentBgIndex={parentBgIndex + 1}
+    />
   </span>
 {/if}
 {#if item.badge && !item.action && !item.secondStepComponent}

@@ -2,23 +2,20 @@
 
 <script lang="ts">
   import { get } from "svelte/store";
-  import {
-    contextActions,
-    type ContextActionsEntry
-  } from "@nucleum/shell/topNav/contextZone/context-actions";
+  import type { ContextActionsEntry } from "@nucleum/shell/topNav/contextZone/context-actions";
   import {
     findContextActionByKey,
     flattenContextActions,
     runContextAction
   } from "@nucleum/surfaces/commandBar/super-bar";
-  import { CONFIRMED_RESOURCE_ACTIONS } from "@nucleum/features/records/resource-action-keys";
+  import {
+    CONFIRMED_RESOURCE_ACTIONS,
+    keyedContextActions
+  } from "@nucleum/features/records/resource-action-keys";
   import { requireCommandHost } from "@nucleum/shared-state/commands/command-host";
   import { confirmationNotification } from "@nucleum/shared-state/notifications/notification.store";
   import { ButtonVariant } from "@21n/ui/elements/button/button.type";
-  import {
-    isKeyTargetPane,
-    isPlainPageKey
-  } from "@nucleum/shell/shortcuts/page-keys";
+  import { isPlainPageKey } from "@nucleum/shell/shortcuts/page-keys";
   import { finishEditMode } from "@nucleum/shared-state/resources/edit-mode-finish";
   import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
   import context from "@nucleum/client/runtime/context.store";
@@ -27,10 +24,7 @@
 
   /** Whether an entry still holds the letters of the pane the user works in. */
   function isActiveTarget(entry: ContextActionsEntry) {
-    return (
-      get(contextActions.active)?.key === entry.key &&
-      isKeyTargetPane(entry.pane)
-    );
+    return get(keyedContextActions)?.key === entry.key;
   }
 
   /**
@@ -44,8 +38,8 @@
    */
   function onKeydown(event: KeyboardEvent) {
     if ($context.embed === Embed.HANDSET || !isPlainPageKey(event)) return;
-    const entry = get(contextActions.active);
-    if (!entry || !isKeyTargetPane(entry.pane)) return;
+    const entry = get(keyedContextActions);
+    if (!entry) return;
     let menu;
     try {
       menu = entry.resolve();

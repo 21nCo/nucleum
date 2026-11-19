@@ -1,7 +1,6 @@
 import { render } from "@testing-library/svelte";
 import { writable } from "svelte/store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
 import { OperatingSystem } from "@nucleum/client/runtime/context.type";
 
 const mocks = vi.hoisted(() => ({

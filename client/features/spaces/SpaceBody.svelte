@@ -15,9 +15,8 @@
   } from "@nucleum/features/spaces/SpaceContextZone.svelte";
   import { Resource } from "@nucleum/datafn/resource.enum";
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
-  import { resolveSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
-  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
-  import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+  import { resolveKeyedSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
+  import { keyedContextActions } from "@nucleum/features/records/resource-action-keys";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
   import {
     contextZone,
@@ -109,15 +108,13 @@
    */
   function resolveSpaceMenu() {
     if (!$viewStore) return [];
-    return withResourceActionKeys(
-      resolveSpacePageMenu($viewStore, {
-        isPinned: isRootPinned,
-        onRename: () => viewStore.setTitleEditing(true),
-        onTogglePin: toggleRootPin,
-        onChanged: () =>
-          viewStore.init(undefined, { isRecordedInRecents: false })
-      })
-    );
+    return resolveKeyedSpacePageMenu($viewStore, {
+      isKeyed: true,
+      isPinned: isRootPinned,
+      onRename: () => viewStore.setTitleEditing(true),
+      onTogglePin: toggleRootPin,
+      onChanged: () => viewStore.init(undefined, { isRecordedInRecents: false })
+    });
   }
 
   /**
@@ -133,9 +130,10 @@
   /**
    * Page letters run the newest actions registered for the pane the user
    * works in, such as an item opened inside the space, so the space menu
-   * shows them only while they act on this space in this page or split.
+   * shows them only while they act on this space in this page or split, and
+   * not while the user works in another pane, such as Calendar beside it.
    */
-  const letterTarget = contextActions.active;
+  const letterTarget = keyedContextActions;
   const pane = getContextZonePane();
   const isLetterTarget = $derived(
     $letterTarget?.id === rootId && $letterTarget.pane.id === pane.id

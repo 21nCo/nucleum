@@ -14,8 +14,7 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import type { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
-  import { resolveSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
-  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
+  import { resolveKeyedSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
 
   let {
     store,
@@ -34,11 +33,6 @@
     isKeyed?: boolean;
   } = $props();
 
-  /** Shows the single-key letters only while they act on this space. */
-  function withKeys(menu: IContextMenu) {
-    return isKeyed ? withResourceActionKeys(menu) : menu;
-  }
-
   function resolveMenu(): IContextMenu {
     const viewGroup = {
       group: "view",
@@ -53,14 +47,13 @@
     if (!$store) return [viewGroup];
     return [
       viewGroup,
-      ...withKeys(
-        resolveSpacePageMenu($store, {
-          isPinned,
-          onRename: () => store.setTitleEditing(true),
-          onTogglePin,
-          onChanged: () => store.init(undefined, { isRecordedInRecents: false })
-        })
-      )
+      ...resolveKeyedSpacePageMenu($store, {
+        isKeyed,
+        isPinned,
+        onRename: () => store.setTitleEditing(true),
+        onTogglePin,
+        onChanged: () => store.init(undefined, { isRecordedInRecents: false })
+      })
     ];
   }
 </script>
