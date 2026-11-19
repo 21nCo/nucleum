@@ -102,10 +102,9 @@
         failure: "Unable to restore data"
       },
       async () => {
-        const data = await file.text();
-        if (!data) throw new Error("Backup file is empty");
+        if (!file.size) throw new Error("Backup file is empty");
         if (!$datafnRuntime) throw new Error("DataFn is not ready");
-        await restoreBackup(data, {
+        await restoreBackup(file, {
           triggerCloneUp: () => $datafnRuntime?.mode === "sync"
         });
         await refreshNucleumDatafnStatus();

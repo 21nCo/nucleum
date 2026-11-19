@@ -485,20 +485,26 @@ const STARTED_NAME = /^started(?:-[\w-]+)?$/;
 
 /**
  * Copies the files an account's queue still holds, so a backup carries the
- * bytes of files that have not reached FileFn. A file that leaves the queue
- * while it is read (its upload ended) is left out.
+ * bytes of files that have not reached FileFn: under the queue's Web Lock,
+ * so a replay running meanwhile ends first, and leaving out a file whose
+ * upload completed (marked uploaded) or that leaves the queue while it is
+ * read.
  */
 export async function exportQueuedFiles(
   dir: string
 ): Promise<QueuedFileCopy[]> {
   if (!isFileQueueSupported()) return [];
-  const copies: QueuedFileCopy[] = [];
-  for (const entryName of await getStore(dir).listPendingUploads()) {
-    if (!entryName.startsWith(ENTRY_PREFIX)) continue;
-    const copy = await copyEntry(dir, entryName);
-    if (copy) copies.push(copy);
-  }
-  return copies;
+  const signal = new AbortController().signal;
+  const copies = await withQueueLock(dir, signal, async () => {
+    const copied: QueuedFileCopy[] = [];
+    for (const entryName of await getStore(dir).listPendingUploads()) {
+      if (!entryName.startsWith(ENTRY_PREFIX)) continue;
+      const copy = await copyEntry(dir, entryName);
+      if (copy) copied.push(copy);
+    }
+    return copied;
+  });
+  return copies ?? [];
 }
 
 async function copyEntry(dir: string, entryName: string) {
@@ -711,7 +717,7 @@ type ReplayPass = {
  * with its authority first) is left untouched at any other authority; one
  * that never started is the replay's. Each decision reads the records
  * fully brought up to date since the pass last uploaded, and again after
- * each upload before the file is removed. A file uploads only while a record
+ * each upload (which marks the file uploaded) before the file is removed. A file uploads only while a record
  * of the account references it, which also commits one whose mark was lost.
  * A committed file whose record was deleted, or an uncommitted one older
  * than a day, is removed without an upload (a pass runs at that deadline),
@@ -913,10 +919,29 @@ async function replayAccountEntry(
     isReady: () => !pass.request.signal.aborted && references.isCurrent(),
     undo: (attempt) => unmarkStarted(dir, entryName, attempt)
   });
+  await markAccountEntryUploaded(dir, entryName, result);
   const isStillReferenced = await isReferencedNow(pass, references, fileId);
   if (isStillReferenced === undefined) return "stop";
   logger.info({ at: "fileQueue.replay", fileId: result.fileId });
   return removeAccountEntry(pass, references, fileId, !isStillReferenced);
+}
+
+/**
+ * Marks an account's file uploaded once its upload completed, so a backup
+ * taken while it is still queued (its pass stopped before removing it) does
+ * not copy it (see exportQueuedFiles). A mark that cannot be written, as the
+ * file left the queue meanwhile, is logged; the pass goes on.
+ */
+async function markAccountEntryUploaded(
+  dir: string,
+  entryName: string,
+  uploaded: UploadResult
+) {
+  try {
+    await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
+  } catch (error) {
+    logger.warn({ at: "fileQueue.replay.uploaded", entryName, error });
+  }
 }
 
 /**
