@@ -54,9 +54,7 @@ artifacts/
 # Local dev seed files — not for tracking
 **/seed.local.ts
 
-# Claude Code: keep personal settings local, share Entire's hooks
-**/.claude/*
-!/.claude/settings.json
+.claude
 
 # iOS local/generated artifacts
 ios/*/www/

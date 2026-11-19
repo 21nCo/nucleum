@@ -191,7 +191,7 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 ### Sync Impact Report
 
 - Version change: 1.12.0 to 1.12.1.
-- Expanded the Entire hooks section to agent hooks: Claude Code hooks are committed in `.claude/settings.json`, Cursor hooks move to the global `~/.cursor/hooks.json` through a wrapper that runs Entire in the repo of the first workspace root with Entire set up and enabled, and Entire CLI 0.12.2 is the minimum version. No test or user-facing behavior authorization rules changed.
+- Expanded the Entire hooks section to agent hooks: Claude Code, Codex and Cursor hooks all live in each machine's global agent config, Cursor's through a wrapper that runs Entire in the repo of the first workspace root with Entire set up and enabled, and Entire CLI 0.12.2 is the minimum version. No test or user-facing behavior authorization rules changed.
 
 - Version change: 1.11.3 to 1.12.0.
 - Updated the shell charter for the layered page model, the top bar context zone and the navigator's access trails, and the app menu (left panel), and marked app tabs as retired while their retained tab state stays with the shell (TIDY-484, TIDY-487, TIDY-488).
@@ -245,10 +245,9 @@ The Nucleum constitution supersedes conflicting process documents for automated 
 
 ## Agent hooks (Entire)
 
-- Use Entire CLI 0.12.2 or newer. Older versions don't register every hook event in `.claude/settings.json` (for example `stop-failure`), so some sessions go unrecorded.
-- Claude Code hooks are committed in `.claude/settings.json`. Put personal Claude settings in `.claude/settings.local.json`, which stays ignored.
-- Entire's Codex and Cursor hooks live in the global configs (`~/.codex/hooks.json` and `~/.cursor/hooks.json`). Do not add or commit a repo-level `.codex/hooks.json` or `.cursor/hooks.json`.
-- `entire enable`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, remove Entire's entries from the file afterward, and delete the file only if nothing else is left in it. Both files are gitignored, so they won't show in `git status`, but agents still run them.
+- Use Entire CLI 0.12.2 or newer. Older versions don't register every Claude Code hook event (for example `stop-failure`), so some sessions go unrecorded.
+- Entire's Claude Code, Codex and Cursor hooks live in each machine's global configs: the `settings.json` of every Claude Code config directory you use (`~/.claude/settings.json`, or the one `CLAUDE_CONFIG_DIR` points to), `~/.codex/hooks.json` and `~/.cursor/hooks.json`. Do not add or commit a repo-level `.claude/settings.json`, `.codex/hooks.json` or `.cursor/hooks.json`; `.claude/` stays ignored. Claude Code and Codex run hooks in the session's working directory, so the plain `entire hooks claude-code <event>` and `entire hooks codex <event>` commands work from the global configs.
+- `entire enable`, `entire agent add claude-code`, `entire agent add codex` and `entire agent add cursor` write these files into the repo. If you run any of them, remove Entire's entries from the file afterward, and delete the file only if nothing else is left in it. All three are gitignored, so they won't show in `git status`, but agents still run them.
 - Cursor runs global hooks from `~/.cursor/`, and Entire skips silently outside a git repository, so the plain `entire hooks cursor <event>` commands record nothing from the global file. Save this wrapper as `~/.cursor/hooks/entire-cursor.sh` (`chmod +x`; it needs `jq` and a POSIX shell, so it covers macOS and Linux, not native Windows). It finds the first workspace root inside a repo where Entire is set up and enabled (the root can be a subfolder), moves to that repo's top level and passes the payload on. In a multi-root workspace only that repo records the session. It skips an event when the workspace root's own `.cursor/hooks.json` already runs Entire for that event and its matcher (if any) matches the event as Cursor applies it, so nothing runs twice:
 
   ```sh
@@ -294,4 +293,4 @@ The Nucleum constitution supersedes conflicting process documents for automated 
   ```
 
   Then add one entry per event to `~/.cursor/hooks.json`, keeping existing entries: `{"command": "./hooks/entire-cursor.sh <event>"}` for `sessionStart` -> `session-start`, `beforeSubmitPrompt` -> `before-submit-prompt`, `stop` -> `stop`, `preCompact` -> `pre-compact`, `subagentStart` -> `subagent-start`, `subagentStop` -> `subagent-stop` and `sessionEnd` -> `session-end`.
-- If the Codex hooks are missing on your machine, add them to `~/.codex/hooks.json`, not to this repo. Without the global hooks, that agent's sessions are not recorded.
+- If the Claude Code or Codex hooks are missing on your machine, add them to the global config (Claude Code `settings.json`, `~/.codex/hooks.json`), not to this repo. Without the global hooks, that agent's sessions are not recorded.
