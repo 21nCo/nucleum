@@ -6,7 +6,6 @@
   import Text from "@21n/ui/elements/text/Text.svelte";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import {
-    datafn,
     datafnRuntime,
     refreshNucleumDatafnStatus
   } from "@nucleum/datafn/datafn.store";
@@ -15,9 +14,8 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { TextStyle } from "@21n/ui/elements/text/text.enum";
   import { InfoTextType } from "@21n/ui/elements/text/info.type";
-  import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
   import { parseAndFormatDate } from "@21n/shared-utils/datetime/date-formatting";
-  import { parse, stringify } from "@21n/shared-utils/json.utils";
+  import { stringify } from "@21n/shared-utils/json.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import {
     detectLegacyLocalData,
@@ -26,6 +24,7 @@
   import { resolveLegacyImportableRecordCount } from "@nucleum/persistence/legacy-backup/summary";
   import type { LegacyLocalDataSummary } from "@nucleum/persistence/legacy-backup/types";
   import { onMount } from "svelte";
+  import { createBackupBlob, restoreBackup } from "./backup-and-restore";
   import {
     formatFileToastMessage,
     runWithStatusToast,
@@ -66,10 +65,7 @@
         failure: "Unable to create backup"
       },
       async () => {
-        const data = await datafn.exportData();
-        const blob = new Blob([stringify(data, { isPreventReplacer: true })], {
-          type: "application/json"
-        });
+        const blob = await createBackupBlob();
         const isDelivered = await fileStore.downloadFromBlob(blob, {
           fileName: fileName,
           fileNameForEmbed: `${product}_backup`,
@@ -109,18 +105,9 @@
         const data = await file.text();
         if (!data) throw new Error("Backup file is empty");
         if (!$datafnRuntime) throw new Error("DataFn is not ready");
-        const result = (await datafn.importData(parse(data), {
+        await restoreBackup(data, {
           triggerCloneUp: $datafnRuntime.mode === "sync"
-        })) as DatafnImportResult;
-        const skipped = [
-          ...Object.values(result?.stats?.resources ?? {}),
-          ...Object.values(result?.stats?.joins ?? {})
-        ].reduce((total, stats) => total + (stats.skipped ?? 0), 0);
-        if (result?.ok !== true || skipped > 0) {
-          throw new Error(
-            result?.errors?.[0]?.message ?? "DataFn restore failed"
-          );
-        }
+        });
         await refreshNucleumDatafnStatus();
       },
       (error) => logger.error({ at: "DataSettings.handleDrop", error })

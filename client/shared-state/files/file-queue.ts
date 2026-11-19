@@ -461,6 +461,163 @@ export function releaseQueuedFileUrls(isReleased: (key: string) => boolean) {
   }
 }
 
+/**
+ * A file of an account's queue as a backup carries it: its bytes, thumbnail,
+ * the authority it is captured at (`claim`), whether its record saved, and
+ * the started markers that bind an upload that may have begun to its
+ * authority (name and contents).
+ */
+export type QueuedFileCopy = {
+  fileId: string;
+  fileName: string;
+  contentType: string;
+  policy: string;
+  createdAt: string;
+  retryCount: number;
+  data: Uint8Array;
+  thumbnail?: { type: string; data: Uint8Array };
+  claim?: QueuedFileClaim;
+  isCommitted: boolean;
+  started: { name: string; text: string }[];
+};
+
+const STARTED_NAME = /^started(?:-[\w-]+)?$/;
+
+/**
+ * Copies the files an account's queue still holds, so a backup carries the
+ * bytes of files that have not reached FileFn. A file that leaves the queue
+ * while it is read (its upload ended) is left out.
+ */
+export async function exportQueuedFiles(
+  dir: string
+): Promise<QueuedFileCopy[]> {
+  if (!isFileQueueSupported()) return [];
+  const copies: QueuedFileCopy[] = [];
+  for (const entryName of await getStore(dir).listPendingUploads()) {
+    if (!entryName.startsWith(ENTRY_PREFIX)) continue;
+    const copy = await copyEntry(dir, entryName);
+    if (copy) copies.push(copy);
+  }
+  return copies;
+}
+
+async function copyEntry(dir: string, entryName: string) {
+  const pending = await getStore(dir).getPendingUpload(entryName);
+  if (!pending?.fileId) return undefined;
+  if (await hasEntryFile(dir, entryName, UPLOADED_FILE)) return undefined;
+  const entry = await getEntryDir(dir, entryName, true);
+  if (!entry) return undefined;
+  try {
+    const thumbnail = await readThumbnail(entry);
+    const started: QueuedFileCopy["started"] = [];
+    for await (const name of (
+      entry as unknown as { keys(): AsyncIterable<string> }
+    ).keys()) {
+      if (!STARTED_NAME.test(name)) continue;
+      const text = await readEntryText(dir, entryName, name, true);
+      if (text !== undefined) started.push({ name, text });
+    }
+    return {
+      fileId: pending.fileId,
+      fileName: pending.fileName,
+      contentType: pending.mimeType,
+      policy: pending.policy,
+      createdAt: pending.createdAt,
+      retryCount: pending.retryCount,
+      data: new Uint8Array(pending.fileData),
+      thumbnail: thumbnail && {
+        type: thumbnail.type,
+        data: new Uint8Array(await thumbnail.arrayBuffer())
+      },
+      claim: await readClaim(dir, entryName, true),
+      isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
+      started
+    };
+  } catch (error) {
+    if (!(await getEntryDir(dir, entryName, true))) return undefined;
+    throw error;
+  }
+}
+
+/** Lists the IDs of the files a queue holds, staged or still staging. */
+export async function listQueuedFileIds(dir: string): Promise<Set<string>> {
+  if (!isFileQueueSupported()) return new Set();
+  const names = await getStore(dir).listPendingUploads();
+  return new Set(
+    names
+      .filter((name) => name.startsWith(ENTRY_PREFIX))
+      .map((name) => name.slice(ENTRY_PREFIX.length))
+  );
+}
+
+/**
+ * Puts files a backup carried back into an account's queue, as they were
+ * when the backup was taken, under the queue's Web Lock so a replay never
+ * reads one half written. A file the queue held when the restore started
+ * (`held`, see listQueuedFileIds), or holds once the lock is taken, is kept
+ * as it is, so a file whose upload ran meanwhile is not added again once it
+ * left the queue: it uploads once. Resolves the number of files added; a file
+ * that cannot be written rejects, after removing what it wrote.
+ */
+export async function importQueuedFiles(
+  dir: string,
+  copies: readonly QueuedFileCopy[],
+  held: ReadonlySet<string>
+): Promise<number> {
+  if (!copies.length) return 0;
+  if (!isFileQueueSupported()) {
+    throw new Error("This device cannot keep the backup's pending files");
+  }
+  const signal = new AbortController().signal;
+  const added = await withQueueLock(dir, signal, async () => {
+    let count = 0;
+    for (const copy of copies) {
+      if (held.has(copy.fileId)) continue;
+      if (await importEntry(dir, copy)) count += 1;
+    }
+    return count;
+  });
+  return added ?? 0;
+}
+
+async function importEntry(dir: string, copy: QueuedFileCopy) {
+  const entryName = toEntryName(copy.fileId);
+  const store = getStore(dir);
+  if (await store.getPendingUpload(entryName)) return false;
+  await store.stagePendingUpload({
+    uploadSessionId: entryName,
+    fileId: copy.fileId,
+    policy: copy.policy,
+    fileName: copy.fileName,
+    size: copy.data.byteLength,
+    mimeType: copy.contentType,
+    fileData: copy.data.slice().buffer as ArrayBuffer,
+    createdAt: copy.createdAt,
+    retryCount: copy.retryCount
+  });
+  try {
+    for (const { name, text } of copy.started) {
+      if (STARTED_NAME.test(name)) {
+        await writeEntryFile(dir, entryName, name, text);
+      }
+    }
+    if (copy.claim) await claimEntry(dir, entryName, copy.claim);
+    if (copy.isCommitted) await markQueuedFileCommitted(dir, copy.fileId);
+    if (copy.thumbnail && THUMBNAIL_TYPES.has(copy.thumbnail.type)) {
+      await writeEntryFile(
+        dir,
+        entryName,
+        `${THUMBNAIL_PREFIX}${copy.thumbnail.type.split("/")[1]}`,
+        copy.thumbnail.data.slice().buffer as ArrayBuffer
+      );
+    }
+  } catch (error) {
+    await store.deletePendingUpload(entryName).catch(() => undefined);
+    throw error;
+  }
+  return true;
+}
+
 /** Returns whether any of the queues holds a file. */
 export async function hasQueuedFiles(dirs: readonly string[]) {
   if (!isFileQueueSupported()) return false;
