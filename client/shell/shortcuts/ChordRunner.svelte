@@ -9,7 +9,11 @@
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
-  import { markChordEndingKey } from "@nucleum/shell/shortcuts/page-keys";
+  import {
+    areSingleKeyShortcutsEnabled,
+    markChordEndingKey
+  } from "@nucleum/shell/shortcuts/page-keys";
+  import { singleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
   import {
     CHORD_TIMEOUT_MS,
     hasModifier,
@@ -81,11 +85,13 @@
   /**
    * Starts a chord for 1.5 seconds on a plain G that no shortcut without a
    * prefix takes, with the same guards as the shortcut runner: not on
-   * handsets, in a text field, behind a right-side drawer, or while a modal,
-   * dialog, popover or modal sheet is in front.
+   * handsets, in a text field, behind a right-side drawer, while a modal,
+   * dialog, popover or modal sheet is in front, or while single-key shortcuts
+   * are off.
    */
   const startListener = (event: KeyboardEvent) => {
     if (!isChordStart(event)) return;
+    if (!areSingleKeyShortcutsEnabled()) return;
     if ($context.embed === Embed.HANDSET) return;
     if (isChordEditableTarget(event.target)) return;
     if (isRightDrawerOnFront() || isViewKeyLayerOnFront()) return;
@@ -103,7 +109,8 @@
    * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
    * pinned space in that app menu position. Typing in a field, or a right-side
    * drawer, modal, dialog, popover or modal sheet opened meanwhile (even one
-   * closed again), ends the chord and leaves the key to them. A plain Escape
+   * closed again), or single-key shortcuts turned off meanwhile, ends the
+   * chord and leaves the key to them. A plain Escape
    * on the page ends the chord and is consumed, so the shell does not also
    * close the top layer;
    * inside such a layer, or with a modifier (Cmd+Escape), Escape ends the
@@ -118,6 +125,7 @@
     const prefix = pendingPrefix;
     clearChord();
     if (
+      !areSingleKeyShortcutsEnabled() ||
       isChordEditableTarget(event.target) ||
       $context.embed === Embed.HANDSET ||
       isRightDrawerOnFront() ||
@@ -154,6 +162,17 @@
   }
 
   $effect(() => clearChord);
+
+  /**
+   * Ends a pending chord as soon as single-key shortcuts turn off, such as
+   * through a synced preference change, so turning them on again before the
+   * second key does not revive it: a fresh G is needed.
+   */
+  $effect(() =>
+    singleKeyShortcutsEnabled.subscribe((isOn) => {
+      if (!isOn) clearChord();
+    })
+  );
 </script>
 
 <svelte:window onkeydown={startListener} onkeydowncapture={captureListener} />

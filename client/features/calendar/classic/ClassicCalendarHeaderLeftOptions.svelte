@@ -9,7 +9,9 @@
   import view from "@21n/ui/environment/view.store";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import Button from "@21n/ui/elements/button/Button.svelte";
+  import { singleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
   import {
+    areSingleKeyShortcutsEnabled,
     isKeyTargetPane,
     isPlainPageKey
   } from "@nucleum/shell/shortcuts/page-keys";
@@ -101,6 +103,23 @@
   )
     .map((scale) => optionsByScale[scale])
     .filter(Boolean);
+  /** The scale options without their letter keys, for while single-key shortcuts are off. */
+  const switchOptionsWithoutKeys = switchOptions.map((option) => ({
+    ...option,
+    icon: undefined
+  }));
+  const shownOptions = $derived(
+    $singleKeyShortcutsEnabled ? switchOptions : switchOptionsWithoutKeys
+  );
+  /**
+   * The wide switcher shows only each scale's letter key while single-key
+   * shortcuts are on; while off it names each scale instead, so no key is hinted.
+   */
+  const switcherStyle = $derived(
+    $singleKeyShortcutsEnabled
+      ? OptionSelectorStyle.ICON
+      : OptionSelectorStyle.TRAIN
+  );
 
   const ownPane = getContextZonePane();
   let rootRef = $state<HTMLDivElement | undefined>();
@@ -131,15 +150,22 @@
       )
   }));
 
-  /** The scale as a calendar menu option group, for compact top bars. */
+  /**
+   * The scale as a calendar menu option group, for compact top bars. Each
+   * option shows the letter key that picks it, unless single-key shortcuts
+   * are off.
+   */
   export function resolveScaleMenuGroup(): IContextMenuGroup[] {
+    const options = areSingleKeyShortcutsEnabled()
+      ? switchOptions
+      : switchOptionsWithoutKeys;
     return [
       {
         group: "scale",
         items: [],
         option: {
           label: "Scale",
-          options: switchOptions as ISelectItem[],
+          options: options as ISelectItem[],
           value: selectedView,
           onChange: (value: ISelectValue) =>
             handleScaleSelection(
@@ -168,7 +194,7 @@
     <div>
       {#if $view.isConstrainedWidth}
         <DropDown
-          items={switchOptions}
+          items={shownOptions}
           value={selectedView}
           isDisableSearch={true}
           width="min-w-32"
@@ -178,12 +204,12 @@
         />
       {:else}
         <OptionSelector
-          options={switchOptions}
+          options={shownOptions as ISelectItem[]}
           selected={selectedView}
           size={Size.sm}
           {parentBgIndex}
           isExpandOnActiveForIcon={true}
-          style={OptionSelectorStyle.ICON}
+          style={switcherStyle}
           onSelect={handleScaleSelection}
         />
       {/if}

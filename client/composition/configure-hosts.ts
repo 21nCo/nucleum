@@ -40,7 +40,14 @@ import { shortcutsConfig } from "./shortcuts.config";
 import { copyResourceLinkToClipboard } from "@nucleum/shell/navigation/resource-link.utils";
 import Records from "@nucleum/surfaces/library/records/Records.svelte";
 import { configureElementActionHost } from "@21n/ui/hosts/action-host";
-import { configureElementShortcutHost } from "@21n/ui/hosts/shortcut-host";
+import {
+  readSingleKeyShortcutsEnabled,
+  singleKeyShortcutsEnabled
+} from "@nucleum/shared-state/preferences/single-key-shortcuts";
+import {
+  configureElementShortcutHost,
+  notifyElementShortcutsChanged
+} from "@21n/ui/hosts/shortcut-host";
 import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
 import FileView from "@21n/ui/compositions/files/FileView.svelte";
 import { configureElementFileHost } from "@21n/ui/hosts/file-host";
@@ -59,6 +66,7 @@ import context from "@nucleum/client/runtime/context.store";
 
 let mountedOwners = 0;
 let disposePlatform: (() => void) | undefined;
+let disposeSingleKeys: (() => void) | undefined;
 
 /** Installs application-lifetime bindings and shares one platform subscription across mounted roots. */
 export function installApplicationHosts() {
@@ -156,7 +164,8 @@ export function installApplicationHosts() {
       }
     });
     configureElementShortcutHost({
-      resolve: (action) => keyboardShortcuts.resolveShortcutForAction(action)
+      resolve: (action) => keyboardShortcuts.resolveShortcutForAction(action),
+      isSingleKeyEnabled: readSingleKeyShortcutsEnabled
     });
     configureElementFileHost({
       renderer: FileView,
@@ -176,6 +185,10 @@ export function installApplicationHosts() {
     configureSessionRecovery(recoverInvalidAccountSession);
 
     disposePlatform = context.subscribe(syncElementPlatform);
+    // Shortcut hints in portable controls follow the single-key setting.
+    disposeSingleKeys = singleKeyShortcutsEnabled.subscribe(() =>
+      notifyElementShortcutsChanged()
+    );
   }
   mountedOwners++;
   let released = false;
@@ -186,6 +199,8 @@ export function installApplicationHosts() {
     if (mountedOwners === 0) {
       disposePlatform?.();
       disposePlatform = undefined;
+      disposeSingleKeys?.();
+      disposeSingleKeys = undefined;
     }
   };
 }

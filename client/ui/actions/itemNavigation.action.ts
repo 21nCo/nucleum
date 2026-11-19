@@ -1,3 +1,4 @@
+import { areElementSingleKeysEnabled } from "@21n/ui/hosts/shortcut-host";
 import {
   isItemNavigationKey,
   resolveItemNavigationIndex,
@@ -49,7 +50,9 @@ function isMenuKey(event: KeyboardEvent) {
   if (event.metaKey || event.ctrlKey) return false;
   if (event.key === "ContextMenu") return true;
   if (event.key === "F10") return event.shiftKey;
-  return event.key === "." && !event.shiftKey;
+  return (
+    event.key === "." && !event.shiftKey && areElementSingleKeysEnabled()
+  );
 }
 const entries: ItemNavigationEntry[] = [];
 let lastInteracted: ItemNavigationEntry | undefined;
@@ -333,11 +336,19 @@ function handleEscape(entry: ItemNavigationEntry, event: KeyboardEvent) {
 
 function isPlainSpace(event: KeyboardEvent) {
   return (
-    event.key === " " && !event.metaKey && !event.ctrlKey && !event.shiftKey
+    event.key === " " &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    areElementSingleKeysEnabled()
   );
 }
 
-/** The menu keys, Enter and Space, which act on the highlighted item. */
+/**
+ * The menu keys, Enter and Space, which act on the highlighted item. "." and
+ * Space are single-key shortcuts: while those are off they are not claimed
+ * and go on as normal. ContextMenu, Shift+F10 and Enter stay on.
+ */
 function handleItemKey(entry: ItemNavigationEntry, event: KeyboardEvent) {
   const highlighted = resolveHighlighted(entry);
   if (
