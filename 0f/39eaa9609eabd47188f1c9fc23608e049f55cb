@@ -1,0 +1,37 @@
+client/ui/actions/popover.action.ts
+  s_f35b422006faeb::t_283c11f8999f94 1026-1030,1038-1039
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_b66d0e9dd4fae0::t_cc2ea40bb1b4ca 354-445
+client/features/records/ResourcePanelSwitcher.svelte
+  s_b66d0e9dd4fae0::t_09cee9cb8deef4 19,72,74-75,78-89,99,110-136,158-159,226-229,231-233
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_b66d0e9dd4fae0::t_aa3a64e24b56b0 11-15,32-33,57-71,112-113,117,126-127,130-132,141-145,207-209,218-221,256,357,361
+client/ui/elements/switcher/switcher-overflow.test.ts
+  s_b66d0e9dd4fae0::t_81943a449f0824 4,125-222
+client/ui/elements/switcher/switcher-overflow.ts
+  s_b66d0e9dd4fae0::t_b46255024ddfe6 82-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0f39eaa9609eabd47188f1c9fc23608e049f55cb",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f35b422006faeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "679baf05-05c3-434b-8d43-45dfc1b3d785",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

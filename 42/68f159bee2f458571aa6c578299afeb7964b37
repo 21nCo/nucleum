@@ -1,0 +1,21 @@
+apps/e2e-playwright/tests/shared/page-letters.spec.ts
+  s_4c87cba73fd197::t_b108fa4e4c1e29 99
+client/features/spaces/space-page-menu.ts
+  s_4c87cba73fd197::t_8828b82a87bfde 92-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4268f159bee2f458571aa6c578299afeb7964b37",
+  "prompts": {},
+  "sessions": {
+    "s_4c87cba73fd197": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee84c3d4-6939-45ef-9e96-4368f98e359f",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

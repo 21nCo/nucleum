@@ -1,0 +1,73 @@
+client/features/calendar/CalendarCW.today-key.test.ts
+  s_f35b422006faeb::t_6195caea78a391 75
+client/features/collections/CollectionTitleBar.svelte
+  s_f35b422006faeb::t_7851ecb310dae4 155-159
+client/features/records/resource-action-keys.test.ts
+  s_b66d0e9dd4fae0::t_bc9c0d95f8de79 8,40-45,89-114
+client/features/spaces/SpaceBody.split-letters.test.ts
+  s_f35b422006faeb::t_6544715a2c59ff 56-59,71-82
+client/shared-state/events/event.enum.ts
+  s_f35b422006faeb::t_30834a5e8e573f 25
+client/ui/elements/contextMenu/ContextMenuHotkeySurface.test.ts
+  s_b66d0e9dd4fae0::t_c15757f2008c2e 1-57
+apps/e2e-playwright/tests/shared/page-letters.spec.ts
+  s_b66d0e9dd4fae0::t_cae3342a9a9a72 90-95,97-99,103-119,151-159,189-195
+client/features/records/resource-action-keys.ts
+  s_b66d0e9dd4fae0::t_094b01c6a53586 1,9-11,59-74
+client/features/spaces/SpaceBody.key-target-hints.test.ts
+  s_b66d0e9dd4fae0::t_e595bfa60c3e40 1-149
+client/features/spaces/SpaceBody.svelte
+  s_b66d0e9dd4fae0::t_4145c476612b03 18-19,111-117,133-134,136
+client/features/spaces/SpaceContextZone.svelte
+  s_b66d0e9dd4fae0::t_8a9020f502345e 17,50-56
+client/features/spaces/space-page-menu.test.ts
+  s_b66d0e9dd4fae0::t_d634b03faf1235 25,54,58,63-64,71-100
+client/features/spaces/space-page-menu.ts
+  s_b66d0e9dd4fae0::t_5eaed867ed1af0 7,10-20,23,53,90-102
+client/surfaces/commandBar/CmdResults.page-key-hints.test.ts
+  s_b66d0e9dd4fae0::t_f332dcde58f782 1-127
+client/surfaces/commandBar/CmdResults.svelte
+  s_b66d0e9dd4fae0::t_3aaf21a89c9b2f 21,33,66,103-110,385-392
+client/surfaces/commandBar/ContextActionKeys.svelte
+  s_b66d0e9dd4fae0::t_2b98a844b59233 5,11-14,18,27,41-42
+client/surfaces/commandBar/super-bar-keys.test.ts
+  s_b66d0e9dd4fae0::t_b69eb586fbf910 2,28-47,81,83,99-104
+client/surfaces/commandBar/super-bar.ts
+  s_b66d0e9dd4fae0::t_cc21e756792439 90-98,103-116
+client/ui/elements/contextMenu/ContextMenuItem.svelte
+  s_b66d0e9dd4fae0::t_0b51015668924c 51,92
+client/ui/elements/contextMenu/ContextMenuItemBase.svelte
+  s_b66d0e9dd4fae0::t_7ba5b56ee409ce 14,20-21,65-68
+client/ui/elements/contextMenu/ContextMenuItemWithSecondary.svelte
+  s_b66d0e9dd4fae0::t_5cd4a99dc46e21 13,24-25,73
+client/ui/elements/contextMenu/ContextMenuToggleItem.svelte
+  s_b66d0e9dd4fae0::t_ab6b51775971a4 79-83
+client/ui/elements/text/ShortcutText.svelte
+  s_b66d0e9dd4fae0::t_7013ad586dba2a 20-21,29-30,87-89
+tests/fixtures/components/ContextZonePaneHarness.svelte
+  s_b66d0e9dd4fae0::t_2006b0cfc6210f 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "834eca110b3c1cfd001e287bbc471d2eaf2dcbdf",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_f35b422006faeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "679baf05-05c3-434b-8d43-45dfc1b3d785",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
