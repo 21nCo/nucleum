@@ -4,6 +4,7 @@ import {
   activateRestoredFiles,
   exportQueuedFiles,
   isFileQueueSupported,
+  readQueueUploadCount,
   resolveAccountFileQueueDir,
   stageRestoredFiles,
   unstageRestoredFiles,
@@ -91,24 +92,29 @@ export async function createBackupBlob(): Promise<Blob> {
 /**
  * Restores a backup. Its queued files are first put in the queue of the
  * account they were captured under, marked restored so no replay acts on
- * them; then the records are imported; then, when the signed-in account is
- * that account, the files are handed to its replay with the marks the backup
- * held, and the queue replays. Another account's (or the guest's) restore
- * leaves them marked restored, without the marks that bind an upload to the
- * capturing account, so they stay in that queue, never uploaded, removed or
- * discarded, until that account restores the backup. Files the queue held
- * unmarked when the restore started stay as they are. Rejects, restoring
- * nothing, when the backup or its queued files cannot be read, this device
- * cannot keep them, a file cannot be written, or the account changes before
- * the records are imported; and when the records could not all be imported,
- * removing the files it added. `triggerCloneUp` decides, right before the
- * records are imported into the account checked unchanged, whether DataFn
- * clones them up.
+ * them (see stageRestoredFiles); then the records are imported; then, when
+ * the signed-in account is that account, the files are handed to its
+ * replay with the marks the backup held, and the queue replays. Should the
+ * restore stop or fail after the records are imported (even in part), the
+ * account's replay takes over each such file once a record of the account
+ * references it, and the account's backups carry it meanwhile. Another
+ * account's (or the guest's) restore leaves them marked restored, without
+ * the marks that bind an upload to the capturing account, so they stay in
+ * that queue, never uploaded, removed or discarded, until that account
+ * restores the backup. A file the queue holds complete and unmarked, or
+ * whose upload completes while the restore waits for the queue, stays as it
+ * is. Rejects, restoring nothing, when the backup or its queued files cannot
+ * be read, this device cannot keep them, a file cannot be written, or the
+ * account changes before the records are imported (removing the files it
+ * added); and when the records could not all be imported, keeping the
+ * files. `triggerCloneUp` decides, right before the records are imported
+ * into the account checked unchanged, whether DataFn clones them up.
  */
 export async function restoreBackup(
   file: Blob,
   options: { triggerCloneUp: () => boolean }
 ): Promise<void> {
+  const uploadCount = readQueueUploadCount();
   if (!file.size) throw new Error("Backup file is empty");
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
@@ -116,42 +122,32 @@ export async function restoreBackup(
   if (fileQueue?.files.length && !isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
   }
-  const isCapturingAccount = Boolean(fileQueue) && userId === fileQueue?.userId;
+  const isOwnAccount = Boolean(fileQueue) && userId === fileQueue?.userId;
   const staged =
     fileQueue &&
     (await stageRestoredFiles(
       resolveAccountFileQueueDir(fileQueue.userId),
-      isCapturingAccount
-        ? fileQueue.files
-        : fileQueue.files.map((copy) => ({
-            ...copy,
-            isCommitted: false,
-            started: []
-          }))
+      fileQueue.files,
+      { isOwnAccount, uploadCount }
     ));
-  try {
-    await importRecords(namespace, records, options.triggerCloneUp);
-  } catch (error) {
+  if (datafn.currentNamespace() !== namespace) {
     if (staged) await unstageRestoredFiles(staged);
-    throw error;
+    throw new Error("The account changed while the backup was restored");
   }
-  if (!staged?.fileIds.length || !isCapturingAccount) return;
+  await importRecords(records, options.triggerCloneUp);
+  if (!staged?.fileIds.length || !isOwnAccount) return;
   await activateRestoredFiles(staged);
   await uploadQueuedFiles();
 }
 
 /**
- * Imports a backup's records into the namespace a restore started in,
- * rejecting when it changed or when the records could not all be imported.
+ * Imports a backup's records, rejecting when they could not all be
+ * imported.
  */
 async function importRecords(
-  namespace: ReturnType<typeof datafn.currentNamespace>,
   records: Record<string, unknown>,
   triggerCloneUp: () => boolean
 ) {
-  if (datafn.currentNamespace() !== namespace) {
-    throw new Error("The account changed while the backup was restored");
-  }
   const result = (await datafn.importData(records, {
     triggerCloneUp: triggerCloneUp()
   })) as DatafnImportResult;
