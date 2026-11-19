@@ -35,6 +35,13 @@
   import { resolveNodeMinWidth } from "@nucleum/features/memory/node/node-layout";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
+  import {
+    runPendingNoteEditorFocus,
+    setNotePaneEditor,
+    type NoteContentState
+  } from "@nucleum/features/memory/markdown/note-editor-focus";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
+  import { afterNavigate } from "$app/navigation";
 
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
@@ -50,6 +57,28 @@
     isFromSplitView?: boolean;
   } = $props();
   let view = $state<NodeView>(NodeView.CONTENT);
+  /**
+   * Whether this pane's note content shows an editor that takes edits, as
+   * last reported; undefined until its content first mounts. It belongs to
+   * this pane: the node store is shared by every view of the note and
+   * replaced when it loads.
+   */
+  let contentState = $state<NoteContentState | undefined>(undefined);
+  setNotePaneEditor({
+    setContentState(state) {
+      contentState = state;
+    }
+  });
+  const notePane = getContextZonePane();
+  /**
+   * Tells an Edit request in this pane that a navigation ended, such as the
+   * panel switch that brings its editor back, which resets focus as it ends.
+   * This view stays mounted while the editor mounts only once its content
+   * is prepared, so the end is recorded even when the editor shows later.
+   */
+  afterNavigate(() => {
+    runPendingNoteEditorFocus(id, notePane.id);
+  });
   let isShowFloatingBar = $state(true);
 
   let nodeViewParam = $derived(
@@ -218,6 +247,8 @@
       {node}
       {accessMode}
       {isConstrainedWidth}
+      isContentView={view === NodeView.CONTENT}
+      {contentState}
       isFloatingHidden={!isShowFloatingBar}
     />
   </div>

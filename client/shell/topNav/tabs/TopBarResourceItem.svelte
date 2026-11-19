@@ -13,6 +13,7 @@
   import { page } from "$app/stores";
   import { hoverable } from "@21n/ui/actions/hover.action";
   import { popover, tooltip } from "@21n/ui/actions/popover.action";
+  import { buildOpenAsSplitItem } from "@nucleum/shared-state/resources/open-as-split-item";
   import { AccessMode } from "@nucleum/datafn/resource.type";
   import {
     determineResourceAccessMode,
@@ -92,27 +93,10 @@
       {
         group: "open",
         items: [
-          {
-            value: "open-as-split",
-            label:
-              currentMode === AccessMode.BESIDE_BASE
-                ? "Close split screen"
-                : "Open in split screen",
-            icon:
-              currentMode === AccessMode.BESIDE_BASE
-                ? "minus-circle"
-                : "split-screen",
-            callback: async () => {
-              if (currentMode === AccessMode.BESIDE_BASE) {
-                navigation.closeResource({
-                  id: resource.id,
-                  accessMode: AccessMode.BESIDE_BASE
-                });
-              } else {
-                navigation.openResource(resource.id, AccessMode.BESIDE_BASE);
-              }
-            }
-          },
+          buildOpenAsSplitItem(resource.id, {
+            open: (id, accessMode) => navigation.openResource(id, accessMode),
+            close: (props) => navigation.closeResource(props)
+          }),
           {
             value: "open-in-full-screen",
             label: maxSearchParam ? "Minimize" : "Maximize",

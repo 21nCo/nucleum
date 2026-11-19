@@ -1,3 +1,4 @@
+import { buildOpenAsSplitItem } from "@nucleum/shared-state/resources/open-as-split-item";
 import { requireResourceActionHost } from "@nucleum/shared-state/resources/resource-action-host";
 import {
   copyActiveResourceContents,
@@ -360,6 +361,20 @@ export class ResourceActions<T extends IActionableResource> {
       }
     };
   }
+  /**
+   * Edit item of a resource edited inline, such as a note, which has no edit
+   * mode: `focus` puts the caret in its open editor.
+   */
+  editInline(focus: () => void): IContextMenuItem {
+    return {
+      label: "Edit",
+      value: ResourceActionType.EDIT,
+      icon: "edit",
+      callback: async () => {
+        focus();
+      }
+    };
+  }
   toggleReadMode(): IContextMenuItem {
     return {
       value: ResourceActionType.TOGGLE_READ_MODE,
@@ -420,32 +435,13 @@ export class ResourceActions<T extends IActionableResource> {
       }
     };
   }
+  /** Opens the resource in a split, or closes its split (see {@link buildOpenAsSplitItem}). */
   openAsSplit(): IContextMenuItem {
-    const currentMode = determineResourceAccessMode(this.resource.id);
-    return {
-      value: "open-as-split",
-      label:
-        currentMode === AccessMode.BESIDE_BASE
-          ? "Close split screen"
-          : "Open in split screen",
-      icon:
-        currentMode === AccessMode.BESIDE_BASE
-          ? "minus-circle"
-          : "split-screen",
-      callback: async () => {
-        if (currentMode === AccessMode.BESIDE_BASE) {
-          requireResourceActionHost().close({
-            id: this.resource.id,
-            accessMode: AccessMode.BESIDE_BASE
-          });
-        } else {
-          requireResourceActionHost().open(
-            this.resource.id,
-            AccessMode.BESIDE_BASE
-          );
-        }
-      }
-    };
+    return buildOpenAsSplitItem(this.resource.id, {
+      open: (id, accessMode) =>
+        requireResourceActionHost().open(id, accessMode),
+      close: (props) => requireResourceActionHost().close(props)
+    });
   }
   maximize(): IContextMenuItem {
     const searchParams = new URLSearchParams(window.location.search);
