@@ -411,17 +411,6 @@ test.describe("context zone overflow", () => {
     await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
     await closeMenus();
 
-    /** Reopens More > Actions by keyboard and checks Star reads Starred. */
-    const expectStarredInActions = async () => {
-      await openMoreByKeyboard();
-      await arrowDownTo(actionsEntry, "the Actions entry");
-      await page.keyboard.press("Enter");
-      await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
-      await page.keyboard.press("Escape");
-      await expect(star).toHaveCount(0, { timeout: 10_000 });
-      await page.keyboard.press("Escape");
-      await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
-    };
     const reopenNote = async () => {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.reload();
@@ -506,6 +495,17 @@ test.describe("context zone overflow", () => {
       await more.focus();
       await page.keyboard.press("Enter");
       await expect(actionsEntry).toBeVisible({ timeout: 10_000 });
+    };
+    /** Reopens More > Actions by keyboard and checks Star reads Starred. */
+    const expectStarredInActions = async () => {
+      await openMoreByKeyboard();
+      await arrowDownTo(actionsEntry, "the Actions entry");
+      await page.keyboard.press("Enter");
+      await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
+      await page.keyboard.press("Escape");
+      await expect(star).toHaveCount(0, { timeout: 10_000 });
+      await page.keyboard.press("Escape");
+      await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
     };
     const reopenNote = async () => {
       await page.setViewportSize({ width: 1440, height: 900 });
