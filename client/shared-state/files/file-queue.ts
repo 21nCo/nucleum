@@ -494,16 +494,17 @@ const RETRY_DELAYS_MS = [5_000, 30_000, 120_000, 600_000];
 const retryCounts = new Map<string, number>();
 /** How long an account's file without a record may still be saving. */
 export const UNCOMMITTED_GRACE_MS = 24 * 60 * 60_000;
-/** The count of requests each client sent (see countSentRequests). */
-const sentRequests = new WeakMap<FileFnClient, { count: number }>();
+/** The upload requests each client sent (see countSentRequests). */
+const sentRequests = new WeakMap<FileFnClient, Map<string, number>>();
 
 /**
- * Lets a replay tell that `client` sent no request during an upload, whose
- * started marker it may then remove; without a count, it may have sent one.
+ * Lets a replay tell that `client` sent no request for an upload, whose marker
+ * it may then remove: `sent` counts upload requests per idempotency key ("*",
+ * unreadable, counts for all); without counts, an upload may have sent one.
  */
 export function countSentRequests(
   client: FileFnClient,
-  sent: { count: number }
+  sent: Map<string, number>
 ) {
   sentRequests.set(client, sent);
 }
@@ -557,10 +558,11 @@ type ReplayPass = {
  * of the account references it, which also commits one whose mark was lost.
  * A committed file whose record was deleted, or an uncommitted one older
  * than a day, is removed without an upload (a pass runs at that deadline),
- * and one whose upload started is discarded first; each discard and removal
- * runs only while the records are still the owner's at that authority,
- * checked in the same step. A marker that cannot be read keeps the file. A
- * pass stops while the records cannot be brought up to date or read.
+ * and one that may have started (per markers read after that check, always
+ * without Web Locks) is discarded first; each discard and removal runs only
+ * while the records are the owner's at that authority, checked in the same
+ * step. A marker that cannot be read keeps the file. A pass stops while the
+ * records cannot be brought up to date or read.
  */
 export function replayFileQueue(
   dir: string,
@@ -720,7 +722,7 @@ async function replayEntry(
  * Replays a file of an account's queue (see replayFileQueue). Its markers and
  * committed mark are read before its record, so a capture saving its record
  * meanwhile keeps the file; an empty or invalid marker (an interrupted write)
- * may be the owner's attempt.
+ * may be the owner's attempt (as may any unreferenced file without Web Locks).
  */
 async function replayAccountEntry(
   pass: ReplayPass,
@@ -743,7 +745,11 @@ async function replayAccountEntry(
       scheduleGraceDeadline(pass, pending.createdAt);
       return "done";
     }
-    return removeAccountEntry(pass, references, fileId, markers.length > 0);
+    const started = globalThis.navigator?.locks
+      ? await readMarkers(dir, entryName)
+      : [undefined];
+    if (isStartedElsewhere(started, references)) return "done";
+    return removeAccountEntry(pass, references, fileId, started.length > 0);
   }
   if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
   const result = await uploadEntry(pass, pending, {
@@ -953,8 +959,10 @@ async function uploadQueuedFile(
   pending: PendingUpload & { fileId: string },
   mark?: StartMark
 ): Promise<UploadResult> {
+  const key = `${pending.uploadSessionId}:${pending.retryCount}`;
   const sent = sentRequests.get(client);
-  const sentBefore = sent?.count;
+  const countSent = () => sent && (sent.get(key) ?? 0) + (sent.get("*") ?? 0);
+  const sentBefore = countSent();
   let attempt: string | undefined;
   let isSending = false;
   try {
@@ -970,11 +978,11 @@ async function uploadQueuedFile(
         }),
         fileName: pending.fileName,
         fileId: pending.fileId,
-        idempotencyKey: `${pending.uploadSessionId}:${pending.retryCount}`
+        idempotencyKey: key
       })
       .done();
   } catch (error) {
-    const isUnsent = !isSending || (sent && sent.count === sentBefore);
+    const isUnsent = !isSending || (sent && countSent() === sentBefore);
     if (attempt && isUnsent) await mark?.undo(attempt);
     if (!(error instanceof FileFnHttpError)) throw error;
     if (error.code === "FILEFN_UPLOAD_ALREADY_COMPLETED") {

@@ -241,7 +241,7 @@ async function createAccountFileFnClient(
   baseUrl: string,
   teardown: AbortSignal
 ): Promise<FileFnClient> {
-  const sent = { count: 0 };
+  const sent = new Map<string, number>();
   const client = await createSdkClient(
     baseUrl,
     teardown,
@@ -460,14 +460,14 @@ export async function uploadQueuedFiles(): Promise<void> {
 
 /**
  * Creates an SDK client at an authority, authenticated as the signed-in
- * account, whose requests end when the teardown signal aborts and add to
- * `sent` once dispatched.
+ * account, whose requests end when the teardown signal aborts and whose
+ * upload requests add to `sent` once dispatched (see createTeardownFetch).
  */
 async function createSdkClient(
   baseUrl: string,
   teardown: AbortSignal,
   offline: { enabled: boolean; opfsDir?: string },
-  sent = { count: 0 }
+  sent?: Map<string, number>
 ): Promise<FileFnClient> {
   const transport = await createNucleumAuthFnTransportAuth();
   return createFileFnClient({
@@ -1025,12 +1025,12 @@ function guardFileFnClient(
 /**
  * Sends requests through the global fetch until the client is torn down, then
  * aborts in-flight requests and rejects new ones with an AbortError, which the
- * offline queue keeps staged without spending a retry. Counts each request in
- * `sent` as it is dispatched.
+ * offline queue keeps staged without spending a retry. Counts in `sent` only
+ * each upload's first request, as dispatched, by its key (see readUploadKey).
  */
 function createTeardownFetch(
   teardown: AbortSignal,
-  sent: { count: number }
+  sent?: Map<string, number>
 ): typeof fetch {
   return async (input, init) => {
     teardown.throwIfAborted();
@@ -1045,10 +1045,23 @@ function createTeardownFetch(
       return () => signal.removeEventListener("abort", forward);
     });
     try {
-      sent.count += 1;
+      const key = readUploadKey(input, init);
+      if (sent && key) sent.set(key, (sent.get(key) ?? 0) + 1);
       return await globalThis.fetch(input, { ...init, signal: linked.signal });
     } finally {
       for (const remove of detach) remove();
     }
   };
+}
+
+/** An upload's first request's idempotency key ("*" for an unreadable body). */
+function readUploadKey(input: RequestInfo | URL, init?: RequestInit) {
+  const url = String(input instanceof Request ? input.url : input);
+  if (!url.split(/[?#]/)[0].endsWith("/upload/init")) return undefined;
+  try {
+    const body = JSON.parse(String(init?.body)) as { idempotencyKey?: unknown };
+    return typeof body.idempotencyKey === "string" ? body.idempotencyKey : "";
+  } catch {
+    return "*";
+  }
 }

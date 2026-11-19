@@ -485,7 +485,7 @@ describe("FileFn OPFS queue of an account's records", () => {
   });
 
   it("removes a committed file without uploading it when the pull before the upload brings its record's deletion", async () => {
-    installDevice();
+    installDevice({ locks: createFakeLocks() });
     const tab = await openTab();
     await enqueuePhoto(tab);
     const fileFn = createClient({ isImmediate: true });
@@ -735,7 +735,7 @@ describe("FileFn OPFS queue of an account's records", () => {
   });
 
   it("brings the records up to date again after a failed upload before deciding the next file", async () => {
-    installDevice();
+    installDevice({ locks: createFakeLocks() });
     const tab = await openTab();
     await enqueuePhoto(tab);
     await tab.enqueueFile(QUEUE, {
@@ -851,7 +851,7 @@ describe("FileFn OPFS queue of an account's records", () => {
   });
 
   it("removes a file without a record that stayed uncommitted for over a day, without uploading it", async () => {
-    installDevice();
+    installDevice({ locks: createFakeLocks() });
     const tab = await openTab();
     await stagePhoto(tab);
     const fileFn = createClient({ isImmediate: true });
@@ -1310,7 +1310,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     await enqueuePhoto(await openTab());
     const first = await openTab();
     const stalled = createClient();
-    first.countSentRequests(stalled.client, { count: 0 });
+    first.countSentRequests(stalled.client, new Map());
     let tearDown: ((error: unknown) => void) | undefined;
     const upload = stalled.client.uploadFile;
     stalled.client.uploadFile = (input) => ({
@@ -1433,7 +1433,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     const torn = createClient({
       uploadError: new DOMException("The client was torn down", "AbortError")
     });
-    tab.countSentRequests(torn.client, { count: 0 });
+    tab.countSentRequests(torn.client, new Map());
     await replay(
       tab,
       torn.client,
@@ -1490,7 +1490,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     await enqueuePhoto(await openTab());
     const first = await openTab();
     const stalled = createClient();
-    first.countSentRequests(stalled.client, { count: 0 });
+    first.countSentRequests(stalled.client, new Map());
     let tearDown: ((error: unknown) => void) | undefined;
     const stalledUpload = stalled.client.uploadFile;
     stalled.client.uploadFile = (input) => ({
@@ -1531,24 +1531,27 @@ describe("FileFn OPFS queue of an account's records", () => {
   });
 
   it.each([
-    ["sent no request", 0, true],
-    ["sent a request", 1, false]
+    ["sent no request", undefined, true],
+    ["sent its own upload request", "own", false],
+    ["sent an upload request it could not attribute", "*", false],
+    ["sent only another upload's request", "ses_other:0", true]
   ])(
     "binds the file to its authority only when the torn-down client %s",
-    async (_, requests, isUploadedAtB) => {
+    async (_, request, isUploadedAtB) => {
       installDevice({ locks: createFakeLocks() });
       await enqueuePhoto(await openTab());
       const tab = await openTab();
       const torn = createClient({
         uploadError: new DOMException("The client was torn down", "AbortError")
       });
-      const sent = { count: 0 };
+      const sent = new Map<string, number>();
       tab.countSentRequests(torn.client, sent);
       const markers: (string | undefined)[] = [];
       const upload = torn.client.uploadFile;
       torn.client.uploadFile = (input) => {
         markers.push(readStarted());
-        sent.count += requests;
+        const key = request === "own" ? input.idempotencyKey! : request;
+        if (key) sent.set(key, 1);
         return upload(input);
       };
       await replay(
@@ -1566,6 +1569,86 @@ describe("FileFn OPFS queue of an account's records", () => {
       expect(opfs.list(QUEUE)).toEqual(
         isUploadedAtB ? [] : [`queued_${FILE_ID}`]
       );
+    }
+  );
+
+  it("without Web Locks, discards a file another tab uploaded while a replay's pull ran after its empty markers scan, before removing it", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    let releasePull!: () => void;
+    const pullGate = new Promise<void>((resolve) => (releasePull = resolve));
+    let isPulling!: () => void;
+    const pulling = new Promise<void>((resolve) => (isPulling = resolve));
+    const referenced = new Set([FILE_ID]);
+    const late = createReferences(referenced);
+    late.references.sync = async () => {
+      isPulling();
+      await pullGate;
+      return true;
+    };
+    const lateDone = replay(
+      await openTab(),
+      createClient().client,
+      late.references
+    );
+    await pulling;
+    expect(readMarkers()).toEqual([]);
+
+    const uploader = createClient({ isImmediate: true });
+    await replay(
+      await openTab(),
+      uploader.client,
+      createReferences(new Set([FILE_ID]), [() => true, () => false]).references
+    );
+    expect(uploader.uploads).toHaveLength(1);
+    expect(readMarkers()).toHaveLength(1);
+
+    referenced.delete(FILE_ID);
+    releasePull();
+    await lateDone;
+
+    expect(late.discarded).toEqual([FILE_ID]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("without Web Locks, discards a committed file whose record was deleted before removing it, though no marker shows it started", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    const fileFn = createClient({ isImmediate: true });
+    const { references, discarded } = createReferences(new Set());
+
+    await replay(await openTab(), fileFn.client, references);
+
+    expect(fileFn.uploads).toEqual([]);
+    expect(discarded).toEqual([FILE_ID]);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it.each([
+    ["at its authority discards the file first", AUTHORITY_A, [FILE_ID], []],
+    [
+      "at another authority leaves the file",
+      AUTHORITY_B,
+      [],
+      [`queued_${FILE_ID}`]
+    ]
+  ])(
+    "with Web Locks, reads a file's markers after its record is found missing: one that landed meanwhile %s",
+    async (_, owner, isDiscarded, left) => {
+      installDevice({ locks: createFakeLocks() });
+      await enqueuePhoto(await openTab());
+      const fileFn = createClient({ isImmediate: true });
+      const { references, discarded } = createReferences(new Set());
+      references.sync = async () => {
+        await writeStarted(JSON.stringify({ ...owner, attempt: "other-tab" }));
+        return true;
+      };
+
+      await replay(await openTab(), fileFn.client, references);
+
+      expect(fileFn.uploads).toEqual([]);
+      expect(discarded).toEqual(isDiscarded);
+      expect(opfs.list(QUEUE)).toEqual(left);
     }
   );
 
@@ -1590,7 +1673,7 @@ describe("FileFn OPFS queue of an account's records", () => {
   it("keeps a capture saving while an older file's grace deadline pass checks its record", async () => {
     vi.useRealTimers();
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
-    installDevice();
+    installDevice({ locks: createFakeLocks() });
     const tab = await openTab();
     await stagePhoto(tab);
     const fileFn = createClient({ isImmediate: true });

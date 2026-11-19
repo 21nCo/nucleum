@@ -37,7 +37,9 @@ const sdk = vi.hoisted(() => ({
   deletes: [] as string[],
   baseUrls: [] as string[],
   /** Holds every upload's completion until it settles, when set. */
-  hold: null as Promise<void> | null
+  hold: null as Promise<void> | null,
+  /** Sends each upload's first request and each delete, when set. */
+  isSending: false
 }));
 vi.mock("@filefn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@filefn/client")>();
@@ -47,6 +49,10 @@ vi.mock("@filefn/client", async (importOriginal) => {
       config: Parameters<typeof actual.createFileFnClient>[0]
     ): Partial<FileFnClient> => {
       sdk.baseUrls.push(config.baseUrl);
+      const send = async (path: string, init: RequestInit) => {
+        if (sdk.isSending)
+          await config.fetch?.(`${config.baseUrl}${path}`, init);
+      };
       return {
         uploadFile: (input) => {
           sdk.started.push(input);
@@ -57,6 +63,13 @@ vi.mock("@filefn/client", async (importOriginal) => {
             abort: () => undefined,
             done: async () => {
               await sdk.hold;
+              await send("/upload/init", {
+                method: "POST",
+                body: JSON.stringify({
+                  fileId: input.fileId,
+                  idempotencyKey: input.idempotencyKey
+                })
+              });
               sdk.uploads.push(input);
               return { fileId: input.fileId!, versionId: "ver_1" };
             }
@@ -64,6 +77,7 @@ vi.mock("@filefn/client", async (importOriginal) => {
         },
         deleteFile: async (fileId) => {
           sdk.deletes.push(fileId);
+          await send(`/${fileId}`, { method: "DELETE" });
         },
         uploadArtifact: async (input) => {
           sdk.artifacts.push(input);
@@ -142,7 +156,11 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
 
 const { fileUpload } = await import("./file-upload");
 const { resolveFileUrl } = await import("./file-url");
-const { captureFileQueueUploader } = await import("./filefn-client");
+const {
+  captureFileQueueUploader,
+  recordFileFnPendingDelete,
+  resolveFileFnBaseUrl
+} = await import("./filefn-client");
 const { replayFileQueue } = await import("./file-queue");
 const { OPFSStore } = await import("@filefn/client");
 
@@ -285,6 +303,7 @@ beforeEach(() => {
   sdk.deletes = [];
   sdk.baseUrls = [];
   sdk.hold = null;
+  sdk.isSending = false;
   authority.url = "https://account-useast-dev.nucleum.app/datafn";
   authority.pulls = 0;
   authority.isFailing = false;
@@ -577,6 +596,7 @@ describe("files a signed-in cloud account captures offline", () => {
   );
 
   it("never uploads an offline capture whose record the pull on reconnect shows was deleted on another device", async () => {
+    trackReplayPasses();
     await bootData(cloudAccount("user-a"));
     isOnline = false;
     const record = await capturePhoto();
@@ -735,6 +755,49 @@ describe("files a signed-in cloud account captures offline", () => {
       expect.objectContaining({ fileId: record.fileId })
     ]);
     expect(sdk.deletes).toEqual([]);
+  });
+
+  it("uploads at the account's new authority a capture whose torn-down client sent only a pending delete while the upload waited to send", async () => {
+    trackReplayPasses();
+    const atA = resolveFileFnBaseUrl("useast");
+    const atB = resolveFileFnBaseUrl("euwest");
+    const sent: string[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      if (url.startsWith(atA) || url.startsWith(atB)) sent.push(url);
+      return new Response("{}");
+    });
+    sdk.isSending = true;
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const hold = deferred<void>();
+    sdk.hold = hold.promise;
+    goOnline();
+    await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
+    await recordFileFnPendingDelete(
+      { userId: "user-a", baseUrl: atA },
+      "file_otherPhoto01"
+    );
+    goOnline();
+    await vi.waitFor(() => expect(sent).toEqual([`${atA}/file_otherPhoto01`]));
+
+    const moved = cloudAccount("user-a");
+    account.set({
+      ...moved,
+      userInfo: { ...moved.userInfo!, region: "euwest" }
+    });
+    authority.url = "https://account-euwest-dev.nucleum.app/datafn";
+    await openData("user-a");
+    hold.resolve();
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sent.filter((url) => url.endsWith("/upload/init"))).toEqual([
+      `${atB}/upload/init`
+    ]);
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
   });
 
   it.each([
