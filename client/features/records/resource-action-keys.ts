@@ -1,3 +1,4 @@
+import { derived } from "svelte/store";
 import type {
   IContextMenu,
   IContextMenuItem
@@ -5,6 +6,9 @@ import type {
 import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
+import { isKeyTargetPane } from "@nucleum/shell/shortcuts/page-keys";
+import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 
 /** Menu item values that run with a single key while a resource is open. */
 export const RESOURCE_ACTION_KEYS: Readonly<Record<string, string>> = {
@@ -52,3 +56,19 @@ export function withResourceActionKeys(menu: IContextMenu): IContextMenu {
     })
   }));
 }
+
+/**
+ * The registered resource actions whose single keys run now: the super bar's
+ * active registration while its pane is the key target. Letter hints follow
+ * it, so a hint never shows for a key that will not run, such as the actions
+ * of a split resource while the user works in Calendar beside it.
+ */
+export const keyedContextActions = derived(
+  [
+    contextActions.active,
+    contextZone.activePaneId,
+    contextZone.pane,
+    contextZone.visibleLayers
+  ],
+  ([entry]) => (entry && isKeyTargetPane(entry.pane) ? entry : undefined)
+);

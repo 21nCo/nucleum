@@ -53,9 +53,10 @@ vi.mock("@nucleum/features/spaces/space.store", async () => {
     }
   };
 });
-// The space menu's star item records which space it ran for.
-vi.mock("@nucleum/features/spaces/space-page-menu", () => ({
-  resolveSpacePageMenu: (space: { id: string }) => [
+vi.mock("@nucleum/features/spaces/space-page-menu", async () => {
+  const { withResourceActionKeys } =
+    await import("@nucleum/features/records/resource-action-keys");
+  const resolveSpacePageMenu = (space: { id: string }) => [
     {
       group: "space",
       items: [
@@ -67,8 +68,18 @@ vi.mock("@nucleum/features/spaces/space-page-menu", () => ({
         }
       ]
     }
-  ]
-}));
+  ];
+  return {
+    resolveSpacePageMenu,
+    resolveKeyedSpacePageMenu: (
+      space: { id: string },
+      params: { isKeyed: boolean }
+    ) =>
+      params.isKeyed
+        ? withResourceActionKeys(resolveSpacePageMenu(space))
+        : resolveSpacePageMenu(space)
+  };
+});
 vi.mock("@datafn/svelte", async () => {
   const { readable } = await import("svelte/store");
   return { toSvelteStore: () => readable({ data: [] }) };
@@ -155,7 +166,6 @@ describe("page letters on a space open in a split", () => {
     const active = get(contextActions.active);
     expect(active?.id).toBe("space:split");
     expect(active?.pane.id).toBe(SPLIT_PANE.id);
-    // The super bar's "This space" rows show the letter of the split space.
     expect(active?.resolve()[0].items[0].hotKey).toBe("s");
 
     await pressS();
