@@ -1,4 +1,7 @@
 import { render } from "@testing-library/svelte";
+import { tick } from "svelte";
+import view from "@21n/ui/environment/view.store";
+import { TimeScaleUnit } from "@21n/shared-utils/datetime/period.type";
 import { get, writable } from "svelte/store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OperatingSystem } from "@nucleum/client/runtime/context.type";
@@ -372,5 +375,26 @@ describe("single-key hints", () => {
     expect(icons()).toContain("text:M");
     syncSingleKeyShortcutsEnabled(false);
     expect(icons()?.every((icon) => icon === undefined)).toBe(true);
+  });
+
+  it("drops the scale letter from the narrow-width Calendar dropdown while off", async () => {
+    view.set({ ...get(view), isConstrainedWidth: true });
+    let unmount = () => {};
+    try {
+      const rendered = render(ClassicCalendarHeaderLeftOptions, {
+        props: { isScopeHidden: true, selectedView: TimeScaleUnit.MONTH }
+      });
+      const { container } = rendered;
+      unmount = rendered.unmount;
+      const trigger = () => container.textContent?.replace(/\s+/g, " ") ?? "";
+      expect(trigger()).toMatch(/\bM\b/);
+      syncSingleKeyShortcutsEnabled(false);
+      await tick();
+      expect(trigger()).not.toMatch(/\bM\b/);
+      expect(trigger()).toContain("Month");
+    } finally {
+      unmount();
+      view.set({ ...get(view), isConstrainedWidth: false });
+    }
   });
 });

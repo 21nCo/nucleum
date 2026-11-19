@@ -40,6 +40,7 @@ import { shortcutsConfig } from "./shortcuts.config";
 import { copyResourceLinkToClipboard } from "@nucleum/shell/navigation/resource-link.utils";
 import Records from "@nucleum/surfaces/library/records/Records.svelte";
 import { configureElementActionHost } from "@21n/ui/hosts/action-host";
+import { readSingleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
 import { configureElementShortcutHost } from "@21n/ui/hosts/shortcut-host";
 import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
 import FileView from "@21n/ui/compositions/files/FileView.svelte";
@@ -156,7 +157,8 @@ export function installApplicationHosts() {
       }
     });
     configureElementShortcutHost({
-      resolve: (action) => keyboardShortcuts.resolveShortcutForAction(action)
+      resolve: (action) => keyboardShortcuts.resolveShortcutForAction(action),
+      isSingleKeyEnabled: readSingleKeyShortcutsEnabled
     });
     configureElementFileHost({
       renderer: FileView,

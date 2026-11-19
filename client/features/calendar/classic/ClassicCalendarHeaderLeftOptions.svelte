@@ -9,6 +9,7 @@
   import view from "@21n/ui/environment/view.store";
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import Button from "@21n/ui/elements/button/Button.svelte";
+  import { singleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
   import {
     areSingleKeyShortcutsEnabled,
     isKeyTargetPane,
@@ -102,6 +103,14 @@
   )
     .map((scale) => optionsByScale[scale])
     .filter(Boolean);
+  /** The scale options without their letter keys, for menus while single-key shortcuts are off. */
+  const switchOptionsWithoutKeys = switchOptions.map((option) => ({
+    ...option,
+    icon: undefined
+  }));
+  const menuOptions = $derived(
+    $singleKeyShortcutsEnabled ? switchOptions : switchOptionsWithoutKeys
+  );
 
   const ownPane = getContextZonePane();
   let rootRef = $state<HTMLDivElement | undefined>();
@@ -140,7 +149,7 @@
   export function resolveScaleMenuGroup(): IContextMenuGroup[] {
     const options = areSingleKeyShortcutsEnabled()
       ? switchOptions
-      : switchOptions.map((option) => ({ ...option, icon: undefined }));
+      : switchOptionsWithoutKeys;
     return [
       {
         group: "scale",
@@ -176,7 +185,7 @@
     <div>
       {#if $view.isConstrainedWidth}
         <DropDown
-          items={switchOptions}
+          items={menuOptions}
           value={selectedView}
           isDisableSearch={true}
           width="min-w-32"

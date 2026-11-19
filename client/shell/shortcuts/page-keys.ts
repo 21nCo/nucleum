@@ -19,7 +19,9 @@ const chordEndingKeys = new WeakSet<KeyboardEvent>();
  * Calendar keys through `isPlainPageKey`, the shortcut runner for registered
  * shortcuts and view digits, the chord runner before a G chord starts and
  * before its second key runs, and component shortcut listeners through
- * `keyboardShortcuts.checkPageShortcut`.
+ * `keyboardShortcuts.checkPageShortcut`. The "." menu key and Space on a
+ * highlighted list item (`itemNavigation`, in @21n/ui) read the same setting
+ * through the element shortcut host (`isSingleKeyEnabled`).
  */
 export function areSingleKeyShortcutsEnabled() {
   return readSingleKeyShortcutsEnabled();
