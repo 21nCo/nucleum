@@ -29,10 +29,7 @@
   import { setContext } from "svelte";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { copyToClipboard } from "@21n/shared-utils/clipboard";
-  import {
-    confirmationNotification,
-    toasts
-  } from "@nucleum/shared-state/notifications/notification.store";
+  import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { dispatchCustomEvent } from "@21n/shared-utils/dom-events";
   import { MemotronEvent } from "@nucleum/shared-state/events/memory-event.enum";
   import { hoverable } from "@21n/ui/actions/hover.action";
@@ -63,13 +60,9 @@
   import Button from "@21n/ui/elements/button/Button.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
 
-  import account from "@nucleum/client/runtime/account/account.store";
-  import { isCloudUserAndOffline } from "@nucleum/client/runtime/account/account.utils";
-
   import { wait } from "@21n/shared-utils/wait";
 
   import type { IMultiFileCaptureData } from "@nucleum/features/memory/capture/capture.type";
-  import { AlertType } from "@nucleum/shared-state/notifications/notification.type";
   import FocusRing from "@nucleum/features/memory/markdown/contextMenu/FocusRing.svelte";
   import { tooltip } from "@21n/ui/actions/popover.action";
   import { Placement } from "@21n/ui/elements/direction.enum";
@@ -871,15 +864,6 @@
     errors: { file: File; type: string }[]
   ) {
     try {
-      if (isCloudUserAndOffline($account, $context.isInOfflineMode)) {
-        confirmationNotification.notify({
-          title: "Offline",
-          message:
-            "You seem to be offline. File upload is not yet available in offline mode.",
-          type: AlertType.ERROR
-        });
-        return;
-      }
       if (block.contentType === NodeType.EMBED && !block.body.id) {
         return;
       }

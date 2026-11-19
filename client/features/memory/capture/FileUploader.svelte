@@ -9,8 +9,6 @@
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
-  import account from "@nucleum/client/runtime/account/account.store";
-  import { isCloudUserAndOffline } from "@nucleum/client/runtime/account/account.utils";
 
   import context from "@nucleum/client/runtime/context.store";
   import view from "@21n/ui/environment/view.store";
@@ -73,11 +71,6 @@
   ) {
     try {
       error = undefined;
-      if (isCloudUserAndOffline($account, $context.isInOfflineMode)) {
-        error =
-          "You seem to be offline. File upload is not yet available in offline mode.";
-        return;
-      }
       if (errors && errors.length > 0) {
         error = resolveFileUploadErrorMessage(errors, {
           maxFileSizeMB: MAX_FILE_SIZE_MB
