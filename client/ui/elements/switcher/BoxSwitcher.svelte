@@ -143,6 +143,14 @@
   );
   /** Entries of the More menu: the hidden options and the trailing entry. */
   const moreCount = $derived(hiddenOptions.length + (trailingMenuItem ? 1 : 0));
+  /**
+   * The most entries More can take (the selected option never moves into it).
+   * The measuring copy shows this count, so More's measured width does not
+   * depend on the row it helps to decide.
+   */
+  const maxMoreCount = $derived(
+    options.length - 1 + (overflowTrailing ? 1 : 0)
+  );
 
   function measureOptions() {
     if (!measureEl) return;
@@ -251,9 +259,9 @@
   });
 </script>
 
-{#snippet moreContent()}
+{#snippet moreContent(count: number)}
   <span class="flex items-center gap-1 text-b2 whitespace-nowrap">
-    <span>+{Math.max(moreCount, 1)}</span>
+    <span>+{Math.max(count, 1)}</span>
     <Icon icon="chevron-down" size={Size.xs} />
   </span>
 {/snippet}
@@ -375,7 +383,7 @@
           )}
         >
           {#snippet children()}
-            {@render moreContent()}
+            {@render moreContent(moreCount)}
           {/snippet}
         </ContextMenuAction>
       {/if}
@@ -410,7 +418,7 @@
             "h-8": $shape.isFramed
           })}
         >
-          {@render moreContent()}
+          {@render moreContent(maxMoreCount)}
         </span>
       {/if}
     </div>

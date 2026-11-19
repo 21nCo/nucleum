@@ -66,15 +66,37 @@
     rowRef?.click();
   }
 
+  const submenuId = "contextMenuPopoverSecondaryScreen";
+
+  /**
+   * The shown submenu, found where the popover renders it: in the row's own
+   * root (a shadow root, or its document), else in the row's document.
+   */
+  function findSubmenu(row: HTMLElement): HTMLElement | null {
+    const root = row.getRootNode();
+    const own =
+      "getElementById" in root
+        ? (root as Document | ShadowRoot).getElementById(submenuId)
+        : null;
+    return own ?? row.ownerDocument.getElementById(submenuId);
+  }
+
+  /** The focused element, followed down through open shadow roots. */
+  function deepActiveElement(row: HTMLElement): Element | null {
+    let active = row.ownerDocument.activeElement;
+    while (active?.shadowRoot?.activeElement)
+      active = active.shadowRoot.activeElement;
+    return active;
+  }
+
   /** Focuses the first enabled item of the shown submenu. */
   function focusSubmenu() {
     if (!rowRef) return;
-    const doc = rowRef.ownerDocument;
-    const first = doc
-      .getElementById("contextMenuPopoverSecondaryScreen")
-      ?.querySelector<HTMLElement>("button:not([disabled])");
+    const first = findSubmenu(rowRef)?.querySelector<HTMLElement>(
+      "button:not([disabled])"
+    );
     first?.focus();
-    isFocusInSubmenu = !!first && doc.activeElement === first;
+    isFocusInSubmenu = !!first && deepActiveElement(rowRef) === first;
   }
 
   /**
@@ -88,9 +110,9 @@
       if (isOpenedByKeyboard) focusSubmenu();
       return;
     }
-    const doc = rowRef.ownerDocument;
-    const active = doc.activeElement;
-    const isFocusLost = !active || active === doc.body;
+    const { body, documentElement } = rowRef.ownerDocument;
+    const active = deepActiveElement(rowRef);
+    const isFocusLost = !active || active === body || active === documentElement;
     if (isFocusInSubmenu && isFocusLost && rowRef.isConnected) rowRef.focus();
     isFocusInSubmenu = false;
     isOpenedByKeyboard = false;
