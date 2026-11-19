@@ -3,6 +3,11 @@ import { writable } from "svelte/store";
 
 export interface ElementShortcutHost {
   resolve(action: string): IKeyboardShortcut | undefined;
+  /**
+   * Whether shortcuts that run on one key press without Cmd, Ctrl or Option
+   * are on. Reads the application's single setting live; absent means on.
+   */
+  isSingleKeyEnabled?(): boolean;
 }
 
 let host: ElementShortcutHost | undefined;
@@ -34,4 +39,14 @@ export function syncElementShortcutHints(isShowHints: boolean) {
 /** Resolves a configured shortcut for presentation. */
 export function resolveElementShortcut(action: string) {
   return host?.resolve(action);
+}
+
+/**
+ * Whether single-key shortcuts are on, for portable key listeners and hints.
+ * Reads the application's setting through the host, so it never has its own
+ * copy; the application calls `notifyElementShortcutsChanged` when it changes
+ * so hints follow it.
+ */
+export function areElementSingleKeysEnabled() {
+  return host?.isSingleKeyEnabled?.() ?? true;
 }

@@ -352,7 +352,7 @@
 
 {#if $hostVisibility}
   <ComponentShortcutListener
-    checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
+    checkShortcut={keyboardShortcuts.checkPageShortcut.bind(keyboardShortcuts)}
     isAllowFromTextInput={true}
     shortcuts={[
       {

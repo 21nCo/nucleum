@@ -17,10 +17,12 @@ import {
   createFileDeferredWork
 } from "../../../services/account/src/files/deferred";
 import {
+  decodeAsciiEscapes,
   FILE_RESPONSE_ISOLATION_HEADERS,
   isolateFileResponse,
   redactFileRequestPath,
-  registerAccountFileRoutes
+  registerAccountFileRoutes,
+  type AsciiEscapeDecodeMeter
 } from "../../../services/account/src/files/routes";
 import {
   createAccountFileFn,
@@ -396,37 +398,76 @@ describe("account FileFn request path redaction", () => {
     expect(redactFileRequestPath(unrelated)).toBe(unrelated);
   });
 
+  type AsciiEscapeDecoder = (value: string, meter: AsciiEscapeDecodeMeter) => string;
+
   /**
-   * Times `repeats` redactions of the three nested paths at `layers` depth.
-   * Short and long samples share the same total number of layers, so a linear
-   * decoder costs about the same for each while a decoder that rescans the
-   * path per layer costs about 8x more on the long paths; interleaving the
-   * samples and comparing medians cancels out a uniformly slow runner.
+   * Counts the steps `decode` spends on `copies` of each of the three nested
+   * paths at `layers` depth. Steps come from the meter, never from a clock, so
+   * the counts are exact integers on every runner.
    */
-  const sampleRedaction = (layers: number, repeats: number) => {
-    const paths = Object.values(nestedPaths(layers));
-    const started = performance.now();
-    for (let repeat = 0; repeat < repeats; repeat += 1) {
-      for (const path of paths) redactFileRequestPath(path);
+  const decodingWork = (decode: AsciiEscapeDecoder, layers: number, copies: number) => {
+    const meter: AsciiEscapeDecodeMeter = { steps: 0 };
+    let maxStepsPerChar = 0;
+    for (const path of Object.values(nestedPaths(layers))) {
+      for (let copy = 0; copy < copies; copy += 1) {
+        const before = meter.steps;
+        decode(path, meter);
+        maxStepsPerChar = Math.max(maxStepsPerChar, (meter.steps - before) / path.length);
+      }
     }
-    return performance.now() - started;
+    return { steps: meter.steps, maxStepsPerChar };
+  };
+
+  /**
+   * Short and long samples share the same total number of layers (8 x `layers`
+   * and 1 x 8 * `layers`), so a decoder doing constant work per character
+   * spends about the same steps on each (the long sample slightly fewer, as it
+   * repeats the fixed path parts once instead of 8 times), while a decoder that
+   * rescans the path once per layer spends about 8x more on the long sample and
+   * far more than 2 steps per character.
+   */
+  const expectLinearDecodingWork = (decode: AsciiEscapeDecoder, layers: number) => {
+    const short = decodingWork(decode, layers, 8);
+    const long = decodingWork(decode, layers * 8, 1);
+    const work = `short ${short.steps} steps; long ${long.steps} steps`;
+    expect(long.steps / short.steps, work).toBeLessThan(2);
+    expect(Math.max(short.maxStepsPerChar, long.maxStepsPerChar), work).toBeLessThanOrEqual(2);
+  };
+
+  /**
+   * A deliberately quadratic decoder: each pass over the whole string decodes
+   * one `%25` layer, as a per-layer rescan does, and costs one step per
+   * character it scans.
+   */
+  const rescanningDecoder: AsciiEscapeDecoder = (value, meter) => {
+    let current = value;
+    for (;;) {
+      meter.steps += current.length;
+      const next = current.replace(/%([0-7][0-9a-f])/gi, (_escape, hex: string) =>
+        String.fromCodePoint(Number.parseInt(hex, 16))
+      );
+      if (next === current) return current;
+      current = next;
+    }
   };
 
   it("costs the same per nesting layer for 8 x 1,000 and 1 x 8,000 layer paths", () => {
-    const median = (values: number[]) =>
-      [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]!;
-    sampleRedaction(1_000, 8);
-    sampleRedaction(8_000, 1);
-    const short: number[] = [];
-    const long: number[] = [];
-    for (let round = 0; round < 7; round += 1) {
-      short.push(sampleRedaction(1_000, 8));
-      long.push(sampleRedaction(8_000, 1));
+    expectLinearDecodingWork(decodeAsciiEscapes, 1_000);
+    for (const path of Object.values(nestedPaths(8_000))) {
+      expect(decodeAsciiEscapes(path, { steps: 0 })).toBe(decodeAsciiEscapes(path));
     }
-    const timings = `short ${short.join(",")} ms; long ${long.join(",")} ms`;
-    expect(median(long) / median(short), timings).toBeLessThan(3);
-    expect(median(long), timings).toBeLessThan(2_000);
-  }, 30_000);
+  });
+
+  it("fails the per-layer cost check for a decoder that rescans the path once per layer", () => {
+    for (const path of Object.values(nestedPaths(100))) {
+      expect(rescanningDecoder(path, { steps: 0 })).toBe(decodeAsciiEscapes(path));
+    }
+    expectLinearDecodingWork(decodeAsciiEscapes, 100);
+    expect(() => expectLinearDecodingWork(rescanningDecoder, 100)).toThrow(
+      /short \d+ steps; long \d+ steps/
+    );
+    expect(decodingWork(rescanningDecoder, 100, 1).maxStepsPerChar).toBeGreaterThan(2);
+  });
 
   it("never lets a generated share token survive, whatever the per-character encoding", () => {
     let seed = 0x5eed538;

@@ -9,54 +9,51 @@
 </script>
 
 <script lang="ts">
+  import type { IContextMenu } from "@21n/ui/elements/contextMenu/context-menu.type";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import { Size } from "@21n/ui/elements/size.enum";
   import type { ISelectValue } from "@21n/ui/elements/select/select.type";
   import type { ActiveSpaceStore } from "@nucleum/features/spaces/space.store";
+  import { resolveKeyedSpacePageMenu } from "@nucleum/features/spaces/space-page-menu";
 
   let {
     store,
     view,
     isPinned = false,
     onTogglePin,
-    onViewChange
+    onViewChange,
+    isKeyed = true
   }: {
     store: ActiveSpaceStore;
     view: SpaceView;
     isPinned?: boolean;
     onTogglePin: () => void;
     onViewChange: (view: SpaceView) => void;
+    /** Whether the space's single-key letters apply, shown in its menu. */
+    isKeyed?: boolean;
   } = $props();
 
-  function resolveMenu() {
-    return [
-      {
-        group: "view",
-        items: [],
-        option: {
-          label: "View",
-          options: SPACE_VIEW_OPTIONS,
-          value: view,
-          onChange: (value: ISelectValue) => onViewChange(value as SpaceView)
-        }
-      },
-      {
-        group: "space",
-        items: [
-          {
-            value: "rename",
-            label: "Rename",
-            icon: "edit",
-            callback: async () => store.setTitleEditing(true)
-          },
-          {
-            value: "pin",
-            label: isPinned ? "Unpin from app menu" : "Pin to app menu",
-            icon: isPinned ? "unpin" : "pin",
-            callback: async () => onTogglePin()
-          }
-        ]
+  function resolveMenu(): IContextMenu {
+    const viewGroup = {
+      group: "view",
+      items: [],
+      option: {
+        label: "View",
+        options: SPACE_VIEW_OPTIONS,
+        value: view,
+        onChange: (value: ISelectValue) => onViewChange(value as SpaceView)
       }
+    };
+    if (!$store) return [viewGroup];
+    return [
+      viewGroup,
+      ...resolveKeyedSpacePageMenu($store, {
+        isKeyed,
+        isPinned,
+        onRename: () => store.setTitleEditing(true),
+        onTogglePin,
+        onChanged: () => store.init(undefined, { isRecordedInRecents: false })
+      })
     ];
   }
 </script>

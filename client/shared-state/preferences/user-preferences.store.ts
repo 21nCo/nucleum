@@ -18,6 +18,7 @@ import {
   removeOptimisticKvEntries
 } from "@nucleum/datafn/optimisticKv.utils";
 import type { OptimisticKvEntries } from "@nucleum/datafn/optimisticKv.type";
+import { syncSingleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
 
 const defaultColorSchemeId = "colorscheme:clean_tidyblue_light";
 const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
@@ -36,6 +37,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
   timeZoneLabel: defaultTimeZone?.label ?? "UTC",
   timeZone: defaultTimeZone?.zone ?? "UTC",
   isAnonymousAnalyticsEnabled: true,
+  isSingleKeyShortcutsEnabled: true,
   lastUsedTranscriptionModel: TranscriptionModel.TINY_EN,
   appearance: {
     skin: AppSkin.Clean,
@@ -77,6 +79,9 @@ const userPreferencesLocal = writable<IUserGlobalPreferences>(
   normalizeUserPreferences(seedUserPreferences)
 );
 const pendingUserPreferenceValues: OptimisticKvEntries = new Map();
+userPreferencesLocal.subscribe((value) =>
+  syncSingleKeyShortcutsEnabled(value.isSingleKeyShortcutsEnabled !== false)
+);
 let userPreferencesNamespace = datafn.currentNamespace();
 let userPreferencesIsInitialized = false;
 
@@ -121,6 +126,7 @@ function normalizeUserPreferences(data?: Partial<IUserGlobalPreferences>) {
     mediaGridTestitems:
       value.mediaGridTestitems ?? seedUserPreferences.mediaGridTestitems,
     isAnonymousAnalyticsEnabled: value.isAnonymousAnalyticsEnabled ?? true,
+    isSingleKeyShortcutsEnabled: value.isSingleKeyShortcutsEnabled !== false,
     timeZone: resolveStoredTimeZone(value) ?? seedUserPreferences.timeZone
   };
 }
@@ -189,6 +195,11 @@ export const userPreferences = {
 
   setAccessibilitySizingFactor(accessibilitySizingFactor: number) {
     this.modify({ accessibilitySizingFactor });
+  },
+
+  /** Turns every shortcut that runs on one key press without Cmd, Ctrl or Option on or off. */
+  setSingleKeyShortcutsEnabled(isSingleKeyShortcutsEnabled: boolean) {
+    return this.modify({ isSingleKeyShortcutsEnabled });
   },
 
   _setTimezone(offset: number, label?: string, timezone?: string) {

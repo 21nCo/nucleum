@@ -27,12 +27,20 @@ export type IContextMenuOptionGroup = {
 
 export type IContextMenuItem = ISelectItem & {
   callback?: (props?: any) => Promise<void>;
+  /** Single key that runs this item from the page, shown as a hint. */
+  hotKey?: string;
   action?: string;
   type?: ContextMenuType;
   initialValue?: boolean;
   secondStepComponent?: {
     component: any;
     props?: any;
+    /**
+     * Whether opening the submenu from the keyboard (Enter, Space or Right
+     * arrow) moves focus into it, so its items take Up, Down and Escape;
+     * Escape then returns focus to the item.
+     */
+    isFocusedOnKeyboardOpen?: boolean;
   };
 };
 

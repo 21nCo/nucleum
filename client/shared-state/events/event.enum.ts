@@ -22,9 +22,7 @@ export enum GlobalEvent {
   ESCAPE = "Escape",
   HIDE_POPOVER = "hidePopover",
   APP_MENU_SWITCHED = "APP_MENU_SWITCHED",
-  /**
-   * @deprecated - using full screen/maximize for resources instead
-   */
+  /** Value of the focus mode switch in a resource's menu. */
   FOCUS_MODE = "focusMode",
   APP_LOADING_STATUS = "appLoadingStatus",
   /**

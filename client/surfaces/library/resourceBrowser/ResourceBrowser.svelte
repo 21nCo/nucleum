@@ -194,7 +194,7 @@
 {/key}
 {#if resource !== Resource.task}
   <ComponentShortcutListener
-    checkShortcut={keyboardShortcuts.checkShortcut.bind(keyboardShortcuts)}
+    checkShortcut={keyboardShortcuts.checkPageShortcut.bind(keyboardShortcuts)}
     shortcuts={[
       {
         shortcut: Action.CREATE,

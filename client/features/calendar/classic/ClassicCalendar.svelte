@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
   import CalendarHeader from "@nucleum/features/calendar/classic/CalendarHeader.svelte";
   import MonthView from "@nucleum/features/calendar/classic/MonthView.svelte";
   import WeekView from "@nucleum/features/calendar/classic/WeekView.svelte";
@@ -36,6 +37,8 @@
 
   let selectedDate = $state(new Date());
   let selectedScale = $state<TimeScaleUnit>(TimeScaleUnit.DAY);
+  const keyPane = getContextZonePane();
+  let viewRef = $state<HTMLDivElement | undefined>();
   let yearViewRef = $state<YearView>();
   let scaleOptionsRef = $state<ClassicCalendarHeaderLeftOptions>();
   let weekViewRef = $state<WeekView>();
@@ -190,6 +193,8 @@
 >
   {#snippet headerLeftOptions(isCompact: boolean, isTight: boolean)}
     <ClassicCalendarHeaderLeftOptions
+      {keyPane}
+      keyRoot={viewRef}
       bind:this={scaleOptionsRef}
       bind:selectedView
       {isRefreshing}
@@ -224,6 +229,7 @@
   {/snippet}
 
   <div
+    bind:this={viewRef}
     class="flex h-full"
     data-testid={`calendar-view-${selectedView.toLowerCase()}`}
   >

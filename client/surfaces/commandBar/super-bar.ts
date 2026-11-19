@@ -87,6 +87,35 @@ export function flattenContextActions(
   );
 }
 
+/** A single letter in lower case; named keys such as Backspace stay exact. */
+function normalizeActionKey(key: string) {
+  return key.length === 1 ? key.toLowerCase() : key;
+}
+
+/**
+ * Finds the action whose single key is `key`, ignoring the letter case of
+ * both the pressed key and the item's hint.
+ */
+export function findContextActionByKey(
+  actions: ContextActionItem[],
+  key: string
+): ContextActionItem | undefined {
+  const pressed = normalizeActionKey(key);
+  return actions.find(
+    (action) =>
+      action.item.hotKey !== undefined &&
+      normalizeActionKey(action.item.hotKey) === pressed
+  );
+}
+
+/**
+ * Accessible label and tooltip of a super bar row's key hint. The super bar
+ * input takes typed letters, so the hint names a key pressed on the page.
+ */
+export function describePageKey(hotKey: string) {
+  return `Press ${hotKey.length === 1 ? hotKey.toUpperCase() : hotKey} on the page`;
+}
+
 /** Keeps the actions whose label contains the query, ignoring case. */
 export function filterContextActions(
   actions: ContextActionItem[],

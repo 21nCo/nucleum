@@ -170,26 +170,45 @@ function stripMarks(value: string): string {
 }
 
 /**
+ * Counts decoding work for tests. `steps` grows by one for every escape check
+ * and every in-place replacement, never with elapsed time.
+ */
+export interface AsciiEscapeDecodeMeter {
+  steps: number;
+}
+
+/**
  * Decodes ASCII `%XX` escapes to a fixed point in one left-to-right pass: after
  * each character is appended, an escape ending at it is decoded in place and
  * the check repeats, so nested `%25` layers resolve without rescanning the
  * whole string and the work stays linear in the path length.
+ *
+ * Exported only as a test seam: the optional `meter` counts the escape checks
+ * and replacements and never changes the result. Each input character costs
+ * one check when appended; each replacement costs one step plus one recheck
+ * and shrinks the output by two characters, so at most `n / 2` replacements
+ * happen and a path of `n` characters costs at most `2n` steps.
  */
-function decodeAsciiEscapes(value: string): string {
+export function decodeAsciiEscapes(value: string, meter?: AsciiEscapeDecodeMeter): string {
   const output: string[] = [];
   for (const char of value) {
     output.push(char);
-    let escape = trailingAsciiEscape(output);
+    let escape = trailingAsciiEscape(output, meter);
     while (escape !== null) {
       output.length -= 3;
       output.push(String.fromCodePoint(Number.parseInt(escape, 16)));
-      escape = trailingAsciiEscape(output);
+      if (meter) meter.steps += 1;
+      escape = trailingAsciiEscape(output, meter);
     }
   }
   return output.join("");
 }
 
-function trailingAsciiEscape(output: string[]): string | null {
+function trailingAsciiEscape(
+  output: string[],
+  meter: AsciiEscapeDecodeMeter | undefined
+): string | null {
+  if (meter) meter.steps += 1;
   const length = output.length;
   if (length < 3 || output[length - 3] !== "%") {
     return null;

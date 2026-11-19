@@ -10,6 +10,8 @@
   import view from "@21n/ui/environment/view.store";
   import ResourcePanelSwitcher from "@nucleum/features/records/ResourcePanelSwitcher.svelte";
   import ContextZoneContent from "@nucleum/shell/topNav/contextZone/ContextZoneContent.svelte";
+  import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
+  import { isInPlaceResource } from "@nucleum/shared-state/resources/in-place-resource";
   import ContextActions from "@nucleum/shell/topNav/contextZone/ContextActions.svelte";
   import { determineResourceType } from "@nucleum/datafn/resource.utils";
   import {
@@ -49,6 +51,13 @@
     title?: Snippet;
   } = $props();
 
+  const isInPlace = isInPlaceResource();
+  const isKeyedMenu = $derived(isContextZoneAccessMode(accessMode) || isInPlace);
+  const keyedMenuResolver = $derived(
+    contextMenuResolver && isKeyedMenu
+      ? () => withResourceActionKeys(contextMenuResolver?.() ?? [])
+      : contextMenuResolver
+  );
   const isContextZoneHosted = contextZone.isHosted;
   const contextZoneEntryWidth = contextZone.entryWidth;
   const isInContextZone = $derived(
@@ -78,9 +87,9 @@
   <ContextActions
     id={$resourceStore.id.toString()}
     resource={determineResourceType($resourceStore.id)}
-    resolve={() => contextMenuResolver?.() ?? []}
+    resolve={() => keyedMenuResolver?.() ?? []}
     {onAction}
-    isEnabled={isContextZoneAccessMode(accessMode)}
+    isEnabled={isKeyedMenu}
   />
 {/if}
 {#if isInContextZone}
@@ -93,7 +102,7 @@
       {isConstrainedWidth}
       {accessMode}
       {onAction}
-      {contextMenuResolver}
+      contextMenuResolver={keyedMenuResolver}
     />
   </ContextZoneContent>
   <ResourcePanelSwitcher
@@ -110,6 +119,6 @@
     {accessMode}
     {onAction}
     {isFloatingHidden}
-    {contextMenuResolver}
+    contextMenuResolver={keyedMenuResolver}
   />
 {/if}

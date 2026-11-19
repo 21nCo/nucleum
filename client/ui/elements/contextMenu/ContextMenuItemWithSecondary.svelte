@@ -10,6 +10,7 @@
     item,
     size = Size.md,
     isOptionGroupRow = false,
+    parentBgIndex = 1,
     onAction = undefined,
     onSelect = undefined
   }: {
@@ -20,10 +21,113 @@
      * top-aligned beside it.
      */
     isOptionGroupRow?: boolean;
+    /** Background index the menu was opened on; the menu surface is one above. */
+    parentBgIndex?: number;
     onAction?: ((event: CustomEvent<unknown>) => void) | undefined;
     onSelect?: ((event: CustomEvent<unknown>) => void) | undefined;
   } = $props();
   let isPopoverVisible = $state(false);
+  let rowRef = $state<HTMLButtonElement>();
+  let isOpenedByKeyboard = false;
+  let isFocusInSubmenu = false;
+  /**
+   * Whether the submenu shows, read from the popover's change event, which
+   * does not bubble, so it is listened to on the row itself.
+   */
+  let isSubmenuShown = false;
+  const isFocusedOnKeyboardOpen = $derived(
+    !!item.secondStepComponent?.isFocusedOnKeyboardOpen
+  );
+  const keyboardOpenKeys = ["ArrowRight", "Enter", " "];
+
+  /** A click without a pointer (Enter, Space) opens the submenu by keyboard. */
+  function handleClickCapture(event: MouseEvent) {
+    isOpenedByKeyboard = event.detail === 0;
+  }
+
+  /**
+   * For a submenu that takes focus on a keyboard open: Right arrow opens a
+   * closed submenu like Enter does, and Enter, Space or Right arrow on a
+   * submenu already shown, such as by hover, move focus into it without
+   * toggling it.
+   */
+  function handleKeydown(event: KeyboardEvent) {
+    if (!isFocusedOnKeyboardOpen || !keyboardOpenKeys.includes(event.key))
+      return;
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+      return;
+    if (isSubmenuShown) {
+      event.preventDefault();
+      focusSubmenu();
+      return;
+    }
+    if (event.key !== "ArrowRight") return;
+    event.preventDefault();
+    rowRef?.click();
+  }
+
+  const submenuId = "contextMenuPopoverSecondaryScreen";
+
+  /**
+   * The shown submenu, found where the popover renders it: in the row's own
+   * root (a shadow root, or its document), else in the row's document.
+   */
+  function findSubmenu(row: HTMLElement): HTMLElement | null {
+    const root = row.getRootNode();
+    const own =
+      "getElementById" in root
+        ? (root as Document | ShadowRoot).getElementById(submenuId)
+        : null;
+    return own ?? row.ownerDocument.getElementById(submenuId);
+  }
+
+  /** The focused element, followed down through open shadow roots. */
+  function deepActiveElement(row: HTMLElement): Element | null {
+    let active = row.ownerDocument.activeElement;
+    while (active?.shadowRoot?.activeElement)
+      active = active.shadowRoot.activeElement;
+    return active;
+  }
+
+  /** Focuses the first enabled item of the shown submenu. */
+  function focusSubmenu() {
+    if (!rowRef) return;
+    const first = findSubmenu(rowRef)?.querySelector<HTMLElement>(
+      "button:not([disabled])"
+    );
+    first?.focus();
+    isFocusInSubmenu = !!first && deepActiveElement(rowRef) === first;
+  }
+
+  /**
+   * For a submenu that takes focus on a keyboard open: focus moves to its
+   * first item, and when it closes with focus lost, back to this row.
+   */
+  function handoffFocus(isOpen: boolean) {
+    isSubmenuShown = isOpen;
+    if (!isFocusedOnKeyboardOpen || !rowRef) return;
+    if (isOpen) {
+      if (isOpenedByKeyboard) focusSubmenu();
+      return;
+    }
+    const { body, documentElement } = rowRef.ownerDocument;
+    const active = deepActiveElement(rowRef);
+    const isFocusLost = !active || active === body || active === documentElement;
+    if (isFocusInSubmenu && isFocusLost && rowRef.isConnected) rowRef.focus();
+    isFocusInSubmenu = false;
+    isOpenedByKeyboard = false;
+  }
+
+  $effect(() => {
+    const row = rowRef;
+    if (!row) return;
+    const onChange = (event: Event) =>
+      handoffFocus(
+        (event as CustomEvent<{ open?: boolean }>).detail?.open ?? false
+      );
+    row.addEventListener("change", onChange);
+    return () => row.removeEventListener("change", onChange);
+  });
 
   function handleSelect(value: unknown) {
     onSelect?.(new CustomEvent<unknown>("select", { detail: value }));
@@ -39,6 +143,9 @@
 </script>
 
 <button
+  bind:this={rowRef}
+  onclickcapture={handleClickCapture}
+  onkeydown={handleKeydown}
   use:popover={{
     placement: isOptionGroupRow ? Placement.RightStart : Placement.Right,
     offsetInPx: 12,
@@ -67,5 +174,5 @@
   )}
   data-context-menu-item-id={item.value}
 >
-  <ContextMenuItemBase {item} />
+  <ContextMenuItemBase {item} {parentBgIndex} />
 </button>
