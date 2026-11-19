@@ -22,12 +22,13 @@
   import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import type { IResourcePageWithPanels } from "@nucleum/datafn/resource.type";
   import type { ISelectValue } from "@21n/ui/elements/select/select.type";
+  import type { NoteContentState } from "@nucleum/features/memory/markdown/note-editor-focus";
   let {
     node,
     accessMode = undefined,
     isConstrainedWidth = false,
     isContentView = true,
-    isOpenedIncomplete = false,
+    contentState = undefined,
     isFloatingHidden = false
   }: {
     node: IActiveNodeStore;
@@ -36,11 +37,8 @@
     isConstrainedWidth?: boolean;
     /** Whether the pane shows the note's content view, not its bird view. */
     isContentView?: boolean;
-    /**
-     * Whether this pane's note content opened without some of its blocks,
-     * which keeps its editor read-only.
-     */
-    isOpenedIncomplete?: boolean;
+    /** Whether this pane's note content shows an editor that takes edits. */
+    contentState?: NoteContentState;
     /** Hides the floating bar while the node content scrolls down. */
     isFloatingHidden?: boolean;
   } = $props();
@@ -125,7 +123,7 @@
       accessMode,
       isConstrainedWidth,
       isContentView,
-      isOpenedIncomplete,
+      contentState,
       paneId: contextZonePane.id,
       revealEditor: () => revealNoteEditor(node, { isConstrainedWidth })
     })}

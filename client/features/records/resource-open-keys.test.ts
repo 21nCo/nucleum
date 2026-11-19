@@ -34,6 +34,7 @@ import { resolveCollectionContextMenu } from "@nucleum/features/collections/coll
 import {
   registerNoteEditorFocus,
   runPendingNoteEditorFocus,
+  type NoteContentState,
   type NoteEditorReveal
 } from "@nucleum/features/memory/markdown/note-editor-focus";
 import { configureResourcePanelHost } from "@nucleum/shared-state/resources/resource-panel-host";
@@ -429,19 +430,20 @@ describe("B and E through the page letters", () => {
           focused.push(editorPane.id)
         )
       );
-    const menuIn = (pane: ContextZonePane, isOpenedIncomplete: boolean) => () =>
-      resolveNodeContextMenu(shared, ResourceAccessPoint.SELF, {
-        accessMode:
-          pane === PAGE_PANE ? AccessMode.PAGE : AccessMode.BESIDE_BASE,
-        paneId: pane.id,
-        isOpenedIncomplete
-      });
+    const menuIn =
+      (pane: ContextZonePane, contentState: NoteContentState) => () =>
+        resolveNodeContextMenu(shared, ResourceAccessPoint.SELF, {
+          accessMode:
+            pane === PAGE_PANE ? AccessMode.PAGE : AccessMode.BESIDE_BASE,
+          paneId: pane.id,
+          contentState
+        });
 
-    openIn(SPLIT_PANE, NOTE_ID, menuIn(SPLIT_PANE, true));
+    openIn(SPLIT_PANE, NOTE_ID, menuIn(SPLIT_PANE, "unavailable"));
     await press("e");
     expect(focused).toEqual([]);
 
-    openIn(PAGE_PANE, NOTE_ID, menuIn(PAGE_PANE, false));
+    openIn(PAGE_PANE, NOTE_ID, menuIn(PAGE_PANE, "ready"));
     await press("e");
     expect(focused).toEqual([PAGE_PANE.id]);
   });
@@ -746,7 +748,7 @@ describe("Edit on a note whose pane cannot show an editable editor", () => {
 
   const editItem = (
     node: Record<string, unknown>,
-    params: { isContentView?: boolean; isOpenedIncomplete?: boolean } = {}
+    params: { isContentView?: boolean; contentState?: NoteContentState } = {}
   ) =>
     findItem(
       resolveNodeContextMenu(note(node), ResourceAccessPoint.SELF, {
@@ -775,24 +777,29 @@ describe("Edit on a note whose pane cannot show an editable editor", () => {
     expect(editItem({})?.hotKey).toBe("e");
   });
 
-  it("offers no Edit in a pane whose note opened without some of its blocks, which stays read-only", () => {
-    expect(editItem({}, { isOpenedIncomplete: true })).toBeUndefined();
+  it("offers no Edit in a pane whose note opened without some of its blocks or gave up loading them", () => {
+    expect(editItem({}, { contentState: "unavailable" })).toBeUndefined();
   });
 
-  it("offers Edit in a pane whose note opened complete", () => {
-    expect(editItem({}, { isOpenedIncomplete: false })?.hotKey).toBe("e");
+  it("offers no Edit in a pane whose note content still prepares its blocks", () => {
+    expect(editItem({}, { contentState: "preparing" })).toBeUndefined();
   });
 
-  it("takes a pane's incomplete content from that pane, not from the note it shares with other panes", () => {
+  it("offers Edit in a pane whose note content is ready, or before it first mounts", () => {
+    expect(editItem({}, { contentState: "ready" })?.hotKey).toBe("e");
+    expect(editItem({}, { contentState: undefined })?.hotKey).toBe("e");
+  });
+
+  it("takes a pane's content state from that pane, not from the note it shares with other panes", () => {
     const shared = note({ isOpenedIncomplete: true });
-    const menuIn = (isOpenedIncomplete: boolean) =>
+    const menuIn = (contentState: NoteContentState) =>
       resolveNodeContextMenu(shared, ResourceAccessPoint.SELF, {
         accessMode: AccessMode.PAGE,
         paneId: PAGE_PANE.id,
-        isOpenedIncomplete
+        contentState
       });
-    expect(findItem(menuIn(false), "edit")?.hotKey).toBe("e");
-    expect(findItem(menuIn(true), "edit")).toBeUndefined();
+    expect(findItem(menuIn("ready"), "edit")?.hotKey).toBe("e");
+    expect(findItem(menuIn("unavailable"), "edit")).toBeUndefined();
   });
 });
 

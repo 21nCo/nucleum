@@ -28,6 +28,7 @@ import {
 } from "@nucleum/datafn/resource.utils";
 import {
   focusNoteEditor,
+  type NoteContentState,
   type NoteEditorReveal
 } from "@nucleum/features/memory/markdown/note-editor-focus";
 import { BASE_CONTEXT_ZONE_PANE } from "@nucleum/shell/topNav/contextZone/context-zone";
@@ -1076,22 +1077,24 @@ const NOTE_EDIT_ACCESS_MODES: ReadonlySet<AccessMode | undefined> = new Set([
  * Whether an open note's menu offers Edit, which focuses its inline editor:
  * a markdown note open as a page or in a split, whose pane shows the content
  * view (not the bird view), while the note is editable: not in read mode,
- * locked, archived or in trash, and its pane's content did not open without
- * some of its blocks, which shows it read-only. A side panel taking the
- * place of the editor in a narrow pane, or the cover picker, does not hide
- * it: Edit brings the editor back first.
+ * locked, archived or in trash, and its pane's content shows an editor
+ * that takes edits: not while it prepares the note's blocks, nor once it
+ * opened without some of them or gave up loading them. A side panel taking
+ * the place of the editor in a narrow pane, or the cover picker, does not
+ * hide it: Edit brings the editor back first, judged by the state the
+ * content last reported, or offered before it first mounts.
  */
 function canFocusNoteEditor(
   node: INode,
   accessMode: AccessMode | undefined,
-  pane: { isContentView: boolean; isOpenedIncomplete: boolean }
+  pane: { isContentView: boolean; contentState?: NoteContentState }
 ) {
   const activeNode = node as Partial<IActiveNode>;
   return (
     node.contentType === NodeType.NODULAR_MARKDOWN &&
     NOTE_EDIT_ACCESS_MODES.has(accessMode) &&
     pane.isContentView &&
-    !pane.isOpenedIncomplete &&
+    (pane.contentState === undefined || pane.contentState === "ready") &&
     !activeNode.isInReadOnlyMode &&
     !activeNode.isLocked &&
     !activeNode.isArchived &&
@@ -1140,11 +1143,11 @@ export function resolveNodeContextMenu(
      */
     isContentView?: boolean;
     /**
-     * Whether the pane's note content opened without some of its blocks,
-     * which keeps that pane's editor read-only. Owned by the pane, as the
-     * node store is shared by every view of the note.
+     * Whether the pane's note content shows an editor that takes edits, as
+     * it last reported; undefined before it first mounts. Owned by the
+     * pane, as the node store is shared by every view of the note.
      */
-    isOpenedIncomplete?: boolean;
+    contentState?: NoteContentState;
     /** Pane the menu's note is open in, whose editor its Edit item focuses. */
     paneId?: string;
     /**
@@ -1355,7 +1358,7 @@ export function resolveNodeContextMenu(
   const editorPaneId = params?.paneId ?? BASE_CONTEXT_ZONE_PANE.id;
   const editItems = canFocusNoteEditor(node, params?.accessMode, {
     isContentView: params?.isContentView ?? true,
-    isOpenedIncomplete: params?.isOpenedIncomplete ?? false
+    contentState: params?.contentState
   })
     ? [
         resourceActions.editInline(() =>

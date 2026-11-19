@@ -35,7 +35,10 @@
   import { resolveNodeMinWidth } from "@nucleum/features/memory/node/node-layout";
   import { datafn } from "@nucleum/datafn/datafn.store";
   import { toSvelteStore } from "@datafn/svelte";
-  import { setNotePaneEditor } from "@nucleum/features/memory/markdown/note-editor-focus";
+  import {
+    setNotePaneEditor,
+    type NoteContentState
+  } from "@nucleum/features/memory/markdown/note-editor-focus";
 
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
@@ -52,14 +55,15 @@
   } = $props();
   let view = $state<NodeView>(NodeView.CONTENT);
   /**
-   * Whether this pane's note content opened without some of its blocks,
-   * which keeps its editor read-only. It belongs to this pane: the node
-   * store is shared by every view of the note and replaced when it loads.
+   * Whether this pane's note content shows an editor that takes edits, as
+   * last reported; undefined until its content first mounts. It belongs to
+   * this pane: the node store is shared by every view of the note and
+   * replaced when it loads.
    */
-  let isContentOpenedIncomplete = $state(false);
+  let contentState = $state<NoteContentState | undefined>(undefined);
   setNotePaneEditor({
-    setOpenedIncomplete(isOpenedIncomplete) {
-      isContentOpenedIncomplete = isOpenedIncomplete;
+    setContentState(state) {
+      contentState = state;
     }
   });
   let isShowFloatingBar = $state(true);
@@ -231,7 +235,7 @@
       {accessMode}
       {isConstrainedWidth}
       isContentView={view === NodeView.CONTENT}
-      isOpenedIncomplete={isContentOpenedIncomplete}
+      {contentState}
       isFloatingHidden={!isShowFloatingBar}
     />
   </div>

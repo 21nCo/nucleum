@@ -1,11 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { tick } from "svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccessMode, ResourceAccessPoint } from "@nucleum/datafn/resource.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
 import type { INode } from "@nucleum/features/memory/node/node.type";
 import view from "@21n/ui/environment/view.store";
 import { withResourceActionKeys } from "@nucleum/features/records/resource-action-keys";
-import { findFirstCaretBlockId } from "@nucleum/features/memory/markdown/note-editor-focus";
+import {
+  findFirstCaretBlockId,
+  focusNoteEditor,
+  registerNoteEditorFocus,
+  reportNoteContentState,
+  resolveNoteContentState,
+  runPendingNoteEditorFocus,
+  type NoteContentState
+} from "@nucleum/features/memory/markdown/note-editor-focus";
 
 const NOTE_ID = "node:pane-edit-note";
 
@@ -26,12 +35,12 @@ const { ActiveNodeStore, resolveNodeContextMenu } = await import(
   "@nucleum/features/memory/node/node.store"
 );
 
-function editItemIn(node: INode, isOpenedIncomplete: boolean) {
+function editItemIn(node: INode, contentState: NoteContentState | undefined) {
   return withResourceActionKeys(
     resolveNodeContextMenu(node, ResourceAccessPoint.SELF, {
       accessMode: AccessMode.PAGE,
-      paneId: isOpenedIncomplete ? "incomplete-pane" : "complete-pane",
-      isOpenedIncomplete
+      paneId: `${contentState}-pane`,
+      contentState
     })
   )
     .flatMap((group) => group.items)
@@ -50,12 +59,118 @@ describe("Edit on one note open in a complete pane and an incomplete pane", () =
       });
 
     await load();
-    expect(editItemIn(store.get(), false)?.hotKey).toBe("e");
-    expect(editItemIn(store.get(), true)).toBeUndefined();
+    expect(editItemIn(store.get(), "ready")?.hotKey).toBe("e");
+    expect(editItemIn(store.get(), "unavailable")).toBeUndefined();
 
     await load();
-    expect(editItemIn(store.get(), false)?.hotKey).toBe("e");
-    expect(editItemIn(store.get(), true)).toBeUndefined();
+    expect(editItemIn(store.get(), "ready")?.hotKey).toBe("e");
+    expect(editItemIn(store.get(), "unavailable")).toBeUndefined();
+  });
+});
+
+describe("Edit while a pane's note content prepares its blocks", () => {
+  it.each([
+    [false, false, false, "preparing"],
+    [false, true, false, "unavailable"],
+    [false, false, true, "unavailable"],
+    [true, false, false, "ready"],
+    [true, true, false, "unavailable"]
+  ] as const)(
+    "content ready %s, opened incomplete %s, given up %s is %s",
+    (isInitialContentReady, isOpenedIncomplete, isPreparationAbandoned, state) => {
+      expect(
+        resolveNoteContentState({
+          isInitialContentReady,
+          isOpenedIncomplete,
+          isPreparationAbandoned
+        })
+      ).toBe(state);
+    }
+  );
+
+  it("is offered only once the content is ready, never while it prepares or after it gave up", async () => {
+    const store = new ActiveNodeStore(NOTE_ID as unknown as IRecordId);
+    await store.init({
+      accessMode: AccessMode.PAGE,
+      accessPoint: ResourceAccessPoint.SELF
+    });
+    expect(editItemIn(store.get(), "preparing")).toBeUndefined();
+    expect(editItemIn(store.get(), "unavailable")).toBeUndefined();
+    expect(editItemIn(store.get(), "ready")?.hotKey).toBe("e");
+  });
+});
+
+describe("a focus request for a hidden editor whose content prepares slowly", () => {
+  const PANE = "slow-pane";
+  const TTL_MS = 3000;
+  const release: (() => void)[] = [];
+  let now = 0;
+
+  beforeEach(() => {
+    now = 1_000_000;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+  });
+  afterEach(() => {
+    release.splice(0).forEach((stop) => stop());
+    reportNoteContentState(NOTE_ID, PANE, "unavailable");
+    vi.restoreAllMocks();
+  });
+
+  const request = (isNavigating: boolean) =>
+    focusNoteEditor(NOTE_ID, PANE, () => ({ isNavigating }));
+
+  it("focuses the editor once it shows after preparing longer than the request would wait", async () => {
+    const focus = vi.fn();
+    request(false);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    now += 10 * TTL_MS;
+    reportNoteContentState(NOTE_ID, PANE, "ready");
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    await tick();
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("focuses the editor shown after its navigation settled and a long preparation", async () => {
+    const focus = vi.fn();
+    request(true);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    expect(runPendingNoteEditorFocus(NOTE_ID, PANE)).toBe(false);
+    now += 10 * TTL_MS;
+    reportNoteContentState(NOTE_ID, PANE, "ready");
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    expect(runPendingNoteEditorFocus(NOTE_ID, PANE)).toBe(true);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops the request when the content opens incomplete or gives up", async () => {
+    const focus = vi.fn();
+    request(false);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    reportNoteContentState(NOTE_ID, PANE, "unavailable");
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    await tick();
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it("lets the request lapse once the preparing content unmounts", async () => {
+    const focus = vi.fn();
+    request(false);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    now += 10 * TTL_MS;
+    reportNoteContentState(NOTE_ID, PANE, undefined);
+    now += TTL_MS + 1;
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    await tick();
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it("still lapses when no content prepares for it", async () => {
+    const focus = vi.fn();
+    request(false);
+    now += TTL_MS + 1;
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    await tick();
+    expect(focus).not.toHaveBeenCalled();
   });
 });
 

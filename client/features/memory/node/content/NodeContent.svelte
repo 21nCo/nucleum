@@ -20,7 +20,12 @@
     shallowDiff
   } from "@21n/shared-utils/obj.utils";
   import NodularMarkdown from "@nucleum/features/memory/markdown/NodularMarkdown.svelte";
-  import { getNotePaneEditor } from "@nucleum/features/memory/markdown/note-editor-focus";
+  import {
+    getNotePaneEditor,
+    reportNoteContentState,
+    resolveNoteContentState
+  } from "@nucleum/features/memory/markdown/note-editor-focus";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
   import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import Divider from "@21n/ui/elements/Divider.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
@@ -83,13 +88,26 @@
    * no edit can save an order without them.
    */
   let isOpenedIncomplete = $state(false);
+  /** Whether preparing the note's blocks gave up, so no editor is shown. */
+  let isPreparationAbandoned = $state(false);
   const paneEditor = getNotePaneEditor();
+  const contentPane = getContextZonePane();
+  const contentState = $derived(
+    resolveNoteContentState({
+      isInitialContentReady,
+      isOpenedIncomplete,
+      isPreparationAbandoned
+    })
+  );
   /**
-   * Tells this content's pane whether its editor is read-only for missing
-   * blocks, so the pane's menu offers Edit only while it is not.
+   * Tells this content's pane whether it shows an editor that takes edits,
+   * so the pane's menu offers Edit only then, and holds a focus request for
+   * that editor while the blocks are still being prepared.
    */
   $effect(() => {
-    paneEditor?.setOpenedIncomplete(isOpenedIncomplete);
+    const state = contentState;
+    paneEditor?.setContentState(state);
+    reportNoteContentState(node.get().id, contentPane.id, state);
   });
   const dev_isEnableBottomDivider = false;
 
@@ -277,7 +295,11 @@
   }
 
   onMount(async () => {
-    if (!(await prepareNoteContentWithRetry()) || isDestroyed) return;
+    if (!(await prepareNoteContentWithRetry())) {
+      if (!isDestroyed) isPreparationAbandoned = true;
+      return;
+    }
+    if (isDestroyed) return;
     isInitialContentReady = true;
     if (!node.eventStore?.subscribe) return;
     focusEventSub = node.eventStore.subscribe((x: any) => {
@@ -325,6 +347,7 @@
 
   onDestroy(() => {
     isDestroyed = true;
+    reportNoteContentState(node.get().id, contentPane.id, undefined);
     if (focusEventSub && typeof focusEventSub === "function") {
       focusEventSub();
     }
