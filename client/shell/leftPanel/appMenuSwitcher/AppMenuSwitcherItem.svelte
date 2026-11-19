@@ -21,6 +21,8 @@
     UIStateScope
   } from "@nucleum/shared-state/preferences/ui-state/uiState.type";
   import { keyboardShortcuts } from "@nucleum/shared-state/shortcuts/shortcuts.store";
+  import { singleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
+  import { isSingleKeyShortcut } from "@21n/ui/elements/keyboard/shortcut.utils";
   import { popover } from "@21n/ui/actions/popover.action";
   import { hoverable } from "@21n/ui/actions/hover.action";
   import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
@@ -109,9 +111,14 @@
     rive?.fire();
   }
 
-  function resolveHotKey() {
+  /**
+   * The item's key hint, such as "g c", or none while single-key shortcuts are
+   * off and the key is a single-key shortcut or chord.
+   */
+  function resolveHotKey(isSingleKeyOn: boolean) {
     const shortcut = keyboardShortcuts.resolveShortcutForAction(item.action);
     if (!shortcut?.key) return;
+    if (!isSingleKeyOn && isSingleKeyShortcut(shortcut)) return;
     return shortcut.prefix
       ? `${shortcut.prefix} ${shortcut.key}`
       : shortcut.key;
@@ -333,7 +340,7 @@
       {/if}
     </div>
     {#if isShowHotKeyHint && layoutContext === LayoutContext.DEFAULT}
-      {@const hotKey = resolveHotKey()}
+      {@const hotKey = resolveHotKey($singleKeyShortcutsEnabled)}
       {#if hotKey}
         <span
           class={cn(

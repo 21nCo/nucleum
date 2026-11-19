@@ -4,4 +4,4 @@
   let { row }: { row: any } = $props();
 </script>
 
-<ShortcutText shortcut={row.shortcut} isPlainText={true} />
+<ShortcutText shortcut={row.shortcut} isPlainText={true} isListing={true} />

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { resolveShortcutText } from "@21n/ui/elements/keyboard/shortcut.utils";
+  import {
+    isSingleKeyShortcut,
+    resolveShortcutText
+  } from "@21n/ui/elements/keyboard/shortcut.utils";
   import { elementPlatform as context } from "@21n/ui/environment/element-environment.store";
   import { Size } from "@21n/ui/elements/size.enum";
   import { bg, cn } from "@21n/ui/environment/presentation";
@@ -7,6 +10,7 @@
   import type { IKeyboardShortcut } from "@21n/ui/elements/keyboard/shortcut.type";
   import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
   import {
+    areElementSingleKeysEnabled,
     elementShortcutState,
     resolveElementShortcut
   } from "@21n/ui/hosts/shortcut-host";
@@ -18,6 +22,7 @@
     isAccentOutlined = false,
     size = Size.md,
     isAlwaysShown = false,
+    isListing = false,
     label = undefined
   }: {
     shortcut: string | IKeyboardShortcut | undefined;
@@ -25,7 +30,17 @@
     isPlainText?: boolean;
     isAccentOutlined?: boolean;
     size?: Size.sm | Size.md;
+    /**
+     * Shows the hint even while hints are hidden or single-key shortcuts are
+     * off, for keys handled inside a focused control, such as characters
+     * typed into the super bar.
+     */
     isAlwaysShown?: boolean;
+    /**
+     * Part of a list of every key, such as the hot keys sheet, so it is shown
+     * even while single-key shortcuts are off.
+     */
+    isListing?: boolean;
     /** Accessible label and tooltip naming the key, such as "Press S on the page". */
     label?: string | undefined;
   } = $props();
@@ -73,6 +88,15 @@
       os: $context.os
     });
   });
+  /**
+   * Hides the hint of a shortcut that does not run while single-key shortcuts
+   * are off (WCAG 2.1.4); hints with Cmd, Ctrl or Option stay.
+   */
+  const isSingleKeyHintHidden = $derived.by(() => {
+    $elementShortcutState.revision;
+    if (isAlwaysShown || isListing || !detail) return false;
+    return !areElementSingleKeysEnabled() && isSingleKeyShortcut(detail);
+  });
   const trimmedText = $derived(text?.trim());
   const shortcutKey = $derived(detail?.key as KeyboardKey | undefined);
   const isSingleLetterShortcut = $derived(
@@ -82,7 +106,7 @@
   );
 </script>
 
-{#if ($elementShortcutState.isShowHints || isAlwaysShown) && shortcut && $context.embed !== "HANDSET" && $context.embed !== "TABLET"}
+{#if ($elementShortcutState.isShowHints || isAlwaysShown) && shortcut && !isSingleKeyHintHidden && $context.embed !== "HANDSET" && $context.embed !== "TABLET"}
   <span
     role={label ? "img" : undefined}
     aria-label={label}

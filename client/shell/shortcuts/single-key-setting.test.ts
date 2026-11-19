@@ -76,6 +76,7 @@ import {
   withResourceActionKeys
 } from "@nucleum/features/records/resource-action-keys";
 import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+import { uiState } from "@nucleum/shared-state/preferences/ui-state/uiState.store";
 import ClassicCalendarHeaderLeftOptions from "@nucleum/features/calendar/classic/ClassicCalendarHeaderLeftOptions.svelte";
 import { areSingleKeyShortcutsEnabled, isPlainPageKey } from "./page-keys";
 import ShortcutRunner from "./ShortcutRunner.svelte";
@@ -278,6 +279,19 @@ describe("the chord runner with single-key shortcuts", () => {
     expect(press("c").defaultPrevented).toBe(false);
     expect(mocks.runAction).not.toHaveBeenCalled();
   });
+
+  it("ends a pending G chord when turned off and on again before the second key, so a fresh G is needed", () => {
+    expect(press("g").defaultPrevented).toBe(true);
+    syncSingleKeyShortcutsEnabled(false);
+    syncSingleKeyShortcutsEnabled(true);
+
+    expect(press("c").defaultPrevented).toBe(false);
+    expect(mocks.runAction).not.toHaveBeenCalled();
+
+    expect(press("g").defaultPrevented).toBe(true);
+    press("c");
+    expect(mocks.runAction).toHaveBeenCalledWith(Action.CALENDAR);
+  });
 });
 
 describe("component shortcut listeners with single-key shortcuts", () => {
@@ -375,6 +389,48 @@ describe("single-key hints", () => {
     expect(icons()).toContain("text:M");
     syncSingleKeyShortcutsEnabled(false);
     expect(icons()?.every((icon) => icon === undefined)).toBe(true);
+  });
+
+  it("names the scales in the wide Calendar switcher instead of showing letters while off", async () => {
+    vi.stubGlobal("matchMedia", () => ({
+      matches: false,
+      addEventListener: () => {},
+      removeEventListener: () => {}
+    }));
+    const rendered = render(ClassicCalendarHeaderLeftOptions, {
+      props: { isScopeHidden: true, selectedView: TimeScaleUnit.MONTH }
+    });
+    const { container } = rendered;
+    const button = (value: string) =>
+      container.querySelector<HTMLButtonElement>(
+        `button[data-option-value="${value}"]`
+      );
+    const text = (value: string) =>
+      button(value)?.textContent?.replace(/\s+/g, " ").trim() ?? "";
+    try {
+      expect(text(TimeScaleUnit.WEEK)).toBe("W");
+      expect(text(TimeScaleUnit.DAY)).toBe("D");
+
+      syncSingleKeyShortcutsEnabled(false);
+      await tick();
+      expect(text(TimeScaleUnit.WEEK)).toBe("Week");
+      expect(text(TimeScaleUnit.DAY)).toBe("Day");
+      expect(text(TimeScaleUnit.MONTH)).toBe("Month");
+      button(TimeScaleUnit.WEEK)?.click();
+      await tick();
+      expect(uiState.setState).toHaveBeenCalledWith(
+        expect.anything(),
+        TimeScaleUnit.WEEK,
+        expect.anything()
+      );
+
+      syncSingleKeyShortcutsEnabled(true);
+      await tick();
+      expect(text(TimeScaleUnit.DAY)).toBe("D");
+    } finally {
+      rendered.unmount();
+      vi.unstubAllGlobals();
+    }
   });
 
   it("drops the scale letter from the narrow-width Calendar dropdown while off", async () => {

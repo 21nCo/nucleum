@@ -42,8 +42,10 @@ export function resolveElementShortcut(action: string) {
 }
 
 /**
- * Whether single-key shortcuts are on, for portable key listeners. Reads the
- * application's setting through the host, so it never has its own copy.
+ * Whether single-key shortcuts are on, for portable key listeners and hints.
+ * Reads the application's setting through the host, so it never has its own
+ * copy; the application calls `notifyElementShortcutsChanged` when it changes
+ * so hints follow it.
  */
 export function areElementSingleKeysEnabled() {
   return host?.isSingleKeyEnabled?.() ?? true;

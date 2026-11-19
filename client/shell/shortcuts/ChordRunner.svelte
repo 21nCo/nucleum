@@ -13,6 +13,7 @@
     areSingleKeyShortcutsEnabled,
     markChordEndingKey
   } from "@nucleum/shell/shortcuts/page-keys";
+  import { singleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
   import {
     CHORD_TIMEOUT_MS,
     hasModifier,
@@ -161,6 +162,17 @@
   }
 
   $effect(() => clearChord);
+
+  /**
+   * Ends a pending chord as soon as single-key shortcuts turn off, such as
+   * through a synced preference change, so turning them on again before the
+   * second key does not revive it: a fresh G is needed.
+   */
+  $effect(() =>
+    singleKeyShortcutsEnabled.subscribe((isOn) => {
+      if (!isOn) clearChord();
+    })
+  );
 </script>
 
 <svelte:window onkeydown={startListener} onkeydowncapture={captureListener} />

@@ -103,13 +103,22 @@
   )
     .map((scale) => optionsByScale[scale])
     .filter(Boolean);
-  /** The scale options without their letter keys, for menus while single-key shortcuts are off. */
+  /** The scale options without their letter keys, for while single-key shortcuts are off. */
   const switchOptionsWithoutKeys = switchOptions.map((option) => ({
     ...option,
     icon: undefined
   }));
-  const menuOptions = $derived(
+  const shownOptions = $derived(
     $singleKeyShortcutsEnabled ? switchOptions : switchOptionsWithoutKeys
+  );
+  /**
+   * The wide switcher shows only each scale's letter key while single-key
+   * shortcuts are on; while off it names each scale instead, so no key is hinted.
+   */
+  const switcherStyle = $derived(
+    $singleKeyShortcutsEnabled
+      ? OptionSelectorStyle.ICON
+      : OptionSelectorStyle.TRAIN
   );
 
   const ownPane = getContextZonePane();
@@ -185,7 +194,7 @@
     <div>
       {#if $view.isConstrainedWidth}
         <DropDown
-          items={menuOptions}
+          items={shownOptions}
           value={selectedView}
           isDisableSearch={true}
           width="min-w-32"
@@ -195,12 +204,12 @@
         />
       {:else}
         <OptionSelector
-          options={switchOptions}
+          options={shownOptions as ISelectItem[]}
           selected={selectedView}
           size={Size.sm}
           {parentBgIndex}
           isExpandOnActiveForIcon={true}
-          style={OptionSelectorStyle.ICON}
+          style={switcherStyle}
           onSelect={handleScaleSelection}
         />
       {/if}
