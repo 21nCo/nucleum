@@ -24,7 +24,10 @@ import {
   determineResourceType,
   isTrashedResource
 } from "@nucleum/datafn/resource.utils";
-import { focusNoteEditor } from "@nucleum/features/memory/markdown/note-editor-focus";
+import {
+  focusNoteEditor,
+  hasNoteEditorFocus
+} from "@nucleum/features/memory/markdown/note-editor-focus";
 import { BASE_CONTEXT_ZONE_PANE } from "@nucleum/shell/topNav/contextZone/context-zone";
 
 import context from "@nucleum/client/runtime/context.store";
@@ -1069,10 +1072,15 @@ const NOTE_EDIT_ACCESS_MODES: ReadonlySet<AccessMode | undefined> = new Set([
 
 /**
  * Whether an open note's menu offers Edit, which focuses its inline editor:
- * a markdown note open as a page or in a split while its editor is editable,
- * not in read mode, locked, archived or in trash.
+ * a markdown note open as a page or in a split while its pane shows its
+ * editor and the note is editable, not in read mode, locked, archived or in
+ * trash.
  */
-function canFocusNoteEditor(node: INode, accessMode: AccessMode | undefined) {
+function canFocusNoteEditor(
+  node: INode,
+  accessMode: AccessMode | undefined,
+  paneId: string
+) {
   const activeNode = node as Partial<IActiveNode>;
   return (
     node.contentType === NodeType.NODULAR_MARKDOWN &&
@@ -1080,7 +1088,8 @@ function canFocusNoteEditor(node: INode, accessMode: AccessMode | undefined) {
     !activeNode.isInReadOnlyMode &&
     !activeNode.isLocked &&
     !activeNode.isArchived &&
-    !isTrashedResource(activeNode)
+    !isTrashedResource(activeNode) &&
+    hasNoteEditorFocus(node.id, paneId)
   );
 }
 
@@ -1295,12 +1304,9 @@ export function resolveNodeContextMenu(
         ? nodeActions.removeCoverPhoto()
         : nodeActions.setCoverPhoto()
       : undefined;
-  const editItems = canFocusNoteEditor(node, params?.accessMode)
-    ? [
-        resourceActions.editInline(() =>
-          focusNoteEditor(node.id, params?.paneId ?? BASE_CONTEXT_ZONE_PANE.id)
-        )
-      ]
+  const editorPaneId = params?.paneId ?? BASE_CONTEXT_ZONE_PANE.id;
+  const editItems = canFocusNoteEditor(node, params?.accessMode, editorPaneId)
+    ? [resourceActions.editInline(() => focusNoteEditor(node.id, editorPaneId))]
     : [];
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [

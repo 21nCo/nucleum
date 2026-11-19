@@ -403,15 +403,23 @@ export function resolveObjectiveContextMenu(
   }
   const ctx = get(context);
   const viewStore = get(view);
-  const openingActionGroup = {
-    group: "open",
-    items: [
-      ...(accessPoint !== ResourceAccessPoint.SELF || !viewStore.isPortrait
+  const isHandset = ctx.isEmbed && ctx.embed === Embed.HANDSET;
+  // The open objective offers its split wherever it can open in one: in
+  // landscape, also at a constrained width, which hides the other open items.
+  const isSelfSplitShown =
+    accessPoint === ResourceAccessPoint.SELF && !viewStore.isPortrait;
+  const openingItems = isHandset
+    ? []
+    : viewStore.isConstrainedWidth
+      ? isSelfSplitShown
         ? [resourceActions.openAsSplit()]
-        : []),
-      resourceActions.maximize()
-    ]
-  };
+        : []
+      : [
+          ...(accessPoint !== ResourceAccessPoint.SELF || isSelfSplitShown
+            ? [resourceActions.openAsSplit()]
+            : []),
+          resourceActions.maximize()
+        ];
   const isCurrentlyFocusing = activeSession.isCurrentFocusItem(objective.id);
   const focusGroup = {
     group: "focus",
@@ -426,10 +434,9 @@ export function resolveObjectiveContextMenu(
       items: [...primaryItems]
     },
     focusGroup,
-    ...((ctx.isEmbed && ctx.embed === Embed.HANDSET) ||
-    viewStore.isConstrainedWidth
-      ? []
-      : [openingActionGroup]),
+    ...(openingItems.length > 0
+      ? [{ group: "open", items: openingItems }]
+      : []),
     {
       group: "more",
       items: [resourceActions.archive(), resourceActions.trash()]

@@ -210,6 +210,23 @@ describe("B on an open resource's own menu", () => {
     ).toBeUndefined();
   });
 
+  it("offers B alone on an objective at a constrained landscape width", () => {
+    view.refresh(780, 600);
+    showIn("page", OBJECTIVE_ID);
+    expect(openGroupValues(resolvers.objective("page"))).toEqual([
+      "open-as-split"
+    ]);
+    expect(findItem(resolvers.objective("page"), "open-as-split")?.hotKey).toBe(
+      "b"
+    );
+  });
+
+  it("offers no open items on an objective at a constrained portrait width", () => {
+    view.refresh(600, 900);
+    showIn("page", OBJECTIVE_ID);
+    expect(openGroupValues(resolvers.objective("page"))).toBeUndefined();
+  });
+
   it.each(["note", "objective", "collection"] as const)(
     "offers no split item on a %s in a handset embed",
     (resource) => {
@@ -223,10 +240,31 @@ describe("B on an open resource's own menu", () => {
 });
 
 describe("E on an open note's own menu", () => {
-  beforeEach(landscape);
+  let releaseEditor = () => {};
 
-  const editItem = (menu: IContextMenu): IContextMenuItem | undefined =>
-    findItem(menu, "edit");
+  beforeEach(() => {
+    landscape();
+    releaseEditor = registerNoteEditorFocus(
+      NOTE_ID,
+      PAGE_PANE.id,
+      () => undefined
+    );
+  });
+
+  afterEach(() => releaseEditor());
+
+  const editItem = (
+    overrides: Record<string, unknown>,
+    accessMode: AccessMode,
+    paneId = PAGE_PANE.id
+  ): IContextMenuItem | undefined =>
+    findItem(
+      resolveNodeContextMenu(note(overrides), ResourceAccessPoint.SELF, {
+        accessMode,
+        paneId
+      }),
+      "edit"
+    );
 
   it.each([
     ["a page", AccessMode.PAGE],
@@ -235,9 +273,7 @@ describe("E on an open note's own menu", () => {
   ])(
     "offers Edit with E on a markdown note open as %s",
     (_name, accessMode) => {
-      const item = editItem(
-        resolveNodeContextMenu(note(), ResourceAccessPoint.SELF, { accessMode })
-      );
+      const item = editItem({}, accessMode);
       expect(item?.label).toBe("Edit");
       expect(item?.hotKey).toBe("e");
     }
@@ -250,13 +286,13 @@ describe("E on an open note's own menu", () => {
     ["in trash", { trashedAt: "2026-11-19T00:00:00.000Z" }]
   ])("offers no Edit on a markdown note %s", (_name, overrides) => {
     for (const accessMode of [AccessMode.PAGE, AccessMode.BESIDE_BASE])
-      expect(
-        editItem(
-          resolveNodeContextMenu(note(overrides), ResourceAccessPoint.SELF, {
-            accessMode
-          })
-        )
-      ).toBeUndefined();
+      expect(editItem(overrides, accessMode)).toBeUndefined();
+  });
+
+  it("offers no Edit while the note's pane shows no editor of it, such as under a side panel", () => {
+    expect(editItem({}, AccessMode.BESIDE_BASE, SPLIT_PANE.id)).toBeUndefined();
+    releaseEditor();
+    expect(editItem({}, AccessMode.PAGE)).toBeUndefined();
   });
 });
 

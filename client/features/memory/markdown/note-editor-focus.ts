@@ -25,8 +25,17 @@ export function registerNoteEditorFocus(
 }
 
 /**
+ * Whether a pane shows an editable editor of the note, which is not the case
+ * while the note is read-only or still loading, or while a side panel takes
+ * the place of its content in a narrow pane.
+ */
+export function hasNoteEditorFocus(id: IRecordId, paneId: string) {
+  return focusers.has(focuserKey(id, paneId));
+}
+
+/**
  * Puts the caret in a note's editor in one pane. Does nothing when that pane
- * has no editable editor of the note, such as while the note is read-only.
+ * shows no editable editor of the note.
  */
 export function focusNoteEditor(id: IRecordId, paneId: string) {
   focusers.get(focuserKey(id, paneId))?.();

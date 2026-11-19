@@ -275,6 +275,69 @@ test.describe("page letters", () => {
     });
   });
 
+  test("E edits a narrow split's note only while its editor shows", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The open resource is a note, and this product has no nodes"
+    );
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E split edit letter ${Date.now()}`
+    });
+    await page.goto(`/calendar?beside=${encodeURIComponent(node.id)}`);
+    const split = page.locator("[data-context-zone-pane='beside']");
+    const content = split.locator("#mdContent");
+    const focusedEditor = page.locator("[contenteditable]:focus");
+    const menuTrigger = page.getByTestId("resource-record-context-menu");
+    const editItem = page.locator(
+      ".popover [data-context-menu-item-id='edit']"
+    );
+    await expect(content).toBeVisible({ timeout: 15_000 });
+
+    // A side panel takes the content's place in the narrow split.
+    await menuTrigger.click();
+    await page
+      .locator(".popover [data-context-menu-item-id='activity']")
+      .first()
+      .click();
+    await expect(content).toBeHidden({ timeout: 10_000 });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await menuTrigger.click();
+    await expect(
+      page.locator(".popover [data-context-menu-item-id='star']").first()
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(editItem).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.keyboard.press("e");
+    await expect(content).toBeHidden();
+    await expect(focusedEditor).toHaveCount(0);
+
+    // Choosing the open panel again gives the content its place back.
+    await menuTrigger.click();
+    await page
+      .locator(".popover [data-context-menu-item-id='activity']")
+      .first()
+      .click();
+    await expect(content).toBeVisible({ timeout: 10_000 });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await expect(focusedEditor).toHaveCount(0);
+    await page.keyboard.press("e");
+    await expect(content.locator("[contenteditable]:focus")).toHaveCount(1, {
+      timeout: 10_000
+    });
+    const typed = `typed in the split ${Date.now()}`;
+    await page.keyboard.type(typed);
+    await expect(content).toContainText(typed);
+  });
+
   test("calendar letters switch the scale and Shift+T goes to today", async ({
     page
   }) => {
