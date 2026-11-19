@@ -106,7 +106,7 @@
         if (!data) throw new Error("Backup file is empty");
         if (!$datafnRuntime) throw new Error("DataFn is not ready");
         await restoreBackup(data, {
-          triggerCloneUp: $datafnRuntime.mode === "sync"
+          triggerCloneUp: () => $datafnRuntime?.mode === "sync"
         });
         await refreshNucleumDatafnStatus();
       },

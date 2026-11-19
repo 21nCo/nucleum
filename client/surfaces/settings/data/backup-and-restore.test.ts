@@ -110,6 +110,25 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   return { ...actual, datafn, datafnRuntime };
 });
 
+/** Runs while a restore lists the queued files it must not overwrite, when set. */
+const preflight = vi.hoisted(() => ({
+  during: null as (() => Promise<void>) | null
+}));
+vi.mock("@nucleum/shared-state/files/file-queue", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("@nucleum/shared-state/files/file-queue")
+    >();
+  return {
+    ...actual,
+    listQueuedFileIds: async (dir: string) => {
+      const held = await actual.listQueuedFileIds(dir);
+      await preflight.during?.();
+      return held;
+    }
+  };
+});
+
 const { fileUpload } = await import("@nucleum/shared-state/files/file-upload");
 const { resolveFileUrl } = await import("@nucleum/shared-state/files/file-url");
 const { createBackupBlob, restoreBackup } =
@@ -259,6 +278,7 @@ beforeEach(() => {
   sdk.uploads = [];
   sdk.artifacts = [];
   sdk.hold = null;
+  preflight.during = null;
 });
 
 afterEach(async () => {
@@ -286,7 +306,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     expect(await savedRecord(record.id)).toBeUndefined();
     expect(opfs.list(QUEUE_A)).toEqual([]);
 
-    await restoreBackup(backup, { triggerCloneUp: false });
+    await restoreBackup(backup, { triggerCloneUp: () => false });
 
     expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
     expect(opfs.list(QUEUE_A)).toEqual([`queued_${record.fileId}`]);
@@ -319,7 +339,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     await clearBrowser();
     isOnline = true;
     await bootData(cloudAccount("user-a"));
-    await restoreBackup(backup, { triggerCloneUp: false });
+    await restoreBackup(backup, { triggerCloneUp: () => false });
 
     await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
     expect(sdk.uploads).toEqual([
@@ -333,7 +353,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     const record = await capturePhoto();
     const backup = await backupText();
 
-    await restoreBackup(backup, { triggerCloneUp: false });
+    await restoreBackup(backup, { triggerCloneUp: () => false });
     expect(opfs.list(QUEUE_A)).toEqual([`queued_${record.fileId}`]);
 
     goOnline();
@@ -357,7 +377,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     goOnline();
     await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
-    const restore = restoreBackup(backup, { triggerCloneUp: false });
+    const restore = restoreBackup(backup, { triggerCloneUp: () => false });
     release();
     await restore;
 
@@ -377,7 +397,7 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     await clearBrowser();
     await bootData(cloudAccount("user-b"));
-    await restoreBackup(backup, { triggerCloneUp: false });
+    await restoreBackup(backup, { triggerCloneUp: () => false });
     lockNames = [];
 
     goOnline();
@@ -401,10 +421,50 @@ describe("backup and restore of files the account upload queue still holds", () 
     const unreadable = { ...backup, fileQueue: { version: 2, files: [] } };
 
     await expect(
-      restoreBackup(JSON.stringify(unreadable), { triggerCloneUp: false })
+      restoreBackup(JSON.stringify(unreadable), { triggerCloneUp: () => false })
     ).rejects.toThrow("The backup's pending files cannot be read");
     expect(await savedRecord(record.id)).toBeUndefined();
     expect(opfs.list(QUEUE_A)).toEqual([]);
+  });
+
+  it("restores nothing when the signed-in account changes before the records are imported", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupText();
+
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    const cloneUp = vi.fn(() => true);
+    preflight.during = () => bootData(cloudAccount("user-b"));
+
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: cloneUp })
+    ).rejects.toThrow("The account changed while the backup was restored");
+    preflight.during = null;
+    expect(datafn.currentNamespace()).toBe("user:user-b");
+    expect(cloneUp).not.toHaveBeenCalled();
+    expect(await savedRecord(record.id)).toBeUndefined();
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(opfs.list(QUEUE_B)).toEqual([]);
+  });
+
+  it("restores nothing when this device cannot keep the backup's queued files", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupText();
+
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    vi.stubGlobal("navigator", { ...globalThis.navigator, storage: {} });
+    const cloneUp = vi.fn(() => true);
+
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: cloneUp })
+    ).rejects.toThrow("This device cannot keep the backup's pending files");
+    expect(cloneUp).not.toHaveBeenCalled();
+    expect(await savedRecord(record.id)).toBeUndefined();
   });
 
   it("carries no file bytes for a capture already uploaded to FileFn", async () => {

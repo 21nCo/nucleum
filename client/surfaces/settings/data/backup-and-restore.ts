@@ -3,6 +3,7 @@ import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
 import {
   exportQueuedFiles,
   importQueuedFiles,
+  isFileQueueSupported,
   listQueuedFileIds,
   resolveAccountFileQueueDir,
   type QueuedFileCopy
@@ -79,19 +80,29 @@ export async function createBackupBlob(): Promise<Blob> {
  * account's restore keeps them in that queue. Files the queue held when the
  * restore started stay as they are. The signed-in account's queue then
  * replays. Rejects, restoring nothing, when the backup's queued files cannot
- * be read, and once restored when the records could not all be.
+ * be read or this device cannot keep them, or when the account changes
+ * before the records are imported; and, once restored, when the records could
+ * not all be. `triggerCloneUp` decides, right before the records are imported
+ * into the account checked unchanged, whether DataFn clones them up.
  */
 export async function restoreBackup(
   text: string,
-  options: { triggerCloneUp: boolean }
+  options: { triggerCloneUp: () => boolean }
 ): Promise<void> {
   if (!text) throw new Error("Backup file is empty");
+  const namespace = datafn.currentNamespace();
   const backup = parse(text) as Record<string, unknown>;
   const fileQueue = readFileQueue(backup.fileQueue);
+  if (fileQueue?.files.length && !isFileQueueSupported()) {
+    throw new Error("This device cannot keep the backup's pending files");
+  }
   const dir = fileQueue && resolveAccountFileQueueDir(fileQueue.userId);
   const held = dir ? await listQueuedFileIds(dir) : new Set<string>();
+  if (datafn.currentNamespace() !== namespace) {
+    throw new Error("The account changed while the backup was restored");
+  }
   const result = (await datafn.importData(backup, {
-    triggerCloneUp: options.triggerCloneUp
+    triggerCloneUp: options.triggerCloneUp()
   })) as DatafnImportResult;
   if (fileQueue && dir) {
     const added = await importQueuedFiles(dir, fileQueue.files, held);
