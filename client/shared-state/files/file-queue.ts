@@ -751,7 +751,8 @@ async function replayAccountEntry(
   const result = await uploadEntry(pass, pending, {
     write: () => (marked ? undefined : markStarted(dir, entryName, references)),
     isReady: () => !pass.request.signal.aborted && references.isCurrent(),
-    undo: (attempt) => unmarkStarted(dir, entryName, attempt)
+    undo: (attempt, isCalled) =>
+      unmarkStarted(dir, entryName, attempt, isCalled)
   });
   const isStillReferenced = await isReferencedNow(pass, references, fileId);
   if (isStillReferenced === undefined) return "stop";
@@ -785,16 +786,22 @@ async function markStarted(
 
 /**
  * Removes a file's started marker while it is still the attempt's own or,
- * without an attempt, while it is invalid (a failed write). Without Web Locks
- * another tab's pass may have relied on the attempt's marker to send, so an
- * attempt's marker is kept.
+ * without an attempt, while it is invalid (a failed write). Without Web Locks,
+ * another tab's pass may have relied on the marker to send while the attempt
+ * waited for its upload's first request, so a marker kept past the attempt's
+ * `uploadFile` call (`isCalled`) stays.
  */
-async function unmarkStarted(dir: string, entryName: string, attempt?: string) {
+async function unmarkStarted(
+  dir: string,
+  entryName: string,
+  attempt?: string,
+  isCalled = false
+) {
   try {
     const text = await readEntryText(dir, entryName, STARTED_FILE, true);
     const marked = parseJson<StartedMarker>(text, isClaim);
     if (attempt ? marked?.attempt !== attempt : marked) return;
-    if (attempt && !globalThis.navigator?.locks) return;
+    if (isCalled && !globalThis.navigator?.locks) return;
     await (await getEntryDir(dir, entryName))?.removeEntry(STARTED_FILE);
   } catch (error) {
     logger.warn({ at: "fileQueue.replay.started", entryName, error });
@@ -911,7 +918,7 @@ async function claimEntry(
 type StartMark = {
   write(): Promise<string | undefined> | undefined;
   isReady(): boolean;
-  undo(attempt: string): Promise<void>;
+  undo(attempt: string, isCalled: boolean): Promise<void>;
 };
 
 /** Throws while the device is offline or the attempt is no longer ready. */
@@ -960,7 +967,7 @@ async function uploadQueuedFile(
       .done();
   } catch (error) {
     const isUnsent = !isSending || (sent && sent.count === sentBefore);
-    if (attempt && isUnsent) await mark?.undo(attempt);
+    if (attempt && isUnsent) await mark?.undo(attempt, isSending);
     if (!(error instanceof FileFnHttpError)) throw error;
     if (error.code === "FILEFN_UPLOAD_ALREADY_COMPLETED") {
       const file = await client.getFile(pending.fileId);

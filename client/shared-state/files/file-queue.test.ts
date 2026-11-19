@@ -1155,7 +1155,7 @@ describe("FileFn OPFS queue of an account's records", () => {
   ] as const)(
     "sends no request and removes the marker when %s while it is written",
     async (_, change) => {
-      installDevice({ locks: createFakeLocks() });
+      installDevice();
       await enqueuePhoto(await openTab());
       const controller = new AbortController();
       const { references } = createReferences(new Set([FILE_ID]));
@@ -1183,7 +1183,7 @@ describe("FileFn OPFS queue of an account's records", () => {
   ])(
     "unbinds a file whose %s STARTED marker it replaced when the attempt goes offline before its request",
     async (_, text) => {
-      installDevice({ locks: createFakeLocks() });
+      installDevice();
       await enqueuePhoto(await openTab());
       await writeStarted(text);
       const { getDirectory } = navigator.storage;
