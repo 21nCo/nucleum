@@ -7,6 +7,7 @@ import {
   type UploadResult
 } from "@filefn/client";
 import account from "@nucleum/client/runtime/account/account.store";
+import context from "@nucleum/client/runtime/context.store";
 import {
   UserDataMode,
   type UserAccount
@@ -16,11 +17,25 @@ import { resolveAccountBaseUrl } from "@nucleum/client/runtime/account/network";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { clientStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
+import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
+import {
+  countSentRequests,
+  isAppOffline,
+  readOfflineModeWith,
+  replayFileQueue,
+  resolveAccountFileQueueDir,
+  resolveFileQueueDirsOf,
+  type QueuedFileClaim,
+  type QueuedFileReferences
+} from "@nucleum/shared-state/files/file-queue";
+import { get } from "svelte/store";
 
 const FILEFN_OFFLINE_DIR_PREFIX = "filefn-pending-uploads";
 const OFFLINE_REPLAY_START_FILE_ID = "";
 const OFFLINE_REPLAY_LOCK_PREFIX = "filefn-offline-replay";
 const PENDING_DELETE_DIR_PREFIX = "filefn-pending-deletes";
+
+readOfflineModeWith(() => get(context).isInOfflineMode === true);
 
 /** Signed-in cloud account that owns a FileFn client. */
 export type FileFnAccountScope = {
@@ -231,13 +246,18 @@ async function createAccountFileFnClient(
   baseUrl: string,
   teardown: AbortSignal
 ): Promise<FileFnClient> {
-  const client = await createSdkClient(baseUrl, teardown, {
-    enabled: true,
-    opfsDir: resolveFileFnOfflineDir(userId)
-  });
+  const sent = new Map<string, number>();
+  const client = await createSdkClient(
+    baseUrl,
+    teardown,
+    { enabled: true, opfsDir: resolveFileFnOfflineDir(userId) },
+    sent
+  );
   const guarded = guardFileFnClient(client, teardown);
+  countSentRequests(guarded, sent);
   if (!teardown.aborted) {
     startOfflineReplayWhenOwner(userId, client, teardown);
+    startFileQueueReplay(userId, baseUrl, guarded, teardown);
     const drain = () =>
       void drainAccountPendingDeletes(userId, baseUrl, guarded, teardown).catch(
         (error: unknown) => {
@@ -251,19 +271,221 @@ async function createAccountFileFnClient(
 }
 
 /**
+ * Returns the FileFn OPFS queues whose files the signed-in account shows from
+ * the device until they upload: the cloud account's own queue and the
+ * device's local queue, or only the local queue without a cloud account.
+ */
+export function resolveFileQueueDirs(): string[] {
+  return resolveFileQueueDirsOf(
+    resolveFileFnAccountScope(account.get())?.userId ?? null
+  );
+}
+
+/**
+ * Uploads the account's queued files through the client, now when online and
+ * on every reconnect or end of the app's offline mode until the client is torn
+ * down. See replayFileQueue for how tabs share the queue. A pass checks the
+ * account's records, so it runs only once DataFn is in the account's
+ * namespace, and again whenever it is.
+ */
+function startFileQueueReplay(
+  userId: string,
+  baseUrl: string,
+  client: FileFnClient,
+  teardown: AbortSignal
+) {
+  const replay = () =>
+    replayAccountFileQueue({ userId, baseUrl, client, signal: teardown });
+  const stop = datafnRuntime.subscribe((runtime) => {
+    if (runtime?.namespace === `user:${userId}`) replay();
+  });
+  let wasOffline = isAppOffline();
+  const stopOffline = context.subscribe(() => {
+    if (wasOffline && !isAppOffline()) replay();
+    wasOffline = isAppOffline();
+  });
+  teardown.addEventListener("abort", stop, { once: true });
+  teardown.addEventListener("abort", stopOffline, { once: true });
+  globalThis.addEventListener?.("online", replay, { signal: teardown });
+}
+
+function replayAccountFileQueue(uploader: FileQueueUploader) {
+  const { userId, baseUrl, client, signal } = uploader;
+  if (signal.aborted || isAppOffline()) return;
+  const namespace = `user:${userId}`;
+  const isAccountRecords = () => {
+    const runtime = get(datafnRuntime);
+    return (
+      !signal.aborted &&
+      datafn.currentNamespace() === namespace &&
+      runtime?.namespace === namespace &&
+      runtime.remoteUrl?.replace(/\/datafn\/?$/, "") ===
+        baseUrl.replace(/\/files\/?$/, "")
+    );
+  };
+  const references: QueuedFileReferences = {
+    owner: { userId, baseUrl },
+    isCurrent: isAccountRecords,
+    async sync() {
+      if (!isAccountRecords()) return false;
+      if (!get(datafnRuntime)?.storage) return true;
+      return pullAccountFileRecords(datafn, isAccountRecords, signal);
+    },
+    async isReferenced(fileId) {
+      if (!isAccountRecords()) return undefined;
+      const result = await datafn.file.query({
+        filters: { fileId },
+        limit: 1,
+        metadata: {
+          includeTrashed: true,
+          includeArchived: true,
+          includeAncestorInactive: true
+        }
+      });
+      if (!isAccountRecords() || !Array.isArray(result.data)) return undefined;
+      return result.data.length > 0;
+    },
+    async discard(fileId) {
+      await client.deleteFile(fileId).catch(async (error: unknown) => {
+        logger.warn({ at: "filefn.client.queue.discard", fileId, error });
+        await recordPendingDelete(userId, baseUrl, fileId);
+      });
+    }
+  };
+  replayFileQueue(
+    resolveAccountFileQueueDir(userId),
+    client,
+    signal,
+    undefined,
+    references
+  ).catch((error: unknown) => {
+    logger.error({ at: "filefn.client.queue", error });
+  });
+}
+
+/** How long a queue replay waits for DataFn to pull the account's records. */
+const ACCOUNT_PULL_TIMEOUT_MS = 120_000;
+
+/**
+ * Pulls the account's records into the device's DataFn copy. Resolves true
+ * once a pull that started after this call applied the file records and
+ * found no change left to bring, and false once one fails, the records stop
+ * being the account's (`isCurrent`), the signal aborts or no pull ends in
+ * time. A pull that brought changes may have stopped at its batch limit, so
+ * it is followed by another until one brings none. A pull already running
+ * when it is called may have read the records before, so it is waited out and
+ * followed by another. A pull that left the file records out, while they
+ * are still being cloned, is followed by the one DataFn starts once they are.
+ */
+export function pullAccountFileRecords(
+  client: Pick<typeof datafn, "subscribe"> & {
+    sync: Pick<typeof datafn.sync, "pullNow">;
+  },
+  isCurrent: () => boolean,
+  signal: AbortSignal
+): Promise<boolean> {
+  if (!isCurrent()) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    let isOwnPull = false;
+    const pull = () => void client.sync.pullNow().catch(() => undefined);
+    const stops = [
+      client.subscribe((event) => {
+        const context = event.context as
+          | {
+              phase?: unknown;
+              cursors?: Record<string, unknown>;
+              cursorDelta?: Record<string, unknown>;
+            }
+          | undefined;
+        if (context?.phase !== "pull") return;
+        if (event.type === "sync_started") isOwnPull = true;
+        if (event.type !== "sync_applied" && event.type !== "sync_failed") {
+          return;
+        }
+        const isCaughtUp = !Object.keys(context.cursorDelta ?? {}).length;
+        if (!isOwnPull || (event.type === "sync_applied" && !isCaughtUp)) {
+          setTimeout(pull, 0);
+        } else if (event.type === "sync_failed") {
+          finish(false);
+        } else if (context.cursors && "file" in context.cursors) {
+          finish(isCurrent());
+        }
+        isOwnPull = false;
+      }),
+      datafnRuntime.subscribe(() => {
+        if (!isCurrent()) finish(false);
+      })
+    ];
+    const timeout = setTimeout(() => finish(false), ACCOUNT_PULL_TIMEOUT_MS);
+    const abort = () => finish(false);
+    signal.addEventListener("abort", abort, { once: true });
+    function finish(isPulled: boolean) {
+      for (const stop of stops) stop();
+      clearTimeout(timeout);
+      signal.removeEventListener("abort", abort);
+      resolve(isPulled);
+    }
+    pull();
+  });
+}
+
+/** The signed-in cloud account's current FileFn client and its lifetime. */
+export type FileQueueUploader = {
+  userId: string;
+  baseUrl: string;
+  client: FileFnClient;
+  /** Aborts when the client is torn down. */
+  signal: AbortSignal;
+};
+
+/**
+ * Returns the signed-in cloud account's current FileFn client, creating it
+ * when there is none yet (creating one starts its queue replay too), or null
+ * offline, without a cloud account, or when the client was replaced while it
+ * was created.
+ */
+export async function captureFileQueueUploader(): Promise<FileQueueUploader | null> {
+  if (isAppOffline()) return null;
+  syncWithAccount();
+  await settleFileFnClientSync();
+  const entry = currentEntry;
+  if (!entry) return null;
+  const client = await entry.client;
+  if (currentEntry !== entry || entry.controller.signal.aborted) return null;
+  return {
+    userId: entry.userId,
+    baseUrl: entry.baseUrl,
+    client,
+    signal: entry.controller.signal
+  };
+}
+
+/**
+ * Uploads the signed-in cloud account's queued files now, through its FileFn
+ * client. Does nothing offline or without a cloud account.
+ */
+export async function uploadQueuedFiles(): Promise<void> {
+  const uploader = await captureFileQueueUploader();
+  if (!uploader) return;
+  replayAccountFileQueue(uploader);
+}
+
+/**
  * Creates an SDK client at an authority, authenticated as the signed-in
- * account, whose requests end when the teardown signal aborts.
+ * account, whose requests end when the teardown signal aborts and whose
+ * upload requests add to `sent` once dispatched (see createTeardownFetch).
  */
 async function createSdkClient(
   baseUrl: string,
   teardown: AbortSignal,
-  offline: { enabled: boolean; opfsDir?: string }
+  offline: { enabled: boolean; opfsDir?: string },
+  sent?: Map<string, number>
 ): Promise<FileFnClient> {
   const transport = await createNucleumAuthFnTransportAuth();
   return createFileFnClient({
     baseUrl,
     credentials: (await transport.getCredentials?.()) ?? "include",
-    fetch: createTeardownFetch(teardown),
+    fetch: createTeardownFetch(teardown, sent),
     getAuthHeaders: async () => {
       teardown.throwIfAborted();
       return Object.fromEntries(
@@ -354,12 +576,26 @@ export async function captureSettledFileFnOwner(): Promise<FileFnOwner | null> {
 }
 
 /**
+ * Returns the authority the owner's files captured now are queued for: the
+ * owner and the FileFn authority its client is bound to once settled, or
+ * undefined when its generation ended or the authority cannot be read.
+ */
+export async function captureFileQueueClaim(
+  owner: FileFnOwner
+): Promise<QueuedFileClaim | undefined> {
+  await settleFileFnClientSync().catch(() => undefined);
+  const entry = currentEntry;
+  if (!entry || !isFileFnOwnerCurrent(owner)) return undefined;
+  return { userId: entry.userId, baseUrl: entry.baseUrl };
+}
+
+/**
  * Returns whether the owner's generation has not ended: the owner's account is
  * still signed in and no sign-out, other account or other authority has torn
  * its client down. A stored region read still pending does not end it; a
  * read that finds another authority does, once it binds.
  */
-function isFileFnOwnerLive(owner: FileFnOwner): boolean {
+export function isFileFnOwnerLive(owner: FileFnOwner): boolean {
   return (
     owner.epoch === ownerEpoch &&
     resolveFileFnAccountScope(account.get())?.userId === owner.userId
@@ -458,6 +694,19 @@ export async function discardFileFnFile(
       entry.controller.signal
     );
   }
+}
+
+/**
+ * Records the delete of a file the account will hold no record of, at the
+ * file's authority, for the account's next client to send (see
+ * discardFileFnFile): a local file the account claimed whose local-only
+ * record was deleted before its record was published.
+ */
+export async function recordFileFnPendingDelete(
+  account: { userId: string; baseUrl: string },
+  fileId: string
+): Promise<void> {
+  await recordPendingDelete(account.userId, account.baseUrl, fileId);
 }
 
 /**
@@ -788,9 +1037,13 @@ function guardFileFnClient(
 /**
  * Sends requests through the global fetch until the client is torn down, then
  * aborts in-flight requests and rejects new ones with an AbortError, which the
- * offline queue keeps staged without spending a retry.
+ * offline queue keeps staged without spending a retry. Counts in `sent` only
+ * each upload's first request, as dispatched, by its key (see readUploadKey).
  */
-function createTeardownFetch(teardown: AbortSignal): typeof fetch {
+function createTeardownFetch(
+  teardown: AbortSignal,
+  sent?: Map<string, number>
+): typeof fetch {
   return async (input, init) => {
     teardown.throwIfAborted();
     const linked = new AbortController();
@@ -804,9 +1057,24 @@ function createTeardownFetch(teardown: AbortSignal): typeof fetch {
       return () => signal.removeEventListener("abort", forward);
     });
     try {
+      const key = readUploadKey(input, init);
+      if (sent && key) sent.set(key, (sent.get(key) ?? 0) + 1);
       return await globalThis.fetch(input, { ...init, signal: linked.signal });
     } finally {
       for (const remove of detach) remove();
     }
   };
+}
+
+/** An upload's first request's idempotency key ("*" when it cannot be read). */
+function readUploadKey(input: RequestInfo | URL, init?: RequestInit) {
+  const url = String(input instanceof Request ? input.url : input);
+  if (!url.split(/[?#]/)[0].endsWith("/upload/init")) return undefined;
+  try {
+    const body: { idempotencyKey?: unknown } = JSON.parse(String(init?.body));
+    const key = body.idempotencyKey;
+    return typeof key === "string" && key ? key : "*";
+  } catch {
+    return "*";
+  }
 }

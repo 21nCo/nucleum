@@ -10,9 +10,6 @@
   import EmptyStatusView from "@21n/ui/elements/feedback/EmptyStatusView.svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import InlineErrorMessage from "@21n/ui/elements/text/InlineErrorMessage.svelte";
-  import account from "@nucleum/client/runtime/account/account.store";
-  import { isCloudUserAndOffline } from "@nucleum/client/runtime/account/account.utils";
-  import context from "@nucleum/client/runtime/context.store";
   import { ButtonVariant } from "@21n/ui/elements/button/button.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { MAX_FILE_SIZE_MB } from "@nucleum/shared-state/files/file.constants";
@@ -53,11 +50,6 @@
   ) {
     try {
       error = undefined;
-      if (isCloudUserAndOffline($account, $context.isInOfflineMode)) {
-        error =
-          "You seem to be offline. File upload is not yet available in offline mode.";
-        return;
-      }
       if (errors && errors.length > 0) {
         error = "Please select a valid image file.";
         return;
