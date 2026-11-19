@@ -1,4 +1,5 @@
 import { Resource } from "@nucleum/datafn/resource.enum";
+import { isNodeSidePanelOpen } from "@nucleum/features/memory/node/node-layout";
 import { LinkType } from "@nucleum/datafn/link.type";
 import { type IActiveNode, type INode, type INodeLinkThumb, canHaveTraces, NodeView, headingNodeTypes, mediaNodeTypeList, socialPostNodeTypeList } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
@@ -1073,36 +1074,49 @@ const NOTE_EDIT_ACCESS_MODES: ReadonlySet<AccessMode | undefined> = new Set([
 
 /**
  * Whether an open note's menu offers Edit, which focuses its inline editor:
- * a markdown note open as a page or in a split while the note is editable,
- * not in read mode, locked, archived or in trash. A side panel taking the
- * place of the editor in a narrow pane, or the cover picker, does not hide
- * it: Edit brings the editor back first.
+ * a markdown note open as a page or in a split, whose pane shows the content
+ * view (not the bird view), while the note is editable: not in read mode,
+ * locked, archived, in trash, or opened without some of its blocks, which
+ * shows it read-only. A side panel taking the place of the editor in a
+ * narrow pane, or the cover picker, does not hide it: Edit brings the
+ * editor back first.
  */
-function canFocusNoteEditor(node: INode, accessMode: AccessMode | undefined) {
+function canFocusNoteEditor(
+  node: INode,
+  accessMode: AccessMode | undefined,
+  isContentView: boolean
+) {
   const activeNode = node as Partial<IActiveNode>;
   return (
     node.contentType === NodeType.NODULAR_MARKDOWN &&
     NOTE_EDIT_ACCESS_MODES.has(accessMode) &&
+    isContentView &&
     !activeNode.isInReadOnlyMode &&
     !activeNode.isLocked &&
     !activeNode.isArchived &&
+    !activeNode.isOpenedIncomplete &&
     !isTrashedResource(activeNode)
   );
 }
 
 /**
  * Brings an open note's editor back from whatever editable state hides it
- * in its pane: the cover picker in its place, or a side panel in a narrow
- * pane. Says whether that started a navigation, which switching the panel
- * does only while the URL shows another panel for the note.
+ * in its pane: the cover picker in its place, or a side panel that takes the
+ * place of the content in a narrow pane. A side panel beside the content, in
+ * a pane wide enough for both, stays open. Says whether that started a
+ * navigation, which switching the panel does only while the URL shows
+ * another panel for the note.
  */
 export function revealNoteEditor(
-  node: Pick<IActiveNodeStore, "get" | "toggleCoverPicker" | "switchPanel">
+  node: Pick<IActiveNodeStore, "get" | "toggleCoverPicker" | "switchPanel">,
+  params?: { isConstrainedWidth?: boolean }
 ): NoteEditorReveal {
   const state = node.get();
   if (state.isShowCoverPicker) node.toggleCoverPicker(false);
+  if (!params?.isConstrainedWidth || !isNodeSidePanelOpen(state.panel)) {
+    return { isNavigating: false };
+  }
   const contentPanel = state.defaultPanel ?? ResourcePanelType.DEFAULT;
-  if (state.panel === contentPanel) return { isNavigating: false };
   const urlPanel = requireResourcePanelHost().readPanel(
     state.id,
     new URL(window.location.href)
@@ -1120,6 +1134,11 @@ export function resolveNodeContextMenu(
     accessPointContext?: string;
     nodeView?: NodeView;
     isConstrainedWidth?: boolean;
+    /**
+     * Whether the pane shows the note's content view, where its editor is,
+     * and not the bird view. Defaults to the content view.
+     */
+    isContentView?: boolean;
     /** Pane the menu's note is open in, whose editor its Edit item focuses. */
     paneId?: string;
     /**
@@ -1328,7 +1347,11 @@ export function resolveNodeContextMenu(
         : nodeActions.setCoverPhoto()
       : undefined;
   const editorPaneId = params?.paneId ?? BASE_CONTEXT_ZONE_PANE.id;
-  const editItems = canFocusNoteEditor(node, params?.accessMode)
+  const editItems = canFocusNoteEditor(
+    node,
+    params?.accessMode,
+    params?.isContentView ?? true
+  )
     ? [
         resourceActions.editInline(() =>
           focusNoteEditor(node.id, editorPaneId, params?.revealEditor)

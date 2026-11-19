@@ -82,6 +82,11 @@
    * no edit can save an order without them.
    */
   let isOpenedIncomplete = $state(false);
+  $effect(() => {
+    const isIncomplete = isOpenedIncomplete;
+    if (!!node.get().isOpenedIncomplete === isIncomplete) return;
+    node.update((state) => ({ ...state, isOpenedIncomplete: isIncomplete }));
+  });
   const dev_isEnableBottomDivider = false;
 
   const calendarContentContext = getContext<any>(Context.CALENDAR_CONTENT);

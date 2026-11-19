@@ -39,6 +39,7 @@ import {
 import { configureResourcePanelHost } from "@nucleum/shared-state/resources/resource-panel-host";
 import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
 import ContextActionKeys from "@nucleum/surfaces/commandBar/ContextActionKeys.svelte";
+import { buildOpenAsSplitItem } from "@nucleum/shared-state/resources/open-as-split-item";
 import { withResourceActionKeys } from "./resource-action-keys";
 
 const NOTE_ID = "node:open-keys-note";
@@ -593,11 +594,12 @@ describe("E on a note whose editor an editable state hides without a navigation"
 
   type RevealableNote = Parameters<typeof revealNoteEditor>[0];
 
-  function edit(store: RevealableNote) {
+  function edit(store: RevealableNote, isConstrainedWidth = true) {
     const menu = resolveNodeContextMenu(note(), ResourceAccessPoint.SELF, {
       accessMode: AccessMode.PAGE,
       paneId: PAGE_PANE.id,
-      revealEditor: () => revealNoteEditor(store)
+      isConstrainedWidth,
+      revealEditor: () => revealNoteEditor(store, { isConstrainedWidth })
     });
     const item = findItem(menu, "edit");
     expect(item?.hotKey).toBe("e");
@@ -669,6 +671,127 @@ describe("E on a note whose editor an editable state hides without a navigation"
     expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(true);
     expect(focus).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps a side panel open beside the editor in a pane wide enough for both", async () => {
+    window.history.replaceState(
+      {},
+      "",
+      `/?${URL_PANEL_PARAM}=${ResourcePanelType.ACTIVITY}`
+    );
+    const { current, store } = openNote({
+      panel: ResourcePanelType.ACTIVITY,
+      isShowCoverPicker: true
+    });
+    const focus = vi.fn();
+
+    edit(store as unknown as RevealableNote, false);
+
+    expect(store.toggleCoverPicker).toHaveBeenCalledWith(false);
+    expect(store.switchPanel).not.toHaveBeenCalled();
+    expect(current.panel).toBe(ResourcePanelType.ACTIVITY);
+
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
+    await tick();
+    await tick();
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("switches the side panel away in a narrow pane where it takes the editor's place", () => {
+    const { current, store } = openNote({ panel: ResourcePanelType.ACTIVITY });
+
+    edit(store as unknown as RevealableNote, true);
+
+    expect(store.switchPanel).toHaveBeenCalledWith(ResourcePanelType.CONTENT);
+    expect(current.panel).toBe(ResourcePanelType.CONTENT);
+  });
+
+  it.each([ResourcePanelType.CONTENT, ResourcePanelType.NONE])(
+    "switches no panel in a narrow pane already showing the %s panel",
+    (panel) => {
+      const { store } = openNote({ panel });
+      edit(store as unknown as RevealableNote, true);
+      expect(store.switchPanel).not.toHaveBeenCalled();
+    }
+  );
+});
+
+describe("Edit on a note whose pane cannot show an editable editor", () => {
+  beforeEach(landscape);
+
+  const editItem = (
+    node: Record<string, unknown>,
+    params: { isContentView?: boolean } = {}
+  ) =>
+    findItem(
+      resolveNodeContextMenu(note(node), ResourceAccessPoint.SELF, {
+        accessMode: AccessMode.PAGE,
+        paneId: PAGE_PANE.id,
+        ...params
+      }),
+      "edit"
+    );
+
+  it.each([AccessMode.PAGE, AccessMode.BESIDE_BASE])(
+    "offers no Edit in the bird view of a note open as %s",
+    (accessMode) => {
+      const menu = resolveNodeContextMenu(note(), ResourceAccessPoint.SELF, {
+        accessMode,
+        paneId: PAGE_PANE.id,
+        isContentView: false
+      });
+      expect(findItem(menu, "edit")).toBeUndefined();
+      expect(findItem(menu, "open-as-split")?.hotKey).toBe("b");
+    }
+  );
+
+  it("offers Edit in the content view of a note", () => {
+    expect(editItem({}, { isContentView: true })?.hotKey).toBe("e");
+    expect(editItem({})?.hotKey).toBe("e");
+  });
+
+  it("offers no Edit on a note opened without some of its blocks, which stays read-only", () => {
+    expect(editItem({ isOpenedIncomplete: true })).toBeUndefined();
+  });
+
+  it("offers Edit again once the note is complete", () => {
+    expect(editItem({ isOpenedIncomplete: false })?.hotKey).toBe("e");
+  });
+});
+
+describe("the split item of every menu of a resource", () => {
+  const open = vi.fn();
+  const close = vi.fn();
+  const split = (id: string) => buildOpenAsSplitItem(id, { open, close });
+
+  beforeEach(() => {
+    open.mockClear();
+    close.mockClear();
+  });
+
+  it("opens a resource that is in no split beside the base page", async () => {
+    showIn("page", NOTE_ID);
+    const item = split(NOTE_ID);
+    expect(item.label).toBe("Open in split screen");
+    await item.callback?.();
+    expect(open).toHaveBeenCalledWith(NOTE_ID, AccessMode.BESIDE_BASE);
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["split", AccessMode.BESIDE_BASE],
+    ["split beside a page", AccessMode.BESIDE_PAGE]
+  ] as const)(
+    "closes the split of a resource open in a %s with that mode",
+    async (mode, accessMode) => {
+      showIn(mode, NOTE_ID);
+      const item = split(NOTE_ID);
+      expect(item.label).toBe("Close split screen");
+      expect(item.icon).toBe("minus-circle");
+      await item.callback?.();
+      expect(close).toHaveBeenCalledWith({ id: NOTE_ID, accessMode });
+      expect(open).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe("note editor focus registrations", () => {

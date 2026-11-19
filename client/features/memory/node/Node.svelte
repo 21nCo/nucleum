@@ -218,6 +218,7 @@
       {node}
       {accessMode}
       {isConstrainedWidth}
+      isContentView={view === NodeView.CONTENT}
       isFloatingHidden={!isShowFloatingBar}
     />
   </div>

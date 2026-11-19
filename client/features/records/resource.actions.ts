@@ -1,3 +1,4 @@
+import { buildOpenAsSplitItem } from "@nucleum/shared-state/resources/open-as-split-item";
 import { requireResourceActionHost } from "@nucleum/shared-state/resources/resource-action-host";
 import {
   copyActiveResourceContents,
@@ -434,36 +435,13 @@ export class ResourceActions<T extends IActionableResource> {
       }
     };
   }
-  /**
-   * Opens the resource in a split, or closes its split when it is already in
-   * one: beside the base page, or beside a page, where a split opened from a
-   * page goes.
-   */
+  /** Opens the resource in a split, or closes its split (see {@link buildOpenAsSplitItem}). */
   openAsSplit(): IContextMenuItem {
-    const currentMode = determineResourceAccessMode(this.resource.id);
-    const splitMode =
-      currentMode === AccessMode.BESIDE_BASE ||
-      currentMode === AccessMode.BESIDE_PAGE
-        ? currentMode
-        : undefined;
-    return {
-      value: "open-as-split",
-      label: splitMode ? "Close split screen" : "Open in split screen",
-      icon: splitMode ? "minus-circle" : "split-screen",
-      callback: async () => {
-        if (splitMode) {
-          requireResourceActionHost().close({
-            id: this.resource.id,
-            accessMode: splitMode
-          });
-        } else {
-          requireResourceActionHost().open(
-            this.resource.id,
-            AccessMode.BESIDE_BASE
-          );
-        }
-      }
-    };
+    return buildOpenAsSplitItem(this.resource.id, {
+      open: (id, accessMode) =>
+        requireResourceActionHost().open(id, accessMode),
+      close: (props) => requireResourceActionHost().close(props)
+    });
   }
   maximize(): IContextMenuItem {
     const searchParams = new URLSearchParams(window.location.search);

@@ -26,12 +26,15 @@
     node,
     accessMode = undefined,
     isConstrainedWidth = false,
+    isContentView = true,
     isFloatingHidden = false
   }: {
     node: IActiveNodeStore;
     /** Mode this view of the node is open in; views share one node store. */
     accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
+    /** Whether the pane shows the note's content view, not its bird view. */
+    isContentView?: boolean;
     /** Hides the floating bar while the node content scrolls down. */
     isFloatingHidden?: boolean;
   } = $props();
@@ -115,8 +118,9 @@
     resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
       accessMode,
       isConstrainedWidth,
+      isContentView,
       paneId: contextZonePane.id,
-      revealEditor: () => revealNoteEditor(node)
+      revealEditor: () => revealNoteEditor(node, { isConstrainedWidth })
     })}
   onAction={onContextMenuAction}
 />
