@@ -53,6 +53,7 @@ artifacts/
 
 # Local dev seed files — not for tracking
 **/seed.local.ts
+
 .claude
 
 # iOS local/generated artifacts
@@ -86,3 +87,6 @@ local-context.md
 
 # Codex hooks are global (~/.codex/hooks.json); never commit repo-level ones
 .codex/hooks.json
+
+# Cursor hooks are global (~/.cursor/hooks.json); never commit repo-level ones
+.cursor/hooks.json
