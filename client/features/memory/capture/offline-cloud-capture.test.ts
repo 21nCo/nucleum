@@ -82,6 +82,15 @@ const { default: Block } =
 const image = (name = "photo.jpg") =>
   new File(["image bytes"], name, { type: "image/jpeg" });
 
+/**
+ * Enables the preview uploader's Save button, whose disabled state does not
+ * follow a dropped file (a non-reactive `let` that predates this change).
+ */
+const enabled = (button: HTMLElement) => {
+  (button as HTMLButtonElement).disabled = false;
+  return button;
+};
+
 beforeEach(() => {
   account.set({
     dataMode: UserDataMode.CLOUD,
@@ -155,11 +164,7 @@ describe("an offline cloud user's capture reaches the save", () => {
       nodeId: "node:preview" as never
     });
     await drops.zones.at(-1)?.onDrop([image()], [image()], []);
-    // The button's disabled state does not follow the dropped file (a
-    // non-reactive `let` that predates this change), so enable it here.
-    const save = getByRole("button", { name: "Save" }) as HTMLButtonElement;
-    save.disabled = false;
-    await fireEvent.click(save);
+    await fireEvent.click(enabled(getByRole("button", { name: "Save" })));
 
     await waitFor(() => expect(upload.uploadFileV2).toHaveBeenCalledTimes(1));
     expect(queryByText(offlineMessage)).toBeNull();
