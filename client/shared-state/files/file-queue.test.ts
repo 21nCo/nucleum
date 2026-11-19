@@ -1287,6 +1287,48 @@ describe("FileFn OPFS queue of an account's records", () => {
     await secondDone;
   });
 
+  it("keeps a marker another tab relied on to send when the attempt that wrote it sends no request, without Web Locks", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    const first = await openTab();
+    const stalled = createClient();
+    first.countSentRequests(stalled.client, { count: 0 });
+    let tearDown: ((error: unknown) => void) | undefined;
+    const upload = stalled.client.uploadFile;
+    stalled.client.uploadFile = (input) => ({
+      ...upload(input),
+      done: () =>
+        new Promise<UploadResult>((_, reject) => {
+          tearDown = reject;
+        })
+    });
+    const firstDone = replay(
+      first,
+      stalled.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+    await vi.waitFor(() => expect(tearDown).toBeDefined());
+    const marker = readStarted();
+    const uploading = createClient();
+    const secondDone = replay(
+      await openTab(),
+      uploading.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+    await vi.waitFor(() => expect(uploading.uploads).toHaveLength(1));
+
+    tearDown!(new DOMException("The client was torn down", "AbortError"));
+    await firstDone;
+
+    expect(readStarted()).toBe(marker);
+    const atB = createClient({ isImmediate: true });
+    const b = createReferences(new Set([FILE_ID]), [], AUTHORITY_B);
+    await replay(await openTab(), atB.client, b.references);
+    expect(atB.uploads).toEqual([]);
+    uploading.finish();
+    await secondDone;
+  });
+
   it.each([
     ["sent no request", 0, true],
     ["sent a request", 1, false]

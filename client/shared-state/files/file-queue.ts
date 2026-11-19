@@ -40,6 +40,7 @@ const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
 const STARTED_FILE = "started";
+const RELIED_FILE = "started-relied";
 
 /** FileFn upload policies the account service registers (Nucleus policies). */
 export const DURABLE_UPLOAD_POLICY = "nucleus-durable-default";
@@ -749,7 +750,7 @@ async function replayAccountEntry(
   }
   if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
   const result = await uploadEntry(pass, pending, {
-    write: () => (marked ? undefined : markStarted(dir, entryName, references)),
+    write: () => markStarted(dir, entryName, references),
     isReady: () => !pass.request.signal.aborted && references.isCurrent(),
     undo: (attempt) => unmarkStarted(dir, entryName, attempt)
   });
@@ -761,7 +762,8 @@ async function replayAccountEntry(
 
 /**
  * Marks a file started at the owner's authority by a new attempt, unless a
- * valid marker exists by now: one of the owner's is kept, another's stops it.
+ * valid marker exists by now: one of the owner's is kept and recorded as
+ * relied on, so no attempt removes it any more; another's stops it.
  */
 async function markStarted(
   dir: string,
@@ -770,7 +772,10 @@ async function markStarted(
 ) {
   const text = await readEntryText(dir, entryName, STARTED_FILE, true);
   const marked = parseJson(text, isClaim);
-  if (marked && isSameClaim(marked, owner)) return undefined;
+  if (marked && isSameClaim(marked, owner)) {
+    await writeEntryFile(dir, entryName, RELIED_FILE, "");
+    return undefined;
+  }
   if (marked) throw new DOMException("Started elsewhere", "NetworkError");
   const attempt = crypto.randomUUID();
   const marker = JSON.stringify({ ...owner, attempt });
@@ -784,14 +789,16 @@ async function markStarted(
 }
 
 /**
- * Removes a file's started marker while it is still the attempt's own or,
- * without an attempt, while it is invalid (a failed write).
+ * Removes a file's started marker while it is still the attempt's own and no
+ * other attempt relied on it or, without an attempt, while it is invalid (a
+ * failed write).
  */
 async function unmarkStarted(dir: string, entryName: string, attempt?: string) {
   try {
     const text = await readEntryText(dir, entryName, STARTED_FILE, true);
     const marked = parseJson<StartedMarker>(text, isClaim);
     if (attempt ? marked?.attempt !== attempt : marked) return;
+    if (await hasEntryFile(dir, entryName, RELIED_FILE)) return;
     await (await getEntryDir(dir, entryName))?.removeEntry(STARTED_FILE);
   } catch (error) {
     logger.warn({ at: "fileQueue.replay.started", entryName, error });
