@@ -1177,6 +1177,44 @@ describe("FileFn OPFS queue of an account's records", () => {
     }
   );
 
+  it.each([
+    ["empty", ""],
+    ["corrupt", '{"userId":']
+  ])(
+    "unbinds a file whose %s STARTED marker it replaced when the attempt goes offline before its request",
+    async (_, text) => {
+      installDevice();
+      await enqueuePhoto(await openTab());
+      await writeStarted(text);
+      const { getDirectory } = navigator.storage;
+      onMarkerWrite(() => {
+        (navigator as { onLine: boolean }).onLine = false;
+      });
+      const atA = createClient({ isImmediate: true });
+      await replay(
+        await openTab(),
+        atA.client,
+        createReferences(new Set([FILE_ID])).references
+      );
+      expect(atA.uploads).toEqual([]);
+      expect(readStarted()).toBeUndefined();
+
+      vi.stubGlobal("navigator", {
+        ...navigator,
+        onLine: true,
+        storage: { getDirectory }
+      });
+      const atB = createClient({ isImmediate: true });
+      const b = createReferences(new Set([FILE_ID]), [], AUTHORITY_B);
+      await replay(await openTab(), atB.client, b.references);
+
+      expect(atB.uploads).toEqual([
+        expect.objectContaining({ fileId: FILE_ID })
+      ]);
+      expect(opfs.list(QUEUE)).toEqual([]);
+    }
+  );
+
   it("removes a recent file without a record at its grace deadline, without another trigger", async () => {
     installDevice();
     const tab = await openTab();

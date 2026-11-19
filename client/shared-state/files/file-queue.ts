@@ -737,7 +737,7 @@ async function replayAccountEntry(
     },
     isReady: () => !pass.request.signal.aborted && references.isCurrent(),
     undo: async () => {
-      if (started !== undefined) return;
+      if (marked) return;
       const entry = await getEntryDir(dir, entryName);
       await entry?.removeEntry(STARTED_FILE).catch((error: unknown) => {
         logger.warn({ at: "fileQueue.replay.started", fileId, error });
