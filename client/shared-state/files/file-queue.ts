@@ -745,9 +745,8 @@ async function replayAccountEntry(
       scheduleGraceDeadline(pass, pending.createdAt);
       return "done";
     }
-    const started = globalThis.navigator?.locks
-      ? await readMarkers(dir, entryName)
-      : [undefined];
+    const started = await readMarkers(dir, entryName);
+    if (!globalThis.navigator?.locks) started.push(undefined);
     if (isStartedElsewhere(started, references)) return "done";
     return removeAccountEntry(pass, references, fileId, started.length > 0);
   }

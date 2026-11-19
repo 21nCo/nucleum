@@ -1054,13 +1054,14 @@ function createTeardownFetch(
   };
 }
 
-/** An upload's first request's idempotency key ("*" for an unreadable body). */
+/** An upload's first request's idempotency key ("*" when it cannot be read). */
 function readUploadKey(input: RequestInfo | URL, init?: RequestInit) {
   const url = String(input instanceof Request ? input.url : input);
   if (!url.split(/[?#]/)[0].endsWith("/upload/init")) return undefined;
   try {
-    const body = JSON.parse(String(init?.body)) as { idempotencyKey?: unknown };
-    return typeof body.idempotencyKey === "string" ? body.idempotencyKey : "";
+    const body: { idempotencyKey?: unknown } = JSON.parse(String(init?.body));
+    const key = body.idempotencyKey;
+    return typeof key === "string" && key ? key : "*";
   } catch {
     return "*";
   }

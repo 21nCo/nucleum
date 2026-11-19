@@ -39,7 +39,9 @@ const sdk = vi.hoisted(() => ({
   /** Holds every upload's completion until it settles, when set. */
   hold: null as Promise<void> | null,
   /** Sends each upload's first request and each delete, when set. */
-  isSending: false
+  isSending: false,
+  /** Makes real FileFn clients instead, when set. */
+  isReal: false
 }));
 vi.mock("@filefn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@filefn/client")>();
@@ -49,6 +51,7 @@ vi.mock("@filefn/client", async (importOriginal) => {
       config: Parameters<typeof actual.createFileFnClient>[0]
     ): Partial<FileFnClient> => {
       sdk.baseUrls.push(config.baseUrl);
+      if (sdk.isReal) return actual.createFileFnClient(config);
       const send = async (path: string, init: RequestInit) => {
         if (sdk.isSending)
           await config.fetch?.(`${config.baseUrl}${path}`, init);
@@ -304,6 +307,7 @@ beforeEach(() => {
   sdk.baseUrls = [];
   sdk.hold = null;
   sdk.isSending = false;
+  sdk.isReal = false;
   authority.url = "https://account-useast-dev.nucleum.app/datafn";
   authority.pulls = 0;
   authority.isFailing = false;
@@ -798,6 +802,46 @@ describe("files a signed-in cloud account captures offline", () => {
     expect(sdk.uploads).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
+  });
+
+  it("leaves at the old authority a capture whose torn-down real FileFn client sent its upload request", async () => {
+    const passes = trackReplayPasses();
+    const atA = resolveFileFnBaseUrl("useast");
+    const inits: { url: string; key: unknown }[] = [];
+    vi.stubGlobal("fetch", (url: string, init?: RequestInit) => {
+      if (!url.endsWith("/upload/init")) return new Response("{}");
+      const { idempotencyKey } = JSON.parse(String(init?.body));
+      inits.push({ url, key: idempotencyKey });
+      return new Promise((_, reject) => {
+        const { signal } = init!;
+        signal!.addEventListener("abort", () => reject(signal!.reason));
+      });
+    });
+    sdk.isReal = true;
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    goOnline();
+    await vi.waitFor(() =>
+      expect(inits).toEqual([
+        { url: `${atA}/upload/init`, key: expect.stringContaining(":") }
+      ])
+    );
+
+    const moved = cloudAccount("user-a");
+    account.set({
+      ...moved,
+      userInfo: { ...moved.userInfo!, region: "euwest" }
+    });
+    authority.url = "https://account-euwest-dev.nucleum.app/datafn";
+    await openData("user-a");
+    const before = passes.length;
+    goOnline();
+    await vi.waitFor(() => expect(passes.length).toBeGreaterThan(before));
+    await Promise.all(passes);
+
+    expect(inits).toHaveLength(1);
+    expect(opfs.list(ACCOUNT_QUEUE)).toEqual([`queued_${record.fileId}`]);
   });
 
   it.each([

@@ -1625,17 +1625,18 @@ describe("FileFn OPFS queue of an account's records", () => {
   });
 
   it.each([
-    ["at its authority discards the file first", AUTHORITY_A, [FILE_ID], []],
     [
-      "at another authority leaves the file",
-      AUTHORITY_B,
-      [],
-      [`queued_${FILE_ID}`]
-    ]
+      "With",
+      "at its authority discards the file first",
+      AUTHORITY_A,
+      [FILE_ID]
+    ],
+    ["With", "at another authority leaves the file", AUTHORITY_B, []],
+    ["Without", "at another authority leaves the file", AUTHORITY_B, []]
   ])(
-    "with Web Locks, reads a file's markers after its record is found missing: one that landed meanwhile %s",
-    async (_, owner, isDiscarded, left) => {
-      installDevice({ locks: createFakeLocks() });
+    "%s Web Locks, reads a file's markers after its record is found missing: one that landed meanwhile %s",
+    async (locks, _, owner, isDiscarded) => {
+      installDevice(locks === "With" ? { locks: createFakeLocks() } : {});
       await enqueuePhoto(await openTab());
       const fileFn = createClient({ isImmediate: true });
       const { references, discarded } = createReferences(new Set());
@@ -1648,7 +1649,9 @@ describe("FileFn OPFS queue of an account's records", () => {
 
       expect(fileFn.uploads).toEqual([]);
       expect(discarded).toEqual(isDiscarded);
-      expect(opfs.list(QUEUE)).toEqual(left);
+      expect(opfs.list(QUEUE)).toEqual(
+        isDiscarded.length ? [] : [`queued_${FILE_ID}`]
+      );
     }
   );
 
