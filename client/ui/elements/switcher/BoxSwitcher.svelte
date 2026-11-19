@@ -59,7 +59,10 @@
      * the "More" menu as the last step, when even the selected option without
      * its label and More do not fit beside them: their width with the gap
      * before them, and the menu entry that stands for them, which ends the
-     * menu. `overflowWidth` then includes the room they take while they show.
+     * menu. Only used with `overflowWidth`, which then includes the room they
+     * take while they show. Without it the switcher measures the room its
+     * own root is given, which already leaves their width out, so they stay
+     * shown and nothing is taken off that room twice.
      */
     overflowTrailing?:
       { width: number; menuItem: IContextMenuItem } | undefined;
@@ -123,7 +126,8 @@
       activeCompactWidth: hasRenderedIcon(activeOption)
         ? activeCompactWidth
         : undefined,
-      trailingWidth: overflowTrailing?.width
+      trailingWidth:
+        overflowWidth === undefined ? undefined : overflowTrailing?.width
     });
   });
   $effect(() => {
