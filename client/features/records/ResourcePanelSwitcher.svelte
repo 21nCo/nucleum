@@ -16,6 +16,7 @@
   import view from "@21n/ui/environment/view.store";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
   import type { IContextMenuItem } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import ContextMenu from "@21n/ui/elements/contextMenu/ContextMenu.svelte";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import {
     isInPlaceResource,
@@ -68,9 +69,28 @@
   const closeInPlace = resolveInPlaceResourceClose();
 
   let editModeWidth = $state(0);
+  /** The record Actions button's width as last shown. */
+  let measuredTrailingWidth = $state(0);
+  /**
+   * The width the switcher reserves for the record Actions button. The button
+   * is not rendered while it sits in More, so its last shown width stands in
+   * for it; it is 0 when there is no Actions menu.
+   */
   let trailingWidth = $state(0);
+  /** Whether the record Actions button sits in the view tabs' More menu. */
+  let isActionsInMore = $state(false);
   const TRAILING_GAP_PX = 8;
   const EDIT_MODE_GAP_PX = 12;
+  const hasActionsMenu = $derived(contextMenuResolver !== undefined);
+  $effect(() => {
+    if (!hasActionsMenu) trailingWidth = 0;
+    else if (measuredTrailingWidth > 0) trailingWidth = measuredTrailingWidth;
+  });
+  /**
+   * Width the view tabs and, when there is an Actions button, the button
+   * with the gap before it can take. The switcher moves the button into its
+   * More menu when even its smallest form does not fit beside it.
+   */
   const tabsWidth = $derived(
     entryWidth === undefined
       ? undefined
@@ -80,8 +100,7 @@
             ($resourceStore.isInEditMode
               ? editModeWidth + EDIT_MODE_GAP_PX
               : 0) -
-            trailingWidth -
-            TRAILING_GAP_PX
+            (hasActionsMenu ? 0 : TRAILING_GAP_PX)
         )
   );
 
@@ -92,6 +111,34 @@
   function handleContextMenuAction(event: CustomEvent<any>) {
     onAction?.(event.detail);
   }
+
+  /**
+   * The More menu entry that stands for the Actions button: a submenu with
+   * the same record actions, hints and callbacks, which reports the picked
+   * action the way the button does.
+   */
+  const actionsMoreItem: IContextMenuItem = {
+    value: "record-actions",
+    label: "Actions",
+    icon: "more-outline-horizontal",
+    secondStepComponent: {
+      isFocusedOnKeyboardOpen: true,
+      component: ContextMenu,
+      props: {
+        menuResolver: resolveContextMenu,
+        heading: "Actions",
+        size: Size.lg
+      }
+    },
+    callback: async (item?: IContextMenuItem) => {
+      if (item) onAction?.(item.value);
+    }
+  };
+  const tabsTrailing = $derived(
+    variant === "tabs" && hasActionsMenu && trailingWidth > 0
+      ? { width: trailingWidth + TRAILING_GAP_PX, menuItem: actionsMoreItem }
+      : undefined
+  );
 </script>
 
 {#snippet panelSwitcher(
@@ -113,6 +160,8 @@
     {isIconOnlyMode}
     isOverflowToMenu={variant === "tabs"}
     overflowWidth={variant === "tabs" ? tabsWidth : undefined}
+    overflowTrailing={tabsTrailing}
+    bind:isTrailingInMenu={isActionsInMore}
   />
 {/snippet}
 
@@ -179,10 +228,14 @@
     {:else}
       {@render panelSwitcher(Size.md, $shape.isFramed && isConstrainedWidth)}
       <div
-        class="flex items-center h-full ml-2 shrink-0"
-        bind:offsetWidth={trailingWidth}
+        class={cn("flex items-center h-full ml-2 shrink-0", {
+          hidden: isActionsInMore
+        })}
+        bind:offsetWidth={measuredTrailingWidth}
       >
-        {@render actionsMenu(1)}
+        {#if !isActionsInMore}
+          {@render actionsMenu(1)}
+        {/if}
       </div>
     {/if}
   </div>

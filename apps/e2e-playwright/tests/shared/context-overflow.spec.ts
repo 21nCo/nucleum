@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
 import { ensureInAppOnHome, navigateToSurface } from "../utils/helpers";
 import {
@@ -350,6 +350,231 @@ test.describe("context zone overflow", () => {
       })
       .toMatchObject({ isMoreShown: true, isTruncated: true });
     expect((await identityLayout(page)).width).toBeGreaterThanOrEqual(127.5);
+  });
+
+  test("a note's record Actions move into the More menu where even the smallest view tabs do not fit, and come back with room", async ({
+    page
+  }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E record actions in More ${Date.now()}`
+    });
+    await openNodeRecordFromLibraryById(page, node.id);
+    const actionsButton = page.getByTestId("resource-record-context-menu");
+    await expect(actionsButton).toBeVisible({ timeout: 15_000 });
+
+    await page.setViewportSize({ width: 950, height: 900 });
+    const more = page.getByTestId("switcher-more");
+    await expect(more).toBeVisible({ timeout: 10_000 });
+    await expect(actionsButton).toHaveCount(0);
+
+    const menuItems = page.locator(".popover button.contextmenuitem");
+    const actionsEntry = page.locator(
+      ".popover [data-context-menu-item-id='record-actions']"
+    );
+    const star = page.locator(".popover [data-context-menu-item-id='star']");
+    const openStarFromMore = async () => {
+      await page.evaluate(() =>
+        (document.activeElement as HTMLElement)?.blur()
+      );
+      await more.click();
+      await expect(actionsEntry).toBeVisible({ timeout: 10_000 });
+      await expect(menuItems.last()).toHaveAttribute(
+        "data-context-menu-item-id",
+        "record-actions"
+      );
+      await actionsEntry.click();
+      await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    };
+    const closeMenus = async () => {
+      await page.evaluate(() =>
+        (document.activeElement as HTMLElement)?.blur()
+      );
+      await page.keyboard.press("Escape");
+      await expect(star).toHaveCount(0, { timeout: 10_000 });
+      await expect(actionsEntry).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+    };
+
+    await openStarFromMore();
+    await expect(
+      star.first().getByTestId("context-menu-item-hotkey")
+    ).toHaveText("S");
+    await expect(star.first()).not.toContainText("Starred");
+    await star.first().click();
+    await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+
+    await openStarFromMore();
+    await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
+    await closeMenus();
+
+    const reopenNote = async () => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.reload();
+      await ensureInAppOnHome(page);
+      await openNodeRecordFromLibraryById(page, node.id);
+      await expect(actionsButton).toBeVisible({ timeout: 15_000 });
+      await page.setViewportSize({ width: 950, height: 900 });
+      await expect(more).toBeVisible({ timeout: 10_000 });
+      await expect(actionsButton).toHaveCount(0);
+    };
+
+    await reopenNote();
+    await openStarFromMore();
+    await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
+    await closeMenus();
+
+    await page.keyboard.press("s");
+    await openStarFromMore();
+    await expect(star.first()).not.toContainText("Starred", {
+      timeout: 10_000
+    });
+    await closeMenus();
+
+    await reopenNote();
+    await openStarFromMore();
+    await expect(star.first()).not.toContainText("Starred", {
+      timeout: 10_000
+    });
+    await closeMenus();
+
+    await page.setViewportSize({ width: 1100, height: 900 });
+    await expect(actionsButton).toBeVisible({ timeout: 10_000 });
+    if ((await more.count()) > 0) {
+      await more.click();
+      await expect(menuItems.first()).toBeVisible({ timeout: 10_000 });
+      await expect(actionsEntry).toHaveCount(0);
+      await page.keyboard.press("Escape");
+      await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+    }
+    await actionsButton.click();
+    await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    await expect(star.first()).not.toContainText("Starred");
+  });
+
+  test("a note's record Actions in the More menu take the keyboard: arrows pick an action, Enter runs it and Escape steps back", async ({
+    page
+  }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E record actions keyboard ${Date.now()}`
+    });
+    await openNodeRecordFromLibraryById(page, node.id);
+    await expect(page.getByTestId("resource-record-context-menu")).toBeVisible({
+      timeout: 15_000
+    });
+    await page.setViewportSize({ width: 950, height: 900 });
+    const more = page.getByTestId("switcher-more");
+    await expect(more).toBeVisible({ timeout: 10_000 });
+
+    const menuItems = page.locator(".popover button.contextmenuitem");
+    const actionsEntry = page.locator(
+      ".popover [data-context-menu-item-id='record-actions']"
+    );
+    const star = page.locator(".popover [data-context-menu-item-id='star']");
+    const submenuFocus = page.locator(
+      "#secondary-popovers button.contextmenuitem:focus"
+    );
+    /** Presses Down, a bounded number of times, until the target has focus. */
+    const arrowDownTo = async (target: Locator, name: string) => {
+      for (let presses = 0; presses < 15; presses++) {
+        await page.keyboard.press("ArrowDown");
+        const isFocused = await target.evaluate(
+          (element) => element === element.ownerDocument.activeElement
+        );
+        if (isFocused) return;
+      }
+      throw new Error(`Down never reached ${name} within 15 presses`);
+    };
+    const openMoreByKeyboard = async () => {
+      await more.focus();
+      await page.keyboard.press("Enter");
+      await expect(actionsEntry).toBeVisible({ timeout: 10_000 });
+    };
+    /** Reopens More > Actions by keyboard and checks Star reads Starred. */
+    const expectStarredInActions = async () => {
+      await openMoreByKeyboard();
+      await arrowDownTo(actionsEntry, "the Actions entry");
+      await page.keyboard.press("Enter");
+      await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
+      await page.keyboard.press("Escape");
+      await expect(star).toHaveCount(0, { timeout: 10_000 });
+      await page.keyboard.press("Escape");
+      await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+    };
+    const reopenNote = async () => {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.reload();
+      await ensureInAppOnHome(page);
+      await openNodeRecordFromLibraryById(page, node.id);
+      await expect(
+        page.getByTestId("resource-record-context-menu")
+      ).toBeVisible({ timeout: 15_000 });
+      await page.setViewportSize({ width: 950, height: 900 });
+      await expect(more).toBeVisible({ timeout: 10_000 });
+    };
+
+    await openMoreByKeyboard();
+    await arrowDownTo(actionsEntry, "the Actions entry");
+    await page.keyboard.press("Enter");
+    await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    await expect(submenuFocus).toHaveCount(1);
+    await expect(star.first()).not.toContainText("Starred");
+    await page.keyboard.press("ArrowDown");
+    await expect(submenuFocus).toHaveCount(1);
+
+    await page.keyboard.press("Escape");
+    await expect(star).toHaveCount(0, { timeout: 10_000 });
+    await expect(actionsEntry).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+    await expect(more).toBeFocused();
+
+    await openMoreByKeyboard();
+    await actionsEntry.hover();
+    await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    await arrowDownTo(actionsEntry, "the Actions entry");
+    await expect(submenuFocus).toHaveCount(0);
+    await page.keyboard.press("ArrowRight");
+    await expect(star.first()).toBeVisible();
+    await expect(submenuFocus).toHaveCount(1);
+    await page.keyboard.press("Escape");
+    await expect(star).toHaveCount(0, { timeout: 10_000 });
+    await expect(actionsEntry).toBeFocused();
+    await page.mouse.move(1, 899);
+    await actionsEntry.hover();
+    await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    await expect(actionsEntry).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(star.first()).toBeVisible();
+    await expect(submenuFocus).toHaveCount(1);
+    await page.keyboard.press("Escape");
+    await expect(star).toHaveCount(0, { timeout: 10_000 });
+    await expect(actionsEntry).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+    await page.mouse.move(1, 899);
+
+    await openMoreByKeyboard();
+    await arrowDownTo(actionsEntry, "the Actions entry");
+    await page.keyboard.press("ArrowRight");
+    await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    await expect(submenuFocus).toHaveCount(1);
+    const isStarFocused = await star
+      .first()
+      .evaluate((element) => element === element.ownerDocument.activeElement);
+    if (!isStarFocused) await arrowDownTo(star.first(), "Star");
+    await page.keyboard.press("Enter");
+    await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+
+    await expectStarredInActions();
+    await reopenNote();
+    await expectStarredInActions();
   });
 });
 

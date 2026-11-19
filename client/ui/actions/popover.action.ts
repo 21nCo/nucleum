@@ -1023,6 +1023,11 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     }
   }
 
+  /**
+   * Hides the popover when the pointer enters another element with the
+   * dismissal class, such as a sibling menu item. Elements inside the popover
+   * itself, such as the items of a submenu, keep it open.
+   */
   function handleClassHoverDismissal(event: MouseEvent): void {
     if (!isShown || !classForHoverDismissal) return;
 
@@ -1030,7 +1035,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     if (
       target &&
       target.classList &&
-      target.classList.contains(classForHoverDismissal)
+      target.classList.contains(classForHoverDismissal) &&
+      !popoverElement?.contains(target)
     ) {
       hidePopover("class hover dismissal");
     }

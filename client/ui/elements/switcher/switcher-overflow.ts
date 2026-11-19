@@ -79,3 +79,68 @@ export function resolveSwitcherVisibleOptions(
 ): number[] {
   return resolveSwitcherOverflow(input).visible;
 }
+
+/** Measured sizes, plus the controls after the switcher that can move into More. */
+export type SwitcherRowInput = SwitcherOverflowInput & {
+  /**
+   * Width of the controls shown after the switcher, with the gap before
+   * them, that move into the "More" menu as the last step. `available` then
+   * includes the room they take while they show.
+   */
+  trailingWidth?: number;
+};
+
+/** The switcher's row, and whether the trailing controls are in More. */
+export type SwitcherRow = SwitcherOverflow & {
+  /** Whether the trailing controls show as an entry of the More menu. */
+  isTrailingInMenu: boolean;
+};
+
+/**
+ * Decides the switcher's row beside its trailing controls. The options are
+ * fitted, as in resolveSwitcherOverflow, in the room the trailing controls
+ * leave. Only when even the smallest form (the selected option, without its
+ * label when it can drop it, and More) does not fit beside them do they move
+ * into the More menu; the row then keeps that smallest form, so as room
+ * returns the trailing controls come back before any hidden option. When no
+ * option is hidden, More only shows for the trailing controls, so they move
+ * into it only when the row does not fit beside them and the menu form (the
+ * selected option and More) is narrower than the row and the trailing controls
+ * together.
+ */
+export function resolveSwitcherRow({
+  trailingWidth = 0,
+  ...input
+}: SwitcherRowInput): SwitcherRow {
+  const trailing = Math.max(0, trailingWidth);
+  const budget = input.available - trailing;
+  const overflow = resolveSwitcherOverflow({ ...input, available: budget });
+  if (trailing === 0) return { ...overflow, isTrailingInMenu: false };
+  const { widths, activeIndex, moreWidth, gap = 0, padding = 0 } = input;
+  const hasActive = activeIndex >= 0 && activeIndex < widths.length;
+  const activeWidth = overflow.isActiveCompact
+    ? (input.activeCompactWidth ?? 0)
+    : (widths[activeIndex] ?? 0);
+  const smallest = padding + moreWidth + (hasActive ? activeWidth + gap : 0);
+  const hasHidden = overflow.visible.length < widths.length;
+  if (!hasHidden) {
+    const shown = overflow.visible.map((index) =>
+      overflow.isActiveCompact && index === activeIndex
+        ? activeWidth
+        : widths[index]
+    );
+    const rowWidth =
+      padding +
+      shown.reduce((sum, width) => sum + width, 0) +
+      gap * Math.max(0, shown.length - 1);
+    if (rowWidth <= budget || smallest >= rowWidth + trailing)
+      return { ...overflow, isTrailingInMenu: false };
+  }
+  if (hasHidden && smallest <= budget)
+    return { ...overflow, isTrailingInMenu: false };
+  return {
+    visible: hasActive ? [activeIndex] : [],
+    isActiveCompact: overflow.isActiveCompact,
+    isTrailingInMenu: true
+  };
+}
