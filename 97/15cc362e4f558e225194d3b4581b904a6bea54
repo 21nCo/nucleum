@@ -1,0 +1,37 @@
+apps/e2e-playwright/tests/shared/page-letters.spec.ts
+  s_d48ae37705a2af::t_cb991637d1ebf7 162-277
+client/features/collections/collection.store.ts
+  s_d48ae37705a2af::t_233e6dd66bb1a2 517-522
+client/features/focus/goals/goal.store.ts
+  s_d48ae37705a2af::t_f1add6158cc70a 404-405,409
+client/features/memory/markdown/NodularMarkdown.svelte
+  s_d48ae37705a2af::t_32c5e333a30238 26-27,390-405
+client/features/memory/markdown/note-editor-focus.ts
+  s_d48ae37705a2af::t_9893df0e8ac1e2 1-33
+client/features/memory/node/floatingBar/NodePanelSwitcher.svelte
+  s_d48ae37705a2af::t_c6cba040ceac7f 20,38-40,116-117
+client/features/memory/node/node.store.ts
+  s_d48ae37705a2af::t_f3fe3d067518ef 24-25,27-28,1063-1086,1096-1097,1298-1304,1307,1318
+client/features/records/resource-action-keys.test.ts
+  s_d48ae37705a2af::t_a0cd95ce6a68ea 94,100,106
+client/features/records/resource-open-keys.test.ts
+  s_d48ae37705a2af::t_23c053c9fab45f 1-427
+client/features/records/resource.actions.ts
+  s_d48ae37705a2af::t_3868dd9f5d5f5b 363-376,437-441,444-448,451-452,454,457
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9715cc362e4f558e225194d3b4581b904a6bea54",
+  "prompts": {},
+  "sessions": {
+    "s_d48ae37705a2af": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_d48ae37705a2af",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

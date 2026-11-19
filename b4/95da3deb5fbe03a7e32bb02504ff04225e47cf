@@ -1,0 +1,25 @@
+client/ui/elements/contextMenu/ContextMenuItemWithSecondary.svelte
+  s_2561a21e997ed0::t_8b2c9954e252ff 30-34,38,45-50,52-58,60-61,66-76,82,85,88
+apps/e2e-playwright/tests/shared/context-overflow.spec.ts
+  s_2561a21e997ed0::t_d65ec1b9dbf01e 1,414-425,437-443,480-509,511-513,516,519,528-534,536-542,544,546-551,553,555-564,566-570,574
+client/ui/elements/switcher/switcher-overflow.test.ts
+  s_2561a21e997ed0::t_9fa3b46a057141 240-259
+client/ui/elements/switcher/switcher-overflow.ts
+  s_2561a21e997ed0::t_ed15d5715bc111 120,132-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b495da3deb5fbe03a7e32bb02504ff04225e47cf",
+  "prompts": {},
+  "sessions": {
+    "s_2561a21e997ed0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ebe9b93a-8ef9-46e9-afca-5c75f75d84bb",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

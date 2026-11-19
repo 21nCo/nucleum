@@ -1,0 +1,25 @@
+client/ui/elements/contextMenu/ContextMenuItemWithSecondary.svelte
+  s_510643f49693c3::t_2667d4c032d0e3 69-91,95-97,99,113-115
+client/ui/elements/contextMenu/ContextMenuItemWithSecondaryFocus.test.ts
+  s_510643f49693c3::t_075bf7911f715c 1-161
+client/ui/elements/switcher/BoxSwitcher.measure.test.ts
+  s_510643f49693c3::t_eb2aad3c22c4c6 1-69
+client/ui/elements/switcher/BoxSwitcher.svelte
+  s_510643f49693c3::t_100c42aafcb300 146-153,262,264,386,421
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "baecf6325a7d9126d27a5f56cba1934902f9cc2b",
+  "prompts": {},
+  "sessions": {
+    "s_510643f49693c3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_510643f49693c3",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
