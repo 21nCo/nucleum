@@ -1,0 +1,23 @@
+client/features/memory/markdown/note-editor-focus.ts
+  s_1859f6a2cf3266::t_d8a7cde5e3336d 153-164,169,179,195-197,199
+client/features/memory/node/content/NodeContent.svelte
+  s_1859f6a2cf3266::t_9dcd4a98106ffc 26-27,352
+client/features/memory/node/note-pane-edit.test.ts
+  s_1859f6a2cf3266::t_c6e0e03a018900 15,102-118,185-198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "55714138a265660e36a4557811f49090a52c66f2",
+  "prompts": {},
+  "sessions": {
+    "s_1859f6a2cf3266": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_1859f6a2cf3266",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
