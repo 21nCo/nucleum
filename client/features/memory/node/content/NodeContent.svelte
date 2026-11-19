@@ -23,7 +23,8 @@
   import {
     getNotePaneEditor,
     reportNoteContentState,
-    resolveNoteContentState
+    resolveNoteContentState,
+    resolveUnmountedNoteContentState
   } from "@nucleum/features/memory/markdown/note-editor-focus";
   import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
   import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
@@ -348,6 +349,7 @@
   onDestroy(() => {
     isDestroyed = true;
     reportNoteContentState(node.get().id, contentPane.id, undefined);
+    paneEditor?.setContentState(resolveUnmountedNoteContentState(contentState));
     if (focusEventSub && typeof focusEventSub === "function") {
       focusEventSub();
     }

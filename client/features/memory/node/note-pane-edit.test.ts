@@ -12,6 +12,7 @@ import {
   registerNoteEditorFocus,
   reportNoteContentState,
   resolveNoteContentState,
+  resolveUnmountedNoteContentState,
   runPendingNoteEditorFocus,
   type NoteContentState
 } from "@nucleum/features/memory/markdown/note-editor-focus";
@@ -98,6 +99,23 @@ describe("Edit while a pane's note content prepares its blocks", () => {
     expect(editItemIn(store.get(), "unavailable")).toBeUndefined();
     expect(editItemIn(store.get(), "ready")?.hotKey).toBe("e");
   });
+
+  it("is offered again once a content still preparing unmounts under a side panel or the cover picker", async () => {
+    const store = new ActiveNodeStore(NOTE_ID as unknown as IRecordId);
+    await store.init({
+      accessMode: AccessMode.PAGE,
+      accessPoint: ResourceAccessPoint.SELF
+    });
+    const kept = resolveUnmountedNoteContentState("preparing");
+    expect(kept).toBeUndefined();
+    expect(editItemIn(store.get(), kept)?.hotKey).toBe("e");
+  });
+
+  it("keeps a settled state when its content unmounts", () => {
+    expect(resolveUnmountedNoteContentState("ready")).toBe("ready");
+    expect(resolveUnmountedNoteContentState("unavailable")).toBe("unavailable");
+    expect(resolveUnmountedNoteContentState(undefined)).toBeUndefined();
+  });
 });
 
 describe("a focus request for a hidden editor whose content prepares slowly", () => {
@@ -159,6 +177,20 @@ describe("a focus request for a hidden editor whose content prepares slowly", ()
     now += 10 * TTL_MS;
     reportNoteContentState(NOTE_ID, PANE, undefined);
     now += TTL_MS + 1;
+    release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
+    await tick();
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it("is not revived by a later mount of the content once it has lapsed", async () => {
+    const focus = vi.fn();
+    request(false);
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    reportNoteContentState(NOTE_ID, PANE, undefined);
+    now += TTL_MS + 1;
+    reportNoteContentState(NOTE_ID, PANE, "preparing");
+    now += 10 * TTL_MS;
+    reportNoteContentState(NOTE_ID, PANE, "ready");
     release.push(registerNoteEditorFocus(NOTE_ID, PANE, focus));
     await tick();
     expect(focus).not.toHaveBeenCalled();

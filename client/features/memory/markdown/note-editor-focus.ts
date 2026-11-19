@@ -151,10 +151,22 @@ export function resolveNoteContentState(content: {
 }
 
 /**
+ * What a pane keeps of its note content's state once that content unmounts,
+ * under a side panel or the cover picker: a settled state as it was, but
+ * nothing for a content still preparing, whose next mount prepares again,
+ * so Edit can bring it back.
+ */
+export function resolveUnmountedNoteContentState(
+  state: NoteContentState | undefined
+) {
+  return state === "preparing" ? undefined : state;
+}
+
+/**
  * Applies a pane's note content state to the focus request waiting for its
  * editor: holds it while the content prepares, starts its lapse once the
  * content is ready or gone (`undefined`, unmounted), and drops it when the
- * content cannot be edited.
+ * content cannot be edited or the request has already lapsed.
  */
 export function reportNoteContentState(
   id: IRecordId,
@@ -164,7 +176,7 @@ export function reportNoteContentState(
   const key = focuserKey(id, paneId);
   const request = pendingFocus.get(key);
   if (!request) return;
-  if (state === "unavailable") {
+  if (state === "unavailable" || Date.now() > request.expiry) {
     pendingFocus.delete(key);
   } else if (state === "preparing") {
     request.expiry = Number.POSITIVE_INFINITY;
@@ -180,10 +192,11 @@ export function reportNoteContentState(
  */
 export interface NotePaneEditor {
   /**
-   * Records the state of the pane's note content. The pane keeps the last
-   * one while a side panel or the cover picker unmounts the content.
+   * Records the state of the pane's note content, or none. The pane keeps
+   * the last one while a side panel or the cover picker unmounts the
+   * content (see {@link resolveUnmountedNoteContentState}).
    */
-  setContentState(state: NoteContentState): void;
+  setContentState(state: NoteContentState | undefined): void;
 }
 
 const NOTE_PANE_EDITOR_CONTEXT = Symbol("note-pane-editor");
