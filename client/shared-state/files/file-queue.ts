@@ -615,9 +615,12 @@ export type RestoredQueuedFiles = {
  * an upload to the account (committed, started), and leaves it marked
  * restored: no replay acts on it until the account restores the backup.
  * Runs under the queue's Web Lock. A file stays as the queue holds it when
- * it is complete there and not marked restored, or when the account's
- * replay completed its upload since `uploadCount` (see readQueueUploadCount);
- * any other (missing, half written, or marked restored) is written again
+ * it is complete there and not marked restored, when an earlier restore into
+ * the account fully wrote it and left it marked RESTORED_FOR_ACCOUNT (a
+ * restore into the account then stages it as it is, to hand it over), or
+ * when the account's replay completed its upload since `uploadCount` (see
+ * readQueueUploadCount); any other (missing, half written, or marked
+ * restored by a restore into another account or the guest) is written again
  * from the backup. A file that cannot be written rejects, after removing the
  * files this call added.
  */
@@ -639,7 +642,12 @@ export async function stageRestoredFiles(
         const uploaded = accountUploads.get(`${dir}\n${entryName}`) ?? 0;
         if (uploaded > options.uploadCount) continue;
         const isPresent = Boolean(await getEntryDir(dir, entryName, true));
-        if (isPresent && (await isCompleteEntry(dir, entryName))) continue;
+        const held = isPresent ? await readHeldEntry(dir, entryName) : "none";
+        if (held === "complete") continue;
+        if (held === "restored") {
+          if (options.isOwnAccount) staged.fileIds.push(copy.fileId);
+          continue;
+        }
         if (!isPresent) staged.added.push(copy.fileId);
         await stageRestoredEntry(dir, copy, isPresent, options.isOwnAccount);
         staged.fileIds.push(copy.fileId);
@@ -652,11 +660,19 @@ export async function stageRestoredFiles(
   return staged;
 }
 
-/** Whether a file's staging finished and no restore marks it restored. */
-async function isCompleteEntry(dir: string, entryName: string) {
+/**
+ * How a queue holds a file a restore brings back: "complete" when it is
+ * fully written and not marked restored, "restored" when an earlier restore
+ * into its account fully wrote it and has not handed it over yet (marked
+ * RESTORED_FOR_ACCOUNT), and "none" when it is half written or marked
+ * restored by a restore into another account or the guest.
+ */
+async function readHeldEntry(dir: string, entryName: string) {
   const pending = await getStore(dir).getPendingUpload(entryName);
-  if (!pending?.fileId) return false;
-  return (await readRestoredMark(dir, entryName)) === undefined;
+  if (!pending?.fileId) return "none";
+  const restored = await readRestoredMark(dir, entryName);
+  if (restored === undefined) return "complete";
+  return restored === RESTORED_FOR_ACCOUNT ? "restored" : "none";
 }
 
 async function stageRestoredEntry(

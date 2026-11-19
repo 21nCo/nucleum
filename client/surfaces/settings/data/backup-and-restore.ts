@@ -101,9 +101,10 @@ export async function createBackupBlob(): Promise<Blob> {
  * account's (or the guest's) restore leaves them marked restored, without
  * the marks that bind an upload to the capturing account, so they stay in
  * that queue, never uploaded, removed or discarded, until that account
- * restores the backup. A file the queue holds complete and unmarked, or
- * whose upload completes while the restore waits for the queue, stays as it
- * is. Rejects, restoring nothing, when the backup or its queued files cannot
+ * restores the backup. A file the queue holds complete and unmarked, one an
+ * earlier restore into the account wrote and has not handed over (which a
+ * restore into the account hands over), or one whose upload completes while
+ * the restore waits for the queue, stays as it is. Rejects, restoring nothing, when the backup or its queued files cannot
  * be read, this device cannot keep them, a file cannot be written, or the
  * account changes before the records are imported (removing the files it
  * added); and when the records could not all be imported, keeping the
@@ -135,8 +136,8 @@ export async function restoreBackup(
     throw new Error("The account changed while the backup was restored");
   }
   await importRecords(records, options.triggerCloneUp);
-  if (!staged?.fileIds.length || !isOwnAccount) return;
-  await activateRestoredFiles(staged);
+  if (!staged || !isOwnAccount) return;
+  if (staged.fileIds.length) await activateRestoredFiles(staged);
   await uploadQueuedFiles();
 }
 

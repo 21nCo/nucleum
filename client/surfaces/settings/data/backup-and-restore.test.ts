@@ -1093,4 +1093,119 @@ describe("backup and restore of files the account upload queue still holds", () 
     ]);
     expect(sdk.artifacts).toHaveLength(1);
   });
+
+  it("uploads right away when a restore online finds every queued file already held", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+
+    isOnline = true;
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+  });
+
+  it("keeps a file a closed restore left for its account when a later restore cannot write, and uploads it once online", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const first = await capturePhoto();
+    const earlier = await backupFile();
+    const second = await capturePhoto();
+    const later = await backupFile();
+    const entry = `queued_${first.fileId}`;
+
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    let isClosing = false;
+    preflight.activate = () => {
+      isClosing = true;
+      return new Promise(() => undefined);
+    };
+    void restoreBackup(earlier, { triggerCloneUp: () => false });
+    await vi.waitFor(() => expect(isClosing).toBe(true));
+    locks = createFakeLocks();
+    preflight.activate = null;
+    const held = opfs.list(QUEUE_A, entry).sort();
+
+    getDirectory = failingWrites((path) =>
+      path[0] === QUEUE_A
+        ? Object.assign(new Error("The quota is exceeded"), {
+            name: "QuotaExceededError"
+          })
+        : undefined
+    );
+    await expect(
+      restoreBackup(later, { triggerCloneUp: () => false })
+    ).rejects.toThrow("The quota is exceeded");
+    getDirectory = opfs.getDirectory;
+
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(opfs.list(QUEUE_A, entry).sort()).toEqual(held);
+    expect(
+      new TextDecoder().decode(opfs.read(QUEUE_A, entry, "restored"))
+    ).toBe("account");
+    expect(await savedRecord(second.id)).toBeUndefined();
+
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: first.fileId })
+    ]);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("leaves a file a closed restore left for its account as it is when another account restores the backup", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    const entry = `queued_${record.fileId}`;
+
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    let isClosing = false;
+    preflight.activate = () => {
+      isClosing = true;
+      return new Promise(() => undefined);
+    };
+    void restoreBackup(backup, { triggerCloneUp: () => false });
+    await vi.waitFor(() => expect(isClosing).toBe(true));
+    locks = createFakeLocks();
+    preflight.activate = null;
+    const held = opfs.list(QUEUE_A, entry).sort();
+    expect(held).toContain("committed");
+
+    await bootData(cloudAccount("user-b"));
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    expect(opfs.list(QUEUE_A, entry).sort()).toEqual(held);
+    expect(
+      new TextDecoder().decode(opfs.read(QUEUE_A, entry, "restored"))
+    ).toBe("account");
+
+    await bootData(cloudAccount("user-a"));
+    const next = JSON.parse(await backupText()) as {
+      fileQueue?: { files: { fileId: string }[] };
+    };
+    expect(next.fileQueue?.files).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
 });
