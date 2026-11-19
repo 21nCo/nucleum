@@ -1155,7 +1155,7 @@ describe("FileFn OPFS queue of an account's records", () => {
   ] as const)(
     "sends no request and removes the marker when %s while it is written",
     async (_, change) => {
-      installDevice();
+      installDevice({ locks: createFakeLocks() });
       await enqueuePhoto(await openTab());
       const controller = new AbortController();
       const { references } = createReferences(new Set([FILE_ID]));
@@ -1183,7 +1183,7 @@ describe("FileFn OPFS queue of an account's records", () => {
   ])(
     "unbinds a file whose %s STARTED marker it replaced when the attempt goes offline before its request",
     async (_, text) => {
-      installDevice();
+      installDevice({ locks: createFakeLocks() });
       await enqueuePhoto(await openTab());
       await writeStarted(text);
       const { getDirectory } = navigator.storage;
@@ -1287,7 +1287,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     await secondDone;
   });
 
-  it("keeps a marker another tab relied on to send when the attempt that wrote it sends no request, without Web Locks", async () => {
+  it("keeps the marker of an attempt that sent no request without Web Locks, as another tab may have relied on it to send", async () => {
     installDevice();
     await enqueuePhoto(await openTab());
     const first = await openTab();
@@ -1329,13 +1329,58 @@ describe("FileFn OPFS queue of an account's records", () => {
     await secondDone;
   });
 
+  it("sends from another tab under its own marker only after an attempt that sent no request removed its marker, with Web Locks", async () => {
+    installDevice({ locks: createFakeLocks() });
+    await enqueuePhoto(await openTab());
+    const first = await openTab();
+    const stalled = createClient();
+    first.countSentRequests(stalled.client, { count: 0 });
+    let tearDown: ((error: unknown) => void) | undefined;
+    const stalledUpload = stalled.client.uploadFile;
+    stalled.client.uploadFile = (input) => ({
+      ...stalledUpload(input),
+      done: () =>
+        new Promise<UploadResult>((_, reject) => {
+          tearDown = reject;
+        })
+    });
+    const firstDone = replay(
+      first,
+      stalled.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+    await vi.waitFor(() => expect(tearDown).toBeDefined());
+    const marker = readStarted();
+    const uploading = createClient({ isImmediate: true });
+    const markersAtSend: (string | undefined)[] = [];
+    const upload = uploading.client.uploadFile;
+    uploading.client.uploadFile = (input) => {
+      markersAtSend.push(readStarted());
+      return upload(input);
+    };
+    const secondDone = replay(
+      await openTab(),
+      uploading.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+
+    tearDown!(new DOMException("The client was torn down", "AbortError"));
+    await firstDone;
+    await secondDone;
+
+    expect(markersAtSend).toHaveLength(1);
+    expect(markersAtSend[0]).not.toBe(marker);
+    expect(JSON.parse(markersAtSend[0]!)).toMatchObject(AUTHORITY_A);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
   it.each([
     ["sent no request", 0, true],
     ["sent a request", 1, false]
   ])(
     "binds the file to its authority only when the torn-down client %s",
     async (_, requests, isUploadedAtB) => {
-      installDevice();
+      installDevice({ locks: createFakeLocks() });
       await enqueuePhoto(await openTab());
       const tab = await openTab();
       const torn = createClient({

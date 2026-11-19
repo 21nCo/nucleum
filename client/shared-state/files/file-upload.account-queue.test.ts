@@ -710,6 +710,7 @@ describe("files a signed-in cloud account captures offline", () => {
   });
 
   it("uploads at the account's new authority an offline capture whose client was torn down before sending it", async () => {
+    trackReplayPasses();
     await bootData(cloudAccount("user-a"));
     isOnline = false;
     const record = await capturePhoto();
