@@ -41,6 +41,11 @@ const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
+/**
+ * Marks a file a restore put in the queue that its account has not taken
+ * over yet (see stageRestoredFiles): a replay leaves it untouched.
+ */
+const RESTORED_FILE = "restored";
 
 /** FileFn upload policies the account service registers (Nucleus policies). */
 export const DURABLE_UPLOAD_POLICY = "nucleus-durable-default";
@@ -487,8 +492,9 @@ const STARTED_NAME = /^started(?:-[\w-]+)?$/;
  * Copies the files an account's queue still holds, so a backup carries the
  * bytes of files that have not reached FileFn: under the queue's Web Lock,
  * so a replay running meanwhile ends first, and leaving out a file whose
- * upload completed (marked uploaded) or that leaves the queue while it is
- * read.
+ * upload completed (marked uploaded), one a restore put in the queue that
+ * the account has not taken over (marked restored: its record is not the
+ * account's), or one that leaves the queue while it is read.
  */
 export async function exportQueuedFiles(
   dir: string
@@ -514,6 +520,7 @@ async function copyEntry(dir: string, entryName: string) {
   const entry = await getEntryDir(dir, entryName, true);
   if (!entry) return undefined;
   try {
+    if (await isRestoredEntry(dir, entryName)) return undefined;
     const thumbnail = await readThumbnail(entry);
     const started: QueuedFileCopy["started"] = [];
     for await (const name of (
@@ -545,52 +552,86 @@ async function copyEntry(dir: string, entryName: string) {
   }
 }
 
-/** Lists the IDs of the files a queue holds, staged or still staging. */
-export async function listQueuedFileIds(dir: string): Promise<Set<string>> {
-  if (!isFileQueueSupported()) return new Set();
-  const names = await getStore(dir).listPendingUploads();
-  return new Set(
-    names
-      .filter((name) => name.startsWith(ENTRY_PREFIX))
-      .map((name) => name.slice(ENTRY_PREFIX.length))
+/**
+ * Whether a restore put the file in the queue and its account has not taken
+ * it over; a read error other than a missing file rejects.
+ */
+async function isRestoredEntry(dir: string, entryName: string) {
+  return (
+    (await readEntryText(dir, entryName, RESTORED_FILE, true)) !== undefined
   );
 }
 
+/** The files a restore staged in a queue (see stageRestoredFiles). */
+export type RestoredQueuedFiles = {
+  dir: string;
+  /** The files staged, each marked restored until the restore takes it over. */
+  fileIds: string[];
+  /** Of those, the files the queue did not hold before. */
+  added: string[];
+};
+
 /**
- * Puts files a backup carried back into an account's queue, as they were
- * when the backup was taken, under the queue's Web Lock so a replay never
- * reads one half written. A file the queue held when the restore started
- * (`held`, see listQueuedFileIds), or holds once the lock is taken, is kept
- * as it is, so a file whose upload ran meanwhile is not added again once it
- * left the queue: it uploads once. Resolves the number of files added; a file
- * that cannot be written rejects, after removing what it wrote.
+ * Puts files a backup carried into a queue, each marked restored, so no
+ * replay acts on it (uploads, removes or discards it) until the restore
+ * takes it over (activateRestoredFiles) once its record is in place. The
+ * mark is written before the file's bytes and anything else, so a replay
+ * never reads a restored file without it, even without Web Locks. Runs
+ * under the queue's Web Lock. A file the queue holds unmarked, when the
+ * restore starts (read before the lock, so a file whose upload runs
+ * meanwhile is not added again once it left the queue) or once the lock is
+ * taken, is kept as it is: it uploads once. A file still marked restored (by
+ * an interrupted restore, or one into another account) is written again from
+ * the backup. A file that cannot be written rejects, after removing the files
+ * this call added.
  */
-export async function importQueuedFiles(
+export async function stageRestoredFiles(
   dir: string,
-  copies: readonly QueuedFileCopy[],
-  held: ReadonlySet<string>
-): Promise<number> {
-  if (!copies.length) return 0;
+  copies: readonly QueuedFileCopy[]
+): Promise<RestoredQueuedFiles> {
+  const staged: RestoredQueuedFiles = { dir, fileIds: [], added: [] };
+  if (!copies.length) return staged;
   if (!isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
   }
+  const held = new Set<string>();
+  for (const entryName of await getStore(dir).listPendingUploads()) {
+    if (!entryName.startsWith(ENTRY_PREFIX)) continue;
+    if (await isRestoredEntry(dir, entryName)) continue;
+    held.add(entryName.slice(ENTRY_PREFIX.length));
+  }
   const signal = new AbortController().signal;
-  const added = await withQueueLock(dir, signal, async () => {
-    let count = 0;
-    for (const copy of copies) {
-      if (held.has(copy.fileId)) continue;
-      if (await importEntry(dir, copy)) count += 1;
+  await withQueueLock(dir, signal, async () => {
+    try {
+      for (const copy of copies) {
+        if (held.has(copy.fileId)) continue;
+        const entryName = toEntryName(copy.fileId);
+        const isPresent = Boolean(await getEntryDir(dir, entryName, true));
+        if (isPresent && !(await isRestoredEntry(dir, entryName))) continue;
+        if (!isPresent) staged.added.push(copy.fileId);
+        await stageRestoredEntry(dir, copy, isPresent);
+        staged.fileIds.push(copy.fileId);
+      }
+    } catch (error) {
+      await unstageRestoredFiles(staged);
+      throw error;
     }
-    return count;
   });
-  return added ?? 0;
+  return staged;
 }
 
-async function importEntry(dir: string, copy: QueuedFileCopy) {
+async function stageRestoredEntry(
+  dir: string,
+  copy: QueuedFileCopy,
+  isPresent: boolean
+) {
   const entryName = toEntryName(copy.fileId);
-  const store = getStore(dir);
-  if (await store.getPendingUpload(entryName)) return false;
-  await store.stagePendingUpload({
+  if (isPresent) await dequeueFile(dir, copy.fileId);
+  const root = await navigator.storage.getDirectory();
+  const queue = await root.getDirectoryHandle(dir, { create: true });
+  await queue.getDirectoryHandle(entryName, { create: true });
+  await writeEntryFile(dir, entryName, RESTORED_FILE, "");
+  await getStore(dir).stagePendingUpload({
     uploadSessionId: entryName,
     fileId: copy.fileId,
     policy: copy.policy,
@@ -601,27 +642,53 @@ async function importEntry(dir: string, copy: QueuedFileCopy) {
     createdAt: copy.createdAt,
     retryCount: copy.retryCount
   });
-  try {
-    for (const { name, text } of copy.started) {
-      if (STARTED_NAME.test(name)) {
-        await writeEntryFile(dir, entryName, name, text);
-      }
+  for (const { name, text } of copy.started) {
+    if (STARTED_NAME.test(name)) {
+      await writeEntryFile(dir, entryName, name, text);
     }
-    if (copy.claim) await claimEntry(dir, entryName, copy.claim);
-    if (copy.isCommitted) await markQueuedFileCommitted(dir, copy.fileId);
-    if (copy.thumbnail && THUMBNAIL_TYPES.has(copy.thumbnail.type)) {
-      await writeEntryFile(
-        dir,
-        entryName,
-        `${THUMBNAIL_PREFIX}${copy.thumbnail.type.split("/")[1]}`,
-        copy.thumbnail.data.slice().buffer as ArrayBuffer
-      );
-    }
-  } catch (error) {
-    await store.deletePendingUpload(entryName).catch(() => undefined);
-    throw error;
   }
-  return true;
+  if (copy.claim) await claimEntry(dir, entryName, copy.claim);
+  if (copy.isCommitted) await markQueuedFileCommitted(dir, copy.fileId);
+  if (copy.thumbnail && THUMBNAIL_TYPES.has(copy.thumbnail.type)) {
+    await writeEntryFile(
+      dir,
+      entryName,
+      `${THUMBNAIL_PREFIX}${copy.thumbnail.type.split("/")[1]}`,
+      copy.thumbnail.data.slice().buffer as ArrayBuffer
+    );
+  }
+}
+
+/**
+ * Hands the files a restore staged to the queue's replay, as the backup
+ * held them, by removing their restored marks (a file or mark already gone
+ * is skipped); rejects when a mark cannot be removed, leaving that file (and
+ * the ones after it) to a later restore.
+ */
+export async function activateRestoredFiles({
+  dir,
+  fileIds
+}: RestoredQueuedFiles): Promise<void> {
+  for (const fileId of fileIds) {
+    const entry = await getEntryDir(dir, toEntryName(fileId), true);
+    await entry?.removeEntry(RESTORED_FILE).catch((error: unknown) => {
+      if ((error as Error)?.name !== "NotFoundError") throw error;
+    });
+  }
+}
+
+/**
+ * Removes the files a restore added to a queue, when the restore fails
+ * before taking them over; one that cannot be removed stays marked
+ * restored, so no replay acts on it.
+ */
+export async function unstageRestoredFiles({
+  dir,
+  added
+}: RestoredQueuedFiles): Promise<void> {
+  for (const fileId of added) {
+    await dequeueFile(dir, fileId).catch(() => undefined);
+  }
 }
 
 /** Returns whether any of the queues holds a file. */
@@ -700,6 +767,8 @@ type ReplayPass = {
  * meanwhile, and one that left files to upload while online is retried a
  * few times at growing delays. An upload starts only while the device is
  * online, checked in the same step, so a client never stages it offline.
+ * A file marked restored (see stageRestoredFiles) is left untouched; a mark
+ * that cannot be read leaves the file to a retry.
  *
  * A file uploads only once it is committed (see markQueuedFileCommitted).
  * With a publisher (the device's local queue), it also needs a current copy
@@ -862,6 +931,7 @@ async function replayEntry(
   const pending = await store.getPendingUpload(entryName);
   const fileId = pending?.fileId;
   if (!pending || !fileId) return "done";
+  if (await isRestoredEntry(dir, entryName)) return "done";
   if (references) {
     return replayAccountEntry(pass, references, { ...pending, fileId });
   }

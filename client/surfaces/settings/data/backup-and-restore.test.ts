@@ -125,10 +125,15 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   return { ...actual, datafn, datafnRuntime };
 });
 
-/** Runs while a restore lists the queued files it must not overwrite, when set. */
+/**
+ * Runs once a restore staged its queued files, before it imports the
+ * records, when set.
+ */
 const preflight = vi.hoisted(() => ({
   during: null as (() => Promise<void>) | null
 }));
+/** The queue replays the FileFn clients started, by queue. */
+const replays = vi.hoisted(() => new Map<string, Promise<void>[]>());
 vi.mock("@nucleum/shared-state/files/file-queue", async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -136,16 +141,25 @@ vi.mock("@nucleum/shared-state/files/file-queue", async (importOriginal) => {
     >();
   return {
     ...actual,
-    listQueuedFileIds: async (dir: string) => {
-      const held = await actual.listQueuedFileIds(dir);
+    stageRestoredFiles: async (
+      ...args: Parameters<typeof actual.stageRestoredFiles>
+    ) => {
+      const staged = await actual.stageRestoredFiles(...args);
       await preflight.during?.();
-      return held;
+      return staged;
+    },
+    replayFileQueue: (...args: Parameters<typeof actual.replayFileQueue>) => {
+      const replay = actual.replayFileQueue(...args);
+      replays.set(args[0], [...(replays.get(args[0]) ?? []), replay]);
+      return replay;
     }
   };
 });
 
 const { fileUpload } = await import("@nucleum/shared-state/files/file-upload");
 const { resolveFileUrl } = await import("@nucleum/shared-state/files/file-url");
+const { UNCOMMITTED_GRACE_MS } =
+  await import("@nucleum/shared-state/files/file-queue");
 const { createBackupBlob, restoreBackup } =
   await import("./backup-and-restore");
 
@@ -162,6 +176,12 @@ const objectUrls = new Map<string, Blob>();
 let lockNames: string[] = [];
 /** The queue replay passes each account's queue ran, by queue. */
 let passes: Map<string, Promise<unknown>[]>;
+/** The device's Web Locks; a new set stands for a reloaded page. */
+let locks: LockManager;
+/** Whether the browser has Web Locks. */
+let hasLocks = true;
+/** Returns the device's OPFS root (see failingWrites). */
+let getDirectory: () => Promise<FileSystemDirectoryHandle>;
 
 function cloudAccount(userId: string): UserAccount {
   return {
@@ -244,6 +264,57 @@ async function backupFile() {
   return new File([await createBackupBlob()], "backup.json");
 }
 
+/**
+ * The OPFS root, whose new files at a path `write` matches cannot be
+ * written: `write` returns the error to reject with, or a promise that never
+ * settles (a page closed mid-write).
+ */
+function failingWrites(write: (path: string[]) => Error | "hang" | undefined) {
+  const wrap = (
+    dir: FileSystemDirectoryHandle,
+    path: string[]
+  ): FileSystemDirectoryHandle =>
+    new Proxy(dir, {
+      get(target, key) {
+        if (key === "getDirectoryHandle") {
+          return async (name: string, options?: { create?: boolean }) =>
+            wrap(await target.getDirectoryHandle(name, options), [
+              ...path,
+              name
+            ]);
+        }
+        if (key === "getFileHandle") {
+          return (name: string, options?: { create?: boolean }) => {
+            const failure = options?.create && write([...path, name]);
+            if (failure === "hang") return new Promise(() => undefined);
+            if (failure) return Promise.reject(failure);
+            return target.getFileHandle(name, options);
+          };
+        }
+        const value = Reflect.get(target, key) as unknown;
+        return typeof value === "function" ? value.bind(target) : value;
+      }
+    });
+  return async () => wrap(await opfs.getDirectory(), []);
+}
+
+/** Waits for the replays of a queue started so far to end. */
+async function replayed(queue: string) {
+  await vi.waitFor(() => expect(replays.get(queue)?.length).toBeTruthy());
+  await Promise.all(replays.get(queue) ?? []);
+}
+
+/** A backup's text with its queued files captured at another time. */
+function withCapturedAt(text: string, createdAt: string) {
+  const at = text.indexOf(',"fileQueueBytes":"');
+  return (
+    text
+      .slice(0, at)
+      .replaceAll(/"createdAt":"[^"]*"/g, `"createdAt":"${createdAt}"`) +
+    text.slice(at)
+  );
+}
+
 function goOnline() {
   isOnline = true;
   window.dispatchEvent(new Event("online"));
@@ -263,26 +334,32 @@ beforeEach(() => {
   isOnline = true;
   lockNames = [];
   passes = new Map();
-  const locks = createFakeLocks();
+  locks = createFakeLocks();
+  getDirectory = opfs.getDirectory;
+  replays.clear();
+  hasLocks = true;
+  const lockManager = {
+    query: () => locks.query(),
+    request: (...args: Parameters<LockManager["request"]>) => {
+      const [name] = args;
+      lockNames.push(name);
+      const pass = locks.request(...args);
+      const queue = name.slice(REPLAY_LOCK.length);
+      if (name.startsWith(REPLAY_LOCK)) {
+        passes.set(queue, [...(passes.get(queue) ?? []), pass]);
+      }
+      return pass;
+    }
+  };
   vi.stubGlobal("navigator", {
     ...globalThis.navigator,
     get onLine() {
       return isOnline;
     },
-    locks: {
-      ...locks,
-      request: (...args: Parameters<LockManager["request"]>) => {
-        const [name] = args;
-        lockNames.push(name);
-        const pass = locks.request(...args);
-        const queue = name.slice(REPLAY_LOCK.length);
-        if (name.startsWith(REPLAY_LOCK)) {
-          passes.set(queue, [...(passes.get(queue) ?? []), pass]);
-        }
-        return pass;
-      }
+    get locks() {
+      return hasLocks ? lockManager : undefined;
     },
-    storage: { getDirectory: opfs.getDirectory }
+    storage: { getDirectory: () => getDirectory() }
   });
   objectUrls.clear();
   URL.createObjectURL ??= () => "";
@@ -634,12 +711,142 @@ describe("backup and restore of files the account upload queue still holds", () 
       ok: true,
       stats: { resources: { file: { skipped: 1 } }, joins: {} }
     };
-    lockNames = [];
+    replays.clear();
 
     await expect(
       restoreBackup(backup, { triggerCloneUp: () => false })
     ).rejects.toThrow("DataFn restore failed");
     expect(opfs.list(QUEUE_A)).toEqual([]);
-    expect(lockNames).not.toContain(`${REPLAY_LOCK}${QUEUE_A}`);
+    expect(replays.get(QUEUE_A)).toBeUndefined();
+  });
+
+  it.each([
+    ["with", true],
+    ["without", false]
+  ])(
+    "keeps a capture past its grace restored into another account untouched by its own account's replay %s Web Locks, and uploads it once that account restores it",
+    async (_, isLocking) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const capturedAt = new Date(
+        Date.now() - 3 * UNCOMMITTED_GRACE_MS
+      ).toISOString();
+      const backup = new File(
+        [withCapturedAt(await backupText(), capturedAt)],
+        "backup.json"
+      );
+
+      await clearBrowser();
+      hasLocks = isLocking;
+      await bootData(cloudAccount("user-b"));
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+      replays.clear();
+
+      await bootData(cloudAccount("user-a"));
+      goOnline();
+      await replayed(QUEUE_A);
+
+      expect(await savedRecord(record.id)).toBeUndefined();
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(QUEUE_A)).toEqual([`queued_${record.fileId}`]);
+
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+      expect(sdk.started).toHaveLength(1);
+      expect(sdk.uploads).toEqual([
+        expect.objectContaining({ fileId: record.fileId })
+      ]);
+      expect(sdk.deleted).toEqual([]);
+    }
+  );
+
+  it("restores no record and keeps no queued file when a queued file cannot be written", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const first = await capturePhoto();
+    const second = await capturePhoto();
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    const written: string[] = [];
+    getDirectory = failingWrites((path) => {
+      written.push(path.join("/"));
+      if (path[1] !== `queued_${second.fileId}`) return undefined;
+      if (!path[2]?.startsWith("thumbnail-")) return undefined;
+      return Object.assign(new Error("The quota is exceeded"), {
+        name: "QuotaExceededError"
+      });
+    });
+    const cloneUp = vi.fn(() => true);
+
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: cloneUp })
+    ).rejects.toThrow("The quota is exceeded");
+    getDirectory = opfs.getDirectory;
+
+    expect(written).toContain(
+      `${QUEUE_A}/queued_${first.fileId}/thumbnail-jpeg`
+    );
+    expect(cloneUp).not.toHaveBeenCalled();
+    expect(await savedRecord(first.id)).toBeUndefined();
+    expect(await savedRecord(second.id)).toBeUndefined();
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+  });
+
+  it("writes again a restored file a closed page left half written, which no replay touched, and uploads it once", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    const entry = `queued_${record.fileId}`;
+
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    let isClosing = false;
+    getDirectory = failingWrites((path) => {
+      if (!path[2]?.startsWith("thumbnail-")) return undefined;
+      isClosing = true;
+      return "hang";
+    });
+    void restoreBackup(backup, { triggerCloneUp: () => false });
+    await vi.waitFor(() => expect(isClosing).toBe(true));
+    // The page closes mid-write and opens again.
+    locks = createFakeLocks();
+    getDirectory = opfs.getDirectory;
+    expect(opfs.list(QUEUE_A, entry)).toContain("restored");
+    expect(opfs.list(QUEUE_A, entry)).toContain("committed");
+    expect(opfs.list(QUEUE_A, entry)).not.toContain("thumbnail-jpeg");
+
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+
+    isOnline = false;
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(opfs.list(QUEUE_A, entry)).not.toContain("restored");
+    expect(await readQueuedBytes(record.fileId, "thumbnail")).toBe(
+      "thumb bytes"
+    );
+
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+    expect(sdk.artifacts).toHaveLength(1);
   });
 });
