@@ -275,7 +275,7 @@ test.describe("page letters", () => {
     });
   });
 
-  test("E edits a narrow split's note only while its editor shows", async ({
+  test("E brings a narrow split's note editor back from a side panel and edits it", async ({
     page
   }, testInfo) => {
     test.skip(
@@ -296,46 +296,52 @@ test.describe("page letters", () => {
     const content = split.locator("#mdContent");
     const focusedEditor = page.locator("[contenteditable]:focus");
     const menuTrigger = page.getByTestId("resource-record-context-menu");
-    const editItem = page.locator(
-      ".popover [data-context-menu-item-id='edit']"
-    );
+    const editItem = page
+      .locator(".popover [data-context-menu-item-id='edit']")
+      .first();
     await expect(content).toBeVisible({ timeout: 15_000 });
 
-    // A side panel takes the content's place in the narrow split.
-    await menuTrigger.click();
-    await page
-      .locator(".popover [data-context-menu-item-id='activity']")
-      .first()
-      .click();
-    await expect(content).toBeHidden({ timeout: 10_000 });
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
-    await menuTrigger.click();
-    await expect(
-      page.locator(".popover [data-context-menu-item-id='star']").first()
-    ).toBeVisible({ timeout: 10_000 });
-    await expect(editItem).toHaveCount(0);
-    await page.keyboard.press("Escape");
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
-    await page.keyboard.press("e");
-    await expect(content).toBeHidden();
-    await expect(focusedEditor).toHaveCount(0);
+    async function openSidePanel() {
+      await menuTrigger.click();
+      await page
+        .locator(".popover [data-context-menu-item-id='activity']")
+        .first()
+        .click();
+      await expect(content).toBeHidden({ timeout: 10_000 });
+      await page.evaluate(() =>
+        (document.activeElement as HTMLElement)?.blur()
+      );
+    }
 
-    // Choosing the open panel again gives the content its place back.
-    await menuTrigger.click();
-    await page
-      .locator(".popover [data-context-menu-item-id='activity']")
-      .first()
-      .click();
-    await expect(content).toBeVisible({ timeout: 10_000 });
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    // A side panel takes the content's place in the narrow split, and E
+    // brings the editor back with the caret in it.
+    await openSidePanel();
     await expect(focusedEditor).toHaveCount(0);
     await page.keyboard.press("e");
+    await expect(content).toBeVisible({ timeout: 10_000 });
     await expect(content.locator("[contenteditable]:focus")).toHaveCount(1, {
       timeout: 10_000
     });
     const typed = `typed in the split ${Date.now()}`;
     await page.keyboard.type(typed);
     await expect(content).toContainText(typed);
+
+    // The Edit item does the same from the menu.
+    await page.keyboard.press("Escape");
+    await expect(focusedEditor).toHaveCount(0);
+    await openSidePanel();
+    await menuTrigger.click();
+    await expect(editItem.getByTestId("context-menu-item-hotkey")).toHaveText(
+      "E"
+    );
+    await editItem.click();
+    await expect(content).toBeVisible({ timeout: 10_000 });
+    await expect(content.locator("[contenteditable]:focus")).toHaveCount(1, {
+      timeout: 10_000
+    });
+    const typedAgain = `typed after the menu ${Date.now()}`;
+    await page.keyboard.type(typedAgain);
+    await expect(content).toContainText(typedAgain);
   });
 
   test("calendar letters switch the scale and Shift+T goes to today", async ({

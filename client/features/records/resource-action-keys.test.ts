@@ -91,13 +91,13 @@ describe("letters on an open note's menu", () => {
       "a markdown note open as a page",
       NodeType.NODULAR_MARKDOWN,
       AccessMode.PAGE,
-      ["s", "c", "l", "r", "f", "b", "z", "a", "Backspace"]
+      ["s", "e", "c", "l", "r", "f", "b", "z", "a", "Backspace"]
     ],
     [
       "a markdown note open in a split",
       NodeType.NODULAR_MARKDOWN,
       AccessMode.BESIDE_BASE,
-      ["s", "c", "l", "r", "f", "b", "z", "a", "Backspace"]
+      ["s", "e", "c", "l", "r", "f", "b", "z", "a", "Backspace"]
     ],
     [
       "an image open as a page",

@@ -24,19 +24,49 @@ export function registerNoteEditorFocus(
   };
 }
 
+/** How long a request to focus a not yet shown editor stays valid, in ms. */
+const PENDING_FOCUS_TTL_MS = 3000;
+
+/** Focus requests waiting for their editor to be shown, with their expiry. */
+const pendingFocus = new Map<string, number>();
+
 /**
- * Whether a pane shows an editable editor of the note, which is not the case
- * while the note is read-only or still loading, or while a side panel takes
- * the place of its content in a narrow pane.
+ * Puts the caret in a note's editor in one pane. While that pane shows no
+ * editable editor of the note, such as under a side panel in a narrow pane,
+ * runs `reveal` to bring the editor back and keeps the request, which
+ * {@link runPendingNoteEditorFocus} runs once the editor is shown and the
+ * navigation behind `reveal` has settled, as that navigation resets focus.
+ * Does nothing without `reveal` then.
  */
-export function hasNoteEditorFocus(id: IRecordId, paneId: string) {
-  return focusers.has(focuserKey(id, paneId));
+export function focusNoteEditor(
+  id: IRecordId,
+  paneId: string,
+  reveal?: () => void
+) {
+  const key = focuserKey(id, paneId);
+  const focus = focusers.get(key);
+  if (focus) {
+    pendingFocus.delete(key);
+    focus();
+    return;
+  }
+  if (!reveal) return;
+  pendingFocus.set(key, Date.now() + PENDING_FOCUS_TTL_MS);
+  reveal();
 }
 
 /**
- * Puts the caret in a note's editor in one pane. Does nothing when that pane
- * shows no editable editor of the note.
+ * Runs the focus request waiting for a pane's note editor, if it has not
+ * expired and the editor is shown. Returns whether it focused the editor.
  */
-export function focusNoteEditor(id: IRecordId, paneId: string) {
-  focusers.get(focuserKey(id, paneId))?.();
+export function runPendingNoteEditorFocus(id: IRecordId, paneId: string) {
+  const key = focuserKey(id, paneId);
+  const expiry = pendingFocus.get(key);
+  if (expiry === undefined) return false;
+  const focus = focusers.get(key);
+  if (!focus) return false;
+  pendingFocus.delete(key);
+  if (Date.now() > expiry) return false;
+  focus();
+  return true;
 }

@@ -28,7 +28,10 @@ import { contextActions } from "@nucleum/shell/topNav/contextZone/context-action
 import { resolveNodeContextMenu } from "@nucleum/features/memory/node/node.store";
 import { resolveObjectiveContextMenu } from "@nucleum/features/focus/goals/goal.store";
 import { resolveCollectionContextMenu } from "@nucleum/features/collections/collection.store";
-import { registerNoteEditorFocus } from "@nucleum/features/memory/markdown/note-editor-focus";
+import {
+  registerNoteEditorFocus,
+  runPendingNoteEditorFocus
+} from "@nucleum/features/memory/markdown/note-editor-focus";
 import ContextActionKeys from "@nucleum/surfaces/commandBar/ContextActionKeys.svelte";
 import { withResourceActionKeys } from "./resource-action-keys";
 
@@ -289,10 +292,10 @@ describe("E on an open note's own menu", () => {
       expect(editItem(overrides, accessMode)).toBeUndefined();
   });
 
-  it("offers no Edit while the note's pane shows no editor of it, such as under a side panel", () => {
-    expect(editItem({}, AccessMode.BESIDE_BASE, SPLIT_PANE.id)).toBeUndefined();
+  it("offers Edit while a side panel hides the note's editor in its pane", () => {
     releaseEditor();
-    expect(editItem({}, AccessMode.PAGE)).toBeUndefined();
+    for (const accessMode of [AccessMode.PAGE, AccessMode.BESIDE_BASE])
+      expect(editItem({}, accessMode)?.hotKey).toBe("e");
   });
 });
 
@@ -410,6 +413,25 @@ describe("B and E through the page letters", () => {
     }
   );
 
+  it("brings a note's hidden editor back with E, then focuses it once shown", async () => {
+    const reveal = vi.fn();
+    const focus = vi.fn();
+    openIn(PAGE_PANE, NOTE_ID, () =>
+      resolveNodeContextMenu(note(), ResourceAccessPoint.SELF, {
+        accessMode: AccessMode.PAGE,
+        paneId: PAGE_PANE.id,
+        revealEditor: reveal
+      })
+    );
+
+    await press("e");
+    expect(reveal).toHaveBeenCalledTimes(1);
+
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
+    runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
   it("leaves a read-only note's editor alone on E", async () => {
     const focus = vi.fn();
     release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
@@ -438,6 +460,81 @@ describe("B and E through the page letters", () => {
 
     await press("e");
 
+    expect(focus).not.toHaveBeenCalled();
+  });
+});
+
+describe("E on a note whose editor a side panel hides", () => {
+  const release: (() => void)[] = [];
+  afterEach(() => {
+    release.splice(0).forEach((fn) => fn());
+    vi.useRealTimers();
+  });
+
+  function editWith(revealEditor?: () => void, paneId = PAGE_PANE.id) {
+    const menu = resolveNodeContextMenu(note(), ResourceAccessPoint.SELF, {
+      accessMode: AccessMode.PAGE,
+      paneId,
+      revealEditor
+    });
+    void findItem(menu, "edit")?.callback?.();
+  }
+
+  it("brings the editor back first and focuses it only once it is shown and the navigation settled", () => {
+    const reveal = vi.fn();
+    const focus = vi.fn();
+    editWith(reveal);
+    expect(reveal).toHaveBeenCalledTimes(1);
+    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(false);
+
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
+    // Mounting the editor is not enough: the navigation behind the reveal
+    // resets focus when it ends.
+    expect(focus).not.toHaveBeenCalled();
+    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(true);
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(false);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("focuses the shown editor directly, without bringing anything back", () => {
+    const reveal = vi.fn();
+    const focus = vi.fn();
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
+    editWith(reveal);
+    expect(reveal).not.toHaveBeenCalled();
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("serves only the pane that asked", () => {
+    const pageFocus = vi.fn();
+    const splitFocus = vi.fn();
+    editWith(vi.fn(), SPLIT_PANE.id);
+    release.push(
+      registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, pageFocus),
+      registerNoteEditorFocus(NOTE_ID, SPLIT_PANE.id, splitFocus)
+    );
+    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(false);
+    expect(runPendingNoteEditorFocus(NOTE_ID, SPLIT_PANE.id)).toBe(true);
+    expect(pageFocus).not.toHaveBeenCalled();
+    expect(splitFocus).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing for a hidden editor when nothing can bring it back", () => {
+    const focus = vi.fn();
+    editWith(undefined);
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
+    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(false);
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it("drops a request whose editor never showed instead of stealing focus later", () => {
+    vi.useFakeTimers();
+    const focus = vi.fn();
+    editWith(vi.fn());
+    vi.advanceTimersByTime(60_000);
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
+    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(false);
     expect(focus).not.toHaveBeenCalled();
   });
 });

@@ -24,7 +24,12 @@
   import Button from "@21n/ui/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
-  import { registerNoteEditorFocus } from "@nucleum/features/memory/markdown/note-editor-focus";
+  import {
+    registerNoteEditorFocus,
+    runPendingNoteEditorFocus
+  } from "@nucleum/features/memory/markdown/note-editor-focus";
+  import { afterNavigate } from "$app/navigation";
+  import { navigating } from "$app/state";
 
   /**
    * Markdown in node form i.e. each block of the markdown stored as node record and nested under each node
@@ -401,6 +406,18 @@
     return registerNoteEditorFocus(editableNoteId, editorPane.id, () =>
       focusBlock()
     );
+  });
+
+  /**
+   * Runs an Edit request that brought this editor back from a side panel once
+   * that navigation has settled, as SvelteKit resets focus when it ends. A
+   * mount during a navigation waits for that navigation's own callback.
+   */
+  afterNavigate((navigation) => {
+    if (navigation.type === "enter" && navigating.type !== null) return;
+    if (editableNoteId) {
+      runPendingNoteEditorFocus(editableNoteId, editorPane.id);
+    }
   });
 
   function onRearrange(event: any) {
