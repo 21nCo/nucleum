@@ -408,6 +408,52 @@ test.describe("page letters", () => {
     await expectEditing(typedAgain);
   });
 
+  test("Edit keeps a side panel open beside the editor in a wide pane", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The open resource is a note opened from the Nodes library, and this product has no nodes"
+    );
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 2400, height: 1000 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E wide edit letter ${Date.now()}`
+    });
+    await openNodeRecordFromLibraryById(page, node.id);
+    const menuTrigger = page.getByTestId("resource-record-context-menu");
+    const content = page.locator("#mdContent");
+    const coverPicker = page.getByText("Pick a cover", { exact: true });
+    const menuItem = (id: string) =>
+      page.locator(`.popover [data-context-menu-item-id='${id}']`).first();
+    await expect(content).toBeVisible({ timeout: 15_000 });
+
+    // The pane is wide enough for the content and a side panel together.
+    await menuTrigger.click();
+    await menuItem("activity").click();
+    await expect(content).toBeVisible();
+    const urlWithPanel = page.url();
+    await menuTrigger.click();
+    await menuItem("SET_COVER_PHOTO").click();
+    await expect(coverPicker).toBeVisible({ timeout: 10_000 });
+    await expect(content).toBeHidden({ timeout: 10_000 });
+
+    await menuTrigger.click();
+    await menuItem("edit").click();
+    await expect(coverPicker).toBeHidden({ timeout: 10_000 });
+    await expect(content.locator("[contenteditable]:focus")).toHaveCount(1, {
+      timeout: 10_000
+    });
+    expect(page.url()).toBe(urlWithPanel);
+    const typed = `typed beside the panel ${Date.now()}`;
+    await page.keyboard.type(typed);
+    await expect(content).toContainText(typed);
+  });
+
   test("calendar letters switch the scale and Shift+T goes to today", async ({
     page
   }) => {
