@@ -20,6 +20,7 @@
     shallowDiff
   } from "@21n/shared-utils/obj.utils";
   import NodularMarkdown from "@nucleum/features/memory/markdown/NodularMarkdown.svelte";
+  import { getNotePaneEditor } from "@nucleum/features/memory/markdown/note-editor-focus";
   import ScrollViewBottomSpacer from "@21n/ui/compositions/scrollView/ScrollViewBottomSpacer.svelte";
   import Divider from "@21n/ui/elements/Divider.svelte";
   import { ColorStrength } from "@21n/theme/appearance.type";
@@ -82,10 +83,13 @@
    * no edit can save an order without them.
    */
   let isOpenedIncomplete = $state(false);
+  const paneEditor = getNotePaneEditor();
+  /**
+   * Tells this content's pane whether its editor is read-only for missing
+   * blocks, so the pane's menu offers Edit only while it is not.
+   */
   $effect(() => {
-    const isIncomplete = isOpenedIncomplete;
-    if (!!node.get().isOpenedIncomplete === isIncomplete) return;
-    node.update((state) => ({ ...state, isOpenedIncomplete: isIncomplete }));
+    paneEditor?.setOpenedIncomplete(isOpenedIncomplete);
   });
   const dev_isEnableBottomDivider = false;
 

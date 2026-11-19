@@ -1020,11 +1020,6 @@ export type IActiveNode = INode &
     blocks?: INode[];
     forelinks?: LinkThumbnail[];
     isShowCoverPicker?: boolean;
-    /**
-     * Whether the note opened without some of its blocks, which shows it
-     * read-only (see `NodeContent`): its editor takes no edit then.
-     */
-    isOpenedIncomplete?: boolean;
   };
 
 export type INodeThumb = INode & {

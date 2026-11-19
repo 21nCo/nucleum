@@ -454,6 +454,88 @@ test.describe("page letters", () => {
     await expect(content).toContainText(typed);
   });
 
+  test("E and Edit on a note that starts with a divider edit its first text block", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The open resource is a note opened from the Nodes library, and this product has no nodes"
+    );
+    test.skip(
+      !(await isRepoSourceServed(page)),
+      "The divider is added through repo source modules, which only the Vite dev server serves"
+    );
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E divider first edit letter ${Date.now()}`
+    });
+    const dividerId = `${node.blockId}_divider`;
+    await page.evaluate(
+      async ({ datafnStorePath, node, dividerId }) => {
+        const { datafn } = await import(datafnStorePath);
+        await datafn.table("node").mutate([
+          {
+            operation: "insert",
+            id: dividerId,
+            record: {
+              id: dividerId,
+              label: "",
+              body: "",
+              contentType: "DIVIDER",
+              creationContext: node.id,
+              mdChildOrder: [],
+              mdParent: [node.id],
+              metaType: "",
+              parent: node.id,
+              parentPath: node.id,
+              text: ""
+            }
+          },
+          {
+            operation: "merge",
+            id: node.id,
+            record: { id: node.id, mdChildOrder: [dividerId, node.blockId] }
+          }
+        ]);
+      },
+      { datafnStorePath, node, dividerId }
+    );
+    await openNodeRecordFromLibraryById(page, node.id);
+    const content = page.locator("#mdContent");
+    const blocks = content.locator(':scope > div[id^="md-block-"]');
+    await expect(blocks.nth(0)).toHaveAttribute("data-content", "DIVIDER", {
+      timeout: 15_000
+    });
+    const textBlock = blocks.nth(1);
+    await expect(textBlock).toHaveAttribute("data-content", "SIMPLE_TEXT");
+    const focusedText = textBlock.locator("[contenteditable]:focus");
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await expect(page.locator("[contenteditable]:focus")).toHaveCount(0);
+
+    await page.keyboard.press("e");
+    await expect(focusedText).toHaveCount(1, { timeout: 10_000 });
+    const typed = `typed after E below a divider ${Date.now()}`;
+    await page.keyboard.type(typed);
+    await expect(textBlock).toContainText(typed);
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator("[contenteditable]:focus")).toHaveCount(0);
+    await page.getByTestId("resource-record-context-menu").click();
+    await page
+      .locator(".popover [data-context-menu-item-id='edit']")
+      .first()
+      .click();
+    await expect(focusedText).toHaveCount(1, { timeout: 10_000 });
+    const clicked = `typed after Edit below a divider ${Date.now()}`;
+    await page.keyboard.type(clicked);
+    await expect(textBlock).toContainText(clicked);
+    await expect(blocks.nth(0)).toHaveAttribute("data-content", "DIVIDER");
+  });
+
   test("calendar letters switch the scale and Shift+T goes to today", async ({
     page
   }) => {

@@ -420,6 +420,32 @@ describe("B and E through the page letters", () => {
     }
   );
 
+  it("focuses with E only the pane of a note whose content opened complete, not its incomplete pane", async () => {
+    const shared = note();
+    const focused: string[] = [];
+    for (const editorPane of [PAGE_PANE, SPLIT_PANE])
+      release.push(
+        registerNoteEditorFocus(NOTE_ID, editorPane.id, () =>
+          focused.push(editorPane.id)
+        )
+      );
+    const menuIn = (pane: ContextZonePane, isOpenedIncomplete: boolean) => () =>
+      resolveNodeContextMenu(shared, ResourceAccessPoint.SELF, {
+        accessMode:
+          pane === PAGE_PANE ? AccessMode.PAGE : AccessMode.BESIDE_BASE,
+        paneId: pane.id,
+        isOpenedIncomplete
+      });
+
+    openIn(SPLIT_PANE, NOTE_ID, menuIn(SPLIT_PANE, true));
+    await press("e");
+    expect(focused).toEqual([]);
+
+    openIn(PAGE_PANE, NOTE_ID, menuIn(PAGE_PANE, false));
+    await press("e");
+    expect(focused).toEqual([PAGE_PANE.id]);
+  });
+
   it("brings a note's hidden editor back with E, then focuses it once shown", async () => {
     const reveal = vi.fn(navigatingReveal);
     const focus = vi.fn();
@@ -720,7 +746,7 @@ describe("Edit on a note whose pane cannot show an editable editor", () => {
 
   const editItem = (
     node: Record<string, unknown>,
-    params: { isContentView?: boolean } = {}
+    params: { isContentView?: boolean; isOpenedIncomplete?: boolean } = {}
   ) =>
     findItem(
       resolveNodeContextMenu(note(node), ResourceAccessPoint.SELF, {
@@ -749,12 +775,24 @@ describe("Edit on a note whose pane cannot show an editable editor", () => {
     expect(editItem({})?.hotKey).toBe("e");
   });
 
-  it("offers no Edit on a note opened without some of its blocks, which stays read-only", () => {
-    expect(editItem({ isOpenedIncomplete: true })).toBeUndefined();
+  it("offers no Edit in a pane whose note opened without some of its blocks, which stays read-only", () => {
+    expect(editItem({}, { isOpenedIncomplete: true })).toBeUndefined();
   });
 
-  it("offers Edit again once the note is complete", () => {
-    expect(editItem({ isOpenedIncomplete: false })?.hotKey).toBe("e");
+  it("offers Edit in a pane whose note opened complete", () => {
+    expect(editItem({}, { isOpenedIncomplete: false })?.hotKey).toBe("e");
+  });
+
+  it("takes a pane's incomplete content from that pane, not from the note it shares with other panes", () => {
+    const shared = note({ isOpenedIncomplete: true });
+    const menuIn = (isOpenedIncomplete: boolean) =>
+      resolveNodeContextMenu(shared, ResourceAccessPoint.SELF, {
+        accessMode: AccessMode.PAGE,
+        paneId: PAGE_PANE.id,
+        isOpenedIncomplete
+      });
+    expect(findItem(menuIn(false), "edit")?.hotKey).toBe("e");
+    expect(findItem(menuIn(true), "edit")).toBeUndefined();
   });
 });
 

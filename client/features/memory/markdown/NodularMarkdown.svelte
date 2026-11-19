@@ -25,6 +25,7 @@
   import { ButtonStyle } from "@21n/ui/elements/button/button.type";
   import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
   import {
+    findFirstCaretBlockId,
     registerNoteEditorFocus,
     runPendingNoteEditorFocus
   } from "@nucleum/features/memory/markdown/note-editor-focus";
@@ -399,13 +400,16 @@
 
   /**
    * Lets the open note's Edit item, and its E key, put the caret in this
-   * editor through {@link focusBlock}, only in this pane and while editable.
+   * editor through {@link focusBlock}, only in this pane and while editable:
+   * in the first block that can take a caret, skipping dividers, and
+   * nowhere when no block can.
    */
   $effect(() => {
     if (!editableNoteId) return;
-    return registerNoteEditorFocus(editableNoteId, editorPane.id, () =>
-      focusBlock()
-    );
+    return registerNoteEditorFocus(editableNoteId, editorPane.id, () => {
+      const blockId = findFirstCaretBlockId(_md?.blocks);
+      if (blockId) focusBlock(blockId);
+    });
   });
 
   /**

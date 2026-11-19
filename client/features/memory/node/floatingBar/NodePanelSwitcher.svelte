@@ -27,6 +27,7 @@
     accessMode = undefined,
     isConstrainedWidth = false,
     isContentView = true,
+    isOpenedIncomplete = false,
     isFloatingHidden = false
   }: {
     node: IActiveNodeStore;
@@ -35,6 +36,11 @@
     isConstrainedWidth?: boolean;
     /** Whether the pane shows the note's content view, not its bird view. */
     isContentView?: boolean;
+    /**
+     * Whether this pane's note content opened without some of its blocks,
+     * which keeps its editor read-only.
+     */
+    isOpenedIncomplete?: boolean;
     /** Hides the floating bar while the node content scrolls down. */
     isFloatingHidden?: boolean;
   } = $props();
@@ -119,6 +125,7 @@
       accessMode,
       isConstrainedWidth,
       isContentView,
+      isOpenedIncomplete,
       paneId: contextZonePane.id,
       revealEditor: () => revealNoteEditor(node, { isConstrainedWidth })
     })}

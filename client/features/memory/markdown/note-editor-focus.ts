@@ -1,5 +1,11 @@
-import { tick } from "svelte";
+import { getContext, setContext, tick } from "svelte";
 import type { IRecordId } from "@nucleum/schema/legacy/data.type";
+import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+import {
+  headingNodeTypes,
+  listNodeTypes,
+  simpleTextNodeTypeList
+} from "@nucleum/features/memory/node/node.type";
 
 /** Focus entry points of the open, editable note editors, by pane and note. */
 const focusers = new Map<string, () => void>();
@@ -115,4 +121,63 @@ export function focusNoteEditor(
  */
 export function runPendingNoteEditorFocus(id: IRecordId, paneId: string) {
   return servePendingFocus(focuserKey(id, paneId));
+}
+
+/**
+ * What one pane's view of an open note knows about whether its editor takes
+ * edits. It belongs to that pane alone: other views of the note share its
+ * node store, so the store cannot hold it.
+ */
+export interface NotePaneEditor {
+  /**
+   * Records whether the pane's note content opened without some of its
+   * blocks, which keeps its editor read-only.
+   */
+  setOpenedIncomplete(isOpenedIncomplete: boolean): void;
+}
+
+const NOTE_PANE_EDITOR_CONTEXT = Symbol("note-pane-editor");
+
+/** Gives a pane's note content a way to report on its editor to the pane. */
+export function setNotePaneEditor(editor: NotePaneEditor) {
+  setContext(NOTE_PANE_EDITOR_CONTEXT, editor);
+}
+
+/** The pane editor report of the note view this content is in, if any. */
+export function getNotePaneEditor() {
+  return getContext<NotePaneEditor | undefined>(NOTE_PANE_EDITOR_CONTEXT);
+}
+
+/**
+ * Whether a markdown block shows a text input that takes a caret, as its
+ * content renders one (see `BlockContent`): a heading, a callout, a list
+ * item or a text block with its usual body. Dividers and other blocks
+ * without text do not.
+ */
+function canBlockTakeCaret(block: {
+  id?: IRecordId;
+  contentType?: NodeType;
+  body?: unknown;
+}) {
+  const type = block.contentType;
+  if (block.id == null || type == null) return false;
+  if (headingNodeTypes.includes(type) || type === NodeType.CALLOUT) {
+    return true;
+  }
+  if (listNodeTypes.includes(type)) {
+    return typeof block.body === "object" && block.body !== null;
+  }
+  return simpleTextNodeTypeList.includes(type) && typeof block.body === "string";
+}
+
+/**
+ * The id of the first of a note's blocks that can take a caret, skipping
+ * blocks with no text input such as dividers, or undefined when none can.
+ */
+export function findFirstCaretBlockId(
+  blocks:
+    | readonly { id?: IRecordId; contentType?: NodeType; body?: unknown }[]
+    | undefined
+) {
+  return blocks?.find(canBlockTakeCaret)?.id;
 }
