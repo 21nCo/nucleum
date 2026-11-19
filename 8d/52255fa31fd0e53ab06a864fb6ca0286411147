@@ -1,0 +1,29 @@
+client/features/memory/markdown/NodularMarkdown.svelte
+  s_f35b422006faeb::t_7a896f457b76d9 412,414-415
+client/features/memory/markdown/note-editor-focus.ts
+  s_f35b422006faeb::t_9f71015ff58aac 1,11-47,50-54,63-68,76-81,86,96-108,112-114,117
+client/features/memory/node/floatingBar/NodePanelSwitcher.svelte
+  s_f35b422006faeb::t_4ac8ece086fbe4 10,119
+client/features/memory/node/node.store.ts
+  s_f35b422006faeb::t_1e83e70ae23e35 6,28-31,1078-1079,1093-1113,1125-1129
+client/features/records/resource-open-keys.test.ts
+  s_f35b422006faeb::t_c1008f9a1c62ae 28-31,36-37,39-40,423,473-475,483-486,495-496,505-506,515,526,548,556-673
+apps/e2e-playwright/tests/shared/page-letters.spec.ts
+  s_f35b422006faeb::t_bdf705996d414c 347-410
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8d52255fa31fd0e53ab06a864fb6ca0286411147",
+  "prompts": {},
+  "sessions": {
+    "s_f35b422006faeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "679baf05-05c3-434b-8d43-45dfc1b3d785",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

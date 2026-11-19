@@ -1,0 +1,25 @@
+.build/.buildSystem_debug
+  s_b66d0e9dd4fae0::t_d4d94f5ee3404f 1
+.build/CACHEDIR.TAG
+  s_b66d0e9dd4fae0::t_0f403bbdcfc687 1-4
+.gitignore
+  s_b66d0e9dd4fae0::t_66279463e842c8 57
+AGENTS.md
+  s_b66d0e9dd4fae0::t_73610c1ef36e51 194,248-250,296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7fd1a9906e20e19c810d936b6932206305dab0a4",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+apps/e2e-playwright/tests/shared/single-key-shortcuts.spec.ts
+  s_59e7f877e9c3ee::t_0cc6b8a0f94042 1-196
+client/features/calendar/classic/ClassicCalendarHeaderLeftOptions.svelte
+  s_59e7f877e9c3ee::t_01e98382b74bc9 13,135-139,141-143,150
+client/features/records/resource-action-keys.ts
+  s_59e7f877e9c3ee::t_ac0ef130cd9d6b 9-13,53-56,58,72-73,77,83-84
+client/shared-state/preferences/single-key-shortcuts.ts
+  s_59e7f877e9c3ee::t_fc8629bfae7c69 1-24
+client/shared-state/preferences/user-preferences.store.ts
+  s_59e7f877e9c3ee::t_e6dca5e245670f 21,40,82-84,129,200-204
+client/shared-state/preferences/user-preferences.type.ts
+  s_59e7f877e9c3ee::t_e30d9436c21032 27-31
+client/shell/shortcuts/ChordRunner.svelte
+  s_59e7f877e9c3ee::t_0600d086eb847e 12-15,87-89,93
+client/shell/shortcuts/ShortcutRunner.svelte
+  s_59e7f877e9c3ee::t_0aad1f1f6695c8 33-37,62-64,85
+client/shell/shortcuts/page-keys.ts
+  s_59e7f877e9c3ee::t_238f0ce5220dde 4,12-27,46-48,56
+client/shell/shortcuts/single-key-setting.test.ts
+  s_59e7f877e9c3ee::t_40208294d20e27 1-323
+client/surfaces/settings/shortcuts/ShortcutSettings.single-key.test.ts
+  s_59e7f877e9c3ee::t_f6338772f6db96 1-144
+client/surfaces/settings/shortcuts/ShortcutSettings.svelte
+  s_59e7f877e9c3ee::t_15a0dafe38fc44 7,14,25-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c40c2a699071c3c4dda1f30d32cc0e1c76139ad8",
+  "prompts": {},
+  "sessions": {
+    "s_59e7f877e9c3ee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_59e7f877e9c3ee",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+client/composition/configure-hosts.ts
+  s_b66d0e9dd4fae0::t_c2052cb96201c2 43-50,69,188-191,202-203
+client/features/calendar/classic/ClassicCalendarHeaderLeftOptions.svelte
+  s_b66d0e9dd4fae0::t_3f5bd27c19a3b2 106,111,114-122,197,207,212
+client/features/memory/markdown/shortcuts/HotKeyShortcutText.svelte
+  s_b66d0e9dd4fae0::t_c733e3b144a013 7
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.single-key.test.ts
+  s_b66d0e9dd4fae0::t_b65e4198d8dc73 1-101
+client/shell/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte
+  s_b66d0e9dd4fae0::t_2259782445ed75 24-25,114-118,121,343
+client/shell/shortcuts/ChordRunner.svelte
+  s_b66d0e9dd4fae0::t_e1d2abdb145647 16,165-175
+client/shell/shortcuts/single-key-setting.test.ts
+  s_b66d0e9dd4fae0::t_9fd673d1e234d6 79,282-294,394-435
+client/ui/elements/keyboard/shortcut.utils.ts
+  s_b66d0e9dd4fae0::t_bc86191166609d 1-5,53-81
+client/ui/elements/text/ShortcutText.single-key.test.ts
+  s_b66d0e9dd4fae0::t_030c7e8bdb1c6f 1-104
+client/ui/elements/text/ShortcutText.svelte
+  s_b66d0e9dd4fae0::t_419483f2e63bd1 2-5,13,25,33-37,39-43,91-99,109
+client/ui/hosts/shortcut-host.ts
+  s_b66d0e9dd4fae0::t_f63af0dca363bd 45-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "19540a2ec7846ddcbd19e7a69814d58802eb8c63",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

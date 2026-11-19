@@ -1,0 +1,31 @@
+client/composition/configure-hosts.ts
+  s_b66d0e9dd4fae0::t_8426094a8ff1fc 43,160-161
+client/features/calendar/classic/ClassicCalendarHeaderLeftOptions.svelte
+  s_b66d0e9dd4fae0::t_d5f9f604552843 12,106-113,152,188
+client/shell/shortcuts/page-keys.ts
+  s_b66d0e9dd4fae0::t_851ec29f65ae6a 22-24
+client/shell/shortcuts/single-key-setting.test.ts
+  s_b66d0e9dd4fae0::t_0b5e799a12889d 2-4,379-399
+client/ui/actions/item-navigation.single-key.test.ts
+  s_b66d0e9dd4fae0::t_d167e762609601 1-109
+client/ui/actions/itemNavigation.action.ts
+  s_b66d0e9dd4fae0::t_3c55126ff7eee3 1,53-55,339-343,347-351
+client/ui/hosts/shortcut-host.ts
+  s_b66d0e9dd4fae0::t_c617cbc125794f 6-10,43-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ec7c61e4586cf5a9461b8061231f683b2fab0d0e",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
