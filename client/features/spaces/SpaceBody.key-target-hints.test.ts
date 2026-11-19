@@ -92,6 +92,24 @@ async function settle() {
   for (let index = 0; index < 5; index++) await tick();
 }
 
+/**
+ * Runs every release in reverse order even when one throws, empties the list,
+ * and rethrows the first error once all have run.
+ */
+function releaseAll(releases: (() => void)[]) {
+  const pending = [...releases].reverse();
+  releases.length = 0;
+  const errors: unknown[] = [];
+  for (const release of pending) {
+    try {
+      release();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length > 0) throw errors[0];
+}
+
 describe("space menu letters beside a pane without resource actions", () => {
   let release: (() => void)[] = [];
 
@@ -122,10 +140,12 @@ describe("space menu letters beside a pane without resource actions", () => {
   });
 
   afterEach(() => {
-    release.reverse().forEach((unregister) => unregister());
+    releaseAll([
+      () => contextZone.releasePane(BASE_CONTEXT_ZONE_PANE.id),
+      () => contextZone.releasePane(SPLIT_PANE.id),
+      ...release
+    ]);
     release = [];
-    contextZone.releasePane(SPLIT_PANE.id);
-    contextZone.releasePane(BASE_CONTEXT_ZONE_PANE.id);
   });
 
   it("shows the split space's letters while the user works in the split", async () => {

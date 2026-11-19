@@ -41,6 +41,24 @@ async function settle() {
   for (let index = 0; index < 5; index++) await tick();
 }
 
+/**
+ * Runs every release in reverse order even when one throws, empties the list,
+ * and rethrows the first error once all have run.
+ */
+function releaseAll(releases: (() => void)[]) {
+  const pending = [...releases].reverse();
+  releases.length = 0;
+  const errors: unknown[] = [];
+  for (const release of pending) {
+    try {
+      release();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length > 0) throw errors[0];
+}
+
 describe("super bar letter hints of the open resource", () => {
   let release: (() => void)[] = [];
 
@@ -58,11 +76,13 @@ describe("super bar letter hints of the open resource", () => {
   });
 
   afterEach(() => {
-    syncElementShortcutHints(true);
-    release.reverse().forEach((unregister) => unregister());
+    releaseAll([
+      () => contextZone.releasePane(BASE_CONTEXT_ZONE_PANE.id),
+      () => contextZone.releasePane(SPLIT_PANE.id),
+      ...release,
+      () => syncElementShortcutHints(true)
+    ]);
     release = [];
-    contextZone.releasePane(SPLIT_PANE.id);
-    contextZone.releasePane(BASE_CONTEXT_ZONE_PANE.id);
   });
 
   /** A note open in a split beside a base page without resource actions. */
