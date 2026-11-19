@@ -7,6 +7,7 @@
   import {
     resolveNodeContextMenu,
     resolvePanelOptions,
+    revealNoteEditor,
     type IActiveNodeStore
   } from "../node.store";
   import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
@@ -17,22 +18,33 @@
     webNodeTypeList
   } from "@nucleum/features/memory/node/node.type";
   import { derived } from "svelte/store";
+  import { getContextZonePane } from "@nucleum/shell/topNav/contextZone/context-zone";
   import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
   import type { IResourcePageWithPanels } from "@nucleum/datafn/resource.type";
   import type { ISelectValue } from "@21n/ui/elements/select/select.type";
+  import type { NoteContentState } from "@nucleum/features/memory/markdown/note-editor-focus";
   let {
     node,
     accessMode = undefined,
     isConstrainedWidth = false,
+    isContentView = true,
+    contentState = undefined,
     isFloatingHidden = false
   }: {
     node: IActiveNodeStore;
     /** Mode this view of the node is open in; views share one node store. */
     accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
+    /** Whether the pane shows the note's content view, not its bird view. */
+    isContentView?: boolean;
+    /** Whether this pane's note content shows an editor that takes edits. */
+    contentState?: NoteContentState;
     /** Hides the floating bar while the node content scrolls down. */
     isFloatingHidden?: boolean;
   } = $props();
+
+  /** Pane this view of the node is open in, whose editor Edit focuses. */
+  const contextZonePane = getContextZonePane();
 
   let isReadOnlyMode = $derived(
     $node.isInReadOnlyMode ||
@@ -109,7 +121,11 @@
   contextMenuResolver={() =>
     resolveNodeContextMenu($node, ResourceAccessPoint.SELF, {
       accessMode,
-      isConstrainedWidth
+      isConstrainedWidth,
+      isContentView,
+      contentState,
+      paneId: contextZonePane.id,
+      revealEditor: () => revealNoteEditor(node, { isConstrainedWidth })
     })}
   onAction={onContextMenuAction}
 />

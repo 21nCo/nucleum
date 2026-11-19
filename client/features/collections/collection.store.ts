@@ -514,7 +514,12 @@ export function resolveCollectionContextMenu(
     commonGroups = [
       {
         group: "open",
-        items: [resourceActions.maximize()]
+        items: [
+          ...(accessPoint === ResourceAccessPoint.SELF && !viewStore.isPortrait
+            ? [resourceActions.openAsSplit()]
+            : []),
+          resourceActions.maximize()
+        ]
       },
       moreGroup
     ];
