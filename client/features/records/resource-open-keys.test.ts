@@ -25,13 +25,19 @@ import {
   type ContextZonePane
 } from "@nucleum/shell/topNav/contextZone/context-zone";
 import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
-import { resolveNodeContextMenu } from "@nucleum/features/memory/node/node.store";
+import {
+  resolveNodeContextMenu,
+  revealNoteEditor
+} from "@nucleum/features/memory/node/node.store";
 import { resolveObjectiveContextMenu } from "@nucleum/features/focus/goals/goal.store";
 import { resolveCollectionContextMenu } from "@nucleum/features/collections/collection.store";
 import {
   registerNoteEditorFocus,
-  runPendingNoteEditorFocus
+  runPendingNoteEditorFocus,
+  type NoteEditorReveal
 } from "@nucleum/features/memory/markdown/note-editor-focus";
+import { configureResourcePanelHost } from "@nucleum/shared-state/resources/resource-panel-host";
+import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
 import ContextActionKeys from "@nucleum/surfaces/commandBar/ContextActionKeys.svelte";
 import { withResourceActionKeys } from "./resource-action-keys";
 
@@ -414,7 +420,7 @@ describe("B and E through the page letters", () => {
   );
 
   it("brings a note's hidden editor back with E, then focuses it once shown", async () => {
-    const reveal = vi.fn();
+    const reveal = vi.fn(navigatingReveal);
     const focus = vi.fn();
     openIn(PAGE_PANE, NOTE_ID, () =>
       resolveNodeContextMenu(note(), ResourceAccessPoint.SELF, {
@@ -464,6 +470,9 @@ describe("B and E through the page letters", () => {
   });
 });
 
+/** A reveal whose panel switch navigated, as from a side panel's URL. */
+const navigatingReveal = (): NoteEditorReveal => ({ isNavigating: true });
+
 describe("E on a note whose editor a side panel hides", () => {
   const release: (() => void)[] = [];
   afterEach(() => {
@@ -471,7 +480,10 @@ describe("E on a note whose editor a side panel hides", () => {
     vi.useRealTimers();
   });
 
-  function editWith(revealEditor?: () => void, paneId = PAGE_PANE.id) {
+  function editWith(
+    revealEditor?: () => NoteEditorReveal,
+    paneId = PAGE_PANE.id
+  ) {
     const menu = resolveNodeContextMenu(note(), ResourceAccessPoint.SELF, {
       accessMode: AccessMode.PAGE,
       paneId,
@@ -480,8 +492,8 @@ describe("E on a note whose editor a side panel hides", () => {
     void findItem(menu, "edit")?.callback?.();
   }
 
-  it("brings the editor back first and focuses it only once it is shown and the navigation settled", () => {
-    const reveal = vi.fn();
+  it("brings the editor back first and focuses it only once it is shown and the navigation settled", async () => {
+    const reveal = vi.fn(navigatingReveal);
     const focus = vi.fn();
     editWith(reveal);
     expect(reveal).toHaveBeenCalledTimes(1);
@@ -490,6 +502,8 @@ describe("E on a note whose editor a side panel hides", () => {
     release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
     // Mounting the editor is not enough: the navigation behind the reveal
     // resets focus when it ends.
+    await tick();
+    await tick();
     expect(focus).not.toHaveBeenCalled();
     expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(true);
     expect(focus).toHaveBeenCalledTimes(1);
@@ -498,7 +512,7 @@ describe("E on a note whose editor a side panel hides", () => {
   });
 
   it("focuses the shown editor directly, without bringing anything back", () => {
-    const reveal = vi.fn();
+    const reveal = vi.fn(navigatingReveal);
     const focus = vi.fn();
     release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
     editWith(reveal);
@@ -509,7 +523,7 @@ describe("E on a note whose editor a side panel hides", () => {
   it("serves only the pane that asked", () => {
     const pageFocus = vi.fn();
     const splitFocus = vi.fn();
-    editWith(vi.fn(), SPLIT_PANE.id);
+    editWith(navigatingReveal, SPLIT_PANE.id);
     release.push(
       registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, pageFocus),
       registerNoteEditorFocus(NOTE_ID, SPLIT_PANE.id, splitFocus)
@@ -531,11 +545,129 @@ describe("E on a note whose editor a side panel hides", () => {
   it("drops a request whose editor never showed instead of stealing focus later", () => {
     vi.useFakeTimers();
     const focus = vi.fn();
-    editWith(vi.fn());
+    editWith(navigatingReveal);
     vi.advanceTimersByTime(60_000);
     release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
     expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(false);
     expect(focus).not.toHaveBeenCalled();
+  });
+});
+
+describe("E on a note whose editor an editable state hides without a navigation", () => {
+  const release: (() => void)[] = [];
+  /** URL panel of the open note, as the panel host reads it. */
+  const URL_PANEL_PARAM = "open-keys-panel";
+
+  beforeEach(() => {
+    configureResourcePanelHost({
+      readPanel: (_id, url) => url.searchParams.get(URL_PANEL_PARAM),
+      writePanel: vi.fn(),
+      close: vi.fn(),
+      goBack: vi.fn(),
+      maximize: vi.fn()
+    });
+  });
+
+  afterEach(() => {
+    release.splice(0).forEach((fn) => fn());
+  });
+
+  /** An open note's store, showing a panel and maybe the cover picker. */
+  function openNote(state: { panel: string; isShowCoverPicker?: boolean }) {
+    const current = {
+      id: NOTE_ID,
+      defaultPanel: ResourcePanelType.CONTENT,
+      ...state
+    };
+    const store = {
+      get: () => current,
+      toggleCoverPicker: vi.fn((value?: boolean) => {
+        current.isShowCoverPicker = value ?? !current.isShowCoverPicker;
+      }),
+      switchPanel: vi.fn((panel: string) => {
+        current.panel = panel;
+      })
+    };
+    return { current, store };
+  }
+
+  type RevealableNote = Parameters<typeof revealNoteEditor>[0];
+
+  function edit(store: RevealableNote) {
+    const menu = resolveNodeContextMenu(note(), ResourceAccessPoint.SELF, {
+      accessMode: AccessMode.PAGE,
+      paneId: PAGE_PANE.id,
+      revealEditor: () => revealNoteEditor(store)
+    });
+    const item = findItem(menu, "edit");
+    expect(item?.hotKey).toBe("e");
+    void item?.callback?.();
+  }
+
+  it("closes the cover picker and focuses the editor once it registers", async () => {
+    const { current, store } = openNote({
+      panel: ResourcePanelType.CONTENT,
+      isShowCoverPicker: true
+    });
+    const pageFocus = vi.fn();
+    const splitFocus = vi.fn();
+    release.push(registerNoteEditorFocus(NOTE_ID, SPLIT_PANE.id, splitFocus));
+
+    edit(store as unknown as RevealableNote);
+
+    expect(store.toggleCoverPicker).toHaveBeenCalledWith(false);
+    expect(current.isShowCoverPicker).toBe(false);
+    expect(store.switchPanel).not.toHaveBeenCalled();
+    expect(pageFocus).not.toHaveBeenCalled();
+
+    // The picker gives way to the editor, which registers with no
+    // navigation behind it, so nothing else will serve the request.
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, pageFocus));
+    await tick();
+    await tick();
+
+    expect(pageFocus).toHaveBeenCalledTimes(1);
+    expect(splitFocus).not.toHaveBeenCalled();
+    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(false);
+    expect(pageFocus).toHaveBeenCalledTimes(1);
+  });
+
+  it("serves a panel switch that left the URL as it was without a navigation", async () => {
+    window.history.replaceState(
+      {},
+      "",
+      `/?${URL_PANEL_PARAM}=${ResourcePanelType.CONTENT}`
+    );
+    const { store } = openNote({ panel: ResourcePanelType.ACTIVITY });
+    const focus = vi.fn();
+
+    edit(store as unknown as RevealableNote);
+    expect(store.switchPanel).toHaveBeenCalledWith(ResourcePanelType.CONTENT);
+
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
+    await tick();
+    await tick();
+
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits for the navigation of a panel switch that changes the URL", async () => {
+    window.history.replaceState(
+      {},
+      "",
+      `/?${URL_PANEL_PARAM}=${ResourcePanelType.ACTIVITY}`
+    );
+    const { store } = openNote({ panel: ResourcePanelType.ACTIVITY });
+    const focus = vi.fn();
+
+    edit(store as unknown as RevealableNote);
+    release.push(registerNoteEditorFocus(NOTE_ID, PAGE_PANE.id, focus));
+    await tick();
+    await tick();
+    expect(focus).not.toHaveBeenCalled();
+
+    expect(runPendingNoteEditorFocus(NOTE_ID, PAGE_PANE.id)).toBe(true);
+    expect(focus).toHaveBeenCalledTimes(1);
   });
 });
 

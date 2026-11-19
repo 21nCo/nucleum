@@ -409,9 +409,10 @@
   });
 
   /**
-   * Runs an Edit request that brought this editor back from a side panel once
+   * Runs an Edit request whose panel switch brought this editor back once
    * that navigation has settled, as SvelteKit resets focus when it ends. A
-   * mount during a navigation waits for that navigation's own callback.
+   * mount during a navigation waits for that navigation's own callback. A
+   * request that started no navigation is served when this editor registers.
    */
   afterNavigate((navigation) => {
     if (navigation.type === "enter" && navigating.type !== null) return;

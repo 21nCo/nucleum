@@ -7,6 +7,7 @@
   import {
     resolveNodeContextMenu,
     resolvePanelOptions,
+    revealNoteEditor,
     type IActiveNodeStore
   } from "../node.store";
   import ResourceViewSwitcher from "@nucleum/features/records/ResourceViewSwitcher.svelte";
@@ -70,12 +71,6 @@
     })
   );
 
-  /** Brings this note's editor back from a side panel in a narrow pane. */
-  function revealEditor() {
-    const contentPanel = $node.defaultPanel ?? ResourcePanelType.DEFAULT;
-    if ($node.panel !== contentPanel) node.switchPanel(contentPanel);
-  }
-
   function onContextMenuAction(detail: ISelectValue) {
     if (panelTypes.has(detail as ResourcePanelType)) {
       node.switchPanel(detail as ResourcePanelType);
@@ -121,7 +116,7 @@
       accessMode,
       isConstrainedWidth,
       paneId: contextZonePane.id,
-      revealEditor
+      revealEditor: () => revealNoteEditor(node)
     })}
   onAction={onContextMenuAction}
 />

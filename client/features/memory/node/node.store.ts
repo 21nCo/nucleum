@@ -3,6 +3,7 @@ import { LinkType } from "@nucleum/datafn/link.type";
 import { type IActiveNode, type INode, type INodeLinkThumb, canHaveTraces, NodeView, headingNodeTypes, mediaNodeTypeList, socialPostNodeTypeList } from "@nucleum/features/memory/node/node.type";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import { ResourcePanelType } from "@nucleum/shared-state/resources/resource-panel.type";
+import { requireResourcePanelHost } from "@nucleum/shared-state/resources/resource-panel-host";
 import { ActiveResourceStore } from "@nucleum/shared-state/resources/active-resource.store";
 import { PanelSwitcherMixin } from "@nucleum/shared-state/resources/panelSwitcher.mixin";
 import { activeResourceFilterIgnoreAncestorInactive } from "@nucleum/datafn/resource-filters";
@@ -24,7 +25,10 @@ import {
   determineResourceType,
   isTrashedResource
 } from "@nucleum/datafn/resource.utils";
-import { focusNoteEditor } from "@nucleum/features/memory/markdown/note-editor-focus";
+import {
+  focusNoteEditor,
+  type NoteEditorReveal
+} from "@nucleum/features/memory/markdown/note-editor-focus";
 import { BASE_CONTEXT_ZONE_PANE } from "@nucleum/shell/topNav/contextZone/context-zone";
 
 import context from "@nucleum/client/runtime/context.store";
@@ -1071,8 +1075,8 @@ const NOTE_EDIT_ACCESS_MODES: ReadonlySet<AccessMode | undefined> = new Set([
  * Whether an open note's menu offers Edit, which focuses its inline editor:
  * a markdown note open as a page or in a split while the note is editable,
  * not in read mode, locked, archived or in trash. A side panel taking the
- * place of the editor in a narrow pane does not hide it: Edit brings the
- * editor back first.
+ * place of the editor in a narrow pane, or the cover picker, does not hide
+ * it: Edit brings the editor back first.
  */
 function canFocusNoteEditor(node: INode, accessMode: AccessMode | undefined) {
   const activeNode = node as Partial<IActiveNode>;
@@ -1086,6 +1090,27 @@ function canFocusNoteEditor(node: INode, accessMode: AccessMode | undefined) {
   );
 }
 
+/**
+ * Brings an open note's editor back from whatever editable state hides it
+ * in its pane: the cover picker in its place, or a side panel in a narrow
+ * pane. Says whether that started a navigation, which switching the panel
+ * does only while the URL shows another panel for the note.
+ */
+export function revealNoteEditor(
+  node: Pick<IActiveNodeStore, "get" | "toggleCoverPicker" | "switchPanel">
+): NoteEditorReveal {
+  const state = node.get();
+  if (state.isShowCoverPicker) node.toggleCoverPicker(false);
+  const contentPanel = state.defaultPanel ?? ResourcePanelType.DEFAULT;
+  if (state.panel === contentPanel) return { isNavigating: false };
+  const urlPanel = requireResourcePanelHost().readPanel(
+    state.id,
+    new URL(window.location.href)
+  );
+  node.switchPanel(contentPanel);
+  return { isNavigating: urlPanel !== contentPanel };
+}
+
 export function resolveNodeContextMenu(
   node: INode,
   accessPoint: ResourceAccessPoint,
@@ -1097,8 +1122,11 @@ export function resolveNodeContextMenu(
     isConstrainedWidth?: boolean;
     /** Pane the menu's note is open in, whose editor its Edit item focuses. */
     paneId?: string;
-    /** Brings the pane's editor back while a side panel hides it. */
-    revealEditor?: () => void;
+    /**
+     * Brings the pane's editor back while an editable state hides it, such
+     * as a side panel or the cover picker, and says if it navigated.
+     */
+    revealEditor?: () => NoteEditorReveal;
   }
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, {

@@ -344,6 +344,70 @@ test.describe("page letters", () => {
     await expect(content).toContainText(typedAgain);
   });
 
+  test("Edit and E close the open note's cover picker and edit the note", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      !resolveSurfaceContract(
+        requireE2EProduct(testInfo.project.name),
+        "library.nodes"
+      ),
+      "The open resource is a note opened from the Nodes library, and this product has no nodes"
+    );
+    test.setTimeout(90_000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E cover edit letter ${Date.now()}`
+    });
+    await openNodeRecordFromLibraryById(page, node.id);
+    const menuTrigger = page.getByTestId("resource-record-context-menu");
+    const content = page.locator("#mdContent");
+    const coverPicker = page.getByText("Pick a cover", { exact: true });
+    const focusedEditor = page.locator("[contenteditable]:focus");
+    const menuItem = (id: string) =>
+      page.locator(`.popover [data-context-menu-item-id='${id}']`).first();
+    await expect(content).toBeVisible({ timeout: 15_000 });
+
+    // The cover picker takes the editor's place on the note's page.
+    async function openCoverPicker() {
+      await menuTrigger.click();
+      await menuItem("SET_COVER_PHOTO").click();
+      await expect(coverPicker).toBeVisible({ timeout: 10_000 });
+      await expect(content).toBeHidden({ timeout: 10_000 });
+      await page.evaluate(() =>
+        (document.activeElement as HTMLElement)?.blur()
+      );
+      await expect(focusedEditor).toHaveCount(0);
+    }
+
+    async function expectEditing(text: string) {
+      await expect(coverPicker).toBeHidden({ timeout: 10_000 });
+      await expect(content).toBeVisible({ timeout: 10_000 });
+      await expect(content.locator("[contenteditable]:focus")).toHaveCount(1, {
+        timeout: 10_000
+      });
+      await page.keyboard.type(text);
+      await expect(content).toContainText(text);
+      await page.keyboard.press("Escape");
+      await expect(focusedEditor).toHaveCount(0);
+    }
+
+    await openCoverPicker();
+    await menuTrigger.click();
+    await expect(
+      menuItem("edit").getByTestId("context-menu-item-hotkey")
+    ).toHaveText("E");
+    await menuItem("edit").click();
+    const typed = `typed after the picker ${Date.now()}`;
+    await expectEditing(typed);
+
+    await openCoverPicker();
+    await page.keyboard.press("e");
+    const typedAgain = `typed after E on the picker ${Date.now()}`;
+    await expectEditing(typedAgain);
+  });
+
   test("calendar letters switch the scale and Shift+T goes to today", async ({
     page
   }) => {
