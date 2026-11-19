@@ -5,6 +5,8 @@ import {
   type PendingUpload,
   type UploadResult
 } from "@filefn/client";
+import { get } from "svelte/store";
+import context from "@nucleum/client/runtime/context.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { DEVICE_THUMBNAIL_KIND } from "@nucleum/shared-state/files/file-processing";
 
@@ -673,7 +675,7 @@ async function drainQueue(dir: string, request: ReplayRequest) {
   };
   let isRetried = false;
   for (const entryName of await pass.store.listPendingUploads()) {
-    if (request.signal.aborted || globalThis.navigator?.onLine === false) {
+    if (request.signal.aborted || isAppOffline()) {
       return false;
     }
     if (!entryName.startsWith(ENTRY_PREFIX)) continue;
@@ -934,9 +936,15 @@ type StartMark = {
   undo(attempt: string): Promise<void>;
 };
 
-/** Throws while the device is offline or the attempt is no longer ready. */
+/** True while the device has no network or the app's offline mode is on. */
+export function isAppOffline(): boolean {
+  const isNetworkOffline = globalThis.navigator?.onLine === false;
+  return isNetworkOffline || get(context).isInOfflineMode === true;
+}
+
+/** Throws while the app is offline or the attempt is no longer ready. */
 function assertSendable(mark?: StartMark) {
-  if (globalThis.navigator?.onLine === false || mark?.isReady() === false) {
+  if (isAppOffline() || mark?.isReady() === false) {
     throw new DOMException("The upload cannot start", "NetworkError");
   }
 }

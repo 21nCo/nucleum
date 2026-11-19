@@ -7,6 +7,7 @@ import type {
   UploadInput
 } from "@filefn/client";
 import account from "@nucleum/client/runtime/account/account.store";
+import context from "@nucleum/client/runtime/context.store";
 import {
   UserDataMode,
   UserSessionType,
@@ -882,4 +883,47 @@ describe("files a signed-in cloud account captures offline", () => {
       expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]);
     }
   );
+});
+
+describe("files a signed-in cloud account captures in the app's offline mode", () => {
+  afterEach(async () => {
+    await context.toggleOfflineMode(false);
+    await clientStorage.remove(ClientStorageKey.OFFLINE_MODE);
+  });
+
+  it("keeps the capture on the device with the network up, sends no FileFn request, and uploads it once offline mode is turned off", async () => {
+    await bootData(cloudAccount("user-a"));
+    await context.toggleOfflineMode(true);
+    expect(globalThis.navigator.onLine).toBe(true);
+    sdk.isSending = true;
+    const fetch = vi.fn(async () => new Response("{}"));
+    vi.stubGlobal("fetch", fetch);
+
+    const record = await capturePhoto();
+    goOnline();
+    await openData("user-a");
+
+    const saved = await savedRecord(record.id);
+    expect(saved?.fileId).toBe(record.fileId);
+    expect(saved?.data ?? null).toBeNull();
+    expect(opfs.list(ACCOUNT_QUEUE)).toEqual([`queued_${record.fileId}`]);
+    expect(await resolveFileUrl(record.fileId, "full")).toBe("blob:queued");
+    expect(sdk.started).toEqual([]);
+    expect(sdk.artifacts).toEqual([]);
+    expect(fetch).not.toHaveBeenCalled();
+
+    await context.toggleOfflineMode(false);
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId, fileName: "photo.png" })
+    ]);
+    expect(sdk.artifacts).toEqual([
+      expect.objectContaining({
+        fileId: record.fileId,
+        kind: "thumbnail-medium"
+      })
+    ]);
+    expect(sdk.deletes).toEqual([]);
+  });
 });

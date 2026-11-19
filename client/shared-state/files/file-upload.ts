@@ -27,6 +27,7 @@ import {
   DURABLE_UPLOAD_POLICY,
   enqueueFile,
   dequeueFile,
+  isAppOffline,
   isFileQueueSupported,
   markQueuedFileCommitted,
   resolveAccountFileQueueDir,
@@ -111,9 +112,10 @@ export const fileUpload = {
    * HEIC photo is converted to PNG and a thumbnail is made on the device, and
    * both upload as client artifacts of the file version; `remote` leaves them
    * to the account service. A thumbnail the caller passes is uploaded in every
-   * mode. A cloud account that is offline keeps the
-   * file in the FileFn OPFS queue and saves the record with its `fileId` and
-   * no bytes (see saveOnDevice); the queue uploads it later.
+   * mode. A cloud account that is offline (no network, or the app's offline
+   * mode is on) keeps the file in the FileFn OPFS queue and saves the record
+   * with its `fileId` and no bytes (see saveOnDevice); the queue uploads it
+   * later.
    *
    * A failed upload or record save is shown to the user as an error toast and
    * rethrown: a failed online upload no longer falls back to keeping the file
@@ -147,7 +149,7 @@ export const fileUpload = {
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
       const input = { id, contentType, fileName, blob, ...options };
       const owner = captureFileFnOwner();
-      if (owner && !isDeviceOffline()) {
+      if (owner && !isAppOffline()) {
         const namespace = resolveDatafnNamespace({
           account: account.get(),
           dapId: ""
@@ -232,11 +234,6 @@ type FileUploadInput = {
   thumbnailBlob?: Blob;
   isGenerateThumbnail?: boolean;
 };
-
-/** True when the browser reports no network connection. */
-function isDeviceOffline() {
-  return typeof navigator !== "undefined" && navigator.onLine === false;
-}
 
 /**
  * Keeps a file captured offline or by a local-only user on the device,

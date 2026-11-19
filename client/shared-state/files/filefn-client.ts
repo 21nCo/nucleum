@@ -7,6 +7,7 @@ import {
   type UploadResult
 } from "@filefn/client";
 import account from "@nucleum/client/runtime/account/account.store";
+import context from "@nucleum/client/runtime/context.store";
 import {
   UserDataMode,
   type UserAccount
@@ -19,6 +20,7 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import {
   countSentRequests,
+  isAppOffline,
   replayFileQueue,
   resolveAccountFileQueueDir,
   resolveFileQueueDirsOf,
@@ -278,9 +280,10 @@ export function resolveFileQueueDirs(): string[] {
 
 /**
  * Uploads the account's queued files through the client, now when online and
- * on every reconnect until the client is torn down. See replayFileQueue for
- * how tabs share the queue. A pass checks the account's records, so it runs
- * only once DataFn is in the account's namespace, and again whenever it is.
+ * on every reconnect or end of the app's offline mode until the client is torn
+ * down. See replayFileQueue for how tabs share the queue. A pass checks the
+ * account's records, so it runs only once DataFn is in the account's
+ * namespace, and again whenever it is.
  */
 function startFileQueueReplay(
   userId: string,
@@ -293,13 +296,19 @@ function startFileQueueReplay(
   const stop = datafnRuntime.subscribe((runtime) => {
     if (runtime?.namespace === `user:${userId}`) replay();
   });
+  let wasOffline = isAppOffline();
+  const stopOffline = context.subscribe(() => {
+    if (wasOffline && !isAppOffline()) replay();
+    wasOffline = isAppOffline();
+  });
   teardown.addEventListener("abort", stop, { once: true });
+  teardown.addEventListener("abort", stopOffline, { once: true });
   globalThis.addEventListener?.("online", replay, { signal: teardown });
 }
 
 function replayAccountFileQueue(uploader: FileQueueUploader) {
   const { userId, baseUrl, client, signal } = uploader;
-  if (signal.aborted || globalThis.navigator?.onLine === false) return;
+  if (signal.aborted || isAppOffline()) return;
   const namespace = `user:${userId}`;
   const isAccountRecords = () => {
     const runtime = get(datafnRuntime);
@@ -433,7 +442,7 @@ export type FileQueueUploader = {
  * was created.
  */
 export async function captureFileQueueUploader(): Promise<FileQueueUploader | null> {
-  if (globalThis.navigator?.onLine === false) return null;
+  if (isAppOffline()) return null;
   syncWithAccount();
   await settleFileFnClientSync();
   const entry = currentEntry;
