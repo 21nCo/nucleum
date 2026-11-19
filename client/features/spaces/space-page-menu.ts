@@ -89,9 +89,8 @@ export function resolveSpacePageMenu(
 }
 
 /**
- * The open space's menu with its single-key letters set as hints while
- * `isKeyed`, that is while those keys act on this space. The super bar's
- * registration and the space's top bar menu both build it here.
+ * The open space's menu, with its single-key letters added as hints when
+ * `isKeyed` is true. The callers decide when that is.
  */
 export function resolveKeyedSpacePageMenu(
   space: ISpace | IActiveSpace,

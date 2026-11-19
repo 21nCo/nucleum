@@ -96,7 +96,7 @@ test.describe("page letters", () => {
     await openMenu();
     await expect(menuHint("star")).toHaveText("S");
     await expect(menuHint("archive")).toHaveText("A");
-    await expect(menuHint("delete")).toHaveText("⌫");
+    await expect(menuHint("delete")).toHaveText("\u232B");
     await expect(star.first()).not.toContainText("Starred");
     await closeMenu();
 
@@ -187,7 +187,6 @@ test.describe("page letters", () => {
     await page.keyboard.press("d");
     await expect(page).toHaveURL(/\/calendar\/classic\/day/);
 
-    // A fresh load without a scale in the route opens the saved scale.
     await page.goto("/calendar/classic");
     await expect(page).toHaveURL(/\/calendar\/classic\/day/, {
       timeout: 15_000

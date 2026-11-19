@@ -77,7 +77,6 @@ vi.mock("@nucleum/features/spaces/SpaceSideNav.svelte", () => ({
 vi.mock("@nucleum/features/spaces/SpaceWall.svelte", () => ({
   default: () => {}
 }));
-// Keeps the live props, whose getters read SpaceBody's current values.
 vi.mock("@nucleum/features/spaces/SpaceContextZone.svelte", () => ({
   default: (_anchor: unknown, props: { isKeyed?: boolean }) => {
     mocks.zoneProps = props;
@@ -138,7 +137,6 @@ describe("space menu letters beside a pane without resource actions", () => {
   it("hides them while the user works in a page beside it, such as Calendar", async () => {
     contextZone.activatePane(BASE_CONTEXT_ZONE_PANE.id);
     await settle();
-    // The super bar still falls back to the split space's actions.
     expect(get(contextActions.active)?.id).toBe("space:split");
     expect(mocks.zoneProps?.isKeyed).toBe(false);
 
