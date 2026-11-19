@@ -44,7 +44,7 @@ describe("BoxSwitcher More measuring copy", () => {
       ?.textContent?.replace(/\s+/g, "");
   }
 
-  it("measures More with the largest count it can show, whatever row is decided", () => {
+  it("measures More with every option and the trailing entry counted, whatever row is decided", () => {
     const { container } = render(BoxSwitcher, {
       props: {
         options,
@@ -55,15 +55,14 @@ describe("BoxSwitcher More measuring copy", () => {
       }
     });
 
-    // Three other options and the trailing entry.
-    expect(measuredMoreLabel(container)).toBe("+4");
+    expect(measuredMoreLabel(container)).toBe("+5");
   });
 
-  it("counts only the other options when no trailing controls can move in", () => {
+  it("counts every option when no trailing controls can move in", () => {
     const { container } = render(BoxSwitcher, {
       props: { options, selected: "notes", isOverflowToMenu: true }
     });
 
-    expect(measuredMoreLabel(container)).toBe("+3");
+    expect(measuredMoreLabel(container)).toBe("+4");
   });
 });

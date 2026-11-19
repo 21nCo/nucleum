@@ -62,8 +62,7 @@
      * menu. `overflowWidth` then includes the room they take while they show.
      */
     overflowTrailing?:
-      | { width: number; menuItem: IContextMenuItem }
-      | undefined;
+      { width: number; menuItem: IContextMenuItem } | undefined;
     /**
      * Whether the trailing controls are in the "More" menu; the surrounding
      * layout hides them while it is true.
@@ -144,13 +143,12 @@
   /** Entries of the More menu: the hidden options and the trailing entry. */
   const moreCount = $derived(hiddenOptions.length + (trailingMenuItem ? 1 : 0));
   /**
-   * The most entries More can take (the selected option never moves into it).
-   * The measuring copy shows this count, so More's measured width does not
-   * depend on the row it helps to decide.
+   * The most entries More can take: every option, since with no selected
+   * option all of them can be hidden, and the trailing entry. The measuring
+   * copy shows this count, so More's measured width does not depend on the
+   * row it helps to decide.
    */
-  const maxMoreCount = $derived(
-    options.length - 1 + (overflowTrailing ? 1 : 0)
-  );
+  const maxMoreCount = $derived(options.length + (overflowTrailing ? 1 : 0));
 
   function measureOptions() {
     if (!measureEl) return;

@@ -411,6 +411,17 @@ test.describe("context zone overflow", () => {
     await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
     await closeMenus();
 
+    /** Reopens More > Actions by keyboard and checks Star reads Starred. */
+    const expectStarredInActions = async () => {
+      await openMoreByKeyboard();
+      await arrowDownTo(actionsEntry, "the Actions entry");
+      await page.keyboard.press("Enter");
+      await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
+      await page.keyboard.press("Escape");
+      await expect(star).toHaveCount(0, { timeout: 10_000 });
+      await page.keyboard.press("Escape");
+      await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+    };
     const reopenNote = async () => {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.reload();
@@ -508,7 +519,6 @@ test.describe("context zone overflow", () => {
       await expect(more).toBeVisible({ timeout: 10_000 });
     };
 
-    // Enter on the closed Actions entry opens it with focus inside.
     await openMoreByKeyboard();
     await arrowDownTo(actionsEntry, "the Actions entry");
     await page.keyboard.press("Enter");
@@ -525,8 +535,6 @@ test.describe("context zone overflow", () => {
     await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
     await expect(more).toBeFocused();
 
-    // Right arrow and Enter on the entry while hover shows its submenu move
-    // focus into it without closing it.
     await openMoreByKeyboard();
     await actionsEntry.hover();
     await expect(star.first()).toBeVisible({ timeout: 10_000 });
@@ -552,7 +560,6 @@ test.describe("context zone overflow", () => {
     await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
     await page.mouse.move(1, 899);
 
-    // Right arrow on the closed entry opens it; Enter on Star runs it.
     await openMoreByKeyboard();
     await arrowDownTo(actionsEntry, "the Actions entry");
     await page.keyboard.press("ArrowRight");
@@ -565,15 +572,9 @@ test.describe("context zone overflow", () => {
     await page.keyboard.press("Enter");
     await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
 
+    await expectStarredInActions();
     await reopenNote();
-    await openMoreByKeyboard();
-    await arrowDownTo(actionsEntry, "the Actions entry");
-    await page.keyboard.press("Enter");
-    await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
-    await page.keyboard.press("Escape");
-    await expect(star).toHaveCount(0, { timeout: 10_000 });
-    await page.keyboard.press("Escape");
-    await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+    await expectStarredInActions();
   });
 });
 

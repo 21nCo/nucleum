@@ -69,12 +69,16 @@ function deepActive(): Element | null {
   return active;
 }
 
+/** jsdom has no layout, so a shown layer reports no boxes and takes no keys. */
+function giveShownLayersBoxes() {
+  vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
+    {}
+  ] as unknown as DOMRectList);
+}
+
 describe("context menu submenu keyboard hand-off", () => {
   beforeEach(() => {
-    // jsdom has no layout, so a shown layer reports no boxes and takes no keys.
-    vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
-      {}
-    ] as unknown as DOMRectList);
+    giveShownLayersBoxes();
     vi.stubGlobal(
       "matchMedia",
       vi.fn(() => ({
@@ -146,16 +150,19 @@ describe("context menu submenu keyboard hand-off", () => {
   it.each([
     ["the document", documentScope],
     ["a shadow root", shadowScope]
-  ])("moves focus into a submenu that hover shows, in %s, and returns to the row", async (_name, makeScope) => {
-    const { root, row } = await openMenu(makeScope);
+  ])(
+    "moves focus into a submenu that hover shows, in %s, and returns to the row",
+    async (_name, makeScope) => {
+      const { root, row } = await openMenu(makeScope);
 
-    await fireEvent.mouseEnter(row);
-    const first = await awaitSubmenuItem(root);
-    expect(deepActive()).toBe(row);
+      await fireEvent.mouseEnter(row);
+      const first = await awaitSubmenuItem(root);
+      expect(deepActive()).toBe(row);
 
-    await fireEvent.keyDown(row, { key: "ArrowRight" });
-    await waitFor(() => expect(deepActive()).toBe(first));
+      await fireEvent.keyDown(row, { key: "ArrowRight" });
+      await waitFor(() => expect(deepActive()).toBe(first));
 
-    await expectEscapeReturnsToRow(root, row, first);
-  });
+      await expectEscapeReturnsToRow(root, row, first);
+    }
+  );
 });

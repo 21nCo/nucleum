@@ -69,15 +69,19 @@
   const closeInPlace = resolveInPlaceResourceClose();
 
   let editModeWidth = $state(0);
+  /** The record Actions button's width as last shown. */
   let measuredTrailingWidth = $state(0);
+  /**
+   * The width the switcher reserves for the record Actions button. The button
+   * is not rendered while it sits in More, so its last shown width stands in
+   * for it; it is 0 when there is no Actions menu.
+   */
   let trailingWidth = $state(0);
   /** Whether the record Actions button sits in the view tabs' More menu. */
   let isActionsInMore = $state(false);
   const TRAILING_GAP_PX = 8;
   const EDIT_MODE_GAP_PX = 12;
   const hasActionsMenu = $derived(contextMenuResolver !== undefined);
-  // The Actions button is not rendered while it sits in More, so its last
-  // shown width stands in for it.
   $effect(() => {
     if (!hasActionsMenu) trailingWidth = 0;
     else if (measuredTrailingWidth > 0) trailingWidth = measuredTrailingWidth;

@@ -102,7 +102,11 @@ export type SwitcherRow = SwitcherOverflow & {
  * leave. Only when even the smallest form (the selected option, without its
  * label when it can drop it, and More) does not fit beside them do they move
  * into the More menu; the row then keeps that smallest form, so as room
- * returns the trailing controls come back before any hidden option.
+ * returns the trailing controls come back before any hidden option. When no
+ * option is hidden, More only shows for the trailing controls, so they move
+ * into it only when the row does not fit beside them and the menu form (the
+ * selected option and More) is narrower than the row and the trailing controls
+ * together.
  */
 export function resolveSwitcherRow({
   trailingWidth = 0,
@@ -129,8 +133,6 @@ export function resolveSwitcherRow({
       padding +
       shown.reduce((sum, width) => sum + width, 0) +
       gap * Math.max(0, shown.length - 1);
-    // Without a hidden option More only shows for the trailing controls, so
-    // they move into it only when that makes the content narrower.
     if (rowWidth <= budget || smallest >= rowWidth + trailing)
       return { ...overflow, isTrailingInMenu: false };
   }
