@@ -1,0 +1,37 @@
+client/features/focus/Focus.svelte
+  s_b66d0e9dd4fae0::t_f640d3fb3c3abe 197
+client/features/focus/tasks/TaskRecords.svelte
+  s_b66d0e9dd4fae0::t_d6c2ca684a57fe 306
+client/features/memory/capture/Capture.svelte
+  s_b66d0e9dd4fae0::t_b2ba8864ccceea 355
+client/shared-state/preferences/single-key-shortcuts.ts
+  s_b66d0e9dd4fae0::t_9268ce31717208 21-41
+client/shared-state/shortcuts/shortcuts.store.ts
+  s_b66d0e9dd4fae0::t_95205694ba1bdf 15,140-149
+client/shell/shortcuts/ChordRunner.svelte
+  s_b66d0e9dd4fae0::t_e599e96610931b 111-112,127
+client/shell/shortcuts/page-keys.ts
+  s_b66d0e9dd4fae0::t_d6198cb4015977 4-7,20-22,28
+client/shell/shortcuts/single-key-setting.test.ts
+  s_b66d0e9dd4fae0::t_c4ec2414ab5dad 80-81,270-320
+client/surfaces/library/Library.svelte
+  s_b66d0e9dd4fae0::t_4b44232188145d 409
+client/surfaces/library/resourceBrowser/ResourceBrowser.svelte
+  s_b66d0e9dd4fae0::t_1c4bf983210ce7 197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3e60e1e0b0e25c98ddd30a464f965e5b10a574a2",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
