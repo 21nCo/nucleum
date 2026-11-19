@@ -8,8 +8,11 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { onMount, tick } from "svelte";
   import ContextMenuAction from "@21n/ui/elements/contextMenu/ContextMenuAction.svelte";
-  import type { IContextMenuGroup } from "@21n/ui/elements/contextMenu/context-menu.type";
-  import { resolveSwitcherOverflow } from "@21n/ui/elements/switcher/switcher-overflow";
+  import type {
+    IContextMenuGroup,
+    IContextMenuItem
+  } from "@21n/ui/elements/contextMenu/context-menu.type";
+  import { resolveSwitcherRow } from "@21n/ui/elements/switcher/switcher-overflow";
   import { tooltip } from "@21n/ui/actions/popover.action";
   import { elementControlShape as shape } from "@21n/ui/environment/control-shape";
 
@@ -26,6 +29,8 @@
     isActiveIndicatorOnTop = false,
     isOverflowToMenu = false,
     overflowWidth = undefined,
+    overflowTrailing = undefined,
+    isTrailingInMenu = $bindable(false),
     onSelect = undefined
   }: {
     options: ISelectItem[];
@@ -49,6 +54,21 @@
      * the switcher measures the room it is given.
      */
     overflowWidth?: number | undefined;
+    /**
+     * Controls the surrounding layout shows after the switcher that move into
+     * the "More" menu as the last step, when even the selected option without
+     * its label and More do not fit beside them: their width with the gap
+     * before them, and the menu entry that stands for them, which ends the
+     * menu. `overflowWidth` then includes the room they take while they show.
+     */
+    overflowTrailing?:
+      | { width: number; menuItem: IContextMenuItem }
+      | undefined;
+    /**
+     * Whether the trailing controls are in the "More" menu; the surrounding
+     * layout hides them while it is true.
+     */
+    isTrailingInMenu?: boolean;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
   $effect(() => {
@@ -89,11 +109,12 @@
   const overflow = $derived.by(() => {
     const all = {
       visible: options.map((_, index) => index),
-      isActiveCompact: false
+      isActiveCompact: false,
+      isTrailingInMenu: false
     };
     if (!isOverflowToMenu || optionWidths.length !== options.length) return all;
     if (overflowWidth === undefined && availableWidth <= 0) return all;
-    return resolveSwitcherOverflow({
+    return resolveSwitcherRow({
       widths: optionWidths,
       activeIndex: options.findIndex((option) => option.value === selected),
       available: budgetWidth,
@@ -102,8 +123,12 @@
       padding: trackPadding,
       activeCompactWidth: hasRenderedIcon(activeOption)
         ? activeCompactWidth
-        : undefined
+        : undefined,
+      trailingWidth: overflowTrailing?.width
     });
+  });
+  $effect(() => {
+    isTrailingInMenu = overflow.isTrailingInMenu;
   });
   const visibleIndexes = $derived(overflow.visible);
   const isActiveLabelHidden = $derived(overflow.isActiveCompact);
@@ -113,6 +138,11 @@
   const hiddenOptions = $derived(
     options.filter((_, index) => !visibleIndexes.includes(index))
   );
+  const trailingMenuItem = $derived(
+    overflow.isTrailingInMenu ? overflowTrailing?.menuItem : undefined
+  );
+  /** Entries of the More menu: the hidden options and the trailing entry. */
+  const moreCount = $derived(hiddenOptions.length + (trailingMenuItem ? 1 : 0));
 
   function measureOptions() {
     if (!measureEl) return;
@@ -174,8 +204,9 @@
   });
 
   function resolveMoreMenu(): IContextMenuGroup[] {
-    return [
-      {
+    const groups: IContextMenuGroup[] = [];
+    if (hiddenOptions.length > 0)
+      groups.push({
         group: "more",
         items: hiddenOptions.map((option) => ({
           ...option,
@@ -184,8 +215,10 @@
             emitSelect(option.value);
           }
         }))
-      }
-    ];
+      });
+    if (trailingMenuItem)
+      groups.push({ group: "trailing", items: [trailingMenuItem] });
+    return groups;
   }
 
   onMount(() => {
@@ -220,7 +253,7 @@
 
 {#snippet moreContent()}
   <span class="flex items-center gap-1 text-b2 whitespace-nowrap">
-    <span>+{Math.max(hiddenOptions.length, 1)}</span>
+    <span>+{Math.max(moreCount, 1)}</span>
     <Icon icon="chevron-down" size={Size.xs} />
   </span>
 {/snippet}
@@ -321,11 +354,11 @@
       >
         {@render optionButtons(items, false)}
       </div>
-      {#if hiddenOptions.length > 0}
+      {#if moreCount > 0}
         <ContextMenuAction
           id="switcherMore"
           testId="switcher-more"
-          tooltip={`+${hiddenOptions.length} more`}
+          tooltip={`+${moreCount} more`}
           menuResolver={resolveMoreMenu}
           {size}
           actionSize={size}
