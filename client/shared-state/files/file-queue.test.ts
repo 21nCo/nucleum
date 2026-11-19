@@ -642,7 +642,7 @@ describe("FileFn OPFS queue of an account's records", () => {
           child: string,
           options?: FileSystemGetFileOptions
         ) => {
-          if (child === name && !options?.create) {
+          if (child.startsWith(name) && !options?.create) {
             throw new DOMException("Unreadable", "NotReadableError");
           }
           return dir.getFileHandle(child, options);
@@ -973,16 +973,31 @@ describe("FileFn OPFS queue of an account's records", () => {
     await writable.close();
   }
 
+  /** The texts of the photo's STARTED markers, one per attempt. */
+  function readMarkers() {
+    const entry = `queued_${FILE_ID}`;
+    return opfs
+      .list(QUEUE, entry)
+      .filter((name) => name.startsWith("started"))
+      .map((name) => new TextDecoder().decode(opfs.read(QUEUE, entry, name)));
+  }
+
+  /** The photo's only STARTED marker, or undefined when it has none. */
   function readStarted() {
-    const bytes = opfs.read(QUEUE, `queued_${FILE_ID}`, "started");
-    return bytes && new TextDecoder().decode(bytes);
+    const markers = readMarkers();
+    expect(markers.length).toBeLessThan(2);
+    return markers[0];
   }
 
   /**
    * Runs `during` when a STARTED marker write closes, before it lands, then
-   * fails the write when `isFailed`.
+   * fails the write when `isFailed`, else awaits `landed` once it landed.
    */
-  function onMarkerWrite(during: () => void, isFailed = false) {
+  function onMarkerWrite(
+    during: () => Promise<void> | void,
+    isFailed = false,
+    landed?: () => Promise<void> | void
+  ) {
     const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
       ({
         ...dir,
@@ -995,7 +1010,7 @@ describe("FileFn OPFS queue of an account's records", () => {
           options?: FileSystemGetFileOptions
         ) => {
           const handle = await dir.getFileHandle(child, options);
-          if (child !== "started") return handle;
+          if (!child.startsWith("started")) return handle;
           return {
             ...handle,
             createWritable: async () => {
@@ -1003,10 +1018,11 @@ describe("FileFn OPFS queue of an account's records", () => {
               return {
                 write: (data: string) => writable.write(data),
                 close: async () => {
-                  during();
+                  await during();
                   if (isFailed)
                     throw new DOMException("Full", "QuotaExceededError");
                   await writable.close();
+                  await landed?.();
                 }
               };
             }
@@ -1065,7 +1081,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     expect(opfs.list(QUEUE)).toEqual([]);
   });
 
-  it("rewrites a corrupt STARTED marker with the owner's authority before uploading", async () => {
+  it("writes its own marker at the owner's authority beside an empty STARTED marker before uploading", async () => {
     installDevice();
     await enqueuePhoto(await openTab());
     await writeStarted("");
@@ -1078,7 +1094,9 @@ describe("FileFn OPFS queue of an account's records", () => {
     );
     await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(1));
 
-    expect(JSON.parse(readStarted()!)).toMatchObject(AUTHORITY_A);
+    const [own, ...others] = readMarkers().sort().reverse();
+    expect(JSON.parse(own)).toMatchObject(AUTHORITY_A);
+    expect(others).toEqual([""]);
     fileFn.finish();
     await done;
     expect(opfs.list(QUEUE)).toEqual([]);
@@ -1181,7 +1199,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     ["empty", ""],
     ["corrupt", '{"userId":']
   ])(
-    "unbinds a file whose %s STARTED marker it replaced when the attempt goes offline before its request",
+    "removes only its own marker beside a %s STARTED marker when the attempt goes offline before its request",
     async (_, text) => {
       installDevice();
       await enqueuePhoto(await openTab());
@@ -1197,7 +1215,7 @@ describe("FileFn OPFS queue of an account's records", () => {
         createReferences(new Set([FILE_ID])).references
       );
       expect(atA.uploads).toEqual([]);
-      expect(readStarted()).toBeUndefined();
+      expect(readMarkers()).toEqual([text]);
 
       vi.stubGlobal("navigator", {
         ...navigator,
@@ -1287,7 +1305,7 @@ describe("FileFn OPFS queue of an account's records", () => {
     await secondDone;
   });
 
-  it("keeps the marker of an attempt that sent no request without Web Locks, as another tab may have relied on it to send", async () => {
+  it("keeps the marker another tab sent under when its own attempt sent no request, without Web Locks", async () => {
     installDevice();
     await enqueuePhoto(await openTab());
     const first = await openTab();
@@ -1308,25 +1326,163 @@ describe("FileFn OPFS queue of an account's records", () => {
       createReferences(new Set([FILE_ID])).references
     );
     await vi.waitFor(() => expect(tearDown).toBeDefined());
-    const marker = readStarted();
+    const stalledMarker = readStarted();
     const uploading = createClient();
+    const markersAtSend: string[][] = [];
+    const send = uploading.client.uploadFile;
+    uploading.client.uploadFile = (input) => {
+      markersAtSend.push(readMarkers());
+      return send(input);
+    };
     const secondDone = replay(
       await openTab(),
       uploading.client,
       createReferences(new Set([FILE_ID])).references
     );
     await vi.waitFor(() => expect(uploading.uploads).toHaveLength(1));
+    const [sentMarker] = markersAtSend[0].filter((m) => m !== stalledMarker);
+    expect(markersAtSend[0]).toHaveLength(2);
+    expect(JSON.parse(sentMarker)).toMatchObject(AUTHORITY_A);
 
     tearDown!(new DOMException("The client was torn down", "AbortError"));
     await firstDone;
 
-    expect(readStarted()).toBe(marker);
+    expect(readMarkers()).toEqual([sentMarker]);
     const atB = createClient({ isImmediate: true });
     const b = createReferences(new Set([FILE_ID]), [], AUTHORITY_B);
     await replay(await openTab(), atB.client, b.references);
     expect(atB.uploads).toEqual([]);
     uploading.finish();
     await secondDone;
+  });
+
+  it.each([
+    ["authority B then leaves the file", "atB"],
+    ["deleting its record then discards it", "deleted"]
+  ] as const)(
+    "keeps the marker of a tab that sent while another's marker landed and that attempt stopped before its request, without Web Locks: %s",
+    async (_, next) => {
+      installDevice();
+      await enqueuePhoto(await openTab());
+      let release: () => void = () => undefined;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let hasLanded: () => void = () => undefined;
+      const landed = new Promise<void>((resolve) => {
+        hasLanded = resolve;
+      });
+      let isHeld = true;
+      onMarkerWrite(
+        () => undefined,
+        false,
+        () => {
+          if (!isHeld) return;
+          isHeld = false;
+          hasLanded();
+          return held;
+        }
+      );
+      let isCurrent = true;
+      const writer = createReferences(new Set([FILE_ID]));
+      writer.references.isCurrent = () => isCurrent;
+      const writerClient = createClient({ isImmediate: true });
+      const writerDone = replay(
+        await openTab(),
+        writerClient.client,
+        writer.references
+      );
+      await landed;
+      const writerMarker = readStarted();
+      const sender = createClient();
+      const senderDone = replay(
+        await openTab(),
+        sender.client,
+        createReferences(new Set([FILE_ID])).references
+      );
+      await vi.waitFor(() => expect(sender.uploads).toHaveLength(1));
+      const [sentMarker] = readMarkers().filter((m) => m !== writerMarker);
+
+      isCurrent = false;
+      release();
+      await writerDone;
+
+      expect(writerClient.uploads).toEqual([]);
+      expect(readMarkers()).toEqual([sentMarker]);
+      expect(JSON.parse(sentMarker)).toMatchObject(AUTHORITY_A);
+      const after = createClient({ isImmediate: true });
+      const { references, discarded } =
+        next === "atB"
+          ? createReferences(new Set([FILE_ID]), [], AUTHORITY_B)
+          : createReferences(new Set());
+      await replay(await openTab(), after.client, references);
+      expect(after.uploads).toEqual([]);
+      expect(discarded).toEqual(next === "atB" ? [] : [FILE_ID]);
+      expect(opfs.list(QUEUE)).toEqual(
+        next === "atB" ? [`queued_${FILE_ID}`] : []
+      );
+      sender.finish();
+      await senderDone;
+    }
+  );
+
+  it("removes the marker of a single tab whose torn-down client sent no request, so authority B uploads the file, without Web Locks", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    const tab = await openTab();
+    const torn = createClient({
+      uploadError: new DOMException("The client was torn down", "AbortError")
+    });
+    tab.countSentRequests(torn.client, { count: 0 });
+    await replay(
+      tab,
+      torn.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+    expect(torn.uploads).toHaveLength(1);
+    expect(readMarkers()).toEqual([]);
+
+    const atB = createClient({ isImmediate: true });
+    await replay(
+      await openTab(),
+      atB.client,
+      createReferences(new Set([FILE_ID]), [], AUTHORITY_B).references
+    );
+
+    expect(atB.uploads).toEqual([expect.objectContaining({ fileId: FILE_ID })]);
+  });
+
+  it("sends from neither of two first attempts at authorities A and B whose markers both land before either reads them, without Web Locks", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    const barrier = () => {
+      let count = 0;
+      let release: () => void = () => undefined;
+      const both = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return () => {
+        if (++count === 2) release();
+        return both;
+      };
+    };
+    onMarkerWrite(barrier(), false, barrier());
+    const atA = createClient({ isImmediate: true });
+    const atB = createClient({ isImmediate: true });
+    const a = createReferences(new Set([FILE_ID]));
+    const b = createReferences(new Set([FILE_ID]), [], AUTHORITY_B);
+
+    await Promise.all([
+      replay(await openTab(), atA.client, a.references),
+      replay(await openTab(), atB.client, b.references)
+    ]);
+
+    expect([...atA.uploads, ...atB.uploads]).toEqual([]);
+    expect(readMarkers()).toEqual([]);
+    await replay(await openTab(), atA.client, a.references);
+    expect(atA.uploads).toEqual([expect.objectContaining({ fileId: FILE_ID })]);
+    expect(atB.uploads).toEqual([]);
+    expect(opfs.list(QUEUE)).toEqual([]);
   });
 
   it("sends from another tab under its own marker only after an attempt that sent no request removed its marker, with Web Locks", async () => {

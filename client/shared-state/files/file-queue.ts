@@ -39,6 +39,7 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
+/** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 
 /** FileFn upload policies the account service registers (Nucleus policies). */
@@ -64,8 +65,6 @@ export type QueuedFileRecord = { id: string } & Record<string, unknown>;
 
 /** The cloud account, at its FileFn authority, that a local file uploads to. */
 export type QueuedFileClaim = { userId: string; baseUrl: string };
-/** The claim of an attempt that may have started a file's upload. */
-type StartedMarker = QueuedFileClaim & { attempt?: string };
 
 /**
  * Publishes the record of a local file that uploaded, so the account holds a
@@ -718,10 +717,10 @@ async function replayEntry(
 }
 
 /**
- * Replays a file of an account's queue (see replayFileQueue). Its marker and
+ * Replays a file of an account's queue (see replayFileQueue). Its markers and
  * committed mark are read before its record, so a capture saving its record
  * meanwhile keeps the file; an empty or invalid marker (an interrupted write)
- * is the owner's attempt.
+ * may be the owner's attempt.
  */
 async function replayAccountEntry(
   pass: ReplayPass,
@@ -730,9 +729,8 @@ async function replayAccountEntry(
 ): Promise<EntryOutcome> {
   const { dir } = pass;
   const { fileId, uploadSessionId: entryName } = pending;
-  const started = await readEntryText(dir, entryName, STARTED_FILE, true);
-  const marked = parseJson(started, isClaim);
-  if (marked && !isSameClaim(marked, references.owner)) return "done";
+  const markers = await readMarkers(dir, entryName);
+  if (isStartedElsewhere(markers, references)) return "done";
   const isCommitted = await hasEntryFile(dir, entryName, COMMITTED_FILE);
   const isRecent = !(
     Date.now() - Date.parse(pending.createdAt) >=
@@ -741,18 +739,17 @@ async function replayAccountEntry(
   const isReferenced = await isReferencedNow(pass, references, fileId);
   if (isReferenced === undefined) return "stop";
   if (!isReferenced) {
-    if (started === undefined && !isCommitted && isRecent) {
+    if (!markers.length && !isCommitted && isRecent) {
       scheduleGraceDeadline(pass, pending.createdAt);
       return "done";
     }
-    return removeAccountEntry(pass, references, fileId, started !== undefined);
+    return removeAccountEntry(pass, references, fileId, markers.length > 0);
   }
   if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
   const result = await uploadEntry(pass, pending, {
-    write: () => (marked ? undefined : markStarted(dir, entryName, references)),
+    write: () => markStarted(dir, entryName, references),
     isReady: () => !pass.request.signal.aborted && references.isCurrent(),
-    undo: (attempt, isCalled) =>
-      unmarkStarted(dir, entryName, attempt, isCalled)
+    undo: (attempt) => unmarkStarted(dir, entryName, attempt)
   });
   const isStillReferenced = await isReferencedNow(pass, references, fileId);
   if (isStillReferenced === undefined) return "stop";
@@ -761,49 +758,60 @@ async function replayAccountEntry(
 }
 
 /**
- * Marks a file started at the owner's authority by a new attempt, unless a
- * valid marker exists by now: one of the owner's is kept, another's stops it.
+ * Reads a file's started markers, each parsed or undefined when empty or
+ * invalid; a read error other than a missing file rejects.
+ */
+async function readMarkers(dir: string, entryName: string) {
+  const entry = await getEntryDir(dir, entryName, true);
+  const markers: (QueuedFileClaim | undefined)[] = [];
+  for await (const name of entry
+    ? (entry as unknown as { keys(): AsyncIterable<string> }).keys()
+    : []) {
+    if (!name.startsWith(STARTED_FILE)) continue;
+    const text = await readEntryText(dir, entryName, name, true);
+    if (text !== undefined) markers.push(parseJson(text, isClaim));
+  }
+  return markers;
+}
+
+function isStartedElsewhere(
+  markers: (QueuedFileClaim | undefined)[],
+  { owner }: QueuedFileReferences
+) {
+  return markers.some((marker) => marker && !isSameClaim(marker, owner));
+}
+
+/**
+ * Writes a new attempt's own started marker at the owner's authority, then
+ * reads every marker: one of another authority by now stops the attempt, as
+ * that attempt, writing first, stops or, writing later, sees this marker.
  */
 async function markStarted(
   dir: string,
   entryName: string,
-  { owner }: QueuedFileReferences
+  references: QueuedFileReferences
 ) {
-  const text = await readEntryText(dir, entryName, STARTED_FILE, true);
-  const marked = parseJson(text, isClaim);
-  if (marked && isSameClaim(marked, owner)) return undefined;
-  if (marked) throw new DOMException("Started elsewhere", "NetworkError");
   const attempt = crypto.randomUUID();
-  const marker = JSON.stringify({ ...owner, attempt });
-  await writeEntryFile(dir, entryName, STARTED_FILE, marker).catch(
-    async (error: unknown) => {
-      await unmarkStarted(dir, entryName);
-      throw error;
+  const marker = JSON.stringify({ ...references.owner, attempt });
+  try {
+    await writeEntryFile(dir, entryName, `${STARTED_FILE}-${attempt}`, marker);
+    if (isStartedElsewhere(await readMarkers(dir, entryName), references)) {
+      throw new DOMException("Started elsewhere", "NetworkError");
     }
-  );
+  } catch (error) {
+    await unmarkStarted(dir, entryName, attempt);
+    throw error;
+  }
   return attempt;
 }
 
-/**
- * Removes a file's started marker while it is still the attempt's own or,
- * without an attempt, while it is invalid (a failed write). Without Web Locks,
- * another tab's pass may have relied on the marker to send while the attempt
- * waited for its upload's first request, so a marker kept past the attempt's
- * `uploadFile` call (`isCalled`) stays.
- */
-async function unmarkStarted(
-  dir: string,
-  entryName: string,
-  attempt?: string,
-  isCalled = false
-) {
+/** Removes an attempt's own started marker; no other attempt removes it. */
+async function unmarkStarted(dir: string, entryName: string, attempt: string) {
   try {
-    const text = await readEntryText(dir, entryName, STARTED_FILE, true);
-    const marked = parseJson<StartedMarker>(text, isClaim);
-    if (attempt ? marked?.attempt !== attempt : marked) return;
-    if (isCalled && !globalThis.navigator?.locks) return;
-    await (await getEntryDir(dir, entryName))?.removeEntry(STARTED_FILE);
+    const entry = await getEntryDir(dir, entryName);
+    await entry?.removeEntry(`${STARTED_FILE}-${attempt}`);
   } catch (error) {
+    if ((error as Error)?.name === "NotFoundError") return;
     logger.warn({ at: "fileQueue.replay.started", entryName, error });
   }
 }
@@ -911,14 +919,14 @@ async function claimEntry(
 }
 
 /**
- * Marks a file started at its owner's authority before the request, sent only
- * while `isReady` (same step); an attempt whose client sent no request undoes
- * the marker it wrote, identified by the `write` result.
+ * Marks a file started at its owner's authority with the attempt's own marker
+ * before the request, sent only while `isReady` (same step); an attempt whose
+ * client sent no request undoes its marker, identified by the `write` result.
  */
 type StartMark = {
-  write(): Promise<string | undefined> | undefined;
+  write(): Promise<string>;
   isReady(): boolean;
-  undo(attempt: string, isCalled: boolean): Promise<void>;
+  undo(attempt: string): Promise<void>;
 };
 
 /** Throws while the device is offline or the attempt is no longer ready. */
@@ -967,7 +975,7 @@ async function uploadQueuedFile(
       .done();
   } catch (error) {
     const isUnsent = !isSending || (sent && sent.count === sentBefore);
-    if (attempt && isUnsent) await mark?.undo(attempt, isSending);
+    if (attempt && isUnsent) await mark?.undo(attempt);
     if (!(error instanceof FileFnHttpError)) throw error;
     if (error.code === "FILEFN_UPLOAD_ALREADY_COMPLETED") {
       const file = await client.getFile(pending.fileId);
