@@ -21,6 +21,7 @@ import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import {
   countSentRequests,
   isAppOffline,
+  readOfflineModeWith,
   replayFileQueue,
   resolveAccountFileQueueDir,
   resolveFileQueueDirsOf,
@@ -33,6 +34,8 @@ const FILEFN_OFFLINE_DIR_PREFIX = "filefn-pending-uploads";
 const OFFLINE_REPLAY_START_FILE_ID = "";
 const OFFLINE_REPLAY_LOCK_PREFIX = "filefn-offline-replay";
 const PENDING_DELETE_DIR_PREFIX = "filefn-pending-deletes";
+
+readOfflineModeWith(() => get(context).isInOfflineMode === true);
 
 /** Signed-in cloud account that owns a FileFn client. */
 export type FileFnAccountScope = {

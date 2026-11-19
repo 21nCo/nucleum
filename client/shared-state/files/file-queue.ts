@@ -5,8 +5,6 @@ import {
   type PendingUpload,
   type UploadResult
 } from "@filefn/client";
-import { get } from "svelte/store";
-import context from "@nucleum/client/runtime/context.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import { DEVICE_THUMBNAIL_KIND } from "@nucleum/shared-state/files/file-processing";
 
@@ -936,10 +934,17 @@ type StartMark = {
   undo(attempt: string): Promise<void>;
 };
 
+let isOfflineModeOn = (): boolean => false;
+
+/** Sets how isAppOffline reads offline mode, so the queue imports no store. */
+export function readOfflineModeWith(read: () => boolean) {
+  isOfflineModeOn = read;
+}
+
 /** True while the device has no network or the app's offline mode is on. */
 export function isAppOffline(): boolean {
   const isNetworkOffline = globalThis.navigator?.onLine === false;
-  return isNetworkOffline || get(context).isInOfflineMode === true;
+  return isNetworkOffline || isOfflineModeOn();
 }
 
 /** Throws while the app is offline or the attempt is no longer ready. */

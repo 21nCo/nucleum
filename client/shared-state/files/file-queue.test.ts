@@ -384,6 +384,37 @@ describe("FileFn OPFS queue", () => {
     expect(fileFn.uploads).toHaveLength(0);
     expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
   });
+
+  it("keeps the file queued while the app's offline mode is on, and uploads it once the mode is off", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    let isOfflineMode = true;
+    tab.readOfflineModeWith(() => isOfflineMode);
+    const fileFn = createClient({ isImmediate: true });
+    const replay = () =>
+      tab.replayFileQueue(QUEUE, fileFn.client, new AbortController().signal);
+
+    await replay();
+    expect(fileFn.uploads).toHaveLength(0);
+    expect(opfs.list(QUEUE)).toEqual([`queued_${FILE_ID}`]);
+
+    isOfflineMode = false;
+    await replay();
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+
+  it("loads without a Svelte store, so each tab's queue module loads cheaply", async () => {
+    vi.doMock("svelte/store", () => {
+      throw new Error("The queue imported a Svelte store");
+    });
+    try {
+      await expect(openTab()).resolves.toHaveProperty("isAppOffline");
+    } finally {
+      vi.doUnmock("svelte/store");
+    }
+  });
 });
 
 describe("FileFn OPFS queue of an account's records", () => {
