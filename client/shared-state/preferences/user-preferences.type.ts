@@ -24,6 +24,11 @@ export type IUserGlobalPreferences = {
   tempColorScheme: string;
   accessibilitySizingFactor: number;
   isAnonymousAnalyticsEnabled: boolean;
+  /**
+   * Whether shortcuts that run on one key press without Cmd, Ctrl or Option
+   * are on (WCAG 2.1.4). Absent means on.
+   */
+  isSingleKeyShortcutsEnabled?: boolean;
   timeFormat: string;
   timeZoneOffset: number;
   timeZoneLabel: string;

@@ -10,6 +10,7 @@
   import { appStore } from "@nucleum/shared-state/app-context/app.store";
   import Button from "@21n/ui/elements/button/Button.svelte";
   import {
+    areSingleKeyShortcutsEnabled,
     isKeyTargetPane,
     isPlainPageKey
   } from "@nucleum/shell/shortcuts/page-keys";
@@ -131,15 +132,22 @@
       )
   }));
 
-  /** The scale as a calendar menu option group, for compact top bars. */
+  /**
+   * The scale as a calendar menu option group, for compact top bars. Each
+   * option shows the letter key that picks it, unless single-key shortcuts
+   * are off.
+   */
   export function resolveScaleMenuGroup(): IContextMenuGroup[] {
+    const options = areSingleKeyShortcutsEnabled()
+      ? switchOptions
+      : switchOptions.map((option) => ({ ...option, icon: undefined }));
     return [
       {
         group: "scale",
         items: [],
         option: {
           label: "Scale",
-          options: switchOptions as ISelectItem[],
+          options: options as ISelectItem[],
           value: selectedView,
           onChange: (value: ISelectValue) =>
             handleScaleSelection(

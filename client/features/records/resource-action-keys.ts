@@ -6,7 +6,11 @@ import type {
 import { KeyboardKey } from "@21n/ui/elements/keyboard/keyboard.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
-import { isKeyTargetPane } from "@nucleum/shell/shortcuts/page-keys";
+import {
+  areSingleKeyShortcutsEnabled,
+  isKeyTargetPane
+} from "@nucleum/shell/shortcuts/page-keys";
+import { singleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
 import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
 import { contextZone } from "@nucleum/shell/topNav/contextZone/context-zone";
 
@@ -46,8 +50,12 @@ export function resolveResourceActionKey(
     : undefined;
 }
 
-/** Copies a resource menu with each item's single key set as its hint. */
+/**
+ * Copies a resource menu with each item's single key set as its hint. While
+ * single-key shortcuts are off it returns the menu as it is, so no hints show.
+ */
 export function withResourceActionKeys(menu: IContextMenu): IContextMenu {
+  if (!areSingleKeyShortcutsEnabled()) return menu;
   return menu.map((group) => ({
     ...group,
     items: group.items.map((item) => {
@@ -61,14 +69,17 @@ export function withResourceActionKeys(menu: IContextMenu): IContextMenu {
  * The registered resource actions whose single keys run now: the super bar's
  * active registration while its pane is the key target. Letter hints follow
  * it, so a hint never shows for a key that will not run, such as the actions
- * of a split resource while the user works in Calendar beside it.
+ * of a split resource while the user works in Calendar beside it. None
+ * while single-key shortcuts are off.
  */
 export const keyedContextActions = derived(
   [
+    singleKeyShortcutsEnabled,
     contextActions.active,
     contextZone.activePaneId,
     contextZone.pane,
     contextZone.visibleLayers
   ],
-  ([entry]) => (entry && isKeyTargetPane(entry.pane) ? entry : undefined)
+  ([isEnabled, entry]) =>
+    isEnabled && entry && isKeyTargetPane(entry.pane) ? entry : undefined
 );

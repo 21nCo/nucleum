@@ -9,7 +9,10 @@
   import { Embed } from "@nucleum/client/runtime/context.type";
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
-  import { markChordEndingKey } from "@nucleum/shell/shortcuts/page-keys";
+  import {
+    areSingleKeyShortcutsEnabled,
+    markChordEndingKey
+  } from "@nucleum/shell/shortcuts/page-keys";
   import {
     CHORD_TIMEOUT_MS,
     hasModifier,
@@ -81,11 +84,13 @@
   /**
    * Starts a chord for 1.5 seconds on a plain G that no shortcut without a
    * prefix takes, with the same guards as the shortcut runner: not on
-   * handsets, in a text field, behind a right-side drawer, or while a modal,
-   * dialog, popover or modal sheet is in front.
+   * handsets, in a text field, behind a right-side drawer, while a modal,
+   * dialog, popover or modal sheet is in front, or while single-key shortcuts
+   * are off.
    */
   const startListener = (event: KeyboardEvent) => {
     if (!isChordStart(event)) return;
+    if (!areSingleKeyShortcutsEnabled()) return;
     if ($context.embed === Embed.HANDSET) return;
     if (isChordEditableTarget(event.target)) return;
     if (isRightDrawerOnFront() || isViewKeyLayerOnFront()) return;
