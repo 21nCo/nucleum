@@ -1,0 +1,27 @@
+apps/e2e-playwright/tests/shared/page-letters.spec.ts
+  s_b66d0e9dd4fae0::t_c7b06c7b1b841b 19-24,353-501
+client/features/memory/markdown/NodularMarkdown.svelte
+  s_b66d0e9dd4fae0::t_bacce9bc7568bc 29
+client/features/memory/markdown/note-editor-focus.ts
+  s_b66d0e9dd4fae0::t_d8fd82328cc236 28-30,61-67,91-92,124-130,133-136
+client/features/memory/node/Node.svelte
+  s_b66d0e9dd4fae0::t_24dbc8cc93957d 39,43-44,72-81
+client/features/memory/node/note-pane-edit.test.ts
+  s_b66d0e9dd4fae0::t_f6202b04ab8c98 159-174,177-220
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a0984505401cd0303de4e57ea3794be386615721",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
