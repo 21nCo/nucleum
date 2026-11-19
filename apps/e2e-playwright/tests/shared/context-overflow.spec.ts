@@ -365,7 +365,7 @@ test.describe("context zone overflow", () => {
     const actionsButton = page.getByTestId("resource-record-context-menu");
     await expect(actionsButton).toBeVisible({ timeout: 15_000 });
 
-    await page.setViewportSize({ width: 900, height: 900 });
+    await page.setViewportSize({ width: 950, height: 900 });
     const more = page.getByTestId("switcher-more");
     await expect(more).toBeVisible({ timeout: 10_000 });
     await expect(actionsButton).toHaveCount(0);
@@ -416,7 +416,7 @@ test.describe("context zone overflow", () => {
     await ensureInAppOnHome(page);
     await openNodeRecordFromLibraryById(page, node.id);
     await expect(actionsButton).toBeVisible({ timeout: 15_000 });
-    await page.setViewportSize({ width: 900, height: 900 });
+    await page.setViewportSize({ width: 950, height: 900 });
     await expect(more).toBeVisible({ timeout: 10_000 });
     await expect(actionsButton).toHaveCount(0);
     await openStarFromMore();
