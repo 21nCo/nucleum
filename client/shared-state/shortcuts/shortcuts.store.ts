@@ -12,6 +12,7 @@ import { requireShortcutHost } from "./shortcut-host";
 import { replacer } from "@21n/shared-utils/json.utils";
 import { datafn } from "@nucleum/datafn/datafn.store";
 import { notifyElementShortcutsChanged } from "@21n/ui/hosts/shortcut-host";
+import { isSingleKeyShortcutBlocked } from "@nucleum/shared-state/preferences/single-key-shortcuts";
 
 const keyboardShortcutsSignal = datafn.kv.signal<IKeyboardShortcutsStore>(
   Resource.keyboardShortcuts,
@@ -134,6 +135,16 @@ export const keyboardShortcuts = {
       logger.error({ error, shortcut, event });
       return false;
     }
+  },
+
+  /**
+   * Whether a key press matches a shortcut a page or component listens for,
+   * as `checkShortcut` does, except that a press without Cmd, Ctrl or Option
+   * matches nothing while single-key shortcuts are off.
+   */
+  checkPageShortcut(event: KeyboardEvent, shortcut: string | IKeyboardShortcut) {
+    if (isSingleKeyShortcutBlocked(event)) return false;
+    return this.checkShortcut(event, shortcut);
   },
 
   destroy() {

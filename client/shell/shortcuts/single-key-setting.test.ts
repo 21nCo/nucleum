@@ -77,6 +77,8 @@ import ClassicCalendarHeaderLeftOptions from "@nucleum/features/calendar/classic
 import { areSingleKeyShortcutsEnabled, isPlainPageKey } from "./page-keys";
 import ShortcutRunner from "./ShortcutRunner.svelte";
 import ChordRunner from "./ChordRunner.svelte";
+import ComponentShortcutListener from "@21n/ui/compositions/keyboard/ComponentShortcutListener.svelte";
+import { ModifierKey } from "@21n/ui/elements/keyboard/keyboard.type";
 
 function keydown(key: string, init: KeyboardEventInit = {}) {
   return new KeyboardEvent("keydown", {
@@ -264,6 +266,57 @@ describe("the chord runner with single-key shortcuts", () => {
     expect(press("g").defaultPrevented).toBe(false);
     expect(press("c").defaultPrevented).toBe(false);
     expect(mocks.runAction).not.toHaveBeenCalled();
+  });
+
+  it("ends a pending G chord without running it once turned off", () => {
+    expect(press("g").defaultPrevented).toBe(true);
+    syncSingleKeyShortcutsEnabled(false);
+
+    expect(press("c").defaultPrevented).toBe(false);
+    expect(mocks.runAction).not.toHaveBeenCalled();
+  });
+});
+
+describe("component shortcut listeners with single-key shortcuts", () => {
+  const create = vi.fn();
+  const linkBox = vi.fn();
+
+  beforeEach(() => {
+    document.body.innerHTML = "";
+    vi.clearAllMocks();
+    configureShortcutHost({
+      defaults: shortcutsConfig,
+      configurableActions: () => []
+    });
+    keyboardShortcuts.loader({});
+    render(ComponentShortcutListener, {
+      props: {
+        checkShortcut: keyboardShortcuts.checkPageShortcut.bind(
+          keyboardShortcuts
+        ),
+        shortcuts: [
+          { shortcut: Action.CREATE, callback: create },
+          {
+            shortcut: { key: "l", modifiers: [ModifierKey.META] },
+            callback: linkBox
+          }
+        ]
+      }
+    });
+  });
+
+  it("runs a page's N while on", () => {
+    expect(press("n").defaultPrevented).toBe(true);
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not run a page's N while off, and still runs Cmd+L", () => {
+    syncSingleKeyShortcutsEnabled(false);
+
+    expect(press("n").defaultPrevented).toBe(false);
+    expect(create).not.toHaveBeenCalled();
+    expect(press("l", { metaKey: true }).defaultPrevented).toBe(true);
+    expect(linkBox).toHaveBeenCalledTimes(1);
   });
 });
 

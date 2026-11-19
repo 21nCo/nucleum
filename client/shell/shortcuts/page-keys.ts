@@ -1,7 +1,10 @@
 import { get } from "svelte/store";
 import { isChordEditableTarget } from "@nucleum/shell/shortcuts/chord-keys";
 import { isViewKeyLayerOnFront } from "@nucleum/shell/shortcuts/front-layer";
-import { readSingleKeyShortcutsEnabled } from "@nucleum/shared-state/preferences/single-key-shortcuts";
+import {
+  isSingleKeyPress,
+  readSingleKeyShortcutsEnabled
+} from "@nucleum/shared-state/preferences/single-key-shortcuts";
 import {
   contextZone,
   type ContextZonePane
@@ -14,16 +17,15 @@ const chordEndingKeys = new WeakSet<KeyboardEvent>();
  * (Shift allowed) are on, from the "Single-key shortcuts" switch in Shortcuts
  * settings (WCAG 2.1.4). Every single-key listener reads it: page letters and
  * Calendar keys through `isPlainPageKey`, the shortcut runner for registered
- * shortcuts and view digits, and the chord runner before a G chord starts.
+ * shortcuts and view digits, the chord runner before a G chord starts and
+ * before its second key runs, and component shortcut listeners through
+ * `keyboardShortcuts.checkPageShortcut`.
  */
 export function areSingleKeyShortcutsEnabled() {
   return readSingleKeyShortcutsEnabled();
 }
 
-/** Whether a key press has none of Cmd, Ctrl or Option (Shift allowed). */
-export function isSingleKeyPress(event: KeyboardEvent) {
-  return !event.metaKey && !event.ctrlKey && !event.altKey;
-}
+export { isSingleKeyPress };
 
 /**
  * Marks the key that ended a pending G chord without matching one. The chord

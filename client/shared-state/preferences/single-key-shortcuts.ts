@@ -18,6 +18,27 @@ export function readSingleKeyShortcutsEnabled() {
   return get(isEnabled);
 }
 
+/** Whether a key press has none of Cmd, Ctrl or Option (Shift allowed). */
+export function isSingleKeyPress(event: {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+}) {
+  return !event.metaKey && !event.ctrlKey && !event.altKey;
+}
+
+/**
+ * Whether a key press must run no shortcut because it is a single-key press
+ * and single-key shortcuts are off.
+ */
+export function isSingleKeyShortcutBlocked(event: {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  altKey: boolean;
+}) {
+  return isSingleKeyPress(event) && !get(isEnabled);
+}
+
 /** Sets the flag from the user's preference. Only the preferences store calls it. */
 export function syncSingleKeyShortcutsEnabled(value: boolean) {
   isEnabled.set(value);

@@ -108,7 +108,8 @@
    * page shortcuts for the same key do not take it first. G then 1 to 9 opens the
    * pinned space in that app menu position. Typing in a field, or a right-side
    * drawer, modal, dialog, popover or modal sheet opened meanwhile (even one
-   * closed again), ends the chord and leaves the key to them. A plain Escape
+   * closed again), or single-key shortcuts turned off meanwhile, ends the
+   * chord and leaves the key to them. A plain Escape
    * on the page ends the chord and is consumed, so the shell does not also
    * close the top layer;
    * inside such a layer, or with a modifier (Cmd+Escape), Escape ends the
@@ -123,6 +124,7 @@
     const prefix = pendingPrefix;
     clearChord();
     if (
+      !areSingleKeyShortcutsEnabled() ||
       isChordEditableTarget(event.target) ||
       $context.embed === Embed.HANDSET ||
       isRightDrawerOnFront() ||
