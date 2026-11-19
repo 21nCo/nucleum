@@ -886,12 +886,13 @@ async function uploadQueuedFile(
   pending: PendingUpload & { fileId: string },
   mark?: StartMark
 ): Promise<UploadResult> {
-  let isSent = false;
+  let step: "check" | "mark" | "send" = "check";
   try {
     assertSendable();
+    step = "mark";
     await mark?.write();
     assertSendable(mark);
-    isSent = true;
+    step = "send";
     return await client
       .uploadFile({
         policy: pending.policy,
@@ -904,7 +905,7 @@ async function uploadQueuedFile(
       })
       .done();
   } catch (error) {
-    if (!isSent) await mark?.undo();
+    if (step === "mark") await mark?.undo();
     if (!(error instanceof FileFnHttpError)) throw error;
     if (error.code === "FILEFN_UPLOAD_ALREADY_COMPLETED") {
       const file = await client.getFile(pending.fileId);

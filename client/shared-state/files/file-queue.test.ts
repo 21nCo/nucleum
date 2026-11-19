@@ -1215,6 +1215,40 @@ describe("FileFn OPFS queue of an account's records", () => {
     }
   );
 
+  it("keeps the marker of another tab's started upload when its own attempt stops before marking, without Web Locks", async () => {
+    installDevice();
+    await enqueuePhoto(await openTab());
+    const first = await openTab();
+    const second = await openTab();
+    let release: (() => void) | undefined;
+    const held = createReferences(new Set([FILE_ID]));
+    held.references.isReferenced = () =>
+      new Promise((resolve) => {
+        release = () => resolve(true);
+      });
+    const firstDone = replay(
+      first,
+      createClient({ isImmediate: true }).client,
+      held.references
+    );
+    await vi.waitFor(() => expect(release).toBeDefined());
+    const uploading = createClient();
+    const secondDone = replay(
+      second,
+      uploading.client,
+      createReferences(new Set([FILE_ID])).references
+    );
+    await vi.waitFor(() => expect(uploading.uploads).toHaveLength(1));
+
+    (navigator as { onLine: boolean }).onLine = false;
+    release!();
+    await firstDone;
+
+    expect(JSON.parse(readStarted()!)).toEqual(AUTHORITY_A);
+    uploading.finish();
+    await secondDone;
+  });
+
   it("removes a recent file without a record at its grace deadline, without another trigger", async () => {
     installDevice();
     const tab = await openTab();
