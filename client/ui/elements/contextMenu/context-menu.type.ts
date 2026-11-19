@@ -35,6 +35,12 @@ export type IContextMenuItem = ISelectItem & {
   secondStepComponent?: {
     component: any;
     props?: any;
+    /**
+     * Whether opening the submenu from the keyboard (Enter, Space or Right
+     * arrow) moves focus into it, so its items take Up, Down and Escape;
+     * Escape then returns focus to the item.
+     */
+    isFocusedOnKeyboardOpen?: boolean;
   };
 };
 

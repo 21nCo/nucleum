@@ -118,6 +118,7 @@
     label: "Actions",
     icon: "more-outline-horizontal",
     secondStepComponent: {
+      isFocusedOnKeyboardOpen: true,
       component: ContextMenu,
       props: {
         menuResolver: resolveContextMenu,

@@ -443,6 +443,89 @@ test.describe("context zone overflow", () => {
     await expect(star.first()).toBeVisible({ timeout: 10_000 });
     await expect(star.first()).not.toContainText("Starred");
   });
+
+  test("a note's record Actions in the More menu take the keyboard: arrows pick an action, Enter runs it and Escape steps back", async ({
+    page
+  }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E record actions keyboard ${Date.now()}`
+    });
+    await openNodeRecordFromLibraryById(page, node.id);
+    await expect(page.getByTestId("resource-record-context-menu")).toBeVisible({
+      timeout: 15_000
+    });
+    await page.setViewportSize({ width: 950, height: 900 });
+    const more = page.getByTestId("switcher-more");
+    await expect(more).toBeVisible({ timeout: 10_000 });
+
+    const menuItems = page.locator(".popover button.contextmenuitem");
+    const actionsEntry = page.locator(
+      ".popover [data-context-menu-item-id='record-actions']"
+    );
+    const star = page.locator(".popover [data-context-menu-item-id='star']");
+    const focusedId = () =>
+      page.evaluate(
+        () =>
+          (document.activeElement as HTMLElement | null)?.getAttribute(
+            "data-context-menu-item-id"
+          ) ?? null
+      );
+
+    const isFocusInSubmenu = () =>
+      page.evaluate(
+        () =>
+          !!document.activeElement?.closest("#secondary-popovers") &&
+          document.activeElement?.matches("button.contextmenuitem")
+      );
+
+    await more.focus();
+    await page.keyboard.press("Enter");
+    await expect(actionsEntry).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("ArrowDown");
+    await expect.poll(focusedId).not.toBeNull();
+    while ((await focusedId()) !== "record-actions")
+      await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    await expect.poll(isFocusInSubmenu).toBe(true);
+    await expect(star.first()).not.toContainText("Starred");
+    await page.keyboard.press("ArrowDown");
+    await expect.poll(isFocusInSubmenu).toBe(true);
+
+    await page.keyboard.press("Escape");
+    await expect(star).toHaveCount(0, { timeout: 10_000 });
+    await expect(actionsEntry).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+    await expect(more).toBeFocused();
+
+    await page.keyboard.press("Enter");
+    await expect(actionsEntry).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("ArrowDown");
+    while ((await focusedId()) !== "record-actions")
+      await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowRight");
+    await expect(star.first()).toBeVisible({ timeout: 10_000 });
+    await expect.poll(isFocusInSubmenu).toBe(true);
+    while ((await focusedId()) !== "star") await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+
+    await more.focus();
+    await page.keyboard.press("Enter");
+    await expect(actionsEntry).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("ArrowDown");
+    while ((await focusedId()) !== "record-actions")
+      await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(star.first()).toContainText("Starred", { timeout: 10_000 });
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+    await expect(menuItems).toHaveCount(0, { timeout: 10_000 });
+  });
 });
 
 /** The calendar controls' level once the top bar has laid out and measured them. */

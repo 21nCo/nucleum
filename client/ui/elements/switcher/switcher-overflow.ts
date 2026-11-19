@@ -111,16 +111,28 @@ export function resolveSwitcherRow({
   const trailing = Math.max(0, trailingWidth);
   const budget = input.available - trailing;
   const overflow = resolveSwitcherOverflow({ ...input, available: budget });
-  if (trailing === 0 || overflow.visible.length === input.widths.length)
-    return { ...overflow, isTrailingInMenu: false };
+  if (trailing === 0) return { ...overflow, isTrailingInMenu: false };
   const { widths, activeIndex, moreWidth, gap = 0, padding = 0 } = input;
   const hasActive = activeIndex >= 0 && activeIndex < widths.length;
   const activeWidth = overflow.isActiveCompact
     ? (input.activeCompactWidth ?? 0)
     : (widths[activeIndex] ?? 0);
-  const smallest =
-    padding + moreWidth + (hasActive ? activeWidth + gap : 0);
-  if (smallest <= budget) return { ...overflow, isTrailingInMenu: false };
+  const hasHidden = overflow.visible.length < widths.length;
+  if (!hasHidden) {
+    const shown = overflow.visible.map((index) =>
+      overflow.isActiveCompact && index === activeIndex
+        ? activeWidth
+        : widths[index]
+    );
+    const rowWidth =
+      padding +
+      shown.reduce((sum, width) => sum + width, 0) +
+      gap * Math.max(0, shown.length - 1);
+    if (rowWidth <= budget) return { ...overflow, isTrailingInMenu: false };
+  }
+  const smallest = padding + moreWidth + (hasActive ? activeWidth + gap : 0);
+  if (hasHidden && smallest <= budget)
+    return { ...overflow, isTrailingInMenu: false };
   return {
     visible: hasActive ? [activeIndex] : [],
     isActiveCompact: overflow.isActiveCompact,
