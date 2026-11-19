@@ -5,7 +5,7 @@ import type { IContextMenu } from "@21n/ui/elements/contextMenu/context-menu.typ
 import type { INode } from "@nucleum/features/memory/node/node.type";
 import { resolveNodeContextMenu } from "@nucleum/features/memory/node/node.store";
 import {
-  RESOURCE_ACTION_KEYS,
+  CONFIRMED_RESOURCE_ACTIONS,
   resolveResourceActionKey,
   withResourceActionKeys
 } from "./resource-action-keys";
@@ -37,6 +37,12 @@ describe("resource action keys", () => {
     expect(keyed[0].items.map((item) => item.hotKey)).toEqual([undefined, "s"]);
   });
 
+  it("asks for confirmation only before moving to trash", () => {
+    expect([...CONFIRMED_RESOURCE_ACTIONS]).toEqual(["delete"]);
+    expect(CONFIRMED_RESOURCE_ACTIONS.has("archive")).toBe(false);
+    expect(CONFIRMED_RESOURCE_ACTIONS.has("star")).toBe(false);
+  });
+
   it("adds hints without changing the original menu", () => {
     const menu = [
       { group: "g", items: [{ value: "star" }, { value: "lock" }] }
@@ -66,15 +72,6 @@ describe("letters on an open note's menu", () => {
     );
   }
 
-  const pageNote = () =>
-    offeredKeys(
-      resolveNodeContextMenu(
-        note(NodeType.NODULAR_MARKDOWN),
-        ResourceAccessPoint.SELF,
-        { accessMode: AccessMode.PAGE }
-      )
-    );
-
   it("offers focus mode with its F letter on an open note", () => {
     const menu = withResourceActionKeys(
       resolveNodeContextMenu(
@@ -89,24 +86,31 @@ describe("letters on an open note's menu", () => {
     expect(focus?.label).toBe("Focus");
   });
 
-  it("reaches a real menu item for every letter but U on open notes", () => {
-    const offered = new Set([
-      ...pageNote(),
-      ...offeredKeys(
-        resolveNodeContextMenu(
-          note(NodeType.NODULAR_MARKDOWN),
-          ResourceAccessPoint.SELF,
-          { accessMode: AccessMode.BESIDE_BASE }
-        )
-      ),
-      ...offeredKeys(
-        resolveNodeContextMenu(note(NodeType.IMAGE), ResourceAccessPoint.SELF, {
-          accessMode: AccessMode.PAGE
-        })
-      )
-    ]);
-    const mapped = new Set(Object.values(RESOURCE_ACTION_KEYS));
-    mapped.delete("u");
-    expect([...mapped].filter((key) => !offered.has(key))).toEqual([]);
+  it.each([
+    [
+      "a markdown note open as a page",
+      NodeType.NODULAR_MARKDOWN,
+      AccessMode.PAGE,
+      ["s", "c", "l", "r", "f", "z", "a", "Backspace"]
+    ],
+    [
+      "a markdown note open in a split",
+      NodeType.NODULAR_MARKDOWN,
+      AccessMode.BESIDE_BASE,
+      ["s", "c", "l", "r", "f", "b", "z", "a", "Backspace"]
+    ],
+    [
+      "an image open as a page",
+      NodeType.IMAGE,
+      AccessMode.PAGE,
+      ["s", "e", "c", "l", "z", "a", "Backspace"]
+    ]
+  ])("offers the approved letters on %s", (_name, type, accessMode, keys) => {
+    const offered = offeredKeys(
+      resolveNodeContextMenu(note(type), ResourceAccessPoint.SELF, {
+        accessMode
+      })
+    );
+    expect([...offered].sort()).toEqual([...keys].sort());
   });
 });

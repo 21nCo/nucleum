@@ -149,13 +149,14 @@
     return $collection as unknown as ICollection;
   }
 
-  /**
-   * The collection's own menu, with the single-key letters shown and run while
-   * it is open as a page or split, where those keys apply.
-   */
   const isInPlace = isInPlaceResource();
   const isKeyedMenu = $derived(isContextZoneAccessMode(accessMode) || isInPlace);
 
+  /**
+   * The collection's own menu, with the single-key letters shown and run while
+   * it is open as a page or split, or shown in place inside another resource,
+   * where those keys apply.
+   */
   function resolveKeyedCollectionMenu() {
     const menu = resolveCollectionContextMenu(
       resolveCollectionForContextMenu(),

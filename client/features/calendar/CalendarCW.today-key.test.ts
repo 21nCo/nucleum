@@ -72,6 +72,6 @@ describe("constrained-width calendar keys", () => {
       })
     );
     await tick();
-    expect(mocks.dates.length).toBe(shown);
+    expect(mocks.dates).toHaveLength(shown);
   });
 });

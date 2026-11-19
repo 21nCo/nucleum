@@ -10,6 +10,7 @@
     item,
     size = Size.md,
     isOptionGroupRow = false,
+    parentBgIndex = 1,
     onAction = undefined,
     onSelect = undefined
   }: {
@@ -20,6 +21,8 @@
      * top-aligned beside it.
      */
     isOptionGroupRow?: boolean;
+    /** Background index the menu was opened on; the menu surface is one above. */
+    parentBgIndex?: number;
     onAction?: ((event: CustomEvent<unknown>) => void) | undefined;
     onSelect?: ((event: CustomEvent<unknown>) => void) | undefined;
   } = $props();
@@ -67,5 +70,5 @@
   )}
   data-context-menu-item-id={item.value}
 >
-  <ContextMenuItemBase {item} />
+  <ContextMenuItemBase {item} {parentBgIndex} />
 </button>

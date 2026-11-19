@@ -17,7 +17,8 @@
     isPlainText = false,
     isAccentOutlined = false,
     size = Size.md,
-    isAlwaysShown = false
+    isAlwaysShown = false,
+    label = undefined
   }: {
     shortcut: string | IKeyboardShortcut | undefined;
     parentBgIndex?: number | undefined;
@@ -25,6 +26,8 @@
     isAccentOutlined?: boolean;
     size?: Size.sm | Size.md;
     isAlwaysShown?: boolean;
+    /** Accessible label and tooltip naming the key, such as "Press S on the page". */
+    label?: string | undefined;
   } = $props();
 
   const iconKeys = new Map<KeyboardKey, string>([
@@ -81,6 +84,9 @@
 
 {#if ($elementShortcutState.isShowHints || isAlwaysShown) && shortcut && $context.embed !== "HANDSET" && $context.embed !== "TABLET"}
   <span
+    role={label ? "img" : undefined}
+    aria-label={label}
+    title={label}
     class={cn(
       "flex justify-center items-center whitespace-nowrap font--mono rounded-md",
       {

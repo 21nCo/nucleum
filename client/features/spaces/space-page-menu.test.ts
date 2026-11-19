@@ -22,7 +22,7 @@ vi.mock("@nucleum/features/records/resource.actions", () => ({
   }
 }));
 
-const { isSpaceLoaded, resolveSpacePageMenu } =
+const { isSpaceLoaded, resolveKeyedSpacePageMenu, resolveSpacePageMenu } =
   await import("./space-page-menu");
 
 describe("space page menu", () => {
@@ -51,18 +51,51 @@ describe("space page menu", () => {
   it("does not reload after rename or pin", async () => {
     const onChanged = vi.fn();
     const onRename = vi.fn();
+    const onTogglePin = vi.fn();
     const menu = resolveSpacePageMenu({ id: "space:1" } as any, {
       isPinned: true,
       onRename,
-      onTogglePin: vi.fn(),
+      onTogglePin,
       onChanged
     });
     await menu[0].items.find((item) => item.value === "rename")?.callback?.();
     expect(onRename).toHaveBeenCalled();
+    await menu[0].items.find((item) => item.value === "pin")?.callback?.();
+    expect(onTogglePin).toHaveBeenCalledTimes(1);
     expect(onChanged).not.toHaveBeenCalled();
     expect(menu[0].items.find((item) => item.value === "pin")?.label).toBe(
       "Unpin from app menu"
     );
+  });
+
+  it("sets the single-key letters as hints only while keyed", () => {
+    const params = {
+      isPinned: false,
+      onRename: vi.fn(),
+      onTogglePin: vi.fn(),
+      onChanged: vi.fn()
+    };
+    const hints = (isKeyed: boolean) =>
+      resolveKeyedSpacePageMenu({ id: "space:1" } as any, {
+        ...params,
+        isKeyed
+      })
+        .flatMap((group) => group.items)
+        .map((item) => [item.value, item.hotKey]);
+    expect(hints(true)).toEqual([
+      ["rename", undefined],
+      ["pin", undefined],
+      ["star", "s"],
+      ["archive", "a"],
+      ["delete", "Backspace"]
+    ]);
+    expect(hints(false)).toEqual([
+      ["rename", undefined],
+      ["pin", undefined],
+      ["star", undefined],
+      ["archive", undefined],
+      ["delete", undefined]
+    ]);
   });
 
   it.each([

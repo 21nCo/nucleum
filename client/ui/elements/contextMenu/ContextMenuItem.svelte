@@ -48,6 +48,7 @@
   <ContextMenuItemWithSecondary
     {item}
     {size}
+    {parentBgIndex}
     onSelect={(e) => {
       if (item.callback) item.callback(e.detail);
       emitSelect();
@@ -88,6 +89,7 @@
       {item}
       bind:this={contextMenuItemRef}
       {isRedAccent}
+      {parentBgIndex}
       onChange={(e) => {
         if (item.callback) item.callback(e.detail);
       }}
