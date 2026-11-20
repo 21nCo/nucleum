@@ -8,12 +8,16 @@ export const ACCOUNT_REGION_IDS = ['insouth', 'useast', 'euwest'] as const;
 
 /**
  * Region ids `/nucleus/bootstrap` accepts. A deployed Worker is configured with
- * every region; a process configured with a single region is the local
+ * every region; a process configured with a single distinct region (one record
+ * per product domain counts once) is the local
  * single-backend setup, which serves all deployed regions.
  */
 export function bootstrapRegionIds(configuredRegionIds: string[]): string[] {
-  if (configuredRegionIds.length > 1) {
-    return configuredRegionIds;
+  const distinct = Array.from(
+    new Set(configuredRegionIds.map((regionId) => regionId.trim().toLowerCase()))
+  );
+  if (distinct.length > 1) {
+    return distinct;
   }
-  return Array.from(new Set([...configuredRegionIds, ...ACCOUNT_REGION_IDS]));
+  return Array.from(new Set([...distinct, ...ACCOUNT_REGION_IDS]));
 }

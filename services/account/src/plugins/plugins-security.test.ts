@@ -73,6 +73,7 @@ describe('account plugin request checks', () => {
     expect(bootstrapRegionIds(['insouth', 'useast', 'euwest'])).toEqual(['insouth', 'useast', 'euwest']);
     expect(bootstrapRegionIds(['insouth', 'useast'])).toEqual(['insouth', 'useast']);
     expect(bootstrapRegionIds(['local']).sort()).toEqual(['euwest', 'insouth', 'local', 'useast']);
+    expect(bootstrapRegionIds(['insouth', 'insouth', 'insouth']).sort()).toEqual(['euwest', 'insouth', 'useast']);
   });
 
   it('refuses a region the plugin is not configured with', async () => {
