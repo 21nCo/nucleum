@@ -77,7 +77,8 @@ describe('account plugin request checks', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email: 'widget-owner@example.com', password: 'test-password-long-enough', sessionMode: 'bearer' })
     }));
-    const token = (await bearerSignUp.json()).data.token as string;
+    const bearerBody = (await bearerSignUp.json()) as { data: { token: string } };
+    const token = bearerBody.data.token;
     expect(token).toEqual(expect.any(String));
     expect((await post(server, '/widget-token', { cookie, authorization: `Bearer ${token}` })).status).toBe(200);
     expect((await post(server, '/widget-token', { authorization: 'Bearer test-invalid-token' })).status).toBe(401);
