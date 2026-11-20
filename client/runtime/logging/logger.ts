@@ -8,16 +8,25 @@ const LOG_METHODS: Record<LogType, "debug" | "error" | "info" | "warn"> = {
   [LogType.DEBUG]: "debug"
 };
 
+/** Live builds ignore the URL log-level override and browser-stored debug sink settings. */
+const IS_LIVE_BUILD =
+  (import.meta.env?.VITE_ENV ?? "").trim().toLowerCase() === "live";
+
+function readStoredDebugSinkSetting(key: string) {
+  if (IS_LIVE_BUILD || typeof window === "undefined") return undefined;
+  try {
+    return window.localStorage?.getItem(key) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 const DEBUG_SINK_URL =
   import.meta.env?.VITE_DEBUG_SINK_URL ??
-  (typeof window !== "undefined"
-    ? window.localStorage?.getItem("debugSinkUrl")
-    : undefined);
+  readStoredDebugSinkSetting("debugSinkUrl");
 const DEBUG_SINK_TOKEN =
   import.meta.env?.VITE_DEBUG_SINK_TOKEN ??
-  (typeof window !== "undefined"
-    ? window.localStorage?.getItem("debugSinkToken")
-    : undefined);
+  readStoredDebugSinkSetting("debugSinkToken");
 const REDACTED = "[REDACTED]";
 const SENSITIVE_KEYS = [
   "authorization",
@@ -52,6 +61,7 @@ class Logger {
   setDefaultLevel() {
     try {
       if (
+        !IS_LIVE_BUILD &&
         typeof window !== "undefined" &&
         window?.location?.search?.includes("log=")
       ) {
@@ -198,19 +208,16 @@ export const logger = new Logger();
 function resolveDebugSinkUrl() {
   const value =
     DEBUG_SINK_URL ??
+    readStoredDebugSinkSetting("debugSinkUrl") ??
     (typeof window !== "undefined"
-      ? (window.localStorage?.getItem("debugSinkUrl") ??
-        window.__NUCLEUM_NATIVE_CONFIG__?.debugSinkUrl)
+      ? window.__NUCLEUM_NATIVE_CONFIG__?.debugSinkUrl
       : undefined);
   return value?.trim().replace(/\/$/, "");
 }
 
 function resolveDebugSinkToken() {
   return (
-    DEBUG_SINK_TOKEN ??
-    (typeof window !== "undefined"
-      ? window.localStorage?.getItem("debugSinkToken")
-      : undefined)
+    DEBUG_SINK_TOKEN ?? readStoredDebugSinkSetting("debugSinkToken")
   )?.trim();
 }
 

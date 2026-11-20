@@ -4,7 +4,10 @@
   import { LinkVariant } from "@21n/ui/elements/button/button.type";
   import { cn } from "@21n/ui/environment/presentation";
   import { isValidEmail } from "@21n/shared-utils/text.utils";
-  import { isUrlMatchPattern } from "@21n/shared-utils/url.utils";
+  import {
+    isUrlMatchPattern,
+    toExternalHttpUrl
+  } from "@21n/shared-utils/url.utils";
 
   let {
     href = undefined,
@@ -20,14 +23,20 @@
     onclick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
 
+  const externalHref = $derived(
+    href && /^https?:\/\//i.test(href.trim()) && toExternalHttpUrl(href)
+      ? href.trim()
+      : undefined
+  );
+
   function handleClick(event: MouseEvent) {
     if (!href) return;
     const host = getElementActionHost();
-    const url = href.includes("http")
-      ? href
-      : isEnforeHttpIfMatchPattern && isUrlMatchPattern(href)
+    const url =
+      externalHref ??
+      (isEnforeHttpIfMatchPattern && isUrlMatchPattern(href)
         ? `https://${href}`
-        : undefined;
+        : undefined);
     if (url) {
       if (host) host.openLink(url);
       else window.open(url, "_blank", "noopener,noreferrer");
@@ -37,13 +46,13 @@
   }
 </script>
 
-{#if href && !$context.isEmbed && href?.includes("http")}
+{#if externalHref && !$context.isEmbed}
   <a
     class={cn("relative hover:text-aps1 whitespace-nowrap min-w-fit", {
       "underline-dotted hover:underline-dotted-hover":
         variant === LinkVariant.DOTTED
     })}
-    {href}
+    href={externalHref}
     target="_blank"
     rel="noopener noreferrer"
     >{label}

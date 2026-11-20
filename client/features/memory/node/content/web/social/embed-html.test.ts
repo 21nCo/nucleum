@@ -1,0 +1,75 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  resolveEmbedFrameUrl,
+  sanitizeEmbedHtml
+} from "@nucleum/features/memory/node/content/web/social/embed-html";
+
+function render(html: string) {
+  const container = document.createElement("div");
+  container.innerHTML = sanitizeEmbedHtml(html);
+  return container;
+}
+
+describe("sanitizeEmbedHtml", () => {
+  it("removes event handlers and scripts from oEmbed HTML", () => {
+    const container = render(
+      '<blockquote class="mastodon-embed"><p>Hi</p><img src=x onerror="alert(document.domain)"><script>alert(1)</script></blockquote>'
+    );
+    expect(container.querySelector("script")).toBeNull();
+    expect(container.querySelector("[onerror]")).toBeNull();
+    expect(container.querySelector("blockquote p")?.textContent).toBe("Hi");
+  });
+
+  it("drops javascript: links and frames, and opens http links in a new tab", () => {
+    const container = render(
+      '<a href="javascript:alert(1)">bad</a><a href="https://example.com/post">ok</a><iframe src="javascript:alert(1)"></iframe>'
+    );
+    const [bad, ok] = Array.from(container.querySelectorAll("a"));
+    expect(bad.getAttribute("href")).toBeNull();
+    expect(ok.getAttribute("href")).toBe("https://example.com/post");
+    expect(ok.getAttribute("target")).toBe("_blank");
+    expect(ok.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(container.querySelector("iframe")).toBeNull();
+  });
+
+  it("keeps https frames from other origins sandboxed and drops same-origin or srcdoc frames", () => {
+    const container = render(
+      [
+        '<iframe src="https://embed.bsky.app/embed/a/app.bsky.feed.post/1"></iframe>',
+        `<iframe src="${window.location.origin}/settings"></iframe>`,
+        '<iframe srcdoc="<script>alert(1)</script>"></iframe>'
+      ].join("")
+    );
+    const frames = Array.from(container.querySelectorAll("iframe"));
+    expect(frames).toHaveLength(1);
+    expect(frames[0].getAttribute("src")).toBe(
+      "https://embed.bsky.app/embed/a/app.bsky.feed.post/1"
+    );
+    expect(frames[0].getAttribute("sandbox")).toContain("allow-scripts");
+    expect(frames[0].hasAttribute("srcdoc")).toBe(false);
+  });
+
+  it("neutralises attribute injection through a crafted post URL", () => {
+    const postUrl = 'https://evil.example/@a/1" onload="alert(1)';
+    const container = render(`<iframe src="${postUrl}/embed"></iframe>`);
+    expect(container.querySelector("[onload]")).toBeNull();
+  });
+
+  it("returns an empty string for non-string input", () => {
+    expect(sanitizeEmbedHtml(undefined)).toBe("");
+    expect(sanitizeEmbedHtml({ html: "<b>x</b>" })).toBe("");
+  });
+});
+
+describe("resolveEmbedFrameUrl", () => {
+  it("accepts only https URLs on another origin", () => {
+    expect(resolveEmbedFrameUrl("https://example.com/a")).toBe(
+      "https://example.com/a"
+    );
+    expect(resolveEmbedFrameUrl("http://example.com/a")).toBeNull();
+    expect(resolveEmbedFrameUrl("javascript:alert(1)")).toBeNull();
+    expect(resolveEmbedFrameUrl("/relative")).toBeNull();
+    expect(resolveEmbedFrameUrl(`${window.location.origin}/x`)).toBeNull();
+  });
+});

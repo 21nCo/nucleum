@@ -9,6 +9,7 @@ import { GlobalEvent } from "@nucleum/shared-state/events/event.enum";
 import context from "@nucleum/client/runtime/context.store";
 
 import { logger } from "@nucleum/client/runtime/logging/logger";
+import { isAllowedLocationTarget } from "@21n/shared-utils/url.utils";
 
 function handleCustomNavigation(event: any) {
   logger.log({
@@ -51,7 +52,8 @@ function handleCustomNavigation(event: any) {
       replaceState,
       ...(state ? { state: state as App.PageState } : {})
     });
-  } else if (event.detail.path) window.location = event.detail.path;
+  } else if (isAllowedLocationTarget(event.detail.path))
+    window.location = event.detail.path;
 }
 
 function handleToggleSearchParam(event: any) {

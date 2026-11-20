@@ -91,3 +91,47 @@ export function isValidHyperlink(url: string) {
   const isEmail = isValidEmail(url);
   return isUrl || isEmail;
 }
+
+/**
+ * Resolves user-entered link text to an absolute http(s) URL to open in a new
+ * window or frame. Text without a scheme is treated as an https host; any other
+ * scheme, such as `javascript:` or `data:`, is refused.
+ */
+export function toExternalHttpUrl(
+  value: string | undefined | null
+): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const hasScheme =
+    /^[a-z][a-z0-9+.-]*:/i.test(trimmed) && !/^[^:/?#]+:\d+(?:[/?#]|$)/.test(trimmed);
+  const candidate = hasScheme
+    ? trimmed
+    : `https://${trimmed.replace(/^\/\//, "")}`;
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return undefined;
+    if (!url.hostname) return undefined;
+    return url.href;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Checks whether a navigation target may be assigned to `window.location`:
+ * http(s), mailto and tel URLs, and the native apps' `<scheme>://oauthsignin`
+ * sign-in links. Script schemes such as `javascript:` are refused.
+ */
+export function isAllowedLocationTarget(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  try {
+    const url = new URL(trimmed);
+    if (["http:", "https:", "mailto:", "tel:"].includes(url.protocol))
+      return true;
+    return /^[a-z][a-z0-9+.-]*:\/\/oauthsignin(?:[/?#]|$)/i.test(trimmed);
+  } catch {
+    return false;
+  }
+}

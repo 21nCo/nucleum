@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { sanitizeEmbedHtml } from "@nucleum/features/memory/node/content/web/social/embed-html";
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
   import { onMount } from "svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -60,7 +61,7 @@
       });
       if (urlData) {
         const parsed = parse(urlData.text);
-        embedHtml = parsed.html;
+        embedHtml = sanitizeEmbedHtml(parsed.html);
         return true;
       }
     } catch (err) {
@@ -75,16 +76,16 @@
       const handle = extractBlueskyHandle(postUrl);
 
       if (postId && handle) {
-        embedHtml = `
+        embedHtml = sanitizeEmbedHtml(`
           <iframe 
-            src="https://embed.bsky.app/embed/${handle}/app.bsky.feed.post/${postId}" 
+            src="https://embed.bsky.app/embed/${encodeURIComponent(handle)}/app.bsky.feed.post/${encodeURIComponent(postId)}" 
             width="400" 
             height="600" 
             style="max-width: 100%; border: 1px solid #ccc; border-radius: 8px;" 
             frameborder="0"
             allowfullscreen>
           </iframe>
-        `;
+        `);
         return true;
       }
     } catch (err) {

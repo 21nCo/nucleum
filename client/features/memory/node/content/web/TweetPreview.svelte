@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { sanitizeEmbedHtml } from "@nucleum/features/memory/node/content/web/social/embed-html";
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
@@ -49,7 +50,7 @@
       isReturnRawData: true
     });
     const parsed = parse(urlData.text);
-    oembedHtml = parsed.html;
+    oembedHtml = sanitizeEmbedHtml(parsed.html);
   }
 </script>
 

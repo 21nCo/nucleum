@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -172,7 +173,9 @@ export function writeCloudflareAssetHeaders(repoRoot, config, productId) {
   const buildDir = path.join(repoRoot, product.appPath, 'build');
   const headersPath = path.join(buildDir, '_headers');
   const existing = fs.existsSync(headersPath) ? fs.readFileSync(headersPath, 'utf8') : '';
-  const next = upsertManagedHeadersBlock(existing, managedCacheHeadersBlock());
+  const withCache = upsertManagedHeadersBlock(existing, managedCacheHeadersBlock(), CACHE_HEADERS_MARKERS);
+  const securityBlock = managedSecurityHeadersBlock(productSecurityHeaders(config, buildDir));
+  const next = upsertManagedHeadersBlock(withCache, securityBlock, SECURITY_HEADERS_MARKERS);
   fs.writeFileSync(headersPath, next);
   return headersPath;
 }
@@ -215,16 +218,118 @@ function managedCacheHeadersBlock() {
   ].join('\n');
 }
 
-function upsertManagedHeadersBlock(existing, block) {
+const CACHE_HEADERS_MARKERS = {
+  start: '# BEGIN 21N_FRONTEND_CACHE_HEADERS',
+  end: '# END 21N_FRONTEND_CACHE_HEADERS'
+};
+
+const SECURITY_HEADERS_MARKERS = {
+  start: '# BEGIN 21N_FRONTEND_SECURITY_HEADERS',
+  end: '# END 21N_FRONTEND_SECURITY_HEADERS'
+};
+
+/**
+ * Origins allowed to frame the web apps: the apps themselves, every product
+ * domain and its subdomains (Memotron share pages embed the app), and the
+ * zones that host non-live environments.
+ */
+export function frameAncestorSources(config) {
+  const domains = new Set(Object.values(config.products ?? {}).map((product) => product.domain));
+  for (const envConfig of Object.values(config.environments ?? {})) {
+    if (envConfig.hosts?.zoneName) domains.add(envConfig.hosts.zoneName);
+  }
+  return ["'self'", ...[...domains].sort().flatMap((domain) => [`https://${domain}`, `https://*.${domain}`])];
+}
+
+/** Collects sha256 CSP sources for every inline script in the built HTML files. */
+export function collectInlineScriptHashes(buildDir) {
+  const hashes = new Set();
+  for (const file of listHtmlFiles(buildDir)) {
+    const html = fs.readFileSync(file, 'utf8');
+    for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+      const attributes = match[1];
+      if (/\bsrc\s*=/i.test(attributes)) continue;
+      const type = attributes.match(/\btype\s*=\s*["']?([^"'\s>]+)/i)?.[1]?.toLowerCase();
+      if (type && !['module', 'text/javascript', 'application/javascript'].includes(type)) continue;
+      const digest = crypto.createHash('sha256').update(match[2], 'utf8').digest('base64');
+      hashes.add(`'sha256-${digest}'`);
+    }
+  }
+  return [...hashes].sort();
+}
+
+function listHtmlFiles(directory) {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return listHtmlFiles(entryPath);
+    return entry.name.endsWith('.html') ? [entryPath] : [];
+  });
+}
+
+/**
+ * Security headers for every static asset response. The enforced policy covers
+ * framing, plugins and `<base>`; the script policy runs report-only until the
+ * reported violations are reviewed, because third-party embeds and analytics
+ * load scripts the policy has not been verified against yet.
+ */
+export function securityHeaders({ frameAncestors, inlineScriptHashes }) {
+  const enforced = [
+    "object-src 'none'",
+    "base-uri 'self'",
+    `frame-ancestors ${frameAncestors.join(' ')}`
+  ].join('; ');
+  const reportOnly = [
+    "default-src 'self'",
+    ["script-src 'self'", ...inlineScriptHashes, "'wasm-unsafe-eval'", 'https:'].join(' '),
+    "script-src-attr 'none'",
+    "style-src 'self' 'unsafe-inline' https:",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https:",
+    "media-src 'self' data: blob: https:",
+    "connect-src 'self' data: blob: https: wss:",
+    "frame-src 'self' blob: https:",
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self' https:"
+  ].join('; ');
+  return {
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Strict-Transport-Security': 'max-age=31536000',
+    'Content-Security-Policy': enforced,
+    'Content-Security-Policy-Report-Only': reportOnly
+  };
+}
+
+/** Security headers for a product's static build output. */
+export function productSecurityHeaders(config, buildDir) {
+  return securityHeaders({
+    frameAncestors: frameAncestorSources(config),
+    inlineScriptHashes: collectInlineScriptHashes(buildDir)
+  });
+}
+
+function managedSecurityHeadersBlock(headers) {
+  return [
+    SECURITY_HEADERS_MARKERS.start,
+    '/*',
+    ...Object.entries(headers).map(([name, value]) => `  ${name}: ${value}`),
+    SECURITY_HEADERS_MARKERS.end
+  ].join('\n');
+}
+
+/** Replaces the managed block between the markers, or appends it when missing. */
+export function upsertManagedHeadersBlock(existing, block, markers = CACHE_HEADERS_MARKERS) {
   const normalizedBlock = block.trim();
-  const start = '# BEGIN 21N_FRONTEND_CACHE_HEADERS';
-  const end = '# END 21N_FRONTEND_CACHE_HEADERS';
+  const { start, end } = markers;
   const pattern = new RegExp(`${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`, 'm');
   const trimmedExisting = existing.trim();
   const withTrailingNewline = (value) => value.replace(/\s*$/, '\n');
 
   if (pattern.test(existing)) {
-    return withTrailingNewline(existing.replace(pattern, normalizedBlock));
+    return withTrailingNewline(existing.replace(pattern, () => normalizedBlock));
   }
 
   if (!trimmedExisting) {

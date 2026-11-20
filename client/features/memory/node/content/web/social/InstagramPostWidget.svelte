@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { sanitizeEmbedHtml } from "@nucleum/features/memory/node/content/web/social/embed-html";
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
   import { onDestroy, onMount } from "svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -60,7 +61,7 @@
           onError?.(data.error);
           return false;
         } else if (data && data.html) {
-          embedHtml = data.html;
+          embedHtml = sanitizeEmbedHtml(data.html);
           setTimeout(() => {
             if (window.instgrm) {
               window.instgrm.Embeds.process();

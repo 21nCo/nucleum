@@ -47,12 +47,34 @@
     }
   }
 
+  function resolveHttpsUrl(url: string): URL | null {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "https:" ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
   function isGitHubGist(url: string): boolean {
-    return url.includes("gist.github.com");
+    return resolveHttpsUrl(url)?.hostname === "gist.github.com";
   }
 
   function isGitLabSnippet(url: string): boolean {
-    return url.includes("gitlab.com/-/snippets");
+    const parsed = resolveHttpsUrl(url);
+    return (
+      parsed?.hostname === "gitlab.com" &&
+      parsed.pathname.includes("/-/snippets/")
+    );
+  }
+
+  function resolveGistFrameUrl(url: string): string {
+    const parsed = resolveHttpsUrl(url);
+    if (!parsed) return "about:blank";
+    parsed.pathname = `${parsed.pathname.replace(/\/+$/, "")}.pibb`;
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.href;
   }
 
   $effect(() => {
@@ -67,7 +89,7 @@
     {#if isGitHubGist(node.url)}
       <iframe
         title="GitHub Gist"
-        src={node.url + ".pibb"}
+        src={resolveGistFrameUrl(node.url)}
         class="w-full h-full border-0 min-h-[200px]"
         frameborder="0"
         scrolling="auto"

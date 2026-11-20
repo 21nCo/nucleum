@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { sanitizeEmbedHtml } from "@nucleum/features/memory/node/content/web/social/embed-html";
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
   import { onMount } from "svelte";
   import appearance from "@nucleum/shared-state/appearance/appearance.store";
@@ -72,7 +73,7 @@
     });
     if (urlData) {
       const data = parse(urlData.text);
-      embedHtml = data.content || "";
+      embedHtml = sanitizeEmbedHtml(data.content);
       isIframeable = data.content;
     }
   }
@@ -89,7 +90,7 @@
         if (parsed && parsed.error) {
           onError?.(parsed.error);
         } else if (parsed && parsed.html) {
-          embedHtml = sanitizeAndStyleHTML(parsed.html);
+          embedHtml = sanitizeEmbedHtml(sanitizeAndStyleHTML(parsed.html));
         }
       }
     } catch (err) {
@@ -107,7 +108,7 @@
         const theme = $appearance?.colorScheme?.isDark ? "dark" : "light";
         const iframeUrl = `${postUrl}/embed`;
 
-        embedHtml = `
+        embedHtml = sanitizeEmbedHtml(`
           <iframe 
             src="${iframeUrl}" 
             class="mastodon-embed" 
@@ -116,7 +117,7 @@
             title="Mastodon post"
             sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox">
           </iframe>
-        `;
+        `);
         return true;
       }
     } catch (err) {

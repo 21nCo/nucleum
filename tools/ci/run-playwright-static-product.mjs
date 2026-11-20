@@ -19,6 +19,7 @@ const frontendConfigUrl = pathToFileURL(
 const {
   buildEnv,
   parseProducts,
+  productSecurityHeaders,
   readConfig,
   readEnvironment
 } = await import(frontendConfigUrl.href);
@@ -125,7 +126,7 @@ function run(command, args, options = {}) {
   });
 }
 
-function createStaticServer(buildDir) {
+function createStaticServer(buildDir, headers = {}) {
   const buildRoot = path.resolve(buildDir);
   const fallbackPath = path.join(buildRoot, "index.html");
 
@@ -171,6 +172,7 @@ function createStaticServer(buildDir) {
     try {
       const body = fs.readFileSync(assetPath);
       response.writeHead(200, {
+        ...headers,
         "content-type": lookup(assetPath) ?? "application/octet-stream",
         "cache-control": "no-store"
       });
@@ -239,7 +241,9 @@ async function main() {
     throw new Error(`Missing static build output: ${path.join(buildDir, "index.html")}`);
   }
 
-  const server = createStaticServer(buildDir);
+  const { "Strict-Transport-Security": _hsts, ...headers } =
+    productSecurityHeaders(config, buildDir);
+  const server = createStaticServer(buildDir, headers);
   const baseUrl = `http://127.0.0.1:${args.port}`;
   await server.listen(args.port);
   console.log(`[playwright-static] Serving ${buildDir} at ${baseUrl}`);

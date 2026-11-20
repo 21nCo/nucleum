@@ -63,17 +63,24 @@ export const symbolPatterns = [
   { regex: /=&gt;/g, replacement: "⇒" }
 ];
 
-/** Escapes HTML delimiters in heading and quote content. */
-function escapeHtml(text: string): string {
-  const htmlEscapes: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#x27;",
-    "/": "&#x2F;"
-  };
-  return text.replace(/[&<>"'\/]/g, (match) => htmlEscapes[match] || match);
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+
+/**
+ * Escapes HTML delimiters so user text cannot inject markup through `renderMdAsHtml`.
+ * Existing character references such as `&amp;` or `&#60;` are kept, so text that
+ * callers already escaped (for example with `escapeMarkdownText`) is not escaped twice.
+ */
+export function escapeHtmlKeepingEntities(text: string): string {
+  return text.replace(
+    /&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#[0-9]+|#[xX][0-9a-fA-F]+);)|[<>"']/g,
+    (char) => HTML_ESCAPES[char] ?? char
+  );
 }
 
 /** Escapes HTML delimiters and inline Markdown syntax so user text renders literally through `renderMdAsHtml`. */
@@ -92,31 +99,31 @@ export function renderMdAsHtml(
     isPageRender?: boolean;
   }
 ) {
-  let parsedText = text;
+  let parsedText = escapeHtmlKeepingEntities(String(text ?? ""));
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
   parsedText = parsedText.replace(
     /^#### (.*)$/gm,
-    (match, content) => `<h4 class="text-h4">${escapeHtml(content)}</h4>`
+    (match, content) => `<h4 class="text-h4">${content}</h4>`
   );
   parsedText = parsedText.replace(
     /^### (.*)$/gm,
     (match, content) =>
-      `<h3 class="${params?.isPageRender ? "text-h3" : "text-h4"}">${escapeHtml(content)}</h3>`
+      `<h3 class="${params?.isPageRender ? "text-h3" : "text-h4"}">${content}</h3>`
   );
   parsedText = parsedText.replace(
     /^## (.*)$/gm,
     (match, content) =>
-      `<h2 class="${params?.isPageRender ? "text-h2" : "text-h4"}">${escapeHtml(content)}</h2>`
+      `<h2 class="${params?.isPageRender ? "text-h2" : "text-h4"}">${content}</h2>`
   );
   parsedText = parsedText.replace(
     /^# (.*)$/gm,
     (match, content) =>
-      `<h1 class="${params?.isPageRender ? "text-h1" : "text-h4"}">${escapeHtml(content)}</h1>`
+      `<h1 class="${params?.isPageRender ? "text-h1" : "text-h4"}">${content}</h1>`
   );
   parsedText = parsedText.replace(
-    /^> (.*)$/gm,
-    (match, content) => `<blockquote>${escapeHtml(content)}</blockquote>`
+    /^&gt; (.*)$/gm,
+    (match, content) => `<blockquote>${content}</blockquote>`
   );
   parsedText = parsedText.replace(/^---\s*$/gm, "<hr>");
   parsedText = parsedText.replace(/^===\s*$/gm, "<hr>");
