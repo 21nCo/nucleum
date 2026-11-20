@@ -35,7 +35,7 @@ afterEach(() => {
 
 describe("frontend security headers", () => {
   const bootstrap = "\n  __sveltekit_x = { base: '' };\n";
-  const html = `<!doctype html><html><head><script type="module">${bootstrap}</script><script src="/_app/a.js"></script><script type="application/json">{"a":1}</script></head><body></body></html>`;
+  const html = `<!doctype html><html><head><script type="module">${bootstrap}</script ><script src="/_app/a.js"></script><script type="application/json">{"a":1}</script></head><body></body></html>`;
 
   it("hashes executable inline scripts only", () => {
     const { buildDir } = makeRepo(html);

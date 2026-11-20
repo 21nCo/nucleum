@@ -238,7 +238,7 @@ export function frameAncestorSources(config) {
   for (const envConfig of Object.values(config.environments ?? {})) {
     if (envConfig.hosts?.zoneName) domains.add(envConfig.hosts.zoneName);
   }
-  return ["'self'", ...[...domains].sort().flatMap((domain) => [`https://${domain}`, `https://*.${domain}`])];
+  return ["'self'", ...[...domains].sort((left, right) => left.localeCompare(right)).flatMap((domain) => [`https://${domain}`, `https://*.${domain}`])];
 }
 
 /** Collects sha256 CSP sources for every inline script in the built HTML files. */
@@ -246,7 +246,7 @@ export function collectInlineScriptHashes(buildDir) {
   const hashes = new Set();
   for (const file of listHtmlFiles(buildDir)) {
     const html = fs.readFileSync(file, 'utf8');
-    for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script[^>]*>/gi)) {
       const attributes = match[1];
       if (/\bsrc\s*=/i.test(attributes)) continue;
       const type = attributes.match(/\btype\s*=\s*["']?([^"'\s>]+)/i)?.[1]?.toLowerCase();
@@ -255,7 +255,7 @@ export function collectInlineScriptHashes(buildDir) {
       hashes.add(`'sha256-${digest}'`);
     }
   }
-  return [...hashes].sort();
+  return [...hashes].sort((left, right) => left.localeCompare(right));
 }
 
 function listHtmlFiles(directory) {
