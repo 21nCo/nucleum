@@ -12,10 +12,15 @@ import { jsonSuccess } from 'authfn/http/envelopes';
 
 type NucleusLifecycleRoute = ReturnType<NonNullable<AuthFnPlugin['routes']>>[number];
 
-export function nucleusLifecyclePlugin(): AuthFnPlugin {
+export interface NucleusLifecyclePluginOptions {
+  /** Region ids the account service is configured with; bootstrap refuses any other `region`. */
+  regionIds?: string[];
+}
+
+export function nucleusLifecyclePlugin(options: NucleusLifecyclePluginOptions = {}): AuthFnPlugin {
   return {
     name: 'nucleusLifecycle',
-    routes: (ctx) => createNucleusLifecycleRoutes(ctx),
+    routes: (ctx) => createNucleusLifecycleRoutes(ctx, options),
     hooks: {
       beforeUserCreate: async (ctx, input) => {
         const allowedDomains = readCsv(process.env.NUCLEUS_ALLOWED_EMAIL_DOMAINS);
@@ -84,7 +89,10 @@ export function nucleusLifecyclePlugin(): AuthFnPlugin {
   };
 }
 
-function createNucleusLifecycleRoutes(ctx: AuthFnPluginRuntimeContext): NucleusLifecycleRoute[] {
+function createNucleusLifecycleRoutes(
+  ctx: AuthFnPluginRuntimeContext,
+  options: NucleusLifecyclePluginOptions
+): NucleusLifecycleRoute[] {
   return [
     {
       method: 'POST',
@@ -108,6 +116,9 @@ function createNucleusLifecycleRoutes(ctx: AuthFnPluginRuntimeContext): NucleusL
           ? body.region.trim().toLowerCase()
           : '';
         const requestedRegion = requestedRegionInput.length > 0 ? requestedRegionInput : undefined;
+        if (requestedRegion !== undefined && !isConfiguredRegion(requestedRegion, options, session.regionId)) {
+          throw new AuthFnValidationError('Unknown region', { field: 'region' });
+        }
         const regionId = requestedRegion ?? session.regionId;
         const now = new Date();
         const user = await ctx.config.database.findOne<AuthFnUserRecord>({
@@ -198,4 +209,14 @@ async function readJsonBody(request: Request): Promise<Record<string, unknown>> 
 
 function requestId(request: Request | undefined): string {
   return request?.headers.get('x-request-id') ?? `req_${Date.now().toString(36)}`;
+}
+
+/** Accepts a bootstrap region only when it is one of the service's configured regions. */
+function isConfiguredRegion(
+  region: string,
+  options: NucleusLifecyclePluginOptions,
+  sessionRegionId: string | undefined
+): boolean {
+  const configured = options.regionIds ?? (sessionRegionId ? [sessionRegionId] : []);
+  return configured.some((regionId) => regionId.toLowerCase() === region);
 }

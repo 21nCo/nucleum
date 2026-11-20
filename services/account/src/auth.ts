@@ -65,7 +65,9 @@ export function accountAuthfn(
         requireExistingEmailVerified: true
       }
     },
-    plugins: createAccountAuthPlugins(),
+    plugins: createAccountAuthPlugins({
+      regionIds: regions.map((region) => region.regionId)
+    }),
     scopes: accountScopeRegistry,
     openApi: {
       title: "Nucleus Account API",

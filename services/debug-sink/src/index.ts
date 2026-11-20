@@ -227,15 +227,30 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.floor(value)));
 }
 
-function hasToken(request: Request, configuredToken: string | undefined, env: Env): boolean {
+/**
+ * Accepts the token only from the `x-debug-sink-token` or `Authorization`
+ * header (never the query string, which ends up in access logs) and compares
+ * it in constant time.
+ */
+export function hasToken(request: Request, configuredToken: string | undefined, env: Env): boolean {
   if (!configuredToken) {
     return env.DEBUG_SINK_ALLOW_UNAUTHENTICATED === 'true';
   }
-  const url = new URL(request.url);
   const provided = request.headers.get('x-debug-sink-token')
-    ?? request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
-    ?? url.searchParams.get('token');
-  return provided === configuredToken;
+    ?? request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  return typeof provided === 'string' && constantTimeEqual(provided, configuredToken);
+}
+
+function constantTimeEqual(left: string, right: string): boolean {
+  const encoder = new TextEncoder();
+  const a = encoder.encode(left);
+  const b = encoder.encode(right);
+  let difference = a.length ^ b.length;
+  const length = Math.max(a.length, b.length);
+  for (let index = 0; index < length; index += 1) {
+    difference |= (a[index] ?? 0) ^ (b[index] ?? 0);
+  }
+  return difference === 0;
 }
 
 function json(request: Request, env: Env, value: unknown, status = 200): Response {
