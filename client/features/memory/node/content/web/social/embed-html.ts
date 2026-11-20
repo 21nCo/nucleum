@@ -44,15 +44,33 @@ export function escapeHtmlAttribute(value: unknown): string {
   );
 }
 
+/** Attributes that hold a URL; outside links and frames they must be absolute http(s). */
+const URI_ATTRIBUTES = [
+  "href",
+  "src",
+  "xlink:href",
+  "poster",
+  "background",
+  "cite",
+  "longdesc",
+  "data",
+  "action",
+  "formaction"
+];
+
 /**
  * Sanitises third-party embed HTML (oEmbed responses, post bodies) before it is
  * rendered with `{@html}`. Scripts, event handlers, forms, `<style>` elements,
- * inline `style` attributes (except on frames) and non-http(s) link and media
- * URLs are removed; frames must be https on another origin and are sandboxed;
+ * inline `style` attributes (except on frames, or replaced by
+ * `options.elementStyle`), `srcset` and every URL attribute that is not an
+ * absolute http(s) URL are removed; frames must be https on another origin and are sandboxed;
  * links open in a new tab without an opener. Callers render the result inside
  * a `contain: paint` wrapper so class-based positioning cannot cover the app.
  */
-export function sanitizeEmbedHtml(html: unknown): string {
+export function sanitizeEmbedHtml(
+  html: unknown,
+  options: { elementStyle?: string } = {}
+): string {
   if (typeof html !== "string" || html.length === 0) return "";
   const purifier = DOMPurify();
   purifier.addHook("afterSanitizeAttributes", (node) => {
@@ -78,11 +96,17 @@ export function sanitizeEmbedHtml(html: unknown): string {
         element.removeAttribute("target");
       }
     }
-    if (tagName === "img" || tagName === "video" || tagName === "source") {
-      const src = element.getAttribute("src");
-      if (src && !isAbsoluteHttpUrl(src)) element.removeAttribute("src");
+    for (const name of URI_ATTRIBUTES) {
+      if (tagName === "a" && name === "href") continue;
+      if (tagName === "iframe" && name === "src") continue;
+      const value = element.getAttribute(name);
+      if (value !== null && !isAbsoluteHttpUrl(value)) element.removeAttribute(name);
     }
-    if (tagName !== "iframe") element.removeAttribute("style");
+    element.removeAttribute("srcset");
+    if (tagName !== "iframe") {
+      if (options.elementStyle) element.setAttribute("style", options.elementStyle);
+      else element.removeAttribute("style");
+    }
   });
   return purifier.sanitize(html, {
     ADD_TAGS: ["iframe"],

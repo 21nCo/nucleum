@@ -258,13 +258,6 @@ function extractInlineLinks(text: string, tokens: string[]) {
   return result + text.slice(index);
 }
 
-/**
- * Pairs every `[` with the `]` that balances it inside the same block, in one
- * pass, ignoring brackets inside inline code (backtick runs of equal length)
- * and backslash-escaped brackets, which are returned as `ignored` so no label
- * opens there.
- * Unclosed brackets at a block boundary are dropped.
- */
 /** Backtick runs indexed by start and by length, for constant-time code span lookups. */
 function indexBacktickRuns(text: string) {
   const endOf = new Map<number, number>();
@@ -290,6 +283,13 @@ function indexBacktickRuns(text: string) {
   };
 }
 
+/**
+ * Pairs every `[` with the `]` that balances it inside the same block, in one
+ * pass, ignoring brackets inside inline code (backtick runs of equal length)
+ * and backslash-escaped brackets, which are returned as `ignored` so no label
+ * opens there.
+ * Unclosed brackets at a block boundary are dropped.
+ */
 function matchLabelBrackets(text: string, boundaries: number[]) {
   const backtickRuns = indexBacktickRuns(text);
   const matches = new Map<number, number>();
@@ -468,15 +468,6 @@ export function findSymbolPatterns(text: string) {
 export function replaceInlineStylePatterns(text: string) {
   let html = text;
   inlineStylingPatterns.forEach((pattern) => {
-    html = html.replace(pattern.regex, pattern.replacement);
-  });
-  return html;
-}
-
-/** Replace inline link patterns for shared inline Markdown presentation. */
-export function replaceInlineLinkPatterns(text: string) {
-  let html = text;
-  inlineLinkPatterns.forEach((pattern) => {
     html = html.replace(pattern.regex, pattern.replacement);
   });
   return html;

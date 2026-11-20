@@ -77,6 +77,28 @@ describe("sanitizeEmbedHtml", () => {
     expect(container.querySelector("[style]")).toBeNull();
   });
 
+  it("removes relative and non-http URLs from every URL attribute", () => {
+    const container = render(
+      '<svg><a xlink:href="/settings"><text>x</text></a></svg><video poster="/private.png" src="https://cdn.example.com/v.mp4"></video><blockquote cite="javascript:alert(1)">q</blockquote><img src="https://cdn.example.com/a.png" srcset="/a.png 1x">'
+    );
+    expect(container.querySelector("[poster]")).toBeNull();
+    expect(container.querySelector("[cite]")).toBeNull();
+    expect(container.querySelector("[srcset]")).toBeNull();
+    expect(container.innerHTML).not.toContain("/settings");
+    expect(container.querySelector("video")?.getAttribute("src")).toBe(
+      "https://cdn.example.com/v.mp4"
+    );
+  });
+
+  it("applies a caller-provided element style instead of embed styles", () => {
+    const container = document.createElement("div");
+    container.innerHTML = sanitizeEmbedHtml(
+      '<p style="position:fixed;inset:0">post</p>',
+      { elementStyle: "width: 80%" }
+    );
+    expect(container.querySelector("p")?.getAttribute("style")).toBe("width: 80%");
+  });
+
   it("returns an empty string for non-string input", () => {
     expect(sanitizeEmbedHtml(undefined)).toBe("");
     expect(sanitizeEmbedHtml({ html: "<b>x</b>" })).toBe("");

@@ -56,7 +56,8 @@ describe("frontend security headers", () => {
     expect(first).toContain("  Strict-Transport-Security: max-age=31536000");
 
     const enforced = first.match(/^  Content-Security-Policy: (.*)$/m)?.[1] ?? "";
-    expect(enforced).toContain("object-src 'self' blob: data: https:");
+    expect(enforced).toMatch(/object-src 'self' blob: https:\/\/[^;]*https:\/\/\*\.nucleum\.app/);
+    expect(enforced).not.toMatch(/object-src[^;]*(data:|https:(?!\/\/))/);
     expect(enforced).toContain("base-uri 'self'");
     expect(enforced).toMatch(/frame-ancestors 'self' .*https:\/\/\*\.memotron\.app/);
     expect(enforced).not.toContain("script-src");

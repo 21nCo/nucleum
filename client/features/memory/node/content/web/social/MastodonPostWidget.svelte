@@ -90,7 +90,7 @@
         if (parsed && parsed.error) {
           onError?.(parsed.error);
         } else if (parsed && parsed.html) {
-          embedHtml = sanitizeAndStyleHTML(sanitizeEmbedHtml(parsed.html));
+          embedHtml = sanitizeEmbedHtml(parsed.html, { elementStyle: "width: 80%" });
         }
       }
     } catch (err) {
@@ -140,46 +140,6 @@
     return match ? match[1] : null;
   }
 
-  function sanitizeAndStyleHTML(htmlString: string): string {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlString, 'text/html');
-    
-    const elements = doc.querySelectorAll('*');
-    elements.forEach(element => {
-      const currentStyle = element.getAttribute('style') || '';
-      const styleObj = parseStyleString(currentStyle);
-      
-      styleObj.width = '80%';
-      delete styleObj['max-width'];
-      
-      const newStyleString = Object.entries(styleObj)
-        .filter(([, value]) => value !== undefined && value !== '')
-        .map(([prop, value]) => `${prop}: ${value}`)
-        .join('; ');
-        
-      if (newStyleString) {
-        element.setAttribute('style', newStyleString);
-      } else {
-        element.removeAttribute('style');
-      }
-    });
-    
-    return doc.body.innerHTML;
-  }
-
-  function parseStyleString(styleString: string) {
-    const styles: Record<string, string> = {};
-    if (!styleString) return styles;
-    
-    styleString.split(';').forEach(rule => {
-      const [property, value] = rule.split(':').map(s => s.trim());
-      if (property && value) {
-        styles[property] = value;
-      }
-    });
-    
-    return styles;
-  }
 </script>
 
 <div {id} class="flex flex-col gap-3 w-full h-full justify-center items-center" style="contain: paint;">
