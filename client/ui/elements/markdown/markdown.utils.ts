@@ -100,21 +100,52 @@ const BLOCK_START_LINE =
   /^(?:#{1,4} |\uFFF2 |\s*[-*] |---\s*$|===\s*$|\s*$)/;
 
 /**
- * Checks whether the text between `start` and `end` stays inside one block:
- * every line it continues onto, read as a whole source line, must not start a
- * heading, quote, list item or rule, or be blank.
+ * Positions of the newlines that end a block: the following whole source line
+ * starts a heading, quote, list item or rule, or is blank. Sorted ascending.
  */
-function staysInBlock(text: string, start: number, end: number) {
-  let newline = text.indexOf("\n", start);
-  while (newline >= 0 && newline < end) {
+function findBlockBoundaries(text: string) {
+  const boundaries: number[] = [];
+  let newline = text.indexOf("\n");
+  while (newline >= 0) {
     const lineEnd = text.indexOf("\n", newline + 1);
     const line = text
       .slice(newline + 1, lineEnd < 0 ? text.length : lineEnd)
       .replace(/\r$/, "");
-    if (BLOCK_START_LINE.test(line)) return false;
-    newline = text.indexOf("\n", newline + 1);
+    if (BLOCK_START_LINE.test(line)) boundaries.push(newline);
+    newline = lineEnd;
   }
-  return true;
+  return boundaries;
+}
+
+/** Index of the first value in a sorted list that is at least `value`. */
+function firstAtOrAfter(sorted: number[], value: number) {
+  let low = 0;
+  let high = sorted.length;
+  while (low < high) {
+    const middle = (low + high) >> 1;
+    if (sorted[middle] < value) low = middle + 1;
+    else high = middle;
+  }
+  return low;
+}
+
+/** Checks whether `[start, end)` contains no block boundary. */
+function staysInBlock(boundaries: number[], start: number, end: number) {
+  const index = firstAtOrAfter(boundaries, start);
+  return index >= boundaries.length || boundaries[index] >= end;
+}
+
+/** Block boundaries and `](` positions of a text, computed once per render. */
+type InlineLayout = { boundaries: number[]; closers: number[] };
+
+function findLabelClosers(text: string) {
+  const closers: number[] = [];
+  let index = text.indexOf("](");
+  while (index >= 0) {
+    closers.push(index);
+    index = text.indexOf("](", index + 1);
+  }
+  return closers;
 }
 
 /**
@@ -128,13 +159,15 @@ function extractInlineLinks(text: string, tokens: string[]) {
     inlineLinkPatterns.find((pattern) => pattern.type === InlineType.MENTION)!,
     inlineLinkPatterns.find((pattern) => pattern.type === InlineType.LINK)!
   ];
-  const brackets = matchLabelBrackets(text);
+  const boundaries = findBlockBoundaries(text);
+  const layout: InlineLayout = { boundaries, closers: findLabelClosers(text) };
+  const brackets = matchLabelBrackets(text, boundaries);
   let result = "";
   let index = 0;
   while (index < text.length) {
     const open = text.indexOf("[", index);
     if (open < 0) break;
-    const parsed = parseInlineLinkAt(text, open, brackets);
+    const parsed = parseInlineLinkAt(text, open, brackets, layout);
     if (!parsed) {
       result += text.slice(index, open + 1);
       index = open + 1;
@@ -162,12 +195,12 @@ function extractInlineLinks(text: string, tokens: string[]) {
  * Pairs every `[` with the `]` that balances it inside the same block, in one
  * pass. Unclosed brackets at a block boundary are dropped.
  */
-function matchLabelBrackets(text: string) {
+function matchLabelBrackets(text: string, boundaries: number[]) {
   const matches = new Map<number, number>();
   const stack: number[] = [];
   for (let index = 0; index < text.length; index += 1) {
     const char = text[index];
-    if (char === "\n" && !staysInBlock(text, index, index + 1)) stack.length = 0;
+    if (char === "\n" && !staysInBlock(boundaries, index, index + 1)) stack.length = 0;
     else if (char === "[") stack.push(index);
     else if (char === "]") {
       const open = stack.pop();
@@ -177,14 +210,13 @@ function matchLabelBrackets(text: string) {
   return matches;
 }
 
-function parseInlineLinkAt(
+/** Reads a `resource=` or `http(s)://` target that starts right after `](` at `close`. */
+function readInlineTarget(
   text: string,
   open: number,
-  brackets: Map<number, number>
+  close: number,
+  boundaries: number[]
 ) {
-  const close = brackets.get(open) ?? -1;
-  if (close < 0 || text[close + 1] !== "(") return null;
-  if (!staysInBlock(text, open, close)) return null;
   const rest = text.slice(close + 2);
   const prefix = rest.startsWith("resource=")
     ? "resource="
@@ -193,13 +225,59 @@ function parseInlineLinkAt(
   const targetStart = close + 2 + prefix.length;
   const targetEnd = text.indexOf(")", targetStart);
   if (targetEnd < 0) return null;
-  if (!staysInBlock(text, targetStart, targetEnd)) return null;
+  if (!staysInBlock(boundaries, targetStart, targetEnd)) return null;
   return {
     isMention: prefix === "resource=",
     label: text.slice(open + 1, close),
     target: text.slice(targetStart, targetEnd),
     end: targetEnd + 1
   };
+}
+
+/** Finds the nearest `](` after `from` in the same block that starts a valid target. */
+function findFallbackClose(
+  text: string,
+  open: number,
+  from: number,
+  layout: InlineLayout
+) {
+  let index = firstAtOrAfter(layout.closers, from);
+  while (index < layout.closers.length) {
+    const close = layout.closers[index];
+    if (!staysInBlock(layout.boundaries, open, close)) return -1;
+    if (readInlineTarget(text, open, close, layout.boundaries)) return close;
+    index += 1;
+  }
+  return -1;
+}
+
+/**
+ * Parses a link or mention starting at `open`. The label normally ends at the
+ * `]` that balances `open` (extended over a run of `]`s, as in `[Happy :]]`).
+ * Labels with unbalanced brackets, which mentions of such titles produce, fall
+ * back to the nearest `](` in the block: always when `open` has no pair, and
+ * when its pair is not followed by `(` and no other `[` comes before that `](`.
+ */
+function parseInlineLinkAt(
+  text: string,
+  open: number,
+  brackets: Map<number, number>,
+  layout: InlineLayout
+) {
+  const { boundaries } = layout;
+  let close = brackets.get(open) ?? -1;
+  if (close < 0) {
+    const fallback = findFallbackClose(text, open, open + 1, layout);
+    return fallback < 0 ? null : readInlineTarget(text, open, fallback, boundaries);
+  }
+  if (!staysInBlock(boundaries, open, close)) return null;
+  while (text[close + 1] === "]") close += 1;
+  if (text[close + 1] === "(") {
+    return readInlineTarget(text, open, close, boundaries);
+  }
+  const fallback = findFallbackClose(text, open, close + 1, layout);
+  if (fallback < 0 || text.slice(close + 1, fallback).includes("[")) return null;
+  return readInlineTarget(text, open, fallback, boundaries);
 }
 
 function restoreInlineLinks(text: string, tokens: string[]) {

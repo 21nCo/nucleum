@@ -189,6 +189,21 @@ describe("renderMdAsHtml links and quotes", () => {
     expect(container.querySelector(".inline-link")?.textContent).toBe("doc");
   });
 
+  it("renders mentions and links whose labels have unbalanced brackets", () => {
+    const cases: [string, string, string][] = [
+      ["See [Happy :]](resource=node_2) today", ".inline-mention", "Happy :]"],
+      ["See [Q4 plan [draft](resource=node_1) today", ".inline-mention", "Q4 plan [draft"],
+      ["Read [Part 2]](https://x.com/p2)", ".inline-link", "Part 2]"],
+      ["[Phase ] 2](resource=node_3)", ".inline-mention", "Phase ] 2"]
+    ];
+    for (const [text, selector, label] of cases) {
+      const element = renderIntoDom(renderMdAsHtml(text)).querySelector(selector);
+      expect(element?.getAttribute("data-label"), text).toBe(label);
+    }
+    const task = renderIntoDom(renderMdAsHtml("- [x] Read [spec](https://x.com/spec)"));
+    expect(task.querySelector(".inline-link")?.textContent).toBe("spec");
+  });
+
   it("checks block boundaries against whole source lines", () => {
     for (const text of [
       "[Release notes\n---](https://example.com/docs)",
