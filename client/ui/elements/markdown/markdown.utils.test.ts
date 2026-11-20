@@ -153,6 +153,29 @@ describe("renderMdAsHtml links and quotes", () => {
     }
   });
 
+  it("renders a link and a mention on consecutive lines separately", () => {
+    for (const newline of ["\n", "\r\n"]) {
+      const container = renderIntoDom(
+        renderMdAsHtml(
+          `[Docs](https://example.com/docs)${newline}[Roadmap](resource=node_1)`
+        )
+      );
+      expect(container.querySelector(".inline-link")?.getAttribute("data-href")).toBe(
+        "https://example.com/docs"
+      );
+      expect(container.querySelector(".inline-mention")?.getAttribute("data-label")).toBe(
+        "Roadmap"
+      );
+    }
+  });
+
+  it("treats only a whole rule line as a block boundary", () => {
+    const link = renderIntoDom(
+      renderMdAsHtml("[Release notes\n---draft](https://example.com/notes)")
+    ).querySelector(".inline-link");
+    expect(link?.getAttribute("data-href")).toBe("https://example.com/notes");
+  });
+
   it("renders a link whose label spans lines", () => {
     const container = renderIntoDom(
       renderMdAsHtml("[first\nsecond](https://example.com/a)")

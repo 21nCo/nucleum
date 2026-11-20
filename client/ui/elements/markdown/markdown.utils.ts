@@ -96,40 +96,78 @@ const TOKEN_END = "\uFFF1";
 const QUOTE_MARKER = "\uFFF2";
 const RESERVED_MARKERS = /[\uFFF0-\uFFF2]/g;
 const TOKEN_PATTERN = /\uFFF0(\d+)\uFFF1/g;
-/**
- * Lazy text for a link or mention label or destination. It may continue onto
- * the next line, but never across a line that starts a heading, quote, list
- * item or rule, so inline links stay inside their block.
- */
-const INLINE_SPAN =
-  "((?:[^\\n]|\\n(?![ \\t]*(?:#{1,4} |[-*] |\\uFFF2 |---|===|\\r?\\n)))*?)";
+const BLOCK_START_LINE =
+  /^(?:#{1,4} |\uFFF2 |\s*[-*] |---\s*$|===\s*$|\s*$)/;
+
+/** Checks whether a span of label or destination text stays inside one block. */
+function staysInBlock(span: string) {
+  return span
+    .split("\n")
+    .slice(1)
+    .every((line) => !BLOCK_START_LINE.test(line.replace(/\r$/, "")));
+}
 
 /**
- * Renders mentions and links into placeholder tokens before any other HTML is
- * generated, so link destinations keep their exact text and no later pattern
- * can match across generated markup.
+ * Renders mentions (`[label](resource=id)`) and links (`[label](https://...)`)
+ * into placeholder tokens in one left-to-right pass, before any other HTML is
+ * generated, so each link keeps its exact destination, no later pattern can
+ * match across generated markup, and a link never spans a block boundary.
  */
 function extractInlineLinks(text: string, tokens: string[]) {
-  let result = text;
-  for (const pattern of inlineLinkPatterns) {
-    const regex = new RegExp(
-      pattern.regex.source.replaceAll("(.*?)", INLINE_SPAN),
-      pattern.regex.flags
+  const [mentionPattern, linkPattern] = [
+    inlineLinkPatterns.find((pattern) => pattern.type === InlineType.MENTION)!,
+    inlineLinkPatterns.find((pattern) => pattern.type === InlineType.LINK)!
+  ];
+  let result = "";
+  let index = 0;
+  while (index < text.length) {
+    const open = text.indexOf("[", index);
+    if (open < 0) break;
+    const parsed = parseInlineLinkAt(text, open);
+    if (!parsed) {
+      result += text.slice(index, open + 1);
+      index = open + 1;
+      continue;
+    }
+    const styledLabel = replaceInlineStylePatterns(
+      replaceSymbolPatterns(parsed.label)
+    ).replace(/\r?\n/g, "<br>");
+    const target = parsed.target.replace(/\r?\n/g, "<br>");
+    const template = parsed.isMention
+      ? mentionPattern.replacement
+      : linkPattern.replacement;
+    tokens.push(
+      template.replace(/\$([12])/g, (_placeholder, group: string) =>
+        group === "1" ? styledLabel : target
+      )
     );
-    result = result.replace(regex, (_match, label: string, target: string) => {
-      const styledLabel = replaceInlineStylePatterns(
-        replaceSymbolPatterns(label)
-      ).replace(/\n/g, "<br>");
-      const destination = target.replace(/\n/g, "<br>");
-      tokens.push(
-        pattern.replacement.replace(/\$([12])/g, (_placeholder, group: string) =>
-          group === "1" ? styledLabel : destination
-        )
-      );
-      return `${TOKEN_START}${tokens.length - 1}${TOKEN_END}`;
-    });
+    result += `${text.slice(index, open)}${TOKEN_START}${tokens.length - 1}${TOKEN_END}`;
+    index = parsed.end;
   }
-  return result;
+  return result + text.slice(index);
+}
+
+function parseInlineLinkAt(text: string, open: number) {
+  const close = text.indexOf("](", open + 1);
+  if (close < 0) return null;
+  const label = text.slice(open + 1, close);
+  if (!staysInBlock(label)) return null;
+  const rest = text.slice(close + 2);
+  const prefix = rest.startsWith("resource=")
+    ? "resource="
+    : (/^https?:\/\//.exec(rest)?.[0] ?? null);
+  if (!prefix) return null;
+  const targetStart = close + 2 + prefix.length;
+  const targetEnd = text.indexOf(")", targetStart);
+  if (targetEnd < 0) return null;
+  const target = text.slice(targetStart, targetEnd);
+  if (!staysInBlock(target)) return null;
+  return {
+    isMention: prefix === "resource=",
+    label,
+    target,
+    end: targetEnd + 1
+  };
 }
 
 function restoreInlineLinks(text: string, tokens: string[]) {
