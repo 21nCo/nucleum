@@ -39,6 +39,7 @@ const { closeTopLayer, resolveTopBarControl, resolveTopLayer } = await import(
 
 const SPLIT = "?page=node:a&besidePage=node:b";
 const MAXIMIZED = "?page=node:a&max=true";
+const OPENED_MAXIMIZED = "?page=node:b&max=true&maxOpened=true";
 
 /** Opens the URL as a direct link. */
 function openLink(search: string) {
@@ -90,6 +91,22 @@ describe.each([
       expect(closeTopLayer()).toBeUndefined();
     });
   });
+
+  it.each([
+    { via: "a direct link", open: async () => openLink(OPENED_MAXIMIZED) },
+    { via: "browser Back", open: () => restoreWithBack(OPENED_MAXIMIZED) }
+  ])(
+    "returns a page opened into full screen to its origin after $via",
+    async ({ open }) => {
+      view.refresh(width, height);
+      await open();
+
+      expect(closeTopLayer()).toBe("page");
+      expect(mocks.navigation.minimizeFullScreen).toHaveBeenCalledTimes(1);
+      expect(mocks.navigation.closeResource).not.toHaveBeenCalled();
+      expect(mocks.navigation.exitFullScreen).not.toHaveBeenCalled();
+    }
+  );
 
   it("still closes a full screen overlay first", () => {
     view.refresh(width, height);

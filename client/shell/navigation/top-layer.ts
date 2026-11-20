@@ -202,6 +202,17 @@ export function closeTopLayer(options?: {
     minimizeFullScreen();
     return layer;
   }
+  // Portrait shows a page opened straight into full screen as a plain page,
+  // so closing it minimizes: it returns to the view it was opened from.
+  if (
+    layer === "page" &&
+    view.get().isPortrait &&
+    searchParams.get(AppSearchParam.MAX) &&
+    isPageOpenedInFullScreen(searchParams)
+  ) {
+    navigation.minimizeFullScreen();
+    return layer;
+  }
   if (
     layer === "overlay" &&
     searchParams.get(AccessMode.PAGE) &&
