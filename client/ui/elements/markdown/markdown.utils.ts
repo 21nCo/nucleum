@@ -91,7 +91,41 @@ export function escapeMarkdownText(text: string): string {
   );
 }
 
-/** Renders the established Markdown display syntax without depending on editor state. */
+const TOKEN_START = "\uFFF0";
+const TOKEN_END = "\uFFF1";
+const QUOTE_MARKER = "\uFFF2";
+const RESERVED_MARKERS = /[\uFFF0-\uFFF2]/g;
+const TOKEN_PATTERN = /\uFFF0(\d+)\uFFF1/g;
+
+/**
+ * Renders mentions and links into placeholder tokens before any other HTML is
+ * generated, so link destinations keep their exact text and no later pattern
+ * can match across generated markup.
+ */
+function extractInlineLinks(text: string, tokens: string[]) {
+  let result = text;
+  for (const pattern of inlineLinkPatterns) {
+    result = result.replace(pattern.regex, (_match, label: string, target: string) => {
+      const styledLabel = replaceInlineStylePatterns(replaceSymbolPatterns(label));
+      tokens.push(
+        pattern.replacement
+          .replaceAll("$1", styledLabel)
+          .replaceAll("$2", target)
+      );
+      return `${TOKEN_START}${tokens.length - 1}${TOKEN_END}`;
+    });
+  }
+  return result;
+}
+
+function restoreInlineLinks(text: string, tokens: string[]) {
+  return text.replace(TOKEN_PATTERN, (_match, index: string) => tokens[Number(index)] ?? "");
+}
+
+/**
+ * Renders the established Markdown display syntax without depending on editor state.
+ * Input is HTML-escaped first, so the output only contains markup this function generates.
+ */
 export function renderMdAsHtml(
   text: string,
   params?: {
@@ -99,7 +133,11 @@ export function renderMdAsHtml(
     isPageRender?: boolean;
   }
 ) {
-  let parsedText = escapeHtmlKeepingEntities(String(text ?? ""));
+  const source = String(text ?? "")
+    .replace(RESERVED_MARKERS, "")
+    .replace(/^> /gm, `${QUOTE_MARKER} `);
+  const tokens: string[] = [];
+  let parsedText = extractInlineLinks(escapeHtmlKeepingEntities(source), tokens);
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
   parsedText = parsedText.replace(
@@ -122,7 +160,7 @@ export function renderMdAsHtml(
       `<h1 class="${params?.isPageRender ? "text-h1" : "text-h4"}">${content}</h1>`
   );
   parsedText = parsedText.replace(
-    /^&gt; (.*)$/gm,
+    new RegExp(`^${QUOTE_MARKER} (.*)$`, "gm"),
     (match, content) => `<blockquote>${content}</blockquote>`
   );
   parsedText = parsedText.replace(/^---\s*$/gm, "<hr>");
@@ -144,9 +182,9 @@ export function renderMdAsHtml(
     }
   );
   parsedText = parsedText.replace(/\n/g, "<br>");
-  parsedText = replaceInlineLinkPatterns(parsedText);
+  parsedText = parsedText.replaceAll(QUOTE_MARKER, "&gt;");
   if (params?.isIncludeSpaces) parsedText = parsedText.replace(/ /g, "&nbsp;");
-  return parsedText;
+  return restoreInlineLinks(parsedText, tokens);
 }
 
 /**  match pattern for shared inline Markdown presentation. */

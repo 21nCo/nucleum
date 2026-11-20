@@ -105,7 +105,7 @@
   }
 </script>
 
-<div {id} class="w-full h-full flex justify-center items-center">
+<div {id} class="w-full h-full flex justify-center items-center" style="contain: paint;">
   {#if embedHtml}
     {@html embedHtml}
   {:else}

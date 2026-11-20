@@ -2,9 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LogType } from "@nucleum/client/runtime/logging/log.type";
 
-async function loadLogger(env: string, search: string) {
+async function loadLogger(env: string, search: string, mode?: string) {
   vi.resetModules();
   vi.stubEnv("VITE_ENV", env);
+  if (mode) vi.stubEnv("MODE", mode);
   window.history.replaceState(null, "", `/${search}`);
   return (await import("@nucleum/client/runtime/logging/logger")).logger;
 }
@@ -18,6 +19,11 @@ describe("logger overrides in live builds", () => {
 
   it("ignores the ?log= level override in live builds", async () => {
     const logger = await loadLogger("live", "?log=4");
+    expect(logger.level).not.toBe(LogType.DEBUG);
+  });
+
+  it("treats a Vite live-mode build without VITE_ENV as live", async () => {
+    const logger = await loadLogger("", "?log=4", "live");
     expect(logger.level).not.toBe(LogType.DEBUG);
   });
 

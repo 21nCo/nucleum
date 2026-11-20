@@ -118,20 +118,32 @@ export function toExternalHttpUrl(
   }
 }
 
+/** URL schemes the native Nucleum, Memotron and Pointron apps register for sign-in returns. */
+const NATIVE_SIGN_IN_SCHEMES = new Set(["nucleum:", "memotron:", "pointron:"]);
+
 /**
  * Checks whether a navigation target may be assigned to `window.location`:
- * http(s), mailto and tel URLs, and the native apps' `<scheme>://oauthsignin`
+ * http(s), mailto and tel URLs, and the native apps' `<app>://oauthsignin`
  * sign-in links. Script schemes such as `javascript:` are refused.
  */
 export function isAllowedLocationTarget(value: unknown): boolean {
   if (typeof value !== "string") return false;
-  const trimmed = value.trim();
   try {
-    const url = new URL(trimmed);
+    const url = new URL(value.trim());
     if (["http:", "https:", "mailto:", "tel:"].includes(url.protocol))
       return true;
-    return /^[a-z][a-z0-9+.-]*:\/\/oauthsignin(?:[/?#]|$)/i.test(trimmed);
+    return (
+      NATIVE_SIGN_IN_SCHEMES.has(url.protocol) && url.hostname === "oauthsignin"
+    );
   } catch {
     return false;
   }
+}
+
+/** Checks whether a value is already an absolute http(s) URL with a host, without adding a scheme. */
+export function isAbsoluteHttpUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return false;
+  return toExternalHttpUrl(trimmed) !== undefined;
 }

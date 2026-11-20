@@ -10,7 +10,8 @@ const LOG_METHODS: Record<LogType, "debug" | "error" | "info" | "warn"> = {
 
 /** Live builds ignore the URL log-level override and browser-stored debug sink settings. */
 const IS_LIVE_BUILD =
-  (import.meta.env?.VITE_ENV ?? "").trim().toLowerCase() === "live";
+  (import.meta.env?.VITE_ENV ?? "").trim().toLowerCase() === "live" ||
+  import.meta.env?.MODE === "live";
 
 function readStoredDebugSinkSetting(key: string) {
   if (IS_LIVE_BUILD || typeof window === "undefined") return undefined;

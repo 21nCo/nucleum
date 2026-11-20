@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  escapeHtmlAttribute,
   resolveEmbedFrameUrl,
   sanitizeEmbedHtml
 } from "@nucleum/features/memory/node/content/web/social/embed-html";
@@ -56,6 +57,26 @@ describe("sanitizeEmbedHtml", () => {
     expect(container.querySelector("[onload]")).toBeNull();
   });
 
+  it("keeps plain presentation attributes such as frame size", () => {
+    const container = render(
+      '<iframe src="https://embed.bsky.app/embed/a/app.bsky.feed.post/1" width="400" height="600" frameborder="0"></iframe><img src="https://cdn.example.com/a.png" width="20" alt="a"><time datetime="2026-01-01">x</time>'
+    );
+    const frame = container.querySelector("iframe");
+    expect(frame?.getAttribute("width")).toBe("400");
+    expect(frame?.getAttribute("height")).toBe("600");
+    expect(container.querySelector("img")?.getAttribute("width")).toBe("20");
+    expect(container.querySelector("time")?.getAttribute("datetime")).toBe(
+      "2026-01-01"
+    );
+  });
+
+  it("removes inline styles that could position content over the app", () => {
+    const container = render(
+      '<a href="https://evil.example/login" style="position:fixed;inset:0;z-index:2147483647">x</a><p style="background:url(https://evil.example/t.png)">y</p>'
+    );
+    expect(container.querySelector("[style]")).toBeNull();
+  });
+
   it("returns an empty string for non-string input", () => {
     expect(sanitizeEmbedHtml(undefined)).toBe("");
     expect(sanitizeEmbedHtml({ html: "<b>x</b>" })).toBe("");
@@ -71,5 +92,13 @@ describe("resolveEmbedFrameUrl", () => {
     expect(resolveEmbedFrameUrl("javascript:alert(1)")).toBeNull();
     expect(resolveEmbedFrameUrl("/relative")).toBeNull();
     expect(resolveEmbedFrameUrl(`${window.location.origin}/x`)).toBeNull();
+  });
+});
+
+describe("escapeHtmlAttribute", () => {
+  it("escapes quotes and angle brackets for built embed snippets", () => {
+    expect(
+      escapeHtmlAttribute('https://x.example/p" onload="alert(1)<')
+    ).toBe("https://x.example/p&quot; onload=&quot;alert(1)&lt;");
   });
 });

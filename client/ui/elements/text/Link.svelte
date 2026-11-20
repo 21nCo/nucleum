@@ -5,8 +5,8 @@
   import { cn } from "@21n/ui/environment/presentation";
   import { isValidEmail } from "@21n/shared-utils/text.utils";
   import {
-    isUrlMatchPattern,
-    toExternalHttpUrl
+    isAbsoluteHttpUrl,
+    isUrlMatchPattern
   } from "@21n/shared-utils/url.utils";
 
   let {
@@ -24,9 +24,7 @@
   } = $props();
 
   const externalHref = $derived(
-    href && /^https?:\/\//i.test(href.trim()) && toExternalHttpUrl(href)
-      ? href.trim()
-      : undefined
+    isAbsoluteHttpUrl(href) ? href.trim() : undefined
   );
 
   function handleClick(event: MouseEvent) {

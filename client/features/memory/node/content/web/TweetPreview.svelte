@@ -55,7 +55,7 @@
 </script>
 
 {#if oembedHtml}
-  {@html oembedHtml}
+  <div style="contain: paint;">{@html oembedHtml}</div>
 {:else if isCloudUserAndOnline($account, $context.isInOfflineMode)}
   <button
     class="w-full h-full px-4 flex justify-center items-center overflow-y-auto"

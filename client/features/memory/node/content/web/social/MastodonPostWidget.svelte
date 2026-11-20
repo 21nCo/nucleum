@@ -90,7 +90,7 @@
         if (parsed && parsed.error) {
           onError?.(parsed.error);
         } else if (parsed && parsed.html) {
-          embedHtml = sanitizeEmbedHtml(sanitizeAndStyleHTML(parsed.html));
+          embedHtml = sanitizeAndStyleHTML(sanitizeEmbedHtml(parsed.html));
         }
       }
     } catch (err) {
@@ -182,7 +182,7 @@
   }
 </script>
 
-<div {id} class="flex flex-col gap-3 w-full h-full justify-center items-center">
+<div {id} class="flex flex-col gap-3 w-full h-full justify-center items-center" style="contain: paint;">
   {#if embedHtml}
     {@html embedHtml}
   {:else}

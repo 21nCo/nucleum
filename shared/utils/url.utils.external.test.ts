@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { isAllowedLocationTarget, toExternalHttpUrl } from "./url.utils";
+import {
+  isAbsoluteHttpUrl,
+  isAllowedLocationTarget,
+  toExternalHttpUrl
+} from "./url.utils";
 
 describe("toExternalHttpUrl", () => {
   it("keeps http and https URLs", () => {
@@ -53,6 +57,20 @@ describe("isAllowedLocationTarget", () => {
     );
     expect(isAllowedLocationTarget("data:text/html,x")).toBe(false);
     expect(isAllowedLocationTarget("nucleum://settings")).toBe(false);
+    expect(
+      isAllowedLocationTarget("javascript://oauthsignin/%0aalert(1)")
+    ).toBe(false);
+    expect(isAllowedLocationTarget("evilapp://oauthsignin?token=x")).toBe(false);
     expect(isAllowedLocationTarget(undefined)).toBe(false);
+  });
+});
+
+describe("isAbsoluteHttpUrl", () => {
+  it("accepts only absolute http(s) URLs", () => {
+    expect(isAbsoluteHttpUrl("https://example.com/a")).toBe(true);
+    expect(isAbsoluteHttpUrl(" http://example.com ")).toBe(true);
+    expect(isAbsoluteHttpUrl("example.com")).toBe(false);
+    expect(isAbsoluteHttpUrl("javascript:alert(1)//https://x")).toBe(false);
+    expect(isAbsoluteHttpUrl(undefined)).toBe(false);
   });
 });

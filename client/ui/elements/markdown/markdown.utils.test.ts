@@ -59,6 +59,57 @@ describe("renderMdAsHtml", () => {
   });
 });
 
+describe("renderMdAsHtml links and quotes", () => {
+  it("keeps link destinations exact, including arrows and underscores", () => {
+    const container = renderIntoDom(
+      renderMdAsHtml("[docs](https://example.com/a__b?q=a->b)")
+    );
+    const link = container.querySelector(".inline-link");
+    expect(link?.getAttribute("data-href")).toBe(
+      "https://example.com/a__b?q=a->b"
+    );
+    expect(link?.textContent).toBe("docs");
+  });
+
+  it("does not let a link pattern match across generated mention markup", () => {
+    for (const text of [
+      '# [x](resource=[y](https://z" onmouseover="alert(1)))',
+      "> [x](resource=[y](https://z onmouseover=alert(1)))",
+      "[a](resource=[b](https://c) [d](https://e))"
+    ]) {
+      const container = renderIntoDom(renderMdAsHtml(text));
+      expect(container.querySelector("[onmouseover]")).toBeNull();
+      for (const element of Array.from(container.querySelectorAll("*"))) {
+        for (const attribute of Array.from(element.attributes)) {
+          expect([
+            "class",
+            "data-record-id",
+            "data-label",
+            "data-href"
+          ]).toContain(attribute.name);
+        }
+      }
+    }
+  });
+
+  it("renders a quote only for a literal greater-than marker", () => {
+    expect(
+      renderIntoDom(renderMdAsHtml("> quoted")).querySelector("blockquote")
+        ?.textContent
+    ).toBe("quoted");
+    const escaped = renderIntoDom(renderMdAsHtml("&gt; 5 requests per second"));
+    expect(escaped.querySelector("blockquote")).toBeNull();
+    expect(escaped.textContent).toBe("> 5 requests per second");
+  });
+
+  it("keeps mentions rendering with their record id", () => {
+    const container = renderIntoDom(renderMdAsHtml("See [Plan](resource=node_1)"));
+    const mention = container.querySelector(".inline-mention");
+    expect(mention?.getAttribute("data-record-id")).toBe("node_1");
+    expect(mention?.getAttribute("data-label")).toBe("Plan");
+  });
+});
+
 describe("escapeHtmlKeepingEntities", () => {
   it("escapes HTML delimiters and bare ampersands but keeps character references", () => {
     expect(escapeHtmlKeepingEntities(`<a href="x">'&'</a> &lt; &#60; &#x3C;`)).toBe(

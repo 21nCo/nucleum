@@ -92,7 +92,7 @@
   <script async src="https://www.threads.com/embed.js"></script>
 </svelte:head>
 
-<div {id} class="w-full flex my-auto justify-center overflow-y-auto">
+<div {id} class="w-full flex my-auto justify-center overflow-y-auto" style="contain: paint;">
   {#if embedHtml && dev_isUseOEmbedAPI}
     {@html embedHtml}
   {:else if dev_isUseOEmbedAPI}

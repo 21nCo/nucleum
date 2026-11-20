@@ -100,7 +100,7 @@
   <script async src="//www.instagram.com/embed.js"></script>
 </svelte:head>
 
-<div {id} class="w-full flex my-auto justify-center overflow-y-auto">
+<div {id} class="w-full flex my-auto justify-center overflow-y-auto" style="contain: paint;">
   {#if embedHtml}
     {@html embedHtml}
   {:else if dev_isUseOEmbedAPI}

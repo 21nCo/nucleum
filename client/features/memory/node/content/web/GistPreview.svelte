@@ -2,6 +2,10 @@
   import type { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
   import type { IGist } from "@nucleum/features/memory/node/node.type";
+  import {
+    EMBED_IFRAME_SANDBOX,
+    resolveEmbedFrameUrl
+  } from "@nucleum/features/memory/node/content/web/social/embed-html";
   let {
     node,
     accessPoint
@@ -48,12 +52,8 @@
   }
 
   function resolveHttpsUrl(url: string): URL | null {
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === "https:" ? parsed : null;
-    } catch {
-      return null;
-    }
+    const frameUrl = resolveEmbedFrameUrl(url);
+    return frameUrl ? new URL(frameUrl) : null;
   }
 
   function isGitHubGist(url: string): boolean {
@@ -90,6 +90,7 @@
       <iframe
         title="GitHub Gist"
         src={resolveGistFrameUrl(node.url)}
+        sandbox={EMBED_IFRAME_SANDBOX}
         class="w-full h-full border-0 min-h-[200px]"
         frameborder="0"
         scrolling="auto"
