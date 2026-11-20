@@ -823,7 +823,10 @@ async function copyEntry(dir: string, entryName: string) {
     if (!pending) return undefined;
     const thumbnail = await readThumbnail(entry);
     const isThumbnailMarked = !thumbnail || names.includes(THUMBNAIL_SENT_FILE);
-    if (names.includes(UPLOADED_FILE) && isThumbnailMarked) return undefined;
+    const isMarked =
+      names.includes(UPLOADED_FILE) &&
+      (await readEntryText(dir, entryName, UPLOADED_FILE, true)) !== undefined;
+    if (isMarked && isThumbnailMarked) return undefined;
     const delivery = await readDelivery(
       dir,
       pending.fileId,
@@ -990,6 +993,9 @@ async function readRestore(dir: string, fileId: string) {
   return {
     ...marks,
     isAdopted: marks.isAdopted || adoptions.has(adoption),
+    isOwn:
+      marks.isOwn &&
+      !adoptions.has(`${FOREIGN_ROW}~${fileId}~${marks.generation}`),
     isHeld: (except?: string) => heldUntil(except) > 0,
     heldUntil
   };
@@ -1011,7 +1017,9 @@ async function readRestore(dir: string, fileId: string) {
  * `dispatch~<session>~<fileId>~~<expires at>`, a step removing or
  * discarding a file without Web Locks (see actAlone). Delivered rows,
  * `delivered~<fileId>~<1 when its thumbnail was sent, else 0>~<version>`,
- * record a delivery the upload log could not (see logDelivered).
+ * record a delivery the upload log could not (see logDelivered), and
+ * foreign rows, `foreign~<fileId>~<generation>`, a generation a restore
+ * into another account kept, which the replay never reclaims.
  */
 type HoldRow = {
   name: string;
@@ -1028,6 +1036,7 @@ const ADOPTION_ROW = "adopted";
 const ACTING_ROW = "acting";
 const DISPATCH_ROW = "dispatch";
 const DELIVERED_ROW = "delivered";
+const FOREIGN_ROW = "foreign";
 /** How long a restore's hold row holds its file at most (see HoldRow). */
 export const RESTORE_HOLD_LIFETIME_MS = 24 * 60 * 60_000;
 /** How long an acting row (see actAlone) counts at most. */
@@ -1054,7 +1063,7 @@ async function readHolds(dir: string) {
   const delivered: (LoggedUpload & { name: string; fileId: string })[] = [];
   for (const name of await readNames(handle)) {
     const [kind, session, fileId, generation, expires] = name.split("~");
-    if (kind === ADOPTION_ROW) adoptions.add(name);
+    if (kind === ADOPTION_ROW || kind === FOREIGN_ROW) adoptions.add(name);
     if (kind === DELIVERED_ROW) {
       const [, file, sent, ...version] = name.split("~");
       const versionId = version.join("~");
@@ -1332,7 +1341,7 @@ async function readDelivery(
   const readRow = async () => {
     try {
       const { delivered } = await readHolds(dir);
-      return delivered.find((found) => found.fileId === fileId);
+      return delivered.filter((found) => found.fileId === fileId);
     } catch (readError) {
       error ??= readError;
       return null;
@@ -1346,7 +1355,7 @@ async function readDelivery(
   }
   if (original === "") {
     const found = await readRow();
-    original = found === null ? undefined : (found?.versionId ?? "");
+    original = found === null ? undefined : (found[0]?.versionId ?? "");
   }
   type Thumbnail = "absent" | "sent" | "rejected" | "pending" | "unknown";
   let thumbnail: Thumbnail = "pending";
@@ -1355,8 +1364,10 @@ async function readDelivery(
   else if (names.includes(THUMBNAIL_REJECTED_FILE)) thumbnail = "rejected";
   else if (original) {
     const sent = await read(log, `${row}~thumbnail`);
-    const found = sent === original ? undefined : await readRow();
-    const isRowSent = found?.isThumbnailSent && found.versionId === original;
+    const found = sent === original ? [] : await readRow();
+    const isRowSent = found?.some(
+      (rowSent) => rowSent.isThumbnailSent && rowSent.versionId === original
+    );
     if (sent === original || isRowSent) thumbnail = "sent";
     else if (sent === undefined || found === null) thumbnail = "unknown";
   }
@@ -1539,6 +1550,12 @@ export async function stageRestoredFiles(
           const { isPresent } = found;
           const isOwn = options.isOwnAccount;
           await stageRestoredEntry(dir, written, generation, isPresent, isOwn);
+        } else if (!options.isOwnAccount) {
+          const handle = await getHoldsDir(dir, true);
+          await handle!.getFileHandle(
+            `${FOREIGN_ROW}~${fileId}~${generation}`,
+            MAKE
+          );
         }
       }
     } catch (error) {

@@ -5833,4 +5833,88 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
     expect(sdk.artifacts).toHaveLength(1);
     expect(sdk.deleted).toEqual([]);
   });
+
+  it("rejects a backup of an uploaded file whose uploaded mark cannot be read, though its thumbnail is marked sent", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    await uploadUntilPullFails(entry);
+    isOnline = false;
+    expect(opfs.list(QUEUE_A, entry)).toContain("sent-thumbnail");
+    getDirectory = unreadable(
+      (path) => path[1] === entry && path[2] === "uploaded"
+    );
+
+    await expect(backupText()).rejects.toThrow();
+    getDirectory = opfs.getDirectory;
+    expect((await backupText()).startsWith('{"fileQueue"')).toBe(false);
+  });
+
+  it("keeps a file its own account restored for it when a restore into another account kept it, though neither restore could mark it settled, also once their holds and its grace ended", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    await deleteRecord(record.id);
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    getDirectory = failingWrites((path) =>
+      path[2]?.startsWith("settled-")
+        ? new DOMException("The quota is exceeded", "QuotaExceededError")
+        : undefined
+    );
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(opfs.list(QUEUE_A, entry).some((n) => n.startsWith("own-"))).toBe(
+      true
+    );
+    await bootData(cloudAccount("user-b"));
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    getDirectory = opfs.getDirectory;
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + RESTORE_HOLD_LIFETIME_MS + UNCOMMITTED_GRACE_MS + 2_000
+    );
+    await bootData(cloudAccount("user-a"));
+
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(await readQueuedBytes(record.fileId, "full")).toBe("photo bytes");
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it.each([
+    ["one of the file's delivered rows records its thumbnail sent", true],
+    ["no delivered row records its thumbnail sent", false]
+  ])(
+    "restores a delivered file's thumbnail only when it was not sent, when %s",
+    async (_, isSent) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const backup = await backupFile();
+      await clearBrowser();
+      await bootData(cloudAccount("user-a"));
+      const root = await opfs.getDirectory();
+      const holds = await root.getDirectoryHandle(HOLDS_A, { create: true });
+      await holds.getFileHandle(`delivered~${record.fileId}~0~ver_1`, {
+        create: true
+      });
+      if (isSent) {
+        await holds.getFileHandle(`delivered~${record.fileId}~1~ver_1`, {
+          create: true
+        });
+      }
+
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+
+      expect(opfs.list(QUEUE_A)).toEqual(
+        isSent ? [] : [`queued_${record.fileId}`]
+      );
+      expect(await readQueuedBytes(record.fileId, "full")).toBeUndefined();
+    }
+  );
 });
