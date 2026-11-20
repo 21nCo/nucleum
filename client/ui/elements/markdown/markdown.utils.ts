@@ -96,6 +96,13 @@ const TOKEN_END = "\uFFF1";
 const QUOTE_MARKER = "\uFFF2";
 const RESERVED_MARKERS = /[\uFFF0-\uFFF2]/g;
 const TOKEN_PATTERN = /\uFFF0(\d+)\uFFF1/g;
+/**
+ * Lazy text for a link or mention label or destination. It may continue onto
+ * the next line, but never across a line that starts a heading, quote, list
+ * item or rule, so inline links stay inside their block.
+ */
+const INLINE_SPAN =
+  "((?:[^\\n]|\\n(?![ \\t]*(?:#{1,4} |[-*] |\\uFFF2 |---|===|\\r?\\n)))*?)";
 
 /**
  * Renders mentions and links into placeholder tokens before any other HTML is
@@ -105,7 +112,10 @@ const TOKEN_PATTERN = /\uFFF0(\d+)\uFFF1/g;
 function extractInlineLinks(text: string, tokens: string[]) {
   let result = text;
   for (const pattern of inlineLinkPatterns) {
-    const regex = new RegExp(pattern.regex.source, `${pattern.regex.flags}s`);
+    const regex = new RegExp(
+      pattern.regex.source.replaceAll("(.*?)", INLINE_SPAN),
+      pattern.regex.flags
+    );
     result = result.replace(regex, (_match, label: string, target: string) => {
       const styledLabel = replaceInlineStylePatterns(
         replaceSymbolPatterns(label)

@@ -128,12 +128,29 @@ describe("renderMdAsHtml links and quotes", () => {
     expect(mention?.getAttribute("data-record-id")).toBe("node_q4");
   });
 
-  it("shows a greater-than sign at the start of a label line", () => {
-    const link = renderIntoDom(
-      renderMdAsHtml("[a\n> b](https://x.com)")
-    ).querySelector(".inline-link");
-    expect(link?.textContent).toBe("a> b");
-    expect(link?.getAttribute("data-label")).not.toContain("\uFFF2");
+  it("never leaks the internal quote marker", () => {
+    for (const text of ["[a\n> b](https://x.com)", "> [q](https://x.com)", "x\n> y"]) {
+      const html = renderMdAsHtml(text);
+      expect(html).not.toContain("\uFFF2");
+      expect(renderIntoDom(html).querySelector("blockquote")).not.toBeNull();
+    }
+  });
+
+  it("does not let a link or mention span a block boundary", () => {
+    for (const newline of ["\n", "\r\n"]) {
+      const container = renderIntoDom(
+        renderMdAsHtml(
+          ["See [doc](https://example.com/doc)", "## Summary", "[Plan](resource=node_1)"].join(newline)
+        )
+      );
+      expect(container.querySelector(".inline-link")?.getAttribute("data-href")).toBe(
+        "https://example.com/doc"
+      );
+      expect(container.querySelector("h2")?.textContent?.trim()).toBe("Summary");
+      expect(container.querySelector(".inline-mention")?.getAttribute("data-label")).toBe(
+        "Plan"
+      );
+    }
   });
 
   it("renders a link whose label spans lines", () => {
