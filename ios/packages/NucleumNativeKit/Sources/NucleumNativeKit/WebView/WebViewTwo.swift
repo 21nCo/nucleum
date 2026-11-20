@@ -771,9 +771,6 @@ struct WebViewTwo: UIViewRepresentable, WebViewHandlerDelegate {
       case .openExternally:
         if let url { UIApplication.shared.open(url) }
         decisionHandler(.cancel)
-      case .startSignIn:
-        if let url { delegate?.receivedJsonValueFromWebView(value: ["oauth": url.absoluteString]) }
-        decisionHandler(.cancel)
       case .cancel:
         Log.info("Blocked a WebView navigation")
         decisionHandler(.cancel)

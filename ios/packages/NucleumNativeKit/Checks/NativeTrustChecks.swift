@@ -32,7 +32,7 @@ check(!NativeTrust.acceptsBridgeMessage(isMainFrame: true, scheme: "https", host
 func decide(_ value: String, target: Bool? = true, source: Bool = true) -> NativeTrust.NavigationDecision {
   NativeTrust.navigationDecision(
     for: URL(string: value)!, targetIsMainFrame: target, sourceIsMainFrame: source,
-    trustedOrigins: origins, isTrustedAccountURL: { url in
+    trustedOrigins: origins, appScheme: "nucleum", isTrustedAccountURL: { url in
       NativeTrust.isTrustedAccountURL(url, allowedAccountOrigins: accountOrigins)
     })
 }
@@ -40,9 +40,12 @@ check(decide("tauri://localhost/index.html") == .allow, "bundled navigation allo
 check(decide("https://web.nucleum.app/library") == .allow, "web origin navigation allowed")
 check(decide("https://account-insouth.nucleum.app/auth/x") == .allow, "account navigation allowed")
 check(decide("about:blank") == .allow, "about:blank allowed")
-check(decide("https://accounts.google.com/o/oauth2/v2/auth?x=1") == .startSignIn, "Google sign-in starts native session")
-check(decide("https://appleid.apple.com/auth/authorize") == .startSignIn, "Apple sign-in starts native session")
-check(decide("https://github.com/login/oauth/authorize") == .startSignIn, "GitHub sign-in starts native session")
+check(decide("https://accounts.google.com/o/oauth2/v2/auth?x=1") == .allow, "app main frame keeps Google sign-in in the WebView")
+check(decide("https://appleid.apple.com/auth/authorize") == .allow, "app main frame keeps Apple sign-in in the WebView")
+check(decide("https://github.com/login/oauth/authorize") == .allow, "app main frame keeps GitHub sign-in in the WebView")
+check(decide("https://accounts.google.com/o/oauth2/v2/auth", target: true, source: false) == .cancel, "embed cannot send the app to a provider page")
+check(decide("nucleum://oauthsignin?token=x") == .allow, "app scheme from the app main frame unchanged")
+check(decide("nucleum://oauthsignin?token=x", target: true, source: false) == .cancel, "embed cannot open the app scheme")
 check(decide("https://github.com/nucleum") == .openExternally, "other GitHub page opens externally")
 check(decide("https://evil.example/") == .openExternally, "foreign web opens externally")
 check(decide("mailto:someone@example.com") == .openExternally, "mailto opens externally")

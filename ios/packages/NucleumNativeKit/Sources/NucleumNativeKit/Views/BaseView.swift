@@ -63,6 +63,7 @@ struct BaseView: View {
           ) {
             callbackURL, error in
             DispatchQueue.main.async {
+              _ = appStore.consumePendingSignIn()
               if let callbackURL = callbackURL {
                 Log.info("OAuth success callback: \(redactUrlForLog(callbackURL))")
                 processOauthResponse(callbackURL)
@@ -194,7 +195,6 @@ struct BaseView: View {
   }
 
   func processOauthResponse(_ url: URL) {
-    _ = appStore.consumePendingSignIn()
     if NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme) == "oauthsignin" {
       guard let token = oauthCallbackValue(url, name: "token") else {
         Log.error(message: "OAuth response did not include a token")

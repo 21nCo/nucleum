@@ -224,21 +224,23 @@ enum NativeTrust {
   enum NavigationDecision: Equatable {
     case allow
     case openExternally
-    case startSignIn
     case cancel
   }
 
   /// Decides a WebView navigation. Subframes (embeds) are unchanged. A
   /// new-window request from a subframe is discarded, as WebKit did before.
   /// Main-frame navigations stay in the WebView only for the app's origins,
-  /// its account hosts and in-page schemes; OAuth provider pages start the
-  /// native sign-in session; other web, mail and phone links open in the
-  /// system browser; anything else is cancelled.
+  /// its account hosts and in-page schemes. OAuth provider pages keep loading in
+  /// the WebView when the app itself navigates there (its existing embedded
+  /// sign-in flows), but an embedded frame cannot send the app to them. Other
+  /// web, mail and phone links open in the system browser; anything else is
+  /// cancelled.
   static func navigationDecision(
     for url: URL,
     targetIsMainFrame: Bool?,
     sourceIsMainFrame: Bool,
     trustedOrigins: [URL],
+    appScheme: String,
     isTrustedAccountURL: (URL) -> Bool
   ) -> NavigationDecision {
     switch targetIsMainFrame {
@@ -253,7 +255,8 @@ enum NativeTrust {
     if scheme == "about" || scheme == "blob" { return .allow }
     if trustedOrigins.contains(where: { sameOrigin($0, url) }) { return .allow }
     if scheme == "https" && isTrustedAccountURL(url) { return .allow }
-    if isOAuthProviderURL(url) { return .startSignIn }
+    if isOAuthProviderURL(url) { return sourceIsMainFrame ? .allow : .cancel }
+    if scheme == appScheme.lowercased() { return sourceIsMainFrame ? .allow : .cancel }
     if scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "tel" {
       return .openExternally
     }
@@ -336,6 +339,7 @@ extension NativeTrust {
       targetIsMainFrame: navigationAction.targetFrame?.isMainFrame,
       sourceIsMainFrame: navigationAction.sourceFrame.isMainFrame,
       trustedOrigins: appTrustedOrigins(loadedURL: loadedURL),
+      appScheme: LocalConfig.urlScheme,
       isTrustedAccountURL: isAppAccountURL
     )
     return (decision, url)

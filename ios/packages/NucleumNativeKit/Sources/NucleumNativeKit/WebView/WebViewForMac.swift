@@ -258,9 +258,6 @@ struct WebViewForMac: NSViewRepresentable, WebViewHandlerDelegate {
       case .openExternally:
         if let url { NSWorkspace.shared.open(url) }
         decisionHandler(.cancel, preferences)
-      case .startSignIn:
-        if let url { delegate?.receivedJsonValueFromWebView(value: ["oauth": url.absoluteString]) }
-        decisionHandler(.cancel, preferences)
       case .cancel:
         Log.info("Blocked a WebView navigation")
         decisionHandler(.cancel, preferences)
