@@ -69,8 +69,13 @@ export function createBrowserLayout() {
     }
   }
   function resize() {
+    const wasPortrait = view.get().isPortrait;
     view.refresh(window.innerWidth, window.innerHeight);
-    if (updateOrientationClasses()) navigation.gotoPath("/");
+    // The shell layout can flip on a width-only resize (PORTRAIT_WIDTH_FLOOR),
+    // so a change of view.isPortrait resets to home like an orientation flip.
+    const orientationChanged = updateOrientationClasses();
+    if (orientationChanged || view.get().isPortrait !== wasPortrait)
+      navigation.gotoPath("/");
   }
   function orientationChange() {
     orientationTimer = setTimeout(() => {
