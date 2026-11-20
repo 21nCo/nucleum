@@ -217,7 +217,9 @@ struct BaseViewForMac: View {
       ? URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
         .first(where: { $0.name == "token" })?.value.flatMap { $0.isEmpty ? nil : $0 }
       : nil
-    if signInToken != nil && !appStore.consumePendingSignIn() {
+    if signInKind != nil
+      && !(signInToken != nil ? appStore.consumePendingSignIn() : appStore.hasPendingSignIn())
+    {
       Log.error(message: "Ignored a sign-in link this app did not start")
       return
     }

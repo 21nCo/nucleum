@@ -243,6 +243,7 @@ enum NativeTrust {
     appScheme: String,
     isFormPost: Bool = false,
     sourceHost: String? = nil,
+    sourceIsAppOrigin: Bool = true,
     isTrustedAccountURL: (URL) -> Bool
   ) -> NavigationDecision {
     switch targetIsMainFrame {
@@ -254,14 +255,18 @@ enum NativeTrust {
       break
     }
     let scheme = url.scheme?.lowercased() ?? ""
-    if scheme == "about" || scheme == "blob" { return sourceIsMainFrame ? .allow : .cancel }
+    if scheme == "about" || scheme == "blob" {
+      return sourceIsMainFrame && sourceIsAppOrigin ? .allow : .cancel
+    }
     if trustedOrigins.contains(where: { sameOrigin($0, url) }) { return .allow }
     if scheme == "https" && isTrustedAccountURL(url) { return .allow }
     if isOAuthProviderURL(url) { return sourceIsMainFrame ? .allow : .cancel }
-    if scheme == appScheme.lowercased() { return sourceIsMainFrame ? .allow : .cancel }
+    if scheme == appScheme.lowercased() {
+      return sourceIsMainFrame && sourceIsAppOrigin ? .allow : .cancel
+    }
     if isFormPost && scheme == "https" && sourceIsMainFrame
       && sourceHost?.lowercased() == "appleid.apple.com"
-      && isAppleSignInCallback(url, isTrustedAccountURL: isTrustedAccountURL)
+      && isAppleSignInCallback(url)
     {
       return .allow
     }
@@ -276,16 +281,12 @@ enum NativeTrust {
     "api.nucleus.website", "api.memotron.app", "api.memotron.xyz", "api.21n.dev",
   ]
 
-  /// Apple's form_post goes to `/oauth/apple` on a sign-in API host, or to an
-  /// app account host's social callback.
-  static func isAppleSignInCallback(_ url: URL, isTrustedAccountURL: (URL) -> Bool) -> Bool {
+  /// Apple's form_post to `/oauth/apple` on a sign-in API host. (Account hosts
+  /// are already allowed by the account check.)
+  static func isAppleSignInCallback(_ url: URL) -> Bool {
     let host = url.host?.lowercased() ?? ""
-    if appleCallbackHosts.contains(host) && (url.port == nil || url.port == 443)
+    return appleCallbackHosts.contains(host) && (url.port == nil || url.port == 443)
       && url.path == "/oauth/apple"
-    {
-      return true
-    }
-    return isTrustedAccountURL(url) && url.path.hasSuffix("/social/callback/apple")
   }
 
   /// Authorization pages of the sign-in providers the account service uses.
@@ -367,6 +368,12 @@ extension NativeTrust {
       appScheme: LocalConfig.urlScheme,
       isFormPost: navigationAction.request.httpMethod?.uppercased() == "POST",
       sourceHost: navigationAction.sourceFrame.securityOrigin.host,
+      sourceIsAppOrigin: isTrustedFrameOrigin(
+        scheme: navigationAction.sourceFrame.securityOrigin.protocol,
+        host: navigationAction.sourceFrame.securityOrigin.host,
+        port: navigationAction.sourceFrame.securityOrigin.port,
+        trustedOrigins: appTrustedOrigins(loadedURL: loadedURL)
+      ),
       isTrustedAccountURL: isAppAccountURL
     )
     return (decision, url)

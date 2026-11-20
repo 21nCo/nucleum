@@ -31,11 +31,12 @@ check(!NativeTrust.acceptsBridgeMessage(isMainFrame: true, scheme: "https", host
 
 func decide(
   _ value: String, target: Bool? = true, source: Bool = true, post: Bool = false,
-  sourceHost: String? = nil
+  sourceHost: String? = nil, appSource: Bool = true
 ) -> NativeTrust.NavigationDecision {
   NativeTrust.navigationDecision(
     for: URL(string: value)!, targetIsMainFrame: target, sourceIsMainFrame: source,
     trustedOrigins: origins, appScheme: "nucleum", isFormPost: post, sourceHost: sourceHost,
+    sourceIsAppOrigin: appSource,
     isTrustedAccountURL: { url in
       NativeTrust.isTrustedAccountURL(url, allowedAccountOrigins: accountOrigins)
     })
@@ -54,7 +55,9 @@ check(decide("https://github.com/nucleum") == .openExternally, "other GitHub pag
 check(decide("https://evil.example/") == .openExternally, "foreign web opens externally")
 check(decide("mailto:someone@example.com") == .openExternally, "mailto opens externally")
 check(decide("https://api.nucleus.website/oauth/apple", post: true, sourceHost: "appleid.apple.com") == .allow, "Apple form_post to the sign-in API keeps loading")
-check(decide("https://account-insouth.nucleum.app/auth/social/callback/apple", post: true, sourceHost: "appleid.apple.com") == .allow, "Apple form_post to the account callback keeps loading")
+check(decide("https://account-insouth.nucleum.app/auth/social/callback/apple", post: true, sourceHost: "appleid.apple.com", appSource: false) == .allow, "Apple form_post to the account callback keeps loading (account host)")
+check(decide("about:blank", appSource: false) == .cancel, "provider page cannot open about:blank in the main frame")
+check(decide("nucleum://oauthsignin?token=x", appSource: false) == .cancel, "provider page cannot open the app scheme")
 check(decide("https://other-service.example/callback", post: true, sourceHost: "appleid.apple.com") == .openExternally, "Apple form_post for another service does not render")
 check(decide("https://api.nucleus.website:8443/oauth/apple", post: true, sourceHost: "appleid.apple.com") == .openExternally, "Apple form_post to another port does not render")
 check(decide("https://evil.example/collect", post: true, sourceHost: "web.nucleum.app") == .openExternally, "other form POST does not render in the app")

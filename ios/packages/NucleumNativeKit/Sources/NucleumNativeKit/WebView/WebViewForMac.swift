@@ -246,7 +246,15 @@ struct WebViewForMac: NSViewRepresentable, WebViewHandlerDelegate {
       preferences: WKWebpagePreferences,
       decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
     ) {
-      if navigationAction.shouldPerformDownload {
+      let source = navigationAction.sourceFrame
+      if navigationAction.shouldPerformDownload && source.isMainFrame
+        && NativeTrust.isTrustedFrameOrigin(
+          scheme: source.securityOrigin.protocol,
+          host: source.securityOrigin.host,
+          port: source.securityOrigin.port,
+          trustedOrigins: NativeTrust.appTrustedOrigins(loadedURL: parent.url)
+        )
+      {
         decisionHandler(.download, preferences)
         return
       }

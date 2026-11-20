@@ -51,6 +51,12 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
     pendingSignInStartedAt = Date()
   }
 
+  /// True while a sign-in this app started is pending, without using it up.
+  func hasPendingSignIn() -> Bool {
+    guard let startedAt = pendingSignInStartedAt else { return false }
+    return Date().timeIntervalSince(startedAt) <= pendingSignInLifetime
+  }
+
   /// Returns true, once, when a sign-in this app started is still pending.
   func consumePendingSignIn() -> Bool {
     defer { pendingSignInStartedAt = nil }

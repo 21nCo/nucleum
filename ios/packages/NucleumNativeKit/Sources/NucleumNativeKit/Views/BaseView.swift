@@ -241,7 +241,9 @@ struct BaseView: View {
           .first(where: { $0.name == "token" })?.value
         : signInKind == "oauthsignin" ? oauthCallbackValue(url, name: "token") : nil)
       .flatMap { $0.isEmpty ? nil : $0 }
-    if signInToken != nil && !appStore.consumePendingSignIn() {
+    if signInKind != nil
+      && !(signInToken != nil ? appStore.consumePendingSignIn() : appStore.hasPendingSignIn())
+    {
       Log.error(message: "Ignored a sign-in link this app did not start")
       return
     }
