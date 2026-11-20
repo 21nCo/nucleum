@@ -74,6 +74,13 @@ const ADOPTED_PREFIX = "adopted-";
 const SETTLED_PREFIX = "settled-";
 /** Marks a file a restore into the queue's own account wrote. */
 const OWN_PREFIX = "own-";
+/**
+ * Binds a restored file to the queue's account (`bound-<generation>`, the
+ * owner's claim) when its replay took the file on a record's reference
+ * while no adoption could be recorded, written before any request (see
+ * isBound), apart from the started markers that tell whether one was sent.
+ */
+const BOUND_PREFIX = "bound-";
 const MAKE = { create: true };
 /** The generation of a file no restore wrote. */
 const BASE_GENERATION = "base";
@@ -254,7 +261,8 @@ async function writeQueuedEntry(dir: string, input: QueuedFileInput) {
  * with `isAllowed`, only while it resolves true, checked once the change is
  * marked as far as it can be (see markChange), right before the removal.
  * The FileFn store ignores a removal that fails, so the entry is looked up
- * again, and one still there rejects, for the caller to retry.
+ * again, and one found still there rejects, for the caller to retry (a
+ * lookup that fails counts as removed).
  */
 export async function dequeueFile(
   dir: string,
@@ -265,7 +273,7 @@ export async function dequeueFile(
   await markChange(dir);
   if (isAllowed && !(await isAllowed())) return false;
   await getStore(dir).deletePendingUpload(entryName);
-  if (await getEntryDir(dir, entryName, true)) {
+  if (await getEntryDir(dir, entryName)) {
     throw new Error("A queued file could not be removed");
   }
   await bumpRevisionAfter(dir);
@@ -1680,34 +1688,55 @@ async function stageRestoredEntry(
  * its record now references the file FileFn holds (see removeDelivered). Any other file not
  * adopted yet stays held for its account, marked settled so no earlier
  * restore's rollback removes it. Without `isReferenced`, for a restore into
- * another account, each file it kept also gets its foreign row (see
- * HoldRow) here, once its records were imported, never while staging, so a
- * restore that rolls back leaves none; its hold row protects it until then.
+ * another account, each file it kept that `isKept` resolves true for (its
+ * records were imported, or one of them references the file) also gets
+ * its foreign row (see HoldRow) here, never while staging, so a restore
+ * that rolls back leaves none; its hold row protects it until then. Its
+ * settled mark also protects it when that row cannot be created, and one
+ * `isKept` resolves false for is left as it was.
  * Then removes the session's own hold rows,
  * leaving other sessions', but the row of a file that cannot be read,
  * adopted or marked, which stays held until the row expires, so no earlier
  * restore's rollback removes it meanwhile, and then for the replay to adopt
- * once it finds the file referenced; never rejects.
+ * once it finds the file referenced. Never rejects; resolves false when a
+ * file kept for another account got neither its foreign row nor its
+ * settled mark.
  */
 export async function settleRestoredFiles(
   staged: RestoredQueuedFiles,
-  isReferenced?: (fileId: string) => Promise<boolean | undefined>
-): Promise<void> {
+  isReferenced?: (fileId: string) => Promise<boolean | undefined>,
+  isKept: (fileId: string) => Promise<boolean> = async () => true
+): Promise<boolean> {
   const { dir, written, kept, session } = staged;
-  if (!written.length && !kept.length) return;
+  if (!written.length && !kept.length) return true;
   const signal = new AbortController().signal;
+  let isProtected = Boolean(isReferenced) || !kept.length;
   await withQueueLock(dir, signal, async () => {
     const retained = new Set<string>();
+    let isFailed = false;
     for (const { fileId, generation } of [...written, ...kept]) {
+      const isForeign =
+        !isReferenced && kept.some((found) => found.fileId === fileId);
+      let isUnprotected = isForeign;
       try {
         const restore = await readRestore(dir, fileId);
         if (!restore?.isPublished || restore.generation !== generation) {
+          isUnprotected = false;
           continue;
         }
-        if (!isReferenced && kept.some((found) => found.fileId === fileId)) {
-          const handle = await getHoldsDir(dir, true);
+        if (isForeign && !(await isKept(fileId))) {
+          isUnprotected = false;
+          continue;
+        }
+        isUnprotected &&= !restore.isAdopted;
+        if (isUnprotected) {
           const foreign = [FOREIGN_ROW, fileId, generation].join("~");
-          await handle!.getFileHandle(foreign, MAKE);
+          await getHoldsDir(dir, true)
+            .then((handle) => handle!.getFileHandle(foreign, MAKE))
+            .then(() => (isUnprotected = false))
+            .catch((error: unknown) => {
+              logger.warn({ at: "fileQueue.foreign", fileId, error });
+            });
         }
         if (isReferenced && (await isReferenced(fileId)) === true) {
           if (restore.isDelivered && !restore.isHeld(session)) {
@@ -1720,16 +1749,20 @@ export async function settleRestoredFiles(
           await entry?.getFileHandle(`${SETTLED_PREFIX}${generation}`, {
             create: true
           });
+          isUnprotected = false;
         }
       } catch (error) {
         retained.add(fileId);
         logger.warn({ at: "fileQueue.release", fileId, error });
       }
+      isFailed ||= isUnprotected;
     }
     await releaseHolds(staged, retained);
+    isProtected = !isFailed;
   }).catch((error: unknown) => {
     logger.warn({ at: "fileQueue.release", dir, error });
   });
+  return isProtected;
 }
 
 /**
@@ -1853,12 +1886,15 @@ const replays = new Map<
 /** Delays of the retries after passes that left files to upload. */
 const RETRY_DELAYS_MS = [5_000, 30_000, 120_000, 600_000];
 /**
- * The retries a queue's passes used, by queue, for the records they read
- * (`references`, see QueuedFileReferences): a request with other records
- * (another DataFn runtime) starts with every retry, so retries a replaced
- * runtime used, or left counted when it stopped, never limit its own.
+ * The retries a queue's passes used, by queue, with the request that last
+ * counted one: every current request shares them, and once that request is
+ * stale (see isStale, a replaced DataFn runtime), the next starts with every
+ * retry, so retries a replaced runtime used never limit its own.
  */
-const retryCounts = new Map<string, { references: unknown; count: number }>();
+const retryCounts = new Map<
+  string,
+  { request: ReplayRequest; count: number }
+>();
 /** How long an account's file without a record may still be saving. */
 export const UNCOMMITTED_GRACE_MS = 24 * 60 * 60_000;
 /** The upload requests each client sent (see countSentRequests). */
@@ -1998,12 +2034,12 @@ async function replayPass(dir: string, request: ReplayRequest) {
   if (isStale(request)) return;
   const { client, signal, publisher, references } = request;
   const used = retryCounts.get(dir);
-  const count = used && used.references === references ? used.count : 0;
+  const count = used && !isStale(used.request) ? used.count : 0;
   if (!isRetried) retryCounts.delete(dir);
   if (!isRetried || request.signal.aborted || count >= RETRY_DELAYS_MS.length) {
     return;
   }
-  retryCounts.set(dir, { references, count: count + 1 });
+  retryCounts.set(dir, { request, count: count + 1 });
   const timer = setTimeout(() => {
     if (isStale(request)) return;
     void replayFileQueue(dir, client, signal, publisher, references);
@@ -2171,8 +2207,8 @@ async function replayEntry(
  * UNCOMMITTED_GRACE_MS) ended, to remove it, for this pass and generation
  * only (`taken`), recording nothing, so a pass that stops before removing
  * it leaves it held for its account. An adoption that cannot be recorded
- * (a full store) is logged and the pass takes the file; its account's
- * attempt then binds it (see isBound) before any request, and a later pass
+ * (a full store) is logged and the pass takes the file; its replay then
+ * binds it (see isBound) before any request, and a later pass
  * takes a file its account bound as one its account adopted.
  * An unpublished file is removed, under Web Locks (no restore writes while
  * the replay holds the lock) or once no live hold row holds it.
@@ -2221,11 +2257,11 @@ async function takeOverRestoredEntry(
 }
 
 /**
- * Whether an attempt of the queue's account (`owner`) started at a restored
- * file's `generation` (see markStarted): its replay took the file once a
- * record of the account referenced it, which binds the file as an adoption
- * does, also when neither its adopted mark nor its adoption row could be
- * created. A marker that cannot be read rejects.
+ * Whether the queue's account (`owner`) bound a restored file's
+ * `generation` (see BOUND_PREFIX): its replay took the file once a record
+ * of the account referenced it, which binds the file as an adoption does,
+ * also when neither its adopted mark nor its adoption row could be
+ * created. A mark that cannot be read rejects.
  */
 async function isBound(
   dir: string,
@@ -2233,12 +2269,15 @@ async function isBound(
   generation: string,
   { owner }: QueuedFileReferences
 ) {
-  const markers = await readMarkers(dir, toEntryName(fileId));
-  return markers.some(
-    (marker) =>
-      (marker as StartedMarker | undefined)?.generation === generation &&
-      isSameClaim(marker!, owner)
+  const name = `${BOUND_PREFIX}${generation}`;
+  const claim = await readEntryJson<QueuedFileClaim>(
+    dir,
+    toEntryName(fileId),
+    name,
+    (value) => typeof value === "object" && value !== null,
+    true
   );
+  return Boolean(claim && isSameClaim(claim, owner));
 }
 
 /**
@@ -2295,8 +2334,8 @@ async function isHeldNow({ dir, taken }: ReplayPass, fileId: string) {
  * retries the file without a request, once a request may have been sent (a
  * restored, byte-less or marked file, or one with a started marker). A
  * restored file the pass took without an adoption (see
- * takeOverRestoredEntry) is bound by its attempt's started marker, written
- * before its first request (see isBound).
+ * takeOverRestoredEntry) is bound (see BOUND_PREFIX) before its first
+ * request.
  */
 async function replayAccountEntry(
   pass: ReplayPass,
@@ -2345,15 +2384,17 @@ async function replayAccountEntry(
   }
   if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
   const isUnbound =
-    uploaded &&
     !delivery?.isDone &&
     pass.taken.has(`${fileId}~${generation}`) &&
     !(await isBound(dir, fileId, generation, references));
-  if (isUnbound) await markStarted(dir, entryName, references, generation);
+  if (isUnbound) {
+    const owner = JSON.stringify(references.owner);
+    await writeEntryFile(dir, entryName, `${BOUND_PREFIX}${generation}`, owner);
+  }
   const result = uploaded
     ? { fileId, versionId: uploaded }
     : await uploadEntry(pass, pending, {
-        write: () => markStarted(dir, entryName, references, generation),
+        write: () => markStarted(dir, entryName, references),
         isReady: () => !pass.request.signal.aborted && references.isCurrent(),
         undo: (attempt) => unmarkStarted(dir, entryName, attempt)
       });
@@ -2429,20 +2470,17 @@ function isStartedElsewhere(
 }
 
 /**
- * Writes a new attempt's own started marker at the owner's authority, with
- * the `generation` of a file a restore wrote (see isBound), then reads every
- * marker: one of another authority by now stops the attempt, as that
- * attempt, writing first, stops or, writing later, sees this marker.
+ * Writes a new attempt's own started marker at the owner's authority, then
+ * reads every marker: one of another authority by now stops the attempt, as
+ * that attempt, writing first, stops or, writing later, sees this marker.
  */
 async function markStarted(
   dir: string,
   entryName: string,
-  references: QueuedFileReferences,
-  generation = BASE_GENERATION
+  references: QueuedFileReferences
 ) {
   const attempt = crypto.randomUUID();
-  const restored = generation === BASE_GENERATION ? {} : { generation };
-  const marker = JSON.stringify({ ...references.owner, attempt, ...restored });
+  const marker = JSON.stringify({ ...references.owner, attempt });
   try {
     await writeEntryFile(dir, entryName, `${STARTED_FILE}-${attempt}`, marker);
     if (isStartedElsewhere(await readMarkers(dir, entryName), references)) {
@@ -2677,9 +2715,6 @@ async function claimEntry(
  * before the request, sent only while `isReady` (same step); an attempt whose
  * client sent no request undoes its marker, identified by the `write` result.
  */
-/** A started marker; `generation` for a file a restore wrote. */
-type StartedMarker = QueuedFileClaim & { generation?: string };
-
 type StartMark = {
   write(): Promise<string>;
   isReady(): boolean;

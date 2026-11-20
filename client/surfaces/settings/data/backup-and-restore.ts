@@ -184,17 +184,26 @@ async function restoreInRuntime(
     if (staged) await unstageRestoredFiles(staged);
     throw new Error("The account changed while the backup was restored");
   }
+  let isImported = false;
+  let isProtected = true;
   try {
     await importRecords(records, options.triggerCloneUp);
+    isImported = true;
   } finally {
     if (staged) {
-      await settleRestoredFiles(
+      isProtected = await settleRestoredFiles(
         staged,
         isOwnAccount
           ? (fileId) => isReferencedIn(namespace, isSwitched, fileId)
-          : undefined
+          : undefined,
+        async (fileId) =>
+          isImported ||
+          (await isReferencedIn(namespace, isSwitched, fileId)) !== false
       );
     }
+  }
+  if (!isProtected) {
+    throw new Error("The backup's pending files could not be kept");
   }
   if (isOwnAccount) await uploadQueuedFiles();
 }
