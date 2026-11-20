@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isAbsoluteHttpUrl,
   isAllowedLocationTarget,
+  resolveLocationTarget,
   toExternalHttpUrl
 } from "./url.utils";
 
@@ -72,5 +73,36 @@ describe("isAbsoluteHttpUrl", () => {
     expect(isAbsoluteHttpUrl("example.com")).toBe(false);
     expect(isAbsoluteHttpUrl("javascript:alert(1)//https://x")).toBe(false);
     expect(isAbsoluteHttpUrl(undefined)).toBe(false);
+  });
+});
+
+describe("resolveLocationTarget", () => {
+  const current = "https://web.nucleum.app/library";
+
+  it("keeps same-origin paths whose query contains a URL", () => {
+    expect(
+      resolveLocationTarget("/library?returnTo=https%3A%2F%2Fexample.com", current)
+    ).toBe("https://web.nucleum.app/library?returnTo=https%3A%2F%2Fexample.com");
+  });
+
+  it("allows external web, mail and native sign-in targets", () => {
+    expect(resolveLocationTarget("https://example.com/a", current)).toBe(
+      "https://example.com/a"
+    );
+    expect(resolveLocationTarget("mailto:someone@example.com", current)).toBe(
+      "mailto:someone@example.com"
+    );
+    expect(
+      resolveLocationTarget("nucleum://oauthsignin?token=test-token", current)
+    ).toBe("nucleum://oauthsignin?token=test-token");
+  });
+
+  it("refuses script URLs, including ones that contain http or oauthsignin", () => {
+    expect(
+      resolveLocationTarget("javascript:alert(document.domain)//http", current)
+    ).toBeUndefined();
+    expect(
+      resolveLocationTarget("javascript://oauthsignin/%0aalert(1)", current)
+    ).toBeUndefined();
   });
 });

@@ -102,6 +102,29 @@ describe("renderMdAsHtml links and quotes", () => {
     expect(escaped.textContent).toBe("> 5 requests per second");
   });
 
+  it("keeps dollar signs in link labels and destinations literal", () => {
+    const container = renderIntoDom(
+      renderMdAsHtml(
+        "[Price $2 $$5 $<100](https://x.com/?q=$&r=1&c=$$) [a $` b](resource=r1)"
+      )
+    );
+    const link = container.querySelector(".inline-link");
+    expect(link?.getAttribute("data-href")).toBe("https://x.com/?q=$&r=1&c=$$");
+    expect(link?.textContent).toBe("Price $2 $$5 $<100");
+    const mention = container.querySelector(".inline-mention");
+    expect(mention?.getAttribute("data-record-id")).toBe("r1");
+    expect(mention?.getAttribute("data-label")).toBe("a $` b");
+  });
+
+  it("renders a link whose label spans lines", () => {
+    const container = renderIntoDom(
+      renderMdAsHtml("[first\nsecond](https://example.com/a)")
+    );
+    const link = container.querySelector(".inline-link");
+    expect(link?.getAttribute("data-href")).toBe("https://example.com/a");
+    expect(link?.querySelector("br")).not.toBeNull();
+  });
+
   it("keeps mentions rendering with their record id", () => {
     const container = renderIntoDom(renderMdAsHtml("See [Plan](resource=node_1)"));
     const mention = container.querySelector(".inline-mention");

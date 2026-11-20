@@ -105,12 +105,19 @@ const TOKEN_PATTERN = /\uFFF0(\d+)\uFFF1/g;
 function extractInlineLinks(text: string, tokens: string[]) {
   let result = text;
   for (const pattern of inlineLinkPatterns) {
-    result = result.replace(pattern.regex, (_match, label: string, target: string) => {
-      const styledLabel = replaceInlineStylePatterns(replaceSymbolPatterns(label));
+    const regex = new RegExp(
+      pattern.regex.source.replace("\\[(.*?)\\]", "\\[([^\\]]*?)\\]"),
+      `${pattern.regex.flags}s`
+    );
+    result = result.replace(regex, (_match, label: string, target: string) => {
+      const styledLabel = replaceInlineStylePatterns(
+        replaceSymbolPatterns(label)
+      ).replace(/\n/g, "<br>");
+      const destination = target.replace(/\n/g, "<br>");
       tokens.push(
-        pattern.replacement
-          .replaceAll("$1", styledLabel)
-          .replaceAll("$2", target)
+        pattern.replacement.replace(/\$([12])/g, (_placeholder, group: string) =>
+          group === "1" ? styledLabel : destination
+        )
       );
       return `${TOKEN_START}${tokens.length - 1}${TOKEN_END}`;
     });

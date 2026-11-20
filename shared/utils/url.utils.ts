@@ -140,6 +140,23 @@ export function isAllowedLocationTarget(value: unknown): boolean {
   }
 }
 
+/**
+ * Resolves a navigation path against the current page URL and returns it only
+ * when it may be assigned to `window.location` (web, mail and native sign-in
+ * targets; never script URLs).
+ */
+export function resolveLocationTarget(
+  path: string,
+  currentHref: string
+): string | undefined {
+  try {
+    const target = new URL(path, currentHref).href;
+    return isAllowedLocationTarget(target) ? target : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Checks whether a value is already an absolute http(s) URL with a host, without adding a scheme. */
 export function isAbsoluteHttpUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;
