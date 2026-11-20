@@ -1,4 +1,4 @@
-import { datafn } from "@nucleum/datafn/datafn.store";
+import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
 import {
   exportQueuedFiles,
@@ -71,17 +71,30 @@ function resolveNamespaceUserId(): string | null {
  * belong to still holds in its upload queue, the records exported under the
  * queue's lock that the copy of the files holds, so no replay removes a
  * file the records reference between the two (see exportQueuedFiles). A
- * queued file that cannot be read rejects.
+ * queued file that cannot be read rejects, as does a backup during which
+ * DataFn switched to another account's records, even one switched back,
+ * so a backup never carries one account's records with another's files.
  */
 export async function createBackupBlob(): Promise<Blob> {
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
+  let switches = -1;
+  const stop = datafnRuntime.subscribe(() => switches++);
   const exportRecords = async () =>
     (await datafn.exportData()) as Record<string, unknown>;
-  const { records: data, files } = userId
-    ? await exportQueuedFiles(resolveAccountFileQueueDir(userId), exportRecords)
-    : { records: await exportRecords(), files: [] };
-  if (datafn.currentNamespace() !== namespace) {
+  let exported: { records: Record<string, unknown>; files: QueuedFileCopy[] };
+  try {
+    exported = userId
+      ? await exportQueuedFiles(
+          resolveAccountFileQueueDir(userId),
+          exportRecords
+        )
+      : { records: await exportRecords(), files: [] };
+  } finally {
+    stop();
+  }
+  const { records: data, files } = exported;
+  if (switches || datafn.currentNamespace() !== namespace) {
     throw new Error("The account changed while the backup was made");
   }
   const records = stringify(data, { isPreventReplacer: true });
