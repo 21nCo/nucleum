@@ -2628,7 +2628,7 @@ describe("restore sessions, generations and publication of queued files", () => 
     }
   );
 
-  it.each(["metadata.json", "data.bin"])(
+  it.each(["metadata.json", "data.bin", "thumbnail-jpeg"])(
     "fails a backup visibly when a queued file's %s cannot be read, and fails a restore that finds it before importing a record, keeping the file",
     async (name) => {
       await bootData(cloudAccount("user-a"));
@@ -2959,5 +2959,34 @@ describe("restore sessions, generations and publication of queued files", () => 
     const text = await backupText();
     expect(text.includes(btoa("photo bytes"))).toBe(false);
     expect(text).toContain('"uploadedVersionId":"ver_1"');
+  });
+
+  it("keeps holding a file for a restore still importing when the clock is set back, so a replay neither removes nor discards it", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    await deleteRecord(record.id);
+    const backup = await backupFile();
+    let isStaged = false;
+    preflight.during = () => {
+      isStaged = true;
+      return new Promise<void>(() => undefined);
+    };
+    void restoreBackup(backup, { triggerCloneUp: () => false });
+    await vi.waitFor(() => expect(isStaged).toBe(true));
+    preflight.during = null;
+    locks = createFakeLocks();
+    expect(isKept(entry)).toBe(true);
+    vi.spyOn(Date, "now").mockReturnValue(Date.now() - 60 * 60_000);
+
+    replays.clear();
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(isKept(entry)).toBe(true);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
   });
 });
