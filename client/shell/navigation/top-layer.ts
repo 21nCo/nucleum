@@ -9,6 +9,7 @@ import { navigation } from "@nucleum/shell/navigation/navigation";
 import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 import { fullScreen } from "@nucleum/shell/overlays/modal.store";
 import { isOverlayAbovePage } from "@nucleum/shell/navigator/navigator-layer";
+import view from "@21n/ui/environment/view.store";
 
 /** Layers the shell can close, from the top of the stack down. */
 export type TopLayer =
@@ -55,22 +56,32 @@ export function isRightPanelCovered(params: {
  * the resource page, then the split next to the base page. A resource page
  * opened from an overlay covers it, so that overlay comes after the page,
  * except an overlay drawn above the page, such as the navigator.
+ * The portrait layout does not render the split beside the page or the
+ * maximized page (NavigationLayout), so neither is a layer there, even when
+ * history or a link restores it in the URL.
  */
 export function resolveTopLayer(
   searchParams: URLSearchParams,
   bulkCount: number,
-  options?: { isIncludePanel?: boolean; isIncludeFullScreen?: boolean }
+  options?: {
+    isIncludePanel?: boolean;
+    isIncludeFullScreen?: boolean;
+    isPortrait?: boolean;
+  }
 ): TopLayer | undefined {
   const isPageOpen = !!searchParams.get(AccessMode.PAGE);
   const overlay = searchParams.get(AccessMode.OVERLAY);
   const isOverlayOpen = !!overlay;
+  const isPortrait = options?.isPortrait ?? view.get().isPortrait;
   if (isOverlayOnTop(overlay, searchParams.get(AccessMode.PAGE)))
     return "overlay";
   if (options?.isIncludePanel !== false && searchParams.get(AccessMode.PANEL))
     return "panel";
   if (bulkCount > 0) return "bulk";
-  if (searchParams.get(AccessMode.BESIDE_PAGE)) return "beside-page";
+  if (!isPortrait && searchParams.get(AccessMode.BESIDE_PAGE))
+    return "beside-page";
   if (
+    !isPortrait &&
     options?.isIncludeFullScreen !== false &&
     isPageOpen &&
     searchParams.get(AppSearchParam.MAX)
@@ -189,6 +200,17 @@ export function closeTopLayer(options?: {
   }
   if (layer === "full-screen") {
     minimizeFullScreen();
+    return layer;
+  }
+  // Portrait shows a page opened straight into full screen as a plain page,
+  // so closing it minimizes: it returns to the view it was opened from.
+  if (
+    layer === "page" &&
+    view.get().isPortrait &&
+    searchParams.get(AppSearchParam.MAX) &&
+    isPageOpenedInFullScreen(searchParams)
+  ) {
+    navigation.minimizeFullScreen();
     return layer;
   }
   if (

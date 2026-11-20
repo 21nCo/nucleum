@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test, type E2ESeed } from "../fixtures/e2e-test";
 import { ensureInAppOnHome, navigateToSurface } from "../utils/helpers";
+import { openResourceRecord } from "../utils/resource-matrix";
 import {
   blockExternalAuthRequests,
   openNodeRecordFromLibraryById
@@ -41,7 +42,7 @@ test.describe("context zone overflow", () => {
     ).toBeGreaterThanOrEqual(3);
     await expect(page.getByTestId("switcher-more")).toHaveCount(0);
 
-    await page.setViewportSize({ width: 900, height: 900 });
+    await page.setViewportSize({ width: 990, height: 900 });
     const more = page.getByTestId("switcher-more");
     await expect(more).toBeVisible({ timeout: 10_000 });
     await expect(tabs).not.toHaveCount(total);
@@ -63,7 +64,7 @@ test.describe("context zone overflow", () => {
     page
   }) => {
     test.setTimeout(90_000);
-    await page.setViewportSize({ width: 900, height: 900 });
+    await page.setViewportSize({ width: 990, height: 900 });
     await ensureInAppOnHome(page);
     const node = await e2eSeed.memory.node({
       label: `E2E overflow keys ${Date.now()}`
@@ -98,7 +99,7 @@ test.describe("context zone overflow", () => {
       "Overview tabs in the top bar are a Nucleum surface"
     );
     test.setTimeout(90_000);
-    await page.setViewportSize({ width: 820, height: 700 });
+    await page.setViewportSize({ width: 990, height: 700 });
     await ensureInAppOnHome(page);
     await page.goto("/overview/dashboard");
     const overviewTabs = page.getByTestId("overview-tabs");
@@ -179,7 +180,7 @@ test.describe("context zone overflow", () => {
     await controls.getByRole("button", { name: "Year", exact: true }).click();
 
     let narrowestInlineScale: number | undefined;
-    for (let width = 1600; width >= 900; width -= 10) {
+    for (let width = 1600; width >= 990; width -= 10) {
       await page.setViewportSize({ width, height: 900 });
       const level = await settledCalendarLevel(page);
       if (level === "4") break;
@@ -225,7 +226,7 @@ test.describe("context zone overflow", () => {
     await controls.getByRole("button", { name: "Year", exact: true }).click();
 
     let dateHiddenWidth: number | undefined;
-    for (let width = 1200; width >= 900; width -= 10) {
+    for (let width = 1200; width >= 990; width -= 10) {
       await page.setViewportSize({ width, height: 900 });
       if (!(await controls.isVisible())) break;
       if ((await settledCalendarLevel(page)) === "5") {
@@ -307,7 +308,7 @@ test.describe("context zone overflow", () => {
     const short = await e2eSeed.memory.node({ label: "Tiny" });
     await openNodeRecordFromLibraryById(page, short.id);
     await expect(identity).toContainText("Tiny", { timeout: 15_000 });
-    for (const width of [1440, 900]) {
+    for (const width of [1440, 990]) {
       await page.setViewportSize({ width, height: 900 });
       await expect
         .poll(() => identityLayout(page), {
@@ -328,7 +329,9 @@ test.describe("context zone overflow", () => {
     await expect(page.getByTestId("switcher-more")).toHaveCount(0);
     const widest = (await identityLayout(page)).width;
     let isTitleShrunkWithAllTabs = false;
-    for (let width = 1440; width >= 900; width -= 60) {
+    for (const width of [
+      1440, 1380, 1320, 1260, 1200, 1140, 1080, 1020, 990
+    ]) {
       await page.setViewportSize({ width, height: 900 });
       await expect
         .poll(() => titleAndMore(page), {
@@ -346,7 +349,7 @@ test.describe("context zone overflow", () => {
     ).toBe(true);
     await expect
       .poll(() => titleAndMore(page), {
-        message: "at 900px the extra view tabs are in More"
+        message: "at 990px the extra view tabs are in More"
       })
       .toMatchObject({ isMoreShown: true, isTruncated: true });
     expect((await identityLayout(page)).width).toBeGreaterThanOrEqual(127.5);
@@ -365,7 +368,7 @@ test.describe("context zone overflow", () => {
     const actionsButton = page.getByTestId("resource-record-context-menu");
     await expect(actionsButton).toBeVisible({ timeout: 15_000 });
 
-    await page.setViewportSize({ width: 950, height: 900 });
+    await page.setViewportSize({ width: 990, height: 900 });
     const more = page.getByTestId("switcher-more");
     await expect(more).toBeVisible({ timeout: 10_000 });
     await expect(actionsButton).toHaveCount(0);
@@ -417,7 +420,7 @@ test.describe("context zone overflow", () => {
       await ensureInAppOnHome(page);
       await openNodeRecordFromLibraryById(page, node.id);
       await expect(actionsButton).toBeVisible({ timeout: 15_000 });
-      await page.setViewportSize({ width: 950, height: 900 });
+      await page.setViewportSize({ width: 990, height: 900 });
       await expect(more).toBeVisible({ timeout: 10_000 });
       await expect(actionsButton).toHaveCount(0);
     };
@@ -468,7 +471,7 @@ test.describe("context zone overflow", () => {
     await expect(page.getByTestId("resource-record-context-menu")).toBeVisible({
       timeout: 15_000
     });
-    await page.setViewportSize({ width: 950, height: 900 });
+    await page.setViewportSize({ width: 990, height: 900 });
     const more = page.getByTestId("switcher-more");
     await expect(more).toBeVisible({ timeout: 10_000 });
 
@@ -515,7 +518,7 @@ test.describe("context zone overflow", () => {
       await expect(
         page.getByTestId("resource-record-context-menu")
       ).toBeVisible({ timeout: 15_000 });
-      await page.setViewportSize({ width: 950, height: 900 });
+      await page.setViewportSize({ width: 990, height: 900 });
       await expect(more).toBeVisible({ timeout: 10_000 });
     };
 
@@ -576,7 +579,166 @@ test.describe("context zone overflow", () => {
     await reopenNote();
     await expectStarredInActions();
   });
+
+  test("a window narrower than 990px uses the portrait layout, and from 990px every control in a note's and an objective's top bar context zone is inside it and clickable", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "nucleum",
+      "Objective records in the top bar are a Nucleum surface"
+    );
+    test.setTimeout(180_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ensureInAppOnHome(page);
+    const node = await e2eSeed.memory.node({
+      label: `E2E portrait floor note ${Date.now()}`
+    });
+    const objectiveLabel = `E2E portrait floor objective ${Date.now()}`;
+    await e2eSeed.focus.objective({ label: objectiveLabel });
+    const records = [
+      {
+        name: "note",
+        open: () => openNodeRecordFromLibraryById(page, node.id)
+      },
+      {
+        name: "objective",
+        open: () =>
+          openResourceRecord(page, testInfo.project.name, "objective", {
+            label: objectiveLabel
+          })
+      }
+    ];
+    const topBar = page.getByTestId("top-bar");
+    const record = page.getByTestId("resource-record-surface");
+
+    for (const { name, open } of records) {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await open();
+      await expect(record).toBeVisible({ timeout: 15_000 });
+      for (const size of [
+        { width: 1000, height: 900 },
+        { width: 990, height: 900 },
+        { width: 990, height: 600 }
+      ]) {
+        await page.setViewportSize(size);
+        await expect(topBar).toBeVisible({ timeout: 10_000 });
+        await expect
+          .poll(() => contextZoneMisses(page), {
+            message: `every ${name} top bar control is inside the context zone and hit-tests to itself at ${size.width}x${size.height}`
+          })
+          .toEqual({ controls: expect.any(Number), misses: [] });
+        expect((await contextZoneMisses(page)).controls).toBeGreaterThan(1);
+      }
+      for (const size of [
+        { width: 925, height: 600 },
+        { width: 900, height: 900 },
+        { width: 881, height: 700 },
+        { width: 950, height: 900 },
+        { width: 989, height: 600 }
+      ]) {
+        await page.setViewportSize(size);
+        await expect(
+          topBar,
+          `no top bar at ${size.width}x${size.height}`
+        ).toHaveCount(0, {
+          timeout: 10_000
+        });
+        // Crossing the floor resets to home, as an orientation flip does, so
+        // the open record closes instead of lingering in a hidden layer.
+        await expect(record).toHaveCount(0);
+      }
+    }
+  });
+
+  test("the Overview and Calendar top bars keep every control inside the context zone and clickable at 990 and 1000px", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "nucleum",
+      "Overview and the calendar layout switcher in the top bar are Nucleum surfaces"
+    );
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await ensureInAppOnHome(page);
+    const surfaces = [
+      {
+        name: "Overview",
+        open: async () => {
+          await page.goto("/overview/dashboard");
+          await expect(page.getByTestId("overview-tabs")).toBeVisible({
+            timeout: 15_000
+          });
+        }
+      },
+      {
+        name: "Calendar",
+        open: async () => {
+          await navigateToSurface(
+            page,
+            "calendar.layout.classic",
+            testInfo.project.name
+          );
+          await expect(
+            page.getByTestId("calendar-context-controls")
+          ).toBeVisible({ timeout: 15_000 });
+        }
+      }
+    ];
+    for (const { name, open } of surfaces) {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await open();
+      for (const width of [1000, 990]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect(page.getByTestId("top-bar")).toBeVisible();
+        await expect
+          .poll(() => contextZoneMisses(page), {
+            message: `every ${name} top bar control is inside the context zone and hit-tests to itself at ${width}px`
+          })
+          .toEqual({ controls: expect.any(Number), misses: [] });
+        expect((await contextZoneMisses(page)).controls).toBeGreaterThan(0);
+      }
+    }
+  });
 });
+
+/**
+ * The visible controls in the top bar's context tab, and those that run past
+ * its right edge or whose centre or right edge hit-tests to something else.
+ */
+function contextZoneMisses(page: Page) {
+  return page.getByTestId("top-bar-context-tab").evaluate((tab) => {
+    const edge = tab.getBoundingClientRect().right;
+    const controls = [
+      ...tab.querySelectorAll<HTMLElement>(
+        'button, [role="tab"], [data-testid="switcher-more"]'
+      )
+    ].filter((control) => {
+      if (control.closest('[aria-hidden="true"]')) return false;
+      const box = control.getBoundingClientRect();
+      return (
+        box.width > 0 &&
+        box.height > 0 &&
+        control.checkVisibility({ visibilityProperty: true })
+      );
+    });
+    const misses: string[] = [];
+    for (const control of controls) {
+      const box = control.getBoundingClientRect();
+      const name =
+        control.getAttribute("aria-label") ??
+        control.dataset.testid ??
+        control.textContent?.trim() ??
+        control.tagName;
+      const y = box.top + box.height / 2;
+      const isHit = (x: number) =>
+        control.contains(document.elementFromPoint(x, y));
+      if (box.right > edge + 1) misses.push(`${name} runs past the edge`);
+      if (!isHit(box.left + box.width / 2)) misses.push(`${name} centre`);
+      if (!isHit(box.right - 2)) misses.push(`${name} right edge`);
+    }
+    return { controls: controls.length, misses };
+  });
+}
 
 /** The calendar controls' level once the top bar has laid out and measured them. */
 function settledCalendarLevel(page: Page) {

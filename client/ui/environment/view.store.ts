@@ -40,6 +40,16 @@ function calculateScreen(width: number, height: number): Display {
   return display;
 }
 
+/**
+ * Windows narrower than this use the portrait layout whatever their height:
+ * below it the landscape top bar cannot fit a record's context zone controls.
+ */
+export const PORTRAIT_WIDTH_FLOOR = 990;
+
+export function isPortraitWindow(width: number, height: number): boolean {
+  return width < height || width < PORTRAIT_WIDTH_FLOOR;
+}
+
 class ViewStore {
   private readonly subject = writable<IViewStore>({
     height: 0,
@@ -83,7 +93,7 @@ class ViewStore {
         isConstrainedWidth: width <= 800
       };
       next.display = calculateScreen(width, height);
-      next.isPortrait = next.landscapiness < 1;
+      next.isPortrait = isPortraitWindow(width, height);
       return next;
     });
   }
