@@ -1,4 +1,5 @@
 import { navigation } from "@nucleum/shell/navigation/navigation";
+import { logger } from "@nucleum/client/runtime/logging/logger";
 
 import {
   OperatingSystem,
@@ -68,6 +69,14 @@ export function createBrowserLayout() {
       document.documentElement.style.removeProperty("--viewport-height");
     }
   }
+  /** Returns to home after a layout flip, reporting a failed navigation. */
+  function resetToHome() {
+    navigation
+      .gotoPath("/")
+      .catch((error) =>
+        logger.error({ at: "browserLayout.resetToHome" }, error)
+      );
+  }
   function resize() {
     const wasPortrait = view.get().isPortrait;
     view.refresh(window.innerWidth, window.innerHeight);
@@ -75,13 +84,13 @@ export function createBrowserLayout() {
     // so a change of view.isPortrait resets to home like an orientation flip.
     const orientationChanged = updateOrientationClasses();
     if (orientationChanged || view.get().isPortrait !== wasPortrait)
-      navigation.gotoPath("/");
+      resetToHome();
   }
   function orientationChange() {
     orientationTimer = setTimeout(() => {
       view.refresh(window.innerWidth, window.innerHeight);
       updateOrientationClasses();
-      navigation.gotoPath("/");
+      resetToHome();
     }, 100);
   }
   return {

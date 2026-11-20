@@ -2,9 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import view from "@21n/ui/environment/view.store";
 
-const gotoPath = vi.hoisted(() => vi.fn());
+const { gotoPath, logError } = vi.hoisted(() => ({
+  gotoPath: vi.fn((_path: string) => Promise.resolve()),
+  logError: vi.fn()
+}));
 vi.mock("@nucleum/shell/navigation/navigation", () => ({
   navigation: { gotoPath }
+}));
+vi.mock("@nucleum/client/runtime/logging/logger", () => ({
+  logger: { error: logError }
 }));
 
 import { createBrowserLayout } from "./browser-layout";
@@ -39,7 +45,10 @@ describe("browser layout resize", () => {
     uninstall = layout.install();
   }
 
-  beforeEach(() => gotoPath.mockClear());
+  beforeEach(() => {
+    gotoPath.mockClear();
+    logError.mockClear();
+  });
   afterEach(() => {
     uninstall();
     view.refresh(1280, 800);
@@ -81,5 +90,26 @@ describe("browser layout resize", () => {
     gotoPath.mockClear();
     resizeTo(1200, 800);
     expect(gotoPath).toHaveBeenCalledTimes(1);
+  });
+
+  it("goes home without reporting an error when the reset resolves", async () => {
+    mountAt(1000, 900);
+    resizeTo(989, 900);
+    await expect(gotoPath.mock.results[0]?.value).resolves.toBeUndefined();
+    await Promise.resolve();
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it("reports a rejected reset instead of leaving it unhandled", async () => {
+    const failure = new Error("navigation failed");
+    gotoPath.mockImplementationOnce(() => Promise.reject(failure));
+    mountAt(1000, 900);
+    resizeTo(989, 900);
+    await vi.waitFor(() =>
+      expect(logError).toHaveBeenCalledWith(
+        { at: "browserLayout.resetToHome" },
+        failure
+      )
+    );
   });
 });
