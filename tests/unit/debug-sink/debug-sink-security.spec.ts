@@ -8,21 +8,21 @@ const env = {} as Env;
 const token = "test-debug-sink-token";
 
 describe("debug sink token check", () => {
-  it("accepts the token from the header or bearer authorization", () => {
-    expect(hasToken(new Request("https://sink.test/v1/logs", { headers: { "x-debug-sink-token": token } }), token, env)).toBe(true);
-    expect(hasToken(new Request("https://sink.test/v1/logs", { headers: { authorization: `Bearer ${token}` } }), token, env)).toBe(true);
+  it("accepts the token from the header or bearer authorization", async () => {
+    expect(await hasToken(new Request("https://sink.test/v1/logs", { headers: { "x-debug-sink-token": token } }), token, env)).toBe(true);
+    expect(await hasToken(new Request("https://sink.test/v1/logs", { headers: { authorization: `Bearer ${token}` } }), token, env)).toBe(true);
   });
 
-  it("refuses a token in the query string and wrong or prefixed tokens", () => {
-    expect(hasToken(new Request(`https://sink.test/v1/logs?token=${token}`), token, env)).toBe(false);
-    expect(hasToken(new Request("https://sink.test/v1/logs", { headers: { "x-debug-sink-token": `${token}x` } }), token, env)).toBe(false);
-    expect(hasToken(new Request("https://sink.test/v1/logs", { headers: { "x-debug-sink-token": token.slice(0, -1) } }), token, env)).toBe(false);
-    expect(hasToken(new Request("https://sink.test/v1/logs"), token, env)).toBe(false);
+  it("refuses a token in the query string and wrong or prefixed tokens", async () => {
+    expect(await hasToken(new Request(`https://sink.test/v1/logs?token=${token}`), token, env)).toBe(false);
+    expect(await hasToken(new Request("https://sink.test/v1/logs", { headers: { "x-debug-sink-token": `${token}x` } }), token, env)).toBe(false);
+    expect(await hasToken(new Request("https://sink.test/v1/logs", { headers: { "x-debug-sink-token": token.slice(0, -1) } }), token, env)).toBe(false);
+    expect(await hasToken(new Request("https://sink.test/v1/logs"), token, env)).toBe(false);
   });
 
-  it("fails closed without a configured token unless explicitly allowed", () => {
-    expect(hasToken(new Request("https://sink.test/v1/logs"), undefined, env)).toBe(false);
-    expect(hasToken(new Request("https://sink.test/v1/logs"), undefined, { DEBUG_SINK_ALLOW_UNAUTHENTICATED: "true" } as Env)).toBe(true);
+  it("fails closed without a configured token unless explicitly allowed", async () => {
+    expect(await hasToken(new Request("https://sink.test/v1/logs"), undefined, env)).toBe(false);
+    expect(await hasToken(new Request("https://sink.test/v1/logs"), undefined, { DEBUG_SINK_ALLOW_UNAUTHENTICATED: "true" } as Env)).toBe(true);
   });
 });
 

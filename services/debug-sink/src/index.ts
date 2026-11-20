@@ -56,7 +56,7 @@ export default {
 };
 
 async function handleWrite(request: Request, env: Env): Promise<Response> {
-  if (!hasToken(request, env.DEBUG_SINK_WRITE_TOKEN, env)) {
+  if (!(await hasToken(request, env.DEBUG_SINK_WRITE_TOKEN, env))) {
     return json(request, env, { ok: false, error: 'unauthorized' }, 401);
   }
 
@@ -120,7 +120,7 @@ async function handleWrite(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleRead(request: Request, env: Env): Promise<Response> {
-  if (!hasToken(request, env.DEBUG_SINK_READ_TOKEN, env)) {
+  if (!(await hasToken(request, env.DEBUG_SINK_READ_TOKEN, env))) {
     return json(request, env, { ok: false, error: 'unauthorized' }, 401);
   }
 
@@ -230,27 +230,31 @@ function clamp(value: number, min: number, max: number): number {
 /**
  * Accepts the token only from the `x-debug-sink-token` or `Authorization`
  * header (never the query string, which ends up in access logs) and compares
- * it in constant time.
+ * fixed-size SHA-256 digests in constant time, so neither the content nor the
+ * length of the configured token affects timing.
  */
-export function hasToken(request: Request, configuredToken: string | undefined, env: Env): boolean {
+export async function hasToken(request: Request, configuredToken: string | undefined, env: Env): Promise<boolean> {
   if (!configuredToken) {
     return env.DEBUG_SINK_ALLOW_UNAUTHENTICATED === 'true';
   }
   const provided = request.headers.get('x-debug-sink-token')
     ?? request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  return typeof provided === 'string' && constantTimeEqual(provided, configuredToken);
-}
-
-function constantTimeEqual(left: string, right: string): boolean {
-  const encoder = new TextEncoder();
-  const a = encoder.encode(left);
-  const b = encoder.encode(right);
-  let difference = a.length ^ b.length;
-  const length = Math.max(a.length, b.length);
-  for (let index = 0; index < length; index += 1) {
-    difference |= (a[index] ?? 0) ^ (b[index] ?? 0);
+  if (typeof provided !== 'string') {
+    return false;
+  }
+  const [providedDigest, configuredDigest] = await Promise.all([
+    sha256(provided),
+    sha256(configuredToken)
+  ]);
+  let difference = 0;
+  for (let index = 0; index < providedDigest.length; index += 1) {
+    difference |= providedDigest[index] ^ configuredDigest[index];
   }
   return difference === 0;
+}
+
+async function sha256(value: string): Promise<Uint8Array> {
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
 }
 
 function json(request: Request, env: Env, value: unknown, status = 200): Response {
