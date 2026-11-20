@@ -457,9 +457,13 @@ export async function resolveQueuedFileUrl(
     if (!entry) releaseQueuedFileUrls((held) => held === key);
     if (!entry) continue;
     const isHeld = variant === "download";
+    if (heldGenerations.get(key) !== entry.generation) {
+      releaseQueuedFileUrls((held) => held === key);
+    }
     const held =
       (isHeld && heldUrls.get(key)) || readUrl(dir, entry, entryName, variant);
     if (isHeld) heldUrls.set(key, held);
+    if (isHeld) heldGenerations.set(key, entry.generation);
     try {
       const url = await held;
       if (isHeld && heldUrls.get(key) !== held) return null;
@@ -540,6 +544,8 @@ async function getPublishedEntryDir(
 }
 
 const heldUrls = new Map<string, Promise<string | undefined | null>>();
+/** The generation each held download URL was read from, by key. */
+const heldGenerations = new Map<string, string>();
 
 /** Revokes the held download URLs whose keys (queue, entry) it selects. */
 export function releaseQueuedFileUrls(isReleased: (key: string) => boolean) {
@@ -614,6 +620,7 @@ export async function exportQueuedFiles<T>(
       const remaining = await readQueueRevision(dir);
       const isChanged =
         (await readRevision(dir)) !== revision ||
+        remaining.size !== listed.size ||
         [...listed].some(([name, value]) => remaining.get(name) !== value);
       return isChanged ? undefined : { records, files };
     });
@@ -1775,7 +1782,11 @@ async function removeAbandonedEntry(
   const found = restore ?? (await readRestore(dir, fileId));
   if (!found || found.isPublished) return;
   if (hasWebLocks() || !found.isHeld()) {
-    await actAlone(dir, fileId, () => dequeueFile(dir, fileId));
+    await actAlone(dir, fileId, async () => {
+      const now = await readRestore(dir, fileId);
+      if (now?.isPublished || now?.generation !== found.generation) return;
+      await dequeueFile(dir, fileId);
+    });
   }
 }
 
@@ -1843,9 +1854,10 @@ async function replayAccountEntry(
         isReady: () => !pass.request.signal.aborted && references.isCurrent(),
         undo: (attempt) => unmarkStarted(dir, entryName, attempt)
       });
-  if (!(await sendAccountThumbnail(pass, entryName, result))) return "retry";
+  const sent = await sendAccountThumbnail(pass, entryName, result);
+  if (!sent) return "retry";
   if (uploaded) pass.isSynced = false;
-  await logUpload(dir, fileId, result.versionId, true);
+  await logUpload(dir, fileId, result.versionId, sent === true);
   const isStillReferenced = await isReferencedNow(pass, references, fileId);
   if (isStillReferenced === undefined) return "stop";
   logger.info({ at: "fileQueue.replay", fileId: result.fileId });
@@ -1949,7 +1961,9 @@ async function isReferencedNow(
  * upload may have reached FileFn, then removing it from the upload log so a
  * later restore stages it again, each only while the records are still the
  * owner's at the authority, checked in the same step. A file a restore holds
- * by then (see isHeldNow and actAlone) stays queued.
+ * by then (see isHeldNow and actAlone) stays queued, and without Web Locks
+ * one a record references again by the time no restore holds it (another
+ * tab restored it) is neither discarded nor removed.
  */
 async function removeAccountEntry(
   pass: ReplayPass,
@@ -1959,6 +1973,14 @@ async function removeAccountEntry(
 ): Promise<EntryOutcome> {
   let outcome: EntryOutcome = "done";
   await actAlone(pass.dir, fileId, async () => {
+    if (isDiscarded && !hasWebLocks()) {
+      pass.isSynced = false;
+      const isReferenced = await isReferencedNow(pass, references, fileId);
+      if (isReferenced !== false) {
+        outcome = isReferenced === undefined ? "stop" : "done";
+        return;
+      }
+    }
     outcome = await discardAccountEntry(pass, references, fileId, isDiscarded);
   });
   return outcome;
@@ -2020,17 +2042,14 @@ async function sendAccountThumbnail(
     !isAppOffline() &&
     !request.signal.aborted &&
     request.references?.isCurrent() !== false;
-  if (
-    !(await uploadQueuedThumbnail(
-      request.client,
-      dir,
-      entryName,
-      uploaded,
-      isReady
-    ))
-  ) {
-    return false;
-  }
+  const sent = await uploadQueuedThumbnail(
+    request.client,
+    dir,
+    entryName,
+    uploaded,
+    isReady
+  );
+  if (sent !== true) return sent;
   await writeEntryFile(dir, entryName, THUMBNAIL_SENT_FILE, "").catch(
     (error: unknown) => {
       logger.warn({ at: "fileQueue.replay.thumbnail", entryName, error });
@@ -2182,7 +2201,9 @@ async function uploadQueuedFile(
  * unless it is retried (`isReady`, an account's file): then only one FileFn
  * rejects for good is left out, and any other upload failure, or a
  * thumbnail read once the replay can no longer send it (`isReady`, read
- * again right before the request), resolves false, for a retry to send it.
+ * again right before the request), resolves false, for a retry to send it;
+ * one that cannot be read resolves "unread", left out with no evidence it
+ * was sent (see sendAccountThumbnail).
  */
 async function uploadQueuedThumbnail(
   client: FileFnClient,
@@ -2190,11 +2211,13 @@ async function uploadQueuedThumbnail(
   entryName: string,
   uploaded: UploadResult,
   isReady?: () => boolean
-): Promise<boolean> {
+): Promise<boolean | "unread"> {
   let thumbnail: Blob | undefined;
+  let isRead = false;
   try {
-    const entry = await getEntryDir(dir, entryName);
+    const entry = await getEntryDir(dir, entryName, Boolean(isReady));
     thumbnail = entry ? await readThumbnail(entry) : undefined;
+    isRead = true;
     if (!thumbnail) return true;
     if (isReady?.() === false) return false;
     await client.uploadArtifact({
@@ -2211,7 +2234,9 @@ async function uploadQueuedThumbnail(
       fileId: uploaded.fileId,
       error
     });
-    return !thumbnail || !isReady || isRejectedForGood(error);
+    if (!isReady) return true;
+    if (!isRead) return "unread";
+    return isRejectedForGood(error);
   }
 }
 
