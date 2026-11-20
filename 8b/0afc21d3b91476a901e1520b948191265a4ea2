@@ -1,0 +1,21 @@
+client/shell/navigation/top-layer-portrait.test.ts
+  s_67bfa32524c520::t_c12b47861ac9f7 42,95-110
+client/shell/navigation/top-layer.ts
+  s_67bfa32524c520::t_8d787774f07d71 205-215
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8b0afc21d3b91476a901e1520b948191265a4ea2",
+  "prompts": {},
+  "sessions": {
+    "s_67bfa32524c520": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d9be864b-9627-4bfe-a578-08844d572e53",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
