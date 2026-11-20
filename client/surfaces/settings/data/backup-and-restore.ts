@@ -98,13 +98,13 @@ export async function createBackupBlob(): Promise<Blob> {
  * restore stop or fail after the records are imported (even in part), the
  * account's replay takes over each such file once a record of the account
  * references it, and the account's backups carry it meanwhile. Another
- * account's (or the guest's) restore leaves them marked restored, without
- * the marks that bind an upload to the capturing account, so they stay in
- * that queue, never uploaded, removed or discarded, until that account
- * restores the backup. A file the queue holds complete and unmarked, one an
- * earlier restore into the account wrote and has not handed over (which a
- * restore into the account hands over), or one whose upload completes while
- * the restore waits for the queue, stays as it is. Rejects, restoring nothing, when the backup or its queued files cannot
+ * account's (or the guest's) restore leaves them marked restored in that
+ * queue, never uploaded, removed or discarded, until that account restores
+ * the backup or a record of that account references them. A file the queue
+ * holds complete and unmarked, one an earlier restore fully wrote and has
+ * not handed over (which a restore into the account hands over), or one
+ * whose upload completes while the restore waits for the queue, stays as it
+ * is. Rejects, restoring nothing, when the backup or its queued files cannot
  * be read, this device cannot keep them, a file cannot be written, or the
  * account changes before the records are imported (removing the files it
  * added); and when the records could not all be imported, keeping the
