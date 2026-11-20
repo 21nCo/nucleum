@@ -4,7 +4,7 @@ import { authfn, authFnPlugins } from 'authfn';
 import { authFnPasswordPlugin } from '@authfn/password';
 import { nucleusLifecyclePlugin } from './nucleus-lifecycle.js';
 import { nucleusWidgetTokenPlugin } from './widget-token.js';
-import { ACCOUNT_REGION_IDS } from '../regions.js';
+import { ACCOUNT_REGION_IDS, bootstrapRegionIds } from '../regions.js';
 import environments from '../../config/environments.json' with { type: 'json' };
 
 const ORIGIN = 'https://account-insouth.example.test';
@@ -16,7 +16,7 @@ function createServer() {
     cookie: { prefix: 'test', sameSite: 'lax', secure: true },
     plugins: authFnPlugins(
       authFnPasswordPlugin(),
-      nucleusLifecyclePlugin({ regionIds: ['local'] }),
+      nucleusLifecyclePlugin({ regionIds: bootstrapRegionIds(['local']) }),
       nucleusWidgetTokenPlugin()
     )
   }).createServer({ database: memoryAdapter({ debug: false }) });
@@ -67,6 +67,24 @@ describe('account plugin request checks', () => {
 
   it('lists every deployed region as a known region', () => {
     expect([...ACCOUNT_REGION_IDS].sort()).toEqual(Object.keys(environments.regions).sort());
+  });
+
+  it('adds the deployed regions only for a single-region (local) process', () => {
+    expect(bootstrapRegionIds(['insouth', 'useast', 'euwest'])).toEqual(['insouth', 'useast', 'euwest']);
+    expect(bootstrapRegionIds(['insouth', 'useast'])).toEqual(['insouth', 'useast']);
+    expect(bootstrapRegionIds(['local']).sort()).toEqual(['euwest', 'insouth', 'local', 'useast']);
+  });
+
+  it('refuses a region the plugin is not configured with', async () => {
+    const server = authfn({
+      namespace: 'authfn',
+      basePath: '/auth',
+      cookie: { prefix: 'test', sameSite: 'lax', secure: true },
+      plugins: authFnPlugins(authFnPasswordPlugin(), nucleusLifecyclePlugin({ regionIds: ['insouth'] }))
+    }).createServer({ database: memoryAdapter({ debug: false }) });
+    const { cookie, csrf } = await signUp(server as ReturnType<typeof createServer>);
+    const response = await post(server as ReturnType<typeof createServer>, '/nucleus/bootstrap', { cookie, 'x-authfn-csrf': csrf }, { region: 'euwest' });
+    expect(response.status).toBe(400);
   });
 
   it('uses a bearer token over cookies without needing the CSRF header', async () => {

@@ -7,7 +7,6 @@ import {
   type AuthFnUserRecord
 } from 'authfn';
 import { authenticateAccountMutation } from './request-auth.js';
-import { ACCOUNT_REGION_IDS } from '../regions.js';
 import { createAuthFnRouteMeta } from 'authfn/http/router';
 import { jsonSuccess } from 'authfn/http/envelopes';
 
@@ -208,16 +207,12 @@ function requestId(request: Request | undefined): string {
   return request?.headers.get('x-request-id') ?? `req_${Date.now().toString(36)}`;
 }
 
-/** Accepts a bootstrap region only when it is a known account region or one this service is configured with. */
+/** Accepts a bootstrap region only when it is one of the plugin's region ids (or the session's region when none are given). */
 function isConfiguredRegion(
   region: string,
   options: NucleusLifecyclePluginOptions,
   sessionRegionId: string | undefined
 ): boolean {
-  const known = [
-    ...ACCOUNT_REGION_IDS,
-    ...(options.regionIds ?? []),
-    ...(sessionRegionId ? [sessionRegionId] : [])
-  ];
-  return known.some((regionId) => regionId.toLowerCase() === region);
+  const allowed = options.regionIds ?? (sessionRegionId ? [sessionRegionId] : []);
+  return allowed.some((regionId) => regionId.toLowerCase() === region);
 }
