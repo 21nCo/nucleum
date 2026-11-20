@@ -167,8 +167,11 @@ struct WebViewForMac: NSViewRepresentable, WebViewHandlerDelegate {
     ) {
       if navigationResponse.canShowMIMEType {
         decisionHandler(.allow)
-      } else {
+      } else if navigationResponse.isForMainFrame {
         decisionHandler(.download)
+      } else {
+        Log.info("Blocked a download started by an embedded frame")
+        decisionHandler(.cancel)
       }
     }
 
