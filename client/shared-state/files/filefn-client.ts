@@ -313,19 +313,29 @@ function startFileQueueReplay(
  * Replays the account's queue (see replayFileQueue) with its records as the
  * DataFn runtime current now holds them: once another runtime replaces it,
  * also one of the same account at the same authority, the references are no
- * longer current, so no decision read from the replaced runtime is acted on;
- * the replay that runtime starts decides again (see startFileQueueReplay).
+ * longer current, so no decision read from the replaced runtime is acted on,
+ * also by the retries and deadline passes that reuse them; the replay that
+ * runtime starts decides again (see startFileQueueReplay). They watch the
+ * runtime until it is replaced or the client is torn down.
  */
 function replayAccountFileQueue(uploader: FileQueueUploader) {
   const { userId, baseUrl, client, signal } = uploader;
   if (signal.aborted || isAppOffline()) return;
   const namespace = `user:${userId}`;
   const bound = { runtime: undefined as unknown, isReplaced: false };
-  const stopWatching = datafnRuntime.subscribe((runtime) => {
+  let stopWatching = () => undefined as void;
+  const unwatch = () => {
+    stopWatching();
+    signal.removeEventListener("abort", unwatch);
+  };
+  stopWatching = datafnRuntime.subscribe((runtime) => {
     if (bound.runtime === undefined) bound.runtime = runtime;
-    else if (runtime !== bound.runtime) bound.isReplaced = true;
+    else if (runtime !== bound.runtime && !bound.isReplaced) {
+      bound.isReplaced = true;
+      queueMicrotask(unwatch);
+    }
   });
-  signal.addEventListener("abort", stopWatching, { once: true });
+  signal.addEventListener("abort", unwatch, { once: true });
   const isAccountRecords = () => {
     const runtime = get(datafnRuntime);
     return (
@@ -376,14 +386,9 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
     signal,
     undefined,
     references
-  )
-    .catch((error: unknown) => {
-      logger.error({ at: "filefn.client.queue", error });
-    })
-    .finally(() => {
-      stopWatching();
-      signal.removeEventListener("abort", stopWatching);
-    });
+  ).catch((error: unknown) => {
+    logger.error({ at: "filefn.client.queue", error });
+  });
 }
 
 /** How long a queue replay waits for DataFn to pull the account's records. */

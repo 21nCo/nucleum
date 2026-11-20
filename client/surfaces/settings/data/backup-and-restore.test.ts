@@ -4673,4 +4673,88 @@ describe("restore sessions, generations and publication of queued files", () => 
       expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(second);
     }
   );
+
+  it("keeps the download URL a lookup returned from the replacement it read meanwhile, sharing it with the next lookup", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    const download = () =>
+      resolveQueuedFileUrl([QUEUE_A], record.fileId, "download");
+    getDirectory = beforeCreating(
+      (path) => path[1] === entry && path[2] === "data.bin",
+      async () => {
+        const putBack = await takeEntryAside(entry);
+        await putBack({
+          "restoring-generation-2": new Uint8Array(),
+          "published-generation-2": new Uint8Array(),
+          "data.bin": new TextEncoder().encode("replacement bytes")
+        });
+        const dir = await (
+          await (await opfs.getDirectory()).getDirectoryHandle(QUEUE_A)
+        ).getDirectoryHandle(entry);
+        for (const name of opfs.list(QUEUE_A, entry)) {
+          const isMark = /^(restoring|published)-/.test(name);
+          if (isMark && !name.endsWith("generation-2")) {
+            await dir.removeEntry(name);
+          }
+        }
+      },
+      false
+    );
+
+    const first = await download();
+    getDirectory = opfs.getDirectory;
+    const next = await download();
+
+    expect(await objectUrls.get(first!)?.text()).toBe("replacement bytes");
+    expect(next).toBe(first);
+    expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(first);
+  });
+
+  it("sends no discard from a retry pass when DataFn is started again for the same account with the file's record after its no-reference query, and uploads the file once", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const records = await datafn.exportData();
+    await deleteRecord(record.id);
+    hasLocks = false;
+    data.isPullFailing = true;
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      replays.clear();
+      goOnline();
+      await replayed(QUEUE_A);
+      expect(sdk.deleted).toEqual([]);
+      data.isPullFailing = false;
+      let isRestarted = false;
+      getDirectory = beforeLookingUp(
+        (path) => path[0] === `${QUEUE_A}.revision`,
+        HOLDS_A,
+        async () => {
+          await bootData(cloudAccount("user-a"));
+          await datafn.importData(records, { triggerCloneUp: false });
+          isRestarted = true;
+        }
+      );
+
+      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.waitFor(() => expect(isRestarted).toBe(true));
+      getDirectory = opfs.getDirectory;
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(sdk.deleted).toEqual([]);
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+  });
 });

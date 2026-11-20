@@ -484,8 +484,8 @@ export async function resolveQueuedFileUrl(
 /**
  * Returns an entry's held download URL (see resolveQueuedFileUrl), shared
  * by concurrent lookups, read from the generation now published. A lookup
- * joins a held read only when that read started from the generation it
- * found published; one started from another generation is joined once the
+ * joins a held read only when it is of the generation the lookup found
+ * published (see HeldUrl); one of another generation is joined once the
  * lookup finds that generation published again, and is otherwise retired
  * (revoked, while still held), so its rejection or null URL never ends a
  * lookup of the generation published now. The URL
@@ -518,8 +518,12 @@ async function resolveHeldUrl(
       continue;
     }
     if (!held) {
-      const read = readUrl(dir, entry, entryName, "download");
-      held = { generation: entry.generation, read };
+      const created = { generation: entry.generation } as HeldUrl;
+      created.read = readUrl(dir, entry, entryName, "download").then((read) => {
+        created.generation = read.generation ?? created.generation;
+        return read;
+      });
+      held = created;
       heldUrls.set(key, held);
     }
     const read: Awaited<HeldUrl["read"]> = await held.read.catch(
@@ -627,7 +631,11 @@ async function getPublishedEntryDir(
  * that supplied its bytes (see readUrl).
  */
 type HeldUrl = {
-  /** The generation the lookup that started the read found published. */
+  /**
+   * The generation whose bytes the read supplied once it resolved (see
+   * readUrl), and until then the one the lookup that started it found
+   * published.
+   */
   generation: string;
   read: Promise<{ url: string | undefined | null; generation?: string }>;
 };
@@ -1091,8 +1099,8 @@ async function holdEntry(
  * step's dispatch row, which every restore then finds and rejects on, and
  * removes the step's acting row, which fails when a restore took the file
  * over by removing that row once it expired (see holdEntry), so exactly
- * one of the two goes on, whatever the clocks read. Later calls are false
- * once the dispatch row is gone.
+ * one of the two goes on, whatever the clocks read; the claim then reads the
+ * rows once more. Later calls are false once the dispatch row is gone.
  */
 async function actAlone(
   dir: string,
@@ -1132,7 +1140,7 @@ async function actAlone(
       throw error;
     }
     isClaimed = true;
-    return true;
+    return isAlone();
   };
   try {
     const isActing = await isAlone(false);
