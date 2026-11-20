@@ -46,11 +46,7 @@ const STARTED_FILE = "started";
  * a later pass or backup does not send or copy it again.
  */
 const THUMBNAIL_SENT_FILE = "sent-thumbnail";
-/**
- * Marks an account's file whose thumbnail FileFn rejected for good, holding
- * the original's version: a later pass sends it no more, but, as FileFn
- * never took it, a backup still copies it (see readDelivery).
- */
+/** Marks a thumbnail FileFn rejected for good: sent no more, still backed up. */
 const THUMBNAIL_REJECTED_FILE = "rejected-thumbnail";
 /**
  * Restore marks, each created empty, so its name alone carries its meaning
@@ -63,9 +59,9 @@ const THUMBNAIL_REJECTED_FILE = "rejected-thumbnail";
  * writing it. A published one is held for its account, never uploaded,
  * removed or discarded, until the account adopts it, once a record of the
  * account references it (`adopted-<generation>`, or an adoption row when
- * that mark cannot be created; see adoptEntry), or, when no restore settled
- * it, no record did by the end of its grace (see takeOverRestoredEntry);
- * the replay's rules then apply. Restore sessions also hold files with hold rows (see HoldRow).
+ * that mark cannot be created; see adoptEntry), or no record did by the end
+ * of its grace (see takeOverRestoredEntry); the replay's rules then
+ * apply. Restore sessions also hold files with hold rows (see HoldRow).
  */
 const RESTORING_PREFIX = "restoring-";
 const PUBLISHED_PREFIX = "published-";
@@ -76,6 +72,9 @@ const ADOPTED_PREFIX = "adopted-";
  * restore's rollback removes it.
  */
 const SETTLED_PREFIX = "settled-";
+/** Marks a file a restore into the queue's own account wrote. */
+const OWN_PREFIX = "own-";
+const MAKE = { create: true };
 /** The generation of a file no restore wrote. */
 const BASE_GENERATION = "base";
 
@@ -929,14 +928,20 @@ async function readNames(handle: FileSystemDirectoryHandle | null) {
 /**
  * Reads an entry's restore marks (see RESTORING_PREFIX) from its names: its
  * generation (BASE_GENERATION when no restore wrote it), whether it is
- * published, whether its adopted and settled marks are there, and whether
- * its original and thumbnail were both delivered.
+ * published, whether its adopted, settled and own marks are there, whether
+ * its original and thumbnail were both delivered. A published mark left
+ * without its restoring mark (see adoptEntry) still names the generation,
+ * published and adopted.
  */
 function readMarks(names: readonly string[]) {
   const generations = names
     .filter((name) => name.startsWith(RESTORING_PREFIX))
     .map((name) => name.slice(RESTORING_PREFIX.length));
-  const [generation = BASE_GENERATION] = generations;
+  const published = names
+    .filter((name) => name.startsWith(PUBLISHED_PREFIX))
+    .map((name) => name.slice(PUBLISHED_PREFIX.length));
+  const [generation = published.length === 1 ? published[0] : BASE_GENERATION] =
+    generations;
   const isRestored = generations.length > 0;
   return {
     generation,
@@ -946,6 +951,7 @@ function readMarks(names: readonly string[]) {
         names.includes(`${PUBLISHED_PREFIX}${generation}`)),
     isAdopted: !isRestored || names.includes(`${ADOPTED_PREFIX}${generation}`),
     isSettled: names.includes(`${SETTLED_PREFIX}${generation}`),
+    isOwn: names.includes(`${OWN_PREFIX}${generation}`),
     isDelivered:
       names.includes(UPLOADED_FILE) &&
       (names.includes(THUMBNAIL_SENT_FILE) ||
@@ -1284,16 +1290,13 @@ async function getUploadLogDir(dir: string, isCreated = false) {
 
 /**
  * A queued file's delivery evidence, per component, from its entry's names
- * (`names`, none once it left the queue) and marks, then its upload log
- * rows: `original`, the version FileFn confirmed for its original (its
- * uploaded mark, or else its log row), "" when none is recorded, undefined
- * when that cannot be read; and `thumbnail`: "absent" without one
- * (`hasThumbnail`), "sent" or "rejected" as its marks or, at the original's
- * version, its log row record it, else "pending", or "unknown" when that
- * row cannot be read. A row or mark is read only while the evidence read
- * before it leaves its component open, and one that cannot be read (but a
- * missing one) is never absent: `isKnown` is false and `error` holds the
- * error. `isDone` is true once the thumbnail needs no other request.
+ * (`names`, none once it left the queue) and marks, its upload log rows and
+ * its delivered row (see logDelivered): `original`, its confirmed version,
+ * "" when none is recorded, undefined when unreadable; `thumbnail`, "absent"
+ * (`hasThumbnail`), "sent", "rejected", "pending" or "unknown". Each source
+ * is read only while those before it leave the component open; one that
+ * cannot be read is never absent (`isKnown` false, `error` set). `isDone`:
+ * the thumbnail needs no other request.
  */
 async function readDelivery(
   dir: string,
@@ -1325,35 +1328,37 @@ async function readDelivery(
         UPLOADED_FILE
       )
     : "";
+  /** The file's delivered row (see logDelivered); null when unreadable. */
+  const readRow = async () => {
+    try {
+      const { delivered } = await readHolds(dir);
+      return delivered.find((found) => found.fileId === fileId);
+    } catch (readError) {
+      error ??= readError;
+      return null;
+    }
+  };
   let original = marked;
-  let isRowSent = false;
   if (!original) {
     const text = await read(log, row);
     const logged = parseJson(text, isLoggedUpload)?.versionId;
     original = logged ?? (text === undefined ? undefined : marked);
   }
   if (original === "") {
-    try {
-      const found = (await readHolds(dir)).delivered.find(
-        (delivered) => delivered.fileId === fileId
-      );
-      original = found?.versionId ?? "";
-      isRowSent = Boolean(found?.isThumbnailSent);
-    } catch (readError) {
-      error ??= readError;
-      original = undefined;
-    }
+    const found = await readRow();
+    original = found === null ? undefined : (found?.versionId ?? "");
   }
   type Thumbnail = "absent" | "sent" | "rejected" | "pending" | "unknown";
   let thumbnail: Thumbnail = "pending";
   if (!hasThumbnail) thumbnail = "absent";
   else if (names.includes(THUMBNAIL_SENT_FILE)) thumbnail = "sent";
   else if (names.includes(THUMBNAIL_REJECTED_FILE)) thumbnail = "rejected";
-  else if (isRowSent) thumbnail = "sent";
   else if (original) {
     const sent = await read(log, `${row}~thumbnail`);
-    if (sent === undefined) thumbnail = "unknown";
-    else if (sent === original) thumbnail = "sent";
+    const found = sent === original ? undefined : await readRow();
+    const isRowSent = found?.isThumbnailSent && found.versionId === original;
+    if (sent === original || isRowSent) thumbnail = "sent";
+    else if (sent === undefined || found === null) thumbnail = "unknown";
   }
   return {
     original,
@@ -1531,7 +1536,9 @@ export async function stageRestoredFiles(
             uploadedVersionId: logged
           };
           const written = { ...copy, ...thumbnailOnly };
-          await stageRestoredEntry(dir, written, generation, found.isPresent);
+          const { isPresent } = found;
+          const isOwn = options.isOwnAccount;
+          await stageRestoredEntry(dir, written, generation, isPresent, isOwn);
         }
       }
     } catch (error) {
@@ -1581,7 +1588,8 @@ async function stageRestoredEntry(
   dir: string,
   copy: QueuedFileCopy,
   generation: string,
-  isPresent: boolean
+  isPresent: boolean,
+  isOwn: boolean
 ) {
   const entryName = toEntryName(copy.fileId);
   if (isPresent) await dequeueFile(dir, copy.fileId);
@@ -1637,6 +1645,7 @@ async function stageRestoredEntry(
   if (restoring.length !== 1) {
     throw new Error("Another restore is writing a queued file");
   }
+  if (isOwn) await entry.getFileHandle(`${OWN_PREFIX}${generation}`, MAKE);
   await entry.getFileHandle(`${PUBLISHED_PREFIX}${generation}`, {
     create: true
   });
@@ -1847,6 +1856,8 @@ type ReplayPass = {
   request: ReplayRequest;
   /** Whether the records were brought up to date since the last upload. */
   isSynced: boolean;
+  /** The `<file>~<generation>`s it took though no adoption was recorded. */
+  taken: Set<string>;
 };
 
 /**
@@ -1940,12 +1951,7 @@ function isStale(request: ReplayRequest) {
   return request.references?.isCurrent() === false;
 }
 
-/**
- * Runs a pass, scheduling a retry when it left files to upload; a pass whose
- * records were replaced by its end (see isStale) leaves the retry budget to
- * the current runtime, and a retry whose records were replaced by the time
- * it comes due does not run.
- */
+/** Runs a pass, scheduling a retry when it left files to upload. */
 async function replayPass(dir: string, request: ReplayRequest) {
   let isRetried = true;
   try {
@@ -1983,10 +1989,8 @@ const graceTimers = new Map<
  * at the earliest deadline, outside the retry budget, cancelled once the
  * pass's client signal aborts. The pass runs with the latest request that
  * asked for a deadline, so records replaced meanwhile (see
- * QueuedFileReferences) never decide it; a request whose records were
- * replaced (see isStale) asks for none, and one replaced by the time its
- * deadline comes runs no pass, so neither displaces nor spends the current
- * runtime's.
+ * QueuedFileReferences) never decide it, and a request whose records were
+ * replaced (see isStale) never displaces a current one's deadline.
  */
 function scheduleDeadline({ dir, request }: ReplayPass, at: number) {
   const current = graceTimers.get(dir);
@@ -2047,7 +2051,8 @@ async function drainQueue(dir: string, request: ReplayRequest) {
     dir,
     store: getStore(dir),
     request,
-    isSynced: false
+    isSynced: false,
+    taken: new Set()
   };
   await removeHolds(dir, (row) => !row.isLive);
   await moveDeliveredRows(dir);
@@ -2125,12 +2130,11 @@ async function replayEntry(
  * account adopted it, or a record of the queue's account now references it,
  * when the replay adopts it. A file a live hold row holds is left
  * untouched, and while the records cannot be brought up to date or read,
- * the pass stops. One held for its account that no record references is
- * left untouched when a restore that went on to import its records settled
- * it (see settleRestoredFiles), and otherwise (that restore never settled
- * it) until the grace of a file without a record (UNCOMMITTED_GRACE_MS,
- * from its capture, `createdAt`) ended, a pass running then; the replay
- * then adopts it, so it is removed (see replayAccountEntry), never uploaded.
+ * the pass stops. One no record references is left untouched, unless a
+ * restore into the queue's own account (see OWN_PREFIX) never settled it:
+ * then the replay takes it once its capture's grace (`createdAt`, see
+ * UNCOMMITTED_GRACE_MS) ended, to remove it. An adoption that cannot be
+ * recorded (a full store) is logged and the replay goes on.
  * An unpublished file is removed, under Web Locks (no restore writes while
  * the replay holds the lock) or once no live hold row holds it.
  */
@@ -2156,12 +2160,15 @@ async function takeOverRestoredEntry(
   const isReferenced = await isReferencedNow(pass, references, fileId);
   if (isReferenced === undefined) return "stop";
   const reclaimAt = Date.parse(createdAt) + UNCOMMITTED_GRACE_MS;
-  if (!isReferenced && restore.isSettled) return "done";
+  if (!isReferenced && (restore.isSettled || !restore.isOwn)) return "done";
   if (!isReferenced && !(Date.now() >= reclaimAt)) {
     scheduleDeadline(pass, reclaimAt + 1_000);
     return "done";
   }
-  await adoptEntry(dir, fileId, restore.generation);
+  await adoptEntry(dir, fileId, restore.generation).catch((error: unknown) => {
+    logger.warn({ at: "fileQueue.adopt", fileId, error });
+    pass.taken.add(`${fileId}~${restore.generation}`);
+  });
   return undefined;
 }
 
@@ -2188,10 +2195,14 @@ async function removeAbandonedEntry(
 }
 
 /** Whether a restore holds a file now (see takeOverRestoredEntry). */
-async function isHeldNow(dir: string, fileId: string) {
+async function isHeldNow({ dir, taken }: ReplayPass, fileId: string) {
   const restore = await readRestore(dir, fileId);
+  const isTaken = taken.has(`${fileId}~${restore?.generation}`);
   return Boolean(
-    restore && (!restore.isPublished || !restore.isAdopted || restore.isHeld())
+    restore &&
+    (!restore.isPublished ||
+      !(restore.isAdopted || isTaken) ||
+      restore.isHeld())
   );
 }
 
@@ -2200,17 +2211,17 @@ async function isHeldNow(dir: string, fileId: string) {
  * committed mark are read before its record, so a capture saving its record
  * meanwhile keeps the file; an empty or invalid marker (an interrupted write)
  * may be the owner's attempt (as may any unreferenced file without Web Locks).
- * An original whose delivery (see readDelivery) records it uploaded is not
- * sent again while its thumbnail is still to be sent, when the file holds
- * its thumbnail only (see QueuedFileCopy), or when a restore wrote the
- * file; for such a file, delivery evidence that cannot be read sends nothing
- * and retries the file, and for any other it may have uploaded (the
- * request is idempotent). A thumbnail recorded sent or rejected is not
- * sent again, and one FileFn could not take is sent again on a retry, the
- * file staying queued meanwhile (see sendAccountThumbnail). A delivery the
- * upload log could not record is recorded again once the removal freed the
- * file's bytes (see logDelivered), before the removal's acting row (see
- * actAlone) ends, so restoring an older backup does not stage it again.
+ * An original marked uploaded is not sent again while its thumbnail is
+ * still to be sent, when the file holds its thumbnail only (see
+ * QueuedFileCopy), or when a restore wrote the file; a delivery the upload
+ * log could not record is recorded again once the removal freed the file's
+ * bytes (a full store), before the removal's acting row (see actAlone)
+ * ends, so restoring an older backup does not stage it again; a thumbnail
+ * marked sent, or for a restored file one the upload log records sent at
+ * its version, is not sent again; a
+ * thumbnail FileFn could not take is sent again on a retry, the file staying
+ * queued meanwhile (see sendAccountThumbnail). Delivery evidence that cannot
+ * be read (see readDelivery) retries a restored, byte-less or marked file.
  */
 async function replayAccountEntry(
   pass: ReplayPass,
@@ -2230,7 +2241,10 @@ async function replayAccountEntry(
     !pending.fileData.byteLength || isThumbnailPending || isRestored;
   const delivery = isLogRead ? await readDelivery(dir, fileId, names) : null;
   const isUnsure = delivery?.original === undefined && isLogRead;
-  if (isUnsure && (isRestored || !pending.fileData.byteLength)) return "retry";
+  const isMarked = names.includes(UPLOADED_FILE);
+  if (isUnsure && (isRestored || isMarked || !pending.fileData.byteLength)) {
+    return "retry";
+  }
   const uploaded = delivery?.original;
   const isCommitted = await hasEntryFile(dir, entryName, COMMITTED_FILE);
   const isRecent = !(
@@ -2248,7 +2262,8 @@ async function replayAccountEntry(
     const started = await readMarkers(dir, entryName);
     if (uploaded || isUnsure || !hasWebLocks()) started.push(undefined);
     if (isStartedElsewhere(started, references)) return "done";
-    return removeAccountEntry(pass, references, fileId, started.length > 0);
+    const isDiscarded = started.length > 0;
+    return removeAccountEntry(pass, references, fileId, isDiscarded, true);
   }
   if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
   const result = uploaded
@@ -2279,6 +2294,7 @@ async function replayAccountEntry(
     references,
     fileId,
     !isStillReferenced,
+    false,
     async () => {
       if (isLogged || !isStillReferenced) return;
       await logDelivered(dir, fileId, result.versionId, sent === true);
@@ -2385,13 +2401,15 @@ async function isReferencedNow(
  * owner's at the authority, checked in the same step. A file a restore holds
  * by then (see isHeldNow and actAlone) stays queued, and without Web Locks
  * one a record references again by the time no restore holds it (another
- * tab restored it) is neither discarded nor removed.
+ * tab restored it) is neither discarded nor removed. A file removed as no
+ * record references it (`isOrphan`) is removed only while none does.
  */
 async function removeAccountEntry(
   pass: ReplayPass,
   references: QueuedFileReferences,
   fileId: string,
   isDiscarded: boolean,
+  isOrphan: boolean,
   afterRemoval?: () => Promise<unknown>
 ): Promise<EntryOutcome> {
   let outcome: EntryOutcome = "done";
@@ -2408,8 +2426,9 @@ async function removeAccountEntry(
       pass,
       references,
       fileId,
-      isDiscarded,
-      isAlone
+      isDiscarded || isOrphan,
+      isAlone,
+      isDiscarded
     );
     if (outcome === "done") await afterRemoval?.();
   });
@@ -2420,7 +2439,8 @@ async function removeAccountEntry(
  * Discards (when `isDiscarded`) and removes an account's file (see
  * removeAccountEntry). Right before the discard request and the removal
  * (see dequeueFile), it checks that it still acts alone (see actAlone),
- * then that no record references a discarded file in the records DataFn
+ * then, with `isUnreferencedOnly`, that no record references the file in
+ * the records DataFn
  * holds now (also after DataFn was started again), the last await before
  * the request, so a reference added while it checked is seen, retrying the
  * file later when either fails, and, with no await in between, that the
@@ -2432,13 +2452,14 @@ async function discardAccountEntry(
   pass: ReplayPass,
   references: QueuedFileReferences,
   fileId: string,
-  isDiscarded: boolean,
-  isAlone: () => Promise<boolean>
+  isUnreferencedOnly: boolean,
+  isAlone: () => Promise<boolean>,
+  isDiscarded: boolean
 ): Promise<EntryOutcome> {
-  if (await isHeldNow(pass.dir, fileId)) return "done";
+  if (await isHeldNow(pass, fileId)) return "done";
   /** Whether no record references the file in the records DataFn holds now. */
   const isUnreferenced = async () =>
-    !isDiscarded || (await references.isReferenced(fileId)) === false;
+    !isUnreferencedOnly || (await references.isReferenced(fileId)) === false;
   if (isDiscarded) {
     if (!references.isCurrent()) return "stop";
     await markChange(pass.dir);
@@ -2447,7 +2468,7 @@ async function discardAccountEntry(
     if (!references.isCurrent()) return "stop";
     if ((await references.discard(fileId)) === false) return "stop";
     await logUpload(pass.dir, fileId);
-    if (await isHeldNow(pass.dir, fileId)) return "done";
+    if (await isHeldNow(pass, fileId)) return "done";
   }
   const isRemoved = await dequeueFile(
     pass.dir,

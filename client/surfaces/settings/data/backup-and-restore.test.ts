@@ -5663,4 +5663,174 @@ describe("delivery evidence, stale timers and reclaiming of queued files", () =>
     ]);
     expect(sdk.deleted).toEqual([]);
   });
+
+  it("keeps a file restored into another account for its capturing account when the restore could not mark it settled, also once its hold and its grace ended", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    getDirectory = failingWrites((path) =>
+      path[2]?.startsWith("settled-")
+        ? new DOMException("The quota is exceeded", "QuotaExceededError")
+        : undefined
+    );
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    getDirectory = opfs.getDirectory;
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + RESTORE_HOLD_LIFETIME_MS + UNCOMMITTED_GRACE_MS + 2_000
+    );
+    await bootData(cloudAccount("user-a"));
+
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(await readQueuedBytes(record.fileId, "full")).toBe("photo bytes");
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("keeps a file a record references by the time its removal as unreferenced marks the change, with Web Locks, and uploads it once", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    await deleteRecord(record.id);
+    let isPaused = false;
+    getDirectory = failingWrites((path) => {
+      if (path[0] !== `${QUEUE_A}.revision` || isPaused) return undefined;
+      isPaused = true;
+      return datafn.file
+        .mutate({
+          operation: "insert",
+          id: "file-reference-2",
+          record: {
+            id: "file-reference-2",
+            label: "Photo",
+            type: "image/png",
+            size: 11,
+            name: "photo.png",
+            fileId: record.fileId
+          }
+        } as never)
+        .then(() => undefined);
+    });
+
+    goOnline();
+    await replayed(QUEUE_A);
+    getDirectory = opfs.getDirectory;
+
+    expect(isPaused).toBe(true);
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(await readQueuedBytes(record.fileId, "full")).toBe("photo bytes");
+    replays.clear();
+    isOnline = false;
+    goOnline();
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("uploads a restored file its record references once its retained hold expired, though its adoption still cannot be recorded", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    getDirectory = failingWrites(
+      (path) =>
+        path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+          ? new DOMException("The quota is exceeded", "QuotaExceededError")
+          : undefined,
+      (path) =>
+        path[2]?.startsWith("restoring-")
+          ? new Error("The restoring mark cannot be removed")
+          : undefined
+    );
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(isHeldForAccount(entry)).toBe(true);
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + RESTORE_HOLD_LIFETIME_MS + 1_000
+    );
+
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    getDirectory = opfs.getDirectory;
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("sends a delivered thumbnail no more after a restore of the older backup when only its upload log row could not be written", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    getDirectory = failingWrites((path) =>
+      path[0] === UPLOAD_LOG && path[1]?.endsWith("~thumbnail")
+        ? new DOMException("The quota is exceeded", "QuotaExceededError")
+        : undefined
+    );
+    goOnline();
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(uploadLogText()).not.toContain("~thumbnail");
+
+    isOnline = false;
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    replays.clear();
+    goOnline();
+    await replayed(QUEUE_A);
+    getDirectory = opfs.getDirectory;
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("requests a capture's uploaded original no more while its uploaded mark cannot be read, and sends only its pending thumbnail once it can", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    sdk.artifactError = fileFnError(503);
+    goOnline();
+    await replayed(QUEUE_A);
+    isOnline = false;
+    expect(sdk.started).toHaveLength(1);
+    expect(opfs.list(QUEUE_A, entry)).toContain("uploaded");
+    const root = await opfs.getDirectory();
+    await (
+      await root.getDirectoryHandle(UPLOAD_LOG)
+    ).removeEntry(encodeURIComponent(record.fileId));
+    sdk.artifactError = null;
+    getDirectory = unreadable(
+      (path) => path[1] === entry && path[2] === "uploaded"
+    );
+
+    replays.clear();
+    goOnline();
+    await replayed(QUEUE_A);
+    expect(sdk.started).toHaveLength(1);
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+
+    getDirectory = opfs.getDirectory;
+    replays.clear();
+    isOnline = false;
+    goOnline();
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
 });
