@@ -201,6 +201,18 @@ describe("renderMdAsHtml links and quotes", () => {
       const element = renderIntoDom(renderMdAsHtml(text)).querySelector(selector);
       expect(element?.getAttribute("data-label"), text).toBe(label);
     }
+    for (const newline of ["\n", "\r\n"]) {
+      const runLink = renderIntoDom(
+        renderMdAsHtml(`[Draft]${newline}Read [Part 2]](https://example.com/docs)`)
+      ).querySelectorAll(".inline-link");
+      expect(runLink).toHaveLength(1);
+      expect(runLink[0].textContent).toBe("Part 2]");
+      const stray = renderIntoDom(
+        renderMdAsHtml(`Syntax starts with [${newline}Read [Docs](https://example.com/docs).`)
+      );
+      expect(stray.querySelector(".inline-link")?.textContent).toBe("Docs");
+      expect(stray.textContent).toContain("Syntax starts with [");
+    }
     const task = renderIntoDom(renderMdAsHtml("- [x] Read [spec](https://x.com/spec)"));
     expect(task.querySelector(".inline-link")?.textContent).toBe("spec");
   });

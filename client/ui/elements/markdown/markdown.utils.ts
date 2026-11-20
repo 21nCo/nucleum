@@ -135,17 +135,69 @@ function staysInBlock(boundaries: number[], start: number, end: number) {
   return index >= boundaries.length || boundaries[index] >= end;
 }
 
-/** Block boundaries and `](` positions of a text, computed once per render. */
-type InlineLayout = { boundaries: number[]; closers: number[] };
+/**
+ * Lookups computed once per render so every check below is a binary search:
+ * block boundaries, the `](` positions that start a valid target (with where
+ * that target ends), each `[`'s balancing `]`, and the `[`s that start a
+ * complete link or mention of their own.
+ */
+type InlineLayout = {
+  boundaries: number[];
+  validClosers: number[];
+  targetEnds: Map<number, number>;
+  brackets: Map<number, number>;
+  completeStarts: number[];
+};
 
-function findLabelClosers(text: string) {
-  const closers: number[] = [];
-  let index = text.indexOf("](");
-  while (index >= 0) {
-    closers.push(index);
-    index = text.indexOf("](", index + 1);
+function buildInlineLayout(text: string): InlineLayout {
+  const boundaries = findBlockBoundaries(text);
+  const parens: number[] = [];
+  for (let index = text.indexOf(")"); index >= 0; index = text.indexOf(")", index + 1)) {
+    parens.push(index);
   }
-  return closers;
+  const validClosers: number[] = [];
+  const targetEnds = new Map<number, number>();
+  for (let close = text.indexOf("]("); close >= 0; close = text.indexOf("](", close + 1)) {
+    const rest = text.slice(close + 2, close + 2 + 9);
+    const prefix = rest.startsWith("resource=")
+      ? "resource="
+      : (/^https?:\/\//.exec(text.slice(close + 2, close + 2 + 8))?.[0] ?? null);
+    if (!prefix) continue;
+    const targetStart = close + 2 + prefix.length;
+    const parenIndex = firstAtOrAfter(parens, targetStart);
+    if (parenIndex >= parens.length) continue;
+    const targetEnd = parens[parenIndex];
+    if (!staysInBlock(boundaries, targetStart, targetEnd)) continue;
+    validClosers.push(close);
+    targetEnds.set(close, targetEnd);
+  }
+  const brackets = matchLabelBrackets(text, boundaries);
+  const completeStarts: number[] = [];
+  for (const [open] of brackets) {
+    if (balancedCloseAt(text, open, brackets, boundaries, targetEnds) >= 0) {
+      completeStarts.push(open);
+    }
+  }
+  completeStarts.sort((left, right) => left - right);
+  return { boundaries, validClosers, targetEnds, brackets, completeStarts };
+}
+
+/**
+ * The `](` that ends the label opened at `open` when its brackets balance:
+ * the balancing `]`, extended over a run of `]`s (as in `[Happy :]]`), must be
+ * directly followed by `(` and a valid target. Returns -1 otherwise.
+ */
+function balancedCloseAt(
+  text: string,
+  open: number,
+  brackets: Map<number, number>,
+  boundaries: number[],
+  targetEnds: Map<number, number>
+) {
+  let close = brackets.get(open);
+  if (close === undefined || !staysInBlock(boundaries, open, close)) return -1;
+  while (text[close + 1] === "]") close += 1;
+  return targetEnds.has(close) ? close : -1;
 }
 
 /**
@@ -159,34 +211,35 @@ function extractInlineLinks(text: string, tokens: string[]) {
     inlineLinkPatterns.find((pattern) => pattern.type === InlineType.MENTION)!,
     inlineLinkPatterns.find((pattern) => pattern.type === InlineType.LINK)!
   ];
-  const boundaries = findBlockBoundaries(text);
-  const layout: InlineLayout = { boundaries, closers: findLabelClosers(text) };
-  const brackets = matchLabelBrackets(text, boundaries);
+  const layout = buildInlineLayout(text);
   let result = "";
   let index = 0;
   while (index < text.length) {
     const open = text.indexOf("[", index);
     if (open < 0) break;
-    const parsed = parseInlineLinkAt(text, open, brackets, layout);
-    if (!parsed) {
+    const close = findLabelClose(text, open, layout);
+    if (close < 0) {
       result += text.slice(index, open + 1);
       index = open + 1;
       continue;
     }
+    const isMention = text.startsWith("resource=", close + 2);
+    const targetStart = close + 2 + (isMention ? 9 : 0);
+    const targetEnd = layout.targetEnds.get(close)!;
     const styledLabel = replaceInlineStylePatterns(
-      replaceSymbolPatterns(parsed.label)
+      replaceSymbolPatterns(text.slice(open + 1, close))
     ).replace(/\r?\n/g, "<br>");
-    const target = parsed.target.replace(/\r?\n/g, "<br>");
-    const template = parsed.isMention
-      ? mentionPattern.replacement
-      : linkPattern.replacement;
+    const target = text
+      .slice(isMention ? targetStart : targetStart + (text.startsWith("https://", targetStart) ? 8 : 7), targetEnd)
+      .replace(/\r?\n/g, "<br>");
+    const template = isMention ? mentionPattern.replacement : linkPattern.replacement;
     tokens.push(
       template.replace(/\$([12])/g, (_placeholder, group: string) =>
         group === "1" ? styledLabel : target
       )
     );
     result += `${text.slice(index, open)}${TOKEN_START}${tokens.length - 1}${TOKEN_END}`;
-    index = parsed.end;
+    index = targetEnd + 1;
   }
   return result + text.slice(index);
 }
@@ -210,94 +263,42 @@ function matchLabelBrackets(text: string, boundaries: number[]) {
   return matches;
 }
 
-/** Reads a `resource=` or `http(s)://` target that starts right after `](` at `close`. */
-function readInlineTarget(
-  text: string,
-  open: number,
-  close: number,
-  boundaries: number[]
-) {
-  const rest = text.slice(close + 2);
-  const prefix = rest.startsWith("resource=")
-    ? "resource="
-    : (/^https?:\/\//.exec(rest)?.[0] ?? null);
-  if (!prefix) return null;
-  const targetStart = close + 2 + prefix.length;
-  const targetEnd = text.indexOf(")", targetStart);
-  if (targetEnd < 0) return null;
-  if (!staysInBlock(boundaries, targetStart, targetEnd)) return null;
-  return {
-    isMention: prefix === "resource=",
-    label: text.slice(open + 1, close),
-    target: text.slice(targetStart, targetEnd),
-    end: targetEnd + 1
-  };
+/** The first valid `](` at or after `from` that stays in the block of `open`. */
+function nextValidCloser(layout: InlineLayout, open: number, from: number) {
+  const index = firstAtOrAfter(layout.validClosers, from);
+  const close = layout.validClosers[index];
+  return close !== undefined && staysInBlock(layout.boundaries, open, close) ? close : -1;
 }
 
-/** Finds the nearest `](` after `from` in the same block that starts a valid target. */
-function findFallbackClose(
-  text: string,
-  open: number,
-  from: number,
-  layout: InlineLayout
-) {
-  let index = firstAtOrAfter(layout.closers, from);
-  while (index < layout.closers.length) {
-    const close = layout.closers[index];
-    if (!staysInBlock(layout.boundaries, open, close)) return -1;
-    if (readInlineTarget(text, open, close, layout.boundaries)) return close;
-    index += 1;
-  }
-  return -1;
-}
-
-/** True when a `[` between `from` and `to` starts its own complete link or mention. */
-function startsCompleteInlineBetween(
-  text: string,
-  from: number,
-  to: number,
-  brackets: Map<number, number>,
-  boundaries: number[]
-) {
-  for (let index = text.indexOf("[", from); index >= 0 && index < to; index = text.indexOf("[", index + 1)) {
-    const close = brackets.get(index);
-    if (close !== undefined && text[close + 1] === "(" && readInlineTarget(text, index, close, boundaries)) {
-      return true;
-    }
-  }
-  return false;
+/** True when a `[` in `(from, to)` starts its own complete link or mention. */
+function hasCompleteStartBetween(layout: InlineLayout, from: number, to: number) {
+  const start = layout.completeStarts[firstAtOrAfter(layout.completeStarts, from + 1)];
+  return start !== undefined && start < to;
 }
 
 /**
- * Parses a link or mention starting at `open`. The label normally ends at the
- * `]` that balances `open` (extended over a run of `]`s, as in `[Happy :]]`).
- * Labels with unbalanced brackets, which mentions of such titles produce, fall
- * back to the nearest `](` in the block: always when `open` has no pair, and
- * when its pair is not followed by `(` and no complete link or mention starts
- * before that `](`.
+ * Finds where the label opened at `open` ends. Balanced labels end at their
+ * balancing `]` (see `balancedCloseAt`). Labels with unbalanced brackets, which
+ * mentions of such titles produce, fall back to the nearest valid `](`: for an
+ * unpaired `[`, only on the same line; for a pair not followed by `(`, only
+ * when no complete link or mention starts in between.
  */
-function parseInlineLinkAt(
-  text: string,
-  open: number,
-  brackets: Map<number, number>,
-  layout: InlineLayout
-) {
-  const { boundaries } = layout;
-  let close = brackets.get(open) ?? -1;
-  if (close < 0) {
-    const fallback = findFallbackClose(text, open, open + 1, layout);
-    return fallback < 0 ? null : readInlineTarget(text, open, fallback, boundaries);
+function findLabelClose(text: string, open: number, layout: InlineLayout) {
+  const { brackets, boundaries, targetEnds } = layout;
+  const balanced = balancedCloseAt(text, open, brackets, boundaries, targetEnds);
+  if (balanced >= 0) return balanced;
+  const pair = brackets.get(open);
+  if (pair === undefined) {
+    const fallback = nextValidCloser(layout, open, open + 1);
+    return fallback >= 0 && !text.slice(open, fallback).includes("\n") ? fallback : -1;
   }
-  if (!staysInBlock(boundaries, open, close)) return null;
+  if (!staysInBlock(boundaries, open, pair)) return -1;
+  let close = pair;
   while (text[close + 1] === "]") close += 1;
-  if (text[close + 1] === "(") {
-    return readInlineTarget(text, open, close, boundaries);
-  }
-  const fallback = findFallbackClose(text, open, close + 1, layout);
-  if (fallback < 0 || startsCompleteInlineBetween(text, close + 1, fallback, brackets, boundaries)) {
-    return null;
-  }
-  return readInlineTarget(text, open, fallback, boundaries);
+  if (text[close + 1] === "(") return -1;
+  const fallback = nextValidCloser(layout, open, close + 1);
+  if (fallback < 0 || hasCompleteStartBetween(layout, close, fallback)) return -1;
+  return fallback;
 }
 
 function restoreInlineLinks(text: string, tokens: string[]) {
