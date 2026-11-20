@@ -1,7 +1,6 @@
 import { datafn } from "@nucleum/datafn/datafn.store";
 import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
 import {
-  activateRestoredFiles,
   exportQueuedFiles,
   isFileQueueSupported,
   readQueueUploadCount,
@@ -93,18 +92,16 @@ export async function createBackupBlob(): Promise<Blob> {
  * Restores a backup. Its queued files are first put in the queue of the
  * account they were captured under, marked restored so no replay acts on
  * them (see stageRestoredFiles); then the records are imported; then, when
- * the signed-in account is that account, the files are handed to its
- * replay with the marks the backup held, and the queue replays. Should the
- * restore stop or fail after the records are imported (even in part), the
- * account's replay takes over each such file once a record of the account
- * references it, and the account's backups carry it meanwhile. Another
- * account's (or the guest's) restore leaves them marked restored in that
- * queue, never uploaded, removed or discarded, until that account restores
- * the backup or a record of that account references them. A file the queue
- * holds complete and unmarked, one an earlier restore fully wrote and has
- * not handed over (which a restore into the account hands over), or one
- * whose upload completes while the restore waits for the queue, stays as it
- * is. Rejects, restoring nothing, when the backup or its queued files cannot
+ * the signed-in account is that account, the queue replays. That account's
+ * replay takes over each file, with the marks the backup held, only once a
+ * record of the account references it (also after a restore that stopped or
+ * imported its records only in part); until then the file stays marked,
+ * never uploaded, removed or discarded, and the account's backups carry it.
+ * So does another account's (or the guest's) restore, until that account
+ * restores the backup or a record of that account references them. A file
+ * the queue holds complete and unmarked, one an earlier restore fully wrote
+ * and was not taken over yet, or one whose upload completes while the
+ * restore waits for the queue, stays as it is. Rejects, restoring nothing, when the backup or its queued files cannot
  * be read, this device cannot keep them, a file cannot be written, or the
  * account changes before the records are imported (removing the files it
  * added); and when the records could not all be imported, keeping the
@@ -136,9 +133,7 @@ export async function restoreBackup(
     throw new Error("The account changed while the backup was restored");
   }
   await importRecords(records, options.triggerCloneUp);
-  if (!staged || !isOwnAccount) return;
-  if (staged.fileIds.length) await activateRestoredFiles(staged);
-  await uploadQueuedFiles();
+  if (isOwnAccount) await uploadQueuedFiles();
 }
 
 /**

@@ -46,8 +46,8 @@ const STARTED_FILE = "started";
  * over yet (see stageRestoredFiles): empty while it is written, so a replay
  * leaves it untouched; once it is fully written, RESTORED_FOR_ACCOUNT for a
  * restore into the queue's own account and RESTORED_FOR_OTHER for one into
- * another account or the guest. The account's replay takes a fully written
- * one over once a record of the account references it.
+ * another account or the guest. Only the account's replay removes the mark
+ * of a fully written one, once a record of the account references it.
  */
 const RESTORED_FILE = "restored";
 const RESTORED_FOR_ACCOUNT = "account";
@@ -599,12 +599,10 @@ export function readQueueUploadCount(): number {
   return accountUploadCount;
 }
 
-/** The files a restore staged in a queue (see stageRestoredFiles). */
+/** The files a restore added to a queue (see stageRestoredFiles). */
 export type RestoredQueuedFiles = {
   dir: string;
-  /** The files staged, each marked restored until the restore takes it over. */
-  fileIds: string[];
-  /** Of those, the files the queue did not hold before. */
+  /** The files the queue did not hold before, each marked restored. */
   added: string[];
 };
 
@@ -615,26 +613,25 @@ export type RestoredQueuedFiles = {
  * backup held, and only once it is fully written is the mark set to
  * RESTORED_FOR_ACCOUNT for a restore into the queue's own account
  * (`isOwnAccount`), or RESTORED_FOR_OTHER for one into another account or
- * the guest. A restore into the account then takes the file over
- * (activateRestoredFiles) once its record is imported; otherwise the
- * account's replay does once a record of the account references it (an
- * interrupted restore, records imported only in part, or records that reach
- * the account another way after a restore into another account or the
- * guest), and until then no replay acts on it.
+ * the guest. Only the account's replay takes the file over, once a record
+ * of the account references it (records a restore into the account
+ * imported, or that reach the account another way), and until then no
+ * replay acts on it; a restore never removes the mark, since its records
+ * may not reference every file it carried.
  * Runs under the queue's Web Lock. A file stays as the queue holds it when
  * it is complete there and not marked restored, when an earlier restore
- * fully wrote it and has not handed it over (a restore into the account
- * then stages it as it is, to hand it over), or when the account's replay
- * completed its upload since `uploadCount` (see readQueueUploadCount); any
- * other (missing or half written) is written again from the backup. A file that cannot be written rejects, after removing the
- * files this call added.
+ * fully wrote it and it was not taken over yet, or when the account's
+ * replay completed its upload since `uploadCount` (see
+ * readQueueUploadCount); any other (missing or half written) is written
+ * again from the backup. A file that cannot be written rejects, after
+ * removing the files this call added.
  */
 export async function stageRestoredFiles(
   dir: string,
   copies: readonly QueuedFileCopy[],
   options: { isOwnAccount: boolean; uploadCount: number }
 ): Promise<RestoredQueuedFiles> {
-  const staged: RestoredQueuedFiles = { dir, fileIds: [], added: [] };
+  const staged: RestoredQueuedFiles = { dir, added: [] };
   if (!copies.length) return staged;
   if (!isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
@@ -648,14 +645,9 @@ export async function stageRestoredFiles(
         if (uploaded > options.uploadCount) continue;
         const isPresent = Boolean(await getEntryDir(dir, entryName, true));
         const held = isPresent ? await readHeldEntry(dir, entryName) : "none";
-        if (held === "complete") continue;
-        if (held === "restored") {
-          if (options.isOwnAccount) staged.fileIds.push(copy.fileId);
-          continue;
-        }
+        if (held !== "none") continue;
         if (!isPresent) staged.added.push(copy.fileId);
         await stageRestoredEntry(dir, copy, isPresent, options.isOwnAccount);
-        staged.fileIds.push(copy.fileId);
       }
     } catch (error) {
       await unstageRestoredFiles(staged);
@@ -725,26 +717,6 @@ async function stageRestoredEntry(
     RESTORED_FILE,
     isOwnAccount ? RESTORED_FOR_ACCOUNT : RESTORED_FOR_OTHER
   );
-}
-
-/**
- * Hands the files a restore into the queue's own account staged to the
- * queue's replay, as the backup held them, by removing their restored marks
- * (a file or mark already gone is skipped). A mark that cannot be removed is
- * logged: the account's replay takes that file over once its record is
- * found.
- */
-export async function activateRestoredFiles({
-  dir,
-  fileIds
-}: RestoredQueuedFiles): Promise<void> {
-  for (const fileId of fileIds) {
-    try {
-      await removeRestoredMark(dir, toEntryName(fileId));
-    } catch (error) {
-      logger.warn({ at: "fileQueue.restore.activate", fileId, error });
-    }
-  }
 }
 
 /**
