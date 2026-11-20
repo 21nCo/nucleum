@@ -244,13 +244,25 @@ export async function hasToken(request: Request, configuredToken: string | undef
   }
   const [providedDigest, configuredDigest] = await Promise.all([
     sha256(provided),
-    sha256(configuredToken)
+    configuredDigestFor(configuredToken)
   ]);
   let difference = 0;
   for (let index = 0; index < providedDigest.length; index += 1) {
     difference |= providedDigest[index] ^ configuredDigest[index];
   }
   return difference === 0;
+}
+
+const configuredDigests = new Map<string, Promise<Uint8Array>>();
+
+/** Digest of a configured token, computed once per Worker isolate rather than per request. */
+function configuredDigestFor(token: string): Promise<Uint8Array> {
+  let digest = configuredDigests.get(token);
+  if (!digest) {
+    digest = sha256(token);
+    configuredDigests.set(token, digest);
+  }
+  return digest;
 }
 
 async function sha256(value: string): Promise<Uint8Array> {
