@@ -4871,35 +4871,62 @@ describe("restore sessions, generations and publication of queued files", () => 
     }
   );
 
-  it("leaves out of a backup a file whose thumbnail the upload log records delivered, though its sent mark could not be written and its pass stopped before removing it", async () => {
-    await bootData(cloudAccount("user-a"));
-    isOnline = false;
-    const record = await capturePhoto();
-    const entry = `queued_${record.fileId}`;
-    getDirectory = failingWrites((path) =>
-      path[1] === entry && path[2] === "sent-thumbnail"
-        ? new DOMException("The quota is exceeded", "QuotaExceededError")
-        : undefined
-    );
-    let releaseUpload!: () => void;
-    sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
-    goOnline();
-    await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
-    data.isPullFailing = true;
-    releaseUpload();
-    await replayed(QUEUE_A);
-    getDirectory = opfs.getDirectory;
-    isOnline = false;
-    expect(sdk.artifacts).toHaveLength(1);
-    expect(opfs.list(QUEUE_A)).toEqual([entry]);
-    expect(opfs.list(QUEUE_A, entry)).not.toContain("sent-thumbnail");
-    expect(uploadLogText()).toContain(`${record.fileId}~thumbnail:ver_1`);
+  it.each([
+    [
+      "leaves out a file whose thumbnail the upload log records delivered",
+      null,
+      false
+    ],
+    [
+      "carries the thumbnail of a file FileFn rejected it from for good",
+      422,
+      true
+    ]
+  ])(
+    "%s, though its sent mark could not be written and its pass stopped before removing it",
+    async (_, status, isCarried) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      sdk.artifactError = status ? fileFnError(status) : null;
+      getDirectory = failingWrites((path) =>
+        path[1] === entry && path[2] === "sent-thumbnail"
+          ? new DOMException("The quota is exceeded", "QuotaExceededError")
+          : undefined
+      );
+      let releaseUpload!: () => void;
+      sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
+      goOnline();
+      await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
+      data.isPullFailing = true;
+      releaseUpload();
+      await replayed(QUEUE_A);
+      getDirectory = opfs.getDirectory;
+      isOnline = false;
+      expect(sdk.artifacts).toHaveLength(isCarried ? 0 : 1);
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      expect(opfs.list(QUEUE_A, entry)).not.toContain("sent-thumbnail");
+      expect(uploadLogText().includes(`${record.fileId}~thumbnail:ver_1`)).toBe(
+        !isCarried
+      );
 
-    const backup = JSON.parse(await backupText()) as Record<string, unknown>;
+      const text = await backupText();
 
-    expect(backup.fileQueue).toBeUndefined();
-    expect(backup.fileQueueBytes).toBeUndefined();
-  });
+      expect(text.startsWith('{"fileQueue"')).toBe(isCarried);
+      expect(text.includes(btoa("photo bytes"))).toBe(false);
+      if (!isCarried) return;
+      const index = JSON.parse(
+        text.slice('{"fileQueue":'.length, text.indexOf(',"fileQueueBytes":"'))
+      ) as {
+        files: { uploadedVersionId?: string; thumbnail?: unknown }[];
+      };
+      expect(index.files).toEqual([
+        expect.objectContaining({ uploadedVersionId: "ver_1" })
+      ]);
+      expect(index.files[0].thumbnail).toBeDefined();
+    }
+  );
 
   it("runs the replay DataFn started again asked for, not a retry pass of the replaced runtime that came due meanwhile, and sends the thumbnail without another trigger", async () => {
     await bootData(cloudAccount("user-a"));
@@ -5107,5 +5134,75 @@ describe("restore sessions, generations and publication of queued files", () => 
     expect(await savedRecord(record.id)).toBeUndefined();
     expect(opfs.list(QUEUE_A)).toEqual([entry]);
     expect(sdk.uploads).toEqual([]);
+  });
+
+  it("keeps the deadline of the replay DataFn started again asked for when a retry pass of the replaced runtime runs after it, and uploads the restored file once its hold expires", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    const entry = `queued_${record.fileId}`;
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    getDirectory = failingWrites(
+      (path) =>
+        path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+          ? new Error("The adoption cannot be recorded")
+          : undefined,
+      (path) =>
+        path[2]?.startsWith("restoring-")
+          ? new Error("The restoring mark cannot be removed")
+          : undefined
+    );
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    const timers: { run: () => void; delay: number }[] = [];
+    const setTimer = globalThis.setTimeout;
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      run: () => void,
+      delay = 0
+    ) => {
+      if (delay < 5_000) return setTimer(run, delay);
+      timers.push({ run, delay });
+      return 0;
+    }) as never);
+    goOnline();
+    await replayed(QUEUE_A);
+    expect(isKept(entry)).toBe(true);
+    const [deadline] = timers.filter((timer) => timer.delay >= 60 * 60_000);
+    expect(deadline).toBeDefined();
+
+    isOnline = false;
+    const second = await capturePhoto();
+    sdk.artifactError = fileFnError(503);
+    replays.clear();
+    goOnline();
+    await replayed(QUEUE_A);
+    const retries = timers.filter((timer) => timer.delay < 60 * 60_000);
+    expect(retries.length).toBeGreaterThan(0);
+    sdk.artifactError = null;
+    let releasePull!: () => void;
+    data.pullHold = new Promise((resolve) => (releasePull = resolve));
+    replays.clear();
+    await bootData(cloudAccount("user-a"));
+    await vi.waitFor(() => expect(data.heldPulls).toBeGreaterThan(0));
+    for (const retry of retries) retry.run();
+    data.pullHold = null;
+    releasePull();
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([entry]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+
+    getDirectory = opfs.getDirectory;
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + RESTORE_HOLD_LIFETIME_MS + 2_000
+    );
+    replays.clear();
+    deadline.run();
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.uploads.map((upload) => upload.fileId).sort()).toEqual(
+      [record.fileId, second.fileId].sort()
+    );
+    expect(sdk.deleted).toEqual([]);
   });
 });

@@ -1263,8 +1263,8 @@ async function removeEntryFile(
  * (`<file>~thumbnail`, holding the version), only ever created, so a writer
  * that did not send it never takes another's delivery back. A restore does not stage again a file it records (see
  * stageRestoredFiles), as its original reached FileFn. A discarded file
- * leaves the log, so a later restore stages it again. Once the replay is
- * done with the file's thumbnail (see sendAccountThumbnail), its row also
+ * leaves the log, so a later restore stages it again. Once FileFn took the
+ * file's thumbnail, or it has none (see sendAccountThumbnail), its row also
  * records it (`isThumbnailSent`), so a restore does not stage the thumbnail
  * again.
  */
@@ -1903,11 +1903,13 @@ const graceTimers = new Map<
  * at the earliest deadline, outside the retry budget, cancelled once the
  * pass's client signal aborts. The pass runs with the latest request that
  * asked for a deadline, so records replaced meanwhile (see
- * QueuedFileReferences) never decide it.
+ * QueuedFileReferences) never decide it, and a request whose records were
+ * replaced (see isStale) never displaces a current one's deadline.
  */
 function scheduleDeadline({ dir, request }: ReplayPass, at: number) {
   const current = graceTimers.get(dir);
   if (!Number.isFinite(at) || request.signal.aborted) return;
+  if (isStale(request) && current && !isStale(current.request)) return;
   if (current?.signal === request.signal && current.at <= at) {
     current.request = request;
     return;
@@ -2373,7 +2375,8 @@ async function uploadEntry(
 /**
  * Sends the thumbnail of an account's file whose original uploaded, unless
  * it is marked sent, then marks it sent (see THUMBNAIL_SENT_FILE); resolves
- * false when it is to be sent again on a retry.
+ * false when it is to be sent again on a retry, and "rejected", leaving it
+ * unmarked, when FileFn rejected it for good.
  */
 async function sendAccountThumbnail(
   { dir, request }: ReplayPass,
@@ -2542,7 +2545,8 @@ async function uploadQueuedFile(
  * Uploads a queued thumbnail, resolving whether it is done with. One that
  * cannot be read is logged and left out, as is one whose upload fails,
  * unless it is retried (`isReady`, an account's file): then only one FileFn
- * rejects for good is left out, and any other upload failure, or a
+ * rejects for good is left out, resolving "rejected" (FileFn did not take
+ * it), and any other upload failure, or a
  * thumbnail read once the replay can no longer send it (`isReady`, read
  * again right before the request), resolves false, for a retry to send it;
  * one that cannot be read resolves "unread", left out with no evidence it
@@ -2554,7 +2558,7 @@ async function uploadQueuedThumbnail(
   entryName: string,
   uploaded: UploadResult,
   isReady?: () => boolean
-): Promise<boolean | "unread"> {
+): Promise<boolean | "unread" | "rejected"> {
   let thumbnail: Blob | undefined;
   let isRead = false;
   try {
@@ -2579,7 +2583,7 @@ async function uploadQueuedThumbnail(
     });
     if (!isReady) return true;
     if (!isRead) return "unread";
-    return isRejectedForGood(error);
+    return isRejectedForGood(error) && "rejected";
   }
 }
 
