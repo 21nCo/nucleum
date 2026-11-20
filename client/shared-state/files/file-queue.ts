@@ -927,13 +927,19 @@ async function readNames(handle: FileSystemDirectoryHandle | null) {
  * Reads an entry's restore marks (see RESTORING_PREFIX) from its names: its
  * generation (BASE_GENERATION when no restore wrote it), whether it is
  * published, whether its adopted and settled marks are there, and whether
- * its original and thumbnail were both delivered.
+ * its original and thumbnail were both delivered. A published mark left
+ * without its restoring mark (see adoptEntry) still names the generation,
+ * published and adopted.
  */
 function readMarks(names: readonly string[]) {
   const generations = names
     .filter((name) => name.startsWith(RESTORING_PREFIX))
     .map((name) => name.slice(RESTORING_PREFIX.length));
-  const [generation = BASE_GENERATION] = generations;
+  const published = names
+    .filter((name) => name.startsWith(PUBLISHED_PREFIX))
+    .map((name) => name.slice(PUBLISHED_PREFIX.length));
+  const [generation = published.length === 1 ? published[0] : BASE_GENERATION] =
+    generations;
   const isRestored = generations.length > 0;
   return {
     generation,
@@ -1203,9 +1209,9 @@ function releaseHolds(
  * adoption row beside the queue, so a replay finds it adopted even when its
  * record is deleted before the replay sees it. When neither can be created
  * (a full store) and no other session holds the file (`isUnheld`), removes
- * its restoring mark instead, so it reads as a file no restore wrote, which
- * the replay's rules apply to and no rollback of `generation` removes.
- * Rejects only when none of these works.
+ * its restoring mark instead, so its published mark alone names
+ * `generation`, adopted (see readMarks). Rejects only when none of these
+ * works.
  */
 async function adoptEntry(
   dir: string,
@@ -1287,12 +1293,16 @@ async function getUploadLogDir(dir: string, isCreated = false) {
 
 /**
  * Reads a file's row of its queue's upload log; one missing or invalid (an
- * interrupted write) reads undefined, and any other read error of it
- * rejects. A thumbnail row that cannot be read is logged and reads as not
- * sent, so the original's version still counts and only the thumbnail is
- * sent again.
+ * interrupted write) reads undefined, and any other read error rejects.
+ * For the replay (`isThumbnailUnsure`), a thumbnail row that cannot be read
+ * is logged and reads as not sent instead, so the original's version still
+ * counts and only the thumbnail is sent again.
  */
-async function readLoggedUpload(dir: string, fileId: string) {
+async function readLoggedUpload(
+  dir: string,
+  fileId: string,
+  isThumbnailUnsure = false
+) {
   const handle = await getUploadLogDir(dir);
   const name = encodeURIComponent(fileId);
   const read = async (row: string) => {
@@ -1306,6 +1316,7 @@ async function readLoggedUpload(dir: string, fileId: string) {
   const logged = handle && parseJson(await read(name), isLoggedUpload);
   if (!logged) return undefined;
   const thumbnail = await read(`${name}~thumbnail`).catch((error: unknown) => {
+    if (!isThumbnailUnsure) throw error;
     logger.warn({ at: "fileQueue.uploadLog", fileId, error });
     return undefined;
   });
@@ -2104,7 +2115,7 @@ async function replayAccountEntry(
   const isLogRead =
     !pending.fileData.byteLength || isThumbnailPending || isRestored;
   const logged = isLogRead
-    ? await readLoggedUpload(dir, fileId).catch(() => undefined)
+    ? await readLoggedUpload(dir, fileId, true).catch(() => undefined)
     : undefined;
   const uploaded = isLogRead
     ? (await readEntryText(dir, entryName, UPLOADED_FILE, true)) ||

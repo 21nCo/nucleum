@@ -5027,4 +5027,85 @@ describe("restore sessions, generations and publication of queued files", () => 
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
+
+  it("requests a delivered original no more for a restored file adopted by dropping its restoring mark, once its pass stopped before removing it without its uploaded mark", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    getDirectory = failingWrites((path) =>
+      path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+        ? new Error("The adoption cannot be recorded")
+        : undefined
+    );
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    const names = opfs.list(QUEUE_A, entry);
+    expect(names.some((name) => name.startsWith("restoring-"))).toBe(false);
+    expect(names.some((name) => name.startsWith("published-"))).toBe(true);
+    getDirectory = failingWrites((path) =>
+      path[1] === entry && path[2] === "uploaded"
+        ? new DOMException("The quota is exceeded", "QuotaExceededError")
+        : undefined
+    );
+    let releaseUpload!: () => void;
+    sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
+    goOnline();
+    await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
+    data.isPullFailing = true;
+    releaseUpload();
+    await replayed(QUEUE_A);
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(opfs.list(QUEUE_A, entry)).toContain("sent-thumbnail");
+
+    data.isPullFailing = false;
+    getDirectory = opfs.getDirectory;
+    replays.clear();
+    isOnline = false;
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("rejects a restore when a file's thumbnail row of the upload log cannot be read, importing no record and keeping the queued file", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await deleteRecord(record.id);
+    const root = await opfs.getDirectory();
+    const log = await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+    const row = await (
+      await log.getFileHandle(encodeURIComponent(record.fileId), {
+        create: true
+      })
+    ).createWritable();
+    await row.write(JSON.stringify({ versionId: "ver_1", at: Date.now() }));
+    await row.close();
+    getDirectory = failingWrites(
+      () => undefined,
+      undefined,
+      undefined,
+      (path) =>
+        path[0] === UPLOAD_LOG && path[1]?.endsWith("~thumbnail")
+          ? new DOMException("The row cannot be read", "NotReadableError")
+          : undefined
+    );
+
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow();
+    getDirectory = opfs.getDirectory;
+
+    expect(await savedRecord(record.id)).toBeUndefined();
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(sdk.uploads).toEqual([]);
+  });
 });
