@@ -3,7 +3,6 @@ import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
 import {
   exportQueuedFiles,
   isFileQueueSupported,
-  readQueueUploadCount,
   resolveAccountFileQueueDir,
   stageRestoredFiles,
   unstageRestoredFiles,
@@ -99,20 +98,20 @@ export async function createBackupBlob(): Promise<Blob> {
  * never uploaded, removed or discarded, and the account's backups carry it.
  * So does another account's (or the guest's) restore, until that account
  * restores the backup or a record of that account references them. A file
- * the queue holds complete and unmarked, one an earlier restore fully wrote
- * and was not taken over yet, or one whose upload completes while the
- * restore waits for the queue, stays as it is. Rejects, restoring nothing, when the backup or its queued files cannot
- * be read, this device cannot keep them, a file cannot be written, or the
- * account changes before the records are imported (removing the files it
- * added); and when the records could not all be imported, keeping the
- * files. `triggerCloneUp` decides, right before the records are imported
+ * the queue holds complete and unmarked, or one an earlier restore fully
+ * wrote and was not taken over yet, stays as it is, and one whose upload
+ * the account's replay completed (in any tab, before or while the restore
+ * runs) is not staged again. Rejects, restoring nothing, when the backup or
+ * its queued files cannot be read, this device cannot keep them, a file
+ * cannot be written, or the account changes before the records are
+ * imported (removing the files it added); and when the records could not
+ * all be imported, keeping the files. `triggerCloneUp` decides, right before the records are imported
  * into the account checked unchanged, whether DataFn clones them up.
  */
 export async function restoreBackup(
   file: Blob,
   options: { triggerCloneUp: () => boolean }
 ): Promise<void> {
-  const uploadCount = readQueueUploadCount();
   if (!file.size) throw new Error("Backup file is empty");
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
@@ -126,7 +125,7 @@ export async function restoreBackup(
     (await stageRestoredFiles(
       resolveAccountFileQueueDir(fileQueue.userId),
       fileQueue.files,
-      { isOwnAccount, uploadCount }
+      { isOwnAccount }
     ));
   if (datafn.currentNamespace() !== namespace) {
     if (staged) await unstageRestoredFiles(staged);

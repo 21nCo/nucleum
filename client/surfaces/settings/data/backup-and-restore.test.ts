@@ -342,6 +342,50 @@ function goOnline() {
   window.dispatchEvent(new Event("online"));
 }
 
+/**
+ * Loads a fresh copy of the queue module, over the device's OPFS and Web
+ * Locks: another tab, or the page before a reload.
+ */
+async function openQueueTab() {
+  vi.resetModules();
+  return vi.importActual<
+    typeof import("@nucleum/shared-state/files/file-queue")
+  >("@nucleum/shared-state/files/file-queue");
+}
+
+/**
+ * Replays user-a's queue in a fresh copy of the queue module, through a
+ * FileFn client recording into `sdk` like the page's own, with the page's
+ * records of user-a.
+ */
+async function replayInOtherTab() {
+  const tab = await openQueueTab();
+  const { createFileFnClient } = await import("@filefn/client");
+  return tab.replayFileQueue(
+    QUEUE_A,
+    createFileFnClient({} as never),
+    new AbortController().signal,
+    undefined,
+    {
+      owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
+      isCurrent: () => true,
+      sync: async () => true,
+      isReferenced: async (fileId) => {
+        const result = await datafn.file.query({ filters: { fileId } });
+        return Boolean(result.data?.length);
+      },
+      discard: async (fileId) => {
+        sdk.deleted.push(fileId);
+      }
+    }
+  );
+}
+
+/** How many times the page and its other tabs requested user-a's queue. */
+function countQueueLocks() {
+  return lockNames.filter((name) => name === `${REPLAY_LOCK}${QUEUE_A}`).length;
+}
+
 const initialAccount = account.get();
 
 beforeEach(() => {
@@ -1361,5 +1405,123 @@ describe("backup and restore of files the account upload queue still holds", () 
     expect(sdk.deleted).toEqual([]);
     expect(opfs.list(QUEUE_A)).toEqual([entry]);
     expect(opfs.list(QUEUE_A, entry)).toContain("restored");
+  });
+
+  it("does not restore again a file whose upload completed before the restore started while its replay still checks its record", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    let releaseUpload!: () => void;
+    sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
+    goOnline();
+    await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
+    let releasePull!: () => void;
+    data.pullHold = new Promise((resolve) => (releasePull = resolve));
+    releaseUpload();
+    await vi.waitFor(() => expect(data.heldPulls).toBe(1));
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(opfs.list(QUEUE_A)).toEqual([`queued_${record.fileId}`]);
+
+    const requested = countQueueLocks();
+    const restore = restoreBackup(backup, { triggerCloneUp: () => false });
+    await vi.waitFor(() => expect(countQueueLocks()).toBe(requested + 1));
+    releasePull();
+    await restore;
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("does not restore again a file another tab uploaded and removed while the restore waited for the queue", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    let releaseUpload!: () => void;
+    sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
+    isOnline = true;
+    const otherTab = replayInOtherTab();
+    await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
+
+    const requested = countQueueLocks();
+    const restore = restoreBackup(backup, { triggerCloneUp: () => false });
+    await vi.waitFor(() => expect(countQueueLocks()).toBe(requested + 1));
+    releaseUpload();
+    await otherTab;
+    await restore;
+
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("does not restore again a file the page before a reload uploaded", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    isOnline = true;
+    await replayInOtherTab();
+    expect(sdk.uploads).toHaveLength(1);
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("restores again a file its replay discarded after uploading it, once its record was deleted, and uploads it again", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    let releaseUpload!: () => void;
+    sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
+    goOnline();
+    await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
+    let releasePull!: () => void;
+    data.pullHold = new Promise((resolve) => (releasePull = resolve));
+    releaseUpload();
+    await vi.waitFor(() => expect(data.heldPulls).toBe(1));
+    const deleted = (await datafn.file.mutate({
+      operation: "delete",
+      id: record.id
+    } as never)) as { ok?: boolean };
+    expect(deleted.ok).not.toBe(false);
+    releasePull();
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([record.fileId]));
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(passes.get(QUEUE_A) ?? []);
+
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+    await vi.waitFor(() => expect(sdk.uploads).toHaveLength(2));
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId }),
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+    expect(sdk.deleted).toEqual([record.fileId]);
   });
 });

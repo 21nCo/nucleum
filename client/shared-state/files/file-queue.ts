@@ -584,19 +584,71 @@ async function removeRestoredMark(dir: string, entryName: string) {
 }
 
 /**
- * The uploads an account's replay completed in this page, by queue and entry,
- * each numbered in order (see readQueueUploadCount), so a restore does not
- * stage again a file whose upload completed while it waited for the queue.
+ * The uploads an account's replay completed, by file: the version FileFn
+ * gave the original, recorded once it uploaded, before its thumbnail is sent
+ * and before the file leaves the queue. The log is a file of the origin
+ * private file system beside the queue, outside its entries, so it outlives
+ * the file leaving the queue, a reload and the tab; it is written and read
+ * under the queue's Web Lock. A restore does not stage again a file it
+ * records (see stageRestoredFiles), as its original reached FileFn. A
+ * discarded file leaves the log, so a later restore stages it again, and the
+ * log keeps the UPLOAD_LOG_LIMIT latest uploads.
  */
-const accountUploads = new Map<string, number>();
-let accountUploadCount = 0;
+type UploadLog = Record<string, LoggedUpload>;
+type LoggedUpload = { versionId: string; at: number };
+
+const UPLOAD_LOG_LIMIT = 500;
+
+function toUploadLogName(dir: string) {
+  return `${dir}.uploads.json`;
+}
+
+function isUploadLog(value: UploadLog) {
+  return (
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.values(value).every(
+      (upload) =>
+        typeof upload?.versionId === "string" && typeof upload.at === "number"
+    )
+  );
+}
 
 /**
- * Returns how many uploads the account replays of this page completed so
- * far, which a restore reads when it starts (see stageRestoredFiles).
+ * Reads a queue's upload log; one missing or invalid reads empty, and any
+ * other read error rejects.
  */
-export function readQueueUploadCount(): number {
-  return accountUploadCount;
+async function readUploadLog(dir: string): Promise<UploadLog> {
+  try {
+    const root = await navigator.storage.getDirectory();
+    const handle = await root.getFileHandle(toUploadLogName(dir));
+    const text = await (await handle.getFile()).text();
+    return parseJson<UploadLog>(text, isUploadLog) ?? {};
+  } catch (error) {
+    if ((error as Error)?.name === "NotFoundError") return {};
+    throw error;
+  }
+}
+
+/**
+ * Records a file's uploaded version in its queue's upload log, or without
+ * one removes the file from it.
+ */
+async function writeUploadLog(dir: string, fileId: string, versionId?: string) {
+  const log = await readUploadLog(dir);
+  if (!versionId && !(fileId in log)) return;
+  delete log[fileId];
+  if (versionId) log[fileId] = { versionId, at: Date.now() };
+  const kept = Object.entries(log)
+    .sort(([, a], [, b]) => b.at - a.at)
+    .slice(0, UPLOAD_LOG_LIMIT);
+  const root = await navigator.storage.getDirectory();
+  const handle = await root.getFileHandle(toUploadLogName(dir), {
+    create: true
+  });
+  const writable = await handle.createWritable();
+  await writable.write(JSON.stringify(Object.fromEntries(kept)));
+  await writable.close();
 }
 
 /** The files a restore added to a queue (see stageRestoredFiles). */
@@ -620,16 +672,16 @@ export type RestoredQueuedFiles = {
  * may not reference every file it carried.
  * Runs under the queue's Web Lock. A file stays as the queue holds it when
  * it is complete there and not marked restored, when an earlier restore
- * fully wrote it and it was not taken over yet, or when the account's
- * replay completed its upload since `uploadCount` (see
- * readQueueUploadCount); any other (missing or half written) is written
- * again from the backup. A file that cannot be written rejects, after
- * removing the files this call added.
+ * fully wrote it and it was not taken over yet, or when the queue's upload
+ * log records its original uploaded (see UploadLog), whether or not it is
+ * still there; any other (missing or half written) is written again from
+ * the backup. A file that cannot be written rejects, after removing the
+ * files this call added.
  */
 export async function stageRestoredFiles(
   dir: string,
   copies: readonly QueuedFileCopy[],
-  options: { isOwnAccount: boolean; uploadCount: number }
+  options: { isOwnAccount: boolean }
 ): Promise<RestoredQueuedFiles> {
   const staged: RestoredQueuedFiles = { dir, added: [] };
   if (!copies.length) return staged;
@@ -639,10 +691,10 @@ export async function stageRestoredFiles(
   const signal = new AbortController().signal;
   await withQueueLock(dir, signal, async () => {
     try {
+      const uploads = await readUploadLog(dir);
       for (const copy of copies) {
+        if (uploads[copy.fileId]) continue;
         const entryName = toEntryName(copy.fileId);
-        const uploaded = accountUploads.get(`${dir}\n${entryName}`) ?? 0;
-        if (uploaded > options.uploadCount) continue;
         const isPresent = Boolean(await getEntryDir(dir, entryName, true));
         const held = isPresent ? await readHeldEntry(dir, entryName) : "none";
         if (held !== "none") continue;
@@ -1066,16 +1118,14 @@ async function replayAccountEntry(
 /**
  * Marks an account's file uploaded once its upload completed, so a backup
  * taken while it is still queued (its pass stopped before removing it) does
- * not copy it (see exportQueuedFiles), and records the upload for a restore
- * waiting for the queue (see stageRestoredFiles). A mark that cannot be
- * written, as the file left the queue meanwhile, is logged; the pass goes on.
+ * not copy it (see exportQueuedFiles). A mark that cannot be written, as the
+ * file left the queue meanwhile, is logged; the pass goes on.
  */
 async function markAccountEntryUploaded(
   dir: string,
   entryName: string,
   uploaded: UploadResult
 ) {
-  accountUploads.set(`${dir}\n${entryName}`, ++accountUploadCount);
   try {
     await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
   } catch (error) {
@@ -1159,7 +1209,8 @@ async function isReferencedNow(
 
 /**
  * Removes a file from an account's queue, discarding it first when its
- * upload may have reached FileFn, each only while the records are still the
+ * upload may have reached FileFn, then removing it from the upload log so a
+ * later restore stages it again, each only while the records are still the
  * owner's at the authority, checked in the same step.
  */
 async function removeAccountEntry(
@@ -1171,22 +1222,28 @@ async function removeAccountEntry(
   if (isDiscarded) {
     if (!references.isCurrent()) return "stop";
     await references.discard(fileId);
-    accountUploads.delete(`${pass.dir}\n${toEntryName(fileId)}`);
+    await writeUploadLog(pass.dir, fileId);
   }
   if (!references.isCurrent()) return "stop";
   await dequeueFile(pass.dir, fileId);
   return "done";
 }
 
-/** Uploads a queued file and its thumbnail. */
+/**
+ * Uploads a queued file and its thumbnail; for an account's queue, records
+ * the original's upload in the upload log before sending the thumbnail.
+ */
 async function uploadEntry(
   pass: ReplayPass,
   pending: PendingUpload & { fileId: string },
   mark?: StartMark
 ) {
   pass.isSynced = false;
-  const { client } = pass.request;
+  const { client, references } = pass.request;
   const result = await uploadQueuedFile(client, pass.store, pending, mark);
+  if (references) {
+    await writeUploadLog(pass.dir, pending.fileId, result.versionId);
+  }
   await uploadQueuedThumbnail(
     client,
     pass.dir,
