@@ -104,16 +104,36 @@ describe("renderMdAsHtml links and quotes", () => {
 
   it("keeps dollar signs in link labels and destinations literal", () => {
     const container = renderIntoDom(
-      renderMdAsHtml(
-        "[Price $2 $$5 $<100](https://x.com/?q=$&r=1&c=$$) [a $` b](resource=r1)"
-      )
+      renderMdAsHtml("[Price $2 $$5 $<100](https://x.com/?q=$&r=1&c=$$)")
     );
     const link = container.querySelector(".inline-link");
     expect(link?.getAttribute("data-href")).toBe("https://x.com/?q=$&r=1&c=$$");
     expect(link?.textContent).toBe("Price $2 $$5 $<100");
-    const mention = container.querySelector(".inline-mention");
+    const mention = renderIntoDom(
+      renderMdAsHtml("[a $` b](resource=r1)")
+    ).querySelector(".inline-mention");
     expect(mention?.getAttribute("data-record-id")).toBe("r1");
     expect(mention?.getAttribute("data-label")).toBe("a $` b");
+  });
+
+  it("keeps brackets inside link and mention labels", () => {
+    const link = renderIntoDom(
+      renderMdAsHtml("[Docs [API]](https://example.com/docs)")
+    ).querySelector(".inline-link");
+    expect(link?.getAttribute("data-href")).toBe("https://example.com/docs");
+    expect(link?.textContent).toBe("Docs [API]");
+    const mention = renderIntoDom(
+      renderMdAsHtml("[Roadmap [Q4]](resource=node_q4)")
+    ).querySelector(".inline-mention");
+    expect(mention?.getAttribute("data-record-id")).toBe("node_q4");
+  });
+
+  it("shows a greater-than sign at the start of a label line", () => {
+    const link = renderIntoDom(
+      renderMdAsHtml("[a\n> b](https://x.com)")
+    ).querySelector(".inline-link");
+    expect(link?.textContent).toBe("a> b");
+    expect(link?.getAttribute("data-label")).not.toContain("\uFFF2");
   });
 
   it("renders a link whose label spans lines", () => {

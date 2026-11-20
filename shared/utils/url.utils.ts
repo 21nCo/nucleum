@@ -142,16 +142,22 @@ export function isAllowedLocationTarget(value: unknown): boolean {
 
 /**
  * Resolves a navigation path against the current page URL and returns it only
- * when it may be assigned to `window.location` (web, mail and native sign-in
- * targets; never script URLs).
+ * when it may be assigned to `window.location`: the app's own scheme and host
+ * (including the bundled `tauri://localhost` app), web, mail and native sign-in
+ * targets; never script URLs.
  */
 export function resolveLocationTarget(
   path: string,
   currentHref: string
 ): string | undefined {
   try {
-    const target = new URL(path, currentHref).href;
-    return isAllowedLocationTarget(target) ? target : undefined;
+    const current = new URL(currentHref);
+    const target = new URL(path, current);
+    const isSamePage =
+      target.protocol === current.protocol && target.host === current.host;
+    return isSamePage || isAllowedLocationTarget(target.href)
+      ? target.href
+      : undefined;
   } catch {
     return undefined;
   }

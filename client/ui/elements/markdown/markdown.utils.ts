@@ -105,10 +105,7 @@ const TOKEN_PATTERN = /\uFFF0(\d+)\uFFF1/g;
 function extractInlineLinks(text: string, tokens: string[]) {
   let result = text;
   for (const pattern of inlineLinkPatterns) {
-    const regex = new RegExp(
-      pattern.regex.source.replace("\\[(.*?)\\]", "\\[([^\\]]*?)\\]"),
-      `${pattern.regex.flags}s`
-    );
+    const regex = new RegExp(pattern.regex.source, `${pattern.regex.flags}s`);
     result = result.replace(regex, (_match, label: string, target: string) => {
       const styledLabel = replaceInlineStylePatterns(
         replaceSymbolPatterns(label)
@@ -189,9 +186,8 @@ export function renderMdAsHtml(
     }
   );
   parsedText = parsedText.replace(/\n/g, "<br>");
-  parsedText = parsedText.replaceAll(QUOTE_MARKER, "&gt;");
   if (params?.isIncludeSpaces) parsedText = parsedText.replace(/ /g, "&nbsp;");
-  return restoreInlineLinks(parsedText, tokens);
+  return restoreInlineLinks(parsedText, tokens).replaceAll(QUOTE_MARKER, "&gt;");
 }
 
 /**  match pattern for shared inline Markdown presentation. */

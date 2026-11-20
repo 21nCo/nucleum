@@ -85,6 +85,18 @@ describe("resolveLocationTarget", () => {
     ).toBe("https://web.nucleum.app/library?returnTo=https%3A%2F%2Fexample.com");
   });
 
+  it("keeps relative paths in the bundled native app", () => {
+    expect(
+      resolveLocationTarget(
+        "/index.html?returnTo=https%3A%2F%2Fexample.com",
+        "tauri://localhost/library"
+      )
+    ).toBe("tauri://localhost/index.html?returnTo=https%3A%2F%2Fexample.com");
+    expect(
+      resolveLocationTarget("javascript:alert(1)//http", "tauri://localhost/x")
+    ).toBeUndefined();
+  });
+
   it("allows external web, mail and native sign-in targets", () => {
     expect(resolveLocationTarget("https://example.com/a", current)).toBe(
       "https://example.com/a"
