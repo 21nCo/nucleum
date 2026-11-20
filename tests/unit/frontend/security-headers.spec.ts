@@ -37,6 +37,18 @@ describe("frontend security headers", () => {
   const bootstrap = "\n  __sveltekit_x = { base: '', tag: '</script-widget>' };\n";
   const html = `<!doctype html><html><head><script type="module">${bootstrap}</script ><script src="/_app/a.js"></script><script type="application/json">{"a":1}</script></head><body></body></html>`;
 
+  it("hashes script text the way the HTML parser reads it", () => {
+    const crlf = "\r\n  window.a = 1;\r\n";
+    const nbsp = "\n  window.b = '</script\u00a0>';\n";
+    const dataSrc = "\n  window.c = 3;\n";
+    const { buildDir } = makeRepo(
+      `<html><head><script>${crlf}</script><script data-x="a>b" type="">${nbsp}</script\n><script data-src="/x.js">${dataSrc}</script><script src=/y.js></script></head></html>`
+    );
+    expect(collectInlineScriptHashes(buildDir).sort()).toEqual(
+      [sha256("\n  window.a = 1;\n"), sha256(nbsp), sha256(dataSrc)].sort()
+    );
+  });
+
   it("hashes executable inline scripts only", () => {
     const { buildDir } = makeRepo(html);
     expect(collectInlineScriptHashes(buildDir)).toEqual([sha256(bootstrap)]);

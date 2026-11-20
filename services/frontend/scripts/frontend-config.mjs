@@ -241,16 +241,40 @@ export function frameAncestorSources(config) {
   return ["'self'", ...[...domains].sort((left, right) => left.localeCompare(right)).flatMap((domain) => [`https://${domain}`, `https://*.${domain}`])];
 }
 
-/** Collects sha256 CSP sources for every inline script in the built HTML files. */
+const HTML_SPACE = '\\t\\n\\f\\r ';
+const SCRIPT_ELEMENT = new RegExp(
+  `<script(?=[${HTML_SPACE}/>])((?:[^>"']|"[^"]*"|'[^']*')*)>([\\s\\S]*?)</script(?=[${HTML_SPACE}/>])[^>]*>`,
+  'gi'
+);
+const HTML_ATTRIBUTE = new RegExp(
+  `(?:^|[${HTML_SPACE}/])([^${HTML_SPACE}/>="'<]+)(?:[${HTML_SPACE}]*=[${HTML_SPACE}]*(?:"([^"]*)"|'([^']*)'|([^${HTML_SPACE}>]+)))?`,
+  'g'
+);
+const JAVASCRIPT_TYPES = new Set(['', 'module', 'text/javascript', 'application/javascript']);
+
+function readScriptAttributes(source) {
+  const attributes = new Map();
+  for (const match of source.matchAll(HTML_ATTRIBUTE)) {
+    const name = match[1].toLowerCase();
+    if (!attributes.has(name)) attributes.set(name, match[2] ?? match[3] ?? match[4] ?? '');
+  }
+  return attributes;
+}
+
+/**
+ * Collects sha256 CSP sources for every inline script in the built HTML files,
+ * following the HTML tokenizer's rules for newlines, script end tags and
+ * attribute names.
+ */
 export function collectInlineScriptHashes(buildDir) {
   const hashes = new Set();
   for (const file of listHtmlFiles(buildDir)) {
-    const html = fs.readFileSync(file, 'utf8');
-    for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script(?=[\s/>])[^>]*>/gi)) {
-      const attributes = match[1];
-      if (/\bsrc\s*=/i.test(attributes)) continue;
-      const type = attributes.match(/\btype\s*=\s*["']?([^"'\s>]+)/i)?.[1]?.toLowerCase();
-      if (type && !['module', 'text/javascript', 'application/javascript'].includes(type)) continue;
+    const html = fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n');
+    for (const match of html.matchAll(SCRIPT_ELEMENT)) {
+      const attributes = readScriptAttributes(match[1]);
+      if (attributes.has('src')) continue;
+      const type = (attributes.get('type') ?? '').trim().toLowerCase();
+      if (!JAVASCRIPT_TYPES.has(type)) continue;
       const digest = crypto.createHash('sha256').update(match[2], 'utf8').digest('base64');
       hashes.add(`'sha256-${digest}'`);
     }
