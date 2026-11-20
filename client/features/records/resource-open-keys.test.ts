@@ -221,15 +221,11 @@ describe("B on an open resource's own menu", () => {
     ).toBeUndefined();
   });
 
-  it("offers B alone on an objective at a constrained landscape width", () => {
+  it("offers no open items on an objective in a constrained landscape window, which uses the portrait layout", () => {
     view.refresh(780, 600);
+    expect(view.get().isPortrait).toBe(true);
     showIn("page", OBJECTIVE_ID);
-    expect(openGroupValues(resolvers.objective("page"))).toEqual([
-      "open-as-split"
-    ]);
-    expect(findItem(resolvers.objective("page"), "open-as-split")?.hotKey).toBe(
-      "b"
-    );
+    expect(openGroupValues(resolvers.objective("page"))).toBeUndefined();
   });
 
   it("offers no open items on an objective at a constrained portrait width", () => {

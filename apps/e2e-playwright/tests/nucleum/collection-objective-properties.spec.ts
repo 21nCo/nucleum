@@ -142,7 +142,7 @@ test.describe("objective collection property views", () => {
     await ensureInAppOnHome(page);
 
     const fixture = await e2eSeed.collections.objectivePropertyView();
-    await page.setViewportSize({ width: 900, height: 900 });
+    await page.setViewportSize({ width: 990, height: 900 });
     await openSeededCollection(page, fixture);
 
     const searchButton = page

@@ -48,12 +48,12 @@ beforeEach(() => {
 });
 
 describe("opening a live action as an overlay over a page", () => {
-  it("keeps the page when the navigator falls back to an overlay", () => {
+  it("keeps the page and opens the navigator as a sheet in a constrained landscape window, which uses the portrait layout", () => {
     view.refresh(800, 600);
     visit("?page=node:a&max=true");
     actionRunner.runAction("navigator");
     expect(mocks.toggleSearchParam).toHaveBeenLastCalledWith({
-      overlay: "navigator"
+      panel: "navigator"
     });
   });
 

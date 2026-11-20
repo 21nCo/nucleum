@@ -324,7 +324,7 @@ test.describe("toasts", () => {
     await enterApp(page);
     const [firstId, secondId] = await seedNodesInLibrary(page, "bounds");
     const list = await openRaisedListBesideDrawer(page, [firstId, secondId]);
-    await expectListBesideDrawerAt(page, list, { width: 801, height: 600 });
+    await expectListBesideDrawerAt(page, list, { width: 990, height: 600 });
     await expectListBesideDrawerAt(page, list, { width: 2200, height: 1100 });
   });
 
@@ -353,7 +353,7 @@ test.describe("toasts", () => {
 
       const [firstId, secondId] = await seedNodesInLibrary(page, "framed");
       const list = await openRaisedListBesideDrawer(page, [firstId, secondId]);
-      await expectListBesideDrawerAt(page, list, { width: 801, height: 600 });
+      await expectListBesideDrawerAt(page, list, { width: 990, height: 600 });
     } finally {
       await page.setViewportSize({ width: 1024, height: 800 });
       await selectAppStyle(page, originalStyle!);
