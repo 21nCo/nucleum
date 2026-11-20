@@ -991,7 +991,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     expect(sdk.deleted).toEqual([]);
   });
 
-  it("keeps a restored file while neither its restore nor its replay can record its adoption, and uploads it once a later replay does", async () => {
+  it("keeps a restored file held while neither its restore nor its replay can record its adoption, and uploads it once a later replay does after the restore's hold expired", async () => {
     await bootData(cloudAccount("user-a"));
     isOnline = false;
     const record = await capturePhoto();
@@ -1015,8 +1015,12 @@ describe("backup and restore of files the account upload queue still holds", () 
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
     expect(isHeldForAccount(entry)).toBe(true);
+    expect(isKept(entry)).toBe(true);
 
     getDirectory = opfs.getDirectory;
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + RESTORE_HOLD_LIFETIME_MS + 1_000
+    );
     replays.clear();
     isOnline = false;
     goOnline();
@@ -2746,6 +2750,7 @@ describe("restore sessions, generations and publication of queued files", () => 
 
   it.each([
     ["FileFn could not take it yet", 503, 1],
+    ["its account's credentials expired", 401, 1],
     ["FileFn rejected it for good", 422, 0]
   ])(
     "sends a thumbnail again on a later pass without its confirmed original when %s",
@@ -2843,4 +2848,116 @@ describe("restore sessions, generations and publication of queued files", () => 
       if (isCarried) expect(text).toContain('"uploadedVersionId":"ver_1"');
     }
   );
+
+  it("takes a backup's snapshot again when another tab removes a file unuploaded between its reads, so no record is carried without its bytes", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    data.exportHook = async () => {
+      data.exportHook = null;
+      await deleteRecord(record.id);
+      await dequeueFile(QUEUE_A, record.fileId);
+    };
+
+    const text = await backupText();
+
+    expect(data.exportHook).toBeNull();
+    expect(text.includes(record.id)).toBe(false);
+    expect(text.startsWith('{"fileQueue"')).toBe(false);
+  });
+
+  it("leaves out of a backup, and writes again on a restore, a file whose capture has not finished writing its metadata", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await writeQueuedEntryFile(entry, "metadata.json", "");
+
+    expect((await backupText()).startsWith('{"fileQueue"')).toBe(false);
+
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(await readQueuedBytes(record.fileId, "full")).toBe("photo bytes");
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.uploads).toEqual([
+      expect.objectContaining({ fileId: record.fileId })
+    ]);
+  });
+
+  it("removes a file a closed page left with only its restoring mark once a replay runs", async () => {
+    await bootData(cloudAccount("user-a"));
+    const entry = "queued_file_abandoned01";
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(QUEUE_A, { create: true });
+    const dir = await queue.getDirectoryHandle(entry, { create: true });
+    await dir.getFileHandle("restoring-generation-1", { create: true });
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+
+    replays.clear();
+    isOnline = false;
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.started).toEqual([]);
+  });
+
+  it("keeps holding a file a restore into another account relied on when its settled mark cannot be created, so an earlier restore's rollback keeps it", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    const entry = `queued_${record.fileId}`;
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    let restores = 0;
+    preflight.during = async () => {
+      if (++restores > 1) return;
+      await bootData(cloudAccount("user-b"));
+      getDirectory = failingWrites((path) =>
+        path[2]?.startsWith("settled-")
+          ? new DOMException("The quota is exceeded", "QuotaExceededError")
+          : undefined
+      );
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      getDirectory = opfs.getDirectory;
+    };
+
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("The account changed while the backup was restored");
+    preflight.during = null;
+
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(isHeldForAccount(entry)).toBe(true);
+    expect(isKept(entry)).toBe(true);
+  });
+
+  it("carries a pending thumbnail without its original when the original's uploaded mark is left empty, using the version the upload log records", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    sdk.artifactError = fileFnError(503);
+    getDirectory = failingWrites(
+      () => undefined,
+      undefined,
+      (path) =>
+        path[1] === entry && path[2] === "uploaded"
+          ? new DOMException("The quota is exceeded", "QuotaExceededError")
+          : undefined
+    );
+    goOnline();
+    await replayed(QUEUE_A);
+    getDirectory = opfs.getDirectory;
+    isOnline = false;
+    expect(opfs.read(QUEUE_A, entry, "uploaded")).toEqual(new Uint8Array());
+
+    const text = await backupText();
+    expect(text.includes(btoa("photo bytes"))).toBe(false);
+    expect(text).toContain('"uploadedVersionId":"ver_1"');
+  });
 });
