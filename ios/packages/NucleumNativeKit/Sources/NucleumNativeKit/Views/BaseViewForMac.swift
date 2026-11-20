@@ -55,13 +55,7 @@ struct BaseViewForMac: View {
               isShowOauthFlow = false
               if let callbackURL = callbackURL {
                 Log.info("Success: \(redactUrlForLog(callbackURL))")
-                if NativeTrust.signInDeepLinkKind(callbackURL, appScheme: LocalConfig.urlScheme)
-                  == "oauthsignarchived"
-                {
-                  processArchivedSignIn(callbackURL)
-                } else {
-                  processOauthResponse(callbackURL)
-                }
+                processOauthResponse(callbackURL)
               } else if let error = error {
                 Log.error(message: error.localizedDescription)
               }
@@ -179,7 +173,9 @@ struct BaseViewForMac: View {
   }
 
   func processOauthResponse(_ url: URL) {
-    if NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme) == "oauthsignin" {
+    // Authentication-session results for either sign-in host carry the token
+    // (query or fragment) and region the web layer needs.
+    if NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme) != nil {
       guard let token = oauthCallbackValue(url, name: "token") else {
         Log.error(message: "OAuth response did not include a token")
         appStore.sendMessageToApp(message: [
