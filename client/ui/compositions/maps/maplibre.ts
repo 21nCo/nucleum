@@ -14,4 +14,3 @@ export function createMaplibreMap(options: maplibregl.MapOptions) {
   return new maplibregl.Map(options);
 }
 
-export { maplibregl };
