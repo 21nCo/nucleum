@@ -1,0 +1,29 @@
+ios/packages/NucleumNativeKit/Checks/NativeTrustChecks.swift
+  s_c2d6ef2e96fafa::t_92c10d7828b3c2 32-35,38-39,56-60
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/Views/BaseView.swift
+  s_c2d6ef2e96fafa::t_2e8eb1e4299966 62-63,222-226
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/Views/BaseViewForMac.swift
+  s_c2d6ef2e96fafa::t_c6d03456c9688e 48-49,201-202
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/Views/SafariWebview.swift
+  s_c2d6ef2e96fafa::t_b8b37eb18daac6 76-77,163-165
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/Views/WebAuthenticationViewForMac.swift
+  s_c2d6ef2e96fafa::t_6c67acda25afa3 8-9,102-104
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/WebView/WebViewCommon.swift
+  s_c2d6ef2e96fafa::t_72d69b075995b6 245,257,262-267,353
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bfd927d2618cfe23c27702e287e7f63485c1a5b7",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

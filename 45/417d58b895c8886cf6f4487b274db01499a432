@@ -1,0 +1,77 @@
+client/shell/navigation/browser-navigation.ts
+  s_c2d6ef2e96fafa::t_0ac099a9f7e6da 12,55-56
+client/features/memory/node/content/web/TweetPreview.svelte
+  s_c2d6ef2e96fafa::t_f2b5f8529dbc82 2,53
+client/features/memory/node/content/web/social/InstagramPostWidget.svelte
+  s_c2d6ef2e96fafa::t_f2b5f8529dbc82 2,64
+tools/ci/run-playwright-static-product.mjs
+  s_c2d6ef2e96fafa::t_32375c1a380391 22,129,175,244-246
+client/features/collections/properties/PropertyItem.svelte
+  s_c2d6ef2e96fafa::t_04029c559ccbe0 2,228-229
+client/features/memory/node/content/web/social/ThreadsPostWidget.svelte
+  s_c2d6ef2e96fafa::t_f2b5f8529dbc82 2,70
+client/extensions/clipper/sidePanel/collectionsOnClipper/WebpageItem.svelte
+  s_c2d6ef2e96fafa::t_04029c559ccbe0 2,45-46,48,50
+client/features/memory/linking/search-results.render.test.ts
+  s_c2d6ef2e96fafa::t_552e59e6e4fe66 1-22
+client/features/memory/node/content/web/social/RedditPostWidget.svelte
+  s_c2d6ef2e96fafa::t_f2b5f8529dbc82 2,31
+client/ui/elements/text/Link.scheme.test.ts
+  s_c2d6ef2e96fafa::t_9ffe9f96693a4d 1-24
+client/runtime/logging/logger.ts
+  s_c2d6ef2e96fafa::t_6e504938427386 11-23,26,29,64,211,213,220
+client/features/memory/node/content/web/social/BlueskyPostWidget.svelte
+  s_c2d6ef2e96fafa::t_f2b5f8529dbc82 2,64,81
+  s_c2d6ef2e96fafa::t_e9e19a3b619b89 79,88
+client/features/package.json
+  s_c2d6ef2e96fafa::t_be63b7a5ba7a44 165
+shared/utils/url.utils.ts
+  s_c2d6ef2e96fafa::t_0ac099a9f7e6da 120-137
+  s_c2d6ef2e96fafa::t_90cdccfb25a8e1 94-119
+client/ui/elements/markdown/markdown.utils.test.ts
+  s_c2d6ef2e96fafa::t_9be4c3f33cae4b 1-68
+client/features/memory/node/content/web/GistPreview.svelte
+  s_c2d6ef2e96fafa::t_04029c559ccbe0 50-58,60,64-77,92
+client/ui/elements/text/Link.svelte
+  s_c2d6ef2e96fafa::t_0ac099a9f7e6da 7-10,26,29-31,35-37,39,49,55
+  s_c2d6ef2e96fafa::t_9ffe9f96693a4d 27-28
+client/features/memory/node/content/web/social/MastodonPostWidget.svelte
+  s_c2d6ef2e96fafa::t_f2b5f8529dbc82 2,76
+  s_c2d6ef2e96fafa::t_e9e19a3b619b89 93,111,120
+client/runtime/logging/logger.live.test.ts
+  s_c2d6ef2e96fafa::t_cef62e94f52cc7 1-40
+services/frontend/scripts/frontend-config.mjs
+  s_c2d6ef2e96fafa::t_2631ddaa5ba350 1,176,178,221-275,277-296,315-317,319-324,326,332
+  s_c2d6ef2e96fafa::t_32375c1a380391 177,276,297-314,318
+tests/unit/frontend/security-headers.spec.ts
+  s_c2d6ef2e96fafa::t_e32c96a21586f7 1-79
+client/ui/elements/markdown/markdown.utils.ts
+  s_c2d6ef2e96fafa::t_9c1b2222bdc6cf 66-73,82,125
+  s_c2d6ef2e96fafa::t_a6c6a658c28b08 74-81,83,102,107,112,117,122,126
+shared/utils/url.utils.external.test.ts
+  s_c2d6ef2e96fafa::t_90cdccfb25a8e1 1-2,4-37,57-58
+  s_c2d6ef2e96fafa::t_0ac099a9f7e6da 3,38-56
+client/features/memory/node/content/web/social/embed-html.ts
+  s_c2d6ef2e96fafa::t_7d90a98fd0e1d9 1-53,60-80,94-97
+  s_c2d6ef2e96fafa::t_be63b7a5ba7a44 54-59,81-93
+client/features/memory/node/content/web/social/embed-html.test.ts
+  s_c2d6ef2e96fafa::t_e88a12a58c1872 1-75
+package-lock.json
+  s_c2d6ef2e96fafa::t_38792456fb5704 3019
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "45417d58b895c8886cf6f4487b274db01499a432",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

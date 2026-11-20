@@ -1,0 +1,29 @@
+client/ui/elements/markdown/markdown.utils.ts
+  s_c2d6ef2e96fafa::t_b765e2e39838d4 286-292
+client/features/memory/node/content/web/social/embed-html.ts
+  s_c2d6ef2e96fafa::t_f0d7ed114a8f2b 47-60,64-66,70-73,99-108
+tests/unit/frontend/security-headers.spec.ts
+  s_c2d6ef2e96fafa::t_b765e2e39838d4 59-60
+client/features/memory/node/content/web/social/MastodonPostWidget.svelte
+  s_c2d6ef2e96fafa::t_f0d7ed114a8f2b 93
+client/features/memory/node/content/web/social/embed-html.test.ts
+  s_c2d6ef2e96fafa::t_1fa54cd0c5c123 80-101
+services/frontend/scripts/frontend-config.mjs
+  s_c2d6ef2e96fafa::t_b765e2e39838d4 272-274,279,281,296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "60ef837cee02b53dfd0112b1c41f03eccb6403c7",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
