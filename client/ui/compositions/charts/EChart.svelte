@@ -396,10 +396,9 @@
             pageTextStyle: {
               color: axisLabelColor
             },
-            ...(isConstrainedWidth && {
-              bottom: 0,
-              left: "center"
-            })
+            ...(isConstrainedWidth
+              ? { bottom: 0, left: "center" }
+              : { top: 0, left: "center" })
           }
         : { show: false },
       xAxis: {
@@ -560,11 +559,9 @@
             pageTextStyle: {
               color: axisLabelColor
             },
-            ...(isConstrainedWidth && {
-              orient: "horizontal",
-              bottom: 0,
-              left: "center"
-            })
+            ...(isConstrainedWidth
+              ? { orient: "horizontal", bottom: 0, left: "center" }
+              : { top: 0, left: "center" })
           }
         : { show: false },
       xAxis: {
