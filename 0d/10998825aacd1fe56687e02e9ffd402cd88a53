@@ -1,0 +1,51 @@
+.github/workflows/account-service-deploy.yml
+  s_c2d6ef2e96fafa::t_68ed4ddd730d26 116,118,124
+.github/workflows/frontend-cloudflare-deploy.yml
+  s_c2d6ef2e96fafa::t_58bce2e039b6df 112,114
+.github/workflows/frontend-cloudflare-routes.yml
+  s_c2d6ef2e96fafa::t_83163b23a2a374 41,43
+.github/workflows/pullfrog.yml
+  s_c2d6ef2e96fafa::t_d30ecdb75c8213 25,29
+.github/workflows/tests-weekly.yml
+  s_c2d6ef2e96fafa::t_1be16a83bdba74 23,25,30,36,46,77,79,84,134
+.github/workflows/tests.yml
+  s_c2d6ef2e96fafa::t_737b74264c176a 28,32,37,52,54,59,63,73,106,108,113,163,180,182,187,199
+apps/memotron/package.json
+  s_c2d6ef2e96fafa::t_9b45b9e683b217 107-108,113
+apps/nucleus/package.json
+  s_c2d6ef2e96fafa::t_fbb34e3b7fb1ab 111-112,117
+apps/pointron/package.json
+  s_c2d6ef2e96fafa::t_d7ab52e6da42ea 103-104,109
+client/features/package.json
+  s_c2d6ef2e96fafa::t_aa303a7c947673 169
+client/surfaces/package.json
+  s_c2d6ef2e96fafa::t_ec95ea86e51192 22
+client/ui/compositions/maps/PointInMap.svelte
+  s_c2d6ef2e96fafa::t_ec39ef0399a024 2
+client/ui/compositions/maps/PointMap.svelte
+  s_c2d6ef2e96fafa::t_102090c12d9cf1 3
+client/ui/package.json
+  s_c2d6ef2e96fafa::t_6e913dbd90687d 23-25
+package-lock.json
+  s_c2d6ef2e96fafa::t_9856e4a539d2a6 130-131,136,204-260,980-1133,1240-1241,1246,1309-1365,2085-2238,2343-2344,2349,2411-2467,3187-3340,3656,3688-3744,3760-3938,4044,4072-4074,8706-8709,8712,8715-8721,8724-8727,8730-8734,8736-8738,8741-8745,8747-8751,8753,8756,16217-16233,18646-18654,23586-23588,33492-33497,34767-34793,34844
+services/account/package.json
+  s_c2d6ef2e96fafa::t_b128c351e042cb 86
+services/frontend/config/environments.json
+  s_c2d6ef2e96fafa::t_5e77666ab9ab39 96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0d10998825aacd1fe56687e02e9ffd402cd88a53",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
