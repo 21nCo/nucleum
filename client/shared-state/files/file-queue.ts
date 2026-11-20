@@ -522,10 +522,12 @@ async function resolveHeldUrl(
       held = { generation: entry.generation, read };
       heldUrls.set(key, held);
     }
-    const read = await held.read.catch((error: unknown) => {
-      if (heldUrls.get(key) === held) heldUrls.delete(key);
-      throw error;
-    });
+    const read: Awaited<HeldUrl["read"]> = await held.read.catch(
+      (error: unknown) => {
+        if (heldUrls.get(key) === held) heldUrls.delete(key);
+        throw error;
+      }
+    );
     if (read.url === null || isReleased()) {
       if (heldUrls.get(key) === held) heldUrls.delete(key);
       return null;

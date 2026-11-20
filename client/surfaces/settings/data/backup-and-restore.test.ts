@@ -2934,9 +2934,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       expect(sdk.uploads).toHaveLength(1);
       expect(opfs.list(QUEUE_A)).toEqual([entry]);
       expect(opfs.list(QUEUE_A, entry)).not.toContain("uploaded");
-      expect(uploadLogText()).toContain(
-        record.fileId
-      );
+      expect(uploadLogText()).toContain(record.fileId);
 
       const text = await backupText();
       expect(text.includes(btoa("photo bytes"))).toBe(false);
@@ -3628,9 +3626,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       await replayed(QUEUE_A);
       getDirectory = opfs.getDirectory;
       expect(sdk.artifacts).toEqual([]);
-      expect(
-        uploadLogText().includes('"isThumbnailSent":true')
-      ).toBe(false);
+      expect(uploadLogText().includes('"isThumbnailSent":true')).toBe(false);
 
       replays.clear();
       await restoreBackup(backup, { triggerCloneUp: () => false });
@@ -4612,9 +4608,9 @@ describe("restore sessions, generations and publication of queued files", () => 
 
     expect(await savedRecord(record.id)).toBeUndefined();
     expect(opfs.list(QUEUE_A)).toEqual([entry]);
-    expect(
-      opfs.read(QUEUE_A, entry, "data.bin")?.byteLength
-    ).toBeGreaterThan(0);
+    expect(opfs.read(QUEUE_A, entry, "data.bin")?.byteLength).toBeGreaterThan(
+      0
+    );
     expect(sdk.uploads).toEqual([]);
   });
 
