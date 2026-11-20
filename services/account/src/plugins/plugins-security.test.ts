@@ -4,6 +4,8 @@ import { authfn, authFnPlugins } from 'authfn';
 import { authFnPasswordPlugin } from '@authfn/password';
 import { nucleusLifecyclePlugin } from './nucleus-lifecycle.js';
 import { nucleusWidgetTokenPlugin } from './widget-token.js';
+import { ACCOUNT_REGION_IDS } from '../regions.js';
+import environments from '../../config/environments.json' with { type: 'json' };
 
 const ORIGIN = 'https://account-insouth.example.test';
 
@@ -14,7 +16,7 @@ function createServer() {
     cookie: { prefix: 'test', sameSite: 'lax', secure: true },
     plugins: authFnPlugins(
       authFnPasswordPlugin(),
-      nucleusLifecyclePlugin({ regionIds: ['insouth', 'useast'] }),
+      nucleusLifecyclePlugin({ regionIds: ['local'] }),
       nucleusWidgetTokenPlugin()
     )
   }).createServer({ database: memoryAdapter({ debug: false }) });
@@ -59,7 +61,25 @@ describe('account plugin request checks', () => {
 
     const unknown = await post(server, '/nucleus/bootstrap', headers, { region: '<script>' });
     expect(unknown.status).toBe(400);
-    const configured = await post(server, '/nucleus/bootstrap', headers, { region: 'USEast' });
-    expect(configured.status).toBe(200);
+    const knownRegion = await post(server, '/nucleus/bootstrap', headers, { region: 'USEast' });
+    expect(knownRegion.status).toBe(200);
+  });
+
+  it('lists every deployed region as a known region', () => {
+    expect([...ACCOUNT_REGION_IDS].sort()).toEqual(Object.keys(environments.regions).sort());
+  });
+
+  it('uses a bearer token over cookies without needing the CSRF header', async () => {
+    const server = createServer();
+    const { cookie } = await signUp(server);
+    const bearerSignUp = await server.router.handle(new Request(`${ORIGIN}/auth/sign-in/password`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'widget-owner@example.com', password: 'test-password-long-enough', sessionMode: 'bearer' })
+    }));
+    const token = (await bearerSignUp.json()).data.token as string;
+    expect(token).toEqual(expect.any(String));
+    expect((await post(server, '/widget-token', { cookie, authorization: `Bearer ${token}` })).status).toBe(200);
+    expect((await post(server, '/widget-token', { authorization: 'Bearer test-invalid-token' })).status).toBe(401);
   });
 });

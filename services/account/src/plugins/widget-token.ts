@@ -4,7 +4,8 @@ import {
   type AuthFnPluginRuntimeContext,
   type AuthFnSchemaDefinition
 } from 'authfn';
-import { assertValidCsrf, authenticateRequest, getCookieSessionState, hashSecret } from 'authfn/core/sessions';
+import { hashSecret } from 'authfn/core/sessions';
+import { authenticateAccountMutation } from './request-auth.js';
 import { createAuthFnRouteMeta } from 'authfn/http/router';
 import { jsonSuccess } from 'authfn/http/envelopes';
 import { nucleusWidgetTokenTables } from './widget-token.schema.js';
@@ -47,31 +48,19 @@ export function createNucleusWidgetTokenSchema(): AuthFnSchemaDefinition['schema
   return nucleusWidgetTokenTables;
 }
 
-/**
- * Authenticates a widget-token mutation. A cookie session must also pass the
- * AuthFn CSRF check; bearer sessions carry no ambient credentials.
- */
-async function authenticateMutation(ctx: AuthFnPluginRuntimeContext, request: Request) {
-  const cookieState = await getCookieSessionState(ctx.config, request);
-  if (cookieState.session) {
-    assertValidCsrf(request, cookieState);
-    return cookieState.session;
-  }
-  return authenticateRequest(ctx.config, request);
-}
-
 function createWidgetTokenRoutes(ctx: AuthFnPluginRuntimeContext): WidgetTokenRoute[] {
   return [
     {
       method: 'POST',
       path: '/widget-token',
       meta: createAuthFnRouteMeta('createWidgetToken', 'Issue a scoped Nucleus widget token', {
-        mode: 'bearer'
+        mode: 'hybrid',
+        csrf: true
       }),
       handler: async (request) => {
-        const session = await authenticateMutation(ctx, request);
+        const session = await authenticateAccountMutation(ctx, request);
         if (!session || session.type !== 'session') {
-          throw new AuthFnUnauthenticatedError('Native bearer session is required');
+          throw new AuthFnUnauthenticatedError('AuthFn session is required');
         }
 
         const now = new Date();
@@ -137,12 +126,13 @@ function createWidgetTokenRoutes(ctx: AuthFnPluginRuntimeContext): WidgetTokenRo
       method: 'POST',
       path: '/widget-token/revoke',
       meta: createAuthFnRouteMeta('revokeWidgetToken', 'Revoke scoped Nucleus widget tokens', {
-        mode: 'bearer'
+        mode: 'hybrid',
+        csrf: true
       }),
       handler: async (request) => {
-        const session = await authenticateMutation(ctx, request);
+        const session = await authenticateAccountMutation(ctx, request);
         if (!session || session.type !== 'session') {
-          throw new AuthFnUnauthenticatedError('Native bearer session is required');
+          throw new AuthFnUnauthenticatedError('AuthFn session is required');
         }
 
         const now = new Date();

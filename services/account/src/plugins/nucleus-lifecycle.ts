@@ -6,7 +6,8 @@ import {
   type AuthFnSession,
   type AuthFnUserRecord
 } from 'authfn';
-import { assertValidCsrf, authenticateRequest, getCookieSessionState } from 'authfn/core/sessions';
+import { authenticateAccountMutation } from './request-auth.js';
+import { ACCOUNT_REGION_IDS } from '../regions.js';
 import { createAuthFnRouteMeta } from 'authfn/http/router';
 import { jsonSuccess } from 'authfn/http/envelopes';
 
@@ -102,11 +103,7 @@ function createNucleusLifecycleRoutes(
         csrf: true
       }),
       handler: async (request) => {
-        const cookieState = await getCookieSessionState(ctx.config, request);
-        if (cookieState.session) {
-          assertValidCsrf(request, cookieState);
-        }
-        const session = cookieState.session ?? (await authenticateRequest(ctx.config, request));
+        const session = await authenticateAccountMutation(ctx, request);
         if (!session || session.type !== 'session') {
           throw new AuthFnUnauthenticatedError('AuthFn session is required');
         }
@@ -211,12 +208,16 @@ function requestId(request: Request | undefined): string {
   return request?.headers.get('x-request-id') ?? `req_${Date.now().toString(36)}`;
 }
 
-/** Accepts a bootstrap region only when it is one of the service's configured regions. */
+/** Accepts a bootstrap region only when it is a known account region or one this service is configured with. */
 function isConfiguredRegion(
   region: string,
   options: NucleusLifecyclePluginOptions,
   sessionRegionId: string | undefined
 ): boolean {
-  const configured = options.regionIds ?? (sessionRegionId ? [sessionRegionId] : []);
-  return configured.some((regionId) => regionId.toLowerCase() === region);
+  const known = [
+    ...ACCOUNT_REGION_IDS,
+    ...(options.regionIds ?? []),
+    ...(sessionRegionId ? [sessionRegionId] : [])
+  ];
+  return known.some((regionId) => regionId.toLowerCase() === region);
 }
