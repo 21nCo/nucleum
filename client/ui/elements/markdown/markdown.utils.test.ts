@@ -176,6 +176,32 @@ describe("renderMdAsHtml links and quotes", () => {
     expect(link?.getAttribute("data-href")).toBe("https://example.com/notes");
   });
 
+  it("matches the label's own closing bracket", () => {
+    const mention = renderIntoDom(
+      renderMdAsHtml("[How to call f[0](x)](resource=node_f)")
+    ).querySelector(".inline-mention");
+    expect(mention?.getAttribute("data-record-id")).toBe("node_f");
+    expect(mention?.getAttribute("data-label")).toBe("How to call f[0](x)");
+    const container = renderIntoDom(
+      renderMdAsHtml("[note](see below) then [doc](https://x.com)")
+    );
+    expect(container.querySelectorAll(".inline-link")).toHaveLength(1);
+    expect(container.querySelector(".inline-link")?.textContent).toBe("doc");
+  });
+
+  it("checks block boundaries against whole source lines", () => {
+    for (const text of [
+      "[Release notes\n---](https://example.com/docs)",
+      "[Release notes\n](https://example.com/docs)"
+    ]) {
+      expect(
+        renderIntoDom(renderMdAsHtml(text))
+          .querySelector(".inline-link")
+          ?.getAttribute("data-href")
+      ).toBe("https://example.com/docs");
+    }
+  });
+
   it("renders a link whose label spans lines", () => {
     const container = renderIntoDom(
       renderMdAsHtml("[first\nsecond](https://example.com/a)")

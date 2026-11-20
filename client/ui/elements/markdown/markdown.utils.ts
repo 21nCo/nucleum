@@ -99,12 +99,22 @@ const TOKEN_PATTERN = /\uFFF0(\d+)\uFFF1/g;
 const BLOCK_START_LINE =
   /^(?:#{1,4} |\uFFF2 |\s*[-*] |---\s*$|===\s*$|\s*$)/;
 
-/** Checks whether a span of label or destination text stays inside one block. */
-function staysInBlock(span: string) {
-  return span
-    .split("\n")
-    .slice(1)
-    .every((line) => !BLOCK_START_LINE.test(line.replace(/\r$/, "")));
+/**
+ * Checks whether the text between `start` and `end` stays inside one block:
+ * every line it continues onto, read as a whole source line, must not start a
+ * heading, quote, list item or rule, or be blank.
+ */
+function staysInBlock(text: string, start: number, end: number) {
+  let newline = text.indexOf("\n", start);
+  while (newline >= 0 && newline < end) {
+    const lineEnd = text.indexOf("\n", newline + 1);
+    const line = text
+      .slice(newline + 1, lineEnd < 0 ? text.length : lineEnd)
+      .replace(/\r$/, "");
+    if (BLOCK_START_LINE.test(line)) return false;
+    newline = text.indexOf("\n", newline + 1);
+  }
+  return true;
 }
 
 /**
@@ -118,12 +128,13 @@ function extractInlineLinks(text: string, tokens: string[]) {
     inlineLinkPatterns.find((pattern) => pattern.type === InlineType.MENTION)!,
     inlineLinkPatterns.find((pattern) => pattern.type === InlineType.LINK)!
   ];
+  const brackets = matchLabelBrackets(text);
   let result = "";
   let index = 0;
   while (index < text.length) {
     const open = text.indexOf("[", index);
     if (open < 0) break;
-    const parsed = parseInlineLinkAt(text, open);
+    const parsed = parseInlineLinkAt(text, open, brackets);
     if (!parsed) {
       result += text.slice(index, open + 1);
       index = open + 1;
@@ -147,11 +158,33 @@ function extractInlineLinks(text: string, tokens: string[]) {
   return result + text.slice(index);
 }
 
-function parseInlineLinkAt(text: string, open: number) {
-  const close = text.indexOf("](", open + 1);
-  if (close < 0) return null;
-  const label = text.slice(open + 1, close);
-  if (!staysInBlock(label)) return null;
+/**
+ * Pairs every `[` with the `]` that balances it inside the same block, in one
+ * pass. Unclosed brackets at a block boundary are dropped.
+ */
+function matchLabelBrackets(text: string) {
+  const matches = new Map<number, number>();
+  const stack: number[] = [];
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "\n" && !staysInBlock(text, index, index + 1)) stack.length = 0;
+    else if (char === "[") stack.push(index);
+    else if (char === "]") {
+      const open = stack.pop();
+      if (open !== undefined) matches.set(open, index);
+    }
+  }
+  return matches;
+}
+
+function parseInlineLinkAt(
+  text: string,
+  open: number,
+  brackets: Map<number, number>
+) {
+  const close = brackets.get(open) ?? -1;
+  if (close < 0 || text[close + 1] !== "(") return null;
+  if (!staysInBlock(text, open, close)) return null;
   const rest = text.slice(close + 2);
   const prefix = rest.startsWith("resource=")
     ? "resource="
@@ -160,12 +193,11 @@ function parseInlineLinkAt(text: string, open: number) {
   const targetStart = close + 2 + prefix.length;
   const targetEnd = text.indexOf(")", targetStart);
   if (targetEnd < 0) return null;
-  const target = text.slice(targetStart, targetEnd);
-  if (!staysInBlock(target)) return null;
+  if (!staysInBlock(text, targetStart, targetEnd)) return null;
   return {
     isMention: prefix === "resource=",
-    label,
-    target,
+    label: text.slice(open + 1, close),
+    target: text.slice(targetStart, targetEnd),
     end: targetEnd + 1
   };
 }
