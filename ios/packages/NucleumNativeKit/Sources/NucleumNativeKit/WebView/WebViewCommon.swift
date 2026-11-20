@@ -242,6 +242,7 @@ enum NativeTrust {
     trustedOrigins: [URL],
     appScheme: String,
     isFormPost: Bool = false,
+    sourceHost: String? = nil,
     isTrustedAccountURL: (URL) -> Bool
   ) -> NavigationDecision {
     switch targetIsMainFrame {
@@ -253,16 +254,17 @@ enum NativeTrust {
       break
     }
     let scheme = url.scheme?.lowercased() ?? ""
-    if scheme == "about" || scheme == "blob" { return .allow }
+    if scheme == "about" || scheme == "blob" { return sourceIsMainFrame ? .allow : .cancel }
     if trustedOrigins.contains(where: { sameOrigin($0, url) }) { return .allow }
     if scheme == "https" && isTrustedAccountURL(url) { return .allow }
     if isOAuthProviderURL(url) { return sourceIsMainFrame ? .allow : .cancel }
     if scheme == appScheme.lowercased() { return sourceIsMainFrame ? .allow : .cancel }
-    if isFormPost && (scheme == "http" || scheme == "https") {
-      // A form POST cannot be handed to the system browser with its body (for
-      // example Apple's form_post sign-in callback), so one the app's main
-      // frame submits keeps loading in the WebView.
-      return sourceIsMainFrame ? .allow : .cancel
+    if isFormPost && scheme == "https" && sourceIsMainFrame
+      && sourceHost?.lowercased() == "appleid.apple.com"
+    {
+      // Apple's form_post sign-in callback cannot be handed to the system
+      // browser with its body, so the POST Apple's page submits keeps loading.
+      return .allow
     }
     if scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "tel" {
       return .openExternally
@@ -348,6 +350,7 @@ extension NativeTrust {
       trustedOrigins: appTrustedOrigins(loadedURL: loadedURL),
       appScheme: LocalConfig.urlScheme,
       isFormPost: navigationAction.request.httpMethod?.uppercased() == "POST",
+      sourceHost: navigationAction.sourceFrame.securityOrigin.host,
       isTrustedAccountURL: isAppAccountURL
     )
     return (decision, url)

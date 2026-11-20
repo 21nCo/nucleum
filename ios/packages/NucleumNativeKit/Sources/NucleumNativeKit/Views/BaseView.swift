@@ -59,7 +59,8 @@ struct BaseView: View {
       if isShowOauthFlow {
         if let oauthUrl = URL(string: appStore.oauthUrl), isAllowedExternalUrl(oauthUrl) {
           WebAuthenticationView(
-            url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme
+            url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme,
+            onStart: { appStore.markSignInStarted() }
           ) {
             callbackURL, error in
             DispatchQueue.main.async {
@@ -188,9 +189,6 @@ struct BaseView: View {
     #endif
     if URL(string: urlString) != nil {
       appStore.oauthUrl = urlString
-      if let url = URL(string: urlString), isAllowedExternalUrl(url) {
-        appStore.markSignInStarted()
-      }
       // UIApplication.shared.open(url)
       self.isShowOauthFlow = true
     }
@@ -221,10 +219,11 @@ struct BaseView: View {
     Log.info("Url Scheme triggered: \(redactUrlForLog(url))")
     let signInKind = NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme)
     let signInToken =
-      signInKind == "oauthsignarchived"
-      ? URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
-        .first(where: { $0.name == "token" })?.value
-      : signInKind == "oauthsignin" ? oauthCallbackValue(url, name: "token") : nil
+      (signInKind == "oauthsignarchived"
+        ? URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+          .first(where: { $0.name == "token" })?.value
+        : signInKind == "oauthsignin" ? oauthCallbackValue(url, name: "token") : nil)
+      .flatMap { $0.isEmpty ? nil : $0 }
     // Only a link that would sign in uses up the pending sign-in; error or
     // malformed links leave it for the real callback.
     if signInToken != nil && !appStore.consumePendingSignIn() {

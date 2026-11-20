@@ -45,7 +45,8 @@ struct BaseViewForMac: View {
       if isShowOauthFlow {
         if let oauthUrl = URL(string: appStore.oauthUrl), isAllowedExternalUrl(oauthUrl) {
           WebAuthenticationView(
-            url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme
+            url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme,
+            onStart: { appStore.markSignInStarted() }
           ) {
             callbackURL, error in
             DispatchQueue.main.async {
@@ -197,8 +198,8 @@ struct BaseViewForMac: View {
     let signInToken =
       signInKind == "oauthsignarchived"
       ? URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
-        .first(where: { $0.name == "token" })?.value
-      : signInKind == "oauthsignin" ? oauthCallbackValue(url, name: "token") : nil
+        .first(where: { $0.name == "token" })?.value.flatMap { $0.isEmpty ? nil : $0 }
+      : nil
     // Only a link that would sign in uses up the pending sign-in; error or
     // malformed links leave it for the real callback.
     if signInToken != nil && !appStore.consumePendingSignIn() {
@@ -299,9 +300,6 @@ struct BaseViewForMac: View {
   func openOauthFlow(_ urlString: String) {
     if URL(string: urlString) != nil {
       appStore.oauthUrl = urlString
-      if let url = URL(string: urlString), isAllowedExternalUrl(url) {
-        appStore.markSignInStarted()
-      }
       self.isShowOauthFlow = true
     }
   }

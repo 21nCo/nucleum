@@ -5,6 +5,8 @@ import SwiftUI
 struct WebAuthenticationView: NSViewRepresentable {
   let url: URL
   let callbackURLScheme: String
+  /// Called once the authentication session has actually started.
+  var onStart: () -> Void = {}
   let completionHandler: (URL?, Error?) -> Void
 
   // Store the authentication session to prevent it from being deallocated
@@ -97,6 +99,9 @@ struct WebAuthenticationView: NSViewRepresentable {
     WebAuthenticationView.authSessionContainer.isCompleting = false
 
     let didStart = authSession.start()
+    if didStart {
+      onStart()
+    }
     Log.info(
       "WebAuthenticationViewForMac.start - id=\(sessionId) didStart=\(didStart) callbackURLScheme=\(callbackURLScheme) url=\(redactOAuthUrl(url))"
     )

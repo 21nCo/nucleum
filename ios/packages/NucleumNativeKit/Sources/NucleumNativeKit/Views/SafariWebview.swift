@@ -73,6 +73,8 @@ struct AuthenticationTestView: View {
 struct WebAuthenticationView: UIViewControllerRepresentable {
   let url: URL
   let callbackURLScheme: String
+  /// Called once the authentication session has actually started.
+  var onStart: () -> Void = {}
   let completionHandler: (URL?, Error?) -> Void
 
   class AuthSessionContainer {
@@ -158,6 +160,9 @@ struct WebAuthenticationView: UIViewControllerRepresentable {
     WebAuthenticationView.authSessionContainer.isCompleting = false
 
     let didStart = authSession.start()
+    if didStart {
+      onStart()
+    }
     Log.info(
       "WebAuthenticationView.start - id=\(sessionId) didStart=\(didStart) callbackURLScheme=\(callbackURLScheme) url=\(redactOAuthUrl(url))"
     )
