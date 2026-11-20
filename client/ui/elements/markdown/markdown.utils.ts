@@ -260,7 +260,33 @@ function extractInlineLinks(text: string, tokens: string[]) {
  * opens there.
  * Unclosed brackets at a block boundary are dropped.
  */
+/** Backtick runs indexed by start and by length, for constant-time code span lookups. */
+function indexBacktickRuns(text: string) {
+  const endOf = new Map<number, number>();
+  const startsByLength = new Map<number, number[]>();
+  for (let index = text.indexOf("`"); index >= 0; index = text.indexOf("`", index + 1)) {
+    let end = index;
+    while (text[end + 1] === "`") end += 1;
+    endOf.set(index, end);
+    const length = end - index + 1;
+    const starts = startsByLength.get(length) ?? [];
+    starts.push(index);
+    startsByLength.set(length, starts);
+    index = end;
+  }
+  return {
+    endOf,
+    /** Start of the next run with the same length after the run `[start, end]`, or -1. */
+    nextSameLength(start: number, end: number) {
+      const starts = startsByLength.get(end - start + 1) ?? [];
+      const next = starts[firstAtOrAfter(starts, end + 1)];
+      return next ?? -1;
+    }
+  };
+}
+
 function matchLabelBrackets(text: string, boundaries: number[]) {
+  const backtickRuns = indexBacktickRuns(text);
   const matches = new Map<number, number>();
   const ignored = new Set<number>();
   const stack: number[] = [];
@@ -269,21 +295,18 @@ function matchLabelBrackets(text: string, boundaries: number[]) {
     if (char === "\n" && !staysInBlock(boundaries, index, index + 1)) {
       stack.length = 0;
     } else if (char === "`") {
-      let runEnd = index;
-      while (text[runEnd + 1] === "`") runEnd += 1;
-      const fence = text.slice(index, runEnd + 1);
-      let codeEnd = text.indexOf(fence, runEnd + 1);
-      while (codeEnd >= 0 && (text[codeEnd - 1] === "`" || text[codeEnd + fence.length] === "`")) {
-        codeEnd = text.indexOf(fence, codeEnd + 1);
-      }
-      if (codeEnd >= 0 && staysInBlock(boundaries, index, codeEnd)) {
-        for (let inner = runEnd + 1; inner < codeEnd; inner += 1) {
+      const runEnd = backtickRuns.endOf.get(index) ?? index;
+      const closer = backtickRuns.nextSameLength(index, runEnd);
+      if (closer >= 0 && staysInBlock(boundaries, index, closer)) {
+        for (let inner = runEnd + 1; inner < closer; inner += 1) {
           if (text[inner] === "[") ignored.add(inner);
         }
-        index = codeEnd + fence.length - 1;
+        index = closer + (runEnd - index);
       } else {
         index = runEnd;
       }
+    } else if (char === "\\" && text[index + 1] === "\\") {
+      index += 1;
     } else if (char === "\\" && (text[index + 1] === "[" || text[index + 1] === "]")) {
       if (text[index + 1] === "[") ignored.add(index + 1);
       index += 1;

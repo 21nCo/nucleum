@@ -244,6 +244,17 @@ describe("renderMdAsHtml links and quotes", () => {
     expect(code.textContent).toContain("a[0]");
   });
 
+  it("treats an escaped backslash before a bracket as literal", () => {
+    expect(
+      renderIntoDom(renderMdAsHtml("\\\\[Docs](https://example.com)"))
+        .querySelector(".inline-link")?.textContent
+    ).toBe("Docs");
+    expect(
+      renderIntoDom(renderMdAsHtml("\\\\\\[Docs](https://example.com)"))
+        .querySelector(".inline-link")
+    ).toBeNull();
+  });
+
   it("does not let a lone backtick hide later brackets", () => {
     const link = renderIntoDom(
       renderMdAsHtml("don`t miss [skip](https://example.com/docs)")
