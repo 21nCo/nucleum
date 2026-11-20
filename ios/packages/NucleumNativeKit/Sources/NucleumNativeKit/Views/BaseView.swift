@@ -60,7 +60,8 @@ struct BaseView: View {
         if let oauthUrl = URL(string: appStore.oauthUrl), isAllowedExternalUrl(oauthUrl) {
           WebAuthenticationView(
             url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme,
-            onStart: { appStore.markSignInStarted() }
+            onStart: { appStore.markSignInStarted() },
+            onStop: { _ = appStore.consumePendingSignIn() }
           ) {
             callbackURL, error in
             DispatchQueue.main.async {

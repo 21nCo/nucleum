@@ -261,6 +261,7 @@ enum NativeTrust {
     if scheme == appScheme.lowercased() { return sourceIsMainFrame ? .allow : .cancel }
     if isFormPost && scheme == "https" && sourceIsMainFrame
       && sourceHost?.lowercased() == "appleid.apple.com"
+      && isAppleSignInCallback(url, isTrustedAccountURL: isTrustedAccountURL)
     {
       // Apple's form_post sign-in callback cannot be handed to the system
       // browser with its body, so the POST Apple's page submits keeps loading.
@@ -270,6 +271,19 @@ enum NativeTrust {
       return .openExternally
     }
     return .cancel
+  }
+
+  /// API hosts of the apps' sign-in service that receive Apple's form_post callback.
+  static let appleCallbackHosts: Set<String> = [
+    "api.nucleus.website", "api.memotron.app", "api.memotron.xyz", "api.21n.dev",
+  ]
+
+  /// Apple's form_post goes to `/oauth/apple` on a sign-in API host, or to an
+  /// app account host's social callback.
+  static func isAppleSignInCallback(_ url: URL, isTrustedAccountURL: (URL) -> Bool) -> Bool {
+    let host = url.host?.lowercased() ?? ""
+    if appleCallbackHosts.contains(host) && url.path == "/oauth/apple" { return true }
+    return isTrustedAccountURL(url) && url.path.hasSuffix("/social/callback/apple")
   }
 
   /// Authorization pages of the sign-in providers the account service uses.

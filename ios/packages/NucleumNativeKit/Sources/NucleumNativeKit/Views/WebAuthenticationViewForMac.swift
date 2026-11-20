@@ -7,6 +7,8 @@ struct WebAuthenticationView: NSViewRepresentable {
   let callbackURLScheme: String
   /// Called once the authentication session has actually started.
   var onStart: () -> Void = {}
+  /// Called when a started session is replaced or a new one fails to start.
+  var onStop: () -> Void = {}
   let completionHandler: (URL?, Error?) -> Void
 
   // Store the authentication session to prevent it from being deallocated
@@ -52,6 +54,7 @@ struct WebAuthenticationView: NSViewRepresentable {
         "WebAuthenticationViewForMac.cancelStaleSession - old=\(WebAuthenticationView.authSessionContainer.sessionKey ?? "unknown") new=\(sessionKey)"
       )
       activeSession.cancel()
+      onStop()
       WebAuthenticationView.authSessionContainer.session = nil
       WebAuthenticationView.authSessionContainer.sessionId = nil
       WebAuthenticationView.authSessionContainer.sessionKey = nil
@@ -106,6 +109,7 @@ struct WebAuthenticationView: NSViewRepresentable {
       "WebAuthenticationViewForMac.start - id=\(sessionId) didStart=\(didStart) callbackURLScheme=\(callbackURLScheme) url=\(redactOAuthUrl(url))"
     )
     if !didStart {
+      onStop()
       WebAuthenticationView.authSessionContainer.session = nil
       WebAuthenticationView.authSessionContainer.sessionId = nil
       WebAuthenticationView.authSessionContainer.sessionKey = nil
