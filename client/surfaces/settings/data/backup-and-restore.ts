@@ -100,7 +100,7 @@ export async function createBackupBlob(): Promise<Blob> {
  * restores the backup or a record of that account references them. A file
  * the queue holds complete and unmarked, or one an earlier restore fully
  * wrote and was not taken over yet, is not written again (a restore into
- * its own account marks a complete unmarked one restored, so no replay
+ * its own account marks a complete unmarked one kept, so no replay
  * removes it before the records are imported), and one whose upload
  * the account's replay completed (in any tab, before or while the restore
  * runs) is not staged again. Rejects, restoring nothing, when the backup or

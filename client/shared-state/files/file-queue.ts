@@ -42,16 +42,24 @@ const STALE_FILE = "stale";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
- * Marks a file a restore put or kept in the queue that its account has not
- * taken over yet (see stageRestoredFiles): empty while it is written, so a
- * replay leaves it untouched; once it is fully written, RESTORED_FOR_ACCOUNT
- * for a restore into the queue's own account and RESTORED_FOR_OTHER for one
- * into another account or the guest. Only the account's replay removes the
+ * Marks a file a restore put in the queue that its account has not taken
+ * over yet (see stageRestoredFiles; KEPT_FILE marks one it kept): empty
+ * while it is written, so a replay leaves it untouched; once it is fully
+ * written, RESTORED_FOR_ACCOUNT for a restore into the queue's own account
+ * and RESTORED_FOR_OTHER for one into another account or the guest. Only the account's replay removes the
  * mark of a fully written one, once a record of the account references it.
  */
 const RESTORED_FILE = "restored";
 const RESTORED_FOR_ACCOUNT = "account";
 const RESTORED_FOR_OTHER = "other";
+/**
+ * Marks a file a restore into the queue's own account found complete and
+ * kept as the queue held it (see stageRestoredFiles). Its presence alone,
+ * whatever it holds, means the file is complete and held for its account
+ * as a RESTORED_FOR_ACCOUNT one is, so a mark whose write rejects or is
+ * interrupted once the file exists never makes the file look half written.
+ */
+const KEPT_FILE = "kept";
 
 /** Returns whether a restored mark is a fully written file's. */
 function isWrittenRestoredMark(mark: string | undefined) {
@@ -532,8 +540,7 @@ async function copyEntry(dir: string, entryName: string) {
   const entry = await getEntryDir(dir, entryName, true);
   if (!entry) return undefined;
   try {
-    const restored = await readRestoredMark(dir, entryName);
-    if (restored !== undefined && !isWrittenRestoredMark(restored)) {
+    if ((await readRestoredState(dir, entryName)) === "writing") {
       return undefined;
     }
     const thumbnail = await readThumbnail(entry);
@@ -568,19 +575,38 @@ async function copyEntry(dir: string, entryName: string) {
 }
 
 /**
- * Reads a file's restored mark (see RESTORED_FILE), or undefined when it has
- * none; a read error other than a missing file rejects.
+ * Reads whether a restore holds a file (see RESTORED_FILE and KEPT_FILE):
+ * "held" when it is marked kept or a restore fully wrote it, "writing" when
+ * a restore is writing it (or was interrupted), and undefined when it is not
+ * marked; a read error other than a missing file rejects.
  */
-function readRestoredMark(dir: string, entryName: string) {
-  return readEntryText(dir, entryName, RESTORED_FILE, true);
+async function readRestoredState(dir: string, entryName: string) {
+  if ((await readEntryText(dir, entryName, KEPT_FILE, true)) !== undefined) {
+    return "held";
+  }
+  const mark = await readEntryText(dir, entryName, RESTORED_FILE, true);
+  if (mark === undefined) return undefined;
+  return isWrittenRestoredMark(mark) ? "held" : "writing";
 }
 
-/** Removes a file's restored mark; one already gone is skipped. */
+/** Marks a complete file kept (see KEPT_FILE), creating the mark only. */
+async function markEntryKept(dir: string, entryName: string) {
+  const entry = await getEntryDir(dir, entryName, true);
+  if (!entry) throw new Error("The kept file's entry is missing");
+  await entry.getFileHandle(KEPT_FILE, { create: true });
+}
+
+/**
+ * Removes a file's restored and kept marks, the kept one last, so an
+ * interrupted removal leaves the file held; one already gone is skipped.
+ */
 async function removeRestoredMark(dir: string, entryName: string) {
   const entry = await getEntryDir(dir, entryName, true);
-  await entry?.removeEntry(RESTORED_FILE).catch((error: unknown) => {
-    if ((error as Error)?.name !== "NotFoundError") throw error;
-  });
+  for (const name of [RESTORED_FILE, KEPT_FILE]) {
+    await entry?.removeEntry(name).catch((error: unknown) => {
+      if ((error as Error)?.name !== "NotFoundError") throw error;
+    });
+  }
 }
 
 /**
@@ -676,8 +702,8 @@ export type RestoredQueuedFiles = {
  * log records its original uploaded (see UploadLog), whether or not it is
  * still there; any other (missing or half written) is written again from
  * the backup. A restore into the queue's own account marks a complete
- * file it keeps RESTORED_FOR_ACCOUNT, so no replay removes or discards it
- * before the restore's records are imported, as a file it writes. A file
+ * file it keeps with KEPT_FILE, so no replay removes or discards it before
+ * the restore's records are imported, as a file it writes. A file
  * that cannot be written rejects, after removing the files this call added.
  */
 export async function stageRestoredFiles(
@@ -700,12 +726,7 @@ export async function stageRestoredFiles(
         const isPresent = Boolean(await getEntryDir(dir, entryName, true));
         const held = isPresent ? await readHeldEntry(dir, entryName) : "none";
         if (held === "complete" && options.isOwnAccount) {
-          await writeEntryFile(
-            dir,
-            entryName,
-            RESTORED_FILE,
-            RESTORED_FOR_ACCOUNT
-          );
+          await markEntryKept(dir, entryName);
         }
         if (held !== "none") continue;
         if (!isPresent) staged.added.push(copy.fileId);
@@ -722,15 +743,15 @@ export async function stageRestoredFiles(
 /**
  * How a queue holds a file a restore brings back: "complete" when it is
  * fully written and not marked restored, "restored" when an earlier restore
- * fully wrote it and it was not taken over yet, and "none" when it is
- * missing or half written.
+ * fully wrote or kept it and it was not taken over yet, and "none" when it
+ * is missing or half written.
  */
 async function readHeldEntry(dir: string, entryName: string) {
   const pending = await getStore(dir).getPendingUpload(entryName);
   if (!pending?.fileId) return "none";
-  const restored = await readRestoredMark(dir, entryName);
+  const restored = await readRestoredState(dir, entryName);
   if (restored === undefined) return "complete";
-  return isWrittenRestoredMark(restored) ? "restored" : "none";
+  return restored === "held" ? "restored" : "none";
 }
 
 async function stageRestoredEntry(
@@ -1060,9 +1081,9 @@ async function replayEntry(
 /**
  * Leaves a replay to act on a file (resolving undefined) when it is not
  * marked restored, or when a restore (into any account or the guest) fully
- * wrote it and a record of the queue's account now references it, removing
- * its mark; any other file marked restored is left untouched, and while the
- * records cannot be brought up to date or read, the pass stops.
+ * wrote or kept it and a record of the queue's account now references it,
+ * removing its marks; any other file marked restored is left untouched, and
+ * while the records cannot be brought up to date or read, the pass stops.
  */
 async function takeOverRestoredEntry(
   pass: ReplayPass,
@@ -1070,9 +1091,9 @@ async function takeOverRestoredEntry(
   fileId: string
 ): Promise<EntryOutcome | undefined> {
   const { references } = pass.request;
-  const restored = await readRestoredMark(pass.dir, entryName);
+  const restored = await readRestoredState(pass.dir, entryName);
   if (restored === undefined) return undefined;
-  if (!isWrittenRestoredMark(restored) || !references) return "done";
+  if (restored !== "held" || !references) return "done";
   const isReferenced = await isReferencedNow(pass, references, fileId);
   if (isReferenced === undefined) return "stop";
   if (!isReferenced) return "done";

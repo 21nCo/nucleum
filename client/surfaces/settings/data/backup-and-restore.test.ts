@@ -169,7 +169,7 @@ vi.mock("@nucleum/shared-state/files/file-queue", async (importOriginal) => {
 
 const { fileUpload } = await import("@nucleum/shared-state/files/file-upload");
 const { resolveFileUrl } = await import("@nucleum/shared-state/files/file-url");
-const { UNCOMMITTED_GRACE_MS } =
+const { UNCOMMITTED_GRACE_MS, dequeueFile } =
   await import("@nucleum/shared-state/files/file-queue");
 const { createBackupBlob, restoreBackup } =
   await import("./backup-and-restore");
@@ -278,13 +278,45 @@ async function backupFile() {
 /**
  * The OPFS root, whose new files at a path `write` matches cannot be
  * written: `write` returns the error to reject with, or a promise that never
- * settles (a page closed mid-write); and whose files at a path `remove`
- * matches cannot be removed.
+ * settles (a page closed mid-write); whose files at a path `remove` matches
+ * cannot be removed; and whose writes to files at a path `close` matches
+ * fail (or never settle) when they close, once the file exists.
  */
 function failingWrites(
   write: (path: string[]) => Error | "hang" | undefined,
-  remove: (path: string[]) => Error | undefined = () => undefined
+  remove: (path: string[]) => Error | undefined = () => undefined,
+  close: (path: string[]) => Error | "hang" | undefined = () => undefined
 ) {
+  const settle = (failure: Error | "hang" | undefined) =>
+    failure === "hang" ? new Promise<never>(() => undefined) : failure;
+  const wrapFile = (
+    handle: FileSystemFileHandle,
+    path: string[]
+  ): FileSystemFileHandle =>
+    new Proxy(handle, {
+      get(target, key) {
+        if (key === "createWritable") {
+          return async () => {
+            const writable = await target.createWritable();
+            return new Proxy(writable, {
+              get(stream, name) {
+                if (name === "close") {
+                  return async () => {
+                    const failure = await settle(close(path));
+                    if (failure) throw failure;
+                    return stream.close();
+                  };
+                }
+                const value = Reflect.get(stream, name) as unknown;
+                return typeof value === "function" ? value.bind(stream) : value;
+              }
+            });
+          };
+        }
+        const value = Reflect.get(target, key) as unknown;
+        return typeof value === "function" ? value.bind(target) : value;
+      }
+    });
   const wrap = (
     dir: FileSystemDirectoryHandle,
     path: string[]
@@ -306,11 +338,14 @@ function failingWrites(
           };
         }
         if (key === "getFileHandle") {
-          return (name: string, options?: { create?: boolean }) => {
+          return async (name: string, options?: { create?: boolean }) => {
             const failure = options?.create && write([...path, name]);
             if (failure === "hang") return new Promise(() => undefined);
-            if (failure) return Promise.reject(failure);
-            return target.getFileHandle(name, options);
+            if (failure) throw failure;
+            return wrapFile(await target.getFileHandle(name, options), [
+              ...path,
+              name
+            ]);
           };
         }
         const value = Reflect.get(target, key) as unknown;
@@ -1568,6 +1603,87 @@ describe("backup and restore of files the account upload queue still holds", () 
         expect.objectContaining({ fileId: record.fileId })
       ]);
       expect(sdk.artifacts).toHaveLength(1);
+      expect(sdk.deleted).toEqual([]);
+    }
+  );
+  it.each([
+    ["rejects", "reject"],
+    ["is cut short by a closed page", "hang"]
+  ] as const)(
+    "keeps a file the queue holds complete in its backups, and uploads it once a record references it, when a restore that keeps it %s after marking it",
+    async (_, failure) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const kept = await capturePhoto();
+      const added = await capturePhoto();
+      const backup = await backupFile();
+      const entry = `queued_${kept.fileId}`;
+      const addedEntry = `queued_${added.fileId}`;
+
+      account.set({
+        dataMode: UserDataMode.NONE,
+        sessionType: UserSessionType.UNDETERMINED
+      });
+      await destroyNucleumDatafn();
+      device = newDevice();
+      await bootData(cloudAccount("user-a"));
+      await dequeueFile(QUEUE_A, added.fileId);
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      const held = opfs.list(QUEUE_A, entry).sort();
+
+      let isFailing = false;
+      const fail = () => {
+        isFailing = true;
+        return failure === "reject"
+          ? Object.assign(new Error("The quota is exceeded"), {
+              name: "QuotaExceededError"
+            })
+          : ("hang" as const);
+      };
+      getDirectory = failingWrites(
+        (path) => (path[1] === addedEntry ? fail() : undefined),
+        undefined,
+        (path) => (path[1] === entry ? fail() : undefined)
+      );
+      const restore = restoreBackup(backup, { triggerCloneUp: () => false });
+      if (failure === "reject") {
+        await expect(restore).rejects.toThrow("The quota is exceeded");
+      } else {
+        void restore;
+        await vi.waitFor(() => expect(isFailing).toBe(true));
+        locks = createFakeLocks();
+      }
+      getDirectory = opfs.getDirectory;
+
+      expect(opfs.list(QUEUE_A, entry)).toEqual(expect.arrayContaining(held));
+      expect(await savedRecord(kept.id)).toBeUndefined();
+      const next = JSON.parse(await backupText()) as {
+        fileQueue?: { files: { fileId: string }[] };
+      };
+      expect(next.fileQueue?.files).toEqual([
+        expect.objectContaining({ fileId: kept.fileId })
+      ]);
+
+      goOnline();
+      await replayed(QUEUE_A);
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(QUEUE_A)).toContain(entry);
+
+      isOnline = false;
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      expect((await savedRecord(kept.id))?.fileId).toBe(kept.fileId);
+
+      goOnline();
+
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+      const uploaded = (fileId: string) =>
+        sdk.uploads.filter((input) => input.fileId === fileId);
+      expect(sdk.started).toHaveLength(2);
+      expect(uploaded(kept.fileId)).toHaveLength(1);
+      expect(uploaded(added.fileId)).toHaveLength(1);
+      expect(sdk.artifacts).toHaveLength(2);
       expect(sdk.deleted).toEqual([]);
     }
   );
