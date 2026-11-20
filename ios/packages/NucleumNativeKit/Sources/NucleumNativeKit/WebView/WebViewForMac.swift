@@ -246,6 +246,26 @@ struct WebViewForMac: NSViewRepresentable, WebViewHandlerDelegate {
       preferences: WKWebpagePreferences,
       decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
     ) {
+      if let url = navigationAction.request.url,
+        navigationAction.targetFrame?.isMainFrame ?? true
+      {
+        switch NativeTrust.mainFrameNavigationDecision(
+          for: url,
+          trustedOrigins: NativeTrust.appTrustedOrigins(loadedURL: parent.url),
+          isTrustedAccountURL: NativeTrust.isAppAccountURL
+        ) {
+        case .allow:
+          break
+        case .openExternally:
+          NSWorkspace.shared.open(url)
+          decisionHandler(.cancel, preferences)
+          return
+        case .cancel:
+          Log.info("Blocked WebView navigation to an untrusted scheme")
+          decisionHandler(.cancel, preferences)
+          return
+        }
+      }
       if navigationAction.shouldPerformDownload {
         decisionHandler(.download, preferences)
       } else {
@@ -304,6 +324,10 @@ extension WebViewForMac.Coordinator: WKScriptMessageHandler {
     _ userContentController: WKUserContentController, didReceive message: WKScriptMessage
   ) {
     if message.name == "iOSNative" {
+      guard NativeTrust.acceptsBridgeMessage(message, loadedURL: parent.url) else {
+        Log.error(message: "Ignored a bridge message from an untrusted frame")
+        return
+      }
       if let body = message.body as? [String: Any?] {
         delegate?.receivedJsonValueFromWebView(value: body)
       } else if let body = message.body as? String {

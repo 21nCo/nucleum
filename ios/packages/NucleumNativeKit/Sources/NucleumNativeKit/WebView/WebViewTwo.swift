@@ -763,13 +763,26 @@ struct WebViewTwo: UIViewRepresentable, WebViewHandlerDelegate {
       _ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
       decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
     ) {
-      if let host = navigationAction.request.url?.host {
-        if host == "restricted.com" {
-          decisionHandler(.cancel)
-          return
-        }
+      guard let url = navigationAction.request.url,
+        navigationAction.targetFrame?.isMainFrame ?? true
+      else {
+        decisionHandler(.allow)
+        return
       }
-      decisionHandler(.allow)
+      switch NativeTrust.mainFrameNavigationDecision(
+        for: url,
+        trustedOrigins: NativeTrust.appTrustedOrigins(loadedURL: parent.url),
+        isTrustedAccountURL: NativeTrust.isAppAccountURL
+      ) {
+      case .allow:
+        decisionHandler(.allow)
+      case .openExternally:
+        UIApplication.shared.open(url)
+        decisionHandler(.cancel)
+      case .cancel:
+        Log.info("Blocked WebView navigation to an untrusted scheme")
+        decisionHandler(.cancel)
+      }
     }
   }
 }
@@ -779,6 +792,10 @@ extension WebViewTwo.Coordinator: WKScriptMessageHandler {
     _ userContentController: WKUserContentController, didReceive message: WKScriptMessage
   ) {
     if message.name == "iOSNative" {
+      guard NativeTrust.acceptsBridgeMessage(message, loadedURL: parent.url) else {
+        Log.error(message: "Ignored a bridge message from an untrusted frame")
+        return
+      }
       if let body = message.body as? [String: Any?] {
         delegate?.receivedJsonValueFromWebView(value: body)
       } else if let body = message.body as? String {

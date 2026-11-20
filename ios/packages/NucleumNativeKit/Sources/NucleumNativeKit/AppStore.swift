@@ -416,11 +416,17 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
     sharedDefaults?.removeObject(forKey: "authfnAccountUrl")
   }
 
+  /// Uses an account URL from the web layer only when it is one of the app's
+  /// own account hosts, because the session token is sent to it.
   private func resolveAuthFnAccountUrl(_ accountUrl: String?) -> String {
     if let accountUrl = accountUrl?.trimmingCharacters(in: .whitespacesAndNewlines),
       !accountUrl.isEmpty
     {
-      return accountUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+      let candidate = accountUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+      if let url = URL(string: candidate), NativeTrust.isAppAccountURL(url) {
+        return candidate
+      }
+      Log.error(message: "Ignored an untrusted AuthFn account URL")
     }
     return LocalConfig.accountUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
   }

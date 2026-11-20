@@ -215,6 +215,10 @@ struct BaseView: View {
 
   func processUrlScheme(_ url: URL) {
     Log.info("Url Scheme triggered: \(redactUrlForLog(url))")
+    if url.absoluteString.contains("oauthsign") && !isShowOauthFlow {
+      Log.error(message: "Ignored a sign-in link this app did not start")
+      return
+    }
     if url.absoluteString.contains("oauthsignin") {
       processOauthResponse(url)
       self.isShowInAppSafari = false
@@ -231,8 +235,10 @@ struct BaseView: View {
       self.src.params = ["token": token, "signup": isSignup ? "true" : "false"]
       self.isShowInAppSafari = false
       self.isShowOauthFlow = false
-    } else if url.absoluteString.contains("debug") {
-      self.src.params = ["debug": "true"]
+    } else if url.host?.lowercased() == "debug" {
+      #if DEBUG
+        self.src.params = ["debug": "true"]
+      #endif
     }
   }
 

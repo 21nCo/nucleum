@@ -192,6 +192,10 @@ struct BaseViewForMac: View {
 
   func handleCustomURL(_ url: URL) {
     Log.info("Url Scheme triggered: \(redactUrlForLog(url))")
+    if url.absoluteString.contains("oauthsign") && !isShowOauthFlow {
+      Log.error(message: "Ignored a sign-in link this app did not start")
+      return
+    }
     if url.absoluteString.contains("oauthsignarchived") {
       let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
       guard let token = components?.queryItems?.first(where: { $0.name == "token" })?.value else {
@@ -203,8 +207,10 @@ struct BaseViewForMac: View {
       self.src.params = ["token": token, "signup": isSignup ? "true" : "false"]
       isShowOauthFlow = false
       self.src.viewModel.valuePublisher.send("authResult:success")
-    } else if url.absoluteString.contains("debug") {
-      self.src.params = ["debug": "true"]
+    } else if url.host?.lowercased() == "debug" {
+      #if DEBUG
+        self.src.params = ["debug": "true"]
+      #endif
     }
   }
 
