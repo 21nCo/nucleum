@@ -228,6 +228,22 @@ describe("renderMdAsHtml links and quotes", () => {
     }
   });
 
+  it("never opens a label at a bracket inside code or after a backslash", () => {
+    const cases: [string, string, string][] = [
+      ["Use `a[0]` and [doc](https://x.com)", ".inline-link", "doc"],
+      ["Call `list[i]` then see [Bob](resource=p1)", ".inline-mention", "Bob"],
+      ["`[` opens a [link](https://x.com)", ".inline-link", "link"],
+      ["[Release notes\nfor ``arr[0``](https://x.com/docs)", ".inline-link", "Release notes<br>for ``arr[0``"],
+      ["See [Q4 plan [draft](resource=node_1) \\\n## Title ]", ".inline-mention", "Q4 plan [draft"]
+    ];
+    for (const [text, selector, label] of cases) {
+      const element = renderIntoDom(renderMdAsHtml(text)).querySelector(selector);
+      expect(element?.getAttribute("data-label"), text).toBe(label);
+    }
+    const code = renderIntoDom(renderMdAsHtml("Use `a[0]` and [doc](https://x.com)"));
+    expect(code.textContent).toContain("a[0]");
+  });
+
   it("does not let a lone backtick hide later brackets", () => {
     const link = renderIntoDom(
       renderMdAsHtml("don`t miss [skip](https://example.com/docs)")

@@ -146,6 +146,7 @@ type InlineLayout = {
   validClosers: number[];
   targetEnds: Map<number, number>;
   brackets: Map<number, number>;
+  ignoredOpens: Set<number>;
   runEnds: Map<number, number>;
   completeStarts: number[];
 };
@@ -172,7 +173,7 @@ function buildInlineLayout(text: string): InlineLayout {
     validClosers.push(close);
     targetEnds.set(close, targetEnd);
   }
-  const brackets = matchLabelBrackets(text, boundaries);
+  const { matches: brackets, ignored: ignoredOpens } = matchLabelBrackets(text, boundaries);
   const runEnds = new Map<number, number>();
   for (let index = text.length - 1, runEnd = -1; index >= 0; index -= 1) {
     if (text[index] === "]") {
@@ -187,7 +188,7 @@ function buildInlineLayout(text: string): InlineLayout {
     }
   }
   completeStarts.sort((left, right) => left - right);
-  return { boundaries, validClosers, targetEnds, brackets, runEnds, completeStarts };
+  return { boundaries, validClosers, targetEnds, brackets, ignoredOpens, runEnds, completeStarts };
 }
 
 /**
@@ -254,27 +255,45 @@ function extractInlineLinks(text: string, tokens: string[]) {
 
 /**
  * Pairs every `[` with the `]` that balances it inside the same block, in one
- * pass, ignoring brackets inside inline code and backslash-escaped brackets.
+ * pass, ignoring brackets inside inline code (backtick runs of equal length)
+ * and backslash-escaped brackets, which are returned as `ignored` so no label
+ * opens there.
  * Unclosed brackets at a block boundary are dropped.
  */
 function matchLabelBrackets(text: string, boundaries: number[]) {
   const matches = new Map<number, number>();
+  const ignored = new Set<number>();
   const stack: number[] = [];
   for (let index = 0; index < text.length; index += 1) {
     const char = text[index];
     if (char === "\n" && !staysInBlock(boundaries, index, index + 1)) {
       stack.length = 0;
     } else if (char === "`") {
-      const codeEnd = text.indexOf("`", index + 1);
-      if (codeEnd >= 0 && staysInBlock(boundaries, index, codeEnd)) index = codeEnd;
-    } else if (char === "\\") index += 1;
-    else if (char === "[") stack.push(index);
+      let runEnd = index;
+      while (text[runEnd + 1] === "`") runEnd += 1;
+      const fence = text.slice(index, runEnd + 1);
+      let codeEnd = text.indexOf(fence, runEnd + 1);
+      while (codeEnd >= 0 && (text[codeEnd - 1] === "`" || text[codeEnd + fence.length] === "`")) {
+        codeEnd = text.indexOf(fence, codeEnd + 1);
+      }
+      if (codeEnd >= 0 && staysInBlock(boundaries, index, codeEnd)) {
+        for (let inner = runEnd + 1; inner < codeEnd; inner += 1) {
+          if (text[inner] === "[") ignored.add(inner);
+        }
+        index = codeEnd + fence.length - 1;
+      } else {
+        index = runEnd;
+      }
+    } else if (char === "\\" && (text[index + 1] === "[" || text[index + 1] === "]")) {
+      if (text[index + 1] === "[") ignored.add(index + 1);
+      index += 1;
+    } else if (char === "[") stack.push(index);
     else if (char === "]") {
       const open = stack.pop();
       if (open !== undefined) matches.set(open, index);
     }
   }
-  return matches;
+  return { matches, ignored };
 }
 
 /** The first valid `](` at or after `from` that stays in the block of `open`. */
@@ -299,6 +318,7 @@ function hasCompleteStartBetween(layout: InlineLayout, from: number, to: number)
  */
 function findLabelClose(text: string, open: number, layout: InlineLayout) {
   const { brackets, boundaries, targetEnds, runEnds } = layout;
+  if (layout.ignoredOpens.has(open)) return -1;
   const balanced = balancedCloseAt(open, brackets, runEnds, boundaries, targetEnds);
   if (balanced >= 0) return balanced;
   const pair = brackets.get(open);
