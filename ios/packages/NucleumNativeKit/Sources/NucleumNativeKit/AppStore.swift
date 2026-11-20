@@ -42,6 +42,21 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
   @Published var isShowCamera: Bool = false
   @Published var inAppSafariUrl: String = ""
   @Published var oauthUrl: String = ""
+  /// When the app last started a browser sign-in; URL-scheme sign-in links are
+  /// accepted only while one is pending.
+  private var pendingSignInStartedAt: Date?
+  private let pendingSignInLifetime: TimeInterval = 10 * 60
+
+  func markSignInStarted() {
+    pendingSignInStartedAt = Date()
+  }
+
+  /// Returns true, once, when a sign-in this app started is still pending.
+  func consumePendingSignIn() -> Bool {
+    defer { pendingSignInStartedAt = nil }
+    guard let startedAt = pendingSignInStartedAt else { return false }
+    return Date().timeIntervalSince(startedAt) <= pendingSignInLifetime
+  }
   @Published var appData: AppData = AppData(colorschemes: [], name: LocalConfig.defaultAppName)
   let sharedDefaults = UserDefaults(suiteName: LocalConfig.appGroup)
   private let widgetTokenRefreshLeewaySeconds: TimeInterval = 5 * 60
@@ -574,6 +589,11 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
 
       let fallbackAccountUrl = resolveAuthFnAccountUrl(nil)
       guard let fallbackAccountBaseURL = URL(string: fallbackAccountUrl) else {
+        sendNativeAppleSignInError("invalid_authorize_url")
+        return true
+      }
+      if let accountBaseURL = context.accountBaseURL, !NativeTrust.isAppAccountURL(accountBaseURL) {
+        Log.error(message: "Ignored native Apple sign-in for an untrusted account URL")
         sendNativeAppleSignInError("invalid_authorize_url")
         return true
       }

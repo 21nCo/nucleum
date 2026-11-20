@@ -246,30 +246,24 @@ struct WebViewForMac: NSViewRepresentable, WebViewHandlerDelegate {
       preferences: WKWebpagePreferences,
       decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
     ) {
-      if let url = navigationAction.request.url,
-        navigationAction.targetFrame?.isMainFrame ?? true
-      {
-        switch NativeTrust.mainFrameNavigationDecision(
-          for: url,
-          trustedOrigins: NativeTrust.appTrustedOrigins(loadedURL: parent.url),
-          isTrustedAccountURL: NativeTrust.isAppAccountURL
-        ) {
-        case .allow:
-          break
-        case .openExternally:
-          NSWorkspace.shared.open(url)
-          decisionHandler(.cancel, preferences)
-          return
-        case .cancel:
-          Log.info("Blocked WebView navigation to an untrusted scheme")
-          decisionHandler(.cancel, preferences)
-          return
-        }
-      }
       if navigationAction.shouldPerformDownload {
         decisionHandler(.download, preferences)
-      } else {
+        return
+      }
+      let (decision, url) = NativeTrust.appNavigationDecision(
+        for: navigationAction, loadedURL: parent.url)
+      switch decision {
+      case .allow:
         decisionHandler(.allow, preferences)
+      case .openExternally:
+        if let url { NSWorkspace.shared.open(url) }
+        decisionHandler(.cancel, preferences)
+      case .startSignIn:
+        if let url { delegate?.receivedJsonValueFromWebView(value: ["oauth": url.absoluteString]) }
+        decisionHandler(.cancel, preferences)
+      case .cancel:
+        Log.info("Blocked a WebView navigation")
+        decisionHandler(.cancel, preferences)
       }
     }
 
@@ -324,7 +318,16 @@ extension WebViewForMac.Coordinator: WKScriptMessageHandler {
     _ userContentController: WKUserContentController, didReceive message: WKScriptMessage
   ) {
     if message.name == "iOSNative" {
-      guard NativeTrust.acceptsBridgeMessage(message, loadedURL: parent.url) else {
+      let frame = message.frameInfo
+      guard
+        NativeTrust.acceptsBridgeMessage(
+          isMainFrame: frame.isMainFrame,
+          scheme: frame.securityOrigin.protocol,
+          host: frame.securityOrigin.host,
+          port: frame.securityOrigin.port,
+          trustedOrigins: NativeTrust.appTrustedOrigins(loadedURL: parent.url)
+        )
+      else {
         Log.error(message: "Ignored a bridge message from an untrusted frame")
         return
       }

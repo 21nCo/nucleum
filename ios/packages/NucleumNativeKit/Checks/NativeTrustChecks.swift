@@ -9,44 +9,55 @@ func check(_ condition: Bool, _ name: String) {
 }
 
 let origins = [URL(string: "tauri://localhost")!, URL(string: "https://web.nucleum.app")!]
+let accountOrigins = ["insouth", "useast", "euwest"].map { URL(string: "https://account-\($0).nucleum.app")! }
 func account(_ value: String) -> Bool {
-  NativeTrust.isTrustedAccountURL(
-    URL(string: value)!, accountDomain: "nucleum.app", devHostZone: "21n.dev", productLabel: "nucleum")
+  NativeTrust.isTrustedAccountURL(URL(string: value)!, allowedAccountOrigins: accountOrigins)
 }
 
-check(account("https://account-insouth.nucleum.app"), "live account host")
-check(account("https://account-useast-pre.nucleum.app/auth"), "pre account host")
-check(account("https://nucleum-account-euwest.21n.dev"), "dev account host")
-check(!account("http://account-insouth.nucleum.app"), "http account host refused")
-check(!account("https://evil.example"), "foreign host refused")
-check(!account("https://nucleum.app.evil.example"), "suffix trick refused")
-check(!account("https://other-account-insouth.21n.dev"), "other product on dev zone refused")
-check(!account("https://a.nucleum-account-insouth.21n.dev"), "nested dev host refused")
+check(account("https://account-insouth.nucleum.app"), "configured account host")
+check(account("https://account-useast.nucleum.app/auth"), "configured account host with path")
+check(!account("https://web.nucleum.app"), "web host refused")
+check(!account("https://help.nucleum.app"), "sibling subdomain refused")
+check(!account("https://account-insouth.nucleum.app:8443"), "other port refused")
+check(!account("http://account-insouth.nucleum.app"), "http refused")
+check(!account("https://nucleum-account-insouth.21n.dev"), "dev host refused in this environment")
 check(!account("https://user@account-insouth.nucleum.app"), "userinfo refused")
 
-check(NativeTrust.isTrustedFrameOrigin(scheme: "tauri", host: "localhost", port: 0, trustedOrigins: origins), "bundled origin")
-check(NativeTrust.isTrustedFrameOrigin(scheme: "https", host: "web.nucleum.app", port: 0, trustedOrigins: origins), "web origin")
-check(!NativeTrust.isTrustedFrameOrigin(scheme: "https", host: "platform.twitter.com", port: 0, trustedOrigins: origins), "embed origin refused")
-check(!NativeTrust.isTrustedFrameOrigin(scheme: "https", host: "web.nucleum.app", port: 8443, trustedOrigins: origins), "other port refused")
+check(NativeTrust.acceptsBridgeMessage(isMainFrame: true, scheme: "tauri", host: "localhost", port: 0, trustedOrigins: origins), "bundled main frame")
+check(NativeTrust.acceptsBridgeMessage(isMainFrame: true, scheme: "https", host: "web.nucleum.app", port: 0, trustedOrigins: origins), "web main frame")
+check(!NativeTrust.acceptsBridgeMessage(isMainFrame: false, scheme: "tauri", host: "localhost", port: 0, trustedOrigins: origins), "subframe refused")
+check(!NativeTrust.acceptsBridgeMessage(isMainFrame: true, scheme: "https", host: "platform.twitter.com", port: 0, trustedOrigins: origins), "foreign main frame refused")
+check(!NativeTrust.acceptsBridgeMessage(isMainFrame: true, scheme: "https", host: "web.nucleum.app", port: 8443, trustedOrigins: origins), "other port refused")
 
-func decide(_ value: String) -> NativeTrust.NavigationDecision {
-  NativeTrust.mainFrameNavigationDecision(
-    for: URL(string: value)!, trustedOrigins: origins, isTrustedAccountURL: { url in
-      NativeTrust.isTrustedAccountURL(url, accountDomain: "nucleum.app", devHostZone: "21n.dev", productLabel: "nucleum")
+func decide(_ value: String, target: Bool? = true, source: Bool = true) -> NativeTrust.NavigationDecision {
+  NativeTrust.navigationDecision(
+    for: URL(string: value)!, targetIsMainFrame: target, sourceIsMainFrame: source,
+    trustedOrigins: origins, isTrustedAccountURL: { url in
+      NativeTrust.isTrustedAccountURL(url, allowedAccountOrigins: accountOrigins)
     })
 }
 check(decide("tauri://localhost/index.html") == .allow, "bundled navigation allowed")
 check(decide("https://web.nucleum.app/library") == .allow, "web origin navigation allowed")
 check(decide("https://account-insouth.nucleum.app/auth/x") == .allow, "account navigation allowed")
 check(decide("about:blank") == .allow, "about:blank allowed")
+check(decide("https://accounts.google.com/o/oauth2/v2/auth?x=1") == .startSignIn, "Google sign-in starts native session")
+check(decide("https://appleid.apple.com/auth/authorize") == .startSignIn, "Apple sign-in starts native session")
+check(decide("https://github.com/login/oauth/authorize") == .startSignIn, "GitHub sign-in starts native session")
+check(decide("https://github.com/nucleum") == .openExternally, "other GitHub page opens externally")
 check(decide("https://evil.example/") == .openExternally, "foreign web opens externally")
 check(decide("mailto:someone@example.com") == .openExternally, "mailto opens externally")
 check(decide("javascript:alert(1)") == .cancel, "javascript cancelled")
 check(decide("data:text/html,x") == .cancel, "data cancelled")
 check(decide("file:///etc/hosts") == .cancel, "file cancelled")
+check(decide("https://evil.example/", target: false, source: false) == .allow, "subframe navigation unchanged")
+check(decide("https://evil.example/", target: nil, source: false) == .cancel, "popup from an embed discarded")
+check(decide("https://evil.example/", target: nil, source: true) == .openExternally, "popup from the app opens externally")
 
-check(NativeTrust.isSignInDeepLink(URL(string: "nucleum://oauthsignin#token=x")!, appScheme: "nucleum"), "sign-in link")
-check(!NativeTrust.isSignInDeepLink(URL(string: "nucleum://debug-oauthsignin")!, appScheme: "nucleum"), "lookalike link")
+check(NativeTrust.signInDeepLinkKind(URL(string: "nucleum://oauthsignin#token=x")!, appScheme: "nucleum") == "oauthsignin", "sign-in link")
+check(NativeTrust.signInDeepLinkKind(URL(string: "nucleum://oauthsignarchived?token=x")!, appScheme: "nucleum") == "oauthsignarchived", "archived link")
+check(NativeTrust.signInDeepLinkKind(URL(string: "nucleum://debug-oauthsignin")!, appScheme: "nucleum") == nil, "lookalike host")
+check(NativeTrust.signInDeepLinkKind(URL(string: "nucleum://x?oauthsignarchived&token=x")!, appScheme: "nucleum") == nil, "query lookalike")
+check(NativeTrust.signInDeepLinkKind(URL(string: "memotron://oauthsignin")!, appScheme: "nucleum") == nil, "other app scheme")
 
 print(failures == 0 ? "NativeTrust checks passed" : "\(failures) NativeTrust checks failed")
 exit(failures == 0 ? 0 : 1)

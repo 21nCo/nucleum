@@ -190,20 +190,13 @@ class WebViewModel: ObservableObject {
 /// Decides which origins, navigations and account URLs the native shell trusts.
 /// Pure functions over explicit inputs so they can be checked without a WebView.
 enum NativeTrust {
-  /// Hosts the shell's own account service can live on: the product account
-  /// domain and its subdomains, or `<product>-account-<region>` on the dev zone.
-  static func isTrustedAccountURL(
-    _ url: URL, accountDomain: String, devHostZone: String, productLabel: String
-  ) -> Bool {
-    guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased(), !host.isEmpty
-    else { return false }
-    if url.user != nil || url.password != nil { return false }
-    let domain = normalizedDomain(accountDomain)
-    if host == domain || host.hasSuffix(".\(domain)") { return true }
-    let zone = normalizedDomain(devHostZone)
-    return host.hasSuffix(".\(zone)")
-      && host.hasPrefix("\(productLabel.lowercased())-account-")
-      && host.dropLast(zone.count + 1).contains(".") == false
+  /// True when `url` is exactly one of the configured account authorities
+  /// (scheme, host and port), so tokens only go to the app's own account service.
+  static func isTrustedAccountURL(_ url: URL, allowedAccountOrigins: [URL]) -> Bool {
+    guard url.scheme?.lowercased() == "https", url.user == nil, url.password == nil else {
+      return false
+    }
+    return allowedAccountOrigins.contains { sameOrigin($0, url) }
   }
 
   /// True when a frame's origin is one the app itself is served from.
@@ -215,35 +208,79 @@ enum NativeTrust {
     return trustedOrigins.contains { origin in
       origin.scheme?.lowercased() == scheme
         && (origin.host?.lowercased() ?? "") == host
-        && effectivePort(origin.port, scheme: scheme) == effectivePort(port == 0 ? nil : port, scheme: scheme)
+        && effectivePort(origin.port, scheme: scheme)
+          == effectivePort(port == 0 ? nil : port, scheme: scheme)
     }
+  }
+
+  /// Accepts a bridge message only from the main frame of an app origin.
+  static func acceptsBridgeMessage(
+    isMainFrame: Bool, scheme: String, host: String, port: Int, trustedOrigins: [URL]
+  ) -> Bool {
+    isMainFrame
+      && isTrustedFrameOrigin(scheme: scheme, host: host, port: port, trustedOrigins: trustedOrigins)
   }
 
   enum NavigationDecision: Equatable {
     case allow
     case openExternally
+    case startSignIn
     case cancel
   }
 
-  /// Main-frame navigations stay in the WebView only for the app's own origins,
-  /// its account hosts and in-page schemes; other web links open in the system
-  /// browser, and anything else is cancelled.
-  static func mainFrameNavigationDecision(
-    for url: URL, trustedOrigins: [URL], isTrustedAccountURL: (URL) -> Bool
+  /// Decides a WebView navigation. Subframes (embeds) are unchanged. A
+  /// new-window request from a subframe is discarded, as WebKit did before.
+  /// Main-frame navigations stay in the WebView only for the app's origins,
+  /// its account hosts and in-page schemes; OAuth provider pages start the
+  /// native sign-in session; other web, mail and phone links open in the
+  /// system browser; anything else is cancelled.
+  static func navigationDecision(
+    for url: URL,
+    targetIsMainFrame: Bool?,
+    sourceIsMainFrame: Bool,
+    trustedOrigins: [URL],
+    isTrustedAccountURL: (URL) -> Bool
   ) -> NavigationDecision {
+    switch targetIsMainFrame {
+    case .some(false):
+      return .allow
+    case .none where !sourceIsMainFrame:
+      return .cancel
+    default:
+      break
+    }
     let scheme = url.scheme?.lowercased() ?? ""
     if scheme == "about" || scheme == "blob" { return .allow }
     if trustedOrigins.contains(where: { sameOrigin($0, url) }) { return .allow }
     if scheme == "https" && isTrustedAccountURL(url) { return .allow }
+    if isOAuthProviderURL(url) { return .startSignIn }
     if scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "tel" {
       return .openExternally
     }
     return .cancel
   }
 
-  /// A sign-in deep link is `<app scheme>://oauthsignin` (case-insensitive host).
-  static func isSignInDeepLink(_ url: URL, appScheme: String) -> Bool {
-    url.scheme?.lowercased() == appScheme.lowercased() && url.host?.lowercased() == "oauthsignin"
+  /// Authorization pages of the sign-in providers the account service uses.
+  static func isOAuthProviderURL(_ url: URL) -> Bool {
+    guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else {
+      return false
+    }
+    switch host {
+    case "accounts.google.com", "appleid.apple.com":
+      return true
+    case "github.com":
+      return url.path.hasPrefix("/login/oauth")
+    default:
+      return false
+    }
+  }
+
+  /// The URL-scheme hosts that carry sign-in results: `oauthsignin` and the
+  /// older `oauthsignarchived`, on the app's own scheme.
+  static func signInDeepLinkKind(_ url: URL, appScheme: String) -> String? {
+    guard url.scheme?.lowercased() == appScheme.lowercased() else { return nil }
+    let host = url.host?.lowercased()
+    return host == "oauthsignin" || host == "oauthsignarchived" ? host : nil
   }
 
   static func sameOrigin(_ left: URL, _ right: URL) -> Bool {
@@ -261,15 +298,13 @@ enum NativeTrust {
     default: return nil
     }
   }
-
-  private static func normalizedDomain(_ domain: String) -> String {
-    let trimmed = domain.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-    return trimmed.hasPrefix(".") ? String(trimmed.dropFirst()) : trimmed
-  }
 }
 // MARK: - NativeTrust (end)
 
 extension NativeTrust {
+  /// Region ids the account service is deployed to.
+  static let accountRegionIds = ["insouth", "useast", "euwest"]
+
   /// Origins the app's own web layer is served from.
   static func appTrustedOrigins(loadedURL: URL?) -> [URL] {
     var origins: [URL] = []
@@ -279,26 +314,30 @@ extension NativeTrust {
     return origins
   }
 
-  /// Account URLs the native side may send the session token to.
-  static func isAppAccountURL(_ url: URL) -> Bool {
-    isTrustedAccountURL(
-      url,
-      accountDomain: LocalConfig.accountDomain,
-      devHostZone: LocalConfig.devHostZone,
-      productLabel: LocalConfig.productLabel
-    )
+  /// The configured account authority for every deployed region in this build's environment.
+  static func appAccountOrigins() -> [URL] {
+    (accountRegionIds + [LocalConfig.defaultRegion]).compactMap {
+      URL(string: LocalConfig.accountUrl(for: $0))
+    }
   }
 
-  /// Accepts bridge messages only from the main frame of an app origin.
-  static func acceptsBridgeMessage(_ message: WKScriptMessage, loadedURL: URL?) -> Bool {
-    guard message.frameInfo.isMainFrame else { return false }
-    let origin = message.frameInfo.securityOrigin
-    return isTrustedFrameOrigin(
-      scheme: origin.protocol,
-      host: origin.host,
-      port: origin.port,
-      trustedOrigins: appTrustedOrigins(loadedURL: loadedURL)
+  /// Account URLs the native side may send the session token or a sign-in credential to.
+  static func isAppAccountURL(_ url: URL) -> Bool {
+    isTrustedAccountURL(url, allowedAccountOrigins: appAccountOrigins())
+  }
+
+  /// Applies `navigationDecision` to a WebKit navigation action for this app.
+  static func appNavigationDecision(
+    for navigationAction: WKNavigationAction, loadedURL: URL?
+  ) -> (NavigationDecision, URL?) {
+    guard let url = navigationAction.request.url else { return (.allow, nil) }
+    let decision = navigationDecision(
+      for: url,
+      targetIsMainFrame: navigationAction.targetFrame?.isMainFrame,
+      sourceIsMainFrame: navigationAction.sourceFrame.isMainFrame,
+      trustedOrigins: appTrustedOrigins(loadedURL: loadedURL),
+      isTrustedAccountURL: isAppAccountURL
     )
+    return (decision, url)
   }
 }
-
