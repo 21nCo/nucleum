@@ -643,7 +643,9 @@ test.describe("context zone overflow", () => {
         ).toHaveCount(0, {
           timeout: 10_000
         });
-        await expect(record).toBeVisible();
+        // Crossing the floor resets to home, as an orientation flip does, so
+        // the open record closes instead of lingering in a hidden layer.
+        await expect(record).toHaveCount(0);
       }
     }
   });
