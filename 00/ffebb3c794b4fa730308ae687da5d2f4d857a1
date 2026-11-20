@@ -4,9 +4,9 @@ client/shared-state/files/filefn-client.ts
   s_b66d0e9dd4fae0::t_7fcc216dc42cb0 10,23,283-286,299-303,305,311,445
 client/shared-state/files/file-upload.ts
   s_b66d0e9dd4fae0::t_4d4ad48abf451c 118
-  s_b66d0e9dd4fae0::t_e19cc4b44f8363 30,115-117,152
+  s_b66d0e9dd4fae0::t_e19cc4b44f8363 30,115-117,115,152
 client/shared-state/files/file-upload.account-queue.test.ts
-  s_b66d0e9dd4fae0::t_cc7fc5e3b64eaa 10,887-929
+  s_b66d0e9dd4fae0::t_cc7fc5e3b64eaa 10,887-929,887-921,926-929
 ---
 {
   "schema_version": "authorship/3.0.0",
