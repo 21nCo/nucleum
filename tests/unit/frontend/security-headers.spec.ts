@@ -41,11 +41,13 @@ describe("frontend security headers", () => {
     const crlf = "\r\n  window.a = 1;\r\n";
     const nbsp = "\n  window.b = '</script\u00a0>';\n";
     const dataSrc = "\n  window.c = 3;\n";
+    const comment = "\n  window.d = 4;\n";
+    const ecma = "\n  window.e = 5;\n";
     const { buildDir } = makeRepo(
-      `<html><head><script>${crlf}</script><script data-x="a>b" type="">${nbsp}</script\n><script data-src="/x.js">${dataSrc}</script><script src=/y.js></script></head></html>`
+      `<html><head><script>${crlf}</script><script data-x="a>b" type="">${nbsp}</script\n><script data-src="/x.js">${dataSrc}</script><script src=/y.js></script><!-- <script type="module"> --><script type="text&#47;javascript">${comment}</script><script type="application/ecmascript">${ecma}</script><script type="text/plain">x</script></head></html>`
     );
     expect(collectInlineScriptHashes(buildDir).sort()).toEqual(
-      [sha256("\n  window.a = 1;\n"), sha256(nbsp), sha256(dataSrc)].sort()
+      [sha256("\n  window.a = 1;\n"), sha256(nbsp), sha256(dataSrc), sha256(comment), sha256(ecma)].sort()
     );
   });
 

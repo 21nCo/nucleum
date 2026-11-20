@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { parse as parseHtml } from 'parse5';
 
 export function readConfig(serviceRoot) {
   return JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
@@ -241,41 +242,49 @@ export function frameAncestorSources(config) {
   return ["'self'", ...[...domains].sort((left, right) => left.localeCompare(right)).flatMap((domain) => [`https://${domain}`, `https://*.${domain}`])];
 }
 
-const HTML_SPACE = '\\t\\n\\f\\r ';
-const SCRIPT_ELEMENT = new RegExp(
-  `<script(?=[${HTML_SPACE}/>])((?:[^>"']|"[^"]*"|'[^']*')*)>([\\s\\S]*?)</script(?=[${HTML_SPACE}/>])[^>]*>`,
-  'gi'
-);
-const HTML_ATTRIBUTE = new RegExp(
-  `(?:^|[${HTML_SPACE}/])([^${HTML_SPACE}/>="'<]+)(?:[${HTML_SPACE}]*=[${HTML_SPACE}]*(?:"([^"]*)"|'([^']*)'|([^${HTML_SPACE}>]+)))?`,
-  'g'
-);
-const JAVASCRIPT_TYPES = new Set(['', 'module', 'text/javascript', 'application/javascript']);
+const JAVASCRIPT_TYPES = new Set([
+  '',
+  'module',
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript'
+]);
 
-function readScriptAttributes(source) {
-  const attributes = new Map();
-  for (const match of source.matchAll(HTML_ATTRIBUTE)) {
-    const name = match[1].toLowerCase();
-    if (!attributes.has(name)) attributes.set(name, match[2] ?? match[3] ?? match[4] ?? '');
-  }
-  return attributes;
+function* scriptElements(node) {
+  if (node.nodeName === 'script') yield node;
+  for (const child of node.childNodes ?? []) yield* scriptElements(child);
+  if (node.content) yield* scriptElements(node.content);
 }
 
 /**
- * Collects sha256 CSP sources for every inline script in the built HTML files,
- * following the HTML tokenizer's rules for newlines, script end tags and
- * attribute names.
+ * Collects sha256 CSP sources for every inline script in the built HTML files.
+ * The HTML is parsed with parse5, so comments, entities, newline normalisation
+ * and script end tags are read the way the browser reads them.
  */
 export function collectInlineScriptHashes(buildDir) {
   const hashes = new Set();
   for (const file of listHtmlFiles(buildDir)) {
-    const html = fs.readFileSync(file, 'utf8').replace(/\r\n?/g, '\n');
-    for (const match of html.matchAll(SCRIPT_ELEMENT)) {
-      const attributes = readScriptAttributes(match[1]);
+    const document = parseHtml(fs.readFileSync(file, 'utf8'));
+    for (const script of scriptElements(document)) {
+      const attributes = new Map(script.attrs.map((attribute) => [attribute.name, attribute.value]));
       if (attributes.has('src')) continue;
       const type = (attributes.get('type') ?? '').trim().toLowerCase();
       if (!JAVASCRIPT_TYPES.has(type)) continue;
-      const digest = crypto.createHash('sha256').update(match[2], 'utf8').digest('base64');
+      const text = script.childNodes.map((child) => child.value ?? '').join('');
+      const digest = crypto.createHash('sha256').update(text, 'utf8').digest('base64');
       hashes.add(`'sha256-${digest}'`);
     }
   }
