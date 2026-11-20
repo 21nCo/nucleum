@@ -1,6 +1,6 @@
 <script lang="ts" generics="T extends MapPoint">
   import { onMount, onDestroy } from "svelte";
-  import maplibregl from "maplibre-gl";
+  import * as maplibregl from "maplibre-gl";
   import "maplibre-gl/dist/maplibre-gl.css";
   import type { MapPoint } from "./map-point.type";
   import { mapTileStyles } from "@21n/ui/compositions/maps/map.styles";
