@@ -148,6 +148,7 @@ type InlineLayout = {
   brackets: Map<number, number>;
   ignoredOpens: Set<number>;
   runEnds: Map<number, number>;
+  newlines: number[];
   completeStarts: number[];
 };
 
@@ -188,7 +189,11 @@ function buildInlineLayout(text: string): InlineLayout {
     }
   }
   completeStarts.sort((left, right) => left - right);
-  return { boundaries, validClosers, targetEnds, brackets, ignoredOpens, runEnds, completeStarts };
+  const newlines: number[] = [];
+  for (let index = text.indexOf("\n"); index >= 0; index = text.indexOf("\n", index + 1)) {
+    newlines.push(index);
+  }
+  return { boundaries, validClosers, targetEnds, brackets, ignoredOpens, runEnds, newlines, completeStarts };
 }
 
 /**
@@ -347,7 +352,8 @@ function findLabelClose(text: string, open: number, layout: InlineLayout) {
   const pair = brackets.get(open);
   if (pair === undefined) {
     const fallback = nextValidCloser(layout, open, open + 1);
-    return fallback >= 0 && !text.slice(open, fallback).includes("\n") ? fallback : -1;
+    const nextNewline = layout.newlines[firstAtOrAfter(layout.newlines, open)];
+    return fallback >= 0 && (nextNewline === undefined || nextNewline > fallback) ? fallback : -1;
   }
   if (!staysInBlock(boundaries, open, pair)) return -1;
   const close = runEnds.get(pair) ?? pair;
