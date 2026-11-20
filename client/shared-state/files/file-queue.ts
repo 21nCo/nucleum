@@ -43,7 +43,7 @@ const STALE_FILE = "stale";
 const STARTED_FILE = "started";
 /**
  * Marks a file a restore put in the queue that its account has not taken
- * over yet (see stageRestoredFiles; KEPT_FILE marks one it kept): empty
+ * over yet (see stageRestoredFiles; a kept mark holds one it kept): empty
  * while it is written, so a replay leaves it untouched; once it is fully
  * written, RESTORED_FOR_ACCOUNT for a restore into the queue's own account
  * and RESTORED_FOR_OTHER for one into another account or the guest. Only the account's replay removes the
@@ -53,15 +53,21 @@ const RESTORED_FILE = "restored";
 const RESTORED_FOR_ACCOUNT = "account";
 const RESTORED_FOR_OTHER = "other";
 /**
- * Marks a file a restore found held and kept as the queue held it (see
+ * Kept marks: `kept-<created at, in ms>-<restore>`, one per restore that
+ * found a file held and kept it as the queue held it (see
  * stageRestoredFiles): complete, by a restore into the queue's own account,
- * or written by an earlier restore, by any restore; a restore that fails
- * then never removes it (see unstageRestoredFiles). Its presence alone,
- * whatever it holds, means the file is complete and held for its account
- * as a RESTORED_FOR_ACCOUNT one is, so a mark whose write rejects or is
- * interrupted once the file exists never makes the file look half written.
+ * or written by an earlier restore, by any restore. A kept mark holds the
+ * file for the restore that made it, from staging until that restore
+ * settles, when it removes its own mark only (see settleRestoredFiles and
+ * unstageRestoredFiles), so concurrent restores never end each other's
+ * hold; a restore that never settles (its page closed) holds it no longer
+ * than KEPT_MARK_LIFETIME_MS. Its presence alone, whatever it holds, means
+ * the file is complete and held as a RESTORED_FOR_ACCOUNT one is, so a mark
+ * whose write rejects or is interrupted once the file exists never makes the
+ * file look half written; the mark is only created, never written.
  */
-const KEPT_FILE = "kept";
+const KEPT_PREFIX = "kept-";
+const KEPT_NAME = /^kept-(\d+)-[\w-]+$/;
 
 /** Returns whether a restored mark is a fully written file's. */
 function isWrittenRestoredMark(mark: string | undefined) {
@@ -577,13 +583,13 @@ async function copyEntry(dir: string, entryName: string) {
 }
 
 /**
- * Reads whether a restore holds a file (see RESTORED_FILE and KEPT_FILE):
- * "held" when it is marked kept or a restore fully wrote it, "writing" when
- * a restore is writing it (or was interrupted), and undefined when it is not
- * marked; a read error other than a missing file rejects.
+ * Reads whether a restore holds a file (see RESTORED_FILE and KEPT_PREFIX):
+ * "held" when a live kept mark holds it or a restore fully wrote it,
+ * "writing" when a restore is writing it (or was interrupted), and undefined
+ * when it is not marked; a read error other than a missing file rejects.
  */
 async function readRestoredState(dir: string, entryName: string) {
-  if ((await readEntryText(dir, entryName, KEPT_FILE, true)) !== undefined) {
+  if ((await readKeptMarks(dir, entryName)).some(isLiveKeptMark)) {
     return "held";
   }
   const mark = await readEntryText(dir, entryName, RESTORED_FILE, true);
@@ -591,23 +597,74 @@ async function readRestoredState(dir: string, entryName: string) {
   return isWrittenRestoredMark(mark) ? "held" : "writing";
 }
 
-/** Marks a complete file kept (see KEPT_FILE), creating the mark only. */
-async function markEntryKept(dir: string, entryName: string) {
+/** The names of a file's kept marks; a read error other than a missing file rejects. */
+async function readKeptMarks(dir: string, entryName: string) {
   const entry = await getEntryDir(dir, entryName, true);
-  if (!entry) throw new Error("The kept file's entry is missing");
-  await entry.getFileHandle(KEPT_FILE, { create: true });
+  const names: string[] = [];
+  for await (const name of entry
+    ? (entry as unknown as { keys(): AsyncIterable<string> }).keys()
+    : []) {
+    if (name.startsWith(KEPT_PREFIX)) names.push(name);
+  }
+  return names;
 }
 
 /**
- * Removes a file's restored and kept marks, the kept one last, so an
- * interrupted removal leaves the file held; one already gone is skipped.
+ * Whether a kept mark still holds its file: made less than
+ * KEPT_MARK_LIFETIME_MS ago (or ahead, on a clock set back).
+ */
+function isLiveKeptMark(name: string) {
+  const createdAt = Number(KEPT_NAME.exec(name)?.[1]);
+  return (
+    Number.isFinite(createdAt) &&
+    Math.abs(Date.now() - createdAt) < KEPT_MARK_LIFETIME_MS
+  );
+}
+
+/** Marks a complete file kept for a restore (see KEPT_PREFIX), creating the mark only. */
+async function markEntryKept(dir: string, entryName: string, mark: string) {
+  const entry = await getEntryDir(dir, entryName, true);
+  if (!entry) throw new Error("The kept file's entry is missing");
+  await entry.getFileHandle(mark, { create: true });
+}
+
+/** Removes a file's entry file, if it is there; any other error rejects. */
+async function removeEntryFile(
+  entry: FileSystemDirectoryHandle | null,
+  name: string
+) {
+  await entry?.removeEntry(name).catch((error: unknown) => {
+    if ((error as Error)?.name !== "NotFoundError") throw error;
+  });
+}
+
+/**
+ * Removes a file's restored mark and every kept mark, the kept ones last, so
+ * an interrupted removal leaves the file held; one already gone is skipped.
  */
 async function removeRestoredMark(dir: string, entryName: string) {
   const entry = await getEntryDir(dir, entryName, true);
-  for (const name of [RESTORED_FILE, KEPT_FILE]) {
-    await entry?.removeEntry(name).catch((error: unknown) => {
-      if ((error as Error)?.name !== "NotFoundError") throw error;
-    });
+  await removeEntryFile(entry, RESTORED_FILE);
+  for (const name of await readKeptMarks(dir, entryName)) {
+    await removeEntryFile(entry, name);
+  }
+}
+
+/**
+ * Removes the kept marks a restore made (see KEPT_PREFIX) from the files it
+ * kept, leaving other restores' marks; one that cannot be removed is logged
+ * and holds its file no longer than KEPT_MARK_LIFETIME_MS. Never rejects.
+ */
+async function removeKeptMarks({ dir, kept, keptMark }: RestoredQueuedFiles) {
+  for (const fileId of kept) {
+    try {
+      await removeEntryFile(
+        await getEntryDir(dir, toEntryName(fileId), true),
+        keptMark
+      );
+    } catch (error) {
+      logger.warn({ at: "fileQueue.kept", fileId, error });
+    }
   }
 }
 
@@ -701,9 +758,13 @@ export type RestoredQueuedFiles = {
   added: string[];
   /**
    * The files the restore wrote or marked kept, `added` among them, which
-   * releaseRestoredFiles hands to the replay once a record references them.
+   * settleRestoredFiles hands to the replay once a record references them.
    */
   held: string[];
+  /** The files the restore marked kept with `keptMark`. */
+  kept: string[];
+  /** The restore's own kept mark (see KEPT_PREFIX). */
+  keptMark: string;
 };
 
 /**
@@ -716,28 +777,36 @@ export type RestoredQueuedFiles = {
  * the guest. Only the account's replay takes the file over, once a record
  * of the account references it (records a restore into the account
  * imported, or that reach the account another way), and until then no
- * replay acts on it; a restore never removes the mark, since its records
- * may not reference every file it carried.
+ * replay acts on it; a restore removes the mark only of a file its imported
+ * records reference (see settleRestoredFiles), since they may not reference
+ * every file it carried.
  * Runs under the queue's Web Lock. A file stays as the queue holds it when
  * it is complete there and not marked restored, when an earlier restore
  * fully wrote it and it was not taken over yet, or when the queue's upload
  * log records its original uploaded (see UploadLog), whether or not it is
  * still there; any other (missing or half written) is written again from
  * the backup. A restore into the queue's own account marks a complete
- * file it keeps with KEPT_FILE, also one the upload log records, so no
- * replay removes or discards it before the restore's records are imported,
- * as a file it writes, and releaseRestoredFiles hands it back to the replay
- * once they are; any restore marks a file an earlier restore wrote kept, so
- * that restore removes it no more if it fails (see unstageRestoredFiles). A
- * file that cannot be written rejects, after removing the files this call
- * added.
+ * file it keeps with its own kept mark (see KEPT_PREFIX), also one the
+ * upload log records, so no replay removes or discards it before the
+ * restore's records are imported, as a file it writes; any restore marks a
+ * file an earlier restore wrote kept, so that restore removes it no more if
+ * it fails (see unstageRestoredFiles). Each restore removes its kept marks
+ * once it settles (see settleRestoredFiles), whatever its records reference.
+ * A file that cannot be written rejects, after removing the files this call
+ * added and its kept marks.
  */
 export async function stageRestoredFiles(
   dir: string,
   copies: readonly QueuedFileCopy[],
   options: { isOwnAccount: boolean }
 ): Promise<RestoredQueuedFiles> {
-  const staged: RestoredQueuedFiles = { dir, added: [], held: [] };
+  const staged: RestoredQueuedFiles = {
+    dir,
+    added: [],
+    held: [],
+    kept: [],
+    keptMark: `${KEPT_PREFIX}${Date.now()}-${crypto.randomUUID()}`
+  };
   if (!copies.length) return staged;
   if (!isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
@@ -754,8 +823,9 @@ export async function stageRestoredFiles(
           held === "restored" ||
           (held === "complete" && options.isOwnAccount)
         ) {
-          await markEntryKept(dir, entryName);
+          staged.kept.push(copy.fileId);
           staged.held.push(copy.fileId);
+          await markEntryKept(dir, entryName, staged.keptMark);
         }
         if (held !== "none" || uploads[copy.fileId]) continue;
         if (!isPresent) staged.added.push(copy.fileId);
@@ -764,6 +834,7 @@ export async function stageRestoredFiles(
       }
     } catch (error) {
       await removeStagedFiles(dir, staged.added, false);
+      await removeKeptMarks(staged);
       throw error;
     }
   });
@@ -771,32 +842,37 @@ export async function stageRestoredFiles(
 }
 
 /**
- * Hands the files a restore into the queue's own account wrote or kept (see
- * stageRestoredFiles) back to the replay once its records are imported,
- * under the queue's Web Lock: each one still held (fully written or kept,
- * not taken over yet) that a record of the account references
- * (`isReferenced`) loses its marks, the kept one last, so the replay's
- * rules apply to it again, also when its record is later deleted; one whose
- * upload the replay completed (marked uploaded) leaves the queue instead,
- * as its record now references the file FileFn holds. A file no record
- * references stays held. A file that cannot be released is logged and stays
- * held, for the replay to take over once it finds the file referenced;
- * never rejects.
+ * Settles a restore that staged its files (see stageRestoredFiles) once it
+ * imported its records, all or in part, or stopped there, under the queue's
+ * Web Lock. With `isReferenced`, for a restore into the queue's own account,
+ * each file it wrote or kept that is still held (fully written or kept, not
+ * taken over yet) and that a record of the account references loses its
+ * marks, the kept ones last, so the replay's rules apply to it again, also
+ * when its record is later deleted; one whose upload the replay completed
+ * (marked uploaded) leaves the queue instead, as its record now references
+ * the file FileFn holds. A file it wrote that no record references stays
+ * held. Then the restore removes its own kept marks, whatever the records
+ * reference, so a file it kept is held by it no more, and only by another
+ * restore's kept mark or its written restored mark. A file that cannot be
+ * released is logged and stays held, for the replay to take over once it
+ * finds the file referenced; never rejects.
  */
-export async function releaseRestoredFiles(
-  { dir, held }: RestoredQueuedFiles,
-  isReferenced: (fileId: string) => Promise<boolean | undefined>
+export async function settleRestoredFiles(
+  staged: RestoredQueuedFiles,
+  isReferenced?: (fileId: string) => Promise<boolean | undefined>
 ): Promise<void> {
+  const { dir, held } = staged;
   if (!held.length) return;
   const signal = new AbortController().signal;
   await withQueueLock(dir, signal, async () => {
-    for (const fileId of new Set(held)) {
+    for (const fileId of isReferenced ? new Set(held) : []) {
       try {
-        await releaseRestoredEntry(dir, fileId, isReferenced);
+        await releaseRestoredEntry(dir, fileId, isReferenced!);
       } catch (error) {
         logger.warn({ at: "fileQueue.release", fileId, error });
       }
     }
+    await removeKeptMarks(staged);
   }).catch((error: unknown) => {
     logger.warn({ at: "fileQueue.release", dir, error });
   });
@@ -883,22 +959,24 @@ async function stageRestoredEntry(
 /**
  * Removes the files a restore added to a queue, when the restore fails
  * before importing any record: under the queue's Web Lock, and only a file
- * the restore still holds alone, marked restored and not kept. A file
- * another restore found and kept (see stageRestoredFiles), as its records
- * may reference it, and one a replay took over (no longer marked), or that
- * left the queue, stay as they are. One that cannot be removed stays marked
- * restored, so no replay acts on it unless its record is found. Never
- * rejects.
+ * the restore still holds alone, marked restored and with no live kept
+ * mark. A file another restore found and kept (see stageRestoredFiles), as
+ * its records may reference it, and one a replay took over (no longer
+ * marked), or that left the queue, stay as they are. One that cannot be
+ * removed stays marked restored, so no replay acts on it unless its record
+ * is found. Then removes the restore's own kept marks (see
+ * settleRestoredFiles). Never rejects.
  */
-export async function unstageRestoredFiles({
-  dir,
-  added
-}: RestoredQueuedFiles): Promise<void> {
-  if (!added.length) return;
+export async function unstageRestoredFiles(
+  staged: RestoredQueuedFiles
+): Promise<void> {
+  const { dir, added, kept } = staged;
+  if (!added.length && !kept.length) return;
   const signal = new AbortController().signal;
-  await withQueueLock(dir, signal, () =>
-    removeStagedFiles(dir, added, true)
-  ).catch((error: unknown) => {
+  await withQueueLock(dir, signal, async () => {
+    await removeStagedFiles(dir, added, true);
+    await removeKeptMarks(staged);
+  }).catch((error: unknown) => {
     logger.warn({ at: "fileQueue.unstage", dir, error });
   });
 }
@@ -925,9 +1003,9 @@ async function removeStagedFiles(
   }
 }
 
-/** Whether a file is marked restored and not kept (see KEPT_FILE). */
+/** Whether a file is marked restored, with no live kept mark (see KEPT_PREFIX). */
 async function isHeldByRestoreAlone(dir: string, entryName: string) {
-  if ((await readEntryText(dir, entryName, KEPT_FILE, true)) !== undefined) {
+  if ((await readKeptMarks(dir, entryName)).some(isLiveKeptMark)) {
     return false;
   }
   return (
@@ -968,6 +1046,8 @@ const RETRY_DELAYS_MS = [5_000, 30_000, 120_000, 600_000];
 const retryCounts = new Map<string, number>();
 /** How long an account's file without a record may still be saving. */
 export const UNCOMMITTED_GRACE_MS = 24 * 60 * 60_000;
+/** How long a kept mark holds its file at most (see KEPT_PREFIX). */
+export const KEPT_MARK_LIFETIME_MS = UNCOMMITTED_GRACE_MS;
 /** The upload requests each client sent (see countSentRequests). */
 const sentRequests = new WeakMap<FileFnClient, Map<string, number>>();
 

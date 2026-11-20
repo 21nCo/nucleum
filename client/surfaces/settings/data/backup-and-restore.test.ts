@@ -169,7 +169,7 @@ vi.mock("@nucleum/shared-state/files/file-queue", async (importOriginal) => {
 
 const { fileUpload } = await import("@nucleum/shared-state/files/file-upload");
 const { resolveFileUrl } = await import("@nucleum/shared-state/files/file-url");
-const { UNCOMMITTED_GRACE_MS, dequeueFile } =
+const { KEPT_MARK_LIFETIME_MS, UNCOMMITTED_GRACE_MS, dequeueFile } =
   await import("@nucleum/shared-state/files/file-queue");
 const { createBackupBlob, restoreBackup } =
   await import("./backup-and-restore");
@@ -270,6 +270,49 @@ async function readQueuedBytes(fileId: string, variant: "full" | "thumbnail") {
 
 async function backupText() {
   return (await createBackupBlob()).text();
+}
+
+/** Deletes a record, as the user does. */
+async function deleteRecord(id: string) {
+  const deleted = (await datafn.file.mutate({
+    operation: "delete",
+    id
+  } as never)) as { ok?: boolean };
+  expect(deleted.ok).not.toBe(false);
+  expect(await savedRecord(id)).toBeUndefined();
+}
+
+/** Writes a file of an entry of user-a's queue. */
+async function writeQueuedEntryFile(entry: string, name: string, text: string) {
+  const root = await opfs.getDirectory();
+  const queued = await (
+    await root.getDirectoryHandle(QUEUE_A)
+  ).getDirectoryHandle(entry);
+  const writable = await (
+    await queued.getFileHandle(name, { create: true })
+  ).createWritable();
+  await writable.write(text);
+  await writable.close();
+  return queued;
+}
+
+/** Whether an entry of user-a's queue carries a restore's kept mark. */
+function isKept(entry: string) {
+  return opfs.list(QUEUE_A, entry).some((name) => name.startsWith("kept"));
+}
+
+/**
+ * The started marker an upload attempt of a queued file's owner leaves (its
+ * page closed before the upload ended), from the file's claim.
+ */
+function startedMarkerOf(entry: string) {
+  const claim = JSON.parse(
+    new TextDecoder().decode(opfs.read(QUEUE_A, entry, "claim.json"))
+  ) as Record<string, unknown>;
+  return {
+    name: "started-attempt-1",
+    text: JSON.stringify({ ...claim, attempt: "attempt-1" })
+  };
 }
 
 /** A backup as the file a user picks to restore. */
@@ -1227,7 +1270,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     expect(sdk.deleted).toEqual([]);
   });
 
-  it("leaves a file a failed offline restore left for its account held for it, only marked kept, when another account restores the backup", async () => {
+  it("leaves a file a failed offline restore left for its account held for it as it was when another account restores the backup", async () => {
     await bootData(cloudAccount("user-a"));
     isOnline = false;
     const record = await capturePhoto();
@@ -1240,19 +1283,18 @@ describe("backup and restore of files the account upload queue still holds", () 
       ok: true,
       stats: { resources: { file: { skipped: 1 } }, joins: {} }
     };
-    data.isImportSaving = true;
     await expect(
       restoreBackup(backup, { triggerCloneUp: () => false })
     ).rejects.toThrow("DataFn restore failed");
     data.importResult = null;
-    data.isImportSaving = false;
+    expect(await savedRecord(record.id)).toBeUndefined();
     const held = opfs.list(QUEUE_A, entry).sort();
     expect(held).toContain("committed");
 
     await bootData(cloudAccount("user-b"));
     await restoreBackup(backup, { triggerCloneUp: () => false });
 
-    expect(opfs.list(QUEUE_A, entry).sort()).toEqual([...held, "kept"].sort());
+    expect(opfs.list(QUEUE_A, entry).sort()).toEqual(held);
     expect(
       new TextDecoder().decode(opfs.read(QUEUE_A, entry, "restored"))
     ).toBe("account");
@@ -1264,6 +1306,8 @@ describe("backup and restore of files the account upload queue still holds", () 
     expect(next.fileQueue?.files).toEqual([
       expect.objectContaining({ fileId: record.fileId })
     ]);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
 
     goOnline();
 
@@ -1622,7 +1666,7 @@ describe("backup and restore of files the account upload queue still holds", () 
     ["rejects", "reject"],
     ["is cut short by a closed page", "hang"]
   ] as const)(
-    "keeps a file the queue holds complete in its backups, and uploads it once a record references it, when a restore that keeps it %s after marking it",
+    "keeps a file the queue holds complete in its backups, and uploads it once a record references it, when a restore that keeps it %s after marking it, held only while that restore may still import",
     async (_, failure) => {
       await bootData(cloudAccount("user-a"));
       isOnline = false;
@@ -1676,11 +1720,15 @@ describe("backup and restore of files the account upload queue still holds", () 
         expect.objectContaining({ fileId: kept.fileId })
       ]);
 
+      expect(
+        opfs.list(QUEUE_A, entry).some((name) => name.startsWith("kept"))
+      ).toBe(failure === "hang");
+
       goOnline();
       await replayed(QUEUE_A);
       expect(sdk.started).toEqual([]);
       expect(sdk.deleted).toEqual([]);
-      expect(opfs.list(QUEUE_A)).toContain(entry);
+      expect(opfs.list(QUEUE_A).includes(entry)).toBe(failure === "hang");
 
       isOnline = false;
       await restoreBackup(backup, { triggerCloneUp: () => false });
@@ -1844,7 +1892,9 @@ describe("backup and restore of files the account upload queue still holds", () 
       isOnline = false;
       expect(sdk.started).toEqual([]);
       expect(opfs.list(QUEUE_A, entry)).not.toContain("restored");
-      expect(opfs.list(QUEUE_A, entry)).not.toContain("kept");
+      expect(
+        opfs.list(QUEUE_A, entry).some((name) => name.startsWith("kept"))
+      ).toBe(false);
       await bootData(cloudAccount("user-b"));
     };
 
@@ -1974,7 +2024,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
       const restored = opfs.list(QUEUE_A, entry);
       expect(restored).not.toContain("restored");
-      expect(restored).not.toContain("kept");
+      expect(restored.some((name) => name.startsWith("kept"))).toBe(false);
       for (const { name } of started) expect(restored).toContain(name);
 
       const deleted = (await datafn.file.mutate({
@@ -1994,4 +2044,276 @@ describe("backup and restore of files the account upload queue still holds", () 
       expect(next.fileQueue).toBeUndefined();
     }
   );
+
+  it.each([
+    ["never started", false],
+    ["started", true]
+  ])(
+    "removes a file whose record was deleted offline once its own account restores a backup without the record on the same browser, when its upload %s",
+    async (_, isStarted) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      if (isStarted) {
+        const marker = startedMarkerOf(entry);
+        await writeQueuedEntryFile(entry, marker.name, marker.text);
+      }
+      await deleteRecord(record.id);
+      const backup = await backupFile();
+      expect(
+        (
+          JSON.parse(await backup.text()) as {
+            fileQueue?: { files: unknown[] };
+          }
+        ).fileQueue?.files
+      ).toEqual([expect.objectContaining({ fileId: record.fileId })]);
+
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      expect(await savedRecord(record.id)).toBeUndefined();
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      expect(isKept(entry)).toBe(false);
+      replays.clear();
+      goOnline();
+
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual(isStarted ? [record.fileId] : []);
+      const next = JSON.parse(await backupText()) as { fileQueue?: unknown };
+      expect(next.fileQueue).toBeUndefined();
+    }
+  );
+
+  it("removes a capture past its grace whose record never saved once its own account restores a backup of it on the same browser", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    await deleteRecord(record.id);
+    const metadata = JSON.parse(
+      new TextDecoder().decode(opfs.read(QUEUE_A, entry, "metadata.json"))
+    ) as Record<string, unknown>;
+    const queued = await writeQueuedEntryFile(
+      entry,
+      "metadata.json",
+      JSON.stringify({
+        ...metadata,
+        createdAt: new Date(Date.now() - 3 * UNCOMMITTED_GRACE_MS).toISOString()
+      })
+    );
+    await queued.removeEntry("committed");
+    const backup = await backupFile();
+
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(isKept(entry)).toBe(false);
+    replays.clear();
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it.each([
+    ["the account changes", "account"],
+    ["its records are imported only in part", "import"]
+  ] as const)(
+    "hands a file the queue held complete back to the replay when its own account's restore rejects after keeping it because %s, and removes it once online",
+    async (_, cause) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      await deleteRecord(record.id);
+      const backup = await backupFile();
+      let isKeptWhileRestoring = false;
+      preflight.during = async () => {
+        isKeptWhileRestoring = isKept(entry);
+        if (cause === "account") await bootData(cloudAccount("user-b"));
+      };
+      if (cause === "import") {
+        data.importResult = {
+          ok: true,
+          stats: { resources: { file: { skipped: 1 } }, joins: {} }
+        };
+      }
+
+      await expect(
+        restoreBackup(backup, { triggerCloneUp: () => false })
+      ).rejects.toThrow(
+        cause === "account"
+          ? "The account changed while the backup was restored"
+          : "DataFn restore failed"
+      );
+      preflight.during = null;
+      data.importResult = null;
+      if (cause === "account") await bootData(cloudAccount("user-a"));
+      expect(isKeptWhileRestoring).toBe(true);
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      expect(isKept(entry)).toBe(false);
+      replays.clear();
+      goOnline();
+
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+    }
+  );
+
+  it.each([
+    ["never started", false],
+    ["started", true]
+  ])(
+    "hands a restored file whose record a partly failed restore saved back to the replay, and removes it once the record is deleted offline, when its upload %s",
+    async (_, isStarted) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      const marker = startedMarkerOf(entry);
+      let text = await backupText();
+      if (isStarted) {
+        const at = text.indexOf(',"fileQueueBytes":"');
+        text =
+          text
+            .slice(0, at)
+            .replace('"started":[]', `"started":${JSON.stringify([marker])}`) +
+          text.slice(at);
+      }
+      const backup = new File([text], "backup.json");
+
+      await clearBrowser();
+      await bootData(cloudAccount("user-a"));
+      data.importResult = {
+        ok: true,
+        stats: { resources: { file: { skipped: 1 } }, joins: {} }
+      };
+      data.isImportSaving = true;
+      await expect(
+        restoreBackup(backup, { triggerCloneUp: () => false })
+      ).rejects.toThrow("DataFn restore failed");
+      data.importResult = null;
+      data.isImportSaving = false;
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+      const restored = opfs.list(QUEUE_A, entry);
+      expect(restored).not.toContain("restored");
+      expect(restored.includes(marker.name)).toBe(isStarted);
+
+      await deleteRecord(record.id);
+      replays.clear();
+      goOnline();
+
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual(isStarted ? [record.fileId] : []);
+    }
+  );
+
+  it.each([
+    ["with", true],
+    ["without", false]
+  ])(
+    "keeps a file the queue holds complete for a restore still running after another restore that kept it settles %s Web Locks, and uploads it once that restore imports its record",
+    async (_, isLocking) => {
+      hasLocks = isLocking;
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const backup = await backupFile();
+      const entry = `queued_${record.fileId}`;
+
+      account.set({
+        dataMode: UserDataMode.NONE,
+        sessionType: UserSessionType.UNDETERMINED
+      });
+      await destroyNucleumDatafn();
+      device = newDevice();
+      await bootData(cloudAccount("user-a"));
+      expect(await savedRecord(record.id)).toBeUndefined();
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+
+      let resume!: () => void;
+      const resumed = new Promise<void>((resolve) => (resume = resolve));
+      let later!: Promise<void>;
+      let restores = 0;
+      preflight.during = async () => {
+        if (++restores > 1) return resumed;
+        later = restoreBackup(backup, { triggerCloneUp: () => false });
+        await vi.waitFor(() => expect(restores).toBe(2));
+        data.importResult = {
+          ok: true,
+          stats: { resources: { file: { skipped: 1 } }, joins: {} }
+        };
+      };
+
+      await expect(
+        restoreBackup(backup, { triggerCloneUp: () => false })
+      ).rejects.toThrow("DataFn restore failed");
+      data.importResult = null;
+      expect(await savedRecord(record.id)).toBeUndefined();
+      expect(isKept(entry)).toBe(true);
+      replays.clear();
+      goOnline();
+      await replayed(QUEUE_A);
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+
+      resume();
+      await later;
+      preflight.during = null;
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+      expect(sdk.started).toHaveLength(1);
+      expect(sdk.uploads).toEqual([
+        expect.objectContaining({ fileId: record.fileId })
+      ]);
+      expect(sdk.artifacts).toHaveLength(1);
+      expect(sdk.deleted).toEqual([]);
+    }
+  );
+
+  it("stops holding a file the queue holds complete for a restore a closed page cut short once that restore's kept mark outlives its lifetime, and removes it", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    await deleteRecord(record.id);
+    const backup = await backupFile();
+    let isStaged = false;
+    preflight.during = () => {
+      isStaged = true;
+      return new Promise<void>(() => undefined);
+    };
+    void restoreBackup(backup, { triggerCloneUp: () => false });
+    await vi.waitFor(() => expect(isStaged).toBe(true));
+    preflight.during = null;
+    locks = createFakeLocks();
+    expect(isKept(entry)).toBe(true);
+
+    replays.clear();
+    goOnline();
+    await replayed(QUEUE_A);
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + KEPT_MARK_LIFETIME_MS + 1_000
+    );
+    replays.clear();
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+  });
 });

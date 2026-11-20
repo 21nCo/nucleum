@@ -3,8 +3,8 @@ import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
 import {
   exportQueuedFiles,
   isFileQueueSupported,
-  releaseRestoredFiles,
   resolveAccountFileQueueDir,
+  settleRestoredFiles,
   stageRestoredFiles,
   unstageRestoredFiles,
   type QueuedFileCopy
@@ -104,10 +104,13 @@ export async function createBackupBlob(): Promise<Blob> {
  * its own account marks a complete unmarked one kept, so no replay
  * removes it before the records are imported), and one whose upload
  * the account's replay completed (in any tab, before or while the restore
- * runs) is not staged again. Once a restore into the files' own account
- * imported every record, the files it wrote or kept that a record
- * references go back to the replay's rules (see releaseRestoredFiles), so
- * deleting the record later removes the file as for any other. Rejects, restoring nothing, when the backup or
+ * runs) is not staged again. Once the restore settles, it holds no file it
+ * kept any more (see settleRestoredFiles): a complete file the queue held
+ * before goes back to the replay's rules, referenced or not; and once a
+ * restore into the files' own account imported its records, all or in
+ * part, the files it wrote that a saved record references go back to the
+ * replay's rules too, so deleting the record later removes the file as for
+ * any other. Rejects, restoring nothing, when the backup or
  * its queued files cannot be read, this device cannot keep them, a file
  * cannot be written, or the account changes before the records are
  * imported (removing the files it added that it still holds alone, not
@@ -138,14 +141,17 @@ export async function restoreBackup(
     if (staged) await unstageRestoredFiles(staged);
     throw new Error("The account changed while the backup was restored");
   }
-  await importRecords(records, options.triggerCloneUp);
-  if (!isOwnAccount) return;
-  if (staged) {
-    await releaseRestoredFiles(staged, (fileId) =>
-      isReferencedIn(namespace, fileId)
-    );
+  try {
+    await importRecords(records, options.triggerCloneUp);
+  } finally {
+    if (staged) {
+      await settleRestoredFiles(
+        staged,
+        isOwnAccount ? (fileId) => isReferencedIn(namespace, fileId) : undefined
+      );
+    }
   }
-  await uploadQueuedFiles();
+  if (isOwnAccount) await uploadQueuedFiles();
 }
 
 /**
