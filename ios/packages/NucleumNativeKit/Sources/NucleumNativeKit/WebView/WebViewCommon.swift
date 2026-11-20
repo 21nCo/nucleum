@@ -241,6 +241,7 @@ enum NativeTrust {
     sourceIsMainFrame: Bool,
     trustedOrigins: [URL],
     appScheme: String,
+    isFormPost: Bool = false,
     isTrustedAccountURL: (URL) -> Bool
   ) -> NavigationDecision {
     switch targetIsMainFrame {
@@ -257,6 +258,12 @@ enum NativeTrust {
     if scheme == "https" && isTrustedAccountURL(url) { return .allow }
     if isOAuthProviderURL(url) { return sourceIsMainFrame ? .allow : .cancel }
     if scheme == appScheme.lowercased() { return sourceIsMainFrame ? .allow : .cancel }
+    if isFormPost && (scheme == "http" || scheme == "https") {
+      // A form POST cannot be handed to the system browser with its body (for
+      // example Apple's form_post sign-in callback), so one the app's main
+      // frame submits keeps loading in the WebView.
+      return sourceIsMainFrame ? .allow : .cancel
+    }
     if scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "tel" {
       return .openExternally
     }
@@ -340,6 +347,7 @@ extension NativeTrust {
       sourceIsMainFrame: navigationAction.sourceFrame.isMainFrame,
       trustedOrigins: appTrustedOrigins(loadedURL: loadedURL),
       appScheme: LocalConfig.urlScheme,
+      isFormPost: navigationAction.request.httpMethod?.uppercased() == "POST",
       isTrustedAccountURL: isAppAccountURL
     )
     return (decision, url)

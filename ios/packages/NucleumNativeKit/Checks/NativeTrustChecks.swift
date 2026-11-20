@@ -29,10 +29,10 @@ check(!NativeTrust.acceptsBridgeMessage(isMainFrame: false, scheme: "tauri", hos
 check(!NativeTrust.acceptsBridgeMessage(isMainFrame: true, scheme: "https", host: "platform.twitter.com", port: 0, trustedOrigins: origins), "foreign main frame refused")
 check(!NativeTrust.acceptsBridgeMessage(isMainFrame: true, scheme: "https", host: "web.nucleum.app", port: 8443, trustedOrigins: origins), "other port refused")
 
-func decide(_ value: String, target: Bool? = true, source: Bool = true) -> NativeTrust.NavigationDecision {
+func decide(_ value: String, target: Bool? = true, source: Bool = true, post: Bool = false) -> NativeTrust.NavigationDecision {
   NativeTrust.navigationDecision(
     for: URL(string: value)!, targetIsMainFrame: target, sourceIsMainFrame: source,
-    trustedOrigins: origins, appScheme: "nucleum", isTrustedAccountURL: { url in
+    trustedOrigins: origins, appScheme: "nucleum", isFormPost: post, isTrustedAccountURL: { url in
       NativeTrust.isTrustedAccountURL(url, allowedAccountOrigins: accountOrigins)
     })
 }
@@ -49,6 +49,8 @@ check(decide("nucleum://oauthsignin?token=x", target: true, source: false) == .c
 check(decide("https://github.com/nucleum") == .openExternally, "other GitHub page opens externally")
 check(decide("https://evil.example/") == .openExternally, "foreign web opens externally")
 check(decide("mailto:someone@example.com") == .openExternally, "mailto opens externally")
+check(decide("https://api.example.com/oauth/apple", post: true) == .allow, "main-frame form POST keeps loading")
+check(decide("https://api.example.com/oauth/apple", source: false, post: true) == .cancel, "embed form POST cancelled")
 check(decide("javascript:alert(1)") == .cancel, "javascript cancelled")
 check(decide("data:text/html,x") == .cancel, "data cancelled")
 check(decide("file:///etc/hosts") == .cancel, "file cancelled")

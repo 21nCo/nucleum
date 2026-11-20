@@ -194,7 +194,14 @@ struct BaseViewForMac: View {
   func handleCustomURL(_ url: URL) {
     Log.info("Url Scheme triggered: \(redactUrlForLog(url))")
     let signInKind = NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme)
-    if signInKind != nil && !appStore.consumePendingSignIn() {
+    let signInToken =
+      signInKind == "oauthsignarchived"
+      ? URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+        .first(where: { $0.name == "token" })?.value
+      : signInKind == "oauthsignin" ? oauthCallbackValue(url, name: "token") : nil
+    // Only a link that would sign in uses up the pending sign-in; error or
+    // malformed links leave it for the real callback.
+    if signInToken != nil && !appStore.consumePendingSignIn() {
       Log.error(message: "Ignored a sign-in link this app did not start")
       return
     }
@@ -292,7 +299,9 @@ struct BaseViewForMac: View {
   func openOauthFlow(_ urlString: String) {
     if URL(string: urlString) != nil {
       appStore.oauthUrl = urlString
-      appStore.markSignInStarted()
+      if let url = URL(string: urlString), isAllowedExternalUrl(url) {
+        appStore.markSignInStarted()
+      }
       self.isShowOauthFlow = true
     }
   }
