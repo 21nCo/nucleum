@@ -166,7 +166,7 @@
     "highlight.js": "^11.10.0",
     "ml-kmeans": "^6.0.0",
     "monaco-editor": "^0.52.0",
-    "music-metadata": "^11.16.0",
+    "music-metadata": "^12.3.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.1.392",
     "svelte": "^5.55.0",
@@ -175,10 +175,10 @@
   "peerDependencies": {
     "@21n/shared-utils": "*",
     "@21n/theme": "*",
-    "@nucleum/shared-state": "*",
+    "@21n/ui": "*",
     "@nucleum/client": "*",
     "@nucleum/persistence": "*",
-    "@21n/ui": "*",
+    "@nucleum/shared-state": "*",
     "@nucleum/shell": "*"
   }
 }

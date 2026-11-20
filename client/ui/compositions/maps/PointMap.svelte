@@ -1,6 +1,9 @@
 <script lang="ts" generics="T extends MapPoint">
   import { onMount, onDestroy } from "svelte";
-  import { maplibregl } from "@21n/ui/compositions/maps/maplibre";
+  import {
+    createMaplibreMap,
+    maplibregl
+  } from "@21n/ui/compositions/maps/maplibre";
   import "maplibre-gl/dist/maplibre-gl.css";
   import type { MapPoint } from "./map-point.type";
   import { mapTileStyles } from "@21n/ui/compositions/maps/map.styles";
@@ -49,7 +52,7 @@
       if (!mapContainer) {
         return;
       }
-      map = new maplibregl.Map({
+      map = createMaplibreMap({
         container: mapContainer,
         style: mapTileStyles.osm as any,
         center: [0, 0],
