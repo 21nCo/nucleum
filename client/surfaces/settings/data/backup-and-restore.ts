@@ -3,6 +3,7 @@ import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
 import {
   exportQueuedFiles,
   isFileQueueSupported,
+  releaseRestoredFiles,
   resolveAccountFileQueueDir,
   stageRestoredFiles,
   unstageRestoredFiles,
@@ -103,7 +104,10 @@ export async function createBackupBlob(): Promise<Blob> {
  * its own account marks a complete unmarked one kept, so no replay
  * removes it before the records are imported), and one whose upload
  * the account's replay completed (in any tab, before or while the restore
- * runs) is not staged again. Rejects, restoring nothing, when the backup or
+ * runs) is not staged again. Once a restore into the files' own account
+ * imported every record, the files it wrote or kept that a record
+ * references go back to the replay's rules (see releaseRestoredFiles), so
+ * deleting the record later removes the file as for any other. Rejects, restoring nothing, when the backup or
  * its queued files cannot be read, this device cannot keep them, a file
  * cannot be written, or the account changes before the records are
  * imported (removing the files it added that it still holds alone, not
@@ -135,7 +139,35 @@ export async function restoreBackup(
     throw new Error("The account changed while the backup was restored");
   }
   await importRecords(records, options.triggerCloneUp);
-  if (isOwnAccount) await uploadQueuedFiles();
+  if (!isOwnAccount) return;
+  if (staged) {
+    await releaseRestoredFiles(staged, (fileId) =>
+      isReferencedIn(namespace, fileId)
+    );
+  }
+  await uploadQueuedFiles();
+}
+
+/**
+ * Whether a record of the namespace's account references a file, or
+ * undefined once the namespace changed or the records cannot be read.
+ */
+async function isReferencedIn(
+  namespace: ReturnType<typeof datafn.currentNamespace>,
+  fileId: string
+) {
+  if (datafn.currentNamespace() !== namespace) return undefined;
+  const result = await datafn.file.query({
+    filters: { fileId },
+    limit: 1,
+    metadata: {
+      includeTrashed: true,
+      includeArchived: true,
+      includeAncestorInactive: true
+    }
+  });
+  if (datafn.currentNamespace() !== namespace) return undefined;
+  return Array.isArray(result.data) ? result.data.length > 0 : undefined;
 }
 
 /**
