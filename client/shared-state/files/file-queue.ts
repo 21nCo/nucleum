@@ -1049,11 +1049,12 @@ async function readHolds(dir: string) {
 
 /**
  * Holds a file's generation for a restore session, creating its row. Without
- * Web Locks, it then reads the rows, removes the file's acting rows that
- * expired, which takes the file over from the step that wrote one (that
- * step can then no longer claim it, see actAlone, even once a clock set
- * ahead is set back), reads the rows again, and rejects while another tab
- * removes or discards the file (a live acting row, or any dispatch row) or,
+ * Web Locks, it then reads the rows, removes the file's acting and dispatch
+ * rows that expired, which takes the file over from the step that wrote one
+ * (that step can then no longer claim it, or act on it once claimed, see
+ * actAlone, even once a clock set ahead is set back), reads the rows again,
+ * and rejects while another tab removes or discards the file (a live acting
+ * or dispatch row, or a dispatch row any clock reads as expired since) or,
  * when the session writes the file (`isWritten`), while another session
  * holds it; also when an expired acting row cannot be removed.
  */
@@ -1069,7 +1070,8 @@ async function holdEntry(
   await handle!.getFileHandle(name, { create: true });
   if (hasWebLocks()) return;
   for (const row of (await readHolds(dir)).rows) {
-    if (row.kind === ACTING_ROW && !row.isLive && row.fileId === fileId) {
+    const isActing = row.kind === ACTING_ROW || row.kind === DISPATCH_ROW;
+    if (isActing && !row.isLive && row.fileId === fileId) {
       await removeEntryFile(handle, row.name);
     }
   }
@@ -1229,7 +1231,9 @@ async function removeEntryFile(
  * entries, with one row per file, so it outlives the file leaving the queue,
  * a reload and the tab, and a write of one file's row (its own file, created
  * or replaced whole) never changes another's, in any tab, with or without
- * Web Locks. A restore does not stage again a file it records (see
+ * Web Locks. A thumbnail's delivery is a row of its own beside its file's
+ * (`<file>~thumbnail`, holding the version), only ever created, so a writer
+ * that did not send it never takes another's delivery back. A restore does not stage again a file it records (see
  * stageRestoredFiles), as its original reached FileFn. A discarded file
  * leaves the log, so a later restore stages it again. Once the replay is
  * done with the file's thumbnail (see sendAccountThumbnail), its row also
@@ -1264,15 +1268,20 @@ async function getUploadLogDir(dir: string, isCreated = false) {
  * interrupted write) reads undefined, and any other read error rejects.
  */
 async function readLoggedUpload(dir: string, fileId: string) {
-  try {
-    const handle = await getUploadLogDir(dir);
-    const row = await handle?.getFileHandle(encodeURIComponent(fileId));
-    const text = row ? await (await row.getFile()).text() : "";
-    return parseJson<LoggedUpload>(text, isLoggedUpload);
-  } catch (error) {
-    if ((error as Error)?.name === "NotFoundError") return undefined;
-    throw error;
-  }
+  const handle = await getUploadLogDir(dir);
+  const name = encodeURIComponent(fileId);
+  const read = async (row: string) => {
+    try {
+      return await (await (await handle!.getFileHandle(row)).getFile()).text();
+    } catch (error) {
+      if ((error as Error)?.name === "NotFoundError") return undefined;
+      throw error;
+    }
+  };
+  const logged = handle && parseJson(await read(name), isLoggedUpload);
+  if (!logged) return undefined;
+  const thumbnail = await read(`${name}~thumbnail`);
+  return { ...logged, isThumbnailSent: thumbnail === logged.versionId };
 }
 
 /**
@@ -1287,13 +1296,18 @@ async function writeUploadLog(
 ) {
   const handle = await getUploadLogDir(dir, Boolean(versionId));
   const name = encodeURIComponent(fileId);
-  if (!versionId) return removeEntryFile(handle, name);
-  const row = await handle!.getFileHandle(name, { create: true });
-  const writable = await row.createWritable();
-  await writable.write(
-    JSON.stringify({ versionId, at: Date.now(), isThumbnailSent })
-  );
-  await writable.close();
+  if (!versionId) {
+    await removeEntryFile(handle, name);
+    return removeEntryFile(handle, `${name}~thumbnail`);
+  }
+  const write = async (row: string, text: string) => {
+    const file = await handle!.getFileHandle(row, { create: true });
+    const writable = await file.createWritable();
+    await writable.write(text);
+    await writable.close();
+  };
+  await write(name, JSON.stringify({ versionId, at: Date.now() }));
+  if (isThumbnailSent) await write(`${name}~thumbnail`, versionId);
 }
 
 /**
@@ -1826,26 +1840,35 @@ async function replayPass(dir: string, request: ReplayRequest) {
 }
 
 /** The timers that run a queue's pass at its earliest grace deadline. */
-const graceTimers = new Map<string, { at: number; signal: AbortSignal }>();
+const graceTimers = new Map<
+  string,
+  { at: number; signal: AbortSignal; request: ReplayRequest }
+>();
 
 /**
  * Runs a pass over the queue at `at`, once a recent file without a record
  * outlives its grace, so it is removed, or a restore's hold on a file
  * expires, so it is uploaded, without another trigger: one timer per queue,
  * at the earliest deadline, outside the retry budget, cancelled once the
- * pass's client signal aborts.
+ * pass's client signal aborts. The pass runs with the latest request that
+ * asked for a deadline, so records replaced meanwhile (see
+ * QueuedFileReferences) never decide it.
  */
 function scheduleDeadline({ dir, request }: ReplayPass, at: number) {
   const current = graceTimers.get(dir);
   if (!Number.isFinite(at) || request.signal.aborted) return;
-  if (current?.signal === request.signal && current.at <= at) return;
-  const { client, signal, publisher, references } = request;
-  const scheduled = { at, signal };
+  if (current?.signal === request.signal && current.at <= at) {
+    current.request = request;
+    return;
+  }
+  const { signal } = request;
+  const scheduled = { at, signal, request };
   graceTimers.set(dir, scheduled);
   const delay = Math.min(at - Date.now(), 2 ** 31 - 1);
   const timer = setTimeout(() => {
     if (graceTimers.get(dir) !== scheduled) return;
     graceTimers.delete(dir);
+    const { client, publisher, references } = scheduled.request;
     void replayFileQueue(dir, client, signal, publisher, references);
   }, delay);
   signal.addEventListener("abort", () => clearTimeout(timer), { once: true });

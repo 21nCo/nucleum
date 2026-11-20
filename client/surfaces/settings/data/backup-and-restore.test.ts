@@ -3626,7 +3626,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       await replayed(QUEUE_A);
       getDirectory = opfs.getDirectory;
       expect(sdk.artifacts).toEqual([]);
-      expect(uploadLogText().includes('"isThumbnailSent":true')).toBe(false);
+      expect(uploadLogText()).not.toMatch(/~thumbnail:/);
 
       replays.clear();
       await restoreBackup(backup, { triggerCloneUp: () => false });
@@ -4550,7 +4550,12 @@ describe("restore sessions, generations and publication of queued files", () => 
     isOnline = true;
     const tab1 = new AbortController();
     const tab2 = new AbortController();
-    const logged = () => opfs.list(UPLOAD_LOG).map(decodeURIComponent);
+    const logged = (suffix = "") =>
+      opfs
+        .list(UPLOAD_LOG)
+        .map(decodeURIComponent)
+        .filter((name) => name.split("~")[1] === (suffix || undefined))
+        .map((name) => name.split("~")[0]);
 
     const one = replayInOtherTab(tab1.signal);
     await vi.waitFor(() => expect(isPaused).toBe(true));
@@ -4574,6 +4579,9 @@ describe("restore sessions, generations and publication of queued files", () => 
     await Promise.all(replays.get(QUEUE_A) ?? []);
 
     expect(logged().sort()).toEqual([first.fileId, second.fileId].sort());
+    expect(logged("thumbnail").sort()).toEqual(
+      [first.fileId, second.fileId].sort()
+    );
     expect([...uploaded].sort()).toEqual([first.fileId, second.fileId].sort());
     expect(restaged).toEqual([]);
     expect(sdk.uploads).toHaveLength(uploads);
@@ -4757,4 +4765,44 @@ describe("restore sessions, generations and publication of queued files", () => 
       expect.objectContaining({ fileId: record.fileId })
     ]);
   });
+
+  it.each([
+    ["restores the file once the row expired", -1_000, true],
+    ["rejects while the row is live", RESTORE_HOLD_LIFETIME_MS, false]
+  ])(
+    "without Web Locks, a restore meeting the dispatch row a closed tab left for the file %s",
+    async (_, expiresIn, isRestored) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      const backup = await backupFile();
+      await clearBrowser();
+      await bootData(cloudAccount("user-a"));
+      hasLocks = false;
+      const row = ["dispatch", "closed-tab", record.fileId, ""].join("~");
+      const holds = await (
+        await opfs.getDirectory()
+      ).getDirectoryHandle(HOLDS_A, { create: true });
+      await holds.getFileHandle(`${row}~${Date.now() + expiresIn}`, {
+        create: true
+      });
+
+      const restored = restoreBackup(backup, { triggerCloneUp: () => false });
+
+      if (isRestored) {
+        await restored;
+        expect(opfs.list(QUEUE_A)).toEqual([entry]);
+        expect(opfs.list(HOLDS_A).some((name) => name.startsWith(row))).toBe(
+          false
+        );
+        expect(await readQueuedBytes(record.fileId, "full")).toBe(
+          "photo bytes"
+        );
+      } else {
+        await expect(restored).rejects.toThrow();
+        expect(await savedRecord(record.id)).toBeUndefined();
+      }
+    }
+  );
 });
