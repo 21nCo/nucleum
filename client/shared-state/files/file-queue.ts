@@ -242,13 +242,23 @@ async function writeQueuedEntry(dir: string, input: QueuedFileInput) {
   }
 }
 
-/** Removes a file from a queue, if it is there. */
-export async function dequeueFile(dir: string, fileId: string): Promise<void> {
+/**
+ * Removes a file from a queue, if it is there, resolving whether it did:
+ * with `isAllowed`, only while it resolves true, checked once the change is
+ * marked (see markChange), right before the removal.
+ */
+export async function dequeueFile(
+  dir: string,
+  fileId: string,
+  isAllowed?: () => Promise<boolean>
+): Promise<boolean> {
   const entryName = toEntryName(fileId);
   await markChange(dir);
+  if (isAllowed && !(await isAllowed())) return false;
   await getStore(dir).deletePendingUpload(entryName);
   await bumpRevisionAfter(dir);
   releaseQueuedFileUrls((key) => key === `${dir}\n${entryName}`);
+  return true;
 }
 
 /**
@@ -662,6 +672,9 @@ export async function exportQueuedFiles<T>(
     const exported = await withQueueLock(dir, signal, async () => {
       if (!(await readRevision(dir))) await bumpRevisionAfter(dir);
       const revision = await readRevision(dir);
+      if (!revision) {
+        throw new Error("The upload queue's change mark cannot be written");
+      }
       const listed = await readQueueRevision(dir);
       const records = await snapshot();
       const uploads = await readUploadLog(dir);
@@ -698,8 +711,8 @@ const SNAPSHOT_ATTEMPTS = 3;
  * removal's, which removes the mark instead (see markChange); one that
  * cannot be written once it ended is logged, as the backup's scan of the
  * entries sees that change itself. A backup that finds no mark creates one
- * first, so a mark removed meanwhile reads as a change. One that cannot be
- * read rejects the backup.
+ * first, so a mark removed meanwhile reads as a change, and rejects when it
+ * cannot. One that cannot be read rejects the backup.
  */
 async function readRevision(dir: string) {
   try {
@@ -1038,11 +1051,12 @@ async function holdEntry(
  * the file; a restore reads the acting rows once its hold row is created
  * (see holdEntry), so either the step sees the hold or the restore sees the
  * step and rejects. The step calls `isAlone` right before each destructive
- * request (a FileFn discard, a removal) and skips it on false: false once
- * the acting row has less than half its lifetime left (or a clock set back
- * makes it look dead to other tabs) or another session's live hold row
- * holds the file, so a step suspended until a restore could hold the file
- * and import its record never acts on it.
+ * request (a FileFn discard, a removal, see dequeueFile), with no await in
+ * between, and skips it on false: false when another session's live hold
+ * row holds the file, or when the acting row has less than half its
+ * lifetime left (or a clock set back makes it look dead to other tabs)
+ * before or once the hold rows are read, so a step suspended until a
+ * restore could hold the file and import its record never acts on it.
  */
 async function actAlone(
   dir: string,
@@ -1058,19 +1072,21 @@ async function actAlone(
   const name = [ACTING_ROW, session, fileId, "", expiresAt].join("~");
   const handle = await getHoldsDir(dir, true);
   await handle!.getFileHandle(name, { create: true });
-  const isAlone = async () => {
+  const isYoung = () => {
     const left = expiresAt - Date.now();
-    if (left < ACTING_LIFETIME_MS / 2 || left > 2 * ACTING_LIFETIME_MS) {
-      return false;
-    }
+    return left >= ACTING_LIFETIME_MS / 2 && left <= 2 * ACTING_LIFETIME_MS;
+  };
+  const isAlone = async () => {
+    if (!isYoung()) return false;
     const { rows } = await readHolds(dir);
-    return !rows.some(
+    const isHeld = rows.some(
       (row) =>
         row.kind === HOLD_ROW &&
         row.isLive &&
         row.fileId === fileId &&
         row.session !== session
     );
+    return !isHeld && isYoung();
   };
   try {
     const isActing = await isAlone();
@@ -1233,8 +1249,8 @@ async function writeUploadLog(
  * upload log, resolving whether it could. The log only spares a later
  * restore staging the file again, so a log that cannot be read or written
  * is logged and the replay goes on: it sends the thumbnail, marks the file
- * uploaded and removes it, or removes a discarded file, as without a log,
- * but keeps a file a restore wrote (see replayAccountEntry).
+ * uploaded and removes it, or removes a discarded file, as without a log
+ * (see replayAccountEntry).
  */
 async function logUpload(
   dir: string,
@@ -1459,7 +1475,7 @@ async function stageRestoredEntry(
  * replay's rules apply to it, also once its record is later deleted; and
  * one whose original and thumbnail the replay delivered (marked uploaded
  * and sent) leaves the queue instead, unless another session holds it, as
- * its record now references the file FileFn holds. Any other file not
+ * its record now references the file FileFn holds (see removeDelivered). Any other file not
  * adopted yet stays held for its account, marked settled so no earlier
  * restore's rollback removes it. Then removes the session's own hold rows,
  * leaving other sessions', but the row of a file that cannot be read,
@@ -1484,14 +1500,7 @@ export async function settleRestoredFiles(
         }
         if (isReferenced && (await isReferenced(fileId)) === true) {
           if (restore.isDelivered && !restore.isHeld(session)) {
-            await actAlone(
-              dir,
-              fileId,
-              async (isAlone) => {
-                if (await isAlone()) await dequeueFile(dir, fileId);
-              },
-              session
-            );
+            await removeDelivered(staged, fileId);
           } else if (!restore.isAdopted) {
             await adoptEntry(dir, fileId, generation);
           }
@@ -1510,6 +1519,39 @@ export async function settleRestoredFiles(
   }).catch((error: unknown) => {
     logger.warn({ at: "fileQueue.release", dir, error });
   });
+}
+
+/**
+ * Removes a restored file whose original and thumbnail were delivered (see
+ * settleRestoredFiles), recording the delivery in the upload log from its
+ * uploaded mark first, and again once the removal freed its bytes when the
+ * log could not be written (a full store), so a later restore does not
+ * stage either again.
+ */
+async function removeDelivered(
+  { dir, session }: RestoredQueuedFiles,
+  fileId: string
+) {
+  const versionId = await readEntryText(
+    dir,
+    toEntryName(fileId),
+    UPLOADED_FILE,
+    true
+  );
+  const isLogged =
+    Boolean(versionId) && (await logUpload(dir, fileId, versionId, true));
+  let isRemoved = false;
+  await actAlone(
+    dir,
+    fileId,
+    async (isAlone) => {
+      isRemoved = await dequeueFile(dir, fileId, isAlone);
+    },
+    session
+  );
+  if (versionId && !isLogged && isRemoved) {
+    await logUpload(dir, fileId, versionId, true);
+  }
 }
 
 /**
@@ -1545,7 +1587,7 @@ async function rollBackEntry(
   if (restore.isAdopted || restore.isSettled || restore.isHeld(session)) {
     return;
   }
-  if (await isAlone()) await dequeueFile(dir, fileId);
+  await dequeueFile(dir, fileId, isAlone);
 }
 
 /** Rolls back a restore session (see unstageRestoredFiles), under the lock. */
@@ -1903,7 +1945,7 @@ async function removeAbandonedEntry(
     await actAlone(dir, fileId, async (isAlone) => {
       const now = await readRestore(dir, fileId);
       if (now?.isPublished || now?.generation !== found.generation) return;
-      if (await isAlone()) await dequeueFile(dir, fileId);
+      await dequeueFile(dir, fileId, isAlone);
     });
   }
 }
@@ -1923,9 +1965,10 @@ async function isHeldNow(dir: string, fileId: string) {
  * may be the owner's attempt (as may any unreferenced file without Web Locks).
  * An original marked uploaded is not sent again while its thumbnail is
  * still to be sent, when the file holds its thumbnail only (see
- * QueuedFileCopy), or when a restore wrote the file, which also stays
- * queued until the upload log records its delivery, so restoring an older
- * backup does not stage it again; a thumbnail marked sent is not sent again; a
+ * QueuedFileCopy), or when a restore wrote the file; a delivery the upload
+ * log could not record is recorded again once the removal freed the file's
+ * bytes (a full store), so restoring an older backup does not stage it
+ * again; a thumbnail marked sent is not sent again; a
  * thumbnail FileFn could not take is sent again on a retry, the file staying
  * queued meanwhile (see sendAccountThumbnail).
  */
@@ -1984,11 +2027,19 @@ async function replayAccountEntry(
     result.versionId,
     sent === true
   );
-  if (!isLogged && isRestored) return "retry";
   const isStillReferenced = await isReferencedNow(pass, references, fileId);
   if (isStillReferenced === undefined) return "stop";
   logger.info({ at: "fileQueue.replay", fileId: result.fileId });
-  return removeAccountEntry(pass, references, fileId, !isStillReferenced);
+  const outcome = await removeAccountEntry(
+    pass,
+    references,
+    fileId,
+    !isStillReferenced
+  );
+  if (!isLogged && isStillReferenced && outcome === "done") {
+    await logUpload(dir, fileId, result.versionId, sent === true);
+  }
+  return outcome;
 }
 
 /**
@@ -2121,10 +2172,10 @@ async function removeAccountEntry(
 
 /**
  * Discards (when `isDiscarded`) and removes an account's file (see
- * removeAccountEntry). Right before the discard request and the removal, it
- * checks that it still acts alone (see actAlone), retrying the file later
- * when not, and then, with no await in between, that the records are still
- * the owner's at the authority.
+ * removeAccountEntry). Right before the discard request and the removal
+ * (see dequeueFile), with no await in between, it checks that it still
+ * acts alone (see actAlone), retrying the file later when not, and that
+ * the records are still the owner's at the authority.
  */
 async function discardAccountEntry(
   pass: ReplayPass,
@@ -2136,17 +2187,20 @@ async function discardAccountEntry(
   if (await isHeldNow(pass.dir, fileId)) return "done";
   if (isDiscarded) {
     if (!references.isCurrent()) return "stop";
-    await markChange(pass.dir);
+    await bumpRevision(pass.dir);
     if (!(await isAlone())) return "retry";
     if (!references.isCurrent()) return "stop";
     await references.discard(fileId);
     await logUpload(pass.dir, fileId);
     if (await isHeldNow(pass.dir, fileId)) return "done";
   }
-  if (!(await isAlone())) return "retry";
-  if (!references.isCurrent()) return "stop";
-  await dequeueFile(pass.dir, fileId);
-  return "done";
+  const isRemoved = await dequeueFile(
+    pass.dir,
+    fileId,
+    async () => (await isAlone()) && references.isCurrent()
+  );
+  if (isRemoved) return "done";
+  return references.isCurrent() ? "retry" : "stop";
 }
 
 /**
