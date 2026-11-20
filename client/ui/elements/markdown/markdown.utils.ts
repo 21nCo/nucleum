@@ -146,6 +146,7 @@ type InlineLayout = {
   validClosers: number[];
   targetEnds: Map<number, number>;
   brackets: Map<number, number>;
+  runEnds: Map<number, number>;
   completeStarts: number[];
 };
 
@@ -172,14 +173,21 @@ function buildInlineLayout(text: string): InlineLayout {
     targetEnds.set(close, targetEnd);
   }
   const brackets = matchLabelBrackets(text, boundaries);
+  const runEnds = new Map<number, number>();
+  for (let index = text.length - 1, runEnd = -1; index >= 0; index -= 1) {
+    if (text[index] === "]") {
+      if (text[index + 1] !== "]") runEnd = index;
+      runEnds.set(index, runEnd);
+    }
+  }
   const completeStarts: number[] = [];
   for (const [open] of brackets) {
-    if (balancedCloseAt(text, open, brackets, boundaries, targetEnds) >= 0) {
+    if (balancedCloseAt(open, brackets, runEnds, boundaries, targetEnds) >= 0) {
       completeStarts.push(open);
     }
   }
   completeStarts.sort((left, right) => left - right);
-  return { boundaries, validClosers, targetEnds, brackets, completeStarts };
+  return { boundaries, validClosers, targetEnds, brackets, runEnds, completeStarts };
 }
 
 /**
@@ -188,15 +196,15 @@ function buildInlineLayout(text: string): InlineLayout {
  * directly followed by `(` and a valid target. Returns -1 otherwise.
  */
 function balancedCloseAt(
-  text: string,
   open: number,
   brackets: Map<number, number>,
+  runEnds: Map<number, number>,
   boundaries: number[],
   targetEnds: Map<number, number>
 ) {
-  let close = brackets.get(open);
-  if (close === undefined || !staysInBlock(boundaries, open, close)) return -1;
-  while (text[close + 1] === "]") close += 1;
+  const pair = brackets.get(open);
+  if (pair === undefined || !staysInBlock(boundaries, open, pair)) return -1;
+  const close = runEnds.get(pair) ?? pair;
   return targetEnds.has(close) ? close : -1;
 }
 
@@ -246,14 +254,20 @@ function extractInlineLinks(text: string, tokens: string[]) {
 
 /**
  * Pairs every `[` with the `]` that balances it inside the same block, in one
- * pass. Unclosed brackets at a block boundary are dropped.
+ * pass, ignoring brackets inside inline code and backslash-escaped brackets.
+ * Unclosed brackets at a block boundary are dropped.
  */
 function matchLabelBrackets(text: string, boundaries: number[]) {
   const matches = new Map<number, number>();
   const stack: number[] = [];
   for (let index = 0; index < text.length; index += 1) {
     const char = text[index];
-    if (char === "\n" && !staysInBlock(boundaries, index, index + 1)) stack.length = 0;
+    if (char === "\n" && !staysInBlock(boundaries, index, index + 1)) {
+      stack.length = 0;
+    } else if (char === "`") {
+      const codeEnd = text.indexOf("`", index + 1);
+      if (codeEnd >= 0 && staysInBlock(boundaries, index, codeEnd)) index = codeEnd;
+    } else if (char === "\\") index += 1;
     else if (char === "[") stack.push(index);
     else if (char === "]") {
       const open = stack.pop();
@@ -284,8 +298,8 @@ function hasCompleteStartBetween(layout: InlineLayout, from: number, to: number)
  * when no complete link or mention starts in between.
  */
 function findLabelClose(text: string, open: number, layout: InlineLayout) {
-  const { brackets, boundaries, targetEnds } = layout;
-  const balanced = balancedCloseAt(text, open, brackets, boundaries, targetEnds);
+  const { brackets, boundaries, targetEnds, runEnds } = layout;
+  const balanced = balancedCloseAt(open, brackets, runEnds, boundaries, targetEnds);
   if (balanced >= 0) return balanced;
   const pair = brackets.get(open);
   if (pair === undefined) {
@@ -293,8 +307,7 @@ function findLabelClose(text: string, open: number, layout: InlineLayout) {
     return fallback >= 0 && !text.slice(open, fallback).includes("\n") ? fallback : -1;
   }
   if (!staysInBlock(boundaries, open, pair)) return -1;
-  let close = pair;
-  while (text[close + 1] === "]") close += 1;
+  const close = runEnds.get(pair) ?? pair;
   if (text[close + 1] === "(") return -1;
   const fallback = nextValidCloser(layout, open, close + 1);
   if (fallback < 0 || hasCompleteStartBetween(layout, close, fallback)) return -1;

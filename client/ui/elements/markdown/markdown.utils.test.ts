@@ -217,6 +217,24 @@ describe("renderMdAsHtml links and quotes", () => {
     expect(task.querySelector(".inline-link")?.textContent).toBe("spec");
   });
 
+  it("ignores brackets in inline code and escaped brackets when pairing labels", () => {
+    for (const text of [
+      "[Release notes\nfor `arr[0`](https://example.com/docs)",
+      "[Release notes\nfor \\[draft](https://example.com/docs)"
+    ]) {
+      const link = renderIntoDom(renderMdAsHtml(text)).querySelector(".inline-link");
+      expect(link?.getAttribute("data-href"), text).toBe("example.com/docs".replace(/^/, "https://"));
+      expect(link?.textContent?.startsWith("Release notes"), text).toBe(true);
+    }
+  });
+
+  it("does not let a lone backtick hide later brackets", () => {
+    const link = renderIntoDom(
+      renderMdAsHtml("don`t miss [skip](https://example.com/docs)")
+    ).querySelector(".inline-link");
+    expect(link?.textContent).toBe("skip");
+  });
+
   it("checks block boundaries against whole source lines", () => {
     for (const text of [
       "[Release notes\n---](https://example.com/docs)",
