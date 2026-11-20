@@ -78,8 +78,7 @@ function resolveNamespaceUserId(): string | null {
 export async function createBackupBlob(): Promise<Blob> {
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
-  let switches = -1;
-  const stop = datafnRuntime.subscribe(() => switches++);
+  const runtime = watchRuntime();
   const exportRecords = async () =>
     (await datafn.exportData()) as Record<string, unknown>;
   let exported: { records: Record<string, unknown>; files: QueuedFileCopy[] };
@@ -91,10 +90,10 @@ export async function createBackupBlob(): Promise<Blob> {
         )
       : { records: await exportRecords(), files: [] };
   } finally {
-    stop();
+    runtime.stop();
   }
   const { records: data, files } = exported;
-  if (switches || datafn.currentNamespace() !== namespace) {
+  if (runtime.isSwitched() || datafn.currentNamespace() !== namespace) {
     throw new Error("The account changed while the backup was made");
   }
   const records = stringify(data, { isPreventReplacer: true });
@@ -137,6 +136,35 @@ export async function restoreBackup(
   file: Blob,
   options: { triggerCloneUp: () => boolean }
 ): Promise<void> {
+  const runtime = watchRuntime();
+  try {
+    await restoreInRuntime(file, options, runtime.isSwitched);
+  } finally {
+    runtime.stop();
+  }
+}
+
+/**
+ * Watches DataFn's runtime until stopped: `isSwitched` tells whether it was
+ * replaced meanwhile (another account, or the same account in another
+ * storage or sync mode, even one switched back).
+ */
+function watchRuntime() {
+  let switches = -1;
+  const stop = datafnRuntime.subscribe(() => switches++);
+  return { isSwitched: () => switches > 0, stop };
+}
+
+/**
+ * Restores a backup (see restoreBackup) into the DataFn runtime it started
+ * in, treating a runtime replaced meanwhile (`isSwitched`) as a changed
+ * account.
+ */
+async function restoreInRuntime(
+  file: Blob,
+  options: { triggerCloneUp: () => boolean },
+  isSwitched: () => boolean
+) {
   if (!file.size) throw new Error("Backup file is empty");
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
@@ -152,7 +180,7 @@ export async function restoreBackup(
       fileQueue.files,
       { isOwnAccount }
     ));
-  if (datafn.currentNamespace() !== namespace) {
+  if (datafn.currentNamespace() !== namespace || isSwitched()) {
     if (staged) await unstageRestoredFiles(staged);
     throw new Error("The account changed while the backup was restored");
   }
@@ -162,7 +190,9 @@ export async function restoreBackup(
     if (staged) {
       await settleRestoredFiles(
         staged,
-        isOwnAccount ? (fileId) => isReferencedIn(namespace, fileId) : undefined
+        isOwnAccount
+          ? (fileId) => isReferencedIn(namespace, isSwitched, fileId)
+          : undefined
       );
     }
   }
@@ -171,13 +201,17 @@ export async function restoreBackup(
 
 /**
  * Whether a record of the namespace's account references a file, or
- * undefined once the namespace changed or the records cannot be read.
+ * undefined once the namespace or the runtime changed (`isSwitched`) or the
+ * records cannot be read.
  */
 async function isReferencedIn(
   namespace: ReturnType<typeof datafn.currentNamespace>,
+  isSwitched: () => boolean,
   fileId: string
 ) {
-  if (datafn.currentNamespace() !== namespace) return undefined;
+  const isChanged = () =>
+    datafn.currentNamespace() !== namespace || isSwitched();
+  if (isChanged()) return undefined;
   const result = await datafn.file.query({
     filters: { fileId },
     limit: 1,
@@ -187,7 +221,7 @@ async function isReferencedIn(
       includeAncestorInactive: true
     }
   });
-  if (datafn.currentNamespace() !== namespace) return undefined;
+  if (isChanged()) return undefined;
   return Array.isArray(result.data) ? result.data.length > 0 : undefined;
 }
 

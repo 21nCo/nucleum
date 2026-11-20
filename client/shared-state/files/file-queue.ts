@@ -187,7 +187,7 @@ export async function enqueueFile(
   try {
     await writeQueuedEntry(dir, input);
   } finally {
-    await bumpRevision(dir);
+    await bumpRevisionAfter(dir);
   }
 }
 
@@ -247,7 +247,7 @@ export async function dequeueFile(dir: string, fileId: string): Promise<void> {
   const entryName = toEntryName(fileId);
   await bumpRevision(dir);
   await getStore(dir).deletePendingUpload(entryName);
-  await bumpRevision(dir);
+  await bumpRevisionAfter(dir);
   releaseQueuedFileUrls((key) => key === `${dir}\n${entryName}`);
 }
 
@@ -481,9 +481,10 @@ export async function resolveQueuedFileUrl(
 /**
  * Reads a published entry's bytes as an object URL (see
  * resolveQueuedFileUrl), from the generation it found published (`entry`),
- * reading its publication again once the bytes are read: a generation
- * replaced meanwhile is read again, from the one that replaced it once that
- * is published, and after SNAPSHOT_ATTEMPTS resolves null.
+ * reading its publication again once the bytes are read, or could not be:
+ * a generation replaced meanwhile is read again, from the one that replaced
+ * it once that is published, and after SNAPSHOT_ATTEMPTS resolves null; a
+ * read error of a generation still published rejects.
  */
 async function readUrl(
   dir: string,
@@ -493,8 +494,17 @@ async function readUrl(
 ) {
   let entry: PublishedEntry | null = found;
   for (let attempt = 0; entry && attempt < SNAPSHOT_ATTEMPTS; attempt++) {
-    const blob = await readBlob(entry, variant);
+    const blob = await readBlob(entry, variant).catch((error: unknown) => {
+      return { error };
+    });
     const again = await getPublishedEntryDir(dir, entryName);
+    if (blob && "error" in blob && again?.generation === entry.generation) {
+      throw blob.error;
+    }
+    if (blob && "error" in blob) {
+      entry = again;
+      continue;
+    }
     if (again?.generation === entry.generation) {
       return blob ? URL.createObjectURL(blob) : blob;
     }
@@ -637,11 +647,14 @@ const SNAPSHOT_ATTEMPTS = 3;
 
 /**
  * A queue's change mark: a file beside the queue that every write or
- * removal of an entry (enqueueFile, dequeueFile, a restore's staging)
- * replaces with a new value before it starts and once it ends, in any tab,
- * with or without Web Locks, so a backup sees any change between its reads,
- * also a file added and removed again meanwhile. A mark that cannot be
- * written rejects the change; one that cannot be read rejects the backup.
+ * removal of an entry (enqueueFile, dequeueFile, a restore's staging) and
+ * every remote discard replaces with a new value before it starts and once
+ * it ends, in any tab, with or without Web Locks, so a backup sees any
+ * change between its reads, also a file added and removed again meanwhile.
+ * A mark that cannot be written before a change rejects the change; one
+ * that cannot be written once it ended is logged, as the backup's scan of
+ * the entries sees that change itself. One that cannot be read rejects the
+ * backup.
  */
 async function readRevision(dir: string) {
   try {
@@ -652,6 +665,13 @@ async function readRevision(dir: string) {
     if ((error as Error)?.name === "NotFoundError") return "";
     throw error;
   }
+}
+
+/** Replaces a queue's change mark once a change ended; never rejects. */
+function bumpRevisionAfter(dir: string) {
+  return bumpRevision(dir).catch((error: unknown) => {
+    logger.warn({ at: "fileQueue.revision", dir, error });
+  });
 }
 
 /** Replaces a queue's change mark with a new value (see readRevision). */
@@ -1221,8 +1241,7 @@ export async function stageRestoredFiles(
           found.state === "restored" ||
           (found.state === "complete" && options.isOwnAccount);
         const logged = uploads[fileId];
-        const isLogged =
-          logged && (!copy.uploadedVersionId || logged.isThumbnailSent);
+        const isLogged = logged && (logged.isThumbnailSent || !copy.thumbnail);
         const isWritten = found.state === "none" && !isLogged;
         if (!isKept && !isWritten) continue;
         const generation = isKept ? found.generation : crypto.randomUUID();
@@ -1237,7 +1256,12 @@ export async function stageRestoredFiles(
           throw new Error("Another tab is changing a queued file");
         }
         if (isWritten) {
-          await stageRestoredEntry(dir, copy, generation, found.isPresent);
+          const thumbnailOnly = logged && {
+            data: new Uint8Array(),
+            uploadedVersionId: logged.versionId
+          };
+          const written = { ...copy, ...thumbnailOnly };
+          await stageRestoredEntry(dir, written, generation, found.isPresent);
         }
       }
     } catch (error) {
@@ -1346,7 +1370,7 @@ async function stageRestoredEntry(
   await entry.getFileHandle(`${PUBLISHED_PREFIX}${generation}`, {
     create: true
   });
-  await bumpRevision(dir);
+  await bumpRevisionAfter(dir);
 }
 
 /**
@@ -1430,17 +1454,31 @@ export async function unstageRestoredFiles(
   });
 }
 
+/** Removes a file a session wrote, unless kept (see unstageRestoredFiles). */
+async function rollBackEntry(
+  { dir, session }: RestoredQueuedFiles,
+  fileId: string,
+  generation: string
+) {
+  const restore = await readRestore(dir, fileId);
+  if (!restore || restore.generation !== generation) return;
+  if (restore.isAdopted || restore.isSettled || restore.isHeld(session)) {
+    return;
+  }
+  await dequeueFile(dir, fileId);
+}
+
 /** Rolls back a restore session (see unstageRestoredFiles), under the lock. */
 async function rollBackRestoredFiles(staged: RestoredQueuedFiles) {
   const { dir, session } = staged;
   for (const { fileId, generation } of staged.written) {
     try {
-      const restore = await readRestore(dir, fileId);
-      if (!restore || restore.generation !== generation) continue;
-      if (restore.isAdopted || restore.isSettled || restore.isHeld(session)) {
-        continue;
-      }
-      await actAlone(dir, fileId, () => dequeueFile(dir, fileId), session);
+      await actAlone(
+        dir,
+        fileId,
+        () => rollBackEntry(staged, fileId, generation),
+        session
+      );
     } catch (error) {
       logger.warn({ at: "fileQueue.unstage", fileId, error });
     }
@@ -1995,6 +2033,7 @@ async function discardAccountEntry(
   if (await isHeldNow(pass.dir, fileId)) return "done";
   if (isDiscarded) {
     if (!references.isCurrent()) return "stop";
+    await bumpRevision(pass.dir);
     await references.discard(fileId);
     await logUpload(pass.dir, fileId);
     if (await isHeldNow(pass.dir, fileId)) return "done";
