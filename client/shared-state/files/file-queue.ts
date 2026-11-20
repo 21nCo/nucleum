@@ -1484,6 +1484,11 @@ export type RestoredQueuedFiles = {
   written: QueuedGeneration[];
   /** The files the restore found held and kept as they were. */
   kept: QueuedGeneration[];
+  /**
+   * The foreign rows (see HoldRow) the restore created for files it kept,
+   * removed again once it rolls back or imports no record of the file.
+   */
+  foreign: string[];
 };
 
 /**
@@ -1522,7 +1527,8 @@ export async function stageRestoredFiles(
     dir,
     session: crypto.randomUUID(),
     written: [],
-    kept: []
+    kept: [],
+    foreign: []
   };
   if (!copies.length) return staged;
   if (!isFileQueueSupported()) {
@@ -1563,6 +1569,8 @@ export async function stageRestoredFiles(
           const { isPresent } = found;
           const isOwn = options.isOwnAccount;
           await stageRestoredEntry(dir, written, generation, isPresent, isOwn);
+        } else if (!options.isOwnAccount) {
+          await createForeignRow(staged, fileId, generation);
         }
       }
     } catch (error) {
@@ -1688,55 +1696,37 @@ async function stageRestoredEntry(
  * its record now references the file FileFn holds (see removeDelivered). Any other file not
  * adopted yet stays held for its account, marked settled so no earlier
  * restore's rollback removes it. Without `isReferenced`, for a restore into
- * another account, each file it kept that `isKept` resolves true for (its
- * records were imported, or one of them references the file) also gets
- * its foreign row (see HoldRow) here, never while staging, so a restore
- * that rolls back leaves none; its hold row protects it until then. Its
- * settled mark also protects it when that row cannot be created, and one
- * `isKept` resolves false for is left as it was.
+ * another account, a file it kept that `isKept` resolves false for (its
+ * import failed, and no record of the account references the file) is left
+ * as it was, without the foreign row the restore created for it (see
+ * createForeignRow); one `isKept` cannot tell keeps that row.
  * Then removes the session's own hold rows,
  * leaving other sessions', but the row of a file that cannot be read,
  * adopted or marked, which stays held until the row expires, so no earlier
  * restore's rollback removes it meanwhile, and then for the replay to adopt
- * once it finds the file referenced. Never rejects; resolves false when a
- * file kept for another account got neither its foreign row nor its
- * settled mark.
+ * once it finds the file referenced; never rejects.
  */
 export async function settleRestoredFiles(
   staged: RestoredQueuedFiles,
   isReferenced?: (fileId: string) => Promise<boolean | undefined>,
-  isKept: (fileId: string) => Promise<boolean> = async () => true
-): Promise<boolean> {
+  isKept: (fileId: string) => Promise<boolean | undefined> = async () => true
+): Promise<void> {
   const { dir, written, kept, session } = staged;
-  if (!written.length && !kept.length) return true;
+  if (!written.length && !kept.length) return;
   const signal = new AbortController().signal;
-  let isProtected = Boolean(isReferenced) || !kept.length;
   await withQueueLock(dir, signal, async () => {
     const retained = new Set<string>();
-    let isFailed = false;
     for (const { fileId, generation } of [...written, ...kept]) {
-      const isForeign =
-        !isReferenced && kept.some((found) => found.fileId === fileId);
-      let isUnprotected = isForeign;
       try {
         const restore = await readRestore(dir, fileId);
         if (!restore?.isPublished || restore.generation !== generation) {
-          isUnprotected = false;
           continue;
         }
-        if (isForeign && !(await isKept(fileId))) {
-          isUnprotected = false;
+        const isForeign =
+          !isReferenced && kept.some((found) => found.fileId === fileId);
+        if (isForeign && (await isKept(fileId)) === false) {
+          await removeForeignRows(staged, `${fileId}~`);
           continue;
-        }
-        isUnprotected &&= !restore.isAdopted;
-        if (isUnprotected) {
-          const foreign = [FOREIGN_ROW, fileId, generation].join("~");
-          await getHoldsDir(dir, true)
-            .then((handle) => handle!.getFileHandle(foreign, MAKE))
-            .then(() => (isUnprotected = false))
-            .catch((error: unknown) => {
-              logger.warn({ at: "fileQueue.foreign", fileId, error });
-            });
         }
         if (isReferenced && (await isReferenced(fileId)) === true) {
           if (restore.isDelivered && !restore.isHeld(session)) {
@@ -1749,20 +1739,16 @@ export async function settleRestoredFiles(
           await entry?.getFileHandle(`${SETTLED_PREFIX}${generation}`, {
             create: true
           });
-          isUnprotected = false;
         }
       } catch (error) {
         retained.add(fileId);
         logger.warn({ at: "fileQueue.release", fileId, error });
       }
-      isFailed ||= isUnprotected;
     }
     await releaseHolds(staged, retained);
-    isProtected = !isFailed;
   }).catch((error: unknown) => {
     logger.warn({ at: "fileQueue.release", dir, error });
   });
-  return isProtected;
 }
 
 /**
@@ -1833,6 +1819,47 @@ async function rollBackEntry(
   await dequeueFile(dir, fileId, isAlone);
 }
 
+/**
+ * Creates the foreign row of a file a restore into another account kept,
+ * before it imports any record, so a restore cut short after its import
+ * still protects the file; one an earlier restore created is left to it.
+ */
+async function createForeignRow(
+  staged: RestoredQueuedFiles,
+  fileId: string,
+  generation: string
+) {
+  const handle = (await getHoldsDir(staged.dir, true))!;
+  const name = [FOREIGN_ROW, fileId, generation].join("~");
+  const isPresent = await handle.getFileHandle(name).then(
+    () => true,
+    (error: unknown) => {
+      if ((error as Error)?.name === "NotFoundError") return false;
+      throw error;
+    }
+  );
+  if (isPresent) return;
+  staged.foreign.push(name);
+  await handle.getFileHandle(name, MAKE);
+}
+
+/**
+ * Removes the foreign rows a restore created (see createForeignRow), of
+ * one file or all; one that cannot be removed is logged and stays.
+ */
+async function removeForeignRows(staged: RestoredQueuedFiles, fileId = "") {
+  const prefix = `${FOREIGN_ROW}~${fileId}`;
+  for (const name of staged.foreign.filter((row) => row.startsWith(prefix))) {
+    try {
+      const handle = await getHoldsDir(staged.dir);
+      await handle?.removeEntry(name);
+    } catch (error) {
+      if ((error as Error)?.name === "NotFoundError") continue;
+      logger.warn({ at: "fileQueue.foreign", name, error });
+    }
+  }
+}
+
 /** Rolls back a restore session (see unstageRestoredFiles), under the lock. */
 async function rollBackRestoredFiles(staged: RestoredQueuedFiles) {
   const { dir, session } = staged;
@@ -1848,6 +1875,7 @@ async function rollBackRestoredFiles(staged: RestoredQueuedFiles) {
       logger.warn({ at: "fileQueue.unstage", fileId, error });
     }
   }
+  await removeForeignRows(staged);
   await releaseHolds(staged);
 }
 
@@ -2384,7 +2412,6 @@ async function replayAccountEntry(
   }
   if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
   const isUnbound =
-    !delivery?.isDone &&
     pass.taken.has(`${fileId}~${generation}`) &&
     !(await isBound(dir, fileId, generation, references));
   if (isUnbound) {
