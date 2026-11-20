@@ -173,8 +173,6 @@ struct BaseViewForMac: View {
   }
 
   func processOauthResponse(_ url: URL) {
-    // Authentication-session results for either sign-in host carry the token
-    // (query or fragment) and region the web layer needs.
     if NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme) != nil {
       guard let token = oauthCallbackValue(url, name: "token") else {
         Log.error(message: "OAuth response did not include a token")
@@ -219,8 +217,6 @@ struct BaseViewForMac: View {
       ? URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
         .first(where: { $0.name == "token" })?.value.flatMap { $0.isEmpty ? nil : $0 }
       : nil
-    // Only a link that would sign in uses up the pending sign-in; error or
-    // malformed links leave it for the real callback.
     if signInToken != nil && !appStore.consumePendingSignIn() {
       Log.error(message: "Ignored a sign-in link this app did not start")
       return

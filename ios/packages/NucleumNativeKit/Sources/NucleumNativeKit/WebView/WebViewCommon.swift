@@ -263,8 +263,6 @@ enum NativeTrust {
       && sourceHost?.lowercased() == "appleid.apple.com"
       && isAppleSignInCallback(url, isTrustedAccountURL: isTrustedAccountURL)
     {
-      // Apple's form_post sign-in callback cannot be handed to the system
-      // browser with its body, so the POST Apple's page submits keeps loading.
       return .allow
     }
     if scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "tel" {
