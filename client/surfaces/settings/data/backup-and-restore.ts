@@ -68,15 +68,19 @@ function resolveNamespaceUserId(): string | null {
 
 /**
  * Creates a backup of the DataFn records and of the files the account they
- * belong to still holds in its upload queue.
+ * belong to still holds in its upload queue, the records exported under the
+ * queue's lock that the copy of the files holds, so no replay removes a
+ * file the records reference between the two (see exportQueuedFiles). A
+ * queued file that cannot be read rejects.
  */
 export async function createBackupBlob(): Promise<Blob> {
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
-  const data = (await datafn.exportData()) as Record<string, unknown>;
-  const files = userId
-    ? await exportQueuedFiles(resolveAccountFileQueueDir(userId))
-    : [];
+  const exportRecords = async () =>
+    (await datafn.exportData()) as Record<string, unknown>;
+  const { records: data, files } = userId
+    ? await exportQueuedFiles(resolveAccountFileQueueDir(userId), exportRecords)
+    : { records: await exportRecords(), files: [] };
   if (datafn.currentNamespace() !== namespace) {
     throw new Error("The account changed while the backup was made");
   }
@@ -90,33 +94,31 @@ export async function createBackupBlob(): Promise<Blob> {
 
 /**
  * Restores a backup. Its queued files are first put in the queue of the
- * account they were captured under, marked restored so no replay acts on
- * them (see stageRestoredFiles); then the records are imported; then, when
- * the signed-in account is that account, the queue replays. That account's
- * replay takes over each file, with the marks the backup held, only once a
- * record of the account references it (also after a restore that stopped or
- * imported its records only in part); until then the file stays marked,
- * never uploaded, removed or discarded, and the account's backups carry it.
- * So does another account's (or the guest's) restore, until that account
- * restores the backup or a record of that account references them. A file
- * the queue holds complete and unmarked, or one an earlier restore fully
- * wrote and was not taken over yet, is not written again (a restore into
- * its own account marks a complete unmarked one kept, so no replay
- * removes it before the records are imported), and one whose upload
- * the account's replay completed (in any tab, before or while the restore
- * runs) is not staged again. Once the restore settles, it holds no file it
- * kept any more (see settleRestoredFiles): a complete file the queue held
- * before goes back to the replay's rules, referenced or not; and once a
- * restore into the files' own account imported its records, all or in
- * part, the files it wrote that a saved record references go back to the
- * replay's rules too, so deleting the record later removes the file as for
- * any other. Rejects, restoring nothing, when the backup or
- * its queued files cannot be read, this device cannot keep them, a file
- * cannot be written, or the account changes before the records are
- * imported (removing the files it added that it still holds alone, not
- * one another restore kept or a replay took over); and when the records could not
- * all be imported, keeping the files. `triggerCloneUp` decides, right before the records are imported
- * into the account checked unchanged, whether DataFn clones them up.
+ * account they were captured under, each published only once fully written
+ * and held by this restore until it settles (see stageRestoredFiles); then
+ * the records are imported; then, when the signed-in account is that
+ * account, the queue replays. A file this restore wrote stays held for its
+ * account, never uploaded, removed or discarded, until the account adopts
+ * it once a record of the account references it: this restore adopts the
+ * files its imported records reference when the account is its own (also
+ * after an import that saved its records only in part), and the account's
+ * replay adopts any other once it finds its record, also after a restore
+ * into another account or the guest; meanwhile the account's backups carry
+ * it. A file the queue holds complete, or one an earlier restore wrote that
+ * no account adopted yet, is not written again (a restore into its own
+ * account holds a complete one, so no replay removes it before the records
+ * are imported), and one whose upload the account's replay completed (in
+ * any tab, before or while the restore runs) is not staged again. Once the
+ * restore settles, it holds no file any more (see settleRestoredFiles), so
+ * deleting the record of a file it adopted later removes the file as for
+ * any other. Rejects, restoring nothing, when the backup or its queued
+ * files cannot be read, this device cannot keep them, a file cannot be
+ * written, or the account changes before the records are imported (rolling
+ * back the files it wrote that no other restore holds and no account
+ * adopted; see unstageRestoredFiles); and when the records could not all be
+ * imported, keeping the files. `triggerCloneUp` decides, right before the
+ * records are imported into the account checked unchanged, whether DataFn
+ * clones them up.
  */
 export async function restoreBackup(
   file: Blob,
@@ -326,6 +328,8 @@ function readIndex(text: string): FileQueueIndex {
       (entry) =>
         typeof entry?.fileId === "string" &&
         Array.isArray(entry.started) &&
+        (entry.uploadedVersionId === undefined ||
+          typeof entry.uploadedVersionId === "string") &&
         isRange(entry.data) &&
         (entry.thumbnail === undefined ||
           (typeof entry.thumbnail?.type === "string" &&
