@@ -282,7 +282,11 @@ enum NativeTrust {
   /// app account host's social callback.
   static func isAppleSignInCallback(_ url: URL, isTrustedAccountURL: (URL) -> Bool) -> Bool {
     let host = url.host?.lowercased() ?? ""
-    if appleCallbackHosts.contains(host) && url.path == "/oauth/apple" { return true }
+    if appleCallbackHosts.contains(host) && (url.port == nil || url.port == 443)
+      && url.path == "/oauth/apple"
+    {
+      return true
+    }
     return isTrustedAccountURL(url) && url.path.hasSuffix("/social/callback/apple")
   }
 

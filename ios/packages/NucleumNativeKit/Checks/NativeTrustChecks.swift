@@ -56,6 +56,7 @@ check(decide("mailto:someone@example.com") == .openExternally, "mailto opens ext
 check(decide("https://api.nucleus.website/oauth/apple", post: true, sourceHost: "appleid.apple.com") == .allow, "Apple form_post to the sign-in API keeps loading")
 check(decide("https://account-insouth.nucleum.app/auth/social/callback/apple", post: true, sourceHost: "appleid.apple.com") == .allow, "Apple form_post to the account callback keeps loading")
 check(decide("https://other-service.example/callback", post: true, sourceHost: "appleid.apple.com") == .openExternally, "Apple form_post for another service does not render")
+check(decide("https://api.nucleus.website:8443/oauth/apple", post: true, sourceHost: "appleid.apple.com") == .openExternally, "Apple form_post to another port does not render")
 check(decide("https://evil.example/collect", post: true, sourceHost: "web.nucleum.app") == .openExternally, "other form POST does not render in the app")
 check(decide("https://api.nucleus.website/oauth/apple", source: false, post: true, sourceHost: "appleid.apple.com") == .openExternally, "embed form POST does not render in the app")
 check(decide("about:blank", target: true, source: false) == .cancel, "embed cannot put about:blank in the main frame")

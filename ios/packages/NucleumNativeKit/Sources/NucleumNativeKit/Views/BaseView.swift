@@ -68,7 +68,13 @@ struct BaseView: View {
               _ = appStore.consumePendingSignIn()
               if let callbackURL = callbackURL {
                 Log.info("OAuth success callback: \(redactUrlForLog(callbackURL))")
-                processOauthResponse(callbackURL)
+                if NativeTrust.signInDeepLinkKind(callbackURL, appScheme: LocalConfig.urlScheme)
+                  == "oauthsignarchived"
+                {
+                  processArchivedSignIn(callbackURL)
+                } else {
+                  processOauthResponse(callbackURL)
+                }
               } else if let error = error {
                 Log.error(message: "OAuth failed: \(error.localizedDescription)")
               }
@@ -216,6 +222,22 @@ struct BaseView: View {
     }
   }
 
+  /// Signs in the web layer with the token of an `oauthsignarchived` link.
+  func processArchivedSignIn(_ url: URL) {
+    let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+    guard let token = components?.queryItems?.first(where: { $0.name == "token" })?.value,
+      !token.isEmpty
+    else {
+      Log.error(message: "OAuth URL scheme did not include a token")
+      return
+    }
+    let isSignup =
+      components?.queryItems?.first(where: { $0.name == "signup" })?.value == "true"
+    self.src.params = ["token": token, "signup": isSignup ? "true" : "false"]
+    self.isShowInAppSafari = false
+    self.isShowOauthFlow = false
+  }
+
   func processUrlScheme(_ url: URL) {
     Log.info("Url Scheme triggered: \(redactUrlForLog(url))")
     let signInKind = NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme)
@@ -236,17 +258,7 @@ struct BaseView: View {
       self.isShowInAppSafari = false
       self.isShowOauthFlow = false
     } else if signInKind == "oauthsignarchived" {
-      let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-      guard let token = components?.queryItems?.first(where: { $0.name == "token" })?.value else {
-        Log.error(message: "OAuth URL scheme did not include a token")
-        return
-      }
-      let isSignup =
-        components?.queryItems?.first(where: { $0.name == "signup" })?.value == "true"
-      // self.webOrigin = URL(string: "\(LocalConfig.webOrigin)/?token=\(token)&signup=\(isSignup)")!
-      self.src.params = ["token": token, "signup": isSignup ? "true" : "false"]
-      self.isShowInAppSafari = false
-      self.isShowOauthFlow = false
+      processArchivedSignIn(url)
     } else if url.host?.lowercased() == "debug" {
       #if DEBUG
         self.src.params = ["debug": "true"]
