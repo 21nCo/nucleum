@@ -109,11 +109,16 @@ export function sanitizeEmbedHtml(
     element.removeAttribute("srcset");
     if (tagName === "iframe") {
       if (options.elementStyle) {
-        const frameStyle = element.getAttribute("style");
-        element.setAttribute(
-          "style",
-          frameStyle ? `${frameStyle}; ${options.elementStyle}` : options.elementStyle
-        );
+        const style = (element as HTMLElement).style;
+        style.removeProperty("max-width");
+        for (const declaration of options.elementStyle.split(";")) {
+          const separator = declaration.indexOf(":");
+          if (separator < 0) continue;
+          style.setProperty(
+            declaration.slice(0, separator).trim(),
+            declaration.slice(separator + 1).trim()
+          );
+        }
       }
     } else if (options.elementStyle) {
       element.setAttribute("style", options.elementStyle);
