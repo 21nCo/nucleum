@@ -2,9 +2,23 @@ import DOMPurify from "dompurify";
 
 import { isAbsoluteHttpUrl } from "@21n/shared-utils/url.utils";
 
-/** Sandbox applied to every third-party embed frame. */
+/**
+ * Sandbox applied to every third-party embed frame. Frames keep an opaque
+ * origin, so a frame that later navigates to the app origin still cannot reach
+ * the app.
+ */
 export const EMBED_IFRAME_SANDBOX =
-  "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox";
+  "allow-scripts allow-popups allow-popups-to-escape-sandbox";
+
+/** Inline style properties a remote frame may keep: sizing and border only. */
+const IFRAME_STYLE_PROPERTIES = [
+  "width",
+  "height",
+  "max-width",
+  "min-height",
+  "border",
+  "border-radius"
+];
 
 /**
  * Returns the URL when it is an absolute https URL on another origin than the
@@ -61,8 +75,8 @@ const URI_ATTRIBUTES = [
 /**
  * Sanitises third-party embed HTML (oEmbed responses, post bodies) before it is
  * rendered with `{@html}`. Scripts, event handlers, forms, `<style>` elements,
- * inline `style` attributes (except on frames, or replaced by
- * `options.elementStyle`), `srcset` and every URL attribute that is not an
+ * inline `style` attributes (frames keep only sizing and border
+ * properties; `options.elementStyle` replaces or extends them), `srcset` and every URL attribute that is not an
  * absolute http(s) URL are removed; frames must be https on another origin and are sandboxed;
  * links open in a new tab without an opener. Callers render the result inside
  * a `contain: paint` wrapper so class-based positioning cannot cover the app.
@@ -108,8 +122,13 @@ export function sanitizeEmbedHtml(
     }
     element.removeAttribute("srcset");
     if (tagName === "iframe") {
+      const style = (element as HTMLElement).style;
+      const kept = IFRAME_STYLE_PROPERTIES.map(
+        (property) => [property, style.getPropertyValue(property)] as const
+      ).filter(([, value]) => value !== "");
+      element.removeAttribute("style");
+      for (const [property, value] of kept) style.setProperty(property, value);
       if (options.elementStyle) {
-        const style = (element as HTMLElement).style;
         style.removeProperty("max-width");
         for (const declaration of options.elementStyle.split(";")) {
           const separator = declaration.indexOf(":");
@@ -120,6 +139,7 @@ export function sanitizeEmbedHtml(
           );
         }
       }
+      if (style.length === 0) element.removeAttribute("style");
     } else if (options.elementStyle) {
       element.setAttribute("style", options.elementStyle);
     } else {

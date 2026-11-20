@@ -246,7 +246,7 @@ export function collectInlineScriptHashes(buildDir) {
   const hashes = new Set();
   for (const file of listHtmlFiles(buildDir)) {
     const html = fs.readFileSync(file, 'utf8');
-    for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script[^>]*>/gi)) {
+    for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script(?=[\s/>])[^>]*>/gi)) {
       const attributes = match[1];
       if (/\bsrc\s*=/i.test(attributes)) continue;
       const type = attributes.match(/\btype\s*=\s*["']?([^"'\s>]+)/i)?.[1]?.toLowerCase();

@@ -48,6 +48,7 @@ describe("sanitizeEmbedHtml", () => {
       "https://embed.bsky.app/embed/a/app.bsky.feed.post/1"
     );
     expect(frames[0].getAttribute("sandbox")).toContain("allow-scripts");
+    expect(frames[0].getAttribute("sandbox")).not.toContain("allow-same-origin");
     expect(frames[0].hasAttribute("srcdoc")).toBe(false);
   });
 
@@ -103,6 +104,21 @@ describe("sanitizeEmbedHtml", () => {
     expect(frame.style.width).toBe("80%");
     expect(frame.style.maxWidth).toBe("");
     expect(frame.style.border).toContain("0");
+  });
+
+  it("keeps only sizing and border styles on frames", () => {
+    const container = document.createElement("div");
+    container.innerHTML = sanitizeEmbedHtml(
+      '<iframe src="https://embed.example.com/p" style="position:fixed; inset:0; z-index:9; background:url(https://evil.example/t.png); width:400px; max-width:100%; border:1px solid red; border-radius:8px"></iframe><iframe src="https://embed.example.com/q" style="position:fixed"></iframe>'
+    );
+    const [frame, bare] = Array.from(container.querySelectorAll("iframe"));
+    expect(frame.style.position).toBe("");
+    expect(frame.style.zIndex).toBe("");
+    expect(frame.style.background).toBe("");
+    expect(frame.style.width).toBe("400px");
+    expect(frame.style.maxWidth).toBe("100%");
+    expect(frame.style.borderRadius).toBe("8px");
+    expect(bare.hasAttribute("style")).toBe(false);
   });
 
   it("applies a caller-provided element style instead of embed styles", () => {
