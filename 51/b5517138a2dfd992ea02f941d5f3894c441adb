@@ -1,19 +1,19 @@
 client/shared-state/files/file-url.ts
   s_b66d0e9dd4fae0::t_2c010f35ee4c29 5-9,14,66-75,81-95
 client/shared-state/files/file-queue.test.ts
-  s_b66d0e9dd4fae0::t_42478eadb9a2c4 1-394
+  s_b66d0e9dd4fae0::t_42478eadb9a2c4 1-394,1-376,377-394
 apps/e2e-playwright/tests/memory/filefn-offline-capture.spec.ts
   s_b66d0e9dd4fae0::t_c903de69499211 1-210
 client/shared-state/files/file-queue.ts
-  s_b66d0e9dd4fae0::t_e0673f6e28580b 1-679
+  s_b66d0e9dd4fae0::t_e0673f6e28580b 1-679,1-77,81-82,83,84-86,87-453,458-465,467-468,470-477,479-522,524,533,535-546,547,551-560,561-679
 tests/fixtures/opfs.ts
   s_b66d0e9dd4fae0::t_2063ad7be72f5d 1-175
 client/shared-state/files/file-upload.ts
-  s_b66d0e9dd4fae0::t_4d4ad48abf451c 26-34,41-42,112-114,155,237-252,254,281-300,303,308-340,342-378
+  s_b66d0e9dd4fae0::t_4d4ad48abf451c 26-34,41-42,112-114,155,237-252,237,254,281-300,281-284,303,308-340,308-316,318-341,342-378,347-350,353-363,366-367,369-370,372-378
 client/shared-state/files/filefn-client.ts
-  s_b66d0e9dd4fae0::t_932056dc7bbce1 19-26,249,262-375,485,586-598
+  s_b66d0e9dd4fae0::t_932056dc7bbce1 19-26,249,262-375,262-273,275,278-375,278-286,289,292-294,296,298,300-301,303-304,316-317,319,322-323,333-375,485,586-598
 client/shared-state/files/file-upload.account-queue.test.ts
-  s_b66d0e9dd4fae0::t_66d754c1ccfd18 1-486
+  s_b66d0e9dd4fae0::t_66d754c1ccfd18 1-486,1-23,25-167,184-321,323-324,327-351,352-486
 ---
 {
   "schema_version": "authorship/3.0.0",
