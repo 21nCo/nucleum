@@ -270,15 +270,14 @@ function listHtmlFiles(directory) {
 /**
  * Security headers for every static asset response. The enforced policy covers
  * framing, `<base>` and plugin content (limited to the app, blob: URLs and
- * the product and environment domains that serve the files PDF previews
- * embed); the script policy runs report-only until the
+ * https: sources, because PDF previews embed files from presigned storage and
+ * legacy S3 URLs on many hosts; `data:` is not allowed); the script policy runs report-only until the
  * reported violations are reviewed, because third-party embeds and analytics
  * load scripts the policy has not been verified against yet.
  */
 export function securityHeaders({ frameAncestors, inlineScriptHashes }) {
-  const pluginSources = frameAncestors.filter((source) => source !== "'self'");
   const enforced = [
-    `object-src 'self' blob: ${pluginSources.join(' ')}`,
+    "object-src 'self' blob: https:",
     "base-uri 'self'",
     `frame-ancestors ${frameAncestors.join(' ')}`
   ].join('; ');
@@ -293,7 +292,7 @@ export function securityHeaders({ frameAncestors, inlineScriptHashes }) {
     "connect-src 'self' data: blob: https: wss:",
     "frame-src 'self' blob: https:",
     "worker-src 'self' blob:",
-    `object-src 'self' blob: ${pluginSources.join(' ')}`,
+    "object-src 'self' blob: https:",
     "base-uri 'self'",
     "form-action 'self' https:"
   ].join('; ');

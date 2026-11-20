@@ -90,6 +90,18 @@ describe("sanitizeEmbedHtml", () => {
     );
   });
 
+  it("opens SVG links in a new tab and applies the element style to frames", () => {
+    const container = document.createElement("div");
+    container.innerHTML = sanitizeEmbedHtml(
+      '<svg><a xlink:href="https://example.com/x"><text>x</text></a></svg><iframe src="https://embed.example.com/p" style="border:0"></iframe>',
+      { elementStyle: "width: 80%" }
+    );
+    const anchor = container.querySelector("a");
+    expect(anchor?.getAttribute("target")).toBe("_blank");
+    expect(anchor?.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(container.querySelector("iframe")?.getAttribute("style")).toContain("width: 80%");
+  });
+
   it("applies a caller-provided element style instead of embed styles", () => {
     const container = document.createElement("div");
     container.innerHTML = sanitizeEmbedHtml(

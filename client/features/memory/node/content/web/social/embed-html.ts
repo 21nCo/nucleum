@@ -86,26 +86,39 @@ export function sanitizeEmbedHtml(
       element.setAttribute("sandbox", EMBED_IFRAME_SANDBOX);
     }
     if (tagName === "a") {
-      const href = element.getAttribute("href");
-      if (isAbsoluteHttpUrl(href)) {
-        element.setAttribute("href", href);
+      let hasLink = false;
+      for (const name of ["href", "xlink:href"]) {
+        const value = element.getAttribute(name);
+        if (value === null) continue;
+        if (isAbsoluteHttpUrl(value)) hasLink = true;
+        else element.removeAttribute(name);
+      }
+      if (hasLink) {
         element.setAttribute("target", "_blank");
         element.setAttribute("rel", "noopener noreferrer");
       } else {
-        element.removeAttribute("href");
         element.removeAttribute("target");
       }
     }
     for (const name of URI_ATTRIBUTES) {
-      if (tagName === "a" && name === "href") continue;
+      if (tagName === "a" && (name === "href" || name === "xlink:href")) continue;
       if (tagName === "iframe" && name === "src") continue;
       const value = element.getAttribute(name);
       if (value !== null && !isAbsoluteHttpUrl(value)) element.removeAttribute(name);
     }
     element.removeAttribute("srcset");
-    if (tagName !== "iframe") {
-      if (options.elementStyle) element.setAttribute("style", options.elementStyle);
-      else element.removeAttribute("style");
+    if (tagName === "iframe") {
+      if (options.elementStyle) {
+        const frameStyle = element.getAttribute("style");
+        element.setAttribute(
+          "style",
+          frameStyle ? `${frameStyle}; ${options.elementStyle}` : options.elementStyle
+        );
+      }
+    } else if (options.elementStyle) {
+      element.setAttribute("style", options.elementStyle);
+    } else {
+      element.removeAttribute("style");
     }
   });
   return purifier.sanitize(html, {
