@@ -818,10 +818,16 @@ async function copyEntry(dir: string, entryName: string) {
     const marked = names.includes(UPLOADED_FILE)
       ? await readEntryText(dir, entryName, UPLOADED_FILE, true)
       : undefined;
-    const uploaded =
-      marked || (await readLoggedUpload(dir, pending.fileId))?.versionId;
     const thumbnail = await readThumbnail(entry);
-    const isThumbnailSent = !thumbnail || names.includes(THUMBNAIL_SENT_FILE);
+    const isThumbnailMarked = !thumbnail || names.includes(THUMBNAIL_SENT_FILE);
+    const logged =
+      marked && isThumbnailMarked
+        ? undefined
+        : await readLoggedUpload(dir, pending.fileId);
+    const uploaded = marked || logged?.versionId;
+    const isThumbnailSent =
+      isThumbnailMarked ||
+      (logged?.isThumbnailSent && logged.versionId === uploaded);
     if ((marked !== undefined || uploaded) && isThumbnailSent) {
       return undefined;
     }
@@ -1195,21 +1201,37 @@ function releaseHolds(
  * Hands a published file a restore wrote, at `generation`, to its account's
  * replay: creates its adopted mark or, when that cannot be created, an
  * adoption row beside the queue, so a replay finds it adopted even when its
- * record is deleted before the replay sees it. Rejects only when neither
- * can be created.
+ * record is deleted before the replay sees it. When neither can be created
+ * (a full store) and no other session holds the file (`isUnheld`), removes
+ * its restoring mark instead, so it reads as a file no restore wrote, which
+ * the replay's rules apply to and no rollback of `generation` removes.
+ * Rejects only when none of these works.
  */
-async function adoptEntry(dir: string, fileId: string, generation: string) {
+async function adoptEntry(
+  dir: string,
+  fileId: string,
+  generation: string,
+  isUnheld: boolean
+) {
+  let entry: FileSystemDirectoryHandle | null = null;
   try {
-    const entry = await getEntryDir(dir, toEntryName(fileId), true);
+    entry = await getEntryDir(dir, toEntryName(fileId), true);
     await entry?.getFileHandle(`${ADOPTED_PREFIX}${generation}`, {
       create: true
     });
   } catch (error) {
     logger.warn({ at: "fileQueue.adopt", fileId, error });
-    const handle = await getHoldsDir(dir, true);
-    await handle!.getFileHandle([ADOPTION_ROW, fileId, generation].join("~"), {
-      create: true
-    });
+    try {
+      const handle = await getHoldsDir(dir, true);
+      await handle!.getFileHandle(
+        [ADOPTION_ROW, fileId, generation].join("~"),
+        { create: true }
+      );
+    } catch (rowError) {
+      if (!isUnheld || !entry) throw rowError;
+      logger.warn({ at: "fileQueue.adopt", fileId, error: rowError });
+      await entry.removeEntry(`${RESTORING_PREFIX}${generation}`);
+    }
   }
 }
 
@@ -1265,7 +1287,10 @@ async function getUploadLogDir(dir: string, isCreated = false) {
 
 /**
  * Reads a file's row of its queue's upload log; one missing or invalid (an
- * interrupted write) reads undefined, and any other read error rejects.
+ * interrupted write) reads undefined, and any other read error of it
+ * rejects. A thumbnail row that cannot be read is logged and reads as not
+ * sent, so the original's version still counts and only the thumbnail is
+ * sent again.
  */
 async function readLoggedUpload(dir: string, fileId: string) {
   const handle = await getUploadLogDir(dir);
@@ -1280,7 +1305,10 @@ async function readLoggedUpload(dir: string, fileId: string) {
   };
   const logged = handle && parseJson(await read(name), isLoggedUpload);
   if (!logged) return undefined;
-  const thumbnail = await read(`${name}~thumbnail`);
+  const thumbnail = await read(`${name}~thumbnail`).catch((error: unknown) => {
+    logger.warn({ at: "fileQueue.uploadLog", fileId, error });
+    return undefined;
+  });
   return { ...logged, isThumbnailSent: thumbnail === logged.versionId };
 }
 
@@ -1567,7 +1595,7 @@ export async function settleRestoredFiles(
           if (restore.isDelivered && !restore.isHeld(session)) {
             await removeDelivered(staged, fileId);
           } else if (!restore.isAdopted) {
-            await adoptEntry(dir, fileId, generation);
+            await adoptEntry(dir, fileId, generation, !restore.isHeld(session));
           }
         } else if (!restore.isAdopted) {
           const entry = await getEntryDir(dir, toEntryName(fileId), true);
@@ -1782,7 +1810,8 @@ type ReplayPass = {
  * without Web Locks) is discarded first; each discard and removal runs only
  * while the records are the owner's at that authority, checked in the same
  * step. A marker that cannot be read keeps the file. A pass stops while the
- * records cannot be brought up to date or read.
+ * records cannot be brought up to date or read, and a request whose records
+ * were replaced never replaces a current one queued (see isStale).
  */
 export function replayFileQueue(
   dir: string,
@@ -1794,7 +1823,9 @@ export function replayFileQueue(
   const first: ReplayRequest = { client, signal, publisher, references };
   const running = replays.get(dir);
   if (running) {
-    running.next = first;
+    if (!isStale(first) || !running.next || isStale(running.next)) {
+      running.next = first;
+    }
     return running.done;
   }
   const state = {
@@ -1814,6 +1845,15 @@ export function replayFileQueue(
     }
   })();
   return state.done;
+}
+
+/**
+ * Whether a request's records were replaced (see QueuedFileReferences), as
+ * for a retry or deadline pass that kept them, so it never replaces the
+ * request a current runtime queued.
+ */
+function isStale(request: ReplayRequest) {
+  return request.references?.isCurrent() === false;
 }
 
 /** Runs a pass, scheduling a retry when it left files to upload. */
@@ -1997,7 +2037,7 @@ async function takeOverRestoredEntry(
   const isReferenced = await isReferencedNow(pass, references, fileId);
   if (isReferenced === undefined) return "stop";
   if (!isReferenced) return "done";
-  await adoptEntry(dir, fileId, restore.generation);
+  await adoptEntry(dir, fileId, restore.generation, true);
   return undefined;
 }
 
