@@ -1,0 +1,21 @@
+client/ui/environment/view.store.test.ts
+  s_b66d0e9dd4fae0::t_3b64a6fde9629f 1-34
+client/ui/environment/view.store.ts
+  s_b66d0e9dd4fae0::t_c8b50ff50fe089 43-52,96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bee6a6772bbb23b65d7cf9f1c68be47cf3ed8099",
+  "prompts": {},
+  "sessions": {
+    "s_b66d0e9dd4fae0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e9c393cf-f180-42b3-b545-a1dbf02818e0",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
