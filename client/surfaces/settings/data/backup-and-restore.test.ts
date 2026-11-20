@@ -6701,4 +6701,90 @@ describe("binding, protection, delivery and retries of restored queued files", (
     expect(sdk.started).toHaveLength(1);
     expect(sdk.deleted).toEqual([record.fileId]);
   });
+
+  it("keeps the foreign row of a file two restores into another account keep while one imports nothing and the other imports its records", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    await deleteRecord(record.id);
+    const ownBackup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    getDirectory = failingWrites((path) =>
+      path[2]?.startsWith("settled-")
+        ? new DOMException("The quota is exceeded", "QuotaExceededError")
+        : undefined
+    );
+    await restoreBackup(ownBackup, { triggerCloneUp: () => false });
+    getDirectory = opfs.getDirectory;
+    await bootData(cloudAccount("user-b"));
+    let releaseSecond!: () => void;
+    const secondGate = new Promise<void>(
+      (resolve) => (releaseSecond = resolve)
+    );
+    let isSecondStaged = false;
+    let second: Promise<void> | undefined;
+    preflight.during = async () => {
+      preflight.during = async () => {
+        isSecondStaged = true;
+        await secondGate;
+      };
+      second = restoreBackup(backup, { triggerCloneUp: () => false });
+      await vi.waitFor(() => expect(isSecondStaged).toBe(true));
+    };
+    data.importResult = { ok: false, errors: [{ message: "Not saved" }] };
+
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("Not saved");
+    expect(foreignRows()).toHaveLength(1);
+    data.importResult = null;
+    releaseSecond();
+    await second;
+    preflight.during = null;
+
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(foreignRows()).toHaveLength(1);
+  });
+
+  it("binds a restored file its replay took on a record's reference before a delivery read that cannot be read stops it, so it is removed once the record is deleted", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const records = await datafn.exportData();
+    const backup = await backupFile();
+    const entry = `queued_${record.fileId}`;
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    await bootData(cloudAccount("user-a"));
+    await datafn.importData(records, { triggerCloneUp: false });
+    getDirectory = failingWrites(
+      (path) =>
+        path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+          ? new Error("The adoption cannot be recorded")
+          : undefined,
+      undefined,
+      undefined,
+      (path) =>
+        path[0] === UPLOAD_LOG
+          ? new DOMException("The row cannot be read", "NotReadableError")
+          : undefined
+    );
+    goOnline();
+    await replayed(QUEUE_A);
+    isOnline = false;
+    getDirectory = opfs.getDirectory;
+    expect(sdk.started).toEqual([]);
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+
+    await deleteRecord(record.id);
+    replays.clear();
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.started).toEqual([]);
+  });
 });
