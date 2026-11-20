@@ -42,12 +42,12 @@ const STALE_FILE = "stale";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
- * Marks a file a restore put in the queue that its account has not taken
- * over yet (see stageRestoredFiles): empty while it is written, so a replay
- * leaves it untouched; once it is fully written, RESTORED_FOR_ACCOUNT for a
- * restore into the queue's own account and RESTORED_FOR_OTHER for one into
- * another account or the guest. Only the account's replay removes the mark
- * of a fully written one, once a record of the account references it.
+ * Marks a file a restore put or kept in the queue that its account has not
+ * taken over yet (see stageRestoredFiles): empty while it is written, so a
+ * replay leaves it untouched; once it is fully written, RESTORED_FOR_ACCOUNT
+ * for a restore into the queue's own account and RESTORED_FOR_OTHER for one
+ * into another account or the guest. Only the account's replay removes the
+ * mark of a fully written one, once a record of the account references it.
  */
 const RESTORED_FILE = "restored";
 const RESTORED_FOR_ACCOUNT = "account";
@@ -675,8 +675,10 @@ export type RestoredQueuedFiles = {
  * fully wrote it and it was not taken over yet, or when the queue's upload
  * log records its original uploaded (see UploadLog), whether or not it is
  * still there; any other (missing or half written) is written again from
- * the backup. A file that cannot be written rejects, after removing the
- * files this call added.
+ * the backup. A restore into the queue's own account marks a complete
+ * file it keeps RESTORED_FOR_ACCOUNT, so no replay removes or discards it
+ * before the restore's records are imported, as a file it writes. A file
+ * that cannot be written rejects, after removing the files this call added.
  */
 export async function stageRestoredFiles(
   dir: string,
@@ -697,6 +699,14 @@ export async function stageRestoredFiles(
         const entryName = toEntryName(copy.fileId);
         const isPresent = Boolean(await getEntryDir(dir, entryName, true));
         const held = isPresent ? await readHeldEntry(dir, entryName) : "none";
+        if (held === "complete" && options.isOwnAccount) {
+          await writeEntryFile(
+            dir,
+            entryName,
+            RESTORED_FILE,
+            RESTORED_FOR_ACCOUNT
+          );
+        }
         if (held !== "none") continue;
         if (!isPresent) staged.added.push(copy.fileId);
         await stageRestoredEntry(dir, copy, isPresent, options.isOwnAccount);

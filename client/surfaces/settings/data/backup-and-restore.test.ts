@@ -1524,4 +1524,51 @@ describe("backup and restore of files the account upload queue still holds", () 
     ]);
     expect(sdk.deleted).toEqual([record.fileId]);
   });
+
+  it.each([
+    ["with", true],
+    ["without", false]
+  ])(
+    "keeps a file the queue holds complete without its record while a replay runs before the restore imports it %s Web Locks, and uploads it once",
+    async (_, isLocking) => {
+      hasLocks = isLocking;
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const backup = await backupFile();
+      const entry = `queued_${record.fileId}`;
+      expect(opfs.list(QUEUE_A, entry)).toContain("committed");
+
+      account.set({
+        dataMode: UserDataMode.NONE,
+        sessionType: UserSessionType.UNDETERMINED
+      });
+      await destroyNucleumDatafn();
+      device = newDevice();
+      await bootData(cloudAccount("user-a"));
+      expect(await savedRecord(record.id)).toBeUndefined();
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      replays.clear();
+      preflight.during = async () => {
+        goOnline();
+        await replayed(QUEUE_A);
+        expect(sdk.started).toEqual([]);
+        expect(sdk.deleted).toEqual([]);
+        expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      };
+
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      preflight.during = null;
+
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+      expect(sdk.started).toHaveLength(1);
+      expect(sdk.uploads).toEqual([
+        expect.objectContaining({ fileId: record.fileId })
+      ]);
+      expect(sdk.artifacts).toHaveLength(1);
+      expect(sdk.deleted).toEqual([]);
+    }
+  );
 });
