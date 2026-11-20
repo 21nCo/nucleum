@@ -309,14 +309,28 @@ function startFileQueueReplay(
   globalThis.addEventListener?.("online", replay, { signal: teardown });
 }
 
+/**
+ * Replays the account's queue (see replayFileQueue) with its records as the
+ * DataFn runtime current now holds them: once another runtime replaces it,
+ * also one of the same account at the same authority, the references are no
+ * longer current, so no decision read from the replaced runtime is acted on;
+ * the replay that runtime starts decides again (see startFileQueueReplay).
+ */
 function replayAccountFileQueue(uploader: FileQueueUploader) {
   const { userId, baseUrl, client, signal } = uploader;
   if (signal.aborted || isAppOffline()) return;
   const namespace = `user:${userId}`;
+  const bound = { runtime: undefined as unknown, isReplaced: false };
+  const stopWatching = datafnRuntime.subscribe((runtime) => {
+    if (bound.runtime === undefined) bound.runtime = runtime;
+    else if (runtime !== bound.runtime) bound.isReplaced = true;
+  });
+  signal.addEventListener("abort", stopWatching, { once: true });
   const isAccountRecords = () => {
     const runtime = get(datafnRuntime);
     return (
       !signal.aborted &&
+      !bound.isReplaced &&
       datafn.currentNamespace() === namespace &&
       runtime?.namespace === namespace &&
       runtime.remoteUrl?.replace(/\/datafn\/?$/, "") ===
@@ -346,10 +360,14 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
       return result.data.length > 0;
     },
     async discard(fileId) {
+      if (!isAccountRecords()) return false;
       await client.deleteFile(fileId).catch(async (error: unknown) => {
         logger.warn({ at: "filefn.client.queue.discard", fileId, error });
-        await recordPendingDelete(userId, baseUrl, fileId);
+        if (isAccountRecords()) {
+          await recordPendingDelete(userId, baseUrl, fileId);
+        }
       });
+      return isAccountRecords();
     }
   };
   replayFileQueue(
@@ -358,9 +376,14 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
     signal,
     undefined,
     references
-  ).catch((error: unknown) => {
-    logger.error({ at: "filefn.client.queue", error });
-  });
+  )
+    .catch((error: unknown) => {
+      logger.error({ at: "filefn.client.queue", error });
+    })
+    .finally(() => {
+      stopWatching();
+      signal.removeEventListener("abort", stopWatching);
+    });
 }
 
 /** How long a queue replay waits for DataFn to pull the account's records. */

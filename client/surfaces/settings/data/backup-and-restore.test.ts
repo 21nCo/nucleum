@@ -198,8 +198,19 @@ const { createBackupBlob, restoreBackup } =
 const QUEUE_A = "nucleum-file-queue-account-user-a";
 const QUEUE_B = "nucleum-file-queue-account-user-b";
 const REPLAY_LOCK = "nucleum-file-queue-replay:";
-/** user-a's queue's upload log, beside the queue. */
-const UPLOAD_LOG = `${QUEUE_A}.uploads.json`;
+/** user-a's queue's upload log, beside the queue: one row per file. */
+const UPLOAD_LOG = `${QUEUE_A}.uploads`;
+
+/** user-a's upload log as text, one `<file ID>:<row>` line per file. */
+function uploadLogText() {
+  return opfs
+    .list(UPLOAD_LOG)
+    .map((name) => {
+      const row = new TextDecoder().decode(opfs.read(UPLOAD_LOG, name));
+      return `${decodeURIComponent(name)}:${row}`;
+    })
+    .join("\n");
+}
 
 /** One device file system: the queue keeps its handles for the page's life. */
 const opfs = createFakeOpfs();
@@ -1828,7 +1839,7 @@ describe("backup and restore of files the account upload queue still holds", () 
       const record = await capturePhoto();
       let faults = 0;
       const failAt = (kind: typeof fault) => (path: string[]) => {
-        if (kind !== fault || path.join("/") !== UPLOAD_LOG) return undefined;
+        if (kind !== fault || path[0] !== UPLOAD_LOG) return undefined;
         faults++;
         return new DOMException("The log is unavailable", "UnknownError");
       };
@@ -1867,10 +1878,18 @@ describe("backup and restore of files the account upload queue still holds", () 
     isOnline = false;
     const record = await capturePhoto();
     let writes = 0;
-    getDirectory = failingWrites((path) => {
-      if (path.join("/") !== UPLOAD_LOG || ++writes < 2) return undefined;
-      return new DOMException("The quota is exceeded", "QuotaExceededError");
-    });
+    let removals = 0;
+    getDirectory = failingWrites(
+      (path) => {
+        if (path[0] !== UPLOAD_LOG || ++writes < 2) return undefined;
+        return new DOMException("The quota is exceeded", "QuotaExceededError");
+      },
+      (path) => {
+        if (path[0] !== UPLOAD_LOG) return undefined;
+        removals++;
+        return new DOMException("The log is unavailable", "UnknownError");
+      }
+    );
     let releaseUpload!: () => void;
     sdk.hold = new Promise((resolve) => (releaseUpload = resolve));
     goOnline();
@@ -1888,8 +1907,10 @@ describe("backup and restore of files the account upload queue still holds", () 
 
     await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
     await Promise.all(passes.get(QUEUE_A) ?? []);
-    // The upload, its thumbnail sent (failing) and the discard (failing).
-    expect(writes).toBe(3);
+    // The upload and its thumbnail sent (failing), then the discard removing
+    // the file's row (failing).
+    expect(writes).toBe(2);
+    expect(removals).toBe(1);
     expect(sdk.deleted).toEqual([record.fileId]);
 
     replays.clear();
@@ -2913,7 +2934,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       expect(sdk.uploads).toHaveLength(1);
       expect(opfs.list(QUEUE_A)).toEqual([entry]);
       expect(opfs.list(QUEUE_A, entry)).not.toContain("uploaded");
-      expect(new TextDecoder().decode(opfs.read(UPLOAD_LOG))).toContain(
+      expect(uploadLogText()).toContain(
         record.fileId
       );
 
@@ -3608,9 +3629,7 @@ describe("restore sessions, generations and publication of queued files", () => 
       getDirectory = opfs.getDirectory;
       expect(sdk.artifacts).toEqual([]);
       expect(
-        new TextDecoder()
-          .decode(opfs.read(UPLOAD_LOG))
-          .includes('"isThumbnailSent":true')
+        uploadLogText().includes('"isThumbnailSent":true')
       ).toBe(false);
 
       replays.clear();
@@ -4173,21 +4192,55 @@ describe("restore sessions, generations and publication of queued files", () => 
     expect(sdk.artifacts).toHaveLength(1);
   });
 
-  it("rejects a backup when the queue has no change mark and none can be written, so no snapshot is taken unchecked", async () => {
+  it.each([
+    ["holding a file", true],
+    ["that is empty", false]
+  ])(
+    "takes a backup of a queue %s that has no change mark while none can be written, as no file can be added meanwhile",
+    async (_, isCaptured) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      if (isCaptured) await capturePhoto();
+      const root = await opfs.getDirectory();
+      await root.removeEntry(`${QUEUE_A}.revision`).catch(String);
+      getDirectory = failingWrites((path) =>
+        path[0] === `${QUEUE_A}.revision`
+          ? new DOMException("The quota is exceeded", "QuotaExceededError")
+          : undefined
+      );
+
+      const text = await backupText();
+
+      expect(text.startsWith('{"fileQueue"')).toBe(isCaptured);
+      expect(text.includes(btoa("photo bytes"))).toBe(isCaptured);
+    }
+  );
+
+  it("takes a backup's snapshot again when a file is added and removed between its reads of a queue that had no change mark", async () => {
     await bootData(cloudAccount("user-a"));
     isOnline = false;
-    await capturePhoto();
     const root = await opfs.getDirectory();
-    await root.removeEntry(`${QUEUE_A}.revision`);
-    getDirectory = failingWrites((path) =>
-      path[0] === `${QUEUE_A}.revision`
-        ? new DOMException("The quota is exceeded", "QuotaExceededError")
-        : undefined
-    );
+    await root.removeEntry(`${QUEUE_A}.revision`).catch(String);
+    let exports = 0;
+    data.exportStartHook = async () => {
+      exports++;
+    };
+    data.exportHook = async () => {
+      data.exportHook = null;
+      const tab = await openQueueTab();
+      await tab.enqueueFile(QUEUE_A, {
+        fileId: "file_added_meanwhile",
+        fileName: "added.png",
+        contentType: "image/png",
+        blob: new Blob(["added bytes"], { type: "image/png" })
+      });
+      await tab.dequeueFile(QUEUE_A, "file_added_meanwhile");
+    };
 
-    await expect(createBackupBlob()).rejects.toThrow(
-      "The upload queue's change mark cannot be written"
-    );
+    const text = await backupText();
+
+    expect(exports).toBe(2);
+    expect(text.startsWith('{"fileQueue"')).toBe(false);
   });
 
   it("sends no discard when the clock that let another tab restore the file is set back before its replay without Web Locks resumes", async () => {
@@ -4357,4 +4410,271 @@ describe("restore sessions, generations and publication of queued files", () => 
       expect(URL.revokeObjectURL).toHaveBeenCalledWith(created);
     }
   });
+
+  /**
+   * The OPFS root, armed once a new file whose path `armedAt` matches is
+   * created; the first listing of user-a's hold rows after that runs
+   * `before` once it read the names, which it then returns as read then.
+   */
+  function afterListingHolds(
+    armedAt: (path: string[]) => boolean,
+    before: () => Promise<void>
+  ) {
+    const state = { isArmed: false, isDone: false };
+    const armed = beforeCreating(armedAt, async () => {
+      state.isArmed = true;
+    });
+    const holds = (dir: FileSystemDirectoryHandle) =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "keys") {
+            return async function* () {
+              const names: string[] = [];
+              const listed = target as unknown as {
+                keys(): AsyncIterable<string>;
+              };
+              for await (const name of listed.keys()) names.push(name);
+              const isActing = names.some((name) => name.startsWith("acting~"));
+              if (state.isArmed && !state.isDone && isActing) {
+                state.isDone = true;
+                await before();
+              }
+              yield* names;
+            };
+          }
+          const value = Reflect.get(target, key) as unknown;
+          return typeof value === "function" ? value.bind(target) : value;
+        }
+      });
+    const open = async () =>
+      new Proxy(await armed(), {
+        get(target, key) {
+          if (key === "getDirectoryHandle") {
+            return async (name: string, options?: { create?: boolean }) => {
+              const dir = await target.getDirectoryHandle(name, options);
+              return name === HOLDS_A ? holds(dir) : dir;
+            };
+          }
+          const value = Reflect.get(target, key) as unknown;
+          return typeof value === "function" ? value.bind(target) : value;
+        }
+      });
+    return { state, open };
+  }
+
+  it("sends no discard when another tab restores the file after its replay without Web Locks last listed the hold rows, the clock reading its acting row expired meanwhile and then set back", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await deleteRecord(record.id);
+    hasLocks = false;
+    const paused = afterListingHolds(
+      (path) => path[0] === `${QUEUE_A}.revision`,
+      async () => {
+        const ahead = vi
+          .spyOn(Date, "now")
+          .mockReturnValue(Date.now() + 11 * 60_000);
+        isOnline = false;
+        await restoreBackup(backup, { triggerCloneUp: () => false });
+        isOnline = true;
+        ahead.mockRestore();
+      }
+    );
+    getDirectory = paused.open;
+    isOnline = true;
+    const otherTab = new AbortController();
+
+    await replayInOtherTab(otherTab.signal);
+    otherTab.abort();
+    getDirectory = opfs.getDirectory;
+
+    expect(paused.state.isDone).toBe(true);
+    expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(sdk.deleted).toEqual([]);
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(await readQueuedBytes(record.fileId, "full")).toBe("photo bytes");
+  });
+
+  it.each([
+    ["the same account", ["user-a"]],
+    ["another account and back", ["user-b", "user-a"]]
+  ])(
+    "sends no discard when DataFn is started again for %s with the file's record after the replay's no-reference query, and uploads the file once",
+    async (_, userIds) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const records = await datafn.exportData();
+      await deleteRecord(record.id);
+      hasLocks = false;
+      let isRestarted = false;
+      getDirectory = beforeLookingUp(
+        (path) => path[0] === `${QUEUE_A}.revision`,
+        HOLDS_A,
+        async () => {
+          for (const userId of userIds) await bootData(cloudAccount(userId));
+          await datafn.importData(records, { triggerCloneUp: false });
+          isRestarted = true;
+        }
+      );
+
+      replays.clear();
+      goOnline();
+      await replayed(QUEUE_A);
+      await vi.waitFor(() => expect(isRestarted).toBe(true));
+      getDirectory = opfs.getDirectory;
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      await Promise.all(replays.get(QUEUE_A) ?? []);
+
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+      expect(sdk.deleted).toEqual([]);
+      expect(sdk.uploads).toEqual([
+        expect.objectContaining({ fileId: record.fileId })
+      ]);
+    }
+  );
+
+  it("keeps both delivery rows when two tabs without Web Locks log their uploads at once, so restoring the older backup sends neither file again", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const first = await capturePhoto();
+    const second = await capturePhoto();
+    const backup = await backupFile();
+    hasLocks = false;
+    let release!: () => void;
+    const released = new Promise<void>((resolve) => (release = resolve));
+    let isPaused = false;
+    getDirectory = failingWrites((path) => {
+      if (path[0] !== UPLOAD_LOG || isPaused) return undefined;
+      isPaused = true;
+      return released;
+    });
+    isOnline = true;
+    const tab1 = new AbortController();
+    const tab2 = new AbortController();
+    const logged = () => opfs.list(UPLOAD_LOG).map(decodeURIComponent);
+
+    const one = replayInOtherTab(tab1.signal);
+    await vi.waitFor(() => expect(isPaused).toBe(true));
+    const two = replayInOtherTab(tab2.signal);
+    await vi.waitFor(() => expect(logged().length).toBeGreaterThan(0));
+    release();
+    await one;
+    await two;
+    tab1.abort();
+    tab2.abort();
+    getDirectory = opfs.getDirectory;
+    const uploaded = new Set(
+      sdk.uploads.map((upload: { fileId?: string }) => upload.fileId)
+    );
+    const uploads = sdk.uploads.length;
+    isOnline = false;
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    const restaged = opfs.list(QUEUE_A);
+    replays.clear();
+    goOnline();
+    await Promise.all(replays.get(QUEUE_A) ?? []);
+
+    expect(logged().sort()).toEqual([first.fileId, second.fileId].sort());
+    expect([...uploaded].sort()).toEqual([first.fileId, second.fileId].sort());
+    expect(restaged).toEqual([]);
+    expect(sdk.uploads).toHaveLength(uploads);
+  });
+
+  it("rejects a restore when a file's delivery row cannot be read, importing no record and keeping the queued file", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await deleteRecord(record.id);
+    const root = await opfs.getDirectory();
+    const log = await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+    await log.getFileHandle(encodeURIComponent(record.fileId), {
+      create: true
+    });
+    getDirectory = failingWrites(
+      () => undefined,
+      undefined,
+      undefined,
+      (path) =>
+        path[0] === UPLOAD_LOG
+          ? new DOMException("The row is unreadable", "NotReadableError")
+          : undefined
+    );
+
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow();
+    getDirectory = opfs.getDirectory;
+
+    expect(await savedRecord(record.id)).toBeUndefined();
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(
+      opfs.read(QUEUE_A, entry, "data.bin")?.byteLength
+    ).toBeGreaterThan(0);
+    expect(sdk.uploads).toEqual([]);
+  });
+
+  it.each([
+    ["rejects", "{"],
+    ["resolves no URL", null]
+  ])(
+    "gives a download lookup that finds a complete replacement its own URL when the retired generation's held read %s",
+    async (_, metadata) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      const backup = await backupFile();
+      await clearBrowser();
+      await bootData(cloudAccount("user-a"));
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      const download = () =>
+        resolveQueuedFileUrl([QUEUE_A], record.fileId, "download");
+      let second: string | undefined | null = "pending";
+      const queue = async () =>
+        (await opfs.getDirectory()).getDirectoryHandle(QUEUE_A);
+      getDirectory = beforeCreating(
+        (path) => path[1] === entry && path[2] === "data.bin",
+        async () => {
+          const putBack = await takeEntryAside(entry);
+          await putBack({
+            "restoring-generation-2": new Uint8Array(),
+            "published-generation-2": new Uint8Array(),
+            "data.bin": new TextEncoder().encode("replacement bytes")
+          });
+          const dir = await (await queue()).getDirectoryHandle(entry);
+          for (const name of opfs.list(QUEUE_A, entry)) {
+            const isMark = /^(restoring|published)-/.test(name);
+            if (isMark && !name.endsWith("generation-2")) {
+              await dir.removeEntry(name);
+            }
+          }
+          void download().then((url) => (second = url));
+          await vi.waitFor(() => expect(second).not.toBe("pending"));
+          if (metadata === null) {
+            await dir.removeEntry("published-generation-2");
+          } else {
+            const writable = await (
+              await dir.getFileHandle("metadata.json")
+            ).createWritable();
+            await writable.write(metadata);
+            await writable.close();
+          }
+        },
+        false
+      );
+
+      const first = await download();
+      getDirectory = opfs.getDirectory;
+
+      expect(first ?? null).toBeNull();
+      expect(second).toBeTruthy();
+      expect(await objectUrls.get(second!)?.text()).toBe("replacement bytes");
+      expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(second);
+    }
+  );
 });

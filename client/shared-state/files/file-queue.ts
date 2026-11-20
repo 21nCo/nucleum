@@ -114,14 +114,15 @@ export type QueuedFilePublisher = {
  * without waiting, bringing them fully up to date with the authority (false
  * while they cannot be), whether one references a file, undefined while they
  * cannot be read, and the delete of an uploaded file whose record was
- * deleted, at that authority.
+ * deleted, at that authority, resolving false when it sent no delete or
+ * recorded none, or the records stopped being current meanwhile.
  */
 export type QueuedFileReferences = {
   owner: QueuedFileClaim;
   isCurrent(): boolean;
   sync(): Promise<boolean>;
   isReferenced(fileId: string): Promise<boolean | undefined>;
-  discard(fileId: string): Promise<void>;
+  discard(fileId: string): Promise<boolean | void>;
 };
 
 /** What a queue holds of a file, for reconciling it with its record. */
@@ -245,7 +246,7 @@ async function writeQueuedEntry(dir: string, input: QueuedFileInput) {
 /**
  * Removes a file from a queue, if it is there, resolving whether it did:
  * with `isAllowed`, only while it resolves true, checked once the change is
- * marked (see markChange), right before the removal.
+ * marked as far as it can be (see markChange), right before the removal.
  */
 export async function dequeueFile(
   dir: string,
@@ -482,7 +483,12 @@ export async function resolveQueuedFileUrl(
 
 /**
  * Returns an entry's held download URL (see resolveQueuedFileUrl), shared
- * by concurrent lookups, read from the generation now published: the URL
+ * by concurrent lookups, read from the generation now published. A lookup
+ * joins a held read only when that read started from the generation it
+ * found published; one started from another generation is joined once the
+ * lookup finds that generation published again, and is otherwise retired
+ * (revoked, while still held), so its rejection or null URL never ends a
+ * lookup of the generation published now. The URL
  * is returned only while the generation that supplied its bytes (see
  * readUrl) is the one published, as `found` or as read again, and while it
  * is still the URL held. One whose generation is no longer published is
@@ -503,11 +509,20 @@ async function resolveHeldUrl(
   let entry: PublishedEntry | null = found;
   for (let attempt = 0; entry && attempt < SNAPSHOT_ATTEMPTS; attempt++) {
     let held = heldUrls.get(key);
+    if (held && held.generation !== entry.generation) {
+      const now = await getPublishedEntryDir(dir, entryName);
+      if (isReleased()) return null;
+      const isRetired = now?.generation !== held.generation;
+      if (isRetired && heldUrls.get(key) === held) revokeHeldUrl(key, held);
+      entry = now;
+      continue;
+    }
     if (!held) {
-      held = readUrl(dir, entry, entryName, "download");
+      const read = readUrl(dir, entry, entryName, "download");
+      held = { generation: entry.generation, read };
       heldUrls.set(key, held);
     }
-    const read = await held.catch((error: unknown) => {
+    const read = await held.read.catch((error: unknown) => {
       if (heldUrls.get(key) === held) heldUrls.delete(key);
       throw error;
     });
@@ -609,7 +624,11 @@ async function getPublishedEntryDir(
  * The held download URLs, by key (queue, entry), each with the generation
  * that supplied its bytes (see readUrl).
  */
-type HeldUrl = Promise<{ url: string | undefined | null; generation?: string }>;
+type HeldUrl = {
+  /** The generation the lookup that started the read found published. */
+  generation: string;
+  read: Promise<{ url: string | undefined | null; generation?: string }>;
+};
 const heldUrls = new Map<string, HeldUrl>();
 
 /** How many times each key's held download URL was released, by key. */
@@ -629,7 +648,9 @@ export function releaseQueuedFileUrls(isReleased: (key: string) => boolean) {
 
 function revokeHeldUrl(key: string, held: HeldUrl) {
   heldUrls.delete(key);
-  void held.then(({ url }) => url && URL.revokeObjectURL(url)).catch(String);
+  void held.read
+    .then(({ url }) => url && URL.revokeObjectURL(url))
+    .catch(String);
 }
 
 /**
@@ -684,17 +705,12 @@ export async function exportQueuedFiles<T>(
   const signal = new AbortController().signal;
   for (let attempt = 0; attempt < SNAPSHOT_ATTEMPTS; attempt++) {
     const exported = await withQueueLock(dir, signal, async () => {
-      if (!(await readRevision(dir))) await bumpRevisionAfter(dir);
       const revision = await readRevision(dir);
-      if (!revision) {
-        throw new Error("The upload queue's change mark cannot be written");
-      }
       const listed = await readQueueRevision(dir);
       const records = await snapshot();
-      const uploads = await readUploadLog(dir);
       const files: QueuedFileCopy[] = [];
       for (const entryName of await listEntryNames(dir)) {
-        const copy = await copyEntry(dir, entryName, uploads);
+        const copy = await copyEntry(dir, entryName);
         if (copy) files.push(copy);
       }
       const remaining = await readQueueRevision(dir);
@@ -716,17 +732,17 @@ export async function exportQueuedFiles<T>(
 const SNAPSHOT_ATTEMPTS = 3;
 
 /**
- * A queue's change mark: a file beside the queue that every write or
- * removal of an entry (enqueueFile, dequeueFile, a restore's staging) and
- * every remote discard replaces with a new value before it starts and once
- * it ends, in any tab, with or without Web Locks, so a backup sees any
- * change between its reads, also a file added and removed again meanwhile.
- * A mark that cannot be written before a change rejects the change, but a
- * removal's, which removes the mark instead (see markChange); one that
- * cannot be written once it ended is logged, as the backup's scan of the
- * entries sees that change itself. A backup that finds no mark creates one
- * first, so a mark removed meanwhile reads as a change, and rejects when it
- * cannot. One that cannot be read rejects the backup.
+ * A queue's change mark: a file beside the queue that every write of an
+ * entry (enqueueFile, a restore's staging) replaces with a new value before
+ * it starts, rejecting the write when it cannot, and once it ends, in any
+ * tab, with or without Web Locks, so a backup sees any entry added between
+ * its reads, also one added and removed again meanwhile. Nothing removes
+ * the mark, so a backup that finds none (none was ever written, or a full
+ * store kept it from being written) knows no entry was added while it still
+ * finds none. A removal (dequeueFile) and a remote discard replace it too,
+ * but only as far as they can (see markChange), so a full store never keeps
+ * a file queued: the backup's scans of the entries see a removal
+ * themselves. One that cannot be read rejects the backup.
  */
 async function readRevision(dir: string) {
   try {
@@ -747,21 +763,11 @@ function bumpRevisionAfter(dir: string) {
 }
 
 /**
- * Marks a change that removes from a queue (see readRevision): replaces the
- * change mark, or, when that cannot be written (a full store), removes it,
- * which frees space instead of taking it, so the removal still reclaims the
- * entry's space while a backup reading the mark between its scans sees it
- * changed (see exportQueuedFiles). Rejects only when neither can be done.
+ * Marks a change that removes from a queue, or discards one of its files
+ * (see readRevision), as far as the change mark can be written: one that
+ * cannot (a full store) is logged and the change goes on; never rejects.
  */
-async function markChange(dir: string) {
-  try {
-    await bumpRevision(dir);
-  } catch (error) {
-    logger.warn({ at: "fileQueue.revision", dir, error });
-    const root = await navigator.storage.getDirectory();
-    await removeEntryFile(root, `${dir}.revision`);
-  }
-}
+const markChange = bumpRevisionAfter;
 
 /** Replaces a queue's change mark with a new value (see readRevision). */
 async function bumpRevision(dir: string) {
@@ -792,7 +798,7 @@ async function listEntryNames(dir: string) {
   return names.filter((name) => name.startsWith(ENTRY_PREFIX));
 }
 
-async function copyEntry(dir: string, entryName: string, uploads: UploadLog) {
+async function copyEntry(dir: string, entryName: string) {
   try {
     const entry = await getEntryDir(dir, entryName, true);
     const names = await readNames(entry);
@@ -802,7 +808,8 @@ async function copyEntry(dir: string, entryName: string, uploads: UploadLog) {
     const marked = names.includes(UPLOADED_FILE)
       ? await readEntryText(dir, entryName, UPLOADED_FILE, true)
       : undefined;
-    const uploaded = marked || uploads[pending.fileId]?.versionId;
+    const uploaded =
+      marked || (await readLoggedUpload(dir, pending.fileId))?.versionId;
     const thumbnail = await readThumbnail(entry);
     const isThumbnailSent = !thumbnail || names.includes(THUMBNAIL_SENT_FILE);
     if ((marked !== undefined || uploaded) && isThumbnailSent) {
@@ -974,9 +981,10 @@ async function readRestore(dir: string, fileId: string) {
  * RESTORE_HOLD_LIFETIME_MS, and a replay removes it once it expired; a
  * clock set back keeps it live (up to twice its lifetime ahead).
  * Adoption rows, `adopted~<fileId>~<generation>`, record an adoption whose
- * mark could not be created in the entry (see adoptEntry), and acting rows,
- * `acting~<session>~<fileId>~~<expires at>`, a step removing or discarding a
- * file without Web Locks (see actAlone).
+ * mark could not be created in the entry (see adoptEntry), and acting and
+ * dispatch rows, `acting~<session>~<fileId>~~<expires at>` and
+ * `dispatch~<session>~<fileId>~~<expires at>`, a step removing or
+ * discarding a file without Web Locks (see actAlone).
  */
 type HoldRow = {
   name: string;
@@ -991,6 +999,7 @@ type HoldRow = {
 const HOLD_ROW = "hold";
 const ADOPTION_ROW = "adopted";
 const ACTING_ROW = "acting";
+const DISPATCH_ROW = "dispatch";
 /** How long a restore's hold row holds its file at most (see HoldRow). */
 export const RESTORE_HOLD_LIFETIME_MS = 24 * 60 * 60_000;
 /** How long an acting row (see actAlone) counts at most. */
@@ -1017,11 +1026,11 @@ async function readHolds(dir: string) {
   for (const name of await readNames(handle)) {
     const [kind, session, fileId, generation, expires] = name.split("~");
     if (kind === ADOPTION_ROW) adoptions.add(name);
-    if (kind !== HOLD_ROW && kind !== ACTING_ROW) continue;
+    if (![HOLD_ROW, ACTING_ROW, DISPATCH_ROW].includes(kind)) continue;
     const expiresAt = Number(expires);
     const left = expiresAt - Date.now();
     const lifetime =
-      kind === HOLD_ROW ? RESTORE_HOLD_LIFETIME_MS : ACTING_LIFETIME_MS;
+      kind === ACTING_ROW ? ACTING_LIFETIME_MS : RESTORE_HOLD_LIFETIME_MS;
     const isLive = left > 0 && left < 2 * lifetime;
     rows.push({ name, kind, session, fileId, generation, expiresAt, isLive });
   }
@@ -1030,12 +1039,13 @@ async function readHolds(dir: string) {
 
 /**
  * Holds a file's generation for a restore session, creating its row. Without
- * Web Locks, it then reads the rows again, removes the file's acting rows
- * that expired (so the step that wrote one never acts, see actAlone, even
- * once a clock set ahead is set back), and rejects while another tab
- * removes or discards the file (a live acting row) or, when the session
- * writes the file (`isWritten`), while another session holds it; also when
- * an expired acting row cannot be removed.
+ * Web Locks, it then reads the rows, removes the file's acting rows that
+ * expired, which takes the file over from the step that wrote one (that
+ * step can then no longer claim it, see actAlone, even once a clock set
+ * ahead is set back), reads the rows again, and rejects while another tab
+ * removes or discards the file (a live acting row, or any dispatch row) or,
+ * when the session writes the file (`isWritten`), while another session
+ * holds it; also when an expired acting row cannot be removed.
  */
 async function holdEntry(
   { dir, session }: RestoredQueuedFiles,
@@ -1048,18 +1058,18 @@ async function holdEntry(
   const handle = await getHoldsDir(dir, true);
   await handle!.getFileHandle(name, { create: true });
   if (hasWebLocks()) return;
-  const { rows } = await readHolds(dir);
-  for (const row of rows) {
+  for (const row of (await readHolds(dir)).rows) {
     if (row.kind === ACTING_ROW && !row.isLive && row.fileId === fileId) {
       await removeEntryFile(handle, row.name);
     }
   }
+  const { rows } = await readHolds(dir);
   const isContended = rows.some(
     (row) =>
-      row.isLive &&
       row.fileId === fileId &&
       row.session !== session &&
-      (row.kind === ACTING_ROW || isWritten)
+      (row.kind === DISPATCH_ROW ||
+        (row.isLive && (row.kind === ACTING_ROW || isWritten)))
   );
   if (isContended) throw new Error("Another tab is changing a queued file");
 }
@@ -1074,12 +1084,13 @@ async function holdEntry(
  * (see holdEntry), so either the step sees the hold or the restore sees the
  * step and rejects. The step calls `isAlone` right before each destructive
  * request (a FileFn discard, a removal, see dequeueFile), with no await in
- * between, and skips it on false: false when another session's live hold
- * row holds the file, when the acting row has less than half its lifetime
- * left (or a clock set back makes it look dead to other tabs) before or
- * once the hold rows are read, or when it is gone (a restore that found it
- * expired removed it, see holdEntry), so a step suspended until a restore
- * could hold the file and import its record never acts on it.
+ * between, and skips it on false: false while another session's live hold
+ * row holds the file. The first call also claims the file: it creates the
+ * step's dispatch row, which every restore then finds and rejects on, and
+ * removes the step's acting row, which fails when a restore took the file
+ * over by removing that row once it expired (see holdEntry), so exactly
+ * one of the two goes on, whatever the clocks read. Later calls are false
+ * once the dispatch row is gone.
  */
 async function actAlone(
   dir: string,
@@ -1091,35 +1102,46 @@ async function actAlone(
     await act(async () => true);
     return true;
   }
-  const expiresAt = Date.now() + ACTING_LIFETIME_MS;
-  const name = [ACTING_ROW, session, fileId, "", expiresAt].join("~");
-  const handle = await getHoldsDir(dir, true);
-  await handle!.getFileHandle(name, { create: true });
-  const isYoung = () => {
-    const left = expiresAt - Date.now();
-    return left >= ACTING_LIFETIME_MS / 2 && left <= 2 * ACTING_LIFETIME_MS;
-  };
-  const isAlone = async () => {
-    if (!isYoung()) return false;
+  const row = (kind: string, lifetime: number) =>
+    [kind, session, fileId, "", Date.now() + lifetime].join("~");
+  const name = row(ACTING_ROW, ACTING_LIFETIME_MS);
+  const fence = row(DISPATCH_ROW, RESTORE_HOLD_LIFETIME_MS);
+  const handle = (await getHoldsDir(dir, true))!;
+  await handle.getFileHandle(name, { create: true });
+  let isClaimed = false;
+  const isAlone = async (isClaiming = true) => {
     const { rows } = await readHolds(dir);
     const isHeld = rows.some(
-      (row) =>
-        row.kind === HOLD_ROW &&
-        row.isLive &&
-        row.fileId === fileId &&
-        row.session !== session
+      (held) =>
+        held.kind === HOLD_ROW &&
+        held.isLive &&
+        held.fileId === fileId &&
+        held.session !== session
     );
-    const isOwn = rows.some((row) => row.name === name);
-    return !isHeld && isOwn && isYoung();
+    if (isHeld) return false;
+    if (isClaimed) return rows.some((held) => held.name === fence);
+    if (!rows.some((held) => held.name === name)) return false;
+    if (!isClaiming) return true;
+    await handle.getFileHandle(fence, { create: true });
+    try {
+      await handle.removeEntry(name);
+    } catch (error) {
+      if ((error as Error)?.name === "NotFoundError") return false;
+      throw error;
+    }
+    isClaimed = true;
+    return true;
   };
   try {
-    const isActing = await isAlone();
-    if (isActing) await act(isAlone);
+    const isActing = await isAlone(false);
+    if (isActing) await act(() => isAlone());
     return isActing;
   } finally {
-    await removeEntryFile(handle, name).catch((error: unknown) => {
-      logger.warn({ at: "fileQueue.holds", row: name, error });
-    });
+    for (const created of [name, fence]) {
+      await removeEntryFile(handle, created).catch((error: unknown) => {
+        logger.warn({ at: "fileQueue.holds", row: created, error });
+      });
+    }
   }
 }
 
@@ -1192,59 +1214,60 @@ async function removeEntryFile(
 /**
  * The uploads an account's replay completed, by file: the version FileFn
  * gave the original, recorded once it uploaded, before its thumbnail is sent
- * and before the file leaves the queue. The log is a file of the origin
- * private file system beside the queue, outside its entries, so it outlives
- * the file leaving the queue, a reload and the tab; it is written and read
- * under the queue's Web Lock. A restore does not stage again a file it
- * records (see stageRestoredFiles), as its original reached FileFn. A
- * discarded file leaves the log, so a later restore stages it again, and the
- * log keeps the UPLOAD_LOG_LIMIT latest uploads. Once the replay is done with
- * the file's thumbnail (see sendAccountThumbnail), the log also records it
- * (`isThumbnailSent`), so a restore does not stage the thumbnail again.
+ * and before the file leaves the queue. The log is a directory of the origin
+ * private file system beside the queue (`<queue>.uploads`), outside its
+ * entries, with one row per file, so it outlives the file leaving the queue,
+ * a reload and the tab, and a write of one file's row (its own file, created
+ * or replaced whole) never changes another's, in any tab, with or without
+ * Web Locks. A restore does not stage again a file it records (see
+ * stageRestoredFiles), as its original reached FileFn. A discarded file
+ * leaves the log, so a later restore stages it again. Once the replay is
+ * done with the file's thumbnail (see sendAccountThumbnail), its row also
+ * records it (`isThumbnailSent`), so a restore does not stage the thumbnail
+ * again.
  */
-type UploadLog = Record<string, LoggedUpload>;
 type LoggedUpload = {
   versionId: string;
   at: number;
   isThumbnailSent?: boolean;
 };
 
-const UPLOAD_LOG_LIMIT = 500;
-
-function toUploadLogName(dir: string) {
-  return `${dir}.uploads.json`;
+function isLoggedUpload(value: LoggedUpload) {
+  return typeof value?.versionId === "string" && typeof value.at === "number";
 }
 
-function isUploadLog(value: UploadLog) {
-  return (
-    typeof value === "object" &&
-    !Array.isArray(value) &&
-    Object.values(value).every(
-      (upload) =>
-        typeof upload?.versionId === "string" && typeof upload.at === "number"
-    )
-  );
+/** Returns a queue's upload log directory, or null when it has none yet. */
+async function getUploadLogDir(dir: string, isCreated = false) {
+  const root = await navigator.storage.getDirectory();
+  try {
+    return await root.getDirectoryHandle(`${dir}.uploads`, {
+      create: isCreated
+    });
+  } catch (error) {
+    if (isCreated || (error as Error)?.name !== "NotFoundError") throw error;
+    return null;
+  }
 }
 
 /**
- * Reads a queue's upload log; one missing or invalid reads empty, and any
- * other read error rejects.
+ * Reads a file's row of its queue's upload log; one missing or invalid (an
+ * interrupted write) reads undefined, and any other read error rejects.
  */
-async function readUploadLog(dir: string): Promise<UploadLog> {
+async function readLoggedUpload(dir: string, fileId: string) {
   try {
-    const root = await navigator.storage.getDirectory();
-    const handle = await root.getFileHandle(toUploadLogName(dir));
-    const text = await (await handle.getFile()).text();
-    return parseJson<UploadLog>(text, isUploadLog) ?? {};
+    const handle = await getUploadLogDir(dir);
+    const row = await handle?.getFileHandle(encodeURIComponent(fileId));
+    const text = row ? await (await row.getFile()).text() : "";
+    return parseJson<LoggedUpload>(text, isLoggedUpload);
   } catch (error) {
-    if ((error as Error)?.name === "NotFoundError") return {};
+    if ((error as Error)?.name === "NotFoundError") return undefined;
     throw error;
   }
 }
 
 /**
- * Records a file's uploaded version in its queue's upload log, or without
- * one removes the file from it.
+ * Records a file's uploaded version in its row of its queue's upload log,
+ * or without one removes its row.
  */
 async function writeUploadLog(
   dir: string,
@@ -1252,19 +1275,14 @@ async function writeUploadLog(
   versionId?: string,
   isThumbnailSent?: boolean
 ) {
-  const log = await readUploadLog(dir);
-  if (!versionId && !(fileId in log)) return;
-  delete log[fileId];
-  if (versionId) log[fileId] = { versionId, at: Date.now(), isThumbnailSent };
-  const kept = Object.entries(log)
-    .sort(([, a], [, b]) => b.at - a.at)
-    .slice(0, UPLOAD_LOG_LIMIT);
-  const root = await navigator.storage.getDirectory();
-  const handle = await root.getFileHandle(toUploadLogName(dir), {
-    create: true
-  });
-  const writable = await handle.createWritable();
-  await writable.write(JSON.stringify(Object.fromEntries(kept)));
+  const handle = await getUploadLogDir(dir, Boolean(versionId));
+  const name = encodeURIComponent(fileId);
+  if (!versionId) return removeEntryFile(handle, name);
+  const row = await handle!.getFileHandle(name, { create: true });
+  const writable = await row.createWritable();
+  await writable.write(
+    JSON.stringify({ versionId, at: Date.now(), isThumbnailSent })
+  );
   await writable.close();
 }
 
@@ -1318,7 +1336,7 @@ export type RestoredQueuedFiles = {
  * or the guest.
  * A file stays as the queue holds it when it is complete there (published),
  * or when the queue's upload log records its original uploaded (see
- * UploadLog), whether or not it is still there, unless the backup carries
+ * LoggedUpload), whether or not it is still there, unless the backup carries
  * its thumbnail only (see QueuedFileCopy); a restore into the queue's
  * own account (`isOwnAccount`) holds a complete file it keeps, and any
  * restore holds a published file no account adopted yet, so no replay acts
@@ -1350,14 +1368,13 @@ export async function stageRestoredFiles(
   const signal = new AbortController().signal;
   await withQueueLock(dir, signal, async () => {
     try {
-      const uploads = await readUploadLog(dir);
       for (const copy of copies) {
         const { fileId } = copy;
         const found = await readFoundEntry(dir, fileId);
         const isKept =
           found.state === "restored" ||
           (found.state === "complete" && options.isOwnAccount);
-        const logged = uploads[fileId];
+        const logged = await readLoggedUpload(dir, fileId);
         const isLogged = logged && (logged.isThumbnailSent || !copy.thumbnail);
         const isWritten = found.state === "none" && !isLogged;
         if (!isKept && !isWritten) continue;
@@ -2011,15 +2028,15 @@ async function replayAccountEntry(
     names.some((name) => name.startsWith(THUMBNAIL_PREFIX)) &&
     !names.includes(THUMBNAIL_SENT_FILE);
   const isRestored = readMarks(names).generation !== BASE_GENERATION;
-  const logged = isRestored
-    ? (await readUploadLog(dir).catch(() => ({}) as UploadLog))[fileId]
+  const isLogRead =
+    !pending.fileData.byteLength || isThumbnailPending || isRestored;
+  const logged = isLogRead
+    ? await readLoggedUpload(dir, fileId).catch(() => undefined)
     : undefined;
-  const uploaded =
-    !pending.fileData.byteLength || isThumbnailPending || isRestored
-      ? (await readEntryText(dir, entryName, UPLOADED_FILE, true)) ||
-        (await readUploadLog(dir).catch(() => ({}) as UploadLog))[fileId]
-          ?.versionId
-      : undefined;
+  const uploaded = isLogRead
+    ? (await readEntryText(dir, entryName, UPLOADED_FILE, true)) ||
+      logged?.versionId
+    : undefined;
   const isCommitted = await hasEntryFile(dir, entryName, COMMITTED_FILE);
   const isRecent = !(
     Date.now() - Date.parse(pending.createdAt) >=
@@ -2047,7 +2064,9 @@ async function replayAccountEntry(
         undo: (attempt) => unmarkStarted(dir, entryName, attempt)
       });
   const sent =
-    (logged?.isThumbnailSent && logged.versionId === result.versionId) ||
+    (isRestored &&
+      logged?.isThumbnailSent &&
+      logged.versionId === result.versionId) ||
     (await sendAccountThumbnail(pass, entryName, result));
   if (!sent) return "retry";
   if (uploaded) pass.isSynced = false;
@@ -2230,7 +2249,7 @@ async function discardAccountEntry(
     if (!(await isUnreferenced())) return "retry";
     if (!(await isAlone())) return "retry";
     if (!references.isCurrent()) return "stop";
-    await references.discard(fileId);
+    if ((await references.discard(fileId)) === false) return "stop";
     await logUpload(pass.dir, fileId);
     if (await isHeldNow(pass.dir, fileId)) return "done";
   }
