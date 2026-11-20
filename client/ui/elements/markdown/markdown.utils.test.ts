@@ -194,7 +194,8 @@ describe("renderMdAsHtml links and quotes", () => {
       ["See [Happy :]](resource=node_2) today", ".inline-mention", "Happy :]"],
       ["See [Q4 plan [draft](resource=node_1) today", ".inline-mention", "Q4 plan [draft"],
       ["Read [Part 2]](https://x.com/p2)", ".inline-link", "Part 2]"],
-      ["[Phase ] 2](resource=node_3)", ".inline-mention", "Phase ] 2"]
+      ["[Phase ] 2](resource=node_3)", ".inline-mention", "Phase ] 2"],
+      ["[Phase ] [draft] status](resource=node_4)", ".inline-mention", "Phase ] [draft] status"]
     ];
     for (const [text, selector, label] of cases) {
       const element = renderIntoDom(renderMdAsHtml(text)).querySelector(selector);

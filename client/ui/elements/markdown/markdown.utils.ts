@@ -251,12 +251,30 @@ function findFallbackClose(
   return -1;
 }
 
+/** True when a `[` between `from` and `to` starts its own complete link or mention. */
+function startsCompleteInlineBetween(
+  text: string,
+  from: number,
+  to: number,
+  brackets: Map<number, number>,
+  boundaries: number[]
+) {
+  for (let index = text.indexOf("[", from); index >= 0 && index < to; index = text.indexOf("[", index + 1)) {
+    const close = brackets.get(index);
+    if (close !== undefined && text[close + 1] === "(" && readInlineTarget(text, index, close, boundaries)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Parses a link or mention starting at `open`. The label normally ends at the
  * `]` that balances `open` (extended over a run of `]`s, as in `[Happy :]]`).
  * Labels with unbalanced brackets, which mentions of such titles produce, fall
  * back to the nearest `](` in the block: always when `open` has no pair, and
- * when its pair is not followed by `(` and no other `[` comes before that `](`.
+ * when its pair is not followed by `(` and no complete link or mention starts
+ * before that `](`.
  */
 function parseInlineLinkAt(
   text: string,
@@ -276,7 +294,9 @@ function parseInlineLinkAt(
     return readInlineTarget(text, open, close, boundaries);
   }
   const fallback = findFallbackClose(text, open, close + 1, layout);
-  if (fallback < 0 || text.slice(close + 1, fallback).includes("[")) return null;
+  if (fallback < 0 || startsCompleteInlineBetween(text, close + 1, fallback, brackets, boundaries)) {
+    return null;
+  }
   return readInlineTarget(text, open, fallback, boundaries);
 }
 
