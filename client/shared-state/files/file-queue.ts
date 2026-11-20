@@ -53,8 +53,10 @@ const RESTORED_FILE = "restored";
 const RESTORED_FOR_ACCOUNT = "account";
 const RESTORED_FOR_OTHER = "other";
 /**
- * Marks a file a restore into the queue's own account found complete and
- * kept as the queue held it (see stageRestoredFiles). Its presence alone,
+ * Marks a file a restore found held and kept as the queue held it (see
+ * stageRestoredFiles): complete, by a restore into the queue's own account,
+ * or written by an earlier restore, by any restore; a restore that fails
+ * then never removes it (see unstageRestoredFiles). Its presence alone,
  * whatever it holds, means the file is complete and held for its account
  * as a RESTORED_FOR_ACCOUNT one is, so a mark whose write rejects or is
  * interrupted once the file exists never makes the file look half written.
@@ -677,6 +679,21 @@ async function writeUploadLog(dir: string, fileId: string, versionId?: string) {
   await writable.close();
 }
 
+/**
+ * Records a replay's upload (or discard, without `versionId`) in its queue's
+ * upload log. The log only spares a later restore staging the file again,
+ * so a log that cannot be read or written is logged and the replay goes on:
+ * it sends the thumbnail, marks the file uploaded and removes it, or removes
+ * a discarded file, as without a log.
+ */
+async function logUpload(dir: string, fileId: string, versionId?: string) {
+  try {
+    await writeUploadLog(dir, fileId, versionId);
+  } catch (error) {
+    logger.warn({ at: "fileQueue.replay.uploadLog", fileId, error });
+  }
+}
+
 /** The files a restore added to a queue (see stageRestoredFiles). */
 export type RestoredQueuedFiles = {
   dir: string;
@@ -703,7 +720,9 @@ export type RestoredQueuedFiles = {
  * still there; any other (missing or half written) is written again from
  * the backup. A restore into the queue's own account marks a complete
  * file it keeps with KEPT_FILE, so no replay removes or discards it before
- * the restore's records are imported, as a file it writes. A file
+ * the restore's records are imported, as a file it writes; any restore
+ * marks a file an earlier restore wrote kept, so that restore removes it
+ * no more if it fails (see unstageRestoredFiles). A file
  * that cannot be written rejects, after removing the files this call added.
  */
 export async function stageRestoredFiles(
@@ -725,7 +744,10 @@ export async function stageRestoredFiles(
         const entryName = toEntryName(copy.fileId);
         const isPresent = Boolean(await getEntryDir(dir, entryName, true));
         const held = isPresent ? await readHeldEntry(dir, entryName) : "none";
-        if (held === "complete" && options.isOwnAccount) {
+        if (
+          held === "restored" ||
+          (held === "complete" && options.isOwnAccount)
+        ) {
           await markEntryKept(dir, entryName);
         }
         if (held !== "none") continue;
@@ -733,7 +755,7 @@ export async function stageRestoredFiles(
         await stageRestoredEntry(dir, copy, isPresent, options.isOwnAccount);
       }
     } catch (error) {
-      await unstageRestoredFiles(staged);
+      await removeStagedFiles(dir, staged.added, false);
       throw error;
     }
   });
@@ -804,16 +826,57 @@ async function stageRestoredEntry(
 
 /**
  * Removes the files a restore added to a queue, when the restore fails
- * before importing any record; one that cannot be removed stays marked
- * restored, so no replay acts on it unless its record is found.
+ * before importing any record: under the queue's Web Lock, and only a file
+ * the restore still holds alone, marked restored and not kept. A file
+ * another restore found and kept (see stageRestoredFiles), as its records
+ * may reference it, and one a replay took over (no longer marked), or that
+ * left the queue, stay as they are. One that cannot be removed stays marked
+ * restored, so no replay acts on it unless its record is found. Never
+ * rejects.
  */
 export async function unstageRestoredFiles({
   dir,
   added
 }: RestoredQueuedFiles): Promise<void> {
+  if (!added.length) return;
+  const signal = new AbortController().signal;
+  await withQueueLock(dir, signal, () =>
+    removeStagedFiles(dir, added, true)
+  ).catch((error: unknown) => {
+    logger.warn({ at: "fileQueue.unstage", dir, error });
+  });
+}
+
+/**
+ * Removes files a restore added to a queue, under the queue's Web Lock;
+ * with `isShared`, after the restore released the lock, only one still
+ * marked restored and not kept (see unstageRestoredFiles).
+ */
+async function removeStagedFiles(
+  dir: string,
+  added: readonly string[],
+  isShared: boolean
+) {
   for (const fileId of added) {
-    await dequeueFile(dir, fileId).catch(() => undefined);
+    try {
+      if (isShared && !(await isHeldByRestoreAlone(dir, toEntryName(fileId)))) {
+        continue;
+      }
+      await dequeueFile(dir, fileId);
+    } catch (error) {
+      logger.warn({ at: "fileQueue.unstage", fileId, error });
+    }
   }
+}
+
+/** Whether a file is marked restored and not kept (see KEPT_FILE). */
+async function isHeldByRestoreAlone(dir: string, entryName: string) {
+  if ((await readEntryText(dir, entryName, KEPT_FILE, true)) !== undefined) {
+    return false;
+  }
+  return (
+    (await readEntryText(dir, entryName, RESTORED_FILE, true)) !== undefined
+  );
 }
 
 /** Returns whether any of the queues holds a file. */
@@ -1253,7 +1316,7 @@ async function removeAccountEntry(
   if (isDiscarded) {
     if (!references.isCurrent()) return "stop";
     await references.discard(fileId);
-    await writeUploadLog(pass.dir, fileId);
+    await logUpload(pass.dir, fileId);
   }
   if (!references.isCurrent()) return "stop";
   await dequeueFile(pass.dir, fileId);
@@ -1273,7 +1336,7 @@ async function uploadEntry(
   const { client, references } = pass.request;
   const result = await uploadQueuedFile(client, pass.store, pending, mark);
   if (references) {
-    await writeUploadLog(pass.dir, pending.fileId, result.versionId);
+    await logUpload(pass.dir, pending.fileId, result.versionId);
   }
   await uploadQueuedThumbnail(
     client,

@@ -106,7 +106,8 @@ export async function createBackupBlob(): Promise<Blob> {
  * runs) is not staged again. Rejects, restoring nothing, when the backup or
  * its queued files cannot be read, this device cannot keep them, a file
  * cannot be written, or the account changes before the records are
- * imported (removing the files it added); and when the records could not
+ * imported (removing the files it added that it still holds alone, not
+ * one another restore kept or a replay took over); and when the records could not
  * all be imported, keeping the files. `triggerCloneUp` decides, right before the records are imported
  * into the account checked unchanged, whether DataFn clones them up.
  */
