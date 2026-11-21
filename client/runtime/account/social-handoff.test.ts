@@ -64,6 +64,15 @@ describe("social handoff verifier", () => {
     expect(challenge).toBe(await deriveSocialHandoffChallenge(verifier ?? ""));
   });
 
+  it("gives every sign-in a fresh verifier that replaces the previous one", async () => {
+    const first = await beginSocialHandoff({ regionId: "useast", now: NOW });
+    const firstVerifier = storedVerifier() ?? "";
+    const second = await beginSocialHandoff({ regionId: "useast", now: NOW + 1000 });
+
+    expect(second).not.toBe(first);
+    expect(isCurrentSocialHandoff(firstVerifier)).toBe(false);
+  });
+
   it("hands the verifier out once and not after it expires", async () => {
     await beginSocialHandoff({ now: NOW });
     const verifier = storedVerifier();
@@ -78,25 +87,6 @@ describe("social handoff verifier", () => {
     expect(window.sessionStorage.getItem(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF)).toBeNull();
   });
 
-  it("reuses a live verifier with a renewed deadline when a sign-in is retried", async () => {
-    const first = await beginSocialHandoff({ now: NOW });
-    const retry = await beginSocialHandoff({ now: NOW + SOCIAL_HANDOFF_TTL_MS - 1000 });
-
-    expect(retry).toBe(first);
-    expect(
-      await takeSocialHandoffVerifier(NOW + SOCIAL_HANDOFF_TTL_MS + 1000)
-    ).toBeDefined();
-    expect(await beginSocialHandoff({ now: NOW + SOCIAL_HANDOFF_TTL_MS + 2000 })).not.toBe(first);
-  });
-
-  it("gives simultaneous starts the same verifier", async () => {
-    const [first, second] = await Promise.all([
-      beginSocialHandoff({ now: NOW }),
-      beginSocialHandoff({ now: NOW })
-    ]);
-
-    expect(second).toBe(first);
-  });
 });
 
 describe("resolveSocialHandoffToken", () => {
@@ -191,6 +181,20 @@ describe("resolveSocialHandoffToken", () => {
     expect(await pending).toEqual({ kind: "ignored" });
   });
 
+  it("keeps the verifier after a failed exchange until a newer sign-in replaces it", async () => {
+    await beginSocialHandoff({ now: NOW });
+    const verifier = storedVerifier();
+    const refused = exchangeClient({
+      ok: false,
+      error: { code: "AUTHFN_OAUTH_STATE_REPLAYED", message: "used" }
+    } as unknown as ExchangeResult);
+
+    expect(
+      await resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, refused.client, NOW)
+    ).toEqual({ kind: "failed", errorCode: "AUTHFN_OAUTH_STATE_REPLAYED" });
+    expect(storedVerifier()).toBe(verifier);
+  });
+
   it("drops a replaced sign-in's failure instead of reporting it", async () => {
     await beginSocialHandoff({ regionId: "useast", now: NOW });
     let fail: (error: Error) => void = () => {};
@@ -217,12 +221,6 @@ describe("resolveSocialHandoffToken", () => {
     expect(
       await resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, single.client, NOW)
     ).toEqual({ kind: "failed", errorCode: "handoff_not_started_here" });
-  });
-
-  it("starts a new verifier when a retry uses another region", async () => {
-    const first = await beginSocialHandoff({ regionId: "useast", now: NOW });
-    expect(await beginSocialHandoff({ regionId: "useast", now: NOW + 1000 })).toBe(first);
-    expect(await beginSocialHandoff({ regionId: "euwest", now: NOW + 2000 })).not.toBe(first);
   });
 
   it("leaves a code to the window that started the sign-in", async () => {
@@ -300,19 +298,6 @@ describe("resolveSocialHandoffToken", () => {
     expect(own).toMatchObject({ kind: "session", token: "test-session-token" });
     expect(await other).toEqual({ kind: "ignored" });
     expect(storedVerifier()).toBeDefined();
-  });
-
-  it("keeps the verifier after a failed exchange so a retry can still use it", async () => {
-    const challenge = await beginSocialHandoff({ now: NOW });
-    const refused = exchangeClient({
-      ok: false,
-      error: { code: "AUTHFN_OAUTH_STATE_REPLAYED", message: "used" }
-    } as unknown as ExchangeResult);
-
-    expect(
-      await resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, refused.client, NOW)
-    ).toEqual({ kind: "failed", errorCode: "AUTHFN_OAUTH_STATE_REPLAYED" });
-    expect(await beginSocialHandoff({ now: NOW + 1000 })).toBe(challenge);
   });
 
   it("a slow, replaced sign-in neither signs in nor clears the newer verifier", async () => {

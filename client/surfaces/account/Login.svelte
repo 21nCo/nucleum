@@ -221,6 +221,7 @@
           });
           const signedIn = await accountSession.signInFromAuthFnSession({
             token,
+            session: resolved.session,
             regionId,
             isNewUser: parsed.oauth.signup === "true",
             isPreventRedirect: true,

@@ -1,4 +1,4 @@
-import type { AuthFnSocialHandoffClient } from "@authfn/client";
+import type { AuthFnSession, AuthFnSocialHandoffClient } from "@authfn/client";
 import { getBrowserStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 
@@ -37,7 +37,14 @@ export type SocialHandoffExchangeClient = AuthFnSocialHandoffClient;
  * may own it; other shells get `failed` instead.
  */
 export type SocialHandoffResolution =
-  | { kind: "session"; token: string; regionId?: string; verifier?: string }
+  | {
+      kind: "session";
+      token: string;
+      regionId?: string;
+      verifier?: string;
+      /** The session the exchange returned, so the caller needn't look it up again. */
+      session?: AuthFnSession;
+    }
   | { kind: "failed"; errorCode: string }
   | { kind: "ignored" };
 
@@ -136,20 +143,14 @@ export function finishSocialHandoff(verifier: string) {
 
 /**
  * Starts a code-and-verifier handoff in `regionId` and returns the challenge
- * for `startSocialSignIn`. A retry in the same region while a sign-in is still
- * pending in this window reuses its verifier with a renewed deadline, so
- * whichever callback arrives can be exchanged; a sign-in in another region
- * replaces it.
+ * for `startSocialSignIn`. Every sign-in gets a fresh verifier and replaces any
+ * earlier one in this window, so only the newest sign-in can complete.
  */
 export async function beginSocialHandoff({
   regionId,
   now = Date.now()
 }: { regionId?: string; now?: number } = {}): Promise<string> {
-  const live = readSocialHandoff(now);
-  const verifier =
-    live.state === "live" && live.pending.regionId === regionId
-      ? live.pending.verifier
-      : toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+  const verifier = toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
   writeSocialHandoff({
     verifier,
     expiresAt: now + SOCIAL_HANDOFF_TTL_MS,
@@ -194,8 +195,7 @@ export function isSocialHandoffCode(input: {
  * because installed native shells don't forward `handoff`) is exchanged with
  * this window's pending verifier and never used as a session. The verifier
  * stays in place while the exchange runs; the caller passes the returned
- * `verifier` to `finishSocialHandoff` once the app is signed in (a retry
- * reuses it until then). Any outcome for a sign-in that a newer one in this
+ * `verifier` to `finishSocialHandoff` once the app is signed in. Any outcome for a sign-in that a newer one in this
  * window replaced while the exchange ran is discarded as `ignored`; callers
  * recheck `isCurrentSocialHandoff` before applying the session. The exchange goes to the region the callback names,
  * or else the one the sign-in was started in. A window with no live sign-in, or whose
@@ -241,7 +241,8 @@ export async function resolveSocialHandoffToken(
         kind: "session",
         token: response.data.handoff.token,
         regionId: response.data.handoff.regionId ?? exchangeRegionId,
-        verifier
+        verifier,
+        session: response.data.session
       };
     }
   } catch {
