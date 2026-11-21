@@ -2557,7 +2557,7 @@ async function reconcileForeignRows(dir: string, request: ReplayRequest) {
       const isReferenced = await references.isReferenced(fileId);
       if (isReferenced === undefined) isRetried = true;
       const fields = row.split("~");
-      if (isReferenced && !fields[5] && scope === destination.scope) {
+      if (isReferenced && handle && !fields[5] && scope === destination.scope) {
         fields[5] = destination.authority;
         if (!references.isCurrent()) return;
         await handle
@@ -2783,7 +2783,10 @@ async function bindEntry(
   const entryName = toEntryName(fileId);
   const names = await readNames(await getEntryDir(dir, entryName, true));
   const marks = names.filter((name) => isBoundMark(name, generation));
-  const at = Math.max(Date.now(), ...marks.map((name) => toMarkOrder(name) + 1));
+  const at = Math.max(
+    Date.now(),
+    ...marks.map((name) => toMarkOrder(name) + 1)
+  );
   const name = `${toBoundMark(generation, owner)}~${at}`;
   const text = JSON.stringify({ ...owner, foreign });
   await writeEntryFile(dir, entryName, name, text);
