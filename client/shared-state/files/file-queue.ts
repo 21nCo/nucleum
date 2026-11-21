@@ -2357,9 +2357,12 @@ async function takeOverRestoredEntry(
     scheduleDeadline(pass, restore.heldUntil() + 1_000);
     return "done";
   }
-  if (restore.isAdopted) return undefined;
-  if (!references) return "done";
   const taken = `${fileId}~${restore.generation}`;
+  if (restore.isAdopted) {
+    unboundTakes.delete(`${dir}\n${taken}`);
+    return undefined;
+  }
+  if (!references) return "done";
   await bindTaken(dir, fileId, restore.generation, references);
   if (await isBound(dir, fileId, restore.generation, references)) {
     pass.taken.add(taken);
@@ -2403,8 +2406,10 @@ const unboundTakes = new Map<string, QueuedFileClaim>();
 
 /**
  * Binds a restored file's generation the queue's account took (see
- * unboundTakes) but could not bind yet, if any; rejects when it still
- * cannot, so the pass sends nothing for the file.
+ * unboundTakes) but could not bind yet, if any, or, when its binding still
+ * cannot be written, adopts it (see adoptEntry), as its take on a record's
+ * reference would have; rejects when neither can be written, so the pass
+ * sends nothing for the file.
  */
 async function bindTaken(
   dir: string,
@@ -2415,7 +2420,12 @@ async function bindTaken(
   const key = `${dir}\n${fileId}~${generation}`;
   const owner = unboundTakes.get(key);
   if (!owner || !isSameClaim(owner, references.owner)) return;
-  await bindEntry(dir, fileId, generation, references);
+  await bindEntry(dir, fileId, generation, references).catch(
+    async (error: unknown) => {
+      logger.warn({ at: "fileQueue.bind", fileId, error });
+      await adoptEntry(dir, fileId, generation);
+    }
+  );
   unboundTakes.delete(key);
 }
 

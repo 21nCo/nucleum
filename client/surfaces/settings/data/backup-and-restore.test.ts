@@ -7245,4 +7245,47 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
+
+  it("uploads a referenced restored file its replay took without recording its adoption or binding once its adoption can be written, though its binding still cannot", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const records = await datafn.exportData();
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    await bootData(cloudAccount("user-a"));
+    await datafn.importData(records, { triggerCloneUp: false });
+    const isBinding = (path: string[]) => path[2]?.startsWith("bound-");
+    getDirectory = failingWrites(
+      (path) =>
+        path[2]?.startsWith("adopted-") ||
+        path[1]?.startsWith("adopted~") ||
+        isBinding(path)
+          ? new Error("The binding cannot be recorded")
+          : undefined,
+      undefined,
+      undefined,
+      (path) =>
+        path[0] === UPLOAD_LOG
+          ? new DOMException("The row cannot be read", "NotReadableError")
+          : undefined
+    );
+    goOnline();
+    await replayed(QUEUE_A);
+    isOnline = false;
+    expect(sdk.started).toEqual([]);
+    expect(opfs.list(QUEUE_A)).toEqual([`queued_${record.fileId}`]);
+
+    getDirectory = failingWrites((path) =>
+      isBinding(path) ? new Error("The binding cannot be recorded") : undefined
+    );
+    replays.clear();
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(sdk.started).toHaveLength(1);
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+  });
 });
