@@ -178,7 +178,7 @@ async function restoreInRuntime(
     (await stageRestoredFiles(
       resolveAccountFileQueueDir(fileQueue.userId),
       fileQueue.files,
-      { isOwnAccount }
+      { isOwnAccount, account: userId }
     ));
   if (datafn.currentNamespace() !== namespace || isSwitched()) {
     if (staged) await unstageRestoredFiles(staged);

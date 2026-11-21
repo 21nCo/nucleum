@@ -49,6 +49,12 @@ const THUMBNAIL_SENT_FILE = "sent-thumbnail";
 /** Marks a thumbnail FileFn rejected for good: sent no more, still backed up. */
 const THUMBNAIL_REJECTED_FILE = "rejected-thumbnail";
 /**
+ * Marks an account's file whose delivery its replay confirmed (see
+ * replayAccountEntry) when it could not then leave the queue, so a later
+ * pass reads its delivery (see readDelivery) instead of sending it again.
+ */
+const DELIVERED_FILE = "delivered";
+/**
  * Restore marks, each created empty, so its name alone carries its meaning
  * and an interrupted write never leaves one half written. A restore writing
  * a file creates `restoring-<generation>` first, with a new generation ID
@@ -261,8 +267,9 @@ async function writeQueuedEntry(dir: string, input: QueuedFileInput) {
  * with `isAllowed`, only while it resolves true, checked once the change is
  * marked as far as it can be (see markChange), right before the removal.
  * The FileFn store ignores a removal that fails, so the entry is looked up
- * again, and one found still there rejects, for the caller to retry (a
- * lookup that fails counts as removed).
+ * again, and one found still there, or a lookup that fails, rejects with an
+ * UnconfirmedRemovalError, for the caller to retry; it may then record what
+ * the removal would have freed room for (see logDelivered).
  */
 export async function dequeueFile(
   dir: string,
@@ -273,12 +280,21 @@ export async function dequeueFile(
   await markChange(dir);
   if (isAllowed && !(await isAllowed())) return false;
   await getStore(dir).deletePendingUpload(entryName);
-  if (await getEntryDir(dir, entryName)) {
-    throw new Error("A queued file could not be removed");
-  }
+  const isLeft = await getEntryDir(dir, entryName, true).then(
+    Boolean,
+    () => true
+  );
+  if (isLeft) throw new UnconfirmedRemovalError();
   await bumpRevisionAfter(dir);
   releaseQueuedFileUrls((key) => key === `${dir}\n${entryName}`);
   return true;
+}
+
+/** A removal dequeueFile attempted but could not confirm. */
+class UnconfirmedRemovalError extends Error {
+  constructor() {
+    super("A queued file could not be removed");
+  }
 }
 
 /**
@@ -1031,9 +1047,11 @@ async function readRestore(dir: string, fileId: string) {
  * discarding a file without Web Locks (see actAlone). Delivered rows,
  * `delivered~<fileId>~<1 when its thumbnail was sent, else 0>~<version>`,
  * record a delivery the upload log could not (see logDelivered), and
- * foreign rows, `foreign~<fileId>~<generation>~<session>` (or without the
- * session), a generation a restore into another account kept, which the
- * replay never reclaims.
+ * foreign rows, `foreign~<fileId>~<generation>~<session>~<account>` (or
+ * without the session or the account), a generation a restore into another
+ * account kept, which the replay never reclaims while the row is there; the
+ * account's replay removes its own once their session holds no file and no
+ * record of the account references the file (see reconcileForeignRows).
  */
 type HoldRow = {
   name: string;
@@ -1491,6 +1509,8 @@ export type RestoredQueuedFiles = {
    * removed again once it rolls back or imports no record of the file.
    */
   foreign: string[];
+  /** The signed-in account the restore imports records into, if any. */
+  account?: string;
 };
 
 /**
@@ -1523,14 +1543,15 @@ export type RestoredQueuedFiles = {
 export async function stageRestoredFiles(
   dir: string,
   copies: readonly QueuedFileCopy[],
-  options: { isOwnAccount: boolean }
+  options: { isOwnAccount: boolean; account?: string | null }
 ): Promise<RestoredQueuedFiles> {
   const staged: RestoredQueuedFiles = {
     dir,
     session: crypto.randomUUID(),
     written: [],
     kept: [],
-    foreign: []
+    foreign: [],
+    account: options.account ?? undefined
   };
   if (!copies.length) return staged;
   if (!isFileQueueSupported()) {
@@ -1776,10 +1797,15 @@ async function removeDelivered(
     dir,
     fileId,
     async (isAlone) => {
-      const isRemoved = await dequeueFile(dir, fileId, isAlone);
-      if (versionId && !isLogged && isRemoved) {
-        await logDelivered(dir, fileId, versionId, true);
-      }
+      const record = () =>
+        versionId && !isLogged && logDelivered(dir, fileId, versionId, true);
+      const isRemoved = await dequeueFile(dir, fileId, isAlone).catch(
+        async (error: unknown) => {
+          if (error instanceof UnconfirmedRemovalError) await record();
+          throw error;
+        }
+      );
+      if (isRemoved) await record();
     },
     session
   );
@@ -1824,7 +1850,10 @@ async function rollBackEntry(
 /**
  * Creates the session's own foreign row of a file a restore into another
  * account kept, before it imports any record, so a restore cut short after
- * its import still protects the file; another session's row is its own.
+ * its import still protects the file, naming the account it restores into,
+ * whose replay removes the row once it finds no record of the account
+ * referencing the file (see reconcileForeignRows); another session's row is
+ * its own.
  */
 async function createForeignRow(
   staged: RestoredQueuedFiles,
@@ -1832,14 +1861,17 @@ async function createForeignRow(
   generation: string
 ) {
   const handle = (await getHoldsDir(staged.dir, true))!;
-  const name = [FOREIGN_ROW, fileId, generation, staged.session].join("~");
-  staged.foreign.push(name);
-  await handle.getFileHandle(name, MAKE);
+  const account = encodeURIComponent(staged.account ?? "");
+  const name = [FOREIGN_ROW, fileId, generation, staged.session, account];
+  const row = name.join("~");
+  staged.foreign.push(row);
+  await handle.getFileHandle(row, MAKE);
 }
 
 /**
  * Removes the foreign rows a restore created (see createForeignRow), of
- * one file or all; one that cannot be removed is logged and stays.
+ * one file or all; one that cannot be removed is logged and stays, for the
+ * account's replay to remove (see reconcileForeignRows).
  */
 async function removeForeignRows(staged: RestoredQueuedFiles, fileId = "") {
   const prefix = `${FOREIGN_ROW}~${fileId}`;
@@ -2053,6 +2085,7 @@ async function replayPass(dir: string, request: ReplayRequest) {
   } catch (error) {
     if (!request.signal.aborted) logger.warn({ at: "fileQueue.replay", error });
   }
+  await reconcileForeignRows(request);
   if (isStale(request)) return;
   const { client, signal, publisher, references } = request;
   const used = retryCounts.get(dir);
@@ -2184,6 +2217,53 @@ async function moveDeliveredRows(dir: string) {
   }
 }
 
+/**
+ * Removes the foreign rows (see HoldRow) restores into the request's account
+ * created in any queue, once no live hold row of their session is left (it
+ * settled or rolled back, or its page closed) and no record of the account
+ * references the file, in its records brought up to date, so a restore cut
+ * short before it imported a matching record, or whose removal of its row
+ * failed, protects the file no longer, while one that saved a matching
+ * record keeps it protected. Each queue's rows are read and removed under
+ * that queue's lock, taken after the pass released its own; never rejects.
+ */
+async function reconcileForeignRows({ references, signal }: ReplayRequest) {
+  if (!references || signal.aborted) return;
+  const account = encodeURIComponent(references.owner.userId);
+  let isSynced = false;
+  try {
+    const root = await navigator.storage.getDirectory();
+    for (const name of await readNames(root)) {
+      if (!name.startsWith(QUEUE_DIR_PREFIX) || !name.endsWith(".holds")) {
+        continue;
+      }
+      const dir = name.slice(0, -".holds".length);
+      const isOwn = (row: string) =>
+        row.startsWith(`${FOREIGN_ROW}~`) && row.endsWith(`~${account}`);
+      if (!(await readNames(await getHoldsDir(dir))).some(isOwn)) continue;
+      await withQueueLock(dir, signal, async () => {
+        const { handle, rows } = await readHolds(dir);
+        for (const row of await readNames(handle)) {
+          const [kind, fileId, , session, owner] = row.split("~");
+          if (kind !== FOREIGN_ROW || owner !== account) continue;
+          const isHeld = rows.some(
+            (hold) =>
+              hold.kind === HOLD_ROW && hold.isLive && hold.session === session
+          );
+          if (isHeld) continue;
+          if (!isSynced && !(await references.sync())) return;
+          isSynced = true;
+          if ((await references.isReferenced(fileId)) !== false) continue;
+          if (!references.isCurrent()) return;
+          await removeEntryFile(handle, row);
+        }
+      });
+    }
+  } catch (error) {
+    if (!signal.aborted) logger.warn({ at: "fileQueue.foreign", error });
+  }
+}
+
 async function replayEntry(
   pass: ReplayPass,
   entryName: string
@@ -2256,6 +2336,7 @@ async function takeOverRestoredEntry(
   if (restore.isAdopted) return undefined;
   if (!references) return "done";
   const taken = `${fileId}~${restore.generation}`;
+  await bindTaken(dir, fileId, restore.generation, references);
   if (await isBound(dir, fileId, restore.generation, references)) {
     pass.taken.add(taken);
     return undefined;
@@ -2277,13 +2358,41 @@ async function takeOverRestoredEntry(
   } catch (error) {
     logger.warn({ at: "fileQueue.adopt", fileId, error });
     pass.taken.add(taken);
-    await bindEntry(dir, fileId, restore.generation, references).catch(
+    unboundTakes.set(`${dir}\n${taken}`, references.owner);
+    await bindTaken(dir, fileId, restore.generation, references).catch(
       (failure: unknown) => {
         logger.warn({ at: "fileQueue.bind", fileId, error: failure });
       }
     );
   }
   return undefined;
+}
+
+/**
+ * The restored files a replay of the page took on a record's reference
+ * while their binding could not be written yet, by queue, file and
+ * generation, with the account that took them: each is bound (see
+ * bindTaken) before any other step of a later pass of that account, in any
+ * runtime of the page, also once the record is deleted meanwhile.
+ */
+const unboundTakes = new Map<string, QueuedFileClaim>();
+
+/**
+ * Binds a restored file's generation the queue's account took (see
+ * unboundTakes) but could not bind yet, if any; rejects when it still
+ * cannot, so the pass sends nothing for the file.
+ */
+async function bindTaken(
+  dir: string,
+  fileId: string,
+  generation: string,
+  references: QueuedFileReferences
+) {
+  const key = `${dir}\n${fileId}~${generation}`;
+  const owner = unboundTakes.get(key);
+  if (!owner || !isSameClaim(owner, references.owner)) return;
+  await bindEntry(dir, fileId, generation, references);
+  unboundTakes.delete(key);
 }
 
 /**
@@ -2365,10 +2474,12 @@ async function isHeldNow({ dir, taken }: ReplayPass, fileId: string) {
  * may be the owner's attempt (as may any unreferenced file without Web Locks).
  * An original marked uploaded is not sent again while its thumbnail is
  * still to be sent, when the file holds its thumbnail only (see
- * QueuedFileCopy), or when a restore wrote the file; a delivery the upload
- * log could not record is recorded again once the removal freed the file's
- * bytes (a full store), before the removal's acting row (see actAlone)
- * ends, so restoring an older backup does not stage it again; a thumbnail
+ * QueuedFileCopy), when a restore wrote the file, or once a removal after
+ * its delivery could not be confirmed (see DELIVERED_FILE); a delivery the
+ * upload log could not record is recorded again once the removal freed, or
+ * may have freed, the file's bytes (a full store), before the removal's
+ * acting row (see actAlone) ends, so restoring an older backup does not
+ * stage it again; a thumbnail
  * marked sent, or for a restored file one the upload log records sent at
  * its version, is not sent again; a
  * thumbnail FileFn could not take, or a restored file's that cannot be
@@ -2395,9 +2506,13 @@ async function replayAccountEntry(
     names.some((name) => name.startsWith(THUMBNAIL_PREFIX)) &&
     !names.includes(THUMBNAIL_SENT_FILE);
   const { generation } = readMarks(names);
+  await bindTaken(dir, fileId, generation, references);
   const isRestored = generation !== BASE_GENERATION;
   const isLogRead =
-    !pending.fileData.byteLength || isThumbnailPending || isRestored;
+    !pending.fileData.byteLength ||
+    isThumbnailPending ||
+    isRestored ||
+    names.includes(DELIVERED_FILE);
   const delivery = isLogRead ? await readDelivery(dir, fileId, names) : null;
   const isUnsure = delivery?.original === undefined && isLogRead;
   const isMaybeSent =
@@ -2427,10 +2542,6 @@ async function replayAccountEntry(
     return removeAccountEntry(pass, references, fileId, isDiscarded, true);
   }
   if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
-  const isUnbound =
-    pass.taken.has(`${fileId}~${generation}`) &&
-    !(await isBound(dir, fileId, generation, references));
-  if (isUnbound) await bindEntry(dir, fileId, generation, references);
   const result = uploaded
     ? { fileId, versionId: uploaded }
     : await uploadEntry(pass, pending, {
@@ -2460,9 +2571,24 @@ async function replayAccountEntry(
     fileId,
     !isStillReferenced,
     false,
-    async () => {
-      if (isLogged || !isStillReferenced) return;
-      await logDelivered(dir, fileId, result.versionId, sent === true);
+    async (isRemoved) => {
+      if (!isStillReferenced) return;
+      if (!isRemoved) await markDelivered(dir, entryName);
+      if (!isLogged) {
+        await logDelivered(dir, fileId, result.versionId, sent === true);
+      }
+    }
+  );
+}
+
+/**
+ * Marks a file whose delivery the replay confirmed delivered (see
+ * DELIVERED_FILE); a mark that cannot be written is logged.
+ */
+async function markDelivered(dir: string, entryName: string) {
+  await writeEntryFile(dir, entryName, DELIVERED_FILE, "").catch(
+    (error: unknown) => {
+      logger.warn({ at: "fileQueue.replay.delivered", entryName, error });
     }
   );
 }
@@ -2575,7 +2701,7 @@ async function removeAccountEntry(
   fileId: string,
   isDiscarded: boolean,
   isOrphan: boolean,
-  afterRemoval?: () => Promise<unknown>
+  afterRemoval?: (isRemoved: boolean) => Promise<unknown>
 ): Promise<EntryOutcome> {
   let outcome: EntryOutcome = "done";
   await actAlone(pass.dir, fileId, async (isAlone) => {
@@ -2594,8 +2720,11 @@ async function removeAccountEntry(
       isDiscarded || isOrphan,
       isAlone,
       isDiscarded
-    );
-    if (outcome === "done") await afterRemoval?.();
+    ).catch(async (error: unknown) => {
+      if (error instanceof UnconfirmedRemovalError) await afterRemoval?.(false);
+      throw error;
+    });
+    if (outcome === "done") await afterRemoval?.(true);
   });
   return outcome;
 }
