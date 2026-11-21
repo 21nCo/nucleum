@@ -272,7 +272,7 @@ async function main() {
   const baseUrl = args.baseUrl ?? `http://127.0.0.1:${args.port}`;
   const upstreamUrl = `http://127.0.0.1:${args.port}`;
   const env = buildTestEnv(args.product, baseUrl);
-  const grep = args.suite === "smoke" ? "@smoke" : "@regression";
+  const suiteArgs = args.suite === "smoke" ? ["--grep", "@smoke"] : [];
   const server = spawnLogged(
     "npm",
     [
@@ -297,7 +297,7 @@ async function main() {
     await maybeSaveAuthState(env);
     await run(
       "npx",
-      ["playwright", "test", `--project=${args.product}`, `--grep=${grep}`],
+      ["playwright", "test", `--project=${args.product}`, ...suiteArgs],
       {
         cwd: e2eRoot,
         env
