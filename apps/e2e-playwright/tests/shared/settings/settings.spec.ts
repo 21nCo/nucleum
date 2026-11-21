@@ -1262,73 +1262,49 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await resetShortcutAndClose(page, "Edit mode", defaultCombo);
   });
 
-  test("Keyboard shortcuts: change Go back shortcut, verify it navigates back, then reset to default", async ({
-    page
-  }, testInfo) => {
-    test.skip(
-      !isMemorySettingsProject(testInfo.project.name),
-      "Shared shortcut-customization flow is not part of this product contract"
-    );
-    test.setTimeout(90_000);
-    await ensureInAppOnHome(page);
-    const calendarUrl = page.url();
-    await page
-      .getByRole("button", { name: /^Overview$/i })
-      .first()
-      .click({ timeout: 8_000 });
-    await expect(page).toHaveURL((url) =>
-      /^\/overview(?:\/|$)/.test(url.pathname)
-    );
+  for (const [direction, key] of [
+    ["back", "KeyB"],
+    ["forward", "KeyF"]
+  ] as const) {
+    const shortcut = `Go ${direction}`;
+    test(`Keyboard shortcuts: change ${shortcut} shortcut, verify it navigates ${direction}, then reset to default`, async ({
+      page
+    }, testInfo) => {
+      test.skip(
+        !isMemorySettingsProject(testInfo.project.name),
+        "Shared shortcut-customization flow is not part of this product contract"
+      );
+      test.setTimeout(90_000);
+      await ensureInAppOnHome(page);
+      const calendarUrl = page.url();
+      await page
+        .getByRole("button", { name: /^Overview$/i })
+        .first()
+        .click({ timeout: 8_000 });
+      await expect(page).toHaveURL((url) =>
+        /^\/overview(?:\/|$)/.test(url.pathname)
+      );
+      const overviewUrl = page.url();
 
-    const panel = page.getByTestId("keyboard-shortcut-settings");
-    const modifier = await browserShortcutModifier(page);
-    const newCombo = `${modifier}+Shift+Alt+KeyB`;
-    const defaultCombo = `${modifier}+Shift+KeyB`;
+      const modifier = await browserShortcutModifier(page);
+      if (direction === "forward") {
+        await page.keyboard.press(`${modifier}+Shift+KeyB`);
+        await expect(page).toHaveURL(calendarUrl);
+      }
 
-    await openShortcutSettings(page);
-    await changeShortcutAndClose(page, panel, "Go back", newCombo);
+      await openShortcutSettings(page);
+      const panel = page.getByTestId("keyboard-shortcut-settings");
+      const newCombo = `${modifier}+Shift+Alt+${key}`;
+      await changeShortcutAndClose(page, panel, shortcut, newCombo);
 
-    await page.keyboard.press(newCombo);
-    await expect(page).toHaveURL(calendarUrl);
+      await page.keyboard.press(newCombo);
+      await expect(page).toHaveURL(
+        direction === "back" ? calendarUrl : overviewUrl
+      );
 
-    await resetShortcutAndClose(page, "Go back", defaultCombo);
-  });
-
-  test("Keyboard shortcuts: change Go forward shortcut, verify it navigates forward, then reset to default", async ({
-    page
-  }, testInfo) => {
-    test.skip(
-      !isMemorySettingsProject(testInfo.project.name),
-      "Shared shortcut-customization flow is not part of this product contract"
-    );
-    test.setTimeout(90_000);
-    await ensureInAppOnHome(page);
-    const calendarUrl = page.url();
-    await page
-      .getByRole("button", { name: /^Overview$/i })
-      .first()
-      .click({ timeout: 8_000 });
-    await expect(page).toHaveURL((url) =>
-      /^\/overview(?:\/|$)/.test(url.pathname)
-    );
-    const overviewUrl = page.url();
-
-    const modifier = await browserShortcutModifier(page);
-    await page.keyboard.press(`${modifier}+Shift+KeyB`);
-    await expect(page).toHaveURL(calendarUrl);
-
-    const panel = page.getByTestId("keyboard-shortcut-settings");
-    const newCombo = `${modifier}+Shift+Alt+KeyF`;
-    const defaultCombo = `${modifier}+Shift+KeyF`;
-
-    await openShortcutSettings(page);
-    await changeShortcutAndClose(page, panel, "Go forward", newCombo);
-
-    await page.keyboard.press(newCombo);
-    await expect(page).toHaveURL(overviewUrl);
-
-    await resetShortcutAndClose(page, "Go forward", defaultCombo);
-  });
+      await resetShortcutAndClose(page, shortcut, `${modifier}+Shift+${key}`);
+    });
+  }
 });
 
 test.describe("settings - Accessibility (shared) @settings", () => {
