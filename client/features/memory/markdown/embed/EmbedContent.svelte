@@ -366,7 +366,10 @@
             "h-auto max-h-[20rem]":
               !isResizable &&
               ![NodeType.TWEET].includes(_mediaBlock?.contentType),
-            "overflow-auto": _mediaBlock?.contentType === NodeType.GIST
+            "overflow-auto": [NodeType.GIST, NodeType.MASTODON_POST].includes(
+              _mediaBlock?.contentType
+            ),
+            "items-start": _mediaBlock?.contentType === NodeType.MASTODON_POST
           })}
         >
           <MediaContentResolver
