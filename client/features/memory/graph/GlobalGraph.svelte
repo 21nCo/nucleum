@@ -213,6 +213,10 @@
   }
 
   function retryLoad() {
+    if (loadAttempt > 0) {
+      window.location.reload();
+      return;
+    }
     isLoadFailed = false;
     loadAttempt += 1;
   }
@@ -288,7 +292,7 @@
         <EmptyStatusView
           mainText="Couldn't load the graph."
           subText="Check your connection and try again."
-          actionText="Retry"
+          actionText={loadAttempt > 0 ? "Reload" : "Retry"}
           onclick={retryLoad}
         />
       {:else}
