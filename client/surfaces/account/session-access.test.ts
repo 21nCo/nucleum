@@ -12,7 +12,8 @@ const mocks = vi.hoisted(() => ({
   refreshPlan: vi.fn(),
   gotoPath: vi.fn(),
   storageGet: vi.fn(),
-  storageSet: vi.fn()
+  storageSet: vi.fn(),
+  startUploadReplay: vi.fn()
 }));
 const account = vi.hoisted(() => ({ current: undefined as any }));
 vi.mock("@nucleum/client/runtime/account/account.store", () => ({
@@ -33,6 +34,9 @@ vi.mock("@nucleum/shell/navigation/navigation", () => ({
 }));
 vi.mock("@nucleum/persistence/client-storage", () => ({
   clientStorage: { get: mocks.storageGet, set: mocks.storageSet }
+}));
+vi.mock("@nucleum/surfaces/account/account-upload-replay", () => ({
+  startUploadReplayForSession: mocks.startUploadReplay
 }));
 vi.mock("@nucleum/client/runtime/logging/logger", () => ({
   logger: { info: vi.fn(), warn: vi.fn() }
@@ -108,5 +112,30 @@ describe("product-configured account access", () => {
     expect(mocks.storageSet).toHaveBeenCalledTimes(2);
     expect(mocks.refreshPlan).toHaveBeenCalledOnce();
     expect(mocks.gotoPath).not.toHaveBeenCalled();
+  });
+
+  it("starts account upload replay only for restored cloud sessions", async () => {
+    const started = async (resolution: object) => {
+      mocks.startUploadReplay.mockClear();
+      mocks.resolve.mockResolvedValue(resolution);
+      await performLoginStatusCheck();
+      return mocks.startUploadReplay.mock.calls.length;
+    };
+    expect(await started({ status: "cached-cloud" })).toBe(1);
+    expect(
+      await started({
+        status: "authenticated",
+        session: { id: "session", actorId: "123", metadata: {} },
+        storedState: {}
+      })
+    ).toBe(1);
+    for (const status of [
+      "offline-only",
+      "unavailable",
+      "expired",
+      "signed-out"
+    ]) {
+      expect(await started({ status })).toBe(0);
+    }
   });
 });
