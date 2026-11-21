@@ -40,20 +40,55 @@
   const grammarLoaders = import.meta.glob<{ default: import("highlight.js").LanguageFn }>(
     "../../../../../node_modules/highlight.js/es/languages/!(*.js).js"
   );
-  const pendingGrammars = new Map<string, Promise<void>>();
+  let grammarQueue = Promise.resolve();
+  let allGrammars: Promise<void> | undefined;
+  const missingGrammars = new Set<string>();
 
-  async function loadGrammar(language: string) {
-    if (hljs.getLanguage(language)) return;
+  async function resolveGrammar(language: string, visited: Set<string>) {
+    if (hljs.getLanguage(language) || missingGrammars.has(language) || visited.has(language)) return;
+    visited.add(language);
     const load = grammarLoaders[`../../../../../node_modules/highlight.js/es/languages/${language}.js`];
-    if (!load) return;
-    let pending = pendingGrammars.get(language);
-    if (!pending) {
-      pending = load().then(({ default: grammar }) => {
-        hljs.registerLanguage(language, grammar);
-      }).finally(() => pendingGrammars.delete(language));
-      pendingGrammars.set(language, pending);
+    if (!load) {
+      allGrammars ??= Promise.all(Object.entries(grammarLoaders).map(async ([path, loader]) => {
+        const { default: grammar } = await loader();
+        return { language: path.slice(path.lastIndexOf("/") + 1, -3), grammar };
+      })).then((grammars) => {
+        for (const { language, grammar } of grammars) hljs.registerLanguage(language, grammar);
+      }).catch((error) => {
+        allGrammars = undefined;
+        throw error;
+      });
+      await allGrammars;
+      if (!hljs.getLanguage(language)) missingGrammars.add(language);
+      return;
     }
-    await pending;
+    const { default: grammar } = await load();
+    const dependencies = new Set<string>();
+    const modes = new Set<object>();
+    function collect(mode: unknown) {
+      if (!mode || typeof mode !== "object" || modes.has(mode)) return;
+      modes.add(mode);
+      const { subLanguage, contains, starts, variants } = mode as {
+        subLanguage?: string | string[];
+        contains?: unknown[];
+        starts?: unknown;
+        variants?: unknown[];
+      };
+      for (const name of typeof subLanguage === "string" ? [subLanguage] : subLanguage ?? []) {
+        dependencies.add(name);
+      }
+      contains?.forEach(collect);
+      variants?.forEach(collect);
+      collect(starts);
+    }
+    collect(grammar(hljs));
+    for (const dependency of dependencies) await resolveGrammar(dependency, visited);
+    hljs.registerLanguage(language, grammar);
+  }
+
+  function loadGrammar(language: string) {
+    grammarQueue = grammarQueue.catch(() => {}).then(() => resolveGrammar(language, new Set()));
+    return grammarQueue;
   }
 
   hljs.registerLanguage("apache", apache);
