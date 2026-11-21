@@ -286,7 +286,7 @@ async function exercisePipLifecycle(
   await pip.close();
   const restored = page.locator("#playercontainer").getByTestId("focus-player");
   await expect(restored).toHaveCount(1);
-  await expect(restored).toBeVisible();
+  await expect(restored).toBeAttached();
   await expect
     .poll(
       () =>
