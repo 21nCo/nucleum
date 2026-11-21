@@ -84,11 +84,12 @@
           return;
         }
 
+        const startRegion = region;
         const handoffMode = resolveHandoffMode();
         const handoffChallenge =
           handoffMode === "session-token" ? await beginSocialHandoff() : undefined;
         const response = await (
-          await authClient({ region })
+          await authClient({ region: startRegion })
         ).startSocialSignIn({
           provider: provider as "apple" | "google" | "github",
           returnTo: resolveReturnTo(),
