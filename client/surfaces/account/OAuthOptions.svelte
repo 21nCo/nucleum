@@ -87,7 +87,9 @@
         const startRegion = region;
         const handoffMode = resolveHandoffMode();
         const handoffChallenge =
-          handoffMode === "session-token" ? await beginSocialHandoff() : undefined;
+          handoffMode === "session-token"
+            ? await beginSocialHandoff({ regionId: startRegion })
+            : undefined;
         const response = await (
           await authClient({ region: startRegion })
         ).startSocialSignIn({

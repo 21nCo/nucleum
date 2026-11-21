@@ -4,6 +4,7 @@ import {
   type AuthFnClientRequestMetric,
   type AuthFnRegionalClient,
   type AuthFnRegionStorage,
+  type AuthFnSocialHandoffClient,
   type AuthFnTransportAuthOptions
 } from "@authfn/client";
 import type { HttpTransportAuthProvider } from "@superfunctions/http";
@@ -23,20 +24,23 @@ import type {
 
 type StoredRegionValue = string | AuthFnCachedRegion;
 
-const authClientsMap: Map<string, AuthFnRegionalClient> = new Map();
+/** The regional AuthFn client, including the social handoff exchange it always provides. */
+type NucleumAuthClient = AuthFnRegionalClient & AuthFnSocialHandoffClient;
+
+const authClientsMap: Map<string, NucleumAuthClient> = new Map();
 const REGION_CACHE_TTL_MS = 15 * 60 * 1000;
 
 export const authClient = async (params?: {
   region?: string;
   isPreventCachedInstance?: boolean;
-}): Promise<AuthFnRegionalClient> => {
+}): Promise<NucleumAuthClient> => {
   const region =
     params?.region ??
     (await clientStorage.get(ClientStorageKey.REGION)) ??
     "insouth";
   const cacheKey = "regional";
   if (authClientsMap.has(cacheKey) && !params?.isPreventCachedInstance) {
-    const existing = authClientsMap.get(cacheKey) as AuthFnRegionalClient;
+    const existing = authClientsMap.get(cacheKey) as NucleumAuthClient;
     existing.setCurrentRegionId(region);
     return existing;
   }

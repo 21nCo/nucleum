@@ -1,4 +1,4 @@
-import type { AuthFnRegionalClient } from "@authfn/client";
+import type { AuthFnSocialHandoffClient } from "@authfn/client";
 import { getBrowserStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 
@@ -23,15 +23,18 @@ const SOCIAL_HANDOFF_CODE_PREFIX = "shc_";
 interface PendingSocialHandoff {
   verifier: string;
   expiresAt: number;
+  /** Account region the sign-in was started in, when known. */
+  regionId?: string;
 }
 
 /** Client surface used to exchange a social handoff code. */
-export type SocialHandoffExchangeClient = Pick<
-  AuthFnRegionalClient,
-  "exchangeSocialHandoff"
->;
+export type SocialHandoffExchangeClient = AuthFnSocialHandoffClient;
 
-/** Outcome of turning a native sign-in callback value into a session token. */
+/**
+ * Outcome of turning a native sign-in callback value into a session token.
+ * `ignored` means this window has no live sign-in the code belongs to: on macOS
+ * the shell broadcasts callbacks to every window, so another window may own it.
+ */
 export type SocialHandoffResolution =
   | { kind: "session"; token: string; regionId?: string; verifier?: string }
   | { kind: "failed"; errorCode: string }
@@ -79,7 +82,11 @@ function readSocialHandoff(now: number): StoredSocialHandoff {
     if (pending.expiresAt <= now) return { state: "expired" };
     return {
       state: "live",
-      pending: { verifier: pending.verifier, expiresAt: pending.expiresAt }
+      pending: {
+        verifier: pending.verifier,
+        expiresAt: pending.expiresAt,
+        ...(typeof pending.regionId === "string" ? { regionId: pending.regionId } : {})
+      }
     };
   } catch {
     return { state: "none" };
@@ -112,18 +119,25 @@ export function finishSocialHandoff(verifier: string) {
 }
 
 /**
- * Starts a code-and-verifier handoff and returns the challenge for
- * `startSocialSignIn`. A sign-in started while another is still pending in
+ * Starts a code-and-verifier handoff in `regionId` and returns the challenge
+ * for `startSocialSignIn`. A sign-in started while another is still pending in
  * this window reuses its verifier with a renewed deadline, so whichever
  * callback arrives can be exchanged.
  */
-export async function beginSocialHandoff(now = Date.now()): Promise<string> {
+export async function beginSocialHandoff({
+  regionId,
+  now = Date.now()
+}: { regionId?: string; now?: number } = {}): Promise<string> {
   const live = readSocialHandoff(now);
   const verifier =
     live.state === "live"
       ? live.pending.verifier
       : toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
-  writeSocialHandoff({ verifier, expiresAt: now + SOCIAL_HANDOFF_TTL_MS });
+  writeSocialHandoff({
+    verifier,
+    expiresAt: now + SOCIAL_HANDOFF_TTL_MS,
+    ...(regionId ? { regionId } : {})
+  });
   return deriveSocialHandoffChallenge(verifier);
 }
 
@@ -164,14 +178,15 @@ export function isSocialHandoffCode(input: {
  * this window's pending verifier and never used as a session. The verifier
  * stays in place while the exchange runs; the caller passes the returned
  * `verifier` to `finishSocialHandoff` once the app is signed in (a retry
- * reuses it until then). A window with no live sign-in, or whose
+ * reuses it until then). The exchange goes to the region the callback names,
+ * or else the one the sign-in was started in. A window with no live sign-in, or whose
  * verifier the code wasn't issued for, ignores it. Any other value is a
  * session token, which native Apple sign-in and sign-ins started without a
  * challenge return directly; it is never sent to the exchange.
  */
 export async function resolveSocialHandoffToken(
   input: { token: string; handoff?: string; regionId?: string },
-  client: () => Promise<SocialHandoffExchangeClient>,
+  client: (regionId?: string) => Promise<SocialHandoffExchangeClient>,
   now = Date.now()
 ): Promise<SocialHandoffResolution> {
   if (!isSocialHandoffCode(input)) {
@@ -181,10 +196,7 @@ export async function resolveSocialHandoffToken(
   if (stored.state !== "live") return { kind: "ignored" };
   const verifier = stored.pending.verifier;
   try {
-    const exchangeClient = await client();
-    if (!exchangeClient.exchangeSocialHandoff) {
-      return { kind: "failed", errorCode: "handoff_exchange_unavailable" };
-    }
+    const exchangeClient = await client(input.regionId ?? stored.pending.regionId);
     const response = await exchangeClient.exchangeSocialHandoff({
       code: input.token,
       verifier

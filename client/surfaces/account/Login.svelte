@@ -22,6 +22,8 @@
   import { clientStorage } from "@nucleum/persistence/client-storage";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
   import { authClient } from "@nucleum/client/runtime/account/auth";
+  import context from "@nucleum/client/runtime/context.store";
+  import { OperatingSystem } from "@nucleum/client/runtime/context.type";
   import {
     finishSocialHandoff,
     resolveSocialHandoffToken
@@ -184,12 +186,15 @@
                   : undefined,
               regionId: regionHint
             },
-            () => authClient({ region: regionHint })
+            (region) => authClient({ region })
           );
           if (resolved.kind === "ignored") {
             logger.info({
               at: "Login.handleMessageFromParent.oauth.handoff.notStartedHere"
             });
+            if ($context.os !== OperatingSystem.MACOS) {
+              toasts.error("Authentication failed. Please try again.");
+            }
             return;
           }
           if (resolved.kind === "failed") {

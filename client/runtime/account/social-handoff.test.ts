@@ -15,7 +15,7 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 const NOW = Date.UTC(2026, 10, 21, 10, 0, 0);
 
 type ExchangeResult = Awaited<
-  ReturnType<NonNullable<SocialHandoffExchangeClient["exchangeSocialHandoff"]>>
+  ReturnType<SocialHandoffExchangeClient["exchangeSocialHandoff"]>
 >;
 
 function exchangeClient(result: ExchangeResult | Error) {
@@ -56,7 +56,7 @@ describe("social handoff verifier", () => {
   });
 
   it("keeps a 43-character verifier whose challenge it returns", async () => {
-    const challenge = await beginSocialHandoff(NOW);
+    const challenge = await beginSocialHandoff({ now: NOW });
     const verifier = storedVerifier();
 
     expect(verifier).toMatch(/^[A-Za-z0-9_-]{43}$/);
@@ -64,13 +64,13 @@ describe("social handoff verifier", () => {
   });
 
   it("hands the verifier out once and not after it expires", async () => {
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     const verifier = storedVerifier();
 
     expect(await takeSocialHandoffVerifier(NOW + 1000)).toBe(verifier);
     expect(await takeSocialHandoffVerifier(NOW + 1000)).toBeUndefined();
 
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     expect(
       await takeSocialHandoffVerifier(NOW + SOCIAL_HANDOFF_TTL_MS)
     ).toBeUndefined();
@@ -78,20 +78,20 @@ describe("social handoff verifier", () => {
   });
 
   it("reuses a live verifier with a renewed deadline when a sign-in is retried", async () => {
-    const first = await beginSocialHandoff(NOW);
-    const retry = await beginSocialHandoff(NOW + SOCIAL_HANDOFF_TTL_MS - 1000);
+    const first = await beginSocialHandoff({ now: NOW });
+    const retry = await beginSocialHandoff({ now: NOW + SOCIAL_HANDOFF_TTL_MS - 1000 });
 
     expect(retry).toBe(first);
     expect(
       await takeSocialHandoffVerifier(NOW + SOCIAL_HANDOFF_TTL_MS + 1000)
     ).toBeDefined();
-    expect(await beginSocialHandoff(NOW + SOCIAL_HANDOFF_TTL_MS + 2000)).not.toBe(first);
+    expect(await beginSocialHandoff({ now: NOW + SOCIAL_HANDOFF_TTL_MS + 2000 })).not.toBe(first);
   });
 
   it("gives simultaneous starts the same verifier", async () => {
     const [first, second] = await Promise.all([
-      beginSocialHandoff(NOW),
-      beginSocialHandoff(NOW)
+      beginSocialHandoff({ now: NOW }),
+      beginSocialHandoff({ now: NOW })
     ]);
 
     expect(second).toBe(first);
@@ -100,7 +100,7 @@ describe("social handoff verifier", () => {
 
 describe("resolveSocialHandoffToken", () => {
   it("exchanges a one-time code with the pending verifier", async () => {
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     const verifier = storedVerifier();
     const { exchangeSocialHandoff, client } = exchangeClient(
       exchanged("test-session-token", "useast")
@@ -128,7 +128,7 @@ describe("resolveSocialHandoffToken", () => {
   });
 
   it("recognizes a code from a shell that does not forward the handoff kind", async () => {
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     const { exchangeSocialHandoff, client } = exchangeClient(
       exchanged("test-session-token", null)
     );
@@ -147,6 +147,25 @@ describe("resolveSocialHandoffToken", () => {
     });
   });
 
+  it("exchanges in the region the callback names, else the one the sign-in started in", async () => {
+    await beginSocialHandoff({ regionId: "useast", now: NOW });
+    const regions: (string | undefined)[] = [];
+    const exchangeSocialHandoff = vi.fn(async () => exchanged("test-session-token", null));
+    const client = async (regionId?: string) => {
+      regions.push(regionId);
+      return { exchangeSocialHandoff } as unknown as SocialHandoffExchangeClient;
+    };
+
+    await resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, client, NOW);
+    await resolveSocialHandoffToken(
+      { token: "shc_test-handoff-code", regionId: "euwest" },
+      client,
+      NOW
+    );
+
+    expect(regions).toEqual(["useast", "euwest"]);
+  });
+
   it("leaves a code to the window that started the sign-in", async () => {
     const elsewhere = exchangeClient(exchanged("test-session-token", null));
     expect(
@@ -160,7 +179,7 @@ describe("resolveSocialHandoffToken", () => {
   });
 
   it("keeps its verifier when another window's code arrives", async () => {
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     const verifier = storedVerifier();
     const other = exchangeClient({
       ok: false,
@@ -178,7 +197,7 @@ describe("resolveSocialHandoffToken", () => {
   });
 
   it("treats an expired sign-in as none, so a broadcast code shows no error", async () => {
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     const expired = exchangeClient(exchanged("test-session-token", null));
     expect(
       await resolveSocialHandoffToken(
@@ -191,7 +210,7 @@ describe("resolveSocialHandoffToken", () => {
   });
 
   it("keeps the verifier available while another window's code is being checked", async () => {
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     let answerOther: (value: ExchangeResult) => void = () => {};
     const exchangeSocialHandoff = vi.fn(
       ({ code }: { code: string; verifier: string }) =>
@@ -225,7 +244,7 @@ describe("resolveSocialHandoffToken", () => {
   });
 
   it("keeps the verifier after a failed exchange so a retry can still use it", async () => {
-    const challenge = await beginSocialHandoff(NOW);
+    const challenge = await beginSocialHandoff({ now: NOW });
     const refused = exchangeClient({
       ok: false,
       error: { code: "AUTHFN_OAUTH_STATE_REPLAYED", message: "used" }
@@ -234,11 +253,11 @@ describe("resolveSocialHandoffToken", () => {
     expect(
       await resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, refused.client, NOW)
     ).toEqual({ kind: "failed", errorCode: "AUTHFN_OAUTH_STATE_REPLAYED" });
-    expect(await beginSocialHandoff(NOW + 1000)).toBe(challenge);
+    expect(await beginSocialHandoff({ now: NOW + 1000 })).toBe(challenge);
   });
 
   it("finishing a slow sign-in never clears a newer sign-in's verifier", async () => {
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     let answer: (value: ExchangeResult) => void = () => {};
     const client = async () =>
       ({
@@ -251,7 +270,7 @@ describe("resolveSocialHandoffToken", () => {
     const pending = resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, client, NOW);
     await Promise.resolve();
     window.sessionStorage.clear();
-    await beginSocialHandoff(NOW + 1000);
+    await beginSocialHandoff({ now: NOW + 1000 });
     const newer = storedVerifier();
     answer(exchanged("test-session-token", null));
 
@@ -263,7 +282,7 @@ describe("resolveSocialHandoffToken", () => {
 
   it("never uses a code as a session when it can't be exchanged", async () => {
 
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     const refused = exchangeClient({
       ok: false,
       error: { code: "AUTHFN_VALIDATION_ERROR", message: "invalid" }
@@ -276,7 +295,7 @@ describe("resolveSocialHandoffToken", () => {
       )
     ).toEqual({ kind: "failed", errorCode: "AUTHFN_VALIDATION_ERROR" });
 
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     const offline = exchangeClient(new Error("network down"));
     expect(
       await resolveSocialHandoffToken(
@@ -288,7 +307,7 @@ describe("resolveSocialHandoffToken", () => {
   });
 
   it("uses a session token as is and never sends it to the exchange", async () => {
-    await beginSocialHandoff(NOW);
+    await beginSocialHandoff({ now: NOW });
     const idle = exchangeClient(exchanged("other-session-token", null));
 
     expect(
