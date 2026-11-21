@@ -146,7 +146,7 @@ export const actionRunner = {
           [mode]: slug
         });
       }
-    } else if (action.component) {
+    } else if (action.component || action.loadComponent) {
       logger.log({
         at: "running action",
         action,

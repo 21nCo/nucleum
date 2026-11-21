@@ -3,24 +3,18 @@ import { ActionType } from "@nucleum/client/config/action.type";
 import type { IAction } from "@nucleum/shared-state/commands/action.type";
 import { memotronActions } from "@nucleum/products/memotron/memotron.actions";
 import { pointronActions } from "@nucleum/products/pointron/pointron.actions";
-import NucleusLibrary from "@nucleum/products/nucleus/NucleusLibrary.svelte";
-import NucleusOverview from "@nucleum/products/nucleus/overview/NucleusOverview.svelte";
 import ComingSoonView from "@21n/ui/elements/ComingSoonView.svelte";
-import LibraryPanelContentResolver from "@nucleum/surfaces/library/LibraryPanelContentResolver.svelte";
 import { Resource } from "@nucleum/datafn/resource.enum";
-import NucleusOverviewPanel from "@nucleum/products/nucleus/overview/NucleusOverviewPanel.svelte";
 import { AccessMode } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";
-import ResourceBrowser from "@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte";
 import { createPageViewActions } from "@nucleum/shared-state/commands/page-view-actions";
 import { createLibraryViewActions } from "@nucleum/surfaces/library/library-route";
 import { resolveLibrarySwitcherResources } from "@nucleum/surfaces/library/resource-switcher.utils";
 import { resolveNucleusOverviewViewSegments } from "@nucleum/products/nucleus/overview/nucleus-overview-views";
 import { resolveProductConfig } from "@nucleum/products/product.config";
 import { Product } from "@nucleum/client/config/product.type";
-import NucleusHomeOnMobile from "@nucleum/products/nucleus/home/NucleusHomeOnMobile.svelte";
 
 const actionsToFilterInSub: string[] = [
   Action.LIBRARY,
@@ -56,8 +50,10 @@ const libraryAction: IAction = {
   action: Action.LIBRARY,
   label: appMenuActionLabelsByAction[Action.LIBRARY],
   icon: "library",
-  component: LibraryPanelContentResolver,
-  panel: NucleusLibrary,
+  loadComponent: () =>
+    import("@nucleum/surfaces/library/LibraryPanelContentResolver.svelte"),
+  panel: () =>
+    import("@nucleum/products/nucleus/NucleusLibrary.svelte"),
   type: ActionType.PAGE,
   componentParams: {
     defaultResource: Resource.collection,
@@ -71,8 +67,8 @@ const overviewAction: IAction = {
   action: Action.OVERVIEW,
   label: appMenuActionLabelsByAction[Action.OVERVIEW],
   icon: "overview",
-  component: NucleusOverview,
-  // panel: NucleusOverviewPanel,
+  loadComponent: () =>
+    import("@nucleum/products/nucleus/overview/NucleusOverview.svelte"),
   type: ActionType.PAGE
 };
 
@@ -94,7 +90,8 @@ export const nucleusActions: IAction[] = [
   ),
   {
     action: Action.MOBILEHOME,
-    component: NucleusHomeOnMobile,
+    loadComponent: () =>
+      import("@nucleum/products/nucleus/home/NucleusHomeOnMobile.svelte"),
     type: ActionType.PAGE,
     isMeta: true,
     isMenuHidden: true
@@ -124,7 +121,8 @@ export const nucleusActions: IAction[] = [
         resourceAction(Resource.space, ResourceActionType.BROWSE)
       ],
     icon: "combination",
-    component: ResourceBrowser,
+    loadComponent: () =>
+      import("@nucleum/surfaces/library/resourceBrowser/ResourceBrowser.svelte"),
     type: ActionType.PAGE,
     componentParams: {
       resource: Resource.space

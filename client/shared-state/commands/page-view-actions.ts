@@ -32,6 +32,7 @@ export function createPageViewActions(
     icon: parent.icon,
     type: ActionType.PAGE,
     component: parent.component,
+    loadComponent: parent.loadComponent,
     subViewOf: parent.action,
     ...(options?.isMeta ? { isMeta: true } : {})
   }));
