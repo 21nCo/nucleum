@@ -996,7 +996,6 @@ describe("replay authorization across the session lifetime", () => {
 
   async function settle() {
     await vi.dynamicImportSettled();
-    await new Promise((resolve) => setTimeout(resolve, 50));
     await vi.dynamicImportSettled();
   }
 
