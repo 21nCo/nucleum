@@ -242,7 +242,7 @@ async function main() {
   }
 
   const { "Strict-Transport-Security": _hsts, ...headers } =
-    productSecurityHeaders(config, buildDir);
+    productSecurityHeaders(config, buildDir, args.environment);
   const server = createStaticServer(buildDir, headers);
   const baseUrl = `http://127.0.0.1:${args.port}`;
   await server.listen(args.port);
