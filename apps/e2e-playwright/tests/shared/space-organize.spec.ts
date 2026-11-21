@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
+import { requireE2EProduct, resolveSurfaceContract } from "../../config/e2e.config";
 import { expect, test } from "../fixtures/e2e-test";
 import { blockExternalAuthRequests } from "../memory/memory-test-helpers";
 import { ensureInAppOnHome, runCommand } from "../utils/helpers";
@@ -22,25 +23,56 @@ async function deleteSpace(page: Page, spaceId: string) {
   );
 }
 
-test("create a space, organize notes and objectives, rename and pin it, and retain everything after reload", async ({
+test("create a space, organize two resource types, rename and pin it, and retain everything after reload", async ({
   page,
   seed
-}) => {
+}, testInfo) => {
   test.setTimeout(120_000);
   await blockExternalAuthRequests(page);
   await page.setViewportSize({ width: 1920, height: 1080 });
   await ensureInAppOnHome(page);
+  const product = requireE2EProduct(testInfo.project.name);
+  const eligibleResources = await page.evaluate(async ({ modulePath, product }) => {
+    const { resolveSpaceItemResources } = await import(modulePath);
+    return resolveSpaceItemResources(product) as string[];
+  }, {
+    modulePath: resolveRepoFsImportPath("client/features/spaces/space.utils.ts"),
+    product
+  });
+  const resourceTypes = ([
+    ["node", "library.nodes"],
+    ["objective", "library.objectives"],
+    ["collection", "library.collections"],
+    ["space", null]
+  ] as const).filter(([resource, surface]) =>
+    eligibleResources.includes(resource) && (!surface || resolveSurfaceContract(product, surface))
+  ).map(([resource]) => resource).slice(0, 2);
+  test.skip(resourceTypes.length < 2, "Requires two space-eligible resource types with product surface contracts");
   const term = `space${randomUUID().replaceAll("-", "").slice(0, 10)}`;
   const initialName = `${term} workspace`;
   const renamedName = `${term} organized`;
-  const note = await seed.memory.node({ label: `${term} note` });
-  const objective = await seed.focus.objective({ label: `${term} objective` });
-
-  await runCommand(page, "Create a new space");
-  const nameInput = page.getByTestId("space-title-input");
-  await expect(nameInput).toBeVisible();
-  const spaceId = new URL(page.url()).searchParams.get("page");
+  const records: { id: string; label: string }[] = [];
+  const seededSpaceIds: string[] = [];
+  let spaceId: string | null = null;
   try {
+    for (const resource of resourceTypes) {
+      const label = `${term} ${resource}`;
+      if (resource === "node") records.push(await seed.memory.node({ label }));
+      else if (resource === "objective") records.push(await seed.focus.objective({ label }));
+      else if (resource === "collection") records.push(await seed.collections.collection({ label }));
+      else {
+        const id = await page.evaluate(async ({ modulePath, label }) => {
+          const { insertSpace } = await import(modulePath);
+          return await insertSpace({ label, items: [] }) as string;
+        }, { modulePath: resolveRepoFsImportPath("client/features/spaces/space.store.ts"), label });
+        seededSpaceIds.push(id);
+        records.push({ id, label });
+      }
+    }
+    await runCommand(page, "Create a new space");
+    const nameInput = page.getByTestId("space-title-input");
+    await expect(nameInput).toBeVisible();
+    spaceId = new URL(page.url()).searchParams.get("page");
     await nameInput.fill(initialName);
     await nameInput.press("Enter");
     const title = page.getByTestId("top-bar-page-title");
@@ -51,7 +83,7 @@ test("create a space, organize notes and objectives, rename and pin it, and reta
     const addPanel = sideNav.getByRole("region", { name: "Add to space", exact: true });
     const search = addPanel.getByRole("searchbox", { name: "Search records to add" });
     const items = sideNav.getByRole("navigation", { name: "Space items", exact: true });
-    for (const record of [note, objective]) {
+    for (const record of records) {
       await search.fill(record.label);
       const result = addPanel.getByTestId("space-picker-result").filter({ hasText: record.label });
       await expect(result).toBeVisible();
@@ -79,7 +111,7 @@ test("create a space, organize notes and objectives, rename and pin it, and reta
     await pinned.click();
     await expect(title).toHaveText(renamedName);
     await expect(pinned).toHaveAttribute("aria-current", "page");
-    for (const record of [note, objective]) {
+    for (const record of records) {
       await expect(items.getByRole("button", { name: record.label, exact: true })).toBeVisible();
     }
 
@@ -88,10 +120,11 @@ test("create a space, organize notes and objectives, rename and pin it, and reta
     await pinned.click();
     await expect(title).toHaveText(renamedName);
     await expect(pinned).toHaveAttribute("aria-current", "page");
-    for (const record of [note, objective]) {
+    for (const record of records) {
       await expect(items.getByRole("button", { name: record.label, exact: true })).toBeVisible();
     }
   } finally {
     if (spaceId) await deleteSpace(page, spaceId);
+    for (const id of seededSpaceIds) await deleteSpace(page, id);
   }
 });
