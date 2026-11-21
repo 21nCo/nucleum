@@ -1,0 +1,31 @@
+client/runtime/account/auth.ts
+  s_a4a9279b38a3d6::t_9b0e1968382332 33-37,41,48-52,78
+client/runtime/account/social-handoff.test.ts
+  s_a4a9279b38a3d6::t_aa8ed49df450e7 180,186,191,215,221,226
+client/surfaces/account/Login.svelte
+  s_a4a9279b38a3d6::t_95c73349694f1e 191,225
+client/surfaces/account/OAuthOptions.svelte
+  s_a4a9279b38a3d6::t_b18df1bf0e6cac 99
+client/surfaces/account/account-session.ts
+  s_a4a9279b38a3d6::t_ac6df43de8d7f2 209-214,222,224-225,259
+services/account/src/auth/account-auth-policy.test.ts
+  s_a4a9279b38a3d6::t_cc2a8bd3b4ff94 1,103-151
+services/account/src/testing/harness.ts
+  s_a4a9279b38a3d6::t_7f07627271bf00 91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5096312b7db9b1bb9f2f499e773d68cfd2ed3f47",
+  "prompts": {},
+  "sessions": {
+    "s_a4a9279b38a3d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1855ecfc-893f-4a3a-9ace-d8374583571f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

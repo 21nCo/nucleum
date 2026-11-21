@@ -1,0 +1,21 @@
+client/runtime/account/social-handoff.test.ts
+  s_a4a9279b38a3d6::t_c9a60a20e2e809 157-174
+client/runtime/account/social-handoff.ts
+  s_a4a9279b38a3d6::t_bca056ddaa5bf2 12-19,150,177-183
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fd7b33598dfd177eafb79cb99185766bcd14b24f",
+  "prompts": {},
+  "sessions": {
+    "s_a4a9279b38a3d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1855ecfc-893f-4a3a-9ace-d8374583571f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

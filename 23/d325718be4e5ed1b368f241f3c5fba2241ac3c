@@ -1,0 +1,20 @@
+client/features/memory/node/content/web/social/SocialPostContentFallback.svelte
+  s_a4a9279b38a3d6::t_f3229a5e85d550 191-192,292
+  s_a4a9279b38a3d6::t_7d60285874d405 193-211,213-219,222-224,226-275,277-289
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "23d325718be4e5ed1b368f241f3c5fba2241ac3c",
+  "prompts": {},
+  "sessions": {
+    "s_a4a9279b38a3d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1855ecfc-893f-4a3a-9ace-d8374583571f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

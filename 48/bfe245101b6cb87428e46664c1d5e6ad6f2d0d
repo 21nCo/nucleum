@@ -1,0 +1,29 @@
+client/runtime/account/social-handoff.test.ts
+  s_a4a9279b38a3d6::t_c8d3714f421228 32-40,43-44,48-54,94-102,109-111,130-146,148-151,154,165,168,174-175,178-179,182-183,185,187-188,191,195-197
+client/runtime/account/social-handoff.ts
+  s_a4a9279b38a3d6::t_c513e3af350004 1,12-14,20-24,46-65,67-69,72-73,90,92-108,114-118,125-126,128-139,145-146
+package-lock.json
+  s_a4a9279b38a3d6::t_b6718f5da620c6 47,4475-4489,17874-17876,17879,17881,17883-17924
+package.json
+  s_a4a9279b38a3d6::t_8aecd69e1c4599 42
+services/account/src/auth/plugins.ts
+  s_a4a9279b38a3d6::t_7aa071561b60dc 24-29
+tools/check/type-ownership.mjs
+  s_a4a9279b38a3d6::t_0e0618df9db80a 86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "48bfe245101b6cb87428e46664c1d5e6ad6f2d0d",
+  "prompts": {},
+  "sessions": {
+    "s_a4a9279b38a3d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1855ecfc-893f-4a3a-9ace-d8374583571f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
