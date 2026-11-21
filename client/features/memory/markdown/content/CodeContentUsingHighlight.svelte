@@ -37,6 +37,25 @@
   import xml from "highlight.js/lib/languages/xml";
   import yaml from "highlight.js/lib/languages/yaml";
 
+  const grammarLoaders = import.meta.glob<{ default: import("highlight.js").LanguageFn }>(
+    "../../../../../node_modules/highlight.js/es/languages/!(*.js).js"
+  );
+  const pendingGrammars = new Map<string, Promise<void>>();
+
+  async function loadGrammar(language: string) {
+    if (hljs.getLanguage(language)) return;
+    const load = grammarLoaders[`../../../../../node_modules/highlight.js/es/languages/${language}.js`];
+    if (!load) return;
+    let pending = pendingGrammars.get(language);
+    if (!pending) {
+      pending = load().then(({ default: grammar }) => {
+        hljs.registerLanguage(language, grammar);
+      }).finally(() => pendingGrammars.delete(language));
+      pendingGrammars.set(language, pending);
+    }
+    await pending;
+  }
+
   hljs.registerLanguage("apache", apache);
   hljs.registerLanguage("bash", bash);
   hljs.registerLanguage("c", c);
@@ -149,7 +168,14 @@
     { label: "YAML", value: "yaml" }
   ];
 
-  function highlightCode() {
+  async function highlightCode() {
+    const requestedLanguage = language || "plaintext";
+    try {
+      await loadGrammar(requestedLanguage.toLowerCase());
+    } catch {
+      return;
+    }
+    if (requestedLanguage !== (language || "plaintext")) return;
     if (codeElement && !isEditing) {
       codeElement.removeAttribute("data-highlighted");
       hljs.highlightElement(codeElement);
