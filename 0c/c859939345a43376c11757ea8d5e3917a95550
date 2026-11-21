@@ -1,0 +1,40 @@
+client/features/memory/node/content/web/social/embed-html.ts
+  s_a4a9279b38a3d6::t_2508a2f63038d5 45-54
+tests/unit/frontend/security-headers.spec.ts
+  s_a4a9279b38a3d6::t_e9547ed7c0cdb6 86-96
+services/frontend/scripts/deploy.mjs
+  s_a4a9279b38a3d6::t_e9547ed7c0cdb6 53
+client/shell/navigation/browser-navigation.ts
+  s_a4a9279b38a3d6::t_2e884cce44c82d 12
+services/frontend/scripts/frontend-config.mjs
+  s_a4a9279b38a3d6::t_e9547ed7c0cdb6 168,178,234-236,238,240-241,341-342,344
+shared/utils/url.utils.external.test.ts
+  s_a4a9279b38a3d6::t_2e884cce44c82d 3
+client/shell/navigation/link-target.ts
+  s_a4a9279b38a3d6::t_2e884cce44c82d 31-75
+client/features/memory/node/content/web/GistPreview.svelte
+  s_a4a9279b38a3d6::t_2508a2f63038d5 7,55
+client/shell/navigation/location-target.test.ts
+  s_a4a9279b38a3d6::t_2e884cce44c82d 1-72
+client/features/memory/node/content/web/social/embed-html.test.ts
+  s_a4a9279b38a3d6::t_2508a2f63038d5 6,152-161
+  s_a4a9279b38a3d6::t_16d0dca965bb22 162-164
+client/features/memory/node/content/web/social/SocialPostContent.svelte
+  s_a4a9279b38a3d6::t_7743b54e8a2f19 58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0cc859939345a43376c11757ea8d5e3917a95550",
+  "prompts": {},
+  "sessions": {
+    "s_a4a9279b38a3d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1855ecfc-893f-4a3a-9ace-d8374583571f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
