@@ -48,6 +48,7 @@
     search = "",
     scope = "all",
     isContextShown = true,
+    hasContextRecord = true,
     isCommandsOnly = false,
     onClose = void 0,
     onSearchAction = void 0,
@@ -57,6 +58,8 @@
     scope?: SuperBarScope;
     /** Whether the open resource's actions are offered. */
     isContextShown?: boolean;
+    /** Whether the selected record has resolved and still exists. */
+    hasContextRecord?: boolean;
     /** Lists commands only, without context actions or search results. */
     isCommandsOnly?: boolean;
     /** Kind of the selected row, so the bar can hint what Enter does. */
@@ -80,7 +83,7 @@
   const allActions = $derived.by(() =>
     loadAllActions(
       $appStore.actions,
-      isContextShown ? $activeContextActions : undefined
+      isContextShown && hasContextRecord ? $activeContextActions : undefined
     )
   );
   const filteredActions = $derived.by(() => {
