@@ -19,7 +19,7 @@
     "@superfunctions/http": "0.2.0",
     "@21n/ui": "*",
     "@sveltejs/kit": "^2.55.0",
-    "maplibre-gl": "^4.5.1",
+    "maplibre-gl": "^6.19.0",
     "svelte": "^5.55.0"
   },
   "peerDependencies": {
