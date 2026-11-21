@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/svelte";
+import { render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { describe, expect, it, vi } from "vitest";
 import { ActionType } from "@nucleum/client/config/action.type";
@@ -74,23 +74,23 @@ describe("ComponentResolver", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("retries a rejected import without losing the action parameters", async () => {
+  it("keeps a failed view from rendering until the app is reloaded", async () => {
     const load = vi
       .fn<ActionComponentLoader>()
-      .mockRejectedValueOnce(new Error("offline"))
+      .mockRejectedValueOnce(new Error("Unable to preload CSS"))
       .mockResolvedValueOnce({ default: ActionRendererStub });
-    const screen = render(ComponentResolver, {
-      action: deferredPage("library", load)
-    });
+    const action = deferredPage("library", load);
+    const screen = render(ComponentResolver, { action });
 
     expect(await screen.findByText(/this view couldn't load/i)).toBeVisible();
-    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.getByRole("button", { name: "Reload app" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    screen.unmount();
 
-    expect(load).toHaveBeenCalledTimes(2);
-    expect(await screen.findByTestId("action-renderer")).toHaveAttribute(
-      "data-path",
-      "library"
-    );
+    const reopened = render(ComponentResolver, { action });
+    expect(await reopened.findByText(/this view couldn't load/i)).toBeVisible();
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(reopened.queryByTestId("action-renderer")).not.toBeInTheDocument();
   });
 
   it("ignores a previous action's import resolving after navigation", async () => {
