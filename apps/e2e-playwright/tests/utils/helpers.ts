@@ -266,16 +266,19 @@ export async function ensureInAppOnHome(page: Page) {
   });
 }
 
-/**
- * Open command bar, type the command label, press Enter.
- */
+/** Opens the command bar in Commands mode and selects the exact command. */
 export async function runCommand(page: Page, commandLabel: string) {
   const cmdButton = page.getByRole("button", { name: /command bar/i });
   await cmdButton.click({ timeout: 5_000 });
-  const cmdInput = page.getByTestId("command-bar-input");
-  await cmdInput.waitFor({ state: "visible", timeout: 15_000 });
-  await cmdInput.fill(commandLabel);
-  await page.keyboard.press("Enter");
+  const commandBar = page.getByTestId("modal-CMD");
+  await commandBar.getByTestId("command-bar-input").fill(`>${commandLabel}`);
+  await expect(commandBar.getByTestId("super-bar-mode-chip")).toBeVisible();
+  const label = commandLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  await commandBar
+    .getByRole("button", {
+      name: new RegExp(`^(?:Go to\\s+)?${label}\\s+(?:page|action|link)$`)
+    })
+    .click();
 }
 
 function normalizeNotificationContent(text: string) {
