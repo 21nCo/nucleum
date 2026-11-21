@@ -1,13 +1,5 @@
 <script lang="ts">
-  import {
-    Graph,
-    NodeEvent,
-    GraphEvent,
-    type GraphData,
-    type NodeData,
-    type EdgeData,
-    CanvasEvent
-  } from "@antv/g6";
+  import type * as G6 from "@antv/g6";
   import { onMount } from "svelte";
   import { truncateString } from "@21n/shared-utils/text.utils";
   import appearance from "@nucleum/shared-state/appearance/appearance.store";
@@ -32,16 +24,25 @@
     onRender?: (() => void) | undefined;
     onSelect?: ((event: any) => void) | undefined;
   } = $props();
-  let graph: Graph;
-  let _data: GraphData = {
+  let g6: typeof G6 | undefined;
+  let graph: G6.Graph;
+  let _data: G6.GraphData = {
     nodes: [],
     edges: [],
     combos: []
   };
   const currentColors: any = $appearance.colorScheme.colors;
   onMount(() => {
-    preProcessData();
-    renderGraph();
+    let isDestroyed = false;
+    import("@antv/g6").then((module) => {
+      if (isDestroyed) return;
+      g6 = module;
+      preProcessData();
+      renderGraph();
+    });
+    return () => {
+      isDestroyed = true;
+    };
   });
 
   export function rerender() {
@@ -83,7 +84,7 @@
       target: edge.target,
       linkType: edge.linkType,
       type: "line"
-    } as EdgeData;
+    } as G6.EdgeData;
   }
 
   export function softUpdate(newData: { nodes?: any[]; edges?: any[] }) {
@@ -183,6 +184,8 @@
   }
 
   function renderGraph() {
+    if (!g6) return;
+    const { Graph, GraphEvent, NodeEvent, CanvasEvent } = g6;
     graph = new Graph({
       container: centerNodeId + "_graph",
       // autoFit: "view",

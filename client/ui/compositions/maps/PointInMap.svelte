@@ -1,6 +1,5 @@
 <script lang="ts">
   import { createMaplibreMap } from "@21n/ui/compositions/maps/maplibre";
-  import "maplibre-gl/dist/maplibre-gl.css";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { mapTileStyles } from "@21n/ui/compositions/maps/map.styles";
   import { mount } from "@21n/ui/actions/mount.action";
@@ -27,7 +26,7 @@
   async function load() {
     if (!location?.latitude || !location?.longitude) return;
     try {
-      createMaplibreMap({
+      await createMaplibreMap({
         container: mapContainerId,
         style: mapTileStyles.osm as any,
         center: [location?.longitude, location?.latitude],
