@@ -1017,6 +1017,7 @@ function readMarks(names: readonly string[]) {
         names.includes(`${PUBLISHED_PREFIX}${generation}`)),
     isAdopted: !isRestored || names.includes(`${ADOPTED_PREFIX}${generation}`),
     isSettled: names.includes(`${SETTLED_PREFIX}${generation}`),
+    isBound: names.includes(`${BOUND_PREFIX}${generation}`),
     isOwn: names.includes(`${OWN_PREFIX}${generation}`),
     isDelivered:
       names.includes(UPLOADED_FILE) &&
@@ -1385,13 +1386,16 @@ async function getUploadLogDir(dir: string, isCreated = false) {
  * (`hasThumbnail`), "sent", "rejected", "pending" or "unknown". Each source
  * is read only while those before it leave the component open; one that
  * cannot be read is never absent (`isKnown` false, `error` set). `isDone`:
- * the thumbnail needs no other request.
+ * the thumbnail needs no other request. With `confirmed`, a version the
+ * page's replay confirmed (see reuseDelivery), the original is that version
+ * and only the thumbnail's evidence is read.
  */
 async function readDelivery(
   dir: string,
   fileId: string,
   names: readonly string[],
-  hasThumbnail = names.some((name) => name.startsWith(THUMBNAIL_PREFIX))
+  hasThumbnail = names.some((name) => name.startsWith(THUMBNAIL_PREFIX)),
+  confirmed?: string
 ) {
   let error: unknown;
   const read = async (
@@ -1411,12 +1415,15 @@ async function readDelivery(
   };
   const log = () => getUploadLogDir(dir);
   const row = encodeURIComponent(fileId);
-  const marked = names.includes(UPLOADED_FILE)
-    ? await read(
-        () => getEntryDir(dir, toEntryName(fileId), true),
-        UPLOADED_FILE
-      )
-    : "";
+  const isMarked = !confirmed && names.includes(UPLOADED_FILE);
+  const marked = confirmed
+    ? confirmed
+    : isMarked
+      ? await read(
+          () => getEntryDir(dir, toEntryName(fileId), true),
+          UPLOADED_FILE
+        )
+      : "";
   /** The file's delivered row (see logDelivered); null when unreadable. */
   const readRow = async () => {
     try {
@@ -1932,9 +1939,10 @@ async function removeDelivered(
 /**
  * Rolls back a restore session that failed before importing any record,
  * under the queue's lock: removes each file it wrote that is still at the
- * generation it wrote, neither adopted nor settled, and held by no other
- * session's live row; a file another restore or the replay adopted, kept,
- * settled or replaced stays as it is. One that cannot be removed stays
+ * generation it wrote, neither adopted, bound (see BOUND_PREFIX) nor
+ * settled, held by no other session's live row and protected by no other
+ * session's foreign row (see HoldRow); a file another restore or the
+ * replay adopted, bound, kept, settled or replaced stays as it is. One that cannot be removed stays
  * held for its account. Then removes the session's own hold rows. Never
  * rejects.
  */
@@ -1963,6 +1971,7 @@ async function rollBackEntry(
     return;
   }
   if (restore.foreignRows.some((row) => !foreign.includes(row))) return;
+  if (restore.isBound) return;
   await dequeueFile(dir, fileId, isAlone);
 }
 
@@ -2757,7 +2766,8 @@ async function replayAccountEntry(
       ? "rejected"
       : delivery?.isDone ||
         (await sendAccountThumbnail(pass, entryName, result));
-  if (!sent || (sent === "unread" && isRestored)) return "retry";
+  const isKept = isRestored || Boolean(confirmed);
+  if (!sent || (sent === "unread" && isKept)) return "retry";
   if (uploaded) pass.isSynced = false;
   const isLogged = await logUpload(
     dir,
@@ -2820,15 +2830,10 @@ async function reuseDelivery(
   confirmed: Awaited<ReturnType<typeof readDelivery>>
 ) {
   if (confirmed.isDone || confirmed.thumbnail === "rejected") return confirmed;
-  const durable = await readDelivery(dir, fileId, names);
-  const isMarked =
-    names.includes(THUMBNAIL_SENT_FILE) ||
-    names.includes(THUMBNAIL_REJECTED_FILE);
-  const { thumbnail } = durable;
-  const isSame = isMarked || durable.original === confirmed.original;
-  if (!isSame || (thumbnail !== "sent" && thumbnail !== "rejected")) {
-    return confirmed;
-  }
+  const { original } = confirmed;
+  const has = names.some((name) => name.startsWith(THUMBNAIL_PREFIX));
+  const { thumbnail } = await readDelivery(dir, fileId, names, has, original);
+  if (thumbnail !== "sent" && thumbnail !== "rejected") return confirmed;
   return { ...confirmed, thumbnail, isDone: thumbnail === "sent" };
 }
 

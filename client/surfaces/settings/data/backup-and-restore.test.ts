@@ -7866,4 +7866,163 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
+
+  it("keeps a confirmed delivery's capture queued on the page's retry while its thumbnail and its delivery evidence cannot be read, and sends the thumbnail once they can, without requesting the original again", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    let isRemovalFailing = true;
+    let isUnreadable = true;
+    getDirectory = failingWrites(
+      () => undefined,
+      (path) =>
+        isRemovalFailing && path.join("/") === `${QUEUE_A}/${entry}`
+          ? new DOMException("The entry cannot be removed", "InvalidStateError")
+          : undefined,
+      undefined,
+      (path) =>
+        isUnreadable &&
+        (path[2]?.startsWith("thumbnail-") ||
+          (!isRemovalFailing &&
+            (path.join("/") === `${QUEUE_A}/${entry}/uploaded` ||
+              path[0] === UPLOAD_LOG)))
+          ? new DOMException("It cannot be read", "NotReadableError")
+          : undefined
+    );
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      isOnline = true;
+      await replayInOtherTab();
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      expect(sdk.uploads).toHaveLength(1);
+
+      isRemovalFailing = false;
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      expect(sdk.artifacts).toEqual([]);
+
+      isUnreadable = false;
+      await vi.advanceTimersByTimeAsync(30_000);
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+  });
+
+  it("sends a confirmed delivery's thumbnail no more on the page's retry once the upload log records it sent at the confirmed version, though the original's mark and log row cannot be read", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    let isFirst = true;
+    getDirectory = failingWrites(
+      () => undefined,
+      (path) =>
+        isFirst && path.join("/") === `${QUEUE_A}/${entry}`
+          ? new DOMException("The entry cannot be removed", "InvalidStateError")
+          : undefined,
+      undefined,
+      (path) => {
+        const isThumbnail = path[2]?.startsWith("thumbnail-");
+        const isOriginal =
+          path.join("/") === `${QUEUE_A}/${entry}/uploaded` ||
+          (path[0] === UPLOAD_LOG && path[1] === record.fileId);
+        return (isFirst && isThumbnail) || (!isFirst && isOriginal)
+          ? new DOMException("It cannot be read", "NotReadableError")
+          : undefined;
+      }
+    );
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      isOnline = true;
+      await replayInOtherTab();
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      expect(sdk.artifacts).toEqual([]);
+
+      const version = new TextDecoder().decode(
+        opfs.read(QUEUE_A, entry, "uploaded")
+      );
+      const root = await opfs.getDirectory();
+      const log = await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+      const row = await log.getFileHandle(`${record.fileId}~thumbnail`, {
+        create: true
+      });
+      const writable = await row.createWritable();
+      await writable.write(version);
+      await writable.close();
+
+      isFirst = false;
+      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.artifacts).toEqual([]);
+  });
+
+  it("keeps a file its capturing account bound while a paused restore into another account that wrote it could not hold it again and rolls back", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    const { createFileFnClient } = await import("@filefn/client");
+    preflight.during = async () => {
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS + 1_000
+      );
+      const root = await opfs.getDirectory();
+      await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+      getDirectory = failingWrites(
+        (path) =>
+          path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+            ? new Error("The adoption cannot be recorded")
+            : undefined,
+        undefined,
+        undefined,
+        isLogUnreadable
+      );
+      isOnline = true;
+      const tab = await openQueueTab();
+      await tab.replayFileQueue(
+        QUEUE_A,
+        createFileFnClient({} as never),
+        new AbortController().signal,
+        undefined,
+        {
+          owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
+          isCurrent: () => true,
+          sync: async () => true,
+          isReferenced: async () => true,
+          discard: async (fileId) => {
+            sdk.deleted.push(fileId);
+          }
+        }
+      );
+      isOnline = false;
+      expect(
+        opfs.list(QUEUE_A, entry).some((name) => name.startsWith("bound-"))
+      ).toBe(true);
+      getDirectory = failingWrites((path) =>
+        path[0] === HOLDS_A && path[1]?.startsWith("hold~")
+          ? new Error("The hold cannot be created")
+          : undefined
+      );
+    };
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("The hold cannot be created");
+    preflight.during = null;
+    getDirectory = opfs.getDirectory;
+
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+  });
 });
