@@ -1,4 +1,4 @@
-import { render } from "@testing-library/svelte";
+import { fireEvent, render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { describe, expect, it, vi } from "vitest";
 import { ActionType } from "@nucleum/client/config/action.type";
@@ -74,15 +74,23 @@ describe("ComponentResolver", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("shows a retry action when the component import rejects", async () => {
+  it("retries a rejected import without losing the action parameters", async () => {
+    const load = vi
+      .fn<ActionComponentLoader>()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce({ default: ActionRendererStub });
     const screen = render(ComponentResolver, {
-      action: deferredPage("library", () =>
-        Promise.reject(new Error("offline"))
-      )
+      action: deferredPage("library", load)
     });
 
     expect(await screen.findByText(/this view couldn't load/i)).toBeVisible();
-    expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
+    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(load).toHaveBeenCalledTimes(2);
+    expect(await screen.findByTestId("action-renderer")).toHaveAttribute(
+      "data-path",
+      "library"
+    );
   });
 
   it("ignores a previous action's import resolving after navigation", async () => {

@@ -46,6 +46,7 @@
     ...(params ?? {})
   }));
   const loadComponent = $derived(resolvedAction?.loadComponent);
+  let loadAttempt = $state(0);
 
   function measureContainer(element: HTMLDivElement) {
     const rect = element.getBoundingClientRect();
@@ -67,31 +68,42 @@
 
 {#snippet content()}
   {#if loadComponent}
-    {#await loadComponent()}
-      <div
-        class="flex items-center justify-center w-full h-full"
-        role="status"
-        aria-label="Loading"
-      >
-        {#if resolvedAction?.loadingComponent}
-          {@const LoadingComponent = resolvedAction.loadingComponent}
-          <LoadingComponent />
-        {:else}
-          <PageLoadingAnimation />
+    {#key loadAttempt}
+      {#await loadComponent()}
+        <div
+          class="flex items-center justify-center w-full h-full"
+          role="status"
+          aria-label="Loading"
+        >
+          {#if resolvedAction?.loadingComponent}
+            {@const LoadingComponent = resolvedAction.loadingComponent}
+            <LoadingComponent />
+          {:else}
+            <PageLoadingAnimation />
+          {/if}
+        </div>
+      {:then { default: ResolvedComponent }}
+        <ResolvedComponent {...resolvedParams} />
+      {:catch}
+        {#if !isPreventErrorFeedback}
+          <PageError
+            message="This view couldn't load. Check your connection and try again."
+            actions={[
+              {
+                label: "Try again",
+                callback: async () => {
+                  loadAttempt += 1;
+                }
+              },
+              {
+                label: "Reload app",
+                callback: async () => window.location.reload()
+              }
+            ]}
+          />
         {/if}
-      </div>
-    {:then { default: ResolvedComponent }}
-      <ResolvedComponent {...resolvedParams} />
-    {:catch}
-      {#if !isPreventErrorFeedback}
-        <PageError
-          message="This view couldn't load. Check your connection and try again."
-          actions={[
-            { label: "Try again", callback: async () => window.location.reload() }
-          ]}
-        />
-      {/if}
-    {/await}
+      {/await}
+    {/key}
   {:else if resolvedAction?.component}
     {@const ResolvedComponent = resolvedAction.component}
     <ResolvedComponent {...resolvedParams} />
@@ -100,7 +112,10 @@
 
 {#if resolvedAction && (resolvedAction.component || loadComponent)}
   {#if $context.isSheet}
-    <ModalLayout path={resolvedAction.action} params={resolvedAction.modalParams ?? {}}>
+    <ModalLayout
+      path={resolvedAction.action}
+      params={resolvedAction.modalParams ?? {}}
+    >
       {@render content()}
     </ModalLayout>
   {:else}
