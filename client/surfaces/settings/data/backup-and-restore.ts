@@ -3,12 +3,15 @@ import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
 import {
   exportQueuedFiles,
   isFileQueueSupported,
+  renewRestoredFiles,
   resolveAccountFileQueueDir,
   settleRestoredFiles,
   stageRestoredFiles,
+  toRecordsView,
   unstageRestoredFiles,
   type QueuedFileCopy
 } from "@nucleum/shared-state/files/file-queue";
+import { get } from "svelte/store";
 import { uploadQueuedFiles } from "@nucleum/shared-state/files/filefn-client";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
 
@@ -168,6 +171,7 @@ async function restoreInRuntime(
   if (!file.size) throw new Error("Backup file is empty");
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
+  const view = toRecordsView(get(datafnRuntime));
   const { records, fileQueue } = await readBackup(file);
   if (fileQueue?.files.length && !isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
@@ -178,11 +182,17 @@ async function restoreInRuntime(
     (await stageRestoredFiles(
       resolveAccountFileQueueDir(fileQueue.userId),
       fileQueue.files,
-      { isOwnAccount, account: userId }
+      { isOwnAccount, account: userId, view }
     ));
   if (datafn.currentNamespace() !== namespace || isSwitched()) {
     if (staged) await unstageRestoredFiles(staged);
     throw new Error("The account changed while the backup was restored");
+  }
+  if (staged) {
+    await renewRestoredFiles(staged).catch(async (error: unknown) => {
+      await unstageRestoredFiles(staged);
+      throw error;
+    });
   }
   let isImported = false;
   try {

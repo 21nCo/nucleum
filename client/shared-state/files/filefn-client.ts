@@ -25,6 +25,7 @@ import {
   replayFileQueue,
   resolveAccountFileQueueDir,
   resolveFileQueueDirsOf,
+  toRecordsView,
   type QueuedFileClaim,
   type QueuedFileReferences
 } from "@nucleum/shared-state/files/file-queue";
@@ -350,6 +351,7 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
   const references: QueuedFileReferences = {
     owner: { userId, baseUrl },
     isCurrent: isAccountRecords,
+    view: () => toRecordsView(get(datafnRuntime)),
     async sync() {
       if (!isAccountRecords()) return false;
       if (!get(datafnRuntime)?.storage) return true;
