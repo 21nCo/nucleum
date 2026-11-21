@@ -156,9 +156,36 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
  * getFileFnClient); a guest or local-only account gets none; signing out tears
  * the client down, which stops its replay. Tabs started together share the
  * queue as described in replayFileQueue. Calling it again does nothing more.
+ *
+ * `sessionUserId` is the user a live session establishes. The client is then
+ * bound only once the account state carries that same cloud user, waiting
+ * while the state carries no cloud user yet: an account state seeded with
+ * another user starts nothing, so that user's queue is never replayed with
+ * this session's credentials.
  */
-export function startAccountUploadReplay(): void {
-  if (!isBoundToAccount) syncWithAccount();
+export function startAccountUploadReplay(sessionUserId?: string): void {
+  if (isBoundToAccount) return;
+  if (sessionUserId === undefined) {
+    syncWithAccount();
+    return;
+  }
+  let isSettled = false;
+  let unsubscribe: (() => void) | undefined;
+  const settle = () => {
+    isSettled = true;
+    unsubscribe?.();
+  };
+  unsubscribe = account.subscribe((value) => {
+    const scope = resolveFileFnAccountScope(value);
+    if (isSettled || !scope) return;
+    settle();
+    if (scope.userId === sessionUserId) {
+      startAccountUploadReplay();
+    } else {
+      logger.warn({ at: "filefn.uploadReplay.start.accountMismatch" });
+    }
+  });
+  if (isSettled) unsubscribe();
 }
 
 /** Binds the client to the account state once, then syncs it with the account. */

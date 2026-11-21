@@ -433,6 +433,73 @@ describe("account upload replay at session restore", () => {
     }
   );
 
+  const sessionChecks = [
+    {
+      order: "a sheet's order (seed, then check)",
+      start: async (page: Page) => {
+        await page.accountSession.init();
+        return page.accountSession.checkIfSessionExpired();
+      }
+    },
+    {
+      order: "an extension's order (check, then seed)",
+      start: async (page: Page) => {
+        const isExpired = await page.accountSession.checkIfSessionExpired();
+        await page.accountSession.init();
+        return isExpired;
+      }
+    }
+  ];
+
+  it.each(sessionChecks)(
+    "does not replay the stored account's queue under another user's live session in $order",
+    async ({ start }) => {
+      await captureOfflineThenLeave();
+      await storeCloudSession();
+      const lockNames = installLocks();
+      isOnline = true;
+      authfn.session = {
+        ...liveSession,
+        id: "session-user-b",
+        actorId: "user:user-b",
+        primaryEmail: "user-b@example.test"
+      };
+
+      const page = await loadPage();
+      expect(await start(page)).toBe(false);
+      await openData(page, "user-a");
+      goOnline();
+      await vi.dynamicImportSettled();
+
+      expect(page.account.get().userId).toBe("user-a");
+      expect(sdk.baseUrls).toEqual([]);
+      expect(lockNames()).not.toContainEqual(
+        expect.stringContaining("filefn-offline-replay")
+      );
+      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+    }
+  );
+
+  it.each(sessionChecks)(
+    "replays the stored account's queue under its own live session in $order",
+    async ({ start }) => {
+      const fileId = await captureOfflineThenLeave();
+      await storeCloudSession();
+      isOnline = true;
+      authfn.session = liveSession;
+
+      const page = await loadPage();
+      expect(await start(page)).toBe(false);
+      await openData(page, "user-a");
+
+      await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+      expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+      expect(sdk.baseUrls).toEqual([
+        "https://account-useast-dev.nucleum.app/files"
+      ]);
+    }
+  );
+
   it.each([
     { session: "a guest", store: async () => undefined },
     {
