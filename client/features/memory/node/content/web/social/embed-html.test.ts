@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   escapeHtmlAttribute,
   resolveEmbedFrameUrl,
+  resolveUpgradedEmbedFrameUrl,
   sanitizeEmbedHtml
 } from "@nucleum/features/memory/node/content/web/social/embed-html";
 
@@ -145,6 +146,19 @@ describe("resolveEmbedFrameUrl", () => {
     expect(resolveEmbedFrameUrl("javascript:alert(1)")).toBeNull();
     expect(resolveEmbedFrameUrl("/relative")).toBeNull();
     expect(resolveEmbedFrameUrl(`${window.location.origin}/x`)).toBeNull();
+  });
+});
+
+describe("resolveUpgradedEmbedFrameUrl", () => {
+  it("upgrades saved http links to https and still refuses other schemes", () => {
+    expect(
+      resolveUpgradedEmbedFrameUrl("http://gist.github.com/someone/abc123")
+    ).toBe("https://gist.github.com/someone/abc123");
+    expect(
+      resolveUpgradedEmbedFrameUrl(" HTTP://gitlab.com/-/snippets/42 ")
+    ).toBe("https://gitlab.com/-/snippets/42");
+    expect(resolveUpgradedEmbedFrameUrl("javascript:alert(1)")).toBeNull();
+    expect(resolveUpgradedEmbedFrameUrl(undefined)).toBeNull();
   });
 });
 

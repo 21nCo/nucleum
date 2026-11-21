@@ -165,7 +165,7 @@ export function renderWranglerConfig(serviceRoot, repoRoot, config, environment,
   return outputPath;
 }
 
-export function writeCloudflareAssetHeaders(repoRoot, config, productId) {
+export function writeCloudflareAssetHeaders(repoRoot, config, productId, environment) {
   const product = config.products[productId];
   if (!product) {
     throw new Error(`Unknown frontend product: ${productId}`);
@@ -175,7 +175,7 @@ export function writeCloudflareAssetHeaders(repoRoot, config, productId) {
   const headersPath = path.join(buildDir, '_headers');
   const existing = fs.existsSync(headersPath) ? fs.readFileSync(headersPath, 'utf8') : '';
   const withCache = upsertManagedHeadersBlock(existing, managedCacheHeadersBlock(), CACHE_HEADERS_MARKERS);
-  const securityBlock = managedSecurityHeadersBlock(productSecurityHeaders(config, buildDir));
+  const securityBlock = managedSecurityHeadersBlock(productSecurityHeaders(config, buildDir, environment));
   const next = upsertManagedHeadersBlock(withCache, securityBlock, SECURITY_HEADERS_MARKERS);
   fs.writeFileSync(headersPath, next);
   return headersPath;
@@ -231,14 +231,14 @@ const SECURITY_HEADERS_MARKERS = {
 
 /**
  * Origins allowed to frame the web apps: the apps themselves, every product
- * domain and its subdomains (Memotron share pages embed the app), and the
- * zones that host non-live environments.
+ * domain and its subdomains (Memotron share pages embed the app), and the zone
+ * of the environment being deployed. Another environment's zone is never
+ * added, so a live build can't be framed from dev or preview hosts.
  */
-export function frameAncestorSources(config) {
+export function frameAncestorSources(config, environment) {
   const domains = new Set(Object.values(config.products ?? {}).map((product) => product.domain));
-  for (const envConfig of Object.values(config.environments ?? {})) {
-    if (envConfig.hosts?.zoneName) domains.add(envConfig.hosts.zoneName);
-  }
+  const zoneName = environment ? config.environments?.[environment]?.hosts?.zoneName : undefined;
+  if (zoneName) domains.add(zoneName);
   return ["'self'", ...[...domains].sort((left, right) => left.localeCompare(right)).flatMap((domain) => [`https://${domain}`, `https://*.${domain}`])];
 }
 
@@ -338,10 +338,10 @@ export function securityHeaders({ frameAncestors, inlineScriptHashes }) {
   };
 }
 
-/** Security headers for a product's static build output. */
-export function productSecurityHeaders(config, buildDir) {
+/** Security headers for a product's static build output deployed to `environment`. */
+export function productSecurityHeaders(config, buildDir, environment) {
   return securityHeaders({
-    frameAncestors: frameAncestorSources(config),
+    frameAncestors: frameAncestorSources(config, environment),
     inlineScriptHashes: collectInlineScriptHashes(buildDir)
   });
 }

@@ -83,12 +83,16 @@ describe("frontend security headers", () => {
     expect(reportOnly).not.toMatch(/script-src[^;]*'unsafe-inline'/);
   });
 
-  it("allows framing only by product domains and environment zones", () => {
-    const sources = frameAncestorSources(config);
-    expect(sources[0]).toBe("'self'");
-    expect(sources).toContain("https://*.nucleum.app");
-    expect(sources).toContain("https://*.21n.dev");
-    expect(sources).not.toContain("*");
-    expect(sources.every((source: string) => source === "'self'" || source.startsWith("https://"))).toBe(true);
+  it("allows framing only by product domains and the deployed environment's zone", () => {
+    const dev = frameAncestorSources(config, "dev");
+    expect(dev[0]).toBe("'self'");
+    expect(dev).toContain("https://*.nucleum.app");
+    expect(dev).toContain("https://*.21n.dev");
+    expect(dev).not.toContain("*");
+    expect(dev.every((source: string) => source === "'self'" || source.startsWith("https://"))).toBe(true);
+
+    const live = frameAncestorSources(config, "live");
+    expect(live).toContain("https://*.nucleum.app");
+    expect(live.some((source: string) => source.includes("21n.dev"))).toBe(false);
   });
 });

@@ -42,6 +42,16 @@ export function resolveEmbedFrameUrl(value: string | null | undefined) {
   }
 }
 
+/**
+ * Like `resolveEmbedFrameUrl`, but first upgrades a plain `http://` URL to
+ * https, for saved links to providers that serve every page over https (such
+ * as GitHub gists and GitLab snippets).
+ */
+export function resolveUpgradedEmbedFrameUrl(value: string | null | undefined) {
+  if (!value) return null;
+  return resolveEmbedFrameUrl(value.trim().replace(/^http:\/\//i, "https://"));
+}
+
 const HTML_ATTRIBUTE_ESCAPES: Record<string, string> = {
   "&": "&amp;",
   "<": "&lt;",

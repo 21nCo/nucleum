@@ -29,7 +29,6 @@
   void accessPoint;
 
   const nodeContext = getContext<any>(Context.NODE);
-  let oembedHtml: string | null = null;
   let error = $state("");
   let isShowPermanentCopy = $state(false);
   onMount(async () => {
@@ -56,9 +55,7 @@
   }
 </script>
 
-{#if oembedHtml}
-  {@html oembedHtml}
-{:else if widgetUrl && !isShowPermanentCopy}
+{#if widgetUrl && !isShowPermanentCopy}
   <div
     class="relative w-full h-full flex flex-col justify-center items-center overflow-y-auto cw:mb-10"
   >

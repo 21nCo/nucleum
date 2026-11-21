@@ -4,7 +4,7 @@
   import type { IGist } from "@nucleum/features/memory/node/node.type";
   import {
     EMBED_IFRAME_SANDBOX,
-    resolveEmbedFrameUrl
+    resolveUpgradedEmbedFrameUrl
   } from "@nucleum/features/memory/node/content/web/social/embed-html";
   let {
     node,
@@ -52,7 +52,7 @@
   }
 
   function resolveHttpsUrl(url: string): URL | null {
-    const frameUrl = resolveEmbedFrameUrl(url);
+    const frameUrl = resolveUpgradedEmbedFrameUrl(url);
     return frameUrl ? new URL(frameUrl) : null;
   }
 
