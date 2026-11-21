@@ -140,7 +140,9 @@ export async function takeSocialHandoffVerifier(
  *
  * TODO(TIDY-640): installed native shells don't forward `handoff`, so the code
  * prefix identifies their codes; drop the prefix check once every supported
- * shell forwards `handoff`.
+ * shell forwards `handoff`. The macOS shell also broadcasts the callback to
+ * every window; in the same native release it should deliver it only to the
+ * WebView that started the sign-in.
  */
 export function isSocialHandoffCode(input: {
   token: string;
