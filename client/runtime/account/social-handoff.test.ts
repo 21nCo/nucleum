@@ -172,7 +172,7 @@ describe("resolveSocialHandoffToken", () => {
     expect(storedVerifier()).toBe(verifier);
   });
 
-  it("never uses a code as a session when it can't be exchanged", async () => {
+  it("treats an expired sign-in as none, so a broadcast code shows no error", async () => {
     await beginSocialHandoff(NOW);
     const expired = exchangeClient(exchanged("test-session-token", null));
     expect(
@@ -181,8 +181,80 @@ describe("resolveSocialHandoffToken", () => {
         expired.client,
         NOW + SOCIAL_HANDOFF_TTL_MS
       )
-    ).toEqual({ kind: "failed", errorCode: "handoff_verifier_expired" });
+    ).toEqual({ kind: "ignored" });
     expect(expired.exchangeSocialHandoff).not.toHaveBeenCalled();
+  });
+
+  it("keeps the verifier available while another window's code is being checked", async () => {
+    await beginSocialHandoff(NOW);
+    let answerOther: (value: ExchangeResult) => void = () => {};
+    const exchangeSocialHandoff = vi.fn(
+      ({ code }: { code: string; verifier: string }) =>
+        code === "shc_test-other-window-code"
+          ? new Promise<ExchangeResult>((resolve) => {
+              answerOther = resolve;
+            })
+          : Promise.resolve(exchanged("test-session-token", null))
+    );
+    const client = async () =>
+      ({ exchangeSocialHandoff }) as unknown as SocialHandoffExchangeClient;
+
+    const other = resolveSocialHandoffToken(
+      { token: "shc_test-other-window-code" },
+      client,
+      NOW
+    );
+    const own = await resolveSocialHandoffToken(
+      { token: "shc_test-own-code" },
+      client,
+      NOW
+    );
+    answerOther({
+      ok: false,
+      error: { code: "AUTHFN_OAUTH_STATE_INVALID", message: "mismatch" }
+    } as unknown as ExchangeResult);
+
+    expect(own).toEqual({ kind: "session", token: "test-session-token", regionId: undefined });
+    expect(await other).toEqual({ kind: "ignored" });
+    expect(storedVerifier()).toBeUndefined();
+  });
+
+  it("keeps the verifier after a failed exchange so a retry can still use it", async () => {
+    const challenge = await beginSocialHandoff(NOW);
+    const refused = exchangeClient({
+      ok: false,
+      error: { code: "AUTHFN_OAUTH_STATE_REPLAYED", message: "used" }
+    } as unknown as ExchangeResult);
+
+    expect(
+      await resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, refused.client, NOW)
+    ).toEqual({ kind: "failed", errorCode: "AUTHFN_OAUTH_STATE_REPLAYED" });
+    expect(await beginSocialHandoff(NOW + 1000)).toBe(challenge);
+  });
+
+  it("clears only its own verifier after a slow exchange succeeds", async () => {
+    await beginSocialHandoff(NOW);
+    let answer: (value: ExchangeResult) => void = () => {};
+    const client = async () =>
+      ({
+        exchangeSocialHandoff: () =>
+          new Promise<ExchangeResult>((resolve) => {
+            answer = resolve;
+          })
+      }) as unknown as SocialHandoffExchangeClient;
+
+    const pending = resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, client, NOW);
+    await Promise.resolve();
+    window.sessionStorage.clear();
+    await beginSocialHandoff(NOW + 1000);
+    const newer = storedVerifier();
+    answer(exchanged("test-session-token", null));
+
+    expect((await pending).kind).toBe("session");
+    expect(storedVerifier()).toBe(newer);
+  });
+
+  it("never uses a code as a session when it can't be exchanged", async () => {
 
     await beginSocialHandoff(NOW);
     const refused = exchangeClient({

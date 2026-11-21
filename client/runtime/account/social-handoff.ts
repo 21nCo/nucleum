@@ -12,8 +12,8 @@ export const SOCIAL_HANDOFF_TTL_MS = 15 * 60 * 1000;
 /**
  * AuthFn's answer when a handoff code was not issued for this verifier. With
  * the callback broadcast to every macOS window, a window whose own sign-in was
- * cancelled or is still running gets it for another window's code; it keeps
- * its verifier and ignores the code.
+ * cancelled or is still running gets it for another window's code and ignores
+ * it.
  */
 const CODE_NOT_FOR_THIS_VERIFIER = "AUTHFN_OAUTH_STATE_INVALID";
 
@@ -93,12 +93,19 @@ function writeSocialHandoff(pending: PendingSocialHandoff) {
   );
 }
 
-function takeSocialHandoff(now: number): StoredSocialHandoff {
-  const stored = readSocialHandoff(now);
-  getBrowserStorage("sessionStorage")?.removeItem(
-    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF
-  );
-  return stored;
+/** Clears the pending verifier only if it is still `verifier`, not a newer sign-in's. */
+function clearSocialHandoff(verifier: string) {
+  const storage = getBrowserStorage("sessionStorage");
+  const stored = storage?.getItem(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
+  if (!stored) return;
+  try {
+    if ((JSON.parse(stored) as Partial<PendingSocialHandoff>).verifier !== verifier) {
+      return;
+    }
+  } catch {
+    return;
+  }
+  storage?.removeItem(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
 }
 
 /**
@@ -121,7 +128,10 @@ export async function beginSocialHandoff(now = Date.now()): Promise<string> {
 export async function takeSocialHandoffVerifier(
   now = Date.now()
 ): Promise<string | undefined> {
-  const stored = takeSocialHandoff(now);
+  const stored = readSocialHandoff(now);
+  getBrowserStorage("sessionStorage")?.removeItem(
+    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF
+  );
   return stored.state === "live" ? stored.pending.verifier : undefined;
 }
 
@@ -146,8 +156,10 @@ export function isSocialHandoffCode(input: {
  *
  * A one-time code (flagged `handoff: "code"`, or carrying AuthFn's code prefix
  * because installed native shells don't forward `handoff`) is exchanged with
- * this window's pending verifier and never used as a session; a window that
- * started no sign-in, or whose verifier the code wasn't issued for, ignores it. Any other value is a
+ * this window's pending verifier and never used as a session. The verifier
+ * stays in place while the exchange runs and is cleared only after a
+ * successful exchange (a retry reuses it until then). A window with no live sign-in, or whose
+ * verifier the code wasn't issued for, ignores it. Any other value is a
  * session token, which native Apple sign-in and sign-ins started without a
  * challenge return directly; it is never sent to the exchange.
  */
@@ -159,11 +171,8 @@ export async function resolveSocialHandoffToken(
   if (!isSocialHandoffCode(input)) {
     return { kind: "session", token: input.token, regionId: input.regionId };
   }
-  const stored = takeSocialHandoff(now);
-  if (stored.state === "none") return { kind: "ignored" };
-  if (stored.state === "expired") {
-    return { kind: "failed", errorCode: "handoff_verifier_expired" };
-  }
+  const stored = readSocialHandoff(now);
+  if (stored.state !== "live") return { kind: "ignored" };
   const verifier = stored.pending.verifier;
   try {
     const exchangeClient = await client();
@@ -175,12 +184,11 @@ export async function resolveSocialHandoffToken(
       verifier
     });
     if (!response.ok) {
-      if (response.error.code === CODE_NOT_FOR_THIS_VERIFIER) {
-        writeSocialHandoff(stored.pending);
-        return { kind: "ignored" };
-      }
-      return { kind: "failed", errorCode: response.error.code };
+      return response.error.code === CODE_NOT_FOR_THIS_VERIFIER
+        ? { kind: "ignored" }
+        : { kind: "failed", errorCode: response.error.code };
     }
+    clearSocialHandoff(verifier);
     return {
       kind: "session",
       token: response.data.handoff.token,
