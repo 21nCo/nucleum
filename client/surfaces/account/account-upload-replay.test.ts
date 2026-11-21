@@ -54,6 +54,25 @@ vi.mock("@filefn/client", async (importOriginal) => {
   };
 });
 
+/** The session AuthFn returns for the stored credentials (null: none). */
+const authfn = vi.hoisted(() => ({ session: null as unknown }));
+vi.mock("@authfn/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@authfn/client")>();
+  return {
+    ...actual,
+    createAuthFnRegionalClient: (
+      options: Parameters<typeof actual.createAuthFnRegionalClient>[0]
+    ) =>
+      Object.assign(actual.createAuthFnRegionalClient(options), {
+        getSession: async () => ({
+          ok: true,
+          data: { session: authfn.session }
+        }),
+        resolveRegion: async () => undefined
+      })
+  };
+});
+
 /**
  * The account's DataFn authority: the device's DataFn runs local-only, so a
  * fake of its sync stands in, whose every pull applies the file records.
@@ -132,6 +151,15 @@ const cloudAccount: UserAccount = {
   userInfo
 };
 
+/** user-a's live AuthFn session. */
+const liveSession = {
+  id: "session-user-a",
+  actorId: "user:user-a",
+  primaryEmail: userInfo.email,
+  regionId: "useast",
+  metadata: { nucleus: { isBootstrapped: true } }
+};
+
 const signedOut: UserAccount = {
   dataMode: UserDataMode.NONE,
   sessionType: UserSessionType.UNDETERMINED
@@ -141,6 +169,7 @@ const signedOut: UserAccount = {
 type Page = {
   account: typeof import("@nucleum/client/runtime/account/account.store").default;
   accountSession: typeof import("./account-session").accountSession;
+  sessionAccess: typeof import("./session-access");
   datafnStore: typeof import("@nucleum/datafn/datafn.store");
 };
 const pages: Page[] = [];
@@ -156,6 +185,7 @@ async function loadPage(): Promise<Page> {
     account: (await import("@nucleum/client/runtime/account/account.store"))
       .default,
     accountSession: (await import("./account-session")).accountSession,
+    sessionAccess: await import("./session-access"),
     datafnStore: await import("@nucleum/datafn/datafn.store")
   };
   pages.push(page);
@@ -206,9 +236,13 @@ async function storeCloudSession() {
   await clientStorage.set(ClientStorageKey.USER_INFO, userInfo);
 }
 
-/** Starts a page's session as the app's base layer does, then its DataFn. */
+/**
+ * Starts a page as the app does: its base layer seeds the account from
+ * storage, its auth guard resolves the stored session, then DataFn opens.
+ */
 async function startSession(page: Page, userId?: string) {
   await page.accountSession.init();
+  await page.sessionAccess.performLoginStatusCheck();
   await openData(page, userId);
 }
 
@@ -218,13 +252,31 @@ function goOnline() {
 }
 
 /**
- * Signs user-a in on a page whose session started without a cloud account,
- * as the login page does, and waits until its queue has uploaded.
+ * Signs user-a in online on a page whose session started without a cloud
+ * account, as the login page does, runs the auth guard of the page it then
+ * opens, and waits until the queue has uploaded.
  */
 async function signInAndUpload(page: Page) {
+  isOnline = true;
+  authfn.session = liveSession;
+  await page.accountSession.signInFromAuthFnSession({
+    session: liveSession,
+    isPreventRedirect: true
+  });
   await openData(page, "user-a");
-  page.account.set(cloudAccount);
+  expect(await page.sessionAccess.performLoginStatusCheck()).toBe(true);
   await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+}
+
+/** Installs fake Web Locks and returns the names of the locks requested. */
+function installLocks() {
+  const locks = createFakeLocks();
+  const request = vi.spyOn(locks, "request");
+  Object.defineProperty(globalThis.navigator, "locks", {
+    configurable: true,
+    value: locks
+  });
+  return () => request.mock.calls.map(([name]) => name);
 }
 
 beforeEach(async () => {
@@ -257,24 +309,35 @@ beforeEach(async () => {
   sdk.started = [];
   sdk.startedBy = [];
   sdk.uploads = [];
-  await clientStorage.remove(ClientStorageKey.USER_INFO);
-  await clientStorage.remove(ClientStorageKey.OFFLINE_SESSION_ID);
+  authfn.session = null;
+  await clearStorage();
 });
+
+async function clearStorage() {
+  for (const key of [
+    ClientStorageKey.USER,
+    ClientStorageKey.USER_INFO,
+    ClientStorageKey.OFFLINE_SESSION_ID,
+    ClientStorageKey.AUTHFN_TOKEN
+  ]) {
+    await clientStorage.remove(key);
+  }
+}
 
 afterEach(async () => {
   for (const page of pages.splice(0)) await leave(page);
-  await clientStorage.remove(ClientStorageKey.USER_INFO);
-  await clientStorage.remove(ClientStorageKey.OFFLINE_SESSION_ID);
+  await clearStorage();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
 describe("account upload replay at session restore", () => {
-  it("uploads an offline capture after a reload onto a page without files once the restored session reconnects", async () => {
+  it("uploads an offline capture after a reload onto a page without files once the session restored offline reconnects", async () => {
     const fileId = await captureOfflineThenLeave();
     await storeCloudSession();
 
+    // Offline at startup, the stored session resolves as the cached cloud one.
     const page = await loadPage();
     await startSession(page, "user-a");
     await vi.waitFor(() =>
@@ -289,6 +352,20 @@ describe("account upload replay at session restore", () => {
 
     await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
     expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+    expect(sdk.baseUrls).toHaveLength(1);
+  });
+
+  it("uploads an offline capture after a reload onto a page without files once the live session is restored online", async () => {
+    const fileId = await captureOfflineThenLeave();
+    await storeCloudSession();
+    isOnline = true;
+    authfn.session = liveSession;
+
+    const page = await loadPage();
+    await startSession(page, "user-a");
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
     expect(sdk.baseUrls).toEqual([
       "https://account-useast-dev.nucleum.app/files"
     ]);
@@ -297,22 +374,64 @@ describe("account upload replay at session restore", () => {
   it("uploads an offline capture once when two tabs restore the session together", async () => {
     const fileId = await captureOfflineThenLeave();
     await storeCloudSession();
-    Object.defineProperty(globalThis.navigator, "locks", {
-      configurable: true,
-      value: createFakeLocks()
-    });
-    isOnline = true;
+    installLocks();
 
-    const [first, second] = [await loadPage(), await loadPage()];
-    await Promise.all([
-      startSession(first, "user-a"),
-      startSession(second, "user-a")
-    ]);
+    // Both tabs restore offline, each with its own file client, then reconnect.
+    const first = await loadPage();
+    await startSession(first, "user-a");
+    await vi.waitFor(() => expect(sdk.baseUrls).toHaveLength(1));
+    const second = await loadPage();
+    await startSession(second, "user-a");
+    await vi.waitFor(() => expect(sdk.baseUrls).toHaveLength(2));
+
+    goOnline();
 
     await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
     expect(sdk.started).toEqual([expect.objectContaining({ fileId })]);
     expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
   });
+
+  it.each([
+    {
+      check: "the app's route check",
+      isExpired: async () => {
+        const { resolveAuthSession } =
+          await import("@nucleum/client/runtime/account/auth");
+        return (await resolveAuthSession()).status === "expired";
+      }
+    },
+    {
+      check: "the auth guard",
+      isExpired: async (page: Page) =>
+        !(await page.sessionAccess.performLoginStatusCheck())
+    },
+    {
+      check: "an extension's session check",
+      isExpired: (page: Page) => page.accountSession.checkIfSessionExpired()
+    }
+  ])(
+    "does not start an account's upload replay when $check resolves the stored session as expired",
+    async ({ isExpired }) => {
+      await captureOfflineThenLeave();
+      await storeCloudSession();
+      const lockNames = installLocks();
+      isOnline = true;
+
+      // The base layer seeds the stored identity, then the session resolves.
+      const page = await loadPage();
+      await page.accountSession.init();
+      await openData(page, "user-a");
+      expect(await isExpired(page)).toBe(true);
+      goOnline();
+      await vi.dynamicImportSettled();
+
+      expect(sdk.baseUrls).toEqual([]);
+      expect(lockNames()).not.toContainEqual(
+        expect.stringContaining("filefn-offline-replay")
+      );
+      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+    }
+  );
 
   it.each([
     { session: "a guest", store: async () => undefined },
@@ -326,6 +445,7 @@ describe("account upload replay at session restore", () => {
     async ({ store }) => {
       const fileId = await captureOfflineThenLeave();
       await store();
+      isOnline = true;
 
       const page = await loadPage();
       await startSession(page);

@@ -31,6 +31,7 @@ import {
 import { resolveAccountBaseUrl } from "@nucleum/client/runtime/account/network";
 import { clearCachedDatafnE2eeState } from "@nucleum/datafn/datafnE2ee.store";
 import { determineIfOffline } from "@nucleum/client/runtime/connectivity";
+import { startUploadReplayForSession } from "@nucleum/surfaces/account/account-upload-replay";
 
 async function postToEmbed(data: any = null) {
   if (!data) {
@@ -93,22 +94,6 @@ async function init() {
   }
   account.set(seed);
   postToEmbed(seed);
-  startAccountUploadReplay();
-}
-
-/**
- * Starts the upload replay of the cloud session init restores, and of any
- * cloud session the account later resolves to, without waiting for a page
- * that renders or captures a file (see the files runtime's
- * startAccountUploadReplay). Session startup does not wait for the FileFn
- * client to load.
- */
-function startAccountUploadReplay() {
-  import("@nucleum/shared-state/files/filefn-client")
-    .then((files) => files.startAccountUploadReplay())
-    .catch((error: unknown) => {
-      logger.error({ at: "account.init.uploadReplay", error });
-    });
 }
 
 async function signIn(
@@ -453,6 +438,7 @@ async function bootstrap(region: string) {
 
 async function checkIfSessionExpired() {
   const resolution = await resolveAuthSession();
+  startUploadReplayForSession(resolution);
   return !["authenticated", "offline-only", "cached-cloud"].includes(
     resolution.status
   );

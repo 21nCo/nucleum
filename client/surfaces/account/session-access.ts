@@ -16,6 +16,7 @@ import { PlanType } from "@nucleum/schema/account/subscription";
 
 import { resolveAuthSession } from "@nucleum/client/runtime/account/auth";
 import { logger } from "@nucleum/client/runtime/logging/logger";
+import { startUploadReplayForSession } from "@nucleum/surfaces/account/account-upload-replay";
 /** Hydrates the resolved account session and enforces the supplied product plan requirement. */
 export async function performLoginStatusCheck(requiredPlan?: PlanType) {
   const resolution = await resolveAuthSession();
@@ -24,6 +25,7 @@ export async function performLoginStatusCheck(requiredPlan?: PlanType) {
   }
 
   if (resolution.status === "cached-cloud") {
+    startUploadReplayForSession(resolution);
     if (
       requiredPlan !== undefined &&
       get(account).plan &&
@@ -118,6 +120,7 @@ export async function performLoginStatusCheck(requiredPlan?: PlanType) {
     userInfo: userInfo as any,
     plan: requiredPlan !== undefined ? cachedPlan : current.plan
   }));
+  startUploadReplayForSession(resolution);
   if (requiredPlan !== undefined) {
     const planResolution = await accountSession.refreshPlanData();
     const plan =
