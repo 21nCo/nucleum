@@ -83,7 +83,7 @@
     "@superfunctions/storage-r2": "0.3.0",
     "authfn": "0.6.0",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.7.10",
+    "hono": "^4.13.19",
     "postgres": "^3.4.8",
     "sendfn": "0.0.3"
   },

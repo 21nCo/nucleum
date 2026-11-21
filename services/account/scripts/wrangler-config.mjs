@@ -161,7 +161,7 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     kv('AUTHFN_COOKIE_PREFIX', envConfig.cookiePrefix ?? config.cookiePrefix),
     kv('AUTHFN_COOKIE_SECURE', 'true'),
     kv('ACCOUNT_LATENCY_DEBUG', String(envConfig.latencyDebug === true)),
-    kv('DEBUG_SINK_URL', envConfig.debugSinkUrl ?? config.debugSinkUrl),
+    ...((envConfig.debugSinkUrl ?? config.debugSinkUrl) ? [kv('DEBUG_SINK_URL', envConfig.debugSinkUrl ?? config.debugSinkUrl)] : []),
     kv('ACCOUNT_REGION_ID', regionId),
     kv('DATAFN_OPENSEARCH_INDEX_PREFIX', `nucleum_${environment}_${regionId}`),
     kv('ACCOUNT_AUTHORITY', accountAuthority(config, environment, regionId)),

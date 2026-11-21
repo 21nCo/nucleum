@@ -22,6 +22,7 @@ import type { SuperfunctionObservability } from "@superfunctions/observability";
 import { ACCOUNT_AUTH_NAMESPACE } from "./auth/constants.js";
 import { sendAccountDebugLog } from "./debug-sink.js";
 import { createAccountAuthPlugins } from "./auth/plugins.js";
+import { bootstrapRegionIds } from "./regions.js";
 import { accountScopeRegistry } from "./datafn/app-scopes.js";
 
 export interface CreateAccountAuthInput {
@@ -65,7 +66,9 @@ export function accountAuthfn(
         requireExistingEmailVerified: true
       }
     },
-    plugins: createAccountAuthPlugins(),
+    plugins: createAccountAuthPlugins({
+      regionIds: bootstrapRegionIds(regions.map((region) => region.regionId))
+    }),
     scopes: accountScopeRegistry,
     openApi: {
       title: "Nucleus Account API",

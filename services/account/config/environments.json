@@ -8,7 +8,6 @@
   "cookieDomain": ".nucleum.app",
   "cookiePrefix": "nucleus",
   "emailFrom": "Nucleum <no-reply@notifications.21n.co>",
-  "debugSinkUrl": "https://nucleus-debug-sink.21n.workers.dev",
   "waf": {
     "browserAuthRoutes": {
       "pathPrefix": "/auth/",

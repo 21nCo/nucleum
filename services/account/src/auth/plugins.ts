@@ -12,7 +12,7 @@ import { nucleusWidgetTokenPlugin } from '../plugins/widget-token.js';
 /**
  * Creates account-service AuthFn declaration plugins for schema and route registration.
  */
-export function createAccountAuthPlugins() {
+export function createAccountAuthPlugins(options: { regionIds?: string[] } = {}) {
   return authFnPlugins(
     authFnPasswordPlugin(),
     authFnEmailOtpPlugin(),
@@ -21,7 +21,7 @@ export function createAccountAuthPlugins() {
     authFnApiKeyPlugin(),
     authFnMultiRegionPlugin(),
     authFnNativeHandoffPlugin(),
-    nucleusLifecyclePlugin(),
+    nucleusLifecyclePlugin({ regionIds: options.regionIds }),
     nucleusWidgetTokenPlugin()
   );
 }
