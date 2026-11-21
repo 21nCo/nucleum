@@ -1,0 +1,31 @@
+client/shared-state/files/file-queue.ts
+  s_b15184ae60b291::t_aba399b3080685 51-56,270-272,283-287,293-299,1050-1054,1512-1513,1546,1553-1554,1800-1808,1853-1856,1864-1868,1873-1874,2088,2220-2266,2339,2361-2362,2371-2397,2477-2482,2509,2512-2515,2574-2591,2704,2723-2727
+client/surfaces/settings/data/backup-and-restore.test.ts
+  s_1f931c8d10251c::t_ceffe93051e337 6791-7109
+client/surfaces/settings/data/backup-and-restore.ts
+  s_1f931c8d10251c::t_9af0645be5e6f3 181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a4adfef6c261a4f825d91849234f2c07744b5951",
+  "prompts": {},
+  "sessions": {
+    "s_1f931c8d10251c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "26d01b44-d964-45ed-9e58-0553797d7bc2",
+        "model": "claude-fable-5-2"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_b15184ae60b291": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd21c743-8ca1-4896-ad7b-a3b81c2516fb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
