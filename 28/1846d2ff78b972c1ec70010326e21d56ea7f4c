@@ -1,0 +1,44 @@
+services/account/src/auth/account-auth-policy.test.ts
+  s_a4a9279b38a3d6::t_e05aa6c1f3ae2d 1-128
+  s_a4a9279b38a3d6::t_f6d963368e7133 129-139
+client/runtime/account/social-handoff.ts
+  s_a4a9279b38a3d6::t_4526cee17516db 1-117
+client/runtime/account/social-handoff.test.ts
+  s_a4a9279b38a3d6::t_524ce1fc852d20 1-161
+client/package.json
+  s_a4a9279b38a3d6::t_be2e02a64ce6ed 13
+client/persistence/persistence.type.ts
+  s_a4a9279b38a3d6::t_55b23bd4738e54 11-12
+client/runtime/account/access-tokens.test.ts
+  s_a4a9279b38a3d6::t_36cfba4addf106 138-150
+client/runtime/account/access-tokens.ts
+  s_a4a9279b38a3d6::t_7ece8982671da1 52,223-230
+client/surfaces/account/Login.svelte
+  s_a4a9279b38a3d6::t_cf8f8061f2eedc 24-25,171-195,197-198,203,207
+client/surfaces/account/OAuthOptions.svelte
+  s_a4a9279b38a3d6::t_26aa2e9d1a5ad7 17,87,94-97
+client/surfaces/package.json
+  s_a4a9279b38a3d6::t_799714958d12b6 11
+package-lock.json
+  s_a4a9279b38a3d6::t_a7a4165f8b014e 3302,3709,4447,4461,4464-4468,4471,5468,5499,5519,5543,5571,5594,17854,17858-17860,17863,17865,17867-17869,19039,19436,19450,19991,20101,20259,21384,22487,23059,23148,23297,23311,24086,24438,24510,24551,24561,25478,25488,25990,26345,28326,28480,28810,29076,29279,30427,30990,31006,31016,31675,32052,32826,32879,32926,34094,34104,34387,34389,34392-34396,34418,34514-34531,34584-34652,35364-35375,35406-35471
+services/account/package.json
+  s_a4a9279b38a3d6::t_45786daf785103 53,55,58-62,84
+services/account/src/auth/plugins.ts
+  s_a4a9279b38a3d6::t_85b8d5ab4031e0 12-40,48,50,52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "281846d2ff78b972c1ec70010326e21d56ea7f4c",
+  "prompts": {},
+  "sessions": {
+    "s_a4a9279b38a3d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1855ecfc-893f-4a3a-9ace-d8374583571f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
