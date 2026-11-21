@@ -1,0 +1,21 @@
+client/runtime/account/auth.ts
+  s_d3e4a3e8234abd::t_aea944b9ed3a0d 37-38,61-74,78,91,97
+client/surfaces/account/account-upload-replay.test.ts
+  s_d3e4a3e8234abd::t_2abb748b35d4e8 1100-1116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ab0a7c07cb56b240363c67c6669e52c59204f5e4",
+  "prompts": {},
+  "sessions": {
+    "s_d3e4a3e8234abd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_d3e4a3e8234abd",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
