@@ -61,7 +61,12 @@ describe('OAuth sign-in linking by verified email', () => {
     });
 
     const callback = await oauthCallback('apple', 'apple-same-email');
-    expect(callback.status).not.toBe(200);
+    // The linking policy refuses the sign-in with a conflict, not some
+    // earlier failure that would also leave the database unchanged.
+    expect(callback.status).toBe(409);
+    const failure = await callback.json() as { ok?: boolean; error?: { code?: string } };
+    expect(failure.ok).toBe(false);
+    expect(failure.error?.code).toBe('AUTHFN_CONFLICT');
 
     expect(await oauthAccountFor('apple', 'apple-same-email-sub')).toBeNull();
     const users = await usersByEmail(email);
