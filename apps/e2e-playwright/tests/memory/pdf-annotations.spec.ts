@@ -1,4 +1,10 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import {
+  expect,
+  test,
+  type BrowserContext,
+  type Locator,
+  type Page
+} from "@playwright/test";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -8,10 +14,15 @@ import {
   openDeclaredNodeContentPanel
 } from "../utils/settings-contracts";
 import {
+  getResourceContextMenuTrigger,
+  getResourceThumbnail
+} from "../utils/resource-matrix";
+import {
   blockExternalAuthRequests,
   closeNodeRecord,
   openCapture,
-  openNodeRecordFromLibrary
+  openNodeRecordFromLibrary,
+  openNodesLibrary
 } from "./memory-test-helpers";
 
 const pdfFixturePath = path.resolve(
@@ -87,8 +98,7 @@ async function uploadPdf(page: Page) {
 }
 
 /** Creates a highlight and verifies its immediate bookmark feedback. */
-async function captureHighlightedPdf(page: Page) {
-  const fileName = await uploadPdf(page);
+async function highlightPdf(page: Page) {
   const toolbar = await selectPdfWord(page, highlightedWord, true);
   await toolbar.getByRole("button").nth(0).click();
   const highlight = page
@@ -101,7 +111,37 @@ async function captureHighlightedPdf(page: Page) {
   await expect(
     page.getByRole("button").filter({ hasText: highlightedWord }).first()
   ).toBeVisible();
-  return fileName;
+}
+
+/** Removes bookmark children before deleting the uploaded PDF through Library. */
+async function deletePdfFixture(page: Page, nodeId: string) {
+  await openPdfContent(page);
+  const highlights = page.locator('[data-annottype="HIGHLIGHT"]');
+  while ((await highlights.count()) > 0) {
+    await highlights.first().click();
+    const deleteButton = page
+      .locator("button[data-pdf-annotation-overlay]")
+      .locator("button")
+      .first();
+    await expect(deleteButton).toBeVisible();
+    const highlightId = await highlights.first().getAttribute("id");
+    await deleteButton.click();
+    await expect(page.locator(`[id="${highlightId}"]`)).toHaveCount(0);
+  }
+  await openDeclaredNodeBookmarksPanel(page, test.info().project.name);
+  await expect(
+    page.getByRole("button").filter({ hasText: highlightedWord })
+  ).toHaveCount(0);
+  await closeNodeRecord(page);
+  await openNodesLibrary(page);
+  const thumbnail = getResourceThumbnail(page, nodeId);
+  await expect(thumbnail).toBeVisible();
+  await thumbnail.hover();
+  await getResourceContextMenuTrigger(thumbnail).click();
+  const deleteItem = page.locator('[data-context-menu-item-id="delete"]');
+  await expect(deleteItem).toBeVisible();
+  await deleteItem.click();
+  await expect(thumbnail).toBeHidden();
 }
 
 /** Enters a new comment through the PDF annotation toolbar. */
@@ -172,7 +212,8 @@ test.describe("memory - PDF annotation durability @creation", () => {
       "This case exercises local-only PDF persistence"
     );
     test.setTimeout(180_000);
-    const fileName = await captureHighlightedPdf(page);
+    const fileName = await uploadPdf(page);
+    await highlightPdf(page);
     await closeNodeRecord(page);
     await page.reload();
     await ensureInAppOnHome(page);
@@ -213,15 +254,19 @@ test.describe("memory - PDF annotation durability @creation", () => {
       "A cloud round trip needs an authenticated account and FileFn"
     );
     test.setTimeout(240_000);
-    const fileName = await captureHighlightedPdf(page);
-    const { cookies } = await page.context().storageState();
-    const restoredContext = await browser.newContext({
-      baseURL,
-      ignoreHTTPSErrors: true,
-      viewport: { width: 1512, height: 600 },
-      storageState: { cookies, origins: [] }
-    });
+    const fileName = await uploadPdf(page);
+    const nodeId = new URL(page.url()).searchParams.get("page");
+    expect(nodeId).toBeTruthy();
+    let restoredContext: BrowserContext | undefined;
     try {
+      await highlightPdf(page);
+      const { cookies } = await page.context().storageState();
+      restoredContext = await browser.newContext({
+        baseURL,
+        ignoreHTTPSErrors: true,
+        viewport: { width: 1512, height: 600 },
+        storageState: { cookies, origins: [] }
+      });
       expect(
         (await restoredContext.storageState({ indexedDB: true })).origins
       ).toEqual([]);
@@ -230,7 +275,11 @@ test.describe("memory - PDF annotation durability @creation", () => {
       await ensureInAppOnHome(restoredPage);
       await expectRestoredAnnotations(restoredPage, fileName);
     } finally {
-      await restoredContext.close();
+      try {
+        await restoredContext?.close();
+      } finally {
+        await deletePdfFixture(page, nodeId!);
+      }
     }
   });
 });
