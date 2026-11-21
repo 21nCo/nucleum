@@ -21,7 +21,9 @@ const sdk = vi.hoisted(() => ({
   /** The index in `baseUrls` of the client that started each upload. */
   startedBy: [] as number[],
   uploads: [] as UploadInput[],
-  deleted: [] as string[]
+  deleted: [] as string[],
+  /** The index in `baseUrls` of the client that sent each delete. */
+  deletedBy: [] as number[]
 }));
 vi.mock("@filefn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@filefn/client")>();
@@ -50,6 +52,7 @@ vi.mock("@filefn/client", async (importOriginal) => {
           ({}) as Awaited<ReturnType<FileFnClient["uploadArtifact"]>>,
         deleteFile: async (fileId: string) => {
           sdk.deleted.push(fileId);
+          sdk.deletedBy.push(client);
         },
         getPendingLocalDescriptor: async () => null
       };
@@ -313,6 +316,7 @@ beforeEach(async () => {
   sdk.startedBy = [];
   sdk.uploads = [];
   sdk.deleted = [];
+  sdk.deletedBy = [];
   authfn.session = null;
   await clearStorage();
 });
@@ -572,6 +576,22 @@ describe("account upload replay authorization", () => {
     actorId: "user:user-b",
     primaryEmail: "user-b@example.test"
   };
+  const revokingSessions = [
+    {
+      resolves: "another user's live session",
+      session: () => userB,
+      isExpired: false
+    },
+    { resolves: "an expired session", session: () => null, isExpired: true }
+  ];
+
+  async function recordPendingDelete() {
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.recordFileFnPendingDelete(
+      { userId: "user-a", baseUrl: USEAST_FILES },
+      PENDING_DELETE
+    );
+  }
 
   /**
    * Restores user-a's session offline after an offline capture and a pending
@@ -579,11 +599,7 @@ describe("account upload replay authorization", () => {
    */
   async function restoreOffline() {
     const fileId = await captureOfflineThenLeave();
-    const files = await import("@nucleum/shared-state/files/filefn-client");
-    await files.recordFileFnPendingDelete(
-      { userId: "user-a", baseUrl: USEAST_FILES },
-      PENDING_DELETE
-    );
+    await recordPendingDelete();
     await storeCloudSession();
     const page = await loadPage();
     await startSession(page, "user-a");
@@ -592,49 +608,60 @@ describe("account upload replay authorization", () => {
     return { page, fileId };
   }
 
-  async function settle() {
-    await vi.dynamicImportSettled();
-    await new Promise((resolve) => setTimeout(resolve, 200));
+  /**
+   * Confirms user-a's live session through the auth guard, then waits until
+   * user-a's queued upload and pending delete are sent, and returns the
+   * clients that sent them.
+   */
+  async function confirmUserA(page: Page, fileId?: string) {
+    authfn.session = liveSession;
+    expect(await page.sessionAccess.performLoginStatusCheck()).toBe(true);
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(opfs.list(...PENDING_DELETES)).toEqual([]);
+    if (fileId) {
+      await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+      expect(sdk.started).toEqual([expect.objectContaining({ fileId })]);
+    }
+    return { startedBy: sdk.startedBy, deletedBy: sdk.deletedBy };
   }
 
-  function expectNothingSent(page: Page) {
-    expect(page.account.get().userId).toBe("user-a");
-    expect(sdk.started).toEqual([]);
-    expect(sdk.deleted).toEqual([]);
-    expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
-    expect(opfs.list(...PENDING_DELETES)).toEqual([PENDING_DELETE]);
-  }
-
-  it.each([
-    {
-      resolves: "another user's live session",
-      session: () => userB,
-      isExpired: false
-    },
-    { resolves: "an expired session", session: () => null, isExpired: true }
-  ])(
-    "sends nothing for the restored account when the extension's session check then resolves $resolves",
+  it.each(revokingSessions)(
+    "keeps the restored account's queue and pending delete when the extension's session check resolves $resolves",
     async ({ session, isExpired }) => {
-      const { page } = await restoreOffline();
+      const { page, fileId } = await restoreOffline();
       authfn.session = session();
       isOnline = true;
 
       expect(await page.accountSession.checkIfSessionExpired()).toBe(isExpired);
+      await vi.dynamicImportSettled();
       goOnline();
-      await settle();
 
-      expectNothingSent(page);
+      expect(page.account.get().userId).toBe("user-a");
+      expect(await confirmUserA(page, fileId)).toEqual({
+        startedBy: [1],
+        deletedBy: [1]
+      });
     }
   );
 
-  it("sends nothing for the restored account when another user's live session resolves on reconnect", async () => {
-    const { page } = await restoreOffline();
+  it("keeps the restored account's queue and pending delete when another user's live session resolves on reconnect", async () => {
+    const { page, fileId } = await restoreOffline();
+    const { logger } = await import("@nucleum/client/runtime/logging/logger");
+    const warn = vi.spyOn(logger, "warn");
     authfn.session = userB;
 
     goOnline();
-    await settle();
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith({
+        at: "filefn.uploadReplay.start.accountMismatch"
+      })
+    );
 
-    expectNothingSent(page);
+    expect(page.account.get().userId).toBe("user-a");
+    expect(await confirmUserA(page, fileId)).toEqual({
+      startedBy: [1],
+      deletedBy: [1]
+    });
   });
 
   it("uploads and sends the pending delete when the restored account's live session resolves on reconnect", async () => {
@@ -649,14 +676,7 @@ describe("account upload replay authorization", () => {
     expect(sdk.baseUrls).toEqual([USEAST_FILES]);
   });
 
-  it.each([
-    {
-      resolves: "another user's live session",
-      session: () => userB,
-      isExpired: false
-    },
-    { resolves: "an expired session", session: () => null, isExpired: true }
-  ])(
+  it.each(revokingSessions)(
     "stops sending for the account it replayed once the extension's session check resolves $resolves",
     async ({ session, isExpired }) => {
       await captureOfflineThenLeave();
@@ -669,16 +689,14 @@ describe("account upload replay authorization", () => {
 
       authfn.session = session();
       expect(await page.accountSession.checkIfSessionExpired()).toBe(isExpired);
-      const files = await import("@nucleum/shared-state/files/filefn-client");
-      await files.recordFileFnPendingDelete(
-        { userId: "user-a", baseUrl: USEAST_FILES },
-        PENDING_DELETE
-      );
+      await vi.dynamicImportSettled();
+      await recordPendingDelete();
       goOnline();
-      await settle();
 
-      expect(sdk.deleted).toEqual([]);
-      expect(opfs.list(...PENDING_DELETES)).toEqual([PENDING_DELETE]);
+      expect(await confirmUserA(page)).toEqual({
+        startedBy: [0],
+        deletedBy: [1]
+      });
     }
   );
 
@@ -689,10 +707,16 @@ describe("account upload replay authorization", () => {
     authfn.session = { ...liveSession, regionId: "euwest" };
 
     const page = await loadPage();
+    const { logger } = await import("@nucleum/client/runtime/logging/logger");
+    const warn = vi.spyOn(logger, "warn");
     await page.accountSession.init();
     expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
     await openData(page, "user-a");
-    await settle();
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith({
+        at: "filefn.uploadReplay.start.accountMismatch"
+      })
+    );
 
     expect(sdk.baseUrls).not.toContain(USEAST_FILES);
     expect(sdk.started).toEqual([]);
