@@ -44,6 +44,10 @@
   let allGrammars: Promise<void> | undefined;
   const missingGrammars = new Set<string>();
 
+  /**
+   * Recursively loads subLanguage dependencies, guarding cycles with visited.
+   * Alias fallback loads all grammars once and caches IDs that remain missing.
+   */
   async function resolveGrammar(language: string, visited: Set<string>) {
     if (hljs.getLanguage(language) || missingGrammars.has(language) || visited.has(language)) return;
     visited.add(language);
@@ -86,6 +90,7 @@
     hljs.registerLanguage(language, grammar);
   }
 
+  /** Serializes grammar loads, recovering the queue after a failed load. */
   function loadGrammar(language: string) {
     grammarQueue = grammarQueue.catch(() => {}).then(() => resolveGrammar(language, new Set()));
     return grammarQueue;
