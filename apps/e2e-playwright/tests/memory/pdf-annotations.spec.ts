@@ -21,7 +21,7 @@ const pdfFixturePath = path.resolve(
   "files",
   "Lorem_ipsum.pdf"
 );
-const highlightedWord = "Lorem";
+const highlightedWord = "versions";
 const comment = "E2E PDF reading note";
 
 /** Opens the PDF through its declared product content surface. */
@@ -33,11 +33,11 @@ async function openPdfContent(page: Page) {
 }
 
 /** Selects a word through PDF.js's text layer and exposes annotation actions. */
-async function selectPdfWord(page: Page, word: string) {
-  const text = page
+async function selectPdfWord(page: Page, word: string, useLastMatch = false) {
+  const matches = page
     .locator('.page[data-page-number="1"] .textLayer span')
-    .filter({ hasText: new RegExp(`\\b${word}\\b`, "i") })
-    .first();
+    .filter({ hasText: new RegExp(`\\b${word}\\b`, "i") });
+  const text = useLastMatch ? matches.last() : matches.first();
   await expect(text).toBeVisible({ timeout: 30_000 });
   await text.scrollIntoViewIfNeeded();
   const point = await text.evaluate((element, word) => {
@@ -89,7 +89,7 @@ async function uploadPdf(page: Page) {
 /** Creates a highlight and verifies its immediate bookmark feedback. */
 async function captureHighlightedPdf(page: Page) {
   const fileName = await uploadPdf(page);
-  const toolbar = await selectPdfWord(page, highlightedWord);
+  const toolbar = await selectPdfWord(page, highlightedWord, true);
   await toolbar.getByRole("button").nth(0).click();
   const highlight = page
     .locator('.page[data-page-number="1"] [data-annottype="HIGHLIGHT"]')
@@ -148,11 +148,11 @@ async function expectRestoredAnnotations(page: Page, fileName: string) {
   const pdfToolbar = page
     .locator("#viewer-parent")
     .locator("xpath=../../following-sibling::div");
-  for (let zoom = 0; zoom < 5; zoom += 1) {
+  for (let zoom = 0; zoom < 10; zoom += 1) {
     await pdfToolbar.getByRole("button").nth(5).click();
   }
   await page.locator("#viewerContainer").evaluate((viewer) => {
-    viewer.scrollTop = viewer.scrollHeight;
+    viewer.scrollTop = 0;
   });
   await expect(highlight).not.toBeInViewport();
   await bookmark.click();
