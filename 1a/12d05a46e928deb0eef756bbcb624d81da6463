@@ -1,0 +1,21 @@
+client/shared-state/files/file-queue.ts
+  s_25109c5d3b5925::t_4d102af59ad093 2361-2365,2409-2412,2423-2428
+client/surfaces/settings/data/backup-and-restore.test.ts
+  s_25109c5d3b5925::t_8c9e0e154e1de2 7248-7290
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1a12d05a46e928deb0eef756bbcb624d81da6463",
+  "prompts": {},
+  "sessions": {
+    "s_25109c5d3b5925": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1fc40-9686-7dd1-b3db-043ca8222b2a",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
