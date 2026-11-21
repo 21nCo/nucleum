@@ -75,8 +75,12 @@ let ownerUserId: string | undefined;
  * a resolution ended it (see startAccountUploadReplay).
  */
 let liveReplayOwner: FileFnAccountScope | null = null;
-/** Whether a file operation requested the client (see syncWithAccount). */
-let isFileClientRequested = false;
+/**
+ * The cloud user a file operation on this page requested the client for (see
+ * syncWithAccount), until the account state changes user or a live session
+ * names another account.
+ */
+let fileRequestUserId: string | undefined;
 /** Clients waiting for their replay to be authorized. */
 const replayWaiters = new Set<() => void>();
 let stopLiveBindWait: () => void = () => undefined;
@@ -173,8 +177,9 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
  * cloud user at the same region, waiting while it carries no cloud user yet;
  * a bound client of another user or region is torn down, and an account state
  * seeded with another user binds nothing. The account state, the queue and the
- * pending deletes stay as they are. A file operation requests the client
- * itself, which then replays as soon as it is created.
+ * pending deletes stay as they are. A file operation requests the client of
+ * the account state's cloud user itself, which then replays as soon as it is
+ * created.
  */
 export function startAccountUploadReplay(
   liveSession?: FileFnAccountScope
@@ -185,8 +190,10 @@ export function startAccountUploadReplay(
   }
   liveReplayOwner = liveSession;
   stopLiveBindWait();
+  if (fileRequestUserId !== liveSession.userId) fileRequestUserId = undefined;
   const entry = currentEntry;
-  if (entry && !isReplayAuthorized(entry.userId, entry.baseUrl)) {
+  if (entry && !isLiveReplayOwner(entry.userId, entry.baseUrl)) {
+    fileRequestUserId = undefined;
     tearDownFileFnClient();
   }
   notifyReplayWaiters();
@@ -219,7 +226,7 @@ export function startAccountUploadReplay(
 export function stopAccountUploadReplay(): void {
   liveReplayOwner = null;
   stopLiveBindWait();
-  if (!isFileClientRequested) tearDownFileFnClient();
+  if (currentEntry?.userId !== fileRequestUserId) tearDownFileFnClient();
 }
 
 function isLiveSessionScope(
@@ -230,17 +237,21 @@ function isLiveSessionScope(
     scope.userId === liveSession.userId &&
     (!scope.region ||
       !liveSession.region ||
-      scope.region === liveSession.region)
+      resolveFileFnBaseUrl(scope.region) ===
+        resolveFileFnBaseUrl(liveSession.region))
   );
 }
 
 /**
  * Whether a client of the account at the authority may send its replay: a
- * file operation requested the client, or a live session confirmed the
- * account at that authority.
+ * file operation requested the account's client, or a live session confirmed
+ * the account at that authority.
  */
 function isReplayAuthorized(userId: string, baseUrl: string): boolean {
-  if (isFileClientRequested) return true;
+  return fileRequestUserId === userId || isLiveReplayOwner(userId, baseUrl);
+}
+
+function isLiveReplayOwner(userId: string, baseUrl: string): boolean {
   const owner = liveReplayOwner;
   return (
     owner?.userId === userId &&
@@ -277,8 +288,9 @@ function notifyReplayWaiters() {
  * its replay as soon as it is created.
  */
 function syncWithAccount() {
-  if (!isFileClientRequested) {
-    isFileClientRequested = true;
+  const userId = resolveFileFnAccountScope(account.get())?.userId;
+  if (userId && fileRequestUserId !== userId) {
+    fileRequestUserId = userId;
     notifyReplayWaiters();
   }
   bindToAccount();
@@ -319,6 +331,7 @@ function syncFileFnClient(value: UserAccount | null | undefined) {
     ownerUserId = scope?.userId;
     ownerEpoch += 1;
   }
+  if (fileRequestUserId !== scope?.userId) fileRequestUserId = undefined;
   if (currentEntry?.userId !== scope?.userId) tearDownFileFnClient();
   if (!scope?.region) {
     isAuthorityPending = Boolean(scope);

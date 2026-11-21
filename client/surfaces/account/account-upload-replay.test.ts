@@ -60,8 +60,14 @@ vi.mock("@filefn/client", async (importOriginal) => {
   };
 });
 
-/** The session AuthFn returns for the stored credentials (null: none). */
-const authfn = vi.hoisted(() => ({ session: null as unknown }));
+/**
+ * The session AuthFn returns for the stored credentials (null: none), or the
+ * response `respond` returns instead when set.
+ */
+const authfn = vi.hoisted(() => ({
+  session: null as unknown,
+  respond: undefined as (() => Promise<unknown>) | undefined
+}));
 vi.mock("@authfn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@authfn/client")>();
   return {
@@ -70,10 +76,10 @@ vi.mock("@authfn/client", async (importOriginal) => {
       options: Parameters<typeof actual.createAuthFnRegionalClient>[0]
     ) =>
       Object.assign(actual.createAuthFnRegionalClient(options), {
-        getSession: async () => ({
-          ok: true,
-          data: { session: authfn.session }
-        }),
+        getSession: async () =>
+          authfn.respond
+            ? authfn.respond()
+            : { ok: true, data: { session: authfn.session } },
         resolveRegion: async () => undefined
       })
   };
@@ -124,6 +130,27 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
 });
 
 // Navigation and the native shell's sign-out cleanup are outside this test.
+/** How many resolutions of the stored session have returned. */
+const auth = vi.hoisted(() => ({ resolved: 0 }));
+vi.mock("@nucleum/client/runtime/account/auth", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("@nucleum/client/runtime/account/auth")
+    >();
+  return {
+    ...actual,
+    resolveAuthSession: async (
+      ...args: Parameters<typeof actual.resolveAuthSession>
+    ) => {
+      try {
+        return await actual.resolveAuthSession(...args);
+      } finally {
+        auth.resolved += 1;
+      }
+    }
+  };
+});
+
 vi.mock("@nucleum/shell/navigation/navigation", () => ({
   navigation: { gotoPath: vi.fn() }
 }));
@@ -318,6 +345,8 @@ beforeEach(async () => {
   sdk.deleted = [];
   sdk.deletedBy = [];
   authfn.session = null;
+  authfn.respond = undefined;
+  auth.resolved = 0;
   await clearStorage();
 });
 
@@ -326,7 +355,8 @@ async function clearStorage() {
     ClientStorageKey.USER,
     ClientStorageKey.USER_INFO,
     ClientStorageKey.OFFLINE_SESSION_ID,
-    ClientStorageKey.AUTHFN_TOKEN
+    ClientStorageKey.AUTHFN_TOKEN,
+    ClientStorageKey.OFFLINE_MODE
   ]) {
     await clientStorage.remove(key);
   }
@@ -335,6 +365,7 @@ async function clearStorage() {
 afterEach(async () => {
   for (const page of pages.splice(0)) await leave(page);
   await clearStorage();
+  vi.useRealTimers();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -721,5 +752,158 @@ describe("account upload replay authorization", () => {
     expect(sdk.baseUrls).not.toContain(USEAST_FILES);
     expect(sdk.started).toEqual([]);
     expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+  });
+
+  /** Holds every AuthFn response until the test answers it. */
+  function holdAuthFnResponses() {
+    const held: ((session: unknown) => void)[] = [];
+    authfn.respond = () =>
+      new Promise((resolve) =>
+        held.push((session) => resolve({ ok: true, data: { session } }))
+      );
+    return held;
+  }
+
+  async function expectNothingSent() {
+    await vi.dynamicImportSettled();
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+  }
+
+  it("applies only the latest reconnect's session when an earlier one resolves later", async () => {
+    const { page, fileId } = await restoreOffline();
+    const { logger } = await import("@nucleum/client/runtime/logging/logger");
+    const warn = vi.spyOn(logger, "warn");
+    const held = holdAuthFnResponses();
+
+    goOnline();
+    goOnline();
+    await vi.waitFor(() => expect(held).toHaveLength(2));
+    held[0](liveSession);
+    await vi.waitFor(() => expect(auth.resolved).toBeGreaterThan(1));
+    held[1](userB);
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith({
+        at: "filefn.uploadReplay.start.accountMismatch"
+      })
+    );
+    await expectNothingSent();
+
+    authfn.respond = undefined;
+    expect(await confirmUserA(page, fileId)).toEqual({
+      startedBy: [1],
+      deletedBy: [1]
+    });
+  });
+
+  it("requires the live session after a file operation while no cloud account was signed in", async () => {
+    const fileId = await captureOfflineThenLeave();
+    await recordPendingDelete();
+    await storeCloudSession();
+    const page = await loadPage();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    expect(await files.getFileFnClient()).toBeNull();
+    await startSession(page, "user-a");
+    await vi.waitFor(() => expect(sdk.baseUrls).toEqual([USEAST_FILES]));
+    const { logger } = await import("@nucleum/client/runtime/logging/logger");
+    const warn = vi.spyOn(logger, "warn");
+    authfn.session = userB;
+
+    goOnline();
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith({
+        at: "filefn.uploadReplay.start.accountMismatch"
+      })
+    );
+    await expectNothingSent();
+
+    expect(await confirmUserA(page, fileId)).toEqual({
+      startedBy: [1],
+      deletedBy: [1]
+    });
+  });
+
+  it("uploads when the live session names the stored region in another letter case", async () => {
+    const fileId = await captureOfflineThenLeave();
+    await clientStorage.set(ClientStorageKey.USER_INFO, {
+      ...userInfo,
+      region: "UsEast"
+    });
+    isOnline = true;
+    authfn.session = liveSession;
+
+    const page = await loadPage();
+    await page.accountSession.init();
+    expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+    await openData(page, "user-a");
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+    expect(sdk.baseUrls).toEqual([USEAST_FILES]);
+  });
+
+  it("uploads once the app's offline mode ends while the network stays up", async () => {
+    const fileId = await captureOfflineThenLeave();
+    await recordPendingDelete();
+    await storeCloudSession();
+    await clientStorage.set(ClientStorageKey.OFFLINE_MODE, "true");
+    isOnline = true;
+    const page = await loadPage();
+    const context = (await import("@nucleum/client/runtime/context.store"))
+      .default;
+    context.update((value) => ({ ...value, isInOfflineMode: true }));
+    await startSession(page, "user-a");
+    await vi.waitFor(() => expect(sdk.baseUrls).toEqual([USEAST_FILES]));
+    await expectNothingSent();
+    authfn.session = liveSession;
+
+    await context.toggleOfflineMode(false);
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+
+  it("resolves the session again after a transient AuthFn failure while online", async () => {
+    vi.useFakeTimers({
+      toFake: ["setTimeout", "clearTimeout"],
+      shouldAdvanceTime: true
+    });
+    const fileId = await captureOfflineThenLeave();
+    await recordPendingDelete();
+    await storeCloudSession();
+    isOnline = true;
+    authfn.respond = async () => ({
+      ok: false,
+      error: { code: "AUTHFN_NETWORK_ERROR", retryable: true }
+    });
+    const page = await loadPage();
+    await startSession(page, "user-a");
+    await vi.waitFor(() => expect(sdk.baseUrls).toEqual([USEAST_FILES]));
+    await expectNothingSent();
+    authfn.respond = undefined;
+    authfn.session = liveSession;
+
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+
+  it("drops a reconnect's session that resolves after sign-out", async () => {
+    const { page } = await restoreOffline();
+    const held = holdAuthFnResponses();
+    goOnline();
+    await vi.waitFor(() => expect(held).toHaveLength(1));
+    const resolved = auth.resolved;
+
+    await page.accountSession.signOut({ isPreventRedirect: true });
+    held[0](liveSession);
+    await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+
+    expect(await clientStorage.get(ClientStorageKey.USER)).toBeFalsy();
+    await expectNothingSent();
   });
 });

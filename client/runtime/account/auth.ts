@@ -323,7 +323,13 @@ async function resolveMissingAuthSession(
   };
 }
 
-export async function resolveAuthSession(): Promise<AuthSessionResolution> {
+/**
+ * Resolves the stored session. Once `signal` aborts (a sign-out), a session
+ * AuthFn returns later is neither stored nor reported: it resolves signed out.
+ */
+export async function resolveAuthSession(options?: {
+  signal?: AbortSignal;
+}): Promise<AuthSessionResolution> {
   const storedState = await resolveStoredAuthSessionState();
   if (typeof window === "undefined") {
     return {
@@ -347,6 +353,9 @@ export async function resolveAuthSession(): Promise<AuthSessionResolution> {
   try {
     const client = await authClient({ isPreventCachedInstance: true });
     const session = await client.getSession();
+    if (options?.signal?.aborted) {
+      return { status: "signed-out", storedState };
+    }
     if (!session.ok) {
       return resolveFailedAuthSession(storedState, session.error);
     }

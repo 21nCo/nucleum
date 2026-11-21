@@ -31,7 +31,10 @@ import {
 import { resolveAccountBaseUrl } from "@nucleum/client/runtime/account/network";
 import { clearCachedDatafnE2eeState } from "@nucleum/datafn/datafnE2ee.store";
 import { determineIfOffline } from "@nucleum/client/runtime/connectivity";
-import { startUploadReplayForSession } from "@nucleum/surfaces/account/account-upload-replay";
+import {
+  startUploadReplayForSession,
+  stopUploadReplayForSession
+} from "@nucleum/surfaces/account/account-upload-replay";
 
 async function postToEmbed(data: any = null) {
   if (!data) {
@@ -147,6 +150,7 @@ async function signOut(params?: {
   isPreventDapIdClear?: boolean;
   isPreventRedirect?: boolean;
 }) {
+  stopUploadReplayForSession();
   try {
     await destroyNucleumDatafn();
   } catch (error) {

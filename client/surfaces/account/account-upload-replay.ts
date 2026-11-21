@@ -1,9 +1,12 @@
 import type { AuthSessionResolution } from "@nucleum/client/runtime/account/auth.type";
 import { resolveAuthSession } from "@nucleum/client/runtime/account/auth";
+import context from "@nucleum/client/runtime/context.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import type { FileFnAccountScope } from "@nucleum/shared-state/files/filefn-client";
 
-let stopReconnectCheck: (() => void) | undefined;
+const RETRY_DELAYS_MS = [5_000, 15_000, 60_000, 300_000];
+
+let sessionRecheck: { stop: () => void; scheduleRetry: () => void } | undefined;
 
 /**
  * Applies a resolution of the stored session to the signed-in cloud account's
@@ -13,19 +16,19 @@ let stopReconnectCheck: (() => void) | undefined;
  * that user and region are the session's. A cached cloud session restored
  * offline (`cached-cloud`) binds the stored account's client, which sends
  * nothing until the stored session, resolved again on the next reconnect,
- * confirms the account. Any other resolution (offline-only, expired,
- * signed-out or unavailable) stops the replay the restore started, keeping the
- * account's queue and pending deletes. The caller does not wait for the FileFn
- * client to load.
+ * confirms the account (see recheckSession). Any other resolution
+ * (offline-only, expired, signed-out or unavailable) stops the replay the
+ * restore started, keeping the account's queue and pending deletes. The caller
+ * does not wait for the FileFn client to load.
  */
 export function startUploadReplayForSession(
   resolution: AuthSessionResolution
 ): void {
   if (resolution.status === "cached-cloud") {
-    checkSessionOnReconnect();
+    recheckSession();
+    if (!resolution.storedState.isOffline) sessionRecheck?.scheduleRetry();
   } else if (resolution.status !== "unavailable") {
-    stopReconnectCheck?.();
-    stopReconnectCheck = undefined;
+    stopSessionRecheck();
   }
   const liveSession = resolveLiveSession(resolution);
   import("@nucleum/shared-state/files/filefn-client")
@@ -54,26 +57,69 @@ function resolveLiveSession(
 }
 
 /**
- * Resolves the stored session again on every reconnect until a resolution
- * other than a cached or unavailable one settles the restored replay.
+ * Stops the upload replay on sign-out: a pending resolution of the stored
+ * session neither stores its session nor authorizes the replay, and the
+ * client the restore bound is torn down.
  */
-function checkSessionOnReconnect() {
-  if (stopReconnectCheck) return;
+export function stopUploadReplayForSession(): void {
+  stopSessionRecheck();
+  import("@nucleum/shared-state/files/filefn-client")
+    .then((files) => files.stopAccountUploadReplay())
+    .catch((error: unknown) => {
+      logger.error({ at: "account.uploadReplay.stop", error });
+    });
+}
+
+function stopSessionRecheck() {
+  sessionRecheck?.stop();
+  sessionRecheck = undefined;
+}
+
+/**
+ * Resolves the stored session again on every reconnect, when the app's offline
+ * mode ends, and, after an AuthFn failure while connected, with a growing
+ * delay, until a resolution other than a cached or unavailable one settles
+ * the restored replay. Only the latest resolution applies.
+ */
+function recheckSession() {
+  if (sessionRecheck) return;
   const controller = new AbortController();
-  stopReconnectCheck = () => controller.abort();
-  globalThis.addEventListener?.(
-    "online",
-    () => {
-      resolveAuthSession()
-        .then((resolution) => {
-          if (!controller.signal.aborted) {
-            startUploadReplayForSession(resolution);
-          }
-        })
-        .catch((error: unknown) => {
-          logger.error({ at: "account.uploadReplay.reconnect", error });
-        });
+  let attempt = 0;
+  let retries = 0;
+  let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  const recheck = () => {
+    clearTimeout(retryTimer);
+    const current = ++attempt;
+    resolveAuthSession({ signal: controller.signal })
+      .then((resolution) => {
+        if (!controller.signal.aborted && current === attempt) {
+          startUploadReplayForSession(resolution);
+        }
+      })
+      .catch((error: unknown) => {
+        logger.error({ at: "account.uploadReplay.reconnect", error });
+      });
+  };
+  globalThis.addEventListener?.("online", recheck, {
+    signal: controller.signal
+  });
+  let wasOfflineMode: boolean | undefined;
+  const stopOfflineMode = context.subscribe(({ isInOfflineMode }) => {
+    if (wasOfflineMode && !isInOfflineMode) recheck();
+    wasOfflineMode = isInOfflineMode;
+  });
+  sessionRecheck = {
+    stop: () => {
+      controller.abort();
+      clearTimeout(retryTimer);
+      stopOfflineMode();
     },
-    { signal: controller.signal }
-  );
+    scheduleRetry: () => {
+      clearTimeout(retryTimer);
+      const delay =
+        RETRY_DELAYS_MS[Math.min(retries, RETRY_DELAYS_MS.length - 1)];
+      retries += 1;
+      retryTimer = setTimeout(recheck, delay);
+    }
+  };
 }
