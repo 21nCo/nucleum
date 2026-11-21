@@ -303,7 +303,9 @@ async function writeQueuedEntry(dir: string, input: QueuedFileInput) {
  * The FileFn store ignores a removal that fails, so the entry is looked up
  * again, and one found still there, or a lookup that fails, rejects with an
  * UnconfirmedRemovalError, for the caller to retry; it may then record what
- * the removal would have freed room for (see logDelivered).
+ * the removal would have freed room for (see logDelivered). The held URL of
+ * an entry it could not look up is released once a pass finds it gone (see
+ * confirmRemovals).
  */
 export async function dequeueFile(
   dir: string,
@@ -314,14 +316,43 @@ export async function dequeueFile(
   await markChange(dir);
   if (isAllowed && !(await isAllowed())) return false;
   await getStore(dir).deletePendingUpload(entryName);
+  const key = `${dir}\n${entryName}`;
   const isLeft = await getEntryDir(dir, entryName, true).then(
     Boolean,
-    () => true
+    () => {
+      unconfirmedRemovals.add(key);
+      return true;
+    }
   );
   if (isLeft) throw new UnconfirmedRemovalError();
+  unconfirmedRemovals.delete(key);
   await bumpRevisionAfter(dir);
-  releaseQueuedFileUrls((key) => key === `${dir}\n${entryName}`);
+  releaseQueuedFileUrls((held) => held === key);
   return true;
+}
+
+/**
+ * Entries (queue, entry) dequeueFile removed but could not look up again,
+ * so a later pass releases their held URL once it finds them gone (see
+ * confirmRemovals).
+ */
+const unconfirmedRemovals = new Set<string>();
+
+/**
+ * Releases the held download URL of each of a queue's entries whose removal
+ * dequeueFile could not confirm (see unconfirmedRemovals) once a lookup
+ * finds it gone; one found there keeps its URL, and one that still cannot be
+ * read is looked up again by the next pass.
+ */
+async function confirmRemovals(dir: string) {
+  for (const key of unconfirmedRemovals) {
+    const [keyDir, entryName] = key.split("\n");
+    if (keyDir !== dir) continue;
+    const entry = await getEntryDir(dir, entryName, true).catch(() => false);
+    if (entry === false) continue;
+    unconfirmedRemovals.delete(key);
+    if (!entry) releaseQueuedFileUrls((held) => held === key);
+  }
 }
 
 /** A removal dequeueFile attempted but could not confirm. */
@@ -2314,6 +2345,7 @@ async function drainQueue(dir: string, request: ReplayRequest) {
   };
   await removeHolds(dir, (row) => !row.isLive);
   await moveDeliveredRows(dir);
+  await confirmRemovals(dir);
   let isRetried = false;
   for (const entryName of await pass.store.listPendingUploads()) {
     if (request.signal.aborted || isAppOffline()) {

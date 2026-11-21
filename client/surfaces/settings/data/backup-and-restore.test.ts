@@ -7288,6 +7288,113 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
     expect(sdk.started).toHaveLength(1);
     expect(opfs.list(QUEUE_A)).toEqual([]);
   });
+
+  it.each([
+    ["with Web Locks", true],
+    ["without Web Locks", false]
+  ])(
+    "revokes the download URL of a file the store removed %s once the retry finds it gone, though looking it up right after the removal failed",
+    async (_, isLocked) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      hasLocks = isLocked;
+      const url = await resolveQueuedFileUrl(
+        [QUEUE_A],
+        record.fileId,
+        "download"
+      );
+      expect(url).toBeTruthy();
+      let isLookupFailing = true;
+      getDirectory = failingLookup(
+        opfs.getDirectory,
+        entry,
+        () => isLookupFailing && !opfs.list(QUEUE_A).includes(entry)
+      );
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        goOnline();
+        await replayed(QUEUE_A);
+        expect(opfs.list(QUEUE_A)).toEqual([]);
+        expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(url);
+
+        isLookupFailing = false;
+        await vi.advanceTimersByTimeAsync(5_000);
+        await vi.waitFor(() =>
+          expect(URL.revokeObjectURL).toHaveBeenCalledWith(url)
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+      expect(sdk.started).toHaveLength(1);
+      expect(sdk.artifacts).toHaveLength(1);
+    }
+  );
+
+  it("keeps the download URL of a file whose removal the store refused while looking it up again failed, and revokes it once the file is removed", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    let isRemovalFailing = true;
+    let failedLookups = 0;
+    getDirectory = failingLookup(
+      failingWrites(
+        () => undefined,
+        (path) => {
+          if (!isRemovalFailing || path.join("/") !== `${QUEUE_A}/${entry}`) {
+            return undefined;
+          }
+          failedLookups = 1;
+          return new DOMException("It cannot be removed", "InvalidStateError");
+        }
+      ),
+      entry,
+      () => failedLookups-- > 0
+    );
+    const tab = await openQueueTab();
+    const { createFileFnClient } = await import("@filefn/client");
+    const download = () =>
+      tab.resolveQueuedFileUrl([QUEUE_A], record.fileId, "download");
+    const url = await download();
+    expect(url).toBeTruthy();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      isOnline = true;
+      await tab.replayFileQueue(
+        QUEUE_A,
+        createFileFnClient({} as never),
+        new AbortController().signal,
+        undefined,
+        {
+          owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
+          isCurrent: () => true,
+          sync: async () => true,
+          isReferenced: async () => true,
+          discard: async (fileId) => {
+            sdk.deleted.push(fileId);
+          }
+        }
+      );
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      expect(URL.revokeObjectURL).not.toHaveBeenCalledWith(url);
+      expect(await download()).toBe(url);
+
+      isRemovalFailing = false;
+      await vi.advanceTimersByTimeAsync(60_000);
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    } finally {
+      vi.useRealTimers();
+    }
+    await vi.waitFor(() =>
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(url)
+    );
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.deleted).toEqual([]);
+  });
 });
 
 describe("who may bind, protect or reclaim a restored queued file", () => {
