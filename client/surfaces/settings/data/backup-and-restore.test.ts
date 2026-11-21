@@ -8645,4 +8645,100 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
       expect(sdk.started).toEqual([]);
     }
   );
+
+  it("drops a take its replay could not bind once a later replay at another FileFn authority bound the file, so the earlier take never removes it after its own record is deleted", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    const useast = AUTHORITY_URL.replace(/\/datafn$/, "/files");
+    const references = (baseUrl: string, isReferenced: boolean) => ({
+      owner: { userId: "user-a", baseUrl },
+      isCurrent: () => true,
+      sync: async () => true,
+      isReferenced: async () => isReferenced,
+      discard: async (fileId: string) => {
+        sdk.deleted.push(fileId);
+      }
+    });
+    const root = await opfs.getDirectory();
+    await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+    const failing = (isBindingFailing: boolean) =>
+      failingWrites(
+        (path) =>
+          path[2]?.startsWith("adopted-") ||
+          path[1]?.startsWith("adopted~") ||
+          (isBindingFailing && path[2]?.startsWith("bound-"))
+            ? new Error("The binding cannot be recorded")
+            : undefined,
+        undefined,
+        undefined,
+        isLogUnreadable
+      );
+    const page = await openQueueTab();
+    const { createFileFnClient } = await import("@filefn/client");
+    const replayPage = async (baseUrl: string, isReferenced: boolean) => {
+      isOnline = true;
+      await page.replayFileQueue(
+        QUEUE_A,
+        createFileFnClient({} as never),
+        new AbortController().signal,
+        undefined,
+        references(baseUrl, isReferenced)
+      );
+      isOnline = false;
+    };
+    getDirectory = failing(true);
+    await replayPage(useast, true);
+    expect(opfs.list(QUEUE_A, entry).some((n) => n.startsWith("bound-"))).toBe(
+      false
+    );
+    getDirectory = failing(false);
+    await replayFresh(QUEUE_A, () => references(EUWEST_URL, true));
+    await replayPage(useast, false);
+    getDirectory = opfs.getDirectory;
+
+    await replayFresh(QUEUE_A, () => references(useast, false));
+
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(sdk.started).toEqual([]);
+  });
+
+  it("names the authority on a local copy's row whose restore could not tell it once a pass at that authority finds the file referenced, so the direct authority that succeeded the retired copy can remove it", async () => {
+    const { clone } = await keepAndLeaveScope(false, true, "euwest");
+    const useast = AUTHORITY_URL.replace(/\/datafn$/, "/files");
+    const [unnamed] = foreignRows();
+    const pass = (storageDbName: string | null, isReferenced: boolean) =>
+      replayFresh(QUEUE_B, (tab) => ({
+        owner: { userId: "user-b", baseUrl: useast },
+        isCurrent: () => true,
+        sync: async () => true,
+        isReferenced: async () => isReferenced,
+        discard: async () => undefined,
+        view: () =>
+          tab.toRecordsView({
+            namespace: "user:user-b",
+            remoteUrl: AUTHORITY_URL,
+            storageDbName
+          })
+      }));
+    await pass(clone, true);
+    const [named] = foreignRows();
+    expect(foreignRows()).toHaveLength(1);
+    expect(named).not.toBe(unnamed);
+    const { deleteDatafnLocalClone } =
+      await import("@nucleum/datafn/storage-lifecycle");
+    await deleteDatafnLocalClone(clone);
+
+    await pass(null, true);
+    expect(foreignRows()).toEqual([named]);
+    await pass(null, false);
+
+    expect(foreignRows()).toEqual([]);
+    expect(sdk.started).toEqual([]);
+  });
 });

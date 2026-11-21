@@ -1136,7 +1136,8 @@ function readMarks(names: readonly string[]) {
 async function readRestore(dir: string, fileId: string) {
   const entry = await getEntryDir(dir, toEntryName(fileId), true);
   if (!entry) return undefined;
-  const marks = readMarks(await readNames(entry));
+  const names = await readNames(entry);
+  const marks = readMarks(names);
   const { rows, adoptions, foreign } = await readHolds(dir);
   const adoption = [ADOPTION_ROW, fileId, marks.generation].join("~");
   const prefix = [FOREIGN_ROW, fileId, marks.generation].join("~");
@@ -1157,6 +1158,8 @@ async function readRestore(dir: string, fileId: string) {
     );
   return {
     ...marks,
+    /** Its generation's binding marks (see toBoundMark). */
+    boundMarks: names.filter((name) => isBoundMark(name, marks.generation)),
     isAdopted: marks.isAdopted || adoptions.has(adoption),
     isOwn:
       marks.isOwn &&
@@ -2491,7 +2494,10 @@ async function moveDeliveredRows(dir: string) {
  * longer on the device (DataFn retired it once its changes synced, see
  * isLocalCopyGone); a row of another scope or authority, without one, or of
  * a local copy that may still be there, stays (a pass retries while the
- * local copies cannot be listed), so a restore cut short before
+ * local copies cannot be listed). A row naming no authority (its restore
+ * could not tell which authority its records sync with) gets the request's
+ * once a pass of its own scope, brought up to date with that authority,
+ * finds a record referencing the file. So a restore cut short before
  * it imported a matching record, or whose removal of its row failed,
  * protects the file no longer, while one that saved a matching record keeps
  * it protected; one that resumes its import later protects its files again
@@ -2550,6 +2556,17 @@ async function reconcileForeignRows(dir: string, request: ReplayRequest) {
       if (!isSynced) return (isRetried = true);
       const isReferenced = await references.isReferenced(fileId);
       if (isReferenced === undefined) isRetried = true;
+      const fields = row.split("~");
+      if (isReferenced && !fields[5] && scope === destination.scope) {
+        fields[5] = destination.authority;
+        if (!references.isCurrent()) return;
+        await handle
+          .getFileHandle(fields.join("~"), MAKE)
+          .then(() => removeEntryFile(handle, row))
+          .catch((error: unknown) => {
+            logger.warn({ at: "fileQueue.foreign", row, error });
+          });
+      }
       if (isReferenced !== false) continue;
       if (!references.isCurrent()) return;
       await removeEntryFile(handle, row).catch((error: unknown) => {
@@ -2681,7 +2698,8 @@ async function takeOverRestoredEntry(
     const { owner } = references;
     unboundTakes.set(`${dir}\n${taken}`, {
       owner,
-      foreign: restore.foreignRows
+      foreign: restore.foreignRows,
+      marks: restore.boundMarks
     });
     await bindTaken(dir, fileId, restore, references).catch(
       (failure: unknown) => {
@@ -2702,7 +2720,7 @@ async function takeOverRestoredEntry(
  */
 const unboundTakes = new Map<
   string,
-  { owner: QueuedFileClaim; foreign: string[] }
+  { owner: QueuedFileClaim; foreign: string[]; marks: string[] }
 >();
 
 /**
@@ -2715,19 +2733,28 @@ const unboundTakes = new Map<
  * a foreign row the take did not find protects the generation (a restore
  * into another account kept it since), the take binds nothing, and stays
  * until that row is removed, so the earlier reference never decides over
- * the newer restore.
+ * the newer restore; and once another account or authority bound the
+ * generation since (a binding mark the take did not find), the take is
+ * dropped, so it never outranks that later binding (see isBound).
  */
 async function bindTaken(
   dir: string,
   fileId: string,
-  restore: { generation: string; foreignRows: string[] },
+  restore: { generation: string; foreignRows: string[]; boundMarks: string[] },
   references: QueuedFileReferences
 ) {
-  const { generation, foreignRows } = restore;
+  const { generation, foreignRows, boundMarks } = restore;
   const key = `${dir}\n${fileId}~${generation}`;
   const take = unboundTakes.get(key);
   if (!take || !isSameClaim(take.owner, references.owner)) return undefined;
   if (foreignRows.some((row) => !take.foreign.includes(row))) return undefined;
+  const own = `${toBoundMark(generation, take.owner)}~`;
+  const isTaken = (mark: string) =>
+    !take.marks.includes(mark) && !mark.startsWith(own);
+  if (boundMarks.some(isTaken)) {
+    unboundTakes.delete(key);
+    return undefined;
+  }
   const bound = bindEntry(dir, fileId, generation, references, take.foreign);
   const recorded = await bound.then(
     () => "bound" as const,
