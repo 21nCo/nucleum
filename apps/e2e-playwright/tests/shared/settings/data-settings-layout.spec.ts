@@ -10,7 +10,7 @@ for (const viewport of [
   { width: 844, height: 390 },
   { width: 1440, height: 1000 }
 ]) {
-  test(`Data Settings fits its scrolling container at ${viewport.width}x${viewport.height} @settings`, async ({
+  test(`Data Settings fits its scrolling container at ${viewport.width}x${viewport.height} @settings @regression${viewport.width === 390 ? " @smoke" : ""}`, async ({
     page
   }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
