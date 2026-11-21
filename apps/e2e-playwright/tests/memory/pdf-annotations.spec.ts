@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -111,12 +111,12 @@ async function enterComment(page: Page) {
   const editor = page.getByPlaceholder("Enter your comment");
   await expect(editor).toBeVisible();
   await editor.fill(comment);
+  await expect(editor).toHaveValue(comment);
   return editor;
 }
 
 /** Asserts that creating a new comment offers Save and persists a bookmark. */
-async function saveComment(page: Page) {
-  const editor = await enterComment(page);
+async function saveComment(page: Page, editor: Locator) {
   const save = page
     .locator("[data-pdf-annotation-overlay]")
     .filter({ has: editor })
@@ -186,11 +186,12 @@ test.describe("memory - PDF annotation durability @creation", () => {
     );
     test.setTimeout(120_000);
     const fileName = await uploadPdf(page);
+    const editor = await enterComment(page);
     test.fail(
       true,
       "PDF comment editor flips Save to Update when typing, so new comments cannot be saved"
     );
-    await saveComment(page);
+    await saveComment(page, editor);
     await closeNodeRecord(page);
     await page.reload();
     await ensureInAppOnHome(page);
