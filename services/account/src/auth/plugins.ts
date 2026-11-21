@@ -21,8 +21,12 @@ const DAY_SECONDS = 24 * 60 * 60;
  * provider in a separate browser session and send no challenge, so binding
  * would refuse their callbacks.
  *
- * TODO(TIDY-640): set `bindBrowserState: true` once a native release that
- * sends a handoff challenge is the minimum supported version.
+ * `requireHandoffChallenge` stays off for the same reason: installed builds
+ * start native sign-ins without a challenge and still receive a session token.
+ *
+ * TODO(TIDY-640): once a native release that sends a handoff challenge is the
+ * minimum supported version, set `bindBrowserState: true` and
+ * `requireHandoffChallenge: true`.
  */
 export const ACCOUNT_SOCIAL_OAUTH_POLICY = {
   bindBrowserState: false,

@@ -29,14 +29,27 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 
 const NOW = Date.UTC(2026, 10, 21, 10, 0, 0);
 
-function exchangeClient(
-  result: Awaited<ReturnType<SocialHandoffExchangeClient["exchangeSocialHandoff"]>>
-) {
-  const exchangeSocialHandoff = vi.fn(async () => result);
+type ExchangeResult = Awaited<
+  ReturnType<NonNullable<SocialHandoffExchangeClient["exchangeSocialHandoff"]>>
+>;
+
+function exchangeClient(result: ExchangeResult | Error) {
+  const exchangeSocialHandoff = vi.fn(async () => {
+    if (result instanceof Error) throw result;
+    return result;
+  });
   return {
     exchangeSocialHandoff,
-    client: async () => ({ exchangeSocialHandoff })
+    client: async () =>
+      ({ exchangeSocialHandoff }) as unknown as SocialHandoffExchangeClient
   };
+}
+
+function exchanged(token: string, regionId: string | null): ExchangeResult {
+  return {
+    ok: true,
+    data: { handoff: { token, regionId } }
+  } as unknown as ExchangeResult;
 }
 
 function storedVerifier() {
@@ -78,16 +91,24 @@ describe("social handoff verifier", () => {
     ).toBeUndefined();
     expect(storage.has(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF)).toBe(false);
   });
+
+  it("reuses a live verifier when a second sign-in starts before the first returns", async () => {
+    const first = await beginSocialHandoff(NOW);
+    const second = await beginSocialHandoff(NOW + 1000);
+
+    expect(second).toBe(first);
+    expect(await takeSocialHandoffVerifier(NOW + 2000)).toBeDefined();
+    expect(await beginSocialHandoff(NOW + 3000)).not.toBe(first);
+  });
 });
 
 describe("resolveSocialHandoffToken", () => {
   it("exchanges a one-time code with the pending verifier", async () => {
     await beginSocialHandoff(NOW);
     const verifier = storedVerifier();
-    const { exchangeSocialHandoff, client } = exchangeClient({
-      ok: true,
-      data: { handoff: { token: "test-session-token", regionId: "useast" } }
-    });
+    const { exchangeSocialHandoff, client } = exchangeClient(
+      exchanged("test-session-token", "useast")
+    );
 
     const result = await resolveSocialHandoffToken(
       { token: "test-handoff-code", handoff: "code", regionId: "insouth" },
@@ -106,14 +127,31 @@ describe("resolveSocialHandoffToken", () => {
     });
   });
 
-  it("refuses a code when no sign-in is pending or the exchange fails", async () => {
-    const missing = exchangeClient({
-      ok: true,
-      data: { handoff: { token: "test-session-token", regionId: null } }
+  it("recognizes a code from a shell that does not forward the handoff kind", async () => {
+    await beginSocialHandoff(NOW);
+    const { exchangeSocialHandoff, client } = exchangeClient(
+      exchanged("test-session-token", null)
+    );
+
+    const result = await resolveSocialHandoffToken(
+      { token: "shc_test-handoff-code", regionId: "insouth" },
+      client,
+      NOW
+    );
+
+    expect(exchangeSocialHandoff).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      kind: "session",
+      token: "test-session-token",
+      regionId: "insouth"
     });
+  });
+
+  it("never uses a code as a session when it can't be exchanged", async () => {
+    const missing = exchangeClient(exchanged("test-session-token", null));
     expect(
       await resolveSocialHandoffToken(
-        { token: "test-handoff-code", handoff: "code" },
+        { token: "shc_test-handoff-code" },
         missing.client,
         NOW
       )
@@ -124,21 +162,30 @@ describe("resolveSocialHandoffToken", () => {
     const refused = exchangeClient({
       ok: false,
       error: { code: "AUTHFN_VALIDATION_ERROR", message: "invalid" }
-    });
+    } as unknown as ExchangeResult);
     expect(
       await resolveSocialHandoffToken(
-        { token: "test-handoff-code", handoff: "code" },
+        { token: "shc_test-handoff-code" },
         refused.client,
         NOW
       )
     ).toEqual({ kind: "failed", errorCode: "AUTHFN_VALIDATION_ERROR" });
+
+    await beginSocialHandoff(NOW);
+    const offline = exchangeClient(new Error("network down"));
+    expect(
+      await resolveSocialHandoffToken(
+        { token: "test-handoff-code", handoff: "code" },
+        offline.client,
+        NOW
+      )
+    ).toEqual({ kind: "failed", errorCode: "handoff_exchange_failed" });
   });
 
-  it("uses a session token as is when nothing was exchanged", async () => {
-    const idle = exchangeClient({
-      ok: false,
-      error: { code: "AUTHFN_VALIDATION_ERROR", message: "invalid" }
-    });
+  it("uses a session token as is and never sends it to the exchange", async () => {
+    await beginSocialHandoff(NOW);
+    const idle = exchangeClient(exchanged("other-session-token", null));
+
     expect(
       await resolveSocialHandoffToken(
         { token: "test-session-token", regionId: "insouth" },
@@ -147,15 +194,6 @@ describe("resolveSocialHandoffToken", () => {
       )
     ).toEqual({ kind: "session", token: "test-session-token", regionId: "insouth" });
     expect(idle.exchangeSocialHandoff).not.toHaveBeenCalled();
-
-    await beginSocialHandoff(NOW);
-    expect(
-      await resolveSocialHandoffToken(
-        { token: "test-session-token" },
-        idle.client,
-        NOW
-      )
-    ).toEqual({ kind: "session", token: "test-session-token", regionId: undefined });
-    expect(idle.exchangeSocialHandoff).toHaveBeenCalledTimes(1);
+    expect(storedVerifier()).toBeDefined();
   });
 });
