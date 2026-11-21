@@ -61,4 +61,10 @@ describe("resource page command context", () => {
     await tick();
     expect(get(contextActions.active)).toBeUndefined();
   });
+
+  it("does not treat an action page as a selected record", async () => {
+    render(ResourceResolver, { id: "history", accessMode: AccessMode.PAGE });
+    await tick();
+    expect(get(contextActions.active)).toBeUndefined();
+  });
 });

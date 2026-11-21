@@ -1,6 +1,6 @@
 <script lang="ts">
   import { AccessMode } from "@nucleum/datafn/resource.type";
-  import { isSameResource } from "@nucleum/datafn/resource.utils";
+  import { isRecordId, isSameResource } from "@nucleum/datafn/resource.utils";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { onMount } from "svelte";
   import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
@@ -26,7 +26,7 @@
   let resolvedId = $derived(typeof id === "string" ? id : "");
 
   $effect(() => {
-    if (!resolvedId || !isContextZoneAccessMode(accessMode)) return;
+    if (!isRecordId(resolvedId) || !isContextZoneAccessMode(accessMode)) return;
     return contextActions.register(pane, {
       id: resolvedId,
       resource: resolvedId.split(":")[0],
