@@ -1,0 +1,21 @@
+services/account/src/auth/oauth-email-linking.test.ts
+  s_a9a21556bca3ac::t_134240d15721d6 37-44,180-181,183-184,187-204
+services/account/src/auth.ts
+  s_a9a21556bca3ac::t_5299e8b3ca6eac 41-47,54-56,65,75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "443de56a930cfe4e1a2205d098589a891606c3d5",
+  "prompts": {},
+  "sessions": {
+    "s_a9a21556bca3ac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d6ea13ab-4ecf-41f5-b1f4-23c2b10cc788",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
