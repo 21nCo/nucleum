@@ -203,6 +203,7 @@ type Page = {
   account: typeof import("@nucleum/client/runtime/account/account.store").default;
   accountSession: typeof import("./account-session").accountSession;
   sessionAccess: typeof import("./session-access");
+  uploadReplay: typeof import("./account-upload-replay");
   datafnStore: typeof import("@nucleum/datafn/datafn.store");
 };
 const pages: Page[] = [];
@@ -219,6 +220,7 @@ async function loadPage(): Promise<Page> {
       .default,
     accountSession: (await import("./account-session")).accountSession,
     sessionAccess: await import("./session-access"),
+    uploadReplay: await import("./account-upload-replay"),
     datafnStore: await import("@nucleum/datafn/datafn.store")
   };
   pages.push(page);
@@ -260,6 +262,7 @@ async function captureOfflineThenLeave() {
 }
 
 async function leave(page: Page) {
+  page.uploadReplay.stopUploadReplayForSession();
   page.account.set(signedOut);
   await page.datafnStore.destroyNucleumDatafn();
 }
