@@ -1,12 +1,15 @@
 import type { AuthSessionResolution } from "@nucleum/client/runtime/account/auth.type";
 import { resolveAuthSession } from "@nucleum/client/runtime/account/auth";
+import { determineIfOffline } from "@nucleum/client/runtime/connectivity";
 import context from "@nucleum/client/runtime/context.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import type { FileFnAccountScope } from "@nucleum/shared-state/files/filefn-client";
 
 const RETRY_DELAYS_MS = [5_000, 15_000, 60_000, 300_000];
 
-let sessionRecheck: { stop: () => void; scheduleRetry: () => void } | undefined;
+let sessionRecheck:
+  | { stop: () => void; scheduleRetry: () => void; recheck: () => void }
+  | undefined;
 
 /**
  * Applies a resolution of the stored session to the signed-in cloud account's
@@ -26,7 +29,8 @@ export function startUploadReplayForSession(
 ): void {
   if (resolution.status === "cached-cloud") {
     recheckSession();
-    if (!resolution.storedState.isOffline) sessionRecheck?.scheduleRetry();
+    if (resolution.storedState.isOffline) recheckIfConnected();
+    else sessionRecheck?.scheduleRetry();
   } else if (resolution.status !== "unavailable") {
     stopSessionRecheck();
   }
@@ -75,26 +79,39 @@ function stopSessionRecheck() {
   sessionRecheck = undefined;
 }
 
+/** Resolves the session again when connectivity returned before the recheck listened for it. */
+function recheckIfConnected() {
+  const current = sessionRecheck;
+  determineIfOffline()
+    .then((isOffline) => {
+      if (!isOffline && current === sessionRecheck) current?.recheck();
+    })
+    .catch((error: unknown) => {
+      logger.error({ at: "account.uploadReplay.connectivity", error });
+    });
+}
+
 /**
  * Resolves the stored session again on every reconnect, when the app's offline
  * mode ends, and, after an AuthFn failure while connected, with a growing
  * delay, until a resolution other than a cached or unavailable one settles
- * the restored replay. Only the latest resolution applies.
+ * the restored replay. A newer resolution or a stop aborts the pending one
+ * before it stores, clears or applies anything.
  */
 function recheckSession() {
   if (sessionRecheck) return;
   const controller = new AbortController();
-  let attempt = 0;
+  let attempt: AbortController | undefined;
   let retries = 0;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   const recheck = () => {
     clearTimeout(retryTimer);
-    const current = ++attempt;
-    resolveAuthSession({ signal: controller.signal })
+    attempt?.abort();
+    const current = new AbortController();
+    attempt = current;
+    resolveAuthSession({ signal: current.signal })
       .then((resolution) => {
-        if (!controller.signal.aborted && current === attempt) {
-          startUploadReplayForSession(resolution);
-        }
+        if (!current.signal.aborted) startUploadReplayForSession(resolution);
       })
       .catch((error: unknown) => {
         logger.error({ at: "account.uploadReplay.reconnect", error });
@@ -109,8 +126,10 @@ function recheckSession() {
     wasOfflineMode = isInOfflineMode;
   });
   sessionRecheck = {
+    recheck,
     stop: () => {
       controller.abort();
+      attempt?.abort();
       clearTimeout(retryTimer);
       stopOfflineMode();
     },

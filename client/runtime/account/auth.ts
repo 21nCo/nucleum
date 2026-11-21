@@ -324,8 +324,9 @@ async function resolveMissingAuthSession(
 }
 
 /**
- * Resolves the stored session. Once `signal` aborts (a sign-out), a session
- * AuthFn returns later is neither stored nor reported: it resolves signed out.
+ * Resolves the stored session. Once `signal` aborts (a sign-out or a newer
+ * resolution), what AuthFn returns later is neither stored, cleared nor
+ * reported: it resolves signed out.
  */
 export async function resolveAuthSession(options?: {
   signal?: AbortSignal;

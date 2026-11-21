@@ -909,4 +909,44 @@ describe("account upload replay authorization", () => {
     expect(await clientStorage.get(ClientStorageKey.USER)).toBeFalsy();
     await expectNothingSent();
   });
+
+  it("keeps the stored session when an earlier reconnect's expired session resolves after a newer one started", async () => {
+    const { fileId } = await restoreOffline();
+    const held = holdAuthFnResponses();
+    goOnline();
+    goOnline();
+    await vi.waitFor(() => expect(held).toHaveLength(2));
+    const resolved = auth.resolved;
+
+    held[0](null);
+    await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+    expect(await clientStorage.get(ClientStorageKey.USER_INFO)).toBeTruthy();
+    held[1](liveSession);
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+    expect(await clientStorage.get(ClientStorageKey.USER_INFO)).toBeTruthy();
+  });
+
+  it("uploads when the network returned while the restored session was being resolved", async () => {
+    const fileId = await captureOfflineThenLeave();
+    await recordPendingDelete();
+    await storeCloudSession();
+    const page = await loadPage();
+    await page.accountSession.init();
+    const { resolveAuthSession } =
+      await import("@nucleum/client/runtime/account/auth");
+    const resolution = await resolveAuthSession();
+    expect(resolution.status).toBe("cached-cloud");
+    await openData(page, "user-a");
+    isOnline = true;
+    authfn.session = liveSession;
+
+    page.uploadReplay.startUploadReplayForSession(resolution);
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
 });
