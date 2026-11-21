@@ -1,5 +1,5 @@
 <script lang="ts">
-  import maplibregl from "maplibre-gl";
+  import { createMaplibreMap } from "@21n/ui/compositions/maps/maplibre";
   import "maplibre-gl/dist/maplibre-gl.css";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { mapTileStyles } from "@21n/ui/compositions/maps/map.styles";
@@ -26,12 +26,16 @@
 
   async function load() {
     if (!location?.latitude || !location?.longitude) return;
-    new maplibregl.Map({
-      container: mapContainerId,
-      style: mapTileStyles.osm as any,
-      center: [location?.longitude, location?.latitude],
-      zoom: 5
-    });
+    try {
+      createMaplibreMap({
+        container: mapContainerId,
+        style: mapTileStyles.osm as any,
+        center: [location?.longitude, location?.latitude],
+        zoom: 5
+      });
+    } catch (error) {
+      console.error("Error initializing map:", error);
+    }
 
     address = await resolveAddress?.({
       latitude: location.latitude,

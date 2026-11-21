@@ -56,7 +56,7 @@ export default {
 };
 
 async function handleWrite(request: Request, env: Env): Promise<Response> {
-  if (!hasToken(request, env.DEBUG_SINK_WRITE_TOKEN, env)) {
+  if (!(await hasToken(request, env.DEBUG_SINK_WRITE_TOKEN, env))) {
     return json(request, env, { ok: false, error: 'unauthorized' }, 401);
   }
 
@@ -120,7 +120,7 @@ async function handleWrite(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleRead(request: Request, env: Env): Promise<Response> {
-  if (!hasToken(request, env.DEBUG_SINK_READ_TOKEN, env)) {
+  if (!(await hasToken(request, env.DEBUG_SINK_READ_TOKEN, env))) {
     return json(request, env, { ok: false, error: 'unauthorized' }, 401);
   }
 
@@ -227,15 +227,46 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.floor(value)));
 }
 
-function hasToken(request: Request, configuredToken: string | undefined, env: Env): boolean {
+/**
+ * Accepts the token only from the `x-debug-sink-token` or `Authorization`
+ * header (never the query string, which ends up in access logs) and compares
+ * fixed-size SHA-256 digests in constant time, so neither the content nor the
+ * length of the configured token affects timing.
+ */
+export async function hasToken(request: Request, configuredToken: string | undefined, env: Env): Promise<boolean> {
   if (!configuredToken) {
     return env.DEBUG_SINK_ALLOW_UNAUTHENTICATED === 'true';
   }
-  const url = new URL(request.url);
   const provided = request.headers.get('x-debug-sink-token')
-    ?? request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
-    ?? url.searchParams.get('token');
-  return provided === configuredToken;
+    ?? request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  if (typeof provided !== 'string') {
+    return false;
+  }
+  const [providedDigest, configuredDigest] = await Promise.all([
+    sha256(provided),
+    configuredDigestFor(configuredToken)
+  ]);
+  let difference = 0;
+  for (let index = 0; index < providedDigest.length; index += 1) {
+    difference |= providedDigest[index] ^ configuredDigest[index];
+  }
+  return difference === 0;
+}
+
+const configuredDigests = new Map<string, Promise<Uint8Array>>();
+
+/** Digest of a configured token, computed once per Worker isolate rather than per request. */
+function configuredDigestFor(token: string): Promise<Uint8Array> {
+  let digest = configuredDigests.get(token);
+  if (!digest) {
+    digest = sha256(token);
+    configuredDigests.set(token, digest);
+  }
+  return digest;
+}
+
+async function sha256(value: string): Promise<Uint8Array> {
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
 }
 
 function json(request: Request, env: Env, value: unknown, status = 200): Response {

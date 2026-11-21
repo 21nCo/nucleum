@@ -4,7 +4,8 @@ import {
   type AuthFnPluginRuntimeContext,
   type AuthFnSchemaDefinition
 } from 'authfn';
-import { authenticateRequest, hashSecret } from 'authfn/core/sessions';
+import { hashSecret } from 'authfn/core/sessions';
+import { authenticateAccountMutation } from './request-auth.js';
 import { createAuthFnRouteMeta } from 'authfn/http/router';
 import { jsonSuccess } from 'authfn/http/envelopes';
 import { nucleusWidgetTokenTables } from './widget-token.schema.js';
@@ -53,12 +54,13 @@ function createWidgetTokenRoutes(ctx: AuthFnPluginRuntimeContext): WidgetTokenRo
       method: 'POST',
       path: '/widget-token',
       meta: createAuthFnRouteMeta('createWidgetToken', 'Issue a scoped Nucleus widget token', {
-        mode: 'bearer'
+        mode: 'hybrid',
+        csrf: true
       }),
       handler: async (request) => {
-        const session = await authenticateRequest(ctx.config, request);
+        const session = await authenticateAccountMutation(ctx, request);
         if (!session || session.type !== 'session') {
-          throw new AuthFnUnauthenticatedError('Native bearer session is required');
+          throw new AuthFnUnauthenticatedError('AuthFn session is required');
         }
 
         const now = new Date();
@@ -124,12 +126,13 @@ function createWidgetTokenRoutes(ctx: AuthFnPluginRuntimeContext): WidgetTokenRo
       method: 'POST',
       path: '/widget-token/revoke',
       meta: createAuthFnRouteMeta('revokeWidgetToken', 'Revoke scoped Nucleus widget tokens', {
-        mode: 'bearer'
+        mode: 'hybrid',
+        csrf: true
       }),
       handler: async (request) => {
-        const session = await authenticateRequest(ctx.config, request);
+        const session = await authenticateAccountMutation(ctx, request);
         if (!session || session.type !== 'session') {
-          throw new AuthFnUnauthenticatedError('Native bearer session is required');
+          throw new AuthFnUnauthenticatedError('AuthFn session is required');
         }
 
         const now = new Date();
