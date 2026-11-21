@@ -20,6 +20,8 @@
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
   let isRendered = false;
+  let isLoadFailed = $state(false);
+  let loadAttempt = $state(0);
   let graphRef: NodeGraphUsingG6;
   const hasData = $derived(!!(data?.nodes && data.nodes.length > 0));
 
@@ -33,6 +35,20 @@
 
   function onRender() {
     isRendered = true;
+  }
+
+  function onLoadError(error: unknown) {
+    console.error("Error loading graph:", error);
+    isLoadFailed = true;
+  }
+
+  function retryLoad() {
+    if (loadAttempt > 0) {
+      window.location.reload();
+      return;
+    }
+    isLoadFailed = false;
+    loadAttempt += 1;
   }
 
   function handleSelect(event: any) {
@@ -49,18 +65,30 @@
     <div
       class="absolute z-10 inset-0 w-full h-full flex justify-center items-center bg-bgs1"
     >
-      <EmptyStatusView isLoadingState={hasData} subText="No links found." />
+      {#if isLoadFailed}
+        <EmptyStatusView
+          mainText="Couldn't load the graph."
+          subText="Check your connection and try again."
+          actionText={loadAttempt > 0 ? "Reload" : "Retry"}
+          onclick={retryLoad}
+        />
+      {:else}
+        <EmptyStatusView isLoadingState={hasData} subText="No links found." />
+      {/if}
     </div>
   {/if}
   {#if hasData}
-    <NodeGraphUsingG6
-      bind:this={graphRef}
-      {data}
-      {layout}
-      centerNodeId={nodeId}
-      onSelect={handleSelect}
-      onRender={onRender}
-      onCanvasClick={handleCanvasClick}
-    />
+    {#key loadAttempt}
+      <NodeGraphUsingG6
+        bind:this={graphRef}
+        {data}
+        {layout}
+        centerNodeId={nodeId}
+        onSelect={handleSelect}
+        {onRender}
+        {onLoadError}
+        onCanvasClick={handleCanvasClick}
+      />
+    {/key}
   {/if}
 </div>
