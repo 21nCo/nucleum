@@ -897,8 +897,7 @@ test("reorders running focus items and preserves their order across reload", asy
     })
     .toBe(fixture.standaloneTasks[0].id);
 
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await ensureInAppOnHome(page);
+  await reloadActiveSession(page);
   await expect
     .poll(
       async () => (await readSessionRuntime(page)).items.map((item) => item.id),
