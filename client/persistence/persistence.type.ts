@@ -8,6 +8,8 @@ export enum ClientStorageKey {
   USER = "user",
   AUTHFN_TOKEN = "authfnToken",
   AUTHFN_WIDGET_TOKEN = "authfnWidgetToken",
+  /** Verifier of a pending native social sign-in that returns a one-time code. */
+  AUTHFN_SOCIAL_HANDOFF = "authfnSocialHandoff",
   REGION = "region",
   USER_REGION_MAP = "userRegionMap",
   USER_INFO = "userInfo",

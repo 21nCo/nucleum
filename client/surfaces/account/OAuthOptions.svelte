@@ -14,6 +14,7 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
+  import { beginSocialHandoff } from "@nucleum/client/runtime/account/social-handoff";
   let {
     providers,
     isExpanded = false,
@@ -83,13 +84,17 @@
           return;
         }
 
+        const handoffMode = resolveHandoffMode();
         const response = await (
           await authClient({ region })
         ).startSocialSignIn({
           provider: provider as "apple" | "google" | "github",
           returnTo: resolveReturnTo(),
           callbackMode: "redirect",
-          handoffMode: resolveHandoffMode()
+          handoffMode,
+          ...(handoffMode === "session-token"
+            ? { handoffChallenge: await beginSocialHandoff() }
+            : {})
         });
         if (response.ok) {
           logger.info({
