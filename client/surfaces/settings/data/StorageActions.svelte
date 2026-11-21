@@ -61,7 +61,7 @@
 
 <section class="flex flex-col gap-4">
   <Text content="More" style={TextStyle.SECTION_HEADING} />
-  <div class="flex items-center gap-4">
+  <div class="flex flex-wrap items-center gap-4">
     <Button
       label="Resync data"
       icon="reload"
