@@ -39,14 +39,21 @@ import { accountScopeRegistry } from "./datafn/app-scopes.js";
 export const OAUTH_EMAIL_LINKING_PROVIDERS = ["google"] as const;
 
 /**
+ * Social provider configuration the account service accepts, by provider.
+ */
+export type AccountOAuthProviders = Partial<
+  Record<"google" | "apple", AuthFnSocialProviderConfig | undefined>
+>;
+
+/**
  * Turns off linking by verified email on every provider that
  * OAUTH_EMAIL_LINKING_PROVIDERS leaves out. A provider's own
  * `linkByVerifiedEmail` setting takes precedence over the account linking
  * policy, so this keeps a provider configuration from turning it back on.
  */
-export function withOAuthEmailLinkingPolicy<
-  T extends Partial<Record<"google" | "apple", AuthFnSocialProviderConfig | undefined>>
->(providers: T): T {
+export function withOAuthEmailLinkingPolicy(
+  providers: AccountOAuthProviders
+): AccountOAuthProviders {
   const allowed: readonly string[] = OAUTH_EMAIL_LINKING_PROVIDERS;
   return Object.fromEntries(
     Object.entries(providers).map(([providerId, provider]) => [
@@ -55,7 +62,7 @@ export function withOAuthEmailLinkingPolicy<
         ? { ...provider, linkByVerifiedEmail: false }
         : provider
     ])
-  ) as T;
+  ) as AccountOAuthProviders;
 }
 
 export interface CreateAccountAuthInput {
@@ -65,9 +72,7 @@ export interface CreateAccountAuthInput {
   deliveryMessage?: AuthFnDeliveryMessageResolver;
   regions?: AuthFnMultiRegionRegionConfig[];
   regionLookupStore?: ConditionalKVStoreAdapter;
-  oauthProviders?: Partial<
-    Record<"google" | "apple", AuthFnSocialProviderConfig | undefined>
-  >;
+  oauthProviders?: AccountOAuthProviders;
   oauthPlugin?: Omit<SocialOAuthPluginRuntimeConfig, "providers">;
   rateLimit?: AuthFnRateLimitConfig;
   observability?: SuperfunctionObservability<AuthFnEvent>;

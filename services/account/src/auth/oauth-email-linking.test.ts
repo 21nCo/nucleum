@@ -34,6 +34,14 @@ describe('OAuth sign-in linking by verified email', () => {
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).not.toContain('apple');
   });
 
+  it('compares versions so the guard trips at the stable 0.1.8 release', () => {
+    expect(compareVersions('0.1.7', '0.1.8')).toBeLessThan(0);
+    expect(compareVersions('0.1.8-rc.1', '0.1.8')).toBeLessThan(0);
+    expect(compareVersions('0.1.8', '0.1.8')).toBe(0);
+    expect(compareVersions('0.1.8+build.1', '0.1.8')).toBe(0);
+    expect(compareVersions('0.2.0', '0.1.8')).toBeGreaterThan(0);
+  });
+
   it('turns off a provider-level linkByVerifiedEmail for providers outside the policy', () => {
     const providers = withOAuthEmailLinkingPolicy({
       google: { clientId: 'test-google-client', linkByVerifiedEmail: true },
@@ -169,12 +177,29 @@ function installedSocialOAuthVersion(): string {
 }
 
 function compareVersions(left: string, right: string): number {
-  const a = left.split(/[.-]/).slice(0, 3).map(Number);
-  const b = right.split(/[.-]/).slice(0, 3).map(Number);
+  const a = parseVersion(left);
+  const b = parseVersion(right);
   for (let index = 0; index < 3; index += 1) {
-    if (a[index] !== b[index]) {
-      return a[index] - b[index];
+    if (a.core[index] !== b.core[index]) {
+      return a.core[index] - b.core[index];
     }
   }
-  return 0;
+  if (a.prerelease === b.prerelease) {
+    return 0;
+  }
+  if (a.prerelease === undefined) {
+    return 1;
+  }
+  if (b.prerelease === undefined) {
+    return -1;
+  }
+  return a.prerelease < b.prerelease ? -1 : 1;
+}
+
+function parseVersion(version: string): { core: number[]; prerelease?: string } {
+  const match = /^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+.*)?$/.exec(version);
+  if (!match) {
+    throw new Error(`Unrecognised version ${version}`);
+  }
+  return { core: [Number(match[1]), Number(match[2]), Number(match[3])], prerelease: match[4] };
 }
