@@ -60,6 +60,7 @@
     <SwitchInput
       label={{
         label: "Automatically activate Picture-in-Picture (PiP) on focus start",
+        isWrapText: true,
         tooltip: {
           body: "When enabled, the PiP will be automatically activated when a focus session starts. Note: PiP is currently only available on web app."
         }
