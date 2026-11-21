@@ -11,6 +11,7 @@
     layout,
     onCanvasClick = undefined,
     onRender = undefined,
+    onLoadError = undefined,
     onSelect = undefined
   }: {
     data?: {
@@ -22,6 +23,7 @@
     layout: string;
     onCanvasClick?: (() => void) | undefined;
     onRender?: (() => void) | undefined;
+    onLoadError?: ((error: unknown) => void) | undefined;
     onSelect?: ((event: any) => void) | undefined;
   } = $props();
   let g6: typeof G6 | undefined;
@@ -34,12 +36,17 @@
   const currentColors: any = $appearance.colorScheme.colors;
   onMount(() => {
     let isDestroyed = false;
-    import("@antv/g6").then((module) => {
-      if (isDestroyed) return;
-      g6 = module;
-      preProcessData();
-      renderGraph();
-    });
+    import("@antv/g6")
+      .then((module) => {
+        if (isDestroyed) return;
+        g6 = module;
+        preProcessData();
+        renderGraph();
+      })
+      .catch((error) => {
+        if (isDestroyed) return;
+        onLoadError?.(error);
+      });
     return () => {
       isDestroyed = true;
     };

@@ -25,21 +25,20 @@
 
   async function load() {
     if (!location?.latitude || !location?.longitude) return;
+    const { latitude, longitude } = location;
+    resolveAddress?.({ latitude, longitude }).then((resolvedAddress) => {
+      address = resolvedAddress;
+    });
     try {
       await createMaplibreMap({
         container: mapContainerId,
         style: mapTileStyles.osm as any,
-        center: [location?.longitude, location?.latitude],
+        center: [longitude, latitude],
         zoom: 5
       });
     } catch (error) {
       console.error("Error initializing map:", error);
     }
-
-    address = await resolveAddress?.({
-      latitude: location.latitude,
-      longitude: location.longitude
-    });
   }
 </script>
 

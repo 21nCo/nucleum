@@ -11,12 +11,14 @@
     layout = "force-1",
     onCanvasClick = undefined,
     onRender = undefined,
+    onLoadError = undefined,
     onSelect = undefined
   }: {
     data?: { nodes: any[]; edges: any[] };
     layout?: string;
     onCanvasClick?: ((event: any) => void) | undefined;
     onRender?: (() => void) | undefined;
+    onLoadError?: ((error: unknown) => void) | undefined;
     onSelect?: ((event: any) => void) | undefined;
   } = $props();
   let _data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
@@ -26,12 +28,17 @@
 
   onMount(() => {
     let isDestroyed = false;
-    import("@antv/g6").then((module) => {
-      if (isDestroyed) return;
-      g6 = module;
-      preProcessData();
-      renderGraph();
-    });
+    import("@antv/g6")
+      .then((module) => {
+        if (isDestroyed) return;
+        g6 = module;
+        preProcessData();
+        renderGraph();
+      })
+      .catch((error) => {
+        if (isDestroyed) return;
+        onLoadError?.(error);
+      });
     return () => {
       isDestroyed = true;
     };
