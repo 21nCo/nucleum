@@ -87,7 +87,7 @@
         <PageError
           message="This view couldn't load. Check your connection and try again."
           actions={[
-            { label: "Try again", callback: () => window.location.reload() }
+            { label: "Try again", callback: async () => window.location.reload() }
           ]}
         />
       {/if}
