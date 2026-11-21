@@ -290,6 +290,9 @@ enum NativeTrust {
   }
 
   /// Authorization pages of the sign-in providers the account service uses.
+  /// GitHub sends a signed-out user from `/login/oauth/authorize` to `/login`,
+  /// posts the credentials to `/session` and runs 2FA and device checks under
+  /// `/sessions/`, so those stay in the WebView with the authorization pages.
   static func isOAuthProviderURL(_ url: URL) -> Bool {
     guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else {
       return false
@@ -298,7 +301,9 @@ enum NativeTrust {
     case "accounts.google.com", "appleid.apple.com":
       return true
     case "github.com":
-      return url.path.hasPrefix("/login/oauth")
+      let path = url.path
+      return path == "/login" || path == "/session" || path.hasPrefix("/login/")
+        || path.hasPrefix("/sessions/")
     default:
       return false
     }
