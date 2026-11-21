@@ -3,7 +3,10 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { ensureInAppOnHome, isCloudAuthModeActive } from "../utils/helpers";
-import { openDeclaredNodeBookmarksPanel } from "../utils/settings-contracts";
+import {
+  openDeclaredNodeBookmarksPanel,
+  openDeclaredNodeContentPanel
+} from "../utils/settings-contracts";
 import {
   blockExternalAuthRequests,
   closeNodeRecord,
@@ -23,10 +26,7 @@ const comment = "E2E PDF reading note";
 
 /** Opens the PDF through its declared product content surface. */
 async function openPdfContent(page: Page) {
-  const contentTab = page.getByRole("tab", { name: "Content", exact: true });
-  await expect(contentTab).toBeVisible();
-  await contentTab.click();
-  await expect(contentTab).toHaveAttribute("aria-selected", "true");
+  await openDeclaredNodeContentPanel(page, test.info().project.name);
   await expect(page.locator("#viewerContainer")).toBeVisible({
     timeout: 60_000
   });
