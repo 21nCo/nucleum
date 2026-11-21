@@ -80,10 +80,6 @@ async function seedMarkdownNode(title: string) {
   await e2eSeed.memory.node({ content: title, label: title });
 }
 
-async function seedCollection(name: string) {
-  await e2eSeed.collections.collection({ label: name, resource: "node" });
-}
-
 async function ensureNodeSurface(page: Page) {
   await expect
     .poll(
@@ -360,28 +356,15 @@ async function embedCollectionFromLibrary(
     "Embed collection",
     "EMBED"
   );
-  await blockLocator(page, index).evaluate((block) => {
-    const buttons = Array.from(block.querySelectorAll("button"));
-    const wrapper = buttons.find((button) => {
-      const label = button.textContent?.replace(/\s+/g, " ").trim() ?? "";
-      return (
-        label.includes("Choose from library") && button.querySelector("button")
-      );
-    });
-    if (!(wrapper instanceof HTMLButtonElement)) {
-      throw new Error("Choose from library wrapper button not found");
-    }
-    wrapper.click();
-  });
-  const searchInput = page.locator('input[placeholder*="Search"]').last();
+  await blockLocator(page, index)
+    .getByRole("button", { name: "Choose from library", exact: true })
+    .click();
+  const searchInput = page.getByPlaceholder("Search Collection as embeds");
   await searchInput.waitFor({ state: "visible", timeout: 10_000 });
-  await searchInput.fill(collectionName);
+  await searchInput.pressSequentially(collectionName);
   const result = page
-    .locator("button")
-    .filter({
-      hasText: new RegExp(collectionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-    })
-    .last();
+    .getByTestId("link-search-result")
+    .filter({ hasText: collectionName });
   await result.waitFor({ state: "visible", timeout: 15_000 });
   await result.click({ timeout: 5_000 });
   await expect(blockLocator(page, index)).toContainText(collectionName, {
@@ -880,7 +863,10 @@ test.describe("nodes - markdown flows @record-page", () => {
     const nodeTitle = `MarkdownRichEmbedNode${token}`;
     const headingFour = `Heading Four ${token}`;
 
-    await seedCollection(collectionName);
+    const collection = await e2eSeed.collections.collection({
+      label: collectionName,
+      resource: "node"
+    });
     await seedMarkdownNode(nodeTitle);
     await openNodeRecordFromLibrary(page, nodeTitle);
     await ensureNodeSurface(page);
@@ -901,7 +887,7 @@ test.describe("nodes - markdown flows @record-page", () => {
     await waitForPersistedMarkdown(
       page,
       nodeId!,
-      [headingFour, "README.md", collectionName],
+      [headingFour, collection.id],
       3
     );
     await openNodeRecordFromLibraryById(page, nodeId!);
