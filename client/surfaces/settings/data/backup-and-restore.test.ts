@@ -7106,4 +7106,143 @@ describe("confirmed removal, recoverable binding and foreign protection of queue
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
+
+  it.each([
+    ["with Web Locks", true],
+    ["without Web Locks", false]
+  ])(
+    "requests a delivered capture's original and thumbnail no more %s once removing it could not be confirmed and its delivered mark could not be written, and removes it on the retry",
+    async (_, isLocked) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      hasLocks = isLocked;
+      let isRemovalFailing = true;
+      getDirectory = failingWrites(
+        (path) =>
+          path.join("/") === `${QUEUE_A}/${entry}/delivered`
+            ? new DOMException("The quota is exceeded", "QuotaExceededError")
+            : undefined,
+        (path) =>
+          isRemovalFailing && path.join("/") === `${QUEUE_A}/${entry}`
+            ? new DOMException(
+                "The entry cannot be removed",
+                "InvalidStateError"
+              )
+            : undefined
+      );
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      try {
+        isOnline = true;
+        await replayInOtherTab();
+        expect(opfs.list(QUEUE_A)).toEqual([entry]);
+        expect(opfs.list(QUEUE_A, entry)).not.toContain("delivered");
+        expect(sdk.started).toHaveLength(1);
+
+        isRemovalFailing = false;
+        await vi.advanceTimersByTimeAsync(5_000);
+        await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+      } finally {
+        vi.useRealTimers();
+      }
+      expect(sdk.started).toHaveLength(1);
+      expect(sdk.uploads).toHaveLength(1);
+      expect(sdk.artifacts).toHaveLength(1);
+      expect(sdk.deleted).toEqual([]);
+    }
+  );
+
+  it("frees a file a restore into another account cut short before its import kept, once its hold expires, though that account's replay ran while the hold was live and no other trigger follows", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    await deleteRecord(record.id);
+    const ownBackup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    getDirectory = failingWrites((path) =>
+      path[2]?.startsWith("settled-")
+        ? new DOMException("The quota is exceeded", "QuotaExceededError")
+        : undefined
+    );
+    await restoreBackup(ownBackup, { triggerCloneUp: () => false });
+    getDirectory = opfs.getDirectory;
+    await bootData(cloudAccount("user-b"));
+    preflight.during = async () => {
+      throw new Error("The page closed");
+    };
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("The page closed");
+    preflight.during = null;
+    expect(foreignRows()).toHaveLength(1);
+
+    const now = Date.now();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      goOnline();
+      await replayed(QUEUE_B);
+      expect(foreignRows()).toHaveLength(1);
+
+      vi.spyOn(Date, "now").mockReturnValue(
+        now + RESTORE_HOLD_LIFETIME_MS + UNCOMMITTED_GRACE_MS + 1_000
+      );
+      await vi.advanceTimersByTimeAsync(RESTORE_HOLD_LIFETIME_MS + 2_000);
+      await vi.waitFor(() => expect(foreignRows()).toEqual([]));
+    } finally {
+      vi.useRealTimers();
+    }
+    isOnline = false;
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("removes the foreign row a restore into another account could not remove, once that account's replay could not remove it either, on the retry without another trigger", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    await deleteRecord(record.id);
+    const ownBackup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    getDirectory = failingWrites((path) =>
+      path[2]?.startsWith("settled-")
+        ? new DOMException("The quota is exceeded", "QuotaExceededError")
+        : undefined
+    );
+    await restoreBackup(ownBackup, { triggerCloneUp: () => false });
+    await bootData(cloudAccount("user-b"));
+    getDirectory = failingWrites(
+      () => undefined,
+      (path) =>
+        path[0] === HOLDS_A && path[1]?.startsWith("foreign~")
+          ? new DOMException("The row cannot be removed", "InvalidStateError")
+          : undefined
+    );
+    data.importResult = { ok: false, errors: [{ message: "Not saved" }] };
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("Not saved");
+    data.importResult = null;
+    expect(foreignRows()).toHaveLength(1);
+
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      goOnline();
+      await replayed(QUEUE_B);
+      expect(foreignRows()).toHaveLength(1);
+
+      getDirectory = opfs.getDirectory;
+      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.waitFor(() => expect(foreignRows()).toEqual([]));
+    } finally {
+      vi.useRealTimers();
+    }
+    isOnline = false;
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+  });
 });

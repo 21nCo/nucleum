@@ -2085,7 +2085,7 @@ async function replayPass(dir: string, request: ReplayRequest) {
   } catch (error) {
     if (!request.signal.aborted) logger.warn({ at: "fileQueue.replay", error });
   }
-  await reconcileForeignRows(request);
+  isRetried = (await reconcileForeignRows(dir, request)) || isRetried;
   if (isStale(request)) return;
   const { client, signal, publisher, references } = request;
   const used = retryCounts.get(dir);
@@ -2118,7 +2118,10 @@ const graceTimers = new Map<
  * QueuedFileReferences) never decide it, and a request whose records were
  * replaced (see isStale) never displaces a current one's deadline.
  */
-function scheduleDeadline({ dir, request }: ReplayPass, at: number) {
+function scheduleDeadline(
+  { dir, request }: Pick<ReplayPass, "dir" | "request">,
+  at: number
+) {
   const current = graceTimers.get(dir);
   if (!Number.isFinite(at) || request.signal.aborted) return;
   if (isStale(request)) return;
@@ -2224,44 +2227,65 @@ async function moveDeliveredRows(dir: string) {
  * references the file, in its records brought up to date, so a restore cut
  * short before it imported a matching record, or whose removal of its row
  * failed, protects the file no longer, while one that saved a matching
- * record keeps it protected. Each queue's rows are read and removed under
- * that queue's lock, taken after the pass released its own; never rejects.
+ * record keeps it protected. A row its session still holds gets a pass of
+ * the request's queue (`dir`) once that hold expires (see scheduleDeadline).
+ * Each queue's rows are read and removed under that queue's lock, taken
+ * after the pass released its own; never rejects, and resolves true when a
+ * row could not be checked or removed, for the pass to be retried.
  */
-async function reconcileForeignRows({ references, signal }: ReplayRequest) {
-  if (!references || signal.aborted) return;
+async function reconcileForeignRows(dir: string, request: ReplayRequest) {
+  const { references, signal } = request;
+  if (!references || signal.aborted) return false;
   const account = encodeURIComponent(references.owner.userId);
   let isSynced = false;
+  let isRetried = false;
+  const reconcile = async (queue: string) => {
+    const { handle, rows } = await readHolds(queue);
+    for (const row of await readNames(handle)) {
+      const [kind, fileId, , session, owner] = row.split("~");
+      if (kind !== FOREIGN_ROW || owner !== account) continue;
+      const heldUntil = Math.max(
+        0,
+        ...rows
+          .filter((hold) => hold.kind === HOLD_ROW && hold.isLive)
+          .filter((hold) => hold.session === session)
+          .map((hold) => hold.expiresAt)
+      );
+      if (heldUntil) {
+        scheduleDeadline({ dir, request }, heldUntil + 1_000);
+        continue;
+      }
+      isSynced ||= await references.sync();
+      if (!isSynced) return (isRetried = true);
+      const isReferenced = await references.isReferenced(fileId);
+      if (isReferenced === undefined) isRetried = true;
+      if (isReferenced !== false) continue;
+      if (!references.isCurrent()) return;
+      await removeEntryFile(handle, row).catch((error: unknown) => {
+        logger.warn({ at: "fileQueue.foreign", row, error });
+        isRetried = true;
+      });
+    }
+  };
   try {
     const root = await navigator.storage.getDirectory();
     for (const name of await readNames(root)) {
       if (!name.startsWith(QUEUE_DIR_PREFIX) || !name.endsWith(".holds")) {
         continue;
       }
-      const dir = name.slice(0, -".holds".length);
+      const queue = name.slice(0, -".holds".length);
       const isOwn = (row: string) =>
         row.startsWith(`${FOREIGN_ROW}~`) && row.endsWith(`~${account}`);
-      if (!(await readNames(await getHoldsDir(dir))).some(isOwn)) continue;
-      await withQueueLock(dir, signal, async () => {
-        const { handle, rows } = await readHolds(dir);
-        for (const row of await readNames(handle)) {
-          const [kind, fileId, , session, owner] = row.split("~");
-          if (kind !== FOREIGN_ROW || owner !== account) continue;
-          const isHeld = rows.some(
-            (hold) =>
-              hold.kind === HOLD_ROW && hold.isLive && hold.session === session
-          );
-          if (isHeld) continue;
-          if (!isSynced && !(await references.sync())) return;
-          isSynced = true;
-          if ((await references.isReferenced(fileId)) !== false) continue;
-          if (!references.isCurrent()) return;
-          await removeEntryFile(handle, row);
-        }
-      });
+      if (!(await readNames(await getHoldsDir(queue))).some(isOwn)) continue;
+      await withQueueLock(queue, signal, () => reconcile(queue));
+      if (isRetried && !isSynced) break;
     }
   } catch (error) {
-    if (!signal.aborted) logger.warn({ at: "fileQueue.foreign", error });
+    if (signal.aborted) return false;
+    logger.warn({ at: "fileQueue.foreign", error });
+    isRetried = true;
   }
+  return isRetried && references.isCurrent();
 }
 
 async function replayEntry(
@@ -2512,7 +2536,8 @@ async function replayAccountEntry(
     !pending.fileData.byteLength ||
     isThumbnailPending ||
     isRestored ||
-    names.includes(DELIVERED_FILE);
+    names.includes(DELIVERED_FILE) ||
+    deliveredEntries.has(`${dir}\n${entryName}`);
   const delivery = isLogRead ? await readDelivery(dir, fileId, names) : null;
   const isUnsure = delivery?.original === undefined && isLogRead;
   const isMaybeSent =
@@ -2582,10 +2607,19 @@ async function replayAccountEntry(
 }
 
 /**
+ * The page's files, by queue and entry, whose delivery its replay confirmed
+ * before their removal could not be (see markDelivered), so a later pass of
+ * the page reads their delivery also when their mark could not be written.
+ */
+const deliveredEntries = new Set<string>();
+
+/**
  * Marks a file whose delivery the replay confirmed delivered (see
- * DELIVERED_FILE); a mark that cannot be written is logged.
+ * DELIVERED_FILE and deliveredEntries); a mark that cannot be written is
+ * logged.
  */
 async function markDelivered(dir: string, entryName: string) {
+  deliveredEntries.add(`${dir}\n${entryName}`);
   await writeEntryFile(dir, entryName, DELIVERED_FILE, "").catch(
     (error: unknown) => {
       logger.warn({ at: "fileQueue.replay.delivered", entryName, error });
