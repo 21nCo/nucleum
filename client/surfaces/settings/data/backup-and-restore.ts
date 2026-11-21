@@ -227,9 +227,9 @@ async function restoreInRuntime(
  * Returns the FileFn authority of the account whose records the restore
  * imports, when the DataFn authority they sync with (`remoteUrl`) is that
  * same authority, else undefined (also when it cannot be read), so a
- * restore's protection of a file is only moved between the account's kinds
- * of DataFn scope at the authority its records sync with (see
- * stageRestoredFiles).
+ * restore's protection of a file names only the authority its records sync
+ * with (see stageRestoredFiles); it is still reconciled in its own DataFn
+ * scope only.
  */
 async function resolveRecordsAuthority(
   userId: string | null,

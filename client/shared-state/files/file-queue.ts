@@ -203,8 +203,7 @@ function toRowDigest(value: string) {
  * QueuedFileClaim): the scope's kind (`s` for a local copy, `d` for a direct
  * authority) followed by the digest of the account, namespace and scope,
  * and the digest of the account, namespace and authority, empty when the
- * authority is unknown; both empty without a scope. `toScope` digests
- * another scope of the same account and namespace.
+ * authority is unknown; both empty without a scope.
  */
 function toRowDestination(
   account: string,
@@ -217,34 +216,13 @@ function toRowDestination(
     `${scope.startsWith("store:") ? "s" : "d"}${toRowDigest(
       `${account}\n${namespace}\n${scope}`
     )}`;
-  if (!view || at < 0) return { scope: "", authority: "", toScope };
+  if (!view || at < 0) return { scope: "", authority: "" };
   return {
     scope: toScope(view.slice(at + 1)),
     authority: authority
       ? toRowDigest(`${account}\n${namespace}\n${authority}`)
-      : "",
-    toScope
+      : ""
   };
-}
-
-/**
- * Whether no local copy whose scope (see toRowDestination) is `scope` is
- * left on the device, undefined while the databases cannot be listed (a
- * pass retries), and false without a way to list them, so an unknown answer
- * never counts as a retired copy.
- */
-async function isLocalCopyGone(
-  scope: string,
-  toScope: (scope: string) => string
-) {
-  if (typeof indexedDB?.databases !== "function") return false;
-  try {
-    const names = (await indexedDB.databases()).map(({ name }) => name ?? "");
-    return !names.some((name) => toScope(`store:${name}`) === scope);
-  } catch (error) {
-    logger.warn({ at: "fileQueue.foreign", error });
-    return undefined;
-  }
 }
 
 /** What a queue holds of a file, for reconciling it with its record. */
@@ -1117,7 +1095,7 @@ function readMarks(names: readonly string[]) {
         names.includes(`${PUBLISHED_PREFIX}${generation}`)),
     isAdopted: !isRestored || names.includes(`${ADOPTED_PREFIX}${generation}`),
     isSettled: names.includes(`${SETTLED_PREFIX}${generation}`),
-    isBound: names.some((name) => isBoundMark(name, generation)),
+    isBound: toBindingMarks(names, generation).length > 0,
     isOwn: names.includes(`${OWN_PREFIX}${generation}`),
     isDelivered:
       names.includes(UPLOADED_FILE) &&
@@ -1159,7 +1137,7 @@ async function readRestore(dir: string, fileId: string) {
   return {
     ...marks,
     /** Its generation's binding marks (see toBoundMark). */
-    boundMarks: names.filter((name) => isBoundMark(name, marks.generation)),
+    boundMarks: toBindingMarks(names, marks.generation),
     isAdopted: marks.isAdopted || adoptions.has(adoption),
     isOwn:
       marks.isOwn &&
@@ -1203,8 +1181,8 @@ async function readRestore(dir: string, fileId: string) {
  * rollback of another session removes (see rollBackEntry); the
  * account's replay removes its own once their session holds no file and no
  * record of the account references the file in the DataFn scope (see
- * toRecordsView) the restore imported into, or in its other kind of scope at
- * the same FileFn authority (see reconcileForeignRows).
+ * toRecordsView) the restore imported into, and in no other scope (see
+ * reconcileForeignRows).
  */
 type HoldRow = {
   name: string;
@@ -2487,17 +2465,17 @@ async function moveDeliveredRows(dir: string) {
  * created in any queue, once no live hold row of their session is left (it
  * settled or rolled back, or its page closed) and no record of the account
  * references the file, in its records brought up to date in the DataFn
- * scope the restore imported into (the row's scope, see toRecordsView), or
- * in the account's other kind of scope at the FileFn authority the row
- * names: a local copy brought up to date with it, for a row of its direct
- * authority, or the direct authority, for a row of a local copy that is no
- * longer on the device (DataFn retired it once its changes synced, see
- * isLocalCopyGone); a row of another scope or authority, without one, or of
- * a local copy that may still be there, stays (a pass retries while the
- * local copies cannot be listed). A row naming no authority (its restore
- * could not tell which authority its records sync with) gets the request's
- * once a pass of its own scope, brought up to date with that authority,
- * finds a record referencing the file. So a restore cut short before
+ * scope the restore imported into (the row's scope, see toRecordsView); a
+ * row of any other scope stays, also one of the account's other kind of
+ * scope at the same FileFn authority, as a negative answer there (a local
+ * copy whose deletion is not acknowledged yet, or a direct authority that a
+ * retired local copy never reached) never shows the row's scope lost its
+ * last reference, so the row keeps the file rather than risk its only
+ * bytes. A row naming no authority (its restore could not tell which
+ * authority its records sync with) gets the request's once a pass of its
+ * own scope, brought up to date with that authority, finds a record
+ * referencing the file; the authority a row names never widens where it is
+ * reconciled. So a restore cut short before
  * it imported a matching record, or whose removal of its row failed,
  * protects the file no longer, while one that saved a matching record keeps
  * it protected; one that resumes its import later protects its files again
@@ -2517,30 +2495,18 @@ async function reconcileForeignRows(dir: string, request: ReplayRequest) {
     owner.baseUrl
   );
   if (!destination.scope) return false;
-  /**
-   * Rows of the account's scope, or of its other kind of scope at the same
-   * FileFn authority (see toRowDestination and isLocalCopyGone).
-   */
+  /** Rows of the account's exact scope (see toRowDestination). */
   const isOwn = (row: string) => {
-    const [kind, , , , scope, authority] = row.split("~");
-    if (kind !== FOREIGN_ROW || !scope) return false;
-    return (
-      scope === destination.scope ||
-      (authority === destination.authority && scope[0] !== destination.scope[0])
-    );
+    const [kind, , , , scope] = row.split("~");
+    return kind === FOREIGN_ROW && scope === destination.scope;
   };
   let isSynced = false;
   let isRetried = false;
   const reconcile = async (queue: string) => {
     const { handle, rows } = await readHolds(queue);
     for (const row of await readNames(handle)) {
-      const [, fileId, , session, scope] = row.split("~");
+      const [, fileId, , session] = row.split("~");
       if (!isOwn(row)) continue;
-      if (scope !== destination.scope && scope.startsWith("s")) {
-        const isGone = await isLocalCopyGone(scope, destination.toScope);
-        if (isGone === undefined) isRetried = true;
-        if (!isGone) continue;
-      }
       const heldUntil = Math.max(
         0,
         ...rows
@@ -2557,7 +2523,7 @@ async function reconcileForeignRows(dir: string, request: ReplayRequest) {
       const isReferenced = await references.isReferenced(fileId);
       if (isReferenced === undefined) isRetried = true;
       const fields = row.split("~");
-      if (isReferenced && handle && !fields[5] && scope === destination.scope) {
+      if (isReferenced && handle && !fields[5]) {
         fields[5] = destination.authority;
         if (!references.isCurrent()) return;
         await handle
@@ -2782,7 +2748,7 @@ async function bindEntry(
 ) {
   const entryName = toEntryName(fileId);
   const names = await readNames(await getEntryDir(dir, entryName, true));
-  const marks = names.filter((name) => isBoundMark(name, generation));
+  const marks = toBindingMarks(names, generation);
   const at = Math.max(
     Date.now(),
     ...marks.map((name) => toMarkOrder(name) + 1)
@@ -2809,6 +2775,18 @@ function isBoundMark(name: string, generation: string) {
   return name === mark || name.startsWith(`${mark}~`);
 }
 
+/**
+ * A generation's binding marks (see toBoundMark), newest first: the one
+ * reader of marks by name for a rollback, which keeps a file any mark binds
+ * (see rollBackEntry), a take, which a mark it did not find drops (see
+ * bindTaken), and a replay, which walks them from the newest (see isBound).
+ */
+function toBindingMarks(names: readonly string[], generation: string) {
+  return names
+    .filter((name) => isBoundMark(name, generation))
+    .sort((a, b) => toMarkOrder(b) - toMarkOrder(a));
+}
+
 /** The order of a binding mark (see toBoundMark), 0 for one without. */
 function toMarkOrder(name: string) {
   const order = Number(name.split("~")[2]);
@@ -2821,15 +2799,19 @@ function toMarkOrder(name: string) {
  * of the account referenced it, which binds the file as an adoption does,
  * also when neither its adopted mark nor its adoption row could be
  * created; not while a foreign row its binding did not find protects the
- * generation (a restore into another account kept it since). A mark whose
- * write was cut short (empty or incomplete) is still the binding its
- * replay began, as for a rollback (see rollBackEntry), once a record
- * referenced the file, for the account and FileFn authority its name
- * digests only (see toBoundMark); since it does not tell which foreign rows
- * it found, any foreign row of the generation protects it. Only the newest
- * mark counts, so an earlier binding at another authority, read or not,
- * never authorizes removing a file a later one took (two newest marks
- * count as none). A mark that cannot be read rejects.
+ * generation (a restore into another account kept it since). The newest
+ * complete mark of the account at its FileFn authority decides, with the
+ * foreign rows it found; a newer mark of the account whose write was cut
+ * short (empty or incomplete) does not hide it. Without a complete one, a
+ * mark whose write was cut short is still the binding its replay began, as
+ * for a rollback (see rollBackEntry), once a record referenced the file,
+ * for the account and FileFn authority its name digests only (see
+ * toBoundMark); since it does not tell which foreign rows it found, any
+ * foreign row of the generation protects it. A newer mark of another
+ * account or authority, complete or not, overrides the account's, so an
+ * earlier binding at another authority, read or not, never authorizes
+ * removing a file a later one took (two marks of one order count as none).
+ * A mark that cannot be read rejects.
  */
 async function isBound(
   dir: string,
@@ -2839,20 +2821,29 @@ async function isBound(
 ) {
   const entryName = toEntryName(fileId);
   const names = await readNames(await getEntryDir(dir, entryName, true));
-  const marks = names.filter((name) => isBoundMark(name, generation));
-  const newest = Math.max(0, ...marks.map(toMarkOrder));
-  const latest = marks.filter((name) => toMarkOrder(name) === newest);
-  const own = `${toBoundMark(generation, owner)}~${newest}`;
-  if (latest.length !== 1 || (newest && latest[0] !== own)) return false;
-  const text = await readEntryText(dir, entryName, latest[0], true);
-  const claim = parseJson<QueuedFileClaim & { foreign?: unknown }>(
-    text,
-    (value) => typeof value === "object" && value !== null && isClaim(value)
-  );
-  if (!claim) return latest[0] === own && !foreignRows.length;
-  const found = Array.isArray(claim.foreign) ? claim.foreign : [];
-  const isProtected = foreignRows.some((row) => !found.includes(row));
-  return isSameClaim(claim, owner) && !isProtected;
+  const marks = toBindingMarks(names, generation);
+  const own = `${toBoundMark(generation, owner)}~`;
+  let isBegun = false;
+  for (const mark of marks) {
+    const order = toMarkOrder(mark);
+    const isTied = marks.some(
+      (other) => other !== mark && toMarkOrder(other) === order
+    );
+    if (!mark.startsWith(own) || isTied) return false;
+    const text = await readEntryText(dir, entryName, mark, true);
+    const claim = parseJson<QueuedFileClaim & { foreign?: unknown }>(
+      text,
+      (value) => typeof value === "object" && value !== null && isClaim(value)
+    );
+    if (!claim) {
+      isBegun = true;
+      continue;
+    }
+    const found = Array.isArray(claim.foreign) ? claim.foreign : [];
+    const isProtected = foreignRows.some((row) => !found.includes(row));
+    return isSameClaim(claim, owner) && !isProtected;
+  }
+  return isBegun && !foreignRows.length;
 }
 
 /**

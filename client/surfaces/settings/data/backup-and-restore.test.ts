@@ -8360,13 +8360,13 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
       1
     ],
     [
-      "removes a local copy's row once the direct authority finds no record referencing the file",
+      "keeps a retired local copy's row when the direct authority finds no record referencing the file",
       false,
       false,
       false,
       "user:user-b",
       "",
-      0
+      1
     ],
     [
       "keeps a direct authority's row while the local copy brought up to date with it references the file",
@@ -8387,16 +8387,16 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
       1
     ],
     [
-      "removes a direct authority's row once the local copy brought up to date with it finds no record referencing the file",
+      "keeps a direct authority's row when the local copy brought up to date with it finds no record referencing the file",
       true,
       true,
       false,
       "user:user-b",
       "",
-      0
+      1
     ]
   ])(
-    "reconciles the foreign row of a restore after DataFn changed the account's kind of scope: %s",
+    "keeps the foreign row of a restore after DataFn changed the account's kind of scope: %s",
     async (_, isDirect, isCloneLeft, isReferenced, namespace, other, count) => {
       const { authority, clone } = await keepAndLeaveScope(
         isDirect,
@@ -8422,33 +8422,42 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     }
   );
 
-  it("retries a pass that could not list the local copies, and removes the row of a retired local copy once the direct authority finds no record referencing the file", async () => {
-    const { authority } = await keepAndLeaveScope(false, false);
-    const listing = vi
-      .spyOn(indexedDB, "databases")
-      .mockRejectedValueOnce(new Error("The databases cannot be listed"));
-    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    try {
-      await replayFresh(QUEUE_B, (tab) => ({
-        owner: { userId: "user-b", baseUrl: authority },
-        isCurrent: () => true,
-        sync: async () => true,
-        isReferenced: async () => false,
-        discard: async () => undefined,
-        view: () =>
-          tab.toRecordsView({
-            namespace: "user:user-b",
-            remoteUrl: AUTHORITY_URL,
-            storageDbName: null
-          })
-      }));
-      expect(foreignRows()).toHaveLength(1);
-      await vi.advanceTimersByTimeAsync(5_000);
-      await vi.waitFor(() => expect(foreignRows()).toEqual([]));
-    } finally {
-      vi.useRealTimers();
-    }
-    expect(listing).toHaveBeenCalledTimes(2);
+  it("keeps a direct authority's row, and the bytes of the account that captured the file, while a local copy at the same FileFn authority finds no record referencing the file after a successful pull", async () => {
+    const { authority, clone } = await keepAndLeaveScope(true, true);
+    const [entry] = opfs.list(QUEUE_A);
+    const files = opfs.list(QUEUE_A, entry);
+    const listing = vi.spyOn(indexedDB, "databases");
+
+    await replayFresh(QUEUE_B, (tab) => ({
+      owner: { userId: "user-b", baseUrl: authority },
+      isCurrent: () => true,
+      sync: async () => true,
+      isReferenced: async () => false,
+      discard: async () => undefined,
+      view: () =>
+        tab.toRecordsView({
+          namespace: "user:user-b",
+          remoteUrl: AUTHORITY_URL,
+          storageDbName: clone
+        })
+    }));
+    expect(foreignRows()).toHaveLength(1);
+    await replayFresh(QUEUE_A, () => ({
+      owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
+      isCurrent: () => true,
+      sync: async () => true,
+      isReferenced: async () => false,
+      discard: async (fileId) => {
+        sdk.deleted.push(fileId);
+      }
+    }));
+
+    expect(foreignRows()).toHaveLength(1);
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(opfs.list(QUEUE_A, entry)).toEqual(files);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    expect(listing).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -8708,7 +8717,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(sdk.started).toEqual([]);
   });
 
-  it("names the authority on a local copy's row whose restore could not tell it once a pass at that authority finds the file referenced, so the direct authority that succeeded the retired copy can remove it", async () => {
+  it("names the authority on a local copy's row whose restore could not tell it once a pass at that authority finds the file referenced, and keeps the row for the direct authority that succeeded the retired copy", async () => {
     const { clone } = await keepAndLeaveScope(false, true, "euwest");
     const useast = AUTHORITY_URL.replace(/\/datafn$/, "/files");
     const [unnamed] = foreignRows();
@@ -8738,7 +8747,169 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(foreignRows()).toEqual([named]);
     await pass(null, false);
 
-    expect(foreignRows()).toEqual([]);
+    expect(foreignRows()).toEqual([named]);
     expect(sdk.started).toEqual([]);
+  });
+
+  /**
+   * Captures a file under user-a, restores it into user-b, protects its
+   * generation with a foreign row (as a restore into another account kept
+   * it), and lets user-a's replay bind it on its record's reference while
+   * its adoption cannot be written, and its delivery cannot be read, so it
+   * sends nothing; then adds a newer binding of user-a at the same FileFn
+   * authority whose write was cut short. Returns the file's entry, the
+   * foreign rows and user-a's references.
+   */
+  async function bindTwice() {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    const published = opfs
+      .list(QUEUE_A, entry)
+      .find((name) => name.startsWith("published-"));
+    expect(published).toBeDefined();
+    const generation = published!.slice("published-".length);
+    const root = await opfs.getDirectory();
+    await (
+      await root.getDirectoryHandle(HOLDS_A, { create: true })
+    ).getFileHandle(
+      `foreign~${record.fileId}~${generation}~test-session~d-test-scope~~test-row`,
+      { create: true }
+    );
+    const rows = foreignRows();
+    expect(rows).toHaveLength(1);
+    const state = { isReferenced: true };
+    const references = (): QueuedFileReferences => ({
+      owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
+      isCurrent: () => true,
+      sync: async () => true,
+      isReferenced: async () => state.isReferenced,
+      discard: async (fileId) => {
+        sdk.deleted.push(fileId);
+      }
+    });
+    await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+    getDirectory = failingWrites(
+      (path) =>
+        path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+          ? new Error("The adoption cannot be recorded")
+          : undefined,
+      undefined,
+      undefined,
+      isLogUnreadable
+    );
+    await replayFresh(QUEUE_A, references);
+    getDirectory = opfs.getDirectory;
+    const marks = opfs
+      .list(QUEUE_A, entry)
+      .filter((name) => name.startsWith("bound-"));
+    expect(marks).toHaveLength(1);
+    const text = new TextDecoder().decode(opfs.read(QUEUE_A, entry, marks[0]));
+    expect(JSON.parse(text).foreign).toEqual(rows);
+    const [mark, digest, order] = marks[0].split("~");
+    const queue = await root.getDirectoryHandle(QUEUE_A);
+    await (
+      await queue.getDirectoryHandle(entry)
+    ).getFileHandle(`${mark}~${digest}~${Number(order) + 1}`, { create: true });
+    return { entry, rows, state, references };
+  }
+
+  it.each([
+    [
+      "removes the file once its record is deleted, though a newer binding of the account at the same FileFn authority was cut short",
+      false
+    ],
+    [
+      "keeps the file while a foreign row the complete binding did not find protects it",
+      true
+    ]
+  ])(
+    "takes the newest complete binding of the account at its FileFn authority: %s",
+    async (_, isProtected) => {
+      const { entry, rows, state, references } = await bindTwice();
+      if (isProtected) {
+        const root = await opfs.getDirectory();
+        await (
+          await root.getDirectoryHandle(HOLDS_A)
+        ).getFileHandle(rows[0].replace(/~[^~]*$/, "~newer-restore"), {
+          create: true
+        });
+      }
+      state.isReferenced = false;
+
+      await replayFresh(QUEUE_A, references);
+
+      expect(opfs.list(QUEUE_A)).toEqual(isProtected ? [entry] : []);
+      expect(foreignRows()).toHaveLength(isProtected ? 2 : 1);
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+    }
+  );
+  it("keeps on rollback a file its account bound, though a newer binding of the account was cut short, and lets the account's replay remove it once its record is deleted", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    let isReferenced = true;
+    const references = (): QueuedFileReferences => ({
+      owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
+      isCurrent: () => true,
+      sync: async () => true,
+      isReferenced: async () => isReferenced,
+      discard: async (fileId) => {
+        sdk.deleted.push(fileId);
+      }
+    });
+    preflight.during = async () => {
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS + 1_000
+      );
+      getDirectory = failingWrites(
+        (path) =>
+          path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+            ? new Error("The adoption cannot be recorded")
+            : undefined,
+        undefined,
+        undefined,
+        isLogUnreadable
+      );
+      await replayFresh(QUEUE_A, references);
+      getDirectory = opfs.getDirectory;
+      const [bound, ...others] = opfs
+        .list(QUEUE_A, entry)
+        .filter((name) => name.startsWith("bound-"));
+      expect(others).toEqual([]);
+      expect(opfs.read(QUEUE_A, entry, bound)?.byteLength).toBeGreaterThan(0);
+      const [mark, digest, order] = bound.split("~");
+      const root = await opfs.getDirectory();
+      const queue = await root.getDirectoryHandle(QUEUE_A);
+      await (
+        await queue.getDirectoryHandle(entry)
+      ).getFileHandle(`${mark}~${digest}~${Number(order) + 1}`, {
+        create: true
+      });
+      isReferenced = false;
+      await bootData(cloudAccount("user-c"));
+    };
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("The account changed while the backup was restored");
+    preflight.during = null;
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(foreignRows()).toEqual([]);
+
+    await replayFresh(QUEUE_A, references);
+
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
   });
 });
