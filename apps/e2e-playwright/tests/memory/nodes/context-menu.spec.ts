@@ -1,4 +1,4 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { expect, test, type E2ESeed } from "../../fixtures/e2e-test";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { ensureInAppOnHome } from "../../utils/helpers";
@@ -15,30 +15,6 @@ import {
 } from "../memory-test-helpers";
 
 let e2eSeed: E2ESeed;
-
-type StarActionVariant = "command" | "toggle";
-
-async function getStarActionVariant(starItem: Locator) {
-  const text = (await starItem.innerText()).replace(/\s+/g, " ").trim();
-  return /^Star(?:red)?$/i.test(text) ? "toggle" : "command";
-}
-
-async function expectStarActionState(
-  starItem: Locator,
-  variant: StarActionVariant,
-  state: "starred" | "unstarred"
-) {
-  if (variant === "toggle") {
-    await expect(starItem).toContainText(
-      state === "starred" ? /^Star(?:red)?$/i : /^Star$/i
-    );
-    return;
-  }
-
-  await expect(starItem).toContainText(
-    state === "starred" ? /Unstar/i : /Star this resource/i
-  );
-}
 
 async function openContextMenuOnNode(
   page: Page,
@@ -466,35 +442,20 @@ test.describe("nodes - context menu (from library, from record page) @context-me
       const starItem = page.locator(
         `[data-context-menu-item-id="${ResourceActionType.STAR}"]`
       );
-      if (await starItem.isVisible().catch(() => false)) {
-        const starVariant = await getStarActionVariant(starItem);
-        await expectStarActionState(starItem, starVariant, "unstarred");
-        await starItem.click();
+      await expect(starItem.getByText("Star", { exact: true })).toBeVisible();
+      await starItem.click();
+      await openRecordPageContextMenu(page);
 
-        await openRecordPageContextMenu(page);
+      const starredLabel = starItem.getByText("Starred", { exact: true });
+      await expect(starredLabel).toBeVisible();
 
-        await expectStarActionState(
-          page.locator(
-            `[data-context-menu-item-id="${ResourceActionType.STAR}"]`
-          ),
-          starVariant,
-          "starred"
-        );
-
-        await page.keyboard.press("Escape");
-        await page.reload({ waitUntil: "domcontentloaded" });
-        await ensureInAppOnHome(page);
-        await openNodesLibrary(page);
-        await getResourceThumbnail(page, node.id).click({ timeout: 5_000 });
-        await openRecordPageContextMenu(page);
-        await expectStarActionState(
-          page.locator(
-            `[data-context-menu-item-id="${ResourceActionType.STAR}"]`
-          ),
-          starVariant,
-          "starred"
-        );
-      }
+      await page.keyboard.press("Escape");
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await ensureInAppOnHome(page);
+      await openNodesLibrary(page);
+      await getResourceThumbnail(page, node.id).click({ timeout: 5_000 });
+      await openRecordPageContextMenu(page);
+      await expect(starredLabel).toBeVisible();
 
       await dismissAnyModals(page);
     });
