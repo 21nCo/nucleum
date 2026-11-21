@@ -14,7 +14,11 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
-  import { beginSocialHandoff } from "@nucleum/client/runtime/account/social-handoff";
+  import {
+    beginSocialHandoff,
+    cancelSocialHandoff,
+    isCurrentSocialHandoffChallenge
+  } from "@nucleum/client/runtime/account/social-handoff";
   let {
     providers,
     isExpanded = false,
@@ -76,6 +80,7 @@
     try {
       if ($context.isEmbed) {
         if (provider === "apple" && $context.os === OperatingSystem.IOS) {
+          cancelSocialHandoff();
           postDataToParent(EmbedDataMessage.AUTHFN_NATIVE_APPLE_SIGN_IN, {
             accountUrl: resolveAccountBaseUrl(region ?? "insouth"),
             returnTo: resolveReturnTo(),
@@ -99,6 +104,14 @@
           handoffMode,
           ...(handoffChallenge ? { handoffChallenge } : {})
         });
+        if (
+          response.ok &&
+          handoffChallenge &&
+          !(await isCurrentSocialHandoffChallenge(handoffChallenge))
+        ) {
+          logger.info({ at: "OAuthOptions.startSocialSignIn.superseded", provider });
+          return;
+        }
         if (response.ok) {
           logger.info({
             at: "OAuthOptions.startSocialSignIn.ok",

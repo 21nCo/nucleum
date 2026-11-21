@@ -130,6 +130,19 @@ export function isCurrentSocialHandoff(verifier: string): boolean {
   return storedVerifier() === verifier;
 }
 
+/** True while `challenge` belongs to this window's current sign-in. */
+export async function isCurrentSocialHandoffChallenge(challenge: string): Promise<boolean> {
+  const verifier = storedVerifier();
+  return verifier !== undefined && (await deriveSocialHandoffChallenge(verifier)) === challenge;
+}
+
+/** Cancels this window's pending browser sign-in, e.g. when another sign-in method starts. */
+export function cancelSocialHandoff() {
+  getBrowserStorage("sessionStorage")?.removeItem(
+    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF
+  );
+}
+
 /**
  * Forgets the verifier of an exchanged sign-in once the app is signed in with
  * it. Clears only if it is still `verifier`, not a newer sign-in's.

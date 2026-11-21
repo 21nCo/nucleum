@@ -5,8 +5,10 @@ import {
   SOCIAL_HANDOFF_TTL_MS,
   beginSocialHandoff,
   deriveSocialHandoffChallenge,
+  cancelSocialHandoff,
   finishSocialHandoff,
   isCurrentSocialHandoff,
+  isCurrentSocialHandoffChallenge,
   resolveSocialHandoffToken,
   takeSocialHandoffVerifier,
   type SocialHandoffExchangeClient
@@ -71,6 +73,16 @@ describe("social handoff verifier", () => {
 
     expect(second).not.toBe(first);
     expect(isCurrentSocialHandoff(firstVerifier)).toBe(false);
+  });
+
+  it("knows whether a challenge is still the current sign-in's, and cancels it", async () => {
+    const first = await beginSocialHandoff({ now: NOW });
+    const second = await beginSocialHandoff({ now: NOW + 1000 });
+
+    expect(await isCurrentSocialHandoffChallenge(first)).toBe(false);
+    expect(await isCurrentSocialHandoffChallenge(second)).toBe(true);
+    cancelSocialHandoff();
+    expect(await isCurrentSocialHandoffChallenge(second)).toBe(false);
   });
 
   it("hands the verifier out once and not after it expires", async () => {
