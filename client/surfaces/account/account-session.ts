@@ -206,6 +206,12 @@ async function embedOAuthSignin(token: string) {
   }
 }
 
+/**
+ * Signs the app in with an AuthFn session (looked up with `token` unless
+ * `session` is given). `isCurrent`, when passed, is checked before anything is
+ * stored and again before the session is committed; if it turns false the
+ * sign-in stops, restores the previous token and returns false.
+ */
 async function signInFromAuthFnSession(params?: {
   token?: string;
   session?: any;
@@ -213,7 +219,10 @@ async function signInFromAuthFnSession(params?: {
   isNewUser?: boolean;
   isPreventRedirect?: boolean;
   persistToken?: boolean;
+  isCurrent?: () => boolean;
 }) {
+  const isStale = () => (params?.isCurrent ? !params.isCurrent() : false);
+  if (isStale()) return false;
   const shouldPersistToken =
     params?.persistToken ?? shouldUseAuthFnBearerSession();
   const previousAuthFnToken = shouldPersistToken
@@ -247,7 +256,7 @@ async function signInFromAuthFnSession(params?: {
     }
   }
 
-  if (!authSession) {
+  if (!authSession || isStale()) {
     if (shouldPersistToken && hasTokenFromResponse) {
       if (previousAuthFnToken) {
         await clientStorage.set(

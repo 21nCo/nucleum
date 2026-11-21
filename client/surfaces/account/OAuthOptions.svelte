@@ -96,7 +96,7 @@
             ? await beginSocialHandoff({ regionId: startRegion })
             : undefined;
         const response = await (
-          await authClient({ region: startRegion })
+          await authClient({ region: startRegion, isIsolated: true })
         ).startSocialSignIn({
           provider: provider as "apple" | "google" | "github",
           returnTo: resolveReturnTo(),

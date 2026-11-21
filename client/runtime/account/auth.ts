@@ -30,16 +30,26 @@ type NucleumAuthClient = AuthFnRegionalClient & AuthFnSocialHandoffClient;
 const authClientsMap: Map<string, NucleumAuthClient> = new Map();
 const REGION_CACHE_TTL_MS = 15 * 60 * 1000;
 
+/**
+ * Returns the regional AuthFn client for `region`. The shared instance is
+ * re-pointed on every call; `isIsolated` returns a new client pinned to
+ * `region` that other callers can't re-point, without replacing the shared one.
+ */
 export const authClient = async (params?: {
   region?: string;
   isPreventCachedInstance?: boolean;
+  isIsolated?: boolean;
 }): Promise<NucleumAuthClient> => {
   const region =
     params?.region ??
     (await clientStorage.get(ClientStorageKey.REGION)) ??
     "insouth";
   const cacheKey = "regional";
-  if (authClientsMap.has(cacheKey) && !params?.isPreventCachedInstance) {
+  if (
+    authClientsMap.has(cacheKey) &&
+    !params?.isPreventCachedInstance &&
+    !params?.isIsolated
+  ) {
     const existing = authClientsMap.get(cacheKey) as NucleumAuthClient;
     existing.setCurrentRegionId(region);
     return existing;
@@ -65,7 +75,7 @@ export const authClient = async (params?: {
     }
   });
   client.setCurrentRegionId(region);
-  authClientsMap.set(cacheKey, client);
+  if (!params?.isIsolated) authClientsMap.set(cacheKey, client);
   return client;
 };
 

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
 import { ACCOUNT_API_KEY_POLICY, ACCOUNT_SOCIAL_OAUTH_POLICY } from './plugins.js';
@@ -97,6 +97,55 @@ describe('account sign-in policy', () => {
     );
     expect(elsewhere.status).toBe(303);
     expect(elsewhere.headers.getSetCookie().some((cookie) => cookie.startsWith('nucleus.session='))).toBe(true);
+  });
+});
+
+describe('native social sign-in handoff', () => {
+  it('returns a one-time code that only the verifier holder can exchange, once', async () => {
+    const verifier = [randomUUID(), randomUUID()].join('-');
+    const challenge = createHash('sha256').update(verifier).digest('base64url');
+    const start = await startGoogle({
+      returnTo: 'nucleum://oauthsignin',
+      callbackMode: 'redirect',
+      handoffMode: 'session-token',
+      handoffChallenge: challenge
+    });
+    expect(start.status).toBe(200);
+    const { redirectTo } = ((await start.json()) as { data: { redirectTo: string } }).data;
+    const state = new URL(redirectTo).searchParams.get('state') ?? '';
+
+    const callback = await call(
+      `/auth/social/callback/google?state=${encodeURIComponent(state)}&code=policy-user`,
+      {}
+    );
+    expect(callback.status).toBe(303);
+    const location = callback.headers.get('location') ?? '';
+    expect(location.startsWith('nucleum://oauthsignin')).toBe(true);
+    expect(callback.headers.getSetCookie().some((cookie) => cookie.startsWith('nucleus.session='))).toBe(false);
+    const fragment = new URLSearchParams(location.split('#')[1] ?? '');
+    expect(fragment.get('handoff')).toBe('code');
+    const code = fragment.get('token') ?? '';
+    expect(code.startsWith('shc_')).toBe(true);
+
+    const exchange = (body: Record<string, string>) =>
+      call('/auth/social/handoff/exchange', { origin: base }, body);
+    const wrong = await exchange({ code, verifier: `${verifier}-other` });
+    expect(wrong.status).toBeGreaterThanOrEqual(400);
+
+    const exchanged = await exchange({ code, verifier });
+    expect(exchanged.status).toBe(200);
+    const data = ((await exchanged.json()) as {
+      data: { session: { id: string }; handoff: { token: string; type: string } };
+    }).data;
+    expect(data.handoff.type).toBe('session-token');
+    expect(data.handoff.token).toBeTruthy();
+    expect(data.session.id).toBeTruthy();
+
+    const session = await call('/auth/session', { authorization: `Bearer ${data.handoff.token}` });
+    expect(session.status).toBe(200);
+
+    const replay = await exchange({ code, verifier });
+    expect(replay.status).toBeGreaterThanOrEqual(400);
   });
 });
 

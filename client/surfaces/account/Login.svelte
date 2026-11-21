@@ -188,7 +188,7 @@
               regionId: regionHint,
               isBroadcast: $context.os === OperatingSystem.MACOS
             },
-            (region) => authClient({ region })
+            (region) => authClient({ region, isIsolated: true })
           );
           if (resolved.kind === "ignored") {
             logger.info({
@@ -222,6 +222,7 @@
           const signedIn = await accountSession.signInFromAuthFnSession({
             token,
             session: resolved.session,
+            isCurrent: () => !isSuperseded(),
             regionId,
             isNewUser: parsed.oauth.signup === "true",
             isPreventRedirect: true,

@@ -177,16 +177,18 @@ describe("resolveSocialHandoffToken", () => {
   it("discards a sign-in that a newer one replaced while its exchange ran", async () => {
     await beginSocialHandoff({ regionId: "useast", now: NOW });
     let answer: (value: ExchangeResult) => void = () => {};
+    const exchangeStarted = vi.fn();
     const client = async () =>
       ({
         exchangeSocialHandoff: () =>
           new Promise<ExchangeResult>((resolve) => {
             answer = resolve;
+            exchangeStarted();
           })
       }) as unknown as SocialHandoffExchangeClient;
 
     const pending = resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, client, NOW);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await vi.waitFor(() => expect(exchangeStarted).toHaveBeenCalled());
     await beginSocialHandoff({ regionId: "euwest", now: NOW + 1000 });
     answer(exchanged("test-session-token", "useast"));
 
@@ -210,16 +212,18 @@ describe("resolveSocialHandoffToken", () => {
   it("drops a replaced sign-in's failure instead of reporting it", async () => {
     await beginSocialHandoff({ regionId: "useast", now: NOW });
     let fail: (error: Error) => void = () => {};
+    const exchangeStarted = vi.fn();
     const client = async () =>
       ({
         exchangeSocialHandoff: () =>
           new Promise<ExchangeResult>((_, reject) => {
             fail = reject;
+            exchangeStarted();
           })
       }) as unknown as SocialHandoffExchangeClient;
 
     const pending = resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, client, NOW);
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await vi.waitFor(() => expect(exchangeStarted).toHaveBeenCalled());
     const retry = await beginSocialHandoff({ regionId: "euwest", now: NOW + 1000 });
     fail(new Error("network down"));
 
