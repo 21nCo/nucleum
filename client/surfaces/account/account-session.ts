@@ -209,8 +209,10 @@ async function embedOAuthSignin(token: string) {
 /**
  * Signs the app in with an AuthFn session (looked up with `token` unless
  * `session` is given). `isCurrent`, when passed, is checked before anything is
- * stored and again before the session is committed; if it turns false the
- * sign-in stops, restores the previous token and returns false.
+ * stored, before the stored session is written (restoring the previous token
+ * if it turned false) and again right before the app state and native shell
+ * are updated; once it is false the call returns false without either. The
+ * newer sign-in that made it false then writes its own session over storage.
  */
 async function signInFromAuthFnSession(params?: {
   token?: string;
@@ -283,6 +285,7 @@ async function signInFromAuthFnSession(params?: {
 
   const userInfo = resolveUserInfoFromAuthFnSession(authSession);
   await clientStorage.set(ClientStorageKey.USER_INFO, userInfo);
+  if (isStale()) return false;
   postToEmbed({ token: sessionToken, userInfo });
   account.update(() => ({
     token: sessionToken,
