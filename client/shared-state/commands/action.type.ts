@@ -16,6 +16,10 @@ import type { ConfirmationNotification } from "@nucleum/shared-state/notificatio
 import type { ModalParams } from "@21n/ui/elements/modal/popup.type";
 import type { IViewStore } from "@21n/ui/environment/view.type";
 import type { Size } from "@21n/ui/elements/size.enum";
+import type { Component } from "svelte";
+
+/** Imports an action's Svelte component when its surface is first rendered. */
+export type ActionComponentLoader = () => Promise<{ default: Component<any> }>;
 
 export type IAction = {
   action: string;
@@ -41,11 +45,14 @@ export type IAction = {
    */
   preCondition?: () => boolean;
   /**
-   * Svelte component associated with the action. This is required if the type is {@link ActionType.MODAL} or {@link ActionType.PAGE}
+   * Eager Svelte component for actions that do not use a loader.
    */
   component?: any;
+  /** On-demand alternative to `component`. */
+  loadComponent?: ActionComponentLoader;
 
-  panel?: any;
+  /** Optional left navigation panel, loaded only while the action is active. */
+  panel?: ActionComponentLoader;
   /**
    * Label to be shown in command bar or anywhere else in the app.
    */

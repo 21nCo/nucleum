@@ -12,6 +12,7 @@
   import { writable, type Writable } from "svelte/store";
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
   import type { IContainer } from "@nucleum/shell/layout.type";
+  import PageLoadingAnimation from "@21n/ui/elements/feedback/animations/PageLoadingAnimation.svelte";
   const containerStore = writable<IContainer | undefined>(undefined);
   setContext<Writable<IContainer | undefined>>(
     Context.CONTAINER,
@@ -44,6 +45,7 @@
     ...(resolvedAction?.componentParams ?? {}),
     ...(params ?? {})
   }));
+  const loadComponent = $derived(resolvedAction?.loadComponent);
 
   function measureContainer(element: HTMLDivElement) {
     const rect = element.getBoundingClientRect();
@@ -63,22 +65,55 @@
   });
 </script>
 
-{#if $context.isSheet && resolvedAction?.component}
-  {@const ResolvedComponent = resolvedAction.component}
-  <ModalLayout path={resolvedAction.action} params={resolvedAction.modalParams ?? {}}>
+{#snippet content()}
+  {#if loadComponent}
+    {#await loadComponent()}
+      <div
+        class="flex items-center justify-center w-full h-full"
+        role="status"
+        aria-label="Loading"
+      >
+        {#if resolvedAction?.loadingComponent}
+          {@const LoadingComponent = resolvedAction.loadingComponent}
+          <LoadingComponent />
+        {:else}
+          <PageLoadingAnimation />
+        {/if}
+      </div>
+    {:then { default: ResolvedComponent }}
+      <ResolvedComponent {...resolvedParams} />
+    {:catch}
+      {#if !isPreventErrorFeedback}
+        <PageError
+          message="This view couldn't load. Check your connection and try again."
+          actions={[
+            { label: "Try again", callback: () => window.location.reload() }
+          ]}
+        />
+      {/if}
+    {/await}
+  {:else if resolvedAction?.component}
+    {@const ResolvedComponent = resolvedAction.component}
     <ResolvedComponent {...resolvedParams} />
-  </ModalLayout>
-{:else if resolvedAction?.component}
-  {@const ResolvedComponent = resolvedAction.component}
-  <div
-    bind:this={containerElement}
-    class="flex justify-center w-full h-full"
-    use:resizeListener={(e) => {
-      containerStore.set(e);
-    }}
-  >
-    <ResolvedComponent {...resolvedParams} />
-  </div>
+  {/if}
+{/snippet}
+
+{#if resolvedAction && (resolvedAction.component || loadComponent)}
+  {#if $context.isSheet}
+    <ModalLayout path={resolvedAction.action} params={resolvedAction.modalParams ?? {}}>
+      {@render content()}
+    </ModalLayout>
+  {:else}
+    <div
+      bind:this={containerElement}
+      class="flex justify-center w-full h-full"
+      use:resizeListener={(e) => {
+        containerStore.set(e);
+      }}
+    >
+      {@render content()}
+    </div>
+  {/if}
 {:else if !isPreventErrorFeedback}
   <PageError isNotFoundPage={true} />
 {/if}

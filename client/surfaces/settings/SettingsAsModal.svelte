@@ -108,7 +108,7 @@
     if (openInRightModal(item)) return;
     selected = item;
     const action = requireCommandHost().resolveAction(item);
-    if (action?.component) pageAction = action;
+    if (action?.component || action?.loadComponent) pageAction = action;
     navigation.toggleSearchParam({
       [AppSearchParam.SETTING]: item
     });
@@ -122,7 +122,8 @@
   function isListStop(item: string) {
     if (item === Action.APPEARANCE_SETTINGS && !$view.isConstrainedWidth)
       return false;
-    return !!requireCommandHost().resolveAction(item)?.component;
+    const action = requireCommandHost().resolveAction(item);
+    return !!(action?.component || action?.loadComponent);
   }
 
   /** The settings list, so the keyboard knows which modal holds it. */
@@ -146,7 +147,7 @@
     if (openInRightModal(slug)) return;
     selected = slug;
     const action = requireCommandHost().resolveAction(slug);
-    if (action?.component) {
+    if (action?.component || action?.loadComponent) {
       pageAction = action;
       return;
     }
