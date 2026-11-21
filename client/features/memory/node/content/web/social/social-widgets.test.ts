@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-import { hasLiveSocialWidget } from "@nucleum/features/memory/node/content/web/social/social-widgets";
+import {
+  MAX_CAPTURED_MEDIA,
+  hasLiveSocialWidget,
+  resolveCapturedMediaUrls
+} from "@nucleum/features/memory/node/content/web/social/social-widgets";
 
 describe("hasLiveSocialWidget", () => {
   it("never renders Mastodon posts with the provider widget", () => {
@@ -31,5 +35,33 @@ describe("hasLiveSocialWidget", () => {
       const source = readFileSync(join(directory, name), "utf8");
       expect(source, name).not.toMatch(/mastodon[^"'\s]*\/embed\.js|mastodon-embed/i);
     }
+  });
+});
+
+describe("resolveCapturedMediaUrls", () => {
+  it("keeps https images the clipper saved, without duplicates", () => {
+    expect(
+      resolveCapturedMediaUrls({
+        media: [
+          "https://files.mastodon.social/media/a.png",
+          " https://files.mastodon.social/media/a.png ",
+          "http://files.mastodon.social/media/b.png",
+          "javascript:alert(1)",
+          "https://user:pass@files.example/c.png",
+          "/relative.png",
+          42
+        ]
+      })
+    ).toEqual(["https://files.mastodon.social/media/a.png"]);
+  });
+
+  it("caps the number of images and ignores missing media", () => {
+    const media = Array.from(
+      { length: MAX_CAPTURED_MEDIA + 2 },
+      (_, index) => `https://files.example/${index}.png`
+    );
+    expect(resolveCapturedMediaUrls({ media })).toHaveLength(MAX_CAPTURED_MEDIA);
+    expect(resolveCapturedMediaUrls(undefined)).toEqual([]);
+    expect(resolveCapturedMediaUrls({ media: "https://files.example/a.png" })).toEqual([]);
   });
 });

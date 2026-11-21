@@ -22,6 +22,7 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
+  import { resolveCapturedMediaUrls } from "@nucleum/features/memory/node/content/web/social/social-widgets";
 
   let {
     node,
@@ -63,6 +64,7 @@
   }
 
   let contentPreview = $derived(resolveContentPreview(node));
+  let capturedMedia = $derived(resolveCapturedMediaUrls(node.metadata));
   void accessPoint;
 
   onMount(async () => {
@@ -213,23 +215,50 @@
     <div class="text-left overflow-y-auto max-h-80">
       {contentPreview}
     </div>
+    {#if capturedMedia.length > 0}
+      <div class="grid grid-cols-2 gap-2 w-full">
+        {#each capturedMedia as src (src)}
+          <img
+            class="w-full max-h-60 object-cover rounded-md"
+            {src}
+            alt="Image from the {platformDisplay || 'social'} post"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+          />
+        {/each}
+      </div>
+    {/if}
     <div class="text-b3 text-fgs3 text-right">
       Posted on {platformDisplay}:
       {getPostedAtTime()}
     </div>
   </button>
-  {#if contentPreview}
+  {#if contentPreview || node.url}
     <div class="flex justify-center items-center w-full gap-4">
-      <Button
-        style={ButtonStyle.PLAIN}
-        label="Copy content"
-        isUnderlined={true}
-        size={Size.sm}
-        onclick={(e) => {
-          e.stopPropagation();
-          copyTextContent();
-        }}
-      />
+      {#if node.url}
+        <Button
+          style={ButtonStyle.PLAIN}
+          label={platformDisplay ? `Open on ${platformDisplay}` : "Open original"}
+          isUnderlined={true}
+          size={Size.sm}
+          onclick={(e) => {
+            e.stopPropagation();
+            if (node.url) navigation.openLink(node.url);
+          }}
+        />
+      {/if}
+      {#if contentPreview}
+        <Button
+          style={ButtonStyle.PLAIN}
+          label="Copy content"
+          isUnderlined={true}
+          size={Size.sm}
+          onclick={(e) => {
+            e.stopPropagation();
+            copyTextContent();
+          }}
+        />
+      {/if}
       {#if onViewEmbed}
         <Button
           style={ButtonStyle.PLAIN}
