@@ -127,41 +127,6 @@
   hljs.registerLanguage("typescript", typescript);
   hljs.registerLanguage("xml", xml);
   hljs.registerLanguage("yaml", yaml);
-</script>
-
-<script lang="ts">
-  import { onMount, tick } from "svelte";
-  import type { ICodeBlockBody } from "@nucleum/features/memory/markdown/md.type";
-  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
-  import { InputStyle } from "@21n/ui/elements/input/input.type";
-  import { Size } from "@21n/ui/elements/size.enum";
-  import Button from "@21n/ui/elements/button/Button.svelte";
-  import { copyToClipboard } from "@21n/shared-utils/clipboard";
-  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
-  import type { MdStoreType } from "@nucleum/features/memory/markdown/markdown.store";
-  import { hoverable } from "@21n/ui/actions/hover.action";
-
-  let {
-    mdStore,
-    body,
-    onUpdate = undefined,
-    onDelete = undefined
-  }: {
-    mdStore: MdStoreType;
-    body: ICodeBlockBody;
-    onUpdate?: ((event: CustomEvent<any>) => void) | undefined;
-    onDelete?: (() => void) | undefined;
-  } = $props();
-
-  let language = $state(body?.language ?? "javascript");
-  let code = $state(body?.text ?? "");
-  let codeElement: HTMLElement;
-  let textareaElement: HTMLTextAreaElement;
-  let containerElement: HTMLDivElement;
-  let isHovering = $state(false);
-  let isEditing = $state(false);
-  let containerHeight = $state("auto");
-
   const languages = [
     { label: "ABAP", value: "abap" },
     { label: "Apache", value: "apache" },
@@ -202,6 +167,44 @@
     { label: "XML", value: "xml" },
     { label: "YAML", value: "yaml" }
   ];
+  for (const { value } of languages) {
+    if (!hljs.getLanguage(value)) missingGrammars.add(value);
+  }
+</script>
+
+<script lang="ts">
+  import { onMount, tick } from "svelte";
+  import type { ICodeBlockBody } from "@nucleum/features/memory/markdown/md.type";
+  import DropDown from "@21n/ui/elements/dropdown/DropDown.svelte";
+  import { InputStyle } from "@21n/ui/elements/input/input.type";
+  import { Size } from "@21n/ui/elements/size.enum";
+  import Button from "@21n/ui/elements/button/Button.svelte";
+  import { copyToClipboard } from "@21n/shared-utils/clipboard";
+  import { ButtonStyle, ButtonVariant } from "@21n/ui/elements/button/button.type";
+  import type { MdStoreType } from "@nucleum/features/memory/markdown/markdown.store";
+  import { hoverable } from "@21n/ui/actions/hover.action";
+
+  let {
+    mdStore,
+    body,
+    onUpdate = undefined,
+    onDelete = undefined
+  }: {
+    mdStore: MdStoreType;
+    body: ICodeBlockBody;
+    onUpdate?: ((event: CustomEvent<any>) => void) | undefined;
+    onDelete?: (() => void) | undefined;
+  } = $props();
+
+  let language = $state(body?.language ?? "javascript");
+  let code = $state(body?.text ?? "");
+  let codeElement: HTMLElement;
+  let textareaElement: HTMLTextAreaElement;
+  let containerElement: HTMLDivElement;
+  let isHovering = $state(false);
+  let isEditing = $state(false);
+  let containerHeight = $state("auto");
+
 
   async function highlightCode() {
     const requestedLanguage = language || "plaintext";
