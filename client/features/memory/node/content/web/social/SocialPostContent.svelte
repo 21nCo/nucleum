@@ -46,6 +46,11 @@
     return hasLiveSocialWidget(node.contentType, $context.isEmbed);
   }
 
+  /** URL of the live widget that can render for this post right now; gates both the widget and the embed toggle. */
+  const widgetUrl = $derived(
+    shouldShowWidget() && node.url && !error ? node.url : undefined
+  );
+
   function onError(message: string) {
     error = message;
   }
@@ -53,7 +58,7 @@
 
 {#if oembedHtml}
   {@html oembedHtml}
-{:else if shouldShowWidget() && node.url && !error && !isShowPermanentCopy}
+{:else if widgetUrl && !isShowPermanentCopy}
   <div
     class="relative w-full h-full flex flex-col justify-center items-center overflow-y-auto cw:mb-10"
   >
@@ -71,26 +76,26 @@
         ></button>
       {/if}
       {#if node.contentType === NodeType.TWEET}
-        <TweetPreviewUsingWidget tweetUrl={node.url} />
+        <TweetPreviewUsingWidget tweetUrl={widgetUrl} />
       {:else if node.contentType === NodeType.INSTAGRAM_POST || node.contentType === NodeType.INSTAGRAM_REEL}
-        <InstagramPostWidget postUrl={node.url} />
+        <InstagramPostWidget postUrl={widgetUrl} />
       {:else if node.contentType === NodeType.LINKEDIN_POST}
-        <LinkedInPostWidget postUrl={node.url} />
+        <LinkedInPostWidget postUrl={widgetUrl} />
       {:else if node.contentType === NodeType.REDDIT_POST}
-        <RedditPostWidget postUrl={node.url} />
+        <RedditPostWidget postUrl={widgetUrl} />
       {:else if node.contentType === NodeType.FACEBOOK_POST}
-        <FacebookPostWidget postUrl={node.url} {onError} onFallback={onError} />
+        <FacebookPostWidget postUrl={widgetUrl} {onError} onFallback={onError} />
       {:else if node.contentType === NodeType.BLUESKY_POST}
-        <BlueskyPostWidget postUrl={node.url} {onError} />
+        <BlueskyPostWidget postUrl={widgetUrl} {onError} />
       {:else if node.contentType === NodeType.THREADS_POST}
-        <ThreadsPostWidget postUrl={node.url} {onError} onFallback={onError} />
+        <ThreadsPostWidget postUrl={widgetUrl} {onError} onFallback={onError} />
       {/if}
     </div>
   </div>
 {:else}
   <SocialPostContentFallback
     {node}
-    onViewEmbed={shouldShowWidget() && node.url && !error
+    onViewEmbed={widgetUrl
       ? () => {
           isShowPermanentCopy = !isShowPermanentCopy;
         }
