@@ -26,6 +26,7 @@
   import { OperatingSystem } from "@nucleum/client/runtime/context.type";
   import {
     finishSocialHandoff,
+    isCurrentSocialHandoff,
     resolveSocialHandoffToken
   } from "@nucleum/client/runtime/account/social-handoff";
   let selectedMode = $state<"signup" | "signin" | "offline">("signup");
@@ -203,6 +204,10 @@
             toasts.error("Authentication failed. Please try again.");
             return;
           }
+          const isSuperseded = () =>
+            resolved.verifier !== undefined &&
+            !isCurrentSocialHandoff(resolved.verifier);
+          if (isSuperseded()) return;
           token = resolved.token;
           const regionId = resolved.regionId;
           localStorage.setItem("embedToken", token);
@@ -226,7 +231,15 @@
               at: "Login.handleMessageFromParent.oauth.session.failed",
               hasToken: true
             });
-            toasts.error("Authentication failed. Please try again.");
+            if (!isSuperseded()) {
+              toasts.error("Authentication failed. Please try again.");
+            }
+            return;
+          }
+          if (isSuperseded()) {
+            logger.info({
+              at: "Login.handleMessageFromParent.oauth.handoff.superseded"
+            });
             return;
           }
           if (resolved.verifier) finishSocialHandoff(resolved.verifier);

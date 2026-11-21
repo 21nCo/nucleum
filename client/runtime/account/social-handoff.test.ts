@@ -6,6 +6,7 @@ import {
   beginSocialHandoff,
   deriveSocialHandoffChallenge,
   finishSocialHandoff,
+  isCurrentSocialHandoff,
   resolveSocialHandoffToken,
   takeSocialHandoffVerifier,
   type SocialHandoffExchangeClient
@@ -188,6 +189,27 @@ describe("resolveSocialHandoffToken", () => {
     answer(exchanged("test-session-token", "useast"));
 
     expect(await pending).toEqual({ kind: "ignored" });
+  });
+
+  it("drops a replaced sign-in's failure instead of reporting it", async () => {
+    await beginSocialHandoff({ regionId: "useast", now: NOW });
+    let fail: (error: Error) => void = () => {};
+    const client = async () =>
+      ({
+        exchangeSocialHandoff: () =>
+          new Promise<ExchangeResult>((_, reject) => {
+            fail = reject;
+          })
+      }) as unknown as SocialHandoffExchangeClient;
+
+    const pending = resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, client, NOW);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const retry = await beginSocialHandoff({ regionId: "euwest", now: NOW + 1000 });
+    fail(new Error("network down"));
+
+    expect(await pending).toEqual({ kind: "ignored" });
+    expect(retry).not.toBe(undefined);
+    expect(isCurrentSocialHandoff(storedVerifier() ?? "")).toBe(true);
   });
 
   it("reports a code with no matching sign-in on a shell that doesn't broadcast", async () => {

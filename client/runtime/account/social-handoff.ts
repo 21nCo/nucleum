@@ -118,6 +118,11 @@ function storedVerifier(): string | undefined {
   }
 }
 
+/** True while `verifier` is still this window's current sign-in, not replaced by a newer one. */
+export function isCurrentSocialHandoff(verifier: string): boolean {
+  return storedVerifier() === verifier;
+}
+
 /**
  * Forgets the verifier of an exchanged sign-in once the app is signed in with
  * it. Clears only if it is still `verifier`, not a newer sign-in's.
@@ -190,8 +195,9 @@ export function isSocialHandoffCode(input: {
  * this window's pending verifier and never used as a session. The verifier
  * stays in place while the exchange runs; the caller passes the returned
  * `verifier` to `finishSocialHandoff` once the app is signed in (a retry
- * reuses it until then). A result for a sign-in that a newer one in this window
- * replaced while the exchange ran is discarded. The exchange goes to the region the callback names,
+ * reuses it until then). Any outcome for a sign-in that a newer one in this
+ * window replaced while the exchange ran is discarded as `ignored`; callers
+ * recheck `isCurrentSocialHandoff` before applying the session. The exchange goes to the region the callback names,
  * or else the one the sign-in was started in. A window with no live sign-in, or whose
  * verifier the code wasn't issued for, ignores it. Any other value is a
  * session token, which native Apple sign-in and sign-ins started without a
@@ -218,6 +224,7 @@ export async function resolveSocialHandoffToken(
   if (stored.state !== "live") return notOurs;
   const verifier = stored.pending.verifier;
   const exchangeRegionId = input.regionId ?? stored.pending.regionId;
+  let result: SocialHandoffResolution;
   try {
     const exchangeClient = await client(exchangeRegionId);
     const response = await exchangeClient.exchangeSocialHandoff({
@@ -225,18 +232,20 @@ export async function resolveSocialHandoffToken(
       verifier
     });
     if (!response.ok) {
-      return response.error.code === CODE_NOT_FOR_THIS_VERIFIER
-        ? notOurs
-        : { kind: "failed", errorCode: response.error.code };
+      result =
+        response.error.code === CODE_NOT_FOR_THIS_VERIFIER
+          ? notOurs
+          : { kind: "failed", errorCode: response.error.code };
+    } else {
+      result = {
+        kind: "session",
+        token: response.data.handoff.token,
+        regionId: response.data.handoff.regionId ?? exchangeRegionId,
+        verifier
+      };
     }
-    if (storedVerifier() !== verifier) return { kind: "ignored" };
-    return {
-      kind: "session",
-      token: response.data.handoff.token,
-      regionId: response.data.handoff.regionId ?? exchangeRegionId,
-      verifier
-    };
   } catch {
-    return { kind: "failed", errorCode: "handoff_exchange_failed" };
+    result = { kind: "failed", errorCode: "handoff_exchange_failed" };
   }
+  return isCurrentSocialHandoff(verifier) ? result : { kind: "ignored" };
 }
