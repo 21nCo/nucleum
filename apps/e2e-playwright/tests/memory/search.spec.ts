@@ -8,8 +8,8 @@ import {
   closeNodeRecord
 } from "./memory-test-helpers";
 
-function searchToken(prefix: string) {
-  return `${prefix}${randomUUID().replaceAll("-", "")}`;
+function uniqueText(text: string) {
+  return `${text} ${randomUUID().slice(0, 6)}`;
 }
 
 async function searchNotes(page: Page, query: string) {
@@ -27,12 +27,13 @@ async function openSearchMatch(
   const results = page.getByTestId("super-bar-result");
   await expect(results).toHaveCount(1, { timeout: 15_000 });
   await expect(results).toContainText(node.label);
-  await results.getByRole("button").click();
+  await results.getByTestId("link-search-result").click();
   await expect(page.getByTestId("command-bar-input")).toBeHidden();
   await expect(page).toHaveURL(
     (url) => url.searchParams.get("page") === node.id
   );
-  await expect(page.getByPlaceholder("Node title").first()).toHaveValue(
+  await expect(page.getByPlaceholder("Node title").first()).toBeVisible();
+  await expect(page.getByPlaceholder("Node title").first()).toHaveText(
     node.label
   );
   await expect(page.getByLabel("Markdown editor").first()).toContainText(body);
@@ -62,25 +63,27 @@ test.describe("memory - saved note search @browse", () => {
     seed
   }) => {
     test.setTimeout(120_000);
-    const oldBody = searchToken("Obsidian");
-    const newBody = searchToken("Quartz");
+    const oldQuery = "Obsidian ridge";
+    const newQuery = "Quartz valley";
+    const oldBody = uniqueText(`${oldQuery} expedition observations`);
+    const newBody = uniqueText(`${newQuery} mineral survey`);
     const target = await seed.memory.node({
-      label: searchToken("Atlas"),
+      label: uniqueText("Atlas journal"),
       content: oldBody
     });
-    const distractorBody = searchToken("Cobalt");
+    const distractorBody = uniqueText("Cobalt harbor weather forecast");
     const distractor = await seed.memory.node({
-      label: searchToken("Delta"),
+      label: uniqueText("Coastal recipes"),
       content: distractorBody
     });
 
-    await searchNotes(page, target.label);
+    await searchNotes(page, "Atlas journal");
     await openSearchMatch(page, target, oldBody);
     await closeNodeRecord(page);
-    await searchNotes(page, distractor.label);
+    await searchNotes(page, "Coastal recipes");
     await openSearchMatch(page, distractor, distractorBody);
     await closeNodeRecord(page);
-    await searchNotes(page, oldBody);
+    await searchNotes(page, oldQuery);
     await openSearchMatch(page, target, oldBody);
 
     const editor = page
@@ -91,15 +94,15 @@ test.describe("memory - saved note search @browse", () => {
     await expect(editor).toBeVisible();
     await editor.fill(newBody);
     await expect(editor).toHaveText(newBody);
-    await searchNotes(page, newBody);
+    await searchNotes(page, newQuery);
     await openSearchMatch(page, target, newBody);
     await closeNodeRecord(page);
     await page.reload();
     await ensureInAppOnHome(page);
 
-    await searchNotes(page, oldBody);
+    await searchNotes(page, oldQuery);
     await expectNoSearchMatches(page);
-    await searchNotes(page, newBody);
+    await searchNotes(page, newQuery);
     await openSearchMatch(page, target, newBody);
     await expect(page.getByLabel("Markdown editor").first()).not.toContainText(
       oldBody
@@ -112,22 +115,24 @@ test.describe("memory - saved note search @browse", () => {
       seed
     }, testInfo) => {
       test.setTimeout(90_000);
-      const body = searchToken("Sapphire");
+      const titleQuery = "Sapphire field journal";
+      const bodyQuery = "Alpine glacier";
+      const body = uniqueText(`${bodyQuery} research findings`);
       const node = await seed.memory.node({
-        label: searchToken("Journal"),
+        label: uniqueText(titleQuery),
         content: body
       });
-      await searchNotes(page, node.label);
+      await searchNotes(page, titleQuery);
       await openSearchMatch(page, node, body);
       await closeNodeRecord(page);
 
       const transport = new DatafnSeedTransport(page, testInfo);
       await transport.mutate("node", { operation, id: node.id });
-      await searchNotes(page, node.label);
+      await searchNotes(page, titleQuery);
       await expectNoSearchMatches(page);
       await page.reload();
       await ensureInAppOnHome(page);
-      for (const query of [node.label, body]) {
+      for (const query of [titleQuery, bodyQuery]) {
         await searchNotes(page, query);
         await expectNoSearchMatches(page);
       }
