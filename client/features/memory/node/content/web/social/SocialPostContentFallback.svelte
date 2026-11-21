@@ -188,102 +188,106 @@
   }
 </script>
 
-<div
-  class="w-full h-full mo:p-4 flex flex-col gap-6 justify-center items-center"
->
-  <button
-    class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md mo:w-full w-3/4"
-    onclick={(event) => {
-      event.stopPropagation();
-      if (node.url) {
-        navigation.openLink(node.url);
-      }
-    }}
-  >
-    {#if parent}
-      <div class="flex gap-2">
-        <div>
-          {#if !socialProfileWithImageUnavailable.has(node.contentType)}
+<div class="w-full h-full mo:p-4 flex flex-col overflow-y-auto">
+  <div class="my-auto w-full flex flex-col gap-6 items-center">
+    <button
+      class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md mo:w-full w-3/4"
+      onclick={(event) => {
+        event.stopPropagation();
+        if (node.url) {
+          navigation.openLink(node.url);
+        }
+      }}
+    >
+      {#if parent}
+        <div class="flex gap-2">
+          <div>
+            {#if !socialProfileWithImageUnavailable.has(node.contentType)}
+              <img
+                class="w-10 h-10 rounded-full"
+                src={parent.body?.profileImageUrl}
+                alt="Profile"
+              />
+            {/if}
+          </div>
+          <div class="flex flex-col items-start">
+            <div class="text-b2">
+              {parent.label ?? parent.body?.name ?? parent.body?.displayName}
+            </div>
+            <div class="text-b4 text-fgs3">
+              @{parentUsername}
+            </div>
+          </div>
+        </div>
+      {/if}
+      <div class="text-left overflow-y-auto max-h-80">
+        {contentPreview}
+      </div>
+      {#if capturedMedia.length > 0}
+        <div
+          class={isCompactGallery
+            ? "flex gap-2 w-full"
+            : "grid grid-cols-2 gap-2 w-full"}
+        >
+          {#each capturedMedia as src (src)}
             <img
-              class="w-10 h-10 rounded-full"
-              src={parent.body?.profileImageUrl}
-              alt="Profile"
+              class={isCompactGallery
+                ? "flex-1 min-w-0 h-24 object-cover rounded-md"
+                : "w-full max-h-[32rem] object-contain rounded-md"}
+              {src}
+              alt="Image from the {platformDisplay || 'social'} post"
+              loading="lazy"
+              referrerpolicy="no-referrer"
             />
-          {/if}
+          {/each}
         </div>
-        <div class="flex flex-col items-start">
-          <div class="text-b2">
-            {parent.label ?? parent.body?.name ?? parent.body?.displayName}
-          </div>
-          <div class="text-b4 text-fgs3">
-            @{parentUsername}
-          </div>
-        </div>
+      {/if}
+      <div class="text-b3 text-fgs3 text-right">
+        Posted on {platformDisplay}:
+        {getPostedAtTime()}
       </div>
-    {/if}
-    <div class="text-left overflow-y-auto max-h-80">
-      {contentPreview}
-    </div>
-    {#if capturedMedia.length > 0}
-      <div
-        class={isCompactGallery ? "flex gap-2 w-full" : "grid grid-cols-2 gap-2 w-full"}
-      >
-        {#each capturedMedia as src (src)}
-          <img
-            class={isCompactGallery
-              ? "flex-1 min-w-0 h-24 object-cover rounded-md"
-              : "w-full max-h-[32rem] object-contain rounded-md"}
-            {src}
-            alt="Image from the {platformDisplay || 'social'} post"
-            loading="lazy"
-            referrerpolicy="no-referrer"
+    </button>
+    {#if copyableText || node.url}
+      <div class="flex justify-center items-center w-full gap-4">
+        {#if node.url}
+          <Button
+            style={ButtonStyle.PLAIN}
+            label={platformDisplay
+              ? `Open on ${platformDisplay}`
+              : "Open original"}
+            isUnderlined={true}
+            size={Size.sm}
+            onclick={(e) => {
+              e.stopPropagation();
+              if (node.url) navigation.openLink(node.url);
+            }}
           />
-        {/each}
+        {/if}
+        {#if copyableText}
+          <Button
+            style={ButtonStyle.PLAIN}
+            label="Copy content"
+            isUnderlined={true}
+            size={Size.sm}
+            onclick={(e) => {
+              e.stopPropagation();
+              copyTextContent();
+            }}
+          />
+        {/if}
+        {#if onViewEmbed}
+          <Button
+            style={ButtonStyle.PLAIN}
+            label="View as embed"
+            isUnderlined={true}
+            size={Size.sm}
+            onclick={(e) => {
+              e.stopPropagation();
+              onViewEmbed?.();
+            }}
+          />
+        {/if}
       </div>
     {/if}
-    <div class="text-b3 text-fgs3 text-right">
-      Posted on {platformDisplay}:
-      {getPostedAtTime()}
-    </div>
-  </button>
-  {#if copyableText || node.url}
-    <div class="flex justify-center items-center w-full gap-4">
-      {#if node.url}
-        <Button
-          style={ButtonStyle.PLAIN}
-          label={platformDisplay ? `Open on ${platformDisplay}` : "Open original"}
-          isUnderlined={true}
-          size={Size.sm}
-          onclick={(e) => {
-            e.stopPropagation();
-            if (node.url) navigation.openLink(node.url);
-          }}
-        />
-      {/if}
-      {#if copyableText}
-        <Button
-          style={ButtonStyle.PLAIN}
-          label="Copy content"
-          isUnderlined={true}
-          size={Size.sm}
-          onclick={(e) => {
-            e.stopPropagation();
-            copyTextContent();
-          }}
-        />
-      {/if}
-      {#if onViewEmbed}
-        <Button
-          style={ButtonStyle.PLAIN}
-          label="View as embed"
-          isUnderlined={true}
-          size={Size.sm}
-          onclick={(e) => {
-            e.stopPropagation();
-            onViewEmbed?.();
-          }}
-        />
-      {/if}
-    </div>
-  {/if}
+  </div>
 </div>
