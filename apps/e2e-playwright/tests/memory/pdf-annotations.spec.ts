@@ -115,33 +115,43 @@ async function highlightPdf(page: Page) {
 
 /** Removes bookmark children before deleting the uploaded PDF through Library. */
 async function deletePdfFixture(page: Page, nodeId: string) {
-  await openPdfContent(page);
-  const highlights = page.locator('[data-annottype="HIGHLIGHT"]');
-  while ((await highlights.count()) > 0) {
-    await highlights.first().click();
-    const deleteButton = page
-      .locator("button[data-pdf-annotation-overlay]")
-      .locator("button")
-      .first();
-    await expect(deleteButton).toBeVisible();
-    const highlightId = await highlights.first().getAttribute("id");
-    await deleteButton.click();
-    await expect(page.locator(`[id="${highlightId}"]`)).toHaveCount(0);
+  const errors: unknown[] = [];
+  try {
+    await openPdfContent(page);
+    const highlights = page.locator('[data-annottype="HIGHLIGHT"]');
+    while ((await highlights.count()) > 0) {
+      await highlights.first().click();
+      const deleteButton = page
+        .locator("button[data-pdf-annotation-overlay]")
+        .locator("button")
+        .first();
+      await expect(deleteButton).toBeVisible();
+      const highlightId = await highlights.first().getAttribute("id");
+      await deleteButton.click();
+      await expect(page.locator(`[id="${highlightId}"]`)).toHaveCount(0);
+    }
+    await openDeclaredNodeBookmarksPanel(page, test.info().project.name);
+    await expect(
+      page.getByRole("button").filter({ hasText: highlightedWord })
+    ).toHaveCount(0);
+  } catch (error) {
+    errors.push(error);
   }
-  await openDeclaredNodeBookmarksPanel(page, test.info().project.name);
-  await expect(
-    page.getByRole("button").filter({ hasText: highlightedWord })
-  ).toHaveCount(0);
-  await closeNodeRecord(page);
-  await openNodesLibrary(page);
-  const thumbnail = getResourceThumbnail(page, nodeId);
-  await expect(thumbnail).toBeVisible();
-  await thumbnail.hover();
-  await getResourceContextMenuTrigger(thumbnail).click();
-  const deleteItem = page.locator('[data-context-menu-item-id="delete"]');
-  await expect(deleteItem).toBeVisible();
-  await deleteItem.click();
-  await expect(thumbnail).toBeHidden();
+  try {
+    await closeNodeRecord(page);
+    await openNodesLibrary(page);
+    const thumbnail = getResourceThumbnail(page, nodeId);
+    await expect(thumbnail).toBeVisible();
+    await thumbnail.hover();
+    await getResourceContextMenuTrigger(thumbnail).click();
+    const deleteItem = page.locator('[data-context-menu-item-id="delete"]');
+    await expect(deleteItem).toBeVisible();
+    await deleteItem.click();
+    await expect(thumbnail).toBeHidden();
+  } catch (error) {
+    errors.push(error);
+  }
+  if (errors.length) throw errors[0];
 }
 
 /** Enters a new comment through the PDF annotation toolbar. */
@@ -290,6 +300,7 @@ test.describe("memory - PDF annotation durability @creation", () => {
     const nodeId = new URL(page.url()).searchParams.get("page");
     expect(nodeId).toBeTruthy();
     let restoredContext: BrowserContext | undefined;
+    let testFailed = false;
     try {
       await highlightPdf(page);
       const { cookies } = await page.context().storageState();
@@ -306,12 +317,22 @@ test.describe("memory - PDF annotation durability @creation", () => {
       await blockExternalAuthRequests(restoredPage);
       await ensureInAppOnHome(restoredPage);
       await expectRestoredAnnotations(restoredPage, fileName);
+    } catch (error) {
+      testFailed = true;
+      throw error;
     } finally {
+      const cleanupErrors: unknown[] = [];
       try {
         await restoredContext?.close();
-      } finally {
-        await deletePdfFixture(page, nodeId!);
+      } catch (error) {
+        cleanupErrors.push(error);
       }
+      try {
+        await deletePdfFixture(page, nodeId!);
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+      if (!testFailed && cleanupErrors.length) throw cleanupErrors[0];
     }
   });
 });
