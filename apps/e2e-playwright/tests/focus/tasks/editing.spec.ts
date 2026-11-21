@@ -154,4 +154,5 @@ test("completing and reopening a task shows and clears its completed date after 
       { message: "reopening a task clears its persisted completed date" }
     )
     .toEqual({ id: task.id, completedAtUnix: null });
+  await expect(completedLabel).toBeHidden();
 });
