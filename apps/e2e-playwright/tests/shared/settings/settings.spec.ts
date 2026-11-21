@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { Product } from "@nucleum/client/config/product.type";
-import { ensureInAppOnHome } from "../../utils/helpers";
+import {
+  browserShortcutModifier,
+  ensureInAppOnHome
+} from "../../utils/helpers";
 import { expectAnyLocatorVisible } from "../../utils/locator-assertions";
 import { resolveRepoFsImportPath } from "../../utils/repo-fs";
 import {
@@ -193,7 +196,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await page
       .getByTestId("settings-sidebar")
       .getByRole("button", { name: /^Keyboard shortcuts$/i })
-      .click({ timeout: 5_000 });
+      .click({ noWaitAfter: true, timeout: 5_000 });
     const panel = page.getByTestId("keyboard-shortcut-settings");
     await expect(panel).toBeVisible({ timeout: 10_000 });
     return panel;
@@ -1180,7 +1183,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await ensureInAppOnHome(page);
     const panel = page.getByTestId("keyboard-shortcut-settings");
 
-    const modifier = process.platform === "darwin" ? "Meta" : "Control";
+    const modifier = await browserShortcutModifier(page);
     const newCombo = `${modifier}+Shift+Alt+KeyO`;
     const defaultCombo = `${modifier}+KeyK`;
 
@@ -1208,7 +1211,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
     const panel = page.getByTestId("keyboard-shortcut-settings");
-    const modifier = process.platform === "darwin" ? "Meta" : "Control";
+    const modifier = await browserShortcutModifier(page);
     const newCombo = `${modifier}+Shift+Alt+KeyK`;
     const defaultCombo = `${modifier}+Shift+KeyK`;
 
@@ -1234,7 +1237,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
     const panel = page.getByTestId("keyboard-shortcut-settings");
-    const modifier = process.platform === "darwin" ? "Meta" : "Control";
+    const modifier = await browserShortcutModifier(page);
     const newCombo = `${modifier}+Shift+Alt+KeyE`;
     const defaultCombo = `${modifier}+KeyE`;
 
@@ -1268,16 +1271,17 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
+    const calendarUrl = page.url();
     await page
       .getByRole("button", { name: /^Overview$/i })
       .first()
       .click({ timeout: 8_000 });
-    await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
-      timeout: 10_000
-    });
+    await expect(page).toHaveURL((url) =>
+      /^\/overview(?:\/|$)/.test(url.pathname)
+    );
 
     const panel = page.getByTestId("keyboard-shortcut-settings");
-    const modifier = process.platform === "darwin" ? "Meta" : "Control";
+    const modifier = await browserShortcutModifier(page);
     const newCombo = `${modifier}+Shift+Alt+KeyB`;
     const defaultCombo = `${modifier}+Shift+KeyB`;
 
@@ -1285,11 +1289,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await changeShortcutAndClose(page, panel, "Go back", newCombo);
 
     await page.keyboard.press(newCombo);
-    await expect(
-      page.getByRole("button", { name: /^Today$/i }).first()
-    ).toBeVisible({
-      timeout: 10_000
-    });
+    await expect(page).toHaveURL(calendarUrl);
 
     await resetShortcutAndClose(page, "Go back", defaultCombo);
   });
@@ -1303,25 +1303,21 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
+    const calendarUrl = page.url();
     await page
       .getByRole("button", { name: /^Overview$/i })
       .first()
       .click({ timeout: 8_000 });
-    await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
-      timeout: 10_000
-    });
-
-    await page.keyboard.press(
-      process.platform === "darwin" ? "Meta+Shift+KeyB" : "Control+Shift+KeyB"
+    await expect(page).toHaveURL((url) =>
+      /^\/overview(?:\/|$)/.test(url.pathname)
     );
-    await expect(
-      page.getByRole("button", { name: /^Today$/i }).first()
-    ).toBeVisible({
-      timeout: 8_000
-    });
+    const overviewUrl = page.url();
+
+    const modifier = await browserShortcutModifier(page);
+    await page.keyboard.press(`${modifier}+Shift+KeyB`);
+    await expect(page).toHaveURL(calendarUrl);
 
     const panel = page.getByTestId("keyboard-shortcut-settings");
-    const modifier = process.platform === "darwin" ? "Meta" : "Control";
     const newCombo = `${modifier}+Shift+Alt+KeyF`;
     const defaultCombo = `${modifier}+Shift+KeyF`;
 
@@ -1329,9 +1325,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
     await changeShortcutAndClose(page, panel, "Go forward", newCombo);
 
     await page.keyboard.press(newCombo);
-    await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
-      timeout: 10_000
-    });
+    await expect(page).toHaveURL(overviewUrl);
 
     await resetShortcutAndClose(page, "Go forward", defaultCombo);
   });
