@@ -208,11 +208,12 @@ async function embedOAuthSignin(token: string) {
 
 /**
  * Signs the app in with an AuthFn session (looked up with `token` unless
- * `session` is given). `isCurrent`, when passed, is checked before anything is
- * stored, before the stored session is written (restoring the previous token
- * if it turned false) and again right before the app state and native shell
- * are updated; once it is false the call returns false without either. The
- * newer sign-in that made it false then writes its own session over storage.
+ * `session` is given). `isCurrent`, when passed, is checked immediately before
+ * every storage write and before the app state and native shell are updated.
+ * Once it is false the call returns false and writes nothing more, not even a
+ * rollback, because the newer sign-in that made it false owns storage. (In the
+ * app's WebView the writes go to localStorage synchronously, so a check and
+ * its write can't be interleaved.)
  */
 async function signInFromAuthFnSession(params?: {
   token?: string;
@@ -224,6 +225,11 @@ async function signInFromAuthFnSession(params?: {
   isCurrent?: () => boolean;
 }) {
   const isStale = () => (params?.isCurrent ? !params.isCurrent() : false);
+  const writeIfCurrent = async (write: () => Promise<unknown>) => {
+    if (isStale()) return false;
+    await write();
+    return true;
+  };
   if (isStale()) return false;
   const shouldPersistToken =
     params?.persistToken ?? shouldUseAuthFnBearerSession();
@@ -232,12 +238,20 @@ async function signInFromAuthFnSession(params?: {
     : undefined;
   const hasTokenFromResponse = Boolean(params?.token?.trim());
   if (shouldPersistToken && hasTokenFromResponse && params?.token) {
-    await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, params.token);
+    const token = params.token;
+    if (!(await writeIfCurrent(() => clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, token)))) {
+      return false;
+    }
   } else if (!shouldPersistToken) {
-    await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
+    if (!(await writeIfCurrent(() => clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN)))) {
+      return false;
+    }
   }
   if (params?.regionId) {
-    await clientStorage.set(ClientStorageKey.REGION, params.regionId);
+    const regionId = params.regionId;
+    if (!(await writeIfCurrent(() => clientStorage.set(ClientStorageKey.REGION, regionId)))) {
+      return false;
+    }
   }
 
   let authSession = params?.session;
@@ -258,7 +272,8 @@ async function signInFromAuthFnSession(params?: {
     }
   }
 
-  if (!authSession || isStale()) {
+  if (isStale()) return false;
+  if (!authSession) {
     if (shouldPersistToken && hasTokenFromResponse) {
       if (previousAuthFnToken) {
         await clientStorage.set(
@@ -275,17 +290,17 @@ async function signInFromAuthFnSession(params?: {
   const sessionToken = shouldPersistToken
     ? (params?.token ?? previousAuthFnToken ?? undefined)
     : undefined;
-  if (shouldPersistToken && sessionToken) {
-    await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, sessionToken);
-  } else {
-    await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
-  }
-  await clientStorage.remove(ClientStorageKey.STOKEN);
-  await clientStorage.set(ClientStorageKey.USER, authSession);
-
   const userInfo = resolveUserInfoFromAuthFnSession(authSession);
-  await clientStorage.set(ClientStorageKey.USER_INFO, userInfo);
-  if (isStale()) return false;
+  const committed =
+    (await writeIfCurrent(() =>
+      shouldPersistToken && sessionToken
+        ? clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, sessionToken)
+        : clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN)
+    )) &&
+    (await writeIfCurrent(() => clientStorage.remove(ClientStorageKey.STOKEN))) &&
+    (await writeIfCurrent(() => clientStorage.set(ClientStorageKey.USER, authSession))) &&
+    (await writeIfCurrent(() => clientStorage.set(ClientStorageKey.USER_INFO, userInfo)));
+  if (!committed || isStale()) return false;
   postToEmbed({ token: sessionToken, userInfo });
   account.update(() => ({
     token: sessionToken,

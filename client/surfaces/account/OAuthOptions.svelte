@@ -14,6 +14,8 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
+  import { clientStorage } from "@nucleum/persistence/client-storage";
+  import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
   import {
     beginSocialHandoff,
     cancelSocialHandoff,
@@ -89,7 +91,11 @@
           return;
         }
 
-        const startRegion = region;
+        const chosenRegion = region;
+        const startRegion =
+          chosenRegion ??
+          (await clientStorage.get(ClientStorageKey.REGION)) ??
+          "insouth";
         const handoffMode = resolveHandoffMode();
         const handoffChallenge =
           handoffMode === "session-token"
