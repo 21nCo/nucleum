@@ -90,7 +90,7 @@
 {:else}
   <SocialPostContentFallback
     {node}
-    onViewEmbed={hasLiveSocialWidget(node.contentType, $context.isEmbed)
+    onViewEmbed={shouldShowWidget() && node.url && !error
       ? () => {
           isShowPermanentCopy = !isShowPermanentCopy;
         }

@@ -14,8 +14,6 @@ import {
 
 describe("hasLiveSocialWidget", () => {
   it("never renders Mastodon posts with the provider widget", () => {
-    // Mastodon's embed page needs allow-same-origin, and its embed.js re-adds
-    // that flag to frames in the app document, so the app copy is shown.
     expect(hasLiveSocialWidget(NodeType.MASTODON_POST)).toBe(false);
     expect(hasLiveSocialWidget(NodeType.MASTODON_POST, true)).toBe(false);
   });
