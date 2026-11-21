@@ -1577,8 +1577,15 @@ async function logDelivered(
   }
 }
 
-/** A queued file at the generation a restore wrote or found it. */
-type QueuedGeneration = { fileId: string; generation: string };
+/**
+ * A queued file at the generation a restore wrote or found it, and whether
+ * the backup carried its thumbnail.
+ */
+type QueuedGeneration = {
+  fileId: string;
+  generation: string;
+  hasThumbnail?: boolean;
+};
 
 /** The files a restore session put or kept in a queue (see stageRestoredFiles). */
 export type RestoredQueuedFiles = {
@@ -1664,7 +1671,9 @@ export async function stageRestoredFiles(
           found.state === "none" && !(logged && delivery.isDone);
         if (!isKept && !isWritten) continue;
         const generation = isKept ? found.generation : crypto.randomUUID();
-        (isKept ? staged.kept : staged.written).push({ fileId, generation });
+        const hasThumbnail = Boolean(copy.thumbnail);
+        const restored = { fileId, generation, hasThumbnail };
+        (isKept ? staged.kept : staged.written).push(restored);
         await holdEntry(staged, fileId, generation, isWritten);
         const again = hasWebLocks() ? found : await readFoundEntry(dir, fileId);
         if (
@@ -1713,9 +1722,12 @@ export async function renewRestoredFiles(staged: RestoredQueuedFiles) {
   const heldUntil = Date.now() + RESTORE_HOLD_LIFETIME_MS;
   const signal = new AbortController().signal;
   await withQueueLock(staged.dir, signal, async () => {
-    for (const { fileId, generation } of [...staged.written, ...staged.kept]) {
+    for (const restored of [...staged.written, ...staged.kept]) {
+      const { fileId, generation, hasThumbnail } = restored;
       const restore = await readRestore(staged.dir, fileId);
-      if (!restore && (await isDelivered(staged.dir, fileId))) continue;
+      if (!restore && (await isDelivered(staged.dir, fileId, hasThumbnail))) {
+        continue;
+      }
       if (!restore?.isPublished || restore.generation !== generation) {
         throw new Error("A queued file changed while the backup was restored");
       }
@@ -1730,14 +1742,15 @@ export async function renewRestoredFiles(staged: RestoredQueuedFiles) {
 
 /**
  * Whether the upload log or a delivered row (see readDelivery) confirms a
- * file's original delivered, once it left the queue (the replay removes a
- * file only once its thumbnail needs no other request); a read error
- * rejects.
+ * file delivered once it left the queue: its original and, when the backup
+ * carried one (`hasThumbnail`), its thumbnail sent, so a restore whose
+ * thumbnail no delivery records rejects instead of dropping it; a read
+ * error rejects.
  */
-async function isDelivered(dir: string, fileId: string) {
-  const delivery = await readDelivery(dir, fileId, []);
-  if (delivery.original === undefined) throw delivery.error;
-  return Boolean(delivery.original);
+async function isDelivered(dir: string, fileId: string, hasThumbnail = false) {
+  const delivery = await readDelivery(dir, fileId, [], hasThumbnail);
+  if (!delivery.isKnown) throw delivery.error;
+  return Boolean(delivery.original) && delivery.isDone;
 }
 
 /**

@@ -8132,4 +8132,40 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
+
+  it("rejects, importing nothing, a restore paused past its hold whose queued file another tab removed with only its original recorded delivered, and stages the thumbnail again on the next restore without uploading the original again", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    const entry = `queued_${record.fileId}`;
+    preflight.during = async () => {
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS + 1_000
+      );
+      isOnline = true;
+      await replayInOtherTab();
+      isOnline = false;
+      expect(opfs.list(QUEUE_A)).toEqual([]);
+      const root = await opfs.getDirectory();
+      const log = await root.getDirectoryHandle(UPLOAD_LOG);
+      await log.removeEntry(`${encodeURIComponent(record.fileId)}~thumbnail`);
+    };
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("A queued file changed while the backup was restored");
+    preflight.during = null;
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    goOnline();
+    await replayed(QUEUE_A);
+
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(2);
+  });
 });
