@@ -82,7 +82,7 @@ const SETTLED_PREFIX = "settled-";
 const OWN_PREFIX = "own-";
 /**
  * Binds a restored file to the queue's account (`bound-<generation>~<digest
- * of the owner, see toBoundMark>`, the owner's claim) when its replay took the file on a record's reference
+ * of the owner>~<order>`, see toBoundMark, the owner's claim) when its replay took the file on a record's reference
  * while no adoption could be recorded, written before any request (see
  * isBound), apart from the started markers that tell whether one was sent.
  */
@@ -2753,15 +2753,21 @@ async function bindEntry(
   { owner }: QueuedFileReferences,
   foreign: string[]
 ) {
-  const name = toBoundMark(generation, owner);
+  const entryName = toEntryName(fileId);
+  const names = await readNames(await getEntryDir(dir, entryName, true));
+  const marks = names.filter((name) => isBoundMark(name, generation));
+  const at = Math.max(Date.now(), ...marks.map((name) => toMarkOrder(name) + 1));
+  const name = `${toBoundMark(generation, owner)}~${at}`;
   const text = JSON.stringify({ ...owner, foreign });
-  await writeEntryFile(dir, toEntryName(fileId), name, text);
+  await writeEntryFile(dir, entryName, name, text);
 }
 
 /**
  * Names the mark binding a generation to an account at its FileFn authority
  * (see BOUND_PREFIX), with their digest, so a mark whose contents were never
- * written still names who began it (see isBound).
+ * written still names who began it (see isBound); bindEntry appends a
+ * number above every earlier mark's of the generation, so the newest
+ * binding alone decides (see toMarkOrder).
  */
 function toBoundMark(generation: string, { userId, baseUrl }: QueuedFileClaim) {
   return `${BOUND_PREFIX}${generation}~${toRowDigest(`${userId}\n${baseUrl}`)}`;
@@ -2771,6 +2777,12 @@ function toBoundMark(generation: string, { userId, baseUrl }: QueuedFileClaim) {
 function isBoundMark(name: string, generation: string) {
   const mark = `${BOUND_PREFIX}${generation}`;
   return name === mark || name.startsWith(`${mark}~`);
+}
+
+/** The order of a binding mark (see toBoundMark), 0 for one without. */
+function toMarkOrder(name: string) {
+  const order = Number(name.split("~")[2]);
+  return Number.isSafeInteger(order) && order > 0 ? order : 0;
 }
 
 /**
@@ -2784,8 +2796,10 @@ function isBoundMark(name: string, generation: string) {
  * replay began, as for a rollback (see rollBackEntry), once a record
  * referenced the file, for the account and FileFn authority its name
  * digests only (see toBoundMark); since it does not tell which foreign rows
- * it found, any foreign row of the generation protects it. A mark that
- * cannot be read rejects.
+ * it found, any foreign row of the generation protects it. Only the newest
+ * mark counts, so an earlier binding at another authority, read or not,
+ * never authorizes removing a file a later one took (two newest marks
+ * count as none). A mark that cannot be read rejects.
  */
 async function isBound(
   dir: string,
@@ -2795,23 +2809,20 @@ async function isBound(
 ) {
   const entryName = toEntryName(fileId);
   const names = await readNames(await getEntryDir(dir, entryName, true));
-  for (const name of names.filter((mark) => isBoundMark(mark, generation))) {
-    const text = await readEntryText(dir, entryName, name, true);
-    const claim = parseJson<QueuedFileClaim & { foreign?: unknown }>(
-      text,
-      (value) => typeof value === "object" && value !== null && isClaim(value)
-    );
-    if (!claim) {
-      if (name === toBoundMark(generation, owner) && !foreignRows.length) {
-        return true;
-      }
-      continue;
-    }
-    const found = Array.isArray(claim.foreign) ? claim.foreign : [];
-    const isProtected = foreignRows.some((row) => !found.includes(row));
-    if (isSameClaim(claim, owner) && !isProtected) return true;
-  }
-  return false;
+  const marks = names.filter((name) => isBoundMark(name, generation));
+  const newest = Math.max(0, ...marks.map(toMarkOrder));
+  const latest = marks.filter((name) => toMarkOrder(name) === newest);
+  const own = `${toBoundMark(generation, owner)}~${newest}`;
+  if (latest.length !== 1 || (newest && latest[0] !== own)) return false;
+  const text = await readEntryText(dir, entryName, latest[0], true);
+  const claim = parseJson<QueuedFileClaim & { foreign?: unknown }>(
+    text,
+    (value) => typeof value === "object" && value !== null && isClaim(value)
+  );
+  if (!claim) return latest[0] === own && !foreignRows.length;
+  const found = Array.isArray(claim.foreign) ? claim.foreign : [];
+  const isProtected = foreignRows.some((row) => !found.includes(row));
+  return isSameClaim(claim, owner) && !isProtected;
 }
 
 /**

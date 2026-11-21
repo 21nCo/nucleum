@@ -12,6 +12,7 @@ import {
   type QueuedFileCopy
 } from "@nucleum/shared-state/files/file-queue";
 import { get } from "svelte/store";
+import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
   captureFileQueueClaim,
   captureSettledFileFnOwner,
@@ -175,21 +176,22 @@ async function restoreInRuntime(
   if (!file.size) throw new Error("Backup file is empty");
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
-  const view = toRecordsView(get(datafnRuntime));
-  const owner = await captureSettledFileFnOwner();
-  const claim =
-    owner?.userId === userId ? await captureFileQueueClaim(owner) : undefined;
+  const runtime = get(datafnRuntime);
+  const view = toRecordsView(runtime);
   const { records, fileQueue } = await readBackup(file);
   if (fileQueue?.files.length && !isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
   }
+  const authority = fileQueue?.files.length
+    ? await resolveRecordsAuthority(userId, runtime?.remoteUrl)
+    : undefined;
   const isOwnAccount = Boolean(fileQueue) && userId === fileQueue?.userId;
   const staged =
     fileQueue &&
     (await stageRestoredFiles(
       resolveAccountFileQueueDir(fileQueue.userId),
       fileQueue.files,
-      { isOwnAccount, account: userId, view, authority: claim?.baseUrl }
+      { isOwnAccount, account: userId, view, authority }
     ));
   const isChanged = () =>
     datafn.currentNamespace() !== namespace || isSwitched();
@@ -219,6 +221,32 @@ async function restoreInRuntime(
     }
   }
   if (isOwnAccount) await uploadQueuedFiles();
+}
+
+/**
+ * Returns the FileFn authority of the account whose records the restore
+ * imports, when the DataFn authority they sync with (`remoteUrl`) is that
+ * same authority, else undefined (also when it cannot be read), so a
+ * restore's protection of a file is only moved between the account's kinds
+ * of DataFn scope at the authority its records sync with (see
+ * stageRestoredFiles).
+ */
+async function resolveRecordsAuthority(
+  userId: string | null,
+  remoteUrl: string | null | undefined
+) {
+  try {
+    const owner = await captureSettledFileFnOwner();
+    if (!owner || owner.userId !== userId) return undefined;
+    const claim = await captureFileQueueClaim(owner);
+    const base = claim?.baseUrl.replace(/\/files\/?$/, "");
+    return base && remoteUrl?.replace(/\/datafn\/?$/, "") === base
+      ? claim?.baseUrl
+      : undefined;
+  } catch (error) {
+    logger.warn({ at: "backup.restore.authority", error });
+    return undefined;
+  }
 }
 
 /**

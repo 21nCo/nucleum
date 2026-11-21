@@ -8275,7 +8275,11 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
    * user-b's local copy, retiring it unless `isCloneLeft`, and returns
    * user-b's FileFn authority and the local copy's name.
    */
-  async function keepAndLeaveScope(isDirect: boolean, isCloneLeft: boolean) {
+  async function keepAndLeaveScope(
+    isDirect: boolean,
+    isCloneLeft: boolean,
+    fileFnRegion = "useast"
+  ) {
     const { backup } = await keepForAnotherAccount(
       "user-b",
       async (records) => {
@@ -8283,6 +8287,9 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
         throw new Error("The page closed");
       }
     );
+    const session = cloudAccount("user-b");
+    const region = fileFnRegion;
+    account.set({ ...session, userInfo: { ...session.userInfo!, region } });
     const authority = AUTHORITY_URL.replace(/\/datafn$/, "/files");
     const fileQueue = await import("@nucleum/shared-state/files/file-queue");
     const direct = fileQueue.toRecordsView({
@@ -8514,6 +8521,127 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
 
       const isKept = isProtected || Boolean(other);
       expect(opfs.list(QUEUE_A)).toEqual(isKept ? [entry] : []);
+      expect(sdk.started).toEqual([]);
+    }
+  );
+
+  it("keeps a local copy's row for its direct authority when the restore's FileFn authority was not the authority its DataFn records synced with", async () => {
+    const { resolveFileFnBaseUrl } =
+      await import("@nucleum/shared-state/files/filefn-client");
+    expect(resolveFileFnBaseUrl("euwest")).toBe(EUWEST_URL);
+    await keepAndLeaveScope(false, false, "euwest");
+
+    for (const baseUrl of [
+      EUWEST_URL,
+      AUTHORITY_URL.replace(/\/datafn$/, "/files")
+    ]) {
+      await replayFresh(QUEUE_B, (tab) => ({
+        owner: { userId: "user-b", baseUrl },
+        isCurrent: () => true,
+        sync: async () => true,
+        isReferenced: async () => false,
+        discard: async () => undefined,
+        view: () =>
+          tab.toRecordsView({
+            namespace: "user:user-b",
+            remoteUrl: AUTHORITY_URL,
+            storageDbName: null
+          })
+      }));
+    }
+
+    expect(foreignRows()).toHaveLength(1);
+  });
+
+  it("restores a backup carrying no queued file while the account's FileFn authority cannot be read", async () => {
+    await bootData(cloudAccount("user-a"));
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    const session = cloudAccount("user-a");
+    const read = clientStorage.get.bind(clientStorage);
+    vi.spyOn(clientStorage, "get").mockImplementation(async (key) =>
+      key === ClientStorageKey.REGION
+        ? Promise.reject(new Error("The region cannot be read"))
+        : read(key)
+    );
+    account.set({
+      ...session,
+      userInfo: { ...session.userInfo!, region: undefined as never }
+    });
+
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).resolves.toBeUndefined();
+  });
+
+  it.each([
+    [
+      "never lets an earlier binding at another FileFn authority remove a file a later binding took",
+      false
+    ],
+    [
+      "lets the later binding remove the file once its record is deleted, though the earlier binding's mark cannot be read",
+      true
+    ]
+  ])(
+    "binds a restored file its replays took at two FileFn authorities by the later binding only: %s",
+    async (_, isLater) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      const backup = await backupFile();
+      await clearBrowser();
+      await bootData(cloudAccount("user-b"));
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      const useast = AUTHORITY_URL.replace(/\/datafn$/, "/files");
+      const references =
+        (baseUrl: string, isReferenced: boolean) =>
+        (): QueuedFileReferences => ({
+          owner: { userId: "user-a", baseUrl },
+          isCurrent: () => true,
+          sync: async () => true,
+          isReferenced: async () => isReferenced,
+          discard: async (fileId) => {
+            sdk.deleted.push(fileId);
+          }
+        });
+      const root = await opfs.getDirectory();
+      await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+      getDirectory = failingWrites(
+        (path) =>
+          path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+            ? new Error("The adoption cannot be recorded")
+            : undefined,
+        undefined,
+        undefined,
+        isLogUnreadable
+      );
+      await replayFresh(QUEUE_A, references(useast, true));
+      await replayFresh(QUEUE_A, references(EUWEST_URL, true));
+      const marks = opfs
+        .list(QUEUE_A, entry)
+        .filter((name) => name.startsWith("bound-"))
+        .sort((a, b) => Number(a.split("~")[2]) - Number(b.split("~")[2]));
+      expect(marks).toHaveLength(2);
+      getDirectory = failingWrites(
+        () => undefined,
+        undefined,
+        undefined,
+        (path) =>
+          isLater && path[2] === marks[0]
+            ? new DOMException("The mark cannot be read", "NotReadableError")
+            : undefined
+      );
+
+      await replayFresh(
+        QUEUE_A,
+        references(isLater ? EUWEST_URL : useast, false)
+      );
+      getDirectory = opfs.getDirectory;
+
+      expect(opfs.list(QUEUE_A)).toEqual(isLater ? [] : [entry]);
       expect(sdk.started).toEqual([]);
     }
   );
