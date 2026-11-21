@@ -157,13 +157,7 @@
     {/snippet}
   </ContextZoneContent>
   {#if selectedPanel === OverviewPanel.DASHBOARD}
-    <div class="w-full h-full flex">
-      <div class="w-80 h-full text-fgs3 text-b2 p-3 border-r border-brs3">
-        <!-- TODO -->
-        dashboard sidebar
-      </div>
-      <AnalyticsV2 />
-    </div>
+    <AnalyticsV2 />
   {:else if selectedPanel === OverviewPanel.GRAPH || selectedPanel === OverviewPanel.MAP}
     <MemotronOverview />
   {:else}
