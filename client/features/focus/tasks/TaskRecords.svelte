@@ -248,7 +248,7 @@
           ? `You completed ${completedTasksCount > 1 ? "all your" : "your"} ${completedTasksCount} task${completedTasksCount > 1 ? "s" : ""}!`
           : isPreventAddNew
             ? "You can't add tasks to this objective when it is archived/deleted."
-            : "Choose a different filters or create a task"}
+            : "Choose different filters or create a task"}
       actionText={accessPoint !== ResourceAccessPoint.CALENDAR &&
       !isPreventAddNew &&
       !$view.isConstrainedWidth
