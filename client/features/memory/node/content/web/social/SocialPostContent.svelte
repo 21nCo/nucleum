@@ -26,7 +26,6 @@
     node: INode;
     accessPoint?: ResourceAccessPoint;
   } = $props();
-  void accessPoint;
 
   const nodeContext = getContext<any>(Context.NODE);
   let error = $state("");
@@ -92,6 +91,7 @@
 {:else}
   <SocialPostContentFallback
     {node}
+    {accessPoint}
     onViewEmbed={widgetUrl
       ? () => {
           isShowPermanentCopy = !isShowPermanentCopy;

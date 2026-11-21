@@ -71,7 +71,10 @@
     resolveCapturedMediaUrls(node.contentType, node.metadata)
   );
   let copyableText = $derived(resolveCopyablePostText(node));
-  void accessPoint;
+  /** Inside a Markdown embed the preview is height-capped, so images take one compact row. */
+  const isCompactGallery = $derived(
+    accessPoint === ResourceAccessPoint.MARKDOWN_EMBED
+  );
 
   onMount(async () => {
     resolveParentUsername();
@@ -222,10 +225,14 @@
       {contentPreview}
     </div>
     {#if capturedMedia.length > 0}
-      <div class="flex gap-2 w-full">
+      <div
+        class={isCompactGallery ? "flex gap-2 w-full" : "grid grid-cols-2 gap-2 w-full"}
+      >
         {#each capturedMedia as src (src)}
           <img
-            class="flex-1 min-w-0 h-24 object-cover rounded-md"
+            class={isCompactGallery
+              ? "flex-1 min-w-0 h-24 object-cover rounded-md"
+              : "w-full max-h-[32rem] object-contain rounded-md"}
             {src}
             alt="Image from the {platformDisplay || 'social'} post"
             loading="lazy"
