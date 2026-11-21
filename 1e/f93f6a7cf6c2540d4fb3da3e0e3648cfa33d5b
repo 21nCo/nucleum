@@ -1,0 +1,21 @@
+services/debug-sink/src/index.ts
+  s_c2d6ef2e96fafa::t_4508e969c37499 59,123,233-234,236,242-251,256-259
+tests/unit/debug-sink/debug-sink-security.spec.ts
+  s_c2d6ef2e96fafa::t_a8832764eda18f 11-13,16-20,23-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1ef93f6a7cf6c2540d4fb3da3e0e3648cfa33d5b",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

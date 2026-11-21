@@ -1,0 +1,26 @@
+client/features/memory/node/content/web/social/embed-html.test.ts
+  s_c2d6ef2e96fafa::t_9e4adc17d45063 51,109-121
+  s_c2d6ef2e96fafa::t_2cf15ab4736bf1 122-123
+client/features/memory/node/content/web/social/embed-html.ts
+  s_c2d6ef2e96fafa::t_19037ecb1998d4 5-9,11-21,78-79,125-130,142
+tests/unit/frontend/security-headers.spec.ts
+  s_c2d6ef2e96fafa::t_f2f05a2a0e704d 37
+services/frontend/scripts/frontend-config.mjs
+  s_c2d6ef2e96fafa::t_afd070dd3955dd 249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3d00896c735a0ed5a5776fcc412ed030553260b6",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}

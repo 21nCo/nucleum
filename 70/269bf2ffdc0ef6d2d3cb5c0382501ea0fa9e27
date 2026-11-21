@@ -1,5 +1,5 @@
 client/shared-state/files/file-queue.ts
-  s_0b0647615a23f7::t_aa0a95136d08f8 937-943,947
+  s_0b0647615a23f7::t_aa0a95136d08f8 937-943,937-938,940-943,947
 client/shared-state/files/filefn-client.ts
   s_0b0647615a23f7::t_08f95041988df6 24,38-39
 client/shared-state/files/file-queue.test.ts

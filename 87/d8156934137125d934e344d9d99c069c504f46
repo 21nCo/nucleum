@@ -4,7 +4,7 @@ client/shared-state/files/file-upload.account-queue.test.ts
   s_f35b422006faeb::t_e521b29db744d4 620,637-640
 client/shared-state/files/file-queue.ts
   s_ace82070dcb8c7::t_664d92d81fb84e 400-402
-  s_b66d0e9dd4fae0::t_23ad33841ce3eb 495,538-540,687-688
+  s_b66d0e9dd4fae0::t_23ad33841ce3eb 495,538-540,538,687-688
 client/shared-state/files/file-upload.ts
   s_f35b422006faeb::t_56568fd84f6db9 33-34,249,304,334,336
 ---

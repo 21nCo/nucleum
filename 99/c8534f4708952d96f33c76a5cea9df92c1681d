@@ -1,0 +1,25 @@
+ios/packages/NucleumNativeKit/Checks/NativeTrustChecks.swift
+  s_c2d6ef2e96fafa::t_452efa603d6a9a 59
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/Views/BaseView.swift
+  s_c2d6ef2e96fafa::t_8a95ff73da9c24 71-77,225-240,261
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/Views/BaseViewForMac.swift
+  s_c2d6ef2e96fafa::t_d09413ce4d1d98 58-64,202-217,233
+ios/packages/NucleumNativeKit/Sources/NucleumNativeKit/WebView/WebViewCommon.swift
+  s_c2d6ef2e96fafa::t_09332eadf1c224 285-289
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "99c8534f4708952d96f33c76a5cea9df92c1681d",
+  "prompts": {},
+  "sessions": {
+    "s_c2d6ef2e96fafa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "06fe544c-d9eb-46b8-b581-824711a616bb",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
