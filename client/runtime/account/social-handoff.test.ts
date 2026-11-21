@@ -171,6 +171,25 @@ describe("resolveSocialHandoffToken", () => {
     expect(regions).toEqual(["useast", "euwest"]);
   });
 
+  it("discards a sign-in that a newer one replaced while its exchange ran", async () => {
+    await beginSocialHandoff({ regionId: "useast", now: NOW });
+    let answer: (value: ExchangeResult) => void = () => {};
+    const client = async () =>
+      ({
+        exchangeSocialHandoff: () =>
+          new Promise<ExchangeResult>((resolve) => {
+            answer = resolve;
+          })
+      }) as unknown as SocialHandoffExchangeClient;
+
+    const pending = resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, client, NOW);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await beginSocialHandoff({ regionId: "euwest", now: NOW + 1000 });
+    answer(exchanged("test-session-token", "useast"));
+
+    expect(await pending).toEqual({ kind: "ignored" });
+  });
+
   it("reports a code with no matching sign-in on a shell that doesn't broadcast", async () => {
     const single = exchangeClient(exchanged("test-session-token", null));
     expect(
@@ -274,7 +293,7 @@ describe("resolveSocialHandoffToken", () => {
     expect(await beginSocialHandoff({ now: NOW + 1000 })).toBe(challenge);
   });
 
-  it("finishing a slow sign-in never clears a newer sign-in's verifier", async () => {
+  it("a slow, replaced sign-in neither signs in nor clears the newer verifier", async () => {
     await beginSocialHandoff({ now: NOW });
     let answer: (value: ExchangeResult) => void = () => {};
     const client = async () =>
@@ -292,9 +311,8 @@ describe("resolveSocialHandoffToken", () => {
     const newer = storedVerifier();
     answer(exchanged("test-session-token", null));
 
-    const result = await pending;
-    expect(result.kind).toBe("session");
-    if (result.kind === "session" && result.verifier) finishSocialHandoff(result.verifier);
+    expect(await pending).toEqual({ kind: "ignored" });
+    finishSocialHandoff("test-older-verifier");
     expect(storedVerifier()).toBe(newer);
   });
 

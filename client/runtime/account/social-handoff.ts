@@ -104,22 +104,29 @@ function writeSocialHandoff(pending: PendingSocialHandoff) {
   );
 }
 
+/** The verifier stored in this window, live or expired, if any. */
+function storedVerifier(): string | undefined {
+  const stored = getBrowserStorage("sessionStorage")?.getItem(
+    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF
+  );
+  if (!stored) return undefined;
+  try {
+    const verifier = (JSON.parse(stored) as Partial<PendingSocialHandoff>).verifier;
+    return typeof verifier === "string" ? verifier : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Forgets the verifier of an exchanged sign-in once the app is signed in with
  * it. Clears only if it is still `verifier`, not a newer sign-in's.
  */
 export function finishSocialHandoff(verifier: string) {
-  const storage = getBrowserStorage("sessionStorage");
-  const stored = storage?.getItem(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
-  if (!stored) return;
-  try {
-    if ((JSON.parse(stored) as Partial<PendingSocialHandoff>).verifier !== verifier) {
-      return;
-    }
-  } catch {
-    return;
-  }
-  storage?.removeItem(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
+  if (storedVerifier() !== verifier) return;
+  getBrowserStorage("sessionStorage")?.removeItem(
+    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF
+  );
 }
 
 /**
@@ -183,7 +190,8 @@ export function isSocialHandoffCode(input: {
  * this window's pending verifier and never used as a session. The verifier
  * stays in place while the exchange runs; the caller passes the returned
  * `verifier` to `finishSocialHandoff` once the app is signed in (a retry
- * reuses it until then). The exchange goes to the region the callback names,
+ * reuses it until then). A result for a sign-in that a newer one in this window
+ * replaced while the exchange ran is discarded. The exchange goes to the region the callback names,
  * or else the one the sign-in was started in. A window with no live sign-in, or whose
  * verifier the code wasn't issued for, ignores it. Any other value is a
  * session token, which native Apple sign-in and sign-ins started without a
@@ -221,6 +229,7 @@ export async function resolveSocialHandoffToken(
         ? notOurs
         : { kind: "failed", errorCode: response.error.code };
     }
+    if (storedVerifier() !== verifier) return { kind: "ignored" };
     return {
       kind: "session",
       token: response.data.handoff.token,
