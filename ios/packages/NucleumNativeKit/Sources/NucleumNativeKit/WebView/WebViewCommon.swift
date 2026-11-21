@@ -233,8 +233,8 @@ enum NativeTrust {
   /// its account hosts and in-page schemes. OAuth provider pages keep loading in
   /// the WebView when the app itself navigates there (its existing embedded
   /// sign-in flows), but an embedded frame cannot send the app to them. Other
-  /// web, mail and phone links open in the system browser; anything else is
-  /// cancelled.
+  /// web, mail and phone links from the main frame open in the system browser;
+  /// an embedded frame cannot open them, and anything else is cancelled.
   static func navigationDecision(
     for url: URL,
     targetIsMainFrame: Bool?,
@@ -271,7 +271,7 @@ enum NativeTrust {
       return .allow
     }
     if scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "tel" {
-      return .openExternally
+      return sourceIsMainFrame ? .openExternally : .cancel
     }
     return .cancel
   }
@@ -365,20 +365,24 @@ extension NativeTrust {
     for navigationAction: WKNavigationAction, loadedURL: URL?
   ) -> (NavigationDecision, URL?) {
     guard let url = navigationAction.request.url else { return (.allow, nil) }
+    let sourceFrame = navigationAction.sourceFrame as WKFrameInfo?
+    let trustedOrigins = appTrustedOrigins(loadedURL: loadedURL)
     let decision = navigationDecision(
       for: url,
       targetIsMainFrame: navigationAction.targetFrame?.isMainFrame,
-      sourceIsMainFrame: navigationAction.sourceFrame.isMainFrame,
-      trustedOrigins: appTrustedOrigins(loadedURL: loadedURL),
+      sourceIsMainFrame: sourceFrame?.isMainFrame ?? false,
+      trustedOrigins: trustedOrigins,
       appScheme: LocalConfig.urlScheme,
       isFormPost: navigationAction.request.httpMethod?.uppercased() == "POST",
-      sourceHost: navigationAction.sourceFrame.securityOrigin.host,
-      sourceIsAppOrigin: isTrustedFrameOrigin(
-        scheme: navigationAction.sourceFrame.securityOrigin.protocol,
-        host: navigationAction.sourceFrame.securityOrigin.host,
-        port: navigationAction.sourceFrame.securityOrigin.port,
-        trustedOrigins: appTrustedOrigins(loadedURL: loadedURL)
-      ),
+      sourceHost: sourceFrame?.securityOrigin.host,
+      sourceIsAppOrigin: sourceFrame.map {
+        isTrustedFrameOrigin(
+          scheme: $0.securityOrigin.protocol,
+          host: $0.securityOrigin.host,
+          port: $0.securityOrigin.port,
+          trustedOrigins: trustedOrigins
+        )
+      } ?? false,
       isTrustedAccountURL: isAppAccountURL
     )
     return (decision, url)
