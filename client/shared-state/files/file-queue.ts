@@ -1086,10 +1086,14 @@ async function readRestore(dir: string, fileId: string) {
  * discarding a file without Web Locks (see actAlone). Delivered rows,
  * `delivered~<fileId>~<1 when its thumbnail was sent, else 0>~<version>`,
  * record a delivery the upload log could not (see logDelivered), and
- * foreign rows, `foreign~<fileId>~<generation>~<session>~<account>~<view>`
- * (or without the session, the account or the view), a generation a
- * restore into another account kept, which the replay never reclaims while
- * the row is there, nor binds on an earlier take (see bindTaken); the
+ * foreign rows,
+ * `foreign~<fileId>~<generation>~<session>~<account>~<view>~<token>` (or
+ * without the session, the account, the view or the token, which is new
+ * for each row created, also when a session creates one again), a
+ * generation a restore into another account kept, which the replay never
+ * reclaims while the row is there, nor binds on an earlier take of it that
+ * did not find that row (see bindTaken and isBound), and which no
+ * rollback of another session removes (see rollBackEntry); the
  * account's replay removes its own once their session holds no file and no
  * record of the account references the file in the DataFn scope (`view`,
  * see toRecordsView) the restore imported into (see reconcileForeignRows).
@@ -1678,7 +1682,7 @@ export async function renewRestoredFiles(staged: RestoredQueuedFiles) {
         throw new Error("A queued file changed while the backup was restored");
       }
       await holdEntry(staged, fileId, generation);
-      if (ownForeignRows(staged, fileId, generation).length) {
+      if (isRowLost(staged, fileId, restore)) {
         await createForeignRow(staged, fileId, generation);
       }
     }
@@ -1698,14 +1702,20 @@ async function isDelivered(dir: string, fileId: string) {
   return Boolean(delivery.original);
 }
 
-/** The foreign rows a session created for a file's generation. */
-function ownForeignRows(
+/**
+ * Whether a session created a foreign row for a file's generation of which
+ * none is left (the account's replay removed it, see reconcileForeignRows),
+ * so the session creates a new one, under a new name (see HoldRow), which
+ * no earlier take or binding of the generation found (see bindTaken).
+ */
+function isRowLost(
   staged: RestoredQueuedFiles,
   fileId: string,
-  generation: string
+  { generation, foreignRows }: { generation: string; foreignRows: string[] }
 ) {
   const prefix = [FOREIGN_ROW, fileId, generation, staged.session, ""];
-  return staged.foreign.filter((row) => row.startsWith(prefix.join("~")));
+  const own = staged.foreign.filter((row) => row.startsWith(prefix.join("~")));
+  return own.length > 0 && !own.some((row) => foreignRows.includes(row));
 }
 
 /**
@@ -1856,8 +1866,7 @@ export async function settleRestoredFiles(
           await removeForeignRows(staged, `${fileId}~`);
           continue;
         }
-        const own = ownForeignRows(staged, fileId, generation);
-        if (own.some((row) => !restore.foreignRows.includes(row))) {
+        if (isRowLost(staged, fileId, restore)) {
           await createForeignRow(staged, fileId, generation);
         }
         if (isReferenced && (await isReferenced(fileId)) === true) {
@@ -1943,7 +1952,7 @@ export async function unstageRestoredFiles(
 
 /** Removes a file a session wrote, unless kept (see unstageRestoredFiles). */
 async function rollBackEntry(
-  { dir, session }: RestoredQueuedFiles,
+  { dir, session, foreign }: RestoredQueuedFiles,
   fileId: string,
   generation: string,
   isAlone: () => Promise<boolean>
@@ -1953,6 +1962,7 @@ async function rollBackEntry(
   if (restore.isAdopted || restore.isSettled || restore.isHeld(session)) {
     return;
   }
+  if (restore.foreignRows.some((row) => !foreign.includes(row))) return;
   await dequeueFile(dir, fileId, isAlone);
 }
 
@@ -1973,8 +1983,8 @@ async function createForeignRow(
   const account = encodeURIComponent(staged.account ?? "");
   const view = toRowField(staged.view);
   const name = [FOREIGN_ROW, fileId, generation, staged.session, account];
-  const row = [...name, view].join("~");
-  if (!staged.foreign.includes(row)) staged.foreign.push(row);
+  const row = [...name, view, crypto.randomUUID()].join("~");
+  staged.foreign.push(row);
   await handle.getFileHandle(row, MAKE);
 }
 

@@ -7757,4 +7757,113 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.artifacts).toEqual([]);
   });
+
+  it("keeps a file another restore into another account protects when a paused restore that wrote it cannot hold it again and rolls back, also once that restore's hold expired and it could not mark the file settled", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    let restores = 0;
+    preflight.during = async () => {
+      if (++restores > 1) return;
+      getDirectory = failingWrites((path) =>
+        path[2]?.startsWith("settled-")
+          ? new DOMException("The quota is exceeded", "QuotaExceededError")
+          : undefined
+      );
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      expect(foreignRows()).toHaveLength(1);
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS + UNCOMMITTED_GRACE_MS + 1_000
+      );
+      getDirectory = failingWrites((path) =>
+        path[0] === HOLDS_A && path[1]?.startsWith("hold~")
+          ? new Error("The hold cannot be created")
+          : undefined
+      );
+    };
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("The hold cannot be created");
+    preflight.during = null;
+    getDirectory = opfs.getDirectory;
+
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(foreignRows()).toHaveLength(1);
+  });
+
+  it("keeps a file a paused restore into another account protects again once that account's replay removed its foreign row, though its capturing account's replay bound it on a reference while the earlier row was there, once the record is deleted", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-b"));
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    await deleteRecord(record.id);
+    const { createFileFnClient } = await import("@filefn/client");
+    let isReferenced = true;
+    const replayOfA = async () => {
+      const tab = await openQueueTab();
+      await tab.replayFileQueue(
+        QUEUE_A,
+        createFileFnClient({} as never),
+        new AbortController().signal,
+        undefined,
+        {
+          owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
+          isCurrent: () => true,
+          sync: async () => true,
+          isReferenced: async () => isReferenced,
+          discard: async (fileId) => {
+            sdk.deleted.push(fileId);
+          }
+        }
+      );
+    };
+    preflight.during = async () => {
+      expect(foreignRows()).toHaveLength(1);
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS + 1_000
+      );
+      const root = await opfs.getDirectory();
+      await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+      getDirectory = failingWrites(
+        (path) =>
+          path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+            ? new Error("The adoption cannot be recorded")
+            : undefined,
+        undefined,
+        undefined,
+        isLogUnreadable
+      );
+      isOnline = true;
+      await replayOfA();
+      getDirectory = opfs.getDirectory;
+      expect(
+        opfs.list(QUEUE_A, entry).some((name) => name.startsWith("bound-"))
+      ).toBe(true);
+
+      replays.clear();
+      goOnline();
+      await replayed(QUEUE_B);
+      isOnline = false;
+      expect(foreignRows()).toEqual([]);
+    };
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    preflight.during = null;
+    expect(foreignRows()).toHaveLength(1);
+
+    isReferenced = false;
+    isOnline = true;
+    await replayOfA();
+    isOnline = false;
+    expect(opfs.list(QUEUE_A)).toEqual([entry]);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+  });
 });
