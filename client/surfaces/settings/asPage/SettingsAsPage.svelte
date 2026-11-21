@@ -10,6 +10,8 @@
   import { AppSearchParam } from "@nucleum/shared-state/app-context/app-store.type";
 
   import ComponentEmbedLayer from "@nucleum/shell/layers/ComponentEmbedLayer.svelte";
+  import { isPortraitMiniPlayerDocked } from "@nucleum/shell/overlays/portrait-dock";
+  import { cn } from "@21n/ui/environment/presentation";
   let {
     isModal = false
   }: {
@@ -41,6 +43,15 @@
     {/if}
   </SettingsAsPageLayout>
 {:else}
-  <SettingsAsModal {isModal} />
+  <div
+    class={cn(
+      "h-full w-full",
+      !isModal &&
+        $view.isPortrait &&
+        ($isPortraitMiniPlayerDocked ? "pb-44" : "pb-24")
+    )}
+  >
+    <SettingsAsModal {isModal} />
+  </div>
 {/if}
 <ComponentEmbedLayer isBackNavigable={true} />
