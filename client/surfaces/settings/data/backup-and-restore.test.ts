@@ -26,6 +26,7 @@ import {
   createFakeLocks,
   createFakeOpfs
 } from "../../../../tests/fixtures/opfs";
+import type { QueuedFileReferences } from "@nucleum/shared-state/files/file-queue";
 
 const codec = vi.hoisted(() => ({
   compressImageToTargetSize: vi.fn(),
@@ -8168,4 +8169,245 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(sdk.uploads).toHaveLength(1);
     expect(sdk.artifacts).toHaveLength(2);
   });
+
+  /**
+   * Captures a file under user-a, leaves its generation unadopted (its own
+   * restore could not settle it), and signs `userId` in, whose restore of
+   * the backup keeps that generation under a foreign row; `during` runs,
+   * with the backed-up records, once that restore staged.
+   */
+  async function keepForAnotherAccount(
+    userId: string,
+    during: (
+      records: Awaited<ReturnType<typeof datafn.exportData>>
+    ) => Promise<void>
+  ) {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const records = await datafn.exportData();
+    const backup = await backupFile();
+    await deleteRecord(record.id);
+    const ownBackup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    getDirectory = failingWrites((path) =>
+      path[2]?.startsWith("settled-")
+        ? new DOMException("The quota is exceeded", "QuotaExceededError")
+        : undefined
+    );
+    await restoreBackup(ownBackup, { triggerCloneUp: () => false });
+    getDirectory = opfs.getDirectory;
+    await bootData(cloudAccount(userId));
+    preflight.during = () => during(records);
+    return { record, backup };
+  }
+
+  /**
+   * Replays a queue in a fresh copy of the queue module (a reloaded page),
+   * with the references `toReferences` gives for that copy.
+   */
+  async function replayFresh(
+    queue: string,
+    toReferences: (
+      tab: Awaited<ReturnType<typeof openQueueTab>>
+    ) => QueuedFileReferences
+  ) {
+    const tab = await openQueueTab();
+    const { createFileFnClient } = await import("@filefn/client");
+    isOnline = true;
+    await tab.replayFileQueue(
+      queue,
+      createFileFnClient({} as never),
+      new AbortController().signal,
+      undefined,
+      toReferences(tab)
+    );
+    isOnline = false;
+  }
+
+  it("keeps a file for a restore into another account under foreign rows whose names stay within the 255 bytes a filename may have, with production-shaped IDs, through renewal, settlement and the account's cleanup", async () => {
+    const userId = "acct_000000000000000b";
+    const queue = `nucleum-file-queue-account-${userId}`;
+    const nameLimit = (path: string[]) =>
+      new TextEncoder().encode(path.at(-1)).byteLength > 255
+        ? new DOMException("The name is too long", "InvalidModificationError")
+        : undefined;
+    let first = "";
+    const { record, backup } = await keepForAnotherAccount(userId, async () => {
+      [first] = foreignRows();
+      const root = await opfs.getDirectory();
+      await (await root.getDirectoryHandle(HOLDS_A)).removeEntry(first);
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS / 2 + 1_000
+      );
+    });
+    getDirectory = failingWrites(nameLimit);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    preflight.during = null;
+
+    const rows = foreignRows();
+    expect(first).toMatch(/^foreign~/);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).not.toBe(first);
+    for (const row of [first, ...rows]) {
+      expect(new TextEncoder().encode(row).byteLength).toBeLessThan(256);
+    }
+
+    await deleteRecord(record.id);
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + RESTORE_HOLD_LIFETIME_MS + UNCOMMITTED_GRACE_MS + 1_000
+    );
+    goOnline();
+    await replayed(queue);
+    isOnline = false;
+    getDirectory = opfs.getDirectory;
+    expect(foreignRows()).toEqual([]);
+  });
+
+  it.each([
+    [
+      "keeps it while that local copy is still on the device",
+      true,
+      false,
+      "user:user-b",
+      1
+    ],
+    [
+      "keeps it for another namespace's direct authority",
+      false,
+      false,
+      "user:user-c",
+      1
+    ],
+    [
+      "keeps it while the direct authority references the file",
+      false,
+      true,
+      "user:user-b",
+      1
+    ],
+    [
+      "removes it once the direct authority finds no record referencing the file",
+      false,
+      false,
+      "user:user-b",
+      0
+    ]
+  ])(
+    "the foreign row of a local copy DataFn retired for direct mode %s",
+    async (_, isCloneLeft, isReferenced, namespace, count) => {
+      const { backup } = await keepForAnotherAccount(
+        "user-b",
+        async (records) => {
+          await datafn.importData(records, { triggerCloneUp: false });
+          throw new Error("The page closed");
+        }
+      );
+      await expect(
+        restoreBackup(backup, { triggerCloneUp: () => false })
+      ).rejects.toThrow("The page closed");
+      preflight.during = null;
+      expect(foreignRows()).toHaveLength(1);
+      const clones = (await indexedDB.databases())
+        .map(({ name }) => name ?? "")
+        .filter((name) => name.includes(device.env))
+        .filter((name) => name.endsWith("_user_user-b"));
+      expect(clones).toHaveLength(1);
+      await destroyNucleumDatafn();
+      if (!isCloneLeft) {
+        const { deleteDatafnLocalClone } =
+          await import("@nucleum/datafn/storage-lifecycle");
+        await deleteDatafnLocalClone(clones[0]);
+      }
+
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS + UNCOMMITTED_GRACE_MS + 1_000
+      );
+      await replayFresh(QUEUE_B, (tab) => ({
+        owner: { userId: "user-b", baseUrl: AUTHORITY_URL },
+        isCurrent: () => true,
+        sync: async () => true,
+        isReferenced: async () => isReferenced,
+        discard: async () => undefined,
+        view: () =>
+          tab.toRecordsView({
+            namespace,
+            remoteUrl: AUTHORITY_URL,
+            storageDbName: null
+          })
+      }));
+
+      expect(foreignRows()).toHaveLength(count);
+      expect(sdk.started).toEqual([]);
+    }
+  );
+
+  it.each([
+    ["is removed once the record is deleted", false],
+    [
+      "stays queued while a newer restore into another account protects it",
+      true
+    ]
+  ])(
+    "takes a binding its replay began but could not finish writing before the page stopped as its account's, so a restored file whose restore rolled back meanwhile %s",
+    async (_, isProtected) => {
+      await bootData(cloudAccount("user-a"));
+      isOnline = false;
+      const record = await capturePhoto();
+      const entry = `queued_${record.fileId}`;
+      const backup = await backupFile();
+      await clearBrowser();
+      await bootData(cloudAccount("user-b"));
+      let isReferenced = true;
+      const references = (): QueuedFileReferences => ({
+        owner: { userId: "user-a", baseUrl: AUTHORITY_URL },
+        isCurrent: () => true,
+        sync: async () => true,
+        isReferenced: async () => isReferenced,
+        discard: async (fileId) => {
+          sdk.deleted.push(fileId);
+        }
+      });
+      preflight.during = async () => {
+        vi.spyOn(Date, "now").mockReturnValue(
+          Date.now() + RESTORE_HOLD_LIFETIME_MS + 1_000
+        );
+        getDirectory = failingWrites(
+          (path) =>
+            path[2]?.startsWith("adopted-") || path[1]?.startsWith("adopted~")
+              ? new Error("The adoption cannot be recorded")
+              : undefined,
+          undefined,
+          (path) =>
+            path[2]?.startsWith("bound-")
+              ? new Error("The binding cannot be written")
+              : undefined
+        );
+        await replayFresh(QUEUE_A, references);
+        getDirectory = opfs.getDirectory;
+        isReferenced = false;
+        await bootData(cloudAccount("user-c"));
+      };
+      await expect(
+        restoreBackup(backup, { triggerCloneUp: () => false })
+      ).rejects.toThrow("The account changed while the backup was restored");
+      preflight.during = null;
+      const marks = opfs.list(QUEUE_A, entry);
+      const bound = marks.find((name) => name.startsWith("bound-"));
+      expect(bound).toBeDefined();
+      expect(opfs.read(QUEUE_A, entry, bound!)?.byteLength ?? 0).toBe(0);
+      expect(sdk.started).toEqual([]);
+
+      if (isProtected) {
+        await bootData(cloudAccount("user-b"));
+        await restoreBackup(backup, { triggerCloneUp: () => false });
+        expect(foreignRows()).toHaveLength(1);
+      }
+      await replayFresh(QUEUE_A, references);
+
+      expect(opfs.list(QUEUE_A)).toEqual(isProtected ? [entry] : []);
+      expect(sdk.started).toEqual([]);
+    }
+  );
 });

@@ -173,9 +173,60 @@ export function toRecordsView(
   return `${namespace}|${scope}`;
 }
 
-/** Encodes a value for a field of a row name (see HoldRow). */
-function toRowField(value: string | undefined) {
-  return encodeURIComponent(value ?? "").replaceAll("~", "%7E");
+/**
+ * A fixed-length digest of a value, for a field of a row name (see
+ * HoldRow): two 53-bit hashes (cyrb53) with different seeds, 28 hex digits,
+ * computed without waiting, so it never delays a replay's timers.
+ */
+function toRowDigest(value: string) {
+  const hash = (seed: number) => {
+    let h1 = 0xdeadbeef ^ seed;
+    let h2 = 0x41c6ce57 ^ seed;
+    for (let at = 0; at < value.length; at++) {
+      const code = value.codePointAt(at) ?? 0;
+      h1 = Math.imul(h1 ^ code, 2654435761);
+      h2 = Math.imul(h2 ^ code, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    const high = (h2 & 0x1fffff) * 0x100000000 + (h1 >>> 0);
+    return high.toString(16).padStart(14, "0");
+  };
+  return `${hash(1)}${hash(2)}`;
+}
+
+/**
+ * The destination fields of a foreign row (see HoldRow) for an account and a
+ * DataFn scope (see toRecordsView): the digest of the account and the
+ * namespace, and the scope's kind (`s` for a local copy, `d` for a direct
+ * authority) followed by the digest of the scope; empty without a scope.
+ */
+function toRowDestination(account: string, view: string | undefined) {
+  const at = view?.indexOf("|") ?? -1;
+  if (!view || at < 0) return { group: "", scope: "" };
+  const namespace = view.slice(0, at);
+  const scope = view.slice(at + 1);
+  return {
+    group: toRowDigest(`${account}\n${namespace}`),
+    scope: `${scope.startsWith("store:") ? "s" : "d"}${toRowDigest(scope)}`
+  };
+}
+
+/**
+ * Whether no local copy whose scope digest (see toRowDestination) is `scope`
+ * is left on the device: false while the databases cannot be listed, so an
+ * unknown answer never counts as a retired copy.
+ */
+async function isLocalCopyGone(scope: string) {
+  if (typeof indexedDB?.databases !== "function") return false;
+  try {
+    const names = (await indexedDB.databases()).map(({ name }) => name ?? "");
+    return !names.some((name) => `s${toRowDigest(`store:${name}`)}` === scope);
+  } catch {
+    return false;
+  }
 }
 
 /** What a queue holds of a file, for reconciling it with its record. */
@@ -1119,16 +1170,19 @@ async function readRestore(dir: string, fileId: string) {
  * `delivered~<fileId>~<1 when its thumbnail was sent, else 0>~<version>`,
  * record a delivery the upload log could not (see logDelivered), and
  * foreign rows,
- * `foreign~<fileId>~<generation>~<session>~<account>~<view>~<token>` (or
- * without the session, the account, the view or the token, which is new
+ * `foreign~<fileId>~<generation>~<session>~<group>~<scope>~<token>` (with
+ * the fixed-length digests of the account and DataFn scope, see
+ * toRowDestination, so the name stays within the 255 bytes a filename may
+ * have; or without the session, the destination or the token, which is new
  * for each row created, also when a session creates one again), a
  * generation a restore into another account kept, which the replay never
  * reclaims while the row is there, nor binds on an earlier take of it that
  * did not find that row (see bindTaken and isBound), and which no
  * rollback of another session removes (see rollBackEntry); the
  * account's replay removes its own once their session holds no file and no
- * record of the account references the file in the DataFn scope (`view`,
- * see toRecordsView) the restore imported into (see reconcileForeignRows).
+ * record of the account references the file in the DataFn scope (see
+ * toRecordsView) the restore imported into, or in the direct authority that
+ * succeeded a local copy no longer on the device (see reconcileForeignRows).
  */
 type HoldRow = {
   name: string;
@@ -2033,10 +2087,9 @@ async function createForeignRow(
   generation: string
 ) {
   const handle = (await getHoldsDir(staged.dir, true))!;
-  const account = encodeURIComponent(staged.account ?? "");
-  const view = toRowField(staged.view);
-  const name = [FOREIGN_ROW, fileId, generation, staged.session, account];
-  const row = [...name, view, crypto.randomUUID()].join("~");
+  const { group, scope } = toRowDestination(staged.account ?? "", staged.view);
+  const name = [FOREIGN_ROW, fileId, generation, staged.session, group, scope];
+  const row = [...name, crypto.randomUUID()].join("~");
   staged.foreign.push(row);
   await handle.getFileHandle(row, MAKE);
 }
@@ -2399,8 +2452,12 @@ async function moveDeliveredRows(dir: string) {
  * created in any queue, once no live hold row of their session is left (it
  * settled or rolled back, or its page closed) and no record of the account
  * references the file, in its records brought up to date in the DataFn
- * scope the restore imported into (the row's view, see toRecordsView; a row
- * of another scope, or without one, stays), so a restore cut short before
+ * scope the restore imported into (the row's scope, see toRecordsView), or,
+ * for a row of a local copy that is no longer on the device (DataFn retired
+ * it once its changes synced, see isLocalCopyGone), in the direct authority
+ * of the same account and namespace that succeeded it (a row of another
+ * scope, without one, or of a local copy that may still be there, stays),
+ * so a restore cut short before
  * it imported a matching record, or whose removal of its row failed,
  * protects the file no longer, while one that saved a matching record keeps
  * it protected; one that resumes its import later protects its files again
@@ -2413,13 +2470,18 @@ async function moveDeliveredRows(dir: string) {
 async function reconcileForeignRows(dir: string, request: ReplayRequest) {
   const { references, signal } = request;
   if (!references || signal.aborted) return false;
-  const account = encodeURIComponent(references.owner.userId);
-  const view = references.view?.();
-  if (!view) return false;
+  const destination = toRowDestination(
+    references.owner.userId,
+    references.view?.()
+  );
+  if (!destination.group) return false;
+  /** Rows of the account's scope, then of a local copy it retired since. */
   const isOwn = (row: string) => {
-    const [kind, , , , owner, rowView] = row.split("~");
+    const [kind, , , , group, scope] = row.split("~");
+    if (kind !== FOREIGN_ROW || group !== destination.group) return false;
     return (
-      kind === FOREIGN_ROW && owner === account && rowView === toRowField(view)
+      scope === destination.scope ||
+      Boolean(scope?.startsWith("s") && destination.scope.startsWith("d"))
     );
   };
   let isSynced = false;
@@ -2427,8 +2489,11 @@ async function reconcileForeignRows(dir: string, request: ReplayRequest) {
   const reconcile = async (queue: string) => {
     const { handle, rows } = await readHolds(queue);
     for (const row of await readNames(handle)) {
-      const [, fileId, , session] = row.split("~");
+      const [, fileId, , session, , scope] = row.split("~");
       if (!isOwn(row)) continue;
+      if (scope !== destination.scope && !(await isLocalCopyGone(scope))) {
+        continue;
+      }
       const heldUntil = Math.max(
         0,
         ...rows
@@ -2658,8 +2723,12 @@ async function bindEntry(
  * of the account referenced it, which binds the file as an adoption does,
  * also when neither its adopted mark nor its adoption row could be
  * created; not while a foreign row its binding did not find protects the
- * generation (a restore into another account kept it since). A mark that
- * cannot be read rejects.
+ * generation (a restore into another account kept it since). A mark whose
+ * write was cut short (empty or incomplete) is still the binding its
+ * replay began, as for a rollback (see rollBackEntry), which only the
+ * account owning the queue writes, once a record referenced the file;
+ * since it does not tell which foreign rows it found, any foreign row of
+ * the generation protects it. A mark that cannot be read rejects.
  */
 async function isBound(
   dir: string,
@@ -2668,16 +2737,16 @@ async function isBound(
   { owner }: QueuedFileReferences
 ) {
   const name = `${BOUND_PREFIX}${generation}`;
-  const claim = await readEntryJson<QueuedFileClaim & { foreign?: unknown }>(
-    dir,
-    toEntryName(fileId),
-    name,
-    (value) => typeof value === "object" && value !== null,
-    true
+  const text = await readEntryText(dir, toEntryName(fileId), name, true);
+  if (text === undefined) return false;
+  const claim = parseJson<QueuedFileClaim & { foreign?: unknown }>(
+    text,
+    (value) => typeof value === "object" && value !== null && isClaim(value)
   );
-  const found = Array.isArray(claim?.foreign) ? claim.foreign : [];
+  if (!claim) return foreignRows.length === 0;
+  const found = Array.isArray(claim.foreign) ? claim.foreign : [];
   const isProtected = foreignRows.some((row) => !found.includes(row));
-  return Boolean(claim && isSameClaim(claim, owner) && !isProtected);
+  return isSameClaim(claim, owner) && !isProtected;
 }
 
 /**
