@@ -147,10 +147,13 @@ export type QueuedFileReferences = {
 };
 
 /**
- * Names the DataFn scope a runtime reads and writes records in: its
- * namespace, authority and local copy (or direct mode), so only a query of
- * the same scope tells that a record a restore imported there is gone (see
- * reconcileForeignRows); undefined without a runtime.
+ * Names the DataFn scope that decides whether a runtime holds a record: its
+ * namespace and local copy, whatever its connectivity (local-only while
+ * offline, synced once online), or in direct mode, without a local copy,
+ * its authority; so only a query of the same scope tells that a record a
+ * restore imported there is gone (see reconcileForeignRows), and a direct
+ * query never counts for records a local copy may hold alone. Undefined
+ * without a runtime.
  */
 export function toRecordsView(
   runtime:
@@ -164,7 +167,10 @@ export function toRecordsView(
 ) {
   if (!runtime) return undefined;
   const { namespace, remoteUrl, storageDbName } = runtime;
-  return [namespace, remoteUrl ?? "", storageDbName ?? "direct"].join("|");
+  const scope = storageDbName
+    ? `store:${storageDbName}`
+    : `direct:${remoteUrl}`;
+  return `${namespace}|${scope}`;
 }
 
 /** Encodes a value for a field of a row name (see HoldRow). */
@@ -1656,7 +1662,8 @@ export async function stageRestoredFiles(
  * account's replay removed it meanwhile (see reconcileForeignRows), so an
  * import that resumes once its holds expired commits only while its files
  * are protected again; a file replaced or removed meanwhile rejects, for
- * the restore to roll back without importing (see unstageRestoredFiles).
+ * the restore to roll back without importing (see unstageRestoredFiles),
+ * unless its delivery is confirmed (see isDelivered).
  */
 export async function renewRestoredFiles(staged: RestoredQueuedFiles) {
   if (!staged.written.length && !staged.kept.length) return;
@@ -1666,6 +1673,7 @@ export async function renewRestoredFiles(staged: RestoredQueuedFiles) {
   await withQueueLock(staged.dir, signal, async () => {
     for (const { fileId, generation } of [...staged.written, ...staged.kept]) {
       const restore = await readRestore(staged.dir, fileId);
+      if (!restore && (await isDelivered(staged.dir, fileId))) continue;
       if (!restore?.isPublished || restore.generation !== generation) {
         throw new Error("A queued file changed while the backup was restored");
       }
@@ -1676,6 +1684,18 @@ export async function renewRestoredFiles(staged: RestoredQueuedFiles) {
     }
   });
   staged.heldUntil = heldUntil;
+}
+
+/**
+ * Whether the upload log or a delivered row (see readDelivery) confirms a
+ * file's original delivered, once it left the queue (the replay removes a
+ * file only once its thumbnail needs no other request); a read error
+ * rejects.
+ */
+async function isDelivered(dir: string, fileId: string) {
+  const delivery = await readDelivery(dir, fileId, []);
+  if (delivery.original === undefined) throw delivery.error;
+  return Boolean(delivery.original);
 }
 
 /** The foreign rows a session created for a file's generation. */
@@ -2682,8 +2702,11 @@ async function replayAccountEntry(
     isRestored ||
     names.includes(DELIVERED_FILE) ||
     Boolean(confirmed);
-  const delivery =
-    confirmed ?? (isLogRead ? await readDelivery(dir, fileId, names) : null);
+  const delivery = confirmed
+    ? await reuseDelivery(dir, fileId, names, confirmed)
+    : isLogRead
+      ? await readDelivery(dir, fileId, names)
+      : null;
   const isUnsure = delivery?.original === undefined && isLogRead;
   const isMaybeSent =
     isRestored ||
@@ -2772,6 +2795,32 @@ const deliveredEntries = new Map<
   string,
   Awaited<ReturnType<typeof readDelivery>>
 >();
+
+/**
+ * A delivery the page's replay confirmed (see deliveredEntries), with a
+ * thumbnail it left to send found sent or rejected since by the file's
+ * marks, or for its version by the upload log or a delivered row (another
+ * tab's replay), so a retry neither requests the original nor sends the
+ * thumbnail again.
+ */
+async function reuseDelivery(
+  dir: string,
+  fileId: string,
+  names: readonly string[],
+  confirmed: Awaited<ReturnType<typeof readDelivery>>
+) {
+  if (confirmed.isDone || confirmed.thumbnail === "rejected") return confirmed;
+  const durable = await readDelivery(dir, fileId, names);
+  const isMarked =
+    names.includes(THUMBNAIL_SENT_FILE) ||
+    names.includes(THUMBNAIL_REJECTED_FILE);
+  const { thumbnail } = durable;
+  const isSame = isMarked || durable.original === confirmed.original;
+  if (!isSame || (thumbnail !== "sent" && thumbnail !== "rejected")) {
+    return confirmed;
+  }
+  return { ...confirmed, thumbnail, isDone: thumbnail === "sent" };
+}
 
 /**
  * Marks a file whose delivery the replay confirmed delivered (see

@@ -184,15 +184,17 @@ async function restoreInRuntime(
       fileQueue.files,
       { isOwnAccount, account: userId, view }
     ));
-  if (datafn.currentNamespace() !== namespace || isSwitched()) {
-    if (staged) await unstageRestoredFiles(staged);
-    throw new Error("The account changed while the backup was restored");
-  }
-  if (staged) {
+  const isChanged = () =>
+    datafn.currentNamespace() !== namespace || isSwitched();
+  if (staged && !isChanged()) {
     await renewRestoredFiles(staged).catch(async (error: unknown) => {
       await unstageRestoredFiles(staged);
       throw error;
     });
+  }
+  if (isChanged()) {
+    if (staged) await unstageRestoredFiles(staged);
+    throw new Error("The account changed while the backup was restored");
   }
   let isImported = false;
   try {

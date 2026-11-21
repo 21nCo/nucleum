@@ -7630,4 +7630,131 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(found.data).toEqual([]);
     expect(sdk.started).toEqual([]);
   });
+
+  it("names one DataFn scope for a local copy whatever its connectivity, and another for each other copy or a direct authority", async () => {
+    const { toRecordsView } = await openQueueTab();
+    const scope = (remoteUrl: string | null, storageDbName: string | null) =>
+      toRecordsView({ namespace: "user:user-b", remoteUrl, storageDbName });
+    expect(scope(null, "memotron_user_user-b")).toBe(
+      scope(AUTHORITY_URL, "memotron_user_user-b")
+    );
+    expect(scope(AUTHORITY_URL, "another_user_user-b")).not.toBe(
+      scope(AUTHORITY_URL, "memotron_user_user-b")
+    );
+    expect(scope(AUTHORITY_URL, null)).not.toBe(
+      scope(AUTHORITY_URL, "memotron_user_user-b")
+    );
+    expect(scope("https://another.example.test/datafn", null)).not.toBe(
+      scope(AUTHORITY_URL, null)
+    );
+  });
+
+  it("imports nothing when the account changes while a restore protects its files again before the import", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(cloudAccount("user-a"));
+    let release = () => undefined as void;
+    let isRenewing = false;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    preflight.during = async () => {
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS
+      );
+      getDirectory = failingWrites((path) => {
+        if (path[0] !== HOLDS_A || !path[1]?.startsWith("hold~")) return;
+        isRenewing = true;
+        return gate;
+      });
+    };
+    const restored = restoreBackup(backup, { triggerCloneUp: () => false });
+    const rejected = expect(restored).rejects.toThrow(
+      "The account changed while the backup was restored"
+    );
+    await vi.waitFor(() => expect(isRenewing).toBe(true));
+    await bootData(cloudAccount("user-b"));
+    release();
+    await rejected;
+    preflight.during = null;
+    getDirectory = opfs.getDirectory;
+
+    const found = await datafn.file.query({
+      filters: { fileId: record.fileId }
+    });
+    expect(found.data).toEqual([]);
+  });
+
+  it("restores a backup whose queued file another tab delivered and removed while the restore was paused past its hold, without uploading it again", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    await capturePhoto();
+    const backup = await backupFile();
+    preflight.during = async () => {
+      vi.spyOn(Date, "now").mockReturnValue(
+        Date.now() + RESTORE_HOLD_LIFETIME_MS + 1_000
+      );
+      isOnline = true;
+      await replayInOtherTab();
+      isOnline = false;
+      expect(opfs.list(QUEUE_A)).toEqual([]);
+    };
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    preflight.during = null;
+
+    expect(opfs.list(QUEUE_A)).toEqual([]);
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.artifacts).toHaveLength(1);
+  });
+
+  it("sends a confirmed delivery's thumbnail no more on the page's retry once another tab's replay recorded it sent in the upload log, though the removal could not be confirmed and the thumbnail could not be read before", async () => {
+    await bootData(cloudAccount("user-a"));
+    isOnline = false;
+    const record = await capturePhoto();
+    const entry = `queued_${record.fileId}`;
+    let isFailing = true;
+    getDirectory = failingWrites(
+      () => undefined,
+      (path) =>
+        isFailing && path.join("/") === `${QUEUE_A}/${entry}`
+          ? new DOMException("The entry cannot be removed", "InvalidStateError")
+          : undefined,
+      undefined,
+      (path) =>
+        isFailing && path[2]?.startsWith("thumbnail-")
+          ? new DOMException("It cannot be read", "NotReadableError")
+          : undefined
+    );
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      isOnline = true;
+      await replayInOtherTab();
+      expect(opfs.list(QUEUE_A)).toEqual([entry]);
+      expect(sdk.uploads).toHaveLength(1);
+      expect(sdk.artifacts).toEqual([]);
+
+      const version = new TextDecoder().decode(
+        opfs.read(QUEUE_A, entry, "uploaded")
+      );
+      const root = await opfs.getDirectory();
+      const log = await root.getDirectoryHandle(UPLOAD_LOG, { create: true });
+      const row = await log.getFileHandle(`${record.fileId}~thumbnail`, {
+        create: true
+      });
+      const writable = await row.createWritable();
+      await writable.write(version);
+      await writable.close();
+
+      isFailing = false;
+      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.waitFor(() => expect(opfs.list(QUEUE_A)).toEqual([]));
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(sdk.uploads).toHaveLength(1);
+    expect(sdk.artifacts).toEqual([]);
+  });
 });
