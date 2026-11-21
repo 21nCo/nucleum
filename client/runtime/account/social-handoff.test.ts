@@ -154,6 +154,24 @@ describe("resolveSocialHandoffToken", () => {
     expect(elsewhere.exchangeSocialHandoff).not.toHaveBeenCalled();
   });
 
+  it("keeps its verifier when another window's code arrives", async () => {
+    await beginSocialHandoff(NOW);
+    const verifier = storedVerifier();
+    const other = exchangeClient({
+      ok: false,
+      error: { code: "AUTHFN_OAUTH_STATE_INVALID", message: "mismatch" }
+    } as unknown as ExchangeResult);
+
+    expect(
+      await resolveSocialHandoffToken(
+        { token: "shc_test-other-window-code" },
+        other.client,
+        NOW
+      )
+    ).toEqual({ kind: "ignored" });
+    expect(storedVerifier()).toBe(verifier);
+  });
+
   it("never uses a code as a session when it can't be exchanged", async () => {
     await beginSocialHandoff(NOW);
     const expired = exchangeClient(exchanged("test-session-token", null));

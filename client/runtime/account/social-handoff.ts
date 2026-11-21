@@ -9,6 +9,14 @@ import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
  */
 export const SOCIAL_HANDOFF_TTL_MS = 15 * 60 * 1000;
 
+/**
+ * AuthFn's answer when a handoff code was not issued for this verifier. With
+ * the callback broadcast to every macOS window, a window whose own sign-in was
+ * cancelled or is still running gets it for another window's code; it keeps
+ * its verifier and ignores the code.
+ */
+const CODE_NOT_FOR_THIS_VERIFIER = "AUTHFN_OAUTH_STATE_INVALID";
+
 /** Prefix of the one-time codes AuthFn's social handoff issues. */
 const SOCIAL_HANDOFF_CODE_PREFIX = "shc_";
 
@@ -139,7 +147,7 @@ export function isSocialHandoffCode(input: {
  * A one-time code (flagged `handoff: "code"`, or carrying AuthFn's code prefix
  * because installed native shells don't forward `handoff`) is exchanged with
  * this window's pending verifier and never used as a session; a window that
- * started no sign-in ignores it. Any other value is a
+ * started no sign-in, or whose verifier the code wasn't issued for, ignores it. Any other value is a
  * session token, which native Apple sign-in and sign-ins started without a
  * challenge return directly; it is never sent to the exchange.
  */
@@ -166,7 +174,13 @@ export async function resolveSocialHandoffToken(
       code: input.token,
       verifier
     });
-    if (!response.ok) return { kind: "failed", errorCode: response.error.code };
+    if (!response.ok) {
+      if (response.error.code === CODE_NOT_FOR_THIS_VERIFIER) {
+        writeSocialHandoff(stored.pending);
+        return { kind: "ignored" };
+      }
+      return { kind: "failed", errorCode: response.error.code };
+    }
     return {
       kind: "session",
       token: response.data.handoff.token,
