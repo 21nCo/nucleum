@@ -21,6 +21,7 @@ import { PointronEvent } from "@nucleum/shared-state/events/focus-event.enum";
 import { Embed } from "@nucleum/client/runtime/context.type";
 import { Action } from "@nucleum/client/config/action.enum";
 import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
+import CreateTask from "@nucleum/features/focus/tasks/CreateTask.svelte";
 import { SessionState } from "@nucleum/features/focus/sessionState.enum";
 import {
   isSameResource,
@@ -838,8 +839,7 @@ export const pointronActions: IAction[] = [
     action: resourceAction(Resource.task, ResourceActionType.CREATE),
     label: "Create a new task",
     type: ActionType.MODAL,
-    loadComponent: () =>
-      import("@nucleum/features/focus/tasks/CreateTask.svelte"),
+    component: CreateTask,
     modalParams: {
       layout: {
         isDynamicSize: true,

@@ -10,6 +10,11 @@ import { AccessMode } from "@nucleum/datafn/resource.type";
 import { ResourceActionType } from "@nucleum/schema/legacy/resource-action.enum";
 import { resourceAction } from "@nucleum/datafn/resource.utils";
 import NodeTitleLabelPart from "@nucleum/features/memory/node/title/NodeTitleLabelPart.svelte";
+import Capture from "@nucleum/features/memory/capture/Capture.svelte";
+import CaptureDnD from "@nucleum/features/memory/capture/CaptureDnD.svelte";
+import PasteConfirmationModal from "@nucleum/features/memory/capture/PasteConfirmationModal.svelte";
+import Node from "@nucleum/features/memory/node/Node.svelte";
+import PreviewImageUploader from "@nucleum/features/memory/node/PreviewImageUploader.svelte";
 import { Action } from "@nucleum/client/config/action.enum";
 import { appMenuActionLabelsByAction } from "@nucleum/client/config/product-nav.config";
 import { createPageViewActions } from "@nucleum/shared-state/commands/page-view-actions";
@@ -17,8 +22,6 @@ import { createLibraryViewActions } from "@nucleum/surfaces/library/library-rout
 import { memotronLibraryResources } from "@nucleum/products/memotron/library/memotron-library";
 import { resolveMemotronOverviewViewSegments } from "@nucleum/products/memotron/overview/memotron-overview-views";
 
-const loadCapture = () =>
-  import("@nucleum/features/memory/capture/Capture.svelte");
 const loadMemotronLibrary = () =>
   import("@nucleum/products/memotron/library/MemotronLibrary.svelte");
 const loadResourceBrowser = () =>
@@ -66,8 +69,7 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.PREVIEW_IMAGE_UPLOADER,
     type: ActionType.MODAL,
     isMeta: true,
-    loadComponent: () =>
-      import("@nucleum/features/memory/node/PreviewImageUploader.svelte"),
+    component: PreviewImageUploader,
     modalParams: {
       layout: {
         size: Size.md,
@@ -103,7 +105,7 @@ export const memotronActions: IAction[] = [
   },
   {
     action: resourceAction(Resource.node, ResourceActionType.CREATE),
-    loadComponent: loadCapture,
+    component: Capture,
     label:
       appMenuActionLabelsByAction[
         resourceAction(Resource.node, ResourceActionType.CREATE)
@@ -117,8 +119,7 @@ export const memotronActions: IAction[] = [
   },
   {
     action: MemotronAction.CAPTURE_DND,
-    loadComponent: () =>
-      import("@nucleum/features/memory/capture/CaptureDnD.svelte"),
+    component: CaptureDnD,
     isMeta: true,
     type: ActionType.RESOURCE,
     accessMode: AccessMode.PAGE,
@@ -134,7 +135,7 @@ export const memotronActions: IAction[] = [
   },
   {
     action: MemotronAction.CAPTURE_SECONDARY,
-    loadComponent: loadCapture,
+    component: Capture,
     isMeta: true,
     type: ActionType.RESOURCE,
     accessMode: AccessMode.PAGE,
@@ -162,8 +163,7 @@ export const memotronActions: IAction[] = [
   },
   {
     action: Resource.node,
-    loadComponent: () =>
-      import("@nucleum/features/memory/node/Node.svelte"),
+    component: Node,
     label: "Node",
     isMeta: true,
     type: ActionType.MODAL,
@@ -208,8 +208,7 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.PASTE_CONFIRMATION,
     type: ActionType.MODAL,
     isMeta: true,
-    loadComponent: () =>
-      import("@nucleum/features/memory/capture/PasteConfirmationModal.svelte"),
+    component: PasteConfirmationModal,
     modalParams: {
       layout: {
         ignoreSafeArea: true,
