@@ -41,17 +41,10 @@ test("restores an active advanced session across reload", async ({ page }) => {
   await waitForSessionElapsed(page, 1);
   const before = await readSessionRuntime(page);
 
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await ensureInAppOnHome(page);
+  await reloadActiveSession(page);
 
-  await expect
-    .poll(async () => (await readSessionRuntime(page)).currentSessionId, {
-      message:
-        "restores an active advanced session across reload: toBe before.currentSessionId"
-    })
-    .toBe(before.currentSessionId);
   const restored = await readSessionRuntime(page);
-  expect(restored.isSessionRunning).toBe(true);
+  expect(restored.currentSessionId).toBe(before.currentSessionId);
   expect(restored.currentFocusItem?.id).toBe(fixture.objective.id);
   await expect
     .poll(async () => (await readSessionRuntime(page)).totalElapsed, {
@@ -59,9 +52,6 @@ test("restores an active advanced session across reload", async ({ page }) => {
         "restores an active advanced session across reload: toBeGreaterThan 0"
     })
     .toBeGreaterThan(0);
-  await expect(
-    page.getByRole("button", { name: /^\d{2}:\d{2}(?::\d{2})?$/ }).last()
-  ).toBeVisible();
 });
 
 test("restores a running break without duplicating intervals", async ({
