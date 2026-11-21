@@ -22,13 +22,10 @@ vi.mock("@nucleum/shell/topNav/tabs/live-resource", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   liveResource: () => record
 }));
-vi.mock("@nucleum/shared-state/shortcuts/shortcuts.store", () => ({
+vi.mock("@nucleum/shared-state/shortcuts/shortcuts.store", async () => ({
   keyboardShortcuts: {
-    resolveShortcut: () => ({ shortcut: undefined, modifiers: [] }),
-    subscribe: (run: (value: unknown) => void) => {
-      run({});
-      return () => undefined;
-    }
+    ...(await import("svelte/store")).readable({}),
+    resolveShortcut: () => ({ shortcut: undefined, modifiers: [] })
   }
 }));
 vi.mock("@nucleum/shared-state/resources/resource-search", () => ({
