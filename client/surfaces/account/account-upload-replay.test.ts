@@ -20,7 +20,8 @@ const sdk = vi.hoisted(() => ({
   started: [] as UploadInput[],
   /** The index in `baseUrls` of the client that started each upload. */
   startedBy: [] as number[],
-  uploads: [] as UploadInput[]
+  uploads: [] as UploadInput[],
+  deleted: [] as string[]
 }));
 vi.mock("@filefn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@filefn/client")>();
@@ -47,7 +48,9 @@ vi.mock("@filefn/client", async (importOriginal) => {
         },
         uploadArtifact: async () =>
           ({}) as Awaited<ReturnType<FileFnClient["uploadArtifact"]>>,
-        deleteFile: async () => undefined,
+        deleteFile: async (fileId: string) => {
+          sdk.deleted.push(fileId);
+        },
         getPendingLocalDescriptor: async () => null
       };
     }
@@ -309,6 +312,7 @@ beforeEach(async () => {
   sdk.started = [];
   sdk.startedBy = [];
   sdk.uploads = [];
+  sdk.deleted = [];
   authfn.session = null;
   await clearStorage();
 });
@@ -348,6 +352,7 @@ describe("account upload replay at session restore", () => {
     expect(sdk.started).toEqual([]);
     expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
 
+    authfn.session = liveSession;
     goOnline();
 
     await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
@@ -384,6 +389,7 @@ describe("account upload replay at session restore", () => {
     await startSession(second, "user-a");
     await vi.waitFor(() => expect(sdk.baseUrls).toHaveLength(2));
 
+    authfn.session = liveSession;
     goOnline();
 
     await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
@@ -550,5 +556,146 @@ describe("account upload replay at session restore", () => {
     expect(sdk.baseUrls).toHaveLength(2);
     expect(sdk.started).toEqual([expect.objectContaining({ fileId })]);
     expect(sdk.startedBy).toEqual([1]);
+  });
+});
+
+describe("account upload replay authorization", () => {
+  const USEAST_FILES = "https://account-useast-dev.nucleum.app/files";
+  const PENDING_DELETE = "pending-delete-file";
+  const PENDING_DELETES = [
+    "filefn-pending-deletes-user-a",
+    encodeURIComponent(USEAST_FILES)
+  ];
+  const userB = {
+    ...liveSession,
+    id: "session-user-b",
+    actorId: "user:user-b",
+    primaryEmail: "user-b@example.test"
+  };
+
+  /**
+   * Restores user-a's session offline after an offline capture and a pending
+   * delete, so the stored account's client is bound but sends nothing yet.
+   */
+  async function restoreOffline() {
+    const fileId = await captureOfflineThenLeave();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.recordFileFnPendingDelete(
+      { userId: "user-a", baseUrl: USEAST_FILES },
+      PENDING_DELETE
+    );
+    await storeCloudSession();
+    const page = await loadPage();
+    await startSession(page, "user-a");
+    await vi.waitFor(() => expect(sdk.baseUrls).toEqual([USEAST_FILES]));
+    expect(sdk.started).toEqual([]);
+    return { page, fileId };
+  }
+
+  async function settle() {
+    await vi.dynamicImportSettled();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  function expectNothingSent(page: Page) {
+    expect(page.account.get().userId).toBe("user-a");
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+    expect(opfs.list(...PENDING_DELETES)).toEqual([PENDING_DELETE]);
+  }
+
+  it.each([
+    {
+      resolves: "another user's live session",
+      session: () => userB,
+      isExpired: false
+    },
+    { resolves: "an expired session", session: () => null, isExpired: true }
+  ])(
+    "sends nothing for the restored account when the extension's session check then resolves $resolves",
+    async ({ session, isExpired }) => {
+      const { page } = await restoreOffline();
+      authfn.session = session();
+      isOnline = true;
+
+      expect(await page.accountSession.checkIfSessionExpired()).toBe(isExpired);
+      goOnline();
+      await settle();
+
+      expectNothingSent(page);
+    }
+  );
+
+  it("sends nothing for the restored account when another user's live session resolves on reconnect", async () => {
+    const { page } = await restoreOffline();
+    authfn.session = userB;
+
+    goOnline();
+    await settle();
+
+    expectNothingSent(page);
+  });
+
+  it("uploads and sends the pending delete when the restored account's live session resolves on reconnect", async () => {
+    const { fileId } = await restoreOffline();
+    authfn.session = liveSession;
+
+    goOnline();
+
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+    expect(sdk.baseUrls).toEqual([USEAST_FILES]);
+  });
+
+  it.each([
+    {
+      resolves: "another user's live session",
+      session: () => userB,
+      isExpired: false
+    },
+    { resolves: "an expired session", session: () => null, isExpired: true }
+  ])(
+    "stops sending for the account it replayed once the extension's session check resolves $resolves",
+    async ({ session, isExpired }) => {
+      await captureOfflineThenLeave();
+      await storeCloudSession();
+      isOnline = true;
+      authfn.session = liveSession;
+      const page = await loadPage();
+      await startSession(page, "user-a");
+      await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+
+      authfn.session = session();
+      expect(await page.accountSession.checkIfSessionExpired()).toBe(isExpired);
+      const files = await import("@nucleum/shared-state/files/filefn-client");
+      await files.recordFileFnPendingDelete(
+        { userId: "user-a", baseUrl: USEAST_FILES },
+        PENDING_DELETE
+      );
+      goOnline();
+      await settle();
+
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(...PENDING_DELETES)).toEqual([PENDING_DELETE]);
+    }
+  );
+
+  it("does not bind the stored account's region when the live session names another", async () => {
+    await captureOfflineThenLeave();
+    await storeCloudSession();
+    isOnline = true;
+    authfn.session = { ...liveSession, regionId: "euwest" };
+
+    const page = await loadPage();
+    await page.accountSession.init();
+    expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+    await openData(page, "user-a");
+    await settle();
+
+    expect(sdk.baseUrls).not.toContain(USEAST_FILES);
+    expect(sdk.started).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
   });
 });

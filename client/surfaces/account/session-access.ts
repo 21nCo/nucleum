@@ -20,12 +20,14 @@ import { startUploadReplayForSession } from "@nucleum/surfaces/account/account-u
 /** Hydrates the resolved account session and enforces the supplied product plan requirement. */
 export async function performLoginStatusCheck(requiredPlan?: PlanType) {
   const resolution = await resolveAuthSession();
+  if (resolution.status !== "authenticated") {
+    startUploadReplayForSession(resolution);
+  }
   if (resolution.status === "offline-only") {
     return true;
   }
 
   if (resolution.status === "cached-cloud") {
-    startUploadReplayForSession(resolution);
     if (
       requiredPlan !== undefined &&
       get(account).plan &&

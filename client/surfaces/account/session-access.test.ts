@@ -114,28 +114,26 @@ describe("product-configured account access", () => {
     expect(mocks.gotoPath).not.toHaveBeenCalled();
   });
 
-  it("starts account upload replay only for restored cloud sessions", async () => {
-    const started = async (resolution: object) => {
+  it("applies every resolved session to the account upload replay once", async () => {
+    const applied = async (resolution: object) => {
       mocks.startUploadReplay.mockClear();
       mocks.resolve.mockResolvedValue(resolution);
       await performLoginStatusCheck();
-      return mocks.startUploadReplay.mock.calls.length;
+      return mocks.startUploadReplay.mock.calls;
     };
-    expect(await started({ status: "cached-cloud" })).toBe(1);
-    expect(
-      await started({
+    for (const resolution of [
+      { status: "cached-cloud" },
+      {
         status: "authenticated",
         session: { id: "session", actorId: "123", metadata: {} },
         storedState: {}
-      })
-    ).toBe(1);
-    for (const status of [
-      "offline-only",
-      "unavailable",
-      "expired",
-      "signed-out"
+      },
+      { status: "offline-only" },
+      { status: "unavailable" },
+      { status: "expired" },
+      { status: "signed-out" }
     ]) {
-      expect(await started({ status })).toBe(0);
+      expect(await applied(resolution)).toEqual([[resolution]]);
     }
   });
 });
