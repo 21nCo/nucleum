@@ -1,5 +1,5 @@
 import type { AuthFnRegionalClient } from "@authfn/client";
-import { clientStorage } from "@nucleum/persistence/client-storage";
+import { getBrowserStorage } from "@nucleum/persistence/client-storage";
 import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 
 /**
@@ -26,7 +26,8 @@ export type SocialHandoffExchangeClient = Pick<
 /** Outcome of turning a native sign-in callback value into a session token. */
 export type SocialHandoffResolution =
   | { kind: "session"; token: string; regionId?: string }
-  | { kind: "failed"; errorCode: string };
+  | { kind: "failed"; errorCode: string }
+  | { kind: "ignored" };
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -43,53 +44,77 @@ export async function deriveSocialHandoffChallenge(verifier: string): Promise<st
   return toBase64Url(new Uint8Array(digest));
 }
 
-async function readPendingSocialHandoff(
-  now: number
-): Promise<PendingSocialHandoff | undefined> {
-  const stored = await clientStorage.get(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
-  if (!stored) return undefined;
+type StoredSocialHandoff =
+  | { state: "live"; pending: PendingSocialHandoff }
+  | { state: "expired" }
+  | { state: "none" };
+
+/**
+ * Pending verifiers live in this WebView's session storage: each app window
+ * keeps its own, so a callback the native shell broadcasts to every window is
+ * exchanged only by the window that started the sign-in. Reads and writes are
+ * synchronous, so two starts in one window can't interleave.
+ */
+function readSocialHandoff(now: number): StoredSocialHandoff {
+  const stored = getBrowserStorage("sessionStorage")?.getItem(
+    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF
+  );
+  if (!stored) return { state: "none" };
   try {
     const pending = JSON.parse(stored) as Partial<PendingSocialHandoff>;
     if (
       typeof pending.verifier !== "string" ||
-      typeof pending.expiresAt !== "number" ||
-      pending.expiresAt <= now
+      typeof pending.expiresAt !== "number"
     ) {
-      return undefined;
+      return { state: "none" };
     }
-    return { verifier: pending.verifier, expiresAt: pending.expiresAt };
+    if (pending.expiresAt <= now) return { state: "expired" };
+    return {
+      state: "live",
+      pending: { verifier: pending.verifier, expiresAt: pending.expiresAt }
+    };
   } catch {
-    return undefined;
+    return { state: "none" };
   }
+}
+
+function writeSocialHandoff(pending: PendingSocialHandoff) {
+  getBrowserStorage("sessionStorage")?.setItem(
+    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF,
+    JSON.stringify(pending)
+  );
+}
+
+function takeSocialHandoff(now: number): StoredSocialHandoff {
+  const stored = readSocialHandoff(now);
+  getBrowserStorage("sessionStorage")?.removeItem(
+    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF
+  );
+  return stored;
 }
 
 /**
  * Starts a code-and-verifier handoff and returns the challenge for
- * `startSocialSignIn`. A sign-in started while another is still pending reuses
- * its verifier, so whichever callback arrives can be exchanged.
+ * `startSocialSignIn`. A sign-in started while another is still pending in
+ * this window reuses its verifier with a renewed deadline, so whichever
+ * callback arrives can be exchanged.
  */
 export async function beginSocialHandoff(now = Date.now()): Promise<string> {
-  const live = await readPendingSocialHandoff(now);
-  if (live) return deriveSocialHandoffChallenge(live.verifier);
-  const verifier = toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
-  const pending: PendingSocialHandoff = {
-    verifier,
-    expiresAt: now + SOCIAL_HANDOFF_TTL_MS
-  };
-  await clientStorage.set(
-    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF,
-    JSON.stringify(pending)
-  );
+  const live = readSocialHandoff(now);
+  const verifier =
+    live.state === "live"
+      ? live.pending.verifier
+      : toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+  writeSocialHandoff({ verifier, expiresAt: now + SOCIAL_HANDOFF_TTL_MS });
   return deriveSocialHandoffChallenge(verifier);
 }
 
-/** Returns and forgets the pending verifier, or undefined when none is live. */
+/** Returns and forgets this window's pending verifier, or undefined when none is live. */
 export async function takeSocialHandoffVerifier(
   now = Date.now()
 ): Promise<string | undefined> {
-  const pending = await readPendingSocialHandoff(now);
-  await clientStorage.remove(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
-  return pending?.verifier;
+  const stored = takeSocialHandoff(now);
+  return stored.state === "live" ? stored.pending.verifier : undefined;
 }
 
 /**
@@ -113,7 +138,8 @@ export function isSocialHandoffCode(input: {
  *
  * A one-time code (flagged `handoff: "code"`, or carrying AuthFn's code prefix
  * because installed native shells don't forward `handoff`) is exchanged with
- * the pending verifier and never used as a session. Any other value is a
+ * this window's pending verifier and never used as a session; a window that
+ * started no sign-in ignores it. Any other value is a
  * session token, which native Apple sign-in and sign-ins started without a
  * challenge return directly; it is never sent to the exchange.
  */
@@ -125,8 +151,12 @@ export async function resolveSocialHandoffToken(
   if (!isSocialHandoffCode(input)) {
     return { kind: "session", token: input.token, regionId: input.regionId };
   }
-  const verifier = await takeSocialHandoffVerifier(now);
-  if (!verifier) return { kind: "failed", errorCode: "handoff_verifier_missing" };
+  const stored = takeSocialHandoff(now);
+  if (stored.state === "none") return { kind: "ignored" };
+  if (stored.state === "expired") {
+    return { kind: "failed", errorCode: "handoff_verifier_expired" };
+  }
+  const verifier = stored.pending.verifier;
   try {
     const exchangeClient = await client();
     if (!exchangeClient.exchangeSocialHandoff) {

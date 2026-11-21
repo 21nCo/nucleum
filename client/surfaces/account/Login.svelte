@@ -183,6 +183,12 @@
             },
             () => authClient({ region: regionHint })
           );
+          if (resolved.kind === "ignored") {
+            logger.info({
+              at: "Login.handleMessageFromParent.oauth.handoff.notStartedHere"
+            });
+            return;
+          }
           if (resolved.kind === "failed") {
             logger.error({
               at: "Login.handleMessageFromParent.oauth.handoff.failed",

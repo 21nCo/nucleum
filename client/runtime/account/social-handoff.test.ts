@@ -1,22 +1,6 @@
 import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const storage = vi.hoisted(() => new Map<string, string>());
-
-vi.mock("@nucleum/persistence/client-storage", () => ({
-  clientStorage: {
-    get: vi.fn(async (key: string) => storage.get(key) ?? null),
-    set: vi.fn(async (key: string, value: string) => {
-      storage.set(key, value);
-      return value;
-    }),
-    remove: vi.fn(async (key: string) => {
-      storage.delete(key);
-      return key;
-    })
-  }
-}));
-
 import {
   SOCIAL_HANDOFF_TTL_MS,
   beginSocialHandoff,
@@ -53,12 +37,12 @@ function exchanged(token: string, regionId: string | null): ExchangeResult {
 }
 
 function storedVerifier() {
-  const raw = storage.get(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
+  const raw = window.sessionStorage.getItem(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
   return raw ? (JSON.parse(raw) as { verifier: string }).verifier : undefined;
 }
 
 beforeEach(() => {
-  storage.clear();
+  window.sessionStorage.clear();
 });
 
 describe("social handoff verifier", () => {
@@ -89,16 +73,27 @@ describe("social handoff verifier", () => {
     expect(
       await takeSocialHandoffVerifier(NOW + SOCIAL_HANDOFF_TTL_MS)
     ).toBeUndefined();
-    expect(storage.has(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF)).toBe(false);
+    expect(window.sessionStorage.getItem(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF)).toBeNull();
   });
 
-  it("reuses a live verifier when a second sign-in starts before the first returns", async () => {
+  it("reuses a live verifier with a renewed deadline when a sign-in is retried", async () => {
     const first = await beginSocialHandoff(NOW);
-    const second = await beginSocialHandoff(NOW + 1000);
+    const retry = await beginSocialHandoff(NOW + SOCIAL_HANDOFF_TTL_MS - 1000);
+
+    expect(retry).toBe(first);
+    expect(
+      await takeSocialHandoffVerifier(NOW + SOCIAL_HANDOFF_TTL_MS + 1000)
+    ).toBeDefined();
+    expect(await beginSocialHandoff(NOW + SOCIAL_HANDOFF_TTL_MS + 2000)).not.toBe(first);
+  });
+
+  it("gives simultaneous starts the same verifier", async () => {
+    const [first, second] = await Promise.all([
+      beginSocialHandoff(NOW),
+      beginSocialHandoff(NOW)
+    ]);
 
     expect(second).toBe(first);
-    expect(await takeSocialHandoffVerifier(NOW + 2000)).toBeDefined();
-    expect(await beginSocialHandoff(NOW + 3000)).not.toBe(first);
   });
 });
 
@@ -147,16 +142,29 @@ describe("resolveSocialHandoffToken", () => {
     });
   });
 
-  it("never uses a code as a session when it can't be exchanged", async () => {
-    const missing = exchangeClient(exchanged("test-session-token", null));
+  it("leaves a code to the window that started the sign-in", async () => {
+    const elsewhere = exchangeClient(exchanged("test-session-token", null));
     expect(
       await resolveSocialHandoffToken(
         { token: "shc_test-handoff-code" },
-        missing.client,
+        elsewhere.client,
         NOW
       )
-    ).toEqual({ kind: "failed", errorCode: "handoff_verifier_missing" });
-    expect(missing.exchangeSocialHandoff).not.toHaveBeenCalled();
+    ).toEqual({ kind: "ignored" });
+    expect(elsewhere.exchangeSocialHandoff).not.toHaveBeenCalled();
+  });
+
+  it("never uses a code as a session when it can't be exchanged", async () => {
+    await beginSocialHandoff(NOW);
+    const expired = exchangeClient(exchanged("test-session-token", null));
+    expect(
+      await resolveSocialHandoffToken(
+        { token: "shc_test-handoff-code" },
+        expired.client,
+        NOW + SOCIAL_HANDOFF_TTL_MS
+      )
+    ).toEqual({ kind: "failed", errorCode: "handoff_verifier_expired" });
+    expect(expired.exchangeSocialHandoff).not.toHaveBeenCalled();
 
     await beginSocialHandoff(NOW);
     const refused = exchangeClient({
