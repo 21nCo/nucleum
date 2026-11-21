@@ -62,11 +62,13 @@ vi.mock("@filefn/client", async (importOriginal) => {
 
 /**
  * The session AuthFn returns for the stored credentials (null: none), or the
- * response `respond` returns instead when set.
+ * response `respond` returns instead when set; `region`, when set, resolves
+ * the session's region instead of resolving none.
  */
 const authfn = vi.hoisted(() => ({
   session: null as unknown,
-  respond: undefined as (() => Promise<unknown>) | undefined
+  respond: undefined as (() => Promise<unknown>) | undefined,
+  region: undefined as ((options: any) => Promise<void>) | undefined
 }));
 vi.mock("@authfn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@authfn/client")>();
@@ -80,7 +82,8 @@ vi.mock("@authfn/client", async (importOriginal) => {
           authfn.respond
             ? authfn.respond()
             : { ok: true, data: { session: authfn.session } },
-        resolveRegion: async () => undefined
+        resolveRegion: async () =>
+          authfn.region ? authfn.region(options) : undefined
       })
   };
 });
@@ -349,6 +352,7 @@ beforeEach(async () => {
   sdk.deletedBy = [];
   authfn.session = null;
   authfn.respond = undefined;
+  authfn.region = undefined;
   auth.resolved = 0;
   await clearStorage();
 });
@@ -947,6 +951,174 @@ describe("account upload replay authorization", () => {
 
     await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
     await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+});
+
+describe("replay authorization across the session lifetime", () => {
+  const USEAST_FILES = "https://account-useast-dev.nucleum.app/files";
+  const EUWEST_FILES = "https://account-euwest-dev.nucleum.app/files";
+  const PENDING_DELETE = "pending-delete-file";
+  const userB = {
+    ...liveSession,
+    id: "session-user-b",
+    actorId: "user:user-b",
+    primaryEmail: "user-b@example.test"
+  };
+
+  async function recordPendingDelete(baseUrl = USEAST_FILES) {
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.recordFileFnPendingDelete(
+      { userId: "user-a", baseUrl },
+      PENDING_DELETE
+    );
+  }
+
+  async function restoreOffline() {
+    const fileId = await captureOfflineThenLeave();
+    await recordPendingDelete();
+    await storeCloudSession();
+    const page = await loadPage();
+    await startSession(page, "user-a");
+    await vi.waitFor(() => expect(sdk.baseUrls).toEqual([USEAST_FILES]));
+    expect(sdk.started).toEqual([]);
+    return { page, fileId };
+  }
+
+  function holdAuthFnResponses() {
+    const held: ((session: unknown) => void)[] = [];
+    authfn.respond = () =>
+      new Promise((resolve) =>
+        held.push((session) => resolve({ ok: true, data: { session } }))
+      );
+    return held;
+  }
+
+  async function settle() {
+    await vi.dynamicImportSettled();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await vi.dynamicImportSettled();
+  }
+
+  it("does not let a file lookup authorize the replay of an account another user's live session contradicted", async () => {
+    await restoreOffline();
+    const { logger } = await import("@nucleum/client/runtime/logging/logger");
+    const warn = vi.spyOn(logger, "warn");
+    authfn.session = userB;
+    goOnline();
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith({
+        at: "filefn.uploadReplay.start.accountMismatch"
+      })
+    );
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await settle();
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+  });
+
+  it("does not carry a file operation's authorization past sign-out into the same user's next cached restore", async () => {
+    await storeCloudSession();
+    isOnline = false;
+    const page = await loadPage();
+    await startSession(page, "user-a");
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await page.accountSession.signOut({ isPreventRedirect: true });
+    await settle();
+    await recordPendingDelete();
+    await storeCloudSession();
+    await page.accountSession.init();
+    await page.sessionAccess.performLoginStatusCheck();
+    await settle();
+    expect(sdk.deleted).toEqual([]);
+  });
+
+  it("drains pending deletes only at the authority the live session confirmed", async () => {
+    await restoreOffline();
+    await recordPendingDelete(EUWEST_FILES);
+    authfn.session = liveSession;
+    goOnline();
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await settle();
+    expect(sdk.deleted.filter((id) => id === PENDING_DELETE)).toHaveLength(1);
+  });
+
+  it("starts no replay from an auth guard session that resolves after sign-out", async () => {
+    await captureOfflineThenLeave();
+    await recordPendingDelete();
+    await storeCloudSession();
+    isOnline = true;
+    const held = holdAuthFnResponses();
+    const page = await loadPage();
+    await page.accountSession.init();
+    const check = page.sessionAccess.performLoginStatusCheck();
+    await vi.waitFor(() => expect(held).toHaveLength(1));
+    await page.accountSession.signOut({ isPreventRedirect: true });
+    held[0](liveSession);
+    await check.catch(() => undefined);
+    await settle();
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+  });
+
+  it("stores no region or session from a recheck whose region lookup finishes after sign-out", async () => {
+    await restoreOffline();
+    await clientStorage.remove(ClientStorageKey.REGION);
+    const heldRegion: (() => void)[] = [];
+    authfn.region = (options) =>
+      new Promise<void>((resolve) =>
+        heldRegion.push(() => {
+          Promise.resolve(
+            options.onRegionChanged?.({
+              fromRegionId: "useast",
+              toRegionId: "euwest"
+            })
+          ).then(() => resolve());
+        })
+      );
+    authfn.session = liveSession;
+    goOnline();
+    await vi.waitFor(() => expect(heldRegion).toHaveLength(1));
+    const resolved = auth.resolved;
+    await signOutLatestPage();
+    heldRegion[0]();
+    await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+    await settle();
+    expect(await clientStorage.get(ClientStorageKey.REGION)).toBeFalsy();
+    expect(await clientStorage.get(ClientStorageKey.USER)).toBeFalsy();
+
+    async function signOutLatestPage() {
+      await pages[pages.length - 1].accountSession.signOut({
+        isPreventRedirect: true
+      });
+    }
+  });
+
+  it("keeps retrying an unavailable recheck while online until the live session confirms the account", async () => {
+    vi.useFakeTimers({
+      toFake: ["setTimeout", "clearTimeout"],
+      shouldAdvanceTime: true
+    });
+    const { fileId } = await restoreOffline();
+    authfn.respond = async () => ({
+      ok: false,
+      error: { code: "AUTHFN_SERVER_ERROR", retryable: false }
+    });
+    const resolved = auth.resolved;
+    goOnline();
+    await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+    await vi.dynamicImportSettled();
+    expect(sdk.started).toEqual([]);
+    authfn.respond = undefined;
+    authfn.session = liveSession;
+    await vi.advanceTimersByTimeAsync(300_000);
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]), {
+      timeout: 3_000
+    });
     expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
   });
 });

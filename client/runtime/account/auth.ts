@@ -34,11 +34,13 @@ const REGION_CACHE_TTL_MS = 15 * 60 * 1000;
  * Returns the regional AuthFn client for `region`. The shared instance is
  * re-pointed on every call; `isIsolated` returns a new client pinned to
  * `region` that other callers can't re-point, without replacing the shared one.
+ * Once `signal` aborts, a new client stores no region it resolves.
  */
 export const authClient = async (params?: {
   region?: string;
   isPreventCachedInstance?: boolean;
   isIsolated?: boolean;
+  signal?: AbortSignal;
 }): Promise<NucleumAuthClient> => {
   const region =
     params?.region ??
@@ -58,7 +60,7 @@ export const authClient = async (params?: {
   const client = createAuthFnRegionalClient({
     defaultRegionId: region,
     resolveBaseUrl: resolveAuthFnBaseUrl,
-    storage: createNucleusRegionStorage(),
+    storage: createNucleusRegionStorage(params?.signal),
     cacheTtlMs: REGION_CACHE_TTL_MS,
     clientOptions: {
       cookiePrefix: resolveAccountCookiePrefix(region),
@@ -71,6 +73,7 @@ export const authClient = async (params?: {
       onRequestMetric: emitAccountNetworkMetric
     },
     onRegionChanged: async (event) => {
+      if (params?.signal?.aborted) return;
       await clientStorage.set(ClientStorageKey.REGION, event.toRegionId);
     }
   });
@@ -325,8 +328,8 @@ async function resolveMissingAuthSession(
 
 /**
  * Resolves the stored session. Once `signal` aborts (a sign-out or a newer
- * resolution), what AuthFn returns later is neither stored, cleared nor
- * reported: it resolves signed out.
+ * resolution), what AuthFn returns later, including a region it resolves, is
+ * neither stored, cleared nor reported: it resolves signed out.
  */
 export async function resolveAuthSession(options?: {
   signal?: AbortSignal;
@@ -352,7 +355,10 @@ export async function resolveAuthSession(options?: {
   }
 
   try {
-    const client = await authClient({ isPreventCachedInstance: true });
+    const client = await authClient({
+      isPreventCachedInstance: true,
+      signal: options?.signal
+    });
     const session = await client.getSession();
     if (options?.signal?.aborted) {
       return { status: "signed-out", storedState };
@@ -364,12 +370,15 @@ export async function resolveAuthSession(options?: {
       return resolveMissingAuthSession(storedState);
     }
     const activeSession = session.data.session;
-    await clientStorage.set(ClientStorageKey.USER, activeSession);
     if (activeSession.primaryEmail) {
       await client.resolveRegion({
         identifier: activeSession.primaryEmail
       });
+      if (options?.signal?.aborted) {
+        return { status: "signed-out", storedState };
+      }
     }
+    await clientStorage.set(ClientStorageKey.USER, activeSession);
     logger.info({
       at: "resolveAuthSession.session.result",
       hasAuthFnToken: Boolean(storedState.authFnToken),
@@ -426,7 +435,7 @@ export async function performSessionCheck(): Promise<boolean | undefined> {
   return false;
 }
 
-function createNucleusRegionStorage(): AuthFnRegionStorage {
+function createNucleusRegionStorage(signal?: AbortSignal): AuthFnRegionStorage {
   return {
     async get(identifier) {
       const map = await readRegionMap();
@@ -438,11 +447,13 @@ function createNucleusRegionStorage(): AuthFnRegionStorage {
     },
     async set(identifier, value) {
       const map = await readRegionMap();
+      if (signal?.aborted) return;
       map[normalizeIdentifier(identifier)] = value;
       await clientStorage.set(ClientStorageKey.USER_REGION_MAP, map);
     },
     async delete(identifier) {
       const map = await readRegionMap();
+      if (signal?.aborted) return;
       delete map[normalizeIdentifier(identifier)];
       await clientStorage.set(ClientStorageKey.USER_REGION_MAP, map);
     }

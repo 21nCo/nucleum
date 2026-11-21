@@ -36,6 +36,7 @@ vi.mock("@nucleum/persistence/client-storage", () => ({
   clientStorage: { get: mocks.storageGet, set: mocks.storageSet }
 }));
 vi.mock("@nucleum/surfaces/account/account-upload-replay", () => ({
+  currentSessionLifetime: () => new AbortController().signal,
   startUploadReplayForSession: mocks.startUploadReplay
 }));
 vi.mock("@nucleum/client/runtime/logging/logger", () => ({
@@ -119,7 +120,7 @@ describe("product-configured account access", () => {
       mocks.startUploadReplay.mockClear();
       mocks.resolve.mockResolvedValue(resolution);
       await performLoginStatusCheck();
-      return mocks.startUploadReplay.mock.calls;
+      return mocks.startUploadReplay.mock.calls.map(([value]) => [value]);
     };
     for (const resolution of [
       { status: "cached-cloud" },

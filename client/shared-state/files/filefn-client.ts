@@ -70,16 +70,19 @@ let isAuthorityPending = false;
 let ownerEpoch = 0;
 let ownerUserId: string | undefined;
 /**
- * The cloud account, at the region it names (null: none named), that the
- * latest live session on this page confirmed, or null before one did or once
- * a resolution ended it (see startAccountUploadReplay).
+ * Who may send replay on this page, until the session ends (see
+ * isReplayAuthorized and endAccountUploadReplay): `liveOwner` is the cloud
+ * account, at the region it names, that the latest live session confirmed
+ * (null before one did or once a resolution stopped the replay);
+ * `contradictedUserIds` are the users a live session showed are not the
+ * signed-in account; `fileGrantUserIds` are the users a file operation
+ * requested the client for while not contradicted.
  */
-let liveReplayOwner: FileFnAccountScope | null = null;
-/**
- * The cloud users a file operation on this page requested the client for
- * (see syncWithAccount), less those a live session contradicted.
- */
-const fileRequestUserIds = new Set<string>();
+const replayAuthorization = {
+  liveOwner: null as FileFnAccountScope | null,
+  contradictedUserIds: new Set<string>(),
+  fileGrantUserIds: new Set<string>()
+};
 /** Clients waiting for their replay to be authorized. */
 const replayWaiters = new Set<() => void>();
 let stopLiveBindWait: () => void = () => undefined;
@@ -169,16 +172,15 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
  * together share the queue as described in replayFileQueue.
  *
  * A client bound this way sends nothing (no offline replay, queue replay or
- * pending delete) until a live session on this page confirms its account:
+ * pending delete) until its replay is authorized (see isReplayAuthorized):
  * `liveSession` is the account and region a live session establishes. Without
  * it (a cached cloud session restored offline) the client is bound and waits.
  * With it, the client is bound only once the account state carries the same
  * cloud user at the same region, waiting while it carries no cloud user yet;
- * a bound client of another user or region is torn down, and an account state
+ * every other user the page knows is contradicted until the session ends, a
+ * bound client of another user or region is torn down, and an account state
  * seeded with another user binds nothing. The account state, the queue and the
- * pending deletes stay as they are. A file operation requests the client of
- * the account state's cloud user itself, which then replays as soon as it is
- * created.
+ * pending deletes stay as they are.
  */
 export function startAccountUploadReplay(
   liveSession?: FileFnAccountScope
@@ -187,14 +189,24 @@ export function startAccountUploadReplay(
     bindToAccount();
     return;
   }
-  liveReplayOwner = liveSession;
-  stopLiveBindWait();
-  for (const userId of fileRequestUserIds) {
-    if (userId !== liveSession.userId) fileRequestUserIds.delete(userId);
+  const { contradictedUserIds, fileGrantUserIds } = replayAuthorization;
+  replayAuthorization.liveOwner = liveSession;
+  contradictedUserIds.delete(liveSession.userId);
+  const known = [
+    ...fileGrantUserIds,
+    currentEntry?.userId,
+    resolveFileFnAccountScope(account.get())?.userId
+  ];
+  for (const userId of known) {
+    if (userId && userId !== liveSession.userId) {
+      contradictedUserIds.add(userId);
+      fileGrantUserIds.delete(userId);
+    }
   }
+  stopLiveBindWait();
   const entry = currentEntry;
   if (entry && !isLiveReplayOwner(entry.userId, entry.baseUrl)) {
-    fileRequestUserIds.delete(entry.userId);
+    fileGrantUserIds.delete(entry.userId);
     tearDownFileFnClient();
   }
   notifyReplayWaiters();
@@ -225,11 +237,25 @@ export function startAccountUploadReplay(
  * stay as they are. A client a file operation requested is left to it.
  */
 export function stopAccountUploadReplay(): void {
-  liveReplayOwner = null;
+  replayAuthorization.liveOwner = null;
   stopLiveBindWait();
-  if (!fileRequestUserIds.has(currentEntry?.userId ?? "")) {
+  if (!replayAuthorization.fileGrantUserIds.has(currentEntry?.userId ?? "")) {
     tearDownFileFnClient();
   }
+}
+
+/**
+ * Ends the page's session for the upload replay on sign-out: every grant and
+ * contradiction is cleared, so the next session's replay waits for its own
+ * authorization, and the bound client is torn down. The queue and the pending
+ * deletes stay as they are.
+ */
+export function endAccountUploadReplay(): void {
+  replayAuthorization.liveOwner = null;
+  replayAuthorization.contradictedUserIds.clear();
+  replayAuthorization.fileGrantUserIds.clear();
+  stopLiveBindWait();
+  tearDownFileFnClient();
 }
 
 function isLiveSessionScope(
@@ -246,16 +272,30 @@ function isLiveSessionScope(
 }
 
 /**
- * Whether a client of the account at the authority may send its replay: a
- * file operation requested the account's client, or a live session confirmed
- * the account at that authority.
+ * Whether the account may send replay (offline uploads, queued files or
+ * pending deletes) at the authority now: never once a live session of this
+ * page's session contradicted it; otherwise when a file operation requested
+ * its client (at every authority, as a file page does) or the latest live
+ * session confirmed it at that authority.
  */
 function isReplayAuthorized(userId: string, baseUrl: string): boolean {
-  return fileRequestUserIds.has(userId) || isLiveReplayOwner(userId, baseUrl);
+  if (isContradicted(userId)) return false;
+  return (
+    replayAuthorization.fileGrantUserIds.has(userId) ||
+    isLiveReplayOwner(userId, baseUrl)
+  );
+}
+
+function isContradicted(userId: string): boolean {
+  const { liveOwner, contradictedUserIds } = replayAuthorization;
+  return (
+    contradictedUserIds.has(userId) ||
+    (liveOwner !== null && liveOwner.userId !== userId)
+  );
 }
 
 function isLiveReplayOwner(userId: string, baseUrl: string): boolean {
-  const owner = liveReplayOwner;
+  const owner = replayAuthorization.liveOwner;
   return (
     owner?.userId === userId &&
     (!owner.region || resolveFileFnBaseUrl(owner.region) === baseUrl)
@@ -287,13 +327,15 @@ function notifyReplayWaiters() {
 }
 
 /**
- * Binds the client to the account state for a file operation, which starts
- * its replay as soon as it is created.
+ * Binds the client to the account state for a file operation. Its replay
+ * starts as soon as it is created, unless a live session contradicted the
+ * account, whose replay then waits for one that confirms it.
  */
 function syncWithAccount() {
   const userId = resolveFileFnAccountScope(account.get())?.userId;
-  if (userId && !fileRequestUserIds.has(userId)) {
-    fileRequestUserIds.add(userId);
+  const { fileGrantUserIds } = replayAuthorization;
+  if (userId && !isContradicted(userId) && !fileGrantUserIds.has(userId)) {
+    fileGrantUserIds.add(userId);
     notifyReplayWaiters();
   }
   bindToAccount();
@@ -448,8 +490,11 @@ function startFileQueueReplay(
   client: FileFnClient,
   teardown: AbortSignal
 ) {
-  const replay = () =>
-    replayAccountFileQueue({ userId, baseUrl, client, signal: teardown });
+  const replay = () => {
+    if (isReplayAuthorized(userId, baseUrl)) {
+      replayAccountFileQueue({ userId, baseUrl, client, signal: teardown });
+    }
+  };
   const stop = datafnRuntime.subscribe((runtime) => {
     if (runtime?.namespace === `user:${userId}`) replay();
   });
@@ -991,9 +1036,10 @@ async function recordPendingDelete(
 }
 
 /**
- * Sends the account's pending deletes at every authority that has one: at
- * the client's own authority through it, at another through a client of that
- * authority made for the account and ended with the client's teardown.
+ * Sends the account's pending deletes at every authority that has one and
+ * where its replay is authorized (see isReplayAuthorized): at the client's
+ * own authority through it, at another through a client of that authority
+ * made for the account and ended with the client's teardown.
  */
 async function drainAccountPendingDeletes(
   userId: string,
@@ -1010,6 +1056,7 @@ async function drainAccountPendingDeletes(
   }
   for (const authority of authorities) {
     if (teardown.aborted) return;
+    if (!isReplayAuthorized(userId, authority)) continue;
     await drainPendingDeletes(userId, authority, async () =>
       authority === baseUrl
         ? client

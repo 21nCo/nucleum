@@ -16,12 +16,21 @@ import { PlanType } from "@nucleum/schema/account/subscription";
 
 import { resolveAuthSession } from "@nucleum/client/runtime/account/auth";
 import { logger } from "@nucleum/client/runtime/logging/logger";
-import { startUploadReplayForSession } from "@nucleum/surfaces/account/account-upload-replay";
-/** Hydrates the resolved account session and enforces the supplied product plan requirement. */
+import {
+  currentSessionLifetime,
+  startUploadReplayForSession
+} from "@nucleum/surfaces/account/account-upload-replay";
+/**
+ * Hydrates the resolved account session and enforces the supplied product plan
+ * requirement. A resolution that returns after sign-out ended its session
+ * hydrates and starts nothing and reports signed out.
+ */
 export async function performLoginStatusCheck(requiredPlan?: PlanType) {
-  const resolution = await resolveAuthSession();
+  const lifetime = currentSessionLifetime();
+  const resolution = await resolveAuthSession({ signal: lifetime });
+  if (lifetime.aborted) return false;
   if (resolution.status !== "authenticated") {
-    startUploadReplayForSession(resolution);
+    startUploadReplayForSession(resolution, lifetime);
   }
   if (resolution.status === "offline-only") {
     return true;
@@ -103,8 +112,10 @@ export async function performLoginStatusCheck(requiredPlan?: PlanType) {
     lastLogin: new Date(),
     region: authSession.regionId ?? subject.regionId
   };
+  if (lifetime.aborted) return false;
   await clientStorage.set(ClientStorageKey.USER, authSession);
   await clientStorage.set(ClientStorageKey.USER_INFO, userInfo);
+  if (lifetime.aborted) return false;
   logger.info({
     at: "AuthGuard.performLoginStatusCheck.session.ok",
     hasAuthFnToken: Boolean(resolution.storedState.authFnToken),
@@ -122,7 +133,7 @@ export async function performLoginStatusCheck(requiredPlan?: PlanType) {
     userInfo: userInfo as any,
     plan: requiredPlan !== undefined ? cachedPlan : current.plan
   }));
-  startUploadReplayForSession(resolution);
+  startUploadReplayForSession(resolution, lifetime);
   if (requiredPlan !== undefined) {
     const planResolution = await accountSession.refreshPlanData();
     const plan =

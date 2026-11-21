@@ -10,6 +10,17 @@ const RETRY_DELAYS_MS = [5_000, 15_000, 60_000, 300_000];
 let sessionRecheck:
   | { stop: () => void; scheduleRetry: () => void; recheck: () => void }
   | undefined;
+let sessionLifetime = new AbortController();
+
+/**
+ * Returns the signal of the page's current session, which sign-out aborts
+ * (see stopUploadReplayForSession). A caller resolving the stored session
+ * passes it to resolveAuthSession and startUploadReplayForSession, so a
+ * resolution that returns after sign-out stores, hydrates and starts nothing.
+ */
+export function currentSessionLifetime(): AbortSignal {
+  return sessionLifetime.signal;
+}
 
 /**
  * Applies a resolution of the stored session to the signed-in cloud account's
@@ -21,22 +32,30 @@ let sessionRecheck:
  * nothing until the stored session, resolved again on the next reconnect,
  * confirms the account (see recheckSession). Any other resolution
  * (offline-only, expired, signed-out or unavailable) stops the replay the
- * restore started, keeping the account's queue and pending deletes. The caller
- * does not wait for the FileFn client to load.
+ * restore started, keeping the account's queue and pending deletes; an
+ * unavailable one keeps an active recheck retrying with its growing delay.
+ * Once `lifetime` (the session the resolution belongs to, see
+ * currentSessionLifetime) has ended, nothing is applied. The caller does not
+ * wait for the FileFn client to load.
  */
 export function startUploadReplayForSession(
-  resolution: AuthSessionResolution
+  resolution: AuthSessionResolution,
+  lifetime: AbortSignal = sessionLifetime.signal
 ): void {
+  if (lifetime.aborted) return;
   if (resolution.status === "cached-cloud") {
     recheckSession();
     if (resolution.storedState.isOffline) recheckIfConnected();
     else sessionRecheck?.scheduleRetry();
-  } else if (resolution.status !== "unavailable") {
+  } else if (resolution.status === "unavailable") {
+    sessionRecheck?.scheduleRetry();
+  } else {
     stopSessionRecheck();
   }
   const liveSession = resolveLiveSession(resolution);
   import("@nucleum/shared-state/files/filefn-client")
     .then((files) => {
+      if (lifetime.aborted) return;
       if (resolution.status === "cached-cloud")
         files.startAccountUploadReplay();
       else if (liveSession) files.startAccountUploadReplay(liveSession);
@@ -61,14 +80,17 @@ function resolveLiveSession(
 }
 
 /**
- * Stops the upload replay on sign-out: a pending resolution of the stored
- * session neither stores its session nor authorizes the replay, and the
- * client the restore bound is torn down.
+ * Stops the upload replay on sign-out: it ends the session's lifetime, so a
+ * pending resolution of the stored session neither stores its session nor
+ * authorizes the replay, clears every replay grant of the page and tears the
+ * bound client down.
  */
 export function stopUploadReplayForSession(): void {
+  sessionLifetime.abort();
+  sessionLifetime = new AbortController();
   stopSessionRecheck();
   import("@nucleum/shared-state/files/filefn-client")
-    .then((files) => files.stopAccountUploadReplay())
+    .then((files) => files.endAccountUploadReplay())
     .catch((error: unknown) => {
       logger.error({ at: "account.uploadReplay.stop", error });
     });
@@ -104,6 +126,7 @@ function recheckSession() {
   let attempt: AbortController | undefined;
   let retries = 0;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  const lifetime = sessionLifetime.signal;
   const recheck = () => {
     clearTimeout(retryTimer);
     attempt?.abort();
@@ -111,7 +134,9 @@ function recheckSession() {
     attempt = current;
     resolveAuthSession({ signal: current.signal })
       .then((resolution) => {
-        if (!current.signal.aborted) startUploadReplayForSession(resolution);
+        if (!current.signal.aborted) {
+          startUploadReplayForSession(resolution, lifetime);
+        }
       })
       .catch((error: unknown) => {
         logger.error({ at: "account.uploadReplay.reconnect", error });
