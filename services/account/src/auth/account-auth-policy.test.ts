@@ -143,6 +143,8 @@ describe('native social sign-in handoff', () => {
 
     const session = await call('/auth/session', { authorization: `Bearer ${data.handoff.token}` });
     expect(session.status).toBe(200);
+    const current = ((await session.json()) as { data: { session: { id: string } | null } }).data;
+    expect(current.session?.id).toBe(data.session.id);
 
     const replay = await exchange({ code, verifier });
     expect(replay.status).toBeGreaterThanOrEqual(400);
