@@ -147,6 +147,21 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
   return currentEntry === entry ? client : getFileFnClient();
 }
 
+/**
+ * Starts the signed-in cloud account's upload replay at session startup, so
+ * files queued before a reload upload once the session is restored, also when
+ * the page never renders or captures a file. It binds the FileFn client to the
+ * account state: a restored cloud session gets its client, whose creation
+ * starts the replay of the account's queues now when online and on every
+ * reconnect (see getFileFnClient); a guest or local-only session gets none;
+ * signing out tears the client down, which stops its replay. Tabs started
+ * together share the queue as described in replayFileQueue. Calling it again
+ * does nothing more.
+ */
+export function startAccountUploadReplay(): void {
+  if (!isBoundToAccount) syncWithAccount();
+}
+
 /** Binds the client to the account state once, then syncs it with the account. */
 function syncWithAccount() {
   if (!isBoundToAccount) {
