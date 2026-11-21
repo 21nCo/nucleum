@@ -1,0 +1,31 @@
+client/surfaces/account/account-session.upload-replay.test.ts
+  s_405b30c2a59737::t_778d8a301bbdd1 1-367
+client/shared-state/files/filefn-client.ts
+  s_8c00622b7d4e6b::t_ada6698005143c 150-164
+client/surfaces/account/account-session.ts
+  s_8c00622b7d4e6b::t_884f32a82e8502 96-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4c22eb266e4b7fb408d1429e8fd3c33d3de37ceb",
+  "prompts": {},
+  "sessions": {
+    "s_405b30c2a59737": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1fed4-1009-7a63-8c59-7c02a8b51360",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_8c00622b7d4e6b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_8c00622b7d4e6b",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
