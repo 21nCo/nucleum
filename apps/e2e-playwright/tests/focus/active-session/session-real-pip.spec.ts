@@ -4,6 +4,7 @@ import { ensureInAppOnHome } from "../../utils/helpers";
 import {
   addAdvancedFocusItems,
   collectPageErrors,
+  hideFocusFullscreen,
   readSessionRuntime,
   resetFocusSession,
   startAdvancedFocus,
@@ -133,20 +134,130 @@ test("real Document PiP supports break resume close restoration and persisted fi
   await waitForSessionElapsed(page, 1);
   const sessionId = (await readSessionRuntime(page)).currentSessionId!;
 
-  const pip = await openRealPip(page);
+  await exercisePipLifecycle(page, objective, sessionId, () => openRealPip(page));
+  expect(pageErrors).toEqual([]);
+});
+
+test("mounted mini-player supports a real PiP lifecycle through fullscreen controls", async ({
+  page,
+  seed
+}) => {
+  const pageErrors = collectPageErrors(page);
+  const objective = await seed.focus.objective({ prefix: "E2E mini-player PiP" });
+  await addAdvancedFocusItems(page, [objective.label]);
+  await configureSessionComposition(page, {
+    type: "Countup",
+    totalDuration: 0,
+    focusDuration: 0,
+    breakDuration: 0,
+    numberOfBreaks: 0,
+    breakReminder: 0,
+    breakType: "Reminder"
+  });
+  await startAdvancedFocus(page);
+  await waitForSessionElapsed(page, 1);
+  const sessionId = (await readSessionRuntime(page)).currentSessionId!;
+  await page.getByRole("button", { name: /^Break$/ }).click();
+  await expect(page.getByText("CURRENT BREAK", { exact: true })).toBeVisible();
+  expect((await readSessionRuntime(page)).state).toBe(3);
+  await page.getByRole("button", { name: /^Resume$/ }).click();
+  await expect(page.getByRole("button", { name: /^Break$/ })).toBeVisible();
+  expect((await readSessionRuntime(page)).state).toBe(1);
+  await page.setViewportSize({ width: 800, height: 600 });
+  await hideFocusFullscreen(page);
+  const player = page.locator("#playercontainer").getByTestId("focus-player");
+  await expect(player.getByText(objective.label, { exact: true })).toBeVisible();
+
+  await exercisePipLifecycle(page, objective, sessionId, async () => {
+    await player.getByText(objective.label, { exact: true }).click();
+    const fullscreen = page.locator(
+      '[data-testid="overlay-layer"][data-overlay="FULL_SCREEN_FOCUS"]'
+    );
+    const control = fullscreen.getByRole("button").filter({
+      has: page.locator('use[href*="picture-in-picture"]')
+    });
+    await control.hover();
+    await expect(
+      page.getByText("Picture in picture", { exact: true })
+    ).toBeVisible();
+    const opened = page.context().waitForEvent("page", { timeout: 10_000 });
+    await control.click();
+    const pip = await opened;
+    await expect(pip.getByTestId("focus-player")).toBeVisible();
+    await expect(page.getByTestId("focus-player")).toHaveCount(0);
+    expect(
+      await page.evaluate(() => {
+        const nativeWindow = (window as any).documentPictureInPicture.window;
+        return Boolean(
+          nativeWindow &&
+            !nativeWindow.closed &&
+            nativeWindow.document !== document
+        );
+      })
+    ).toBe(true);
+    await hideFocusFullscreen(page);
+    return pip;
+  });
+  expect(pageErrors).toEqual([]);
+});
+
+async function exercisePipLifecycle(
+  page: Page,
+  objective: { id: string; label: string },
+  sessionId: string,
+  openPip: () => Promise<Page>
+) {
+  const pip = await openPip();
   const pipPlayer = pip.getByTestId("focus-player");
   await expect(
     pipPlayer.getByText(objective.label, { exact: true })
   ).toBeVisible();
+  await pip.evaluate(() => {
+    document.addEventListener(
+      "click",
+      (event) => {
+        (window as any).__e2eNativePipClick = {
+          isTrusted: event.isTrusted,
+          breakControl: Boolean(
+            (event.target as Element)
+              .closest("button")
+              ?.querySelector('use[href*="clock"]')
+          )
+        };
+      },
+      { capture: true, once: true }
+    );
+  });
   await pipPlayer
     .getByRole("button")
     .filter({
-      has: pip.locator('use[href*="clock"]')
+      has: pip.locator('use[href*="clock"]'),
+      hasNot: pip.getByRole("button")
     })
     .click();
-  await expect(
-    pipPlayer.getByText("CURRENT BREAK", { exact: true })
-  ).toBeVisible();
+  try {
+    await expect(
+      pipPlayer.getByText("CURRENT BREAK", { exact: true })
+    ).toBeVisible();
+  } catch (error) {
+    const runtime = await readSessionRuntime(page);
+    const nativeClick = await pip.evaluate(
+      () => (window as any).__e2eNativePipClick
+    );
+    await test.info().attach("real-pip-break-diagnostics", {
+      contentType: "application/json",
+      body: JSON.stringify({
+        nativeClick,
+        stateAfterClick: runtime.state,
+        sameSession: runtime.currentSessionId === sessionId
+      })
+    });
+    test.fail(
+      runtime.state === 1 && nativeClick?.isTrusted && nativeClick?.breakControl,
+      "A trusted Break click in native Document PiP does not reach the moved player's delegated Svelte handler."
+    );
+    throw new Error(`${String(error)}; native PiP click: ${JSON.stringify(nativeClick)}; session state: ${runtime.state}`);
+  }
   await expect
     .poll(async () => (await readSessionRuntime(page)).state, {
       message: "break clicked in Document PiP updates the main session"
@@ -160,7 +271,8 @@ test("real Document PiP supports break resume close restoration and persisted fi
   await pipPlayer
     .getByRole("button")
     .filter({
-      has: pip.locator('use[href*="play-circle"]')
+      has: pip.locator('use[href*="play-circle"]'),
+      hasNot: pip.getByRole("button")
     })
     .click();
   await expect(
@@ -193,13 +305,14 @@ test("real Document PiP supports break resume close restoration and persisted fi
   expect(afterClose.state).toBe(1);
   expect(afterClose.intervals).toHaveLength(resumed.intervals.length);
 
-  const finishingPip = await openRealPip(page);
+  const finishingPip = await openPip();
   const closed = finishingPip.waitForEvent("close");
   await finishingPip
     .getByTestId("focus-player")
     .getByRole("button")
     .filter({
-      has: finishingPip.locator('use[href*="arrow-circle-right"]')
+      has: finishingPip.locator('use[href*="arrow-circle-right"]'),
+      hasNot: finishingPip.getByRole("button")
     })
     .click();
   await expect(
@@ -227,5 +340,4 @@ test("real Document PiP supports break resume close restoration and persisted fi
   await reopenPersistedSession(page, sessionId, [objective.label]);
   expect(await readPersistedSession(page, sessionId)).toEqual(persisted);
   expect((await readSessionRuntime(page)).isSessionRunning).toBe(false);
-  expect(pageErrors).toEqual([]);
-});
+}
