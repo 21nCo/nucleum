@@ -1,0 +1,27 @@
+client/runtime/account/auth.ts
+  s_a4a9279b38a3d6::t_93403167d72ab3 7,27-30,36,43
+client/runtime/account/social-handoff.test.ts
+  s_a4a9279b38a3d6::t_86c586c2a53e2d 18,59,67,73,81-82,88,93-94,103,131,150-168,182,200,213,247,256,260,273,285,298,310
+client/runtime/account/social-handoff.ts
+  s_a4a9279b38a3d6::t_d6f9e074d6bb75 1,26-27,31,33-37,85-89,122-123,127-130,136-140,181-182,189,199
+client/surfaces/account/Login.svelte
+  s_a4a9279b38a3d6::t_73a9d7ad0499af 25-26,189,195-197
+client/surfaces/account/OAuthOptions.svelte
+  s_a4a9279b38a3d6::t_ed26bed1a95e7a 90-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "97ffa93b9789e732d70bd8503404222d24be96d6",
+  "prompts": {},
+  "sessions": {
+    "s_a4a9279b38a3d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1855ecfc-893f-4a3a-9ace-d8374583571f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Aravind Samala <samalaaravind02@gmail.com>"
+    }
+  }
+}
