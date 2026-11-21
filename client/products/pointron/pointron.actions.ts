@@ -22,6 +22,7 @@ import { Embed } from "@nucleum/client/runtime/context.type";
 import { Action } from "@nucleum/client/config/action.enum";
 import ObjectiveSearchResultItem from "@nucleum/features/focus/goals/GoalSearchResultItem.svelte";
 import CreateTask from "@nucleum/features/focus/tasks/CreateTask.svelte";
+import FocusPlayer from "@nucleum/features/focus/player/FocusPlayer.svelte";
 import { SessionState } from "@nucleum/features/focus/sessionState.enum";
 import {
   isSameResource,
@@ -444,8 +445,7 @@ export const pointronActions: IAction[] = [
     action: PointronAction.FOCUS_PLAYER,
     type: ActionType.INLINE,
     isMeta: true,
-    loadComponent: () =>
-      import("@nucleum/features/focus/player/FocusPlayer.svelte")
+    component: FocusPlayer
   },
   {
     action: PointronAction.FOCUS,
