@@ -104,14 +104,6 @@
           handoffMode,
           ...(handoffChallenge ? { handoffChallenge } : {})
         });
-        if (
-          response.ok &&
-          handoffChallenge &&
-          !(await isCurrentSocialHandoffChallenge(handoffChallenge))
-        ) {
-          logger.info({ at: "OAuthOptions.startSocialSignIn.superseded", provider });
-          return;
-        }
         if (response.ok) {
           logger.info({
             at: "OAuthOptions.startSocialSignIn.ok",
@@ -119,6 +111,10 @@
             isEmbed: true,
             redirectTo: response.data.redirectTo
           });
+          if (handoffChallenge && !isCurrentSocialHandoffChallenge(handoffChallenge)) {
+            logger.info({ at: "OAuthOptions.startSocialSignIn.superseded", provider });
+            return;
+          }
           navigation.openLink(response.data.redirectTo, true);
         } else {
           logger.error({

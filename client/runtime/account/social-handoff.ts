@@ -25,6 +25,8 @@ interface PendingSocialHandoff {
   expiresAt: number;
   /** Account region the sign-in was started in, when known. */
   regionId?: string;
+  /** The verifier's challenge, once derived. */
+  challenge?: string;
 }
 
 /** Client surface used to exchange a social handoff code. */
@@ -96,7 +98,8 @@ function readSocialHandoff(now: number): StoredSocialHandoff {
       pending: {
         verifier: pending.verifier,
         expiresAt: pending.expiresAt,
-        ...(typeof pending.regionId === "string" ? { regionId: pending.regionId } : {})
+        ...(typeof pending.regionId === "string" ? { regionId: pending.regionId } : {}),
+        ...(typeof pending.challenge === "string" ? { challenge: pending.challenge } : {})
       }
     };
   } catch {
@@ -130,10 +133,17 @@ export function isCurrentSocialHandoff(verifier: string): boolean {
   return storedVerifier() === verifier;
 }
 
-/** True while `challenge` belongs to this window's current sign-in. */
-export async function isCurrentSocialHandoffChallenge(challenge: string): Promise<boolean> {
-  const verifier = storedVerifier();
-  return verifier !== undefined && (await deriveSocialHandoffChallenge(verifier)) === challenge;
+/** True while `challenge` belongs to this window's current sign-in; checked synchronously. */
+export function isCurrentSocialHandoffChallenge(challenge: string): boolean {
+  const stored = getBrowserStorage("sessionStorage")?.getItem(
+    ClientStorageKey.AUTHFN_SOCIAL_HANDOFF
+  );
+  if (!stored) return false;
+  try {
+    return (JSON.parse(stored) as Partial<PendingSocialHandoff>).challenge === challenge;
+  } catch {
+    return false;
+  }
 }
 
 /** Cancels this window's pending browser sign-in, e.g. when another sign-in method starts. */
@@ -164,12 +174,15 @@ export async function beginSocialHandoff({
   now = Date.now()
 }: { regionId?: string; now?: number } = {}): Promise<string> {
   const verifier = toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
-  writeSocialHandoff({
+  const pending: PendingSocialHandoff = {
     verifier,
     expiresAt: now + SOCIAL_HANDOFF_TTL_MS,
     ...(regionId ? { regionId } : {})
-  });
-  return deriveSocialHandoffChallenge(verifier);
+  };
+  writeSocialHandoff(pending);
+  const challenge = await deriveSocialHandoffChallenge(verifier);
+  if (storedVerifier() === verifier) writeSocialHandoff({ ...pending, challenge });
+  return challenge;
 }
 
 /** Returns and forgets this window's pending verifier, or undefined when none is live. */

@@ -79,10 +79,10 @@ describe("social handoff verifier", () => {
     const first = await beginSocialHandoff({ now: NOW });
     const second = await beginSocialHandoff({ now: NOW + 1000 });
 
-    expect(await isCurrentSocialHandoffChallenge(first)).toBe(false);
-    expect(await isCurrentSocialHandoffChallenge(second)).toBe(true);
+    expect(isCurrentSocialHandoffChallenge(first)).toBe(false);
+    expect(isCurrentSocialHandoffChallenge(second)).toBe(true);
     cancelSocialHandoff();
-    expect(await isCurrentSocialHandoffChallenge(second)).toBe(false);
+    expect(isCurrentSocialHandoffChallenge(second)).toBe(false);
   });
 
   it("hands the verifier out once and not after it expires", async () => {
