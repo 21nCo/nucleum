@@ -222,10 +222,10 @@
       {contentPreview}
     </div>
     {#if capturedMedia.length > 0}
-      <div class="grid grid-cols-2 gap-2 w-full">
+      <div class="flex gap-2 w-full">
         {#each capturedMedia as src (src)}
           <img
-            class="w-full max-h-60 object-cover rounded-md"
+            class="flex-1 min-w-0 h-24 object-cover rounded-md"
             {src}
             alt="Image from the {platformDisplay || 'social'} post"
             loading="lazy"
