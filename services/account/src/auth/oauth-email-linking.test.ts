@@ -1,5 +1,8 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { OAUTH_EMAIL_LINKING_PROVIDERS } from '../auth.js';
+import { OAUTH_EMAIL_LINKING_PROVIDERS, withOAuthEmailLinkingPolicy } from '../auth.js';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
 import { ACCOUNT_AUTH_NAMESPACE } from './constants.js';
 
@@ -19,6 +22,26 @@ describe('OAuth sign-in linking by verified email', () => {
 
   it('allows linking by verified email for Google only', () => {
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).toEqual(['google']);
+  });
+
+  it('keeps Apple out of email linking until @authfn/social-oauth 0.1.8 or later is installed', () => {
+    const version = installedSocialOAuthVersion();
+    const fixed = compareVersions(version, '0.1.8') >= 0;
+    expect(
+      fixed,
+      `@authfn/social-oauth ${version} is installed. Once it is 0.1.8 or later, decide whether to add "apple" back to OAUTH_EMAIL_LINKING_PROVIDERS and update this test.`
+    ).toBe(false);
+    expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).not.toContain('apple');
+  });
+
+  it('turns off a provider-level linkByVerifiedEmail for providers outside the policy', () => {
+    const providers = withOAuthEmailLinkingPolicy({
+      google: { clientId: 'test-google-client', linkByVerifiedEmail: true },
+      apple: { clientId: 'test-apple-client', linkByVerifiedEmail: true }
+    });
+    expect(providers.apple?.linkByVerifiedEmail).toBe(false);
+    expect(providers.google?.linkByVerifiedEmail).toBe(true);
+    expect(withOAuthEmailLinkingPolicy({ apple: undefined }).apple).toBeUndefined();
   });
 
   it('refuses to attach an Apple sign-in to an existing account with the same verified email', async () => {
@@ -125,3 +148,33 @@ describe('OAuth sign-in linking by verified email', () => {
     }) as Promise<Record<string, unknown>[]>;
   }
 });
+
+function installedSocialOAuthVersion(): string {
+  const require = createRequire(import.meta.url);
+  let directory = dirname(require.resolve('@authfn/social-oauth'));
+  for (;;) {
+    const manifestPath = join(directory, 'package.json');
+    if (existsSync(manifestPath)) {
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { name?: string; version?: string };
+      if (manifest.name === '@authfn/social-oauth' && manifest.version) {
+        return manifest.version;
+      }
+    }
+    const parent = dirname(directory);
+    if (parent === directory) {
+      throw new Error('Could not find the installed @authfn/social-oauth package.json');
+    }
+    directory = parent;
+  }
+}
+
+function compareVersions(left: string, right: string): number {
+  const a = left.split(/[.-]/).slice(0, 3).map(Number);
+  const b = right.split(/[.-]/).slice(0, 3).map(Number);
+  for (let index = 0; index < 3; index += 1) {
+    if (a[index] !== b[index]) {
+      return a[index] - b[index];
+    }
+  }
+  return 0;
+}

@@ -38,6 +38,26 @@ import { accountScopeRegistry } from "./datafn/app-scopes.js";
  */
 export const OAUTH_EMAIL_LINKING_PROVIDERS = ["google"] as const;
 
+/**
+ * Turns off linking by verified email on every provider that
+ * OAUTH_EMAIL_LINKING_PROVIDERS leaves out. A provider's own
+ * `linkByVerifiedEmail` setting takes precedence over the account linking
+ * policy, so this keeps a provider configuration from turning it back on.
+ */
+export function withOAuthEmailLinkingPolicy<
+  T extends Partial<Record<"google" | "apple", AuthFnSocialProviderConfig | undefined>>
+>(providers: T): T {
+  const allowed: readonly string[] = OAUTH_EMAIL_LINKING_PROVIDERS;
+  return Object.fromEntries(
+    Object.entries(providers).map(([providerId, provider]) => [
+      providerId,
+      provider && !allowed.includes(providerId)
+        ? { ...provider, linkByVerifiedEmail: false }
+        : provider
+    ])
+  ) as T;
+}
+
 export interface CreateAccountAuthInput {
   database: Adapter;
   stores: RuntimeStores;
@@ -95,7 +115,9 @@ export type AccountAuthApp = ReturnType<typeof accountAuthfn>;
 export function createAccountAuth(input: CreateAccountAuthInput): AuthFnServer {
   const regions = input.regions ?? resolveRegions();
   const defaultRegion = regions[0];
-  const oauthProviders = input.oauthProviders ?? resolveOAuthProviders();
+  const oauthProviders = withOAuthEmailLinkingPolicy(
+    input.oauthProviders ?? resolveOAuthProviders()
+  );
   const multiRegion = {
     regions,
     defaultRegionId: defaultRegion.regionId,
