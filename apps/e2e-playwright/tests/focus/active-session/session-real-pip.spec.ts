@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, test } from "../../fixtures/e2e-test";
+import { expect, test, type E2ESeed } from "../../fixtures/e2e-test";
 import { ensureInAppOnHome } from "../../utils/helpers";
 import {
   addAdvancedFocusItems,
@@ -114,11 +114,7 @@ test.afterEach(async ({ page, context }) => {
   await resetFocusSession(page).catch(() => null);
 });
 
-test("real Document PiP supports break resume close restoration and persisted finish", async ({
-  page,
-  seed
-}) => {
-  const pageErrors = collectPageErrors(page);
+async function startPipFocusSession(page: Page, seed: E2ESeed) {
   const objective = await seed.focus.objective({ prefix: "E2E real PiP" });
   await addAdvancedFocusItems(page, [objective.label]);
   await configureSessionComposition(page, {
@@ -132,8 +128,18 @@ test("real Document PiP supports break resume close restoration and persisted fi
   });
   await startAdvancedFocus(page);
   await waitForSessionElapsed(page, 1);
-  const sessionId = (await readSessionRuntime(page)).currentSessionId!;
+  return {
+    objective,
+    sessionId: (await readSessionRuntime(page)).currentSessionId!
+  };
+}
 
+test("real Document PiP supports break resume close restoration and persisted finish", async ({
+  page,
+  seed
+}) => {
+  const pageErrors = collectPageErrors(page);
+  const { objective, sessionId } = await startPipFocusSession(page, seed);
   await exercisePipLifecycle(page, objective, sessionId, () => openRealPip(page));
   expect(pageErrors).toEqual([]);
 });
@@ -143,20 +149,7 @@ test("mounted mini-player supports a real PiP lifecycle through fullscreen contr
   seed
 }) => {
   const pageErrors = collectPageErrors(page);
-  const objective = await seed.focus.objective({ prefix: "E2E mini-player PiP" });
-  await addAdvancedFocusItems(page, [objective.label]);
-  await configureSessionComposition(page, {
-    type: "Countup",
-    totalDuration: 0,
-    focusDuration: 0,
-    breakDuration: 0,
-    numberOfBreaks: 0,
-    breakReminder: 0,
-    breakType: "Reminder"
-  });
-  await startAdvancedFocus(page);
-  await waitForSessionElapsed(page, 1);
-  const sessionId = (await readSessionRuntime(page)).currentSessionId!;
+  const { objective, sessionId } = await startPipFocusSession(page, seed);
   await page.getByRole("button", { name: /^Break$/ }).click();
   await expect(page.getByText("CURRENT BREAK", { exact: true })).toBeVisible();
   expect((await readSessionRuntime(page)).state).toBe(3);
