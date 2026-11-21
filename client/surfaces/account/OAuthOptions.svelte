@@ -85,6 +85,8 @@
         }
 
         const handoffMode = resolveHandoffMode();
+        const handoffChallenge =
+          handoffMode === "session-token" ? await beginSocialHandoff() : undefined;
         const response = await (
           await authClient({ region })
         ).startSocialSignIn({
@@ -92,9 +94,7 @@
           returnTo: resolveReturnTo(),
           callbackMode: "redirect",
           handoffMode,
-          ...(handoffMode === "session-token"
-            ? { handoffChallenge: await beginSocialHandoff() }
-            : {})
+          ...(handoffChallenge ? { handoffChallenge } : {})
         });
         if (response.ok) {
           logger.info({
