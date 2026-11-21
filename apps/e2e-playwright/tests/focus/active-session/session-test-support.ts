@@ -69,28 +69,6 @@ export async function configureSessionComposition(
 }
 
 /**
- * Reads the durable active-session snapshot used to restore Focus after reload.
- */
-export async function readPersistedSessionSnapshot(page: Page) {
-  return page.evaluate(
-    async ({ modulePath }) => {
-      const { datafn } = await import(modulePath);
-      const snapshot = await datafn.kv.get("pointSessionSnapshotv2");
-      if (!snapshot || typeof snapshot !== "object") return undefined;
-      const active = snapshot as Record<string, any>;
-      return {
-        currentFocusItemId:
-          active.currentFocusItem?.id?.toString() ?? undefined,
-        currentSessionId: active.currentSessionId?.toString() ?? undefined,
-        isQuickStartOn: Boolean(active.isQuickStartOn),
-        isSessionRunning: Boolean(active.isSessionRunning)
-      };
-    },
-    { modulePath: datafnStorePath }
-  );
-}
-
-/**
  * Reads the persisted session with expanded items and all associated logs.
  */
 export async function readPersistedSession(page: Page, sessionId: string) {
