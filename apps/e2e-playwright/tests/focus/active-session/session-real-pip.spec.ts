@@ -152,10 +152,18 @@ test("mounted mini-player supports a real PiP lifecycle through fullscreen contr
   const { objective, sessionId } = await startPipFocusSession(page, seed);
   await page.getByRole("button", { name: /^Break$/ }).click();
   await expect(page.getByText("CURRENT BREAK", { exact: true })).toBeVisible();
-  expect((await readSessionRuntime(page)).state).toBe(3);
+  await expect
+    .poll(async () => (await readSessionRuntime(page)).state, {
+      message: "the main-window Break control updates the active session"
+    })
+    .toBe(3);
   await page.getByRole("button", { name: /^Resume$/ }).click();
   await expect(page.getByRole("button", { name: /^Break$/ })).toBeVisible();
-  expect((await readSessionRuntime(page)).state).toBe(1);
+  await expect
+    .poll(async () => (await readSessionRuntime(page)).state, {
+      message: "the main-window Resume control updates the active session"
+    })
+    .toBe(1);
   await page.setViewportSize({ width: 800, height: 600 });
   await hideFocusFullscreen(page);
   const player = page.locator("#playercontainer").getByTestId("focus-player");
