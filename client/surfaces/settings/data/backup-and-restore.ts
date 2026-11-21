@@ -12,7 +12,11 @@ import {
   type QueuedFileCopy
 } from "@nucleum/shared-state/files/file-queue";
 import { get } from "svelte/store";
-import { uploadQueuedFiles } from "@nucleum/shared-state/files/filefn-client";
+import {
+  captureFileQueueClaim,
+  captureSettledFileFnOwner,
+  uploadQueuedFiles
+} from "@nucleum/shared-state/files/filefn-client";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
 
 /**
@@ -172,6 +176,9 @@ async function restoreInRuntime(
   const namespace = datafn.currentNamespace();
   const userId = resolveNamespaceUserId();
   const view = toRecordsView(get(datafnRuntime));
+  const owner = await captureSettledFileFnOwner();
+  const claim =
+    owner?.userId === userId ? await captureFileQueueClaim(owner) : undefined;
   const { records, fileQueue } = await readBackup(file);
   if (fileQueue?.files.length && !isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
@@ -182,7 +189,7 @@ async function restoreInRuntime(
     (await stageRestoredFiles(
       resolveAccountFileQueueDir(fileQueue.userId),
       fileQueue.files,
-      { isOwnAccount, account: userId, view }
+      { isOwnAccount, account: userId, view, authority: claim?.baseUrl }
     ));
   const isChanged = () =>
     datafn.currentNamespace() !== namespace || isSwitched();

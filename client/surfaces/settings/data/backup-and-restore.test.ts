@@ -8170,6 +8170,9 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(sdk.artifacts).toHaveLength(2);
   });
 
+  /** Another FileFn authority than the accounts' own. */
+  const EUWEST_URL = "https://account-euwest-dev.nucleum.app/files";
+
   /**
    * Captures a file under user-a, leaves its generation unadopted (its own
    * restore could not settle it), and signs `userId` in, whose restore of
@@ -8265,67 +8268,136 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(foreignRows()).toEqual([]);
   });
 
+  /**
+   * Restores user-a's backup into user-b, keeping user-a's unadopted
+   * generation, from a local copy or (`isDirect`) the direct authority, cut
+   * short once its import saved user-b's record; then lets DataFn leave
+   * user-b's local copy, retiring it unless `isCloneLeft`, and returns
+   * user-b's FileFn authority and the local copy's name.
+   */
+  async function keepAndLeaveScope(isDirect: boolean, isCloneLeft: boolean) {
+    const { backup } = await keepForAnotherAccount(
+      "user-b",
+      async (records) => {
+        await datafn.importData(records, { triggerCloneUp: false });
+        throw new Error("The page closed");
+      }
+    );
+    const authority = AUTHORITY_URL.replace(/\/datafn$/, "/files");
+    const fileQueue = await import("@nucleum/shared-state/files/file-queue");
+    const direct = fileQueue.toRecordsView({
+      namespace: "user:user-b",
+      remoteUrl: AUTHORITY_URL,
+      storageDbName: null
+    });
+    const view = vi.spyOn(fileQueue, "toRecordsView");
+    if (isDirect) view.mockReturnValue(direct);
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("The page closed");
+    view.mockRestore();
+    preflight.during = null;
+    expect(foreignRows()).toHaveLength(1);
+    const [clone, ...others] = (await indexedDB.databases())
+      .map(({ name }) => name ?? "")
+      .filter((name) => name.includes(device.env))
+      .filter((name) => name.endsWith("_user_user-b"));
+    expect(others).toEqual([]);
+    await destroyNucleumDatafn();
+    if (!isCloneLeft) {
+      const { deleteDatafnLocalClone } =
+        await import("@nucleum/datafn/storage-lifecycle");
+      await deleteDatafnLocalClone(clone);
+    }
+    vi.spyOn(Date, "now").mockReturnValue(
+      Date.now() + RESTORE_HOLD_LIFETIME_MS + UNCOMMITTED_GRACE_MS + 1_000
+    );
+    return { authority, clone };
+  }
+
   it.each([
     [
-      "keeps it while that local copy is still on the device",
+      "keeps a local copy's row while that copy is still on the device",
+      false,
       true,
       false,
       "user:user-b",
+      "",
       1
     ],
     [
-      "keeps it for another namespace's direct authority",
+      "keeps a local copy's row for another namespace's direct authority",
+      false,
       false,
       false,
       "user:user-c",
+      "",
       1
     ],
     [
-      "keeps it while the direct authority references the file",
+      "keeps a local copy's row for another FileFn authority's direct authority",
+      false,
+      false,
+      false,
+      "user:user-b",
+      EUWEST_URL,
+      1
+    ],
+    [
+      "keeps a local copy's row while the direct authority references the file",
+      false,
       false,
       true,
       "user:user-b",
+      "",
       1
     ],
     [
-      "removes it once the direct authority finds no record referencing the file",
+      "removes a local copy's row once the direct authority finds no record referencing the file",
+      false,
       false,
       false,
       "user:user-b",
+      "",
+      0
+    ],
+    [
+      "keeps a direct authority's row while the local copy brought up to date with it references the file",
+      true,
+      true,
+      true,
+      "user:user-b",
+      "",
+      1
+    ],
+    [
+      "keeps a direct authority's row for another FileFn authority's local copy",
+      true,
+      true,
+      false,
+      "user:user-b",
+      EUWEST_URL,
+      1
+    ],
+    [
+      "removes a direct authority's row once the local copy brought up to date with it finds no record referencing the file",
+      true,
+      true,
+      false,
+      "user:user-b",
+      "",
       0
     ]
   ])(
-    "the foreign row of a local copy DataFn retired for direct mode %s",
-    async (_, isCloneLeft, isReferenced, namespace, count) => {
-      const { backup } = await keepForAnotherAccount(
-        "user-b",
-        async (records) => {
-          await datafn.importData(records, { triggerCloneUp: false });
-          throw new Error("The page closed");
-        }
+    "reconciles the foreign row of a restore after DataFn changed the account's kind of scope: %s",
+    async (_, isDirect, isCloneLeft, isReferenced, namespace, other, count) => {
+      const { authority, clone } = await keepAndLeaveScope(
+        isDirect,
+        isCloneLeft
       );
-      await expect(
-        restoreBackup(backup, { triggerCloneUp: () => false })
-      ).rejects.toThrow("The page closed");
-      preflight.during = null;
-      expect(foreignRows()).toHaveLength(1);
-      const clones = (await indexedDB.databases())
-        .map(({ name }) => name ?? "")
-        .filter((name) => name.includes(device.env))
-        .filter((name) => name.endsWith("_user_user-b"));
-      expect(clones).toHaveLength(1);
-      await destroyNucleumDatafn();
-      if (!isCloneLeft) {
-        const { deleteDatafnLocalClone } =
-          await import("@nucleum/datafn/storage-lifecycle");
-        await deleteDatafnLocalClone(clones[0]);
-      }
 
-      vi.spyOn(Date, "now").mockReturnValue(
-        Date.now() + RESTORE_HOLD_LIFETIME_MS + UNCOMMITTED_GRACE_MS + 1_000
-      );
       await replayFresh(QUEUE_B, (tab) => ({
-        owner: { userId: "user-b", baseUrl: AUTHORITY_URL },
+        owner: { userId: "user-b", baseUrl: other || authority },
         isCurrent: () => true,
         sync: async () => true,
         isReferenced: async () => isReferenced,
@@ -8334,7 +8406,7 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
           tab.toRecordsView({
             namespace,
             remoteUrl: AUTHORITY_URL,
-            storageDbName: null
+            storageDbName: isDirect ? clone : null
           })
       }));
 
@@ -8343,15 +8415,46 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     }
   );
 
+  it("retries a pass that could not list the local copies, and removes the row of a retired local copy once the direct authority finds no record referencing the file", async () => {
+    const { authority } = await keepAndLeaveScope(false, false);
+    const listing = vi
+      .spyOn(indexedDB, "databases")
+      .mockRejectedValueOnce(new Error("The databases cannot be listed"));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      await replayFresh(QUEUE_B, (tab) => ({
+        owner: { userId: "user-b", baseUrl: authority },
+        isCurrent: () => true,
+        sync: async () => true,
+        isReferenced: async () => false,
+        discard: async () => undefined,
+        view: () =>
+          tab.toRecordsView({
+            namespace: "user:user-b",
+            remoteUrl: AUTHORITY_URL,
+            storageDbName: null
+          })
+      }));
+      expect(foreignRows()).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.waitFor(() => expect(foreignRows()).toEqual([]));
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(listing).toHaveBeenCalledTimes(2);
+  });
+
   it.each([
-    ["is removed once the record is deleted", false],
+    ["is removed once the record is deleted", false, ""],
     [
       "stays queued while a newer restore into another account protects it",
-      true
-    ]
+      true,
+      ""
+    ],
+    ["stays queued for a replay at another FileFn authority", false, EUWEST_URL]
   ])(
     "takes a binding its replay began but could not finish writing before the page stopped as its account's, so a restored file whose restore rolled back meanwhile %s",
-    async (_, isProtected) => {
+    async (_, isProtected, other) => {
       await bootData(cloudAccount("user-a"));
       isOnline = false;
       const record = await capturePhoto();
@@ -8404,9 +8507,13 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
         await restoreBackup(backup, { triggerCloneUp: () => false });
         expect(foreignRows()).toHaveLength(1);
       }
-      await replayFresh(QUEUE_A, references);
+      await replayFresh(QUEUE_A, () => ({
+        ...references(),
+        owner: { userId: "user-a", baseUrl: other || AUTHORITY_URL }
+      }));
 
-      expect(opfs.list(QUEUE_A)).toEqual(isProtected ? [entry] : []);
+      const isKept = isProtected || Boolean(other);
+      expect(opfs.list(QUEUE_A)).toEqual(isKept ? [entry] : []);
       expect(sdk.started).toEqual([]);
     }
   );
