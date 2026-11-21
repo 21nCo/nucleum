@@ -46,7 +46,7 @@ export default defineConfig({
             return "charts";
           }
           // Group visualization libraries
-          if (id.includes("highlight.js")) {
+          if (id.includes("highlight.js") && !id.includes("/languages/")) {
             return "syntax";
           }
           // Group map related code
