@@ -29,7 +29,10 @@
     searchResources,
     type ResourceSearchHit
   } from "@nucleum/shared-state/resources/resource-search";
-  import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+  import {
+    contextActions,
+    type ContextActionsEntry
+  } from "@nucleum/shell/topNav/contextZone/context-actions";
   import { keyedContextActions } from "@nucleum/features/records/resource-action-keys";
   import { navigation } from "@nucleum/shell/navigation/navigation";
   import { AccessMode } from "@nucleum/datafn/resource.type";
@@ -74,7 +77,12 @@
   let searchController: AbortController | undefined;
 
   const query = $derived(search.trim());
-  const allActions = $derived.by(() => loadAllActions($appStore.actions));
+  const allActions = $derived.by(() =>
+    loadAllActions(
+      $appStore.actions,
+      isContextShown ? $activeContextActions : undefined
+    )
+  );
   const filteredActions = $derived.by(() => {
     if (query) {
       return allActions.filter((x) =>
@@ -230,6 +238,9 @@
       await tick();
       requireCommandHost().runAction(resolvedAction.action, {
         componentParams: {
+          ...(resolvedAction.resourceContext
+            ? resolvedAction.componentParams
+            : {}),
           isCmdBarLaunch: true
         }
       });
@@ -257,7 +268,10 @@
     userPreferences.setRecentCommands(recentCommands);
   }
 
-  function loadAllActions(rawActions: IAction[]) {
+  function loadAllActions(
+    rawActions: IAction[],
+    resourceContext?: ContextActionsEntry
+  ) {
     const actions: ICommandAction[] = [];
     const isPortraitLibraryAvailable = rawActions.some(
       (action) => action.action === Action.LIBRARY_PORTRAIT
@@ -267,6 +281,9 @@
         action.label &&
         !action.isInactive &&
         !action.isMeta &&
+        (!action.resourceContext ||
+          (resourceContext?.id &&
+            action.resourceContext === resourceContext.resource)) &&
         !(!$view.isPortrait && action.action === Action.LIBRARY_PORTRAIT) &&
         !(
           $view.isPortrait &&
@@ -276,6 +293,15 @@
         (action.preCondition ? action.preCondition() : true)
     );
     primitive.forEach((action) => {
+      if (action.resourceContext) {
+        action = {
+          ...action,
+          componentParams: {
+            ...action.componentParams,
+            id: resourceContext?.id
+          }
+        };
+      }
       const rawCmdLabel = action.cmdLabel ?? action.label;
       if (typeof rawCmdLabel === "string") {
         actions.push({
