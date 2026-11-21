@@ -33,7 +33,7 @@ export type SocialHandoffExchangeClient = Pick<
 
 /** Outcome of turning a native sign-in callback value into a session token. */
 export type SocialHandoffResolution =
-  | { kind: "session"; token: string; regionId?: string }
+  | { kind: "session"; token: string; regionId?: string; verifier?: string }
   | { kind: "failed"; errorCode: string }
   | { kind: "ignored" };
 
@@ -93,8 +93,11 @@ function writeSocialHandoff(pending: PendingSocialHandoff) {
   );
 }
 
-/** Clears the pending verifier only if it is still `verifier`, not a newer sign-in's. */
-function clearSocialHandoff(verifier: string) {
+/**
+ * Forgets the verifier of an exchanged sign-in once the app is signed in with
+ * it. Clears only if it is still `verifier`, not a newer sign-in's.
+ */
+export function finishSocialHandoff(verifier: string) {
   const storage = getBrowserStorage("sessionStorage");
   const stored = storage?.getItem(ClientStorageKey.AUTHFN_SOCIAL_HANDOFF);
   if (!stored) return;
@@ -159,8 +162,9 @@ export function isSocialHandoffCode(input: {
  * A one-time code (flagged `handoff: "code"`, or carrying AuthFn's code prefix
  * because installed native shells don't forward `handoff`) is exchanged with
  * this window's pending verifier and never used as a session. The verifier
- * stays in place while the exchange runs and is cleared only after a
- * successful exchange (a retry reuses it until then). A window with no live sign-in, or whose
+ * stays in place while the exchange runs; the caller passes the returned
+ * `verifier` to `finishSocialHandoff` once the app is signed in (a retry
+ * reuses it until then). A window with no live sign-in, or whose
  * verifier the code wasn't issued for, ignores it. Any other value is a
  * session token, which native Apple sign-in and sign-ins started without a
  * challenge return directly; it is never sent to the exchange.
@@ -190,11 +194,11 @@ export async function resolveSocialHandoffToken(
         ? { kind: "ignored" }
         : { kind: "failed", errorCode: response.error.code };
     }
-    clearSocialHandoff(verifier);
     return {
       kind: "session",
       token: response.data.handoff.token,
-      regionId: response.data.handoff.regionId ?? input.regionId
+      regionId: response.data.handoff.regionId ?? input.regionId,
+      verifier
     };
   } catch {
     return { kind: "failed", errorCode: "handoff_exchange_failed" };

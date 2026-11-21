@@ -5,6 +5,7 @@ import {
   SOCIAL_HANDOFF_TTL_MS,
   beginSocialHandoff,
   deriveSocialHandoffChallenge,
+  finishSocialHandoff,
   resolveSocialHandoffToken,
   takeSocialHandoffVerifier,
   type SocialHandoffExchangeClient
@@ -118,8 +119,12 @@ describe("resolveSocialHandoffToken", () => {
     expect(result).toEqual({
       kind: "session",
       token: "test-session-token",
-      regionId: "useast"
+      regionId: "useast",
+      verifier
     });
+    expect(storedVerifier()).toBe(verifier);
+    finishSocialHandoff(verifier ?? "");
+    expect(storedVerifier()).toBeUndefined();
   });
 
   it("recognizes a code from a shell that does not forward the handoff kind", async () => {
@@ -135,7 +140,7 @@ describe("resolveSocialHandoffToken", () => {
     );
 
     expect(exchangeSocialHandoff).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       kind: "session",
       token: "test-session-token",
       regionId: "insouth"
@@ -214,9 +219,9 @@ describe("resolveSocialHandoffToken", () => {
       error: { code: "AUTHFN_OAUTH_STATE_INVALID", message: "mismatch" }
     } as unknown as ExchangeResult);
 
-    expect(own).toEqual({ kind: "session", token: "test-session-token", regionId: undefined });
+    expect(own).toMatchObject({ kind: "session", token: "test-session-token" });
     expect(await other).toEqual({ kind: "ignored" });
-    expect(storedVerifier()).toBeUndefined();
+    expect(storedVerifier()).toBeDefined();
   });
 
   it("keeps the verifier after a failed exchange so a retry can still use it", async () => {
@@ -232,7 +237,7 @@ describe("resolveSocialHandoffToken", () => {
     expect(await beginSocialHandoff(NOW + 1000)).toBe(challenge);
   });
 
-  it("clears only its own verifier after a slow exchange succeeds", async () => {
+  it("finishing a slow sign-in never clears a newer sign-in's verifier", async () => {
     await beginSocialHandoff(NOW);
     let answer: (value: ExchangeResult) => void = () => {};
     const client = async () =>
@@ -250,7 +255,9 @@ describe("resolveSocialHandoffToken", () => {
     const newer = storedVerifier();
     answer(exchanged("test-session-token", null));
 
-    expect((await pending).kind).toBe("session");
+    const result = await pending;
+    expect(result.kind).toBe("session");
+    if (result.kind === "session" && result.verifier) finishSocialHandoff(result.verifier);
     expect(storedVerifier()).toBe(newer);
   });
 

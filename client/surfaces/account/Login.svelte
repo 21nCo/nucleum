@@ -22,7 +22,10 @@
   import { clientStorage } from "@nucleum/persistence/client-storage";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
   import { authClient } from "@nucleum/client/runtime/account/auth";
-  import { resolveSocialHandoffToken } from "@nucleum/client/runtime/account/social-handoff";
+  import {
+    finishSocialHandoff,
+    resolveSocialHandoffToken
+  } from "@nucleum/client/runtime/account/social-handoff";
   let selectedMode = $state<"signup" | "signin" | "offline">("signup");
   let currentProgress = $state<string | undefined>(undefined);
   let cloudSyncLoginRef = $state<CloudSyncLogin | undefined>(undefined);
@@ -223,6 +226,7 @@
             toasts.error("Authentication failed. Please try again.");
             return;
           }
+          if (resolved.verifier) finishSocialHandoff(resolved.verifier);
           accountSession.gotoPostAuthRoute({
             isNewUser: parsed.oauth.signup === "true"
           });
