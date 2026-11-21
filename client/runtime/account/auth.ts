@@ -34,7 +34,8 @@ const REGION_CACHE_TTL_MS = 15 * 60 * 1000;
  * Returns the regional AuthFn client for `region`. The shared instance is
  * re-pointed on every call; `isIsolated` returns a new client pinned to
  * `region` that other callers can't re-point, without replacing the shared one.
- * Once `signal` aborts, a new client stores no region it resolves.
+ * With `signal`, the new client returned stores no region it resolves once the
+ * signal aborts; a shared instance it replaces is not bound to the signal.
  */
 export const authClient = async (params?: {
   region?: string;
@@ -57,10 +58,24 @@ export const authClient = async (params?: {
     return existing;
   }
 
+  const client = createRegionalAuthClient(region, params?.signal);
+  if (!params?.isIsolated) {
+    authClientsMap.set(
+      cacheKey,
+      params?.signal ? createRegionalAuthClient(region) : client
+    );
+  }
+  return client;
+};
+
+function createRegionalAuthClient(
+  region: string,
+  signal?: AbortSignal
+): NucleumAuthClient {
   const client = createAuthFnRegionalClient({
     defaultRegionId: region,
     resolveBaseUrl: resolveAuthFnBaseUrl,
-    storage: createNucleusRegionStorage(params?.signal),
+    storage: createNucleusRegionStorage(signal),
     cacheTtlMs: REGION_CACHE_TTL_MS,
     clientOptions: {
       cookiePrefix: resolveAccountCookiePrefix(region),
@@ -73,14 +88,13 @@ export const authClient = async (params?: {
       onRequestMetric: emitAccountNetworkMetric
     },
     onRegionChanged: async (event) => {
-      if (params?.signal?.aborted) return;
+      if (signal?.aborted) return;
       await clientStorage.set(ClientStorageKey.REGION, event.toRegionId);
     }
   });
   client.setCurrentRegionId(region);
-  if (!params?.isIsolated) authClientsMap.set(cacheKey, client);
   return client;
-};
+}
 
 export function resolveAuthFnBaseUrl(region: string) {
   return `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/auth`;

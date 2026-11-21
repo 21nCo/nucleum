@@ -1097,6 +1097,23 @@ describe("replay authorization across the session lifetime", () => {
     }
   });
 
+  it("still stores regions through the shared AuthFn client after a recheck settles", async () => {
+    await restoreOffline();
+    authfn.session = liveSession;
+    goOnline();
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    authfn.region = (options) =>
+      Promise.resolve(
+        options.onRegionChanged?.({
+          fromRegionId: "useast",
+          toRegionId: "euwest"
+        })
+      );
+    const { authClient } = await import("@nucleum/client/runtime/account/auth");
+    await (await authClient()).resolveRegion({ identifier: userInfo.email });
+    expect(await clientStorage.get(ClientStorageKey.REGION)).toBe("euwest");
+  });
+
   it("keeps retrying an unavailable recheck while online until the live session confirms the account", async () => {
     vi.useFakeTimers({
       toFake: ["setTimeout", "clearTimeout"],
