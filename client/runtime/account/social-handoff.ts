@@ -32,13 +32,17 @@ export type SocialHandoffExchangeClient = AuthFnSocialHandoffClient;
 
 /**
  * Outcome of turning a native sign-in callback value into a session token.
- * `ignored` means this window has no live sign-in the code belongs to: on macOS
- * the shell broadcasts callbacks to every window, so another window may own it.
+ * `ignored` means this window has no live sign-in the code belongs to, on a
+ * shell that broadcasts callbacks to every window (macOS), so another window
+ * may own it; other shells get `failed` instead.
  */
 export type SocialHandoffResolution =
   | { kind: "session"; token: string; regionId?: string; verifier?: string }
   | { kind: "failed"; errorCode: string }
   | { kind: "ignored" };
+
+/** Reported when a code reaches a window without a matching sign-in on a shell that doesn't broadcast. */
+const NOT_STARTED_HERE = "handoff_not_started_here";
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -120,9 +124,10 @@ export function finishSocialHandoff(verifier: string) {
 
 /**
  * Starts a code-and-verifier handoff in `regionId` and returns the challenge
- * for `startSocialSignIn`. A sign-in started while another is still pending in
- * this window reuses its verifier with a renewed deadline, so whichever
- * callback arrives can be exchanged.
+ * for `startSocialSignIn`. A retry in the same region while a sign-in is still
+ * pending in this window reuses its verifier with a renewed deadline, so
+ * whichever callback arrives can be exchanged; a sign-in in another region
+ * replaces it.
  */
 export async function beginSocialHandoff({
   regionId,
@@ -130,7 +135,7 @@ export async function beginSocialHandoff({
 }: { regionId?: string; now?: number } = {}): Promise<string> {
   const live = readSocialHandoff(now);
   const verifier =
-    live.state === "live"
+    live.state === "live" && live.pending.regionId === regionId
       ? live.pending.verifier
       : toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
   writeSocialHandoff({
@@ -185,31 +190,41 @@ export function isSocialHandoffCode(input: {
  * challenge return directly; it is never sent to the exchange.
  */
 export async function resolveSocialHandoffToken(
-  input: { token: string; handoff?: string; regionId?: string },
+  input: {
+    token: string;
+    handoff?: string;
+    regionId?: string;
+    /** True when the native shell delivers each callback to every window. */
+    isBroadcast?: boolean;
+  },
   client: (regionId?: string) => Promise<SocialHandoffExchangeClient>,
   now = Date.now()
 ): Promise<SocialHandoffResolution> {
   if (!isSocialHandoffCode(input)) {
     return { kind: "session", token: input.token, regionId: input.regionId };
   }
+  const notOurs: SocialHandoffResolution = input.isBroadcast
+    ? { kind: "ignored" }
+    : { kind: "failed", errorCode: NOT_STARTED_HERE };
   const stored = readSocialHandoff(now);
-  if (stored.state !== "live") return { kind: "ignored" };
+  if (stored.state !== "live") return notOurs;
   const verifier = stored.pending.verifier;
+  const exchangeRegionId = input.regionId ?? stored.pending.regionId;
   try {
-    const exchangeClient = await client(input.regionId ?? stored.pending.regionId);
+    const exchangeClient = await client(exchangeRegionId);
     const response = await exchangeClient.exchangeSocialHandoff({
       code: input.token,
       verifier
     });
     if (!response.ok) {
       return response.error.code === CODE_NOT_FOR_THIS_VERIFIER
-        ? { kind: "ignored" }
+        ? notOurs
         : { kind: "failed", errorCode: response.error.code };
     }
     return {
       kind: "session",
       token: response.data.handoff.token,
-      regionId: response.data.handoff.regionId ?? input.regionId,
+      regionId: response.data.handoff.regionId ?? exchangeRegionId,
       verifier
     };
   } catch {

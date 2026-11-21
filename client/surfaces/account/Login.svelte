@@ -184,7 +184,8 @@
                 typeof parsed.oauth.handoff === "string"
                   ? parsed.oauth.handoff
                   : undefined,
-              regionId: regionHint
+              regionId: regionHint,
+              isBroadcast: $context.os === OperatingSystem.MACOS
             },
             (region) => authClient({ region })
           );
@@ -192,9 +193,6 @@
             logger.info({
               at: "Login.handleMessageFromParent.oauth.handoff.notStartedHere"
             });
-            if ($context.os !== OperatingSystem.MACOS) {
-              toasts.error("Authentication failed. Please try again.");
-            }
             return;
           }
           if (resolved.kind === "failed") {

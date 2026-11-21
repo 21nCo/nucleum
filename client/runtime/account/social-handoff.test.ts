@@ -156,7 +156,12 @@ describe("resolveSocialHandoffToken", () => {
       return { exchangeSocialHandoff } as unknown as SocialHandoffExchangeClient;
     };
 
-    await resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, client, NOW);
+    const started = await resolveSocialHandoffToken(
+      { token: "shc_test-handoff-code" },
+      client,
+      NOW
+    );
+    expect(started).toMatchObject({ kind: "session", regionId: "useast" });
     await resolveSocialHandoffToken(
       { token: "shc_test-handoff-code", regionId: "euwest" },
       client,
@@ -166,11 +171,24 @@ describe("resolveSocialHandoffToken", () => {
     expect(regions).toEqual(["useast", "euwest"]);
   });
 
+  it("reports a code with no matching sign-in on a shell that doesn't broadcast", async () => {
+    const single = exchangeClient(exchanged("test-session-token", null));
+    expect(
+      await resolveSocialHandoffToken({ token: "shc_test-handoff-code" }, single.client, NOW)
+    ).toEqual({ kind: "failed", errorCode: "handoff_not_started_here" });
+  });
+
+  it("starts a new verifier when a retry uses another region", async () => {
+    const first = await beginSocialHandoff({ regionId: "useast", now: NOW });
+    expect(await beginSocialHandoff({ regionId: "useast", now: NOW + 1000 })).toBe(first);
+    expect(await beginSocialHandoff({ regionId: "euwest", now: NOW + 2000 })).not.toBe(first);
+  });
+
   it("leaves a code to the window that started the sign-in", async () => {
     const elsewhere = exchangeClient(exchanged("test-session-token", null));
     expect(
       await resolveSocialHandoffToken(
-        { token: "shc_test-handoff-code" },
+        { token: "shc_test-handoff-code", isBroadcast: true },
         elsewhere.client,
         NOW
       )
@@ -188,7 +206,7 @@ describe("resolveSocialHandoffToken", () => {
 
     expect(
       await resolveSocialHandoffToken(
-        { token: "shc_test-other-window-code" },
+        { token: "shc_test-other-window-code", isBroadcast: true },
         other.client,
         NOW
       )
@@ -201,7 +219,7 @@ describe("resolveSocialHandoffToken", () => {
     const expired = exchangeClient(exchanged("test-session-token", null));
     expect(
       await resolveSocialHandoffToken(
-        { token: "shc_test-handoff-code" },
+        { token: "shc_test-handoff-code", isBroadcast: true },
         expired.client,
         NOW + SOCIAL_HANDOFF_TTL_MS
       )
@@ -224,7 +242,7 @@ describe("resolveSocialHandoffToken", () => {
       ({ exchangeSocialHandoff }) as unknown as SocialHandoffExchangeClient;
 
     const other = resolveSocialHandoffToken(
-      { token: "shc_test-other-window-code" },
+      { token: "shc_test-other-window-code", isBroadcast: true },
       client,
       NOW
     );
