@@ -3,8 +3,14 @@
   import { isSameResource } from "@nucleum/datafn/resource.utils";
   import { requireActionRenderer } from "@nucleum/shared-state/resources/action-renderer";
   import { onMount } from "svelte";
+  import { contextActions } from "@nucleum/shell/topNav/contextZone/context-actions";
+  import {
+    getContextZonePane,
+    isContextZoneAccessMode
+  } from "@nucleum/shell/topNav/contextZone/context-zone";
 
   const ComponentResolver = requireActionRenderer();
+  const pane = getContextZonePane();
   let {
     id,
     isFromSplitView = false,
@@ -18,6 +24,16 @@
   } = $props();
   let refreshId = $state<number>(new Date().getTime());
   let resolvedId = $derived(typeof id === "string" ? id : "");
+
+  $effect(() => {
+    if (!resolvedId || !isContextZoneAccessMode(accessMode)) return;
+    return contextActions.register(pane, {
+      id: resolvedId,
+      resource: resolvedId.split(":")[0],
+      resolve: () => [],
+      isFallback: true
+    });
+  });
 
   onMount(() => {
     const reloadResourceHandler: EventListener = (event) => {
