@@ -22,7 +22,10 @@
   import { Size } from "@21n/ui/elements/size.enum";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   import { Context } from "@nucleum/shared-state/app-context/app-store.type";
-  import { resolveCapturedMediaUrls } from "@nucleum/features/memory/node/content/web/social/social-widgets";
+  import {
+    resolveCapturedMediaUrls,
+    resolveCopyablePostText
+  } from "@nucleum/features/memory/node/content/web/social/social-widgets";
 
   let {
     node,
@@ -64,7 +67,10 @@
   }
 
   let contentPreview = $derived(resolveContentPreview(node));
-  let capturedMedia = $derived(resolveCapturedMediaUrls(node.metadata));
+  let capturedMedia = $derived(
+    resolveCapturedMediaUrls(node.contentType, node.metadata)
+  );
+  let copyableText = $derived(resolveCopyablePostText(node));
   void accessPoint;
 
   onMount(async () => {
@@ -172,8 +178,8 @@
   }
 
   async function copyTextContent() {
-    if (contentPreview) {
-      await navigator.clipboard.writeText(contentPreview);
+    if (copyableText) {
+      await navigator.clipboard.writeText(copyableText);
       toasts.success("Text copied to clipboard");
     }
   }
@@ -233,7 +239,7 @@
       {getPostedAtTime()}
     </div>
   </button>
-  {#if contentPreview || node.url}
+  {#if copyableText || node.url}
     <div class="flex justify-center items-center w-full gap-4">
       {#if node.url}
         <Button
@@ -247,7 +253,7 @@
           }}
         />
       {/if}
-      {#if contentPreview}
+      {#if copyableText}
         <Button
           style={ButtonStyle.PLAIN}
           label="Copy content"

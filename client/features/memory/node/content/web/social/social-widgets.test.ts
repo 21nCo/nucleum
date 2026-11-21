@@ -8,7 +8,8 @@ import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
 import {
   MAX_CAPTURED_MEDIA,
   hasLiveSocialWidget,
-  resolveCapturedMediaUrls
+  resolveCapturedMediaUrls,
+  resolveCopyablePostText
 } from "@nucleum/features/memory/node/content/web/social/social-widgets";
 
 describe("hasLiveSocialWidget", () => {
@@ -41,7 +42,7 @@ describe("hasLiveSocialWidget", () => {
 describe("resolveCapturedMediaUrls", () => {
   it("keeps https images the clipper saved, without duplicates", () => {
     expect(
-      resolveCapturedMediaUrls({
+      resolveCapturedMediaUrls(NodeType.MASTODON_POST, {
         media: [
           "https://files.mastodon.social/media/a.png",
           " https://files.mastodon.social/media/a.png ",
@@ -60,8 +61,35 @@ describe("resolveCapturedMediaUrls", () => {
       { length: MAX_CAPTURED_MEDIA + 2 },
       (_, index) => `https://files.example/${index}.png`
     );
-    expect(resolveCapturedMediaUrls({ media })).toHaveLength(MAX_CAPTURED_MEDIA);
-    expect(resolveCapturedMediaUrls(undefined)).toEqual([]);
-    expect(resolveCapturedMediaUrls({ media: "https://files.example/a.png" })).toEqual([]);
+    expect(resolveCapturedMediaUrls(NodeType.MASTODON_POST, { media })).toHaveLength(
+      MAX_CAPTURED_MEDIA
+    );
+    expect(resolveCapturedMediaUrls(NodeType.MASTODON_POST, undefined)).toEqual([]);
+    expect(
+      resolveCapturedMediaUrls(NodeType.MASTODON_POST, { media: "https://files.example/a.png" })
+    ).toEqual([]);
+  });
+
+  it("shows no gallery for clippers that also store videos in media", () => {
+    const metadata = { media: ["https://video.example/clip.mp4"] };
+    expect(resolveCapturedMediaUrls(NodeType.FACEBOOK_POST, metadata)).toEqual([]);
+    expect(resolveCapturedMediaUrls(NodeType.INSTAGRAM_REEL, metadata)).toEqual([]);
+  });
+});
+
+describe("resolveCopyablePostText", () => {
+  it("copies captured post text, never the URL-derived label", () => {
+    expect(
+      resolveCopyablePostText({ contentType: NodeType.MASTODON_POST, text: "Hello" })
+    ).toBe("Hello");
+    expect(
+      resolveCopyablePostText({ contentType: NodeType.MASTODON_POST, text: "  " })
+    ).toBe("");
+    expect(
+      resolveCopyablePostText({
+        contentType: NodeType.TWEET,
+        body: { content: "Tweet body" }
+      })
+    ).toBe("Tweet body");
   });
 });

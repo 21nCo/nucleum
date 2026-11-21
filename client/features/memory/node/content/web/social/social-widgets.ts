@@ -39,10 +39,23 @@ export function hasLiveSocialWidget(
 export const MAX_CAPTURED_MEDIA = 4;
 
 /**
- * Image URLs the clipper saved with a social post (`metadata.media`), keeping
- * only absolute https URLs, without duplicates, at most `MAX_CAPTURED_MEDIA`.
+ * Post types whose clipper saves only image URLs in `metadata.media` (other
+ * clippers also store video URLs there).
  */
-export function resolveCapturedMediaUrls(metadata: unknown): string[] {
+const IMAGE_ONLY_MEDIA_TYPES: ReadonlySet<NodeType> = new Set([
+  NodeType.MASTODON_POST
+]);
+
+/**
+ * Image URLs the clipper saved with a social post (`metadata.media`), for post
+ * types whose media are images only, keeping only absolute https URLs, without
+ * duplicates, at most `MAX_CAPTURED_MEDIA`.
+ */
+export function resolveCapturedMediaUrls(
+  contentType: NodeType | string | undefined,
+  metadata: unknown
+): string[] {
+  if (!contentType || !IMAGE_ONLY_MEDIA_TYPES.has(contentType as NodeType)) return [];
   if (typeof metadata !== "object" || metadata === null) return [];
   const media = (metadata as { media?: unknown }).media;
   if (!Array.isArray(media)) return [];
@@ -61,4 +74,25 @@ export function resolveCapturedMediaUrls(metadata: unknown): string[] {
     if (urls.length === MAX_CAPTURED_MEDIA) break;
   }
   return urls;
+}
+
+/**
+ * Post text the user can copy: the captured text, or a tweet's body content.
+ * The URL-derived label shown when nothing else was captured is not post text.
+ */
+export function resolveCopyablePostText(node: {
+  contentType?: NodeType | string;
+  text?: unknown;
+  body?: unknown;
+}): string {
+  if (typeof node.text === "string" && node.text.trim()) return node.text;
+  if (
+    node.contentType === NodeType.TWEET &&
+    typeof node.body === "object" &&
+    node.body !== null
+  ) {
+    const content = (node.body as { content?: unknown }).content;
+    if (typeof content === "string" && content.trim()) return content;
+  }
+  return "";
 }
