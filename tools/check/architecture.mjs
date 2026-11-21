@@ -577,6 +577,7 @@ const compositionOwners = new Set(["layers", "chrome"]);
 const compositionRootFiles = new Set([
   "AppLoadingView.svelte",
   "ComponentResolver.svelte",
+  "ComponentResolver.test.ts",
   "SubAtomLogo.svelte",
   "global-commands.ts",
   "configure-hosts.ts",
