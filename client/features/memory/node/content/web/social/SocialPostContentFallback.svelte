@@ -230,16 +230,18 @@
           copyTextContent();
         }}
       />
-      <Button
-        style={ButtonStyle.PLAIN}
-        label="View as embed"
-        isUnderlined={true}
-        size={Size.sm}
-        onclick={(e) => {
-          e.stopPropagation();
-          onViewEmbed?.();
-        }}
-      />
+      {#if onViewEmbed}
+        <Button
+          style={ButtonStyle.PLAIN}
+          label="View as embed"
+          isUnderlined={true}
+          size={Size.sm}
+          onclick={(e) => {
+            e.stopPropagation();
+            onViewEmbed?.();
+          }}
+        />
+      {/if}
     </div>
   {/if}
 </div>

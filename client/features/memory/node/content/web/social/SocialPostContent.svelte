@@ -8,9 +8,9 @@
   import LinkedInPostWidget from "@nucleum/features/memory/node/content/web/social/LinkedInPostWidget.svelte";
   import RedditPostWidget from "@nucleum/features/memory/node/content/web/social/RedditPostWidget.svelte";
   import FacebookPostWidget from "@nucleum/features/memory/node/content/web/social/FacebookPostWidget.svelte";
-  import MastodonPostWidget from "@nucleum/features/memory/node/content/web/social/MastodonPostWidget.svelte";
   import BlueskyPostWidget from "@nucleum/features/memory/node/content/web/social/BlueskyPostWidget.svelte";
   import ThreadsPostWidget from "@nucleum/features/memory/node/content/web/social/ThreadsPostWidget.svelte";
+  import { hasLiveSocialWidget } from "@nucleum/features/memory/node/content/web/social/social-widgets";
   import account from "@nucleum/client/runtime/account/account.store";
   import { isCloudUserAndOnline } from "@nucleum/client/runtime/account/account.utils";
   import SocialPostContentFallback from "@nucleum/features/memory/node/content/web/social/SocialPostContentFallback.svelte";
@@ -43,31 +43,7 @@
   function shouldShowWidget() {
     if (!isCloudUserAndOnline($account, $context.isInOfflineMode)) return false;
 
-    const supportedWidgets = [
-      NodeType.TWEET,
-      NodeType.INSTAGRAM_POST,
-      NodeType.INSTAGRAM_REEL,
-      NodeType.LINKEDIN_POST,
-      NodeType.REDDIT_POST,
-      NodeType.MASTODON_POST,
-      NodeType.BLUESKY_POST,
-      NodeType.THREADS_POST
-    ];
-
-    const supportedWidgetsOnEmbed = [
-      NodeType.TWEET,
-      NodeType.INSTAGRAM_POST,
-      NodeType.INSTAGRAM_REEL,
-      NodeType.MASTODON_POST,
-      NodeType.BLUESKY_POST,
-      NodeType.THREADS_POST
-    ];
-
-    if ($context.isEmbed) {
-      return supportedWidgetsOnEmbed.includes(node.contentType);
-    } else {
-      return supportedWidgets.includes(node.contentType);
-    }
+    return hasLiveSocialWidget(node.contentType, $context.isEmbed);
   }
 
   function onError(message: string) {
@@ -104,8 +80,6 @@
         <RedditPostWidget postUrl={node.url} />
       {:else if node.contentType === NodeType.FACEBOOK_POST}
         <FacebookPostWidget postUrl={node.url} {onError} onFallback={onError} />
-      {:else if node.contentType === NodeType.MASTODON_POST}
-        <MastodonPostWidget postUrl={node.url} {onError} onFallback={onError} />
       {:else if node.contentType === NodeType.BLUESKY_POST}
         <BlueskyPostWidget postUrl={node.url} {onError} />
       {:else if node.contentType === NodeType.THREADS_POST}
@@ -116,8 +90,10 @@
 {:else}
   <SocialPostContentFallback
     {node}
-    onViewEmbed={() => {
-      isShowPermanentCopy = !isShowPermanentCopy;
-    }}
+    onViewEmbed={hasLiveSocialWidget(node.contentType, $context.isEmbed)
+      ? () => {
+          isShowPermanentCopy = !isShowPermanentCopy;
+        }
+      : undefined}
   />
 {/if}
