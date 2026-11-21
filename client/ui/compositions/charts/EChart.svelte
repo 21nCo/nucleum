@@ -1,4 +1,5 @@
 <script module lang="ts">
+  import type { ContinuousVisualMapComponentOption } from "echarts";
   import { init, use, type ComposeOption, type ECharts } from "echarts/core";
   import {
     BarChart,
@@ -26,8 +27,7 @@
     type GraphicComponentOption,
     type GridComponentOption,
     type LegendComponentOption,
-    type TooltipComponentOption,
-    type VisualMapComponentOption
+    type TooltipComponentOption
   } from "echarts/components";
   import { LabelLayout, LegacyGridContainLabel } from "echarts/features";
   import { CanvasRenderer } from "echarts/renderers";
@@ -63,7 +63,7 @@
     | GridComponentOption
     | LegendComponentOption
     | TooltipComponentOption
-    | VisualMapComponentOption
+    | (ContinuousVisualMapComponentOption & { type?: "continuous" })
   >;
 </script>
 
