@@ -54,9 +54,14 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
    * bound `ref`, and each column's children), so the media and the indicator
    * share one element the grid sizes as the item, and the indicator is laid
    * over it out of flow: a failed item adds no grid child and nothing the
-   * grid's resize loop has to shrink.
+   * grid's resize loop has to shrink. Only media FileView renders (an image
+   * or a video, the kind its record ID is named after from its content type)
+   * gets that element; a PDF shows the indicator inside its own element, and
+   * a file the grid shows nothing for (audio) shows nothing.
    */
   let isUploadFailed = $state(false);
+  const isPdf = $derived(!!file?.type.startsWith("application/pdf"));
+  const isRenderedMedia = $derived(/^(image|video)\//.test(_file?.type ?? ""));
   const failedItemClassList = $derived(
     `${isDraggable ? "cursor-move" : ""} relative box-border inline-block`
   );
@@ -240,7 +245,7 @@ cursor: pointer;`);
   }
 </script>
 
-{#if _file && isUploadFailed}
+{#if _file && isUploadFailed && isRenderedMedia}
   <div class={failedItemClassList} {style} bind:this={ref}>
     <FileView
       file={_file}
@@ -290,9 +295,11 @@ cursor: pointer;`);
     Column: {item.position.columns.columnNo + 1}
   </div>
 {/if}
-{#if file?.type.startsWith("application/pdf")}
+{#if isPdf && file}
   <div
-    class="{classList} min-w-[100px] h-full overflow-hidden"
+    class={cn(classList, "min-w-[100px] h-full overflow-hidden", {
+      relative: isUploadFailed
+    })}
     {style}
     draggable={isDraggable}
     use:draggable
@@ -304,5 +311,11 @@ cursor: pointer;`);
       height="110%"
       style="pointer-events: none;"
     />
+    {#if isUploadFailed}
+      <FileUploadFailedIndicator
+        fileId={file.fileId}
+        class="absolute inset-x-1 bottom-1 flex-wrap"
+      />
+    {/if}
   </div>
 {/if}

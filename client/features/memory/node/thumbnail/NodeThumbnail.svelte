@@ -163,22 +163,22 @@
 
   /**
    * The file the thumbnail shows, in the order its arrangement renders: a
-   * grid or masonry card shows its cover before its preview, so a cover that
-   * is a file record is the file it shows and a color, gradient or Unsplash
-   * cover shows no file; a list row shows its preview first. Otherwise the
-   * preview, else the node's file.
+   * grid or masonry card shows its cover before its preview, a list row its
+   * preview before its cover. The first of them the item has is what it
+   * shows: a preview, or a cover that is a file record, is that file, and a
+   * color, gradient or Unsplash cover shows no file. With neither, the
+   * node's file.
    */
   function resolveShownFile(): IFile | IRecordId | undefined {
-    const cover = item?.cover;
+    const cover = item?.cover || undefined;
     const isCoverFirst =
       arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY;
-    if (isCoverFirst && cover) {
-      const isFileCover =
-        typeof cover === "string" &&
-        !nonFileCoverPrefixes.some((prefix) => cover.includes(prefix));
-      return isFileCover ? cover : undefined;
-    }
-    return filePreview ?? item?.file;
+    const isCoverShown = !!cover && (isCoverFirst || !filePreview);
+    if (!isCoverShown) return filePreview ?? item?.file;
+    const isFileCover =
+      typeof cover === "string" &&
+      !nonFileCoverPrefixes.some((prefix) => cover.includes(prefix));
+    return isFileCover ? cover : undefined;
   }
 
   /**

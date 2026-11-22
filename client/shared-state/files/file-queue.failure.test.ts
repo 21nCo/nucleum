@@ -36,8 +36,14 @@ function installDevice() {
   });
 }
 
-function rejection(status: number, code = "FILEFN_TEST_REJECTION") {
-  return new FileFnHttpError(code, status, { error: { code, message: code } });
+function rejection(
+  status: number,
+  code = "FILEFN_POLICY_CONTENT_TYPE_NOT_ALLOWED",
+  details?: Record<string, unknown>
+) {
+  return new FileFnHttpError(code, status, {
+    error: { code, message: code, details }
+  });
 }
 
 /**
@@ -146,13 +152,24 @@ describe("a queued upload FileFn rejects for good", () => {
     }
   );
 
-  it.each([400, 403, 404, 409, 413, 422])(
-    "counts FileFn status %i as a permanent rejection",
-    async (status) => {
+  it.each([
+    ["FILEFN_POLICY_CONTENT_TYPE_NOT_ALLOWED", 400, undefined],
+    ["FILEFN_POLICY_MAX_SIZE_EXCEEDED", 400, undefined],
+    ["FILEFN_POLICY_NOT_FOUND", 400, undefined],
+    ["FILEFN_QUOTA_EXCEEDED", 402, undefined],
+    ["FILEFN_INVALID_FILE_ID", 400, undefined],
+    ["FILEFN_INVALID_REQUEST", 400, undefined],
+    ["FILEFN_UPLOAD_SIZE_MISMATCH", 409, undefined],
+    ["FILEFN_IDEMPOTENCY_CONFLICT", 409, undefined],
+    ["FILEFN_FORBIDDEN", 403, undefined],
+    ["FILEFN_FORBIDDEN", 403, { fileId: FILE_ID, operation: "replace" }]
+  ] as const)(
+    "counts FileFn's %s %i (details %o) as a permanent rejection",
+    async (code, status, details) => {
       installDevice();
       const tab = await openTab();
       await enqueuePhoto(tab);
-      const fileFn = createClient([rejection(status)]);
+      const fileFn = createClient([rejection(status, code, details)]);
 
       await tab.replayFileQueue(
         QUEUE,
@@ -165,11 +182,40 @@ describe("a queued upload FileFn rejects for good", () => {
   );
 
   it.each([
-    ["an authorization failure", rejection(401)],
+    ["an authorization failure", rejection(401, "FILEFN_AUTH_REQUIRED")],
     ["a timeout", rejection(408)],
-    ["a rate limit", rejection(429)],
+    ["a rate limit", rejection(429, "FILEFN_RATE_LIMITED")],
     ["an expired session", rejection(410, "FILEFN_UPLOAD_EXPIRED")],
     ["a server error", rejection(503)],
+    [
+      "a request refused for its scope (FILEFN_FORBIDDEN reason scope)",
+      rejection(403, "FILEFN_FORBIDDEN", { reason: "scope" })
+    ],
+    [
+      "a request refused for its CSRF header (FILEFN_FORBIDDEN reason csrf)",
+      rejection(403, "FILEFN_FORBIDDEN", { reason: "csrf" })
+    ],
+    [
+      "a route the account service does not know (FILEFN_ROUTE_NOT_FOUND)",
+      rejection(404, "FILEFN_ROUTE_NOT_FOUND")
+    ],
+    [
+      "a completion still running (retryable)",
+      rejection(409, "FILEFN_UPLOAD_COMPLETION_IN_PROGRESS", {
+        retryable: true
+      })
+    ],
+    [
+      "a retryable answer with a file rejection code",
+      rejection(409, "FILEFN_UPLOAD_SIZE_MISMATCH", { retryable: true })
+    ],
+    ["a session not found", rejection(404, "FILEFN_SESSION_NOT_FOUND")],
+    [
+      "an invalid session token",
+      rejection(403, "FILEFN_SESSION_TOKEN_INVALID")
+    ],
+    ["an incomplete session", rejection(409, "FILEFN_UPLOAD_INCOMPLETE")],
+    ["a part conflict", rejection(409, "FILEFN_PART_CONFLICT")],
     ["a network failure", new TypeError("Failed to fetch")],
     [
       "a storage URL that refused a part (no FileFn error code)",
@@ -213,7 +259,7 @@ describe("a queued upload FileFn rejects for good", () => {
     await enqueuePhoto(tab);
     const changes: string[] = [];
     tab.onQueuedFileFailureChange((fileId) => changes.push(fileId));
-    const fileFn = createClient([rejection(422), "ok"]);
+    const fileFn = createClient([rejection(400), "ok"]);
     await tab.replayFileQueue(
       QUEUE,
       fileFn.client,
@@ -227,8 +273,8 @@ describe("a queued upload FileFn rejects for good", () => {
     expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(false);
     await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
     expect(fileFn.uploads).toHaveLength(2);
-    // Marked failed, retried, then uploaded and removed from the queue.
-    expect(changes).toEqual([FILE_ID, FILE_ID, FILE_ID]);
+    const markedRetriedThenUploaded = [FILE_ID, FILE_ID, FILE_ID];
+    expect(changes).toEqual(markedRetriedThenUploaded);
     expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID)).toBe(false);
   });
 

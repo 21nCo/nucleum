@@ -3616,22 +3616,61 @@ async function uploadQueuedFile(
 }
 
 /**
- * Whether FileFn rejected an original's upload in a way a retry does not
- * change: a client error of the FileFn API, which carries one of FileFn's own
- * error codes (FILEFN_*), other than an authorization failure (401), a
- * timeout (408) or a rate limit (429), which a later attempt may not meet,
- * and other than an ended session, which the next replay replaces (see
- * ENDED_SESSION_CODES), or one already completed. A part upload's failure
- * carries no code (a presigned storage URL that expired answers 403), and a
- * coded error FileFn did not raise (such as an AUTHFN_* region routing
- * answer from the service in front of it) is not FileFn's rejection of the
- * upload, so both stay transient failures the next replay retries.
+ * FileFn codes that reject the file itself or its metadata, which another
+ * attempt with the same bytes, name, type and file ID meets again: its type
+ * or size the policy refuses, a policy that does not exist, a storage quota
+ * it exceeds, a file ID or request FileFn refuses, a size that does not match
+ * the bytes sent, an idempotency key FileFn holds for another payload, and
+ * FileFn's own refusal of access (see isUploadRejectedForGood). Every other
+ * code stays a failure the next replay retries, such as one about a single
+ * upload session (not found, invalid token, incomplete, a part or etag),
+ * which the next replay replaces with a new session.
  */
-function isUploadRejectedForGood({ status, code }: FileFnHttpError) {
-  if (typeof code !== "string" || !code.startsWith("FILEFN_")) return false;
-  if (code === "FILEFN_UPLOAD_ALREADY_COMPLETED") return false;
-  if (ENDED_SESSION_CODES.has(code)) return false;
-  return status >= 400 && status < 500 && ![401, 408, 429].includes(status);
+const FILE_REJECTION_CODES = new Set([
+  "FILEFN_POLICY_CONTENT_TYPE_NOT_ALLOWED",
+  "FILEFN_POLICY_MAX_SIZE_EXCEEDED",
+  "FILEFN_POLICY_NOT_FOUND",
+  "FILEFN_QUOTA_EXCEEDED",
+  "FILEFN_INVALID_FILE_ID",
+  "FILEFN_INVALID_REQUEST",
+  "FILEFN_UPLOAD_SIZE_MISMATCH",
+  "FILEFN_IDEMPOTENCY_CONFLICT",
+  "FILEFN_FORBIDDEN"
+]);
+
+/**
+ * Reasons the account service in front of FileFn refuses a request with
+ * FILEFN_FORBIDDEN before FileFn sees the file (a missing scope, a CSRF
+ * header read again on each request), which a later attempt may not meet.
+ */
+const REQUEST_REFUSAL_REASONS = new Set(["scope", "csrf"]);
+
+/**
+ * Whether FileFn rejected an original's upload in a way a retry does not
+ * change: a client error of the FileFn API (4xx other than an authorization
+ * failure (401), a timeout (408) or a rate limit (429)) with one of the codes
+ * that reject the file itself (see FILE_REJECTION_CODES), unless FileFn marks
+ * it retryable, or it is the account service's refusal of the request rather
+ * than FileFn's (see REQUEST_REFUSAL_REASONS). A part upload's failure carries
+ * no code (a presigned storage URL that expired answers 403), and a code
+ * FileFn did not raise (such as an AUTHFN_* region routing answer, or the
+ * account service's FILEFN_ROUTE_NOT_FOUND), so both stay transient failures
+ * the next replay retries.
+ */
+function isUploadRejectedForGood({ status, code, details }: FileFnHttpError) {
+  if (typeof code !== "string" || !FILE_REJECTION_CODES.has(code)) {
+    return false;
+  }
+  if (status < 400 || status >= 500 || [401, 408, 429].includes(status)) {
+    return false;
+  }
+  const { retryable, reason } = details ?? {};
+  if (retryable === true) return false;
+  return !(
+    code === "FILEFN_FORBIDDEN" &&
+    typeof reason === "string" &&
+    REQUEST_REFUSAL_REASONS.has(reason)
+  );
 }
 
 /** An original's upload FileFn rejected for good (see isUploadRejectedForGood). */

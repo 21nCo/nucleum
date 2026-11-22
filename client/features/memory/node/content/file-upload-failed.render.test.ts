@@ -209,6 +209,14 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/**
+ * Fakes `setTimeout`: a media grid lays its items out on a timer once
+ * mounted, which a test runs while the grid is still mounted.
+ */
+function fakeGridLayoutTimers() {
+  vi.useFakeTimers({ toFake: ["setTimeout"] });
+}
+
 /** Lets every pending promise reaction run. */
 async function flushMicrotasks() {
   for (let turn = 0; turn < 20; turn++) await Promise.resolve();
@@ -318,6 +326,55 @@ describe("the file a thumbnail shows the failed state of", () => {
     expect(uploads.watched).toContain(FILE_ID);
   });
 
+  it("is the file cover a list row without a preview shows", async () => {
+    const COVER_FILE_ID = "file_coverImage02";
+    records.files.set("cover-record", async () => ({
+      ...photo,
+      id: "cover-record",
+      fileId: COVER_FILE_ID
+    }));
+    uploads.failed.add(COVER_FILE_ID);
+    render(NodeThumbnail, {
+      props: {
+        item: {
+          id: "node-3",
+          label: "paper.pdf",
+          contentType: NodeType.PDF,
+          file: RECORD_ID,
+          cover: "cover-record"
+        } as never,
+        arrangement: Arrangement.LIST,
+        accessPointId: "page-1" as never
+      }
+    });
+
+    expect(await screen.findByTestId("file-upload-failed")).toBeTruthy();
+    expect(uploads.watched).toEqual([COVER_FILE_ID]);
+    await fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(uploads.retryFileUpload).toHaveBeenCalledWith(COVER_FILE_ID);
+  });
+
+  it("is no file when a list row without a preview shows a color cover", async () => {
+    uploads.failed.add(FILE_ID);
+    render(NodeThumbnail, {
+      props: {
+        item: {
+          id: "node-3",
+          label: "paper.pdf",
+          contentType: NodeType.PDF,
+          file: RECORD_ID,
+          cover: "hex_#336699"
+        } as never,
+        arrangement: Arrangement.LIST,
+        accessPointId: "page-1" as never
+      }
+    });
+    await flushMicrotasks();
+
+    expect(uploads.watched).toEqual([]);
+    expect(screen.queryByTestId("file-upload-failed")).toBeNull();
+  });
+
   it("follows the item it shows and drops a lookup of the previous one", async () => {
     let release = () => {};
     records.files.set(
@@ -387,13 +444,12 @@ describe("a media grid holding a file whose upload failed", () => {
   it.each([MediaGridType.AUTO, MediaGridType.COLUMNS])(
     "adds no %s layout child for the failed state, laying it over the item",
     async (type) => {
-      // The grid lays its items out on a timer once mounted; run it mounted.
-      vi.useFakeTimers({ toFake: ["setTimeout"] });
+      fakeGridLayoutTimers();
       const usual = await showGrid(type);
       const usualChildren = usual.container.children.length;
-      expect(usual.media.every((m) => m.parentElement === usual.container)).toBe(
-        true
-      );
+      expect(
+        usual.media.every((m) => m.parentElement === usual.container)
+      ).toBe(true);
       usual.shown.unmount();
 
       uploads.failed.add(FILE_ID);
@@ -416,10 +472,85 @@ describe("a media grid holding a file whose upload failed", () => {
   );
 });
 
+describe("a media grid holding a PDF whose upload failed", () => {
+  const PDF_FILE_ID = "file_rejectedPaper01";
+  const pdf = {
+    ...photo,
+    id: "pdf-record",
+    fileId: PDF_FILE_ID,
+    label: "paper.pdf",
+    name: "paper.pdf",
+    type: "application/pdf",
+    url: "blob:queued-paper"
+  };
+
+  /** Renders a grid of two PDFs laid out as `type`, returning its files' container. */
+  async function showPdfGrid(type: MediaGridType) {
+    const shown = render(MediaGrid, {
+      props: {
+        block: {
+          id: "grid-1",
+          body: {
+            type,
+            noOfColumns: 1,
+            items: ["media-1", "media-2"].map((id, index) => ({
+              id,
+              file: pdf.id,
+              position: { auto: index, columns: { index, columnNo: 0 } }
+            }))
+          }
+        } as never,
+        files: [{ ...pdf }] as never,
+        mdStore: {
+          ...writable({ params: { isReadOnly: true } }),
+          insert: vi.fn(),
+          deleteBlock: vi.fn()
+        } as never
+      }
+    });
+    const items = await vi.waitFor(() => {
+      const embeds = [...document.querySelectorAll("embed")];
+      expect(embeds).toHaveLength(2);
+      return embeds.map((embed) => embed.parentElement!);
+    });
+    const container = items[0].parentElement!;
+    return { shown, items, container };
+  }
+
+  it.each([MediaGridType.AUTO, MediaGridType.COLUMNS])(
+    "shows Upload failed inside each %s PDF item, adding no layout child",
+    async (type) => {
+      fakeGridLayoutTimers();
+      const usual = await showPdfGrid(type);
+      const usualChildren = usual.container.children.length;
+      usual.shown.unmount();
+
+      uploads.failed.add(PDF_FILE_ID);
+      const failed = await showPdfGrid(type);
+      const indicators = await vi.waitFor(() => {
+        const found = screen.getAllByTestId("file-upload-failed");
+        expect(found).toHaveLength(2);
+        return found;
+      });
+
+      expect(failed.container.children.length).toBe(usualChildren);
+      failed.items.forEach((item, index) => {
+        expect(item.parentElement).toBe(failed.container);
+        expect(indicators[index].parentElement).toBe(item);
+        expect(indicators[index].className).toContain("absolute");
+      });
+      await fireEvent.click(
+        screen.getAllByRole("button", { name: "Retry" })[0]
+      );
+      expect(uploads.retryFileUpload).toHaveBeenCalledWith(PDF_FILE_ID);
+      vi.runOnlyPendingTimers();
+    }
+  );
+});
+
 describe("Retry inside an interactive file display", () => {
   it("retries a media grid's file without inserting a block, by click or key", async () => {
-    // The grid lays its items out on a timer once mounted; run it mounted.
-    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    fakeGridLayoutTimers();
     uploads.failed.add(FILE_ID);
     const mdStore = {
       ...writable({ params: {} }),
