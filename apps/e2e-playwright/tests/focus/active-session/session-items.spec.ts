@@ -354,6 +354,7 @@ async function expectDuplicateMainInputRejected(
   const result = searchRoot
     .locator(".popover button")
     .filter({ has: page.getByText(label, { exact: true }) });
+  await expect(result).toBeVisible();
   await result.click();
 
   await readToastNotificationContent(page, {
