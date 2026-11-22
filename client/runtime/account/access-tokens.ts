@@ -49,7 +49,7 @@ export interface CreatedAccessToken {
 
 /**
  * Why a token request failed: `session` when the account service needs a
- * signed-in web session, `unsupported` when this client holds a bearer
+ * signed-in web session or a recent sign-in, `unsupported` when this client holds a bearer
  * session the token routes do not accept, `invalid` for rejected input, and
  * `failed` otherwise.
  */
@@ -218,6 +218,14 @@ function failure(error: { code: string; message: string }): {
       ok: false,
       kind: "session",
       message: "Sign in again to manage access tokens."
+    };
+  }
+  if (error.code === "AUTHFN_REAUTHENTICATION_REQUIRED") {
+    return {
+      ok: false,
+      kind: "session",
+      message:
+        "For your security, sign out and sign in again, then create the token within 15 minutes."
     };
   }
   if (error.code === "AUTHFN_VALIDATION_ERROR") {

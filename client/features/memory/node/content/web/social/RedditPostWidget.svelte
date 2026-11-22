@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { sanitizeEmbedHtml } from "@nucleum/features/memory/node/content/web/social/embed-html";
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
   import { onMount } from "svelte";
   import appearance from "@nucleum/shared-state/appearance/appearance.store";
@@ -27,7 +28,7 @@
       });
       if (urlData) {
         const parsed = parse(urlData.text);
-        embedHtml = parsed.html;
+        embedHtml = sanitizeEmbedHtml(parsed.html);
         return true;
       } else {
         error = "Failed to load Reddit post";
@@ -41,7 +42,7 @@
   }
 </script>
 
-<div class="w-full h-full flex justify-center items-center">
+<div class="w-full h-full flex justify-center items-center" style="contain: paint;">
   {#if embedHtml}
     {@html embedHtml}
   {:else}

@@ -19,6 +19,7 @@
     "waf:live": "node scripts/sync-waf-exceptions.mjs live"
   },
   "devDependencies": {
+    "parse5": "^7.3.0",
     "wrangler": "^4.85.0"
   }
 }
