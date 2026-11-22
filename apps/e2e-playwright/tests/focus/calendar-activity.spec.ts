@@ -96,6 +96,8 @@ async function expectActivityEntry(
       .getByRole("button")
       .filter({ has: page.getByText(actionPattern) })
       .filter({ has: page.getByText(label, { exact: false }) })
+      .filter({ visible: true })
+      .first()
   ).toBeVisible({ timeout: 20_000 });
 }
 
