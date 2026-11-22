@@ -23,7 +23,14 @@ const sdk = vi.hoisted(() => ({
   uploads: [] as UploadInput[],
   deleted: [] as string[],
   /** The index in `baseUrls` of the client that sent each delete. */
-  deletedBy: [] as number[]
+  deletedBy: [] as number[],
+  /**
+   * When set, each delete is also sent through the real SDK client of its
+   * config, so its transport and retries run against the global fetch.
+   */
+  isRealDelete: false,
+  /** How each delete sent through the real SDK settled, by authority. */
+  realDeletes: [] as { baseUrl: string; error?: unknown }[]
 }));
 vi.mock("@filefn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@filefn/client")>();
@@ -53,6 +60,16 @@ vi.mock("@filefn/client", async (importOriginal) => {
         deleteFile: async (fileId: string) => {
           sdk.deleted.push(fileId);
           sdk.deletedBy.push(client);
+          if (!sdk.isRealDelete) return;
+          try {
+            await actual
+              .createFileFnClient({ ...config, offline: { enabled: false } })
+              .deleteFile(fileId);
+            sdk.realDeletes.push({ baseUrl: config.baseUrl });
+          } catch (error) {
+            sdk.realDeletes.push({ baseUrl: config.baseUrl, error });
+            throw error;
+          }
         },
         getPendingLocalDescriptor: async () => null
       };
@@ -390,6 +407,8 @@ beforeEach(async () => {
   sdk.uploads = [];
   sdk.deleted = [];
   sdk.deletedBy = [];
+  sdk.isRealDelete = false;
+  sdk.realDeletes = [];
   authfn.session = null;
   authfn.respond = undefined;
   authfn.region = undefined;
@@ -2235,6 +2254,134 @@ describe("replay authorization across the session lifetime", () => {
       expect(auth.resolved).toBe(resolved);
       expect(sdk.started).toEqual([]);
       expect(sdk.deleted).toEqual([]);
+    });
+
+    /**
+     * Sends deletes through the real SDK against a fake network that answers
+     * the first one at `baseUrl` for `fileId` with a 503 once `respond503` is
+     * called, and every other one at once with a 204.
+     */
+    function failFirstDeleteWith503(baseUrl: string, fileId = PENDING_DELETE) {
+      const realFetch = globalThis.fetch;
+      const requests: string[] = [];
+      let release: () => void = () => undefined;
+      const held = new Promise<void>((resolve) => (release = resolve));
+      const isTarget = (url: string) =>
+        url.startsWith(baseUrl) && url.includes(fileId);
+      vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+        if (init?.method !== "DELETE") {
+          return realFetch(input as RequestInfo, init);
+        }
+        const url = String(input instanceof Request ? input.url : input);
+        requests.push(url);
+        if (isTarget(url) && requests.filter(isTarget).length === 1) {
+          await held;
+          return new Response("busy", { status: 503, statusText: "Busy" });
+        }
+        return new Response(null, { status: 204 });
+      });
+      sdk.isRealDelete = true;
+      return {
+        sentTo: () => requests.filter(isTarget),
+        settledAt: () => sdk.realDeletes.filter((d) => d.baseUrl === baseUrl),
+        respond503: () => release()
+      };
+    }
+
+    /**
+     * Sends a region-less live session's euwest pending delete through the
+     * real SDK, answers it with a 503 after a live session at useast narrowed
+     * the authorization when `isNarrowed`, and waits until the SDK settles it.
+     */
+    async function retryEuwestDeleteAfter503(isNarrowed: boolean) {
+      vi.useFakeTimers({
+        toFake: ["setTimeout", "clearTimeout"],
+        shouldAdvanceTime: true
+      });
+      const { page } = await restoreOffline();
+      await recordPendingDelete(EUWEST_FILES);
+      const network = failFirstDeleteWith503(EUWEST_FILES);
+      authfn.session = { ...liveSession, regionId: undefined };
+      goOnline();
+      await vi.waitFor(() => expect(network.sentTo()).toHaveLength(1));
+      if (isNarrowed) {
+        authfn.session = liveSession;
+        expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+      }
+      network.respond503();
+      await vi.waitFor(() => expect(network.settledAt()).toHaveLength(1), {
+        timeout: 10_000
+      });
+      await settle();
+      return network;
+    }
+
+    it("sends no SDK retry of a pending delete to an authority a live session stopped authorizing after a 503, and sends it once a file operation authorizes it", async () => {
+      const network = await retryEuwestDeleteAfter503(true);
+      expect(network.sentTo()).toHaveLength(1);
+      expect(network.settledAt()[0].error).toMatchObject({
+        name: "AbortError"
+      });
+      const euwestDeletes = [
+        "filefn-pending-deletes-user-a",
+        encodeURIComponent(EUWEST_FILES)
+      ];
+      expect(opfs.list(...euwestDeletes)).toEqual([PENDING_DELETE]);
+      const files = await import("@nucleum/shared-state/files/filefn-client");
+      await files.getFileFnClient();
+      await vi.waitFor(() => expect(network.settledAt()).toHaveLength(2));
+      await settle();
+      expect(network.sentTo()).toHaveLength(2);
+      expect(network.settledAt()[1]).toEqual({ baseUrl: EUWEST_FILES });
+      expect(opfs.list(...euwestDeletes)).toEqual([]);
+    });
+
+    it("retries a pending delete after a 503 when the authorization is unchanged", async () => {
+      const network = await retryEuwestDeleteAfter503(false);
+      expect(network.sentTo()).toHaveLength(2);
+      expect(network.settledAt()).toEqual([{ baseUrl: EUWEST_FILES }]);
+    });
+
+    it("sends no SDK retry of the bound client's pending delete after a 503 once a live session at another authority tears it down", async () => {
+      vi.useFakeTimers({
+        toFake: ["setTimeout", "clearTimeout"],
+        shouldAdvanceTime: true
+      });
+      const { page } = await restoreOffline();
+      const network = failFirstDeleteWith503(USEAST_FILES);
+      authfn.session = liveSession;
+      goOnline();
+      await vi.waitFor(() => expect(network.sentTo()).toHaveLength(1));
+      authfn.session = { ...liveSession, regionId: "euwest" };
+      expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+      network.respond503();
+      await vi.waitFor(() => expect(network.settledAt()).toHaveLength(1), {
+        timeout: 10_000
+      });
+      await settle();
+      expect(network.sentTo()).toHaveLength(1);
+      expect(network.settledAt()[0].error).toMatchObject({
+        name: "AbortError"
+      });
+    });
+
+    it("retries a file operation's delete through the bound client after a 503", async () => {
+      vi.useFakeTimers({
+        toFake: ["setTimeout", "clearTimeout"],
+        shouldAdvanceTime: true
+      });
+      await restoreOffline();
+      const network = failFirstDeleteWith503(USEAST_FILES, "foreground-file");
+      const files = await import("@nucleum/shared-state/files/filefn-client");
+      const client = await files.getFileFnClient();
+      const deleted = client!.deleteFile("foreground-file");
+      await vi.waitFor(() => expect(network.sentTo()).toHaveLength(1));
+      network.respond503();
+      await vi.waitFor(() => expect(network.sentTo()).toHaveLength(2), {
+        timeout: 10_000
+      });
+      await deleted;
+      expect(network.sentTo()).toHaveLength(2);
     });
   });
 });
