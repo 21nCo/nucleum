@@ -1310,7 +1310,8 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
           isNucleumProject(testInfo.project.name)
             ? page
                 .getByRole("main")
-                .getByRole("tab", { name: "All", exact: true })
+                .getByRole("tablist")
+                .getByRole("tab", { selected: true })
             : page.getByTestId("overview-tabs").getByRole("tab", {
                 selected: true
               })
