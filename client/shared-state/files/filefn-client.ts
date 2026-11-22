@@ -75,15 +75,16 @@ let ownerUserId: string | undefined;
  * account, at the region it names, that the latest live session confirmed
  * (null before one did or once a resolution stopped the replay);
  * `contradictedUserIds` are the users a live session showed are not the
- * signed-in account; `fileGrantUserIds` are the users a file operation
- * requested the client for while not contradicted.
+ * signed-in account, or that a session which ended knew; `fileGrantUserIds`
+ * are the users a file operation requested the client for while not
+ * contradicted.
  */
 const replayAuthorization = {
   liveOwner: null as FileFnAccountScope | null,
   contradictedUserIds: new Set<string>(),
   fileGrantUserIds: new Set<string>()
 };
-/** Clients waiting for their replay to be authorized. */
+/** What each client runs when the replay authorization expands. */
 const replayWaiters = new Set<() => void>();
 let stopLiveBindWait: () => void = () => undefined;
 const pendingDeleteDrains = new Map<string, Promise<void>>();
@@ -245,15 +246,27 @@ export function stopAccountUploadReplay(): void {
 }
 
 /**
- * Ends the page's session for the upload replay on sign-out: every grant and
- * contradiction is cleared, so the next session's replay waits for its own
- * authorization, and the bound client is torn down. The queue and the pending
- * deletes stay as they are.
+ * Ends the page's session for the upload replay on sign-out: every grant is
+ * cleared and every user the session knew (its live owner, file grants, bound
+ * client and the account state's cloud user) is contradicted, so no file
+ * operation during or after the sign-out authorizes their replay again; only
+ * a later live session that confirms a user does. The bound client is torn
+ * down, and the queue and the pending deletes stay as they are.
  */
 export function endAccountUploadReplay(): void {
+  const { liveOwner, contradictedUserIds, fileGrantUserIds } =
+    replayAuthorization;
+  const known = [
+    liveOwner?.userId,
+    ...fileGrantUserIds,
+    currentEntry?.userId,
+    resolveFileFnAccountScope(account.get())?.userId
+  ];
+  for (const userId of known) {
+    if (userId) contradictedUserIds.add(userId);
+  }
   replayAuthorization.liveOwner = null;
-  replayAuthorization.contradictedUserIds.clear();
-  replayAuthorization.fileGrantUserIds.clear();
+  fileGrantUserIds.clear();
   stopLiveBindWait();
   tearDownFileFnClient();
 }
@@ -315,11 +328,20 @@ function whenReplayAuthorized(
     replayWaiters.delete(tryStart);
     start();
   };
-  replayWaiters.add(tryStart);
-  teardown.addEventListener("abort", () => replayWaiters.delete(tryStart), {
+  onReplayAuthorizationExpanded(tryStart, teardown);
+  tryStart();
+}
+
+/** Runs `listener` on every expansion of the replay authorization until teardown. */
+function onReplayAuthorizationExpanded(
+  listener: () => void,
+  teardown: AbortSignal
+) {
+  if (teardown.aborted) return;
+  replayWaiters.add(listener);
+  teardown.addEventListener("abort", () => replayWaiters.delete(listener), {
     once: true
   });
-  tryStart();
 }
 
 function notifyReplayWaiters() {
@@ -434,8 +456,8 @@ function tearDownFileFnClient() {
  * Creates an account's FileFn client. The SDK's HEIC preprocessing is off, so
  * the original keeps its bytes and the processing mode owns conversion. The
  * client sends the account's pending deletes, at every authority, now and on
- * every reconnect until it is torn down, once its replay is authorized (see
- * startAccountUploadReplay).
+ * every reconnect and every expansion of the replay authorization until it
+ * is torn down, once its replay is authorized (see startAccountUploadReplay).
  */
 async function createAccountFileFnClient(
   userId: string,
@@ -462,6 +484,7 @@ async function createAccountFileFnClient(
       );
     drain();
     globalThis.addEventListener?.("online", drain, { signal: teardown });
+    onReplayAuthorizationExpanded(drain, teardown);
   });
   return guarded;
 }

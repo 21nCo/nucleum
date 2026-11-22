@@ -82,14 +82,15 @@ function resolveLiveSession(
 /**
  * Stops the upload replay on sign-out: it ends the session's lifetime, so a
  * pending resolution of the stored session neither stores its session nor
- * authorizes the replay, clears every replay grant of the page and tears the
- * bound client down.
+ * authorizes the replay, and ends the session's replay authorization (see the
+ * files runtime's endAccountUploadReplay), tearing the bound client down. The
+ * returned promise settles once the authorization has ended; it never rejects.
  */
-export function stopUploadReplayForSession(): void {
+export function stopUploadReplayForSession(): Promise<void> {
   sessionLifetime.abort();
   sessionLifetime = new AbortController();
   stopSessionRecheck();
-  import("@nucleum/shared-state/files/filefn-client")
+  return import("@nucleum/shared-state/files/filefn-client")
     .then((files) => files.endAccountUploadReplay())
     .catch((error: unknown) => {
       logger.error({ at: "account.uploadReplay.stop", error });

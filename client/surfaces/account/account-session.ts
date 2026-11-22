@@ -151,7 +151,7 @@ async function signOut(params?: {
   isPreventDapIdClear?: boolean;
   isPreventRedirect?: boolean;
 }) {
-  stopUploadReplayForSession();
+  await stopUploadReplayForSession();
   try {
     await destroyNucleumDatafn();
   } catch (error) {
