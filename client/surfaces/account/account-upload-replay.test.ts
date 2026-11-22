@@ -1936,4 +1936,272 @@ describe("replay authorization across the session lifetime", () => {
     });
     expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
   });
+
+  describe("authorization when the replay sends and superseded rechecks", () => {
+    /**
+     * Holds the `nth` (1-based) device storage open made by a pending-delete
+     * send pass (replayPendingDeletes), after its authority was checked.
+     */
+    function holdNthPendingDeleteSend(nth: number) {
+      const open = navigator.storage.getDirectory.bind(navigator.storage);
+      let release: () => void = () => undefined;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const hold = { isHeld: false, release: () => release() };
+      let seen = 0;
+      vi.spyOn(navigator.storage, "getDirectory").mockImplementation(() => {
+        if (new Error().stack?.includes("replayPendingDeletes")) {
+          seen += 1;
+          if (seen === nth) {
+            hold.isHeld = true;
+            return gate.then(() => open());
+          }
+        }
+        return open();
+      });
+      return hold;
+    }
+
+    /**
+     * Holds a region-less live session's drain at its euwest send pass, then
+     * narrows the authorization with a live session at useast and releases it.
+     */
+    async function narrowAuthorizationDuringDrain() {
+      const { page } = await restoreOffline();
+      await recordPendingDelete(EUWEST_FILES);
+      const hold = holdNthPendingDeleteSend(2);
+      authfn.session = { ...liveSession, regionId: undefined };
+      goOnline();
+      await vi.waitFor(() => expect(hold.isHeld).toBe(true));
+      expect(sdk.deleted).toEqual([PENDING_DELETE]);
+      expect(sdk.deletedBy.map((i) => sdk.baseUrls[i])).toEqual([USEAST_FILES]);
+      authfn.session = liveSession;
+      expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+      hold.release();
+      await settle();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await settle();
+      return page;
+    }
+
+    it("sends no pending delete at an authority a live session stopped authorizing during the drain", async () => {
+      await narrowAuthorizationDuringDrain();
+      expect(sdk.deletedBy.map((i) => sdk.baseUrls[i])).toEqual([USEAST_FILES]);
+      expect(sdk.baseUrls).not.toContain(EUWEST_FILES);
+    });
+
+    it("sends the refused authority's pending delete once when a file operation later authorizes it", async () => {
+      await narrowAuthorizationDuringDrain();
+      const files = await import("@nucleum/shared-state/files/filefn-client");
+      await files.getFileFnClient();
+      await vi.waitFor(() =>
+        expect(sdk.deletedBy.map((i) => sdk.baseUrls[i])).toEqual([
+          USEAST_FILES,
+          EUWEST_FILES
+        ])
+      );
+      await settle();
+      expect(sdk.deleted).toEqual([PENDING_DELETE, PENDING_DELETE]);
+      expect(sdk.deletedBy.map((i) => sdk.baseUrls[i])).toEqual([
+        USEAST_FILES,
+        EUWEST_FILES
+      ]);
+    });
+
+    async function restoreRegionlessHeld() {
+      await captureOfflineThenLeave();
+      await clientStorage.set(ClientStorageKey.USER_INFO, {
+        ...userInfo,
+        region: undefined
+      });
+      isOnline = false;
+      const page = await loadPage();
+      const bind = await holdStoredRegionBind();
+      await page.accountSession.init();
+      page.account.set({
+        ...cloudAccount,
+        userInfo: { ...userInfo, region: undefined }
+      });
+      await page.sessionAccess.performLoginStatusCheck();
+      await vi.waitFor(() => expect(bind.isHeld).toBe(true));
+      return { page, bind };
+    }
+
+    it("creates no client from a restore's pending stored-region bind after the session expired", async () => {
+      const { page, bind } = await restoreRegionlessHeld();
+      isOnline = true;
+      authfn.session = null;
+      expect(await page.accountSession.checkIfSessionExpired()).toBe(true);
+      await settle();
+      bind.release();
+      await settle();
+      expect(sdk.baseUrls).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+    });
+
+    it("completes a file operation's pending stored-region bind after the session expired", async () => {
+      const { page, bind } = await restoreRegionlessHeld();
+      const files = await import("@nucleum/shared-state/files/filefn-client");
+      const client = files.getFileFnClient();
+      isOnline = true;
+      authfn.session = null;
+      expect(await page.accountSession.checkIfSessionExpired()).toBe(true);
+      bind.release();
+      expect(await client).not.toBeNull();
+      expect(sdk.baseUrls).toHaveLength(1);
+    });
+
+    /**
+     * Contradicts user-a with user-b's live session, then publishes user-a in
+     * the account state again and runs a file lookup.
+     */
+    async function republishContradictedUser() {
+      const { page, fileId } = await restoreOffline();
+      authfn.session = userB;
+      goOnline();
+      await vi.waitFor(() => expect(auth.resolved).toBeGreaterThan(1));
+      await settle();
+      const before = sdk.baseUrls.length;
+      page.account.set({ ...cloudAccount });
+      const files = await import("@nucleum/shared-state/files/filefn-client");
+      await files.getFileFnClient();
+      await settle();
+      return { page, fileId, before };
+    }
+
+    it("constructs no client for a user another user's live session contradicted when the account state publishes it again", async () => {
+      const { before } = await republishContradictedUser();
+      expect(sdk.baseUrls).toHaveLength(before);
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+    });
+
+    it("creates the contradicted user's client and drains once when a live session confirms it again", async () => {
+      const { page, fileId, before } = await republishContradictedUser();
+      authfn.session = liveSession;
+      expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+      await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+      await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+      await settle();
+      expect(sdk.baseUrls).toHaveLength(before + 1);
+      expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+      expect(sdk.deletedBy.map((i) => sdk.baseUrls[i])).toEqual([USEAST_FILES]);
+    });
+
+    it("applies a held live result once the reconnect replacing a canceled one fails, without the canceled request settling", async () => {
+      const { page, fileId } = await restoreOffline();
+      const held = holdAuthFnResponses();
+      isOnline = true;
+      const older = page.accountSession.checkIfSessionExpired();
+      await vi.waitFor(() => expect(held).toHaveLength(1));
+      goOnline();
+      await vi.waitFor(() => expect(held).toHaveLength(2));
+      held[0](liveSession);
+      expect(await older).toBe(false);
+      await settle();
+      expect(sdk.started).toEqual([]);
+      const resolved = auth.resolved;
+      auth.failNext = true;
+      goOnline();
+      await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+      await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+      expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+      expect(held).toHaveLength(2);
+    });
+
+    /**
+     * Holds an older check's live result behind a reconnect whose request
+     * never settles, then reconnects again with every response held.
+     */
+    async function supersedeHeldReconnect() {
+      const { older, held, fileId } = await startCheckThenReconnect();
+      held[0](liveSession);
+      expect(await older).toBe(false);
+      await settle();
+      goOnline();
+      await vi.waitFor(() => expect(held).toHaveLength(3));
+      await settle();
+      return { held, fileId };
+    }
+
+    it("lets the replacing reconnect decide before a result held for the canceled one applies", async () => {
+      const { held, fileId } = await supersedeHeldReconnect();
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+      held[2](liveSession);
+      await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+      await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+      await settle();
+      expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+      expect(sdk.deletedBy.map((i) => sdk.baseUrls[i])).toEqual([USEAST_FILES]);
+    });
+
+    it("changes nothing when the canceled reconnect's request settles late", async () => {
+      const { held, fileId } = await supersedeHeldReconnect();
+      held[2](liveSession);
+      await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+      await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+      held[1](null);
+      await settle();
+      await recordPendingDelete();
+      goOnline();
+      await vi.waitFor(() =>
+        expect(sdk.deleted).toEqual([PENDING_DELETE, PENDING_DELETE])
+      );
+      await settle();
+      expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+      expect(sdk.deletedBy.map((i) => sdk.baseUrls[i])).toEqual([
+        USEAST_FILES,
+        USEAST_FILES
+      ]);
+    });
+
+    /**
+     * Cancels a reconnect whose request never settles with a second one
+     * that fails, under fake timers, leaving the bounded retry armed.
+     */
+    async function failReplacingReconnect() {
+      vi.useFakeTimers({
+        toFake: ["setTimeout", "clearTimeout"],
+        shouldAdvanceTime: true
+      });
+      const { page, fileId } = await restoreOffline();
+      const held = holdAuthFnResponses();
+      goOnline();
+      await vi.waitFor(() => expect(held).toHaveLength(1));
+      const resolved = auth.resolved;
+      auth.failNext = true;
+      goOnline();
+      await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+      await settle();
+      expect(sdk.started).toEqual([]);
+      authfn.respond = undefined;
+      authfn.session = liveSession;
+      return { page, fileId, resolved: auth.resolved };
+    }
+
+    it("retries once through the bounded delay after the reconnect replacing a canceled one fails", async () => {
+      const { fileId, resolved } = await failReplacingReconnect();
+      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]), {
+        timeout: 3_000
+      });
+      expect(auth.resolved).toBe(resolved + 1);
+      await vi.advanceTimersByTimeAsync(300_000);
+      await settle();
+      expect(auth.resolved).toBe(resolved + 1);
+      expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+      expect(sdk.deleted).toEqual([PENDING_DELETE]);
+    });
+
+    it("cancels the replay and the bounded retry on sign-out after the reconnect replacing a canceled one fails", async () => {
+      const { page, resolved } = await failReplacingReconnect();
+      await page.accountSession.signOut({ isPreventRedirect: true });
+      await vi.advanceTimersByTimeAsync(300_000);
+      await settle();
+      expect(auth.resolved).toBe(resolved);
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+    });
+  });
 });
