@@ -1301,6 +1301,13 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       await expect(page).toHaveURL(
         direction === "back" ? calendarUrl : overviewUrl
       );
+      await expect(
+        direction === "back"
+          ? page.getByRole("button", { name: "Go to today" })
+          : page.getByTestId("overview-tabs").getByRole("tab", {
+              selected: true
+            })
+      ).toBeVisible();
 
       await resetShortcutAndClose(page, shortcut, `${modifier}+Shift+${key}`);
     });
