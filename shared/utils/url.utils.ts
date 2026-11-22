@@ -91,3 +91,37 @@ export function isValidHyperlink(url: string) {
   const isEmail = isValidEmail(url);
   return isUrl || isEmail;
 }
+
+/**
+ * Resolves user-entered link text to an absolute http(s) URL to open in a new
+ * window or frame. Text without a scheme is treated as an https host; any other
+ * scheme, such as `javascript:` or `data:`, is refused.
+ */
+export function toExternalHttpUrl(
+  value: string | undefined | null
+): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const hasScheme =
+    /^[a-z][a-z0-9+.-]*:/i.test(trimmed) && !/^[^:/?#]+:\d+(?:[/?#]|$)/.test(trimmed);
+  const candidate = hasScheme
+    ? trimmed
+    : `https://${trimmed.replace(/^\/\//, "")}`;
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return undefined;
+    if (!url.hostname) return undefined;
+    return url.href;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Checks whether a value is already an absolute http(s) URL with a host, without adding a scheme. */
+export function isAbsoluteHttpUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return false;
+  return toExternalHttpUrl(trimmed) !== undefined;
+}
