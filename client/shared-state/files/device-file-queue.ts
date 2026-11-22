@@ -115,7 +115,7 @@ function assertNamespace(namespace: string) {
 /**
  * Returns the publisher of the device's local files for a cloud account: it
  * is ready while DataFn is in the account's namespace and syncs with the
- * account authority the files upload to, so a published record reaches it, and publishes each
+ * account authority the files upload to, and publishes each
  * uploaded file as a record of the account under its local-only record's ID,
  * with the record's current fields and its trashed and archived state,
  * unless the account already holds that record (an earlier publish whose
@@ -231,11 +231,9 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
 
 /**
  * Reconciles the local files of the given changed records (all with none)
- * with their records in the guest namespace. Only the files captured in that
- * namespace are reconciled: the local queue is the device's, and a sign-out
- * opens a new guest namespace (a new DataFn device ID), so a file captured in
- * another one keeps its record copy to publish at the next cloud sign-in, or
- * at the account that claimed it. When a changed record could not
+ * with their records in the guest namespace, captured there: a file of
+ * another guest namespace (a sign-out opens a new one) keeps its copy to
+ * publish. When a changed record could not
  * be read, as DataFn left the namespace, its file is marked stale, so it does
  * not upload with an outdated copy until the namespace starts again; a file
  * whose record did not change keeps its copy, which is still current.
@@ -276,8 +274,8 @@ function scheduleLocalRecordWork(run: () => Promise<void>) {
 }
 
 /**
- * Uploads the device's local files (a local-only user's) through a cloud
- * account's client and publishes their records in the account, so the
+ * Uploads the device's local files (a local-only user's) through the signed-in
+ * cloud account's client and publishes their records in the account, so the
  * account holds a record of each file it receives; see replayFileQueue.
  */
 export async function uploadLocalQueuedFiles(
@@ -345,12 +343,14 @@ function logOrphanError(error: unknown) {
 }
 
 /** Brings every local file of a local-only user's namespace in line with its record. */
-function prepareNamespace(namespace: string) {
-  if (!resolveMigrationQueueDir(namespace)) return;
-  void scheduleLocalRecordWork(async () => {
-    changedRecordIds.delete(namespace);
-    await reconcileLocalFiles(namespace);
-  });
+async function prepareNamespace(namespace: string) {
+  const queueDir = resolveMigrationQueueDir(namespace);
+  if (queueDir) {
+    await scheduleLocalRecordWork(async () => {
+      changedRecordIds.delete(namespace);
+      await reconcileLocalFiles(namespace);
+    });
+  }
 }
 
 /** IDs of local-only records changed since their files were last reconciled. */
@@ -380,11 +380,8 @@ function onFileRecordsChanged(event: { ids?: string[] }) {
 }
 
 /**
- * Uploads the local files with each replay of an account's queue, through
- * its client: it runs only once the account may send replay (a live session
- * confirmed it, or a file operation requested its client), on its namespace
- * start, reconnect and the end of offline mode, never from this module's own
- * triggers, so they never authorize an account's replay.
+ * Uploads the local files with each authorized replay of an account's queue
+ * (see onAccountQueueReplay), so no trigger here authorizes a replay.
  */
 function uploadWithAccountReplay(replay: AccountQueueReplay) {
   void uploadLocalQueuedFiles(replay).catch((error: unknown) => {
@@ -418,7 +415,7 @@ export function installDeviceFileQueue(): () => void {
     stopEvents();
   };
   const stopRuntime = datafnRuntime.subscribe((runtime) => {
-    if (runtime?.namespace) prepareNamespace(runtime.namespace);
+    if (runtime?.namespace) void prepareNamespace(runtime.namespace);
   });
   const stopUploads = onAccountQueueReplay(uploadWithAccountReplay);
   return () => {

@@ -2501,19 +2501,13 @@ export function replayFileQueue(
   return state.done;
 }
 
-/** An account queue's replay request: its owner, client and client lifetime. */
-export type AccountQueueReplay = QueuedFileClaim & {
-  client: FileFnClient;
-  signal: AbortSignal;
-};
-
+export type AccountQueueReplay = QueuedFileClaim &
+  Pick<ReplayRequest, "client" | "signal">;
 const accountReplayListeners = new Set<(replay: AccountQueueReplay) => void>();
 
 /**
- * Runs `listener` on every replay of an account's queue requested (with
- * references), retries included, until the returned function is called. An
- * account's queue replays only once the account may send replay (see the
- * files client's startFileQueueReplay and uploadQueuedFiles).
+ * Runs `listener` on each replay of an account's queue (with references),
+ * which runs only once the account may send replay, until unsubscribed.
  */
 export function onAccountQueueReplay(
   listener: (replay: AccountQueueReplay) => void
