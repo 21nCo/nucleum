@@ -158,18 +158,23 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
 /**
  * How many session resolutions finished; `failNext`, when set, makes the next
  * one fail before it reads the stored session, and `failNextWhen` makes the
- * next one fail once that promise settles.
+ * next one fail once that promise settles. `probeStorage` is the client
+ * storage instance the auth module itself reads and writes.
  */
 const auth = vi.hoisted(() => ({
   resolved: 0,
   failNext: false,
-  failNextWhen: undefined as Promise<void> | undefined
+  failNextWhen: undefined as Promise<void> | undefined,
+  probeStorage: undefined as any
 }));
 vi.mock("@nucleum/client/runtime/account/auth", async (importOriginal) => {
   const actual =
     await importOriginal<
       typeof import("@nucleum/client/runtime/account/auth")
     >();
+  auth.probeStorage = (
+    await import("@nucleum/persistence/client-storage")
+  ).clientStorage;
   return {
     ...actual,
     resolveAuthSession: async (
@@ -2382,6 +2387,230 @@ describe("replay authorization across the session lifetime", () => {
       });
       await deleted;
       expect(network.sentTo()).toHaveLength(2);
+    });
+  });
+
+  describe("session resolutions canceled while they read or store the session", () => {
+    const USEAST = "https://account-useast-dev.nucleum.app/files";
+
+    async function restoreCachedOffline() {
+      const fileId = await captureOfflineThenLeave();
+      const files = await import("@nucleum/shared-state/files/filefn-client");
+      await files.recordFileFnPendingDelete(
+        { userId: "user-a", baseUrl: USEAST },
+        "pending-delete-file"
+      );
+      await storeCloudSession();
+      const page = await loadPage();
+      await startSession(page, "user-a");
+      await vi.waitFor(() => expect(sdk.baseUrls).toEqual([USEAST]));
+      expect(sdk.started).toEqual([]);
+      return { page, fileId };
+    }
+
+    /**
+     * Holds the next stored-session read's USER_INFO value (read now) until
+     * release, on every loaded client-storage instance (auth.probeStorage is
+     * the one the auth module mock's original module loaded).
+     */
+    async function holdStoredSessionRead() {
+      const { clientStorage: dynamicStorage } =
+        await import("@nucleum/persistence/client-storage");
+      let release: () => void = () => undefined;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const hold = { isHeld: false, release: () => release() };
+      for (const storage of new Set([
+        clientStorage,
+        dynamicStorage,
+        auth.probeStorage
+      ])) {
+        const get = storage.get.bind(storage);
+        vi.spyOn(storage, "get").mockImplementation(((key: any) => {
+          if (
+            !hold.isHeld &&
+            key === ClientStorageKey.USER_INFO &&
+            new Error().stack?.includes("resolveStoredAuthSessionState")
+          ) {
+            hold.isHeld = true;
+            const value = get(key);
+            return gate.then(() => value);
+          }
+          return get(key);
+        }) as any);
+      }
+      return hold;
+    }
+
+    it("P24: a cached-cloud check whose stored-session read spans sign-out reports expired and sends nothing", async () => {
+      const { page } = await restoreCachedOffline();
+      const hold = await holdStoredSessionRead();
+      const checking = page.accountSession.checkIfSessionExpired();
+      await vi.waitFor(() => expect(hold.isHeld).toBe(true));
+      await page.accountSession.signOut({ isPreventRedirect: true });
+      hold.release();
+      const isExpired = await checking;
+      goOnline();
+      await vi.dynamicImportSettled();
+      await vi.dynamicImportSettled();
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(isExpired).toBe(true);
+    });
+
+    it("P24-direct: resolveAuthSession aborted during the stored-session read resolves signed-out", async () => {
+      await restoreCachedOffline();
+      const hold = await holdStoredSessionRead();
+      const { resolveAuthSession } =
+        await import("@nucleum/client/runtime/account/auth");
+      const controller = new AbortController();
+      const pending = resolveAuthSession({ signal: controller.signal });
+      await vi.waitFor(() => expect(hold.isHeld).toBe(true));
+      controller.abort();
+      hold.release();
+      expect((await pending).status).toBe("signed-out");
+    });
+
+    it("P24-control: an uncanceled cached restore check reports active", async () => {
+      const { page } = await restoreCachedOffline();
+      const hold = await holdStoredSessionRead();
+      const checking = page.accountSession.checkIfSessionExpired();
+      await vi.waitFor(() => expect(hold.isHeld).toBe(true));
+      hold.release();
+      expect(await checking).toBe(false);
+    });
+    it("P24b: an offline-only resolution aborted during the stored-session read resolves signed-out", async () => {
+      await clientStorage.set(
+        ClientStorageKey.OFFLINE_SESSION_ID,
+        "local-session"
+      );
+      isOnline = true;
+      await loadPage();
+      const hold = await holdStoredSessionRead();
+      const { resolveAuthSession } =
+        await import("@nucleum/client/runtime/account/auth");
+      const controller = new AbortController();
+      const pending = resolveAuthSession({ signal: controller.signal });
+      await vi.waitFor(() => expect(hold.isHeld).toBe(true));
+      controller.abort();
+      hold.release();
+      expect((await pending).status).toBe("signed-out");
+    });
+
+    it("P25: a live resolution aborted while it stores the session resolves signed-out", async () => {
+      await storeCloudSession();
+      isOnline = true;
+      authfn.session = liveSession;
+      await loadPage();
+      const storage = auth.probeStorage;
+      const set = storage.set.bind(storage);
+      let release: () => void = () => undefined;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      let isHeld = false;
+      vi.spyOn(storage, "set").mockImplementation(((key: any, value: any) => {
+        if (!isHeld && key === ClientStorageKey.USER) {
+          isHeld = true;
+          return gate.then(() => set(key, value));
+        }
+        return set(key, value);
+      }) as any);
+      const { resolveAuthSession } =
+        await import("@nucleum/client/runtime/account/auth");
+      const controller = new AbortController();
+      const pending = resolveAuthSession({ signal: controller.signal });
+      await vi.waitFor(() => expect(isHeld).toBe(true));
+      controller.abort();
+      release();
+      expect((await pending).status).toBe("signed-out");
+    });
+
+    /**
+     * Holds the next call of `method` for `key` on the auth module's client
+     * storage until release; the held call runs once released.
+     */
+    function holdAuthStorage(method: "set" | "remove", key: ClientStorageKey) {
+      const storage = auth.probeStorage;
+      const original = storage[method].bind(storage);
+      let release: () => void = () => undefined;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const hold = { isHeld: false, release: () => release() };
+      vi.spyOn(storage, method).mockImplementation(((...args: any[]) => {
+        if (!hold.isHeld && args[0] === key) {
+          hold.isHeld = true;
+          return gate.then(() => original(...args));
+        }
+        return original(...args);
+      }) as any);
+      return hold;
+    }
+
+    it("resolves signed-out when aborted while it clears a session AuthFn reports missing", async () => {
+      await storeCloudSession();
+      isOnline = true;
+      authfn.session = null;
+      await loadPage();
+      const hold = holdAuthStorage("remove", ClientStorageKey.USER);
+      const { resolveAuthSession } =
+        await import("@nucleum/client/runtime/account/auth");
+      const controller = new AbortController();
+      const pending = resolveAuthSession({ signal: controller.signal });
+      await vi.waitFor(() => expect(hold.isHeld).toBe(true));
+      controller.abort();
+      hold.release();
+      expect((await pending).status).toBe("signed-out");
+    });
+
+    it("still reports a session AuthFn reports missing as expired when not aborted", async () => {
+      await storeCloudSession();
+      isOnline = true;
+      authfn.session = null;
+      await loadPage();
+      const { resolveAuthSession } =
+        await import("@nucleum/client/runtime/account/auth");
+      const controller = new AbortController();
+      expect(
+        (await resolveAuthSession({ signal: controller.signal })).status
+      ).toBe("expired");
+    });
+
+    it("still resolves an uncanceled cached-cloud restore as cached-cloud, with or without a signal", async () => {
+      await restoreCachedOffline();
+      const { resolveAuthSession } =
+        await import("@nucleum/client/runtime/account/auth");
+      expect((await resolveAuthSession()).status).toBe("cached-cloud");
+      const controller = new AbortController();
+      expect(
+        (await resolveAuthSession({ signal: controller.signal })).status
+      ).toBe("cached-cloud");
+    });
+
+    it("still resolves an uncanceled offline-only session as offline-only, with or without a signal", async () => {
+      await clientStorage.set(
+        ClientStorageKey.OFFLINE_SESSION_ID,
+        "local-session"
+      );
+      isOnline = true;
+      await loadPage();
+      const { resolveAuthSession } =
+        await import("@nucleum/client/runtime/account/auth");
+      expect((await resolveAuthSession()).status).toBe("offline-only");
+      const controller = new AbortController();
+      expect(
+        (await resolveAuthSession({ signal: controller.signal })).status
+      ).toBe("offline-only");
+    });
+
+    it("still resolves an uncanceled live session as authenticated, with or without a signal", async () => {
+      await storeCloudSession();
+      isOnline = true;
+      authfn.session = liveSession;
+      await loadPage();
+      const { resolveAuthSession } =
+        await import("@nucleum/client/runtime/account/auth");
+      expect((await resolveAuthSession()).status).toBe("authenticated");
+      const controller = new AbortController();
+      expect(
+        (await resolveAuthSession({ signal: controller.signal })).status
+      ).toBe("authenticated");
     });
   });
 });
