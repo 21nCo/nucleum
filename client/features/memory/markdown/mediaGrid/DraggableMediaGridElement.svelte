@@ -9,6 +9,7 @@
   import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import { cn } from "@21n/ui/environment/presentation";
   import FileUploadFailedIndicator from "@nucleum/features/memory/node/content/FileUploadFailedIndicator.svelte";
+  import { watchFileUploadFailure } from "@nucleum/shared-state/files/file-url";
 
   let {
     isGridItem = true,
@@ -47,6 +48,31 @@
   const style = $derived(`${sizeProperty}: 100%;
 object-fit: scale-down;
 cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
+  /**
+   * A file whose upload FileFn rejected for good shows "Upload failed" over
+   * its media. The grid sizes and counts its items by their elements (the
+   * bound `ref`, and each column's children), so the media and the indicator
+   * share one element the grid sizes as the item, and the indicator is laid
+   * over it out of flow: a failed item adds no grid child and nothing the
+   * grid's resize loop has to shrink.
+   */
+  let isUploadFailed = $state(false);
+  const failedItemClassList = $derived(
+    `${isDraggable ? "cursor-move" : ""} relative box-border inline-block`
+  );
+  const failedMediaClassList = "box-border block border-[2.5px] border-transparent";
+  const failedMediaStyle = $derived(`${sizeProperty == "width" ? "width: 100%;" : ""}height: 100%;
+object-fit: scale-down;
+cursor: pointer;`);
+
+  $effect(() => {
+    isUploadFailed = false;
+    const fileId = _file?.fileId;
+    if (!fileId) return;
+    return watchFileUploadFailure(fileId, (isFailed) => {
+      isUploadFailed = isFailed;
+    });
+  });
   let isDragOver = $state(false);
   let highlightBorder = $state("left");
   const dragId = $derived(id);
@@ -214,7 +240,27 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
   }
 </script>
 
-{#if _file}
+{#if _file && isUploadFailed}
+  <div class={failedItemClassList} {style} bind:this={ref}>
+    <FileView
+      file={_file}
+      class={failedMediaClassList}
+      style={failedMediaStyle}
+      {isDraggable}
+      {onLoad}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={onDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    />
+    <FileUploadFailedIndicator
+      fileId={_file.fileId}
+      class="absolute inset-x-1 bottom-1 flex-wrap"
+    />
+  </div>
+{:else if _file}
   <FileView
     file={_file}
     class={classList}
@@ -229,7 +275,6 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
     onDrop={handleDrop}
     bind:ref
   />
-  <FileUploadFailedIndicator fileId={_file.fileId} class="m-1 w-fit" />
 {:else if id.includes("DropArea")}
   <div
     draggable={false}

@@ -3617,18 +3617,20 @@ async function uploadQueuedFile(
 
 /**
  * Whether FileFn rejected an original's upload in a way a retry does not
- * change: a client error of the FileFn API, which carries its error code,
- * other than an authorization failure (401), a timeout (408) or a rate
- * limit (429), which a later attempt may not meet, and other than an ended
- * session, which the next replay replaces (see ENDED_SESSION_CODES), or one
- * already completed. A part upload's failure carries no code (a presigned
- * storage URL that expired answers 403), so it stays a transient failure
- * the next replay retries with a new session.
+ * change: a client error of the FileFn API, which carries one of FileFn's own
+ * error codes (FILEFN_*), other than an authorization failure (401), a
+ * timeout (408) or a rate limit (429), which a later attempt may not meet,
+ * and other than an ended session, which the next replay replaces (see
+ * ENDED_SESSION_CODES), or one already completed. A part upload's failure
+ * carries no code (a presigned storage URL that expired answers 403), and a
+ * coded error FileFn did not raise (such as an AUTHFN_* region routing
+ * answer from the service in front of it) is not FileFn's rejection of the
+ * upload, so both stay transient failures the next replay retries.
  */
 function isUploadRejectedForGood({ status, code }: FileFnHttpError) {
-  if (typeof code !== "string" || !code) return false;
+  if (typeof code !== "string" || !code.startsWith("FILEFN_")) return false;
   if (code === "FILEFN_UPLOAD_ALREADY_COMPLETED") return false;
-  if (code && ENDED_SESSION_CODES.has(code)) return false;
+  if (ENDED_SESSION_CODES.has(code)) return false;
   return status >= 400 && status < 500 && ![401, 408, 429].includes(status);
 }
 

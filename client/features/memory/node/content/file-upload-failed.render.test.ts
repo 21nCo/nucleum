@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { readable, writable } from "svelte/store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
+import { MediaGridType } from "@nucleum/features/memory/node/node.type";
+import { Arrangement } from "@21n/ui/elements/direction.enum";
 
 const FILE_ID = "file_rejectedPhoto01";
 const RECORD_ID = "file-record-1";
@@ -62,8 +64,10 @@ vi.mock("@nucleum/shared-state/files/file.store", () => ({
   }
 }));
 
-vi.mock("@21n/ui/compositions/files/FileView.svelte", () => ({
-  default: () => {}
+vi.mock("@21n/ui/compositions/files/FileView.svelte", async () => ({
+  default: (
+    await import("../../../../../tests/fixtures/components/FileViewStub.svelte")
+  ).default
 }));
 vi.mock("@nucleum/features/memory/pdfAnnotator/PdfAnnotator.svelte", () => ({
   default: () => {}
@@ -259,6 +263,61 @@ describe("the file a thumbnail shows the failed state of", () => {
     expect(screen.queryByTestId("file-upload-failed")).toBeNull();
   });
 
+  it("is the file cover a grid card shows before its preview", async () => {
+    const COVER_FILE_ID = "file_coverImage01";
+    records.files.set("cover-record", async () => ({
+      ...photo,
+      id: "cover-record",
+      fileId: COVER_FILE_ID
+    }));
+    uploads.failed.add(COVER_FILE_ID);
+    render(NodeThumbnail, {
+      props: {
+        item: { ...imageNode, cover: "cover-record" } as never,
+        arrangement: Arrangement.GRID,
+        accessPointId: "page-1" as never
+      }
+    });
+
+    const indicator = await screen.findByTestId("file-upload-failed");
+    expect(indicator.textContent).toContain("Upload failed");
+    expect(uploads.watched).toEqual([COVER_FILE_ID]);
+    await fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(uploads.retryFileUpload).toHaveBeenCalledWith(COVER_FILE_ID);
+  });
+
+  it.each([Arrangement.GRID, Arrangement.MASONRY])(
+    "is no file when a %s card shows a color cover over a failed image",
+    async (arrangement) => {
+      uploads.failed.add(FILE_ID);
+      render(NodeThumbnail, {
+        props: {
+          item: { ...imageNode, cover: "hex_#336699" } as never,
+          arrangement,
+          accessPointId: "page-1" as never
+        }
+      });
+      await flushMicrotasks();
+
+      expect(uploads.watched).toEqual([]);
+      expect(screen.queryByTestId("file-upload-failed")).toBeNull();
+    }
+  );
+
+  it("is a list row's image, which it shows before its cover", async () => {
+    uploads.failed.add(FILE_ID);
+    render(NodeThumbnail, {
+      props: {
+        item: { ...imageNode, cover: "hex_#336699" } as never,
+        arrangement: Arrangement.LIST,
+        accessPointId: "page-1" as never
+      }
+    });
+
+    expect(await screen.findByTestId("file-upload-failed")).toBeTruthy();
+    expect(uploads.watched).toContain(FILE_ID);
+  });
+
   it("follows the item it shows and drops a lookup of the previous one", async () => {
     let release = () => {};
     records.files.set(
@@ -290,6 +349,71 @@ describe("the file a thumbnail shows the failed state of", () => {
     expect(uploads.watched).not.toContain(PREVIEW_FILE_ID);
     expect(screen.queryByTestId("file-upload-failed")).toBeNull();
   });
+});
+
+describe("a media grid holding a file whose upload failed", () => {
+  /** Renders a grid of two items laid out as `type`, returning its files' container. */
+  async function showGrid(type: MediaGridType) {
+    const shown = render(MediaGrid, {
+      props: {
+        block: {
+          id: "grid-1",
+          body: {
+            type,
+            noOfColumns: 1,
+            items: ["media-1", "media-2"].map((id, index) => ({
+              id,
+              file: RECORD_ID,
+              position: { auto: index, columns: { index, columnNo: 0 } }
+            }))
+          }
+        } as never,
+        mdStore: {
+          ...writable({ params: { isReadOnly: true } }),
+          insert: vi.fn(),
+          deleteBlock: vi.fn()
+        } as never
+      }
+    });
+    const media = await vi.waitFor(() => {
+      const found = screen.getAllByTestId("file-view");
+      expect(found).toHaveLength(2);
+      return found;
+    });
+    const container = media[0].closest("button")!;
+    return { shown, media, container };
+  }
+
+  it.each([MediaGridType.AUTO, MediaGridType.COLUMNS])(
+    "adds no %s layout child for the failed state, laying it over the item",
+    async (type) => {
+      // The grid lays its items out on a timer once mounted; run it mounted.
+      vi.useFakeTimers({ toFake: ["setTimeout"] });
+      const usual = await showGrid(type);
+      const usualChildren = usual.container.children.length;
+      expect(usual.media.every((m) => m.parentElement === usual.container)).toBe(
+        true
+      );
+      usual.shown.unmount();
+
+      uploads.failed.add(FILE_ID);
+      const failed = await showGrid(type);
+      const indicators = await vi.waitFor(() => {
+        const found = screen.getAllByTestId("file-upload-failed");
+        expect(found).toHaveLength(2);
+        return found;
+      });
+
+      expect(failed.container.children.length).toBe(usualChildren);
+      failed.media.forEach((media, index) => {
+        const item = media.parentElement!;
+        expect(item.parentElement).toBe(failed.container);
+        expect(indicators[index].parentElement).toBe(item);
+        expect(indicators[index].className).toContain("absolute");
+      });
+      vi.runOnlyPendingTimers();
+    }
+  );
 });
 
 describe("Retry inside an interactive file display", () => {

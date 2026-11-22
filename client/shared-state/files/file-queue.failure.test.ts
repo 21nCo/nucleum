@@ -174,6 +174,14 @@ describe("a queued upload FileFn rejects for good", () => {
     [
       "a storage URL that refused a part (no FileFn error code)",
       new FileFnHttpError("Upload failed: HTTP 403", 403)
+    ],
+    [
+      "a region routing answer (AUTHFN_REGION_MISMATCH 409)",
+      rejection(409, "AUTHFN_REGION_MISMATCH")
+    ],
+    [
+      "an unknown region (AUTHFN_REGION_NOT_FOUND 404)",
+      rejection(404, "AUTHFN_REGION_NOT_FOUND")
     ]
   ])(
     "retries %s and uploads the file once FileFn takes it",

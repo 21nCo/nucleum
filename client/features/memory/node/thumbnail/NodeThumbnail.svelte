@@ -158,13 +158,36 @@
     _url = undefined;
   }
 
+  /** Cover values that are not a file record (see CoverRenderer). */
+  const nonFileCoverPrefixes = ["hex_", "gradient_", "unsplash_"];
+
   /**
-   * The FileFn file the thumbnail shows (its preview, else the node's file),
-   * whose failed upload it shows; the lookup of a record ID is dropped once
-   * another file is shown, or when it fails.
+   * The file the thumbnail shows, in the order its arrangement renders: a
+   * grid or masonry card shows its cover before its preview, so a cover that
+   * is a file record is the file it shows and a color, gradient or Unsplash
+   * cover shows no file; a list row shows its preview first. Otherwise the
+   * preview, else the node's file.
+   */
+  function resolveShownFile(): IFile | IRecordId | undefined {
+    const cover = item?.cover;
+    const isCoverFirst =
+      arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY;
+    if (isCoverFirst && cover) {
+      const isFileCover =
+        typeof cover === "string" &&
+        !nonFileCoverPrefixes.some((prefix) => cover.includes(prefix));
+      return isFileCover ? cover : undefined;
+    }
+    return filePreview ?? item?.file;
+  }
+
+  /**
+   * The FileFn file the thumbnail shows (see resolveShownFile), whose failed
+   * upload it shows; the lookup of a record ID is dropped once another file
+   * is shown, or when it fails.
    */
   $effect(() => {
-    const shown = filePreview ?? item?.file;
+    const shown = resolveShownFile();
     uploadFileId = undefined;
     if (!shown) return;
     if (typeof shown === "object") {
