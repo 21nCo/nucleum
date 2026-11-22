@@ -557,13 +557,8 @@ async function readEntryText(
   }
 }
 
-async function hasEntryFile(
-  dir: string,
-  entryName: string,
-  name: string,
-  isStrict = false
-) {
-  return (await readEntryText(dir, entryName, name, isStrict)) !== undefined;
+async function hasEntryFile(dir: string, entryName: string, name: string) {
+  return (await readEntryText(dir, entryName, name)) !== undefined;
 }
 
 /** Reads a JSON file of an entry, or undefined when it is missing or invalid. */
@@ -3580,7 +3575,8 @@ async function isPublishable(
   publisher: QueuedFilePublisher
 ) {
   for (const mark of [UPLOADED_FILE, STALE_FILE, ORPHANED_FILE]) {
-    if (await hasEntryFile(dir, entryName, mark, true)) return false;
+    const text = await readEntryText(dir, entryName, mark, true);
+    if (text !== undefined) return false;
   }
   if (!(await readQueuedRecord(dir, entryName, true))) return false;
   const claim = await readClaim(dir, entryName, true);
