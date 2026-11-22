@@ -157,7 +157,10 @@ test("restores the active session in a second tab", async ({
   const firstState = await readSessionRuntime(page);
   expect(firstState.currentSessionId).toBeTruthy();
   await expect
-    .poll(() => readPersistedSessionSnapshot(page))
+    .poll(() => readPersistedSessionSnapshot(page), {
+      message:
+        "The first tab saves the running session before the second tab opens"
+    })
     .toMatchObject({
       currentSessionId: firstState.currentSessionId,
       isSessionRunning: true
