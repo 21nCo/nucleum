@@ -1,0 +1,29 @@
+client/features/memory/node/content/FileUploadFailedIndicator.svelte
+  s_1696841032f445::t_87df31e93c3b0f 16-19,40-47,61,64-66
+client/features/memory/node/content/file-upload-failed.render.test.ts
+  s_1696841032f445::t_334d9194a8dc99 26-34,104,107,109,117-126,129-130,143-145,197-200,204,208-212,238-365
+client/features/memory/node/thumbnail/NodeThumbnail.svelte
+  s_1696841032f445::t_40c130c509e062 29,161-186
+client/shared-state/files/file-queue.failure.test.ts
+  s_1696841032f445::t_68ac26e9ab836a 167-171,216-217,274-276,279-375,399-401
+client/shared-state/files/file-queue.ts
+  s_1696841032f445::t_ebc64a666e0ae7 386,410-413,626-629,638-641,653-658,2056,2730,3620-3626,3629
+client/shared-state/files/file-url.ts
+  s_1696841032f445::t_dd5e57c0b2383d 3,133-140,153,156-162,165-166,170-179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5d0aa9be9ba3f4f09f12063f86bb61d20510ea6b",
+  "prompts": {},
+  "sessions": {
+    "s_1696841032f445": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_1696841032f445",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
