@@ -21,6 +21,7 @@ import {
   destroyNucleumDatafn,
   initializeNucleumDatafn
 } from "@nucleum/datafn/datafn.store";
+import context from "@nucleum/client/runtime/context.store";
 import { createFakeOpfs } from "../../../tests/fixtures/opfs";
 
 const codec = vi.hoisted(() => ({
@@ -75,6 +76,50 @@ vi.mock("@filefn/client", async (importOriginal) => {
   };
 });
 
+/**
+ * The cloud accounts' DataFn authority. The device's DataFn runs local-only,
+ * so a fake of its sync stands in: an account's namespace syncs with `url`
+ * (a guest's syncs with none), and each pull applies at once.
+ */
+const authority = vi.hoisted(() => ({
+  url: "https://account-useast-dev.nucleum.app/datafn"
+}));
+vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
+  const { derived } = await import("svelte/store");
+  const handlers = new Set<(event: never) => void>();
+  const emit = (type: string, context: Record<string, unknown>) => {
+    for (const handler of handlers) {
+      handler({ type, timestampMs: Date.now(), context } as never);
+    }
+  };
+  let pulls = 0;
+  const pullNow = async () => {
+    const pull = ++pulls;
+    emit("sync_started", { phase: "pull" });
+    emit("sync_applied", { phase: "pull", cursors: { file: `${pull}` } });
+  };
+  const datafn = new Proxy(actual.datafn, {
+    get(target, key) {
+      if (key === "subscribe") {
+        return (handler: (event: never) => void) => {
+          handlers.add(handler);
+          return () => handlers.delete(handler);
+        };
+      }
+      if (key === "sync") return { ...target.sync, pullNow };
+      return Reflect.get(target, key);
+    }
+  });
+  const datafnRuntime = derived(actual.datafnRuntime, (runtime) =>
+    runtime?.namespace?.startsWith("user:")
+      ? { ...runtime, mode: "sync" as const, remoteUrl: authority.url }
+      : runtime
+  );
+  return { ...actual, datafn, datafnRuntime };
+});
+
 const { fileUpload } = await import("./file-upload");
 const { resolveFileUrl } = await import("./file-url");
 const {
@@ -82,7 +127,11 @@ const {
   settleLocalFileRecords,
   uploadLocalQueuedFiles
 } = await import("./device-file-queue");
-const { captureFileQueueUploader } = await import("./filefn-client");
+const {
+  captureFileQueueUploader,
+  endAccountUploadReplay,
+  startAccountUploadReplay
+} = await import("./filefn-client");
 const { replayFileQueue } = await import("./file-queue");
 const { OPFSStore } = await import("@filefn/client");
 
@@ -132,16 +181,43 @@ async function bootData(value: UserAccount) {
   account.set(value);
 }
 
+/** Confirms the account's cloud session live, as a sign-in or a session restore does. */
+function confirmLiveSession(userId: string) {
+  startAccountUploadReplay({ userId, region: "useast" });
+}
+
 /** Signs a cloud account in, then moves DataFn to its namespace, as the app does. */
 async function signInToCloud(userId: string) {
   account.set(cloudAccount(userId));
+  confirmLiveSession(userId);
   await openData(userId);
 }
 
-/** Signs out to local-only mode, back in the device's guest namespace. */
-async function signOutToLocal() {
+/**
+ * Signs out to local-only mode, back in a guest namespace: the device's, or
+ * with `isNewGuest` a new one, as a sign-out that clears the device's DataFn
+ * ID opens.
+ */
+async function signOutToLocal(isNewGuest = false) {
+  endAccountUploadReplay();
   account.set(localAccount);
+  if (isNewGuest)
+    device = { ...device, dapId: `device-${crypto.randomUUID()}` };
   await openData();
+}
+
+/** Runs a pass of the local queue through the signed-in account's client. */
+async function replayLocalQueue() {
+  const uploader = await captureFileQueueUploader();
+  if (uploader) await uploadLocalQueuedFiles(uploader);
+}
+
+/** Lets the background work the page started run its course. */
+async function settleTasks() {
+  for (let turn = 0; turn < 50; turn++) {
+    await new Promise<void>((resolve) => setImmediate(resolve));
+  }
+  await settleLocalFileRecords();
 }
 
 function deferred<T>() {
@@ -183,7 +259,7 @@ const LOCAL_QUEUE = "nucleum-file-queue-local";
  * Captures a photo as a local-only user, then signs a cloud account in whose
  * upload of it is still running when the account signs out.
  */
-async function captureThenSignOutDuringUpload() {
+async function captureThenSignOutDuringUpload(isNewGuest = false) {
   await bootData(localAccount);
   uninstall = installDeviceFileQueue();
   const record = await capturePhoto();
@@ -192,7 +268,7 @@ async function captureThenSignOutDuringUpload() {
   sdk.hold = new Promise<void>((done) => (release = done));
   await signInToCloud("user-a");
   await vi.waitFor(() => expect(sdk.started).toHaveLength(1));
-  await signOutToLocal();
+  await signOutToLocal(isNewGuest);
   release();
   sdk.hold = null;
   return record;
@@ -252,6 +328,7 @@ afterEach(async () => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  context.update((value) => ({ ...value, isInOfflineMode: false }));
 });
 
 describe("files captured offline or by a local-only user", () => {
@@ -272,8 +349,9 @@ describe("files captured offline or by a local-only user", () => {
     // Signed in while DataFn still holds the guest's data: the account would
     // hold no record of the file, so nothing uploads yet.
     account.set(cloudAccount("user-a"));
+    confirmLiveSession("user-a");
     await vi.waitFor(() => expect(sdk.baseUrls).not.toEqual([]));
-    await uploadLocalQueuedFiles();
+    await replayLocalQueue();
     expect(sdk.uploads).toEqual([]);
 
     await openData("user-a");
@@ -310,7 +388,7 @@ describe("files captured offline or by a local-only user", () => {
     // Another account signing in later receives nothing: the files went to
     // the first one.
     await signInToCloud("user-b");
-    await uploadLocalQueuedFiles();
+    await replayLocalQueue();
     expect(sdk.uploads).toHaveLength(1);
     expect(await savedRecord(record.id)).toBeUndefined();
   });
@@ -380,7 +458,7 @@ describe("files captured offline or by a local-only user", () => {
     const record = await captureThenSignOutDuringUpload();
 
     await signInToCloud("user-b");
-    await uploadLocalQueuedFiles();
+    await replayLocalQueue();
     expect(sdk.started).toHaveLength(1);
     expect(await savedRecord(record.id)).toBeUndefined();
 
@@ -407,7 +485,7 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.deletes).toEqual([]);
 
     await signInToCloud("user-b");
-    await uploadLocalQueuedFiles();
+    await replayLocalQueue();
     expect(sdk.deletes).toEqual([]);
     expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
 
@@ -446,6 +524,95 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.deletes).toEqual([]);
     expect(sdk.started).toHaveLength(1);
     expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+  });
+
+  it("keeps a capture from an earlier guest namespace and publishes it at the first cloud sign-in", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+
+    // A sign-out cleared the device's DataFn ID: a new guest namespace opens,
+    // which holds no record of the earlier guest's capture.
+    await signOutToLocal(true);
+    await settleLocalFileRecords();
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+
+    await signInToCloud("user-a");
+
+    await vi.waitFor(async () =>
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId)
+    );
+    expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([record.fileId]);
+    expect(sdk.deletes).toEqual([]);
+  });
+
+  it("publishes a claimed capture at its account after a sign-out opened a new guest namespace", async () => {
+    const record = await captureThenSignOutDuringUpload(true);
+    await settleLocalFileRecords();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "orphaned")
+    ).toBeUndefined();
+
+    await signInToCloud("user-a");
+
+    await vi.waitFor(async () =>
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId)
+    );
+    expect(sdk.deletes).toEqual([]);
+    expect(sdk.started.map((upload) => upload.idempotencyKey)).toEqual([
+      `queued_${record.fileId}:0`,
+      `queued_${record.fileId}:0`
+    ]);
+  });
+
+  it("uploads a local-only user's capture only once a live session confirms the cloud account", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+
+    // A cached cloud session restored: its client binds and sends nothing.
+    account.set(cloudAccount("user-a"));
+    startAccountUploadReplay();
+    await openData("user-a");
+    goOnline();
+    await vi.waitFor(() => expect(sdk.baseUrls).not.toEqual([]));
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+
+    // A live session of another user contradicts the account.
+    confirmLiveSession("user-b");
+    account.set(cloudAccount("user-a"));
+    goOnline();
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+
+    confirmLiveSession("user-a");
+
+    await vi.waitFor(async () =>
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId)
+    );
+    expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([record.fileId]);
+  });
+
+  it("uploads a local-only user's capture when the app's offline mode ends", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    context.update((value) => ({ ...value, isInOfflineMode: true }));
+
+    await signInToCloud("user-a");
+    await vi.waitFor(() => expect(sdk.baseUrls).not.toEqual([]));
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+
+    context.update((value) => ({ ...value, isInOfflineMode: false }));
+
+    await vi.waitFor(async () =>
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId)
+    );
   });
 
   it("keeps the bytes on the record of a capture made after sign-out while DataFn still holds the account's data", async () => {

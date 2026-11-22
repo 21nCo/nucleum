@@ -241,6 +241,8 @@ export type QueuedFileEntry = {
   createdAt: string;
   /** The ID of the record a local file was staged or last copied with. */
   recordId?: string;
+  /** The DataFn namespace a local file's record copy was read in. */
+  namespace?: string;
   isCommitted: boolean;
   isUploaded: boolean;
   isOrphaned: boolean;
@@ -476,10 +478,13 @@ export async function listQueuedFiles(dir: string): Promise<QueuedFileEntry[]> {
     if (!entryName.startsWith(ENTRY_PREFIX)) continue;
     const pending = await store.getPendingUpload(entryName);
     if (!pending?.fileId) continue;
+    const record = await readQueuedRecord(dir, entryName);
     entries.push({
       fileId: pending.fileId,
       createdAt: pending.createdAt,
-      recordId: (await readQueuedRecord(dir, entryName))?.id,
+      recordId: record?.id,
+      namespace:
+        typeof record?.namespace === "string" ? record.namespace : undefined,
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
       isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
@@ -2461,6 +2466,11 @@ export function replayFileQueue(
   references?: QueuedFileReferences
 ): Promise<void> {
   const first: ReplayRequest = { client, signal, publisher, references };
+  if (references && !isStale(first)) {
+    for (const listener of [...accountReplayListeners]) {
+      listener({ ...references.owner, client, signal });
+    }
+  }
   const latest = latestRequests.get(dir);
   if (!isStale(first) || !latest || isStale(latest)) {
     latestRequests.set(dir, first);
@@ -2489,6 +2499,27 @@ export function replayFileQueue(
     }
   })();
   return state.done;
+}
+
+/** An account queue's replay request: its owner, client and client lifetime. */
+export type AccountQueueReplay = QueuedFileClaim & {
+  client: FileFnClient;
+  signal: AbortSignal;
+};
+
+const accountReplayListeners = new Set<(replay: AccountQueueReplay) => void>();
+
+/**
+ * Runs `listener` on every replay of an account's queue requested (with
+ * references), retries included, until the returned function is called. An
+ * account's queue replays only once the account may send replay (see the
+ * files client's startFileQueueReplay and uploadQueuedFiles).
+ */
+export function onAccountQueueReplay(
+  listener: (replay: AccountQueueReplay) => void
+): () => void {
+  accountReplayListeners.add(listener);
+  return () => accountReplayListeners.delete(listener);
 }
 
 /**

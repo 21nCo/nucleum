@@ -313,7 +313,9 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     thumbnailBlob,
     isTemp: input.isTemp,
     claim,
-    record: owner ? undefined : metadata
+    record: owner
+      ? undefined
+      : { ...metadata, namespace: datafn.currentNamespace() }
   });
   recordFileProcessing({
     mode: "local",
