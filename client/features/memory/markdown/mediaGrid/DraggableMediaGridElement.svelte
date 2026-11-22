@@ -8,6 +8,7 @@
   import { fileStore } from "@nucleum/shared-state/files/file.store";
   import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import { cn } from "@21n/ui/environment/presentation";
+  import FileUploadFailedIndicator from "@nucleum/features/memory/node/content/FileUploadFailedIndicator.svelte";
 
   let {
     isGridItem = true,
@@ -228,6 +229,7 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
     onDrop={handleDrop}
     bind:ref
   />
+  <FileUploadFailedIndicator fileId={_file.fileId} class="m-1 w-fit" />
 {:else if id.includes("DropArea")}
   <div
     draggable={false}

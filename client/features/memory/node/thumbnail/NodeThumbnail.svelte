@@ -36,6 +36,7 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import NodeThumbnailSocialPostPreview from "@nucleum/features/memory/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
   import CoverRenderer from "@nucleum/features/records/cover/CoverRenderer.svelte";
+  import FileUploadFailedIndicator from "@nucleum/features/memory/node/content/FileUploadFailedIndicator.svelte";
   let {
     item: itemProp,
     arrangement = Arrangement.LIST,
@@ -82,6 +83,7 @@
   let item = $state<INode | INodeThumb>(itemProp);
 
   let _url = $state<string | undefined>(undefined);
+  let uploadFileId = $state<string | undefined>(undefined);
   let filePreview = $derived(
     resolveFilePreview(item) as IFile | IRecordId | undefined
   );
@@ -150,9 +152,11 @@
     if (item?.file) {
       const result = await fileStore.refresh(item.file);
       if (result) _url = result.url ?? "";
+      uploadFileId = result?.fileId;
       return;
     }
     _url = undefined;
+    uploadFileId = undefined;
   }
 
   function propagateClick(event: MouseEvent) {
@@ -536,4 +540,8 @@
       </div>
     {/if}
   {/if}
+  <FileUploadFailedIndicator
+    fileId={uploadFileId}
+    class="absolute bottom-2 right-2 z-10"
+  />
 </ResourceThumbnailBase>

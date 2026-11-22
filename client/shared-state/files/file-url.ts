@@ -2,8 +2,11 @@ import type { FileFnClient } from "@filefn/client";
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
+  isQueuedFileFailed,
+  onQueuedFileFailureChange,
   resolveFileQueueDirsOf,
-  resolveQueuedFileUrl
+  resolveQueuedFileUrl,
+  retryFailedQueuedFile
 } from "@nucleum/shared-state/files/file-queue";
 import {
   captureFileFnOwner,
@@ -120,6 +123,73 @@ export async function resolveFileUrl(
     return undefined;
   }
   return url;
+}
+
+/**
+ * Calls `onChange` with whether a file's upload failed on this device: FileFn
+ * rejected it for good while it is still in the FileFn OPFS queue of the
+ * signed-in cloud account, or of the device's local queue, read as
+ * resolveFileUrl reads them (see isQueuedFileFailed). It reads it now and
+ * again whenever a file of that ID is marked failed or retried, reporting
+ * the latest read only, and never once stopped; a read whose account's
+ * generation ended meanwhile, or that fails, reports false, so another
+ * account or device shows the file as it shows any file it cannot resolve.
+ * Returns the stop.
+ */
+export function watchFileUploadFailure(
+  fileId: string,
+  onChange: (isFailed: boolean) => void
+): () => void {
+  let isStopped = false;
+  let reads = 0;
+  const read = async () => {
+    const at = ++reads;
+    const isFailed = await readFileUploadFailure(fileId);
+    if (!isStopped && at === reads) onChange(isFailed);
+  };
+  const stop = onQueuedFileFailureChange((changed) => {
+    if (changed === fileId) void read();
+  });
+  void read();
+  return () => {
+    isStopped = true;
+    stop();
+  };
+}
+
+async function readFileUploadFailure(fileId: string): Promise<boolean> {
+  try {
+    const owner = captureFileFnOwner();
+    const isFailed = await isQueuedFileFailed(
+      resolveFileQueueDirsOf(owner?.userId ?? null),
+      fileId
+    );
+    return isFailed && (!owner || isFileFnOwnerLive(owner));
+  } catch (error: unknown) {
+    logger.warn({ at: "fileUrl.failure", fileId, error });
+    return false;
+  }
+}
+
+/**
+ * Retries a file whose upload failed (see watchFileUploadFailure) from the
+ * queues of the signed-in cloud account, or the device's local queue: it
+ * uploads again on the queue's next replay, which starts now while one is
+ * running for the queue (see retryFailedQueuedFile). Resolves whether the
+ * file was failed; a retry that fails is logged and resolves false.
+ */
+export async function retryFileUpload(fileId: string): Promise<boolean> {
+  try {
+    const owner = captureFileFnOwner();
+    if (owner && !isFileFnOwnerLive(owner)) return false;
+    return await retryFailedQueuedFile(
+      resolveFileQueueDirsOf(owner?.userId ?? null),
+      fileId
+    );
+  } catch (error: unknown) {
+    logger.warn({ at: "fileUrl.retry", fileId, error });
+    return false;
+  }
 }
 
 /** Drops every cached URL; the next lookup of each variant resolves it again. */

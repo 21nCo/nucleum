@@ -1,0 +1,326 @@
+import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  FileFnHttpError,
+  type FileFnClient,
+  type UploadInput,
+  type UploadResult
+} from "@filefn/client";
+import { createFakeOpfs } from "../../../tests/fixtures/opfs";
+
+type FileQueue = typeof import("./file-queue");
+
+const QUEUE = "nucleum-file-queue-account-user-a";
+const FILE_ID = "file_rejectedPhoto01";
+const ENTRY = `queued_${FILE_ID}`;
+const REPLAY_RETRY_WINDOW_MS = 20 * 60_000;
+
+let opfs: ReturnType<typeof createFakeOpfs>;
+
+async function openTab(): Promise<FileQueue> {
+  vi.resetModules();
+  return import("./file-queue");
+}
+
+function installDevice() {
+  opfs = createFakeOpfs();
+  vi.stubGlobal("navigator", {
+    ...globalThis.navigator,
+    onLine: true,
+    storage: { getDirectory: opfs.getDirectory }
+  });
+}
+
+function rejection(status: number, code = "FILEFN_TEST_REJECTION") {
+  return new FileFnHttpError(code, status, { error: { code, message: code } });
+}
+
+/**
+ * A FileFn client whose uploads end in turn as `outcomes` says (an error
+ * rejects, anything else completes), the last outcome repeating.
+ */
+function createClient(outcomes: (Error | "ok")[]) {
+  const uploads: UploadInput[] = [];
+  const client = {
+    uploadFile: (input: UploadInput) => {
+      uploads.push(input);
+      const outcome = outcomes[Math.min(uploads.length, outcomes.length) - 1];
+      return {
+        uploadSessionId: `ses_${uploads.length}`,
+        fileId: input.fileId!,
+        onProgress: () => undefined,
+        abort: () => undefined,
+        done: (): Promise<UploadResult> =>
+          outcome instanceof Error
+            ? Promise.reject(outcome)
+            : Promise.resolve({ fileId: input.fileId!, versionId: "ver_1" })
+      };
+    },
+    uploadArtifact: async () => ({}),
+    getFile: async (fileId: string) => ({ fileId })
+  } as unknown as FileFnClient;
+  return { client, uploads };
+}
+
+async function enqueuePhoto(queue: FileQueue) {
+  await queue.enqueueFile(QUEUE, {
+    fileId: FILE_ID,
+    fileName: "photo.png",
+    contentType: "image/png",
+    blob: new Blob(["photo bytes"], { type: "image/png" })
+  });
+  await queue.markQueuedFileCommitted(QUEUE, FILE_ID);
+}
+
+/** An account's records that reference the queued photo. */
+function referencingRecords() {
+  return {
+    owner: { userId: "user-a", baseUrl: "https://a.example.test/files" },
+    isCurrent: () => true,
+    sync: async () => true,
+    isReferenced: async (fileId: string) => fileId === FILE_ID,
+    discard: async () => undefined
+  };
+}
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  vi.stubGlobal("Blob", NodeBlob);
+  vi.stubGlobal("File", NodeFile);
+  vi.stubGlobal("BroadcastChannel", undefined);
+  URL.createObjectURL ??= () => "";
+  URL.revokeObjectURL ??= () => undefined;
+  vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:queued");
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  vi.doUnmock("@nucleum/shared-state/files/filefn-client");
+});
+
+describe("a queued upload FileFn rejects for good", () => {
+  it.each([
+    ["an account's queue", referencingRecords],
+    ["a queue without records", () => undefined]
+  ])(
+    "in %s is marked failed, keeps its bytes and is not retried automatically",
+    async (_, records) => {
+      installDevice();
+      const tab = await openTab();
+      await enqueuePhoto(tab);
+      const changes: string[] = [];
+      tab.onQueuedFileFailureChange((fileId) => changes.push(fileId));
+      const fileFn = createClient([rejection(400)]);
+      const replay = () =>
+        tab.replayFileQueue(
+          QUEUE,
+          fileFn.client,
+          new AbortController().signal,
+          undefined,
+          records()
+        );
+
+      await replay();
+
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true);
+      expect(changes).toEqual([FILE_ID]);
+      expect(opfs.list(QUEUE)).toEqual([ENTRY]);
+      expect(opfs.list(QUEUE, ENTRY)).toContain("data.bin");
+      expect(await tab.resolveQueuedFileUrl([QUEUE], FILE_ID, "full")).toMatch(
+        /^blob:/
+      );
+
+      await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+      await replay();
+      expect(fileFn.uploads).toHaveLength(1);
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true);
+    }
+  );
+
+  it.each([400, 403, 404, 409, 413, 422])(
+    "counts FileFn status %i as a permanent rejection",
+    async (status) => {
+      installDevice();
+      const tab = await openTab();
+      await enqueuePhoto(tab);
+      const fileFn = createClient([rejection(status)]);
+
+      await tab.replayFileQueue(
+        QUEUE,
+        fileFn.client,
+        new AbortController().signal
+      );
+
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true);
+    }
+  );
+
+  it.each([
+    ["an authorization failure", rejection(401)],
+    ["a timeout", rejection(408)],
+    ["a rate limit", rejection(429)],
+    ["an expired session", rejection(410, "FILEFN_UPLOAD_EXPIRED")],
+    ["a server error", rejection(503)],
+    ["a network failure", new TypeError("Failed to fetch")]
+  ])(
+    "retries %s and uploads the file once FileFn takes it",
+    async (_, error) => {
+      installDevice();
+      const tab = await openTab();
+      await enqueuePhoto(tab);
+      const fileFn = createClient([error, "ok"]);
+
+      await tab.replayFileQueue(
+        QUEUE,
+        fileFn.client,
+        new AbortController().signal,
+        undefined,
+        referencingRecords()
+      );
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(false);
+      expect(opfs.list(QUEUE)).toEqual([ENTRY]);
+
+      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
+      expect(fileFn.uploads).toHaveLength(2);
+    }
+  );
+
+  it("uploads a retried file once and clears its failed state when FileFn takes it", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const changes: string[] = [];
+    tab.onQueuedFileFailureChange((fileId) => changes.push(fileId));
+    const fileFn = createClient([rejection(422), "ok"]);
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      referencingRecords()
+    );
+
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID)).toBe(true);
+
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(false);
+    await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
+    expect(fileFn.uploads).toHaveLength(2);
+    expect(changes).toEqual([FILE_ID, FILE_ID]);
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID)).toBe(false);
+  });
+
+  it("marks a retried file failed again only when FileFn rejects it again", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient([
+      rejection(400),
+      rejection(503),
+      rejection(400)
+    ]);
+    const signal = new AbortController().signal;
+    await tab.replayFileQueue(QUEUE, fileFn.client, signal);
+
+    await tab.retryFailedQueuedFile([QUEUE], FILE_ID);
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(5_000);
+    await vi.waitFor(async () =>
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true)
+    );
+    expect(fileFn.uploads).toHaveLength(3);
+    expect(opfs.list(QUEUE)).toEqual([ENTRY]);
+  });
+
+  it("leaves a retried file for the next replay when no replay of its queue is current", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const page = new AbortController();
+    const rejected = createClient([rejection(400)]);
+    await tab.replayFileQueue(QUEUE, rejected.client, page.signal);
+    page.abort();
+
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID)).toBe(true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(rejected.uploads).toHaveLength(1);
+
+    const next = createClient(["ok"]);
+    await tab.replayFileQueue(QUEUE, next.client, new AbortController().signal);
+    expect(next.uploads).toHaveLength(1);
+    expect(opfs.list(QUEUE)).toEqual([]);
+  });
+});
+
+describe("the failed state a file display reads", () => {
+  async function openFileUrl(owner: { userId: string; isLive: boolean }) {
+    vi.resetModules();
+    vi.doMock("@nucleum/shared-state/files/filefn-client", () => ({
+      captureFileFnOwner: () => ({ userId: owner.userId, epoch: 1 }),
+      isFileFnOwnerLive: () => owner.isLive
+    }));
+    const queue = await import("./file-queue");
+    const fileUrl = await import("./file-url");
+    return { queue, fileUrl };
+  }
+
+  it("shows a failed upload on the device that holds it until a retry uploads it", async () => {
+    installDevice();
+    const owner = { userId: "user-a", isLive: true };
+    const { queue, fileUrl } = await openFileUrl(owner);
+    await enqueuePhoto(queue);
+    const seen: boolean[] = [];
+    const stop = fileUrl.watchFileUploadFailure(FILE_ID, (isFailed) =>
+      seen.push(isFailed)
+    );
+    await vi.waitFor(() => expect(seen).toEqual([false]));
+    const fileFn = createClient([rejection(400), "ok"]);
+
+    await queue.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      referencingRecords()
+    );
+    await vi.waitFor(() => expect(seen).toEqual([false, true]));
+
+    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
+    await vi.waitFor(() => expect(seen).toEqual([false, true, false]));
+    await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
+    stop();
+  });
+
+  it("reports no failed upload for another account or once the reading account signed out", async () => {
+    installDevice();
+    const owner = { userId: "user-a", isLive: true };
+    const { queue, fileUrl } = await openFileUrl(owner);
+    await enqueuePhoto(queue);
+    await queue.replayFileQueue(
+      QUEUE,
+      createClient([rejection(400)]).client,
+      new AbortController().signal
+    );
+    const read = () =>
+      new Promise<boolean>((resolve) => {
+        const stop = fileUrl.watchFileUploadFailure(FILE_ID, (isFailed) => {
+          stop();
+          resolve(isFailed);
+        });
+      });
+
+    expect(await read()).toBe(true);
+    owner.isLive = false;
+    expect(await read()).toBe(false);
+    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(false);
+    owner.isLive = true;
+    owner.userId = "user-b";
+    expect(await read()).toBe(false);
+    expect(await queue.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true);
+  });
+});
