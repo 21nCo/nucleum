@@ -1301,13 +1301,21 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
       await expect(page).toHaveURL(
         direction === "back" ? calendarUrl : overviewUrl
       );
-      await expect(
-        direction === "back"
-          ? page.getByRole("button", { name: "Go to today" })
-          : page.getByTestId("overview-tabs").getByRole("tab", {
-              selected: true
-            })
-      ).toBeVisible();
+      if (direction === "back") {
+        await expect(
+          page.getByRole("button", { name: "Previous calendar period" })
+        ).toBeVisible();
+      } else {
+        await expect(
+          isNucleumProject(testInfo.project.name)
+            ? page
+                .getByRole("main")
+                .getByRole("tab", { name: "All", exact: true })
+            : page.getByTestId("overview-tabs").getByRole("tab", {
+                selected: true
+              })
+        ).toBeVisible();
+      }
 
       await resetShortcutAndClose(page, shortcut, `${modifier}+Shift+${key}`);
     });
