@@ -83,6 +83,7 @@ const changedEnumContracts = new Map([
           USER: "user",
           AUTHFN_TOKEN: "authfnToken",
           AUTHFN_WIDGET_TOKEN: "authfnWidgetToken",
+          AUTHFN_SOCIAL_HANDOFF: "authfnSocialHandoff",
           REGION: "region",
           USER_REGION_MAP: "userRegionMap",
           USER_INFO: "userInfo",
