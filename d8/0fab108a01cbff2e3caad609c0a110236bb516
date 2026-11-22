@@ -1,0 +1,21 @@
+client/shared-state/files/filefn-client.ts
+  s_0aa4ca452eb5ee::t_4a9f914e063f68 184-187,212,235,281,430-440
+client/surfaces/account/account-upload-replay.ts
+  s_0aa4ca452eb5ee::t_94c6d0b86237a7 16-19,34-38,57-62,68-97,107-111,140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d80fab108a01cbff2e3caad609c0a110236bb516",
+  "prompts": {},
+  "sessions": {
+    "s_0aa4ca452eb5ee": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31d4b0f4-b181-44d7-a15a-00daf9cdecb9",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
