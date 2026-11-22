@@ -84,6 +84,11 @@ vi.mock("@filefn/client", async (importOriginal) => {
 const authority = vi.hoisted(() => ({
   url: "https://account-useast-dev.nucleum.app/datafn"
 }));
+/** Runs, when set, before each query or mutation of the file records. */
+const fileCalls = vi.hoisted(() => ({
+  beforeQuery: null as ((args: unknown) => Promise<void>) | null,
+  beforeMutate: null as ((args: unknown) => Promise<void>) | null
+}));
 vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
@@ -109,6 +114,24 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
         };
       }
       if (key === "sync") return { ...target.sync, pullNow };
+      if (key === "file") {
+        return new Proxy(target.file, {
+          get(table, name) {
+            const method = Reflect.get(table, name);
+            const before =
+              name === "query"
+                ? fileCalls.beforeQuery
+                : name === "mutate"
+                  ? fileCalls.beforeMutate
+                  : null;
+            if (!before || typeof method !== "function") return method;
+            return async (...args: unknown[]) => {
+              await before(args[0]);
+              return method.apply(table, args);
+            };
+          }
+        });
+      }
       return Reflect.get(target, key);
     }
   });
@@ -274,6 +297,17 @@ async function captureThenSignOutDuringUpload(isNewGuest = false) {
   return record;
 }
 
+/** Writes a file of a local file's entry, as another tab's replay does. */
+async function writeLocalEntryFile(fileId: string, name: string, text = "") {
+  const root = await opfs.getDirectory();
+  const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+  const entry = await queue.getDirectoryHandle(`queued_${fileId}`);
+  const file = await entry.getFileHandle(name, { create: true });
+  const writable = await file.createWritable();
+  await writable.write(text);
+  await writable.close();
+}
+
 function goOnline() {
   isOnline = true;
   window.dispatchEvent(new Event("online"));
@@ -313,6 +347,8 @@ beforeEach(() => {
   sdk.deletes = [];
   sdk.baseUrls = [];
   sdk.hold = null;
+  fileCalls.beforeQuery = null;
+  fileCalls.beforeMutate = null;
 });
 
 afterEach(async () => {
@@ -524,6 +560,66 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.deletes).toEqual([]);
     expect(sdk.started).toHaveLength(1);
     expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+  });
+
+  it("leaves a deleted local-only record's file to the account another tab claimed it for after this tab's reconcile listed it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // Another tab's replay claims the file for user-a while this tab's
+    // reconcile of the deleted record looks the file up in the records.
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { fileId?: string } };
+      if (filters?.fileId !== record.fileId) return;
+      fileCalls.beforeQuery = null;
+      const claim = { userId: "user-a", baseUrl: sdk.baseUrls[0] ?? "" };
+      await writeLocalEntryFile(
+        record.fileId,
+        "claim.json",
+        JSON.stringify(claim)
+      );
+    };
+
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleLocalFileRecords();
+
+    expect(opfs.list(LOCAL_QUEUE, `queued_${record.fileId}`)).toContain(
+      "orphaned"
+    );
+    expect(sdk.deletes).toEqual([]);
+  });
+
+  it("never deletes a claimed file whose record another replay is publishing when its account settles its orphaned files", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    let settling: Promise<void> | undefined;
+    // The file is marked orphaned while the replay publishes its record, and
+    // another replay of the account settles its orphaned files meanwhile.
+    fileCalls.beforeMutate = async (args) => {
+      const [first] = Array.isArray(args) ? args : [];
+      if (first?.operation !== "insert" || first.id !== record.id) return;
+      fileCalls.beforeMutate = null;
+      await writeLocalEntryFile(record.fileId, "orphaned");
+      settling = replayLocalQueue();
+      for (let turn = 0; turn < 200; turn++) {
+        await new Promise<void>((resolve) => setImmediate(resolve));
+      }
+    };
+
+    await signInToCloud("user-a");
+    await vi.waitFor(async () =>
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId)
+    );
+    await vi.waitFor(() => expect(settling).toBeDefined());
+    await settling;
+
+    expect(sdk.deletes).toEqual([]);
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
+    ).toBeDefined();
   });
 
   it("keeps a capture from an earlier guest namespace and publishes it at the first cloud sign-in", async () => {

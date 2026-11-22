@@ -12,6 +12,7 @@ import {
   onAccountQueueReplay,
   replayFileQueue,
   UNCOMMITTED_GRACE_MS,
+  withQueueLock,
   writeQueuedFileRecord,
   type AccountQueueReplay,
   type QueuedFileEntry,
@@ -193,6 +194,12 @@ function isAbandoned(entry: QueuedFileEntry) {
   );
 }
 
+/** Reads a local file's entry as the queue holds it now. */
+async function readLocalEntry(fileId: string) {
+  const entries = await listQueuedFiles(LOCAL_FILE_QUEUE_DIR);
+  return entries.find((entry) => entry.fileId === fileId);
+}
+
 /**
  * Brings a local file in line with the local-only record that references it,
  * read in the guest namespace it was captured in: the file keeps a copy of
@@ -200,7 +207,9 @@ function isAbandoned(entry: QueuedFileEntry) {
  * the first one was deleted, too) and is marked committed. A committed file
  * no record references any more, or one never committed and abandoned, is
  * removed from the device, but one an account claimed and did not record
- * uploaded is marked orphaned for it to settle (see settleOrphanedLocalFiles).
+ * uploaded is marked orphaned for it to settle (see settleOrphanedLocalFiles):
+ * decided under the queue's lock on the entry and record read there, so no
+ * replay claims or publishes it meanwhile.
  */
 async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
   const byId = entry.recordId
@@ -222,11 +231,15 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
     return;
   }
   if (!entry.isCommitted && !isAbandoned(entry)) return;
-  if (entry.claim && !entry.isUploaded) {
-    await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, entry.fileId);
-    return;
-  }
-  await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+  const { signal } = new AbortController();
+  await withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, async () => {
+    const current = await readLocalEntry(entry.fileId);
+    if (current?.namespace !== namespace) return;
+    if (await readFileRecord(namespace, { fileId: entry.fileId })) return;
+    if (current.claim && !current.isUploaded) {
+      await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+    } else await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+  });
 }
 
 /**
@@ -297,7 +310,9 @@ export async function uploadLocalQueuedFiles(
  * Removes the orphaned local files the uploader's account claimed, while the
  * publisher is ready and its synced records are up to date, deleting each no
  * record of the account references at its authority (its publish never
- * landed), or recording that delete for the account's next client.
+ * landed), or recording that delete for the account's next client; each
+ * under the queue's lock, on its entry read there, so no publish runs
+ * between the check of its records and the delete.
  */
 async function settleOrphanedLocalFiles(
   uploader: FileQueueUploader,
@@ -320,14 +335,16 @@ async function settleOrphanedLocalFiles(
   ) {
     return;
   }
-  for (const { fileId } of orphans) {
-    if (!publisher.isReady()) return;
+  const settle = async (fileId: string) => {
+    const entry = await readLocalEntry(fileId);
+    if (!entry?.isOrphaned || entry.isUploaded) return true;
+    if (!publisher.isReady()) return false;
     const result = await datafn.file.query({
       filters: { fileId },
       limit: 1,
       metadata: ALL_RECORDS
     });
-    if (!publisher.isReady() || !Array.isArray(result.data)) return;
+    if (!publisher.isReady() || !Array.isArray(result.data)) return false;
     if (result.data.length === 0) {
       await client.deleteFile(fileId).catch(async (error: unknown) => {
         logOrphanError(error);
@@ -335,6 +352,13 @@ async function settleOrphanedLocalFiles(
       });
     }
     await dequeueFile(LOCAL_FILE_QUEUE_DIR, fileId);
+    return true;
+  };
+  for (const { fileId } of orphans) {
+    const lock = withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, () =>
+      settle(fileId)
+    );
+    if (!(await lock)) return;
   }
 }
 

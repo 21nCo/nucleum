@@ -2601,7 +2601,7 @@ const pageLocks = new Map<string, Promise<unknown>>();
  * page's own lock of the queue, so the page's replays, backups and restores
  * of a queue never interleave.
  */
-async function withQueueLock<T>(
+export async function withQueueLock<T>(
   dir: string,
   signal: AbortSignal,
   run: () => Promise<T>
