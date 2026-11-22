@@ -21,6 +21,14 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { clientStorage } from "@nucleum/persistence/client-storage";
   import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
+  import { authClient } from "@nucleum/client/runtime/account/auth";
+  import context from "@nucleum/client/runtime/context.store";
+  import { OperatingSystem } from "@nucleum/client/runtime/context.type";
+  import {
+    finishSocialHandoff,
+    isCurrentSocialHandoff,
+    resolveSocialHandoffToken
+  } from "@nucleum/client/runtime/account/social-handoff";
   let selectedMode = $state<"signup" | "signin" | "offline">("signup");
   let currentProgress = $state<string | undefined>(undefined);
   let cloudSyncLoginRef = $state<CloudSyncLogin | undefined>(undefined);
@@ -166,21 +174,56 @@
             toasts.error("Authentication failed. Please try again.");
             return;
           }
+          const regionHint =
+            typeof parsed.oauth.regionId === "string" && parsed.oauth.regionId
+              ? parsed.oauth.regionId
+              : undefined;
+          const resolved = await resolveSocialHandoffToken(
+            {
+              token,
+              handoff:
+                typeof parsed.oauth.handoff === "string"
+                  ? parsed.oauth.handoff
+                  : undefined,
+              regionId: regionHint,
+              isBroadcast: $context.os === OperatingSystem.MACOS
+            },
+            (region) => authClient({ region, isIsolated: true })
+          );
+          if (resolved.kind === "ignored") {
+            logger.info({
+              at: "Login.handleMessageFromParent.oauth.handoff.notStartedHere"
+            });
+            return;
+          }
+          if (resolved.kind === "failed") {
+            logger.error({
+              at: "Login.handleMessageFromParent.oauth.handoff.failed",
+              errorCode: resolved.errorCode
+            });
+            toasts.error("Authentication failed. Please try again.");
+            return;
+          }
+          const isSuperseded = () =>
+            resolved.verifier !== undefined &&
+            !isCurrentSocialHandoff(resolved.verifier);
+          if (isSuperseded()) return;
+          token = resolved.token;
+          const regionId = resolved.regionId;
           localStorage.setItem("embedToken", token);
-          if (parsed.oauth.regionId) {
-            await clientStorage.set(
-              ClientStorageKey.REGION,
-              parsed.oauth.regionId
-            );
+          if (regionId) {
+            await clientStorage.set(ClientStorageKey.REGION, regionId);
           }
           logger.info({
             at: "Login.handleMessageFromParent.oauth.token.received",
             isSignup: parsed.oauth.signup === "true",
-            regionId: parsed.oauth.regionId
+            regionId
           });
           const signedIn = await accountSession.signInFromAuthFnSession({
             token,
-            regionId: parsed.oauth.regionId,
+            session: resolved.session,
+            isCurrent: () => !isSuperseded(),
+            regionId,
             isNewUser: parsed.oauth.signup === "true",
             isPreventRedirect: true,
             persistToken: true
@@ -190,9 +233,18 @@
               at: "Login.handleMessageFromParent.oauth.session.failed",
               hasToken: true
             });
-            toasts.error("Authentication failed. Please try again.");
+            if (!isSuperseded()) {
+              toasts.error("Authentication failed. Please try again.");
+            }
             return;
           }
+          if (isSuperseded()) {
+            logger.info({
+              at: "Login.handleMessageFromParent.oauth.handoff.superseded"
+            });
+            return;
+          }
+          if (resolved.verifier) finishSocialHandoff(resolved.verifier);
           accountSession.gotoPostAuthRoute({
             isNewUser: parsed.oauth.signup === "true"
           });

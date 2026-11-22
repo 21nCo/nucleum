@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { escapeHtmlAttribute } from "@nucleum/features/memory/node/content/web/social/embed-html";
   import { onMount } from "svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   let {
@@ -61,10 +62,10 @@
       if (element) {
         element.innerHTML = `
           <div class="fb-post" 
-               data-href="${postUrl}" 
+               data-href="${escapeHtmlAttribute(postUrl)}" 
                data-width="500" 
                data-show-text="true">
-            <blockquote cite="${postUrl}" class="fb-xfbml-parse-ignore">
+            <blockquote cite="${escapeHtmlAttribute(postUrl)}" class="fb-xfbml-parse-ignore">
               Loading Facebook post...
             </blockquote>
           </div>

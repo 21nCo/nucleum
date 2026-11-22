@@ -63,17 +63,24 @@ export const symbolPatterns = [
   { regex: /=&gt;/g, replacement: "⇒" }
 ];
 
-/** Escapes HTML delimiters in heading and quote content. */
-function escapeHtml(text: string): string {
-  const htmlEscapes: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#x27;",
-    "/": "&#x2F;"
-  };
-  return text.replace(/[&<>"'\/]/g, (match) => htmlEscapes[match] || match);
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+
+/**
+ * Escapes HTML delimiters so user text cannot inject markup through `renderMdAsHtml`.
+ * Existing character references such as `&amp;` or `&#60;` are kept, so text that
+ * callers already escaped (for example with `escapeMarkdownText`) is not escaped twice.
+ */
+export function escapeHtmlKeepingEntities(text: string): string {
+  return text.replace(
+    /&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#[0-9]+|#[xX][0-9a-fA-F]+);)|[<>"']/g,
+    (char) => HTML_ESCAPES[char] ?? char
+  );
 }
 
 /** Escapes HTML delimiters and inline Markdown syntax so user text renders literally through `renderMdAsHtml`. */
@@ -84,7 +91,286 @@ export function escapeMarkdownText(text: string): string {
   );
 }
 
-/** Renders the established Markdown display syntax without depending on editor state. */
+const TOKEN_START = "\uFFF0";
+const TOKEN_END = "\uFFF1";
+const QUOTE_MARKER = "\uFFF2";
+const RESERVED_MARKERS = /[\uFFF0-\uFFF2]/g;
+const TOKEN_PATTERN = /\uFFF0(\d+)\uFFF1/g;
+const BLOCK_START_LINE =
+  /^(?:#{1,4} |\uFFF2 |\s*[-*] |---\s*$|===\s*$|\s*$)/;
+
+/**
+ * Positions of the newlines that end a block: the following whole source line
+ * starts a heading, quote, list item or rule, or is blank. Sorted ascending.
+ */
+function findBlockBoundaries(text: string) {
+  const boundaries: number[] = [];
+  let newline = text.indexOf("\n");
+  while (newline >= 0) {
+    const lineEnd = text.indexOf("\n", newline + 1);
+    const line = text
+      .slice(newline + 1, lineEnd < 0 ? text.length : lineEnd)
+      .replace(/\r$/, "");
+    if (BLOCK_START_LINE.test(line)) boundaries.push(newline);
+    newline = lineEnd;
+  }
+  return boundaries;
+}
+
+/** Index of the first value in a sorted list that is at least `value`. */
+function firstAtOrAfter(sorted: number[], value: number) {
+  let low = 0;
+  let high = sorted.length;
+  while (low < high) {
+    const middle = (low + high) >> 1;
+    if (sorted[middle] < value) low = middle + 1;
+    else high = middle;
+  }
+  return low;
+}
+
+/** Checks whether `[start, end)` contains no block boundary. */
+function staysInBlock(boundaries: number[], start: number, end: number) {
+  const index = firstAtOrAfter(boundaries, start);
+  return index >= boundaries.length || boundaries[index] >= end;
+}
+
+/**
+ * Lookups computed once per render so every check below is a binary search:
+ * block boundaries, the `](` positions that start a valid target (with where
+ * that target ends), each `[`'s balancing `]`, and the `[`s that start a
+ * complete link or mention of their own.
+ */
+type InlineLayout = {
+  boundaries: number[];
+  validClosers: number[];
+  targetEnds: Map<number, number>;
+  brackets: Map<number, number>;
+  ignoredOpens: Set<number>;
+  runEnds: Map<number, number>;
+  newlines: number[];
+  completeStarts: number[];
+};
+
+function buildInlineLayout(text: string): InlineLayout {
+  const boundaries = findBlockBoundaries(text);
+  const parens: number[] = [];
+  for (let index = text.indexOf(")"); index >= 0; index = text.indexOf(")", index + 1)) {
+    parens.push(index);
+  }
+  const validClosers: number[] = [];
+  const targetEnds = new Map<number, number>();
+  for (let close = text.indexOf("]("); close >= 0; close = text.indexOf("](", close + 1)) {
+    const rest = text.slice(close + 2, close + 2 + 9);
+    const prefix = rest.startsWith("resource=")
+      ? "resource="
+      : (/^https?:\/\//.exec(text.slice(close + 2, close + 2 + 8))?.[0] ?? null);
+    if (!prefix) continue;
+    const targetStart = close + 2 + prefix.length;
+    const parenIndex = firstAtOrAfter(parens, targetStart);
+    if (parenIndex >= parens.length) continue;
+    const targetEnd = parens[parenIndex];
+    if (!staysInBlock(boundaries, targetStart, targetEnd)) continue;
+    validClosers.push(close);
+    targetEnds.set(close, targetEnd);
+  }
+  const { matches: brackets, ignored: ignoredOpens } = matchLabelBrackets(text, boundaries);
+  const runEnds = new Map<number, number>();
+  for (let index = text.length - 1, runEnd = -1; index >= 0; index -= 1) {
+    if (text[index] === "]") {
+      if (text[index + 1] !== "]") runEnd = index;
+      runEnds.set(index, runEnd);
+    }
+  }
+  const completeStarts: number[] = [];
+  for (const [open] of brackets) {
+    if (balancedCloseAt(open, brackets, runEnds, boundaries, targetEnds) >= 0) {
+      completeStarts.push(open);
+    }
+  }
+  completeStarts.sort((left, right) => left - right);
+  const newlines: number[] = [];
+  for (let index = text.indexOf("\n"); index >= 0; index = text.indexOf("\n", index + 1)) {
+    newlines.push(index);
+  }
+  return { boundaries, validClosers, targetEnds, brackets, ignoredOpens, runEnds, newlines, completeStarts };
+}
+
+/**
+ * The `](` that ends the label opened at `open` when its brackets balance:
+ * the balancing `]`, extended over a run of `]`s (as in `[Happy :]]`), must be
+ * directly followed by `(` and a valid target. Returns -1 otherwise.
+ */
+function balancedCloseAt(
+  open: number,
+  brackets: Map<number, number>,
+  runEnds: Map<number, number>,
+  boundaries: number[],
+  targetEnds: Map<number, number>
+) {
+  const pair = brackets.get(open);
+  if (pair === undefined || !staysInBlock(boundaries, open, pair)) return -1;
+  const close = runEnds.get(pair) ?? pair;
+  return targetEnds.has(close) ? close : -1;
+}
+
+/**
+ * Renders mentions (`[label](resource=id)`) and links (`[label](https://...)`)
+ * into placeholder tokens in one left-to-right pass, before any other HTML is
+ * generated, so each link keeps its exact destination, no later pattern can
+ * match across generated markup, and a link never spans a block boundary.
+ */
+function extractInlineLinks(text: string, tokens: string[]) {
+  const [mentionPattern, linkPattern] = [
+    inlineLinkPatterns.find((pattern) => pattern.type === InlineType.MENTION)!,
+    inlineLinkPatterns.find((pattern) => pattern.type === InlineType.LINK)!
+  ];
+  const layout = buildInlineLayout(text);
+  let result = "";
+  let index = 0;
+  while (index < text.length) {
+    const open = text.indexOf("[", index);
+    if (open < 0) break;
+    const close = findLabelClose(text, open, layout);
+    if (close < 0) {
+      result += text.slice(index, open + 1);
+      index = open + 1;
+      continue;
+    }
+    const isMention = text.startsWith("resource=", close + 2);
+    const targetStart = close + 2 + (isMention ? 9 : 0);
+    const targetEnd = layout.targetEnds.get(close)!;
+    const styledLabel = replaceInlineStylePatterns(
+      replaceSymbolPatterns(text.slice(open + 1, close))
+    ).replace(/\r?\n/g, "<br>");
+    const target = text
+      .slice(isMention ? targetStart : targetStart + (text.startsWith("https://", targetStart) ? 8 : 7), targetEnd)
+      .replace(/\r?\n/g, "<br>");
+    const template = isMention ? mentionPattern.replacement : linkPattern.replacement;
+    tokens.push(
+      template.replace(/\$([12])/g, (_placeholder, group: string) =>
+        group === "1" ? styledLabel : target
+      )
+    );
+    result += `${text.slice(index, open)}${TOKEN_START}${tokens.length - 1}${TOKEN_END}`;
+    index = targetEnd + 1;
+  }
+  return result + text.slice(index);
+}
+
+/** Backtick runs indexed by start and by length, for constant-time code span lookups. */
+function indexBacktickRuns(text: string) {
+  const endOf = new Map<number, number>();
+  const startsByLength = new Map<number, number[]>();
+  for (let index = text.indexOf("`"); index >= 0; index = text.indexOf("`", index + 1)) {
+    let end = index;
+    while (text[end + 1] === "`") end += 1;
+    endOf.set(index, end);
+    const length = end - index + 1;
+    const starts = startsByLength.get(length) ?? [];
+    starts.push(index);
+    startsByLength.set(length, starts);
+    index = end;
+  }
+  return {
+    endOf,
+    /** Start of the next run with the same length after the run `[start, end]`, or -1. */
+    nextSameLength(start: number, end: number) {
+      const starts = startsByLength.get(end - start + 1) ?? [];
+      const next = starts[firstAtOrAfter(starts, end + 1)];
+      return next ?? -1;
+    }
+  };
+}
+
+/**
+ * Pairs every `[` with the `]` that balances it inside the same block, in one
+ * pass, ignoring brackets inside inline code (backtick runs of equal length)
+ * and backslash-escaped brackets, which are returned as `ignored` so no label
+ * opens there.
+ * Unclosed brackets at a block boundary are dropped.
+ */
+function matchLabelBrackets(text: string, boundaries: number[]) {
+  const backtickRuns = indexBacktickRuns(text);
+  const matches = new Map<number, number>();
+  const ignored = new Set<number>();
+  const stack: number[] = [];
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === "\n" && !staysInBlock(boundaries, index, index + 1)) {
+      stack.length = 0;
+    } else if (char === "`") {
+      const runEnd = backtickRuns.endOf.get(index) ?? index;
+      const closer = backtickRuns.nextSameLength(index, runEnd);
+      if (closer >= 0 && staysInBlock(boundaries, index, closer)) {
+        for (let inner = runEnd + 1; inner < closer; inner += 1) {
+          if (text[inner] === "[") ignored.add(inner);
+        }
+        index = closer + (runEnd - index);
+      } else {
+        index = runEnd;
+      }
+    } else if (char === "\\" && text[index + 1] === "\\") {
+      index += 1;
+    } else if (char === "\\" && (text[index + 1] === "[" || text[index + 1] === "]")) {
+      if (text[index + 1] === "[") ignored.add(index + 1);
+      index += 1;
+    } else if (char === "[") stack.push(index);
+    else if (char === "]") {
+      const open = stack.pop();
+      if (open !== undefined) matches.set(open, index);
+    }
+  }
+  return { matches, ignored };
+}
+
+/** The first valid `](` at or after `from` that stays in the block of `open`. */
+function nextValidCloser(layout: InlineLayout, open: number, from: number) {
+  const index = firstAtOrAfter(layout.validClosers, from);
+  const close = layout.validClosers[index];
+  return close !== undefined && staysInBlock(layout.boundaries, open, close) ? close : -1;
+}
+
+/** True when a `[` in `(from, to)` starts its own complete link or mention. */
+function hasCompleteStartBetween(layout: InlineLayout, from: number, to: number) {
+  const start = layout.completeStarts[firstAtOrAfter(layout.completeStarts, from + 1)];
+  return start !== undefined && start < to;
+}
+
+/**
+ * Finds where the label opened at `open` ends. Balanced labels end at their
+ * balancing `]` (see `balancedCloseAt`). Labels with unbalanced brackets, which
+ * mentions of such titles produce, fall back to the nearest valid `](`: for an
+ * unpaired `[`, only on the same line; for a pair not followed by `(`, only
+ * when no complete link or mention starts in between.
+ */
+function findLabelClose(text: string, open: number, layout: InlineLayout) {
+  const { brackets, boundaries, targetEnds, runEnds } = layout;
+  if (layout.ignoredOpens.has(open)) return -1;
+  const balanced = balancedCloseAt(open, brackets, runEnds, boundaries, targetEnds);
+  if (balanced >= 0) return balanced;
+  const pair = brackets.get(open);
+  if (pair === undefined) {
+    const fallback = nextValidCloser(layout, open, open + 1);
+    const nextNewline = layout.newlines[firstAtOrAfter(layout.newlines, open)];
+    return fallback >= 0 && (nextNewline === undefined || nextNewline > fallback) ? fallback : -1;
+  }
+  if (!staysInBlock(boundaries, open, pair)) return -1;
+  const close = runEnds.get(pair) ?? pair;
+  if (text[close + 1] === "(") return -1;
+  const fallback = nextValidCloser(layout, open, close + 1);
+  if (fallback < 0 || hasCompleteStartBetween(layout, close, fallback)) return -1;
+  return fallback;
+}
+
+function restoreInlineLinks(text: string, tokens: string[]) {
+  return text.replace(TOKEN_PATTERN, (_match, index: string) => tokens[Number(index)] ?? "");
+}
+
+/**
+ * Renders the established Markdown display syntax without depending on editor state.
+ * Input is HTML-escaped first, so the output only contains markup this function generates.
+ */
 export function renderMdAsHtml(
   text: string,
   params?: {
@@ -92,31 +378,35 @@ export function renderMdAsHtml(
     isPageRender?: boolean;
   }
 ) {
-  let parsedText = text;
+  const source = String(text ?? "")
+    .replace(RESERVED_MARKERS, "")
+    .replace(/^> /gm, `${QUOTE_MARKER} `);
+  const tokens: string[] = [];
+  let parsedText = extractInlineLinks(escapeHtmlKeepingEntities(source), tokens);
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
   parsedText = parsedText.replace(
     /^#### (.*)$/gm,
-    (match, content) => `<h4 class="text-h4">${escapeHtml(content)}</h4>`
+    (match, content) => `<h4 class="text-h4">${content}</h4>`
   );
   parsedText = parsedText.replace(
     /^### (.*)$/gm,
     (match, content) =>
-      `<h3 class="${params?.isPageRender ? "text-h3" : "text-h4"}">${escapeHtml(content)}</h3>`
+      `<h3 class="${params?.isPageRender ? "text-h3" : "text-h4"}">${content}</h3>`
   );
   parsedText = parsedText.replace(
     /^## (.*)$/gm,
     (match, content) =>
-      `<h2 class="${params?.isPageRender ? "text-h2" : "text-h4"}">${escapeHtml(content)}</h2>`
+      `<h2 class="${params?.isPageRender ? "text-h2" : "text-h4"}">${content}</h2>`
   );
   parsedText = parsedText.replace(
     /^# (.*)$/gm,
     (match, content) =>
-      `<h1 class="${params?.isPageRender ? "text-h1" : "text-h4"}">${escapeHtml(content)}</h1>`
+      `<h1 class="${params?.isPageRender ? "text-h1" : "text-h4"}">${content}</h1>`
   );
   parsedText = parsedText.replace(
-    /^> (.*)$/gm,
-    (match, content) => `<blockquote>${escapeHtml(content)}</blockquote>`
+    new RegExp(`^${QUOTE_MARKER} (.*)$`, "gm"),
+    (match, content) => `<blockquote>${content}</blockquote>`
   );
   parsedText = parsedText.replace(/^---\s*$/gm, "<hr>");
   parsedText = parsedText.replace(/^===\s*$/gm, "<hr>");
@@ -137,9 +427,8 @@ export function renderMdAsHtml(
     }
   );
   parsedText = parsedText.replace(/\n/g, "<br>");
-  parsedText = replaceInlineLinkPatterns(parsedText);
   if (params?.isIncludeSpaces) parsedText = parsedText.replace(/ /g, "&nbsp;");
-  return parsedText;
+  return restoreInlineLinks(parsedText, tokens).replaceAll(QUOTE_MARKER, "&gt;");
 }
 
 /**  match pattern for shared inline Markdown presentation. */
@@ -179,15 +468,6 @@ export function findSymbolPatterns(text: string) {
 export function replaceInlineStylePatterns(text: string) {
   let html = text;
   inlineStylingPatterns.forEach((pattern) => {
-    html = html.replace(pattern.regex, pattern.replacement);
-  });
-  return html;
-}
-
-/** Replace inline link patterns for shared inline Markdown presentation. */
-export function replaceInlineLinkPatterns(text: string) {
-  let html = text;
-  inlineLinkPatterns.forEach((pattern) => {
     html = html.replace(pattern.regex, pattern.replacement);
   });
   return html;
