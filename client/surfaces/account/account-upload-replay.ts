@@ -13,6 +13,10 @@ let sessionRecheck:
 let sessionLifetime = new AbortController();
 let endingSessions = 0;
 let resolutionGeneration = 0;
+let lastAppliedGeneration = 0;
+let filesRuntime: FilesRuntime | undefined;
+
+type FilesRuntime = typeof import("@nucleum/shared-state/files/filefn-client");
 
 /**
  * One resolution of the stored session: `signal` is the page session it
@@ -27,17 +31,15 @@ export interface SessionResolutionTicket {
 /**
  * Starts a resolution of the stored session. The caller passes the ticket's
  * signal to resolveAuthSession and the ticket to startUploadReplayForSession,
- * which applies the resolution only while no newer one started and the session
- * has not ended, so a resolution that returns after sign-out stores, hydrates
- * and starts nothing, and an older one never replaces a newer one's replay.
+ * which applies the resolution only while the session has not ended and no
+ * resolution started after it has applied, so a resolution that returns after
+ * sign-out stores, hydrates and starts nothing, an older one never replaces a
+ * newer one's replay, and one that never applies (it failed or was aborted)
+ * leaves an older one to apply.
  */
 export function beginSessionResolution(): SessionResolutionTicket {
   resolutionGeneration += 1;
   return { signal: sessionLifetime.signal, generation: resolutionGeneration };
-}
-
-function isCurrentResolution(ticket: SessionResolutionTicket): boolean {
-  return !ticket.signal.aborted && ticket.generation === resolutionGeneration;
 }
 
 /**
@@ -52,15 +54,47 @@ function isCurrentResolution(ticket: SessionResolutionTicket): boolean {
  * (offline-only, expired, signed-out or unavailable) stops the replay the
  * restore started, keeping the account's queue and pending deletes; an
  * unavailable one keeps an active recheck retrying with its growing delay.
- * Nothing is applied once `ticket`'s session has ended or a newer resolution
- * started (see beginSessionResolution). The caller does not wait for the
- * FileFn client to load.
+ * Nothing is applied once `ticket`'s session has ended or a resolution
+ * started after it has applied (see beginSessionResolution). Once the files
+ * runtime is loaded, the resolution applies to it before any reconnect or
+ * retry can resolve the session again, so a non-live resolution ends an
+ * earlier live confirmation first; before that, no live confirmation exists,
+ * and the caller does not wait for the FileFn client to load.
  */
 export function startUploadReplayForSession(
   resolution: AuthSessionResolution,
   ticket: SessionResolutionTicket = beginSessionResolution()
 ): void {
-  if (!isCurrentResolution(ticket)) return;
+  if (ticket.signal.aborted || ticket.generation <= lastAppliedGeneration) {
+    return;
+  }
+  lastAppliedGeneration = ticket.generation;
+  const liveSession = resolveLiveSession(resolution);
+  const apply = (files: FilesRuntime) => {
+    if (resolution.status === "cached-cloud") files.startAccountUploadReplay();
+    else if (liveSession) files.startAccountUploadReplay(liveSession);
+    else files.stopAccountUploadReplay();
+  };
+  if (filesRuntime) {
+    try {
+      apply(filesRuntime);
+    } catch (error) {
+      logger.error({ at: "account.uploadReplay.start", error });
+    }
+  } else {
+    loadFilesRuntime()
+      .then((files) => {
+        if (
+          !ticket.signal.aborted &&
+          lastAppliedGeneration === ticket.generation
+        ) {
+          apply(files);
+        }
+      })
+      .catch((error: unknown) => {
+        logger.error({ at: "account.uploadReplay.start", error });
+      });
+  }
   if (resolution.status === "cached-cloud") {
     recheckSession();
     if (resolution.storedState.isOffline) recheckIfConnected();
@@ -70,18 +104,11 @@ export function startUploadReplayForSession(
   } else {
     stopSessionRecheck();
   }
-  const liveSession = resolveLiveSession(resolution);
-  import("@nucleum/shared-state/files/filefn-client")
-    .then((files) => {
-      if (!isCurrentResolution(ticket)) return;
-      if (resolution.status === "cached-cloud")
-        files.startAccountUploadReplay();
-      else if (liveSession) files.startAccountUploadReplay(liveSession);
-      else files.stopAccountUploadReplay();
-    })
-    .catch((error: unknown) => {
-      logger.error({ at: "account.uploadReplay.start", error });
-    });
+}
+
+async function loadFilesRuntime(): Promise<FilesRuntime> {
+  filesRuntime ??= await import("@nucleum/shared-state/files/filefn-client");
+  return filesRuntime;
 }
 
 function resolveLiveSession(
@@ -110,7 +137,7 @@ export function stopUploadReplayForSession(): Promise<void> {
   endingSessions += 1;
   sessionLifetime.abort();
   stopSessionRecheck();
-  return import("@nucleum/shared-state/files/filefn-client")
+  return loadFilesRuntime()
     .then((files) => files.endAccountUploadReplay())
     .catch((error: unknown) => {
       logger.error({ at: "account.uploadReplay.stop", error });

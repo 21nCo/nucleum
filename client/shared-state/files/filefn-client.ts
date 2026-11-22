@@ -181,9 +181,10 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
  * state carries the same cloud user at the same region, waiting while it
  * carries no cloud user yet; every other user the page knows, or the account
  * state publishes, is contradicted until a live session confirms it, a bound
- * client of another user or region is torn down, and an account state seeded
- * with another user binds nothing. The account state, the queue and the
- * pending deletes stay as they are.
+ * client of another user or region is torn down, a pending bind of another
+ * user creates none (see cancelPendingBind), and an account state seeded with
+ * another user binds nothing. The account state, the queue and the pending
+ * deletes stay as they are.
  */
 export function startAccountUploadReplay(
   liveSession?: FileFnAccountScope
@@ -208,6 +209,7 @@ export function startAccountUploadReplay(
     }
   }
   stopLiveBindWait();
+  cancelPendingBind(liveSession.userId);
   const entry = currentEntry;
   if (entry && !isLiveReplayOwner(entry.userId, entry.baseUrl)) {
     fileGrantUserIds.delete(entry.userId);
@@ -230,6 +232,7 @@ export function startAccountUploadReplay(
     } else {
       if (scope.userId !== liveSession.userId) {
         contradictedUserIds.add(scope.userId);
+        cancelPendingBind(liveSession.userId);
       }
       logger.warn({ at: "filefn.uploadReplay.start.accountMismatch" });
     }
@@ -275,6 +278,7 @@ export function endAccountUploadReplay(): void {
   replayAuthorization.liveOwner = null;
   fileGrantUserIds.clear();
   stopLiveBindWait();
+  cancelPendingBind();
   tearDownFileFnClient();
 }
 
@@ -421,6 +425,17 @@ function syncFileFnClient(value: UserAccount | null | undefined) {
   isAuthorityPending = false;
   bindFileFnClient(scope.userId, scope.region);
   latestSync = Promise.resolve();
+}
+
+/**
+ * Drops the pending stored-region bind (see syncFileFnClient) unless it binds
+ * `userId`, once a session contradicted or ended its user, so the read creates
+ * no client for that user. A later sync binds the account state again.
+ */
+function cancelPendingBind(userId?: string) {
+  if (!isAuthorityPending || ownerUserId === userId) return;
+  syncGeneration += 1;
+  isAuthorityPending = false;
 }
 
 function bindToStoredRegion(userId: string, generation: number) {
