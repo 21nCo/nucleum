@@ -6,6 +6,11 @@ import {
   type UploadInput,
   type UploadResult
 } from "@filefn/client";
+import {
+  UserDataMode,
+  UserSessionType,
+  type UserAccount
+} from "@nucleum/client/runtime/account/account.type";
 import { createFakeOpfs } from "../../../tests/fixtures/opfs";
 
 type FileQueue = typeof import("./file-queue");
@@ -99,6 +104,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.doUnmock("@nucleum/shared-state/files/filefn-client");
+  vi.doUnmock("@filefn/client");
 });
 
 describe("a queued upload FileFn rejects for good", () => {
@@ -267,7 +273,9 @@ describe("the failed state a file display reads", () => {
     vi.resetModules();
     vi.doMock("@nucleum/shared-state/files/filefn-client", () => ({
       captureFileFnOwner: () => ({ userId: owner.userId, epoch: 1 }),
-      isFileFnOwnerLive: () => owner.isLive
+      isFileFnOwnerLive: () => owner.isLive,
+      resolveFileFnAccountScope: () =>
+        owner.isLive ? { userId: owner.userId, region: null } : null
     }));
     const queue = await import("./file-queue");
     const fileUrl = await import("./file-url");
@@ -428,5 +436,88 @@ describe("the failed state a file display reads", () => {
     owner.userId = "user-b";
     expect(await read()).toBe(false);
     expect(await queue.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true);
+  });
+});
+
+describe("the failed state a file display reads, with the account's FileFn client", () => {
+  function cloudAccount(userId: string): UserAccount {
+    return {
+      dataMode: UserDataMode.CLOUD,
+      sessionType: UserSessionType.RETURNING,
+      userId,
+      userInfo: {
+        id: `user:${userId}`,
+        email: `${userId}@example.test`,
+        nickName: userId,
+        joinDate: new Date(0),
+        lastLogin: new Date(0),
+        region: "useast"
+      }
+    };
+  }
+
+  /**
+   * Opens a page whose real FileFn client module binds the account's client
+   * at session restore before any live session confirmed it, recording each
+   * client it creates and each client whose replay starts.
+   */
+  async function openRestoredPage() {
+    vi.resetModules();
+    const sdk = { created: [] as string[], replayed: [] as string[] };
+    vi.doMock("@filefn/client", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("@filefn/client")>();
+      return {
+        ...actual,
+        createFileFnClient: (config: { baseUrl: string }) => {
+          sdk.created.push(config.baseUrl);
+          return {
+            ...createClient(["ok"]).client,
+            getPendingLocalDescriptor: async () => {
+              sdk.replayed.push(config.baseUrl);
+              return null;
+            }
+          };
+        }
+      };
+    });
+    const queue = await import("./file-queue");
+    const fileUrl = await import("./file-url");
+    const files = await import("./filefn-client");
+    const { default: account } =
+      await import("@nucleum/client/runtime/account/account.store");
+    account.set(cloudAccount("user-a"));
+    files.startAccountUploadReplay();
+    await vi.waitFor(() => expect(sdk.created).toHaveLength(1));
+    return { queue, fileUrl, account, sdk };
+  }
+
+  it("never authorizes the account's replay by reading it, while Retry does", async () => {
+    installDevice();
+    const { queue, fileUrl, account, sdk } = await openRestoredPage();
+    await enqueuePhoto(queue);
+    await queue.replayFileQueue(
+      QUEUE,
+      createClient([rejection(400), "ok"]).client,
+      new AbortController().signal
+    );
+    const seen: boolean[] = [];
+    const stop = fileUrl.watchFileUploadFailure(FILE_ID, (isFailed) =>
+      seen.push(isFailed)
+    );
+    await vi.waitFor(() => expect(seen).toEqual([true]));
+    account.set(cloudAccount("user-b"));
+    await vi.waitFor(() => expect(seen).toEqual([true, false]));
+    account.set(cloudAccount("user-a"));
+    await vi.waitFor(() => expect(seen).toEqual([true, false, true]));
+    await vi.dynamicImportSettled();
+    await vi.waitFor(() => expect(sdk.created).toHaveLength(3));
+
+    expect(sdk.replayed).toEqual([]);
+
+    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
+    await vi.waitFor(() => expect(sdk.replayed).toHaveLength(1));
+    await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(seen.at(-1)).toBe(false));
+    stop();
   });
 });

@@ -16,6 +16,7 @@ import {
   getOwnedFileFnClient,
   isFileFnOwnerCurrent,
   isFileFnOwnerLive,
+  resolveFileFnAccountScope,
   settleFileFnOwner,
   type FileFnOwner
 } from "@nucleum/shared-state/files/filefn-client";
@@ -134,10 +135,14 @@ export async function resolveFileUrl(
  * again whenever that file's failed state may have changed (see
  * onQueuedFileFailureChange: marked, retried, removed, uploaded or written
  * again) and whenever another cloud account, or none, is signed in,
- * reporting the latest read only, and never once stopped; a read whose
- * account's generation ended meanwhile, or that fails, reports false, so
- * another account or device shows the file as it shows any file it cannot
- * resolve. Returns the stop.
+ * reporting the latest read only, and never once stopped; a read during
+ * which another account, or none, was signed in, or that fails, reports
+ * false, so another account or device shows the file as it shows any file
+ * it cannot resolve. Returns the stop.
+ *
+ * Reading is not a file operation: it only reads the account state, so it
+ * never requests the account's FileFn client nor authorizes its replay (see
+ * captureFileFnOwner); only the user's Retry does (see retryFileUpload).
  */
 export function watchFileUploadFailure(
   fileId: string,
@@ -155,7 +160,7 @@ export function watchFileUploadFailure(
   });
   let readerId: string | null | undefined;
   const stopAccount = account.subscribe(() => {
-    const userId = readOwnerId();
+    const userId = readAccountUserId();
     if (userId === readerId) return;
     readerId = userId;
     void read();
@@ -167,10 +172,13 @@ export function watchFileUploadFailure(
   };
 }
 
-/** The signed-in cloud account's ID, null without one or once unreadable. */
-function readOwnerId(): string | null {
+/**
+ * The signed-in cloud account's ID, null without one or once unreadable,
+ * read from the account state alone (no FileFn client or replay grant).
+ */
+function readAccountUserId(): string | null {
   try {
-    return captureFileFnOwner()?.userId ?? null;
+    return resolveFileFnAccountScope(account.get())?.userId ?? null;
   } catch (error: unknown) {
     logger.warn({ at: "fileUrl.failure.owner", error });
     return null;
@@ -179,12 +187,12 @@ function readOwnerId(): string | null {
 
 async function readFileUploadFailure(fileId: string): Promise<boolean> {
   try {
-    const owner = captureFileFnOwner();
+    const userId = readAccountUserId();
     const isFailed = await isQueuedFileFailed(
-      resolveFileQueueDirsOf(owner?.userId ?? null),
+      resolveFileQueueDirsOf(userId),
       fileId
     );
-    return isFailed && (!owner || isFileFnOwnerLive(owner));
+    return isFailed && readAccountUserId() === userId;
   } catch (error: unknown) {
     logger.warn({ at: "fileUrl.failure", fileId, error });
     return false;
@@ -196,7 +204,9 @@ async function readFileUploadFailure(fileId: string): Promise<boolean> {
  * queues of the signed-in cloud account, or the device's local queue: it
  * uploads again on the queue's next replay, which starts now while one is
  * running for the queue (see retryFailedQueuedFile). Resolves whether the
- * file was failed; a retry that fails is logged and resolves false.
+ * file was failed; a retry that fails is logged and resolves false. Unlike
+ * watching, a Retry is the user's file operation, so it requests the
+ * account's FileFn client as any file operation does (see captureFileFnOwner).
  */
 export async function retryFileUpload(fileId: string): Promise<boolean> {
   try {
