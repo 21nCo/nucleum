@@ -13,7 +13,8 @@ const mocks = vi.hoisted(() => ({
   gotoPath: vi.fn(),
   storageGet: vi.fn(),
   storageSet: vi.fn(),
-  startUploadReplay: vi.fn()
+  startUploadReplay: vi.fn(),
+  ticket: { signal: new AbortController().signal, generation: 1 }
 }));
 const account = vi.hoisted(() => ({ current: undefined as any }));
 vi.mock("@nucleum/client/runtime/account/account.store", () => ({
@@ -36,7 +37,7 @@ vi.mock("@nucleum/persistence/client-storage", () => ({
   clientStorage: { get: mocks.storageGet, set: mocks.storageSet }
 }));
 vi.mock("@nucleum/surfaces/account/account-upload-replay", () => ({
-  currentSessionLifetime: () => new AbortController().signal,
+  beginSessionResolution: () => mocks.ticket,
   startUploadReplayForSession: mocks.startUploadReplay
 }));
 vi.mock("@nucleum/client/runtime/logging/logger", () => ({
@@ -120,7 +121,10 @@ describe("product-configured account access", () => {
       mocks.startUploadReplay.mockClear();
       mocks.resolve.mockResolvedValue(resolution);
       await performLoginStatusCheck();
-      return mocks.startUploadReplay.mock.calls.map(([value]) => [value]);
+      expect(mocks.resolve).toHaveBeenLastCalledWith({
+        signal: mocks.ticket.signal
+      });
+      return mocks.startUploadReplay.mock.calls;
     };
     for (const resolution of [
       { status: "cached-cloud" },
@@ -134,7 +138,9 @@ describe("product-configured account access", () => {
       { status: "expired" },
       { status: "signed-out" }
     ]) {
-      expect(await applied(resolution)).toEqual([[resolution]]);
+      const calls = await applied(resolution);
+      expect(calls).toEqual([[resolution, mocks.ticket]]);
+      expect(calls[0][1]).toBe(mocks.ticket);
     }
   });
 });

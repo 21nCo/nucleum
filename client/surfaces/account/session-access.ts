@@ -17,7 +17,7 @@ import { PlanType } from "@nucleum/schema/account/subscription";
 import { resolveAuthSession } from "@nucleum/client/runtime/account/auth";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
-  currentSessionLifetime,
+  beginSessionResolution,
   startUploadReplayForSession
 } from "@nucleum/surfaces/account/account-upload-replay";
 /**
@@ -26,11 +26,11 @@ import {
  * hydrates and starts nothing and reports signed out.
  */
 export async function performLoginStatusCheck(requiredPlan?: PlanType) {
-  const lifetime = currentSessionLifetime();
-  const resolution = await resolveAuthSession({ signal: lifetime });
-  if (lifetime.aborted) return false;
+  const ticket = beginSessionResolution();
+  const resolution = await resolveAuthSession({ signal: ticket.signal });
+  if (ticket.signal.aborted) return false;
   if (resolution.status !== "authenticated") {
-    startUploadReplayForSession(resolution, lifetime);
+    startUploadReplayForSession(resolution, ticket);
   }
   if (resolution.status === "offline-only") {
     return true;
@@ -112,10 +112,10 @@ export async function performLoginStatusCheck(requiredPlan?: PlanType) {
     lastLogin: new Date(),
     region: authSession.regionId ?? subject.regionId
   };
-  if (lifetime.aborted) return false;
+  if (ticket.signal.aborted) return false;
   await clientStorage.set(ClientStorageKey.USER, authSession);
   await clientStorage.set(ClientStorageKey.USER_INFO, userInfo);
-  if (lifetime.aborted) return false;
+  if (ticket.signal.aborted) return false;
   logger.info({
     at: "AuthGuard.performLoginStatusCheck.session.ok",
     hasAuthFnToken: Boolean(resolution.storedState.authFnToken),
@@ -133,7 +133,7 @@ export async function performLoginStatusCheck(requiredPlan?: PlanType) {
     userInfo: userInfo as any,
     plan: requiredPlan !== undefined ? cachedPlan : current.plan
   }));
-  startUploadReplayForSession(resolution, lifetime);
+  startUploadReplayForSession(resolution, ticket);
   if (requiredPlan !== undefined) {
     const planResolution = await accountSession.refreshPlanData();
     const plan =

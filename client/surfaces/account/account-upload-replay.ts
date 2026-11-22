@@ -11,15 +11,33 @@ let sessionRecheck:
   | { stop: () => void; scheduleRetry: () => void; recheck: () => void }
   | undefined;
 let sessionLifetime = new AbortController();
+let endingSessions = 0;
+let resolutionGeneration = 0;
 
 /**
- * Returns the signal of the page's current session, which sign-out aborts
- * (see stopUploadReplayForSession). A caller resolving the stored session
- * passes it to resolveAuthSession and startUploadReplayForSession, so a
- * resolution that returns after sign-out stores, hydrates and starts nothing.
+ * One resolution of the stored session: `signal` is the page session it
+ * belongs to, which sign-out aborts (see stopUploadReplayForSession), and
+ * `generation` orders it among the page's resolutions.
  */
-export function currentSessionLifetime(): AbortSignal {
-  return sessionLifetime.signal;
+export interface SessionResolutionTicket {
+  readonly signal: AbortSignal;
+  readonly generation: number;
+}
+
+/**
+ * Starts a resolution of the stored session. The caller passes the ticket's
+ * signal to resolveAuthSession and the ticket to startUploadReplayForSession,
+ * which applies the resolution only while no newer one started and the session
+ * has not ended, so a resolution that returns after sign-out stores, hydrates
+ * and starts nothing, and an older one never replaces a newer one's replay.
+ */
+export function beginSessionResolution(): SessionResolutionTicket {
+  resolutionGeneration += 1;
+  return { signal: sessionLifetime.signal, generation: resolutionGeneration };
+}
+
+function isCurrentResolution(ticket: SessionResolutionTicket): boolean {
+  return !ticket.signal.aborted && ticket.generation === resolutionGeneration;
 }
 
 /**
@@ -34,15 +52,15 @@ export function currentSessionLifetime(): AbortSignal {
  * (offline-only, expired, signed-out or unavailable) stops the replay the
  * restore started, keeping the account's queue and pending deletes; an
  * unavailable one keeps an active recheck retrying with its growing delay.
- * Once `lifetime` (the session the resolution belongs to, see
- * currentSessionLifetime) has ended, nothing is applied. The caller does not
- * wait for the FileFn client to load.
+ * Nothing is applied once `ticket`'s session has ended or a newer resolution
+ * started (see beginSessionResolution). The caller does not wait for the
+ * FileFn client to load.
  */
 export function startUploadReplayForSession(
   resolution: AuthSessionResolution,
-  lifetime: AbortSignal = sessionLifetime.signal
+  ticket: SessionResolutionTicket = beginSessionResolution()
 ): void {
-  if (lifetime.aborted) return;
+  if (!isCurrentResolution(ticket)) return;
   if (resolution.status === "cached-cloud") {
     recheckSession();
     if (resolution.storedState.isOffline) recheckIfConnected();
@@ -55,7 +73,7 @@ export function startUploadReplayForSession(
   const liveSession = resolveLiveSession(resolution);
   import("@nucleum/shared-state/files/filefn-client")
     .then((files) => {
-      if (lifetime.aborted) return;
+      if (!isCurrentResolution(ticket)) return;
       if (resolution.status === "cached-cloud")
         files.startAccountUploadReplay();
       else if (liveSession) files.startAccountUploadReplay(liveSession);
@@ -81,20 +99,33 @@ function resolveLiveSession(
 
 /**
  * Stops the upload replay on sign-out: it ends the session's lifetime, so a
- * pending resolution of the stored session neither stores its session nor
- * authorizes the replay, and ends the session's replay authorization (see the
- * files runtime's endAccountUploadReplay), tearing the bound client down. The
- * returned promise settles once the authorization has ended; it never rejects.
+ * pending resolution of the stored session, or one started before the
+ * sign-out reopens the lifetime (see reopenSessionLifetime), neither stores
+ * its session nor authorizes the replay, and ends the session's replay
+ * authorization (see the files runtime's endAccountUploadReplay), tearing the
+ * bound client down. The returned promise settles once the authorization has
+ * ended; it never rejects.
  */
 export function stopUploadReplayForSession(): Promise<void> {
+  endingSessions += 1;
   sessionLifetime.abort();
-  sessionLifetime = new AbortController();
   stopSessionRecheck();
   return import("@nucleum/shared-state/files/filefn-client")
     .then((files) => files.endAccountUploadReplay())
     .catch((error: unknown) => {
       logger.error({ at: "account.uploadReplay.stop", error });
     });
+}
+
+/**
+ * Opens the next session lifetime once a sign-out (see
+ * stopUploadReplayForSession) has finished, and no other is still running.
+ */
+export function reopenSessionLifetime(): void {
+  endingSessions = Math.max(0, endingSessions - 1);
+  if (endingSessions === 0 && sessionLifetime.signal.aborted) {
+    sessionLifetime = new AbortController();
+  }
 }
 
 function stopSessionRecheck() {
@@ -127,16 +158,16 @@ function recheckSession() {
   let attempt: AbortController | undefined;
   let retries = 0;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
-  const lifetime = sessionLifetime.signal;
   const recheck = () => {
     clearTimeout(retryTimer);
     attempt?.abort();
     const current = new AbortController();
     attempt = current;
+    const ticket = beginSessionResolution();
     resolveAuthSession({ signal: current.signal })
       .then((resolution) => {
         if (!current.signal.aborted) {
-          startUploadReplayForSession(resolution, lifetime);
+          startUploadReplayForSession(resolution, ticket);
         }
       })
       .catch((error: unknown) => {

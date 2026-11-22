@@ -409,6 +409,9 @@ export async function resolveAuthSession(options?: {
       session: activeSession
     };
   } catch (error) {
+    if (options?.signal?.aborted) {
+      return { status: "signed-out", storedState };
+    }
     const canUseCachedCloudSession = canUseStoredCloudSession(
       storedState,
       error,

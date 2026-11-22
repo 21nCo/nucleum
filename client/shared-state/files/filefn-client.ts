@@ -175,18 +175,21 @@ export async function getFileFnClient(): Promise<FileFnClient | null> {
  * A client bound this way sends nothing (no offline replay, queue replay or
  * pending delete) until its replay is authorized (see isReplayAuthorized):
  * `liveSession` is the account and region a live session establishes. Without
- * it (a cached cloud session restored offline) the client is bound and waits.
- * With it, the client is bound only once the account state carries the same
- * cloud user at the same region, waiting while it carries no cloud user yet;
- * every other user the page knows is contradicted until the session ends, a
- * bound client of another user or region is torn down, and an account state
- * seeded with another user binds nothing. The account state, the queue and the
+ * it (a cached cloud session restored offline) an earlier live confirmation no
+ * longer counts (see stopAccountUploadReplay), and the client is bound and
+ * waits for the next one. With it, the client is bound only once the account
+ * state carries the same cloud user at the same region, waiting while it
+ * carries no cloud user yet; every other user the page knows, or the account
+ * state publishes, is contradicted until a live session confirms it, a bound
+ * client of another user or region is torn down, and an account state seeded
+ * with another user binds nothing. The account state, the queue and the
  * pending deletes stay as they are.
  */
 export function startAccountUploadReplay(
   liveSession?: FileFnAccountScope
 ): void {
   if (!liveSession) {
+    if (replayAuthorization.liveOwner) stopAccountUploadReplay();
     bindToAccount();
     return;
   }
@@ -225,6 +228,9 @@ export function startAccountUploadReplay(
     if (isLiveSessionScope(scope, liveSession)) {
       bindToAccount();
     } else {
+      if (scope.userId !== liveSession.userId) {
+        contradictedUserIds.add(scope.userId);
+      }
       logger.warn({ at: "filefn.uploadReplay.start.accountMismatch" });
     }
   });
@@ -233,8 +239,9 @@ export function startAccountUploadReplay(
 
 /**
  * Stops the upload replay the session restore started, once the stored session
- * resolves as expired, signed out, local-only or unavailable: the client it
- * bound is torn down, and the account state, the queue and the pending deletes
+ * resolves as expired, signed out, local-only, unavailable or only as the
+ * cached session: the client it bound is torn down, and the account state,
+ * the queue, the pending deletes and the users a live session contradicted
  * stay as they are. A client a file operation requested is left to it.
  */
 export function stopAccountUploadReplay(): void {
@@ -351,11 +358,16 @@ function notifyReplayWaiters() {
 /**
  * Binds the client to the account state for a file operation. Its replay
  * starts as soon as it is created, unless a live session contradicted the
- * account, whose replay then waits for one that confirms it.
+ * account (it stays contradicted when that session's confirmation lapses),
+ * whose replay then waits for one that confirms it.
  */
 function syncWithAccount() {
   const userId = resolveFileFnAccountScope(account.get())?.userId;
-  const { fileGrantUserIds } = replayAuthorization;
+  const { liveOwner, contradictedUserIds, fileGrantUserIds } =
+    replayAuthorization;
+  if (userId && liveOwner && liveOwner.userId !== userId) {
+    contradictedUserIds.add(userId);
+  }
   if (userId && !isContradicted(userId) && !fileGrantUserIds.has(userId)) {
     fileGrantUserIds.add(userId);
     notifyReplayWaiters();

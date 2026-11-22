@@ -32,7 +32,8 @@ import { resolveAccountBaseUrl } from "@nucleum/client/runtime/account/network";
 import { clearCachedDatafnE2eeState } from "@nucleum/datafn/datafnE2ee.store";
 import { determineIfOffline } from "@nucleum/client/runtime/connectivity";
 import {
-  currentSessionLifetime,
+  beginSessionResolution,
+  reopenSessionLifetime,
   startUploadReplayForSession,
   stopUploadReplayForSession
 } from "@nucleum/surfaces/account/account-upload-replay";
@@ -151,18 +152,22 @@ async function signOut(params?: {
   isPreventDapIdClear?: boolean;
   isPreventRedirect?: boolean;
 }) {
-  await stopUploadReplayForSession();
   try {
-    await destroyNucleumDatafn();
-  } catch (error) {
-    logger.error({ at: "account.signOut.destroyDatafn", error });
+    await stopUploadReplayForSession();
+    try {
+      await destroyNucleumDatafn();
+    } catch (error) {
+      logger.error({ at: "account.signOut.destroyDatafn", error });
+    }
+    await clearCachedDatafnE2eeState();
+    account.update(() => ({
+      sessionType: UserSessionType.UNDETERMINED,
+      dataMode: UserDataMode.NONE
+    }));
+    await signout(params, "signOut account.store");
+  } finally {
+    reopenSessionLifetime();
   }
-  await clearCachedDatafnE2eeState();
-  account.update(() => ({
-    sessionType: UserSessionType.UNDETERMINED,
-    dataMode: UserDataMode.NONE
-  }));
-  await signout(params, "signOut account.store");
   if (!params?.isPreventRedirect) goto("/account/login");
 }
 
@@ -442,9 +447,9 @@ async function bootstrap(region: string) {
 }
 
 async function checkIfSessionExpired() {
-  const lifetime = currentSessionLifetime();
-  const resolution = await resolveAuthSession({ signal: lifetime });
-  startUploadReplayForSession(resolution, lifetime);
+  const ticket = beginSessionResolution();
+  const resolution = await resolveAuthSession({ signal: ticket.signal });
+  startUploadReplayForSession(resolution, ticket);
   return !["authenticated", "offline-only", "cached-cloud"].includes(
     resolution.status
   );
