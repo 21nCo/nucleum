@@ -2,6 +2,10 @@
   import type { ResourceAccessPoint } from "@nucleum/datafn/resource.type";
   import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
   import type { IGist } from "@nucleum/features/memory/node/node.type";
+  import {
+    EMBED_IFRAME_SANDBOX,
+    resolveUpgradedEmbedFrameUrl
+  } from "@nucleum/features/memory/node/content/web/social/embed-html";
   let {
     node,
     accessPoint
@@ -47,12 +51,30 @@
     }
   }
 
+  function resolveHttpsUrl(url: string): URL | null {
+    const frameUrl = resolveUpgradedEmbedFrameUrl(url);
+    return frameUrl ? new URL(frameUrl) : null;
+  }
+
   function isGitHubGist(url: string): boolean {
-    return url.includes("gist.github.com");
+    return resolveHttpsUrl(url)?.hostname === "gist.github.com";
   }
 
   function isGitLabSnippet(url: string): boolean {
-    return url.includes("gitlab.com/-/snippets");
+    const parsed = resolveHttpsUrl(url);
+    return (
+      parsed?.hostname === "gitlab.com" &&
+      parsed.pathname.includes("/-/snippets/")
+    );
+  }
+
+  function resolveGistFrameUrl(url: string): string {
+    const parsed = resolveHttpsUrl(url);
+    if (!parsed) return "about:blank";
+    parsed.pathname = `${parsed.pathname.replace(/\/+$/, "")}.pibb`;
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.href;
   }
 
   $effect(() => {
@@ -67,7 +89,8 @@
     {#if isGitHubGist(node.url)}
       <iframe
         title="GitHub Gist"
-        src={node.url + ".pibb"}
+        src={resolveGistFrameUrl(node.url)}
+        sandbox={EMBED_IFRAME_SANDBOX}
         class="w-full h-full border-0 min-h-[200px]"
         frameborder="0"
         scrolling="auto"

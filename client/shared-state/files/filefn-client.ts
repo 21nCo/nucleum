@@ -25,6 +25,7 @@ import {
   replayFileQueue,
   resolveAccountFileQueueDir,
   resolveFileQueueDirsOf,
+  toRecordsView,
   type QueuedFileClaim,
   type QueuedFileReferences
 } from "@nucleum/shared-state/files/file-queue";
@@ -309,14 +310,38 @@ function startFileQueueReplay(
   globalThis.addEventListener?.("online", replay, { signal: teardown });
 }
 
+/**
+ * Replays the account's queue (see replayFileQueue) with its records as the
+ * DataFn runtime current now holds them: once another runtime replaces it,
+ * also one of the same account at the same authority, the references are no
+ * longer current, so no decision read from the replaced runtime is acted on,
+ * also by the retries and deadline passes that reuse them; the replay that
+ * runtime starts decides again (see startFileQueueReplay). They watch the
+ * runtime until it is replaced or the client is torn down.
+ */
 function replayAccountFileQueue(uploader: FileQueueUploader) {
   const { userId, baseUrl, client, signal } = uploader;
   if (signal.aborted || isAppOffline()) return;
   const namespace = `user:${userId}`;
+  const bound = { runtime: undefined as unknown, isReplaced: false };
+  let stopWatching = () => undefined as void;
+  const unwatch = () => {
+    stopWatching();
+    signal.removeEventListener("abort", unwatch);
+  };
+  stopWatching = datafnRuntime.subscribe((runtime) => {
+    if (bound.runtime === undefined) bound.runtime = runtime;
+    else if (runtime !== bound.runtime && !bound.isReplaced) {
+      bound.isReplaced = true;
+      queueMicrotask(unwatch);
+    }
+  });
+  signal.addEventListener("abort", unwatch, { once: true });
   const isAccountRecords = () => {
     const runtime = get(datafnRuntime);
     return (
       !signal.aborted &&
+      !bound.isReplaced &&
       datafn.currentNamespace() === namespace &&
       runtime?.namespace === namespace &&
       runtime.remoteUrl?.replace(/\/datafn\/?$/, "") ===
@@ -326,6 +351,7 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
   const references: QueuedFileReferences = {
     owner: { userId, baseUrl },
     isCurrent: isAccountRecords,
+    view: () => toRecordsView(get(datafnRuntime)),
     async sync() {
       if (!isAccountRecords()) return false;
       if (!get(datafnRuntime)?.storage) return true;
@@ -346,10 +372,14 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
       return result.data.length > 0;
     },
     async discard(fileId) {
+      if (!isAccountRecords()) return false;
       await client.deleteFile(fileId).catch(async (error: unknown) => {
         logger.warn({ at: "filefn.client.queue.discard", fileId, error });
-        await recordPendingDelete(userId, baseUrl, fileId);
+        if (isAccountRecords()) {
+          await recordPendingDelete(userId, baseUrl, fileId);
+        }
       });
+      return isAccountRecords();
     }
   };
   replayFileQueue(

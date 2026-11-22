@@ -7,11 +7,11 @@
 
   import { type INode } from "@nucleum/features/memory/node/node.type";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
-  import { resolveContentPreview } from "@nucleum/features/memory/node/node.utils";
+  import { resolveCopyablePostText } from "@nucleum/features/memory/node/content/web/social/social-widgets";
   import { properCase } from "@21n/shared-utils/text.utils";
   import { toasts } from "@nucleum/shared-state/notifications/notification.store";
   let { node }: { node: INode } = $props();
-  let hasPermanentCopy = $derived(!!resolveContentPreview(node));
+  let hasPermanentCopy = $derived(!!resolveCopyablePostText(node));
 
   function resolveOpenInButtonLabel() {
     let suffix = "";
@@ -26,7 +26,7 @@
   }
 
   async function copyTextContent() {
-    const text = resolveContentPreview(node);
+    const text = resolveCopyablePostText(node);
     if (text) {
       await navigator.clipboard.writeText(text);
       toasts.success("Text copied to clipboard");
