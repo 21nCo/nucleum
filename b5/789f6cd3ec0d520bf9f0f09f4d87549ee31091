@@ -1,0 +1,19 @@
+client/surfaces/account/account-upload-replay.test.ts
+  s_124319b903d839::t_87fed26190f63a 1939-2206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b5789f6cd3ec0d520bf9f0f09f4d87549ee31091",
+  "prompts": {},
+  "sessions": {
+    "s_124319b903d839": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "459fa815-0e7a-4823-b25b-3c85bd3d320a",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
