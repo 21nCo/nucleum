@@ -129,7 +129,11 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
         }
       : null
   );
-  return { ...actual, datafn, datafnRuntime };
+  const destroyNucleumDatafn = async () => {
+    await datafnTeardown.before?.();
+    return actual.destroyNucleumDatafn();
+  };
+  return { ...actual, datafn, datafnRuntime, destroyNucleumDatafn };
 });
 
 // Navigation and the native shell's sign-out cleanup are outside this test.
@@ -167,6 +171,10 @@ vi.mock("@nucleum/client/runtime/account/session-cleanup", () => ({
 /** While `gate` is pending, sign-out's DataFn E2EE cleanup waits for it. */
 const cleanupHold = vi.hoisted(() => ({
   gate: undefined as Promise<void> | undefined
+}));
+/** When set, every DataFn teardown runs it first. */
+const datafnTeardown = vi.hoisted(() => ({
+  before: undefined as (() => Promise<void>) | undefined
 }));
 vi.mock("@nucleum/datafn/datafnE2ee.store", async (importOriginal) => {
   const actual =
@@ -386,6 +394,8 @@ async function clearStorage() {
 }
 
 afterEach(async () => {
+  datafnTeardown.before = undefined;
+  cleanupHold.gate = undefined;
   for (const page of pages.splice(0)) await leave(page);
   await clearStorage();
   vi.useRealTimers();
@@ -1209,6 +1219,46 @@ describe("replay authorization across the session lifetime", () => {
       release();
       await signingOut;
     }
+  });
+
+  it("sends nothing for the stored account from a file lookup during sign-out cleanup after an unavailable recheck", async () => {
+    const { page } = await restoreOffline();
+    authfn.respond = async () => ({
+      ok: false,
+      error: { code: "AUTHFN_SERVER_ERROR", retryable: false }
+    });
+    const resolved = auth.resolved;
+    goOnline();
+    await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+    await settle();
+    const release = holdCleanup();
+    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
+    await settle();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await settle();
+    try {
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+    } finally {
+      release();
+      await signingOut;
+    }
+  });
+
+  it("tears the ending session's client down before sign-out destroys DataFn", async () => {
+    const { page } = await restoreOffline();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    const ending = await files.getFileFnClient();
+    let atTeardown: unknown;
+    datafnTeardown.before = async () => {
+      datafnTeardown.before = undefined;
+      atTeardown = await files.getFileFnClient();
+    };
+    await page.accountSession.signOut({ isPreventRedirect: true });
+    expect(ending).not.toBeNull();
+    expect(atTeardown).not.toBe(ending);
   });
 
   it("drains the queue and the pending delete once when a live session confirms the account after sign-out", async () => {
