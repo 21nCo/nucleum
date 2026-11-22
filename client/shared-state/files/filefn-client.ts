@@ -508,7 +508,7 @@ async function createAccountFileFnClient(
     baseUrl,
     teardown,
     { enabled: true, opfsDir: resolveFileFnOfflineDir(userId) },
-    sent
+    { sent }
   );
   const guarded = guardFileFnClient(client, teardown);
   countSentRequests(guarded, sent);
@@ -762,20 +762,21 @@ export async function uploadQueuedFiles(): Promise<void> {
 
 /**
  * Creates an SDK client at an authority, authenticated as the signed-in
- * account, whose requests end when the teardown signal aborts and whose
+ * account, whose requests end when the teardown signal aborts, are each
+ * dispatched only while `isDispatchAllowed` (when given) holds, and whose
  * upload requests add to `sent` once dispatched (see createTeardownFetch).
  */
 async function createSdkClient(
   baseUrl: string,
   teardown: AbortSignal,
   offline: { enabled: boolean; opfsDir?: string },
-  sent?: Map<string, number>
+  dispatch: DispatchGate = {}
 ): Promise<FileFnClient> {
   const transport = await createNucleumAuthFnTransportAuth();
   return createFileFnClient({
     baseUrl,
     credentials: (await transport.getCredentials?.()) ?? "include",
-    fetch: createTeardownFetch(teardown, sent),
+    fetch: createTeardownFetch(teardown, dispatch),
     getAuthHeaders: async () => {
       teardown.throwIfAborted();
       return Object.fromEntries(
@@ -837,6 +838,13 @@ function startOfflineReplay(client: FileFnClient) {
 
 function createTeardownError() {
   return new DOMException("The FileFn client was torn down", "AbortError");
+}
+
+function createDispatchRefusedError() {
+  return new DOMException(
+    "The FileFn replay is not authorized at this authority",
+    "AbortError"
+  );
 }
 
 /**
@@ -1101,7 +1109,8 @@ async function recordPendingDelete(
  * Sends the account's pending deletes at every authority that has one and
  * where its replay is authorized (see isReplayAuthorized): at the client's
  * own authority through it, at another through a client of that authority
- * made for the account and ended with the client's teardown.
+ * made for the account and ended with the client's teardown, which sends each
+ * request, an SDK retry included, only while the replay is authorized there.
  */
 async function drainAccountPendingDeletes(
   userId: string,
@@ -1123,7 +1132,12 @@ async function drainAccountPendingDeletes(
       authority === baseUrl
         ? client
         : guardFileFnClient(
-            await createSdkClient(authority, teardown, { enabled: false }),
+            await createSdkClient(
+              authority,
+              teardown,
+              { enabled: false },
+              { isDispatchAllowed: () => isReplayAuthorized(userId, authority) }
+            ),
             teardown
           )
     );
@@ -1336,17 +1350,32 @@ function guardFileFnClient(
 }
 
 /**
+ * How an SDK client dispatches: `isDispatchAllowed`, when given, is checked
+ * right before each request, including every retry the SDK makes, and `sent`
+ * counts each upload's first request (see createTeardownFetch).
+ */
+interface DispatchGate {
+  isDispatchAllowed?: () => boolean;
+  sent?: Map<string, number>;
+}
+
+/**
  * Sends requests through the global fetch until the client is torn down, then
  * aborts in-flight requests and rejects new ones with an AbortError, which the
- * offline queue keeps staged without spending a retry. Counts in `sent` only
+ * offline queue keeps staged without spending a retry. Rejects a request with
+ * an AbortError, which the SDK does not retry, when `isDispatchAllowed` is
+ * given and does not hold right before it is sent. Counts in `sent` only
  * each upload's first request, as dispatched, by its key (see readUploadKey).
  */
 function createTeardownFetch(
   teardown: AbortSignal,
-  sent?: Map<string, number>
+  { isDispatchAllowed, sent }: DispatchGate = {}
 ): typeof fetch {
   return async (input, init) => {
     teardown.throwIfAborted();
+    if (isDispatchAllowed && !isDispatchAllowed()) {
+      throw createDispatchRefusedError();
+    }
     const linked = new AbortController();
     const sources = [teardown, init?.signal].filter(
       (signal): signal is AbortSignal => Boolean(signal)
