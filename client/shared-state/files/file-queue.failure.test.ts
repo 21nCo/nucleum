@@ -322,6 +322,118 @@ describe("a queued upload FileFn rejects for good", () => {
   });
 });
 
+describe("a failed file of the local queue another account claimed", () => {
+  /**
+   * Stages the photo in the device's local queue, claimed by user-b, and
+   * has FileFn reject it for good on a replay that stays current, whose
+   * client uploads it on its next attempt.
+   */
+  async function rejectClaimedPhoto(queue: FileQueue) {
+    await queue.enqueueFile(queue.LOCAL_FILE_QUEUE_DIR, {
+      fileId: FILE_ID,
+      fileName: "photo.png",
+      contentType: "image/png",
+      blob: new Blob(["photo bytes"], { type: "image/png" }),
+      claim: { userId: "user-b", baseUrl: "https://b.example.test/files" }
+    });
+    await queue.markQueuedFileCommitted(queue.LOCAL_FILE_QUEUE_DIR, FILE_ID);
+    const fileFn = createClient([rejection(400), "ok"]);
+    await queue.replayFileQueue(
+      queue.LOCAL_FILE_QUEUE_DIR,
+      fileFn.client,
+      new AbortController().signal
+    );
+    expect(fileFn.uploads).toHaveLength(1);
+    return fileFn;
+  }
+
+  it("is failed and retried only for the account that claimed it", async () => {
+    installDevice();
+    const tab = await openTab();
+    const fileFn = await rejectClaimedPhoto(tab);
+    const changes: string[] = [];
+    tab.onQueuedFileFailureChange((fileId) => changes.push(fileId));
+    const userADirs = tab.resolveFileQueueDirsOf("user-a");
+    const userBDirs = tab.resolveFileQueueDirsOf("user-b");
+
+    expect(await tab.isQueuedFileFailed(userADirs, FILE_ID, "user-a")).toBe(
+      false
+    );
+    expect(
+      await tab.isQueuedFileFailed([tab.LOCAL_FILE_QUEUE_DIR], FILE_ID)
+    ).toBe(false);
+    expect(await tab.retryFailedQueuedFile(userADirs, FILE_ID, "user-a")).toBe(
+      false
+    );
+    await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(changes).toEqual([]);
+    expect(await tab.isQueuedFileFailed(userBDirs, FILE_ID, "user-b")).toBe(
+      true
+    );
+
+    expect(await tab.retryFailedQueuedFile(userBDirs, FILE_ID, "user-b")).toBe(
+      true
+    );
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+    expect(await tab.isQueuedFileFailed(userBDirs, FILE_ID, "user-b")).toBe(
+      false
+    );
+  });
+
+  it("keeps an unclaimed failed file failed and retryable for any account", async () => {
+    installDevice();
+    const tab = await openTab();
+    await enqueuePhoto(tab);
+    const fileFn = createClient([rejection(400), "ok"]);
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal
+    );
+
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, "user-b")).toBe(true);
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, null)).toBe(true);
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID, "user-b")).toBe(
+      true
+    );
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+  });
+
+  it("is shown and retried by a file display only for the claiming account", async () => {
+    installDevice();
+    const owner = { userId: "user-a", isLive: true };
+    vi.resetModules();
+    vi.doMock("@nucleum/shared-state/files/filefn-client", () => ({
+      captureFileFnOwner: () => ({ userId: owner.userId, epoch: 1 }),
+      isFileFnOwnerLive: () => owner.isLive,
+      resolveFileFnAccountScope: () =>
+        owner.isLive ? { userId: owner.userId, region: null } : null
+    }));
+    const queue = await import("./file-queue");
+    const fileUrl = await import("./file-url");
+    const fileFn = await rejectClaimedPhoto(queue);
+    const read = () =>
+      new Promise<boolean>((resolve) => {
+        const stop = fileUrl.watchFileUploadFailure(FILE_ID, (isFailed) => {
+          stop();
+          resolve(isFailed);
+        });
+      });
+
+    expect(await read()).toBe(false);
+    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(false);
+    await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+    expect(fileFn.uploads).toHaveLength(1);
+
+    owner.userId = "user-b";
+    expect(await read()).toBe(true);
+    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+    expect(await read()).toBe(false);
+  });
+});
+
 describe("the failed state a file display reads", () => {
   async function openFileUrl(owner: { userId: string; isLive: boolean }) {
     vi.resetModules();

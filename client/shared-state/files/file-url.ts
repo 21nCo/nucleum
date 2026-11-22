@@ -136,9 +136,10 @@ export async function resolveFileUrl(
  * onQueuedFileFailureChange: marked, retried, removed, uploaded or written
  * again) and whenever another cloud account, or none, is signed in,
  * reporting the latest read only, and never once stopped; a read during
- * which another account, or none, was signed in, or that fails, reports
- * false, so another account or device shows the file as it shows any file
- * it cannot resolve. Returns the stop.
+ * which another account, or none, was signed in, or that fails, and one of
+ * a file another account claimed (see isQueuedFileFailed), reports false, so
+ * another account or device shows the file as it shows any file it cannot
+ * resolve. Returns the stop.
  *
  * Reading is not a file operation: it only reads the account state, so it
  * never requests the account's FileFn client nor authorizes its replay (see
@@ -190,7 +191,8 @@ async function readFileUploadFailure(fileId: string): Promise<boolean> {
     const userId = readAccountUserId();
     const isFailed = await isQueuedFileFailed(
       resolveFileQueueDirsOf(userId),
-      fileId
+      fileId,
+      userId
     );
     return isFailed && readAccountUserId() === userId;
   } catch (error: unknown) {
@@ -212,9 +214,11 @@ export async function retryFileUpload(fileId: string): Promise<boolean> {
   try {
     const owner = captureFileFnOwner();
     if (owner && !isFileFnOwnerLive(owner)) return false;
+    const userId = owner?.userId ?? null;
     return await retryFailedQueuedFile(
-      resolveFileQueueDirsOf(owner?.userId ?? null),
-      fileId
+      resolveFileQueueDirsOf(userId),
+      fileId,
+      userId
     );
   } catch (error: unknown) {
     logger.warn({ at: "fileUrl.retry", fileId, error });

@@ -372,13 +372,10 @@ export async function dequeueFile(
   if (isAllowed && !(await isAllowed())) return false;
   await getStore(dir).deletePendingUpload(entryName);
   const key = `${dir}\n${entryName}`;
-  const isLeft = await getEntryDir(dir, entryName, true).then(
-    Boolean,
-    () => {
-      unconfirmedRemovals.add(key);
-      return true;
-    }
-  );
+  const isLeft = await getEntryDir(dir, entryName, true).then(Boolean, () => {
+    unconfirmedRemovals.add(key);
+    return true;
+  });
   if (isLeft) throw new UnconfirmedRemovalError();
   unconfirmedRemovals.delete(key);
   await bumpRevisionAfter(dir);
@@ -605,16 +602,19 @@ async function readThumbnail(
 
 /**
  * Whether the first queue that holds a file (see resolveQueuedFileUrl) holds
- * it failed (see FAILED_PREFIX); false when none holds it or it cannot be
- * read.
+ * it failed (see FAILED_PREFIX) for the account `userId` (null for none):
+ * the entry is unclaimed or claimed by that account (see isClaimedBy). False
+ * when none holds it, another account claimed it or it cannot be read.
  */
 export async function isQueuedFileFailed(
   dirs: readonly string[],
-  fileId: string
+  fileId: string,
+  userId: string | null = null
 ): Promise<boolean> {
   if (!isFileQueueSupported()) return false;
   const found = await findPublishedEntry(dirs, fileId);
-  return Boolean(found?.entry.names.includes(toFailedMark(found.entry)));
+  if (!found?.entry.names.includes(toFailedMark(found.entry))) return false;
+  return isClaimedBy(found.dir, toEntryName(fileId), userId);
 }
 
 /**
@@ -625,18 +625,25 @@ export async function isQueuedFileFailed(
  * (see isStale), when the next replay requested uploads it. Resolves
  * whether it removed a mark; one it finds unmarked (removed, uploaded or
  * written again meanwhile) resolves false and has the file's failed state
- * read again (see onQueuedFileFailureChange). A mark it cannot remove
+ * read again (see onQueuedFileFailureChange). Only the account `userId`
+ * (null for none) the entry is unclaimed or claimed by retries it (see
+ * isClaimedBy): one another account claimed resolves false and is left as
+ * it is, its mark kept and no replay started. A mark it cannot remove
  * rejects.
  */
 export async function retryFailedQueuedFile(
   dirs: readonly string[],
-  fileId: string
+  fileId: string,
+  userId: string | null = null
 ): Promise<boolean> {
   if (!isFileQueueSupported()) return false;
   const found = await findPublishedEntry(dirs, fileId);
   const mark = found && toFailedMark(found.entry);
   if (!found || !mark || !found.entry.names.includes(mark)) {
     notifyFailureChange(fileId);
+    return false;
+  }
+  if (!(await isClaimedBy(found.dir, toEntryName(fileId), userId))) {
     return false;
   }
   await removeEntryFile(found.entry.entry, mark);
@@ -700,6 +707,23 @@ function notifyFailureChange(fileId: string) {
 
 function toFailedMark({ generation }: Pick<PublishedEntry, "generation">) {
   return `${FAILED_PREFIX}${generation}`;
+}
+
+/**
+ * Whether an entry's failed state is the account `userId`'s (null for none)
+ * to read and retry: it is unclaimed, or claimed by that account, as replay
+ * only uploads an entry through the account that claimed it (see
+ * isPublishable). The claim's account is compared alone: its authority is
+ * the account's own, which a failed-state read does not resolve (see
+ * watchFileUploadFailure).
+ */
+async function isClaimedBy(
+  dir: string,
+  entryName: string,
+  userId: string | null
+) {
+  const claim = await readClaim(dir, entryName);
+  return !claim || claim.userId === userId;
 }
 
 /** The first queue's published entry of a file (see getPublishedEntryDir). */
