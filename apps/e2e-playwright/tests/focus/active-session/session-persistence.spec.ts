@@ -94,14 +94,16 @@ test("keeps the global timer active while navigating away", async ({
   await addAdvancedFocusItems(page, [fixture.objective.label]);
   await startAdvancedFocus(page);
   await hideFocusFullscreen(page);
-  await page
-    .getByRole("button", { name: /^Calendar$/i })
-    .first()
-    .click({ timeout: 5_000 });
+  const calendar = page.getByRole("button", { name: /^Calendar$/i }).first();
+  await expect(calendar).toBeVisible();
+  await calendar.click({ noWaitAfter: true, timeout: 5_000 });
+  await expect(page).toHaveURL((url) =>
+    /^\/calendar(?:\/|$)/.test(url.pathname)
+  );
 
   const topNavTimer = page
-    .getByRole("button", { name: /^\d{2}:\d{2}(?::\d{2})?$/ })
-    .last();
+    .getByTestId("top-bar")
+    .getByRole("button", { name: /^\d{2}:\d{2}(?::\d{2})?$/ });
   await expect(topNavTimer).toBeVisible({ timeout: 15_000 });
   expect((await readSessionRuntime(page)).isSessionRunning).toBe(true);
 

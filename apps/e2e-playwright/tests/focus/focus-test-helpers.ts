@@ -269,7 +269,10 @@ export async function reloadActiveSession(page: Page) {
   await expectAnyLocatorVisible(
     [
       page.getByRole("button", { name: "Finish", exact: true }),
-      page.getByTestId("focus-top-nav-timer")
+      page.getByTestId("focus-top-nav-timer"),
+      page.getByTestId("top-bar").getByRole("button", {
+        name: /^\d{2}:\d{2}(?::\d{2})?$/
+      })
     ],
     { timeout: 20_000 }
   );
