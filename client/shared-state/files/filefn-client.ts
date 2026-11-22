@@ -245,12 +245,15 @@ export function startAccountUploadReplay(
  * resolves as expired, signed out, local-only, unavailable or only as the
  * cached session: the client it bound is torn down, and the account state,
  * the queue, the pending deletes and the users a live session contradicted
- * stay as they are. A client a file operation requested is left to it.
+ * stay as they are. A client a file operation requested, or its pending
+ * stored-region bind (see cancelPendingBind), is left to it.
  */
 export function stopAccountUploadReplay(): void {
+  const { fileGrantUserIds } = replayAuthorization;
   replayAuthorization.liveOwner = null;
   stopLiveBindWait();
-  if (!replayAuthorization.fileGrantUserIds.has(currentEntry?.userId ?? "")) {
+  if (!fileGrantUserIds.has(ownerUserId ?? "")) cancelPendingBind();
+  if (!fileGrantUserIds.has(currentEntry?.userId ?? "")) {
     tearDownFileFnClient();
   }
 }
@@ -451,7 +454,16 @@ function bindToStoredRegion(userId: string, generation: number) {
   return sync;
 }
 
+/**
+ * Creates the account's client at the region's authority, unless it is
+ * already bound there. A user a live session contradicted gets none, and its
+ * client is torn down, until a live session confirms it.
+ */
 function bindFileFnClient(userId: string, region: string) {
+  if (isContradicted(userId)) {
+    tearDownFileFnClient();
+    return;
+  }
   const baseUrl = resolveFileFnBaseUrl(region);
   const key = `${userId}:${baseUrl}`;
   if (currentEntry?.key === key) return;
@@ -1107,7 +1119,7 @@ async function drainAccountPendingDeletes(
   for (const authority of authorities) {
     if (teardown.aborted) return;
     if (!isReplayAuthorized(userId, authority)) continue;
-    await drainPendingDeletes(userId, authority, async () =>
+    await drainPendingDeletes(userId, authority, teardown, async () =>
       authority === baseUrl
         ? client
         : guardFileFnClient(
@@ -1125,11 +1137,12 @@ async function drainAccountPendingDeletes(
 function drainPendingDeletes(
   userId: string,
   baseUrl: string,
+  teardown: AbortSignal,
   getClient: () => Promise<FileFnClient>
 ): Promise<void> {
   const key = `${userId}:${baseUrl}`;
   const drain = (pendingDeleteDrains.get(key) ?? Promise.resolve())
-    .then(() => replayPendingDeletes(userId, baseUrl, getClient))
+    .then(() => replayPendingDeletes(userId, baseUrl, teardown, getClient))
     .catch((error: unknown) => {
       logger.error({ at: "filefn.client.pendingDelete", error });
     });
@@ -1181,10 +1194,15 @@ async function getPendingDeleteDir(
  * Sends the account's pending deletes at an authority, dropping each one
  * that succeeds or finds the file already gone and keeping each other
  * failure for the next drain. The client is made only when one is pending.
+ * The client is made, and each delete sent, only while the client is not
+ * torn down and the replay is authorized at the authority (see
+ * isReplayAuthorized); once it is not, the drain stops and keeps the rest
+ * for a later one.
  */
 async function replayPendingDeletes(
   userId: string,
   baseUrl: string,
+  teardown: AbortSignal,
   getClient: () => Promise<FileFnClient>
 ) {
   const dir = await getPendingDeleteDir(userId, baseUrl, false);
@@ -1194,9 +1212,12 @@ async function replayPendingDeletes(
       fileIds.add(decodeURIComponent(name));
     }
   }
-  if (fileIds.size === 0) return;
+  const isSendable = () =>
+    !teardown.aborted && isReplayAuthorized(userId, baseUrl);
+  if (fileIds.size === 0 || !isSendable()) return;
   const client = await getClient();
   for (const fileId of fileIds) {
+    if (!isSendable()) return;
     try {
       await client.deleteFile(fileId).catch((error: unknown) => {
         if (!(error instanceof FileFnHttpError && error.status === 404)) {

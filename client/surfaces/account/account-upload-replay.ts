@@ -54,13 +54,14 @@ export function beginSessionResolution(): SessionResolutionTicket {
 /**
  * Ends a resolution whose caller is done with it, whether or not it reached
  * startUploadReplayForSession, so one that failed no longer holds older ones
- * back: the newest result held for it then applies.
+ * back: the newest result held for it then applies. A resolution that is no
+ * longer pending is left as it is, so ending it again changes nothing.
  */
 export function abandonSessionResolution(
   ticket: SessionResolutionTicket
 ): void {
   if (loadingGenerations.has(ticket.generation)) return;
-  pendingGenerations.delete(ticket.generation);
+  if (!pendingGenerations.delete(ticket.generation)) return;
   const held = heldResolution;
   if (!held || isNewerResolutionPending(held.ticket.generation)) return;
   heldResolution = undefined;
@@ -227,21 +228,31 @@ function recheckIfConnected() {
  * mode ends, and, after an AuthFn failure while connected, with a growing
  * delay, until a resolution other than a cached or unavailable one settles
  * the restored replay. A newer resolution or a stop aborts the pending one
- * before it stores, clears or applies anything. An attempt that fails keeps
- * the growing delay armed until a resolution settles the replay or a stop.
+ * before it stores, clears or applies anything, and ends its ticket at once,
+ * after the newer one's has started, so a result held for it is decided
+ * without waiting for the aborted request to settle. An attempt that fails
+ * keeps the growing delay armed until a resolution settles the replay or a
+ * stop.
  */
 function recheckSession() {
   if (sessionRecheck) return;
   const controller = new AbortController();
-  let attempt: AbortController | undefined;
+  let attempt:
+    | { controller: AbortController; ticket: SessionResolutionTicket }
+    | undefined;
   let retries = 0;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
+  const endAttempt = (ended: typeof attempt) => {
+    ended?.controller.abort();
+    if (ended) abandonSessionResolution(ended.ticket);
+  };
   const recheck = () => {
     clearTimeout(retryTimer);
-    attempt?.abort();
+    const previous = attempt;
     const current = new AbortController();
-    attempt = current;
     const ticket = beginSessionResolution();
+    attempt = { controller: current, ticket };
+    endAttempt(previous);
     resolveAuthSession({ signal: current.signal })
       .then((resolution) => {
         if (current.signal.aborted) abandonSessionResolution(ticket);
@@ -275,7 +286,7 @@ function recheckSession() {
     recheck,
     stop: () => {
       controller.abort();
-      attempt?.abort();
+      endAttempt(attempt);
       clearTimeout(retryTimer);
       stopOfflineMode();
     },
