@@ -83,10 +83,17 @@ async function enqueuePhoto(queue: FileQueue) {
   await queue.markQueuedFileCommitted(QUEUE, FILE_ID);
 }
 
+const AUTHORITY_A = "https://a.example.test/files";
+const AUTHORITY_B = "https://b.example.test/files";
+/** user-a at the authority its records reference the photo under. */
+const OWNER_A = { userId: "user-a", baseUrl: AUTHORITY_A };
+/** user-b at the authority it claims the local photo at. */
+const OWNER_B = { userId: "user-b", baseUrl: AUTHORITY_B };
+
 /** An account's records that reference the queued photo. */
 function referencingRecords() {
   return {
-    owner: { userId: "user-a", baseUrl: "https://a.example.test/files" },
+    owner: OWNER_A,
     isCurrent: () => true,
     sync: async () => true,
     isReferenced: async (fileId: string) => fileId === FILE_ID,
@@ -104,6 +111,34 @@ beforeEach(() => {
   vi.spyOn(URL, "createObjectURL").mockImplementation(() => "blob:queued");
   vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
 });
+
+/**
+ * Replaces the account's FileFn client module with one whose signed-in
+ * account is `owner`, live while `isLive`, its session carrying `region`
+ * (none by default) and its client settled at `baseUrl` (authority A by
+ * default; resolveFileFnBaseUrl maps a region to `https://<region>.example.test/files`).
+ */
+function mockFileFnOwner(owner: {
+  userId: string;
+  isLive: boolean;
+  region?: string | null;
+  baseUrl?: string;
+}) {
+  vi.doMock("@nucleum/shared-state/files/filefn-client", () => ({
+    captureFileFnOwner: () => ({ userId: owner.userId, epoch: 1 }),
+    captureFileQueueClaim: async () =>
+      owner.isLive
+        ? { userId: owner.userId, baseUrl: owner.baseUrl ?? AUTHORITY_A }
+        : undefined,
+    isFileFnOwnerLive: () => owner.isLive,
+    resolveFileFnAccountScope: () =>
+      owner.isLive
+        ? { userId: owner.userId, region: owner.region ?? null }
+        : null,
+    resolveFileFnBaseUrl: (region: string) =>
+      `https://${region}.example.test/files`
+  }));
+}
 
 afterEach(() => {
   vi.useRealTimers();
@@ -137,7 +172,9 @@ describe("a queued upload FileFn rejects for good", () => {
 
       await replay();
 
-      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true);
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(
+        true
+      );
       expect(changes).toEqual([FILE_ID]);
       expect(opfs.list(QUEUE)).toEqual([ENTRY]);
       expect(opfs.list(QUEUE, ENTRY)).toContain("data.bin");
@@ -148,7 +185,9 @@ describe("a queued upload FileFn rejects for good", () => {
       await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
       await replay();
       expect(fileFn.uploads).toHaveLength(1);
-      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true);
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(
+        true
+      );
     }
   );
 
@@ -177,7 +216,9 @@ describe("a queued upload FileFn rejects for good", () => {
         new AbortController().signal
       );
 
-      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true);
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(
+        true
+      );
     }
   );
 
@@ -244,7 +285,9 @@ describe("a queued upload FileFn rejects for good", () => {
         undefined,
         referencingRecords()
       );
-      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(false);
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(
+        false
+      );
       expect(opfs.list(QUEUE)).toEqual([ENTRY]);
 
       await vi.advanceTimersByTimeAsync(5_000);
@@ -268,14 +311,18 @@ describe("a queued upload FileFn rejects for good", () => {
       referencingRecords()
     );
 
-    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID)).toBe(true);
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A)).toBe(
+      true
+    );
 
-    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(false);
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(false);
     await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
     expect(fileFn.uploads).toHaveLength(2);
     const markedRetriedThenUploaded = [FILE_ID, FILE_ID, FILE_ID];
     expect(changes).toEqual(markedRetriedThenUploaded);
-    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID)).toBe(false);
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A)).toBe(
+      false
+    );
   });
 
   it("marks a retried file failed again only when FileFn rejects it again", async () => {
@@ -290,13 +337,13 @@ describe("a queued upload FileFn rejects for good", () => {
     const signal = new AbortController().signal;
     await tab.replayFileQueue(QUEUE, fileFn.client, signal);
 
-    await tab.retryFailedQueuedFile([QUEUE], FILE_ID);
+    await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A);
     await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
-    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(false);
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(false);
 
     await vi.advanceTimersByTimeAsync(5_000);
     await vi.waitFor(async () =>
-      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID)).toBe(true)
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(true)
     );
     expect(fileFn.uploads).toHaveLength(3);
     expect(opfs.list(QUEUE)).toEqual([ENTRY]);
@@ -311,7 +358,9 @@ describe("a queued upload FileFn rejects for good", () => {
     await tab.replayFileQueue(QUEUE, rejected.client, page.signal);
     page.abort();
 
-    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID)).toBe(true);
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A)).toBe(
+      true
+    );
     await vi.advanceTimersByTimeAsync(0);
     expect(rejected.uploads).toHaveLength(1);
 
@@ -334,7 +383,7 @@ describe("a failed file of the local queue another account claimed", () => {
       fileName: "photo.png",
       contentType: "image/png",
       blob: new Blob(["photo bytes"], { type: "image/png" }),
-      claim: { userId: "user-b", baseUrl: "https://b.example.test/files" }
+      claim: OWNER_B
     });
     await queue.markQueuedFileCommitted(queue.LOCAL_FILE_QUEUE_DIR, FILE_ID);
     const fileFn = createClient([rejection(400), "ok"]);
@@ -356,27 +405,27 @@ describe("a failed file of the local queue another account claimed", () => {
     const userADirs = tab.resolveFileQueueDirsOf("user-a");
     const userBDirs = tab.resolveFileQueueDirsOf("user-b");
 
-    expect(await tab.isQueuedFileFailed(userADirs, FILE_ID, "user-a")).toBe(
+    expect(await tab.isQueuedFileFailed(userADirs, FILE_ID, OWNER_A)).toBe(
       false
     );
     expect(
       await tab.isQueuedFileFailed([tab.LOCAL_FILE_QUEUE_DIR], FILE_ID)
     ).toBe(false);
-    expect(await tab.retryFailedQueuedFile(userADirs, FILE_ID, "user-a")).toBe(
+    expect(await tab.retryFailedQueuedFile(userADirs, FILE_ID, OWNER_A)).toBe(
       false
     );
     await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
     expect(fileFn.uploads).toHaveLength(1);
     expect(changes).toEqual([]);
-    expect(await tab.isQueuedFileFailed(userBDirs, FILE_ID, "user-b")).toBe(
+    expect(await tab.isQueuedFileFailed(userBDirs, FILE_ID, OWNER_B)).toBe(
       true
     );
 
-    expect(await tab.retryFailedQueuedFile(userBDirs, FILE_ID, "user-b")).toBe(
+    expect(await tab.retryFailedQueuedFile(userBDirs, FILE_ID, OWNER_B)).toBe(
       true
     );
     await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
-    expect(await tab.isQueuedFileFailed(userBDirs, FILE_ID, "user-b")).toBe(
+    expect(await tab.isQueuedFileFailed(userBDirs, FILE_ID, OWNER_B)).toBe(
       false
     );
   });
@@ -392,9 +441,9 @@ describe("a failed file of the local queue another account claimed", () => {
       new AbortController().signal
     );
 
-    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, "user-b")).toBe(true);
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_B)).toBe(true);
     expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, null)).toBe(true);
-    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID, "user-b")).toBe(
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_B)).toBe(
       true
     );
     await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
@@ -402,14 +451,9 @@ describe("a failed file of the local queue another account claimed", () => {
 
   it("is shown and retried by a file display only for the claiming account", async () => {
     installDevice();
-    const owner = { userId: "user-a", isLive: true };
+    const owner = { userId: "user-a", isLive: true, baseUrl: AUTHORITY_A };
     vi.resetModules();
-    vi.doMock("@nucleum/shared-state/files/filefn-client", () => ({
-      captureFileFnOwner: () => ({ userId: owner.userId, epoch: 1 }),
-      isFileFnOwnerLive: () => owner.isLive,
-      resolveFileFnAccountScope: () =>
-        owner.isLive ? { userId: owner.userId, region: null } : null
-    }));
+    mockFileFnOwner(owner);
     const queue = await import("./file-queue");
     const fileUrl = await import("./file-url");
     const fileFn = await rejectClaimedPhoto(queue);
@@ -427,6 +471,7 @@ describe("a failed file of the local queue another account claimed", () => {
     expect(fileFn.uploads).toHaveLength(1);
 
     owner.userId = "user-b";
+    owner.baseUrl = AUTHORITY_B;
     expect(await read()).toBe(true);
     expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
     await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
@@ -434,15 +479,131 @@ describe("a failed file of the local queue another account claimed", () => {
   });
 });
 
+describe("a failed file of an account whose FileFn authority moved", () => {
+  const OWNER_A_AT_B = { userId: "user-a", baseUrl: AUTHORITY_B };
+
+  /** Has FileFn reject the photo of user-a's queue at authority A for good. */
+  async function rejectStartedPhoto(queue: FileQueue) {
+    await enqueuePhoto(queue);
+    const fileFn = createClient([rejection(400), "ok"]);
+    await queue.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      referencingRecords()
+    );
+    expect(fileFn.uploads).toHaveLength(1);
+    return fileFn;
+  }
+
+  it("keeps a local file claimed at the old authority failed until a retry there", async () => {
+    installDevice();
+    const tab = await openTab();
+    await tab.enqueueFile(tab.LOCAL_FILE_QUEUE_DIR, {
+      fileId: FILE_ID,
+      fileName: "photo.png",
+      contentType: "image/png",
+      blob: new Blob(["photo bytes"], { type: "image/png" }),
+      claim: OWNER_A
+    });
+    await tab.markQueuedFileCommitted(tab.LOCAL_FILE_QUEUE_DIR, FILE_ID);
+    const fileFn = createClient([rejection(400), "ok"]);
+    await tab.replayFileQueue(
+      tab.LOCAL_FILE_QUEUE_DIR,
+      fileFn.client,
+      new AbortController().signal
+    );
+    const dirs = tab.resolveFileQueueDirsOf("user-a");
+
+    expect(await tab.isQueuedFileFailed(dirs, FILE_ID, OWNER_A_AT_B)).toBe(
+      false
+    );
+    expect(await tab.retryFailedQueuedFile(dirs, FILE_ID, OWNER_A_AT_B)).toBe(
+      false
+    );
+    await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(await tab.isQueuedFileFailed(dirs, FILE_ID, OWNER_A)).toBe(true);
+    const unknownAuthority = { userId: "user-a", baseUrl: null };
+    expect(await tab.isQueuedFileFailed(dirs, FILE_ID, unknownAuthority)).toBe(
+      true
+    );
+
+    expect(await tab.retryFailedQueuedFile(dirs, FILE_ID, OWNER_A)).toBe(true);
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+    expect(await tab.isQueuedFileFailed(dirs, FILE_ID, OWNER_A)).toBe(false);
+  });
+
+  it("keeps an account file started at the old authority failed until a retry there", async () => {
+    installDevice();
+    const tab = await openTab();
+    const fileFn = await rejectStartedPhoto(tab);
+
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A_AT_B)).toBe(
+      false
+    );
+    expect(
+      await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A_AT_B)
+    ).toBe(false);
+    expect(
+      await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A, () => false)
+    ).toBe(false);
+    await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(true);
+
+    expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A)).toBe(
+      true
+    );
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+    await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
+  });
+
+  it("is shown at the session's authority and retried only at the settled one", async () => {
+    installDevice();
+    const owner = {
+      userId: "user-a",
+      isLive: true,
+      region: "b" as string | null,
+      baseUrl: AUTHORITY_B
+    };
+    vi.resetModules();
+    mockFileFnOwner(owner);
+    const queue = await import("./file-queue");
+    const fileUrl = await import("./file-url");
+    const fileFn = await rejectStartedPhoto(queue);
+    const read = () =>
+      new Promise<boolean>((resolve) => {
+        const stop = fileUrl.watchFileUploadFailure(FILE_ID, (isFailed) => {
+          stop();
+          resolve(isFailed);
+        });
+      });
+
+    expect(await read()).toBe(false);
+    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(false);
+
+    owner.region = null;
+    expect(await read()).toBe(true);
+    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(false);
+    await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+    expect(fileFn.uploads).toHaveLength(1);
+    expect(await read()).toBe(true);
+
+    owner.region = "a";
+    owner.baseUrl = AUTHORITY_A;
+    expect(await read()).toBe(true);
+    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+    await vi.waitFor(async () => expect(await read()).toBe(false));
+  });
+});
+
 describe("the failed state a file display reads", () => {
   async function openFileUrl(owner: { userId: string; isLive: boolean }) {
     vi.resetModules();
-    vi.doMock("@nucleum/shared-state/files/filefn-client", () => ({
-      captureFileFnOwner: () => ({ userId: owner.userId, epoch: 1 }),
-      isFileFnOwnerLive: () => owner.isLive,
-      resolveFileFnAccountScope: () =>
-        owner.isLive ? { userId: owner.userId, region: null } : null
-    }));
+    mockFileFnOwner(owner);
     const queue = await import("./file-queue");
     const fileUrl = await import("./file-url");
     const { default: account } =

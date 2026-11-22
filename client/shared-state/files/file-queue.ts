@@ -601,20 +601,31 @@ async function readThumbnail(
 }
 
 /**
+ * The account, at the FileFn authority it stores files under, that reads or
+ * retries a failed file (see isReplayableBy); null for none. A null
+ * `baseUrl` is an authority not known yet (a read from a session that
+ * carries no region, see watchFileUploadFailure), matched by account alone.
+ */
+export type QueuedFileFailureOwner = {
+  userId: string;
+  baseUrl: string | null;
+} | null;
+
+/**
  * Whether the first queue that holds a file (see resolveQueuedFileUrl) holds
- * it failed (see FAILED_PREFIX) for the account `userId` (null for none):
- * the entry is unclaimed or claimed by that account (see isClaimedBy). False
- * when none holds it, another account claimed it or it cannot be read.
+ * it failed (see FAILED_PREFIX) for `owner`: one its replay would upload
+ * again once retried (see isReplayableBy). False when none holds it, another
+ * account or authority claimed or started it, or it cannot be read.
  */
 export async function isQueuedFileFailed(
   dirs: readonly string[],
   fileId: string,
-  userId: string | null = null
+  owner: QueuedFileFailureOwner = null
 ): Promise<boolean> {
   if (!isFileQueueSupported()) return false;
   const found = await findPublishedEntry(dirs, fileId);
   if (!found?.entry.names.includes(toFailedMark(found.entry))) return false;
-  return isClaimedBy(found.dir, toEntryName(fileId), userId);
+  return isReplayableBy(found.dir, toEntryName(fileId), owner);
 }
 
 /**
@@ -625,16 +636,19 @@ export async function isQueuedFileFailed(
  * (see isStale), when the next replay requested uploads it. Resolves
  * whether it removed a mark; one it finds unmarked (removed, uploaded or
  * written again meanwhile) resolves false and has the file's failed state
- * read again (see onQueuedFileFailureChange). Only the account `userId`
- * (null for none) the entry is unclaimed or claimed by retries it (see
- * isClaimedBy): one another account claimed resolves false and is left as
- * it is, its mark kept and no replay started. A mark it cannot remove
- * rejects.
+ * read again (see onQueuedFileFailureChange). Only an `owner` whose
+ * replay would upload the entry retries it (see isReplayableBy), and only
+ * while `isCurrent` holds just before the mark is removed: an entry another
+ * account or authority claimed or started, or an owner no longer current,
+ * resolves false and is left as it is, its mark kept and no replay started,
+ * so a Retry never clears a rejection without an upload attempt. A mark it
+ * cannot remove rejects.
  */
 export async function retryFailedQueuedFile(
   dirs: readonly string[],
   fileId: string,
-  userId: string | null = null
+  owner: QueuedFileFailureOwner = null,
+  isCurrent: () => boolean = () => true
 ): Promise<boolean> {
   if (!isFileQueueSupported()) return false;
   const found = await findPublishedEntry(dirs, fileId);
@@ -643,9 +657,10 @@ export async function retryFailedQueuedFile(
     notifyFailureChange(fileId);
     return false;
   }
-  if (!(await isClaimedBy(found.dir, toEntryName(fileId), userId))) {
+  if (!(await isReplayableBy(found.dir, toEntryName(fileId), owner))) {
     return false;
   }
+  if (!isCurrent()) return false;
   await removeEntryFile(found.entry.entry, mark);
   notifyFailureChange(fileId);
   const request = latestRequests.get(found.dir);
@@ -710,20 +725,30 @@ function toFailedMark({ generation }: Pick<PublishedEntry, "generation">) {
 }
 
 /**
- * Whether an entry's failed state is the account `userId`'s (null for none)
- * to read and retry: it is unclaimed, or claimed by that account, as replay
- * only uploads an entry through the account that claimed it (see
- * isPublishable). The claim's account is compared alone: its authority is
- * the account's own, which a failed-state read does not resolve (see
- * watchFileUploadFailure).
+ * Whether `owner`'s replay would upload an entry once its failed mark is
+ * removed, so its failed state is the owner's to read and retry: unclaimed
+ * or claimed by the owner at its authority (as isPublishable requires), and
+ * with no started marker of another account or authority (as
+ * isStartedElsewhere skips it). An owner whose authority is not known yet
+ * (a null `baseUrl`) is matched by account alone; its Retry captures the
+ * authority first. A marker read error rejects.
  */
-async function isClaimedBy(
+async function isReplayableBy(
   dir: string,
   entryName: string,
-  userId: string | null
+  owner: QueuedFileFailureOwner
 ) {
   const claim = await readClaim(dir, entryName);
-  return !claim || claim.userId === userId;
+  if (claim && !isOwnedClaim(claim, owner)) return false;
+  const markers = await readMarkers(dir, entryName);
+  return !markers.some((marker) => marker && !isOwnedClaim(marker, owner));
+}
+
+function isOwnedClaim(claim: QueuedFileClaim, owner: QueuedFileFailureOwner) {
+  return (
+    claim.userId === owner?.userId &&
+    (owner.baseUrl === null || claim.baseUrl === owner.baseUrl)
+  );
 }
 
 /** The first queue's published entry of a file (see getPublishedEntryDir). */
