@@ -1293,4 +1293,196 @@ describe("replay authorization across the session lifetime", () => {
       expect(sdk.deleted.filter((id) => id === PENDING_DELETE)).toHaveLength(2)
     );
   });
+
+  async function expectNothingSent() {
+    await settle();
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+  }
+
+  it("does not restart the ending session's replay from a session check during sign-out cleanup", async () => {
+    const { page } = await restoreOffline();
+    isOnline = true;
+    authfn.session = liveSession;
+    const release = holdCleanup();
+    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
+    await settle();
+    await page.accountSession.checkIfSessionExpired();
+    try {
+      await expectNothingSent();
+    } finally {
+      release();
+      await signingOut;
+    }
+  });
+
+  it("drains once for a live sign-in after a sign-out whose cleanup saw a session check", async () => {
+    const { page, fileId } = await restoreOffline();
+    isOnline = true;
+    authfn.session = liveSession;
+    const release = holdCleanup();
+    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
+    await settle();
+    await page.accountSession.checkIfSessionExpired();
+    release();
+    await signingOut;
+    await settle();
+    expect(sdk.deleted).toEqual([]);
+
+    await signInAndUpload(page);
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    await settle();
+    expect(sdk.deleted).toEqual([PENDING_DELETE]);
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+
+  it("keeps an account published after another user's live session contradicted after an unavailable check", async () => {
+    await captureOfflineThenLeave();
+    await recordPendingDelete();
+    isOnline = true;
+    const page = await loadPage();
+    await page.accountSession.init();
+    const { logger } = await import("@nucleum/client/runtime/logging/logger");
+    const warn = vi.spyOn(logger, "warn");
+    authfn.session = userB;
+    expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+    await settle();
+    page.account.set(cloudAccount);
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith({
+        at: "filefn.uploadReplay.start.accountMismatch"
+      })
+    );
+    authfn.respond = async () => {
+      throw new Error("authfn unavailable");
+    };
+    await page.accountSession.checkIfSessionExpired();
+    await settle();
+    authfn.respond = undefined;
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await expectNothingSent();
+  });
+
+  it("keeps a file lookup's account contradicted by another user's live session after an unavailable check", async () => {
+    await captureOfflineThenLeave();
+    await recordPendingDelete();
+    isOnline = true;
+    const page = await loadPage();
+    await page.accountSession.init();
+    authfn.session = userB;
+    expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+    await settle();
+    page.account.set({ ...cloudAccount, userId: "user-b" });
+    await settle();
+    page.account.set(cloudAccount);
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    authfn.respond = async () => {
+      throw new Error("authfn unavailable");
+    };
+    await page.accountSession.checkIfSessionExpired();
+    await settle();
+    authfn.respond = undefined;
+    await files.getFileFnClient();
+    await expectNothingSent();
+  });
+
+  it("sends nothing on reconnect after a cached-cloud result until the session is confirmed again", async () => {
+    const { page } = await restoreOffline();
+    authfn.session = liveSession;
+    goOnline();
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    await settle();
+    isOnline = false;
+    await recordPendingDelete();
+    expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+    await settle();
+    const held = holdAuthFnResponses();
+    goOnline();
+    await settle();
+    try {
+      expect(sdk.deleted).toEqual([PENDING_DELETE]);
+    } finally {
+      for (const answer of held) answer(null);
+    }
+  });
+
+  it("sends a pending delete recorded after a cached-cloud result once when the held recheck confirms the account", async () => {
+    const { page } = await restoreOffline();
+    authfn.session = liveSession;
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    await settle();
+    isOnline = false;
+    await recordPendingDelete();
+    expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
+    await settle();
+    const held = holdAuthFnResponses();
+    goOnline();
+    await vi.waitFor(() => expect(held.length).toBeGreaterThan(0));
+    await settle();
+    expect(sdk.deleted).toEqual([PENDING_DELETE]);
+    for (const answer of held) answer(liveSession);
+    await vi.waitFor(() =>
+      expect(sdk.deleted).toEqual([PENDING_DELETE, PENDING_DELETE])
+    );
+    await settle();
+    expect(sdk.deleted).toHaveLength(2);
+  });
+
+  it("does not let an older foreground check restart the replay a newer one stopped", async () => {
+    const { page } = await restoreOffline();
+    isOnline = true;
+    const held = holdAuthFnResponses();
+    const older = page.accountSession.checkIfSessionExpired();
+    await vi.waitFor(() => expect(held).toHaveLength(1));
+    const newer = page.accountSession.checkIfSessionExpired();
+    await vi.waitFor(() => expect(held).toHaveLength(2));
+    held[1](null);
+    expect(await newer).toBe(true);
+    await settle();
+    held[0](liveSession);
+    await older;
+    await expectNothingSent();
+  });
+
+  it("returns true from two concurrent auth guards that resolve the live session and drains once", async () => {
+    const { page, fileId } = await restoreOffline();
+    isOnline = true;
+    const held = holdAuthFnResponses();
+    const first = page.sessionAccess.performLoginStatusCheck();
+    await vi.waitFor(() => expect(held).toHaveLength(1));
+    const second = page.sessionAccess.performLoginStatusCheck();
+    await vi.waitFor(() => expect(held).toHaveLength(2));
+    held[1](liveSession);
+    held[0](liveSession);
+    expect(await Promise.all([first, second])).toEqual([true, true]);
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    await settle();
+    expect(sdk.deleted).toEqual([PENDING_DELETE]);
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+
+  it("resolves signed out when the region lookup fails after the signal aborted", async () => {
+    await storeCloudSession();
+    isOnline = true;
+    authfn.session = liveSession;
+    let fail: ((error: Error) => void) | undefined;
+    authfn.region = () =>
+      new Promise<void>((_, reject) => {
+        fail = reject;
+      });
+    const controller = new AbortController();
+    const { resolveAuthSession } =
+      await import("@nucleum/client/runtime/account/auth");
+    const pending = resolveAuthSession({ signal: controller.signal });
+    await vi.waitFor(() => expect(fail).toBeDefined());
+    controller.abort();
+    fail!(new Error("region lookup failed"));
+    expect((await pending).status).toBe("signed-out");
+  });
 });
