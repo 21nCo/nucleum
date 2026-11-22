@@ -333,12 +333,15 @@ test.describe("nodes - record page (opening, visibility, tab switching) @record-
     const contentTab = page
       .getByTestId("top-bar-context-zone")
       .getByRole("tab", { name: "Content", exact: true });
+    await expect(contentTab).toBeVisible();
     await contentTab.click({ noWaitAfter: true, timeout: 10_000 });
     await expect(contentTab).toHaveAttribute("aria-selected", "true");
 
     const editor = page
-      .locator('#mdContent > div[id^="md-block-"] [contenteditable]')
+      .getByRole("textbox", { name: "Markdown editor", exact: true })
+      .getByRole("textbox")
       .first();
+    await expect(editor).toBeVisible();
     await editor.click({ timeout: 5_000 });
     await expect(editor).toBeFocused();
     await editor.press("End");
