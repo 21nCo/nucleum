@@ -469,8 +469,14 @@ export async function markQueuedFileStale(
   await writeEntryFile(dir, toEntryName(fileId), STALE_FILE, "");
 }
 
-/** Lists the files of a queue whose staging finished. */
-export async function listQueuedFiles(dir: string): Promise<QueuedFileEntry[]> {
+/**
+ * Lists the files of a queue whose staging finished; with `isStrict`, a claim
+ * that cannot be read rejects instead of counting as none.
+ */
+export async function listQueuedFiles(
+  dir: string,
+  isStrict = false
+): Promise<QueuedFileEntry[]> {
   if (!isFileQueueSupported()) return [];
   const store = getStore(dir);
   const entries: QueuedFileEntry[] = [];
@@ -488,7 +494,7 @@ export async function listQueuedFiles(dir: string): Promise<QueuedFileEntry[]> {
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
       isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
-      claim: await readClaim(dir, entryName)
+      claim: await readClaim(dir, entryName, isStrict)
     });
   }
   return entries;
@@ -551,8 +557,13 @@ async function readEntryText(
   }
 }
 
-async function hasEntryFile(dir: string, entryName: string, name: string) {
-  return (await readEntryText(dir, entryName, name)) !== undefined;
+async function hasEntryFile(
+  dir: string,
+  entryName: string,
+  name: string,
+  isStrict = false
+) {
+  return (await readEntryText(dir, entryName, name, isStrict)) !== undefined;
 }
 
 /** Reads a JSON file of an entry, or undefined when it is missing or invalid. */
@@ -593,12 +604,13 @@ function isSameClaim(a: QueuedFileClaim, b: QueuedFileClaim) {
   return a.userId === b.userId && a.baseUrl === b.baseUrl;
 }
 
-function readQueuedRecord(dir: string, entryName: string) {
+function readQueuedRecord(dir: string, entryName: string, isStrict = false) {
   return readEntryJson<QueuedFileRecord>(
     dir,
     entryName,
     RECORD_FILE,
-    (record) => typeof record.id === "string"
+    (record) => typeof record.id === "string",
+    isStrict
   );
 }
 
@@ -1031,12 +1043,15 @@ const DATA_FILE = "data.bin";
  * (keeping a thumbnail still to be sent; one whose version neither records
  * is copied whole), an unpublished file (see RESTORING_PREFIX), and one that
  * leaves the queue while it is read. A published file a restore wrote is
- * copied whether or not its account adopted it. A file whose metadata, bytes
+ * copied whether or not its account adopted it. With `isWhole`, every file
+ * is copied whole as the device holds it, uploaded or not (a local-only
+ * user's backup of the local queue). A file whose metadata, bytes
  * or marks cannot be read rejects, and never counts as absent.
  */
 export async function exportQueuedFiles<T>(
   dir: string,
-  snapshot: () => Promise<T>
+  snapshot: () => Promise<T>,
+  isWhole = false
 ): Promise<{ records: T; files: QueuedFileCopy[] }> {
   if (!isFileQueueSupported()) return { records: await snapshot(), files: [] };
   const signal = new AbortController().signal;
@@ -1047,7 +1062,7 @@ export async function exportQueuedFiles<T>(
       const records = await snapshot();
       const files: QueuedFileCopy[] = [];
       for (const entryName of await listEntryNames(dir)) {
-        const copy = await copyEntry(dir, entryName);
+        const copy = await copyEntry(dir, entryName, isWhole);
         if (copy) files.push(copy);
       }
       const remaining = await readQueueRevision(dir);
@@ -1135,7 +1150,7 @@ async function listEntryNames(dir: string) {
   return names.filter((name) => name.startsWith(ENTRY_PREFIX));
 }
 
-async function copyEntry(dir: string, entryName: string) {
+async function copyEntry(dir: string, entryName: string, isWhole = false) {
   try {
     const entry = await getEntryDir(dir, entryName, true);
     const names = await readNames(entry);
@@ -1147,16 +1162,13 @@ async function copyEntry(dir: string, entryName: string) {
     const isMarked =
       names.includes(UPLOADED_FILE) &&
       (await readEntryText(dir, entryName, UPLOADED_FILE, true)) !== undefined;
-    if (isMarked && isThumbnailMarked) return undefined;
-    const delivery = await readDelivery(
-      dir,
-      pending.fileId,
-      names,
-      !!thumbnail
-    );
-    if (!delivery.isKnown) throw delivery.error;
-    const uploaded = delivery.original;
-    if (uploaded && delivery.isDone) return undefined;
+    if (isMarked && isThumbnailMarked && !isWhole) return undefined;
+    const delivery = isWhole
+      ? undefined
+      : await readDelivery(dir, pending.fileId, names, !!thumbnail);
+    if (delivery && !delivery.isKnown) throw delivery.error;
+    const uploaded = delivery?.original;
+    if (uploaded && delivery?.isDone) return undefined;
     const started: QueuedFileCopy["started"] = [];
     for (const name of names) {
       if (!STARTED_NAME.test(name)) continue;
@@ -3559,18 +3571,19 @@ async function sendAccountThumbnail(
 /**
  * Whether a local file can upload through the publisher's account: not yet
  * uploaded, with a current copy of its record, and unclaimed or claimed by
- * that account.
+ * that account: read strictly, so a mark or claim that cannot be read
+ * rejects, leaving the file to a retry, and never counts as absent.
  */
 async function isPublishable(
   dir: string,
   entryName: string,
   publisher: QueuedFilePublisher
 ) {
-  if (await hasEntryFile(dir, entryName, UPLOADED_FILE)) return false;
-  if (await hasEntryFile(dir, entryName, STALE_FILE)) return false;
-  if (await hasEntryFile(dir, entryName, ORPHANED_FILE)) return false;
-  if (!(await readQueuedRecord(dir, entryName))) return false;
-  const claim = await readClaim(dir, entryName);
+  for (const mark of [UPLOADED_FILE, STALE_FILE, ORPHANED_FILE]) {
+    if (await hasEntryFile(dir, entryName, mark, true)) return false;
+  }
+  if (!(await readQueuedRecord(dir, entryName, true))) return false;
+  const claim = await readClaim(dir, entryName, true);
   return !claim || isSameClaim(claim, publisher.owner);
 }
 
@@ -3597,7 +3610,7 @@ async function claimEntry(
   entryName: string,
   owner: QueuedFileClaim
 ) {
-  if (await readClaim(dir, entryName)) return;
+  if (await readClaim(dir, entryName, true)) return;
   await writeEntryFile(
     dir,
     entryName,

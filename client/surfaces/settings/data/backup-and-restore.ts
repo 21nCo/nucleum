@@ -99,7 +99,7 @@ export async function createBackupBlob(): Promise<Blob> {
         )
       : namespace?.startsWith("guest:")
         ? withLocalFileBytes(
-            await exportQueuedFiles(LOCAL_FILE_QUEUE_DIR, exportRecords)
+            await exportQueuedFiles(LOCAL_FILE_QUEUE_DIR, exportRecords, true)
           )
         : { records: await exportRecords(), files: [] };
   } finally {
@@ -119,7 +119,8 @@ export async function createBackupBlob(): Promise<Blob> {
 
 /**
  * Puts the bytes of a local-only user's files that the device's local queue
- * holds (see device-file-queue) back on the exported records that reference
+ * holds (see device-file-queue), uploaded to an account or not, back on the
+ * exported records that reference
  * them, without their `fileId`, as such a record kept them before, so a
  * guest backup restores them on any device.
  */

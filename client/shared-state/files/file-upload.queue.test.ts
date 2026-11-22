@@ -84,10 +84,14 @@ vi.mock("@filefn/client", async (importOriginal) => {
 const authority = vi.hoisted(() => ({
   url: "https://account-useast-dev.nucleum.app/datafn"
 }));
-/** Runs, when set, before each query or mutation of the file records. */
+/**
+ * Runs, when set, before each query or mutation of the file records; a
+ * function it returns replaces the call's result with its own.
+ */
+type AfterCall = (result: unknown) => unknown;
 const fileCalls = vi.hoisted(() => ({
   beforeQuery: null as ((args: unknown) => Promise<void>) | null,
-  beforeMutate: null as ((args: unknown) => Promise<void>) | null
+  beforeMutate: null as ((args: unknown) => Promise<void | AfterCall>) | null
 }));
 vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
@@ -126,8 +130,9 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
                   : null;
             if (!before || typeof method !== "function") return method;
             return async (...args: unknown[]) => {
-              await before(args[0]);
-              return method.apply(table, args);
+              const after = await before(args[0]);
+              const result = await method.apply(table, args);
+              return after ? after(result) : result;
             };
           }
         });
@@ -306,6 +311,27 @@ async function writeLocalEntryFile(fileId: string, name: string, text = "") {
   const writable = await file.createWritable();
   await writable.write(text);
   await writable.close();
+}
+
+/** Makes every read of a queued file's claim fail, as an unreadable file does. */
+function failClaimReads() {
+  const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+    new Proxy(dir, {
+      get(target, key) {
+        if (key === "getDirectoryHandle") {
+          return async (name: string, options?: { create?: boolean }) =>
+            wrap(await target.getDirectoryHandle(name, options));
+        }
+        if (key !== "getFileHandle") return Reflect.get(target, key);
+        return async (name: string, options?: { create?: boolean }) => {
+          const file = await target.getFileHandle(name, options);
+          if (name !== "claim.json") return file;
+          const unreadable = new DOMException("Unreadable", "NotReadableError");
+          return { ...file, getFile: () => Promise.reject(unreadable) };
+        };
+      }
+    });
+  navigator.storage.getDirectory = async () => wrap(await opfs.getDirectory());
 }
 
 function goOnline() {
@@ -620,6 +646,62 @@ describe("files captured offline or by a local-only user", () => {
     expect(
       opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
     ).toBeDefined();
+  });
+
+  it("completes a first publish that saved the record but not its trash when the local file replays again", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await datafn.file.mutate({ operation: "trash", id: record.id } as never);
+    await settleLocalFileRecords();
+    // The first publish saves its insert but not its trash, as an offline
+    // DataFn that applies each mutation of a batch on its own may.
+    let isPartial = false;
+    fileCalls.beforeMutate = async (args) => {
+      const [first] = Array.isArray(args) ? args : [];
+      if (first?.operation !== "insert" || first.id !== record.id) return;
+      fileCalls.beforeMutate = null;
+      (args as unknown[]).splice(1);
+      isPartial = true;
+      const failed = { ok: false, error: new Error("The trash failed") };
+      return (result) => [...(result as unknown[]), failed];
+    };
+
+    await signInToCloud("user-a");
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId)
+    );
+    expect(isPartial).toBe(true);
+    await replayLocalQueue();
+
+    await vi.waitFor(() =>
+      expect(
+        opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
+      ).toBeDefined()
+    );
+    expect((await readAnyRecord(record.id))?.trashedAt ?? null).not.toBeNull();
+    expect(await savedRecord(record.id)).toBeUndefined();
+  });
+
+  it("never uploads or claims a local file for another account while its claim cannot be read", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    const claim = opfs.read(
+      LOCAL_QUEUE,
+      `queued_${record.fileId}`,
+      "claim.json"
+    );
+    expect(claim).toBeDefined();
+
+    failClaimReads();
+    await signInToCloud("user-b");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toHaveLength(1);
+    expect(await savedRecord(record.id)).toBeUndefined();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "claim.json")
+    ).toEqual(claim);
   });
 
   it("keeps a capture from an earlier guest namespace and publishes it at the first cloud sign-in", async () => {

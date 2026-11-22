@@ -118,9 +118,11 @@ function assertNamespace(namespace: string) {
  * is ready while DataFn is in the account's namespace and syncs with the
  * account authority the files upload to, and publishes each
  * uploaded file as a record of the account under its local-only record's ID,
- * with the record's current fields and its trashed and archived state,
- * unless the account already holds that record (an earlier publish whose
- * entry was not yet marked uploaded).
+ * with the record's current fields and its trashed and archived state. When
+ * the account already holds that record (an earlier publish whose entry was
+ * not yet marked uploaded, which may have saved only its insert), it only
+ * trashes or archives it as its copy is, if it references the file; it
+ * changes nothing else, so later edits in the account stay.
  */
 export function createLocalFilePublisher(
   uploader: Pick<FileQueueUploader, "userId" | "baseUrl" | "signal">
@@ -153,19 +155,23 @@ export function createLocalFilePublisher(
         }
       };
       assertReady();
-      const existing = await datafn.file.query({
+      const found = await datafn.file.query({
         filters: { id: record.id },
         limit: 1,
         metadata: ALL_RECORDS
       });
-      if (existing.data?.[0]) return;
+      const existing = found.data?.[0] as Record<string, unknown> | undefined;
+      if (existing && existing.fileId !== record.fileId) return;
+      const saved = existing && toQueuedFileRecord(existing, namespace);
       const id = record.id;
-      const mutations: Record<string, unknown>[] = [
-        { operation: "insert", id, record: pickPublishedFields(record) }
-      ];
-      if (record.isTrashed === true) mutations.push({ operation: "trash", id });
-      if (record.isArchived === true)
+      const mutations: Record<string, unknown>[] = saved
+        ? []
+        : [{ operation: "insert", id, record: pickPublishedFields(record) }];
+      if (record.isTrashed === true && !saved?.isTrashed)
+        mutations.push({ operation: "trash", id });
+      if (record.isArchived === true && !saved?.isArchived)
         mutations.push({ operation: "archive", id });
+      if (!mutations.length) return;
       assertReady();
       assertSaved(await datafn.file.mutate(mutations as never));
     }
@@ -194,9 +200,9 @@ function isAbandoned(entry: QueuedFileEntry) {
   );
 }
 
-/** Reads a local file's entry as the queue holds it now. */
+/** Reads a local file's entry as the queue holds it now; an unreadable claim rejects. */
 async function readLocalEntry(fileId: string) {
-  const entries = await listQueuedFiles(LOCAL_FILE_QUEUE_DIR);
+  const entries = await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true);
   return entries.find((entry) => entry.fileId === fileId);
 }
 

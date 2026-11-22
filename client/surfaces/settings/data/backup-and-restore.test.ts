@@ -8947,4 +8947,34 @@ describe("backup and restore of a local-only user's files", () => {
     expect(decode(restored?.thumbnailData)).toBe("thumb bytes");
     expect(sdk.started).toEqual([]);
   });
+
+  it("restores a local-only user's capture an account already received, whose bytes the device still holds, with its original and thumbnail", async () => {
+    await bootData(localAccount);
+    const record = await capturePhoto();
+    // The first cloud sign-in uploaded the file and its thumbnail; the
+    // device's local queue keeps them, marked uploaded.
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle("nucleum-file-queue-local");
+    const entry = await queue.getDirectoryHandle(`queued_${record.fileId}`);
+    for (const [mark, text] of [
+      ["uploaded", "v1"],
+      ["sent-thumbnail", ""]
+    ]) {
+      const writable = await (
+        await entry.getFileHandle(mark, { create: true })
+      ).createWritable();
+      await writable.write(text);
+      await writable.close();
+    }
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    const restored = await savedRecord(record.id);
+    expect(restored?.fileId).toBeUndefined();
+    expect(decode(restored?.data)).toBe("photo bytes");
+    expect(decode(restored?.thumbnailData)).toBe("thumb bytes");
+  });
 });
