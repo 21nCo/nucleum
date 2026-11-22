@@ -1735,4 +1735,81 @@ describe("replay authorization across the session lifetime", () => {
     expect(sdk.started).toEqual([]);
     expect(sdk.deleted).toEqual([]);
   });
+
+  async function startCheckThenReconnect() {
+    const { page, fileId } = await restoreOffline();
+    const held = holdAuthFnResponses();
+    isOnline = true;
+    const older = page.accountSession.checkIfSessionExpired();
+    await vi.waitFor(() => expect(held).toHaveLength(1));
+    goOnline();
+    await vi.waitFor(() => expect(held).toHaveLength(2));
+    return { older, held, fileId };
+  }
+
+  it("keeps a pending reconnect's live result when an older check's expired result returns first", async () => {
+    const { older, held, fileId } = await startCheckThenReconnect();
+    held[0](null);
+    await older;
+    await settle();
+    held[1](liveSession);
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    await settle();
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+    expect(sdk.deleted).toEqual([PENDING_DELETE]);
+  });
+
+  it("grants no replay from an older check's live result while a newer reconnect is pending", async () => {
+    const { older, held } = await startCheckThenReconnect();
+    held[0](liveSession);
+    expect(await older).toBe(false);
+    await settle();
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    held[1](userB);
+    await settle();
+    await expectNothingSent();
+  });
+
+  it("applies an older check's live result at once when the newer reconnect failed without a result", async () => {
+    vi.useFakeTimers({
+      toFake: ["setTimeout", "clearTimeout"],
+      shouldAdvanceTime: true
+    });
+    const { page, fileId } = await restoreOffline();
+    const held = holdAuthFnResponses();
+    isOnline = true;
+    const older = page.accountSession.checkIfSessionExpired();
+    await vi.waitFor(() => expect(held).toHaveLength(1));
+    const resolved = auth.resolved;
+    auth.failNext = true;
+    goOnline();
+    await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+    held[0](liveSession);
+    expect(await older).toBe(false);
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+    expect(held).toHaveLength(1);
+  });
+
+  it("keeps the bounded retry when a reconnect's own session resolution fails", async () => {
+    vi.useFakeTimers({
+      toFake: ["setTimeout", "clearTimeout"],
+      shouldAdvanceTime: true
+    });
+    const { fileId } = await restoreOffline();
+    const resolved = auth.resolved;
+    auth.failNext = true;
+    goOnline();
+    await vi.waitFor(() => expect(auth.resolved).toBe(resolved + 1));
+    await settle();
+    expect(sdk.started).toEqual([]);
+    authfn.session = liveSession;
+    await vi.advanceTimersByTimeAsync(300_000);
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]), {
+      timeout: 3_000
+    });
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
 });
