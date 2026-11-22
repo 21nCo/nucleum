@@ -1939,21 +1939,55 @@ describe("replay authorization across the session lifetime", () => {
 
   describe("authorization when the replay sends and superseded rechecks", () => {
     /**
+     * Wraps a device storage directory so `hold.isListed` turns true once a
+     * directory opened through it has listed all its entries.
+     */
+    function signalWhenListed<T extends object>(
+      dir: T,
+      hold: { isListed: boolean }
+    ): T {
+      return new Proxy(dir, {
+        get(target, prop) {
+          const value = Reflect.get(target, prop) as unknown;
+          if (typeof value !== "function") return value;
+          if (prop === "getDirectoryHandle") {
+            return async (...args: unknown[]) =>
+              signalWhenListed(
+                (await value.apply(target, args)) as object,
+                hold
+              );
+          }
+          if (prop === "keys") {
+            return async function* () {
+              yield* value.call(target) as AsyncIterable<string>;
+              hold.isListed = true;
+            };
+          }
+          return value.bind(target);
+        }
+      });
+    }
+
+    /**
      * Holds the `nth` (1-based) device storage open made by a pending-delete
-     * send pass (replayPendingDeletes), after its authority was checked.
+     * send pass (replayPendingDeletes), after its authority was checked;
+     * `isListed` turns true once the released pass has listed its deletes,
+     * right before it decides whether to send them.
      */
     function holdNthPendingDeleteSend(nth: number) {
       const open = navigator.storage.getDirectory.bind(navigator.storage);
       let release: () => void = () => undefined;
       const gate = new Promise<void>((resolve) => (release = resolve));
-      const hold = { isHeld: false, release: () => release() };
+      const hold = { isHeld: false, isListed: false, release: () => release() };
       let seen = 0;
       vi.spyOn(navigator.storage, "getDirectory").mockImplementation(() => {
         if (new Error().stack?.includes("replayPendingDeletes")) {
           seen += 1;
           if (seen === nth) {
             hold.isHeld = true;
-            return gate.then(() => open());
+            return gate.then(() => open()).then((root) =>
+              signalWhenListed(root, hold)
+            );
           }
         }
         return open();
@@ -1977,8 +2011,7 @@ describe("replay authorization across the session lifetime", () => {
       authfn.session = liveSession;
       expect(await page.accountSession.checkIfSessionExpired()).toBe(false);
       hold.release();
-      await settle();
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(() => expect(hold.isListed).toBe(true));
       await settle();
       return page;
     }
