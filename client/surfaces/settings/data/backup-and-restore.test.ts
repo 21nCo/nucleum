@@ -8913,3 +8913,38 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(sdk.deleted).toEqual([]);
   });
 });
+
+describe("backup and restore of a local-only user's files", () => {
+  const localAccount: UserAccount = {
+    dataMode: UserDataMode.LOCAL,
+    sessionType: UserSessionType.RETURNING
+  };
+  /**
+   * Decodes record bytes as a backup restores them: JSON carries a record's
+   * bytes as an object of its byte values, as for a record that kept them.
+   */
+  const decode = (bytes: unknown) =>
+    new TextDecoder().decode(
+      Uint8Array.from(Object.values(bytes as Record<string, number>))
+    );
+
+  it("restores a local-only user's capture, whose bytes the device's local queue holds, with its original and thumbnail on a cleared browser", async () => {
+    await bootData(localAccount);
+    const record = await capturePhoto();
+    expect(opfs.list("nucleum-file-queue-local")).toEqual([
+      `queued_${record.fileId}`
+    ]);
+    expect((await savedRecord(record.id))?.data).toBeUndefined();
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    const restored = await savedRecord(record.id);
+    expect(restored?.fileId).toBeUndefined();
+    expect(decode(restored?.data)).toBe("photo bytes");
+    expect(decode(restored?.thumbnailData)).toBe("thumb bytes");
+    expect(sdk.started).toEqual([]);
+  });
+});
