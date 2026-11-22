@@ -39,6 +39,8 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
+/** Marks a claimed local file whose record was deleted (see device-file-queue). */
+const ORPHANED_FILE = "orphaned";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
@@ -241,6 +243,7 @@ export type QueuedFileEntry = {
   recordId?: string;
   isCommitted: boolean;
   isUploaded: boolean;
+  isOrphaned: boolean;
   claim?: QueuedFileClaim;
 };
 
@@ -442,6 +445,15 @@ export async function writeQueuedFileRecord(
   await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(record));
   const entry = await getEntryDir(dir, entryName);
   await entry?.removeEntry(STALE_FILE).catch(() => undefined);
+  await entry?.removeEntry(ORPHANED_FILE).catch(() => undefined);
+}
+
+/** Marks a local file orphaned: it does not publish until its copy is rewritten. */
+export async function markQueuedFileOrphaned(
+  dir: string,
+  fileId: string
+): Promise<void> {
+  await writeEntryFile(dir, toEntryName(fileId), ORPHANED_FILE, "");
 }
 
 /**
@@ -470,6 +482,7 @@ export async function listQueuedFiles(dir: string): Promise<QueuedFileEntry[]> {
       recordId: (await readQueuedRecord(dir, entryName))?.id,
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
+      isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
       claim: await readClaim(dir, entryName)
     });
   }
@@ -3530,6 +3543,7 @@ async function isPublishable(
 ) {
   if (await hasEntryFile(dir, entryName, UPLOADED_FILE)) return false;
   if (await hasEntryFile(dir, entryName, STALE_FILE)) return false;
+  if (await hasEntryFile(dir, entryName, ORPHANED_FILE)) return false;
   if (!(await readQueuedRecord(dir, entryName))) return false;
   const claim = await readClaim(dir, entryName);
   return !claim || isSameClaim(claim, publisher.owner);

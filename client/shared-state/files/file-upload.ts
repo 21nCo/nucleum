@@ -29,6 +29,7 @@ import {
   dequeueFile,
   isAppOffline,
   isFileQueueSupported,
+  LOCAL_FILE_QUEUE_DIR,
   markQueuedFileCommitted,
   resolveAccountFileQueueDir,
   TEMPORARY_UPLOAD_POLICY,
@@ -239,7 +240,8 @@ type FileUploadInput = {
  * Keeps a file captured offline or by a local-only user on the device,
  * converting a HEIC photo to PNG and making a thumbnail first. The file and
  * its thumbnail go to the FileFn OPFS queue under a new `fileId`, in the
- * owner's account queue while DataFn is in the owner's namespace, and the
+ * owner's account queue while DataFn is in the owner's namespace, or with no
+ * cloud account in the local queue while it is in a guest namespace, and the
  * record keeps that `fileId` without bytes; the queue uploads the file once
  * the account is online. A record that cannot be saved, or a sign-out,
  * another account or DataFn leaving the namespace while the file was staged,
@@ -286,9 +288,13 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     }
   }
   const claim = owner ? await captureFileQueueClaim(owner) : undefined;
+  const isQueueCurrent = () =>
+    owner ? isQueueOwnerCurrent(owner) : isGuestDataCurrent();
   const queueDir =
-    claim && owner && isQueueOwnerCurrent(owner)
-      ? resolveAccountFileQueueDir(owner.userId)
+    (claim || !owner) && isQueueCurrent()
+      ? owner
+        ? resolveAccountFileQueueDir(owner.userId)
+        : LOCAL_FILE_QUEUE_DIR
       : undefined;
   const metadata = {
     id: input.id,
@@ -306,7 +312,8 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     blob,
     thumbnailBlob,
     isTemp: input.isTemp,
-    claim
+    claim,
+    record: owner ? undefined : metadata
   });
   recordFileProcessing({
     mode: "local",
@@ -315,7 +322,7 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
     deviceDurationMs: sumDurations(artifacts),
     artifacts
   });
-  if (!queueDir || !fileId || !owner) {
+  if (!queueDir || !fileId) {
     return fileUpload.saveLocalFile({
       id: input.id,
       fileName,
@@ -328,7 +335,7 @@ async function saveOnDevice(input: FileUploadInput, owner: FileFnOwner | null) {
   const record = { ...metadata, fileId };
   try {
     assertScope();
-    if (!isQueueOwnerCurrent(owner) || Date.now() > saveBy) {
+    if (!isQueueCurrent() || Date.now() > saveBy) {
       throw new DOMException(
         "The capture outlived its account or its staged file",
         "AbortError"
@@ -386,6 +393,16 @@ function isQueueOwnerCurrent(owner: FileFnOwner) {
   return (
     resolveFileFnAccountScope(account.get())?.userId === owner.userId &&
     datafn.currentNamespace() === namespace &&
+    get(datafnRuntime)?.namespace === namespace
+  );
+}
+
+/** True while no cloud account is signed in and DataFn holds guest data. */
+function isGuestDataCurrent() {
+  const namespace = datafn.currentNamespace();
+  return (
+    !resolveFileFnAccountScope(account.get()) &&
+    Boolean(namespace?.startsWith("guest:")) &&
     get(datafnRuntime)?.namespace === namespace
   );
 }
