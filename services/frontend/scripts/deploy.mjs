@@ -50,7 +50,7 @@ for (const productId of products) {
   }
 
   assertBuildOutput(repoRoot, config, productId);
-  writeCloudflareAssetHeaders(repoRoot, config, productId);
+  writeCloudflareAssetHeaders(repoRoot, config, productId, environment);
   const wranglerConfig = renderWranglerConfig(serviceRoot, repoRoot, config, environment, productId);
   run(resolveWranglerBin(), ['deploy', '--config', wranglerConfig, ...(dryRun ? ['--dry-run'] : [])], {
     cwd: serviceRoot
