@@ -14,8 +14,14 @@ let sessionLifetime = new AbortController();
 let endingSessions = 0;
 let resolutionGeneration = 0;
 let lastAppliedGeneration = 0;
-/** The resolutions started that have not reached startUploadReplayForSession. */
+/** The resolutions started that have not been decided yet. */
 const pendingGenerations = new Set<number>();
+/** The pending resolutions waiting for the files runtime to load. */
+const loadingGenerations = new Set<number>();
+/** The newest result held back while a newer resolution is pending. */
+let heldResolution:
+  | { resolution: AuthSessionResolution; ticket: SessionResolutionTicket }
+  | undefined;
 let filesRuntime: FilesRuntime | undefined;
 
 type FilesRuntime = typeof import("@nucleum/shared-state/files/filefn-client");
@@ -36,7 +42,8 @@ export interface SessionResolutionTicket {
  * which applies the resolution only while the session has not ended and no
  * resolution started after it has applied or is still pending, so a
  * resolution that returns after sign-out stores, hydrates and starts nothing,
- * and an older one never replaces or preempts a newer one's replay.
+ * and an older one never replaces or preempts a newer one's replay. The
+ * caller ends the ticket with abandonSessionResolution once it is done.
  */
 export function beginSessionResolution(): SessionResolutionTicket {
   resolutionGeneration += 1;
@@ -45,13 +52,19 @@ export function beginSessionResolution(): SessionResolutionTicket {
 }
 
 /**
- * Ends a resolution that will not reach startUploadReplayForSession because
- * resolving the session failed, so it no longer holds older ones back.
+ * Ends a resolution whose caller is done with it, whether or not it reached
+ * startUploadReplayForSession, so one that failed no longer holds older ones
+ * back: the newest result held for it then applies.
  */
 export function abandonSessionResolution(
   ticket: SessionResolutionTicket
 ): void {
+  if (loadingGenerations.has(ticket.generation)) return;
   pendingGenerations.delete(ticket.generation);
+  const held = heldResolution;
+  if (!held || isNewerResolutionPending(held.ticket.generation)) return;
+  heldResolution = undefined;
+  startUploadReplayForSession(held.resolution, held.ticket);
 }
 
 function isNewerResolutionPending(generation: number): boolean {
@@ -73,52 +86,43 @@ function isNewerResolutionPending(generation: number): boolean {
  * (offline-only, expired, signed-out or unavailable) stops the replay the
  * restore started, keeping the account's queue and pending deletes; an
  * unavailable one keeps an active recheck retrying with its growing delay.
- * Nothing is applied once `ticket`'s session has ended or while a resolution
- * started after it has applied or is pending (see beginSessionResolution);
- * the result says whether it applied. Once the files
- * runtime is loaded, the resolution applies to it before any reconnect or
- * retry can resolve the session again, so a non-live resolution ends an
- * earlier live confirmation first; before that, no live confirmation exists,
- * and the caller does not wait for the FileFn client to load.
+ * Nothing is applied once `ticket`'s session has ended or a resolution
+ * started after it has applied; while one is pending, the result is held
+ * until it applies or fails (see abandonSessionResolution). The resolution
+ * applies to the files runtime before any reconnect or retry can resolve the
+ * session again, so a non-live resolution ends an earlier live confirmation
+ * first. Until the runtime has loaded, the resolution stays pending and is
+ * decided once it has; the caller does not wait for it.
  */
 export function startUploadReplayForSession(
   resolution: AuthSessionResolution,
   ticket: SessionResolutionTicket = beginSessionResolution()
-): boolean {
+): void {
+  const files = filesRuntime;
+  if (!files) {
+    decideOnceLoaded(resolution, ticket);
+    return;
+  }
   pendingGenerations.delete(ticket.generation);
-  if (
-    ticket.signal.aborted ||
-    ticket.generation <= lastAppliedGeneration ||
-    isNewerResolutionPending(ticket.generation)
-  ) {
-    return false;
+  if (ticket.signal.aborted || ticket.generation <= lastAppliedGeneration) {
+    return;
+  }
+  if (isNewerResolutionPending(ticket.generation)) {
+    const held = heldResolution;
+    if (!held || held.ticket.generation < ticket.generation) {
+      heldResolution = { resolution, ticket };
+    }
+    return;
   }
   lastAppliedGeneration = ticket.generation;
+  heldResolution = undefined;
   const liveSession = resolveLiveSession(resolution);
-  const apply = (files: FilesRuntime) => {
+  try {
     if (resolution.status === "cached-cloud") files.startAccountUploadReplay();
     else if (liveSession) files.startAccountUploadReplay(liveSession);
     else files.stopAccountUploadReplay();
-  };
-  if (filesRuntime) {
-    try {
-      apply(filesRuntime);
-    } catch (error) {
-      logger.error({ at: "account.uploadReplay.start", error });
-    }
-  } else {
-    loadFilesRuntime()
-      .then((files) => {
-        if (
-          !ticket.signal.aborted &&
-          lastAppliedGeneration === ticket.generation
-        ) {
-          apply(files);
-        }
-      })
-      .catch((error: unknown) => {
-        logger.error({ at: "account.uploadReplay.start", error });
-      });
+  } catch (error) {
+    logger.error({ at: "account.uploadReplay.start", error });
   }
   if (resolution.status === "cached-cloud") {
     recheckSession();
@@ -129,7 +133,24 @@ export function startUploadReplayForSession(
   } else {
     stopSessionRecheck();
   }
-  return true;
+}
+
+function decideOnceLoaded(
+  resolution: AuthSessionResolution,
+  ticket: SessionResolutionTicket
+) {
+  const { generation } = ticket;
+  loadingGenerations.add(generation);
+  loadFilesRuntime()
+    .then(() => {
+      loadingGenerations.delete(generation);
+      startUploadReplayForSession(resolution, ticket);
+    })
+    .catch((error: unknown) => {
+      loadingGenerations.delete(generation);
+      logger.error({ at: "account.uploadReplay.start", error });
+      abandonSessionResolution(ticket);
+    });
 }
 
 async function loadFilesRuntime(): Promise<FilesRuntime> {
@@ -163,6 +184,8 @@ export function stopUploadReplayForSession(): Promise<void> {
   endingSessions += 1;
   sessionLifetime.abort();
   pendingGenerations.clear();
+  loadingGenerations.clear();
+  heldResolution = undefined;
   stopSessionRecheck();
   return loadFilesRuntime()
     .then((files) => files.endAccountUploadReplay())
@@ -204,9 +227,8 @@ function recheckIfConnected() {
  * mode ends, and, after an AuthFn failure while connected, with a growing
  * delay, until a resolution other than a cached or unavailable one settles
  * the restored replay. A newer resolution or a stop aborts the pending one
- * before it stores, clears or applies anything. An attempt that fails, or
- * whose result cannot apply while a newer resolution is pending, keeps the
- * growing delay armed until a resolution settles the replay or a stop.
+ * before it stores, clears or applies anything. An attempt that fails keeps
+ * the growing delay armed until a resolution settles the replay or a stop.
  */
 function recheckSession() {
   if (sessionRecheck) return;
@@ -222,15 +244,12 @@ function recheckSession() {
     const ticket = beginSessionResolution();
     resolveAuthSession({ signal: current.signal })
       .then((resolution) => {
-        if (current.signal.aborted) {
-          pendingGenerations.delete(ticket.generation);
-        } else if (!startUploadReplayForSession(resolution, ticket)) {
-          retryWhileActive();
-        }
+        if (current.signal.aborted) abandonSessionResolution(ticket);
+        else startUploadReplayForSession(resolution, ticket);
       })
       .catch((error: unknown) => {
-        pendingGenerations.delete(ticket.generation);
         logger.error({ at: "account.uploadReplay.reconnect", error });
+        abandonSessionResolution(ticket);
         if (!current.signal.aborted) retryWhileActive();
       });
   };

@@ -449,16 +449,15 @@ async function bootstrap(region: string) {
 
 async function checkIfSessionExpired() {
   const ticket = beginSessionResolution();
-  const resolution = await resolveAuthSession({ signal: ticket.signal }).catch(
-    (error: unknown) => {
-      abandonSessionResolution(ticket);
-      throw error;
-    }
-  );
-  startUploadReplayForSession(resolution, ticket);
-  return !["authenticated", "offline-only", "cached-cloud"].includes(
-    resolution.status
-  );
+  try {
+    const resolution = await resolveAuthSession({ signal: ticket.signal });
+    startUploadReplayForSession(resolution, ticket);
+    return !["authenticated", "offline-only", "cached-cloud"].includes(
+      resolution.status
+    );
+  } finally {
+    abandonSessionResolution(ticket);
+  }
 }
 
 /** Coordinates account persistence, authentication, and application lifecycle work. */

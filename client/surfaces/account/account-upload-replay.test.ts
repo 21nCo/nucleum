@@ -140,9 +140,14 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
 /** How many resolutions of the stored session have returned. */
 /**
  * How many session resolutions finished; `failNext`, when set, makes the next
- * one fail before it reads the stored session.
+ * one fail before it reads the stored session, and `failNextWhen` makes the
+ * next one fail once that promise settles.
  */
-const auth = vi.hoisted(() => ({ resolved: 0, failNext: false }));
+const auth = vi.hoisted(() => ({
+  resolved: 0,
+  failNext: false,
+  failNextWhen: undefined as Promise<void> | undefined
+}));
 vi.mock("@nucleum/client/runtime/account/auth", async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -154,7 +159,10 @@ vi.mock("@nucleum/client/runtime/account/auth", async (importOriginal) => {
       ...args: Parameters<typeof actual.resolveAuthSession>
     ) => {
       try {
-        if (auth.failNext) {
+        const failWhen = auth.failNextWhen;
+        auth.failNextWhen = undefined;
+        if (failWhen) await failWhen;
+        if (auth.failNext || failWhen) {
           auth.failNext = false;
           throw new Error("stored session read failed");
         }
@@ -387,6 +395,7 @@ beforeEach(async () => {
   authfn.region = undefined;
   auth.resolved = 0;
   auth.failNext = false;
+  auth.failNextWhen = undefined;
   await clearStorage();
 });
 
@@ -1805,6 +1814,106 @@ describe("replay authorization across the session lifetime", () => {
     expect(await older).toBe(true);
     await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
     await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+
+  /**
+   * Restores user-a's stored session online on a new page whose files runtime
+   * loads only once `loaded` is called, with the queued capture and a pending
+   * delete, and returns the auth guard's live result held in that load.
+   */
+  async function restoreLiveWhileFilesLoad() {
+    await captureOfflineThenLeave();
+    await recordPendingDelete();
+    await storeCloudSession();
+    let loaded: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (loaded = resolve));
+    vi.doMock(
+      "@nucleum/shared-state/files/filefn-client",
+      async (importOriginal) => {
+        await gate;
+        return importOriginal();
+      }
+    );
+    const page = await loadPage();
+    await page.accountSession.init();
+    isOnline = true;
+    authfn.session = liveSession;
+    expect(await page.sessionAccess.performLoginStatusCheck()).toBe(true);
+    return { page, loaded };
+  }
+
+  it("grants no replay from a result held in the files runtime load while a newer check is pending", async () => {
+    const { page, loaded } = await restoreLiveWhileFilesLoad();
+    try {
+      const held = holdAuthFnResponses();
+      const newer = page.accountSession.checkIfSessionExpired();
+      await vi.waitFor(() => expect(held).toHaveLength(1));
+      loaded();
+      await settle();
+      expect(sdk.baseUrls).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      held[0](userB);
+      expect(await newer).toBe(false);
+      await expectNothingSent();
+    } finally {
+      vi.doUnmock("@nucleum/shared-state/files/filefn-client");
+    }
+  });
+
+  it("lets the newest of the results waiting for the files runtime load decide the replay", async () => {
+    const { page, loaded } = await restoreLiveWhileFilesLoad();
+    try {
+      const held = holdAuthFnResponses();
+      const older = page.accountSession.checkIfSessionExpired();
+      await vi.waitFor(() => expect(held).toHaveLength(1));
+      const newer = page.accountSession.checkIfSessionExpired();
+      await vi.waitFor(() => expect(held).toHaveLength(2));
+      held[0](liveSession);
+      expect(await older).toBe(false);
+      held[1](userB);
+      expect(await newer).toBe(false);
+      loaded();
+      await settle();
+      expect(sdk.baseUrls).toEqual([]);
+      await expectNothingSent();
+    } finally {
+      vi.doUnmock("@nucleum/shared-state/files/filefn-client");
+    }
+  });
+
+  it("applies a result held in the files runtime load once the newer check fails", async () => {
+    const { page, loaded } = await restoreLiveWhileFilesLoad();
+    try {
+      auth.failNext = true;
+      await expect(
+        page.accountSession.checkIfSessionExpired()
+      ).rejects.toThrow();
+      loaded();
+      await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+      expect(sdk.baseUrls).toEqual([USEAST_FILES]);
+    } finally {
+      vi.doUnmock("@nucleum/shared-state/files/filefn-client");
+    }
+  });
+
+  it("applies an older check's result held for a newer check that then fails", async () => {
+    const { page, fileId } = await restoreOffline();
+    const held = holdAuthFnResponses();
+    isOnline = true;
+    const older = page.accountSession.checkIfSessionExpired();
+    await vi.waitFor(() => expect(held).toHaveLength(1));
+    let fail: () => void = () => undefined;
+    auth.failNextWhen = new Promise<void>((resolve) => (fail = resolve));
+    const newer = page.accountSession.checkIfSessionExpired();
+    held[0](liveSession);
+    expect(await older).toBe(false);
+    await settle();
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deleted).toEqual([]);
+    fail();
+    await expect(newer).rejects.toThrow();
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
     expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
   });
 

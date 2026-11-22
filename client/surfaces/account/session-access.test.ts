@@ -127,6 +127,18 @@ describe("product-configured account access", () => {
     expect(mocks.startUploadReplay).not.toHaveBeenCalled();
   });
 
+  it("abandons its session resolution when storing the live session fails", async () => {
+    mocks.resolve.mockResolvedValue({
+      status: "authenticated",
+      session: { id: "session", actorId: "123", metadata: {} },
+      storedState: {}
+    });
+    mocks.storageSet.mockRejectedValueOnce(new Error("storage write failed"));
+    await expect(performLoginStatusCheck()).rejects.toThrow();
+    expect(replay.abandon).toHaveBeenCalledWith(mocks.ticket);
+    expect(mocks.startUploadReplay).not.toHaveBeenCalled();
+  });
+
   it("applies every resolved session to the account upload replay once", async () => {
     const applied = async (resolution: object) => {
       mocks.startUploadReplay.mockClear();

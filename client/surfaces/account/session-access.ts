@@ -19,7 +19,8 @@ import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
   abandonSessionResolution,
   beginSessionResolution,
-  startUploadReplayForSession
+  startUploadReplayForSession,
+  type SessionResolutionTicket
 } from "@nucleum/surfaces/account/account-upload-replay";
 /**
  * Hydrates the resolved account session and enforces the supplied product plan
@@ -28,12 +29,18 @@ import {
  */
 export async function performLoginStatusCheck(requiredPlan?: PlanType) {
   const ticket = beginSessionResolution();
-  const resolution = await resolveAuthSession({ signal: ticket.signal }).catch(
-    (error: unknown) => {
-      abandonSessionResolution(ticket);
-      throw error;
-    }
-  );
+  try {
+    return await checkLoginStatus(ticket, requiredPlan);
+  } finally {
+    abandonSessionResolution(ticket);
+  }
+}
+
+async function checkLoginStatus(
+  ticket: SessionResolutionTicket,
+  requiredPlan?: PlanType
+) {
+  const resolution = await resolveAuthSession({ signal: ticket.signal });
   if (ticket.signal.aborted) return false;
   if (resolution.status !== "authenticated") {
     startUploadReplayForSession(resolution, ticket);
