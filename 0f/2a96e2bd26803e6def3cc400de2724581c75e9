@@ -1,0 +1,24 @@
+client/shared-state/files/file-queue.ts
+  h_a39f9495f9ec1d 3620-3628,3631,3633
+client/features/memory/node/content/file-upload-failed.render.test.ts
+  h_a39f9495f9ec1d 5-6,67-70,266-320,354-418
+client/features/memory/node/thumbnail/NodeThumbnail.svelte
+  h_a39f9495f9ec1d 161-183,185-187,190
+client/features/memory/markdown/mediaGrid/DraggableMediaGridElement.svelte
+  h_a39f9495f9ec1d 12,51-75,243-263
+client/shared-state/files/file-queue.failure.test.ts
+  h_a39f9495f9ec1d 177-184
+tests/fixtures/components/FileViewStub.svelte
+  h_a39f9495f9ec1d 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0f2a96e2bd26803e6def3cc400de2724581c75e9",
+  "prompts": {},
+  "humans": {
+    "h_a39f9495f9ec1d": {
+      "author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
