@@ -90,10 +90,12 @@ const OWNER_A = { userId: "user-a", baseUrl: AUTHORITY_A };
 /** user-b at the authority it claims the local photo at. */
 const OWNER_B = { userId: "user-b", baseUrl: AUTHORITY_B };
 
-/** An account's records that reference the queued photo. */
-function referencingRecords() {
+/** An account's records that reference the queued photo, at `owner`'s authority. */
+function referencingRecords(
+  owner: { userId: string; baseUrl: string } = OWNER_A
+) {
   return {
-    owner: OWNER_A,
+    owner,
     isCurrent: () => true,
     sync: async () => true,
     isReferenced: async (fileId: string) => fileId === FILE_ID,
@@ -115,15 +117,28 @@ beforeEach(() => {
 /**
  * Replaces the account's FileFn client module with one whose signed-in
  * account is `owner`, live while `isLive`, its session carrying `region`
- * (none by default) and its client settled at `baseUrl` (authority A by
- * default; resolveFileFnBaseUrl maps a region to `https://<region>.example.test/files`).
+ * (none by default), the device storing `storedRegion` ("a" by default; null
+ * stores none) and its client settled at `baseUrl` (authority A by default;
+ * resolveFileFnBaseUrl maps a region to `https://<region>.example.test/files`).
  */
 function mockFileFnOwner(owner: {
   userId: string;
   isLive: boolean;
   region?: string | null;
+  storedRegion?: string | null;
   baseUrl?: string;
 }) {
+  if (owner.storedRegion === undefined) owner.storedRegion = "a";
+  vi.doMock("@nucleum/persistence/client-storage", async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("@nucleum/persistence/client-storage")
+      >();
+    const clientStorage = Object.create(actual.clientStorage);
+    clientStorage.get = async (key: string) =>
+      key === "region" ? (owner.storedRegion ?? null) : null;
+    return { ...actual, clientStorage };
+  });
   vi.doMock("@nucleum/shared-state/files/filefn-client", () => ({
     captureFileFnOwner: () => ({ userId: owner.userId, epoch: 1 }),
     captureFileQueueClaim: async () =>
@@ -145,6 +160,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   vi.doUnmock("@nucleum/shared-state/files/filefn-client");
+  vi.doUnmock("@nucleum/persistence/client-storage");
   vi.doUnmock("@filefn/client");
 });
 
@@ -451,7 +467,12 @@ describe("a failed file of the local queue another account claimed", () => {
 
   it("is shown and retried by a file display only for the claiming account", async () => {
     installDevice();
-    const owner = { userId: "user-a", isLive: true, baseUrl: AUTHORITY_A };
+    const owner = {
+      userId: "user-a",
+      isLive: true,
+      storedRegion: "a",
+      baseUrl: AUTHORITY_A
+    };
     vi.resetModules();
     mockFileFnOwner(owner);
     const queue = await import("./file-queue");
@@ -471,6 +492,7 @@ describe("a failed file of the local queue another account claimed", () => {
     expect(fileFn.uploads).toHaveLength(1);
 
     owner.userId = "user-b";
+    owner.storedRegion = "b";
     owner.baseUrl = AUTHORITY_B;
     expect(await read()).toBe(true);
     expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
@@ -525,10 +547,6 @@ describe("a failed file of an account whose FileFn authority moved", () => {
     await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
     expect(fileFn.uploads).toHaveLength(1);
     expect(await tab.isQueuedFileFailed(dirs, FILE_ID, OWNER_A)).toBe(true);
-    const unknownAuthority = { userId: "user-a", baseUrl: null };
-    expect(await tab.isQueuedFileFailed(dirs, FILE_ID, unknownAuthority)).toBe(
-      true
-    );
 
     expect(await tab.retryFailedQueuedFile(dirs, FILE_ID, OWNER_A)).toBe(true);
     await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
@@ -560,43 +578,112 @@ describe("a failed file of an account whose FileFn authority moved", () => {
     await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
   });
 
-  it("is shown at the session's authority and retried only at the settled one", async () => {
+  it("is failed for the authority that started an account file, not the one that staged it", async () => {
     installDevice();
-    const owner = {
-      userId: "user-a",
-      isLive: true,
-      region: "b" as string | null,
-      baseUrl: AUTHORITY_B
-    };
-    vi.resetModules();
-    mockFileFnOwner(owner);
-    const queue = await import("./file-queue");
-    const fileUrl = await import("./file-url");
-    const fileFn = await rejectStartedPhoto(queue);
-    const read = () =>
-      new Promise<boolean>((resolve) => {
-        const stop = fileUrl.watchFileUploadFailure(FILE_ID, (isFailed) => {
-          stop();
-          resolve(isFailed);
-        });
-      });
-
-    expect(await read()).toBe(false);
-    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(false);
-
-    owner.region = null;
-    expect(await read()).toBe(true);
-    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(false);
-    await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+    const tab = await openTab();
+    await tab.enqueueFile(QUEUE, {
+      fileId: FILE_ID,
+      fileName: "photo.png",
+      contentType: "image/png",
+      blob: new Blob(["photo bytes"], { type: "image/png" }),
+      claim: OWNER_A
+    });
+    await tab.markQueuedFileCommitted(QUEUE, FILE_ID);
+    const fileFn = createClient([rejection(400), "ok"]);
+    await tab.replayFileQueue(
+      QUEUE,
+      fileFn.client,
+      new AbortController().signal,
+      undefined,
+      referencingRecords(OWNER_A_AT_B)
+    );
     expect(fileFn.uploads).toHaveLength(1);
-    expect(await read()).toBe(true);
 
-    owner.region = "a";
-    owner.baseUrl = AUTHORITY_A;
-    expect(await read()).toBe(true);
-    expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A_AT_B)).toBe(
+      true
+    );
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(false);
+    expect(
+      await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A_AT_B)
+    ).toBe(true);
     await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
-    await vi.waitFor(async () => expect(await read()).toBe(false));
+    await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
+    expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A_AT_B)).toBe(
+      false
+    );
+  });
+
+  describe("read by a file display whose session carries no region", () => {
+    /**
+     * Opens a page whose user-a session carries no region, the device
+     * storing `storedRegion`, and has FileFn reject the photo for good on a
+     * replay at `startedAt`, whose client uploads it on its next attempt.
+     */
+    async function openRejectedAt(
+      storedRegion: string | null,
+      startedAt: string
+    ) {
+      installDevice();
+      const settled = `https://${storedRegion ?? "insouth"}.example.test/files`;
+      vi.resetModules();
+      mockFileFnOwner({
+        userId: "user-a",
+        isLive: true,
+        region: null,
+        storedRegion,
+        baseUrl: settled
+      });
+      const queue = await import("./file-queue");
+      const fileUrl = await import("./file-url");
+      await enqueuePhoto(queue);
+      const fileFn = createClient([rejection(400), "ok"]);
+      await queue.replayFileQueue(
+        QUEUE,
+        fileFn.client,
+        new AbortController().signal,
+        undefined,
+        referencingRecords({ userId: "user-a", baseUrl: startedAt })
+      );
+      expect(fileFn.uploads).toHaveLength(1);
+      const read = () =>
+        new Promise<boolean>((resolve) => {
+          const stop = fileUrl.watchFileUploadFailure(FILE_ID, (isFailed) => {
+            stop();
+            resolve(isFailed);
+          });
+        });
+      return { fileUrl, fileFn, read };
+    }
+
+    it("shows no failed upload started at another authority than the stored region's", async () => {
+      const { fileUrl, fileFn, read } = await openRejectedAt("b", AUTHORITY_A);
+
+      expect(await read()).toBe(false);
+      expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(false);
+      await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+      expect(fileFn.uploads).toHaveLength(1);
+    });
+
+    it("shows a failed upload started at the stored region's authority, which Retry uploads", async () => {
+      const { fileUrl, fileFn, read } = await openRejectedAt("b", AUTHORITY_B);
+
+      expect(await read()).toBe(true);
+      expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
+      await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+      await vi.waitFor(async () => expect(await read()).toBe(false));
+    });
+
+    it("reads at insouth's authority when the device stores no region", async () => {
+      const insouth = "https://insouth.example.test/files";
+      const elsewhere = await openRejectedAt(null, AUTHORITY_A);
+      expect(await elsewhere.read()).toBe(false);
+      expect(await elsewhere.fileUrl.retryFileUpload(FILE_ID)).toBe(false);
+
+      const { fileUrl, fileFn, read } = await openRejectedAt(null, insouth);
+      expect(await read()).toBe(true);
+      expect(await fileUrl.retryFileUpload(FILE_ID)).toBe(true);
+      await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+    });
   });
 });
 

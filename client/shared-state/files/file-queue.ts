@@ -602,14 +602,9 @@ async function readThumbnail(
 
 /**
  * The account, at the FileFn authority it stores files under, that reads or
- * retries a failed file (see isReplayableBy); null for none. A null
- * `baseUrl` is an authority not known yet (a read from a session that
- * carries no region, see watchFileUploadFailure), matched by account alone.
+ * retries a failed file (see isReplayableBy); null for none.
  */
-export type QueuedFileFailureOwner = {
-  userId: string;
-  baseUrl: string | null;
-} | null;
+export type QueuedFileFailureOwner = QueuedFileClaim | null;
 
 /**
  * Whether the first queue that holds a file (see resolveQueuedFileUrl) holds
@@ -726,29 +721,26 @@ function toFailedMark({ generation }: Pick<PublishedEntry, "generation">) {
 
 /**
  * Whether `owner`'s replay would upload an entry once its failed mark is
- * removed, so its failed state is the owner's to read and retry: unclaimed
- * or claimed by the owner at its authority (as isPublishable requires), and
- * with no started marker of another account or authority (as
- * isStartedElsewhere skips it). An owner whose authority is not known yet
- * (a null `baseUrl`) is matched by account alone; its Retry captures the
- * authority first. A marker read error rejects.
+ * removed, so its failed state is the owner's to read and retry: the test
+ * the replay of the entry's queue applies (see replayEntry). An account
+ * queue's entry is replayed with the account's references, which skip it
+ * only once an attempt of another account or authority started it (see
+ * isStartedElsewhere), whatever authority it was staged with (claim.json);
+ * a local entry must also be unclaimed or claimed by the owner at its
+ * authority (see isPublishable). No owner matches no claim or started
+ * marker. A marker read error rejects.
  */
 async function isReplayableBy(
   dir: string,
   entryName: string,
   owner: QueuedFileFailureOwner
 ) {
-  const claim = await readClaim(dir, entryName);
-  if (claim && !isOwnedClaim(claim, owner)) return false;
-  const markers = await readMarkers(dir, entryName);
-  return !markers.some((marker) => marker && !isOwnedClaim(marker, owner));
-}
-
-function isOwnedClaim(claim: QueuedFileClaim, owner: QueuedFileFailureOwner) {
-  return (
-    claim.userId === owner?.userId &&
-    (owner.baseUrl === null || claim.baseUrl === owner.baseUrl)
-  );
+  const isOwned = (claim: QueuedFileClaim | undefined) =>
+    !claim || (owner !== null && isSameClaim(claim, owner));
+  if (dir === LOCAL_FILE_QUEUE_DIR) {
+    if (!isOwned(await readClaim(dir, entryName))) return false;
+  }
+  return (await readMarkers(dir, entryName)).every(isOwned);
 }
 
 /** The first queue's published entry of a file (see getPublishedEntryDir). */

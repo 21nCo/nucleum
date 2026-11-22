@@ -2,6 +2,8 @@ import type { FileFnClient } from "@filefn/client";
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
 import account from "@nucleum/client/runtime/account/account.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
+import { clientStorage } from "@nucleum/persistence/client-storage";
+import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
 import {
   isQueuedFileFailed,
   onQueuedFileFailureChange,
@@ -146,12 +148,12 @@ export async function resolveFileUrl(
  *
  * Reading is not a file operation: it only reads the account state, so it
  * never requests the account's FileFn client nor authorizes its replay (see
- * captureFileFnOwner); only the user's Retry does (see retryFileUpload). The
- * authority it reads for is the session region's; a session that carries no
- * region (the client reads the stored one) reads the account's file failed
- * at any authority, and its Retry, which captures the settled authority
- * first, keeps the mark and resolves false when that authority would not
- * replay the file.
+ * captureFileFnOwner); only the user's Retry does (see retryFileUpload). It
+ * reads at the authority the account's client binds to (see
+ * readAccountOwner), the one Retry captures, so a file shown failed is one
+ * whose Retry uploads it again. A change of the stored region alone, which
+ * the client only reads when the account state changes, is read on the
+ * next account change or failure change.
  */
 export function watchFileUploadFailure(
   fileId: string,
@@ -169,7 +171,8 @@ export function watchFileUploadFailure(
   });
   let readerKey: string | undefined;
   const stopAccount = account.subscribe(() => {
-    const key = toReaderKey(readAccountOwner());
+    const scope = readAccountScope();
+    const key = scope ? `${scope.userId}\n${scope.region ?? ""}` : "";
     if (key === readerKey) return;
     readerKey = key;
     void read();
@@ -181,36 +184,46 @@ export function watchFileUploadFailure(
   };
 }
 
-/**
- * The signed-in cloud account and the authority of its session region (null
- * without one), null without an account or once unreadable, read from the
- * account state alone (no FileFn client or replay grant).
- */
-function readAccountOwner(): QueuedFileFailureOwner {
+/** The signed-in cloud account and its session region, null without one. */
+function readAccountScope() {
   try {
-    const scope = resolveFileFnAccountScope(account.get());
-    if (!scope) return null;
-    const { userId, region } = scope;
-    return { userId, baseUrl: region ? resolveFileFnBaseUrl(region) : null };
+    return resolveFileFnAccountScope(account.get());
   } catch (error: unknown) {
     logger.warn({ at: "fileUrl.failure.owner", error });
     return null;
   }
 }
 
+/**
+ * The signed-in cloud account at the FileFn authority its client binds to
+ * (see syncFileFnClient): its session region's, else the stored region's,
+ * else insouth's; null without an account. Read from the account state and
+ * the stored region alone, it requests no FileFn client or replay grant.
+ */
+async function readAccountOwner(): Promise<QueuedFileFailureOwner> {
+  const scope = readAccountScope();
+  if (!scope) return null;
+  const region =
+    scope.region ??
+    (await clientStorage.get(ClientStorageKey.REGION)) ??
+    "insouth";
+  return { userId: scope.userId, baseUrl: resolveFileFnBaseUrl(region) };
+}
+
 function toReaderKey(owner: QueuedFileFailureOwner) {
-  return owner ? `${owner.userId}\n${owner.baseUrl ?? ""}` : "";
+  return owner ? `${owner.userId}\n${owner.baseUrl}` : "";
 }
 
 async function readFileUploadFailure(fileId: string): Promise<boolean> {
   try {
-    const owner = readAccountOwner();
+    const owner = await readAccountOwner();
     const isFailed = await isQueuedFileFailed(
       resolveFileQueueDirsOf(owner?.userId ?? null),
       fileId,
       owner
     );
-    return isFailed && toReaderKey(readAccountOwner()) === toReaderKey(owner);
+    if (!isFailed) return false;
+    return toReaderKey(await readAccountOwner()) === toReaderKey(owner);
   } catch (error: unknown) {
     logger.warn({ at: "fileUrl.failure", fileId, error });
     return false;
