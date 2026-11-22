@@ -13,7 +13,10 @@
    * Shows "Upload failed" with a Retry action for a FileFn file whose upload
    * FileFn rejected for good on this device (see watchFileUploadFailure),
    * and nothing otherwise, so a device without the file's bytes keeps its
-   * usual placeholder. Retry asks the queue to upload it again once.
+   * usual placeholder. Retry asks the queue to upload it again once. The
+   * indicator sits inside interactive file displays (a media grid that
+   * inserts a block on Enter, an embed that navigates on click), so a click
+   * in it, and the Enter or Space that activates Retry, stays in it.
    */
   let {
     fileId = undefined,
@@ -34,6 +37,14 @@
     });
   });
 
+  function keepClick(event: MouseEvent) {
+    event.stopPropagation();
+  }
+
+  function keepActivationKey(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") event.stopPropagation();
+  }
+
   async function retry(event: MouseEvent) {
     event.stopPropagation();
     if (!fileId || isRetrying) return;
@@ -47,8 +58,12 @@
 </script>
 
 {#if isFailed && fileId}
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     role="status"
+    onclick={keepClick}
+    onkeydown={keepActivationKey}
+    onkeyup={keepActivationKey}
     data-testid="file-upload-failed"
     class={cn(
       "flex items-center gap-2 rounded-md border border-ars1 bg-bgs1 px-2 py-1 text-b3 text-ars1",

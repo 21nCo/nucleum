@@ -383,6 +383,7 @@ export async function dequeueFile(
   unconfirmedRemovals.delete(key);
   await bumpRevisionAfter(dir);
   releaseQueuedFileUrls((held) => held === key);
+  notifyFailureChange(fileId);
   return true;
 }
 
@@ -406,7 +407,10 @@ async function confirmRemovals(dir: string) {
     const entry = await getEntryDir(dir, entryName, true).catch(() => false);
     if (entry === false) continue;
     unconfirmedRemovals.delete(key);
-    if (!entry) releaseQueuedFileUrls((held) => held === key);
+    if (!entry) {
+      releaseQueuedFileUrls((held) => held === key);
+      notifyFailureChange(entryName.slice(ENTRY_PREFIX.length));
+    }
   }
 }
 
@@ -619,7 +623,10 @@ export async function isQueuedFileFailed(
  * of that queue now with the request the page last asked a replay of it
  * with, unless that request's signal aborted or its records were replaced
  * (see isStale), when the next replay requested uploads it. Resolves
- * whether it removed a mark; one it cannot remove rejects.
+ * whether it removed a mark; one it finds unmarked (removed, uploaded or
+ * written again meanwhile) resolves false and has the file's failed state
+ * read again (see onQueuedFileFailureChange). A mark it cannot remove
+ * rejects.
  */
 export async function retryFailedQueuedFile(
   dirs: readonly string[],
@@ -628,7 +635,10 @@ export async function retryFailedQueuedFile(
   if (!isFileQueueSupported()) return false;
   const found = await findPublishedEntry(dirs, fileId);
   const mark = found && toFailedMark(found.entry);
-  if (!found || !mark || !found.entry.names.includes(mark)) return false;
+  if (!found || !mark || !found.entry.names.includes(mark)) {
+    notifyFailureChange(fileId);
+    return false;
+  }
   await removeEntryFile(found.entry.entry, mark);
   notifyFailureChange(fileId);
   const request = latestRequests.get(found.dir);
@@ -640,9 +650,12 @@ export async function retryFailedQueuedFile(
 }
 
 /**
- * Calls `listener` with the file's ID whenever a file of any queue is marked
- * failed or retried (see FAILED_PREFIX), in this page or, where the browser
- * has a BroadcastChannel, in another tab; returns the unsubscribe.
+ * Calls `listener` with the file's ID whenever the failed state of a file of
+ * any queue (see FAILED_PREFIX) may have changed, in this page or, where the
+ * browser has a BroadcastChannel, in another tab: the file was marked
+ * failed or retried, or its entry was removed (see dequeueFile), uploaded
+ * and dropped, or written again by a restore as an unmarked generation.
+ * Returns the unsubscribe.
  */
 export function onQueuedFileFailureChange(
   listener: (fileId: string) => void
@@ -2040,6 +2053,7 @@ async function stageRestoredEntry(
     create: true
   });
   await bumpRevisionAfter(dir);
+  notifyFailureChange(copy.fileId);
 }
 
 /**
@@ -2713,6 +2727,7 @@ async function replayEntry(
   } else {
     await store.deletePendingUpload(entryName);
     releaseQueuedFileUrls((key) => key === `${dir}\n${entryName}`);
+    notifyFailureChange(fileId);
   }
   logger.info({ at: "fileQueue.replay", fileId: result.fileId });
   return "done";
@@ -3602,12 +3617,16 @@ async function uploadQueuedFile(
 
 /**
  * Whether FileFn rejected an original's upload in a way a retry does not
- * change: a client error other than an authorization failure (401), a
- * timeout (408) or a rate limit (429), which a later attempt may not meet,
- * and other than an ended session, which the next replay replaces (see
- * ENDED_SESSION_CODES), or one already completed.
+ * change: a client error of the FileFn API, which carries its error code,
+ * other than an authorization failure (401), a timeout (408) or a rate
+ * limit (429), which a later attempt may not meet, and other than an ended
+ * session, which the next replay replaces (see ENDED_SESSION_CODES), or one
+ * already completed. A part upload's failure carries no code (a presigned
+ * storage URL that expired answers 403), so it stays a transient failure
+ * the next replay retries with a new session.
  */
 function isUploadRejectedForGood({ status, code }: FileFnHttpError) {
+  if (typeof code !== "string" || !code) return false;
   if (code === "FILEFN_UPLOAD_ALREADY_COMPLETED") return false;
   if (code && ENDED_SESSION_CODES.has(code)) return false;
   return status >= 400 && status < 500 && ![401, 408, 429].includes(status);

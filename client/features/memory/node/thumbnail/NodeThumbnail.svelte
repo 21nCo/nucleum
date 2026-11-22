@@ -26,6 +26,7 @@
   import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { fileStore } from "@nucleum/shared-state/files/file.store";
+  import { datafn } from "@nucleum/datafn/datafn.store";
   import type { IFile } from "@nucleum/shared-state/files/file.type";
   import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
   import CollectionItemThumbnailProperties from "@nucleum/features/collections/properties/CollectionItemThumbnailProperties.svelte";
@@ -152,12 +153,36 @@
     if (item?.file) {
       const result = await fileStore.refresh(item.file);
       if (result) _url = result.url ?? "";
-      uploadFileId = result?.fileId;
       return;
     }
     _url = undefined;
-    uploadFileId = undefined;
   }
+
+  /**
+   * The FileFn file the thumbnail shows (its preview, else the node's file),
+   * whose failed upload it shows; the lookup of a record ID is dropped once
+   * another file is shown, or when it fails.
+   */
+  $effect(() => {
+    const shown = filePreview ?? item?.file;
+    uploadFileId = undefined;
+    if (!shown) return;
+    if (typeof shown === "object") {
+      uploadFileId = (shown as IFile).fileId;
+      return;
+    }
+    let isCurrent = true;
+    datafn.file.query({ filters: { id: shown } }).then(
+      (result) => {
+        const file = result.data?.[0] as IFile | undefined;
+        if (isCurrent) uploadFileId = file?.fileId;
+      },
+      () => undefined
+    );
+    return () => {
+      isCurrent = false;
+    };
+  });
 
   function propagateClick(event: MouseEvent) {
     onClick?.(event);

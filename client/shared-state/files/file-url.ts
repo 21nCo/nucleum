@@ -1,5 +1,6 @@
 import type { FileFnClient } from "@filefn/client";
 import { resolveViewerSource, type RenderIntent } from "@filefn/viewer";
+import account from "@nucleum/client/runtime/account/account.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
   isQueuedFileFailed,
@@ -129,12 +130,14 @@ export async function resolveFileUrl(
  * Calls `onChange` with whether a file's upload failed on this device: FileFn
  * rejected it for good while it is still in the FileFn OPFS queue of the
  * signed-in cloud account, or of the device's local queue, read as
- * resolveFileUrl reads them (see isQueuedFileFailed). It reads it now and
- * again whenever a file of that ID is marked failed or retried, reporting
- * the latest read only, and never once stopped; a read whose account's
- * generation ended meanwhile, or that fails, reports false, so another
- * account or device shows the file as it shows any file it cannot resolve.
- * Returns the stop.
+ * resolveFileUrl reads them (see isQueuedFileFailed). It reads it now,
+ * again whenever that file's failed state may have changed (see
+ * onQueuedFileFailureChange: marked, retried, removed, uploaded or written
+ * again) and whenever another cloud account, or none, is signed in,
+ * reporting the latest read only, and never once stopped; a read whose
+ * account's generation ended meanwhile, or that fails, reports false, so
+ * another account or device shows the file as it shows any file it cannot
+ * resolve. Returns the stop.
  */
 export function watchFileUploadFailure(
   fileId: string,
@@ -147,14 +150,31 @@ export function watchFileUploadFailure(
     const isFailed = await readFileUploadFailure(fileId);
     if (!isStopped && at === reads) onChange(isFailed);
   };
-  const stop = onQueuedFileFailureChange((changed) => {
+  const stopChanges = onQueuedFileFailureChange((changed) => {
     if (changed === fileId) void read();
   });
-  void read();
+  let readerId: string | null | undefined;
+  const stopAccount = account.subscribe(() => {
+    const userId = readOwnerId();
+    if (userId === readerId) return;
+    readerId = userId;
+    void read();
+  });
   return () => {
     isStopped = true;
-    stop();
+    stopChanges();
+    stopAccount();
   };
+}
+
+/** The signed-in cloud account's ID, null without one or once unreadable. */
+function readOwnerId(): string | null {
+  try {
+    return captureFileFnOwner()?.userId ?? null;
+  } catch (error: unknown) {
+    logger.warn({ at: "fileUrl.failure.owner", error });
+    return null;
+  }
 }
 
 async function readFileUploadFailure(fileId: string): Promise<boolean> {

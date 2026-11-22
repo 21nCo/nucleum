@@ -23,6 +23,15 @@ const uploads = vi.hoisted(() => ({
   retryFileUpload: vi.fn(async () => true)
 }));
 
+/**
+ * The `file` records datafn holds, by record ID, each read when queried, so
+ * a test can hold a lookup back; and the content type of the embedded node.
+ */
+const records = vi.hoisted(() => ({
+  files: new Map<string, () => Promise<object | undefined>>(),
+  embeddedType: ""
+}));
+
 vi.mock("@nucleum/shared-state/files/file-url", () => ({
   watchFileUploadFailure: (
     fileId: string,
@@ -92,12 +101,12 @@ vi.mock("@datafn/svelte", () => ({
 vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("@nucleum/datafn/datafn.store")>();
-  const embedded = {
+  const embedded = () => ({
     id: "node-1",
     label: "photo.png",
-    contentType: NodeType.FILE,
+    contentType: records.embeddedType || NodeType.FILE,
     file: { ...photo }
-  };
+  });
   /** Reads `key` of `target` with its methods bound to it. */
   const read = (target: object, key: string | symbol) => {
     const value = (target as Record<string | symbol, unknown>)[key];
@@ -105,10 +114,20 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   };
   const node = new Proxy(actual.datafn.node, {
     get: (target, key) =>
-      key === "query" ? async () => ({ data: [embedded] }) : read(target, key)
+      key === "query" ? async () => ({ data: [embedded()] }) : read(target, key)
+  });
+  const file = new Proxy(actual.datafn.file, {
+    get: (target, key) =>
+      key === "query"
+        ? async ({ filters }: { filters: { id: string } }) => {
+            const found = await records.files.get(filters.id)?.();
+            return { data: found ? [found] : [] };
+          }
+        : read(target, key)
   });
   const datafn = new Proxy(actual.datafn, {
-    get: (target, key) => (key === "node" ? node : read(target, key))
+    get: (target, key) =>
+      key === "node" ? node : key === "file" ? file : read(target, key)
   });
   return { ...actual, datafn };
 });
@@ -121,6 +140,9 @@ const { default: EmbedContent } =
   await import("@nucleum/features/memory/markdown/embed/EmbedContent.svelte");
 const { default: DraggableMediaGridElement } =
   await import("@nucleum/features/memory/markdown/mediaGrid/DraggableMediaGridElement.svelte");
+const { default: MediaGrid } =
+  await import("@nucleum/features/memory/markdown/mediaGrid/MediaGrid.svelte");
+const { navigation } = await import("@nucleum/shell/navigation/navigation");
 
 const imageNode = {
   id: "node-1",
@@ -172,11 +194,21 @@ beforeEach(() => {
   uploads.failed.clear();
   uploads.watched.length = 0;
   uploads.retryFileUpload.mockClear();
+  records.files.clear();
+  records.files.set(RECORD_ID, async () => ({ ...photo }));
+  records.embeddedType = "";
+  vi.mocked(navigation.openResource).mockClear();
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
+
+/** Lets every pending promise reaction run. */
+async function flushMicrotasks() {
+  for (let turn = 0; turn < 20; turn++) await Promise.resolve();
+}
 
 describe("file displays of a file whose upload FileFn rejected for good", () => {
   it.each(displays)(
@@ -202,4 +234,132 @@ describe("file displays of a file whose upload FileFn rejected for good", () => 
       expect(screen.queryByText("Upload failed")).toBeNull();
     }
   );
+});
+
+describe("the file a thumbnail shows the failed state of", () => {
+  const PREVIEW_FILE_ID = "file_screenshotPreview01";
+
+  it("is the screenshot it shows, not the node's own file", async () => {
+    uploads.failed.add(FILE_ID);
+    render(NodeThumbnail, {
+      props: {
+        item: {
+          id: "node-2",
+          label: "page",
+          contentType: NodeType.WEB_SCREENSHOT,
+          file: RECORD_ID,
+          body: { file: { ...photo, id: "shot-1", fileId: PREVIEW_FILE_ID } }
+        } as never,
+        accessPointId: "page-1" as never
+      }
+    });
+
+    await vi.waitFor(() => expect(uploads.watched).toContain(PREVIEW_FILE_ID));
+    expect(uploads.watched).not.toContain(FILE_ID);
+    expect(screen.queryByTestId("file-upload-failed")).toBeNull();
+  });
+
+  it("follows the item it shows and drops a lookup of the previous one", async () => {
+    let release = () => {};
+    records.files.set(
+      "preview-record",
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ ...photo, fileId: PREVIEW_FILE_ID });
+        })
+    );
+    uploads.failed.add(PREVIEW_FILE_ID);
+    const shown = render(NodeThumbnail, {
+      props: {
+        item: {
+          ...imageNode,
+          previewImage: "preview-record"
+        } as never,
+        accessPointId: "page-1" as never
+      }
+    });
+
+    await shown.rerender({
+      item: { ...imageNode, file: { ...photo } } as never,
+      accessPointId: "page-1" as never
+    });
+    await vi.waitFor(() => expect(uploads.watched).toContain(FILE_ID));
+    release();
+    await flushMicrotasks();
+
+    expect(uploads.watched).not.toContain(PREVIEW_FILE_ID);
+    expect(screen.queryByTestId("file-upload-failed")).toBeNull();
+  });
+});
+
+describe("Retry inside an interactive file display", () => {
+  it("retries a media grid's file without inserting a block, by click or key", async () => {
+    // The grid lays its items out on a timer once mounted; run it mounted.
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    uploads.failed.add(FILE_ID);
+    const mdStore = {
+      ...writable({ params: {} }),
+      insert: vi.fn(() => "block-2"),
+      deleteBlock: vi.fn()
+    };
+    const onInsert = vi.fn();
+    render(MediaGrid, {
+      props: {
+        block: {
+          id: "grid-1",
+          body: {
+            items: [
+              {
+                id: "media-1",
+                file: RECORD_ID,
+                position: { auto: 0, columns: { index: 0, columnNo: 0 } }
+              }
+            ]
+          }
+        } as never,
+        mdStore: mdStore as never,
+        onInsert
+      }
+    });
+    const retry = await vi.waitFor(() =>
+      screen.getByRole("button", { name: "Retry" })
+    );
+
+    await fireEvent.keyDown(retry, { key: "Enter" });
+    await fireEvent.keyUp(retry, { key: "Enter" });
+    await fireEvent.keyDown(retry, { key: " " });
+    await fireEvent.click(retry);
+
+    expect(uploads.retryFileUpload).toHaveBeenCalledWith(FILE_ID);
+    expect(mdStore.insert).not.toHaveBeenCalled();
+    expect(onInsert).not.toHaveBeenCalled();
+
+    const grid = screen.getByTestId("file-upload-failed").closest("button");
+    await fireEvent.keyDown(grid!, { key: "Enter" });
+    expect(mdStore.insert).toHaveBeenCalledTimes(1);
+    vi.runOnlyPendingTimers();
+  });
+
+  it("retries an embedded image without opening it", async () => {
+    records.embeddedType = NodeType.IMAGE;
+    uploads.failed.add(FILE_ID);
+    render(EmbedContent, {
+      props: {
+        id: "block-1" as never,
+        body: { id: "node:embedded01", subType: NodeType.IMAGE } as never,
+        mdStore: writable({ params: { isReadOnly: true } }) as never
+      }
+    });
+    const retry = await screen.findByRole("button", { name: "Retry" });
+
+    await fireEvent.keyDown(retry, { key: "Enter" });
+    await fireEvent.click(retry);
+
+    expect(uploads.retryFileUpload).toHaveBeenCalledWith(FILE_ID);
+    expect(navigation.openResource).not.toHaveBeenCalled();
+
+    const preview = screen.getByTestId("file-upload-failed").closest("button");
+    await fireEvent.click(preview!);
+    expect(navigation.openResource).toHaveBeenCalledTimes(1);
+  });
 });
