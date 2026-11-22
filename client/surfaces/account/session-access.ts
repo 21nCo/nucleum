@@ -17,6 +17,7 @@ import { PlanType } from "@nucleum/schema/account/subscription";
 import { resolveAuthSession } from "@nucleum/client/runtime/account/auth";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
+  abandonSessionResolution,
   beginSessionResolution,
   startUploadReplayForSession
 } from "@nucleum/surfaces/account/account-upload-replay";
@@ -27,7 +28,12 @@ import {
  */
 export async function performLoginStatusCheck(requiredPlan?: PlanType) {
   const ticket = beginSessionResolution();
-  const resolution = await resolveAuthSession({ signal: ticket.signal });
+  const resolution = await resolveAuthSession({ signal: ticket.signal }).catch(
+    (error: unknown) => {
+      abandonSessionResolution(ticket);
+      throw error;
+    }
+  );
   if (ticket.signal.aborted) return false;
   if (resolution.status !== "authenticated") {
     startUploadReplayForSession(resolution, ticket);

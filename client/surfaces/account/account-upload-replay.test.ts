@@ -1793,6 +1793,21 @@ describe("replay authorization across the session lifetime", () => {
     expect(held).toHaveLength(1);
   });
 
+  it("applies an older auth guard's live result when a newer check failed before it returned", async () => {
+    const { page, fileId } = await restoreOffline();
+    const held = holdAuthFnResponses();
+    isOnline = true;
+    const older = page.sessionAccess.performLoginStatusCheck();
+    await vi.waitFor(() => expect(held).toHaveLength(1));
+    auth.failNext = true;
+    await expect(page.accountSession.checkIfSessionExpired()).rejects.toThrow();
+    held[0](liveSession);
+    expect(await older).toBe(true);
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+
   it("keeps the bounded retry when a reconnect's own session resolution fails", async () => {
     vi.useFakeTimers({
       toFake: ["setTimeout", "clearTimeout"],

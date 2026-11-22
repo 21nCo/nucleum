@@ -44,6 +44,16 @@ export function beginSessionResolution(): SessionResolutionTicket {
   return { signal: sessionLifetime.signal, generation: resolutionGeneration };
 }
 
+/**
+ * Ends a resolution that will not reach startUploadReplayForSession because
+ * resolving the session failed, so it no longer holds older ones back.
+ */
+export function abandonSessionResolution(
+  ticket: SessionResolutionTicket
+): void {
+  pendingGenerations.delete(ticket.generation);
+}
+
 function isNewerResolutionPending(generation: number): boolean {
   for (const pending of pendingGenerations) {
     if (pending > generation) return true;

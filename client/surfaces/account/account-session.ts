@@ -32,6 +32,7 @@ import { resolveAccountBaseUrl } from "@nucleum/client/runtime/account/network";
 import { clearCachedDatafnE2eeState } from "@nucleum/datafn/datafnE2ee.store";
 import { determineIfOffline } from "@nucleum/client/runtime/connectivity";
 import {
+  abandonSessionResolution,
   beginSessionResolution,
   reopenSessionLifetime,
   startUploadReplayForSession,
@@ -448,7 +449,12 @@ async function bootstrap(region: string) {
 
 async function checkIfSessionExpired() {
   const ticket = beginSessionResolution();
-  const resolution = await resolveAuthSession({ signal: ticket.signal });
+  const resolution = await resolveAuthSession({ signal: ticket.signal }).catch(
+    (error: unknown) => {
+      abandonSessionResolution(ticket);
+      throw error;
+    }
+  );
   startUploadReplayForSession(resolution, ticket);
   return !["authenticated", "offline-only", "cached-cloud"].includes(
     resolution.status

@@ -36,7 +36,9 @@ vi.mock("@nucleum/shell/navigation/navigation", () => ({
 vi.mock("@nucleum/persistence/client-storage", () => ({
   clientStorage: { get: mocks.storageGet, set: mocks.storageSet }
 }));
+const replay = vi.hoisted(() => ({ abandon: vi.fn() }));
 vi.mock("@nucleum/surfaces/account/account-upload-replay", () => ({
+  abandonSessionResolution: replay.abandon,
   beginSessionResolution: () => mocks.ticket,
   startUploadReplayForSession: mocks.startUploadReplay
 }));
@@ -114,6 +116,15 @@ describe("product-configured account access", () => {
     expect(mocks.storageSet).toHaveBeenCalledTimes(2);
     expect(mocks.refreshPlan).toHaveBeenCalledOnce();
     expect(mocks.gotoPath).not.toHaveBeenCalled();
+  });
+
+  it("abandons its session resolution when resolving the session fails", async () => {
+    mocks.resolve.mockRejectedValueOnce(
+      new Error("stored session read failed")
+    );
+    await expect(performLoginStatusCheck()).rejects.toThrow();
+    expect(replay.abandon).toHaveBeenCalledWith(mocks.ticket);
+    expect(mocks.startUploadReplay).not.toHaveBeenCalled();
   });
 
   it("applies every resolved session to the account upload replay once", async () => {
