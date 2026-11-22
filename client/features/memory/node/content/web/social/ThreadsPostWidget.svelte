@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { sanitizeEmbedHtml } from "@nucleum/features/memory/node/content/web/social/embed-html";
   import { retrieveUrlData } from "@nucleum/features/memory/capture/url-data";
   import { onDestroy, onMount } from "svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -66,7 +67,7 @@
           onError?.(data.error);
           return false;
         } else if (data && data.html) {
-          embedHtml = data.html;
+          embedHtml = sanitizeEmbedHtml(data.html);
           return true;
         }
       }
@@ -91,7 +92,7 @@
   <script async src="https://www.threads.com/embed.js"></script>
 </svelte:head>
 
-<div {id} class="w-full flex my-auto justify-center overflow-y-auto">
+<div {id} class="w-full flex my-auto justify-center overflow-y-auto" style="contain: paint;">
   {#if embedHtml && dev_isUseOEmbedAPI}
     {@html embedHtml}
   {:else if dev_isUseOEmbedAPI}

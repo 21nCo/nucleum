@@ -142,21 +142,6 @@
   });
 
   $effect(() => {
-    if (accessPoint !== ResourceAccessPoint.LIBRARY) return;
-    if (item.contentType !== NodeType.NODULAR_MARKDOWN) return;
-    console.log(
-      "NodeThumbnail.libraryItem",
-      JSON.stringify({
-        id: item.id,
-        label: item.label,
-        text: item.text,
-        bodySearch: item.bodySearch,
-        labelSearch: item.labelSearch
-      })
-    );
-  });
-
-  $effect(() => {
     filePreview;
     void resolveUrl();
   });
