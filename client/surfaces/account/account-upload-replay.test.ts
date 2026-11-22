@@ -164,6 +164,22 @@ vi.mock("@nucleum/client/runtime/account/session-cleanup", () => ({
   signout: vi.fn(async () => undefined)
 }));
 
+/** While `gate` is pending, sign-out's DataFn E2EE cleanup waits for it. */
+const cleanupHold = vi.hoisted(() => ({
+  gate: undefined as Promise<void> | undefined
+}));
+vi.mock("@nucleum/datafn/datafnE2ee.store", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@nucleum/datafn/datafnE2ee.store")>();
+  return {
+    ...actual,
+    clearCachedDatafnE2eeState: async () => {
+      await cleanupHold.gate;
+      return actual.clearCachedDatafnE2eeState();
+    }
+  };
+});
+
 const ACCOUNT_QUEUE = "nucleum-file-queue-account-user-a";
 
 /** One device: its file system and storage outlive every page. */
@@ -1136,5 +1152,95 @@ describe("replay authorization across the session lifetime", () => {
       timeout: 3_000
     });
     expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+
+  function holdCleanup() {
+    let release: () => void = () => undefined;
+    cleanupHold.gate = new Promise<void>((resolve) => {
+      release = () => {
+        cleanupHold.gate = undefined;
+        resolve();
+      };
+    });
+    return () => release();
+  }
+
+  it("does not restart a contradicted account's replay from a file lookup while sign-out cleanup is pending", async () => {
+    const { page } = await restoreOffline();
+    const { logger } = await import("@nucleum/client/runtime/logging/logger");
+    const warn = vi.spyOn(logger, "warn");
+    authfn.session = userB;
+    goOnline();
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith({
+        at: "filefn.uploadReplay.start.accountMismatch"
+      })
+    );
+    const release = holdCleanup();
+    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
+    await settle();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await settle();
+    try {
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+    } finally {
+      release();
+      await signingOut;
+    }
+  });
+
+  it("sends nothing for the ending session from a file lookup while sign-out cleanup is pending", async () => {
+    const { page } = await restoreOffline();
+    isOnline = true;
+    const release = holdCleanup();
+    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
+    await settle();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await settle();
+    try {
+      expect(sdk.started).toEqual([]);
+      expect(sdk.deleted).toEqual([]);
+      expect(opfs.list(ACCOUNT_QUEUE)).toHaveLength(1);
+    } finally {
+      release();
+      await signingOut;
+    }
+  });
+
+  it("drains the queue and the pending delete once when a live session confirms the account after sign-out", async () => {
+    const { page, fileId } = await restoreOffline();
+    isOnline = true;
+    const release = holdCleanup();
+    const signingOut = page.accountSession.signOut({ isPreventRedirect: true });
+    await settle();
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    release();
+    await signingOut;
+    await settle();
+    expect(sdk.deleted).toEqual([]);
+
+    await signInAndUpload(page);
+    await vi.waitFor(() => expect(sdk.deleted).toEqual([PENDING_DELETE]));
+    expect(sdk.uploads).toEqual([expect.objectContaining({ fileId })]);
+  });
+
+  it("drains a pending delete that a file operation made eligible at another authority without a reconnect", async () => {
+    await restoreOffline();
+    await recordPendingDelete(EUWEST_FILES);
+    authfn.session = liveSession;
+    goOnline();
+    await vi.waitFor(() => expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]));
+    await settle();
+    expect(sdk.deleted.filter((id) => id === PENDING_DELETE)).toHaveLength(1);
+    const files = await import("@nucleum/shared-state/files/filefn-client");
+    await files.getFileFnClient();
+    await vi.waitFor(() =>
+      expect(sdk.deleted.filter((id) => id === PENDING_DELETE)).toHaveLength(2)
+    );
   });
 });
