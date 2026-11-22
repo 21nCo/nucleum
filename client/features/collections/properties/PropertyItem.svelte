@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toExternalHttpUrl } from "@21n/shared-utils/url.utils";
   import DatePicker from "@21n/ui/elements/datetime/DatePicker.svelte";
   import TextInput from "@21n/ui/elements/input/TextInput.svelte";
   import Rating from "@nucleum/features/collections/properties/ratingProperty/Rating.svelte";
@@ -224,10 +225,8 @@
         })}
         onclick={() => {
           if (property.type === PropertyType.URL) {
-            const url = _value?.toString().includes("http")
-              ? _value.toString()
-              : `https://${_value}`;
-            window.open(url, "_blank");
+            const url = toExternalHttpUrl(_value?.toString());
+            if (url) window.open(url, "_blank", "noopener");
           } else if (property.type === PropertyType.EMAIL) {
             window.open(`mailto:${_value}`, "_blank");
           }
