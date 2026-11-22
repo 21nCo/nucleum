@@ -121,9 +121,7 @@ describe("product-configured account access", () => {
       mocks.startUploadReplay.mockClear();
       mocks.resolve.mockResolvedValue(resolution);
       await performLoginStatusCheck();
-      expect(mocks.resolve).toHaveBeenLastCalledWith({
-        signal: mocks.ticket.signal
-      });
+      expect(mocks.resolve.mock.lastCall?.[0].signal).toBe(mocks.ticket.signal);
       return mocks.startUploadReplay.mock.calls;
     };
     for (const resolution of [
