@@ -385,6 +385,57 @@ describe("a queued upload FileFn rejects for good", () => {
     expect(next.uploads).toHaveLength(1);
     expect(opfs.list(QUEUE)).toEqual([]);
   });
+
+  it.each([
+    ["FILEFN_UPLOAD_SIZE_MISMATCH", 409],
+    ["FILEFN_IDEMPOTENCY_CONFLICT", 409]
+  ] as const)(
+    "retries a file FileFn rejected with %s %i under a new upload session",
+    async (code, status) => {
+      installDevice();
+      const tab = await openTab();
+      await enqueuePhoto(tab);
+      // FileFn answers every request with a rejected key as it did the first.
+      const rejectedKeys = new Set<string>();
+      const fileFn = createClient([]);
+      const uploadFile = fileFn.client.uploadFile.bind(fileFn.client);
+      fileFn.client.uploadFile = (input: UploadInput) => {
+        const upload = uploadFile(input);
+        const key = input.idempotencyKey!;
+        const isFirst = fileFn.uploads.length === 1;
+        if (isFirst) rejectedKeys.add(key);
+        const isRejected = rejectedKeys.has(key);
+        return {
+          ...upload,
+          done: () =>
+            isRejected ? Promise.reject(rejection(status, code)) : upload.done()
+        };
+      };
+      await tab.replayFileQueue(
+        QUEUE,
+        fileFn.client,
+        new AbortController().signal,
+        undefined,
+        referencingRecords()
+      );
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(
+        true
+      );
+
+      expect(await tab.retryFailedQueuedFile([QUEUE], FILE_ID, OWNER_A)).toBe(
+        true
+      );
+
+      await vi.waitFor(() => expect(opfs.list(QUEUE)).toEqual([]));
+      const keys = fileFn.uploads.map((upload) => upload.idempotencyKey);
+      expect(keys).toHaveLength(2);
+      expect(keys[1]).not.toBe(keys[0]);
+      expect(fileFn.uploads[1].fileId).toBe(FILE_ID);
+      expect(await tab.isQueuedFileFailed([QUEUE], FILE_ID, OWNER_A)).toBe(
+        false
+      );
+    }
+  );
 });
 
 describe("a failed file of the local queue another account claimed", () => {

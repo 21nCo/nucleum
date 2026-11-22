@@ -3598,16 +3598,25 @@ function assertSendable(mark?: StartMark) {
   }
 }
 
-/** FileFn codes of a session that can no longer take parts. */
+/**
+ * FileFn codes of a session that can no longer upload the file: it expired
+ * or was aborted, it completed with a size other than the bytes sent, or its
+ * idempotency key is held for another payload. FileFn returns the same
+ * session, or the same conflict, for every request with its key.
+ */
 const ENDED_SESSION_CODES = new Set([
   "FILEFN_UPLOAD_EXPIRED",
-  "FILEFN_UPLOAD_ABORTED"
+  "FILEFN_UPLOAD_ABORTED",
+  "FILEFN_UPLOAD_SIZE_MISMATCH",
+  "FILEFN_IDEMPOTENCY_CONFLICT"
 ]);
 
 /**
  * Uploads a queued file under its `fileId`. The idempotency key carries the
- * entry's session count, so a session that expired or was aborted is
- * replaced by a new one on the next replay instead of being reused forever.
+ * entry's session count, which a session that ended (see
+ * ENDED_SESSION_CODES) advances, so the next upload, a replay's or, after a
+ * rejection for good, a Retry's, starts a new session instead of meeting the
+ * ended one again.
  */
 async function uploadQueuedFile(
   client: FileFnClient,
@@ -3662,7 +3671,9 @@ async function uploadQueuedFile(
  * or size the policy refuses, a policy that does not exist, a storage quota
  * it exceeds, a file ID or request FileFn refuses, a size that does not match
  * the bytes sent, an idempotency key FileFn holds for another payload, and
- * FileFn's own refusal of access (see isUploadRejectedForGood). Every other
+ * FileFn's own refusal of access (see isUploadRejectedForGood); the session
+ * of the two session-bound ones is replaced for a Retry (see
+ * ENDED_SESSION_CODES). Every other
  * code stays a failure the next replay retries, such as one about a single
  * upload session (not found, invalid token, incomplete, a part or etag),
  * which the next replay replaces with a new session.
