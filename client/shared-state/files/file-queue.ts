@@ -87,6 +87,14 @@ const OWN_PREFIX = "own-";
  * isBound), apart from the started markers that tell whether one was sent.
  */
 const BOUND_PREFIX = "bound-";
+/**
+ * Marks a file whose original FileFn rejected for good (`failed-<generation>`,
+ * see RejectedUploadError), holding the rejection's status and code: the
+ * file keeps its bytes and renders on the device, and no replay uploads it
+ * until the user retries it (see retryFailedQueuedFile). Named after its
+ * generation, so a restore that writes the file again starts unmarked.
+ */
+const FAILED_PREFIX = "failed-";
 const MAKE = { create: true };
 /** The generation of a file no restore wrote. */
 const BASE_GENERATION = "base";
@@ -364,17 +372,15 @@ export async function dequeueFile(
   if (isAllowed && !(await isAllowed())) return false;
   await getStore(dir).deletePendingUpload(entryName);
   const key = `${dir}\n${entryName}`;
-  const isLeft = await getEntryDir(dir, entryName, true).then(
-    Boolean,
-    () => {
-      unconfirmedRemovals.add(key);
-      return true;
-    }
-  );
+  const isLeft = await getEntryDir(dir, entryName, true).then(Boolean, () => {
+    unconfirmedRemovals.add(key);
+    return true;
+  });
   if (isLeft) throw new UnconfirmedRemovalError();
   unconfirmedRemovals.delete(key);
   await bumpRevisionAfter(dir);
   releaseQueuedFileUrls((held) => held === key);
+  notifyFailureChange(fileId);
   return true;
 }
 
@@ -398,7 +404,10 @@ async function confirmRemovals(dir: string) {
     const entry = await getEntryDir(dir, entryName, true).catch(() => false);
     if (entry === false) continue;
     unconfirmedRemovals.delete(key);
-    if (!entry) releaseQueuedFileUrls((held) => held === key);
+    if (!entry) {
+      releaseQueuedFileUrls((held) => held === key);
+      notifyFailureChange(entryName.slice(ENTRY_PREFIX.length));
+    }
   }
 }
 
@@ -587,6 +596,159 @@ async function readThumbnail(
     return new Blob([await file.arrayBuffer()], {
       type: THUMBNAIL_TYPES.has(type) ? type : "image/jpeg"
     });
+  }
+  return undefined;
+}
+
+/**
+ * The account, at the FileFn authority it stores files under, that reads or
+ * retries a failed file (see isReplayableBy); null for none.
+ */
+export type QueuedFileFailureOwner = QueuedFileClaim | null;
+
+/**
+ * Whether the first queue that holds a file (see resolveQueuedFileUrl) holds
+ * it failed (see FAILED_PREFIX) for `owner`: one its replay would upload
+ * again once retried (see isReplayableBy). False when none holds it, another
+ * account or authority claimed or started it, or it cannot be read.
+ */
+export async function isQueuedFileFailed(
+  dirs: readonly string[],
+  fileId: string,
+  owner: QueuedFileFailureOwner = null
+): Promise<boolean> {
+  if (!isFileQueueSupported()) return false;
+  const found = await findPublishedEntry(dirs, fileId);
+  if (!found?.entry.names.includes(toFailedMark(found.entry))) return false;
+  return isReplayableBy(found.dir, toEntryName(fileId), owner);
+}
+
+/**
+ * Retries a failed file (see FAILED_PREFIX) of the first queue that holds
+ * it: removes its failed mark, so replays upload it again, and runs one pass
+ * of that queue now with the request the page last asked a replay of it
+ * with, unless that request's signal aborted or its records were replaced
+ * (see isStale), when the next replay requested uploads it. Resolves
+ * whether it removed a mark; one it finds unmarked (removed, uploaded or
+ * written again meanwhile) resolves false and has the file's failed state
+ * read again (see onQueuedFileFailureChange). Only an `owner` whose
+ * replay would upload the entry retries it (see isReplayableBy), and only
+ * while `isCurrent` holds just before the mark is removed: an entry another
+ * account or authority claimed or started, or an owner no longer current,
+ * resolves false and is left as it is, its mark kept and no replay started,
+ * so a Retry never clears a rejection without an upload attempt. A mark it
+ * cannot remove rejects.
+ */
+export async function retryFailedQueuedFile(
+  dirs: readonly string[],
+  fileId: string,
+  owner: QueuedFileFailureOwner = null,
+  isCurrent: () => boolean = () => true
+): Promise<boolean> {
+  if (!isFileQueueSupported()) return false;
+  const found = await findPublishedEntry(dirs, fileId);
+  const mark = found && toFailedMark(found.entry);
+  if (!found || !mark || !found.entry.names.includes(mark)) {
+    notifyFailureChange(fileId);
+    return false;
+  }
+  if (!(await isReplayableBy(found.dir, toEntryName(fileId), owner))) {
+    return false;
+  }
+  if (!isCurrent()) return false;
+  await removeEntryFile(found.entry.entry, mark);
+  notifyFailureChange(fileId);
+  const request = latestRequests.get(found.dir);
+  if (request && !request.signal.aborted && !isStale(request)) {
+    const { client, signal, publisher, references } = request;
+    void replayFileQueue(found.dir, client, signal, publisher, references);
+  }
+  return true;
+}
+
+/**
+ * Calls `listener` with the file's ID whenever the failed state of a file of
+ * any queue (see FAILED_PREFIX) may have changed, in this page or, where the
+ * browser has a BroadcastChannel, in another tab: the file was marked
+ * failed or retried, or its entry was removed (see dequeueFile), uploaded
+ * and dropped, or written again by a restore as an unmarked generation.
+ * Returns the unsubscribe.
+ */
+export function onQueuedFileFailureChange(
+  listener: (fileId: string) => void
+): () => void {
+  failureListeners.add(listener);
+  getFailureChannel();
+  return () => {
+    failureListeners.delete(listener);
+  };
+}
+
+const failureListeners = new Set<(fileId: string) => void>();
+const FAILURE_CHANNEL = `${QUEUE_DIR_PREFIX}-failures`;
+let failureChannel: BroadcastChannel | null | undefined;
+
+function getFailureChannel() {
+  if (failureChannel !== undefined) return failureChannel;
+  failureChannel = null;
+  if (typeof BroadcastChannel !== "function") return failureChannel;
+  const channel = new BroadcastChannel(FAILURE_CHANNEL);
+  (channel as { unref?: () => void }).unref?.();
+  channel.onmessage = ({ data }: MessageEvent) => {
+    if (typeof data === "string") callFailureListeners(data);
+  };
+  return (failureChannel = channel);
+}
+
+function callFailureListeners(fileId: string) {
+  for (const listener of failureListeners) {
+    try {
+      listener(fileId);
+    } catch (error) {
+      logger.warn({ at: "fileQueue.failure", fileId, error });
+    }
+  }
+}
+
+function notifyFailureChange(fileId: string) {
+  callFailureListeners(fileId);
+  getFailureChannel()?.postMessage(fileId);
+}
+
+function toFailedMark({ generation }: Pick<PublishedEntry, "generation">) {
+  return `${FAILED_PREFIX}${generation}`;
+}
+
+/**
+ * Whether `owner`'s replay would upload an entry once its failed mark is
+ * removed, so its failed state is the owner's to read and retry: the test
+ * the replay of the entry's queue applies (see replayEntry). An account
+ * queue's entry is replayed with the account's references, which skip it
+ * only once an attempt of another account or authority started it (see
+ * isStartedElsewhere), whatever authority it was staged with (claim.json);
+ * a local entry must also be unclaimed or claimed by the owner at its
+ * authority (see isPublishable). No owner matches no claim or started
+ * marker. A marker read error rejects.
+ */
+async function isReplayableBy(
+  dir: string,
+  entryName: string,
+  owner: QueuedFileFailureOwner
+) {
+  const isOwned = (claim: QueuedFileClaim | undefined) =>
+    !claim || (owner !== null && isSameClaim(claim, owner));
+  if (dir === LOCAL_FILE_QUEUE_DIR) {
+    if (!isOwned(await readClaim(dir, entryName))) return false;
+  }
+  return (await readMarkers(dir, entryName)).every(isOwned);
+}
+
+/** The first queue's published entry of a file (see getPublishedEntryDir). */
+async function findPublishedEntry(dirs: readonly string[], fileId: string) {
+  const entryName = toEntryName(fileId);
+  for (const dir of dirs) {
+    const entry = await getPublishedEntryDir(dir, entryName);
+    if (entry) return { dir, entry };
   }
   return undefined;
 }
@@ -1932,6 +2094,7 @@ async function stageRestoredEntry(
     create: true
   });
   await bumpRevisionAfter(dir);
+  notifyFailureChange(copy.fileId);
 }
 
 /**
@@ -2176,6 +2339,12 @@ const replays = new Map<
   string,
   { next: ReplayRequest | null; done: Promise<void> }
 >();
+/**
+ * The request the page last asked a replay of each queue with, that a retry
+ * of a failed file runs a pass with (see retryFailedQueuedFile); one whose
+ * records were replaced (see isStale) never replaces a current one.
+ */
+const latestRequests = new Map<string, ReplayRequest>();
 /** Delays of the retries after passes that left files to upload. */
 const RETRY_DELAYS_MS = [5_000, 30_000, 120_000, 600_000];
 /**
@@ -2279,6 +2448,10 @@ export function replayFileQueue(
   references?: QueuedFileReferences
 ): Promise<void> {
   const first: ReplayRequest = { client, signal, publisher, references };
+  const latest = latestRequests.get(dir);
+  if (!isStale(first) || !latest || isStale(latest)) {
+    latestRequests.set(dir, first);
+  }
   const running = replays.get(dir);
   if (running) {
     if (!isStale(first) || !running.next || isStale(running.next)) {
@@ -2580,14 +2753,22 @@ async function replayEntry(
   if (!(await hasEntryFile(dir, entryName, COMMITTED_FILE))) return "done";
   if (publisher && !(await isPublishable(dir, entryName, publisher)))
     return "done";
+  const names = await readNames(await getEntryDir(dir, entryName, true));
+  const marks = readMarks(names);
+  if (names.includes(toFailedMark(marks))) return "done";
   if (publisher && !publisher.isReady()) return "stop";
   if (publisher) await claimEntry(dir, entryName, publisher.owner);
-  const result = await uploadEntry(pass, { ...pending, fileId });
+  const result = await uploadOrMarkFailed(pass, entryName, marks, {
+    ...pending,
+    fileId
+  });
+  if (!result) return "done";
   if (publisher) {
     await publishEntry(dir, entryName, publisher, result);
   } else {
     await store.deletePendingUpload(entryName);
     releaseQueuedFileUrls((key) => key === `${dir}\n${entryName}`);
+    notifyFailureChange(fileId);
   }
   logger.info({ at: "fileQueue.replay", fileId: result.fileId });
   return "done";
@@ -2965,13 +3146,15 @@ async function replayAccountEntry(
     return removeAccountEntry(pass, references, fileId, isDiscarded, true);
   }
   if (!isCommitted) await markQueuedFileCommitted(dir, fileId);
+  if (!uploaded && names.includes(toFailedMark({ generation }))) return "done";
   const result = uploaded
     ? { fileId, versionId: uploaded }
-    : await uploadEntry(pass, pending, {
+    : await uploadOrMarkFailed(pass, entryName, { generation }, pending, {
         write: () => markStarted(dir, entryName, references),
         isReady: () => !pass.request.signal.aborted && references.isCurrent(),
         undo: (attempt) => unmarkStarted(dir, entryName, attempt)
       });
+  if (!result) return "done";
   const sent =
     delivery?.thumbnail === "rejected"
       ? "rejected"
@@ -3272,6 +3455,37 @@ async function uploadEntry(
 }
 
 /**
+ * Uploads an entry (see uploadEntry), or, once FileFn rejects its original
+ * for good (see RejectedUploadError), marks it failed for its generation
+ * (see FAILED_PREFIX), keeping its bytes, and resolves null, so the pass is
+ * done with it and schedules no retry for it; a mark that cannot be written
+ * rejects, leaving the file to a retry.
+ */
+async function uploadOrMarkFailed(
+  pass: ReplayPass,
+  entryName: string,
+  marks: Pick<PublishedEntry, "generation">,
+  pending: PendingUpload & { fileId: string },
+  mark?: StartMark
+): Promise<UploadResult | null> {
+  try {
+    return await uploadEntry(pass, pending, mark);
+  } catch (error) {
+    if (!(error instanceof RejectedUploadError)) throw error;
+    const { status, code } = error.rejection;
+    logger.warn({
+      at: "fileQueue.replay.rejected",
+      fileId: pending.fileId,
+      error: error.rejection
+    });
+    const failed = JSON.stringify({ status, code: code ?? null });
+    await writeEntryFile(pass.dir, entryName, toFailedMark(marks), failed);
+    notifyFailureChange(pending.fileId);
+    return null;
+  }
+}
+
+/**
  * Sends the thumbnail of an account's file whose original uploaded, unless
  * it is marked sent, then marks it sent (see THUMBNAIL_SENT_FILE); resolves
  * false when it is to be sent again on a retry, and "rejected", marking it
@@ -3384,16 +3598,25 @@ function assertSendable(mark?: StartMark) {
   }
 }
 
-/** FileFn codes of a session that can no longer take parts. */
+/**
+ * FileFn codes of a session that can no longer upload the file: it expired
+ * or was aborted, it completed with a size other than the bytes sent, or its
+ * idempotency key is held for another payload. FileFn returns the same
+ * session, or the same conflict, for every request with its key.
+ */
 const ENDED_SESSION_CODES = new Set([
   "FILEFN_UPLOAD_EXPIRED",
-  "FILEFN_UPLOAD_ABORTED"
+  "FILEFN_UPLOAD_ABORTED",
+  "FILEFN_UPLOAD_SIZE_MISMATCH",
+  "FILEFN_IDEMPOTENCY_CONFLICT"
 ]);
 
 /**
  * Uploads a queued file under its `fileId`. The idempotency key carries the
- * entry's session count, so a session that expired or was aborted is
- * replaced by a new one on the next replay instead of being reused forever.
+ * entry's session count, which a session that ended (see
+ * ENDED_SESSION_CODES) advances, so the next upload, a replay's or, after a
+ * rejection for good, a Retry's, starts a new session instead of meeting the
+ * ended one again.
  */
 async function uploadQueuedFile(
   client: FileFnClient,
@@ -3437,7 +3660,76 @@ async function uploadQueuedFile(
     if (error.code && ENDED_SESSION_CODES.has(error.code)) {
       await store.incrementRetryCount(pending.uploadSessionId);
     }
+    if (isUploadRejectedForGood(error)) throw new RejectedUploadError(error);
     throw error;
+  }
+}
+
+/**
+ * FileFn codes that reject the file itself or its metadata, which another
+ * attempt with the same bytes, name, type and file ID meets again: its type
+ * or size the policy refuses, a policy that does not exist, a storage quota
+ * it exceeds, a file ID or request FileFn refuses, a size that does not match
+ * the bytes sent, an idempotency key FileFn holds for another payload, and
+ * FileFn's own refusal of access (see isUploadRejectedForGood); the session
+ * of the two session-bound ones is replaced for a Retry (see
+ * ENDED_SESSION_CODES). Every other
+ * code stays a failure the next replay retries, such as one about a single
+ * upload session (not found, invalid token, incomplete, a part or etag),
+ * which the next replay replaces with a new session.
+ */
+const FILE_REJECTION_CODES = new Set([
+  "FILEFN_POLICY_CONTENT_TYPE_NOT_ALLOWED",
+  "FILEFN_POLICY_MAX_SIZE_EXCEEDED",
+  "FILEFN_POLICY_NOT_FOUND",
+  "FILEFN_QUOTA_EXCEEDED",
+  "FILEFN_INVALID_FILE_ID",
+  "FILEFN_INVALID_REQUEST",
+  "FILEFN_UPLOAD_SIZE_MISMATCH",
+  "FILEFN_IDEMPOTENCY_CONFLICT",
+  "FILEFN_FORBIDDEN"
+]);
+
+/**
+ * Reasons the account service in front of FileFn refuses a request with
+ * FILEFN_FORBIDDEN before FileFn sees the file (a missing scope, a CSRF
+ * header read again on each request), which a later attempt may not meet.
+ */
+const REQUEST_REFUSAL_REASONS = new Set(["scope", "csrf"]);
+
+/**
+ * Whether FileFn rejected an original's upload in a way a retry does not
+ * change: a client error of the FileFn API (4xx other than an authorization
+ * failure (401), a timeout (408) or a rate limit (429)) with one of the codes
+ * that reject the file itself (see FILE_REJECTION_CODES), unless FileFn marks
+ * it retryable, or it is the account service's refusal of the request rather
+ * than FileFn's (see REQUEST_REFUSAL_REASONS). A part upload's failure carries
+ * no code (a presigned storage URL that expired answers 403), and a code
+ * FileFn did not raise (such as an AUTHFN_* region routing answer, or the
+ * account service's FILEFN_ROUTE_NOT_FOUND), so both stay transient failures
+ * the next replay retries.
+ */
+function isUploadRejectedForGood({ status, code, details }: FileFnHttpError) {
+  if (typeof code !== "string" || !FILE_REJECTION_CODES.has(code)) {
+    return false;
+  }
+  if (status < 400 || status >= 500 || [401, 408, 429].includes(status)) {
+    return false;
+  }
+  const { retryable, reason } = details ?? {};
+  if (retryable === true) return false;
+  return !(
+    code === "FILEFN_FORBIDDEN" &&
+    typeof reason === "string" &&
+    REQUEST_REFUSAL_REASONS.has(reason)
+  );
+}
+
+/** An original's upload FileFn rejected for good (see isUploadRejectedForGood). */
+class RejectedUploadError extends Error {
+  constructor(readonly rejection: FileFnHttpError) {
+    super(rejection.message);
+    this.name = "RejectedUploadError";
   }
 }
 
