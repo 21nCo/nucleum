@@ -301,9 +301,7 @@ async function reconcileLocalFiles(
     const isHeld =
       entry.isOrphaned || entry.isDeleted || entry.stale !== undefined;
     if (!isFull && !ids.has(id) && !isHeld) continue;
-    let isDeleted = pending.some(
-      (change) => change.id === id && change.action === "delete"
-    );
+    let isDeleted = pending.some((c) => c.id === id && c.action === "delete");
     try {
       const isMarked =
         !isDeleted ||
@@ -314,8 +312,9 @@ async function reconcileLocalFiles(
         throw new Error("The delete of a staged file is not marked");
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
-      if (!isHeld && !ids.has(id)) continue;
-      isDeleted ||= isPendingDelete(pendingKey(namespace, id));
+      const key = pendingKey(namespace, id);
+      if (!isHeld && !ids.has(id) && !memoryPending.has(key)) continue;
+      isDeleted ||= isPendingDelete(key);
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, isDeleted);
       failed.push(id);
     }

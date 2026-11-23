@@ -283,15 +283,19 @@ function withSharedLocks(locks: LockManager): LockManager {
   } as LockManager;
 }
 
-/** Makes the next request of the queue's lock fail, as a busy browser can. */
-function failQueueLockOnce() {
+/**
+ * Makes the next request of the queue's lock (only of the lock named `name`,
+ * if given) fail, as a busy browser can.
+ */
+function failQueueLockOnce(name?: string) {
   const locks = webLocks as LockManager;
   const request = locks.request.bind(locks) as (
     ...args: unknown[]
   ) => Promise<unknown>;
   let isFailed = false;
   vi.spyOn(locks, "request").mockImplementation(((...args: unknown[]) => {
-    if (isFailed || (args[1] as LockOptions)?.mode === "shared")
+    const isOther = name !== undefined && args[0] !== name;
+    if (isFailed || isOther || (args[1] as LockOptions)?.mode === "shared")
       return request(...args);
     isFailed = true;
     return Promise.reject(
@@ -1046,6 +1050,63 @@ describe("files captured offline or by a local-only user", () => {
     await replayLocalQueue();
     await settleTasks();
 
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("holds a capture renamed while the startup pass copies its old record when the rename's pending entry cannot be stored, the sign-in aborts that copy's reread and the rename's pass cannot take the queue's lock", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    uninstall?.();
+    const entry = `queued_${record.fileId}`;
+    const setItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ) {
+      if (key.includes("-pending:"))
+        throw new DOMException("The storage is full", "QuotaExceededError");
+      return setItem.call(this, key, value);
+    });
+    let reads = 0;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      if (++reads === 2) {
+        // The sign-in aborts the reread of the old copy the pass wrote.
+        fileCalls.beforeQuery = null;
+        await signInToCloud("user-a");
+        return;
+      }
+      // Once the startup pass read the old record, the capture is renamed,
+      // its fence marks it stale, and its own pass will miss the lock.
+      return async (result: unknown) => {
+        await datafn.file.mutate({
+          operation: "merge",
+          id: record.id,
+          record: { id: record.id, name: "receipt.png" }
+        } as never);
+        await vi.waitFor(() =>
+          expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined()
+        );
+        for (let turn = 0; turn < 20; turn++)
+          await new Promise<void>((resolve) => setImmediate(resolve));
+        failQueueLockOnce(`nucleum-file-queue-replay:${LOCAL_QUEUE}`);
+        return result;
+      };
+    };
+
+    uninstall = installDeviceFileQueue();
+    await vi.waitFor(() =>
+      expect(datafn.currentNamespace()).toBe("user:user-a")
+    );
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(reads).toBe(2);
     expect(sdk.started).toEqual([]);
     expect(await readAnyRecord(record.id)).toBeUndefined();
   });
