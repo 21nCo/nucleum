@@ -1035,7 +1035,9 @@ describe("files captured offline or by a local-only user", () => {
     return record;
   }
 
+  /** Reads a local file's stale mark, "deleted" when its deleted mark is set. */
   function readStaleMark(fileId: string) {
+    if (opfs.read(LOCAL_QUEUE, `queued_${fileId}`, "deleted")) return "deleted";
     const bytes = opfs.read(LOCAL_QUEUE, `queued_${fileId}`, "stale");
     return bytes && new TextDecoder().decode(bytes);
   }
@@ -1129,6 +1131,70 @@ describe("files captured offline or by a local-only user", () => {
     await replayLocalQueue();
     await settleTasks();
 
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+  });
+
+  it("keeps an orphaned capture held once its guest namespace retires while a guest record's takeover of it is not copied yet", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleLocalFileRecords();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "orphaned")
+    ).toBeDefined();
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { fileId?: string } };
+      if (filters?.fileId !== record.fileId) return;
+      fileCalls.beforeQuery = null;
+      await signInToCloud("user-a");
+    };
+    await datafn.file.mutate({
+      operation: "insert",
+      id: `${record.id}-copy`,
+      record: { name: "copy.png", type: "image/png", fileId: record.fileId }
+    } as never);
+    await vi.waitFor(() =>
+      expect(datafn.currentNamespace()).toBe("user:user-a")
+    );
+    await settleTasks();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+    ).toBeDefined();
+
+    await signOutToLocal(true);
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+  });
+
+  it("deletes nothing when another tab's guest record takes over an orphaned capture while its settle reads the account's records", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleLocalFileRecords();
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { fileId?: string } };
+      if (filters?.fileId !== record.fileId) return;
+      if (datafn.currentNamespace() !== "user:user-a") return;
+      fileCalls.beforeQuery = null;
+      // The other tab, in the guest namespace, records and fences its insert.
+      const id = [namespace, `${record.id}-copy`].map(encodeURIComponent);
+      localStorage.setItem(
+        `${LOCAL_QUEUE}-pending:${id.join(":")}`,
+        "change:t"
+      );
+      await writeLocalEntryFile(record.fileId, "stale", "changed");
+    };
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(fileCalls.beforeQuery).toBeNull();
     expect(sdk.deletes).toEqual([]);
     expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
   });
@@ -2520,45 +2586,54 @@ describe("guest changes a page reload interrupts", () => {
     return page;
   }
 
-  it("never publishes a capture whose guest delete was neither fenced nor copied before the sign-in, after the default sign-out and a reload", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
-    // The delete's stale mark cannot be written, and the sign-in aborts its
-    // pass as it reads the record.
-    failEntryFile("stale", true, 1);
-    fileCalls.beforeQuery = async (args) => {
-      const { filters } = args as { filters?: { id?: string } };
-      if (filters?.id !== record.id) return;
-      fileCalls.beforeQuery = null;
-      await signInToCloud("user-a");
-    };
-    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
-    await vi.waitFor(() =>
-      expect(datafn.currentNamespace()).toBe("user:user-a")
-    );
-    await settleTasks();
+  it.each([
+    ["was neither fenced nor copied", false],
+    ["outlived an earlier change's later stale mark", true]
+  ])(
+    "never publishes a capture whose guest delete %s before the sign-in, after the default sign-out and a reload",
+    async (_case, isMarkedLate) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      // The delete's mark cannot be written (or an earlier rename's fence,
+      // which read no mark, writes its own after it), and the sign-in aborts
+      // its pass as it reads the record.
+      if (!isMarkedLate) failEntryFile("deleted", true, 1);
+      fileCalls.beforeQuery = async (args) => {
+        const { filters } = args as { filters?: { id?: string } };
+        if (filters?.id !== record.id) return;
+        fileCalls.beforeQuery = null;
+        await signInToCloud("user-a");
+      };
+      await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+      await vi.waitFor(() =>
+        expect(datafn.currentNamespace()).toBe("user:user-a")
+      );
+      await settleTasks();
+      if (isMarkedLate)
+        await writeLocalEntryFile(record.fileId, "stale", "changed");
 
-    // The default sign-out clears the device's storage and DataFn ID; the
-    // page reloads in a new guest namespace, then signs in.
-    endAccountUploadReplay();
-    localStorage.clear();
-    device = { ...device, dapId: `device-${crypto.randomUUID()}` };
-    const page = await reloadPage();
-    page.account.set(cloudAccount("user-a"));
-    page.client.startAccountUploadReplay({
-      userId: "user-a",
-      region: "useast"
-    });
-    await openData("user-a");
-    const uploader = await page.client.captureFileQueueUploader();
-    if (uploader) await page.queue.uploadLocalQueuedFiles(uploader);
-    await settleTasks();
+      // The default sign-out clears the device's storage and DataFn ID; the
+      // page reloads in a new guest namespace, then signs in.
+      endAccountUploadReplay();
+      localStorage.clear();
+      device = { ...device, dapId: `device-${crypto.randomUUID()}` };
+      const page = await reloadPage();
+      page.account.set(cloudAccount("user-a"));
+      page.client.startAccountUploadReplay({
+        userId: "user-a",
+        region: "useast"
+      });
+      await openData("user-a");
+      const uploader = await page.client.captureFileQueueUploader();
+      if (uploader) await page.queue.uploadLocalQueuedFiles(uploader);
+      await settleTasks();
 
-    expect(sdk.started).toEqual([]);
-    expect(await readAnyRecord(record.id)).toBeUndefined();
-  });
+      expect(sdk.started).toEqual([]);
+      expect(await readAnyRecord(record.id)).toBeUndefined();
+    }
+  );
 
   it.each(["rename", "delete"])(
     "publishes no outdated copy of a capture whose guest %s a reload interrupted before a pass copied it",
@@ -2569,7 +2644,7 @@ describe("guest changes a page reload interrupts", () => {
       await settleLocalFileRecords();
       // The change's pass cannot list the local files, nor can its stale mark
       // be written, before the page reloads signed in to the account.
-      failEntryFile("stale", true);
+      failEntryFile(change === "delete" ? "deleted" : "stale", true);
       const busy = new DOMException(
         "The file system is busy",
         "NotReadableError"

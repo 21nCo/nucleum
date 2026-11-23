@@ -280,11 +280,11 @@ async function reconcileLocalFile(
 
 /**
  * Reconciles the local files of the namespace's pending changes (all, for a
- * full pass) and its orphaned ones with their guest records, and returns the
- * record IDs it could not copy. A pending delete's file is marked deleted
- * first (a staged file it leaves stays pending until that mark is
- * written); a pending, stale or orphaned file it could not reconcile is
- * marked stale with its pending action, so the mark holds it across a
+ * full pass) and its orphaned or deleted ones with their guest records, and
+ * returns the record IDs it could not copy. A pending delete's file is
+ * marked deleted first (a staged file it leaves stays pending until that
+ * mark is written); a pending, stale, orphaned or deleted file it could not
+ * reconcile is marked with its pending action, so the mark holds it across a
  * sign-out (see markQueuedFileStale). Another keeps its copy, still current.
  */
 async function reconcileLocalFiles(
@@ -298,7 +298,8 @@ async function reconcileLocalFiles(
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
     const id = entry.recordId ?? "";
     if (entry.namespace !== namespace) continue;
-    if (!isFull && !ids.includes(id) && !entry.isOrphaned) continue;
+    const isHeld = entry.isOrphaned || entry.isDeleted;
+    if (!isFull && !ids.includes(id) && !isHeld) continue;
     const isDeleted = pending.some(
       (change) => change.id === id && change.action === "delete"
     );
@@ -312,7 +313,7 @@ async function reconcileLocalFiles(
         throw new Error("The delete of a staged file is not marked");
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
-      const isCurrent = entry.stale === undefined && !entry.isOrphaned;
+      const isCurrent = entry.stale === undefined && !isHeld;
       if (isCurrent && !ids.includes(id)) continue;
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, isDeleted);
       failed.push(id);
@@ -347,9 +348,10 @@ function holdNamespace(namespace: string | undefined) {
  * copies they hold, dropping those namespaces' pending changes. A namespace
  * is retired when it is not the device's (the sign-out that cleared the
  * DataFn ID it was opened with means it never starts again) and no tab is in
- * it. A file whose record was deleted, or whose mark tells nothing, stays
- * held; a claimed one not uploaded, or a stale orphaned one, is marked
- * orphaned for its account to settle (see settleOrphanedLocalFiles).
+ * it. An orphaned file, one whose record was deleted, or one whose mark
+ * tells nothing stays held; a deleted one claimed, not uploaded and not stale
+ * (no guest record took it over) is marked orphaned for its account to
+ * settle (see settleOrphanedLocalFiles).
  */
 async function releaseRetiredNamespaces() {
   const locks = await globalThis.navigator?.locks?.query();
@@ -371,19 +373,16 @@ async function releaseRetiredNamespaces() {
     else deleted.add(`${change.namespace}\n${change.id}`);
   }
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
-    if (!isRetired(entry.namespace)) continue;
+    if (!isRetired(entry.namespace) || entry.isOrphaned) continue;
     const { fileId, stale } = entry;
     const isDeleted =
-      stale === "deleted" ||
-      deleted.has(`${entry.namespace}\n${entry.recordId}`);
-    if (isDeleted || (entry.isOrphaned && stale !== undefined)) {
-      if (entry.claim && !entry.isUploaded)
-        await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, fileId);
-      else if (isDeleted)
-        await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId, true);
-    } else if (stale !== undefined) {
-      await clearQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId);
-    }
+      entry.isDeleted || deleted.has(`${entry.namespace}\n${entry.recordId}`);
+    if (!isDeleted) {
+      if (stale !== undefined)
+        await clearQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId);
+    } else if (entry.claim && !entry.isUploaded && stale === undefined) {
+      await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, fileId);
+    } else await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId, true);
   }
 }
 
@@ -485,7 +484,8 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
  * landed), or records that delete for the account's next client; each under
  * the queue's lock, on its entry read there, so no publish runs between the
  * check of its records and the delete. An orphan stays while its guest
- * namespace has a change not yet copied, which may take it over.
+ * namespace has a change not yet copied, which may take it over; that is
+ * checked again after the records' query and before the dequeue.
  */
 async function settleOrphanedLocalFiles(
   uploader: FileQueueUploader,
@@ -511,9 +511,15 @@ async function settleOrphanedLocalFiles(
   )
     return;
   const settle = async (fileId: string) => {
-    const entries = await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true);
-    const entry = entries.find((queued) => queued.fileId === fileId);
-    if (!isOrphanOf(entry)) return true;
+    const isOrphan = async () =>
+      Boolean(
+        isOrphanOf(
+          (await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)).find(
+            (queued) => queued.fileId === fileId
+          )
+        )
+      );
+    if (!(await isOrphan())) return true;
     if (!publisher.isReady()) return false;
     const result = await datafn.file.query({
       filters: { fileId },
@@ -521,12 +527,13 @@ async function settleOrphanedLocalFiles(
       metadata: ALL_RECORDS
     });
     if (!publisher.isReady() || !Array.isArray(result.data)) return false;
+    if (!(await isOrphan())) return true;
     if (!result.data.length) {
       const pend = () => recordFileFnPendingDelete(uploader, fileId);
       if (isAppOffline()) await pend();
       else await client.deleteFile(fileId).catch(pend);
     }
-    await dequeueFile(LOCAL_FILE_QUEUE_DIR, fileId);
+    await dequeueFile(LOCAL_FILE_QUEUE_DIR, fileId, isOrphan);
     return true;
   };
   for (const { fileId } of orphans) {
@@ -658,8 +665,9 @@ let fences: Promise<void> = Promise.resolve();
 
 /**
  * Marks the changed records' local files (a delete's as deleted) and the
- * orphaned ones stale at once, without the lock. Changes whose marks could
- * not be written stay held in page memory until a pass handles them.
+ * orphaned or deleted ones, which a changed record may take over, stale at
+ * once, without the lock. Changes whose marks could not be written stay held
+ * in page memory until a pass handles them.
  */
 function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
   fences = fences
@@ -667,7 +675,7 @@ function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
       for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)) {
         if (entry.namespace !== namespace) continue;
         const isChanged = ids.includes(entry.recordId ?? "");
-        if (isChanged || entry.isOrphaned)
+        if (isChanged || entry.isOrphaned || entry.isDeleted)
           await markQueuedFileStale(
             LOCAL_FILE_QUEUE_DIR,
             entry.fileId,
