@@ -218,9 +218,8 @@ async function readLocalEntry(fileId: string) {
  * the first one was deleted, too) and is marked committed. A committed file
  * no record references any more, or one never committed and abandoned, is
  * removed from the device, but one an account claimed and did not record
- * uploaded is marked orphaned for it to settle (see settleOrphanedLocalFiles):
- * decided under the queue's lock on the entry and record read there, so no
- * replay claims or publishes it meanwhile.
+ * uploaded is marked orphaned for it to settle (see settleOrphanedLocalFiles);
+ * under the queue's lock (scheduleLocalRecordWork), so no other tab acts meanwhile.
  */
 async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
   const byId = entry.recordId
@@ -242,15 +241,11 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
     return;
   }
   if (!entry.isCommitted && !isAbandoned(entry)) return;
-  const { signal } = new AbortController();
-  await withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, async () => {
-    const current = await readLocalEntry(entry.fileId);
-    if (current?.namespace !== namespace) return;
-    if (await readFileRecord(namespace, { fileId: entry.fileId })) return;
-    if (current.claim && !current.isUploaded) {
-      await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, entry.fileId);
-    } else await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId);
-  });
+  const current = await readLocalEntry(entry.fileId);
+  if (current?.namespace !== namespace) return;
+  if (current.claim && !current.isUploaded) {
+    await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+  } else await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId);
 }
 
 /**
@@ -290,7 +285,9 @@ export function settleLocalFileRecords(): Promise<void> {
 }
 
 function scheduleLocalRecordWork(run: () => Promise<void>) {
-  const work = localRecordWork.then(run).catch((error: unknown) => {
+  const { signal } = new AbortController();
+  const locked = () => withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, run);
+  const work = localRecordWork.then(locked).catch((error: unknown) => {
     logger.error({ at: "deviceFileQueue.records", error });
   });
   localRecordWork = work;
@@ -377,13 +374,15 @@ function logOrphanError(error: unknown) {
   logger.warn({ at: "deviceFileQueue.orphans", error });
 }
 
-/** Brings every local file of a local-only user's namespace in line with its record. */
+/** Brings a local-only user's local files in line with their records, then the changed ones. */
 async function prepareNamespace(namespace: string) {
   const queueDir = resolveMigrationQueueDir(namespace);
   if (queueDir) {
     await scheduleLocalRecordWork(async () => {
+      const changed = changedRecordIds.get(namespace);
       changedRecordIds.delete(namespace);
       await reconcileLocalFiles(namespace);
+      if (changed) await reconcileLocalFiles(namespace, [...changed]);
     });
   }
 }

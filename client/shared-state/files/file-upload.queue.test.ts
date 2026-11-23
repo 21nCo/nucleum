@@ -90,7 +90,7 @@ const authority = vi.hoisted(() => ({
  */
 type AfterCall = (result: unknown) => unknown;
 const fileCalls = vi.hoisted(() => ({
-  beforeQuery: null as ((args: unknown) => Promise<void>) | null,
+  beforeQuery: null as ((args: unknown) => Promise<void | AfterCall>) | null,
   beforeMutate: null as ((args: unknown) => Promise<void | AfterCall>) | null
 }));
 vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
@@ -160,7 +160,7 @@ const {
   endAccountUploadReplay,
   startAccountUploadReplay
 } = await import("./filefn-client");
-const { replayFileQueue } = await import("./file-queue");
+const { replayFileQueue, withQueueLock } = await import("./file-queue");
 const { OPFSStore } = await import("@filefn/client");
 
 /** One device file system: the queue keeps its handles for the page's life. */
@@ -731,6 +731,146 @@ describe("files captured offline or by a local-only user", () => {
       expect(sdk.uploads).toHaveLength(1);
     }
   );
+
+  it("keeps a claimed file orphaned when another tab deletes its record while this tab copies an earlier change of it", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await settleLocalFileRecords();
+    let otherTab: Promise<unknown> | undefined;
+    // This tab has read the renamed record when another tab, whose changes
+    // this tab does not see, deletes it and marks the claimed file orphaned
+    // under the queue's lock.
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      return async (result: unknown) => {
+        uninstall?.();
+        uninstall = undefined;
+        otherTab = withQueueLock(
+          LOCAL_QUEUE,
+          new AbortController().signal,
+          async () => {
+            await datafn.file.mutate({
+              operation: "delete",
+              id: record.id
+            } as never);
+            await writeLocalEntryFile(record.fileId, "orphaned");
+          }
+        );
+        for (let turn = 0; turn < 200; turn++) {
+          await new Promise<void>((resolve) => setImmediate(resolve));
+        }
+        return result;
+      };
+    };
+
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+    await otherTab;
+
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "orphaned")
+    ).toBeDefined();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(sdk.deletes).toEqual([record.fileId]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
+  it("holds a capture whose change was queued behind the namespace's startup reconcile when that reconcile cannot read its record", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // A change pass holds its read of the record while the namespace starts
+    // again; a rename queues behind that start's full pass, and every later
+    // read of the record fails, as when DataFn leaves the namespace.
+    const gate = deferred<void>();
+    let reads = 0;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      reads += 1;
+      if (reads === 1) {
+        return async (result: unknown) => {
+          await gate.promise;
+          return result;
+        };
+      }
+      throw new DOMException("DataFn left the namespace", "AbortError");
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, label: "Draft" }
+    } as never);
+    await vi.waitFor(() => expect(reads).toBe(1));
+    uninstall();
+    uninstall = installDeviceFileQueue();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    gate.resolve();
+    await settleLocalFileRecords();
+    fileCalls.beforeQuery = null;
+
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+    ).toBeDefined();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("holds a capture whose change pass the first sign-in aborted and publishes it once its guest namespace reconciles it again", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // The cloud sign-in moves DataFn to the account's namespace while the
+    // change pass of a rename made just before it reads the record.
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      await signInToCloud("user-a");
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await vi.waitFor(() =>
+      expect(datafn.currentNamespace()).toBe("user:user-a")
+    );
+    await settleTasks();
+    await replayLocalQueue();
+
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+    ).toBeDefined();
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+
+    await signOutToLocal();
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+
+    await vi.waitFor(async () =>
+      expect(await savedRecord(record.id)).toEqual(
+        expect.objectContaining({ fileId: record.fileId, name: "receipt.png" })
+      )
+    );
+    expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([record.fileId]);
+  });
 
   it("never uploads or claims a local file for another account while its claim cannot be read", async () => {
     const record = await captureThenSignOutDuringUpload();
