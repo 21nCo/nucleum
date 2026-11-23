@@ -122,7 +122,9 @@ function assertNamespace(namespace: string) {
  * the account already holds that record (an earlier publish whose entry was
  * not yet marked uploaded, which may have saved only its insert), it only
  * trashes or archives it as its copy is, if it references the file; it
- * changes nothing else, so later edits in the account stay.
+ * changes nothing else, so later edits in the account stay. One referencing
+ * another file or none stays as it is: the local file is marked orphaned, so
+ * its account deletes the upload and removes it (see settleOrphanedLocalFiles).
  */
 export function createLocalFilePublisher(
   uploader: Pick<FileQueueUploader, "userId" | "baseUrl" | "signal">
@@ -145,7 +147,7 @@ export function createLocalFilePublisher(
   return {
     owner: { userId: uploader.userId, baseUrl: uploader.baseUrl },
     isReady,
-    async publish(record) {
+    async publish(record, uploaded) {
       const assertReady = () => {
         if (!isReady()) {
           throw new DOMException(
@@ -161,7 +163,10 @@ export function createLocalFilePublisher(
         metadata: ALL_RECORDS
       });
       const existing = found.data?.[0] as Record<string, unknown> | undefined;
-      if (existing && existing.fileId !== record.fileId) return;
+      if (existing && existing.fileId !== record.fileId) {
+        await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, uploaded.fileId);
+        throw new DOMException("The record ID is taken", "ConstraintError");
+      }
       const saved = existing && toQueuedFileRecord(existing, namespace);
       const id = record.id;
       const mutations: Record<string, unknown>[] = saved
@@ -310,6 +315,7 @@ export async function uploadLocalQueuedFiles(
     uploader.signal,
     publisher
   );
+  await settleOrphanedLocalFiles(uploader, publisher).catch(logOrphanError);
 }
 
 /**

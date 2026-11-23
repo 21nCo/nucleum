@@ -683,6 +683,41 @@ describe("files captured offline or by a local-only user", () => {
     expect(await savedRecord(record.id)).toBeUndefined();
   });
 
+  it.each([
+    ["no file", undefined],
+    ["another file", "file_other"]
+  ])(
+    "leaves an account record with the capture's ID and %s unchanged and deletes the upload instead of marking it uploaded",
+    async (_, otherFileId) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      await settleLocalFileRecords();
+      // The account already holds a record with the capture's ID, as one
+      // restored from a guest backup (bytes on the record, no fileId) does.
+      await openData("user-a");
+      const restored = { name: "restored.png", type: "image/png" };
+      await datafn.file.mutate({
+        operation: "insert",
+        id: record.id,
+        record: { ...restored, ...(otherFileId && { fileId: otherFileId }) }
+      } as never);
+
+      await signInToCloud("user-a");
+
+      await vi.waitFor(() => expect(sdk.deletes).toEqual([record.fileId]));
+      expect(sdk.uploads).toEqual([
+        expect.objectContaining({ fileId: record.fileId })
+      ]);
+      await vi.waitFor(() => expect(opfs.list(LOCAL_QUEUE)).toEqual([]));
+      const saved = await savedRecord(record.id);
+      expect(saved).toEqual(expect.objectContaining(restored));
+      expect(saved?.fileId).toBe(otherFileId);
+      await replayLocalQueue();
+      expect(sdk.uploads).toHaveLength(1);
+    }
+  );
+
   it("never uploads or claims a local file for another account while its claim cannot be read", async () => {
     const record = await captureThenSignOutDuringUpload();
     const claim = opfs.read(
