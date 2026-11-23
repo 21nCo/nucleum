@@ -481,22 +481,22 @@ async function removeMark(
 
 /** Marks a local file orphaned: it does not publish until its copy is rewritten. */
 export async function markQueuedFileOrphaned(dir: string, fileId: string) {
-  await writeEntryFile(dir, toEntryName(fileId), ORPHANED_FILE, "");
-  await removeMark(
-    await getEntryDir(dir, toEntryName(fileId), true),
-    STALE_FILE
-  );
+  const name = toEntryName(fileId);
+  await writeEntryFile(dir, name, ORPHANED_FILE, "");
+  await removeMark(await getEntryDir(dir, name, true), STALE_FILE);
 }
 
-/** Marks a local file discarded (or not), before its upload is deleted. */
+/** Marks a local file discarded (or not); resolves whether it already was. */
 export async function markQueuedFileDiscarded(
   dir: string,
   fileId: string,
   isDiscarded = true
 ) {
   const name = toEntryName(fileId);
-  if (isDiscarded) return writeEntryFile(dir, name, DISCARDED_FILE, "");
-  await removeMark(await getEntryDir(dir, name, true), DISCARDED_FILE);
+  const was = await readEntryText(dir, name, DISCARDED_FILE, true);
+  if (isDiscarded) await writeEntryFile(dir, name, DISCARDED_FILE, "");
+  else await removeMark(await getEntryDir(dir, name, true), DISCARDED_FILE);
+  return was !== undefined;
 }
 
 /** Lets a stale local file whose mark says its record changed publish its copy. */

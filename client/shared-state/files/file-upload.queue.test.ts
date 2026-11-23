@@ -1336,6 +1336,46 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.deletes).toEqual([]);
   });
 
+  it("keeps an earlier settle's discard mark when another tab's guest record takes over the orphaned capture while a later settle writes it", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleLocalFileRecords();
+    // An earlier settle marked the capture discarded and sent its delete,
+    // then stopped before its dequeue.
+    await writeLocalEntryFile(record.fileId, "discarded");
+    let isTakenOver = false;
+    hookEntryFiles({
+      create: async (name) => {
+        if (name !== "discarded" || isTakenOver) return;
+        isTakenOver = true;
+        await changeInOtherTab(namespace, `${record.id}-copy`, record.fileId);
+      }
+    });
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    const entry = `queued_${record.fileId}`;
+    expect(isTakenOver).toBe(true);
+    expect(opfs.read(LOCAL_QUEUE, entry, "discarded")).toBeDefined();
+
+    // The guest record that took the file over is copied to it.
+    await signOutToLocal();
+    await datafn.file.mutate({
+      operation: "insert",
+      id: `${record.id}-copy`,
+      record: { name: "copy.png", type: "image/png", fileId: record.fileId }
+    } as never);
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(`${record.id}-copy`)).toBeUndefined();
+    expect(sdk.started).toHaveLength(1);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([entry]);
+  });
+
   it("deletes nothing when another tab's guest record takes over an orphaned capture while its settle reads the account's records", async () => {
     const record = await captureThenSignOutDuringUpload();
     const namespace = String(readLocalCopy(record.fileId)?.namespace);

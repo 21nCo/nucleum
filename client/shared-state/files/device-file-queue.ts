@@ -496,10 +496,9 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
  * the queue's lock, on its entry read there, so no publish runs between the
  * check of its records and the delete. An orphan stays while its guest
  * namespace has a change not yet copied, which may take it over; that is
- * checked again after the records' query, after its discard mark (cleared
- * then, with nothing deleted) and before the dequeue. One whose upload is
- * deleted is marked discarded first, so it never publishes, even when a
- * guest record takes it over before its dequeue.
+ * checked again after the records' query, after a new discard mark (then
+ * removed) and before the dequeue: a file whose upload is deleted never
+ * publishes, even when a guest record takes it over before its dequeue.
  */
 async function settleOrphanedLocalFiles(
   uploader: FileQueueUploader,
@@ -543,8 +542,8 @@ async function settleOrphanedLocalFiles(
     if (!publisher.isReady() || !Array.isArray(result.data)) return false;
     if (!(await isOrphan())) return true;
     if (!result.data.length) {
-      await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId);
-      if (!(await isOrphan())) {
+      const was = await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId);
+      if (!was && !(await isOrphan())) {
         await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId, false);
         return true;
       }
