@@ -1282,7 +1282,7 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
         .first()
         .click({ timeout: 8_000 });
       await expect(page).toHaveURL((url) =>
-        /^\/overview(?:\/|$)/.test(url.pathname)
+        /^\/overview\/[^/]+\/?$/.test(url.pathname)
       );
       const overviewUrl = page.url();
 
@@ -1306,15 +1306,11 @@ test.describe("settings - Interface and keyboard shortcuts (comprehensive) @sett
           page.getByRole("button", { name: "Previous calendar period" })
         ).toBeVisible();
       } else {
+        const overviewTabs = page.getByTestId("overview-tabs");
         await expect(
           isNucleumProject(testInfo.project.name)
-            ? page
-                .getByRole("main")
-                .getByRole("tablist")
-                .getByRole("tab", { selected: true })
-            : page.getByTestId("overview-tabs").getByRole("tab", {
-                selected: true
-              })
+            ? overviewTabs
+            : overviewTabs.getByRole("tab", { selected: true })
         ).toBeVisible();
       }
 
