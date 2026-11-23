@@ -399,7 +399,6 @@ function isQueueOwnerCurrent(owner: FileFnOwner) {
   );
 }
 
-/** True while no cloud account is signed in and DataFn holds guest data. */
 function isGuestDataCurrent() {
   const namespace = datafn.currentNamespace();
   return (

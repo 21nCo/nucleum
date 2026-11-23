@@ -39,6 +39,7 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
+const SAVED_FILE = "saved";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
@@ -135,7 +136,11 @@ export type QueuedFilePublisher = {
   publish(
     record: QueuedFileRecord,
     uploaded: UploadResult,
-    isCurrent: () => Promise<boolean>
+    entry: {
+      isCurrent(): Promise<boolean>;
+      saved: string[];
+      mark(name: "saved" | "uploaded", text: string): Promise<void>;
+    }
   ): Promise<void>;
 };
 
@@ -243,8 +248,7 @@ export type QueuedFileEntry = {
   createdAt: string;
   /** The ID of the record a local file was staged or last copied with. */
   recordId?: string;
-  /** The DataFn namespace a local file's record copy was read in. */
-  namespace?: string;
+  namespace?: unknown;
   isCommitted: boolean;
   isUploaded: boolean;
   claim?: QueuedFileClaim;
@@ -461,9 +465,7 @@ export async function markQueuedFileStale(
   await writeEntryFile(dir, toEntryName(fileId), STALE_FILE, "");
 }
 
-/**
- * Lists the files of a queue whose staging finished, `isStrict` read strictly.
- */
+/** Lists the files of a queue whose staging finished. */
 export async function listQueuedFiles(dir: string, isStrict = false) {
   if (!isFileQueueSupported()) return [];
   const store = getStore(dir);
@@ -477,8 +479,7 @@ export async function listQueuedFiles(dir: string, isStrict = false) {
       fileId: pending.fileId,
       createdAt: pending.createdAt,
       recordId: record?.id,
-      namespace:
-        typeof record?.namespace === "string" ? record.namespace : undefined,
+      namespace: record?.namespace,
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
       claim: await readClaim(dir, entryName, isStrict)
@@ -1025,8 +1026,7 @@ const DATA_FILE = "data.bin";
  * (keeping a thumbnail still to be sent; one whose version neither records
  * is copied whole), an unpublished file (see RESTORING_PREFIX), and one that
  * leaves the queue while it is read. A published file a restore wrote is
- * copied whether or not its account adopted it. With `isWhole` (a guest
- * backup) every file is copied whole. A file whose metadata, bytes
+ * copied whether or not its account adopted it. A file whose metadata, bytes
  * or marks cannot be read rejects, and never counts as absent.
  */
 export async function exportQueuedFiles<T>(
@@ -2498,7 +2498,6 @@ export type AccountQueueReplay = QueuedFileClaim &
   Pick<ReplayRequest, "client" | "signal">;
 const accountReplayListeners = new Set<(replay: AccountQueueReplay) => void>();
 
-/** Runs `listener` on each (authorized) replay of an account's queue. */
 export function onAccountQueueReplay(
   listener: (replay: AccountQueueReplay) => void
 ): () => void {
@@ -3551,7 +3550,7 @@ async function sendAccountThumbnail(
 /**
  * Whether a local file can upload through the publisher's account: not yet
  * uploaded, with a current copy of its record, and unclaimed or claimed by
- * that account, read strictly (an unreadable mark or claim rejects).
+ * that account.
  */
 async function isPublishable(
   dir: string,
@@ -3570,7 +3569,7 @@ async function isPublishable(
 /**
  * Publishes the record of a local file that uploaded, as its copy is now,
  * then marks the file uploaded. A file whose record was removed or marked
- * stale before the publisher saves it is left for the reconciliation of it.
+ * stale during the upload is left for the reconciliation of its record.
  */
 async function publishEntry(
   dir: string,
@@ -3582,8 +3581,12 @@ async function publishEntry(
   const record = await readQueuedRecord(dir, entryName);
   if (!record) return;
   const isCurrent = () => isPublishable(dir, entryName, publisher);
+  const mark = (name: string, text: string) =>
+    writeEntryFile(dir, entryName, name, text);
+  const saved = (await readEntryText(dir, entryName, SAVED_FILE, true)) ?? "";
   const copy = { ...record, fileId: uploaded.fileId };
-  await publisher.publish(copy, uploaded, isCurrent);
+  const entry = { isCurrent, saved: saved.split("\n"), mark };
+  await publisher.publish(copy, uploaded, entry);
   if (!(await isCurrent())) return;
   await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
 }

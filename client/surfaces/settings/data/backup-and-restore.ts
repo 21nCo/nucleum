@@ -117,10 +117,6 @@ export async function createBackupBlob(): Promise<Blob> {
   return new Blob(parts, { type: "application/json" });
 }
 
-/**
- * Puts the bytes of the local files the device holds (uploaded or not, empty
- * too) back on the records that reference them, as a guest record kept them.
- */
 function withLocalFileBytes(exported: {
   records: Record<string, unknown>;
   files: QueuedFileCopy[];
