@@ -11,6 +11,7 @@ import {
   listQueuedFiles,
   LOCAL_FILE_QUEUE_DIR,
   markQueuedFileCommitted,
+  markQueuedFileDiscarded,
   markQueuedFileOrphaned,
   markQueuedFileStale,
   onAccountQueueReplay,
@@ -280,7 +281,8 @@ async function reconcileLocalFile(
 
 /**
  * Reconciles the local files of the namespace's pending changes (all, for a
- * full pass) and its orphaned or deleted ones with their guest records, and
+ * full pass) and its stale, orphaned or deleted ones (a late fence may mark
+ * one whose change a pass copied) with their guest records, and
  * returns the record IDs it could not copy. A pending delete's file is
  * marked deleted first (a staged file it leaves stays pending until that
  * mark is written); a pending, stale, orphaned or deleted file it could not
@@ -294,13 +296,13 @@ async function reconcileLocalFiles(
 ) {
   const failed: string[] = [];
   const ids = pending.map(({ id }) => id);
-  if (!isFull && !ids.length) return failed;
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
     const id = entry.recordId ?? "";
     if (entry.namespace !== namespace) continue;
-    const isHeld = entry.isOrphaned || entry.isDeleted;
+    const isHeld =
+      entry.isOrphaned || entry.isDeleted || entry.stale !== undefined;
     if (!isFull && !ids.includes(id) && !isHeld) continue;
-    const isDeleted = pending.some(
+    let isDeleted = pending.some(
       (change) => change.id === id && change.action === "delete"
     );
     try {
@@ -313,8 +315,9 @@ async function reconcileLocalFiles(
         throw new Error("The delete of a staged file is not marked");
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
-      const isCurrent = entry.stale === undefined && !isHeld;
-      if (isCurrent && !ids.includes(id)) continue;
+      if (!isHeld && !ids.includes(id)) continue;
+      // A delete recorded since the snapshot (another tab's) stays one.
+      isDeleted ||= isPendingDelete(pendingKey(namespace, id));
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, isDeleted);
       failed.push(id);
     }
@@ -485,7 +488,9 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
  * the queue's lock, on its entry read there, so no publish runs between the
  * check of its records and the delete. An orphan stays while its guest
  * namespace has a change not yet copied, which may take it over; that is
- * checked again after the records' query and before the dequeue.
+ * checked again after the records' query and before the dequeue. One whose
+ * upload is deleted is marked discarded first, so it never publishes, even
+ * when a guest record takes it over before its dequeue.
  */
 async function settleOrphanedLocalFiles(
   uploader: FileQueueUploader,
@@ -529,6 +534,7 @@ async function settleOrphanedLocalFiles(
     if (!publisher.isReady() || !Array.isArray(result.data)) return false;
     if (!(await isOrphan())) return true;
     if (!result.data.length) {
+      await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId);
       const pend = () => recordFileFnPendingDelete(uploader, fileId);
       if (isAppOffline()) await pend();
       else await client.deleteFile(fileId).catch(pend);
@@ -609,12 +615,16 @@ function readPendingChanges(namespace?: string): PendingChange[] {
   );
 }
 
+function isPendingDelete(key: string) {
+  return [memoryPending.get(key), readStoredChange(key)].some((value) =>
+    value?.startsWith("delete:")
+  );
+}
+
 /** Records a pending change; a record's delete stays one. */
 function addPendingChange(namespace: string, id: string, action = "change") {
   const key = pendingKey(namespace, id);
-  const isDeleted = [memoryPending.get(key), readStoredChange(key)].some(
-    (value) => value?.startsWith("delete:")
-  );
+  const isDeleted = isPendingDelete(key);
   const token = `${Date.now().toString(36)}.${Math.random().toString(36).slice(2)}`;
   const value = `${isDeleted ? "delete" : action}:${token}`;
   memoryPending.set(key, value);

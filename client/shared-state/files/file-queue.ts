@@ -44,6 +44,8 @@ const DELETED_FILE = "deleted";
 const CHANGED_MARK = "changed";
 /** Marks a claimed local file whose record was deleted (see device-file-queue). */
 const ORPHANED_FILE = "orphaned";
+/** Marks a local file whose upload its account deleted: it never publishes. */
+const DISCARDED_FILE = "discarded";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
@@ -484,6 +486,11 @@ export async function markQueuedFileOrphaned(dir: string, fileId: string) {
     await getEntryDir(dir, toEntryName(fileId), true),
     STALE_FILE
   );
+}
+
+/** Marks a local file discarded, before its account deletes its upload. */
+export async function markQueuedFileDiscarded(dir: string, fileId: string) {
+  await writeEntryFile(dir, toEntryName(fileId), DISCARDED_FILE, "");
 }
 
 /** Lets a stale local file whose mark says its record changed publish its copy. */
@@ -3609,7 +3616,8 @@ async function isPublishable(
   entryName: string,
   publisher: QueuedFilePublisher
 ) {
-  for (const mark of [UPLOADED_FILE, STALE_FILE, DELETED_FILE, ORPHANED_FILE])
+  const marks = [UPLOADED_FILE, STALE_FILE, DELETED_FILE, ORPHANED_FILE];
+  for (const mark of [...marks, DISCARDED_FILE])
     if ((await readEntryText(dir, entryName, mark, true)) !== undefined)
       return false;
   const record = await readQueuedRecord(dir, entryName, true);
