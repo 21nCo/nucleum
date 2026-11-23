@@ -39,6 +39,13 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
+/** Marks a local file whose record was deleted; only its record's copy clears it. */
+const DELETED_FILE = "deleted";
+const CHANGED_MARK = "changed";
+/** Marks a claimed local file whose record was deleted (see device-file-queue). */
+const ORPHANED_FILE = "orphaned";
+/** Marks a local file whose upload its account deleted: it never publishes. */
+const DISCARDED_FILE = "discarded";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
@@ -127,11 +134,14 @@ export type QueuedFileClaim = { userId: string; baseUrl: string };
  * Publishes the record of a local file that uploaded, so the account holds a
  * record of every local file it uploads. `isReady` is checked before each
  * upload; a pass stops while it is false, keeping the files for a later one.
- * `owner` claims each local file before its upload.
+ * `owner` claims each local file before its upload. A file whose record
+ * copy `isHeld` (a change to its record not yet copied) neither uploads nor
+ * publishes.
  */
 export type QueuedFilePublisher = {
   owner: QueuedFileClaim;
   isReady(): boolean;
+  isHeld?(record: QueuedFileRecord): boolean;
   publish(
     record: QueuedFileRecord,
     uploaded: UploadResult,
@@ -250,6 +260,10 @@ export type QueuedFileEntry = {
   namespace?: unknown;
   isCommitted: boolean;
   isUploaded: boolean;
+  /** Stale mark: "changed", or "" (an earlier build's, unknown). */
+  stale?: string;
+  isDeleted: boolean;
+  isOrphaned: boolean;
   claim?: QueuedFileClaim;
 };
 
@@ -440,7 +454,8 @@ export async function markQueuedFileCommitted(
 
 /**
  * Replaces the copy of a local file's record with the record as it is now,
- * which its upload publishes, and clears a stale mark.
+ * which its upload publishes, and clears its orphaned, deleted, then stale
+ * marks: an interrupted orphan keeps its stale mark (see markQueuedFileStale).
  */
 export async function writeQueuedFileRecord(
   dir: string,
@@ -449,19 +464,66 @@ export async function writeQueuedFileRecord(
 ): Promise<void> {
   const entryName = toEntryName(fileId);
   await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(record));
-  const entry = await getEntryDir(dir, entryName);
-  await entry?.removeEntry(STALE_FILE).catch(() => undefined);
+  const entry = await getEntryDir(dir, entryName, true);
+  await removeMark(entry, ORPHANED_FILE);
+  await removeMark(entry, DELETED_FILE);
+  await removeMark(entry, STALE_FILE);
+}
+
+async function removeMark(
+  entry: FileSystemDirectoryHandle | null | undefined,
+  mark: string
+) {
+  await entry?.removeEntry(mark).catch((error: Error) => {
+    if (error?.name !== "NotFoundError") throw error;
+  });
+}
+
+/** Marks a local file orphaned: it does not publish until its copy is rewritten. */
+export async function markQueuedFileOrphaned(dir: string, fileId: string) {
+  const name = toEntryName(fileId);
+  await writeEntryFile(dir, name, ORPHANED_FILE, "");
+  await removeMark(await getEntryDir(dir, name, true), STALE_FILE);
+}
+
+/** Marks a local file discarded (or not); resolves whether it already was. */
+export async function markQueuedFileDiscarded(
+  dir: string,
+  fileId: string,
+  isDiscarded = true
+) {
+  const name = toEntryName(fileId);
+  const was = await readEntryText(dir, name, DISCARDED_FILE, true);
+  const entry = await getEntryDir(dir, name, true);
+  if (isDiscarded) await entry?.getFileHandle(DISCARDED_FILE, { create: true });
+  else await removeMark(entry, DISCARDED_FILE);
+  return was !== undefined;
+}
+
+/** Lets a stale local file whose mark says its record changed publish its copy. */
+export async function clearQueuedFileStale(dir: string, fileId: string) {
+  const name = toEntryName(fileId);
+  if ((await readEntryText(dir, name, STALE_FILE, true)) !== CHANGED_MARK)
+    return;
+  await (await getEntryDir(dir, name, true))?.removeEntry(STALE_FILE);
 }
 
 /**
  * Marks a local file's record copy stale, when its record changed but could
  * not be read again: the file does not upload until the copy is replaced.
+ * A deleted record (`isDeleted`) gets its own mark, which no other writer
+ * replaces; a stale mark is never replaced, so an earlier build's ("") keeps
+ * telling nothing.
  */
 export async function markQueuedFileStale(
   dir: string,
-  fileId: string
+  fileId: string,
+  isDeleted = false
 ): Promise<void> {
-  await writeEntryFile(dir, toEntryName(fileId), STALE_FILE, "");
+  const name = toEntryName(fileId);
+  if (isDeleted) return writeEntryFile(dir, name, DELETED_FILE, "");
+  if ((await readEntryText(dir, name, STALE_FILE, true)) !== undefined) return;
+  await writeEntryFile(dir, name, STALE_FILE, CHANGED_MARK);
 }
 
 /** Lists the files of a queue whose staging finished. */
@@ -481,6 +543,11 @@ export async function listQueuedFiles(dir: string, isStrict = false) {
       namespace: record?.namespace,
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
+      stale: await readEntryText(dir, entryName, STALE_FILE, isStrict),
+      isDeleted:
+        (await readEntryText(dir, entryName, DELETED_FILE, isStrict)) !==
+        undefined,
+      isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
       claim: await readClaim(dir, entryName, isStrict)
     });
   }
@@ -3556,10 +3623,12 @@ async function isPublishable(
   entryName: string,
   publisher: QueuedFilePublisher
 ) {
-  for (const mark of [UPLOADED_FILE, STALE_FILE])
+  const marks = [UPLOADED_FILE, STALE_FILE, DELETED_FILE, ORPHANED_FILE];
+  for (const mark of [...marks, DISCARDED_FILE])
     if ((await readEntryText(dir, entryName, mark, true)) !== undefined)
       return false;
-  if (!(await readQueuedRecord(dir, entryName, true))) return false;
+  const record = await readQueuedRecord(dir, entryName, true);
+  if (!record || publisher.isHeld?.(record)) return false;
   const claim = await readClaim(dir, entryName, true);
   return !claim || isSameClaim(claim, publisher.owner);
 }
