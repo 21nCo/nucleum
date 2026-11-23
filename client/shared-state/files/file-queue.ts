@@ -494,8 +494,9 @@ export async function markQueuedFileDiscarded(
 ) {
   const name = toEntryName(fileId);
   const was = await readEntryText(dir, name, DISCARDED_FILE, true);
-  if (isDiscarded) await writeEntryFile(dir, name, DISCARDED_FILE, "");
-  else await removeMark(await getEntryDir(dir, name, true), DISCARDED_FILE);
+  const entry = await getEntryDir(dir, name, true);
+  if (isDiscarded) await entry?.getFileHandle(DISCARDED_FILE, { create: true });
+  else await removeMark(entry, DISCARDED_FILE);
   return was !== undefined;
 }
 

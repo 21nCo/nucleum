@@ -255,7 +255,6 @@ async function reconcileLocalFile(
       : await readFileRecord(namespace, { fileId: entry.fileId });
   if (record) {
     const copy = toQueuedFileRecord(record, namespace);
-    // An orphan a record took over stays stale until its copy is written.
     if (entry.isOrphaned)
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
     await writeQueuedFileRecord(LOCAL_FILE_QUEUE_DIR, entry.fileId, copy);
@@ -316,7 +315,6 @@ async function reconcileLocalFiles(
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
       if (!isHeld && !ids.has(id)) continue;
-      // A delete recorded since the snapshot (another tab's) stays one.
       isDeleted ||= isPendingDelete(pendingKey(namespace, id));
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, isDeleted);
       failed.push(id);
@@ -325,10 +323,7 @@ async function reconcileLocalFiles(
   return failed;
 }
 
-/**
- * Name of the shared Web Lock every tab holds while DataFn is in a guest
- * namespace (see holdNamespace).
- */
+/** The shared Web Lock a tab holds while DataFn is in the guest namespace. */
 function liveLockName(namespace: string) {
   return `${LOCAL_FILE_QUEUE_DIR}-live:${namespace}`;
 }
@@ -495,8 +490,8 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
  * check of its records and the delete. An orphan stays while its guest
  * namespace has a change not yet copied, which may take it over; that is
  * checked again after the records' query, after its discard mark (removed
- * then, unless an earlier settle wrote it) and before the dequeue; a deleted
- * upload's file never publishes, even when a guest record then takes it over.
+ * unless that check passes or an earlier settle wrote it), before recording
+ * a failed delete and the dequeue; a deleted upload's file never publishes.
  */
 async function settleOrphanedLocalFiles(
   uploader: FileQueueUploader,
@@ -541,12 +536,13 @@ async function settleOrphanedLocalFiles(
     if (!(await isOrphan())) return true;
     if (!result.data.length) {
       const was = await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId);
-      if (!(await isOrphan())) {
+      if (!(await isOrphan().catch(() => false))) {
         if (!was)
           await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId, false);
         return true;
       }
-      const pend = () => recordFileFnPendingDelete(uploader, fileId);
+      const pend = async () =>
+        (await isOrphan()) && recordFileFnPendingDelete(uploader, fileId);
       if (isAppOffline()) await pend();
       else await client.deleteFile(fileId).catch(pend);
     }
@@ -573,7 +569,7 @@ function logOrphanError(error: unknown) {
  * pass copies them after another tab's sign-out cleared local storage.
  * A local file's durable hold is its stale mark (see fenceChanges); until
  * that mark is written, its local-storage entry holds it, and its memory
- * entry too while either could not be written (`unfenced`).
+ * entry while neither is written (`unfenced`, until the fence marks it).
  */
 const PENDING_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-pending:`;
 const memoryPending = new Map<string, string>();
@@ -621,9 +617,7 @@ function readPendingChanges(namespace?: string): PendingChange[] {
       .map(decodeURIComponent);
     return { key, value, namespace: owner, id, action: value.split(":")[0] };
   });
-  return changes.filter(
-    (change) => !namespace || change.namespace === namespace
-  );
+  return changes.filter((c) => !namespace || c.namespace === namespace);
 }
 
 function isPendingDelete(key: string) {
@@ -702,6 +696,8 @@ function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
             entry.fileId,
             isChanged && isDeleted
           );
+        const key = pendingKey(namespace, String(entry.recordId));
+        if (isChanged && unfenced.delete(key)) memoryPending.delete(key);
       }
     })
     .catch((error) => {
