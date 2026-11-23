@@ -295,13 +295,13 @@ async function reconcileLocalFiles(
   isFull: boolean
 ) {
   const failed: string[] = [];
-  const ids = pending.map(({ id }) => id);
+  const ids = new Set(pending.map(({ id }) => id));
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
     const id = entry.recordId ?? "";
     if (entry.namespace !== namespace) continue;
     const isHeld =
       entry.isOrphaned || entry.isDeleted || entry.stale !== undefined;
-    if (!isFull && !ids.includes(id) && !isHeld) continue;
+    if (!isFull && !ids.has(id) && !isHeld) continue;
     let isDeleted = pending.some(
       (change) => change.id === id && change.action === "delete"
     );
@@ -315,7 +315,7 @@ async function reconcileLocalFiles(
         throw new Error("The delete of a staged file is not marked");
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
-      if (!isHeld && !ids.includes(id)) continue;
+      if (!isHeld && !ids.has(id)) continue;
       // A delete recorded since the snapshot (another tab's) stays one.
       isDeleted ||= isPendingDelete(pendingKey(namespace, id));
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, isDeleted);
@@ -353,8 +353,8 @@ function holdNamespace(namespace: string | undefined) {
  * DataFn ID it was opened with means it never starts again) and no tab is in
  * it. An orphaned file, one whose record was deleted, or one whose mark
  * tells nothing stays held; a deleted one claimed, not uploaded and not stale
- * (no guest record took it over) is marked orphaned for its account to
- * settle (see settleOrphanedLocalFiles).
+ * (no guest record, nor a change it drops, took it over: marked stale) is
+ * marked orphaned for its account to settle (see settleOrphanedLocalFiles).
  */
 async function releaseRetiredNamespaces() {
   const locks = await globalThis.navigator?.locks?.query();
@@ -370,16 +370,24 @@ async function releaseRetiredNamespaces() {
     namespace !== `guest:${dapId}` &&
     !live.some(({ name }) => name === liveLockName(namespace));
   const deleted = new Set<string>();
+  const dropped: PendingChange[] = [];
   for (const change of readPendingChanges()) {
     if (!isRetired(change.namespace)) continue;
-    if (change.action !== "delete") removePendingChange(change);
+    if (change.action !== "delete") dropped.push(change);
     else deleted.add(`${change.namespace}\n${change.id}`);
   }
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
-    if (!isRetired(entry.namespace) || entry.isOrphaned) continue;
-    const { fileId, stale } = entry;
+    if (!isRetired(entry.namespace)) continue;
+    const { fileId } = entry;
+    let { stale } = entry;
     const isDeleted =
       entry.isDeleted || deleted.has(`${entry.namespace}\n${entry.recordId}`);
+    const isTakenOver = dropped.some((c) => c.namespace === entry.namespace);
+    if ((entry.isOrphaned || isDeleted) && isTakenOver && stale === undefined) {
+      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId);
+      stale = "changed";
+    }
+    if (entry.isOrphaned) continue;
     if (!isDeleted) {
       if (stale !== undefined)
         await clearQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId);
@@ -387,6 +395,7 @@ async function releaseRetiredNamespaces() {
       await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, fileId);
     } else await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId, true);
   }
+  dropped.forEach(removePendingChange);
 }
 
 function logReleaseError(error: unknown) {
@@ -436,9 +445,8 @@ function scheduleChangePass(namespace: string, isFull = false) {
       const failed = await reconcileLocalFiles(namespace, pending, isFull);
       if (isFull) await releaseRetiredNamespaces().catch(logReleaseError);
       for (const change of pending) {
-        if (unfenced.get(change.key) === change.value)
-          unfenced.delete(change.key);
-        if (!failed.includes(change.id)) removePendingChange(change);
+        if (failed.includes(change.id)) unfenced.delete(change.key);
+        else removePendingChange(change);
       }
       for (const id of failed)
         if (!pending.some((change) => change.id === id))
@@ -488,9 +496,10 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
  * the queue's lock, on its entry read there, so no publish runs between the
  * check of its records and the delete. An orphan stays while its guest
  * namespace has a change not yet copied, which may take it over; that is
- * checked again after the records' query and before the dequeue. One whose
- * upload is deleted is marked discarded first, so it never publishes, even
- * when a guest record takes it over before its dequeue.
+ * checked again after the records' query, after its discard mark (cleared
+ * then, with nothing deleted) and before the dequeue. One whose upload is
+ * deleted is marked discarded first, so it never publishes, even when a
+ * guest record takes it over before its dequeue.
  */
 async function settleOrphanedLocalFiles(
   uploader: FileQueueUploader,
@@ -535,6 +544,10 @@ async function settleOrphanedLocalFiles(
     if (!(await isOrphan())) return true;
     if (!result.data.length) {
       await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId);
+      if (!(await isOrphan())) {
+        await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId, false);
+        return true;
+      }
       const pend = () => recordFileFnPendingDelete(uploader, fileId);
       if (isAppOffline()) await pend();
       else await client.deleteFile(fileId).catch(pend);
@@ -566,7 +579,7 @@ function logOrphanError(error: unknown) {
  */
 const PENDING_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-pending:`;
 const memoryPending = new Map<string, string>();
-const unfenced = new Map<string, string>();
+const unfenced = new Set<string>();
 
 type PendingChange = {
   key: string;
@@ -625,20 +638,20 @@ function isPendingDelete(key: string) {
 function addPendingChange(namespace: string, id: string, action = "change") {
   const key = pendingKey(namespace, id);
   const isDeleted = isPendingDelete(key);
-  const token = `${Date.now().toString(36)}.${Math.random().toString(36).slice(2)}`;
-  const value = `${isDeleted ? "delete" : action}:${token}`;
+  const value = `${isDeleted ? "delete" : action}:${crypto.randomUUID()}`;
   memoryPending.set(key, value);
   try {
     globalThis.localStorage?.setItem(key, value);
   } catch (error) {
     logger.warn({ at: "deviceFileQueue.pending", error });
-    unfenced.set(key, value);
+    unfenced.add(key);
   }
 }
 
 /** Removes a pending change, unless it was recorded again since it was read. */
 function removePendingChange({ key, value }: PendingChange) {
   if (memoryPending.get(key) === value) memoryPending.delete(key);
+  if (!memoryPending.has(key)) unfenced.delete(key);
   try {
     const storage = globalThis.localStorage;
     if (storage?.getItem(key) === value) storage.removeItem(key);
@@ -697,7 +710,7 @@ function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
       logger.warn({ at: "deviceFileQueue.fence", error });
       for (const id of ids) {
         const key = pendingKey(namespace, id);
-        unfenced.set(key, memoryPending.get(key) ?? "");
+        if (memoryPending.has(key)) unfenced.add(key);
       }
     });
 }

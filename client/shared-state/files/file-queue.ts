@@ -464,7 +464,7 @@ export async function writeQueuedFileRecord(
 ): Promise<void> {
   const entryName = toEntryName(fileId);
   await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(record));
-  const entry = await getEntryDir(dir, entryName);
+  const entry = await getEntryDir(dir, entryName, true);
   await removeMark(entry, ORPHANED_FILE);
   await removeMark(entry, DELETED_FILE);
   await removeMark(entry, STALE_FILE);
@@ -488,9 +488,15 @@ export async function markQueuedFileOrphaned(dir: string, fileId: string) {
   );
 }
 
-/** Marks a local file discarded, before its account deletes its upload. */
-export async function markQueuedFileDiscarded(dir: string, fileId: string) {
-  await writeEntryFile(dir, toEntryName(fileId), DISCARDED_FILE, "");
+/** Marks a local file discarded (or not), before its upload is deleted. */
+export async function markQueuedFileDiscarded(
+  dir: string,
+  fileId: string,
+  isDiscarded = true
+) {
+  const name = toEntryName(fileId);
+  if (isDiscarded) return writeEntryFile(dir, name, DISCARDED_FILE, "");
+  await removeMark(await getEntryDir(dir, name, true), DISCARDED_FILE);
 }
 
 /** Lets a stale local file whose mark says its record changed publish its copy. */
