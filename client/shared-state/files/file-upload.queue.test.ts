@@ -687,7 +687,7 @@ describe("files captured offline or by a local-only user", () => {
     ["no file", undefined],
     ["another file", "file_other"]
   ])(
-    "leaves an account record with the capture's ID and %s unchanged and deletes the upload instead of marking it uploaded",
+    "leaves an account record with the capture's ID and %s unchanged, deletes the upload and keeps the capture on the device for its guest record",
     async (_, otherFileId) => {
       await bootData(localAccount);
       uninstall = installDeviceFileQueue();
@@ -709,10 +709,24 @@ describe("files captured offline or by a local-only user", () => {
       expect(sdk.uploads).toEqual([
         expect.objectContaining({ fileId: record.fileId })
       ]);
-      await vi.waitFor(() => expect(opfs.list(LOCAL_QUEUE)).toEqual([]));
+      await vi.waitFor(() =>
+        expect(
+          opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
+        ).toBeDefined()
+      );
       const saved = await savedRecord(record.id);
       expect(saved).toEqual(expect.objectContaining(restored));
       expect(saved?.fileId).toBe(otherFileId);
+      await replayLocalQueue();
+      expect(sdk.uploads).toHaveLength(1);
+      expect(sdk.deletes).toEqual([record.fileId]);
+
+      await signOutToLocal();
+      await settleLocalFileRecords();
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
+      expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+      expect(await resolveFileUrl(record.fileId, "full")).toBe("blob:queued");
+      await signInToCloud("user-a");
       await replayLocalQueue();
       expect(sdk.uploads).toHaveLength(1);
     }

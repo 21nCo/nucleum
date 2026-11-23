@@ -123,11 +123,10 @@ function assertNamespace(namespace: string) {
  * not yet marked uploaded, which may have saved only its insert), it only
  * trashes or archives it as its copy is, if it references the file; it
  * changes nothing else, so later edits in the account stay. One referencing
- * another file or none stays as it is: the local file is marked orphaned, so
- * its account deletes the upload and removes it (see settleOrphanedLocalFiles).
+ * another file or none stays too: its upload is deleted, its file kept.
  */
 export function createLocalFilePublisher(
-  uploader: Pick<FileQueueUploader, "userId" | "baseUrl" | "signal">
+  uploader: Pick<FileQueueUploader, "userId" | "baseUrl" | "signal" | "client">
 ): QueuedFilePublisher {
   const namespace = `user:${uploader.userId}`;
   const isReady = () => {
@@ -164,8 +163,9 @@ export function createLocalFilePublisher(
       });
       const existing = found.data?.[0] as Record<string, unknown> | undefined;
       if (existing && existing.fileId !== record.fileId) {
-        await markQueuedFileOrphaned(LOCAL_FILE_QUEUE_DIR, uploaded.fileId);
-        throw new DOMException("The record ID is taken", "ConstraintError");
+        return uploader.client
+          .deleteFile(uploaded.fileId)
+          .catch(() => recordFileFnPendingDelete(uploader, uploaded.fileId));
       }
       const saved = existing && toQueuedFileRecord(existing, namespace);
       const id = record.id;
@@ -315,7 +315,6 @@ export async function uploadLocalQueuedFiles(
     uploader.signal,
     publisher
   );
-  await settleOrphanedLocalFiles(uploader, publisher).catch(logOrphanError);
 }
 
 /**
