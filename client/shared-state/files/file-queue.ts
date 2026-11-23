@@ -39,6 +39,8 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
+/** Marks a claimed local file whose record was deleted (see device-file-queue). */
+const ORPHANED_FILE = "orphaned";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
@@ -127,11 +129,14 @@ export type QueuedFileClaim = { userId: string; baseUrl: string };
  * Publishes the record of a local file that uploaded, so the account holds a
  * record of every local file it uploads. `isReady` is checked before each
  * upload; a pass stops while it is false, keeping the files for a later one.
- * `owner` claims each local file before its upload.
+ * `owner` claims each local file before its upload. A file whose record
+ * copy `isHeld` (a change to its record not yet copied) neither uploads nor
+ * publishes.
  */
 export type QueuedFilePublisher = {
   owner: QueuedFileClaim;
   isReady(): boolean;
+  isHeld?(record: QueuedFileRecord): boolean;
   publish(
     record: QueuedFileRecord,
     uploaded: UploadResult,
@@ -250,6 +255,8 @@ export type QueuedFileEntry = {
   namespace?: unknown;
   isCommitted: boolean;
   isUploaded: boolean;
+  isStale: boolean;
+  isOrphaned: boolean;
   claim?: QueuedFileClaim;
 };
 
@@ -440,7 +447,7 @@ export async function markQueuedFileCommitted(
 
 /**
  * Replaces the copy of a local file's record with the record as it is now,
- * which its upload publishes, and clears a stale mark.
+ * which its upload publishes, and clears a stale or orphaned mark.
  */
 export async function writeQueuedFileRecord(
   dir: string,
@@ -451,6 +458,18 @@ export async function writeQueuedFileRecord(
   await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(record));
   const entry = await getEntryDir(dir, entryName);
   await entry?.removeEntry(STALE_FILE).catch(() => undefined);
+  await entry?.removeEntry(ORPHANED_FILE).catch(() => undefined);
+}
+
+/** Marks a local file orphaned: it does not publish until its copy is rewritten. */
+export async function markQueuedFileOrphaned(dir: string, fileId: string) {
+  await writeEntryFile(dir, toEntryName(fileId), ORPHANED_FILE, "");
+}
+
+/** Lets a stale local file publish the record copy it holds. */
+export async function clearQueuedFileStale(dir: string, fileId: string) {
+  const entry = await getEntryDir(dir, toEntryName(fileId), true);
+  await entry?.removeEntry(STALE_FILE);
 }
 
 /**
@@ -481,6 +500,8 @@ export async function listQueuedFiles(dir: string, isStrict = false) {
       namespace: record?.namespace,
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
+      isStale: await hasEntryFile(dir, entryName, STALE_FILE),
+      isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
       claim: await readClaim(dir, entryName, isStrict)
     });
   }
@@ -3556,10 +3577,11 @@ async function isPublishable(
   entryName: string,
   publisher: QueuedFilePublisher
 ) {
-  for (const mark of [UPLOADED_FILE, STALE_FILE])
+  for (const mark of [UPLOADED_FILE, STALE_FILE, ORPHANED_FILE])
     if ((await readEntryText(dir, entryName, mark, true)) !== undefined)
       return false;
-  if (!(await readQueuedRecord(dir, entryName, true))) return false;
+  const record = await readQueuedRecord(dir, entryName, true);
+  if (!record || publisher.isHeld?.(record)) return false;
   const claim = await readClaim(dir, entryName, true);
   return !claim || isSameClaim(claim, publisher.owner);
 }
