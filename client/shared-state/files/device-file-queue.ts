@@ -268,12 +268,14 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
 }
 
 /**
- * Reconciles the local files of the given changed records (all with none)
- * with their records in the guest namespace, resolving the IDs of the
- * pending changes (see readPendingChanges) it could not copy. When such a
- * record could not be read, as DataFn left the namespace, its file is marked
- * stale, so it does not upload with an outdated copy until a pass copies it;
- * a file whose record did not change keeps its copy, which is still current.
+ * Reconciles the local files of the given changed records (all with none),
+ * and every orphaned one (any record may take over its file), with their
+ * records in the guest namespace, resolving the record IDs it could not
+ * copy. When a pending change's record (see readPendingChanges; any with a
+ * pending full pass) or an orphaned file's could not be read, as DataFn left
+ * the namespace, its file is marked stale, so it neither uploads with an
+ * outdated copy nor settles until a pass copies it; a file whose record did
+ * not change keeps its copy, which is still current.
  */
 async function reconcileLocalFiles(
   namespace: string,
@@ -285,14 +287,15 @@ async function reconcileLocalFiles(
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
     const id = entry.recordId ?? "";
     if (entry.namespace !== namespace) continue;
-    if (changedIds && !changedIds.includes(id)) continue;
+    if (changedIds && !changedIds.includes(id) && !entry.isOrphaned) continue;
     try {
       await reconcileLocalFile(namespace, entry);
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
-      if (!isAllPending && !pendingIds.includes(id)) continue;
+      if (!isAllPending && !pendingIds.includes(id) && !entry.isOrphaned)
+        continue;
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
-      failed.push(isAllPending ? FULL_PASS : id);
+      failed.push(id);
     }
   }
   return failed;
@@ -302,7 +305,8 @@ async function reconcileLocalFiles(
  * Lets the stale local files of the other guest namespaces publish the
  * record copies they hold, dropping their pending changes: such a namespace
  * never starts again (a sign-out replaced the device's DataFn ID), so no
- * later pass can copy them. A file whose record was deleted stays held.
+ * later pass can copy them. A file whose record was deleted (its stale mark
+ * or a pending change says so) or that is orphaned stays held.
  */
 async function releaseOtherNamespaces(namespace: string) {
   const deleted = new Set<string>();
@@ -312,8 +316,12 @@ async function releaseOtherNamespaces(namespace: string) {
     else deleted.add(`${change.namespace}\n${change.id}`);
   }
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
-    if (entry.namespace === namespace || !entry.isStale) continue;
-    if (deleted.has(`${entry.namespace}\n${entry.recordId}`)) continue;
+    if (entry.namespace === namespace || entry.stale !== "") continue;
+    if (
+      entry.isOrphaned ||
+      deleted.has(`${entry.namespace}\n${entry.recordId}`)
+    )
+      continue;
     await clearQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
   }
 }
@@ -348,9 +356,11 @@ function retryChangePass(namespace: string) {
 /**
  * Copies a guest namespace's pending changes to their local files, under the
  * queue's lock, and removes those it copied; a full pass (as the namespace
- * starts) reconciles all its files and releases other namespaces' (see
- * releaseOtherNamespaces). A pass that fails keeps its changes pending, a
- * full one as a pending full pass, and runs again (see retryChangePass).
+ * starts, or a pending one) reconciles all its files and releases other
+ * namespaces' (see releaseOtherNamespaces). A pass that fails keeps its
+ * changes pending, a full one as a pending full pass, records a change
+ * pending for each record it could not copy, and runs again (see
+ * retryChangePass).
  */
 function scheduleChangePass(namespace: string, isFull = false) {
   if (!resolveMigrationQueueDir(namespace)) return localRecordWork;
@@ -360,16 +370,18 @@ function scheduleChangePass(namespace: string, isFull = false) {
     await withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, async () => {
       const pending = readPendingChanges(namespace);
       const ids = pending.map(({ id }) => id);
-      const failed =
-        isFull || ids.includes(FULL_PASS)
-          ? await reconcileLocalFiles(namespace, undefined, ids)
-          : ids.length
-            ? await reconcileLocalFiles(namespace, ids)
-            : [];
-      if (isFull) await releaseOtherNamespaces(namespace);
+      const isFullPass = isFull || ids.includes(FULL_PASS);
+      const failed = isFullPass
+        ? await reconcileLocalFiles(namespace, undefined, ids)
+        : ids.length
+          ? await reconcileLocalFiles(namespace, ids)
+          : [];
+      if (isFullPass) await releaseOtherNamespaces(namespace);
       for (const change of pending) {
         if (!failed.includes(change.id)) removePendingChange(change);
       }
+      for (const id of failed)
+        if (!ids.includes(id)) addPendingChange(namespace, id);
       if (!failed.length) passRetries.delete(namespace);
       else retryChangePass(namespace);
     }).catch((error: unknown) => {
@@ -403,7 +415,8 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
 }
 
 /**
- * Removes the orphaned local files the uploader's account claimed, while the
+ * Removes the orphaned local files the uploader's account claimed (none a
+ * change of its guest namespace left stale), while the
  * publisher is ready and its synced records are up to date: deletes each no
  * record of the account references at its authority (its publish never
  * landed), or records that delete for the account's next client; each under
@@ -417,6 +430,7 @@ async function settleOrphanedLocalFiles(
   const { userId, baseUrl, client, signal } = uploader;
   const isOrphanOf = (entry?: QueuedFileEntry) =>
     entry?.isOrphaned &&
+    entry.stale === undefined &&
     !entry.isUploaded &&
     entry.claim?.userId === userId &&
     entry.claim.baseUrl === baseUrl;
@@ -467,7 +481,11 @@ function logOrphanError(error: unknown) {
  * each, `<PENDING_PREFIX><namespace>:<record ID>` (FULL_PASS for a full pass
  * that failed), valued `<action>:<token>`, so a reload and other tabs keep
  * them, and a pass removes only those it read and that did not change since;
- * in memory for the page without local storage.
+ * and in memory for the page, so a tab's pass still copies the changes it
+ * fenced after another tab cleared local storage (a sign-out does) or
+ * released them, or without local storage. A record's delete is also kept
+ * on its file's stale mark, which a sign-out does not clear (see
+ * fenceChanges).
  */
 const PENDING_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-pending:`;
 const FULL_PASS = "*";
@@ -483,19 +501,19 @@ type PendingChange = {
 
 /** Lists the pending changes (of one namespace, if given). */
 function readPendingChanges(namespace?: string): PendingChange[] {
-  const found = new Map(memoryPending);
+  const found = [...memoryPending];
   try {
     const storage = globalThis.localStorage;
     for (let index = 0; index < (storage?.length ?? 0); index++) {
       const key = storage.key(index);
       if (key?.startsWith(PENDING_PREFIX)) {
-        found.set(key, storage.getItem(key) ?? "");
+        found.push([key, storage.getItem(key) ?? ""]);
       }
     }
   } catch (error) {
     logger.warn({ at: "deviceFileQueue.pending", error });
   }
-  const changes = [...found].map(([key, value]) => {
+  const changes = found.map(([key, value]) => {
     const [owner = "", id = ""] = key
       .slice(PENDING_PREFIX.length)
       .split(":")
@@ -511,18 +529,16 @@ function readPendingChanges(namespace?: string): PendingChange[] {
 function addPendingChange(namespace: string, id: string, action = "change") {
   const key =
     PENDING_PREFIX + [namespace, id].map(encodeURIComponent).join(":");
-  const held = readPendingChanges(namespace).find(
-    (change) => change.key === key
+  const isDeleted = readPendingChanges(namespace).some(
+    (change) => change.key === key && change.action === "delete"
   );
   const token = `${Date.now().toString(36)}.${Math.random().toString(36).slice(2)}`;
-  const value = `${held?.action === "delete" ? "delete" : action}:${token}`;
+  const value = `${isDeleted ? "delete" : action}:${token}`;
+  memoryPending.set(key, value);
   try {
-    const storage = globalThis.localStorage;
-    if (!storage) throw new Error("No local storage");
-    storage.setItem(key, value);
+    globalThis.localStorage?.setItem(key, value);
   } catch (error) {
     logger.warn({ at: "deviceFileQueue.pending", error });
-    memoryPending.set(key, value);
   }
 }
 
@@ -558,19 +574,29 @@ function onFileRecordsChanged(event: { ids?: string[]; action?: string }) {
   if (!event.ids?.length) return;
   const action = event.action === "delete" ? "delete" : "change";
   for (const id of event.ids) addPendingChange(namespace, id, action);
-  fenceChanges(namespace, event.ids);
+  fenceChanges(namespace, event.ids, action === "delete");
   void scheduleChangePass(namespace);
 }
 
 let fences: Promise<void> = Promise.resolve();
 
-/** Marks the changed records' local files stale at once, without the lock. */
-function fenceChanges(namespace: string, ids: string[]) {
+/**
+ * Marks the changed records' local files stale at once, without the lock (a
+ * delete's as deleted), and the namespace's orphaned files, which a changed
+ * record may have taken over.
+ */
+function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
   fences = fences
     .then(async () => {
       for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)) {
-        if (entry.namespace === namespace && ids.includes(entry.recordId ?? ""))
-          await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+        if (entry.namespace !== namespace) continue;
+        const isChanged = ids.includes(entry.recordId ?? "");
+        if (isChanged || entry.isOrphaned)
+          await markQueuedFileStale(
+            LOCAL_FILE_QUEUE_DIR,
+            entry.fileId,
+            isChanged && isDeleted
+          );
       }
     })
     .catch((error) => logger.warn({ at: "deviceFileQueue.fence", error }));
