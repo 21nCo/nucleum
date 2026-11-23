@@ -19,6 +19,7 @@ import {
   type QueuedFileRecord
 } from "@nucleum/shared-state/files/file-queue";
 import {
+  pullAccountFileRecords,
   recordFileFnPendingDelete,
   type FileQueueUploader
 } from "@nucleum/shared-state/files/filefn-client";
@@ -154,12 +155,17 @@ export function createLocalFilePublisher(
         }
       };
       assertReady();
+      const isPulled =
+        !get(datafnRuntime)?.storage ||
+        (await pullAccountFileRecords(datafn, isReady, uploader.signal));
+      if (!isPulled) throw new DOMException("Records not pulled", "AbortError");
       const found = await datafn.file.query({
         filters: { id: record.id },
         limit: 1,
         metadata: ALL_RECORDS
       });
-      const existing = found.data?.[0] as Record<string, unknown> | undefined;
+      if (!Array.isArray(found.data)) throw new Error("File records unknown");
+      const existing = found.data[0] as Record<string, unknown> | undefined;
       if (existing && existing.fileId !== record.fileId) {
         return uploader.client
           .deleteFile(uploaded.fileId)
@@ -209,7 +215,7 @@ function isAbandoned(entry: QueuedFileEntry) {
  * the record as it is now (another record that took over its `fileId` when
  * the first one was deleted, too) and is marked committed. A committed file
  * no record references any more, or one never committed and abandoned, is
- * removed from the device, but one an account claimed and did not record
+ * removed under Web Locks once a reread finds none, but one claimed and not
  * uploaded is marked stale and kept, never deleted; under the queue's lock
  * (scheduleChangePass), so no other tab acts meanwhile.
  */
@@ -235,7 +241,11 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
   if (!entry.isCommitted && !isAbandoned(entry)) return;
   if (entry.claim && !entry.isUploaded) {
     await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
-  } else await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+  } else if (globalThis.navigator?.locks) {
+    const isUnused = async () =>
+      !(await readFileRecord(namespace, { fileId: entry.fileId }));
+    await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId, isUnused);
+  }
 }
 
 /**
@@ -256,9 +266,7 @@ async function reconcileLocalFiles(namespace: string, changedIds?: string[]) {
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
       if (!changedIds) continue;
-      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId).catch(
-        () => undefined
-      );
+      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
     }
   }
 }

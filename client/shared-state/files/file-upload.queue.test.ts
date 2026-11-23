@@ -91,7 +91,9 @@ const authority = vi.hoisted(() => ({
 type AfterCall = (result: unknown) => unknown;
 const fileCalls = vi.hoisted(() => ({
   beforeQuery: null as ((args: unknown) => Promise<void | AfterCall>) | null,
-  beforeMutate: null as ((args: unknown) => Promise<void | AfterCall>) | null
+  beforeMutate: null as ((args: unknown) => Promise<void | AfterCall>) | null,
+  /** Runs, when set, as each pull of the authority's records applies. */
+  onPull: null as (() => Promise<void | "fail">) | null
 }));
 vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   const actual =
@@ -106,8 +108,10 @@ vi.mock("@nucleum/datafn/datafn.store", async (importOriginal) => {
   let pulls = 0;
   const pullNow = async () => {
     const pull = ++pulls;
+    const outcome = await fileCalls.onPull?.();
     emit("sync_started", { phase: "pull" });
-    emit("sync_applied", { phase: "pull", cursors: { file: `${pull}` } });
+    if (outcome === "fail") emit("sync_failed", { phase: "pull" });
+    else emit("sync_applied", { phase: "pull", cursors: { file: `${pull}` } });
   };
   const datafn = new Proxy(actual.datafn, {
     get(target, key) {
@@ -160,7 +164,12 @@ const {
   endAccountUploadReplay,
   startAccountUploadReplay
 } = await import("./filefn-client");
-const { replayFileQueue, withQueueLock } = await import("./file-queue");
+const {
+  isQueuedFileFailed,
+  replayFileQueue,
+  retryFailedQueuedFile,
+  withQueueLock
+} = await import("./file-queue");
 const { OPFSStore } = await import("@filefn/client");
 
 /** One device file system: the queue keeps its handles for the page's life. */
@@ -315,21 +324,31 @@ async function writeLocalEntryFile(fileId: string, name: string, text = "") {
   await writable.close();
 }
 
-/** Makes every read of a queued file's claim fail, as an unreadable file does. */
-function failClaimReads() {
+/**
+ * Makes reads of a queued file's `name`, or with `isWrite` its creation,
+ * fail `times` times (every time by default), as an unreadable or full file
+ * system does.
+ */
+function failEntryFile(name: string, isWrite = false, times = Infinity) {
+  let left = times;
+  const fail = () => {
+    left -= 1;
+    return Promise.reject(new DOMException("Unreadable", "NotReadableError"));
+  };
   const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
     new Proxy(dir, {
       get(target, key) {
         if (key === "getDirectoryHandle") {
-          return async (name: string, options?: { create?: boolean }) =>
-            wrap(await target.getDirectoryHandle(name, options));
+          return async (dirName: string, options?: { create?: boolean }) =>
+            wrap(await target.getDirectoryHandle(dirName, options));
         }
         if (key !== "getFileHandle") return Reflect.get(target, key);
-        return async (name: string, options?: { create?: boolean }) => {
-          const file = await target.getFileHandle(name, options);
-          if (name !== "claim.json") return file;
-          const unreadable = new DOMException("Unreadable", "NotReadableError");
-          return { ...file, getFile: () => Promise.reject(unreadable) };
+        return async (fileName: string, options?: { create?: boolean }) => {
+          const isFailing = fileName === name && left > 0;
+          if (isFailing && isWrite && options?.create) return fail();
+          const file = await target.getFileHandle(fileName, options);
+          if (!isFailing || isWrite) return file;
+          return { ...file, getFile: fail };
         };
       }
     });
@@ -380,6 +399,7 @@ beforeEach(() => {
   sdk.hold = null;
   fileCalls.beforeQuery = null;
   fileCalls.beforeMutate = null;
+  fileCalls.onPull = null;
 });
 
 afterEach(async () => {
@@ -894,6 +914,184 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
+  it("keeps a change whose local file's record copy cannot be read during its pass and publishes no outdated copy of it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    failEntryFile("record.json", false, 1);
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+
+    await signOutToLocal();
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    await vi.waitFor(async () =>
+      expect(await savedRecord(record.id)).toEqual(
+        expect.objectContaining({ fileId: record.fileId, name: "receipt.png" })
+      )
+    );
+  });
+
+  it("keeps a change pending when its record cannot be read and its local file cannot be marked stale", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    fileCalls.beforeQuery = async () => {
+      fileCalls.beforeQuery = null;
+      throw new DOMException("The records are busy", "NotReadableError");
+    };
+    failEntryFile("stale", true, 1);
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+    ).toBeUndefined();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+
+    await signOutToLocal();
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    await vi.waitFor(async () =>
+      expect(await savedRecord(record.id)).toEqual(
+        expect.objectContaining({ fileId: record.fileId, name: "receipt.png" })
+      )
+    );
+  });
+
+  it("keeps a committed capture whose local-only record is deleted while Web Locks cannot fence other tabs", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "committed")
+    ).toBeDefined();
+
+    webLocks = undefined;
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleLocalFileRecords();
+
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+  });
+
+  it("keeps a capture a record references again by the time its removal would run", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // The pass's first lookup by file misses the record that takes the file
+    // over, as one read before that record saved does.
+    let lookups = 0;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { fileId?: string } };
+      if (filters?.fileId !== record.fileId || ++lookups > 1) return;
+      return () => ({ data: [] });
+    };
+    const copy = crypto.randomUUID();
+    await datafn.file.mutate([
+      {
+        operation: "insert",
+        id: copy,
+        record: { name: "copy.png", type: "image/png", fileId: record.fileId }
+      },
+      { operation: "delete", id: record.id }
+    ] as never);
+    await settleLocalFileRecords();
+
+    expect(lookups).toBeGreaterThan(1);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+  });
+
+  it("decides a first publish on the account's records pulled from its authority, leaving one the authority already holds unchanged", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // The authority holds a record with the capture's ID (restored on another
+    // device) that reaches this device with the first pull after the upload.
+    const restored = { name: "restored.png", type: "image/png" };
+    let isPulled = false;
+    fileCalls.onPull = async () => {
+      if (isPulled || !sdk.uploads.length) return;
+      isPulled = true;
+      await datafn.file.mutate({
+        operation: "insert",
+        id: record.id,
+        record: { ...restored, fileId: "file_other" }
+      } as never);
+    };
+
+    await signInToCloud("user-a");
+
+    await vi.waitFor(() => expect(sdk.deletes).toEqual([record.fileId]));
+    await vi.waitFor(() =>
+      expect(
+        opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
+      ).toBeDefined()
+    );
+    expect(await savedRecord(record.id)).toEqual(
+      expect.objectContaining({ ...restored, fileId: "file_other" })
+    );
+  });
+
+  it("publishes nothing and marks nothing uploaded while the account's records cannot be pulled", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    fileCalls.onPull = async () => "fail";
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(sdk.uploads.length).toBeGreaterThan(0);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
+    ).toBeUndefined();
+
+    fileCalls.onPull = null;
+    await replayLocalQueue();
+    await vi.waitFor(async () =>
+      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId)
+    );
+  });
+
+  it("never shows or retries a failed local file for the guest while its claim cannot be read", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await writeLocalEntryFile(record.fileId, "failed-base");
+    failEntryFile("claim.json");
+
+    const isFailed = isQueuedFileFailed([LOCAL_QUEUE], record.fileId, null);
+    await expect(isFailed.catch(() => false)).resolves.toBe(false);
+    const retry = retryFailedQueuedFile([LOCAL_QUEUE], record.fileId, null);
+    await expect(retry.catch(() => false)).resolves.toBe(false);
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "failed-base")
+    ).toBeDefined();
+  });
+
   it("neither uploads, publishes nor deletes a local file without Web Locks, which leave other tabs unfenced", async () => {
     const record = await captureThenSignOutDuringUpload();
     await datafn.file.mutate({ operation: "delete", id: record.id } as never);
@@ -923,7 +1121,7 @@ describe("files captured offline or by a local-only user", () => {
     );
     expect(claim).toBeDefined();
 
-    failClaimReads();
+    failEntryFile("claim.json");
     await signInToCloud("user-b");
     await replayLocalQueue();
     await settleTasks();

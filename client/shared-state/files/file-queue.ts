@@ -458,8 +458,8 @@ export async function markQueuedFileStale(
 }
 
 /**
- * Lists the files of a queue whose staging finished; with `isStrict`, a claim
- * that cannot be read rejects instead of counting as none.
+ * Lists the files of a queue whose staging finished; with `isStrict`, a record
+ * copy or claim that cannot be read rejects instead of counting as none.
  */
 export async function listQueuedFiles(
   dir: string,
@@ -472,7 +472,7 @@ export async function listQueuedFiles(
     if (!entryName.startsWith(ENTRY_PREFIX)) continue;
     const pending = await store.getPendingUpload(entryName);
     if (!pending?.fileId) continue;
-    const record = await readQueuedRecord(dir, entryName);
+    const record = await readQueuedRecord(dir, entryName, isStrict);
     entries.push({
       fileId: pending.fileId,
       createdAt: pending.createdAt,
@@ -750,7 +750,7 @@ async function isReplayableBy(
   const isOwned = (claim: QueuedFileClaim | undefined) =>
     !claim || (owner !== null && isSameClaim(claim, owner));
   if (dir === LOCAL_FILE_QUEUE_DIR) {
-    if (!isOwned(await readClaim(dir, entryName))) return false;
+    if (!isOwned(await readClaim(dir, entryName, true))) return false;
   }
   return (await readMarkers(dir, entryName)).every(isOwned);
 }
