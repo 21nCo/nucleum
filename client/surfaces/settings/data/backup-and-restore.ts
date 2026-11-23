@@ -119,9 +119,8 @@ export async function createBackupBlob(): Promise<Blob> {
 
 /**
  * Puts the bytes of a local-only user's files that the device's local queue
- * holds (see device-file-queue), uploaded to an account or not, back on the
- * exported records that reference
- * them, without their `fileId`, as such a record kept them before, so a
+ * holds (see device-file-queue), uploaded to an account or not and also
+ * when empty, back on the exported records that reference them, without their `fileId`, as such a record kept them before, so a
  * guest backup restores them on any device.
  */
 function withLocalFileBytes(exported: {
@@ -133,7 +132,7 @@ function withLocalFileBytes(exported: {
   const records = Array.isArray(resources?.file) ? resources.file : [];
   for (const record of records as Record<string, unknown>[]) {
     const copy = copies.get(record.fileId as string);
-    if (!copy?.data.length) continue;
+    if (!copy) continue;
     delete record.fileId;
     record.data = copy.data;
     record.size = copy.data.length;

@@ -8977,4 +8977,27 @@ describe("backup and restore of a local-only user's files", () => {
     expect(decode(restored?.data)).toBe("photo bytes");
     expect(decode(restored?.thumbnailData)).toBe("thumb bytes");
   });
+
+  it("restores a local-only user's empty capture as an empty file, not as a record whose file resolves nowhere", async () => {
+    await bootData(localAccount);
+    const [record] = (await fileUpload.uploadFileV2(
+      "text/plain",
+      "empty.txt",
+      new Blob([], { type: "text/plain" })
+    )) as { id: string; fileId: string }[];
+    expect(opfs.list("nucleum-file-queue-local")).toEqual([
+      `queued_${record.fileId}`
+    ]);
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    const restored = await savedRecord(record.id);
+    expect(restored).toBeDefined();
+    expect(restored?.fileId).toBeUndefined();
+    expect(decode(restored?.data)).toBe("");
+    expect(restored?.size).toBe(0);
+  });
 });
