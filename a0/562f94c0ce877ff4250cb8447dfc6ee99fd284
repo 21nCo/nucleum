@@ -1,0 +1,17 @@
+client/shared-state/files/file-queue.ts
+  h_a39f9495f9ec1d 489-492,500-501
+  h_a39f9495f9ec1d 502
+client/shared-state/files/device-file-queue.ts
+  h_a39f9495f9ec1d 498-500,545,550-551,578,707-708
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a0562f94c0ce877ff4250cb8447dfc6ee99fd284",
+  "prompts": {},
+  "humans": {
+    "h_a39f9495f9ec1d": {
+      "author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
