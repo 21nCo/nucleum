@@ -504,6 +504,26 @@ function failEntryWriteOnce(name: string) {
   navigator.storage.getDirectory = async () => wrap(await getDirectory());
 }
 
+/** Makes each lookup of a queued file's `name` fail while `isFailing` says so. */
+function failEntryLookup(name: string, isFailing: () => boolean) {
+  const getDirectory = navigator.storage.getDirectory;
+  const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+    new Proxy(dir, {
+      get(target, key) {
+        if (key === "getDirectoryHandle")
+          return async (dirName: string, options?: { create?: boolean }) =>
+            wrap(await target.getDirectoryHandle(dirName, options));
+        if (key !== "getFileHandle") return Reflect.get(target, key);
+        return async (fileName: string, options?: { create?: boolean }) => {
+          if (fileName === name && !options?.create && isFailing())
+            throw new DOMException("Unreadable", "NotReadableError");
+          return target.getFileHandle(fileName, options);
+        };
+      }
+    });
+  navigator.storage.getDirectory = async () => wrap(await getDirectory());
+}
+
 /** Removes a queued file's `name`, as another tab's pass does. */
 async function removeLocalEntryFile(fileId: string, name: string) {
   const root = await opfs.getDirectory();
@@ -960,6 +980,66 @@ describe("files captured offline or by a local-only user", () => {
       expect(datafn.currentNamespace()).toBe("user:user-a")
     );
     await settleTasks();
+
+    await signOutToLocal(true);
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("keeps a capture deleted in this tab while its rename's pass copies it held, when the delete's pending entry cannot be stored and the sign-in aborts the copy's reread", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const setItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string
+    ) {
+      if (key.includes("-pending:") && value.startsWith("delete:"))
+        throw new DOMException("The storage is full", "QuotaExceededError");
+      return setItem.call(this, key, value);
+    });
+    let reads = 0;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      if (++reads === 2) {
+        // The sign-in aborts the reread of the copy the pass wrote.
+        fileCalls.beforeQuery = null;
+        await signInToCloud("user-a");
+        return;
+      }
+      // Once the rename's pass read the renamed record, this tab deletes it,
+      // and the delete's fence marks the capture deleted.
+      return async (result: unknown) => {
+        await datafn.file.mutate({
+          operation: "delete",
+          id: record.id
+        } as never);
+        await vi.waitFor(() =>
+          expect(opfs.read(LOCAL_QUEUE, entry, "deleted")).toBeDefined()
+        );
+        return result;
+      };
+    };
+
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await vi.waitFor(() =>
+      expect(datafn.currentNamespace()).toBe("user:user-a")
+    );
+    await settleTasks();
+    expect(reads).toBe(2);
 
     await signOutToLocal(true);
     await signInToCloud("user-a");
@@ -1489,6 +1569,33 @@ describe("files captured offline or by a local-only user", () => {
     goOnline();
     await settleTasks();
     expect(sdk.deletes).toEqual([]);
+  });
+
+  it("records the delete of an orphaned capture whose settle finds the app offline and keeps the capture while a later check cannot read it", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleLocalFileRecords();
+    // Offline mode starts as the settle marks the capture discarded; the
+    // second read of its orphaned mark after that fails.
+    let reads = -1;
+    hookEntryFiles({
+      create: (name) => {
+        if (name !== "discarded" || reads >= 0) return;
+        reads = 0;
+        context.update((value) => ({ ...value, isInOfflineMode: true }));
+      }
+    });
+    failEntryLookup("orphaned", () => reads >= 0 && ++reads === 2);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(reads).toBeGreaterThanOrEqual(2);
+    expect(sdk.deletes).toEqual([]);
+
+    context.update((value) => ({ ...value, isInOfflineMode: false }));
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deletes).toEqual([record.fileId]));
   });
 
   it("records no pending delete when another tab's guest record takes an orphaned capture over while its rejected delete is in flight", async () => {

@@ -541,20 +541,19 @@ async function settleOrphanedLocalFiles(
           await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId, false);
         return true;
       }
-      const pend = async () =>
-        (await isOrphan()) && recordFileFnPendingDelete(uploader, fileId);
-      if (isAppOffline()) await pend();
-      else await client.deleteFile(fileId).catch(pend);
+      if (isAppOffline()) await recordFileFnPendingDelete(uploader, fileId);
+      else
+        await client.deleteFile(fileId).catch(async (error: unknown) => {
+          if (!(await isOrphan())) throw error;
+          await recordFileFnPendingDelete(uploader, fileId);
+        });
     }
     await dequeueFile(LOCAL_FILE_QUEUE_DIR, fileId, isOrphan);
     return true;
   };
-  for (const { fileId } of orphans) {
-    if (
-      !(await withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, () => settle(fileId)))
-    )
-      return;
-  }
+  const settleLocked = (fileId: string) =>
+    withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, () => settle(fileId));
+  for (const { fileId } of orphans) if (!(await settleLocked(fileId))) return;
 }
 
 function logOrphanError(error: unknown) {
@@ -569,7 +568,7 @@ function logOrphanError(error: unknown) {
  * pass copies them after another tab's sign-out cleared local storage.
  * A local file's durable hold is its stale mark (see fenceChanges); until
  * that mark is written, its local-storage entry holds it, and its memory
- * entry while neither is written (`unfenced`, until the fence marks it).
+ * entry while neither is written (`unfenced`; a non-delete's own fence ends it).
  */
 const PENDING_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-pending:`;
 const memoryPending = new Map<string, string>();
@@ -685,27 +684,27 @@ let fences: Promise<void> = Promise.resolve();
  * in page memory until a pass handles them.
  */
 function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
+  const keys = ids.map((id) => pendingKey(namespace, id));
+  const values = isDeleted ? [] : keys.map((key) => memoryPending.get(key));
   fences = fences
     .then(async () => {
       for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)) {
         if (entry.namespace !== namespace) continue;
-        const isChanged = ids.includes(entry.recordId ?? "");
+        const index = ids.indexOf(entry.recordId ?? "");
+        const isChanged = index >= 0;
         if (isChanged || entry.isOrphaned || entry.isDeleted)
           await markQueuedFileStale(
             LOCAL_FILE_QUEUE_DIR,
             entry.fileId,
             isChanged && isDeleted
           );
-        const key = pendingKey(namespace, String(entry.recordId));
-        if (isChanged && unfenced.delete(key)) memoryPending.delete(key);
+        if (isChanged && memoryPending.get(keys[index]) === values[index])
+          unfenced.delete(keys[index]);
       }
     })
     .catch((error) => {
       logger.warn({ at: "deviceFileQueue.fence", error });
-      for (const id of ids) {
-        const key = pendingKey(namespace, id);
-        if (memoryPending.has(key)) unfenced.add(key);
-      }
+      for (const key of keys) if (memoryPending.has(key)) unfenced.add(key);
     });
 }
 
