@@ -111,15 +111,14 @@ function assertNamespace(namespace: string) {
   }
 }
 
-function toParts(copy: QueuedFileRecord) {
+function toState(copy: QueuedFileRecord, trash = copy, archive = copy) {
   const fields = PUBLISHED_FIELDS.map((field) => copy[field] ?? null);
-  return [JSON.stringify(fields), `t${copy.isTrashed}`, `a${copy.isArchived}`];
+  return JSON.stringify([fields, trash.isTrashed, archive.isArchived]);
 }
 
 /**
  * Returns the publisher of the device's local files for a cloud account: it
- * is ready while the runtime it was created in, in the account's namespace,
- * syncs to the account authority the files upload to, and publishes each
+ * is ready while its runtime syncs to the account authority and publishes each
  * uploaded file as a record of the account under its local-only record's ID,
  * with the record's current fields and its trashed and archived state,
  * unless the account already holds that record (an earlier publish whose
@@ -158,28 +157,25 @@ export function createLocalFilePublisher(
         }
       };
       assertReady();
-      const isPulled =
-        !bound?.storage ||
-        (await pullAccountFileRecords(datafn, isReady, uploader.signal));
-      if (!isPulled) throw new DOMException("Records not pulled", "AbortError");
+      if (
+        bound?.storage &&
+        !(await pullAccountFileRecords(datafn, isReady, uploader.signal))
+      )
+        throw new DOMException("Records not pulled", "AbortError");
       assertReady();
-      const existing = await datafn.file.query({
-        filters: { id: record.id },
-        limit: 1,
-        metadata: ALL_RECORDS
-      });
+      const held = await readFileRecord(namespace, { id: record.id });
       assertReady();
-      if (!Array.isArray(existing.data)) throw new Error("Records unknown");
-      const held = existing.data[0] as Record<string, unknown> | undefined;
       if (held && held.fileId !== record.fileId) {
         await entry.mark("uploaded", uploaded.versionId);
+        if (await readFileRecord(namespace, { fileId: uploaded.fileId }))
+          return;
         const pend = () => recordFileFnPendingDelete(uploader, uploaded.fileId);
         if (isAppOffline() || !isReady()) return pend();
         return uploader.client.deleteFile(uploaded.fileId).catch(pend);
       }
+      if (!held && entry.saved.includes(`ok ${record.id}`)) return;
       const saved = held && toQueuedFileRecord(held, namespace);
-      if (saved && !toParts(saved).every((part) => entry.saved.includes(part)))
-        return;
+      if (saved && !entry.saved.includes(toState(saved))) return;
       const id = record.id;
       const { isTrashed, isArchived } = record;
       const from = saved ?? { ...record, isTrashed: false, isArchived: false };
@@ -193,11 +189,15 @@ export function createLocalFilePublisher(
         mutations.push({ id, operation: isTrashed ? "trash" : "restore" });
       if (isArchived !== from.isArchived)
         mutations.push({ id, operation: isArchived ? "archive" : "unarchive" });
+      const both = [from, record];
+      const states = both.flatMap((a) =>
+        both.flatMap((b) => both.map((c) => toState(a, b, c)))
+      );
+      await entry.mark("saved", [...entry.saved, ...states].join("\n"));
       if (!(await entry.isCurrent())) return;
-      const parts = [...entry.saved, ...toParts(from), ...toParts(record)];
-      await entry.mark("saved", parts.join("\n"));
       assertReady();
       assertSaved(await datafn.file.mutate(mutations as never));
+      await entry.mark("saved", `${toState(record)}\nok ${record.id}`);
     }
   };
 }
@@ -214,7 +214,8 @@ async function readFileRecord(
     metadata: ALL_RECORDS
   });
   assertNamespace(namespace);
-  return result.data?.[0] as Record<string, unknown> | undefined;
+  if (!Array.isArray(result.data)) throw new Error("Records unknown");
+  return result.data[0] as Record<string, unknown> | undefined;
 }
 
 function isAbandoned(entry: QueuedFileEntry) {
@@ -244,8 +245,7 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
     const copy = toQueuedFileRecord(record, namespace);
     await writeQueuedFileRecord(LOCAL_FILE_QUEUE_DIR, entry.fileId, copy);
     const now = await readFileRecord(namespace, { id: copy.id });
-    const nowCopy = now && toQueuedFileRecord(now, namespace);
-    if (JSON.stringify(nowCopy) !== JSON.stringify(copy))
+    if (!now || toState(toQueuedFileRecord(now, namespace)) !== toState(copy))
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
     if (!entry.isCommitted) {
       await markQueuedFileCommitted(LOCAL_FILE_QUEUE_DIR, entry.fileId);
@@ -295,7 +295,6 @@ export function settleLocalFileRecords(): Promise<void> {
   return localRecordWork;
 }
 
-/** Reconciles a namespace's changed records (`isFull`: all) under the lock. */
 function scheduleChangePass(namespace: string, isFull = false) {
   if (!resolveMigrationQueueDir(namespace)) return localRecordWork;
   const { signal } = new AbortController();
@@ -349,7 +348,6 @@ function onFileRecordsChanged(event: { ids?: string[] }) {
   void scheduleChangePass(namespace);
 }
 
-/** Stale marks for changed records, written before the queue's lock. */
 let fences: Promise<void> = Promise.resolve();
 
 function queueChanges(namespace: string, ids: string[]) {

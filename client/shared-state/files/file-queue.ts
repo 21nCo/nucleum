@@ -39,7 +39,6 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
-const SAVED_FILE = "saved";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
@@ -3557,10 +3556,9 @@ async function isPublishable(
   entryName: string,
   publisher: QueuedFilePublisher
 ) {
-  for (const mark of [UPLOADED_FILE, STALE_FILE]) {
-    const text = await readEntryText(dir, entryName, mark, true);
-    if (text !== undefined) return false;
-  }
+  for (const mark of [UPLOADED_FILE, STALE_FILE])
+    if ((await readEntryText(dir, entryName, mark, true)) !== undefined)
+      return false;
   if (!(await readQueuedRecord(dir, entryName, true))) return false;
   const claim = await readClaim(dir, entryName, true);
   return !claim || isSameClaim(claim, publisher.owner);
@@ -3581,9 +3579,8 @@ async function publishEntry(
   const record = await readQueuedRecord(dir, entryName);
   if (!record) return;
   const isCurrent = () => isPublishable(dir, entryName, publisher);
-  const mark = (name: string, text: string) =>
-    writeEntryFile(dir, entryName, name, text);
-  const saved = (await readEntryText(dir, entryName, SAVED_FILE, true)) ?? "";
+  const mark = writeEntryFile.bind(null, dir, entryName);
+  const saved = (await readEntryText(dir, entryName, "saved", true)) ?? "";
   const copy = { ...record, fileId: uploaded.fileId };
   const entry = { isCurrent, saved: saved.split("\n"), mark };
   await publisher.publish(copy, uploaded, entry);
