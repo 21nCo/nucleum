@@ -1336,13 +1336,13 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.deletes).toEqual([]);
   });
 
-  it("keeps an earlier settle's discard mark when another tab's guest record takes over the orphaned capture while a later settle writes it", async () => {
+  it("keeps an earlier settle's discard mark and sends no delete when another tab's guest record takes over the orphaned capture while a later settle writes it", async () => {
     const record = await captureThenSignOutDuringUpload();
     const namespace = String(readLocalCopy(record.fileId)?.namespace);
     await datafn.file.mutate({ operation: "delete", id: record.id } as never);
     await settleLocalFileRecords();
-    // An earlier settle marked the capture discarded and sent its delete,
-    // then stopped before its dequeue.
+    // An earlier settle marked the capture discarded, and may have sent its
+    // delete, then stopped before its dequeue.
     await writeLocalEntryFile(record.fileId, "discarded");
     let isTakenOver = false;
     hookEntryFiles({
@@ -1357,6 +1357,7 @@ describe("files captured offline or by a local-only user", () => {
     await settleTasks();
     const entry = `queued_${record.fileId}`;
     expect(isTakenOver).toBe(true);
+    expect(sdk.deletes).toEqual([]);
     expect(opfs.read(LOCAL_QUEUE, entry, "discarded")).toBeDefined();
 
     // The guest record that took the file over is copied to it.

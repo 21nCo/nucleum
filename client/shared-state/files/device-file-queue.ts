@@ -444,10 +444,8 @@ function scheduleChangePass(namespace: string, isFull = false) {
       const pending = readPendingChanges(namespace);
       const failed = await reconcileLocalFiles(namespace, pending, isFull);
       if (isFull) await releaseRetiredNamespaces().catch(logReleaseError);
-      for (const change of pending) {
-        if (failed.includes(change.id)) unfenced.delete(change.key);
-        else removePendingChange(change);
-      }
+      for (const change of pending)
+        if (!failed.includes(change.id)) removePendingChange(change);
       for (const id of failed)
         if (!pending.some((change) => change.id === id))
           addPendingChange(namespace, id);
@@ -496,9 +494,9 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
  * the queue's lock, on its entry read there, so no publish runs between the
  * check of its records and the delete. An orphan stays while its guest
  * namespace has a change not yet copied, which may take it over; that is
- * checked again after the records' query, after a new discard mark (then
- * removed) and before the dequeue: a file whose upload is deleted never
- * publishes, even when a guest record takes it over before its dequeue.
+ * checked again after the records' query, after its discard mark (removed
+ * then, unless an earlier settle wrote it) and before the dequeue; a deleted
+ * upload's file never publishes, even when a guest record then takes it over.
  */
 async function settleOrphanedLocalFiles(
   uploader: FileQueueUploader,
@@ -543,8 +541,9 @@ async function settleOrphanedLocalFiles(
     if (!(await isOrphan())) return true;
     if (!result.data.length) {
       const was = await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId);
-      if (!was && !(await isOrphan())) {
-        await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId, false);
+      if (!(await isOrphan())) {
+        if (!was)
+          await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId, false);
         return true;
       }
       const pend = () => recordFileFnPendingDelete(uploader, fileId);
