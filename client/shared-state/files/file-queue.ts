@@ -499,9 +499,8 @@ export async function markQueuedFileStale(
   isDeleted = false
 ): Promise<void> {
   const name = toEntryName(fileId);
-  const mark = isDeleted ? DELETED_MARK : "";
   if (!isDeleted && (await readEntryText(dir, name, STALE_FILE, true))) return;
-  await writeEntryFile(dir, name, STALE_FILE, mark);
+  await writeEntryFile(dir, name, STALE_FILE, isDeleted ? DELETED_MARK : "");
 }
 
 /** Lists the files of a queue whose staging finished. */

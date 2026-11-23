@@ -316,13 +316,10 @@ async function releaseOtherNamespaces(namespace: string) {
     else deleted.add(`${change.namespace}\n${change.id}`);
   }
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
+    const key = `${entry.namespace}\n${entry.recordId}`;
     if (entry.namespace === namespace || entry.stale !== "") continue;
-    if (
-      entry.isOrphaned ||
-      deleted.has(`${entry.namespace}\n${entry.recordId}`)
-    )
-      continue;
-    await clearQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+    if (!entry.isOrphaned && !deleted.has(key))
+      await clearQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
   }
 }
 
@@ -347,9 +344,8 @@ function retryChangePass(namespace: string) {
   if (count >= PASS_RETRY_MS.length) return;
   passRetries.set(namespace, count + 1);
   setTimeout(() => {
-    if (datafn.currentNamespace() === namespace) {
+    if (datafn.currentNamespace() === namespace)
       void scheduleChangePass(namespace);
-    }
   }, PASS_RETRY_MS[count]);
 }
 
@@ -377,9 +373,8 @@ function scheduleChangePass(namespace: string, isFull = false) {
           ? await reconcileLocalFiles(namespace, ids)
           : [];
       if (isFullPass) await releaseOtherNamespaces(namespace);
-      for (const change of pending) {
+      for (const change of pending)
         if (!failed.includes(change.id)) removePendingChange(change);
-      }
       for (const id of failed)
         if (!ids.includes(id)) addPendingChange(namespace, id);
       if (!failed.length) passRetries.delete(namespace);
@@ -435,20 +430,18 @@ async function settleOrphanedLocalFiles(
     entry.claim?.userId === userId &&
     entry.claim.baseUrl === baseUrl;
   const orphans = (await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)).filter(
-    (entry) => isOrphanOf(entry)
+    isOrphanOf
   );
   if (!orphans.length || !publisher.isReady()) return;
   if (
     get(datafnRuntime)?.storage &&
     !(await pullAccountFileRecords(datafn, publisher.isReady, signal))
-  ) {
+  )
     return;
-  }
   const settle = async (fileId: string) => {
     const entries = await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true);
-    if (!isOrphanOf(entries.find((entry) => entry.fileId === fileId))) {
-      return true;
-    }
+    const entry = entries.find((queued) => queued.fileId === fileId);
+    if (!isOrphanOf(entry)) return true;
     if (!publisher.isReady()) return false;
     const result = await datafn.file.query({
       filters: { fileId },
@@ -506,9 +499,8 @@ function readPendingChanges(namespace?: string): PendingChange[] {
     const storage = globalThis.localStorage;
     for (let index = 0; index < (storage?.length ?? 0); index++) {
       const key = storage.key(index);
-      if (key?.startsWith(PENDING_PREFIX)) {
+      if (key?.startsWith(PENDING_PREFIX))
         found.push([key, storage.getItem(key) ?? ""]);
-      }
     }
   } catch (error) {
     logger.warn({ at: "deviceFileQueue.pending", error });
