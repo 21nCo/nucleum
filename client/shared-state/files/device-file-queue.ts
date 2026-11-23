@@ -268,14 +268,11 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
 }
 
 /**
- * Reconciles the local files of the given changed records (all with none),
- * and every orphaned one (any record may take over its file), with their
- * records in the guest namespace, resolving the record IDs it could not
- * copy. When a pending change's record (see readPendingChanges; any with a
- * pending full pass) or an orphaned file's could not be read, as DataFn left
- * the namespace, its file is marked stale, so it neither uploads with an
- * outdated copy nor settles until a pass copies it; a file whose record did
- * not change keeps its copy, which is still current.
+ * Reconciles the local files of the given changed records (all with none)
+ * and the orphaned ones with their guest records, resolving the record IDs
+ * it could not copy. A pending change's file (any, for a pending full pass)
+ * or an orphaned one whose record could not be read is marked stale; a file
+ * whose record did not change keeps its copy, which is still current.
  */
 async function reconcileLocalFiles(
   namespace: string,
@@ -304,9 +301,8 @@ async function reconcileLocalFiles(
 /**
  * Lets the stale local files of the other guest namespaces publish the
  * record copies they hold, dropping their pending changes: such a namespace
- * never starts again (a sign-out replaced the device's DataFn ID), so no
- * later pass can copy them. A file whose record was deleted (its stale mark
- * or a pending change says so) or that is orphaned stays held.
+ * never starts again (a sign-out replaced the device's DataFn ID). A deleted
+ * record's file or an orphaned one stays held.
  */
 async function releaseOtherNamespaces(namespace: string) {
   const deleted = new Set<string>();
@@ -353,10 +349,8 @@ function retryChangePass(namespace: string) {
  * Copies a guest namespace's pending changes to their local files, under the
  * queue's lock, and removes those it copied; a full pass (as the namespace
  * starts, or a pending one) reconciles all its files and releases other
- * namespaces' (see releaseOtherNamespaces). A pass that fails keeps its
- * changes pending, a full one as a pending full pass, records a change
- * pending for each record it could not copy, and runs again (see
- * retryChangePass).
+ * namespaces'. A pass keeps pending what it could not copy (a failed full
+ * pass as a pending full pass) and runs again (see retryChangePass).
  */
 function scheduleChangePass(namespace: string, isFull = false) {
   if (!resolveMigrationQueueDir(namespace)) return localRecordWork;
@@ -410,8 +404,7 @@ export async function uploadLocalQueuedFiles(uploader: FileQueueUploader) {
 }
 
 /**
- * Removes the orphaned local files the uploader's account claimed (none a
- * change of its guest namespace left stale), while the
+ * Removes the orphaned local files the uploader's account claimed, while the
  * publisher is ready and its synced records are up to date: deletes each no
  * record of the account references at its authority (its publish never
  * landed), or records that delete for the account's next client; each under
@@ -425,7 +418,7 @@ async function settleOrphanedLocalFiles(
   const { userId, baseUrl, client, signal } = uploader;
   const isOrphanOf = (entry?: QueuedFileEntry) =>
     entry?.isOrphaned &&
-    entry.stale === undefined &&
+    entry.stale === undefined && // A guest change may have taken it over.
     !entry.isUploaded &&
     entry.claim?.userId === userId &&
     entry.claim.baseUrl === baseUrl;
@@ -474,11 +467,7 @@ function logOrphanError(error: unknown) {
  * each, `<PENDING_PREFIX><namespace>:<record ID>` (FULL_PASS for a full pass
  * that failed), valued `<action>:<token>`, so a reload and other tabs keep
  * them, and a pass removes only those it read and that did not change since;
- * and in memory for the page, so a tab's pass still copies the changes it
- * fenced after another tab cleared local storage (a sign-out does) or
- * released them, or without local storage. A record's delete is also kept
- * on its file's stale mark, which a sign-out does not clear (see
- * fenceChanges).
+ * also in page memory, which another tab's sign-out or release cannot clear.
  */
 const PENDING_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-pending:`;
 const FULL_PASS = "*";
@@ -573,9 +562,8 @@ function onFileRecordsChanged(event: { ids?: string[]; action?: string }) {
 let fences: Promise<void> = Promise.resolve();
 
 /**
- * Marks the changed records' local files stale at once, without the lock (a
- * delete's as deleted), and the namespace's orphaned files, which a changed
- * record may have taken over.
+ * Marks the changed records' local files (a delete's as deleted) and the
+ * orphaned ones stale at once, without the lock.
  */
 function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
   fences = fences

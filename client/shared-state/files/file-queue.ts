@@ -39,7 +39,6 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
-/** A stale mark's text when the file's record was deleted. */
 const DELETED_MARK = "deleted";
 /** Marks a claimed local file whose record was deleted (see device-file-queue). */
 const ORPHANED_FILE = "orphaned";
@@ -257,7 +256,6 @@ export type QueuedFileEntry = {
   namespace?: unknown;
   isCommitted: boolean;
   isUploaded: boolean;
-  /** The stale mark's text (see markQueuedFileStale), when it has one. */
   stale?: string;
   isOrphaned: boolean;
   claim?: QueuedFileClaim;
@@ -450,8 +448,7 @@ export async function markQueuedFileCommitted(
 
 /**
  * Replaces the copy of a local file's record with the record as it is now,
- * which its upload publishes, and clears a stale or orphaned mark; a failed
- * removal of the orphaned mark throws, so the file is not settled as one.
+ * which its upload publishes, and clears a stale or orphaned mark.
  */
 export async function writeQueuedFileRecord(
   dir: string,
@@ -467,20 +464,14 @@ export async function writeQueuedFileRecord(
   });
 }
 
-/**
- * Marks a local file orphaned, replacing its stale mark: it does not publish
- * until its copy is rewritten.
- */
+/** Marks a local file orphaned: it does not publish until its copy is rewritten. */
 export async function markQueuedFileOrphaned(dir: string, fileId: string) {
   await writeEntryFile(dir, toEntryName(fileId), ORPHANED_FILE, "");
   const entry = await getEntryDir(dir, toEntryName(fileId), true);
   await entry?.removeEntry(STALE_FILE).catch(() => undefined);
 }
 
-/**
- * Lets a stale local file publish the record copy it holds, unless its
- * record was deleted.
- */
+/** Lets a stale local file whose record was not deleted publish its copy. */
 export async function clearQueuedFileStale(dir: string, fileId: string) {
   const name = toEntryName(fileId);
   if ((await readEntryText(dir, name, STALE_FILE, true)) !== "") return;
@@ -490,8 +481,7 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
 /**
  * Marks a local file's record copy stale, when its record changed but could
  * not be read again: the file does not upload until the copy is replaced.
- * With `isDeleted` its record was deleted, which the mark keeps (`deleted`)
- * until the copy is replaced.
+ * A deleted record's mark (`isDeleted`) is never replaced by another.
  */
 export async function markQueuedFileStale(
   dir: string,
