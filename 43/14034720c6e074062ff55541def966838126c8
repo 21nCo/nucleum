@@ -1,0 +1,21 @@
+client/surfaces/settings/data/backup-and-restore.test.ts
+  s_124319b903d839::t_59fed5ce469249 8980-9002
+client/surfaces/settings/data/backup-and-restore.ts
+  s_124319b903d839::t_579ab138d42fb4 122-123,135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4314034720c6e074062ff55541def966838126c8",
+  "prompts": {},
+  "sessions": {
+    "s_124319b903d839": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "459fa815-0e7a-4823-b25b-3c85bd3d320a",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
