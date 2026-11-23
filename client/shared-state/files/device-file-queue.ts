@@ -3,6 +3,7 @@ import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
   dequeueFile,
+  isAppOffline,
   isFileQueueSupported,
   listQueuedFiles,
   LOCAL_FILE_QUEUE_DIR,
@@ -13,7 +14,6 @@ import {
   UNCOMMITTED_GRACE_MS,
   withQueueLock,
   writeQueuedFileRecord,
-  type AccountQueueReplay,
   type QueuedFileEntry,
   type QueuedFilePublisher,
   type QueuedFileRecord
@@ -66,8 +66,7 @@ function pickPublishedFields(record: Record<string, unknown>) {
 
 /**
  * Copies the fields of a `file` record its cloud copy is published with, and
- * whether it is trashed or archived, which the publish applies, with the
- * guest namespace it is read in (see reconcileLocalFiles).
+ * whether it is trashed or archived, which the publish applies.
  */
 export function toQueuedFileRecord(
   record: Record<string, unknown>,
@@ -117,12 +116,9 @@ function assertNamespace(namespace: string) {
  * is ready while DataFn is in the account's namespace and syncs with the
  * account authority the files upload to, and publishes each
  * uploaded file as a record of the account under its local-only record's ID,
- * with the record's current fields and its trashed and archived state. When
- * the account already holds that record (an earlier publish whose entry was
- * not yet marked uploaded, which may have saved only its insert), it only
- * trashes or archives it as its copy is, if it references the file; it
- * changes nothing else, so later edits in the account stay. One referencing
- * another file or none stays too: its upload is deleted, its file kept.
+ * with the record's current fields and its trashed and archived state,
+ * unless the account already holds that record (an earlier publish whose
+ * entry was not yet marked uploaded): then it only trashes or archives it.
  */
 export function createLocalFilePublisher(
   uploader: Pick<FileQueueUploader, "userId" | "baseUrl" | "signal" | "client">
@@ -145,7 +141,7 @@ export function createLocalFilePublisher(
   return {
     owner: { userId: uploader.userId, baseUrl: uploader.baseUrl },
     isReady,
-    async publish(record, uploaded) {
+    async publish(record, uploaded, isCurrent) {
       const assertReady = () => {
         if (!isReady()) {
           throw new DOMException(
@@ -167,9 +163,9 @@ export function createLocalFilePublisher(
       if (!Array.isArray(found.data)) throw new Error("File records unknown");
       const existing = found.data[0] as Record<string, unknown> | undefined;
       if (existing && existing.fileId !== record.fileId) {
-        return uploader.client
-          .deleteFile(uploaded.fileId)
-          .catch(() => recordFileFnPendingDelete(uploader, uploaded.fileId));
+        const pend = () => recordFileFnPendingDelete(uploader, uploaded.fileId);
+        if (isAppOffline()) return pend();
+        return uploader.client.deleteFile(uploaded.fileId).catch(pend);
       }
       const saved = existing && toQueuedFileRecord(existing, namespace);
       const id = record.id;
@@ -182,6 +178,7 @@ export function createLocalFilePublisher(
         mutations.push({ operation: "archive", id });
       if (!mutations.length) return;
       assertReady();
+      if (!(await isCurrent())) return;
       assertSaved(await datafn.file.mutate(mutations as never));
     }
   };
@@ -215,9 +212,8 @@ function isAbandoned(entry: QueuedFileEntry) {
  * the record as it is now (another record that took over its `fileId` when
  * the first one was deleted, too) and is marked committed. A committed file
  * no record references any more, or one never committed and abandoned, is
- * removed under Web Locks once a reread finds none, but one claimed and not
- * uploaded is marked stale and kept, never deleted; under the queue's lock
- * (scheduleChangePass), so no other tab acts meanwhile.
+ * removed under Web Locks once a reread finds none; one claimed and not
+ * uploaded, or whose record changed after the copy, is marked stale.
  */
 async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
   const byId = entry.recordId
@@ -228,11 +224,12 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
       ? byId
       : await readFileRecord(namespace, { fileId: entry.fileId });
   if (record) {
-    await writeQueuedFileRecord(
-      LOCAL_FILE_QUEUE_DIR,
-      entry.fileId,
-      toQueuedFileRecord(record, namespace)
-    );
+    const copy = toQueuedFileRecord(record, namespace);
+    await writeQueuedFileRecord(LOCAL_FILE_QUEUE_DIR, entry.fileId, copy);
+    const now = await readFileRecord(namespace, { id: copy.id });
+    const nowCopy = now && toQueuedFileRecord(now, namespace);
+    if (JSON.stringify(nowCopy) !== JSON.stringify(copy))
+      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
     if (!entry.isCommitted) {
       await markQueuedFileCommitted(LOCAL_FILE_QUEUE_DIR, entry.fileId);
     }
@@ -244,15 +241,14 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
   } else if (globalThis.navigator?.locks) {
     const isUnused = async () =>
       !(await readFileRecord(namespace, { fileId: entry.fileId }));
-    await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId, isUnused);
+    if (!(await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId, isUnused)))
+      await reconcileLocalFile(namespace, entry);
   }
 }
 
 /**
  * Reconciles the local files of the given changed records (all with none)
- * with their records in the guest namespace, captured there: a file of
- * another guest namespace (a sign-out opens a new one) keeps its copy to
- * publish. When a changed record could not
+ * with their records in the guest namespace. When a changed record could not
  * be read, as DataFn left the namespace, its file is marked stale, so it does
  * not upload with an outdated copy until the namespace starts again; a file
  * whose record did not change keeps its copy, which is still current.
@@ -282,23 +278,17 @@ export function settleLocalFileRecords(): Promise<void> {
   return localRecordWork;
 }
 
-/** Namespaces whose next change pass has not yet taken their changed IDs. */
-const waitingPasses = new Set<string>();
-
 /**
- * Reconciles a namespace's changed records, after all its local files with
- * `isFull`, under the queue's lock, so no other tab acts meanwhile; changes
- * that come while a pass waits are reconciled together by that pass. A pass
- * that fails puts the IDs it took back for the next one.
+ * Reconciles a namespace's changed records (all its files first with `isFull`)
+ * under the queue's lock after their fences; a failed pass requeues its IDs.
  */
 function scheduleChangePass(namespace: string, isFull = false) {
-  if (!isFull && waitingPasses.has(namespace)) return localRecordWork;
-  waitingPasses.add(namespace);
+  if (!resolveMigrationQueueDir(namespace)) return localRecordWork;
   const { signal } = new AbortController();
   const work = localRecordWork.then(async () => {
-    waitingPasses.delete(namespace);
     const changed = [...(changedRecordIds.get(namespace) ?? [])];
     changedRecordIds.delete(namespace);
+    await fences;
     await withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, async () => {
       if (isFull) await reconcileLocalFiles(namespace);
       if (changed.length) await reconcileLocalFiles(namespace, changed);
@@ -319,10 +309,8 @@ function scheduleChangePass(namespace: string, isFull = false) {
 export async function uploadLocalQueuedFiles(
   uploader: FileQueueUploader
 ): Promise<void> {
-  // Without Web Locks no lock keeps other tabs' passes out: files stay local.
   if (!globalThis.navigator?.locks) return;
   await settleLocalFileRecords();
-  // A change no pass could take holds the local files.
   if (uploader.signal.aborted || changedRecordIds.size) return;
   await replayFileQueue(
     LOCAL_FILE_QUEUE_DIR,
@@ -330,12 +318,6 @@ export async function uploadLocalQueuedFiles(
     uploader.signal,
     createLocalFilePublisher(uploader)
   );
-}
-
-/** Brings a local-only user's local files in line with their records, then the changed ones. */
-async function prepareNamespace(namespace: string) {
-  if (!resolveMigrationQueueDir(namespace)) return;
-  await scheduleChangePass(namespace, true);
 }
 
 /** IDs of local-only records changed since their files were last reconciled. */
@@ -355,21 +337,28 @@ function onFileRecordsChanged(event: { ids?: string[] }) {
   void scheduleChangePass(namespace);
 }
 
+let fences: Promise<void> = Promise.resolve();
+
+/**
+ * Queues changed IDs for the next pass and marks their local files stale
+ * without the queue's lock, so a replay holding it in another tab publishes
+ * no outdated copy; the pass awaits these fences.
+ */
 function queueChanges(namespace: string, ids: string[]) {
   if (!ids.length) return;
   const queued = changedRecordIds.get(namespace) ?? new Set<string>();
   for (const id of ids) queued.add(id);
   changedRecordIds.set(namespace, queued);
-}
-
-/**
- * Uploads the local files with each authorized replay of an account's queue
- * (see onAccountQueueReplay), so no trigger here authorizes a replay.
- */
-function uploadWithAccountReplay(replay: AccountQueueReplay) {
-  void uploadLocalQueuedFiles(replay).catch((error: unknown) => {
-    logger.error({ at: "deviceFileQueue.upload", error });
-  });
+  fences = fences
+    .then(async () => {
+      for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)) {
+        if (entry.namespace === namespace && ids.includes(entry.recordId ?? ""))
+          await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+      }
+    })
+    .catch((error: unknown) =>
+      logger.warn({ at: "deviceFileQueue.fence", error })
+    );
 }
 
 /**
@@ -379,7 +368,7 @@ function uploadWithAccountReplay(replay: AccountQueueReplay) {
  * record is copied to its local file (see onFileRecordsChanged; the DataFn
  * events are subscribed again on every context switch, which replaces the
  * client that emits them), and the local files upload with each replay of a
- * cloud account's queue (see uploadWithAccountReplay). A local-only user's
+ * cloud account's queue (see onAccountQueueReplay). A local-only user's
  * files upload, with their records, on the first cloud sign-in once DataFn is
  * in the account's namespace. Returns the function that unbinds it.
  */
@@ -398,9 +387,13 @@ export function installDeviceFileQueue(): () => void {
     stopEvents();
   };
   const stopRuntime = datafnRuntime.subscribe((runtime) => {
-    if (runtime?.namespace) void prepareNamespace(runtime.namespace);
+    if (runtime?.namespace) void scheduleChangePass(runtime.namespace, true);
   });
-  const stopUploads = onAccountQueueReplay(uploadWithAccountReplay);
+  const stopUploads = onAccountQueueReplay((replay) => {
+    void uploadLocalQueuedFiles(replay).catch((error: unknown) => {
+      logger.error({ at: "deviceFileQueue.upload", error });
+    });
+  });
   return () => {
     stopRecords();
     stopRuntime();

@@ -132,7 +132,11 @@ export type QueuedFileClaim = { userId: string; baseUrl: string };
 export type QueuedFilePublisher = {
   owner: QueuedFileClaim;
   isReady(): boolean;
-  publish(record: QueuedFileRecord, uploaded: UploadResult): Promise<void>;
+  publish(
+    record: QueuedFileRecord,
+    uploaded: UploadResult,
+    isCurrent: () => Promise<boolean>
+  ): Promise<void>;
 };
 
 /**
@@ -458,13 +462,9 @@ export async function markQueuedFileStale(
 }
 
 /**
- * Lists the files of a queue whose staging finished; with `isStrict`, a record
- * copy or claim that cannot be read rejects instead of counting as none.
+ * Lists the files of a queue whose staging finished, `isStrict` read strictly.
  */
-export async function listQueuedFiles(
-  dir: string,
-  isStrict = false
-): Promise<QueuedFileEntry[]> {
+export async function listQueuedFiles(dir: string, isStrict = false) {
   if (!isFileQueueSupported()) return [];
   const store = getStore(dir);
   const entries: QueuedFileEntry[] = [];
@@ -1025,9 +1025,8 @@ const DATA_FILE = "data.bin";
  * (keeping a thumbnail still to be sent; one whose version neither records
  * is copied whole), an unpublished file (see RESTORING_PREFIX), and one that
  * leaves the queue while it is read. A published file a restore wrote is
- * copied whether or not its account adopted it. With `isWhole`, every file
- * is copied whole as the device holds it, uploaded or not (a local-only
- * user's backup of the local queue). A file whose metadata, bytes
+ * copied whether or not its account adopted it. With `isWhole` (a guest
+ * backup) every file is copied whole. A file whose metadata, bytes
  * or marks cannot be read rejects, and never counts as absent.
  */
 export async function exportQueuedFiles<T>(
@@ -2499,10 +2498,7 @@ export type AccountQueueReplay = QueuedFileClaim &
   Pick<ReplayRequest, "client" | "signal">;
 const accountReplayListeners = new Set<(replay: AccountQueueReplay) => void>();
 
-/**
- * Runs `listener` on each replay of an account's queue (with references),
- * which runs only once the account may send replay, until unsubscribed.
- */
+/** Runs `listener` on each (authorized) replay of an account's queue. */
 export function onAccountQueueReplay(
   listener: (replay: AccountQueueReplay) => void
 ): () => void {
@@ -3478,7 +3474,8 @@ async function uploadEntry(
   const entryName = pending.uploadSessionId;
   const result = await uploadQueuedFile(client, pass.store, pending, mark);
   if (!references) {
-    await uploadQueuedThumbnail(client, pass.dir, entryName, result);
+    const sent = await sendAccountThumbnail(pass, entryName, result);
+    if (!sent || sent === "unread") throw new Error("Thumbnail unsent");
     return result;
   }
   await logUpload(pass.dir, pending.fileId, result.versionId);
@@ -3533,7 +3530,8 @@ async function sendAccountThumbnail(
   const isReady = () =>
     !isAppOffline() &&
     !request.signal.aborted &&
-    request.references?.isCurrent() !== false;
+    request.references?.isCurrent() !== false &&
+    request.publisher?.isReady() !== false;
   const sent = await uploadQueuedThumbnail(
     request.client,
     dir,
@@ -3553,8 +3551,7 @@ async function sendAccountThumbnail(
 /**
  * Whether a local file can upload through the publisher's account: not yet
  * uploaded, with a current copy of its record, and unclaimed or claimed by
- * that account: read strictly, so a mark or claim that cannot be read
- * rejects, leaving the file to a retry, and never counts as absent.
+ * that account, read strictly (an unreadable mark or claim rejects).
  */
 async function isPublishable(
   dir: string,
@@ -3573,7 +3570,7 @@ async function isPublishable(
 /**
  * Publishes the record of a local file that uploaded, as its copy is now,
  * then marks the file uploaded. A file whose record was removed or marked
- * stale during the upload is left for the reconciliation of its record.
+ * stale before the publisher saves it is left for the reconciliation of it.
  */
 async function publishEntry(
   dir: string,
@@ -3584,7 +3581,10 @@ async function publishEntry(
   if (!(await isPublishable(dir, entryName, publisher))) return;
   const record = await readQueuedRecord(dir, entryName);
   if (!record) return;
-  await publisher.publish({ ...record, fileId: uploaded.fileId }, uploaded);
+  const isCurrent = () => isPublishable(dir, entryName, publisher);
+  const copy = { ...record, fileId: uploaded.fileId };
+  await publisher.publish(copy, uploaded, isCurrent);
+  if (!(await isCurrent())) return;
   await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
 }
 
