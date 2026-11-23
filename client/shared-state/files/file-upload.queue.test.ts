@@ -211,8 +211,12 @@ const localAccount: UserAccount = {
 /** The device's DataFn identity, so a namespace can be opened again. */
 let device = { dapId: "", env: "" };
 
-/** Opens local DataFn in the namespace of the account (of none: the guest). */
+/**
+ * Opens local DataFn in the namespace of the account (of none: the guest),
+ * with the device's DataFn ID kept in local storage, as the app does.
+ */
 async function openData(userId?: string) {
+  localStorage.setItem(ClientStorageKey.DAP_ID, device.dapId);
   await destroyNucleumDatafn();
   await initializeNucleumDatafn({
     product: Product.MEMOTRON,
@@ -252,6 +256,56 @@ async function signOutToLocal(isNewGuest = false) {
   if (isNewGuest)
     device = { ...device, dapId: `device-${crypto.randomUUID()}` };
   await openData();
+}
+
+/**
+ * Adds shared locks and their query to the device's fake Web Locks: a shared
+ * request is granted at once and held until its callback's promise settles.
+ */
+function withSharedLocks(locks: LockManager): LockManager {
+  const held: LockInfo[] = [];
+  const request = locks.request.bind(locks) as (
+    ...args: unknown[]
+  ) => Promise<unknown>;
+  return {
+    request(name: string, options: LockOptions, callback: LockGrantedCallback) {
+      if (options?.mode !== "shared") return request(name, options, callback);
+      const lock = { name, mode: "shared" as const };
+      held.push(lock);
+      return Promise.resolve(callback(lock as Lock)).finally(() =>
+        held.splice(held.indexOf(lock), 1)
+      );
+    },
+    query: async () => ({ held: [...held], pending: [] })
+  } as LockManager;
+}
+
+/** Makes the next request of the queue's lock fail, as a busy browser can. */
+function failQueueLockOnce() {
+  const locks = webLocks as LockManager;
+  const request = locks.request.bind(locks) as (
+    ...args: unknown[]
+  ) => Promise<unknown>;
+  let isFailed = false;
+  vi.spyOn(locks, "request").mockImplementation(((...args: unknown[]) => {
+    if (isFailed || (args[1] as LockOptions)?.mode === "shared")
+      return request(...args);
+    isFailed = true;
+    return Promise.reject(
+      new DOMException("The lock request failed", "AbortError")
+    );
+  }) as never);
+}
+
+/** Holds a guest namespace live, as another tab in it does, until released. */
+function enterInOtherTab(namespace: string) {
+  const left = deferred<void>();
+  void navigator.locks.request(
+    `${LOCAL_QUEUE}-live:${namespace}`,
+    { mode: "shared" },
+    () => left.promise
+  );
+  return () => left.resolve();
 }
 
 /** Runs a pass of the local queue through the signed-in account's client. */
@@ -371,6 +425,28 @@ function failEntryFile(name: string, isWrite = false, times = Infinity) {
   navigator.storage.getDirectory = async () => wrap(await opfs.getDirectory());
 }
 
+/** Makes `times` removals of a queued file's `name` fail, as a busy file system does. */
+function failEntryRemoval(name: string, times = Infinity) {
+  let left = times;
+  const getDirectory = navigator.storage.getDirectory;
+  const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+    new Proxy(dir, {
+      get(target, key) {
+        if (key === "getDirectoryHandle") {
+          return async (dirName: string, options?: { create?: boolean }) =>
+            wrap(await target.getDirectoryHandle(dirName, options));
+        }
+        if (key !== "removeEntry") return Reflect.get(target, key);
+        return async (entryName: string) => {
+          if (entryName !== name || left-- <= 0)
+            return target.removeEntry(entryName);
+          throw new DOMException("The file system is busy", "NotReadableError");
+        };
+      }
+    });
+  navigator.storage.getDirectory = async () => wrap(await getDirectory());
+}
+
 function goOnline() {
   isOnline = true;
   window.dispatchEvent(new Event("online"));
@@ -394,7 +470,7 @@ beforeEach(() => {
     env: `test-${crypto.randomUUID()}`
   };
   isOnline = true;
-  webLocks = createFakeLocks();
+  webLocks = withSharedLocks(createFakeLocks());
   vi.stubGlobal("navigator", {
     ...globalThis.navigator,
     get onLine() {
@@ -904,9 +980,7 @@ describe("files captured offline or by a local-only user", () => {
     uninstall = installDeviceFileQueue();
     const record = await capturePhoto();
     await settleLocalFileRecords();
-    vi.spyOn(webLocks as LockManager, "request").mockRejectedValueOnce(
-      new DOMException("The lock request failed", "AbortError")
-    );
+    failQueueLockOnce();
     await datafn.file.mutate({
       operation: "merge",
       id: record.id,
@@ -966,6 +1040,99 @@ describe("files captured offline or by a local-only user", () => {
     return bytes && new TextDecoder().decode(bytes);
   }
 
+  it("keeps a stale capture held while another tab is still in its guest namespace, and publishes its last copy once that tab leaves", async () => {
+    const record = await captureThenChangeDuringSignIn("rename");
+    const leave = enterInOtherTab(`guest:${device.dapId}`);
+
+    await signOutToLocal(true);
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+    expect(readStaleMark(record.fileId)).toBe("changed");
+
+    leave();
+    await replayLocalQueue();
+    await vi.waitFor(async () =>
+      expect(await savedRecord(record.id)).toEqual(
+        expect.objectContaining({ fileId: record.fileId, name: "photo.png" })
+      )
+    );
+  });
+
+  it("publishes the last copy of a stale capture at a sign-in that follows the default sign-out with no guest namespace opened", async () => {
+    const record = await captureThenChangeDuringSignIn("rename");
+    expect(readStaleMark(record.fileId)).toBeDefined();
+
+    // The default sign-out clears the device's storage and DataFn ID and
+    // goes straight to the sign-in, which gives the device a new DataFn ID.
+    endAccountUploadReplay();
+    localStorage.clear();
+    device = { ...device, dapId: `device-${crypto.randomUUID()}` };
+    await signInToCloud("user-a");
+
+    await vi.waitFor(async () =>
+      expect(await savedRecord(record.id)).toEqual(
+        expect.objectContaining({ fileId: record.fileId, name: "photo.png" })
+      )
+    );
+    expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([record.fileId]);
+  });
+
+  it("settles a claimed capture whose guest delete the sign-in aborted once its guest namespace retires", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await settleTasks();
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      await signInToCloud("user-a");
+    };
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await vi.waitFor(() =>
+      expect(datafn.currentNamespace()).toBe("user:user-a")
+    );
+    await settleTasks();
+    await replayLocalQueue();
+    expect(readStaleMark(record.fileId)).toBe("deleted");
+    expect(sdk.deletes).toEqual([]);
+
+    await signOutToLocal(true);
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+
+    await vi.waitFor(() => expect(sdk.deletes).toEqual([record.fileId]));
+    await vi.waitFor(() => expect(opfs.list(LOCAL_QUEUE)).toEqual([]));
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("deletes nothing at sign-in for an orphaned capture whose takeover by a guest record was interrupted", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleLocalFileRecords();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "orphaned")
+    ).toBeDefined();
+    // The takeover's pass writes the new copy, but the file system fails
+    // the orphaned mark's removal and the stale marks around it.
+    failEntryFile("stale", true, 2);
+    failEntryRemoval("orphaned");
+    await datafn.file.mutate({
+      operation: "insert",
+      id: `${record.id}-copy`,
+      record: { name: "copy.png", type: "image/png", fileId: record.fileId }
+    } as never);
+    await settleLocalFileRecords();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+  });
+
   it("keeps a capture whose guest delete the first sign-in aborted held after a sign-out that cleared the device's storage and DataFn ID", async () => {
     const record = await captureThenChangeDuringSignIn("delete");
     expect(readStaleMark(record.fileId)).toBe("deleted");
@@ -984,13 +1151,11 @@ describe("files captured offline or by a local-only user", () => {
 
   it("publishes the last copy of a stale capture once the retry of a new guest namespace's failed startup pass releases it", async () => {
     const record = await captureThenChangeDuringSignIn("rename");
-    vi.spyOn(webLocks as LockManager, "request").mockRejectedValueOnce(
-      new DOMException("The lock request failed", "AbortError")
-    );
+    failQueueLockOnce();
 
     await signOutToLocal(true);
     await settleLocalFileRecords();
-    expect(readStaleMark(record.fileId)).toBe("");
+    expect(readStaleMark(record.fileId)).toBe("changed");
     await vi.waitFor(
       () => expect(readStaleMark(record.fileId)).toBeUndefined(),
       { timeout: 5000 }
@@ -1005,38 +1170,23 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
-  it("publishes the captures a retried full pass copied and holds only the one whose record it could not read", async () => {
+  it("publishes the current copies of a guest namespace whose startup pass failed when the sign-in comes before its retry", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
-    const unread = await capturePhoto();
-    const copied = await capturePhoto();
+    const first = await capturePhoto();
+    const second = await capturePhoto();
     await settleLocalFileRecords();
-    // The namespace's startup pass cannot take the queue's lock, and its
-    // retry cannot read one capture's record.
-    vi.spyOn(webLocks as LockManager, "request").mockRejectedValueOnce(
-      new DOMException("The lock request failed", "AbortError")
-    );
-    fileCalls.beforeQuery = async (args) => {
-      const { filters } = args as { filters?: { id?: string } };
-      if (filters?.id === unread.id)
-        throw new DOMException("Unreadable", "NotReadableError");
-    };
+    failQueueLockOnce();
     uninstall();
     uninstall = installDeviceFileQueue();
-    await vi.waitFor(() => expect(readStaleMark(unread.fileId)).toBe(""), {
-      timeout: 5000
-    });
     await settleLocalFileRecords();
-    fileCalls.beforeQuery = null;
 
     await signInToCloud("user-a");
 
-    await vi.waitFor(async () =>
-      expect((await savedRecord(copied.id))?.fileId).toBe(copied.fileId)
-    );
-    await settleTasks();
-    expect(await readAnyRecord(unread.id)).toBeUndefined();
-    expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([copied.fileId]);
+    await vi.waitFor(async () => {
+      expect((await savedRecord(first.id))?.fileId).toBe(first.fileId);
+      expect((await savedRecord(second.id))?.fileId).toBe(second.fileId);
+    });
   });
 
   it("copies a guest change whose pending entry and stale mark another tab cleared before this tab's pass took the queue's lock", async () => {
@@ -1065,7 +1215,9 @@ describe("files captured offline or by a local-only user", () => {
       id: record.id,
       record: { id: record.id, name: "receipt.png" }
     } as never);
-    await vi.waitFor(() => expect(readStaleMark(record.fileId)).toBe(""));
+    await vi.waitFor(() =>
+      expect(readStaleMark(record.fileId)).toBe("changed")
+    );
     gate.resolve();
     await otherTab;
     await settleLocalFileRecords();
@@ -2367,6 +2519,46 @@ describe("guest changes a page reload interrupts", () => {
     await page.queue.settleLocalFileRecords();
     return page;
   }
+
+  it("never publishes a capture whose guest delete was neither fenced nor copied before the sign-in, after the default sign-out and a reload", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // The delete's stale mark cannot be written, and the sign-in aborts its
+    // pass as it reads the record.
+    failEntryFile("stale", true, 1);
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      await signInToCloud("user-a");
+    };
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await vi.waitFor(() =>
+      expect(datafn.currentNamespace()).toBe("user:user-a")
+    );
+    await settleTasks();
+
+    // The default sign-out clears the device's storage and DataFn ID; the
+    // page reloads in a new guest namespace, then signs in.
+    endAccountUploadReplay();
+    localStorage.clear();
+    device = { ...device, dapId: `device-${crypto.randomUUID()}` };
+    const page = await reloadPage();
+    page.account.set(cloudAccount("user-a"));
+    page.client.startAccountUploadReplay({
+      userId: "user-a",
+      region: "useast"
+    });
+    await openData("user-a");
+    const uploader = await page.client.captureFileQueueUploader();
+    if (uploader) await page.queue.uploadLocalQueuedFiles(uploader);
+    await settleTasks();
+
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
 
   it.each(["rename", "delete"])(
     "publishes no outdated copy of a capture whose guest %s a reload interrupted before a pass copied it",
