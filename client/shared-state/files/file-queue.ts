@@ -132,7 +132,15 @@ export type QueuedFileClaim = { userId: string; baseUrl: string };
 export type QueuedFilePublisher = {
   owner: QueuedFileClaim;
   isReady(): boolean;
-  publish(record: QueuedFileRecord, uploaded: UploadResult): Promise<void>;
+  publish(
+    record: QueuedFileRecord,
+    uploaded: UploadResult,
+    entry: {
+      isCurrent(): Promise<boolean>;
+      saved: string[];
+      mark(name: "saved" | "uploaded", text: string): Promise<void>;
+    }
+  ): Promise<void>;
 };
 
 /**
@@ -239,6 +247,7 @@ export type QueuedFileEntry = {
   createdAt: string;
   /** The ID of the record a local file was staged or last copied with. */
   recordId?: string;
+  namespace?: unknown;
   isCommitted: boolean;
   isUploaded: boolean;
   claim?: QueuedFileClaim;
@@ -456,7 +465,7 @@ export async function markQueuedFileStale(
 }
 
 /** Lists the files of a queue whose staging finished. */
-export async function listQueuedFiles(dir: string): Promise<QueuedFileEntry[]> {
+export async function listQueuedFiles(dir: string, isStrict = false) {
   if (!isFileQueueSupported()) return [];
   const store = getStore(dir);
   const entries: QueuedFileEntry[] = [];
@@ -464,13 +473,15 @@ export async function listQueuedFiles(dir: string): Promise<QueuedFileEntry[]> {
     if (!entryName.startsWith(ENTRY_PREFIX)) continue;
     const pending = await store.getPendingUpload(entryName);
     if (!pending?.fileId) continue;
+    const record = await readQueuedRecord(dir, entryName, isStrict);
     entries.push({
       fileId: pending.fileId,
       createdAt: pending.createdAt,
-      recordId: (await readQueuedRecord(dir, entryName))?.id,
+      recordId: record?.id,
+      namespace: record?.namespace,
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
-      claim: await readClaim(dir, entryName)
+      claim: await readClaim(dir, entryName, isStrict)
     });
   }
   return entries;
@@ -575,12 +586,13 @@ function isSameClaim(a: QueuedFileClaim, b: QueuedFileClaim) {
   return a.userId === b.userId && a.baseUrl === b.baseUrl;
 }
 
-function readQueuedRecord(dir: string, entryName: string) {
+function readQueuedRecord(dir: string, entryName: string, isStrict = false) {
   return readEntryJson<QueuedFileRecord>(
     dir,
     entryName,
     RECORD_FILE,
-    (record) => typeof record.id === "string"
+    (record) => typeof record.id === "string",
+    isStrict
   );
 }
 
@@ -738,7 +750,7 @@ async function isReplayableBy(
   const isOwned = (claim: QueuedFileClaim | undefined) =>
     !claim || (owner !== null && isSameClaim(claim, owner));
   if (dir === LOCAL_FILE_QUEUE_DIR) {
-    if (!isOwned(await readClaim(dir, entryName))) return false;
+    if (!isOwned(await readClaim(dir, entryName, true))) return false;
   }
   return (await readMarkers(dir, entryName)).every(isOwned);
 }
@@ -1018,7 +1030,8 @@ const DATA_FILE = "data.bin";
  */
 export async function exportQueuedFiles<T>(
   dir: string,
-  snapshot: () => Promise<T>
+  snapshot: () => Promise<T>,
+  isWhole = false
 ): Promise<{ records: T; files: QueuedFileCopy[] }> {
   if (!isFileQueueSupported()) return { records: await snapshot(), files: [] };
   const signal = new AbortController().signal;
@@ -1029,7 +1042,7 @@ export async function exportQueuedFiles<T>(
       const records = await snapshot();
       const files: QueuedFileCopy[] = [];
       for (const entryName of await listEntryNames(dir)) {
-        const copy = await copyEntry(dir, entryName);
+        const copy = await copyEntry(dir, entryName, isWhole);
         if (copy) files.push(copy);
       }
       const remaining = await readQueueRevision(dir);
@@ -1117,7 +1130,7 @@ async function listEntryNames(dir: string) {
   return names.filter((name) => name.startsWith(ENTRY_PREFIX));
 }
 
-async function copyEntry(dir: string, entryName: string) {
+async function copyEntry(dir: string, entryName: string, isWhole = false) {
   try {
     const entry = await getEntryDir(dir, entryName, true);
     const names = await readNames(entry);
@@ -1129,16 +1142,13 @@ async function copyEntry(dir: string, entryName: string) {
     const isMarked =
       names.includes(UPLOADED_FILE) &&
       (await readEntryText(dir, entryName, UPLOADED_FILE, true)) !== undefined;
-    if (isMarked && isThumbnailMarked) return undefined;
-    const delivery = await readDelivery(
-      dir,
-      pending.fileId,
-      names,
-      !!thumbnail
-    );
-    if (!delivery.isKnown) throw delivery.error;
-    const uploaded = delivery.original;
-    if (uploaded && delivery.isDone) return undefined;
+    if (isMarked && isThumbnailMarked && !isWhole) return undefined;
+    const delivery = isWhole
+      ? undefined
+      : await readDelivery(dir, pending.fileId, names, !!thumbnail);
+    if (delivery && !delivery.isKnown) throw delivery.error;
+    const uploaded = delivery?.original;
+    if (uploaded && delivery?.isDone) return undefined;
     const started: QueuedFileCopy["started"] = [];
     for (const name of names) {
       if (!STARTED_NAME.test(name)) continue;
@@ -2448,6 +2458,11 @@ export function replayFileQueue(
   references?: QueuedFileReferences
 ): Promise<void> {
   const first: ReplayRequest = { client, signal, publisher, references };
+  if (references && !isStale(first)) {
+    for (const listener of [...accountReplayListeners]) {
+      listener({ ...references.owner, client, signal });
+    }
+  }
   const latest = latestRequests.get(dir);
   if (!isStale(first) || !latest || isStale(latest)) {
     latestRequests.set(dir, first);
@@ -2476,6 +2491,17 @@ export function replayFileQueue(
     }
   })();
   return state.done;
+}
+
+export type AccountQueueReplay = QueuedFileClaim &
+  Pick<ReplayRequest, "client" | "signal">;
+const accountReplayListeners = new Set<(replay: AccountQueueReplay) => void>();
+
+export function onAccountQueueReplay(
+  listener: (replay: AccountQueueReplay) => void
+): () => void {
+  accountReplayListeners.add(listener);
+  return () => accountReplayListeners.delete(listener);
 }
 
 /**
@@ -2563,7 +2589,7 @@ const pageLocks = new Map<string, Promise<unknown>>();
  * page's own lock of the queue, so the page's replays, backups and restores
  * of a queue never interleave.
  */
-async function withQueueLock<T>(
+export async function withQueueLock<T>(
   dir: string,
   signal: AbortSignal,
   run: () => Promise<T>
@@ -3446,7 +3472,8 @@ async function uploadEntry(
   const entryName = pending.uploadSessionId;
   const result = await uploadQueuedFile(client, pass.store, pending, mark);
   if (!references) {
-    await uploadQueuedThumbnail(client, pass.dir, entryName, result);
+    const sent = await sendAccountThumbnail(pass, entryName, result);
+    if (!sent || sent === "unread") throw new Error("Thumbnail unsent");
     return result;
   }
   await logUpload(pass.dir, pending.fileId, result.versionId);
@@ -3501,7 +3528,8 @@ async function sendAccountThumbnail(
   const isReady = () =>
     !isAppOffline() &&
     !request.signal.aborted &&
-    request.references?.isCurrent() !== false;
+    request.references?.isCurrent() !== false &&
+    request.publisher?.isReady() !== false;
   const sent = await uploadQueuedThumbnail(
     request.client,
     dir,
@@ -3528,10 +3556,11 @@ async function isPublishable(
   entryName: string,
   publisher: QueuedFilePublisher
 ) {
-  if (await hasEntryFile(dir, entryName, UPLOADED_FILE)) return false;
-  if (await hasEntryFile(dir, entryName, STALE_FILE)) return false;
-  if (!(await readQueuedRecord(dir, entryName))) return false;
-  const claim = await readClaim(dir, entryName);
+  for (const mark of [UPLOADED_FILE, STALE_FILE])
+    if ((await readEntryText(dir, entryName, mark, true)) !== undefined)
+      return false;
+  if (!(await readQueuedRecord(dir, entryName, true))) return false;
+  const claim = await readClaim(dir, entryName, true);
   return !claim || isSameClaim(claim, publisher.owner);
 }
 
@@ -3549,7 +3578,13 @@ async function publishEntry(
   if (!(await isPublishable(dir, entryName, publisher))) return;
   const record = await readQueuedRecord(dir, entryName);
   if (!record) return;
-  await publisher.publish({ ...record, fileId: uploaded.fileId }, uploaded);
+  const isCurrent = () => isPublishable(dir, entryName, publisher);
+  const mark = writeEntryFile.bind(null, dir, entryName);
+  const saved = (await readEntryText(dir, entryName, "saved", true)) ?? "";
+  const copy = { ...record, fileId: uploaded.fileId };
+  const entry = { isCurrent, saved: saved.split("\n"), mark };
+  await publisher.publish(copy, uploaded, entry);
+  if (!(await isCurrent())) return;
   await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
 }
 
@@ -3558,7 +3593,7 @@ async function claimEntry(
   entryName: string,
   owner: QueuedFileClaim
 ) {
-  if (await readClaim(dir, entryName)) return;
+  if (await readClaim(dir, entryName, true)) return;
   await writeEntryFile(
     dir,
     entryName,
