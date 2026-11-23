@@ -541,12 +541,12 @@ async function settleOrphanedLocalFiles(
           await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId, false);
         return true;
       }
+      const isPended = async () =>
+        (await isOrphan().catch(() => false)) &&
+        recordFileFnPendingDelete(uploader, fileId).then(() => true);
       if (isAppOffline()) await recordFileFnPendingDelete(uploader, fileId);
-      else
-        await client.deleteFile(fileId).catch(async (error: unknown) => {
-          if (!(await isOrphan())) throw error;
-          await recordFileFnPendingDelete(uploader, fileId);
-        });
+      else if (!(await client.deleteFile(fileId).then(() => true, isPended)))
+        return true;
     }
     await dequeueFile(LOCAL_FILE_QUEUE_DIR, fileId, isOrphan);
     return true;
@@ -691,14 +691,13 @@ function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
       for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)) {
         if (entry.namespace !== namespace) continue;
         const index = ids.indexOf(entry.recordId ?? "");
-        const isChanged = index >= 0;
-        if (isChanged || entry.isOrphaned || entry.isDeleted)
+        if (index >= 0 || entry.isOrphaned || entry.isDeleted)
           await markQueuedFileStale(
             LOCAL_FILE_QUEUE_DIR,
             entry.fileId,
-            isChanged && isDeleted
+            index >= 0 && isDeleted
           );
-        if (isChanged && memoryPending.get(keys[index]) === values[index])
+        if (index >= 0 && memoryPending.get(keys[index]) === values[index])
           unfenced.delete(keys[index]);
       }
     })

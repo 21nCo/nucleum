@@ -1571,6 +1571,54 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.deletes).toEqual([]);
   });
 
+  it("keeps settling another guest namespace's orphaned capture after one whose rejected delete another tab's guest record takes over", async () => {
+    const first = await captureThenSignOutDuringUpload();
+    await datafn.file.mutate({ operation: "delete", id: first.id } as never);
+    await settleLocalFileRecords();
+    // A sign-out opens a new guest namespace, whose capture the account
+    // claimed too before its record was deleted.
+    await signOutToLocal(true);
+    const records = [first, await capturePhoto()];
+    await settleLocalFileRecords();
+    const claim = opfs.read(
+      LOCAL_QUEUE,
+      `queued_${first.fileId}`,
+      "claim.json"
+    );
+    await writeLocalEntryFile(
+      records[1].fileId,
+      "claim.json",
+      new TextDecoder().decode(claim)
+    );
+    await datafn.file.mutate({
+      operation: "delete",
+      id: records[1].id
+    } as never);
+    await settleLocalFileRecords();
+    const namespaces = records.map(
+      ({ fileId }) => readLocalCopy(fileId)?.namespace
+    );
+    expect(new Set(namespaces).size).toBe(2);
+    sdk.onDelete = async () => {
+      sdk.onDelete = null;
+      const index = records.findIndex(
+        ({ fileId }) => fileId === sdk.deletes[0]
+      );
+      const copyId = `${records[index].id}-copy`;
+      await changeInOtherTab(String(namespaces[index]), copyId, sdk.deletes[0]);
+      throw new Error("The delete request failed");
+    };
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    const [taken] = sdk.deletes;
+    const other = records.find(({ fileId }) => fileId !== taken)?.fileId;
+    expect(sdk.deletes).toEqual([taken, other]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${taken}`]);
+  });
+
   it("records the delete of an orphaned capture whose settle finds the app offline and keeps the capture while a later check cannot read it", async () => {
     const record = await captureThenSignOutDuringUpload();
     await datafn.file.mutate({ operation: "delete", id: record.id } as never);
