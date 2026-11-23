@@ -542,29 +542,29 @@ describe("files captured offline or by a local-only user", () => {
     ]);
   });
 
-  it("deletes the claiming account's file when the local-only record is deleted before its record was published", async () => {
+  it("holds a claimed capture stale, unpublished and undeleted when its local-only record is deleted before the claiming account published it", async () => {
     const record = await captureThenSignOutDuringUpload();
 
     await datafn.file.mutate({ operation: "delete", id: record.id } as never);
     await settleLocalFileRecords();
     // Only the claiming account can tell whether the record was published.
     expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
-    expect(sdk.deletes).toEqual([]);
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+    ).toBeDefined();
 
-    await signInToCloud("user-b");
-    await replayLocalQueue();
-    expect(sdk.deletes).toEqual([]);
-    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
-
-    await signInToCloud("user-a");
-
-    await vi.waitFor(() => expect(sdk.deletes).toEqual([record.fileId]));
-    await vi.waitFor(() => expect(opfs.list(LOCAL_QUEUE)).toEqual([]));
-    expect(sdk.started).toHaveLength(1);
-    expect(await savedRecord(record.id)).toBeUndefined();
+    for (const userId of ["user-b", "user-a"]) {
+      await signInToCloud(userId);
+      await replayLocalQueue();
+      await settleTasks();
+      expect(sdk.started).toHaveLength(1);
+      expect(sdk.deletes).toEqual([]);
+      expect(await readAnyRecord(record.id)).toBeUndefined();
+      expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+    }
   });
 
-  it("keeps the claiming account's file when its record was published before the local-only record was deleted", async () => {
+  it("keeps the claiming account's file and record when its record was published before the local-only record was deleted", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
     const record = await capturePhoto();
@@ -586,71 +586,15 @@ describe("files captured offline or by a local-only user", () => {
     await datafn.file.mutate({ operation: "delete", id: record.id } as never);
     await settleLocalFileRecords();
     await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
 
-    await vi.waitFor(() => expect(opfs.list(LOCAL_QUEUE)).toEqual([]));
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+    ).toBeDefined();
     expect(sdk.deletes).toEqual([]);
     expect(sdk.started).toHaveLength(1);
     expect((await savedRecord(record.id))?.fileId).toBe(record.fileId);
-  });
-
-  it("leaves a deleted local-only record's file to the account another tab claimed it for after this tab's reconcile listed it", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
-    // Another tab's replay claims the file for user-a while this tab's
-    // reconcile of the deleted record looks the file up in the records.
-    fileCalls.beforeQuery = async (args) => {
-      const { filters } = args as { filters?: { fileId?: string } };
-      if (filters?.fileId !== record.fileId) return;
-      fileCalls.beforeQuery = null;
-      const claim = { userId: "user-a", baseUrl: sdk.baseUrls[0] ?? "" };
-      await writeLocalEntryFile(
-        record.fileId,
-        "claim.json",
-        JSON.stringify(claim)
-      );
-    };
-
-    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
-    await settleLocalFileRecords();
-
-    expect(opfs.list(LOCAL_QUEUE, `queued_${record.fileId}`)).toContain(
-      "orphaned"
-    );
-    expect(sdk.deletes).toEqual([]);
-  });
-
-  it("never deletes a claimed file whose record another replay is publishing when its account settles its orphaned files", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
-    let settling: Promise<void> | undefined;
-    // The file is marked orphaned while the replay publishes its record, and
-    // another replay of the account settles its orphaned files meanwhile.
-    fileCalls.beforeMutate = async (args) => {
-      const [first] = Array.isArray(args) ? args : [];
-      if (first?.operation !== "insert" || first.id !== record.id) return;
-      fileCalls.beforeMutate = null;
-      await writeLocalEntryFile(record.fileId, "orphaned");
-      settling = replayLocalQueue();
-      for (let turn = 0; turn < 200; turn++) {
-        await new Promise<void>((resolve) => setImmediate(resolve));
-      }
-    };
-
-    await signInToCloud("user-a");
-    await vi.waitFor(async () =>
-      expect((await savedRecord(record.id))?.fileId).toBe(record.fileId)
-    );
-    await vi.waitFor(() => expect(settling).toBeDefined());
-    await settling;
-
-    expect(sdk.deletes).toEqual([]);
-    expect(
-      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
-    ).toBeDefined();
   });
 
   it("completes a first publish that saved the record but not its trash when the local file replays again", async () => {
@@ -737,12 +681,12 @@ describe("files captured offline or by a local-only user", () => {
     }
   );
 
-  it("keeps a claimed file orphaned when another tab deletes its record while this tab copies an earlier change of it", async () => {
+  it("keeps a claimed file stale when another tab deletes its record while this tab copies an earlier change of it", async () => {
     const record = await captureThenSignOutDuringUpload();
     await settleLocalFileRecords();
     let otherTab: Promise<unknown> | undefined;
     // This tab has read the renamed record when another tab, whose changes
-    // this tab does not see, deletes it and marks the claimed file orphaned
+    // this tab does not see, deletes it and marks the claimed file stale
     // under the queue's lock.
     fileCalls.beforeQuery = async (args) => {
       const { filters } = args as { filters?: { id?: string } };
@@ -759,7 +703,7 @@ describe("files captured offline or by a local-only user", () => {
               operation: "delete",
               id: record.id
             } as never);
-            await writeLocalEntryFile(record.fileId, "orphaned");
+            await writeLocalEntryFile(record.fileId, "stale");
           }
         );
         for (let turn = 0; turn < 200; turn++) {
@@ -778,13 +722,14 @@ describe("files captured offline or by a local-only user", () => {
     await otherTab;
 
     expect(
-      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "orphaned")
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
     ).toBeDefined();
     await signInToCloud("user-a");
     await replayLocalQueue();
     expect(await readAnyRecord(record.id)).toBeUndefined();
-    expect(sdk.deletes).toEqual([record.fileId]);
-    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
   });
 
   it("holds a capture whose change was queued behind the namespace's startup reconcile when that reconcile cannot read its record", async () => {
@@ -877,7 +822,7 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([record.fileId]);
   });
 
-  it("publishes the last copy of a capture held stale at sign-in once a sign-out opened a new guest namespace", async () => {
+  it("keeps holding a capture stale at sign-in after a sign-out opened a new guest namespace", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
     const record = await capturePhoto();
@@ -901,20 +846,20 @@ describe("files captured offline or by a local-only user", () => {
     expect(sdk.started).toEqual([]);
 
     // The sign-out cleared the device's DataFn ID: the capture's guest
-    // namespace never starts again, so its record cannot be read again.
+    // namespace never starts again, and its outdated copy is never released.
     await signOutToLocal(true);
     await settleLocalFileRecords();
     expect(
       opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
-    ).toBeUndefined();
+    ).toBeDefined();
     await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
 
-    await vi.waitFor(async () =>
-      expect(await savedRecord(record.id)).toEqual(
-        expect.objectContaining({ fileId: record.fileId, name: "photo.png" })
-      )
-    );
-    expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([record.fileId]);
+    expect(sdk.started).toEqual([]);
+    expect(sdk.deletes).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
   });
 
   it("keeps a change whose pass could not list the local files and publishes no outdated copy of it", async () => {
@@ -937,9 +882,6 @@ describe("files captured offline or by a local-only user", () => {
     await settleTasks();
     expect(sdk.started).toEqual([]);
     expect(await readAnyRecord(record.id)).toBeUndefined();
-    expect(
-      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
-    ).toBeDefined();
 
     await signOutToLocal();
     await settleLocalFileRecords();
@@ -1018,7 +960,7 @@ describe("files captured offline or by a local-only user", () => {
     const record = await captureThenSignOutDuringUpload(true);
     await settleLocalFileRecords();
     expect(
-      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "orphaned")
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
     ).toBeUndefined();
 
     await signInToCloud("user-a");

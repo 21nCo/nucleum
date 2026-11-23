@@ -39,8 +39,6 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
-/** Marks a claimed local file whose record was deleted (see device-file-queue). */
-const ORPHANED_FILE = "orphaned";
 /** Started markers: `started-<attempt>`, one per attempt (`started` earlier). */
 const STARTED_FILE = "started";
 /**
@@ -245,8 +243,6 @@ export type QueuedFileEntry = {
   namespace?: string;
   isCommitted: boolean;
   isUploaded: boolean;
-  isOrphaned: boolean;
-  isStale: boolean;
   claim?: QueuedFileClaim;
 };
 
@@ -448,15 +444,6 @@ export async function writeQueuedFileRecord(
   await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(record));
   const entry = await getEntryDir(dir, entryName);
   await entry?.removeEntry(STALE_FILE).catch(() => undefined);
-  await entry?.removeEntry(ORPHANED_FILE).catch(() => undefined);
-}
-
-/** Marks a local file orphaned: it does not publish until its copy is rewritten. */
-export async function markQueuedFileOrphaned(
-  dir: string,
-  fileId: string
-): Promise<void> {
-  await writeEntryFile(dir, toEntryName(fileId), ORPHANED_FILE, "");
 }
 
 /**
@@ -468,12 +455,6 @@ export async function markQueuedFileStale(
   fileId: string
 ): Promise<void> {
   await writeEntryFile(dir, toEntryName(fileId), STALE_FILE, "");
-}
-
-/** Lets a stale local file publish the record copy it holds. */
-export async function clearQueuedFileStale(dir: string, fileId: string) {
-  const entry = await getEntryDir(dir, toEntryName(fileId));
-  await entry?.removeEntry(STALE_FILE);
 }
 
 /**
@@ -500,8 +481,6 @@ export async function listQueuedFiles(
         typeof record?.namespace === "string" ? record.namespace : undefined,
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
-      isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
-      isStale: await hasEntryFile(dir, entryName, STALE_FILE),
       claim: await readClaim(dir, entryName, isStrict)
     });
   }
@@ -3582,7 +3561,7 @@ async function isPublishable(
   entryName: string,
   publisher: QueuedFilePublisher
 ) {
-  for (const mark of [UPLOADED_FILE, STALE_FILE, ORPHANED_FILE]) {
+  for (const mark of [UPLOADED_FILE, STALE_FILE]) {
     const text = await readEntryText(dir, entryName, mark, true);
     if (text !== undefined) return false;
   }
