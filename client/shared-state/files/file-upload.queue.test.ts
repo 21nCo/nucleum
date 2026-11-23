@@ -179,7 +179,8 @@ const {
   isQueuedFileFailed,
   replayFileQueue,
   retryFailedQueuedFile,
-  withQueueLock
+  withQueueLock,
+  writeQueuedFileRecord
 } = await import("./file-queue");
 const { OPFSStore } = await import("@filefn/client");
 
@@ -2171,50 +2172,62 @@ describe("files captured offline or by a local-only user", () => {
     );
   });
 
-  it("publishes a capture whose rename's pending entry could not be stored once another tab copies the rename and this tab signs in before its pass's retry", async () => {
-    await bootData(localAccount);
-    uninstall = installDeviceFileQueue();
-    const record = await capturePhoto();
-    await settleLocalFileRecords();
-    const setItem = Storage.prototype.setItem;
-    let isRefused = false;
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
-      this: Storage,
-      key: string,
-      value: string
-    ) {
-      if (isRefused || !key.includes("-pending:"))
-        return setItem.call(this, key, value);
-      isRefused = true;
-      throw new DOMException("The storage is full", "QuotaExceededError");
-    });
-    failQueueLockOnce();
-    await datafn.file.mutate({
-      operation: "merge",
-      id: record.id,
-      record: { id: record.id, name: "receipt.png" }
-    } as never);
-    await settleLocalFileRecords();
-    const entry = `queued_${record.fileId}`;
-    expect(isRefused).toBe(true);
-    expect(readLocalCopy(record.fileId)?.name).toBe("photo.png");
-    expect(opfs.read(LOCAL_QUEUE, entry, "stale")).toBeDefined();
-    // Another tab's pass copies the rename to the local file.
-    const copy = { ...readLocalCopy(record.fileId), name: "receipt.png" };
-    await writeLocalEntryFile(
-      record.fileId,
-      "record.json",
-      JSON.stringify(copy)
-    );
-    await removeLocalEntryFile(record.fileId, "stale");
+  it.each([
+    ["writes the record copy it read before the rename", "photo.png"],
+    ["copies the rename", "receipt.png"]
+  ])(
+    "keeps a capture whose rename's pending entry could not be stored held at a sign-in before its pass's retry when another tab's pass %s and clears its stale mark",
+    async (_case, otherTabName) => {
+      await bootData(localAccount);
+      uninstall = installDeviceFileQueue();
+      const record = await capturePhoto();
+      const control = await capturePhoto();
+      await settleLocalFileRecords();
+      const setItem = Storage.prototype.setItem;
+      let isRefused = false;
+      vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+        this: Storage,
+        key: string,
+        value: string
+      ) {
+        if (isRefused || !key.includes("-pending:"))
+          return setItem.call(this, key, value);
+        isRefused = true;
+        throw new DOMException("The storage is full", "QuotaExceededError");
+      });
+      failQueueLockOnce();
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "receipt.png" }
+      } as never);
+      await settleLocalFileRecords();
+      expect(isRefused).toBe(true);
+      expect(readLocalCopy(record.fileId)?.name).toBe("photo.png");
+      expect(
+        opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+      ).toBeDefined();
+      // Another tab's pass, which cannot see this page's change, writes its
+      // copy (clearing the stale mark) and then fails its reread.
+      await writeQueuedFileRecord(LOCAL_QUEUE, record.fileId, {
+        ...readLocalCopy(record.fileId),
+        name: otherTabName
+      } as never);
+      expect(
+        opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+      ).toBeUndefined();
 
-    await signInToCloud("user-a");
-    await vi.waitFor(async () =>
-      expect(await savedRecord(record.id)).toEqual(
-        expect.objectContaining({ fileId: record.fileId, name: "receipt.png" })
-      )
-    );
-  });
+      await signInToCloud("user-a");
+      await vi.waitFor(async () =>
+        expect(await savedRecord(control.id)).toBeDefined()
+      );
+      await settleTasks();
+      expect(await savedRecord(record.id)).toBeUndefined();
+      expect(sdk.started.map((input) => input.fileId)).not.toContain(
+        record.fileId
+      );
+    }
+  );
 
   it("publishes the current copy of a capture whose change's fence fails after a pass already copied that change", async () => {
     await bootData(localAccount);

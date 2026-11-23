@@ -567,7 +567,7 @@ function logOrphanError(error: unknown) {
  * pass copies them after another tab's sign-out cleared local storage.
  * A local file's durable hold is its stale mark (see fenceChanges); until
  * that mark is written, its local-storage entry holds it, and its memory
- * entry while neither is written (`unfenced`; a non-delete's own fence ends it).
+ * entry too while either could not be written (`unfenced`).
  */
 const PENDING_PREFIX = `${LOCAL_FILE_QUEUE_DIR}-pending:`;
 const memoryPending = new Map<string, string>();
@@ -684,7 +684,6 @@ let fences: Promise<void> = Promise.resolve();
  */
 function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
   const keys = ids.map((id) => pendingKey(namespace, id));
-  const values = isDeleted ? [] : keys.map((key) => memoryPending.get(key));
   fences = fences
     .then(async () => {
       for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)) {
@@ -696,8 +695,6 @@ function fenceChanges(namespace: string, ids: string[], isDeleted: boolean) {
             entry.fileId,
             index >= 0 && isDeleted
           );
-        if (index >= 0 && memoryPending.get(keys[index]) === values[index])
-          unfenced.delete(keys[index]);
       }
     })
     .catch((error) => {
