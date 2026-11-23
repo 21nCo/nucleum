@@ -1675,6 +1675,72 @@ describe("files captured offline or by a local-only user", () => {
     expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
   });
 
+  it("keeps the staged capture of a guest save that fails while Web Locks cannot fence other tabs", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    webLocks = undefined;
+    fileCalls.beforeMutate = async () => {
+      throw new Error("The record save failed");
+    };
+
+    await expect(capturePhoto()).rejects.toThrow();
+    await settleLocalFileRecords();
+
+    const [entry] = opfs.list(LOCAL_QUEUE);
+    expect(entry).toMatch(/^queued_/);
+    expect(opfs.read(LOCAL_QUEUE, entry, "committed")).toBeUndefined();
+  });
+
+  it("keeps the bytes of a guest capture whose record saved although its save reported a failure, and commits it with its record", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    let saved: { id: string; record: { fileId: string } } | undefined;
+    fileCalls.beforeMutate = async (args) => {
+      fileCalls.beforeMutate = null;
+      saved = args as typeof saved;
+      return () => ({ ok: false, error: new Error("The save timed out") });
+    };
+
+    await expect(capturePhoto()).rejects.toThrow();
+    await settleTasks();
+
+    const fileId = saved?.record.fileId ?? "";
+    expect((await savedRecord(saved?.id ?? ""))?.fileId).toBe(fileId);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${fileId}`]);
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${fileId}`, "committed")
+    ).toBeDefined();
+    expect(readLocalCopy(fileId)?.id).toBe(saved?.id);
+  });
+
+  it("removes the staged capture of a failed guest save only once a pass finds it abandoned and no record referencing it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    fileCalls.beforeMutate = async () => {
+      fileCalls.beforeMutate = null;
+      throw new Error("The record save failed");
+    };
+    await expect(capturePhoto()).rejects.toThrow();
+    const [entry] = opfs.list(LOCAL_QUEUE);
+    await openData();
+    await settleTasks();
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([entry]);
+
+    const now = Date.now() + 25 * 60 * 60_000;
+    vi.spyOn(Date, "now").mockReturnValue(now);
+    const lookups: unknown[] = [];
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { fileId?: string } };
+      if (`queued_${filters?.fileId}` === entry) lookups.push(filters);
+    };
+    await openData();
+    await settleTasks();
+
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+    // One lookup decides the capture is unused, and the removal reads again.
+    expect(lookups.length).toBeGreaterThan(1);
+  });
+
   it("keeps a capture a record references again by the time its removal would run", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
