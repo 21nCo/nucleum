@@ -22,7 +22,7 @@ import {
   initializeNucleumDatafn
 } from "@nucleum/datafn/datafn.store";
 import context from "@nucleum/client/runtime/context.store";
-import { createFakeOpfs } from "../../../tests/fixtures/opfs";
+import { createFakeLocks, createFakeOpfs } from "../../../tests/fixtures/opfs";
 
 const codec = vi.hoisted(() => ({
   compressImageToTargetSize: vi.fn(),
@@ -166,6 +166,8 @@ const { OPFSStore } = await import("@filefn/client");
 /** One device file system: the queue keeps its handles for the page's life. */
 const opfs = createFakeOpfs();
 let isOnline = true;
+/** The device's Web Locks; a test sets undefined for a browser without them. */
+let webLocks: LockManager | undefined;
 let uninstall: (() => void) | undefined;
 
 function cloudAccount(userId: string): UserAccount {
@@ -354,12 +356,15 @@ beforeEach(() => {
     env: `test-${crypto.randomUUID()}`
   };
   isOnline = true;
+  webLocks = createFakeLocks();
   vi.stubGlobal("navigator", {
     ...globalThis.navigator,
     get onLine() {
       return isOnline;
     },
-    locks: undefined,
+    get locks() {
+      return webLocks;
+    },
     storage: { getDirectory: opfs.getDirectory }
   });
   URL.createObjectURL ??= () => "";
@@ -870,6 +875,101 @@ describe("files captured offline or by a local-only user", () => {
       )
     );
     expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([record.fileId]);
+  });
+
+  it("publishes the last copy of a capture held stale at sign-in once a sign-out opened a new guest namespace", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      await signInToCloud("user-a");
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await vi.waitFor(() =>
+      expect(datafn.currentNamespace()).toBe("user:user-a")
+    );
+    await settleTasks();
+    await replayLocalQueue();
+    expect(sdk.started).toEqual([]);
+
+    // The sign-out cleared the device's DataFn ID: the capture's guest
+    // namespace never starts again, so its record cannot be read again.
+    await signOutToLocal(true);
+    await settleLocalFileRecords();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+    ).toBeUndefined();
+    await signInToCloud("user-a");
+
+    await vi.waitFor(async () =>
+      expect(await savedRecord(record.id)).toEqual(
+        expect.objectContaining({ fileId: record.fileId, name: "photo.png" })
+      )
+    );
+    expect(sdk.uploads.map((upload) => upload.fileId)).toEqual([record.fileId]);
+  });
+
+  it("keeps a change whose pass could not list the local files and publishes no outdated copy of it", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    vi.spyOn(OPFSStore.prototype, "listPendingUploads").mockRejectedValueOnce(
+      new DOMException("The file system is busy", "NotReadableError")
+    );
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "stale")
+    ).toBeDefined();
+
+    await signOutToLocal();
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+
+    await vi.waitFor(async () =>
+      expect(await savedRecord(record.id)).toEqual(
+        expect.objectContaining({ fileId: record.fileId, name: "receipt.png" })
+      )
+    );
+  });
+
+  it("neither uploads, publishes nor deletes a local file without Web Locks, which leave other tabs unfenced", async () => {
+    const record = await captureThenSignOutDuringUpload();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    await settleLocalFileRecords();
+    const kept = await capturePhoto();
+    await settleLocalFileRecords();
+
+    webLocks = undefined;
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toHaveLength(1);
+    expect(sdk.deletes).toEqual([]);
+    expect(await savedRecord(kept.id)).toBeUndefined();
+    expect(opfs.list(LOCAL_QUEUE).sort()).toEqual(
+      [`queued_${record.fileId}`, `queued_${kept.fileId}`].sort()
+    );
   });
 
   it("never uploads or claims a local file for another account while its claim cannot be read", async () => {

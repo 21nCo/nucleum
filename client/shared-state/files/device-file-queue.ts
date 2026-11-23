@@ -2,6 +2,7 @@ import { get } from "svelte/store";
 import { datafn, datafnRuntime } from "@nucleum/datafn/datafn.store";
 import { logger } from "@nucleum/client/runtime/logging/logger";
 import {
+  clearQueuedFileStale,
   dequeueFile,
   isFileQueueSupported,
   listQueuedFiles,
@@ -219,7 +220,7 @@ async function readLocalEntry(fileId: string) {
  * no record references any more, or one never committed and abandoned, is
  * removed from the device, but one an account claimed and did not record
  * uploaded is marked orphaned for it to settle (see settleOrphanedLocalFiles);
- * under the queue's lock (scheduleLocalRecordWork), so no other tab acts meanwhile.
+ * under the queue's lock (scheduleChangePass), so no other tab acts meanwhile.
  */
 async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
   const byId = entry.recordId
@@ -255,14 +256,22 @@ async function reconcileLocalFile(namespace: string, entry: QueuedFileEntry) {
  * publish. When a changed record could not
  * be read, as DataFn left the namespace, its file is marked stale, so it does
  * not upload with an outdated copy until the namespace starts again; a file
- * whose record did not change keeps its copy, which is still current.
+ * whose record did not change keeps its copy, which is still current. A full
+ * pass lets a stale file of another guest namespace publish the copy it
+ * holds: that namespace never starts again (a sign-out replaced the device's
+ * DataFn ID), so no later read can bring its copy up to date.
  */
 async function reconcileLocalFiles(namespace: string, changedIds?: string[]) {
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR)) {
-    if (entry.namespace !== namespace) continue;
-    if (changedIds && !changedIds.includes(entry.recordId ?? "")) continue;
+    const isOwn = entry.namespace === namespace;
+    if (changedIds && !(isOwn && changedIds.includes(entry.recordId ?? ""))) {
+      continue;
+    }
     try {
-      await reconcileLocalFile(namespace, entry);
+      if (isOwn) await reconcileLocalFile(namespace, entry);
+      else if (entry.isStale) {
+        await clearQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
+      }
     } catch (error) {
       logger.warn({ at: "deviceFileQueue.reconcile", namespace, error });
       if (!changedIds) continue;
@@ -284,11 +293,30 @@ export function settleLocalFileRecords(): Promise<void> {
   return localRecordWork;
 }
 
-function scheduleLocalRecordWork(run: () => Promise<void>) {
+/** Namespaces whose next change pass has not yet taken their changed IDs. */
+const waitingPasses = new Set<string>();
+
+/**
+ * Reconciles a namespace's changed records, after all its local files with
+ * `isFull`, under the queue's lock, so no other tab acts meanwhile; changes
+ * that come while a pass waits are reconciled together by that pass. A pass
+ * that fails puts the IDs it took back for the next one.
+ */
+function scheduleChangePass(namespace: string, isFull = false) {
+  if (!isFull && waitingPasses.has(namespace)) return localRecordWork;
+  waitingPasses.add(namespace);
   const { signal } = new AbortController();
-  const locked = () => withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, run);
-  const work = localRecordWork.then(locked).catch((error: unknown) => {
-    logger.error({ at: "deviceFileQueue.records", error });
+  const work = localRecordWork.then(async () => {
+    waitingPasses.delete(namespace);
+    const changed = [...(changedRecordIds.get(namespace) ?? [])];
+    changedRecordIds.delete(namespace);
+    await withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, async () => {
+      if (isFull) await reconcileLocalFiles(namespace);
+      if (changed.length) await reconcileLocalFiles(namespace, changed);
+    }).catch((error: unknown) => {
+      logger.error({ at: "deviceFileQueue.records", error });
+      queueChanges(namespace, changed);
+    });
   });
   localRecordWork = work;
   return work;
@@ -302,8 +330,14 @@ function scheduleLocalRecordWork(run: () => Promise<void>) {
 export async function uploadLocalQueuedFiles(
   uploader: FileQueueUploader
 ): Promise<void> {
+  // Without Web Locks no lock keeps other tabs' passes out: files stay local.
+  if (!globalThis.navigator?.locks) return;
+  for (const namespace of changedRecordIds.keys()) {
+    void scheduleChangePass(namespace);
+  }
   await settleLocalFileRecords();
-  if (uploader.signal.aborted) return;
+  // A change no pass could take holds the local files until one does.
+  if (uploader.signal.aborted || changedRecordIds.size) return;
   const publisher = createLocalFilePublisher(uploader);
   await settleOrphanedLocalFiles(uploader, publisher).catch(logOrphanError);
   await replayFileQueue(
@@ -374,17 +408,17 @@ function logOrphanError(error: unknown) {
   logger.warn({ at: "deviceFileQueue.orphans", error });
 }
 
-/** Brings a local-only user's local files in line with their records, then the changed ones. */
+/**
+ * Brings a local-only user's local files in line with their records, then
+ * the changed ones; changes of an earlier guest namespace, which never
+ * starts again, are dropped (see reconcileLocalFiles).
+ */
 async function prepareNamespace(namespace: string) {
-  const queueDir = resolveMigrationQueueDir(namespace);
-  if (queueDir) {
-    await scheduleLocalRecordWork(async () => {
-      const changed = changedRecordIds.get(namespace);
-      changedRecordIds.delete(namespace);
-      await reconcileLocalFiles(namespace);
-      if (changed) await reconcileLocalFiles(namespace, [...changed]);
-    });
+  if (!resolveMigrationQueueDir(namespace)) return;
+  for (const other of changedRecordIds.keys()) {
+    if (other !== namespace) changedRecordIds.delete(other);
   }
+  await scheduleChangePass(namespace, true);
 }
 
 /** IDs of local-only records changed since their files were last reconciled. */
@@ -400,17 +434,15 @@ function onFileRecordsChanged(event: { ids?: string[] }) {
   const namespace = datafn.currentNamespace();
   if (!namespace || !resolveMigrationQueueDir(namespace)) return;
   if (!event.ids?.length) return;
-  let ids = changedRecordIds.get(namespace);
-  if (!ids) {
-    ids = new Set();
-    changedRecordIds.set(namespace, ids);
-    void scheduleLocalRecordWork(async () => {
-      const changed = changedRecordIds.get(namespace);
-      changedRecordIds.delete(namespace);
-      if (changed) await reconcileLocalFiles(namespace, [...changed]);
-    });
-  }
-  for (const id of event.ids) ids.add(id);
+  queueChanges(namespace, event.ids);
+  void scheduleChangePass(namespace);
+}
+
+function queueChanges(namespace: string, ids: string[]) {
+  if (!ids.length) return;
+  const queued = changedRecordIds.get(namespace) ?? new Set<string>();
+  for (const id of ids) queued.add(id);
+  changedRecordIds.set(namespace, queued);
 }
 
 /**

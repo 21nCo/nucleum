@@ -246,6 +246,7 @@ export type QueuedFileEntry = {
   isCommitted: boolean;
   isUploaded: boolean;
   isOrphaned: boolean;
+  isStale: boolean;
   claim?: QueuedFileClaim;
 };
 
@@ -469,6 +470,12 @@ export async function markQueuedFileStale(
   await writeEntryFile(dir, toEntryName(fileId), STALE_FILE, "");
 }
 
+/** Lets a stale local file publish the record copy it holds. */
+export async function clearQueuedFileStale(dir: string, fileId: string) {
+  const entry = await getEntryDir(dir, toEntryName(fileId));
+  await entry?.removeEntry(STALE_FILE);
+}
+
 /**
  * Lists the files of a queue whose staging finished; with `isStrict`, a claim
  * that cannot be read rejects instead of counting as none.
@@ -494,6 +501,7 @@ export async function listQueuedFiles(
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
       isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
+      isStale: await hasEntryFile(dir, entryName, STALE_FILE),
       claim: await readClaim(dir, entryName, isStrict)
     });
   }
