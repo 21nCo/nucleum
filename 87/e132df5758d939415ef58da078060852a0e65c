@@ -1,6 +1,6 @@
 client/shared-state/files/device-file-queue.ts
   s_6bee239b8eed31::t_40b5b0e58324bf 380-381
-  s_f63c3e224e63da::t_32ed81071089ae 221-222,244-248,258-260,263-276,278,388,391
+  s_f63c3e224e63da::t_32ed81071089ae 221-222,221,244-248,258-260,263-276,263-265,268-271,273-276,278,388,391
   s_6bee239b8eed31::t_7c463d72b6180d 382-383
 client/shared-state/files/file-upload.queue.test.ts
   s_f63c3e224e63da::t_e236f496fb9db1 163,735-876
