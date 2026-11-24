@@ -8,6 +8,12 @@ import { ACCOUNT_AUTH_NAMESPACE } from './constants.js';
 
 const authority = 'http://127.0.0.1:18788';
 const email = 'existing-user@example.test';
+/**
+ * First @authfn/social-oauth release that takes the Apple email only from the
+ * verified identity token. 0.2.0 does not contain the fix and 0.2.1 failed to
+ * build and was never published, so the guard trips at 0.2.2.
+ */
+const FIRST_FIXED_SOCIAL_OAUTH = '0.2.2';
 
 describe('OAuth sign-in linking by verified email', () => {
   let harness: AccountTestHarness;
@@ -24,22 +30,31 @@ describe('OAuth sign-in linking by verified email', () => {
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).toEqual(['google']);
   });
 
-  it('keeps Apple out of email linking until @authfn/social-oauth 0.1.8 or later is installed', () => {
+  it(`keeps Apple out of email linking until @authfn/social-oauth ${FIRST_FIXED_SOCIAL_OAUTH} or later is installed`, () => {
     const version = installedSocialOAuthVersion();
-    const fixed = compareVersions(version, '0.1.8') >= 0;
+    const fixed = compareVersions(version, FIRST_FIXED_SOCIAL_OAUTH) >= 0;
     expect(
       fixed,
-      `@authfn/social-oauth ${version} is installed. Once it is 0.1.8 or later, decide whether to add "apple" back to OAUTH_EMAIL_LINKING_PROVIDERS and update this test.`
+      `@authfn/social-oauth ${version} is installed. ${FIRST_FIXED_SOCIAL_OAUTH} is the first release that takes the Apple email only from the verified identity token. Decide whether to add "apple" back to OAUTH_EMAIL_LINKING_PROVIDERS and update this test.`
     ).toBe(false);
     expect([...OAUTH_EMAIL_LINKING_PROVIDERS]).not.toContain('apple');
   });
 
-  it('compares versions so the guard trips at the stable 0.1.8 release', () => {
-    expect(compareVersions('0.1.7', '0.1.8')).toBeLessThan(0);
-    expect(compareVersions('0.1.8-rc.1', '0.1.8')).toBeLessThan(0);
-    expect(compareVersions('0.1.8', '0.1.8')).toBe(0);
-    expect(compareVersions('0.1.8+build.1', '0.1.8')).toBe(0);
-    expect(compareVersions('0.2.0', '0.1.8')).toBeGreaterThan(0);
+  it(`compares versions so the guard trips at the stable ${FIRST_FIXED_SOCIAL_OAUTH} release`, () => {
+    expect(compareVersions('0.1.8', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
+    expect(compareVersions('0.2.0', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
+    expect(compareVersions('0.2.1', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
+    expect(compareVersions('0.2.2-rc.1', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
+    expect(compareVersions('0.2.2-rc.2', '0.2.2-rc.10')).toBeLessThan(0);
+    expect(compareVersions('0.2.2-rc.1', '0.2.2-rc')).toBeGreaterThan(0);
+    expect(compareVersions('0.2.2-1', '0.2.2-alpha')).toBeLessThan(0);
+    expect(compareVersions('0.2.2', FIRST_FIXED_SOCIAL_OAUTH)).toBe(0);
+    expect(compareVersions('0.2.2+build.1', FIRST_FIXED_SOCIAL_OAUTH)).toBe(0);
+    expect(compareVersions('0.2.3', FIRST_FIXED_SOCIAL_OAUTH)).toBeGreaterThan(0);
+    expect(compareVersions('0.3.0', FIRST_FIXED_SOCIAL_OAUTH)).toBeGreaterThan(0);
+    expect(compareVersions('0.10.0', FIRST_FIXED_SOCIAL_OAUTH)).toBeGreaterThan(0);
+    expect(compareVersions('0.2.2-rc.9007199254740992', '0.2.2-rc.9007199254740993')).toBeLessThan(0);
+    expect(compareVersions('0.9007199254740992.0', '0.9007199254740993.0')).toBeLessThan(0);
   });
 
   it('turns off a provider-level linkByVerifiedEmail for providers outside the policy', () => {
@@ -183,8 +198,9 @@ function compareVersions(left: string, right: string): number {
   const a = parseVersion(left);
   const b = parseVersion(right);
   for (let index = 0; index < 3; index += 1) {
-    if (a.core[index] !== b.core[index]) {
-      return a.core[index] - b.core[index];
+    const order = compareNumericIdentifiers(a.core[index], b.core[index]);
+    if (order !== 0) {
+      return order;
     }
   }
   if (a.prerelease === b.prerelease) {
@@ -196,13 +212,52 @@ function compareVersions(left: string, right: string): number {
   if (b.prerelease === undefined) {
     return -1;
   }
-  return a.prerelease < b.prerelease ? -1 : 1;
+  return comparePrerelease(a.prerelease.split('.'), b.prerelease.split('.'));
 }
 
-function parseVersion(version: string): { core: number[]; prerelease?: string } {
+/**
+ * Orders prerelease identifiers by SemVer 2.0.0 section 11: numeric
+ * identifiers compare numerically and sort before alphanumeric ones, which
+ * compare in ASCII order; a longer list wins when every shared identifier is
+ * equal.
+ */
+function comparePrerelease(left: string[], right: string[]): number {
+  for (let index = 0; index < Math.min(left.length, right.length); index += 1) {
+    const a = left[index];
+    const b = right[index];
+    if (a === b) {
+      continue;
+    }
+    const aNumeric = /^\d+$/.test(a);
+    const bNumeric = /^\d+$/.test(b);
+    if (aNumeric && bNumeric) {
+      return compareNumericIdentifiers(a, b);
+    }
+    if (aNumeric !== bNumeric) {
+      return aNumeric ? -1 : 1;
+    }
+    return a < b ? -1 : 1;
+  }
+  return left.length - right.length;
+}
+
+/**
+ * Compares digit strings without converting them to numbers, so identifiers
+ * above Number.MAX_SAFE_INTEGER keep their order.
+ */
+function compareNumericIdentifiers(left: string, right: string): number {
+  const a = left.replace(/^0+(?=\d)/, '');
+  const b = right.replace(/^0+(?=\d)/, '');
+  if (a.length !== b.length) {
+    return a.length - b.length;
+  }
+  return a === b ? 0 : a < b ? -1 : 1;
+}
+
+function parseVersion(version: string): { core: string[]; prerelease?: string } {
   const match = /^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+.*)?$/.exec(version);
   if (!match) {
     throw new Error(`Unrecognised version ${version}`);
   }
-  return { core: [Number(match[1]), Number(match[2]), Number(match[3])], prerelease: match[4] };
+  return { core: [match[1], match[2], match[3]], prerelease: match[4] };
 }
