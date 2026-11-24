@@ -66,9 +66,12 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
   const mutations: Row[] = [];
   /** Holds each mutation until the returned promise resolves, when set. */
   let gate: (() => Promise<void>) | null = null;
+  /** Runs before each query, when set; it may change rows or throw. */
+  let beforeQuery: ((count: number) => void) | null = null;
   const executor = {
     async query(payload: Row) {
       queries.push(payload);
+      beforeQuery?.(queries.length);
       if ('cursor' in payload) throw new Error('the router must not rely on DataFn cursors');
       const filters = (payload.filters ?? {}) as Row;
       const selected = rows.filter((row) => row.resource === payload.resource &&
@@ -109,7 +112,13 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
     getSyncServer: async () => ({ executor }) as unknown as SyncServer,
     ...overrides
   };
-  return { services, queries, mutations, hold: (next: (() => Promise<void>) | null) => { gate = next; } };
+  return {
+    services,
+    queries,
+    mutations,
+    hold: (next: (() => Promise<void>) | null) => { gate = next; },
+    onQuery: (next: ((count: number) => void) | null) => { beforeQuery = next; }
+  };
 }
 
 async function send(services: InterfaceApiServices, path: string, init: RequestInit = {}): Promise<Response> {
@@ -122,6 +131,26 @@ async function send(services: InterfaceApiServices, path: string, init: RequestI
 
 function task(id: string, dateUnix: string | null): Row {
   return { resource: 'task', id, label: `Task ${id}`, isChecked: false, dateUnix, minutes: '25' };
+}
+
+/** A cursor as a client could build one by hand. */
+function handCursor(cursor: Row): string {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64url');
+}
+
+async function readAll(services: InterfaceApiServices, query: string): Promise<string[]> {
+  const ids: string[] = [];
+  let cursor: string | null = null;
+  let pages = 0;
+  do {
+    const response = await send(services, `/v1/pointron/tasks?${query}${cursor ? `&cursor=${cursor}` : ''}`);
+    const page = await response.json() as { data: Row[]; nextCursor: string | null };
+    expect(response.status, JSON.stringify(page)).toBe(200);
+    ids.push(...page.data.map((row) => String(row.id)));
+    cursor = page.nextCursor;
+    pages += 1;
+  } while (cursor && pages < 20);
+  return ids;
 }
 
 describe('v1 routes on PostgreSQL-like storage', () => {
@@ -170,6 +199,80 @@ describe('v1 routes on PostgreSQL-like storage', () => {
       .json() as { data: Row[]; nextCursor: string | null };
     expect(second.data.map((row) => row.id)).toEqual(['task:100']);
     expect(second.nextCursor).toBeNull();
+  });
+
+  it('delivers a row whose sort value changes between segment reads once, and continues after it', async () => {
+    const rows = [
+      { ...task('task:a', null), completedAtUnix: '100' },
+      { ...task('task:b', null), completedAtUnix: '200' },
+      { ...task('task:c', null), completedAtUnix: null },
+      { ...task('task:d', null), completedAtUnix: null }
+    ];
+    const { services, onQuery } = createPostgresLikeServices(rows);
+    // After the first segment read task:a, a concurrent uncheck nulls it.
+    onQuery((count) => {
+      if (count === 2) rows[0].completedAtUnix = null;
+    });
+    const response = await send(services, '/v1/pointron/tasks?sort=completedAtUnix&limit=3');
+    const page = await response.json() as { data: Row[]; nextCursor: string };
+    expect(page.data.map((row) => row.id)).toEqual(['task:a', 'task:b', 'task:c']);
+    onQuery(null);
+    const next = await (await send(services, `/v1/pointron/tasks?sort=completedAtUnix&limit=3&cursor=${page.nextCursor}`))
+      .json() as { data: Row[]; nextCursor: string | null };
+    expect(next.data.map((row) => row.id)).toEqual(['task:d']);
+    expect(next.nextCursor).toBeNull();
+  });
+
+  it('keeps an equality filter on the sort field and refuses a cursor that contradicts it', async () => {
+    const rows = [task('task:a', '900'), task('task:d', '900'), task('task:f', '20')];
+    const { services } = createPostgresLikeServices(rows);
+    expect(await readAll(services, 'dateUnix=900&sort=dateUnix&limit=1')).toEqual(['task:a', 'task:d']);
+    const contradicting = handCursor({ sort: 'dateUnix', value: 20, id: 'task:a' });
+    const response = await send(services, `/v1/pointron/tasks?dateUnix=900&sort=dateUnix&cursor=${contradicting}`);
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ code: 'invalid_parameter' });
+  });
+
+  it('refuses a cursor value of the wrong kind before querying and accepts numeric strings', async () => {
+    const { services, queries } = createPostgresLikeServices([task('task:a', '900'), task('task:f', '20')]);
+    const wrong = await send(services, `/v1/pointron/tasks?sort=dateUnix&cursor=${handCursor({ sort: 'dateUnix', value: 'abc', id: 'task:a' })}`);
+    expect(wrong.status).toBe(400);
+    expect(wrong.headers.get('content-type')).toContain('application/problem+json');
+    expect(await wrong.json()).toMatchObject({ code: 'invalid_parameter' });
+    expect(queries).toHaveLength(0);
+    const numeric = await send(services, `/v1/pointron/tasks?sort=dateUnix&cursor=${handCursor({ sort: 'dateUnix', value: '20', id: 'task:f' })}`);
+    expect(numeric.status).toBe(200);
+    expect((await numeric.json() as { data: Row[] }).data.map((row) => row.id)).toEqual(['task:a']);
+  });
+
+  it.each([
+    { method: 'PATCH', path: '/v1/pointron/tasks/task:a', operation: 'merge', status: 200, body: { label: 'Renamed' }, other: { label: 'Other' } },
+    { method: 'POST', path: '/v1/pointron/tasks', operation: 'insert', status: 201,
+      body: { label: 'Created', dateUnix: 1_700_000_000_000 }, other: { label: 'Other', dateUnix: 1_700_000_000_000 } }
+  ])('keeps a $method key bound to its body after the write commits and its readback fails', async (write) => {
+    const { services, mutations, hold, onQuery } = createPostgresLikeServices([task('task:a', null)], {
+      idempotencyStore: createMemoryRuntimeStores().atomicKv,
+      logError: () => undefined
+    });
+    hold(async () => {
+      hold(null);
+      // The mutation commits; the next read (the readback) fails once.
+      onQuery(() => {
+        onQuery(null);
+        throw new DatafnExecutorError({ code: 'INTERNAL', message: 'database unavailable' }, 500);
+      });
+    });
+    const headers = { 'idempotency-key': 'readback-fails' };
+    const first = await send(services, write.path, { method: write.method, headers, body: JSON.stringify(write.body) });
+    expect(first.status).toBe(500);
+    const other = await send(services, write.path, { method: write.method, headers, body: JSON.stringify(write.other) });
+    expect(other.status).toBe(422);
+    expect(await other.json()).toMatchObject({ code: 'idempotency_key_reused' });
+    const retry = await send(services, write.path, { method: write.method, headers, body: JSON.stringify(write.body) });
+    expect(retry.status).toBe(write.status);
+    expect(retry.headers.get('idempotent-replayed')).toBe('true');
+    expect(await retry.json()).toMatchObject(write.body);
+    expect(mutations.filter((mutation) => mutation.operation === write.operation)).toHaveLength(1);
   });
 
   it('replays a keyed create whose replay record was lost and refuses the key with another body', async () => {

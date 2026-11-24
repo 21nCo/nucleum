@@ -479,13 +479,19 @@ async function listRecords(
   }
   const limit = parseLimit(params.get('limit'), DEFAULT_LIMIT, MAX_LIMIT);
   const raw = params.get('cursor');
+  const sortField = resolveApiField(contract.resource, sort.replace(/^-/, ''));
+  const cursor = raw === null ? null : decodeCursor(raw, sort, sortField);
+  const required = filters[sortField.name];
+  if (cursor && cursor.value !== null && required !== undefined && !isOperatorSet(required) &&
+    canonicalJson(required) !== canonicalJson(cursor.value)) {
+    throw parameterProblem('cursor', `cursor does not match the ${sortField.name} filter of this list.`);
+  }
   // One row past the page shows whether another follows; DataFn reads at
   // most MAX_LIMIT rows a query, so a full-size page probes for it instead.
-  const rows = await keysetPage(contract, caller, filters, sort, raw === null ? null : decodeCursor(raw, sort),
-    Math.min(limit + 1, MAX_LIMIT));
+  const rows = await keysetPage(contract, caller, filters, sort, cursor, Math.min(limit + 1, MAX_LIMIT));
   const page = rows.slice(0, limit);
   const last = page.at(-1);
-  const after = last ? { sort, value: sortValue(last, sort), id: String(last.id) } : null;
+  const after = last ? { sort, value: sortValue(last, sortField), id: String(last.id) } : null;
   const more = rows.length > limit || (after !== null && rows.length === MAX_LIMIT &&
     (await keysetPage(contract, caller, filters, sort, after, 1)).length > 0);
   return Response.json({
@@ -501,9 +507,25 @@ interface Cursor {
   id: string;
 }
 
-function sortValue(row: Row, sort: string): Cursor['value'] {
-  const value = row[sort.replace(/^-/, '')];
+function sortValue(row: Row, field: ApiField): Cursor['value'] {
+  const value = serializeField(field, row[field.name]);
   return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? value : null;
+}
+
+/** The cursor value as the sort field's kind, or `undefined` when it is not one. */
+function cursorValue(field: ApiField, value: unknown): Cursor['value'] | undefined {
+  if (value === null) return null;
+  if (field.kind === 'number' || field.kind === 'integer') {
+    const number = serializeField(field, value);
+    return typeof number === 'number' && Number.isFinite(number) ? number : undefined;
+  }
+  if (field.kind === 'string') return typeof value === 'string' ? value : undefined;
+  if (field.kind === 'boolean') return typeof value === 'boolean' ? value : undefined;
+  return undefined;
+}
+
+function isOperatorSet(value: unknown): value is Row {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /**
@@ -539,29 +561,46 @@ async function keysetPage(
     });
   }
   const rows: Row[] = [];
+  const seen = new Set<string>();
   for (const segment of segments) {
     if (rows.length >= want) break;
+    const segmentFilters = withConditions(filters, segment.where);
+    if (segmentFilters === null) continue;
+    // A row whose sort value changed after an earlier segment read it can
+    // come back here; only rows this page holds can repeat, so reading
+    // `want` rows still leaves enough new ones.
     const result = await run<QueryResult>(() => caller.executor.query({
       resource: contract.resource,
       version: 1,
-      filters: withConditions(filters, segment.where),
+      filters: segmentFilters,
       sort: segment.sort,
-      limit: want - rows.length
+      limit: want
     }, caller.context), 'read', caller.services);
-    rows.push(...result.data);
+    for (const row of result.data) {
+      const id = String(row.id);
+      if (seen.has(id)) continue;
+      seen.add(id);
+      rows.push(row);
+      if (rows.length >= want) break;
+    }
   }
   return rows;
 }
 
-/** Adds operator conditions to filters, keeping a filter already on the same field. */
-function withConditions(filters: Row, conditions: Record<string, Row>): Row {
+/**
+ * Adds operator conditions to the caller's filters, keeping both. Returns
+ * null when one operator would need two different values, which no row meets.
+ */
+function withConditions(filters: Row, conditions: Record<string, Row>): Row | null {
   const merged: Row = { ...filters };
   for (const [name, ops] of Object.entries(conditions)) {
     const existing = merged[name];
-    const base = typeof existing === 'object' && existing !== null && !Array.isArray(existing)
-      ? existing as Row
-      : existing === undefined ? {} : { eq: existing };
-    merged[name] = { ...base, ...ops };
+    const combined: Row = isOperatorSet(existing) ? { ...existing } : existing === undefined ? {} : { eq: existing };
+    for (const [op, operand] of Object.entries(ops)) {
+      if (op in combined && canonicalJson(combined[op]) !== canonicalJson(operand)) return null;
+      combined[op] = operand;
+    }
+    merged[name] = combined;
   }
   return merged;
 }
@@ -619,7 +658,7 @@ async function createRecord(
   if (keyed.state === 'done') return respond(await keyedRecord(app, contract, caller, id), true);
   // A create still in progress under this key needs no wait: its id is
   // taken, so this insert either replays it or fails the body match.
-  return keyed.write(async () => {
+  return keyed.write(async (committed) => {
     const record = { ...body };
     applyDerivedFields(contract, record);
     const result = await mutate(caller, {
@@ -630,9 +669,14 @@ async function createRecord(
       record,
       ...keyed.mutation
     });
-    if (result.ok) return respond(await getRecord(app, contract, caller, id), result.deduped === true);
+    if (result.ok) {
+      await committed();
+      return respond(await getRecord(app, contract, caller, id), result.deduped === true);
+    }
     if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
-    return respond(await matchKeyedRecord(app, contract, caller, id, body), true);
+    const stored = await matchKeyedRecord(app, contract, caller, id, body);
+    await committed();
+    return respond(stored, true);
   });
 }
 
@@ -654,7 +698,7 @@ async function updateRecord(
   // Two overlapping updates would each derive fields such as a completion
   // time, so the later one waits for the first instead of writing.
   if (keyed.state === 'in_progress') throw idempotencyInProgress();
-  return keyed.write(async () => {
+  return keyed.write(async (committed) => {
     const record = { ...body };
     applyDerivedFields(contract, record);
     const result = await mutate(caller, {
@@ -666,6 +710,7 @@ async function updateRecord(
       ...keyed.mutation
     });
     if (!result.ok) throw mutationProblem(result, caller);
+    await committed();
     return respond(result.deduped === true);
   });
 }
@@ -814,7 +859,7 @@ function encodeCursor(cursor: Cursor): string {
 }
 
 /** Decodes a cursor, which must come from a page with the same sort. */
-function decodeCursor(raw: string, sort: string): Cursor {
+function decodeCursor(raw: string, sort: string, field: ApiField): Cursor {
   const invalid = parameterProblem('cursor', 'cursor is not a nextCursor of this list with this sort.');
   let decoded: unknown;
   try {
@@ -826,12 +871,14 @@ function decodeCursor(raw: string, sort: string): Cursor {
   }
   const cursor = decoded as Partial<Cursor> | null;
   if (typeof cursor !== 'object' || cursor === null || Array.isArray(cursor) || cursor.sort !== sort ||
-    typeof cursor.id !== 'string' || cursor.id.length === 0 ||
-    !(cursor.value === null || ['string', 'number', 'boolean'].includes(typeof cursor.value)) ||
+    typeof cursor.id !== 'string' || cursor.id.length === 0 || !('value' in cursor) ||
     Object.keys(cursor).some((key) => !['sort', 'value', 'id'].includes(key))) {
     throw invalid;
   }
-  return { sort, value: cursor.value, id: cursor.id } as Cursor;
+  // A value of another kind would reach the database as a bad comparison.
+  const value = cursorValue(field, cursor.value);
+  if (value === undefined) throw invalid;
+  return { sort, value, id: cursor.id };
 }
 
 async function readBody(ctx: RouteContext): Promise<unknown> {
@@ -858,13 +905,20 @@ interface KeyedWrite {
    * `in_progress` while one is still writing; `new` otherwise.
    */
   state: KeyState;
-  /** Runs the write, then records the key as done, or frees it if the write fails. */
-  write(perform: () => Promise<Response>): Promise<Response>;
+  /**
+   * Runs the write. `perform` calls `committed` as soon as its mutation is
+   * stored (before reading the record back), which binds the key to this
+   * body for the replay window. A failure before that frees the key this
+   * request claimed; a key recorded done is never freed.
+   */
+  write(perform: (committed: () => Promise<void>) => Promise<Response>): Promise<Response>;
 }
 
 interface KeyClaim {
   fingerprint: string;
   state: 'pending' | 'done';
+  /** Names the request holding a pending claim, so only it frees the claim. */
+  owner?: string;
 }
 
 /**
@@ -883,8 +937,9 @@ async function idempotency(
   target: string[]
 ): Promise<KeyedWrite> {
   const value = request.headers.get('idempotency-key');
+  const noClaim = (perform: (committed: () => Promise<void>) => Promise<Response>) => perform(async () => undefined);
   if (value === null) {
-    return { enabled: false, key: '', mutation: {}, state: 'new', write: (perform) => perform() };
+    return { enabled: false, key: '', mutation: {}, state: 'new', write: noClaim };
   }
   if (!IDEMPOTENCY_KEY.test(value)) {
     throw parameterProblem('Idempotency-Key', 'Idempotency-Key must be 1 to 255 visible ASCII characters.');
@@ -894,11 +949,12 @@ async function idempotency(
   const mutation = { clientId: `v1-${app}`, mutationId: await sha256Hex(`${key}\n${fingerprint}`) };
   const store = caller.services.idempotencyStore;
   if (!store) {
-    return { enabled: true, key, mutation, state: 'new', write: (perform) => perform() };
+    return { enabled: true, key, mutation, state: 'new', write: noClaim };
   }
   const claim = `v1-idempotency:${key}`;
-  const encode = (state: KeyClaim['state']) => JSON.stringify({ fingerprint, state } satisfies KeyClaim);
-  const result = await store.setIfAbsent({ key: claim, value: encode('pending'), ttlSeconds: IDEMPOTENCY_PENDING_SECONDS });
+  const pending = JSON.stringify({ fingerprint, state: 'pending', owner: crypto.randomUUID() } satisfies KeyClaim);
+  const done = JSON.stringify({ fingerprint, state: 'done' } satisfies KeyClaim);
+  const result = await store.setIfAbsent({ key: claim, value: pending, ttlSeconds: IDEMPOTENCY_PENDING_SECONDS });
   let state: KeyState = 'new';
   if (!result.inserted) {
     const existing = parseClaim(result.existing);
@@ -912,18 +968,27 @@ async function idempotency(
     mutation,
     state,
     write: async (perform) => {
-      let response: Response;
+      let stored = false;
+      const committed = async () => {
+        if (stored) return;
+        stored = true;
+        await store.set({ key: claim, value: done, ttlSeconds: IDEMPOTENCY_TTL_SECONDS }).catch(logFailure);
+      };
       try {
-        response = await perform();
+        return await perform(committed);
       } catch (error) {
-        // Only the request that claimed the key frees it for a retry.
-        if (result.inserted) await store.delete(claim).catch(logFailure);
+        // A write that never stored frees only the pending claim this request
+        // made; once any request records the key done, it stays bound.
+        if (!stored && result.inserted) await releaseClaim(store, claim, pending).catch(logFailure);
         throw error;
       }
-      await store.set({ key: claim, value: encode('done'), ttlSeconds: IDEMPOTENCY_TTL_SECONDS }).catch(logFailure);
-      return response;
     }
   };
+}
+
+/** Deletes a claim only while it still holds this request's pending value. */
+async function releaseClaim(store: ConditionalKVStoreAdapter, claim: string, pending: string): Promise<void> {
+  if (await store.get(claim) === pending) await store.delete(claim);
 }
 
 /** The digest naming one `Idempotency-Key` of one account, app, operation and target. */
