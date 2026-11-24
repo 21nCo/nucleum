@@ -1,0 +1,5724 @@
+{
+  "info": {
+    "description": "Versioned REST API for Pointron. Authenticate with a personal access token as a Bearer token. Lists page with cursors, writes accept an Idempotency-Key, and errors are RFC 9457 problem details.",
+    "title": "Pointron API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/pointron/collections": {
+      "get": {
+        "description": "Collections and types of the app's records. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`.",
+        "operationId": "listCollections",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "The `nextCursor` of the previous page, with the same `sort`.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isArchived",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isArchived equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isStarred",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isStarred equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource",
+            "required": false,
+            "schema": {
+              "description": "Only records whose resource equals this value.",
+              "enum": [
+                "accessLog",
+                "objective",
+                "session",
+                "sessionLog",
+                "task",
+                "event",
+                "collection",
+                "linkTag",
+                "property",
+                "view",
+                "space"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "label",
+                "-label",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "description": "Only records whose type equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "typeToExtend",
+            "required": false,
+            "schema": {
+              "description": "Only records whose typeToExtend equals this value.",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Collections and types of the app's records.",
+                        "properties": {
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isArchived": {
+                            "type": "boolean"
+                          },
+                          "isStarred": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "resource": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "typeToExtend": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "Collection",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "CollectionPage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List collections",
+        "tags": [
+          "collections"
+        ]
+      },
+      "post": {
+        "description": "Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "createCollection",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "isStarred": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "resource": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "typeToExtend": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "resource"
+                ],
+                "title": "CollectionCreate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Collections and types of the app's records.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "resource": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "typeToExtend": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Collection",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The created record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Create a collection",
+        "tags": [
+          "collections"
+        ]
+      }
+    },
+    "/v1/pointron/collections/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getCollection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Collections and types of the app's records.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "resource": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "typeToExtend": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Collection",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one collection",
+        "tags": [
+          "collections"
+        ]
+      },
+      "patch": {
+        "description": "Sets only the fields in the body. Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "updateCollection",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "isStarred": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "title": "CollectionUpdate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Collections and types of the app's records.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "resource": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "typeToExtend": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Collection",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The updated record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Update a collection",
+        "tags": [
+          "collections"
+        ]
+      }
+    },
+    "/v1/pointron/events": {
+      "get": {
+        "description": "Calendar events. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`.",
+        "operationId": "listEvents",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "The `nextCursor` of the previous page, with the same `sort`.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endUnix",
+            "required": false,
+            "schema": {
+              "description": "Only records whose endUnix equals this value.",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "description": "Only records whose event equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isArchived",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isArchived equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "label",
+                "-label",
+                "startUnix",
+                "-startUnix",
+                "endUnix",
+                "-endUnix",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startUnix",
+            "required": false,
+            "schema": {
+              "description": "Only records whose startUnix equals this value.",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Calendar events.",
+                        "properties": {
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "endUnix": {
+                            "type": "number"
+                          },
+                          "event": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isArchived": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "startUnix": {
+                            "type": "number"
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "value": {}
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "Event",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "EventPage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List events",
+        "tags": [
+          "events"
+        ]
+      },
+      "post": {
+        "description": "Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "createEvent",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "endUnix": {
+                    "type": "number"
+                  },
+                  "event": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "startUnix": {
+                    "type": "number"
+                  },
+                  "value": {}
+                },
+                "required": [
+                  "event"
+                ],
+                "title": "EventCreate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Calendar events.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "endUnix": {
+                      "type": "number"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "startUnix": {
+                      "type": "number"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "value": {}
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Event",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The created record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Create a event",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/v1/pointron/events/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getEvent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Calendar events.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "endUnix": {
+                      "type": "number"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "startUnix": {
+                      "type": "number"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "value": {}
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Event",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one event",
+        "tags": [
+          "events"
+        ]
+      },
+      "patch": {
+        "description": "Sets only the fields in the body. Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "updateEvent",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "endUnix": {
+                    "type": "number"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "startUnix": {
+                    "type": "number"
+                  },
+                  "value": {}
+                },
+                "title": "EventUpdate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Calendar events.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "endUnix": {
+                      "type": "number"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "startUnix": {
+                      "type": "number"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "value": {}
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Event",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The updated record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Update a event",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/v1/pointron/link-tags": {
+      "get": {
+        "description": "Tags applied to links between records. Requires pointron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged.",
+        "operationId": "listLinkTags",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "group",
+            "required": false,
+            "schema": {
+              "description": "Only records whose group equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isArchived",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isArchived equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "label",
+                "-label",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Tags applied to links between records.",
+                        "properties": {
+                          "color": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "group": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isArchived": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "LinkTag",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "LinkTagPage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List link-tags",
+        "tags": [
+          "link-tags"
+        ]
+      }
+    },
+    "/v1/pointron/link-tags/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getLinkTag",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Tags applied to links between records.",
+                  "properties": {
+                    "color": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "group": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "LinkTag",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one linkTag",
+        "tags": [
+          "link-tags"
+        ]
+      }
+    },
+    "/v1/pointron/objectives": {
+      "get": {
+        "description": "Goals, projects and routines with optional parents. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`.",
+        "operationId": "listObjectives",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "The `nextCursor` of the previous page, with the same `sort`.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isArchived",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isArchived equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isPinnedForQuickFocus",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isPinnedForQuickFocus equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isStarred",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isStarred equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "parentId",
+            "required": false,
+            "schema": {
+              "description": "Only records whose parentId equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "label",
+                "-label",
+                "sortOrder",
+                "-sortOrder",
+                "startDate",
+                "-startDate",
+                "endDate",
+                "-endDate",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "description": "Only records whose status equals this value.",
+              "enum": [
+                "NOT_STARTED",
+                "IN_PROGRESS",
+                "COMPLETED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "description": "Only records whose type equals this value.",
+              "enum": [
+                "INDEFINITE",
+                "DEFINITE",
+                "ROUTINE"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Goals, projects and routines with optional parents.",
+                        "properties": {
+                          "color": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "description": {},
+                          "endDate": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isArchived": {
+                            "type": "boolean"
+                          },
+                          "isLocked": {
+                            "type": "boolean"
+                          },
+                          "isPinnedForQuickFocus": {
+                            "type": "boolean"
+                          },
+                          "isStarred": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "parentId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "sortOrder": {
+                            "type": "number"
+                          },
+                          "startDate": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "status": {
+                            "enum": [
+                              "NOT_STARTED",
+                              "IN_PROGRESS",
+                              "COMPLETED"
+                            ],
+                            "type": "string"
+                          },
+                          "type": {
+                            "enum": [
+                              "INDEFINITE",
+                              "DEFINITE",
+                              "ROUTINE"
+                            ],
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "Objective",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "ObjectivePage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List objectives",
+        "tags": [
+          "objectives"
+        ]
+      },
+      "post": {
+        "description": "Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "createObjective",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "color": {
+                    "type": "number"
+                  },
+                  "description": {},
+                  "endDate": {
+                    "description": "Unix epoch milliseconds.",
+                    "type": "integer"
+                  },
+                  "isPinnedForQuickFocus": {
+                    "type": "boolean"
+                  },
+                  "isStarred": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "sortOrder": {
+                    "type": "number"
+                  },
+                  "startDate": {
+                    "description": "Unix epoch milliseconds.",
+                    "type": "integer"
+                  },
+                  "status": {
+                    "enum": [
+                      "NOT_STARTED",
+                      "IN_PROGRESS",
+                      "COMPLETED"
+                    ],
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": [
+                      "INDEFINITE",
+                      "DEFINITE",
+                      "ROUTINE"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "status"
+                ],
+                "title": "ObjectiveCreate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Goals, projects and routines with optional parents.",
+                  "properties": {
+                    "color": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {},
+                    "endDate": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isLocked": {
+                      "type": "boolean"
+                    },
+                    "isPinnedForQuickFocus": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "parentId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sortOrder": {
+                      "type": "number"
+                    },
+                    "startDate": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "status": {
+                      "enum": [
+                        "NOT_STARTED",
+                        "IN_PROGRESS",
+                        "COMPLETED"
+                      ],
+                      "type": "string"
+                    },
+                    "type": {
+                      "enum": [
+                        "INDEFINITE",
+                        "DEFINITE",
+                        "ROUTINE"
+                      ],
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Objective",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The created record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Create a objective",
+        "tags": [
+          "objectives"
+        ]
+      }
+    },
+    "/v1/pointron/objectives/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getObjective",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Goals, projects and routines with optional parents.",
+                  "properties": {
+                    "color": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {},
+                    "endDate": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isLocked": {
+                      "type": "boolean"
+                    },
+                    "isPinnedForQuickFocus": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "parentId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sortOrder": {
+                      "type": "number"
+                    },
+                    "startDate": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "status": {
+                      "enum": [
+                        "NOT_STARTED",
+                        "IN_PROGRESS",
+                        "COMPLETED"
+                      ],
+                      "type": "string"
+                    },
+                    "type": {
+                      "enum": [
+                        "INDEFINITE",
+                        "DEFINITE",
+                        "ROUTINE"
+                      ],
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Objective",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one objective",
+        "tags": [
+          "objectives"
+        ]
+      },
+      "patch": {
+        "description": "Sets only the fields in the body. Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "updateObjective",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "color": {
+                    "type": "number"
+                  },
+                  "description": {},
+                  "endDate": {
+                    "description": "Unix epoch milliseconds.",
+                    "type": "integer"
+                  },
+                  "isLocked": {
+                    "type": "boolean"
+                  },
+                  "isPinnedForQuickFocus": {
+                    "type": "boolean"
+                  },
+                  "isStarred": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "sortOrder": {
+                    "type": "number"
+                  },
+                  "startDate": {
+                    "description": "Unix epoch milliseconds.",
+                    "type": "integer"
+                  },
+                  "status": {
+                    "enum": [
+                      "NOT_STARTED",
+                      "IN_PROGRESS",
+                      "COMPLETED"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "title": "ObjectiveUpdate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Goals, projects and routines with optional parents.",
+                  "properties": {
+                    "color": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {},
+                    "endDate": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isLocked": {
+                      "type": "boolean"
+                    },
+                    "isPinnedForQuickFocus": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "parentId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sortOrder": {
+                      "type": "number"
+                    },
+                    "startDate": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "status": {
+                      "enum": [
+                        "NOT_STARTED",
+                        "IN_PROGRESS",
+                        "COMPLETED"
+                      ],
+                      "type": "string"
+                    },
+                    "type": {
+                      "enum": [
+                        "INDEFINITE",
+                        "DEFINITE",
+                        "ROUTINE"
+                      ],
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Objective",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The updated record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Update a objective",
+        "tags": [
+          "objectives"
+        ]
+      }
+    },
+    "/v1/pointron/properties": {
+      "get": {
+        "description": "Properties defined for the app's records. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`.",
+        "operationId": "listProperties",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "The `nextCursor` of the previous page, with the same `sort`.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isArchived",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isArchived equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "propertyType",
+            "required": false,
+            "schema": {
+              "description": "Only records whose propertyType equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource",
+            "required": false,
+            "schema": {
+              "description": "Only records whose resource equals this value.",
+              "enum": [
+                "accessLog",
+                "objective",
+                "session",
+                "sessionLog",
+                "task",
+                "event",
+                "collection",
+                "linkTag",
+                "property",
+                "view",
+                "space"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "label",
+                "-label",
+                "order",
+                "-order",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "description": "Only records whose type equals this value.",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Properties defined for the app's records.",
+                        "properties": {
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isArchived": {
+                            "type": "boolean"
+                          },
+                          "isMulti": {
+                            "type": "boolean"
+                          },
+                          "isRequired": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "options": {
+                            "type": "array"
+                          },
+                          "order": {
+                            "type": "number"
+                          },
+                          "propertyType": {
+                            "type": "string"
+                          },
+                          "resource": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "Property",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "PropertyPage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List properties",
+        "tags": [
+          "properties"
+        ]
+      },
+      "post": {
+        "description": "Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "createProperty",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "isMulti": {
+                    "type": "boolean"
+                  },
+                  "isRequired": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "type": "array"
+                  },
+                  "order": {
+                    "type": "number"
+                  },
+                  "propertyType": {
+                    "type": "string"
+                  },
+                  "resource": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                },
+                "required": [],
+                "title": "PropertyCreate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Properties defined for the app's records.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isMulti": {
+                      "type": "boolean"
+                    },
+                    "isRequired": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "options": {
+                      "type": "array"
+                    },
+                    "order": {
+                      "type": "number"
+                    },
+                    "propertyType": {
+                      "type": "string"
+                    },
+                    "resource": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Property",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The created record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Create a property",
+        "tags": [
+          "properties"
+        ]
+      }
+    },
+    "/v1/pointron/properties/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getProperty",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Properties defined for the app's records.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isMulti": {
+                      "type": "boolean"
+                    },
+                    "isRequired": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "options": {
+                      "type": "array"
+                    },
+                    "order": {
+                      "type": "number"
+                    },
+                    "propertyType": {
+                      "type": "string"
+                    },
+                    "resource": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Property",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one property",
+        "tags": [
+          "properties"
+        ]
+      },
+      "patch": {
+        "description": "Sets only the fields in the body. Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "updateProperty",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "isMulti": {
+                    "type": "boolean"
+                  },
+                  "isRequired": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "options": {
+                    "type": "array"
+                  },
+                  "order": {
+                    "type": "number"
+                  }
+                },
+                "title": "PropertyUpdate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Properties defined for the app's records.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isMulti": {
+                      "type": "boolean"
+                    },
+                    "isRequired": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "options": {
+                      "type": "array"
+                    },
+                    "order": {
+                      "type": "number"
+                    },
+                    "propertyType": {
+                      "type": "string"
+                    },
+                    "resource": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Property",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The updated record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Update a property",
+        "tags": [
+          "properties"
+        ]
+      }
+    },
+    "/v1/pointron/search": {
+      "get": {
+        "description": "Full-text search over objective, task, event. Requires pointron:read (or nucleum).",
+        "operationId": "search",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "description": "Search text (required).",
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resource",
+            "required": false,
+            "schema": {
+              "description": "Search only this resource.",
+              "enum": [
+                "objective",
+                "task",
+                "event"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "record": {
+                            "type": "object"
+                          },
+                          "resource": {
+                            "enum": [
+                              "objective",
+                              "task",
+                              "event"
+                            ],
+                            "type": "string"
+                          },
+                          "score": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "resource",
+                          "id",
+                          "score",
+                          "record"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "title": "SearchResults",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Matches, best first."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "Search records",
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/v1/pointron/session-logs": {
+      "get": {
+        "description": "Focus time logged against sessions, objectives and tasks. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`.",
+        "operationId": "listSessionLogs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "The `nextCursor` of the previous page, with the same `sort`.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endUnix",
+            "required": false,
+            "schema": {
+              "description": "Only records whose endUnix equals this value.",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "objectiveId",
+            "required": false,
+            "schema": {
+              "description": "Only records whose objectiveId equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sessionId",
+            "required": false,
+            "schema": {
+              "description": "Only records whose sessionId equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "startUnix",
+                "-startUnix",
+                "endUnix",
+                "-endUnix",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startUnix",
+            "required": false,
+            "schema": {
+              "description": "Only records whose startUnix equals this value.",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "taskId",
+            "required": false,
+            "schema": {
+              "description": "Only records whose taskId equals this value.",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Focus time logged against sessions, objectives and tasks.",
+                        "properties": {
+                          "breakTime": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "end": {
+                            "type": "string"
+                          },
+                          "endUnix": {
+                            "type": "number"
+                          },
+                          "focus": {
+                            "type": "number"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "objectiveId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "sessionId": {
+                            "type": "string"
+                          },
+                          "start": {
+                            "type": "string"
+                          },
+                          "startUnix": {
+                            "type": "number"
+                          },
+                          "taskId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "taskName": {
+                            "type": "string"
+                          },
+                          "tzOffset": {
+                            "type": "number"
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "SessionLog",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "SessionLogPage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List session-logs",
+        "tags": [
+          "session-logs"
+        ]
+      }
+    },
+    "/v1/pointron/session-logs/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getSessionLog",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Focus time logged against sessions, objectives and tasks.",
+                  "properties": {
+                    "breakTime": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "end": {
+                      "type": "string"
+                    },
+                    "endUnix": {
+                      "type": "number"
+                    },
+                    "focus": {
+                      "type": "number"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "objectiveId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sessionId": {
+                      "type": "string"
+                    },
+                    "start": {
+                      "type": "string"
+                    },
+                    "startUnix": {
+                      "type": "number"
+                    },
+                    "taskId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "taskName": {
+                      "type": "string"
+                    },
+                    "tzOffset": {
+                      "type": "number"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "SessionLog",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one sessionLog",
+        "tags": [
+          "session-logs"
+        ]
+      }
+    },
+    "/v1/pointron/sessions": {
+      "get": {
+        "description": "Focus sessions; started and stopped by the focus tools. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`.",
+        "operationId": "listSessions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "The `nextCursor` of the previous page, with the same `sort`.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "endUnix",
+            "required": false,
+            "schema": {
+              "description": "Only records whose endUnix equals this value.",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "startUnix",
+                "-startUnix",
+                "endUnix",
+                "-endUnix",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "startUnix",
+            "required": false,
+            "schema": {
+              "description": "Only records whose startUnix equals this value.",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "description": "Only records whose type equals this value.",
+              "enum": [
+                "PREDEFINED_INTERVALS",
+                "COUNTDOWN",
+                "COUNTUP",
+                "MANUAL_ENTRY"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Focus sessions; started and stopped by the focus tools.",
+                        "properties": {
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "elapsed": {
+                            "type": "number"
+                          },
+                          "end": {
+                            "type": "string"
+                          },
+                          "endUnix": {
+                            "type": "number"
+                          },
+                          "extended": {
+                            "type": "number"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "plannedEndUnix": {
+                            "type": "number"
+                          },
+                          "start": {
+                            "type": "string"
+                          },
+                          "startUnix": {
+                            "type": "number"
+                          },
+                          "type": {
+                            "enum": [
+                              "PREDEFINED_INTERVALS",
+                              "COUNTDOWN",
+                              "COUNTUP",
+                              "MANUAL_ENTRY"
+                            ],
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "Session",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "SessionPage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List sessions",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/v1/pointron/sessions/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getSession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Focus sessions; started and stopped by the focus tools.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "elapsed": {
+                      "type": "number"
+                    },
+                    "end": {
+                      "type": "string"
+                    },
+                    "endUnix": {
+                      "type": "number"
+                    },
+                    "extended": {
+                      "type": "number"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "plannedEndUnix": {
+                      "type": "number"
+                    },
+                    "start": {
+                      "type": "string"
+                    },
+                    "startUnix": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "enum": [
+                        "PREDEFINED_INTERVALS",
+                        "COUNTDOWN",
+                        "COUNTUP",
+                        "MANUAL_ENTRY"
+                      ],
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Session",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one session",
+        "tags": [
+          "sessions"
+        ]
+      }
+    },
+    "/v1/pointron/spaces": {
+      "get": {
+        "description": "Spaces that group items from the app. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`.",
+        "operationId": "listSpaces",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "The `nextCursor` of the previous page, with the same `sort`.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isArchived",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isArchived equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isStarred",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isStarred equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "label",
+                "-label",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Spaces that group items from the app.",
+                        "properties": {
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isArchived": {
+                            "type": "boolean"
+                          },
+                          "isStarred": {
+                            "type": "boolean"
+                          },
+                          "items": {
+                            "type": "array"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "view": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "Space",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "SpacePage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List spaces",
+        "tags": [
+          "spaces"
+        ]
+      },
+      "post": {
+        "description": "Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "createSpace",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "isStarred": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [],
+                "title": "SpaceCreate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Spaces that group items from the app.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "items": {
+                      "type": "array"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "view": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Space",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The created record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Create a space",
+        "tags": [
+          "spaces"
+        ]
+      }
+    },
+    "/v1/pointron/spaces/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getSpace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Spaces that group items from the app.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "items": {
+                      "type": "array"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "view": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Space",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one space",
+        "tags": [
+          "spaces"
+        ]
+      },
+      "patch": {
+        "description": "Sets only the fields in the body. Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "updateSpace",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "isStarred": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "title": "SpaceUpdate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Spaces that group items from the app.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isStarred": {
+                      "type": "boolean"
+                    },
+                    "items": {
+                      "type": "array"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "view": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Space",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The updated record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Update a space",
+        "tags": [
+          "spaces"
+        ]
+      }
+    },
+    "/v1/pointron/tasks": {
+      "get": {
+        "description": "Dated tasks, optionally under an objective. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`.",
+        "operationId": "listTasks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "description": "The `nextCursor` of the previous page, with the same `sort`.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "dateUnix",
+            "required": false,
+            "schema": {
+              "description": "Only records whose dateUnix equals this value.",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isArchived",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isArchived equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "isChecked",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isChecked equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "objectiveId",
+            "required": false,
+            "schema": {
+              "description": "Only records whose objectiveId equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "label",
+                "-label",
+                "dateUnix",
+                "-dateUnix",
+                "completedAtUnix",
+                "-completedAtUnix",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Dated tasks, optionally under an objective.",
+                        "properties": {
+                          "completedAtUnix": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "dateUnix": {
+                            "type": "number"
+                          },
+                          "estimated": {
+                            "type": "number"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isArchived": {
+                            "type": "boolean"
+                          },
+                          "isChecked": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "minutes": {
+                            "type": "number"
+                          },
+                          "objectiveId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "Task",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "TaskPage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List tasks",
+        "tags": [
+          "tasks"
+        ]
+      },
+      "post": {
+        "description": "Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "createTask",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "dateUnix": {
+                    "type": "number"
+                  },
+                  "estimated": {
+                    "type": "number"
+                  },
+                  "isChecked": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "objectiveId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "dateUnix"
+                ],
+                "title": "TaskCreate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dated tasks, optionally under an objective.",
+                  "properties": {
+                    "completedAtUnix": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "dateUnix": {
+                      "type": "number"
+                    },
+                    "estimated": {
+                      "type": "number"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isChecked": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "minutes": {
+                      "type": "number"
+                    },
+                    "objectiveId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Task",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The created record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Create a task",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/v1/pointron/tasks/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getTask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dated tasks, optionally under an objective.",
+                  "properties": {
+                    "completedAtUnix": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "dateUnix": {
+                      "type": "number"
+                    },
+                    "estimated": {
+                      "type": "number"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isChecked": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "minutes": {
+                      "type": "number"
+                    },
+                    "objectiveId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Task",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one task",
+        "tags": [
+          "tasks"
+        ]
+      },
+      "patch": {
+        "description": "Sets only the fields in the body. Requires pointron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "operationId": "updateTask",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "description": "Client-chosen key that makes retries of this write safe.",
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "dateUnix": {
+                    "type": "number"
+                  },
+                  "estimated": {
+                    "type": "number"
+                  },
+                  "isChecked": {
+                    "type": "boolean"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "objectiveId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "title": "TaskUpdate",
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Dated tasks, optionally under an objective.",
+                  "properties": {
+                    "completedAtUnix": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "dateUnix": {
+                      "type": "number"
+                    },
+                    "estimated": {
+                      "type": "number"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "isChecked": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "minutes": {
+                      "type": "number"
+                    },
+                    "objectiveId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Task",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The updated record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+          }
+        },
+        "summary": "Update a task",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/v1/pointron/views": {
+      "get": {
+        "description": "Saved collection views. Requires pointron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged.",
+        "operationId": "listViews",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "isArchived",
+            "required": false,
+            "schema": {
+              "description": "Only records whose isArchived equals this value.",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "layout",
+            "required": false,
+            "schema": {
+              "description": "Only records whose layout equals this value.",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-createdAt",
+              "description": "Sort field; a leading `-` sorts descending.",
+              "enum": [
+                "label",
+                "-label",
+                "createdAt",
+                "-createdAt",
+                "updatedAt",
+                "-updatedAt"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "description": "Saved collection views.",
+                        "properties": {
+                          "createdAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          },
+                          "groupBy": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isArchived": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "layout": {
+                            "type": "string"
+                          },
+                          "subGroupBy": {
+                            "type": "string"
+                          },
+                          "tabBy": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "description": "Unix epoch milliseconds.",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id"
+                        ],
+                        "title": "View",
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "nextCursor"
+                  ],
+                  "title": "ViewPage",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The page of records."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+          }
+        },
+        "summary": "List views",
+        "tags": [
+          "views"
+        ]
+      }
+    },
+    "/v1/pointron/views/{id}": {
+      "get": {
+        "description": "Requires pointron:read (or nucleum).",
+        "operationId": "getView",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Saved collection views.",
+                  "properties": {
+                    "createdAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    },
+                    "groupBy": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "isArchived": {
+                      "type": "boolean"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "layout": {
+                      "type": "string"
+                    },
+                    "subGroupBy": {
+                      "type": "string"
+                    },
+                    "tabBy": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "description": "Unix epoch milliseconds.",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "View",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The record."
+          },
+          "4XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          }
+        },
+        "summary": "Get one view",
+        "tags": [
+          "views"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "collections"
+    },
+    {
+      "name": "events"
+    },
+    {
+      "name": "link-tags"
+    },
+    {
+      "name": "objectives"
+    },
+    {
+      "name": "properties"
+    },
+    {
+      "name": "search"
+    },
+    {
+      "name": "session-logs"
+    },
+    {
+      "name": "sessions"
+    },
+    {
+      "name": "spaces"
+    },
+    {
+      "name": "tasks"
+    },
+    {
+      "name": "views"
+    }
+  ]
+}

@@ -43,6 +43,7 @@ import { createAccountRequestObservationMiddleware } from "./http/observability.
 import type { AccountFileProcessing } from "./files/processing.js";
 import { createAccountFileFn } from "./files/server.js";
 import { registerAccountFileRoutes } from "./files/routes.js";
+import { registerInterfaceApiRoutes } from "./api/routes.js";
 
 /** Required infrastructure dependencies for the account app. */
 export type AccountSyncDatabaseProvider =
@@ -360,6 +361,15 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
     getSyncServer
   });
   registerAccountFileRoutes({ app, getFileFn });
+  registerInterfaceApiRoutes({
+    app,
+    services: {
+      authenticate: (request) => auth.provider.authenticate(request),
+      getSyncServer,
+      regionId,
+      logError: (message, error) => logger.error(message, { error })
+    }
+  });
   registerAccountAuthRoutes({ app, auth });
 }
 
