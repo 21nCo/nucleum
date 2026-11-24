@@ -59,10 +59,13 @@ struct BaseView: View {
       if isShowOauthFlow {
         if let oauthUrl = URL(string: appStore.oauthUrl), isAllowedExternalUrl(oauthUrl) {
           WebAuthenticationView(
-            url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme
+            url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme,
+            onStart: { appStore.markSignInStarted() },
+            onStop: { _ = appStore.consumePendingSignIn() }
           ) {
             callbackURL, error in
             DispatchQueue.main.async {
+              _ = appStore.consumePendingSignIn()
               if let callbackURL = callbackURL {
                 Log.info("OAuth success callback: \(redactUrlForLog(callbackURL))")
                 processOauthResponse(callbackURL)
@@ -193,7 +196,7 @@ struct BaseView: View {
   }
 
   func processOauthResponse(_ url: URL) {
-    if url.absoluteString.contains("oauthsign") {
+    if NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme) != nil {
       guard let token = oauthCallbackValue(url, name: "token") else {
         Log.error(message: "OAuth response did not include a token")
         appStore.sendMessageToApp(message: [
@@ -213,26 +216,47 @@ struct BaseView: View {
     }
   }
 
+  /// Signs in the web layer with the token of an `oauthsignarchived` link.
+  func processArchivedSignIn(_ url: URL) {
+    let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+    guard let token = components?.queryItems?.first(where: { $0.name == "token" })?.value,
+      !token.isEmpty
+    else {
+      Log.error(message: "OAuth URL scheme did not include a token")
+      return
+    }
+    let isSignup =
+      components?.queryItems?.first(where: { $0.name == "signup" })?.value == "true"
+    self.src.params = ["token": token, "signup": isSignup ? "true" : "false"]
+    self.isShowInAppSafari = false
+    self.isShowOauthFlow = false
+  }
+
   func processUrlScheme(_ url: URL) {
     Log.info("Url Scheme triggered: \(redactUrlForLog(url))")
-    if url.absoluteString.contains("oauthsignin") {
+    let signInKind = NativeTrust.signInDeepLinkKind(url, appScheme: LocalConfig.urlScheme)
+    let signInToken =
+      (signInKind == "oauthsignarchived"
+        ? URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+          .first(where: { $0.name == "token" })?.value
+        : signInKind == "oauthsignin" ? oauthCallbackValue(url, name: "token") : nil)
+      .flatMap { $0.isEmpty ? nil : $0 }
+    if signInKind != nil
+      && !(signInToken != nil ? appStore.consumePendingSignIn() : appStore.hasPendingSignIn())
+    {
+      Log.error(message: "Ignored a sign-in link this app did not start")
+      return
+    }
+    if signInKind == "oauthsignin" {
       processOauthResponse(url)
       self.isShowInAppSafari = false
       self.isShowOauthFlow = false
-    } else if url.absoluteString.contains("oauthsignarchived") {
-      let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-      guard let token = components?.queryItems?.first(where: { $0.name == "token" })?.value else {
-        Log.error(message: "OAuth URL scheme did not include a token")
-        return
-      }
-      let isSignup =
-        components?.queryItems?.first(where: { $0.name == "signup" })?.value == "true"
-      // self.webOrigin = URL(string: "\(LocalConfig.webOrigin)/?token=\(token)&signup=\(isSignup)")!
-      self.src.params = ["token": token, "signup": isSignup ? "true" : "false"]
-      self.isShowInAppSafari = false
-      self.isShowOauthFlow = false
-    } else if url.absoluteString.contains("debug") {
-      self.src.params = ["debug": "true"]
+    } else if signInKind == "oauthsignarchived" {
+      processArchivedSignIn(url)
+    } else if url.host?.lowercased() == "debug" {
+      #if DEBUG
+        self.src.params = ["debug": "true"]
+      #endif
     }
   }
 

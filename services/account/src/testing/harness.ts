@@ -88,7 +88,7 @@ export function createAccountTestHarness(
   const regionLookupStore = input.regionLookupStore ?? createInMemoryRegionLookupStore();
   const logger = createCapturedLogger(`nucleus-account-test-${regionId}`);
   const oauth = createMockOAuthConfig({
-    returnTo: [`${authority}/auth/callback`, `${authority}/`],
+    returnTo: [`${authority}/auth/callback`, `${authority}/`, "nucleum://oauthsignin"],
     redirectUris: [
       `${authority}/auth/social/callback/google`,
       `${authority}/auth/social/callback/apple`

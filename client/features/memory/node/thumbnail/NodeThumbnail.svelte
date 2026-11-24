@@ -26,6 +26,7 @@
   import { TimeFormat } from "@21n/shared-utils/datetime/duration.type";
   import type { IRecordId } from "@nucleum/schema/legacy/data.type";
   import { fileStore } from "@nucleum/shared-state/files/file.store";
+  import { datafn } from "@nucleum/datafn/datafn.store";
   import type { IFile } from "@nucleum/shared-state/files/file.type";
   import { renderMdAsHtml } from "@21n/ui/elements/markdown/markdown.utils";
   import CollectionItemThumbnailProperties from "@nucleum/features/collections/properties/CollectionItemThumbnailProperties.svelte";
@@ -36,6 +37,7 @@
   import Icon from "@21n/ui/elements/Icon.svelte";
   import NodeThumbnailSocialPostPreview from "@nucleum/features/memory/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
   import CoverRenderer from "@nucleum/features/records/cover/CoverRenderer.svelte";
+  import FileUploadFailedIndicator from "@nucleum/features/memory/node/content/FileUploadFailedIndicator.svelte";
   let {
     item: itemProp,
     arrangement = Arrangement.LIST,
@@ -82,6 +84,7 @@
   let item = $state<INode | INodeThumb>(itemProp);
 
   let _url = $state<string | undefined>(undefined);
+  let uploadFileId = $state<string | undefined>(undefined);
   let filePreview = $derived(
     resolveFilePreview(item) as IFile | IRecordId | undefined
   );
@@ -142,21 +145,6 @@
   });
 
   $effect(() => {
-    if (accessPoint !== ResourceAccessPoint.LIBRARY) return;
-    if (item.contentType !== NodeType.NODULAR_MARKDOWN) return;
-    console.log(
-      "NodeThumbnail.libraryItem",
-      JSON.stringify({
-        id: item.id,
-        label: item.label,
-        text: item.text,
-        bodySearch: item.bodySearch,
-        labelSearch: item.labelSearch
-      })
-    );
-  });
-
-  $effect(() => {
     filePreview;
     void resolveUrl();
   });
@@ -169,6 +157,55 @@
     }
     _url = undefined;
   }
+
+  /** Cover values that are not a file record (see CoverRenderer). */
+  const nonFileCoverPrefixes = ["hex_", "gradient_", "unsplash_"];
+
+  /**
+   * The file the thumbnail shows, in the order its arrangement renders: a
+   * grid or masonry card shows its cover before its preview, a list row its
+   * preview before its cover. The first of them the item has is what it
+   * shows: a preview, or a cover that is a file record, is that file, and a
+   * color, gradient or Unsplash cover shows no file. With neither, the
+   * node's file.
+   */
+  function resolveShownFile(): IFile | IRecordId | undefined {
+    const cover = item?.cover || undefined;
+    const isCoverFirst =
+      arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY;
+    const isCoverShown = !!cover && (isCoverFirst || !filePreview);
+    if (!isCoverShown) return filePreview ?? item?.file;
+    const isFileCover =
+      typeof cover === "string" &&
+      !nonFileCoverPrefixes.some((prefix) => cover.includes(prefix));
+    return isFileCover ? cover : undefined;
+  }
+
+  /**
+   * The FileFn file the thumbnail shows (see resolveShownFile), whose failed
+   * upload it shows; the lookup of a record ID is dropped once another file
+   * is shown, or when it fails.
+   */
+  $effect(() => {
+    const shown = resolveShownFile();
+    uploadFileId = undefined;
+    if (!shown) return;
+    if (typeof shown === "object") {
+      uploadFileId = (shown as IFile).fileId;
+      return;
+    }
+    let isCurrent = true;
+    datafn.file.query({ filters: { id: shown } }).then(
+      (result) => {
+        const file = result.data?.[0] as IFile | undefined;
+        if (isCurrent) uploadFileId = file?.fileId;
+      },
+      () => undefined
+    );
+    return () => {
+      isCurrent = false;
+    };
+  });
 
   function propagateClick(event: MouseEvent) {
     onClick?.(event);
@@ -551,4 +588,8 @@
       </div>
     {/if}
   {/if}
+  <FileUploadFailedIndicator
+    fileId={uploadFileId}
+    class="absolute bottom-2 right-2 z-10"
+  />
 </ResourceThumbnailBase>

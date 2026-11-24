@@ -135,6 +135,19 @@ describe("createAccessToken", () => {
       message: "Sign in again to manage access tokens."
     });
   });
+  it("asks for a fresh sign-in when the account service requires one", async () => {
+    mocks.createApiKey.mockResolvedValue(fail("AUTHFN_REAUTHENTICATION_REQUIRED"));
+
+    const result = await createAccessToken({
+      name: "x",
+      app: "memotron",
+      access: "read",
+      expiresInDays: 7
+    });
+
+    expect(result).toMatchObject({ ok: false, kind: "session" });
+    expect(result.ok ? "" : result.message).toMatch(/sign in again/i);
+  });
 });
 
 describe("listAccessTokens", () => {

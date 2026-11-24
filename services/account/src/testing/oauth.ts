@@ -60,7 +60,6 @@ export function createMockOAuthConfig(input: {
     allowlistedRedirectUris: input.redirectUris ?? [],
     allowlistedReturnTo: input.returnTo ?? ['http://127.0.0.1:8787/auth/callback'],
     scopes: ['openid', 'email', 'profile'],
-    linkByVerifiedEmail: true,
     profileResolver: profileResolver('google')
   };
   const apple: AuthFnSocialProviderConfig = {
@@ -69,7 +68,6 @@ export function createMockOAuthConfig(input: {
     allowlistedRedirectUris: input.redirectUris ?? [],
     allowlistedReturnTo: input.returnTo ?? ['http://127.0.0.1:8787/auth/callback'],
     scopes: ['name', 'email'],
-    linkByVerifiedEmail: true,
     profileResolver: profileResolver('apple')
   };
 
