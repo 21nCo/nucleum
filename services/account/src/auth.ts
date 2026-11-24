@@ -31,7 +31,8 @@ import { accountScopeRegistry } from "./datafn/app-scopes.js";
  *
  * Apple is left out until the account service runs an `@authfn/social-oauth`
  * release that takes the Apple email only from the verified identity token
- * (0.1.8 or later). Earlier releases accept an unsigned email that the Apple
+ * (0.2.2 or later; 0.2.0 does not have the fix and 0.2.1 was never published).
+ * Earlier releases accept an unsigned email that the Apple
  * callback request carries, so linking by email through Apple could attach a
  * caller's own Apple ID to someone else's account. Apple IDs already linked to
  * an account keep signing in; an Apple sign-in whose email belongs to an
