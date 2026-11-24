@@ -219,8 +219,9 @@ function resourceRoutes(
 /** How a list treats archived records, for resources that can be archived. */
 function inactiveListNote(contract: InterfaceResourceContract): string {
   if (!contract.filters.includes('isArchived')) return '';
-  const under = inheritsInactive(contract.resource) ? ' and records under an archived parent' : '';
-  return ` Archived records${under} are left out unless \`isArchived=true\` is given, which lists them.`;
+  const archived = ' Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.';
+  if (!inheritsInactive(contract.resource)) return archived;
+  return `${archived} A record under an archived parent that is not archived itself is left out of every list; read it by id.`;
 }
 
 /** Whether a resource's records turn inactive with an archived ancestor. */

@@ -8,7 +8,7 @@
   "paths": {
     "/v1/memotron/collections": {
       "get": {
-        "description": "Collections and types of the app's records. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Collections and types of the app's records. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listCollections",
         "parameters": [
           {
@@ -955,7 +955,7 @@
     },
     "/v1/memotron/files": {
       "get": {
-        "description": "File records; uploads go through the files API. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "File records; uploads go through the files API. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listFiles",
         "parameters": [
           {
@@ -1394,7 +1394,7 @@
     },
     "/v1/memotron/link-tags": {
       "get": {
-        "description": "Tags applied to links between records. Requires memotron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Tags applied to links between records. Requires memotron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listLinkTags",
         "parameters": [
           {
@@ -1781,7 +1781,7 @@
     },
     "/v1/memotron/nodes": {
       "get": {
-        "description": "Notes, links and other memory nodes. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records and records under an archived parent are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Notes, links and other memory nodes. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves. A record under an archived parent that is not archived itself is left out of every list; read it by id.",
         "operationId": "listNodes",
         "parameters": [
           {
@@ -2753,7 +2753,7 @@
     },
     "/v1/memotron/properties": {
       "get": {
-        "description": "Properties defined for the app's records. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Properties defined for the app's records. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listProperties",
         "parameters": [
           {
@@ -3934,7 +3934,7 @@
     },
     "/v1/memotron/spaces": {
       "get": {
-        "description": "Spaces that group items from the app. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Spaces that group items from the app. Requires memotron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listSpaces",
         "parameters": [
           {
@@ -4791,7 +4791,7 @@
     },
     "/v1/memotron/views": {
       "get": {
-        "description": "Saved collection views. Requires memotron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Saved collection views. Requires memotron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listViews",
         "parameters": [
           {

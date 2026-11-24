@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { interfaceApps, interfaceContract, interfaceResources } from '@nucleum/schema/interfaces';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
@@ -625,6 +626,32 @@ describe('v1 archived records and references', () => {
     });
     expect(again.status).toBe(201);
     expect(again.headers.get('idempotent-replayed')).toBe('true');
+  });
+
+  it('lists a record under an archived parent only when it is archived itself, as the list description says', async () => {
+    const spec = JSON.parse(readFileSync(new URL('../../openapi/pointron.json', import.meta.url), 'utf8')) as {
+      paths: Record<string, { get?: { description?: string } }>;
+    };
+    const description = String(spec.paths['/v1/pointron/tasks']?.get?.description);
+    expect(description).toContain('lists the records that are archived themselves');
+    expect(description).toContain('A record under an archived parent that is not archived itself is left out of every list; read it by id.');
+    const child = await json(await call('/v1/pointron/tasks', actors.pointronWrite, {
+      body: { label: 'Listed nowhere', dateUnix: 1_700_000_000_000, objectiveId: 'objective:archived' }
+    }), 201);
+    const seeded = await call('/datafn/mutation', actors.cookie, {
+      body: [insert('task', 'task:archived-child', {
+        label: 'Archived child', dateUnix: 1_700_000_000_000, objectiveId: 'objective:archived', isArchived: true
+      })]
+    });
+    expect(seeded.status).toBe(200);
+    const archivedList = await ids(await call('/v1/pointron/tasks?isArchived=true&limit=100', actors.pointronWrite));
+    expect(archivedList).toContain('task:archived-child');
+    expect(archivedList).not.toContain(String(child.id));
+    expect(await ids(await call('/v1/pointron/tasks?limit=100', actors.pointronWrite))).not.toContain(String(child.id));
+    expect(await ids(await call('/v1/pointron/tasks?isArchived=false&limit=100', actors.pointronWrite)))
+      .not.toContain(String(child.id));
+    expect(await json(await call(`/v1/pointron/tasks/${String(child.id)}`, actors.pointronWrite), 200))
+      .toMatchObject({ id: child.id, label: 'Listed nowhere', objectiveId: 'objective:archived' });
   });
 
   it('refuses a reference to a record that does not exist without writing', async () => {

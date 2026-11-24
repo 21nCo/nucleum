@@ -8,7 +8,7 @@
   "paths": {
     "/v1/pointron/collections": {
       "get": {
-        "description": "Collections and types of the app's records. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Collections and types of the app's records. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listCollections",
         "parameters": [
           {
@@ -957,7 +957,7 @@
     },
     "/v1/pointron/events": {
       "get": {
-        "description": "Calendar events. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Calendar events. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listEvents",
         "parameters": [
           {
@@ -1835,7 +1835,7 @@
     },
     "/v1/pointron/link-tags": {
       "get": {
-        "description": "Tags applied to links between records. Requires pointron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Tags applied to links between records. Requires pointron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listLinkTags",
         "parameters": [
           {
@@ -2222,7 +2222,7 @@
     },
     "/v1/pointron/objectives": {
       "get": {
-        "description": "Goals, projects and routines with optional parents. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records and records under an archived parent are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Goals, projects and routines with optional parents. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves. A record under an archived parent that is not archived itself is left out of every list; read it by id.",
         "operationId": "listObjectives",
         "parameters": [
           {
@@ -3327,7 +3327,7 @@
     },
     "/v1/pointron/properties": {
       "get": {
-        "description": "Properties defined for the app's records. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Properties defined for the app's records. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listProperties",
         "parameters": [
           {
@@ -5462,7 +5462,7 @@
     },
     "/v1/pointron/spaces": {
       "get": {
-        "description": "Spaces that group items from the app. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Spaces that group items from the app. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listSpaces",
         "parameters": [
           {
@@ -6319,7 +6319,7 @@
     },
     "/v1/pointron/tasks": {
       "get": {
-        "description": "Dated tasks, optionally under an objective. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records and records under an archived parent are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Dated tasks, optionally under an objective. Requires pointron:read (or nucleum). Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves. A record under an archived parent that is not archived itself is left out of every list; read it by id.",
         "operationId": "listTasks",
         "parameters": [
           {
@@ -7266,7 +7266,7 @@
     },
     "/v1/pointron/views": {
       "get": {
-        "description": "Saved collection views. Requires pointron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists them.",
+        "description": "Saved collection views. Requires pointron:read (or nucleum). Rows are filtered to this app after the query runs, so the list is not paged. Archived records are left out unless `isArchived=true` is given, which lists the records that are archived themselves.",
         "operationId": "listViews",
         "parameters": [
           {
