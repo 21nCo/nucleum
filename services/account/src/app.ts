@@ -32,6 +32,7 @@ import {
 } from "./observability/events.js";
 import { sendAccountDebugLog } from "./debug-sink.js";
 import { createSyncServer } from "./datafn/server.js";
+import { createSyncSearchProvider } from "./datafn/search-provider.js";
 import type { SyncServer } from "./datafn/server.js";
 import { registerAccountDatafnRoutes } from "./datafn/routes.js";
 import {
@@ -119,6 +120,12 @@ export interface AccountServices {
    * it does nothing.
    */
   retryFileDeletions: (options?: { limit?: number }) => Promise<FileDeletionRetryResult>;
+  /**
+   * The search provider the sync server indexes writes with, and the region
+   * it tags them with, once `getSyncServer` has created that server; undefined
+   * before then or when search is not configured.
+   */
+  getSyncSearchIndex?: () => { provider: SearchProvider; regionId?: string } | undefined;
   regionId: string;
   corsOrigins: string[];
   observability: SuperfunctionObservability<AccountObservationEvent>;
@@ -206,10 +213,16 @@ export function buildAccountServices(
         })
       : undefined;
   let syncServer: Promise<SyncServer> | undefined;
+  let syncSearchProvider: SearchProvider | undefined;
   const getSyncServer = () => {
     syncServer ??= resolveSyncDatabase(infra.syncDatabase)
-      .then((syncDatabase) =>
-        createSyncServer({
+      .then((syncDatabase) => {
+        // Resolved here, as the sync server would, so the v1 API indexes its
+        // writes with the same provider instance.
+        syncSearchProvider =
+          infra.syncSearchProvider ??
+          createSyncSearchProvider({ observability, regionId });
+        return createSyncServer({
           auth: {
             authenticate: (request) => auth.provider.authenticate(request),
             authorizeMutation: (request) => auth.authorizeMutation(request)
@@ -218,11 +231,11 @@ export function buildAccountServices(
           stores: infra.stores,
           regionId,
           observability,
-          searchProvider: infra.syncSearchProvider,
+          searchProvider: syncSearchProvider,
           rateLimit: integrations.syncRateLimit,
           fileDeletions: createFileDeletions(syncDatabase)
-        })
-      )
+        });
+      })
       .catch((error) => {
         syncServer = undefined;
         throw error;
@@ -255,6 +268,15 @@ export function buildAccountServices(
     getSyncServer,
     getFileFn,
     retryFileDeletions,
+    getSyncSearchIndex: () =>
+      syncSearchProvider
+        ? {
+            provider: syncSearchProvider,
+            // createSyncServer adds DataFn's multi-region plugin, which tags
+            // indexed records with this region, only with a directory store.
+            regionId: infra.stores.directory ? regionId : undefined
+          }
+        : undefined,
     regionId,
     corsOrigins,
     observability,
@@ -374,6 +396,7 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
       getSyncServer,
       regionId,
       idempotencyStore: services.infra.stores.atomicKv,
+      getSearchIndex: () => services.getSyncSearchIndex?.(),
       logError: (message, error) => logger.error(message, { error })
     }
   });

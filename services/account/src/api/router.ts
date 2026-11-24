@@ -1,5 +1,5 @@
 import { createRouter, type Route, type RouteContext, type Router } from '@superfunctions/http';
-import { DatafnExecutorError, type DatafnExecutor } from '@datafn/server';
+import { DatafnExecutorError, type DatafnExecutor, type SearchProvider } from '@datafn/server';
 import { AuthFnError, type AuthFnSession } from 'authfn';
 import type { ConditionalKVStoreAdapter } from '@superfunctions/db';
 import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
@@ -15,6 +15,7 @@ import {
 } from '@nucleum/schema/interfaces';
 import type { SyncContext, SyncServer } from '../datafn/server.js';
 import { resolveAppScopeAccess, type AppGrant } from '../datafn/app-scopes.js';
+import { resolveAccountUserNamespace } from '../datafn/namespace.js';
 import { ApiProblem, parameterProblem, problemSchema, validationProblem } from './problem.js';
 import {
   parseFilterValue,
@@ -39,6 +40,13 @@ export interface InterfaceApiServices {
    * another body still never replays: creates are refused and updates apply.
    */
   idempotencyStore?: ConditionalKVStoreAdapter;
+  /**
+   * The search provider the sync server indexes its mutations with, and the
+   * region DataFn tags indexed records with (when it runs multi-region). A v1
+   * write runs in one DataFn transact call, which does not index, so the API
+   * indexes the record each write commits the same way.
+   */
+  getSearchIndex?(): { provider: Pick<SearchProvider, 'updateIndices'>; regionId?: string } | undefined;
   /** Records failures the API answers with a 500. */
   logError?(message: string, error: unknown): void;
 }
@@ -845,7 +853,9 @@ async function createRecord(
       await committed();
       // A replayed create whose record is gone meanwhile has nothing to answer with.
       if (!row && result.deduped === true) throw idempotencyConflict();
-      return respond(project(contract, withReferences(contract, row ?? { ...record, id }, record)), result.deduped === true);
+      const stored = withReferences(contract, row ?? { ...record, id }, record);
+      await indexWritten(caller, contract.resource, stored);
+      return respond(project(contract, stored), result.deduped === true);
     }
     if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
     const stored = await matchKeyedRecord(app, contract, caller, id, body);
@@ -907,8 +917,9 @@ async function updateRecord(
     }
     await committed();
     if (!row && result.deduped === true) throw notVisible(contract, id);
-    return respond(project(contract, withReferences(contract, row ?? { ...before, ...record }, record, before)),
-      result.deduped === true);
+    const stored = withReferences(contract, row ?? { ...before, ...record }, record, before);
+    await indexWritten(caller, contract.resource, stored);
+    return respond(project(contract, stored), result.deduped === true);
   });
 }
 
@@ -1005,6 +1016,30 @@ async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<
   if (!result.ok) return { result, row: null };
   const rows = (read as Partial<QueryResult> | undefined)?.data;
   return { result, row: Array.isArray(rows) ? rows.find((entry) => entry.id === id) ?? null : null };
+}
+
+/**
+ * Indexes a record a v1 write committed. DataFn's ordinary mutation route
+ * indexes the stored record after its write, but its transact call does not,
+ * so the API does the same with the sync server's provider and namespace.
+ * As in DataFn, a failed index update is logged and does not fail the write.
+ */
+async function indexWritten(caller: Caller, resource: string, stored: Row): Promise<void> {
+  const index = caller.services.getSearchIndex?.();
+  if (!index) return;
+  try {
+    await index.provider.updateIndices({
+      resource,
+      records: [{
+        ...stored,
+        __ns: resolveAccountUserNamespace(caller.actorId),
+        ...(index.regionId ? { __region: index.regionId } : {})
+      }],
+      operation: 'upsert'
+    });
+  } catch (error) {
+    caller.services.logError?.('v1 API search index update failed; the write stands', error);
+  }
 }
 
 function isMutationResult(value: unknown): value is MutationResult {
@@ -1320,7 +1355,14 @@ async function run<T>(
   }
 }
 
-/** Maps a DataFn failure to a problem, without exposing internal errors. */
+/** DataFn codes that describe the caller's input rather than a server failure. */
+const CALLER_INPUT_CODES = new Set(['LIMIT_EXCEEDED', 'RELATION_RESTRICTED', 'DATAFN_PAYLOAD_TOO_LARGE']);
+
+/**
+ * Maps a DataFn failure to a problem, without exposing internal errors.
+ * DataFn answers most failures, its own internal ones included, with HTTP
+ * 400, so the code decides; the status counts only when there is no code.
+ */
 function datafnProblem(
   status: number | undefined,
   code: string | undefined,
@@ -1328,25 +1370,46 @@ function datafnProblem(
   access: Access,
   services: InterfaceApiServices | undefined
 ): ApiProblem {
-  if (status === 404 || code === 'NOT_FOUND') {
-    return new ApiProblem(404, 'not_found', 'No record with that id is visible to this token.');
+  const kind = code === undefined ? statusKind(status) : codeKind(code);
+  switch (kind) {
+    case 'not_found':
+      return new ApiProblem(404, 'not_found', 'No record with that id is visible to this token.');
+    case 'forbidden':
+      return new ApiProblem(403, 'forbidden', 'This token may not reach that record.');
+    case 'conflict':
+      return new ApiProblem(409, 'conflict', message ?? 'The write conflicts with the stored record.');
+    case 'rate_limited':
+      return new ApiProblem(429, 'rate_limited', 'Too many requests; retry later.');
+    case 'invalid':
+      return access === 'write'
+        ? validationProblem([{ pointer: '', detail: message ?? 'The write is invalid.' }])
+        : new ApiProblem(400, 'invalid_request', message ?? 'The request is invalid.');
+    default:
+      services?.logError?.('v1 API DataFn request failed', { status, code, message });
+      return new ApiProblem(500, 'internal', 'The request could not be completed.');
   }
-  if (status === 403 || code === 'FORBIDDEN') {
-    return new ApiProblem(403, 'forbidden', 'This token may not reach that record.');
+}
+
+type FailureKind = 'not_found' | 'forbidden' | 'conflict' | 'rate_limited' | 'invalid' | 'internal';
+
+function codeKind(code: string): FailureKind {
+  if (code === 'NOT_FOUND') return 'not_found';
+  if (code === 'FORBIDDEN') return 'forbidden';
+  if (code === 'CONFLICT') return 'conflict';
+  if (code === 'RATE_LIMITED' || code === 'DATAFN_ROUTE_RATE_LIMITED') return 'rate_limited';
+  if (code.startsWith('DFQL_') || CALLER_INPUT_CODES.has(code)) return 'invalid';
+  return 'internal';
+}
+
+function statusKind(status: number | undefined): FailureKind {
+  switch (status) {
+    case 404: return 'not_found';
+    case 403: return 'forbidden';
+    case 409: return 'conflict';
+    case 429: return 'rate_limited';
+    case 400: return 'invalid';
+    default: return 'internal';
   }
-  if (status === 409 || code === 'CONFLICT') {
-    return new ApiProblem(409, 'conflict', message ?? 'The write conflicts with the stored record.');
-  }
-  if (status === 429 || code === 'RATE_LIMITED') {
-    return new ApiProblem(429, 'rate_limited', 'Too many requests; retry later.');
-  }
-  if (status === 400 || code === 'DFQL_INVALID') {
-    return access === 'write'
-      ? validationProblem([{ pointer: '', detail: message ?? 'The write is invalid.' }])
-      : new ApiProblem(400, 'invalid_request', message ?? 'The request is invalid.');
-  }
-  services?.logError?.('v1 API DataFn request failed', { status, code, message });
-  return new ApiProblem(500, 'internal', 'The request could not be completed.');
 }
 
 function toProblem(error: unknown, services: InterfaceApiServices | undefined): ApiProblem {

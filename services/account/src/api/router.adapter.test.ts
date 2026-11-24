@@ -295,7 +295,11 @@ describe('v1 routes on PostgreSQL-like storage', () => {
 
   it.each([
     { name: 'a failed result', fail: () => ({ ok: false, errors: [{ code: 'INTERNAL', message: 'Failed query', path: '$' }] }) },
-    { name: 'a thrown internal error', fail: () => { throw new DatafnExecutorError({ code: 'INTERNAL', message: 'Internal error' }, 500); } }
+    { name: 'a thrown internal error', fail: () => { throw new DatafnExecutorError({ code: 'INTERNAL', message: 'Internal error' }, 500); } },
+    // DataFn's transact handler sends its own failures with HTTP 400.
+    { name: 'a transact failure sent as a 400', fail: () => {
+      throw new DatafnExecutorError({ code: 'INTERNAL', message: 'Transaction failed: example internal detail' }, 400);
+    } }
   ])('answers 422 when the referenced record is removed while the write runs ($name)', async ({ fail }) => {
     const rows: Row[] = [{ resource: 'objective', id: 'objective:g', label: 'Goal' }];
     const base = createPostgresLikeServices(rows);
@@ -481,5 +485,81 @@ describe('v1 routes on PostgreSQL-like storage', () => {
     expect(response.status).toBe(500);
     expect(JSON.stringify(await response.json())).not.toContain('database unavailable');
     expect(logError).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ message: 'database unavailable' }));
+  });
+
+  describe('DataFn failures', () => {
+    const internal = () => new DatafnExecutorError({ code: 'INTERNAL', message: 'Transaction failed: example internal detail' }, 400);
+    const invalid = () => new DatafnExecutorError({ code: 'DFQL_INVALID', message: 'example invalid input' }, 400);
+
+    /** Services whose executor throws `error` from every transact and query call. */
+    function failing(error: () => DatafnExecutorError) {
+      const logError = vi.fn();
+      const base = createPostgresLikeServices([task('task:a', null)], { logError });
+      const services: InterfaceApiServices = {
+        ...base.services,
+        getSyncServer: async () => ({
+          executor: {
+            query: async () => { throw error(); },
+            transact: async () => { throw error(); }
+          }
+        }) as unknown as SyncServer
+      };
+      return { services, logError };
+    }
+
+    /** Lets the PATCH existence check read the row, then fails the write. */
+    function failingWrite(error: () => DatafnExecutorError) {
+      const logError = vi.fn();
+      const base = createPostgresLikeServices([task('task:a', null)], { logError });
+      const services: InterfaceApiServices = {
+        ...base.services,
+        getSyncServer: async () => {
+          const executor = (await base.services.getSyncServer()).executor;
+          return { executor: { query: executor.query, transact: async () => { throw error(); } } } as unknown as SyncServer;
+        }
+      };
+      return { services, logError };
+    }
+
+    const writes = [
+      { method: 'POST', path: '/v1/pointron/tasks', body: { label: 'Created', dateUnix: 900 } },
+      { method: 'PATCH', path: '/v1/pointron/tasks/task:a', body: { label: 'Renamed' } }
+    ];
+
+    it.each(writes)('answers an internal DataFn failure sent as a 400 on $method with a logged 500', async (write) => {
+      const { services, logError } = failingWrite(internal);
+      const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
+      expect(response.status).toBe(500);
+      expect(response.headers.get('content-type')).toContain('application/problem+json');
+      const text = await response.text();
+      expect(JSON.parse(text)).toMatchObject({ status: 500, code: 'internal' });
+      expect(text).not.toContain('example internal detail');
+      expect(logError).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ code: 'INTERNAL' }));
+    });
+
+    it('answers an internal DataFn failure sent as a 400 on a list with a logged 500', async () => {
+      const { services, logError } = failing(internal);
+      const response = await send(services, '/v1/pointron/tasks');
+      expect(response.status).toBe(500);
+      expect(response.headers.get('content-type')).toContain('application/problem+json');
+      const text = await response.text();
+      expect(JSON.parse(text)).toMatchObject({ status: 500, code: 'internal' });
+      expect(text).not.toContain('example internal detail');
+      expect(logError).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ code: 'INTERNAL' }));
+    });
+
+    it.each(writes)('keeps a DataFn input error on $method a 422', async (write) => {
+      const { services } = failingWrite(invalid);
+      const response = await send(services, write.path, { method: write.method, body: JSON.stringify(write.body) });
+      expect(response.status).toBe(422);
+      expect(await response.json()).toMatchObject({ code: 'validation_failed' });
+    });
+
+    it('keeps a DataFn input error on a read a 400', async () => {
+      const { services } = failing(invalid);
+      const response = await send(services, '/v1/pointron/tasks');
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ code: 'invalid_request' });
+    });
   });
 });

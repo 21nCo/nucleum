@@ -555,6 +555,26 @@ describe('v1 search', () => {
     expect(hit?.record).toMatchObject({ id: 'node:n1', label: 'Alpha note' });
   });
 
+  it.each([
+    { app: 'pointron', path: 'tasks', actor: 'pointronWrite' as const, body: { dateUnix: 1_700_000_000_000 } },
+    { app: 'memotron', path: 'nodes', actor: 'memotronWrite' as const, body: { contentType: 'SIMPLE_TEXT' } }
+  ])('indexes $app $path created and renamed through v1 for search', async ({ app, path, actor, body }) => {
+    const hits = async (q: string) => {
+      const found = await json(await call(`/v1/${app}/search?q=${q}`, actors[actor]), 200);
+      return (found.data as Body[]).map((hit) => hit.id);
+    };
+    const created = await json(await call(`/v1/${app}/${path}`, actors[actor], {
+      body: { label: `Zebraprobe ${app}`, ...body }
+    }), 201);
+    expect(await hits('Zebraprobe')).toContain(created.id);
+    await json(await call(`/v1/${app}/${path}/${encodeURIComponent(String(created.id))}`, actors[actor], {
+      method: 'PATCH',
+      body: { label: `Quokkaprobe ${app}` }
+    }), 200);
+    expect(await hits('Quokkaprobe')).toContain(created.id);
+    expect(await hits('Zebraprobe')).not.toContain(created.id);
+  });
+
   it('validates the search parameters', async () => {
     for (const query of ['', '?q=', '?q=Alpha&resource=objective', '?q=Alpha&limit=51', '?q=Alpha&extra=1']) {
       await problem(await call(`/v1/memotron/search${query}`, actors.memotronRead), 400, 'invalid_parameter');
