@@ -9124,6 +9124,9 @@ describe("backup and restore of a local-only user's files", () => {
     // restoring device would ever commit or remove it.
     const uncommitted = await captureInRetiredGuest();
     await (await localEntry(uncommitted.fileId)).removeEntry("committed");
+    // A failed restore rollback fenced it (see unrestoreEntry).
+    const fenced = await captureInRetiredGuest();
+    await writeLocalFile(fenced.fileId, "claim.json", "restore-fenced");
     const complete = await captureInRetiredGuest();
     const record = await capturePhoto();
 
@@ -9238,6 +9241,22 @@ describe("backup and restore of a local-only user's files", () => {
 
     await writeLocalFile(retired.fileId, "claim.json", "restore-fenced");
     await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(readHeldState(retired.fileId)).toEqual(held);
+  });
+
+  it("adds a later backup's publish journal to a held capture an earlier restore wrote", async () => {
+    const retired = await captureInRetiredGuest();
+    const before = await backupFile();
+    await writeLocalFile(retired.fileId, "saved", `ok ${retired.id}`);
+    const held = readHeldState(retired.fileId);
+    const after = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(before, { triggerCloneUp: () => false });
+    expect(readHeldState(retired.fileId)[7][1]).toBeUndefined();
+    await restoreBackup(after, { triggerCloneUp: () => false });
+
     expect(readHeldState(retired.fileId)).toEqual(held);
   });
 

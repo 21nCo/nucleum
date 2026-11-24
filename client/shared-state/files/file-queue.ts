@@ -1192,7 +1192,8 @@ export async function exportQueuedFiles<T>(
 /**
  * Whether a guest backup carries a held local file's copy and its restore
  * writes it back: with its record ID and namespace, readable marks, and
- * claimed (settled once orphaned) or committed and not deleted (released).
+ * claimed by a named owner (settled once orphaned) or committed and not
+ * deleted (released).
  */
 export function isRestorableLocalCopy(copy: QueuedFileCopy) {
   const { record, marks = [], claim } = copy;
@@ -1204,7 +1205,7 @@ export function isRestorableLocalCopy(copy: QueuedFileCopy) {
     ) &&
     (claim === undefined
       ? copy.isCommitted === true && !marks.some((m) => m.name === DELETED_FILE)
-      : isClaim(Object(claim)))
+      : isClaim(Object(claim)) && isReadClaim(Object(claim)))
   );
 }
 
@@ -1212,7 +1213,7 @@ export function isRestorableLocalCopy(copy: QueuedFileCopy) {
  * Writes a guest backup's held local files back, still held, under one hold
  * of the queue's lock, each with its record copy last: a file already
  * there whole (record copy and bytes, committed if the copy is, not fenced)
- * is kept, any other (no pass publishes or reconciles one without a record
+ * is kept, with the copy's publish journal (`saved`) lines added, any other (no pass publishes or reconciles one without a record
  * copy) written again; one it cannot read rejects the restore. Rejects, leaving none it wrote, on a copy that is not restorable
  * (before any write), a failed write, or `isChanged` after the last write;
  * one whose removal it cannot confirm is left without its record copy, else
@@ -1231,7 +1232,21 @@ export async function restoreLocalQueuedFiles(
     try {
       for (const copy of files) {
         const entryName = toEntryName(copy.fileId);
-        if (await isWholeEntry(dir, entryName, copy.isCommitted)) continue;
+        if (await isWholeEntry(dir, entryName, copy.isCommitted)) {
+          const read = readEntryText(dir, entryName, "saved", true);
+          const had = (await read)?.split("\n") ?? [];
+          const saved = copy.marks?.find((m) => m.name === "saved")?.text;
+          const more = saved?.split("\n").filter((s) => !had.includes(s));
+          if (!more?.length) continue;
+          await bumpRevision(dir);
+          await writeEntryFile(
+            dir,
+            entryName,
+            "saved",
+            [...had, ...more].join("\n")
+          );
+          continue;
+        }
         await bumpRevision(dir);
         written.push(entryName);
         try {
