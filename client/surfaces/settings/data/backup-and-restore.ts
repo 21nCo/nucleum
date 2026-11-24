@@ -3,6 +3,7 @@ import type { DatafnImportResult } from "@nucleum/datafn/datafn.type";
 import {
   exportQueuedFiles,
   isFileQueueSupported,
+  LOCAL_FILE_QUEUE_DIR,
   renewRestoredFiles,
   resolveAccountFileQueueDir,
   settleRestoredFiles,
@@ -96,7 +97,11 @@ export async function createBackupBlob(): Promise<Blob> {
           resolveAccountFileQueueDir(userId),
           exportRecords
         )
-      : { records: await exportRecords(), files: [] };
+      : namespace?.startsWith("guest:")
+        ? withLocalFileBytes(
+            await exportQueuedFiles(LOCAL_FILE_QUEUE_DIR, exportRecords, true)
+          )
+        : { records: await exportRecords(), files: [] };
   } finally {
     runtime.stop();
   }
@@ -110,6 +115,24 @@ export async function createBackupBlob(): Promise<Blob> {
       ? toBackupParts(records, { userId, files })
       : [records];
   return new Blob(parts, { type: "application/json" });
+}
+
+function withLocalFileBytes(exported: {
+  records: Record<string, unknown>;
+  files: QueuedFileCopy[];
+}) {
+  const copies = new Map(exported.files.map((copy) => [copy.fileId, copy]));
+  const resources = exported.records.resources as Record<string, unknown>;
+  const records = Array.isArray(resources?.file) ? resources.file : [];
+  for (const record of records as Record<string, unknown>[]) {
+    const copy = copies.get(record.fileId as string);
+    if (!copy) continue;
+    delete record.fileId;
+    record.data = copy.data;
+    record.size = copy.data.length;
+    if (copy.thumbnail) record.thumbnailData = copy.thumbnail.data;
+  }
+  return { records: exported.records, files: [] };
 }
 
 /**
