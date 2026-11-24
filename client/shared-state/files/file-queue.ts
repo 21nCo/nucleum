@@ -271,6 +271,8 @@ export type QueuedFileEntry = {
   /** Stale mark: "changed", or "" (an earlier build's, unknown). */
   stale?: string;
   saved?: string;
+  /** The record copy it was listed with. */
+  record?: QueuedFileRecord;
   isDeleted: boolean;
   isOrphaned: boolean;
   claim?: QueuedFileClaim;
@@ -502,16 +504,16 @@ async function removeMark(
   });
 }
 
-/** Marks a local file orphaned, clearing its stale marks up to `before`. */
+/** Marks a local file orphaned, clearing the stale marks `covered` covers. */
 export async function markQueuedFileOrphaned(
   dir: string,
   fileId: string,
-  before = Number.NaN
+  covered: Partial<QueuedFileRecord> = {}
 ) {
   const name = toEntryName(fileId);
   await writeEntryFile(dir, name, ORPHANED_FILE, "");
   const entry = await getEntryDir(dir, name, true);
-  await removeGenerationMarks(entry, { id: "", verifiedAt: before });
+  await removeGenerationMarks(entry, { ...covered, id: "" });
   await removeMark(entry, STALE_FILE);
 }
 
@@ -519,9 +521,13 @@ export function toChangeGeneration() {
   return `${Date.now()}-${crypto.randomUUID()}`;
 }
 
+/** A generation as toChangeGeneration writes it: `<ms>-<uuid>`. */
+const GENERATION = /^\d+-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i;
+
 function toMarkGeneration(name: string) {
-  const [mark, generation] = name.split(/\.(.*)/);
-  return [STALE_FILE, DELETED_FILE].includes(mark) ? generation : undefined;
+  const [mark, generation = ""] = name.split(/\.(.*)/);
+  const isMark = [STALE_FILE, DELETED_FILE].includes(mark);
+  return isMark && GENERATION.test(generation) ? generation : undefined;
 }
 
 /** Whether a record copy (see reconcileLocalFile) covers a generation. */
@@ -544,7 +550,9 @@ async function removeGenerationMarks(
 
 /** Whether a stale or deleted mark holds: an uncovered generation's, or set. */
 function holdsMark(names: string[], mark: string, record?: QueuedFileRecord) {
-  const marks = names.filter((name) => name.startsWith(`${mark}.`));
+  const marks = names.filter(
+    (name) => name.startsWith(`${mark}.`) && toMarkGeneration(name)
+  );
   if (!marks.length) return names.includes(mark);
   return marks.some(
     (name) => !record || !isSupersededBy(record, toMarkGeneration(name))
@@ -639,6 +647,7 @@ export async function listQueuedFiles(dir: string, isStrict = false) {
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
       ...(await readHoldMarks(dir, entryName, record, isStrict)),
+      record,
       saved: await readEntryText(dir, entryName, SAVED_FILE, isStrict),
       isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
       claim: await readClaim(dir, entryName, isStrict)
@@ -1355,7 +1364,12 @@ export async function restoreLocalQueuedFiles(
             await write(name, thumbnail.data.slice().buffer as ArrayBuffer);
           }
           if (copy.isCommitted) await write(COMMITTED_FILE, "");
-          await write(RECORD_FILE, JSON.stringify(copy.record));
+          // Only a verified reread on this device releases its holds.
+          const unverified = { verifiedAt: undefined, read: undefined };
+          await write(
+            RECORD_FILE,
+            JSON.stringify({ ...copy.record, ...unverified })
+          );
         } finally {
           await bumpRevisionAfter(dir);
         }
