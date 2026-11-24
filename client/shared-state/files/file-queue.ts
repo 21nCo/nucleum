@@ -39,6 +39,8 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
+/** A local file's publish journal (see QueuedFilePublisher). */
+const SAVED_FILE = "saved";
 /** Marks a local file whose record was deleted; only its record's copy clears it. */
 const DELETED_FILE = "deleted";
 const CHANGED_MARK = "changed";
@@ -269,6 +271,8 @@ export type QueuedFileEntry = {
   isUploaded: boolean;
   /** Stale mark: "changed", or "" (an earlier build's, unknown). */
   stale?: string;
+  /** A local file's publish journal (see QueuedFilePublisher), if any. */
+  saved?: string;
   isDeleted: boolean;
   isOrphaned: boolean;
   claim?: QueuedFileClaim;
@@ -461,16 +465,20 @@ export async function markQueuedFileCommitted(
 
 /**
  * Replaces the copy of a local file's record with the record as it is now,
- * which its upload publishes, and clears its orphaned, deleted, then stale
- * marks: an interrupted orphan keeps its stale mark (see markQueuedFileStale).
+ * which its upload publishes, and (unless `isClearing` is false, for a copy
+ * not verified yet or one a newer change holds) clears its orphaned, deleted,
+ * then stale marks: an interrupted orphan keeps its stale mark (see
+ * markQueuedFileStale).
  */
 export async function writeQueuedFileRecord(
   dir: string,
   fileId: string,
-  record: QueuedFileRecord
+  record: QueuedFileRecord,
+  isClearing = true
 ): Promise<void> {
   const entryName = toEntryName(fileId);
   await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(record));
+  if (!isClearing) return;
   const entry = await getEntryDir(dir, entryName, true);
   await removeMark(entry, ORPHANED_FILE);
   await removeMark(entry, DELETED_FILE);
@@ -484,6 +492,15 @@ async function removeMark(
   await entry?.removeEntry(mark).catch((error: Error) => {
     if (error?.name !== "NotFoundError") throw error;
   });
+}
+
+/** Rewrites a local file's publish journal (see QueuedFilePublisher). */
+export async function writeQueuedFileSaved(
+  dir: string,
+  fileId: string,
+  text: string
+) {
+  await writeEntryFile(dir, toEntryName(fileId), SAVED_FILE, text);
 }
 
 /** Marks a local file orphaned: it does not publish until its copy is rewritten. */
@@ -551,6 +568,7 @@ export async function listQueuedFiles(dir: string, isStrict = false) {
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
       stale: await readEntryText(dir, entryName, STALE_FILE, isStrict),
+      saved: await readEntryText(dir, entryName, SAVED_FILE, isStrict),
       isDeleted:
         (await readEntryText(dir, entryName, DELETED_FILE, isStrict)) !==
         undefined,
