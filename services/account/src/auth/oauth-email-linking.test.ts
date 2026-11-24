@@ -51,6 +51,8 @@ describe('OAuth sign-in linking by verified email', () => {
     expect(compareVersions('0.2.3', '0.2.2')).toBeGreaterThan(0);
     expect(compareVersions('0.3.0', '0.2.2')).toBeGreaterThan(0);
     expect(compareVersions('0.10.0', '0.2.2')).toBeGreaterThan(0);
+    expect(compareVersions('0.2.2-rc.9007199254740992', '0.2.2-rc.9007199254740993')).toBeLessThan(0);
+    expect(compareVersions('0.9007199254740992.0', '0.9007199254740993.0')).toBeLessThan(0);
   });
 
   it('turns off a provider-level linkByVerifiedEmail for providers outside the policy', () => {
@@ -194,8 +196,9 @@ function compareVersions(left: string, right: string): number {
   const a = parseVersion(left);
   const b = parseVersion(right);
   for (let index = 0; index < 3; index += 1) {
-    if (a.core[index] !== b.core[index]) {
-      return a.core[index] - b.core[index];
+    const order = compareNumericIdentifiers(a.core[index], b.core[index]);
+    if (order !== 0) {
+      return order;
     }
   }
   if (a.prerelease === b.prerelease) {
@@ -223,7 +226,7 @@ function comparePrerelease(left: string[], right: string[]): number {
     const aNumeric = /^\d+$/.test(a);
     const bNumeric = /^\d+$/.test(b);
     if (aNumeric && bNumeric) {
-      return Number(a) - Number(b);
+      return compareNumericIdentifiers(a, b);
     }
     if (aNumeric !== bNumeric) {
       return aNumeric ? -1 : 1;
@@ -233,10 +236,21 @@ function comparePrerelease(left: string[], right: string[]): number {
   return left.length - right.length;
 }
 
-function parseVersion(version: string): { core: number[]; prerelease?: string } {
+// Compares digit strings without converting them to numbers, so identifiers
+// above Number.MAX_SAFE_INTEGER keep their order.
+function compareNumericIdentifiers(left: string, right: string): number {
+  const a = left.replace(/^0+(?=\d)/, '');
+  const b = right.replace(/^0+(?=\d)/, '');
+  if (a.length !== b.length) {
+    return a.length - b.length;
+  }
+  return a === b ? 0 : a < b ? -1 : 1;
+}
+
+function parseVersion(version: string): { core: string[]; prerelease?: string } {
   const match = /^(\d+)\.(\d+)\.(\d+)(?:-([^+]+))?(?:\+.*)?$/.exec(version);
   if (!match) {
     throw new Error(`Unrecognised version ${version}`);
   }
-  return { core: [Number(match[1]), Number(match[2]), Number(match[3])], prerelease: match[4] };
+  return { core: [match[1], match[2], match[3]], prerelease: match[4] };
 }
