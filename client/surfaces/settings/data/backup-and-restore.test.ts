@@ -9244,8 +9244,10 @@ describe("backup and restore of a local-only user's files", () => {
     expect(readHeldState(retired.fileId)).toEqual(held);
   });
 
-  it("adds a later backup's publish journal to a held capture an earlier restore wrote", async () => {
+  it("adds a later backup's publish journal to a held capture an earlier restore wrote, only under the same claim", async () => {
     const retired = await captureInRetiredGuest();
+    const claim = { userId: "user-a", baseUrl: "https://files.example.test" };
+    await writeLocalFile(retired.fileId, "claim.json", JSON.stringify(claim));
     const before = await backupFile();
     await writeLocalFile(retired.fileId, "saved", `ok ${retired.id}`);
     const held = readHeldState(retired.fileId);
@@ -9255,6 +9257,11 @@ describe("backup and restore of a local-only user's files", () => {
     await bootData(localAccount);
     await restoreBackup(before, { triggerCloneUp: () => false });
     expect(readHeldState(retired.fileId)[7][1]).toBeUndefined();
+    const other = JSON.stringify({ ...claim, userId: "user-b" });
+    await writeLocalFile(retired.fileId, "claim.json", other);
+    await restoreBackup(after, { triggerCloneUp: () => false });
+    expect(readHeldState(retired.fileId)[7][1]).toBeUndefined();
+    await writeLocalFile(retired.fileId, "claim.json", JSON.stringify(claim));
     await restoreBackup(after, { triggerCloneUp: () => false });
 
     expect(readHeldState(retired.fileId)).toEqual(held);
