@@ -9213,7 +9213,7 @@ describe("backup and restore of a local-only user's files", () => {
     expect(await readQueuedBytes(retired.fileId, "full")).toBe("photo bytes");
   });
 
-  it("keeps a whole held capture a guest restore cannot read, and writes again one a failed rollback fenced", async () => {
+  it("keeps a held capture with its record copy and bytes a guest restore cannot read or finds uncommitted, and writes again one a failed rollback fenced", async () => {
     const retired = await captureInRetiredGuest();
     const held = readHeldState(retired.fileId);
     const backup = await backupFile();
@@ -9229,7 +9229,7 @@ describe("backup and restore of a local-only user's files", () => {
       undefined,
       undefined,
       (path) =>
-        path[0] === LOCAL_QUEUE && path[2] === "committed"
+        path[0] === LOCAL_QUEUE && path[2] === "claim.json"
           ? unreadable
           : undefined
     );
@@ -9238,32 +9238,14 @@ describe("backup and restore of a local-only user's files", () => {
     ).rejects.toThrow("read failed");
     getDirectory = opfs.getDirectory;
     expect(readHeldState(retired.fileId)).toEqual(held);
+    // Not rewritten, so a rejected restore never removes it.
+    await (await localEntry(retired.fileId)).removeEntry("committed");
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(readHeldState(retired.fileId)[2][1]).toBeUndefined();
+    await writeLocalFile(retired.fileId, "committed");
 
     await writeLocalFile(retired.fileId, "claim.json", "restore-fenced");
     await restoreBackup(backup, { triggerCloneUp: () => false });
-    expect(readHeldState(retired.fileId)).toEqual(held);
-  });
-
-  it("adds a later backup's publish journal to a held capture an earlier restore wrote, only under the same claim", async () => {
-    const retired = await captureInRetiredGuest();
-    const claim = { userId: "user-a", baseUrl: "https://files.example.test" };
-    await writeLocalFile(retired.fileId, "claim.json", JSON.stringify(claim));
-    const before = await backupFile();
-    await writeLocalFile(retired.fileId, "saved", `ok ${retired.id}`);
-    const held = readHeldState(retired.fileId);
-    const after = await backupFile();
-
-    await clearBrowser();
-    await bootData(localAccount);
-    await restoreBackup(before, { triggerCloneUp: () => false });
-    expect(readHeldState(retired.fileId)[7][1]).toBeUndefined();
-    const other = JSON.stringify({ ...claim, userId: "user-b" });
-    await writeLocalFile(retired.fileId, "claim.json", other);
-    await restoreBackup(after, { triggerCloneUp: () => false });
-    expect(readHeldState(retired.fileId)[7][1]).toBeUndefined();
-    await writeLocalFile(retired.fileId, "claim.json", JSON.stringify(claim));
-    await restoreBackup(after, { triggerCloneUp: () => false });
-
     expect(readHeldState(retired.fileId)).toEqual(held);
   });
 

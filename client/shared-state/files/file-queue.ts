@@ -1212,9 +1212,8 @@ export function isRestorableLocalCopy(copy: QueuedFileCopy) {
 /**
  * Writes a guest backup's held local files back, still held, under one hold
  * of the queue's lock, each with its record copy last: a file already
- * there whole (record copy and bytes, committed if the copy is, not fenced)
- * is kept, with the copy's publish journal (`saved`) lines added when it
- * has the copy's claim, any other (no pass publishes or reconciles one without a record
+ * there whole (record copy, written last, and bytes, not fenced) is kept,
+ * any other (no pass publishes or reconciles one without a record
  * copy) written again; one it cannot read rejects the restore. Rejects, leaving none it wrote, on a copy that is not restorable
  * (before any write), a failed write, or `isChanged` after the last write;
  * one whose removal it cannot confirm is left without its record copy, else
@@ -1233,23 +1232,7 @@ export async function restoreLocalQueuedFiles(
     try {
       for (const copy of files) {
         const entryName = toEntryName(copy.fileId);
-        if (await isWholeEntry(dir, entryName, copy.isCommitted)) {
-          const read = readEntryText(dir, entryName, "saved", true);
-          const had = (await read)?.split("\n") ?? [];
-          const saved = copy.marks?.find((m) => m.name === "saved")?.text;
-          const more = saved?.split("\n").filter((s) => !had.includes(s));
-          const claim = await readClaim(dir, entryName, true);
-          if (!more?.length || !isSameClaim(Object(claim), Object(copy.claim)))
-            continue;
-          await bumpRevision(dir);
-          await writeEntryFile(
-            dir,
-            entryName,
-            "saved",
-            [...had, ...more].join("\n")
-          );
-          continue;
-        }
+        if (await isWholeEntry(dir, entryName)) continue;
         await bumpRevision(dir);
         written.push(entryName);
         try {
@@ -1289,20 +1272,11 @@ export async function restoreLocalQueuedFiles(
   });
 }
 
-async function isWholeEntry(
-  dir: string,
-  entryName: string,
-  isCommitted: boolean
-) {
+async function isWholeEntry(dir: string, entryName: string) {
   if (!(await readQueuedRecord(dir, entryName, true))) return false;
   const claim = await readEntryText(dir, entryName, CLAIM_FILE, true);
   const pending = await getStore(dir).getPendingUpload(entryName);
-  const read = readEntryText.bind(null, dir, entryName, COMMITTED_FILE, true);
-  return (
-    claim !== RESTORE_FENCE &&
-    !!pending?.fileData &&
-    (!isCommitted || (await read()) !== undefined)
-  );
+  return claim !== RESTORE_FENCE && !!pending?.fileData;
 }
 
 /** The claim.json of an entry a failed restore could not remove. */
