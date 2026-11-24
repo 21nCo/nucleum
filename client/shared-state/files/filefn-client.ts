@@ -495,8 +495,11 @@ function tearDownFileFnClient() {
  * Creates an account's FileFn client. The SDK's HEIC preprocessing is off, so
  * the original keeps its bytes and the processing mode owns conversion. The
  * client sends the account's pending deletes, at every authority, now and on
- * every reconnect and every expansion of the replay authorization until it
- * is torn down, once its replay is authorized (see startAccountUploadReplay).
+ * every reconnect, every later runtime DataFn opens in the account's
+ * namespace (a checked delete waits for the account's records, see
+ * replayPendingDeletes) and every expansion of the replay authorization
+ * until it is torn down, once its replay is authorized (see
+ * startAccountUploadReplay).
  */
 async function createAccountFileFnClient(
   userId: string,
@@ -522,6 +525,12 @@ async function createAccountFileFnClient(
         }
       );
     drain();
+    let isBound = false;
+    const stopDrains = datafnRuntime.subscribe((runtime) => {
+      if (isBound && runtime?.namespace === `user:${userId}`) drain();
+      isBound = true;
+    });
+    teardown.addEventListener("abort", stopDrains, { once: true });
     globalThis.addEventListener?.("online", drain, { signal: teardown });
     onReplayAuthorizationExpanded(drain, teardown);
   });
@@ -597,17 +606,8 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
     }
   });
   signal.addEventListener("abort", unwatch, { once: true });
-  const isAccountRecords = () => {
-    const runtime = get(datafnRuntime);
-    return (
-      !signal.aborted &&
-      !bound.isReplaced &&
-      datafn.currentNamespace() === namespace &&
-      runtime?.namespace === namespace &&
-      runtime.remoteUrl?.replace(/\/datafn\/?$/, "") ===
-        baseUrl.replace(/\/files\/?$/, "")
-    );
-  };
+  const isAccountRecords = () =>
+    !signal.aborted && !bound.isReplaced && isAccountRuntime(userId, baseUrl);
   const references: QueuedFileReferences = {
     owner: { userId, baseUrl },
     isCurrent: isAccountRecords,
@@ -617,20 +617,7 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
       if (!get(datafnRuntime)?.storage) return true;
       return pullAccountFileRecords(datafn, isAccountRecords, signal);
     },
-    async isReferenced(fileId) {
-      if (!isAccountRecords()) return undefined;
-      const result = await datafn.file.query({
-        filters: { fileId },
-        limit: 1,
-        metadata: {
-          includeTrashed: true,
-          includeArchived: true,
-          includeAncestorInactive: true
-        }
-      });
-      if (!isAccountRecords() || !Array.isArray(result.data)) return undefined;
-      return result.data.length > 0;
-    },
+    isReferenced: (fileId) => isReferencedBy(isAccountRecords, fileId),
     async discard(fileId) {
       if (!isAccountRecords()) return false;
       await client.deleteFile(fileId).catch(async (error: unknown) => {
@@ -651,6 +638,41 @@ function replayAccountFileQueue(uploader: FileQueueUploader) {
   ).catch((error: unknown) => {
     logger.error({ at: "filefn.client.queue", error });
   });
+}
+
+/**
+ * Whether DataFn is in the account's namespace now, synced with the DataFn
+ * authority of the FileFn authority `baseUrl`.
+ */
+function isAccountRuntime(userId: string, baseUrl: string) {
+  const namespace = `user:${userId}`;
+  const runtime = get(datafnRuntime);
+  return (
+    datafn.currentNamespace() === namespace &&
+    runtime?.namespace === namespace &&
+    runtime.remoteUrl?.replace(/\/datafn\/?$/, "") ===
+      baseUrl.replace(/\/files\/?$/, "")
+  );
+}
+
+/**
+ * Whether a record DataFn holds references the file (a row without a
+ * `fileId` references none), trashed, archived or under an inactive one too,
+ * or undefined once `isCurrent` fails or the records cannot be read.
+ */
+async function isReferencedBy(isCurrent: () => boolean, fileId: string) {
+  if (!fileId || !isCurrent()) return undefined;
+  const result = await datafn.file.query({
+    filters: { fileId },
+    limit: 1,
+    metadata: {
+      includeTrashed: true,
+      includeArchived: true,
+      includeAncestorInactive: true
+    }
+  });
+  if (!isCurrent() || !Array.isArray(result.data)) return undefined;
+  return result.data.some((row) => row?.fileId === fileId);
 }
 
 /** How long a queue replay waits for DataFn to pull the account's records. */
@@ -998,36 +1020,62 @@ export async function discardFileFnFile(
  * Records the delete of a file the account will hold no record of, at the
  * file's authority, for the account's next client to send (see
  * discardFileFnFile): a local file the account claimed whose local-only
- * record was deleted before its record was published.
+ * record was deleted before its record was published. With `isChecked`
+ * (for a file a record may reference by the time it is sent), it is sent
+ * only once the account's records, brought up to date, hold none that
+ * references the file, and dropped once one does (see replayPendingDeletes).
  */
 export async function recordFileFnPendingDelete(
   account: { userId: string; baseUrl: string },
-  fileId: string
+  fileId: string,
+  isChecked = false
 ): Promise<void> {
-  await recordPendingDelete(account.userId, account.baseUrl, fileId);
+  await recordPendingDelete(account.userId, account.baseUrl, fileId, isChecked);
 }
 
 /**
- * Pending deletes recorded without device file storage, each its own entry:
- * in local storage, which a reload keeps and where tabs add and remove
- * entries without overwriting each other, else in memory for this session.
+ * Marks a checked pending delete (see recordFileFnPendingDelete): the start
+ * of its file's name in device file storage, which an encoded file ID never
+ * starts with, so the file is checked from its creation on.
  */
-const memoryPendingDeletes = new Set<string>();
+const CHECKED_DELETE = "checked=";
+
+/**
+ * Pending deletes recorded without device file storage, each its own entry
+ * (a checked one under CHECKED_DELETE_KEY, which a build that sends every
+ * delete unchecked never reads, and an unchecked one, never recorded
+ * beside a checked one, under the key that build reads): in local storage, which a reload
+ * keeps and where tabs add and remove entries without overwriting each
+ * other, else in memory for this session.
+ */
+const memoryPendingDeletes = new Map<string, string>();
+
+const CHECKED_DELETE_KEY = "filefn-checked-deletes";
 
 function getFallbackPendingDeleteKey(
   userId: string,
   baseUrl: string,
-  fileId: string
+  fileId: string,
+  isChecked = false
 ) {
   return [baseUrl, fileId].reduce(
     (key, part) => `${key}:${encodeURIComponent(part)}`,
-    getPendingDeleteKey(userId)
+    getFallbackPendingDeletePrefix(userId, isChecked)
   );
 }
 
-/** Returns the account's pending deletes without device file storage. */
-function getFallbackPendingDeletes(userId: string): Map<string, Set<string>> {
-  const keys = new Set(memoryPendingDeletes);
+function getFallbackPendingDeletePrefix(userId: string, isChecked: boolean) {
+  return isChecked
+    ? `${CHECKED_DELETE_KEY}-${encodeURIComponent(userId)}`
+    : getPendingDeleteKey(userId);
+}
+
+/**
+ * Returns the account's pending deletes without device file storage, by
+ * authority, each with whether it is checked.
+ */
+function getFallbackPendingDeletes(userId: string) {
+  const keys = new Set(memoryPendingDeletes.keys());
   try {
     const storage = globalThis.localStorage;
     for (let index = 0; index < (storage?.length ?? 0); index++) {
@@ -1037,19 +1085,22 @@ function getFallbackPendingDeletes(userId: string): Map<string, Set<string>> {
   } catch (error) {
     logger.warn({ at: "filefn.client.pendingDelete", error });
   }
-  const prefix = `${getPendingDeleteKey(userId)}:`;
-  const byAuthority = new Map<string, Set<string>>();
+  const byAuthority = new Map<string, Map<string, boolean>>();
   for (const key of keys) {
-    if (!key.startsWith(prefix)) continue;
-    const [authority, fileId] = key
-      .slice(prefix.length)
-      .split(":")
-      .map(decodeURIComponent);
-    if (!authority || !fileId) continue;
-    byAuthority.set(
-      authority,
-      (byAuthority.get(authority) ?? new Set()).add(fileId)
-    );
+    for (const isChecked of [false, true]) {
+      const prefix = `${getFallbackPendingDeletePrefix(userId, isChecked)}:`;
+      if (!key.startsWith(prefix)) continue;
+      const [authority, fileId] = key
+        .slice(prefix.length)
+        .split(":")
+        .map(decodeURIComponent);
+      if (!authority || !fileId) continue;
+      const fileIds = byAuthority.get(authority) ?? new Map<string, boolean>();
+      byAuthority.set(
+        authority,
+        fileIds.set(fileId, fileIds.get(fileId) || isChecked)
+      );
+    }
   }
   return byAuthority;
 }
@@ -1057,16 +1108,23 @@ function getFallbackPendingDeletes(userId: string): Map<string, Set<string>> {
 function addFallbackPendingDelete(
   userId: string,
   baseUrl: string,
-  fileId: string
+  fileId: string,
+  isChecked: boolean
 ) {
-  const key = getFallbackPendingDeleteKey(userId, baseUrl, fileId);
+  const key = getFallbackPendingDeleteKey(userId, baseUrl, fileId, isChecked);
+  const unchecked = getFallbackPendingDeleteKey(userId, baseUrl, fileId);
+  const checked = getFallbackPendingDeleteKey(userId, baseUrl, fileId, true);
   try {
     const storage = globalThis.localStorage;
     if (!storage) throw new Error("No local storage");
+    if (!isChecked && storage.getItem(checked) !== null) return;
     storage.setItem(key, "1");
+    if (isChecked) storage.removeItem(unchecked);
   } catch (error) {
     logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
-    memoryPendingDeletes.add(key);
+    if (!isChecked && memoryPendingDeletes.has(checked)) return;
+    memoryPendingDeletes.set(key, "1");
+    if (isChecked) memoryPendingDeletes.delete(unchecked);
   }
 }
 
@@ -1075,12 +1133,14 @@ function removeFallbackPendingDelete(
   baseUrl: string,
   fileId: string
 ) {
-  const key = getFallbackPendingDeleteKey(userId, baseUrl, fileId);
-  memoryPendingDeletes.delete(key);
-  try {
-    globalThis.localStorage?.removeItem(key);
-  } catch (error) {
-    logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
+  for (const isChecked of [false, true]) {
+    const key = getFallbackPendingDeleteKey(userId, baseUrl, fileId, isChecked);
+    memoryPendingDeletes.delete(key);
+    try {
+      globalThis.localStorage?.removeItem(key);
+    } catch (error) {
+      logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
+    }
   }
 }
 
@@ -1088,21 +1148,29 @@ function getPendingDeleteKey(userId: string) {
   return `${PENDING_DELETE_DIR_PREFIX}-${encodeURIComponent(userId)}`;
 }
 
+/**
+ * Records a pending delete (see discardFileFnFile); a file's delete recorded
+ * checked (see recordFileFnPendingDelete) stays checked, also when it is
+ * recorded again unchecked.
+ */
 async function recordPendingDelete(
   userId: string,
   baseUrl: string,
-  fileId: string
+  fileId: string,
+  isChecked = false
 ) {
   try {
     const dir = await getPendingDeleteDir(userId, baseUrl, true);
     if (dir) {
-      await dir.getFileHandle(encodeURIComponent(fileId), { create: true });
+      const name =
+        (isChecked ? CHECKED_DELETE : "") + encodeURIComponent(fileId);
+      await dir.getFileHandle(name, { create: true });
       return;
     }
   } catch (error) {
     logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
   }
-  addFallbackPendingDelete(userId, baseUrl, fileId);
+  addFallbackPendingDelete(userId, baseUrl, fileId, isChecked);
 }
 
 /**
@@ -1207,7 +1275,15 @@ async function getPendingDeleteDir(
 /**
  * Sends the account's pending deletes at an authority, dropping each one
  * that succeeds or finds the file already gone and keeping each other
- * failure for the next drain. The client is made only when one is pending.
+ * failure for the next drain. A checked one (see recordFileFnPendingDelete)
+ * is sent only while DataFn holds the account's records at the authority,
+ * in the runtime it pulled up to date for that delete, and none references
+ * the file (checked wins over unchecked across both stores); it is
+ * dropped unsent once one does, and kept for a later drain while they
+ * cannot be read. It is sent through a client of its own whose every
+ * request, an SDK retry included, is dispatched only while that runtime is
+ * still bound and DataFn applied no change since the check (else it is
+ * kept for a later drain). The client is made only when one is pending.
  * The client is made, and each delete sent, only while the client is not
  * torn down and the replay is authorized at the authority (see
  * isReplayAuthorized); once it is not, the drain stops and keeps the rest
@@ -1220,28 +1296,72 @@ async function replayPendingDeletes(
   getClient: () => Promise<FileFnClient>
 ) {
   const dir = await getPendingDeleteDir(userId, baseUrl, false);
-  const fileIds = new Set(getFallbackPendingDeletes(userId).get(baseUrl));
+  const fileIds = new Map(getFallbackPendingDeletes(userId).get(baseUrl));
   if (dir) {
     for await (const name of listEntryNames(dir)) {
-      fileIds.add(decodeURIComponent(name));
+      const isChecked = name.startsWith(CHECKED_DELETE);
+      const at = isChecked ? CHECKED_DELETE.length : 0;
+      const fileId = decodeURIComponent(name.slice(at));
+      fileIds.set(fileId, fileIds.get(fileId) || isChecked);
     }
   }
   const isSendable = () =>
     !teardown.aborted && isReplayAuthorized(userId, baseUrl);
   if (fileIds.size === 0 || !isSendable()) return;
   const client = await getClient();
-  for (const fileId of fileIds) {
+  const isCurrent = () => isSendable() && isAccountRuntime(userId, baseUrl);
+  const drop = async (fileId: string) => {
+    removeFallbackPendingDelete(userId, baseUrl, fileId);
+    for (const mark of ["", CHECKED_DELETE])
+      await dir?.removeEntry(mark + encodeURIComponent(fileId)).catch(String);
+  };
+  let isFresh = () => false;
+  let checkedClient: Promise<FileFnClient> | undefined;
+  for (const [fileId, isChecked] of fileIds) {
     if (!isSendable()) return;
+    let stop = () => {};
     try {
-      await client.deleteFile(fileId).catch((error: unknown) => {
+      let sender = client;
+      if (isChecked) {
+        const runtime = get(datafnRuntime);
+        const isBound = () => isCurrent() && get(datafnRuntime) === runtime;
+        const isPulled =
+          isBound() &&
+          (!runtime?.storage ||
+            (await pullAccountFileRecords(datafn, isBound, teardown)));
+        let isChanged = false;
+        stop = datafn.subscribe(({ type }) => {
+          if (type === "mutation_applied" || type === "sync_applied")
+            isChanged = true;
+        });
+        const isReferenced = isPulled
+          ? await isReferencedBy(isBound, fileId)
+          : undefined;
+        if (isReferenced === undefined || !isSendable()) continue;
+        if (isReferenced) {
+          await drop(fileId);
+          continue;
+        }
+        isFresh = () => !isChanged && isBound();
+        checkedClient ??= createSdkClient(
+          baseUrl,
+          teardown,
+          { enabled: false },
+          { isDispatchAllowed: () => isSendable() && isFresh() }
+        ).then((created) => guardFileFnClient(created, teardown));
+        sender = await checkedClient;
+      }
+      await sender.deleteFile(fileId).catch((error: unknown) => {
         if (!(error instanceof FileFnHttpError && error.status === 404)) {
           throw error;
         }
       });
-      removeFallbackPendingDelete(userId, baseUrl, fileId);
-      await dir?.removeEntry(encodeURIComponent(fileId)).catch(() => undefined);
+      await drop(fileId);
     } catch (error) {
       logger.warn({ at: "filefn.client.pendingDelete", fileId, error });
+    } finally {
+      stop();
+      isFresh = () => false;
     }
   }
 }

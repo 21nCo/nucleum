@@ -102,6 +102,13 @@ const BOUND_PREFIX = "bound-";
  * generation, so a restore that writes the file again starts unmarked.
  */
 const FAILED_PREFIX = "failed-";
+/**
+ * Marks a failed local file another account claimed that the guest retried
+ * (`retry-<generation>`): it stays failed, so the guest still sees it and
+ * its Retry, until its claimant's next pass removes both marks and uploads
+ * it again (see retryFailedQueuedFile).
+ */
+const RETRY_PREFIX = "retry-";
 const MAKE = { create: true };
 /** The generation of a file no restore wrote. */
 const BASE_GENERATION = "base";
@@ -641,16 +648,29 @@ function parseJson<T>(
   }
 }
 
-function readClaim(dir: string, entryName: string, isStrict = false) {
-  return readEntryJson(dir, entryName, CLAIM_FILE, isClaim, isStrict);
+/**
+ * Reads an entry's claim (see getEntryDir for `isStrict`): undefined when it
+ * has none, and an empty or malformed claim.json (one half written, too) as
+ * an unreadable claim, which no owner matches (see isSameClaim), so it never
+ * counts as no claim.
+ */
+async function readClaim(dir: string, entryName: string, isStrict = false) {
+  const text = await readEntryText(dir, entryName, CLAIM_FILE, isStrict);
+  if (text === undefined) return undefined;
+  return parseJson(text, isClaim) ?? { userId: "", baseUrl: "" };
 }
 
 function isClaim(claim: QueuedFileClaim) {
   return typeof claim.userId === "string" && typeof claim.baseUrl === "string";
 }
 
+/** Whether a claim read names an owner, not an unreadable claim.json. */
+function isReadClaim({ userId, baseUrl }: QueuedFileClaim) {
+  return Boolean(userId && baseUrl);
+}
+
 function isSameClaim(a: QueuedFileClaim, b: QueuedFileClaim) {
-  return a.userId === b.userId && a.baseUrl === b.baseUrl;
+  return isReadClaim(a) && a.userId === b.userId && a.baseUrl === b.baseUrl;
 }
 
 function readQueuedRecord(dir: string, entryName: string, isStrict = false) {
@@ -715,8 +735,10 @@ export async function isQueuedFileFailed(
  * while `isCurrent` holds just before the mark is removed: an entry another
  * account or authority claimed or started, or an owner no longer current,
  * resolves false and is left as it is, its mark kept and no replay started,
- * so a Retry never clears a rejection without an upload attempt. A mark it
- * cannot remove rejects.
+ * so a Retry never clears a rejection without an upload attempt. The
+ * guest's Retry of a local file an account claimed instead adds its retry
+ * mark (see RETRY_PREFIX) and keeps it failed until that account uploads
+ * it. A mark it cannot remove or add rejects.
  */
 export async function retryFailedQueuedFile(
   dirs: readonly string[],
@@ -735,7 +757,16 @@ export async function retryFailedQueuedFile(
     return false;
   }
   if (!isCurrent()) return false;
-  await removeEntryFile(found.entry.entry, mark);
+  const isClaimed =
+    owner === null &&
+    found.dir === LOCAL_FILE_QUEUE_DIR &&
+    (await readClaim(found.dir, toEntryName(fileId), true)) !== undefined;
+  const retry = `${RETRY_PREFIX}${found.entry.generation}`;
+  if (isClaimed)
+    await writeEntryFile(found.dir, toEntryName(fileId), retry, "");
+  else
+    for (const name of [mark, retry])
+      await removeEntryFile(found.entry.entry, name);
   notifyFailureChange(fileId);
   const request = latestRequests.get(found.dir);
   if (request && !request.signal.aborted && !isStale(request)) {
@@ -807,7 +838,9 @@ function toFailedMark({ generation }: Pick<PublishedEntry, "generation">) {
  * isStartedElsewhere), whatever authority it was staged with (claim.json);
  * a local entry must also be unclaimed or claimed by the owner at its
  * authority (see isPublishable). No owner matches no claim or started
- * marker. A marker read error rejects.
+ * marker, except that the guest (no owner) reads and retries every local
+ * file whose claim reads: a retry only removes its failed mark, and the
+ * account that claimed it still uploads it. A marker read error rejects.
  */
 async function isReplayableBy(
   dir: string,
@@ -817,7 +850,9 @@ async function isReplayableBy(
   const isOwned = (claim: QueuedFileClaim | undefined) =>
     !claim || (owner !== null && isSameClaim(claim, owner));
   if (dir === LOCAL_FILE_QUEUE_DIR) {
-    if (!isOwned(await readClaim(dir, entryName, true))) return false;
+    const claim = await readClaim(dir, entryName, true);
+    const isGuests = owner === null && claim !== undefined;
+    if (!(isGuests ? isReadClaim(claim) : isOwned(claim))) return false;
   }
   return (await readMarkers(dir, entryName)).every(isOwned);
 }
@@ -1057,7 +1092,8 @@ function revokeHeldUrl(key: string, held: HeldUrl) {
  * the started markers that bind an upload that may have begun to its
  * authority (name and contents). A file whose original FileFn confirmed
  * (`uploadedVersionId`, the version it got) while its thumbnail is still to
- * be sent carries the thumbnail only, with no original bytes.
+ * be sent carries the thumbnail only, with no original bytes. A file of the
+ * local queue also carries its record copy and its marks (see LOCAL_MARKS).
  */
 export type QueuedFileCopy = {
   fileId: string;
@@ -1072,7 +1108,24 @@ export type QueuedFileCopy = {
   claim?: QueuedFileClaim;
   isCommitted: boolean;
   started: { name: string; text: string }[];
+  record?: QueuedFileRecord;
+  marks?: { name: string; text: string }[];
 };
+
+/**
+ * The marks that hold a local file (see markQueuedFileStale) and its publish
+ * journal (`saved`, so a restored file never inserts again a record its
+ * account deleted), which a guest backup carries and restores; its copy
+ * also lists the file's uploaded mark, so the backup can leave out a file
+ * that reached its account.
+ */
+const LOCAL_MARKS = [
+  STALE_FILE,
+  DELETED_FILE,
+  ORPHANED_FILE,
+  DISCARDED_FILE,
+  "saved"
+];
 
 const STARTED_NAME = /^started(?:-[\w-]+)?$/;
 /** The files of a FileFn OPFSStore entry: its metadata and its bytes. */
@@ -1093,12 +1146,15 @@ const DATA_FILE = "data.bin";
  * is copied whole), an unpublished file (see RESTORING_PREFIX), and one that
  * leaves the queue while it is read. A published file a restore wrote is
  * copied whether or not its account adopted it. A file whose metadata, bytes
- * or marks cannot be read rejects, and never counts as absent.
+ * or marks cannot be read rejects, and never counts as absent, unless its
+ * record copy reads and `isForeign` tells, from it and the snapshot, that
+ * the backup does not need it: that file is logged and left out.
  */
 export async function exportQueuedFiles<T>(
   dir: string,
   snapshot: () => Promise<T>,
-  isWhole = false
+  isWhole = false,
+  isForeign?: (fileId: string, record: QueuedFileRecord, records: T) => boolean
 ): Promise<{ records: T; files: QueuedFileCopy[] }> {
   if (!isFileQueueSupported()) return { records: await snapshot(), files: [] };
   const signal = new AbortController().signal;
@@ -1109,7 +1165,16 @@ export async function exportQueuedFiles<T>(
       const records = await snapshot();
       const files: QueuedFileCopy[] = [];
       for (const entryName of await listEntryNames(dir)) {
-        const copy = await copyEntry(dir, entryName, isWhole);
+        const fileId = entryName.slice(ENTRY_PREFIX.length);
+        const copy = await copyEntry(dir, entryName, isWhole).catch(
+          async (error: unknown) => {
+            const record = await readQueuedRecord(dir, entryName, true).catch(
+              () => undefined
+            );
+            if (!record || !isForeign?.(fileId, record, records)) throw error;
+            logger.warn({ at: "fileQueue.export", fileId, error });
+          }
+        );
         if (copy) files.push(copy);
       }
       const remaining = await readQueueRevision(dir);
@@ -1122,6 +1187,133 @@ export async function exportQueuedFiles<T>(
     if (exported) return exported;
   }
   throw new Error("The upload queue changed while the backup was made");
+}
+
+/**
+ * Whether a guest backup carries a held local file's copy and its restore
+ * writes it back: with its record ID and namespace, readable marks, and
+ * claimed by a named owner (settled once orphaned) or committed and not
+ * deleted (released).
+ */
+export function isRestorableLocalCopy(copy: QueuedFileCopy) {
+  const { record, marks = [], claim } = copy;
+  return (
+    typeof record?.id === "string" &&
+    typeof record.namespace === "string" &&
+    marks.every(
+      (m) => LOCAL_MARKS.includes(m.name) && typeof m.text === "string"
+    ) &&
+    (claim === undefined
+      ? copy.isCommitted === true && !marks.some((m) => m.name === DELETED_FILE)
+      : isClaim(Object(claim)) && isReadClaim(Object(claim)))
+  );
+}
+
+/**
+ * Writes a guest backup's held local files back, still held, under one hold
+ * of the queue's lock, each with its record copy last: a file already
+ * there whole (record copy, written last, and bytes, not fenced) is kept,
+ * any other (no pass publishes or reconciles one without a record
+ * copy) written again once its removal (record copy first) is confirmed,
+ * else the restore rejects, as on one it cannot read, keeping it. Rejects,
+ * leaving none it wrote, on a copy that is not restorable
+ * (before any write), a failed write, or `isChanged` after the last write;
+ * one whose removal it cannot confirm is left without its record copy, else
+ * with an unreadable claim, so no pass publishes it (see unrestoreEntry).
+ */
+export async function restoreLocalQueuedFiles(
+  files: QueuedFileCopy[],
+  isChanged: () => boolean
+) {
+  const dir = LOCAL_FILE_QUEUE_DIR;
+  if (!files.every(isRestorableLocalCopy))
+    throw new Error("A held local file is invalid");
+  const written: string[] = [];
+  const signal = new AbortController().signal;
+  await withQueueLock(dir, signal, async () => {
+    try {
+      for (const copy of files) {
+        const entryName = toEntryName(copy.fileId);
+        if (await isWholeEntry(dir, entryName)) continue;
+        await bumpRevision(dir);
+        try {
+          const entry = await getEntryDir(dir, entryName, true);
+          await removeEntryFile(entry, RECORD_FILE);
+          await getStore(dir).deletePendingUpload(entryName);
+          if (await getEntryDir(dir, entryName, true))
+            throw new Error("A held local file could not be replaced");
+          written.push(entryName);
+          await getStore(dir).stagePendingUpload({
+            uploadSessionId: entryName,
+            fileId: copy.fileId,
+            policy: copy.policy,
+            fileName: copy.fileName,
+            size: copy.data.byteLength,
+            mimeType: copy.contentType,
+            fileData: copy.data.slice().buffer as ArrayBuffer,
+            createdAt: copy.createdAt,
+            retryCount: copy.retryCount
+          });
+          const write = writeEntryFile.bind(null, dir, entryName);
+          for (const { name, text } of copy.marks ?? [])
+            await write(name, text);
+          if (copy.claim) await write(CLAIM_FILE, JSON.stringify(copy.claim));
+          const { thumbnail } = copy;
+          if (thumbnail && THUMBNAIL_TYPES.has(thumbnail.type)) {
+            const name = `${THUMBNAIL_PREFIX}${thumbnail.type.split("/")[1]}`;
+            await write(name, thumbnail.data.slice().buffer as ArrayBuffer);
+          }
+          if (copy.isCommitted) await write(COMMITTED_FILE, "");
+          await write(RECORD_FILE, JSON.stringify(copy.record));
+        } finally {
+          await bumpRevisionAfter(dir);
+        }
+      }
+      if (isChanged())
+        throw new Error("The account changed while the backup was restored");
+    } catch (error) {
+      for (const name of written) await unrestoreEntry(dir, name);
+      throw error;
+    }
+  });
+}
+
+/**
+ * Whether an entry has its bytes and metadata (both listed, then read
+ * strictly), record copy and no restore fence; a read error, or listed
+ * bytes or metadata that cannot be read, rejects and never counts as missing.
+ */
+async function isWholeEntry(dir: string, entryName: string) {
+  const entry = await getEntryDir(dir, entryName, true);
+  const names = await readNames(entry);
+  const claim = await readEntryText(dir, entryName, CLAIM_FILE, true);
+  const record = await readQueuedRecord(dir, entryName, true);
+  if (!entry || !names.includes(DATA_FILE) || !names.includes(METADATA_FILE))
+    return false;
+  if (claim === RESTORE_FENCE || !record) return false;
+  return !!(await readPendingStrict(entry, names));
+}
+
+/** The claim.json of an entry a failed restore could not remove. */
+const RESTORE_FENCE = "restore-fenced";
+
+/**
+ * Removes an entry a restore wrote, its record copy first, and confirms its
+ * record copy is gone; one still there gets an unreadable claim.json (see
+ * readClaim), so no pass publishes or deletes it, and a retry rewrites it.
+ */
+async function unrestoreEntry(dir: string, entryName: string) {
+  await removeEntryFile(await getEntryDir(dir, entryName), RECORD_FILE).catch(
+    String
+  );
+  await getStore(dir).deletePendingUpload(entryName).catch(String);
+  const isGone = await readEntryText(dir, entryName, RECORD_FILE, true).then(
+    (text) => text === undefined,
+    () => false
+  );
+  if (isGone) return;
+  logger.error({ at: "fileQueue.restore", entryName });
+  await writeEntryFile(dir, entryName, CLAIM_FILE, RESTORE_FENCE).catch(String);
 }
 
 /**
@@ -1217,10 +1409,13 @@ async function copyEntry(dir: string, entryName: string, isWhole = false) {
     const uploaded = delivery?.original;
     if (uploaded && delivery?.isDone) return undefined;
     const started: QueuedFileCopy["started"] = [];
+    const marks: QueuedFileCopy["started"] = [];
+    const isLocal = dir === LOCAL_FILE_QUEUE_DIR;
     for (const name of names) {
-      if (!STARTED_NAME.test(name)) continue;
+      const isMark = isLocal && [...LOCAL_MARKS, UPLOADED_FILE].includes(name);
+      if (!STARTED_NAME.test(name) && !isMark) continue;
       const text = await readEntryText(dir, entryName, name, true);
-      if (text !== undefined) started.push({ name, text });
+      if (text !== undefined) (isMark ? marks : started).push({ name, text });
     }
     return {
       fileId: pending.fileId,
@@ -1237,7 +1432,11 @@ async function copyEntry(dir: string, entryName: string, isWhole = false) {
       },
       claim: await readClaim(dir, entryName, true),
       isCommitted: names.includes(COMMITTED_FILE),
-      started
+      started,
+      ...(isLocal && {
+        record: await readQueuedRecord(dir, entryName, true),
+        marks
+      })
     };
   } catch (error) {
     if (!(await getEntryDir(dir, entryName, true))) return undefined;
@@ -2848,7 +3047,15 @@ async function replayEntry(
     return "done";
   const names = await readNames(await getEntryDir(dir, entryName, true));
   const marks = readMarks(names);
-  if (names.includes(toFailedMark(marks))) return "done";
+  const failed = toFailedMark(marks);
+  if (names.includes(failed)) {
+    const retry = `${RETRY_PREFIX}${marks.generation}`;
+    const isReady = !publisher || publisher.isReady();
+    if (!isReady || !names.includes(retry)) return "done";
+    const entry = await getEntryDir(dir, entryName, true);
+    for (const name of [failed, retry]) await removeEntryFile(entry, name);
+    notifyFailureChange(fileId);
+  }
   if (publisher && !publisher.isReady()) return "stop";
   if (publisher) await claimEntry(dir, entryName, publisher.owner);
   const result = await uploadOrMarkFailed(pass, entryName, marks, {
