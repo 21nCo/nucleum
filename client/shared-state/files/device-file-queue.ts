@@ -130,9 +130,13 @@ const stateOf = (row?: Record<string, unknown>) =>
 /** A journal's receipt (`sent <id> <state>`) of a record its save may leave. */
 const SENT = "sent";
 
-/** Deletes the unedited records of receipts but `except`'s (see SENT). */
+/** Account records (`<namespace>\n<id>`) a save of this page applied. */
+const landed = new Set<string>();
+
+/** Deletes unedited records of `fileId` receipts name but `except`'s. */
 async function settleSent(
   namespace: string,
+  fileId: string,
   saved: string[],
   isReady: () => boolean,
   except = ""
@@ -143,7 +147,8 @@ async function settleSent(
   for (const id of ids) {
     const row = await readFileRecord(namespace, { id });
     if (!isReady()) throw new DOMException("Not ready", "AbortError");
-    if (row && sent.includes(`${SENT} ${id} ${stateOf(row)}`))
+    const isSent = sent.includes(`${SENT} ${id} ${stateOf(row)}`);
+    if (row?.fileId === fileId && isSent)
       assertSaved(
         await datafn.file.mutate({ operation: "delete", id } as never)
       );
@@ -206,7 +211,7 @@ export function createLocalFilePublisher(
       assertReady();
       const id = record.id;
       const settleOthers = (saved = entry.saved) =>
-        settleSent(namespace, saved, isReady, id);
+        settleSent(namespace, uploaded.fileId, saved, isReady, id);
       const held = await readFileRecord(namespace, { id });
       assertReady();
       if (held && held.fileId !== record.fileId) {
@@ -220,9 +225,11 @@ export function createLocalFilePublisher(
         return uploader.client.deleteFile(uploaded.fileId).catch(pend);
       }
       const ok = `ok ${id}`;
-      const isSent = entry.saved.some(
-        (line) => line === ok || line.startsWith(`${SENT} ${id} `)
-      );
+      const isSent =
+        landed.has(`${namespace}\n${id}`) ||
+        entry.saved.some(
+          (line) => line === ok || line.startsWith(`${SENT} ${id} `)
+        );
       const saved = held && toQueuedFileRecord(held, namespace);
       if (saved ? !entry.saved.includes(toState(saved)) : isSent)
         return void (await settleOthers());
@@ -242,42 +249,29 @@ export function createLocalFilePublisher(
       const states = both.flatMap((a) =>
         both.flatMap((b) => both.map((c) => toState(a, b, c)))
       );
-      const sent = states
-        .filter((state) => state !== stateOf(held))
-        .map((state) => `${SENT} ${id} ${state}`);
-      const known = [...entry.saved, ...states, ...sent];
+      // Its states and a held record's `ok` first (neither stops an insert or
+      // allows a delete), its receipts once sent (both lost: TIDY-553).
+      const known = [...entry.saved, ...states];
       if (held) known.push(ok);
-      // Any exit before the save, or a save that applied nothing, restores
-      // the journal; a stop just before the save keeps them (TIDY-553).
-      const unsend = () => entry.mark("saved", entry.saved.join("\n"));
       await entry.mark("saved", known.join("\n"));
       let now: string | undefined;
-      let result: unknown;
-      try {
-        if (await entry.isCurrent()) {
-          assertReady();
-          now = stateOf(await readFileRecord(namespace, { id }));
-          assertReady();
-        }
-        if (now === stateOf(held))
-          result = await datafn.file.mutate(mutations as never);
-      } catch (error) {
-        await unsend();
-        throw error;
+      if (await entry.isCurrent()) {
+        assertReady();
+        now = stateOf(await readFileRecord(namespace, { id }));
+        assertReady();
       }
-      if (now !== stateOf(held)) {
-        await unsend();
+      if (now !== stateOf(held))
         return now !== undefined && publisher.publish(record, uploaded, entry);
-      }
-      // A save whose first mutation applied holds the record: `ok`.
+      const result = await datafn.file.mutate(mutations as never);
       const [first] = [result].flat() as ({ ok?: boolean } | undefined)[];
-      try {
-        assertSaved(result);
-      } catch (error) {
-        if (first?.ok === false) await unsend();
-        else await entry.mark("saved", [...known, ok].join("\n"));
-        throw error;
+      if (first?.ok !== false) {
+        landed.add(`${namespace}\n${id}`);
+        const sent = states
+          .filter((state) => state !== stateOf(held))
+          .map((state) => `${SENT} ${id} ${state}`);
+        await entry.mark("saved", [...known, ...sent, ok].join("\n"));
       }
+      assertSaved(result);
       const state = toState(record);
       const isConfirmed = await entry.isCurrent().catch(() => false);
       const others = entry.saved.filter(
@@ -311,13 +305,6 @@ async function readFileRecord(
   return result.data[0] as Record<string, unknown> | undefined;
 }
 
-/** Resolves a time by which every change at or before it was applied. */
-async function passTime() {
-  const at = Date.now();
-  await new Promise((resolve) => setTimeout(resolve, 1));
-  return Date.now() > at ? at : at - 1;
-}
-
 function isAbandoned(entry: QueuedFileEntry) {
   const createdAt = Date.parse(entry.createdAt);
   return (
@@ -340,9 +327,10 @@ function isAbandoned(entry: QueuedFileEntry) {
 async function reconcileLocalFile(
   namespace: string,
   entry: QueuedFileEntry,
-  read: PendingChange[],
-  at: number
+  read: PendingChange[]
 ): Promise<boolean> {
+  // A change (stamped once applied) at or before `at` shows in the reads.
+  const at = Date.now() - 1;
   const byId = entry.recordId
     ? await readFileRecord(namespace, { id: entry.recordId })
     : undefined;
@@ -357,13 +345,14 @@ async function reconcileLocalFile(
     const { fileId } = entry;
     const dir = LOCAL_FILE_QUEUE_DIR;
     const marked = await writeQueuedFileRecord(dir, fileId, copy, false);
+    const verifiedAt = Date.now() - 1;
     const now = await readFileRecord(namespace, { id: copy.id });
     if (!now || toState(toQueuedFileRecord(now, namespace)) !== toState(copy))
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, !now);
     else {
       const ids = read.filter((change) => change.id === copy.id);
       const tokens = [...ids.map(toToken), ...marked];
-      const verified = { ...copy, verifiedAt: at, read: tokens };
+      const verified = { ...copy, verifiedAt, read: tokens };
       const isClear = !isHeld(verified);
       const left = await writeQueuedFileRecord(dir, fileId, verified, isClear);
       const receipt = `${SENT} ${copy.id} ${toState(copy)}`;
@@ -384,7 +373,7 @@ async function reconcileLocalFile(
     const isUnused = async () =>
       !(await readFileRecord(namespace, { fileId: entry.fileId }));
     if (!(await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId, isUnused)))
-      return reconcileLocalFile(namespace, entry, read, at);
+      return reconcileLocalFile(namespace, entry, read);
   }
   return true;
 }
@@ -402,8 +391,7 @@ async function reconcileLocalFile(
 async function reconcileLocalFiles(
   namespace: string,
   pending: PendingChange[],
-  isFull: boolean,
-  at: number
+  isFull: boolean
 ) {
   const failed: string[] = [];
   const ids = new Set(pending.map(({ id }) => id));
@@ -420,7 +408,7 @@ async function reconcileLocalFiles(
         (await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, true)
           .then(() => true)
           .catch(() => false));
-      const isDone = await reconcileLocalFile(namespace, entry, pending, at);
+      const isDone = await reconcileLocalFile(namespace, entry, pending);
       if (!isDone && !isMarked)
         throw new Error("The delete of a staged file is not marked");
     } catch (error) {
@@ -550,10 +538,9 @@ function scheduleChangePass(namespace: string, isFull = false) {
   const { signal } = new AbortController();
   const work = localRecordWork.then(async () => {
     await fences;
-    const at = await passTime();
     await withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, async () => {
       const pending = readPendingChanges(namespace);
-      const failed = await reconcileLocalFiles(namespace, pending, isFull, at);
+      const failed = await reconcileLocalFiles(namespace, pending, isFull);
       if (isFull) await releaseRetiredNamespaces().catch(logReleaseError);
       for (const change of pending)
         if (!failed.includes(change.id)) removePendingChange(change);
@@ -643,7 +630,7 @@ async function settleOrphanedLocalFiles(
     if (!publisher.isReady()) return false;
     // Its unconfirmed records go first (see SENT), then unused bytes.
     const saved = orphan.saved?.split("\n") ?? [];
-    await settleSent(`user:${userId}`, saved, publisher.isReady);
+    await settleSent(`user:${userId}`, fileId, saved, publisher.isReady);
     const result = await datafn.file.query({
       filters: { fileId },
       limit: 1,

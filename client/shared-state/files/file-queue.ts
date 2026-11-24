@@ -597,7 +597,8 @@ export async function clearQueuedFileStale(dir: string, fileId: string) {
  * not be read again: the file does not upload until the copy is replaced.
  * A deleted record (`isDeleted`) gets its own mark, which no other writer
  * replaces; a stale mark is never replaced, so an earlier build's ("") keeps
- * telling nothing. A mark of the `generation` it fences goes first.
+ * telling nothing. A mark of the `generation` it fences goes first; one a
+ * verified copy covers then goes, unless an uncovered generation holds.
  */
 export async function markQueuedFileStale(
   dir: string,
@@ -608,8 +609,16 @@ export async function markQueuedFileStale(
   const name = toEntryName(fileId);
   const mark = isDeleted ? DELETED_FILE : STALE_FILE;
   await writeEntryFile(dir, name, `${mark}.${generation}`, "");
-  if (isDeleted || (await readEntryText(dir, name, mark, true)) === undefined)
-    await writeEntryFile(dir, name, mark, isDeleted ? "" : CHANGED_MARK);
+  if (!isDeleted && (await readEntryText(dir, name, mark, true)) !== undefined)
+    return;
+  await writeEntryFile(dir, name, mark, isDeleted ? "" : CHANGED_MARK);
+  const record = await readQueuedRecord(dir, name, true).catch(() => null);
+  if (!record || !isSupersededBy(record, generation)) return;
+  const entry = await getEntryDir(dir, name, true).catch(() => null);
+  const names = await readNames(entry).catch(() => null);
+  const others = names?.filter((n) => n !== mark);
+  if (others && !holdsMark(others, mark, record))
+    await removeMark(entry, mark).catch(() => undefined);
 }
 
 /** Lists the files of a queue whose staging finished. */
