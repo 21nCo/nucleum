@@ -9249,7 +9249,7 @@ describe("backup and restore of a local-only user's files", () => {
     expect(readHeldState(retired.fileId)).toEqual(held);
   });
 
-  it("keeps a held capture with a newer mark whose bytes or metadata a guest restore cannot read, also when writing a later one fails", async () => {
+  it("keeps a held capture with a newer mark whose bytes, metadata or claim a guest restore cannot read, also when another one fails", async () => {
     const retired = await captureInRetiredGuest();
     const other = await captureInRetiredGuest();
     const backup = await backupFile();
@@ -9279,10 +9279,24 @@ describe("backup and restore of a local-only user's files", () => {
             ? unreadable
             : undefined
       );
-      await restoreBackup(backup, { triggerCloneUp: () => false });
+      await expect(
+        restoreBackup(backup, { triggerCloneUp: () => false })
+      ).rejects.toThrow("Unreadable");
       getDirectory = opfs.getDirectory;
       expect(readHeldState(retired.fileId)).toEqual(held);
     }
+    // Malformed metadata is never read as a whole entry, nor replaced.
+    const metadata = opfs.read(LOCAL_QUEUE, entry, "metadata.json");
+    await writeLocalFile(retired.fileId, "metadata.json", "{");
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow();
+    expect(readHeldState(retired.fileId)).toEqual(held);
+    await writeLocalFile(
+      retired.fileId,
+      "metadata.json",
+      new TextDecoder().decode(metadata)
+    );
 
     const queue = await (await opfs.getDirectory()).getDirectoryHandle(
       LOCAL_QUEUE
@@ -9302,12 +9316,33 @@ describe("backup and restore of a local-only user's files", () => {
     );
     await expect(
       restoreBackup(backup, { triggerCloneUp: () => false })
-    ).rejects.toThrow("Disk full");
+    ).rejects.toThrow(/Disk full|Unreadable/);
+    expect(opfs.list(LOCAL_QUEUE)).not.toContain(`queued_${other.fileId}`);
+    getDirectory = opfs.getDirectory;
+    expect(readHeldState(retired.fileId)).toEqual(held);
+
+    // An entry without its bytes whose newer claim cannot be read is kept.
+    await (await localEntry(retired.fileId)).removeEntry("data.bin");
+    const claim = { userId: "user-b", baseUrl: "https://files.example.test" };
+    await writeLocalFile(retired.fileId, "claim.json", JSON.stringify(claim));
+    const partial = readHeldState(retired.fileId);
+    getDirectory = failingWrites(
+      () => undefined,
+      undefined,
+      undefined,
+      (path) =>
+        path[1] === entry && path[2] === "claim.json"
+          ? new DOMException("Unreadable", "NotReadableError")
+          : undefined
+    );
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow(/Disk full|Unreadable/);
     getDirectory = opfs.getDirectory;
     vi.mocked(OPFSStore.prototype.stagePendingUpload).mockRestore();
     vi.mocked(OPFSStore.prototype.getPendingUpload).mockRestore();
-    expect(readHeldState(retired.fileId)).toEqual(held);
-    expect(await readQueuedBytes(retired.fileId, "full")).toBe("photo bytes");
+    expect(readHeldState(retired.fileId)).toEqual(partial);
+    expect(opfs.list(LOCAL_QUEUE, entry)).not.toContain("data.bin");
   });
 
   it("rejects a guest restore over a fenced held capture whose removal it cannot confirm, and a retry restores it unfenced", async () => {
