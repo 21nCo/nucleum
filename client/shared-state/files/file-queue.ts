@@ -529,7 +529,7 @@ async function removeMark(
 export async function markQueuedFileOrphaned(
   dir: string,
   fileId: string,
-  covered: string[]
+  covered: string[] = []
 ) {
   const name = toEntryName(fileId);
   await writeEntryFile(dir, name, ORPHANED_FILE, "");
