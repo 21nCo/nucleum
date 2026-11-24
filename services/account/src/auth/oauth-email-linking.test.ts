@@ -41,18 +41,18 @@ describe('OAuth sign-in linking by verified email', () => {
   });
 
   it(`compares versions so the guard trips at the stable ${FIRST_FIXED_SOCIAL_OAUTH} release`, () => {
-    expect(compareVersions('0.1.8', '0.2.2')).toBeLessThan(0);
-    expect(compareVersions('0.2.0', '0.2.2')).toBeLessThan(0);
-    expect(compareVersions('0.2.1', '0.2.2')).toBeLessThan(0);
-    expect(compareVersions('0.2.2-rc.1', '0.2.2')).toBeLessThan(0);
+    expect(compareVersions('0.1.8', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
+    expect(compareVersions('0.2.0', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
+    expect(compareVersions('0.2.1', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
+    expect(compareVersions('0.2.2-rc.1', FIRST_FIXED_SOCIAL_OAUTH)).toBeLessThan(0);
     expect(compareVersions('0.2.2-rc.2', '0.2.2-rc.10')).toBeLessThan(0);
     expect(compareVersions('0.2.2-rc.1', '0.2.2-rc')).toBeGreaterThan(0);
     expect(compareVersions('0.2.2-1', '0.2.2-alpha')).toBeLessThan(0);
-    expect(compareVersions('0.2.2', '0.2.2')).toBe(0);
-    expect(compareVersions('0.2.2+build.1', '0.2.2')).toBe(0);
-    expect(compareVersions('0.2.3', '0.2.2')).toBeGreaterThan(0);
-    expect(compareVersions('0.3.0', '0.2.2')).toBeGreaterThan(0);
-    expect(compareVersions('0.10.0', '0.2.2')).toBeGreaterThan(0);
+    expect(compareVersions('0.2.2', FIRST_FIXED_SOCIAL_OAUTH)).toBe(0);
+    expect(compareVersions('0.2.2+build.1', FIRST_FIXED_SOCIAL_OAUTH)).toBe(0);
+    expect(compareVersions('0.2.3', FIRST_FIXED_SOCIAL_OAUTH)).toBeGreaterThan(0);
+    expect(compareVersions('0.3.0', FIRST_FIXED_SOCIAL_OAUTH)).toBeGreaterThan(0);
+    expect(compareVersions('0.10.0', FIRST_FIXED_SOCIAL_OAUTH)).toBeGreaterThan(0);
     expect(compareVersions('0.2.2-rc.9007199254740992', '0.2.2-rc.9007199254740993')).toBeLessThan(0);
     expect(compareVersions('0.9007199254740992.0', '0.9007199254740993.0')).toBeLessThan(0);
   });
