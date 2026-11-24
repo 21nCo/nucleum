@@ -25,6 +25,48 @@ import { createAccountAuthPlugins } from "./auth/plugins.js";
 import { bootstrapRegionIds } from "./regions.js";
 import { accountScopeRegistry } from "./datafn/app-scopes.js";
 
+/**
+ * Social providers whose sign-in may attach to an existing account that has
+ * the same verified email.
+ *
+ * Apple is left out until the account service runs an `@authfn/social-oauth`
+ * release that takes the Apple email only from the verified identity token
+ * (0.2.2 or later; 0.2.0 does not have the fix and 0.2.1 was never published).
+ * Earlier releases accept an unsigned email that the Apple
+ * callback request carries, so linking by email through Apple could attach a
+ * caller's own Apple ID to someone else's account. Apple IDs already linked to
+ * an account keep signing in; an Apple sign-in whose email belongs to an
+ * existing account is refused instead of linked.
+ */
+export const OAUTH_EMAIL_LINKING_PROVIDERS = ["google"] as const;
+
+/**
+ * Social provider configuration the account service accepts, by provider.
+ */
+export type AccountOAuthProviders = Partial<
+  Record<"google" | "apple", AuthFnSocialProviderConfig | undefined>
+>;
+
+/**
+ * Turns off linking by verified email on every provider that
+ * OAUTH_EMAIL_LINKING_PROVIDERS leaves out. A provider's own
+ * `linkByVerifiedEmail` setting takes precedence over the account linking
+ * policy, so this keeps a provider configuration from turning it back on.
+ */
+export function withOAuthEmailLinkingPolicy(
+  providers: AccountOAuthProviders
+): AccountOAuthProviders {
+  const allowed: readonly string[] = OAUTH_EMAIL_LINKING_PROVIDERS;
+  return Object.fromEntries(
+    Object.entries(providers).map(([providerId, provider]) => [
+      providerId,
+      provider && !allowed.includes(providerId)
+        ? { ...provider, linkByVerifiedEmail: false }
+        : provider
+    ])
+  ) as AccountOAuthProviders;
+}
+
 export interface CreateAccountAuthInput {
   database: Adapter;
   stores: RuntimeStores;
@@ -32,9 +74,7 @@ export interface CreateAccountAuthInput {
   deliveryMessage?: AuthFnDeliveryMessageResolver;
   regions?: AuthFnMultiRegionRegionConfig[];
   regionLookupStore?: ConditionalKVStoreAdapter;
-  oauthProviders?: Partial<
-    Record<"google" | "apple", AuthFnSocialProviderConfig | undefined>
-  >;
+  oauthProviders?: AccountOAuthProviders;
   oauthPlugin?: Omit<SocialOAuthPluginRuntimeConfig, "providers">;
   rateLimit?: AuthFnRateLimitConfig;
   observability?: SuperfunctionObservability<AuthFnEvent>;
@@ -57,7 +97,7 @@ export function accountAuthfn(
     },
     accountLinking: {
       oauthByVerifiedEmail: {
-        providers: ["google", "apple"],
+        providers: [...OAUTH_EMAIL_LINKING_PROVIDERS],
         requireExistingEmailVerified: true,
         requireProviderEmailVerified: true
       },
@@ -84,7 +124,9 @@ export type AccountAuthApp = ReturnType<typeof accountAuthfn>;
 export function createAccountAuth(input: CreateAccountAuthInput): AuthFnServer {
   const regions = input.regions ?? resolveRegions();
   const defaultRegion = regions[0];
-  const oauthProviders = input.oauthProviders ?? resolveOAuthProviders();
+  const oauthProviders = withOAuthEmailLinkingPolicy(
+    input.oauthProviders ?? resolveOAuthProviders()
+  );
   const multiRegion = {
     regions,
     defaultRegionId: defaultRegion.regionId,
