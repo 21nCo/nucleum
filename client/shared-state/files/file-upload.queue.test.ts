@@ -2907,41 +2907,31 @@ describe("files captured offline or by a local-only user", () => {
       await datafn.file.mutate({ operation: "delete", id: record.id } as never);
       await settleLocalFileRecords();
 
-      // The account edits the record as the settle next opens the file's
-      // entry after it first reads the account's records of the file.
-      let isArmed = false;
+      // The account edits the record as the settle reads it again, just
+      // before its delete.
       let isEdited = false;
-      if (variant === "edited") {
-        fileCalls.beforeQuery = async (args) => {
-          const { filters } = args as { filters?: Record<string, string> };
-          if (filters?.id === record.id || filters?.fileId === record.fileId)
-            isArmed = true;
-        };
-        hookEntryFiles({
-          async lookup(name) {
-            if (!isArmed || isEdited || name !== `queued_${record.fileId}`)
-              return;
-            isArmed = false;
-            if (!(await readAnyRecord(record.id))) return;
-            isEdited = true;
-            await datafn.file.mutate({
-              operation: "merge",
-              id: record.id,
-              record: { id: record.id, name: "account.png" }
-            } as never);
-          }
-        });
-      }
+      fileCalls.beforeQuery = async (args) => {
+        const { filters } = args as { filters?: Record<string, string> };
+        if (variant !== "edited" || filters?.id !== record.id || isEdited)
+          return;
+        isEdited = true;
+        await datafn.file.mutate({
+          operation: "merge",
+          id: record.id,
+          record: { id: record.id, name: "account.png" }
+        } as never);
+      };
       await signInToCloud("user-a");
       await replayLocalQueue();
       await settleTasks();
 
-      const kept = variant === "shared" ? sibling : isEdited && record.id;
-      if (kept) expect((await readAnyRecord(kept))?.fileId).toBe(record.fileId);
-      if (isEdited)
+      const kept = variant === "shared" ? sibling : record.id;
+      expect(isEdited).toBe(variant === "edited");
+      expect((await readAnyRecord(kept))?.fileId).toBe(record.fileId);
+      if (variant === "edited")
         expect((await readAnyRecord(record.id))?.name).toBe("account.png");
       else expect(await readAnyRecord(record.id)).toBeUndefined();
-      expect(sdk.deletes).toEqual(kept ? [] : [record.fileId]);
+      expect(sdk.deletes).toEqual([]);
       expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
     }
   );
@@ -3025,14 +3015,15 @@ describe("files captured offline or by a local-only user", () => {
     expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
   });
 
-  it("keeps a capture held when another tab fences its change after a pass verified the copy and before it clears the marks", async () => {
+  it("keeps a capture held when another tab fences a later change after a pass verified the copy and before it clears the marks", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
     const record = await capturePhoto();
     await settleLocalFileRecords();
     // Just after this tab's pass verifies its copy of the rename, another
     // tab renames the record again (its pending entry only in its memory)
-    // and fences it.
+    // and fences it; the pass ends with its clear.
+    const generation = `${Date.now() + 60_000}-other-tab`;
     let reads = 0;
     fileCalls.beforeQuery = async (args) => {
       const { filters } = args as { filters?: { id?: string } };
@@ -3046,6 +3037,7 @@ describe("files captured offline or by a local-only user", () => {
           silent: true
         } as never);
         await writeLocalEntryFile(record.fileId, "stale", "changed");
+        await writeLocalEntryFile(record.fileId, `stale.${generation}`);
         return result;
       };
     };
@@ -3057,7 +3049,8 @@ describe("files captured offline or by a local-only user", () => {
     await settleLocalFileRecords();
     expect(reads).toBe(2);
     expect(readLocalCopy(record.fileId)?.name).toBe("receipt.png");
-    expect(readStaleMark(record.fileId)).toBe("changed");
+    const entry = `queued_${record.fileId}`;
+    expect(opfs.read(LOCAL_QUEUE, entry, `stale.${generation}`)).toBeDefined();
 
     await signInToCloud("user-a");
     await replayLocalQueue();
@@ -3066,7 +3059,7 @@ describe("files captured offline or by a local-only user", () => {
     expect(await readAnyRecord(record.id)).toBeUndefined();
   });
 
-  it("releases a capture held in this tab once another tab's verified copy of a later pass supersedes its change, and not before", async () => {
+  it("releases a capture held in this tab once another tab's copy verified as of its change's time covers it, and not before", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
     const record = await capturePhoto();
@@ -3092,7 +3085,6 @@ describe("files captured offline or by a local-only user", () => {
       isRefused = true;
       throw new DOMException("The storage is full", "QuotaExceededError");
     });
-    const before = Date.now();
     await datafn.file.mutate({
       operation: "merge",
       id: record.id,
@@ -3104,6 +3096,14 @@ describe("files captured offline or by a local-only user", () => {
       ).toBeDefined()
     );
     expect(isRefused).toBe(true);
+    // The change's time, as its fence's generation mark names it.
+    const at = Number.parseInt(
+      opfs
+        .list(LOCAL_QUEUE, `queued_${record.fileId}`)
+        .find((name) => name.startsWith("stale."))
+        ?.slice("stale.".length) ?? ""
+    );
+    expect(Number.isFinite(at)).toBe(true);
     await signInToCloud("user-a");
     gate.resolve();
     await lockedTab;
@@ -3128,11 +3128,11 @@ describe("files captured offline or by a local-only user", () => {
           if (key.includes("-pending:")) localStorage.removeItem(key);
       });
     const copy = { ...readLocalCopy(record.fileId), name: "receipt.png" };
-    // A copy its pass has not verified yet, then one verified by a pass that
-    // started before this tab's change, hold it still.
+    // A copy its pass has not verified yet, then one verified as of a time
+    // before this tab's change, hold it still.
     for (const [verified, isVerified] of [
       [{}, false],
-      [{ verifiedAt: before - 1 }, true]
+      [{ verifiedAt: at - 1 }, true]
     ] as const) {
       await copyInOtherTab({ ...copy, ...verified }, isVerified);
       await replayLocalQueue();
@@ -3141,12 +3141,240 @@ describe("files captured offline or by a local-only user", () => {
       expect(await readAnyRecord(record.id)).toBeUndefined();
     }
 
-    await copyInOtherTab({ ...copy, verifiedAt: Date.now() + 1 }, true);
+    // A copy verified as of the change's own millisecond covers it.
+    await copyInOtherTab({ ...copy, verifiedAt: at }, true);
     await replayLocalQueue();
 
     await vi.waitFor(async () =>
       expect((await readAnyRecord(record.id))?.name).toBe("receipt.png")
     );
+  });
+
+  it("publishes a capture whose change's fence lands again after a pass copied and verified that change", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await settleLocalFileRecords();
+    const copy = readLocalCopy(record.fileId);
+    expect(copy?.name).toBe("receipt.png");
+    // Another tab's fence of that same rename lands only now.
+    const generation = String((copy?.read as unknown[] | undefined)?.at(-1));
+    await writeLocalEntryFile(record.fileId, "stale", "changed");
+    await writeLocalEntryFile(record.fileId, `stale.${generation}`);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("receipt.png")
+    );
+  });
+
+  it("publishes the copy of a capture whose record another tab renames after a pass read its pending changes and before it verifies that copy", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // As this tab's pass of a rename first reads the record, another tab
+    // renames it again, records its change and fences it.
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "second.png" },
+        silent: true
+      } as never);
+      const generation = `${Date.now()}-other-tab`;
+      const id = [namespace, record.id, generation].map(encodeURIComponent);
+      localStorage.setItem(
+        `${LOCAL_QUEUE}-pending:${id.join(":")}`,
+        `change:${generation}`
+      );
+      await writeLocalEntryFile(record.fileId, "stale", "changed");
+      await writeLocalEntryFile(record.fileId, `stale.${generation}`);
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "first.png" }
+    } as never);
+    await settleLocalFileRecords();
+    expect(fileCalls.beforeQuery).toBeNull();
+    expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("second.png")
+    );
+  });
+
+  it("marks a capture uploaded once its check after the save finds its copy current, keeping its record and bytes when the guest record is deleted just after", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    const entry = `queued_${record.fileId}`;
+    // Another tab deletes the guest record and fences it just after this
+    // tab's check of the file after its save, as it journals that save.
+    let saves = 0;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "saved" || ++saves !== 2) return;
+        const id = [namespace, record.id].map(encodeURIComponent);
+        localStorage.setItem(
+          `${LOCAL_QUEUE}-pending:${id.join(":")}`,
+          "delete:t"
+        );
+        await writeLocalEntryFile(record.fileId, "deleted");
+      }
+    });
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(saves).toBe(2);
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+
+    const gate = deferred<void>();
+    const otherTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    gate.resolve();
+    await otherTab;
+    await settleTasks();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
+  it("removes the record a partial first save left when another tab deletes the guest record during that save", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await datafn.file.mutate({ operation: "trash", id: record.id } as never);
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // The save applies its insert but not its trash, while another tab
+    // deletes the guest record and fences it.
+    fileCalls.beforeMutate = async (args) => {
+      const [first] = Array.isArray(args) ? args : [];
+      if (first?.operation !== "insert" || first.id !== record.id) return;
+      fileCalls.beforeMutate = null;
+      (args as unknown[]).splice(1);
+      return async (result) => {
+        const id = [namespace, record.id].map(encodeURIComponent);
+        localStorage.setItem(
+          `${LOCAL_QUEUE}-pending:${id.join(":")}`,
+          "delete:t"
+        );
+        await writeLocalEntryFile(record.fileId, "deleted");
+        const failed = { ok: false, error: new Error("The trash failed") };
+        return [...(result as unknown[]), failed];
+      };
+    };
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(fileCalls.beforeMutate).toBeNull();
+    expect(await readAnyRecord(record.id)).toBeDefined();
+
+    const gate = deferred<void>();
+    const otherTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    gate.resolve();
+    await otherTab;
+    await settleTasks();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(sdk.deletes).toEqual([record.fileId]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
+  it("removes the outdated record of a raced publish once another guest record takes over its file, and publishes that record", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // Another tab deletes the guest record while this tab saves it.
+    fileCalls.beforeMutate = async (args) => {
+      const [first] = Array.isArray(args) ? args : [args];
+      if ((first as { id?: string })?.id !== record.id) return;
+      fileCalls.beforeMutate = null;
+      return async (result) => {
+        const id = [namespace, record.id].map(encodeURIComponent);
+        localStorage.setItem(
+          `${LOCAL_QUEUE}-pending:${id.join(":")}`,
+          "delete:t"
+        );
+        await writeLocalEntryFile(record.fileId, "deleted");
+        return result;
+      };
+    };
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(await readAnyRecord(record.id)).toBeDefined();
+
+    // Before this tab's next pass, the guest record is deleted and another
+    // takes over its file.
+    const gate = deferred<void>();
+    const otherTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    const next = "00000000-0000-4000-8000-000000000003";
+    await datafn.file.mutate({
+      operation: "insert",
+      id: next,
+      record: { id: next, name: "copy.png", fileId: record.fileId }
+    } as never);
+    gate.resolve();
+    await otherTab;
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.id).toBe(next);
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect((await readAnyRecord(next))?.fileId).toBe(record.fileId);
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
+    ).toBeDefined();
+    expect(sdk.deletes).toEqual([]);
   });
 
   it("decides nothing on a runtime that replaced the one the publisher was created with, even in the same namespace", async () => {
