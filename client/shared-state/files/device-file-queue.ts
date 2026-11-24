@@ -218,32 +218,44 @@ export function createLocalFilePublisher(
         row ? toState(toQueuedFileRecord(row, namespace)) : "";
       if (stateOf(now) !== stateOf(held))
         return publisher.publish(record, uploaded, { ...entry, saved: known });
+      // A save the result shows its first mutation applied (the insert or
+      // merge, even when a later one failed) holds the record: `ok`.
+      const result: unknown = await datafn.file.mutate(mutations as never);
+      const [first] = [result].flat() as ({ ok?: boolean } | undefined)[];
       try {
-        assertSaved(await datafn.file.mutate(mutations as never));
+        assertSaved(result);
       } catch (error) {
-        if (await readFileRecord(namespace, { id }).catch(() => undefined))
+        if (first?.ok !== false)
           await entry.mark("saved", [...known, ok].join("\n"));
         throw error;
       }
-      const raced = (await entry.isCurrent()) ? [] : [RACED];
-      await entry.mark("saved", [toState(record), ok, ...raced].join("\n"));
+      const done = [toState(record), ok];
+      await entry.mark("saved", done.join("\n"));
+      if (!(await entry.isCurrent().catch(() => false)))
+        await entry.mark("saved", [...done, RACED].join("\n"));
     }
   };
   return publisher;
 }
 
 /**
- * Whether the account's record is a raced publish of the local file (see
- * createLocalFilePublisher) not edited since: a save whose copy changed
- * while it saved, and that no verified copy of the same state confirmed
- * since (see reconcileLocalFile).
+ * The account record ID of the local file's raced publish (see
+ * createLocalFilePublisher), if any: a save whose copy changed while it
+ * saved, and that no verified copy of the same state confirmed since (see
+ * reconcileLocalFile).
  */
-function isRacedCopy(entry: QueuedFileEntry, row: Record<string, unknown>) {
+function readRacedId(entry: QueuedFileEntry) {
   const saved = entry.saved?.split("\n") ?? [];
+  if (!saved.includes(RACED)) return undefined;
+  return saved.find((line) => line.startsWith("ok "))?.slice(3);
+}
+
+/** Whether the account's record is the local file's raced publish, not edited since. */
+function isRacedCopy(entry: QueuedFileEntry, row?: Record<string, unknown>) {
   return (
-    saved.includes(RACED) &&
-    saved.includes(`ok ${String(row.id)}`) &&
-    saved[0] === toState(toQueuedFileRecord(row, ""))
+    row !== undefined &&
+    readRacedId(entry) === row.id &&
+    entry.saved?.split("\n")[0] === toState(toQueuedFileRecord(row, ""))
   );
 }
 
@@ -274,11 +286,12 @@ function isAbandoned(entry: QueuedFileEntry) {
  * Brings a local file in line with the local-only record that references it,
  * read in the guest namespace it was captured in: the file keeps a copy of
  * the record as it is now (another record that took over its `fileId` when
- * the first one was deleted, too) and is marked committed. Its marks are
- * cleared only once a reread verifies the copy, and only when no change
- * the pass did not read (`read`) holds the record: the copy is then marked
- * verified as of the pass's start (`since`, see isHeld), and a raced publish
- * of the same state confirmed. A committed file
+ * the first one was deleted, too) and is marked committed. A copy a reread
+ * verifies is marked verified as of that reread (`verifiedAt`, with the
+ * changes the pass read, see isHeld); its marks are cleared then, unless a
+ * change the pass did not read holds the record, and restored when a reread
+ * after the clear no longer verifies it, and a raced publish of the same
+ * state is confirmed. A committed file
  * no record references any more, or one never committed and abandoned, is
  * removed under Web Locks; one claimed and not uploaded is marked orphaned,
  * for the claiming account to settle (see settleOrphanedLocalFiles).
@@ -288,8 +301,7 @@ function isAbandoned(entry: QueuedFileEntry) {
 async function reconcileLocalFile(
   namespace: string,
   entry: QueuedFileEntry,
-  since: number,
-  read: string[]
+  read: PendingChange[]
 ): Promise<boolean> {
   const byId = entry.recordId
     ? await readFileRecord(namespace, { id: entry.recordId })
@@ -302,29 +314,39 @@ async function reconcileLocalFile(
     const copy = toQueuedFileRecord(record, namespace);
     if (entry.isOrphaned)
       await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId);
-    await writeQueuedFileRecord(
-      LOCAL_FILE_QUEUE_DIR,
-      entry.fileId,
-      copy,
-      false
-    );
-    const now = await readFileRecord(namespace, { id: copy.id });
-    if (!now || toState(toQueuedFileRecord(now, namespace)) !== toState(copy)) {
-      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, !now);
-    } else {
+    const { fileId } = entry;
+    await writeQueuedFileRecord(LOCAL_FILE_QUEUE_DIR, fileId, copy, false);
+    const isCurrent = async () => {
+      const now = await readFileRecord(namespace, { id: copy.id });
+      if (now && toState(toQueuedFileRecord(now, namespace)) === toState(copy))
+        return true;
+      await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId, !now);
+      return false;
+    };
+    const before = Date.now();
+    if (await isCurrent()) {
       const isClearing = !readPendingChanges(namespace).some(
-        (change) => change.id === copy.id && !read.includes(change.key)
+        (change) =>
+          change.id === copy.id && !read.some(({ key }) => key === change.key)
       );
-      const verified = { ...copy, verifiedAt: since };
-      const { fileId } = entry;
+      const keys = read.filter((c) => c.id === copy.id).map((c) => c.key);
+      const verified = { ...copy, verifiedAt: before, read: keys };
       await writeQueuedFileRecord(
         LOCAL_FILE_QUEUE_DIR,
         fileId,
         verified,
         isClearing
       );
+      // A fence the clear removed is of a change applied before it, which
+      // this reread sees: its mark is restored before the lock is released.
+      const isVerified =
+        !isClearing ||
+        (await isCurrent().catch(async (error: unknown) => {
+          await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, fileId);
+          throw error;
+        }));
       const saved = entry.saved?.split("\n") ?? [];
-      if (saved.includes(RACED) && saved[0] === toState(copy)) {
+      if (isVerified && saved.includes(RACED) && saved[0] === toState(copy)) {
         const text = saved.filter((line) => line !== RACED).join("\n");
         await writeQueuedFileSaved(LOCAL_FILE_QUEUE_DIR, fileId, text);
       }
@@ -341,7 +363,7 @@ async function reconcileLocalFile(
     const isUnused = async () =>
       !(await readFileRecord(namespace, { fileId: entry.fileId }));
     if (!(await dequeueFile(LOCAL_FILE_QUEUE_DIR, entry.fileId, isUnused)))
-      return reconcileLocalFile(namespace, entry, since, read);
+      return reconcileLocalFile(namespace, entry, read);
   }
   return true;
 }
@@ -359,12 +381,10 @@ async function reconcileLocalFile(
 async function reconcileLocalFiles(
   namespace: string,
   pending: PendingChange[],
-  isFull: boolean,
-  since: number
+  isFull: boolean
 ) {
   const failed: string[] = [];
   const ids = new Set(pending.map(({ id }) => id));
-  const read = pending.map(({ key }) => key);
   for (const entry of await listQueuedFiles(LOCAL_FILE_QUEUE_DIR, true)) {
     const id = entry.recordId ?? "";
     if (entry.namespace !== namespace) continue;
@@ -378,7 +398,7 @@ async function reconcileLocalFiles(
         (await markQueuedFileStale(LOCAL_FILE_QUEUE_DIR, entry.fileId, true)
           .then(() => true)
           .catch(() => false));
-      const isDone = await reconcileLocalFile(namespace, entry, since, read);
+      const isDone = await reconcileLocalFile(namespace, entry, pending);
       if (!isDone && !isMarked)
         throw new Error("The delete of a staged file is not marked");
     } catch (error) {
@@ -506,14 +526,8 @@ function scheduleChangePass(namespace: string, isFull = false) {
   const work = localRecordWork.then(async () => {
     await fences;
     await withQueueLock(LOCAL_FILE_QUEUE_DIR, signal, async () => {
-      const since = Date.now();
       const pending = readPendingChanges(namespace);
-      const failed = await reconcileLocalFiles(
-        namespace,
-        pending,
-        isFull,
-        since
-      );
+      const failed = await reconcileLocalFiles(namespace, pending, isFull);
       if (isFull) await releaseRetiredNamespaces().catch(logReleaseError);
       for (const change of pending)
         if (!failed.includes(change.id)) removePendingChange(change);
@@ -598,8 +612,19 @@ async function settleOrphanedLocalFiles(
         (queued) => queued.fileId === fileId && isOrphanOf(queued)
       );
     const isOrphan = async () => Boolean(await readOrphan());
-    if (!(await isOrphan())) return true;
+    const orphan = await readOrphan();
+    if (!orphan) return true;
     if (!publisher.isReady()) return false;
+    // A raced publish's outdated record goes first, if not edited since,
+    // read again just before its delete; the file's bytes go only when no
+    // record references them then.
+    const id = readRacedId(orphan);
+    if (id) {
+      const row = await readFileRecord(`user:${userId}`, { id });
+      if (!publisher.isReady()) return false;
+      if (isRacedCopy(orphan, row))
+        assertSaved(await datafn.file.mutate({ operation: "delete", id }));
+    }
     const result = await datafn.file.query({
       filters: { fileId },
       limit: 1,
@@ -607,15 +632,7 @@ async function settleOrphanedLocalFiles(
     });
     if (!publisher.isReady() || !Array.isArray(result.data)) return false;
     if (!(await isOrphan())) return true;
-    const [row] = result.data as Record<string, unknown>[];
-    const entry = row && (await readOrphan());
-    const isRaced = Boolean(entry && isRacedCopy(entry, row));
-    if (isRaced) {
-      if (!publisher.isReady()) return false;
-      const deleted = { operation: "delete", id: row.id };
-      assertSaved(await datafn.file.mutate(deleted as never));
-    }
-    if (!row || isRaced) {
+    if (!result.data.length) {
       const was = await markQueuedFileDiscarded(LOCAL_FILE_QUEUE_DIR, fileId);
       if (!(await isOrphan().catch(() => false))) {
         if (!was)
@@ -649,8 +666,8 @@ function logOrphanError(error: unknown) {
  * removes only the writes it read; also in page memory, so this tab's pass
  * copies them after another tab's sign-out cleared local storage. A
  * generation starts with its write's time (`at`). Each change holds its
- * record's local file (see isHeld) until a pass removes it or a copy
- * verified by a pass started after it supersedes it; an earlier build's
+ * record's local file (see isHeld) until a pass removes it or a verified
+ * copy that read it, or was reread after it, supersedes it; an earlier build's
  * entry, with no generation, holds until a pass removes it. A local file's
  * durable hold is its stale mark (see fenceChanges), which only a verified
  * copy clears.
@@ -730,13 +747,17 @@ function removePendingChange({ key, value }: PendingChange) {
 
 /**
  * Whether a local file's record copy has a change not yet copied to it: one
- * no verified copy (`verifiedAt`, see reconcileLocalFile) supersedes.
+ * its verified copy (see reconcileLocalFile) neither read nor reread after.
  */
 function isHeld(record: QueuedFileRecord) {
   if (typeof record.namespace !== "string") return false;
   const verifiedAt = Number(record.verifiedAt);
+  const read = Array.isArray(record.read) ? record.read : [];
   return readPendingChanges(record.namespace).some(
-    (change) => change.id === record.id && !((change.at ?? NaN) < verifiedAt)
+    (change) =>
+      change.id === record.id &&
+      !read.includes(change.key) &&
+      !((change.at ?? NaN) < verifiedAt)
   );
 }
 
