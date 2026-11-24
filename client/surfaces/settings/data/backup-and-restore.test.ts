@@ -9210,6 +9210,37 @@ describe("backup and restore of a local-only user's files", () => {
     expect(await readQueuedBytes(retired.fileId, "full")).toBe("photo bytes");
   });
 
+  it("keeps a whole held capture a guest restore cannot read, and writes again one a failed rollback fenced", async () => {
+    const retired = await captureInRetiredGuest();
+    const held = readHeldState(retired.fileId);
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    const unreadable = Object.assign(new Error("read failed"), {
+      name: "NotReadableError"
+    });
+    getDirectory = failingWrites(
+      () => undefined,
+      undefined,
+      undefined,
+      (path) =>
+        path[0] === LOCAL_QUEUE && path[2] === "committed"
+          ? unreadable
+          : undefined
+    );
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("read failed");
+    getDirectory = opfs.getDirectory;
+    expect(readHeldState(retired.fileId)).toEqual(held);
+
+    await writeLocalFile(retired.fileId, "claim.json", "restore-fenced");
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(readHeldState(retired.fileId)).toEqual(held);
+  });
+
   it("writes again a held capture a guest restore cut short before its record copy, so a retry restores it committed", async () => {
     const retired = await captureInRetiredGuest();
     const held = readHeldState(retired.fileId);

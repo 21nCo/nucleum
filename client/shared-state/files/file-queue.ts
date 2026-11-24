@@ -1211,9 +1211,9 @@ export function isRestorableLocalCopy(copy: QueuedFileCopy) {
 /**
  * Writes a guest backup's held local files back, still held, under one hold
  * of the queue's lock, each with its record copy last: a file already
- * there whole (record copy and bytes, committed if the copy is) is kept, any
- * other (no pass publishes or reconciles one without a record copy) written
- * again. Rejects, leaving none it wrote, on a copy that is not restorable
+ * there whole (record copy and bytes, committed if the copy is, not fenced)
+ * is kept, any other (no pass publishes or reconciles one without a record
+ * copy) written again; one it cannot read rejects the restore. Rejects, leaving none it wrote, on a copy that is not restorable
  * (before any write), a failed write, or `isChanged` after the last write;
  * one whose removal it cannot confirm is left without its record copy, else
  * with an unreadable claim, so no pass publishes it (see unrestoreEntry).
@@ -1277,19 +1277,23 @@ async function isWholeEntry(
   isCommitted: boolean
 ) {
   if (!(await readQueuedRecord(dir, entryName, true))) return false;
-  const pending = await getStore(dir)
-    .getPendingUpload(entryName)
-    .catch(() => null);
+  const claim = await readEntryText(dir, entryName, CLAIM_FILE, true);
+  const pending = await getStore(dir).getPendingUpload(entryName);
+  const read = readEntryText.bind(null, dir, entryName, COMMITTED_FILE, true);
   return (
+    claim !== RESTORE_FENCE &&
     !!pending?.fileData &&
-    (!isCommitted || (await hasEntryFile(dir, entryName, COMMITTED_FILE)))
+    (!isCommitted || (await read()) !== undefined)
   );
 }
 
+/** The claim.json of an entry a failed restore could not remove. */
+const RESTORE_FENCE = "restore-fenced";
+
 /**
  * Removes an entry a restore wrote, its record copy first, and confirms its
- * record copy is gone; one still there gets an empty claim.json, which no
- * owner matches (see readClaim), so no pass publishes or deletes it.
+ * record copy is gone; one still there gets an unreadable claim.json (see
+ * readClaim), so no pass publishes or deletes it, and a retry rewrites it.
  */
 async function unrestoreEntry(dir: string, entryName: string) {
   await removeEntryFile(await getEntryDir(dir, entryName), RECORD_FILE).catch(
@@ -1302,7 +1306,7 @@ async function unrestoreEntry(dir: string, entryName: string) {
   );
   if (isGone) return;
   logger.error({ at: "fileQueue.restore", entryName });
-  await writeEntryFile(dir, entryName, CLAIM_FILE, "").catch(String);
+  await writeEntryFile(dir, entryName, CLAIM_FILE, RESTORE_FENCE).catch(String);
 }
 
 /**
