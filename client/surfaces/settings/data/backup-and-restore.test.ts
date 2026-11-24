@@ -9249,6 +9249,90 @@ describe("backup and restore of a local-only user's files", () => {
     expect(readHeldState(retired.fileId)).toEqual(held);
   });
 
+  it("keeps a held capture with a newer mark whose bytes or metadata a guest restore cannot read, also when writing a later one fails", async () => {
+    const retired = await captureInRetiredGuest();
+    const other = await captureInRetiredGuest();
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    await writeLocalFile(retired.fileId, "stale", "changed");
+    const held = readHeldState(retired.fileId);
+    const entry = `queued_${retired.fileId}`;
+    // The SDK reads an entry it cannot read as missing.
+    const { OPFSStore } = await import("@filefn/client");
+    const read = OPFSStore.prototype.getPendingUpload;
+    vi.spyOn(OPFSStore.prototype, "getPendingUpload").mockImplementation(
+      function (this: InstanceType<typeof OPFSStore>, id) {
+        return id === entry ? Promise.resolve(null) : read.call(this, id);
+      }
+    );
+    for (const name of ["data.bin", "metadata.json"]) {
+      const unreadable = new DOMException("Unreadable", "NotReadableError");
+      getDirectory = failingWrites(
+        () => undefined,
+        undefined,
+        undefined,
+        (path) =>
+          path[0] === LOCAL_QUEUE && path[1] === entry && path[2] === name
+            ? unreadable
+            : undefined
+      );
+      await restoreBackup(backup, { triggerCloneUp: () => false });
+      getDirectory = opfs.getDirectory;
+      expect(readHeldState(retired.fileId)).toEqual(held);
+    }
+
+    const queue = await (await opfs.getDirectory()).getDirectoryHandle(
+      LOCAL_QUEUE
+    );
+    await queue.removeEntry(`queued_${other.fileId}`, { recursive: true });
+    vi.spyOn(OPFSStore.prototype, "stagePendingUpload").mockRejectedValue(
+      new Error("Disk full")
+    );
+    getDirectory = failingWrites(
+      () => undefined,
+      undefined,
+      undefined,
+      (path) =>
+        path[1] === entry && path[2] === "data.bin"
+          ? new DOMException("Unreadable", "NotReadableError")
+          : undefined
+    );
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("Disk full");
+    getDirectory = opfs.getDirectory;
+    vi.mocked(OPFSStore.prototype.stagePendingUpload).mockRestore();
+    vi.mocked(OPFSStore.prototype.getPendingUpload).mockRestore();
+    expect(readHeldState(retired.fileId)).toEqual(held);
+    expect(await readQueuedBytes(retired.fileId, "full")).toBe("photo bytes");
+  });
+
+  it("rejects a guest restore over a fenced held capture whose removal it cannot confirm, and a retry restores it unfenced", async () => {
+    const retired = await captureInRetiredGuest();
+    const held = readHeldState(retired.fileId);
+    expect(held[1][1]).toBeUndefined();
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    await writeLocalFile(retired.fileId, "claim.json", "restore-fenced");
+    const { OPFSStore } = await import("@filefn/client");
+    vi.spyOn(OPFSStore.prototype, "deletePendingUpload").mockResolvedValue();
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("A held local file could not be replaced");
+    vi.mocked(OPFSStore.prototype.deletePendingUpload).mockRestore();
+    await Promise.all(replays.get(LOCAL_QUEUE) ?? []);
+    expect(sdk.started).toEqual([]);
+
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(readHeldState(retired.fileId)).toEqual(held);
+  });
+
   it("writes again a held capture a guest restore cut short before its record copy, so a retry restores it committed", async () => {
     const retired = await captureInRetiredGuest();
     const held = readHeldState(retired.fileId);

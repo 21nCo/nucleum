@@ -1214,7 +1214,9 @@ export function isRestorableLocalCopy(copy: QueuedFileCopy) {
  * of the queue's lock, each with its record copy last: a file already
  * there whole (record copy, written last, and bytes, not fenced) is kept,
  * any other (no pass publishes or reconciles one without a record
- * copy) written again; one it cannot read rejects the restore. Rejects, leaving none it wrote, on a copy that is not restorable
+ * copy) written again once its removal is confirmed, else the restore
+ * rejects, as it does on one it cannot read, keeping that entry. Rejects,
+ * leaving none it wrote, on a copy that is not restorable
  * (before any write), a failed write, or `isChanged` after the last write;
  * one whose removal it cannot confirm is left without its record copy, else
  * with an unreadable claim, so no pass publishes it (see unrestoreEntry).
@@ -1234,9 +1236,11 @@ export async function restoreLocalQueuedFiles(
         const entryName = toEntryName(copy.fileId);
         if (await isWholeEntry(dir, entryName)) continue;
         await bumpRevision(dir);
-        written.push(entryName);
         try {
-          await getStore(dir).deletePendingUpload(entryName).catch(String);
+          await getStore(dir).deletePendingUpload(entryName);
+          if (await getEntryDir(dir, entryName, true))
+            throw new Error("A held local file could not be replaced");
+          written.push(entryName);
           await getStore(dir).stagePendingUpload({
             uploadSessionId: entryName,
             fileId: copy.fileId,
@@ -1272,11 +1276,18 @@ export async function restoreLocalQueuedFiles(
   });
 }
 
+/**
+ * Whether an entry has its bytes and metadata (as listed, so a read error
+ * never counts as missing), record copy and no restore fence; a read error
+ * of its names, record copy or claim rejects.
+ */
 async function isWholeEntry(dir: string, entryName: string) {
-  if (!(await readQueuedRecord(dir, entryName, true))) return false;
+  const names = await readNames(await getEntryDir(dir, entryName, true));
+  if (!names.includes(DATA_FILE) || !names.includes(METADATA_FILE))
+    return false;
   const claim = await readEntryText(dir, entryName, CLAIM_FILE, true);
-  const pending = await getStore(dir).getPendingUpload(entryName);
-  return claim !== RESTORE_FENCE && !!pending?.fileData;
+  if (claim === RESTORE_FENCE) return false;
+  return !!(await readQueuedRecord(dir, entryName, true));
 }
 
 /** The claim.json of an entry a failed restore could not remove. */
