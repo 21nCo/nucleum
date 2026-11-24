@@ -1,0 +1,31 @@
+client/runtime/account/auth.ts
+  s_05bbc078bc7480::t_16cbc76f33c75a 37,43,63,76,331-332,358-361,377-379,381,438,450,456
+client/shared-state/files/filefn-client.ts
+  s_05bbc078bc7480::t_f53bdfcb49fab3 73-79,81-85,175,180-181,183,192-204,206,209,240,242,247-260,275-279,282-294,298,330-332,336-338,493-497,1039-1042,1059
+client/surfaces/account/account-session.ts
+  s_05bbc078bc7480::t_d32257ea6b6b48 35,445-447
+client/surfaces/account/account-upload-replay.test.ts
+  s_05bbc078bc7480::t_07f4c98c463860 65-66,70-71,85-86,355,957-1124
+client/surfaces/account/account-upload-replay.ts
+  s_05bbc078bc7480::t_935e683712ac5f 13-23,35-39,42-43,45,50-52,58,83-86,89-90,93,129,137-139
+client/surfaces/account/session-access.test.ts
+  s_05bbc078bc7480::t_2918cf33167a19 39,123
+client/surfaces/account/session-access.ts
+  s_05bbc078bc7480::t_bf239885ae5342 19-27,29-31,33,115,118,136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "886868e49939c28a6a51761d4bb0db14fc1522bd",
+  "prompts": {},
+  "sessions": {
+    "s_05bbc078bc7480": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_05bbc078bc7480",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

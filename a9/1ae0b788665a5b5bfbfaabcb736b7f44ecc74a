@@ -1,0 +1,21 @@
+client/shared-state/files/file-queue.failure.test.ts
+  s_95d0bef9512303::t_798bf74a4b3193 388-438
+client/shared-state/files/file-queue.ts
+  s_95d0bef9512303::t_bcb6baac30e87c 3601-3606,3609-3611,3616-3619,3674-3676
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a91ae0b788665a5b5bfbfaabcb736b7f44ecc74a",
+  "prompts": {},
+  "sessions": {
+    "s_95d0bef9512303": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_95d0bef9512303",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

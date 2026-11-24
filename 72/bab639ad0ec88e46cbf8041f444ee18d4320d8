@@ -1,0 +1,14 @@
+client/shared-state/files/file-upload.queue.test.ts
+  h_a39f9495f9ec1d 317-323,897-901,903-905,935-936,969-970,997-1212
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "72bab639ad0ec88e46cbf8041f444ee18d4320d8",
+  "prompts": {},
+  "humans": {
+    "h_a39f9495f9ec1d": {
+      "author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

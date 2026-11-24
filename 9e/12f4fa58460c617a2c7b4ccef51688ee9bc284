@@ -1,0 +1,31 @@
+client/shared-state/files/filefn-client.ts
+  s_24ea5af1ad34fe::t_971572d8bd035b 159-164,166-188
+client/surfaces/account/account-upload-replay.ts
+  s_c7ec784961d5e7::t_0f1201f681285a 8-13,16,18-24,28
+client/surfaces/account/account-upload-replay.test.ts
+  s_24ea5af1ad34fe::t_c4de9e6c2bfa16 436-502
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9e12f4fa58460c617a2c7b4ccef51688ee9bc284",
+  "prompts": {},
+  "sessions": {
+    "s_24ea5af1ad34fe": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "29d95ab2-be57-4d93-8c83-096aa061ec75",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_c7ec784961d5e7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "725aba51-cd3f-454e-b48e-f55aeead54ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

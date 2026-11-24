@@ -1,0 +1,27 @@
+client/surfaces/account/account-session.ts
+  s_124319b903d839::t_473ec3c5842999 452-460
+client/surfaces/account/account-upload-replay.test.ts
+  s_124319b903d839::t_3918b96d85592b 143-144,146-150,162-165,398,1820-1919
+client/surfaces/account/account-upload-replay.ts
+  s_124319b903d839::t_e03ac917d5ffe3 17,19-24,45-46,55-57,62,64-67,89-95,100-105,107-115,118,120,124-125,136-153,187-188,230-231,247-248,252
+client/surfaces/account/session-access.test.ts
+  s_124319b903d839::t_a933abdf87e6b9 127-138
+client/surfaces/account/session-access.ts
+  s_124319b903d839::t_ac84ba0f137cc9 22-23,32-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "20896a9648fb292b9928cced9092cfd1b035ea68",
+  "prompts": {},
+  "sessions": {
+    "s_124319b903d839": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "459fa815-0e7a-4823-b25b-3c85bd3d320a",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

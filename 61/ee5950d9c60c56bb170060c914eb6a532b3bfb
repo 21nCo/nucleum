@@ -1,0 +1,19 @@
+client/surfaces/account/account-upload-replay.test.ts
+  s_124319b903d839::t_6a95eeb18d791b 1941-1970,1973-1975,1981,1988-1990,2014
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "61ee5950d9c60c56bb170060c914eb6a532b3bfb",
+  "prompts": {},
+  "sessions": {
+    "s_124319b903d839": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "459fa815-0e7a-4823-b25b-3c85bd3d320a",
+        "model": "unknown"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+client/features/memory/markdown/embed/EmbedContent.svelte
+  s_fcc9dd4e551cfd::t_89fce95eeea88f 5,112-117,538-540
+client/features/memory/markdown/mediaGrid/DraggableMediaGridElement.svelte
+  s_124319b903d839::t_89a452adf20fd1 11,232
+client/features/memory/node/content/FileUploadFailedIndicator.svelte
+  s_124319b903d839::t_17d5477b366b8a 1-69
+client/features/memory/node/content/MediaContentResolver.svelte
+  s_124319b903d839::t_fd229e0c0793bb 16,154
+client/features/memory/node/thumbnail/NodeThumbnail.svelte
+  s_fcc9dd4e551cfd::t_0eb102841a146d 39,86,155,159,543-546
+client/features/memory/node/content/file-upload-failed.render.test.ts
+  s_124319b903d839::t_ae179a754f1d7e 1-205
+client/shared-state/files/file-queue.failure.test.ts
+  s_124319b903d839::t_13a9df6893bdca 1-326
+client/shared-state/files/file-queue.ts
+  s_124319b903d839::t_fb20bd6fc6a901 90-97,602-701,2287-2292,2396-2399,2701-2703,2706-2710,3093,3096,3101,3401-3431,3598,3603-3623
+client/shared-state/files/file-url.ts
+  s_124319b903d839::t_78c0c4425111c2 5-6,8-9,128-194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bea4a055bada86e06c3b8db8f05648b15a4c79ff",
+  "prompts": {},
+  "sessions": {
+    "s_124319b903d839": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "459fa815-0e7a-4823-b25b-3c85bd3d320a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    },
+    "s_fcc9dd4e551cfd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a60d7a22-5b3c-4c6b-9505-0181b6390bb7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "thyaravind <samalaaravind02@gmail.com>"
+    }
+  }
+}
