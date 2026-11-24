@@ -6,6 +6,7 @@ import {
   LOCAL_FILE_QUEUE_DIR,
   renewRestoredFiles,
   resolveAccountFileQueueDir,
+  isRestorableLocalCopy,
   restoreLocalQueuedFiles,
   settleRestoredFiles,
   stageRestoredFiles,
@@ -143,9 +144,8 @@ function listFileRecords(records: Record<string, unknown>) {
  * restoreLocalQueuedFiles). One of the backed-up namespace `namespace`
  * whose record is gone is marked deleted, if no mark tells that yet (its
  * guest change may not be copied yet), so it never publishes its copy. It
- * leaves out, logged, a file whose record copy cannot be read (no restore
- * could hold it) and an unclaimed one marked deleted (nothing on FileFn to
- * settle, so no release or settle path would ever remove it).
+ * leaves out, logged, every file its restore would not accept or no release
+ * or settle path would ever remove (see isRestorableLocalCopy).
  */
 function withLocalFileBytes(
   exported: { records: Record<string, unknown>; files: QueuedFileCopy[] },
@@ -169,7 +169,7 @@ function withLocalFileBytes(
     if (inlined.has(copy.fileId) || has("uploaded")) return false;
     if (copy.record?.namespace === namespace && !has("deleted", "orphaned"))
       marks.push({ name: "deleted", text: "" });
-    const isKept = Boolean(copy.record) && (copy.claim || !has("deleted"));
+    const isKept = isRestorableLocalCopy(copy);
     if (!isKept) logger.warn({ at: "backup.localFile", fileId: copy.fileId });
     return isKept;
   });
@@ -201,9 +201,9 @@ function withLocalFileBytes(
  * back the files it wrote that no other restore holds and no account
  * adopted; see unstageRestoredFiles); and when the records could not all be
  * imported, keeping the files. A guest backup's held local files are
- * written back first, still held, and kept once the records are imported or
- * fail to; the restore removes the ones it wrote when it rejects before
- * (see restoreLocalQueuedFiles).
+ * written back first, still held, under the queue's lock, which they leave
+ * only when the account is unchanged after the last write, and then stay
+ * whatever the restore does next (see restoreLocalQueuedFiles).
  * `triggerCloneUp` decides, right before the
  * records are imported into the account checked unchanged, whether DataFn
  * clones them up.
@@ -252,10 +252,8 @@ async function restoreInRuntime(
   }
   const isChanged = () =>
     datafn.currentNamespace() !== namespace || isSwitched();
-  const unrestore =
-    read?.userId === null
-      ? await restoreLocalQueuedFiles(read.files, isChanged)
-      : undefined;
+  if (read?.userId === null)
+    await restoreLocalQueuedFiles(read.files, isChanged);
   const fileQueue = read?.userId
     ? { userId: read.userId, files: read.files }
     : undefined;
@@ -278,7 +276,6 @@ async function restoreInRuntime(
   }
   if (isChanged()) {
     if (staged) await unstageRestoredFiles(staged);
-    await unrestore?.();
     throw new Error("The account changed while the backup was restored");
   }
   let isImported = false;

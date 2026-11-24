@@ -1164,75 +1164,83 @@ export async function exportQueuedFiles<T>(
 }
 
 /**
- * Writes the held local files a guest backup carries back to the local
- * queue, each with its record copy, claim, committed state and the marks
- * that hold it (see LOCAL_MARKS), under the queue's lock, so no pass sees
- * one half written, and resolves with the removal of the files it wrote. A
- * file the queue holds with a record copy is left as it is; one an
- * interrupted write left without it is written again. Rejects, leaving none
- * it wrote, when a copy is invalid (before any write) or a write fails;
- * stops writing once `isChanged` tells the account changed, for the caller
- * to remove the ones it wrote.
+ * Whether a guest backup carries a held local file's copy and its restore
+ * writes it back: with its record ID and namespace, readable marks, and
+ * claimed (settled once orphaned) or committed and not deleted (released).
+ */
+export function isRestorableLocalCopy(copy: QueuedFileCopy) {
+  const { record, marks = [], claim } = copy;
+  return (
+    typeof record?.id === "string" &&
+    typeof record.namespace === "string" &&
+    marks.every(
+      (m) => LOCAL_MARKS.includes(m.name) && typeof m.text === "string"
+    ) &&
+    (claim === undefined
+      ? copy.isCommitted === true && !marks.some((m) => m.name === DELETED_FILE)
+      : isClaim(Object(claim)))
+  );
+}
+
+/**
+ * Writes a guest backup's held local files back, still held, under one hold
+ * of the queue's lock, each with its record copy last: a file with one is
+ * kept, one without it (no pass publishes or reconciles it) written again.
+ * Rejects, leaving none it wrote, on a copy that is not restorable (before
+ * any write), a failed write, or `isChanged` after the last write.
  */
 export async function restoreLocalQueuedFiles(
   files: QueuedFileCopy[],
   isChanged: () => boolean
 ) {
   const dir = LOCAL_FILE_QUEUE_DIR;
-  const isHeld = ({ record, marks = [], claim }: QueuedFileCopy) =>
-    typeof record?.id === "string" &&
-    typeof record.namespace === "string" &&
-    (claim === undefined || isClaim(Object(claim))) &&
-    marks.every(
-      (m) => LOCAL_MARKS.includes(m.name) && typeof m.text === "string"
-    );
-  if (!files.every(isHeld)) throw new Error("A held local file is invalid");
+  if (!files.every(isRestorableLocalCopy))
+    throw new Error("A held local file is invalid");
   const written: string[] = [];
   const signal = new AbortController().signal;
-  const remove = () =>
-    withQueueLock(dir, signal, async () => {
-      for (const name of written.splice(0))
-        await getStore(dir).deletePendingUpload(name).catch(String);
-    });
   await withQueueLock(dir, signal, async () => {
-    for (const copy of files) {
-      const entryName = toEntryName(copy.fileId);
-      if (isChanged()) break;
-      if (await readQueuedRecord(dir, entryName, true)) continue;
-      await bumpRevision(dir);
-      written.push(entryName);
-      try {
-        await getStore(dir).deletePendingUpload(entryName).catch(String);
-        await getStore(dir).stagePendingUpload({
-          uploadSessionId: entryName,
-          fileId: copy.fileId,
-          policy: copy.policy,
-          fileName: copy.fileName,
-          size: copy.data.byteLength,
-          mimeType: copy.contentType,
-          fileData: copy.data.slice().buffer as ArrayBuffer,
-          createdAt: copy.createdAt,
-          retryCount: copy.retryCount
-        });
-        const write = writeEntryFile.bind(null, dir, entryName);
-        for (const { name, text } of copy.marks ?? []) await write(name, text);
-        if (copy.claim) await write(CLAIM_FILE, JSON.stringify(copy.claim));
-        await write(RECORD_FILE, JSON.stringify(copy.record));
-        const { thumbnail } = copy;
-        if (thumbnail && THUMBNAIL_TYPES.has(thumbnail.type)) {
-          const name = `${THUMBNAIL_PREFIX}${thumbnail.type.split("/")[1]}`;
-          await write(name, thumbnail.data.slice().buffer as ArrayBuffer);
+    try {
+      for (const copy of files) {
+        const entryName = toEntryName(copy.fileId);
+        if (await readQueuedRecord(dir, entryName, true)) continue;
+        await bumpRevision(dir);
+        written.push(entryName);
+        try {
+          await getStore(dir).deletePendingUpload(entryName).catch(String);
+          await getStore(dir).stagePendingUpload({
+            uploadSessionId: entryName,
+            fileId: copy.fileId,
+            policy: copy.policy,
+            fileName: copy.fileName,
+            size: copy.data.byteLength,
+            mimeType: copy.contentType,
+            fileData: copy.data.slice().buffer as ArrayBuffer,
+            createdAt: copy.createdAt,
+            retryCount: copy.retryCount
+          });
+          const write = writeEntryFile.bind(null, dir, entryName);
+          for (const { name, text } of copy.marks ?? [])
+            await write(name, text);
+          if (copy.claim) await write(CLAIM_FILE, JSON.stringify(copy.claim));
+          const { thumbnail } = copy;
+          if (thumbnail && THUMBNAIL_TYPES.has(thumbnail.type)) {
+            const name = `${THUMBNAIL_PREFIX}${thumbnail.type.split("/")[1]}`;
+            await write(name, thumbnail.data.slice().buffer as ArrayBuffer);
+          }
+          if (copy.isCommitted) await write(COMMITTED_FILE, "");
+          await write(RECORD_FILE, JSON.stringify(copy.record));
+        } finally {
+          await bumpRevisionAfter(dir);
         }
-        if (copy.isCommitted) await write(COMMITTED_FILE, "");
-      } finally {
-        await bumpRevisionAfter(dir);
       }
+      if (isChanged())
+        throw new Error("The account changed while the backup was restored");
+    } catch (error) {
+      for (const name of written)
+        await getStore(dir).deletePendingUpload(name).catch(String);
+      throw error;
     }
-  }).catch(async (error: unknown) => {
-    await remove();
-    throw error;
   });
-  return remove;
 }
 
 /**

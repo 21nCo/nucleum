@@ -192,13 +192,6 @@ vi.mock("@nucleum/shared-state/files/file-queue", async (importOriginal) => {
       await preflight.during?.();
       return staged;
     },
-    restoreLocalQueuedFiles: async (
-      ...args: Parameters<typeof actual.restoreLocalQueuedFiles>
-    ) => {
-      const remove = await actual.restoreLocalQueuedFiles(...args);
-      await preflight.during?.();
-      return remove;
-    },
     replayFileQueue: (...args: Parameters<typeof actual.replayFileQueue>) => {
       const replay = actual.replayFileQueue(...args);
       replays.set(args[0], [...(replays.get(args[0]) ?? []), replay]);
@@ -9116,11 +9109,17 @@ describe("backup and restore of a local-only user's files", () => {
     return queue.getDirectoryHandle(`queued_${fileId}`);
   }
 
-  it("leaves out of a guest backup a held capture whose record copy is missing or empty, and restores its records and complete held captures", async () => {
+  it("leaves out of a guest backup a held capture its restore would not accept or nothing would remove, and restores its records and complete held captures", async () => {
     const missing = await captureInRetiredGuest();
     await (await localEntry(missing.fileId)).removeEntry("record.json");
     const empty = await captureInRetiredGuest();
     await writeLocalFile(empty.fileId, "record.json", "");
+    const idOnly = await captureInRetiredGuest();
+    await writeLocalFile(idOnly.fileId, "record.json", '{"id":"record-1"}');
+    // Its capture was cut short before its record was saved: nothing on the
+    // restoring device would ever commit or remove it.
+    const uncommitted = await captureInRetiredGuest();
+    await (await localEntry(uncommitted.fileId)).removeEntry("committed");
     const complete = await captureInRetiredGuest();
     const record = await capturePhoto();
 
@@ -9134,21 +9133,57 @@ describe("backup and restore of a local-only user's files", () => {
     expect(await readQueuedBytes(complete.fileId, "full")).toBe("photo bytes");
   });
 
-  it("removes the held captures a guest restore wrote when the account changes before its records are imported", async () => {
+  it("removes, before any pass sees them, the held captures a guest restore wrote when the account changes during its last write", async () => {
     const retired = await captureInRetiredGuest();
     const record = await capturePhoto();
     const backup = await backupFile();
 
     await clearBrowser();
     await bootData(localAccount);
-    preflight.during = () => bootData(cloudAccount("user-b"));
+    // Another tab waits for the queue's lock while the restore writes.
+    const tab = await openQueueTab();
+    let seen: Promise<{ files: { fileId: string }[] }> | undefined;
+    let signIn: Promise<void> | undefined;
+    getDirectory = failingWrites((path) => {
+      if (path[0] !== LOCAL_QUEUE || path[2] !== "record.json") return;
+      seen ??= tab.exportQueuedFiles(LOCAL_QUEUE, async () => null, true);
+      return (signIn ??= bootData(cloudAccount("user-b")).then(() => {}));
+    });
     await expect(
       restoreBackup(backup, { triggerCloneUp: () => false })
     ).rejects.toThrow("The account changed while the backup was restored");
-    preflight.during = null;
+    getDirectory = opfs.getDirectory;
+    expect(signIn).toBeDefined();
+    await Promise.all(replays.get(LOCAL_QUEUE) ?? []);
 
+    expect((await seen)?.files).toEqual([]);
     expect(opfs.list(LOCAL_QUEUE)).not.toContain(`queued_${retired.fileId}`);
+    expect(sdk.started).toEqual([]);
     expect(await savedRecord(record.id)).toBeUndefined();
+  });
+
+  it("writes again a held capture a guest restore cut short before its record copy, so a retry restores it committed", async () => {
+    const retired = await captureInRetiredGuest();
+    const held = readHeldState(retired.fileId);
+    expect(held[2][1]).toBe("");
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    let isClosing = false;
+    getDirectory = failingWrites((path) => {
+      if (path[0] !== LOCAL_QUEUE || path[2] !== "committed") return undefined;
+      isClosing = true;
+      return "hang";
+    });
+    void restoreBackup(backup, { triggerCloneUp: () => false });
+    await vi.waitFor(() => expect(isClosing).toBe(true));
+    locks = createFakeLocks();
+    getDirectory = opfs.getDirectory;
+
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(readHeldState(retired.fileId)).toEqual(held);
+    expect(await readQueuedBytes(retired.fileId, "full")).toBe("photo bytes");
   });
 
   it("leaves none of a guest backup's held captures when writing a later one fails", async () => {
