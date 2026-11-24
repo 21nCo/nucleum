@@ -1167,24 +1167,42 @@ export async function exportQueuedFiles<T>(
  * Writes the held local files a guest backup carries back to the local
  * queue, each with its record copy, claim, committed state and the marks
  * that hold it (see LOCAL_MARKS), under the queue's lock, so no pass sees
- * one half written; a file the queue holds already is left as it is, and
- * one whose write fails is removed again and rejects. A copy without a
- * record copy, or with another mark, rejects before any is written.
+ * one half written, and resolves with the removal of the files it wrote. A
+ * file the queue holds with a record copy is left as it is; one an
+ * interrupted write left without it is written again. Rejects, leaving none
+ * it wrote, when a copy is invalid (before any write) or a write fails;
+ * stops writing once `isChanged` tells the account changed, for the caller
+ * to remove the ones it wrote.
  */
-export async function restoreLocalQueuedFiles(files: QueuedFileCopy[]) {
-  if (!files.length) return;
+export async function restoreLocalQueuedFiles(
+  files: QueuedFileCopy[],
+  isChanged: () => boolean
+) {
   const dir = LOCAL_FILE_QUEUE_DIR;
-  const isHeld = ({ record, marks = [] }: QueuedFileCopy) =>
+  const isHeld = ({ record, marks = [], claim }: QueuedFileCopy) =>
     typeof record?.id === "string" &&
-    marks.every(({ name }) => LOCAL_MARKS.includes(name));
+    typeof record.namespace === "string" &&
+    (claim === undefined || isClaim(Object(claim))) &&
+    marks.every(
+      (m) => LOCAL_MARKS.includes(m.name) && typeof m.text === "string"
+    );
   if (!files.every(isHeld)) throw new Error("A held local file is invalid");
+  const written: string[] = [];
   const signal = new AbortController().signal;
+  const remove = () =>
+    withQueueLock(dir, signal, async () => {
+      for (const name of written.splice(0))
+        await getStore(dir).deletePendingUpload(name).catch(String);
+    });
   await withQueueLock(dir, signal, async () => {
     for (const copy of files) {
       const entryName = toEntryName(copy.fileId);
-      if (await getEntryDir(dir, entryName, true)) continue;
+      if (isChanged()) break;
+      if (await readQueuedRecord(dir, entryName, true)) continue;
       await bumpRevision(dir);
+      written.push(entryName);
       try {
+        await getStore(dir).deletePendingUpload(entryName).catch(String);
         await getStore(dir).stagePendingUpload({
           uploadSessionId: entryName,
           fileId: copy.fileId,
@@ -1206,14 +1224,15 @@ export async function restoreLocalQueuedFiles(files: QueuedFileCopy[]) {
           await write(name, thumbnail.data.slice().buffer as ArrayBuffer);
         }
         if (copy.isCommitted) await write(COMMITTED_FILE, "");
-      } catch (error) {
-        await getStore(dir).deletePendingUpload(entryName).catch(String);
-        throw error;
       } finally {
         await bumpRevisionAfter(dir);
       }
     }
+  }).catch(async (error: unknown) => {
+    await remove();
+    throw error;
   });
+  return remove;
 }
 
 /**

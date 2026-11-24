@@ -173,6 +173,7 @@ const {
 const {
   captureFileQueueUploader,
   endAccountUploadReplay,
+  recordFileFnPendingDelete,
   startAccountUploadReplay
 } = await import("./filefn-client");
 const {
@@ -3311,6 +3312,111 @@ describe("files captured offline or by a local-only user", () => {
     goOnline();
     await settleTasks();
     expect(sdk.deletes).toEqual([unreferenced.fileId]);
+  });
+
+  /**
+   * Signs in to user-a and records checked deletes of `fileIds` at its
+   * authority, as a settle of orphaned captures that found the app offline.
+   */
+  async function recordCheckedDeletes(fileIds: string[]) {
+    await bootData(localAccount);
+    await signInToCloud("user-a");
+    await settleTasks();
+    const uploader = await captureFileQueueUploader();
+    for (const fileId of fileIds)
+      await recordFileFnPendingDelete(uploader!, fileId, true);
+  }
+
+  /** Inserts an account record that references the file. */
+  async function insertReference(fileId: string) {
+    await datafn.file.mutate({
+      operation: "insert",
+      id: `record_${fileId}`,
+      record: { name: "photo.png", type: "image/png", fileId }
+    } as never);
+  }
+
+  it("pulls the account's records again for each checked delete, so a record that arrives during an earlier delete keeps its file", async () => {
+    const fileIds = ["file_first", "file_second", "file_third"];
+    await recordCheckedDeletes(fileIds);
+    let referenced: string | undefined;
+    fileCalls.onPull = async () => {
+      if (sdk.deletes.length !== 1 || referenced) return;
+      referenced = fileIds.find((fileId) => !sdk.deletes.includes(fileId))!;
+      await insertReference(referenced);
+    };
+
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deletes).toHaveLength(2));
+    await settleTasks();
+    goOnline();
+    await settleTasks();
+    expect(sdk.deletes).toHaveLength(2);
+    expect(sdk.deletes).not.toContain(referenced);
+  });
+
+  it("sends a checked delete only on records pulled in the DataFn runtime that answers, not one reopened during the pull", async () => {
+    const fileIds = ["file_first", "file_second"];
+    await recordCheckedDeletes(fileIds);
+    const store = await vi.importActual<
+      typeof import("@nucleum/datafn/datafn.store")
+    >("@nucleum/datafn/datafn.store");
+    let pulls = 0;
+    let replacedAt: number | undefined;
+    fileCalls.onPull = async () => {
+      pulls += 1;
+      if (sdk.deletes.length !== 1 || replacedAt !== undefined) return;
+      replacedAt = pulls;
+      store.datafnRuntime.update((runtime) => runtime && { ...runtime });
+    };
+    // How many pulls began in the runtime that replaced it, at each delete.
+    const pullsSinceReplaced: number[] = [];
+    sdk.onDelete = async () => {
+      pullsSinceReplaced.push(pulls - (replacedAt ?? pulls + 1));
+    };
+
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deletes.sort()).toEqual(fileIds));
+    sdk.onDelete = null;
+    expect(pullsSinceReplaced[0]).toBe(-1);
+    expect(pullsSinceReplaced[1]).toBeGreaterThan(0);
+  });
+
+  it("keeps a delete recorded checked checked when this session also holds it unchecked", async () => {
+    vi.spyOn(navigator.storage, "getDirectory").mockImplementation(async () => {
+      const root = await opfs.getDirectory();
+      return {
+        ...root,
+        getDirectoryHandle: (name: string, options?: object) =>
+          name.startsWith("filefn-pending-deletes")
+            ? Promise.reject(new DOMException("Denied", "NotAllowedError"))
+            : root.getDirectoryHandle(name, options)
+      } as FileSystemDirectoryHandle;
+    });
+    await bootData(localAccount);
+    await signInToCloud("user-a");
+    await settleTasks();
+    const uploader = (await captureFileQueueUploader())!;
+    // Local storage refused the unchecked record, which this session keeps.
+    const { setItem } = Storage.prototype;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key,
+      value
+    ) {
+      if (key.includes("file_referenced") && value === "1")
+        throw new DOMException("Full", "QuotaExceededError");
+      setItem.call(this, key, value);
+    });
+    await recordFileFnPendingDelete(uploader, "file_referenced");
+    await recordFileFnPendingDelete(uploader, "file_referenced", true);
+    await recordFileFnPendingDelete(uploader, "file_unreferenced", true);
+    await insertReference("file_referenced");
+
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deletes).toEqual(["file_unreferenced"]));
+    await settleTasks();
+    expect(sdk.deletes).toEqual(["file_unreferenced"]);
   });
 
   it("keeps a capture from an earlier guest namespace and publishes it at the first cloud sign-in", async () => {

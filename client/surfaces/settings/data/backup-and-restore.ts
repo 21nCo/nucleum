@@ -142,7 +142,10 @@ function listFileRecords(records: Record<string, unknown>) {
  * with its record copy and marks, restored still held (see
  * restoreLocalQueuedFiles). One of the backed-up namespace `namespace`
  * whose record is gone is marked deleted, if no mark tells that yet (its
- * guest change may not be copied yet), so it never publishes its copy.
+ * guest change may not be copied yet), so it never publishes its copy. It
+ * leaves out, logged, a file whose record copy cannot be read (no restore
+ * could hold it) and an unclaimed one marked deleted (nothing on FileFn to
+ * settle, so no release or settle path would ever remove it).
  */
 function withLocalFileBytes(
   exported: { records: Record<string, unknown>; files: QueuedFileCopy[] },
@@ -159,16 +162,17 @@ function withLocalFileBytes(
     record.size = copy.data.length;
     if (copy.thumbnail) record.thumbnailData = copy.thumbnail.data;
   }
-  const files = exported.files.filter(
-    ({ fileId, marks = [] }) =>
-      !inlined.has(fileId) && !marks.some(({ name }) => name === "uploaded")
-  );
-  for (const copy of files) {
+  const files = exported.files.filter((copy) => {
     const marks = (copy.marks ??= []);
-    const isGone = !marks.some((m) => ["deleted", "orphaned"].includes(m.name));
-    if (copy.record?.namespace === namespace && isGone)
+    const has = (...names: string[]) =>
+      marks.some((m) => names.includes(m.name));
+    if (inlined.has(copy.fileId) || has("uploaded")) return false;
+    if (copy.record?.namespace === namespace && !has("deleted", "orphaned"))
       marks.push({ name: "deleted", text: "" });
-  }
+    const isKept = Boolean(copy.record) && (copy.claim || !has("deleted"));
+    if (!isKept) logger.warn({ at: "backup.localFile", fileId: copy.fileId });
+    return isKept;
+  });
   return { records: exported.records, files };
 }
 
@@ -197,7 +201,9 @@ function withLocalFileBytes(
  * back the files it wrote that no other restore holds and no account
  * adopted; see unstageRestoredFiles); and when the records could not all be
  * imported, keeping the files. A guest backup's held local files are
- * written back first, still held, and kept (see restoreLocalQueuedFiles).
+ * written back first, still held, and kept once the records are imported or
+ * fail to; the restore removes the ones it wrote when it rejects before
+ * (see restoreLocalQueuedFiles).
  * `triggerCloneUp` decides, right before the
  * records are imported into the account checked unchanged, whether DataFn
  * clones them up.
@@ -244,7 +250,12 @@ async function restoreInRuntime(
   if (read?.files.length && !isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
   }
-  if (read?.userId === null) await restoreLocalQueuedFiles(read.files);
+  const isChanged = () =>
+    datafn.currentNamespace() !== namespace || isSwitched();
+  const unrestore =
+    read?.userId === null
+      ? await restoreLocalQueuedFiles(read.files, isChanged)
+      : undefined;
   const fileQueue = read?.userId
     ? { userId: read.userId, files: read.files }
     : undefined;
@@ -259,8 +270,6 @@ async function restoreInRuntime(
       fileQueue.files,
       { isOwnAccount, account: userId, view, authority }
     ));
-  const isChanged = () =>
-    datafn.currentNamespace() !== namespace || isSwitched();
   if (staged && !isChanged()) {
     await renewRestoredFiles(staged).catch(async (error: unknown) => {
       await unstageRestoredFiles(staged);
@@ -269,6 +278,7 @@ async function restoreInRuntime(
   }
   if (isChanged()) {
     if (staged) await unstageRestoredFiles(staged);
+    await unrestore?.();
     throw new Error("The account changed while the backup was restored");
   }
   let isImported = false;

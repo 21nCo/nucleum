@@ -1070,7 +1070,8 @@ function getFallbackPendingDeletes(userId: string) {
     const storage = globalThis.localStorage;
     for (let index = 0; index < (storage?.length ?? 0); index++) {
       const key = storage?.key(index);
-      if (key && !keys.has(key)) keys.set(key, storage.getItem(key) ?? "");
+      if (key && keys.get(key) !== CHECKED_DELETE)
+        keys.set(key, storage.getItem(key) ?? "");
     }
   } catch (error) {
     logger.warn({ at: "filefn.client.pendingDelete", error });
@@ -1261,7 +1262,8 @@ async function getPendingDeleteDir(
  * that succeeds or finds the file already gone and keeping each other
  * failure for the next drain. A checked one (see recordFileFnPendingDelete)
  * is sent only while DataFn holds the account's records at the authority,
- * pulled up to date by this drain, and none references the file; it is
+ * in the runtime it pulled up to date for that delete, and none references
+ * the file (checked wins over unchecked across both stores); it is
  * dropped unsent once one does, and kept for a later drain while they
  * cannot be read. The client is made only when one is pending.
  * The client is made, and each delete sent, only while the client is not
@@ -1290,7 +1292,6 @@ async function replayPendingDeletes(
   if (fileIds.size === 0 || !isSendable()) return;
   const client = await getClient();
   const isCurrent = () => isSendable() && isAccountRuntime(userId, baseUrl);
-  let isPulled: Promise<boolean> | undefined;
   const drop = async (fileId: string) => {
     removeFallbackPendingDelete(userId, baseUrl, fileId);
     for (const mark of ["", CHECKED_DELETE])
@@ -1300,14 +1301,14 @@ async function replayPendingDeletes(
     if (!isSendable()) return;
     try {
       if (isChecked) {
-        isPulled ??= Promise.resolve(
-          isCurrent() &&
-            (!get(datafnRuntime)?.storage ||
-              pullAccountFileRecords(datafn, isCurrent, teardown))
-        );
-        const isReferenced = (await isPulled)
-          ? await isReferencedBy(isCurrent, fileId)
-          : undefined;
+        const runtime = get(datafnRuntime);
+        const isBound = () => isCurrent() && get(datafnRuntime) === runtime;
+        const isReferenced =
+          isBound() &&
+          (!runtime?.storage ||
+            (await pullAccountFileRecords(datafn, isBound, teardown)))
+            ? await isReferencedBy(isBound, fileId)
+            : undefined;
         if (isReferenced === undefined || !isSendable()) continue;
         if (isReferenced) {
           await drop(fileId);

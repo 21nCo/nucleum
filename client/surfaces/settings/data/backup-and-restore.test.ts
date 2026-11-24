@@ -192,6 +192,13 @@ vi.mock("@nucleum/shared-state/files/file-queue", async (importOriginal) => {
       await preflight.during?.();
       return staged;
     },
+    restoreLocalQueuedFiles: async (
+      ...args: Parameters<typeof actual.restoreLocalQueuedFiles>
+    ) => {
+      const remove = await actual.restoreLocalQueuedFiles(...args);
+      await preflight.during?.();
+      return remove;
+    },
     replayFileQueue: (...args: Parameters<typeof actual.replayFileQueue>) => {
       const replay = actual.replayFileQueue(...args);
       replays.set(args[0], [...(replays.get(args[0]) ?? []), replay]);
@@ -9054,7 +9061,8 @@ describe("backup and restore of a local-only user's files", () => {
     // The guest record of the claimed, not uploaded capture was deleted.
     await deleteRecord(claimed.id);
     await writeLocalFile(claimed.fileId, "orphaned");
-    // A guest record deleted before its change marked its capture.
+    // A guest record deleted before its change marked its capture, which
+    // has no claim, so nothing would ever settle a restored copy of it.
     const unfenced = await capturePhoto();
     await deleteRecord(unfenced.id);
     const held = [retired, claimed].map(({ fileId }) => readHeldState(fileId));
@@ -9070,13 +9078,8 @@ describe("backup and restore of a local-only user's files", () => {
     await restoreBackup(backup, { triggerCloneUp: () => false });
 
     expect(opfs.list(LOCAL_QUEUE).sort()).toEqual(
-      [retired, claimed, unfenced]
-        .map(({ fileId }) => `queued_${fileId}`)
-        .sort()
+      [retired, claimed].map(({ fileId }) => `queued_${fileId}`).sort()
     );
-    expect(
-      opfs.read(LOCAL_QUEUE, `queued_${unfenced.fileId}`, "deleted")
-    ).toBeDefined();
     expect(
       [retired, claimed].map(({ fileId }) => readHeldState(fileId))
     ).toEqual(held);
@@ -9104,5 +9107,78 @@ describe("backup and restore of a local-only user's files", () => {
     expect(restored?.fileId).toBeUndefined();
     expect(decode(restored?.data)).toBe("photo bytes");
     expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
+  /** Returns a local file's entry in the device's local queue. */
+  async function localEntry(fileId: string) {
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    return queue.getDirectoryHandle(`queued_${fileId}`);
+  }
+
+  it("leaves out of a guest backup a held capture whose record copy is missing or empty, and restores its records and complete held captures", async () => {
+    const missing = await captureInRetiredGuest();
+    await (await localEntry(missing.fileId)).removeEntry("record.json");
+    const empty = await captureInRetiredGuest();
+    await writeLocalFile(empty.fileId, "record.json", "");
+    const complete = await captureInRetiredGuest();
+    const record = await capturePhoto();
+
+    const backup = await backupFile();
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    expect(decode((await savedRecord(record.id))?.data)).toBe("photo bytes");
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${complete.fileId}`]);
+    expect(await readQueuedBytes(complete.fileId, "full")).toBe("photo bytes");
+  });
+
+  it("removes the held captures a guest restore wrote when the account changes before its records are imported", async () => {
+    const retired = await captureInRetiredGuest();
+    const record = await capturePhoto();
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    preflight.during = () => bootData(cloudAccount("user-b"));
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("The account changed while the backup was restored");
+    preflight.during = null;
+
+    expect(opfs.list(LOCAL_QUEUE)).not.toContain(`queued_${retired.fileId}`);
+    expect(await savedRecord(record.id)).toBeUndefined();
+  });
+
+  it("leaves none of a guest backup's held captures when writing a later one fails", async () => {
+    const first = await captureInRetiredGuest();
+    const second = await captureInRetiredGuest();
+    const record = await capturePhoto();
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    const { OPFSStore } = await import("@filefn/client");
+    const stage = OPFSStore.prototype.stagePendingUpload;
+    let stages = 0;
+    vi.spyOn(OPFSStore.prototype, "stagePendingUpload").mockImplementation(
+      function (this: InstanceType<typeof OPFSStore>, ...args) {
+        if (++stages === 2) return Promise.reject(new Error("Disk full"));
+        return stage.apply(this, args);
+      }
+    );
+    await expect(
+      restoreBackup(backup, { triggerCloneUp: () => false })
+    ).rejects.toThrow("Disk full");
+
+    expect(stages).toBe(2);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+    expect(await savedRecord(record.id)).toBeUndefined();
+    vi.mocked(OPFSStore.prototype.stagePendingUpload).mockRestore();
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+    expect(opfs.list(LOCAL_QUEUE).sort()).toEqual(
+      [first, second].map(({ fileId }) => `queued_${fileId}`).sort()
+    );
   });
 });
