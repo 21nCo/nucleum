@@ -61,9 +61,9 @@ function generateCredential(): string {
   return [randomUUID().toUpperCase(), randomUUID(), '!'].join('');
 }
 
-async function signUp(): Promise<Headers> {
+async function signUp(email = 'v1-api@example.test'): Promise<Headers> {
   const response = await call('/auth/sign-up/password', { origin: base }, {
-    body: { email: 'v1-api@example.test', password: generateCredential(), sessionMode: 'hybrid' }
+    body: { email, password: generateCredential(), sessionMode: 'hybrid' }
   });
   expect(response.status).toBe(200);
   const cookies = response.headers.getSetCookie().map((cookie) => cookie.split(';')[0]);
@@ -176,8 +176,8 @@ describe('v1 authentication and scopes', () => {
     const body = await problem(response, 403, 'insufficient_scope');
     expect(body.scopes).toEqual(['memotron:read', 'memotron:write']);
     expect(response.headers.get('www-authenticate')).toContain('error="insufficient_scope"');
-    expect(await ids(await call('/v1/nucleum/nodes?limit=100', actors.nucleumWrite)))
-      .not.toContain(expect.stringMatching(/Denied/));
+    const stored = await json(await call('/v1/nucleum/nodes?limit=100', actors.nucleumWrite), 200);
+    expect((stored.data as Body[]).map((row) => row.label)).not.toContain('Denied');
   });
 
   it('refuses a token once it is revoked', async () => {
@@ -220,6 +220,17 @@ describe('v1 shared resources', () => {
     await problem(await call('/v1/memotron/collections', actors.memotronWrite, {
       body: { label: 'Goals 2', type: 'list', resource: 'objective' }
     }), 422, 'validation_failed');
+    await problem(await call('/v1/memotron/properties', actors.memotronWrite, {
+      body: { label: 'No resource', propertyType: 'text' }
+    }), 422, 'validation_failed');
+    for (const segment of ['collections', 'properties']) {
+      const route = createInterfaceApiRouter('memotron').getRoutes()
+        .find((entry) => entry.method === 'POST' && entry.path === `/v1/memotron/${segment}`);
+      const schema = (route?.meta as { body: { required: string[]; properties: { resource: { enum: string[] } } } }).body;
+      expect(schema.required, segment).toContain('resource');
+      expect(schema.properties.resource.enum, segment).toEqual(expect.arrayContaining(['node']));
+      expect(schema.properties.resource.enum, segment).not.toContain('objective');
+    }
     const created = await json(await call('/v1/memotron/collections', actors.memotronWrite, {
       body: { label: 'Notes 2', type: 'list', resource: 'node' }
     }), 201);
@@ -251,6 +262,34 @@ describe('v1 lists', () => {
     const first = await json(await call('/v1/memotron/nodes?sort=label&limit=1', actors.memotronRead), 200);
     await problem(await call(`/v1/memotron/nodes?sort=-label&cursor=${first.nextCursor}`, actors.memotronRead), 400, 'invalid_parameter');
     await problem(await call('/v1/memotron/nodes?cursor=not-a-cursor', actors.memotronRead), 400, 'invalid_parameter');
+  });
+
+  it('pages a nullable sort field in both directions, visiting every record once with nulls last', async () => {
+    for (const [label, date] of [['Dated b', 1_700_000_200_000], ['Undated a', null], ['Dated a', 1_700_000_100_000],
+      ['Undated b', null], ['Dated c', 1_700_000_200_000]] as const) {
+      await json(await call('/v1/memotron/nodes', actors.memotronWrite, {
+        body: { label, contentType: 'SIMPLE_TEXT', ...(date === null ? {} : { date }) }
+      }), 201);
+    }
+    const all = await ids(await call('/v1/memotron/nodes?limit=100', actors.memotronRead));
+    for (const sort of ['date', '-date']) {
+      const seen: Body[] = [];
+      let cursor: string | null = null;
+      let pages = 0;
+      do {
+        const query = `?sort=${sort}&limit=2${cursor ? `&cursor=${cursor}` : ''}`;
+        const page = await json(await call(`/v1/memotron/nodes${query}`, actors.memotronRead), 200);
+        seen.push(...page.data as Body[]);
+        cursor = page.nextCursor as string | null;
+        pages += 1;
+      } while (cursor && pages < 100);
+      expect(seen.map((row) => String(row.id)).sort(), sort).toEqual(all);
+      const dates = seen.map((row) => (row.date ?? null) as number | null);
+      const firstNull = dates.indexOf(null);
+      expect(dates.slice(firstNull).every((date) => date === null), sort).toBe(true);
+      const dated = dates.slice(0, firstNull === -1 ? undefined : firstNull) as number[];
+      expect(dated, sort).toEqual([...dated].sort((a, b) => (sort === 'date' ? a - b : b - a)));
+    }
   });
 
   it('rejects unknown, repeated and invalid parameters', async () => {
@@ -296,6 +335,82 @@ describe('v1 writes', () => {
     expect((list.data as Body[]).filter((row) => row.label === 'Once only')).toHaveLength(1);
     await problem(await call('/v1/memotron/nodes', { ...actors.memotronWrite, 'idempotency-key': 'has space' }, { body }),
       400, 'invalid_parameter');
+  });
+
+  it('serves the created record at its Location', async () => {
+    const response = await call('/v1/memotron/nodes', actors.memotronWrite, {
+      body: { label: 'Located', contentType: 'SIMPLE_TEXT' }
+    });
+    const created = await json(response, 201);
+    const location = response.headers.get('location');
+    expect(location).toContain('%3A');
+    expect(await json(await call(String(location), actors.memotronRead), 200)).toEqual(created);
+  });
+
+  it('keeps Idempotency-Keys apart per account and replays only the same body', async () => {
+    const otherCookie = await signUp('v1-api-other@example.test');
+    const other = (await createKey(otherCookie, ['memotron:read', 'memotron:write'])).headers;
+    const key = { 'idempotency-key': `shared-${randomUUID()}` };
+    const mine = await json(await call('/v1/memotron/nodes', { ...actors.memotronWrite, ...key }, {
+      body: { label: 'Mine', contentType: 'SIMPLE_TEXT' }
+    }), 201);
+    const theirsResponse = await call('/v1/memotron/nodes', { ...other, ...key }, {
+      body: { label: 'Theirs', contentType: 'SIMPLE_TEXT' }
+    });
+    const theirs = await json(theirsResponse, 201);
+    expect(theirsResponse.headers.get('idempotent-replayed')).toBeNull();
+    expect(theirs).toMatchObject({ label: 'Theirs' });
+    expect(theirs.id).not.toBe(mine.id);
+    expect(await ids(await call('/v1/memotron/nodes?limit=100', other))).toEqual([theirs.id]);
+
+    const reused = await problem(await call('/v1/memotron/nodes', { ...actors.memotronWrite, ...key }, {
+      body: { label: 'Mine again', contentType: 'SIMPLE_TEXT' }
+    }), 422, 'idempotency_key_reused');
+    expect(JSON.stringify(reused)).not.toContain(String(mine.id));
+    const labels = async () => ((await json(await call('/v1/memotron/nodes?limit=100', actors.memotronRead), 200))
+      .data as Body[]).map((row) => row.label);
+    expect(await labels()).not.toContain('Mine again');
+
+    await json(await call(`/v1/memotron/nodes/${mine.id}`, actors.memotronWrite, {
+      method: 'PATCH', body: { label: 'Mine renamed' }
+    }), 200);
+    const replay = await call('/v1/memotron/nodes', { ...actors.memotronWrite, ...key }, {
+      body: { label: 'Mine', contentType: 'SIMPLE_TEXT' }
+    });
+    expect(await json(replay, 201)).toMatchObject({ id: mine.id, label: 'Mine renamed' });
+    expect(replay.headers.get('idempotent-replayed')).toBe('true');
+    expect((await labels()).filter((label) => label === 'Mine' || label === 'Mine renamed')).toEqual(['Mine renamed']);
+  });
+
+  it('refuses an update Idempotency-Key reused with another body', async () => {
+    const headers = { ...actors.memotronWrite, 'idempotency-key': `update-${randomUUID()}` };
+    await json(await call('/v1/memotron/nodes/node:n1', headers, { method: 'PATCH', body: { notes: 'Keyed' } }), 200);
+    const repeated = await call('/v1/memotron/nodes/node:n1', headers, { method: 'PATCH', body: { notes: 'Keyed' } });
+    await json(repeated, 200);
+    expect(repeated.headers.get('idempotent-replayed')).toBe('true');
+    await problem(await call('/v1/memotron/nodes/node:n1', headers, { method: 'PATCH', body: { notes: 'Other' } }),
+      422, 'idempotency_key_reused');
+    expect(await json(await call('/v1/memotron/nodes/node:n1', actors.memotronRead), 200))
+      .toMatchObject({ notes: 'Keyed' });
+  });
+
+  it('creates once for overlapping requests with one Idempotency-Key', async () => {
+    const headers = { ...actors.memotronWrite, 'idempotency-key': `overlap-${randomUUID()}` };
+    const body = { label: 'Overlapping', contentType: 'SIMPLE_TEXT' };
+    const responses = await Promise.all(Array.from({ length: 4 }, () => call('/v1/memotron/nodes', headers, { body })));
+    const created = await Promise.all(responses.map((response) => json(response, 201)));
+    expect(new Set(created.map((row) => row.id)).size).toBe(1);
+    const list = await json(await call('/v1/memotron/nodes?limit=100', actors.memotronRead), 200);
+    expect((list.data as Body[]).filter((row) => row.label === 'Overlapping')).toHaveLength(1);
+  });
+
+  it('answers a path that does not percent-decode with a problem', async () => {
+    for (const method of ['GET', 'PATCH', 'DELETE']) {
+      const response = await call('/v1/memotron/nodes/node%E0%A4%A', actors.memotronWrite, {
+        method, ...(method === 'PATCH' ? { body: { notes: 'x' } } : {})
+      });
+      await problem(response, 400, 'invalid_path');
+    }
   });
 
   it('updates only the fields sent and answers 404 for records it cannot see', async () => {
@@ -357,5 +472,28 @@ describe('v1 search', () => {
     for (const query of ['', '?q=', '?q=Alpha&resource=objective', '?q=Alpha&limit=51', '?q=Alpha&extra=1']) {
       await problem(await call(`/v1/memotron/search${query}`, actors.memotronRead), 400, 'invalid_parameter');
     }
+  });
+});
+
+describe('v1 browser access', () => {
+  it('lets an allowed origin preflight updates with an Idempotency-Key and read the write headers', async () => {
+    const origin = 'https://app.example.test';
+    const browser = createAccountTestHarness({ enableRateLimit: false, corsOrigins: [origin] });
+    const preflight = await browser.app.fetch(new Request(`${base}/v1/memotron/nodes/node:n1`, {
+      method: 'OPTIONS',
+      headers: {
+        origin,
+        'access-control-request-method': 'PATCH',
+        'access-control-request-headers': 'authorization, content-type, idempotency-key'
+      }
+    }));
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get('access-control-allow-origin')).toBe(origin);
+    expect(preflight.headers.get('access-control-allow-methods')?.split(',')).toContain('PATCH');
+    expect(preflight.headers.get('access-control-allow-headers')?.split(',')).toContain('idempotency-key');
+    const response = await browser.app.fetch(new Request(`${base}/v1/memotron/nodes`, { headers: { origin } }));
+    expect(response.status).toBe(401);
+    expect(response.headers.get('access-control-expose-headers')?.split(','))
+      .toEqual(expect.arrayContaining(['location', 'idempotent-replayed', 'www-authenticate', 'allow']));
   });
 });

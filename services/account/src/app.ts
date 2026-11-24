@@ -298,7 +298,7 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
       "*",
       cors({
         origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
-        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allowHeaders: [
           "content-type",
           "authorization",
@@ -311,6 +311,7 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
           "x-datafn-sync-cursor",
           "x-filefn-client-version",
           "x-idempotency-key",
+          "idempotency-key",
           "x-upload-session-token"
         ],
         exposeHeaders: [
@@ -328,7 +329,11 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
           "x-datafn-region",
           "content-disposition",
           "content-range",
-          "etag"
+          "etag",
+          "location",
+          "idempotent-replayed",
+          "www-authenticate",
+          "allow"
         ],
         credentials: true,
         maxAge: 600
@@ -367,6 +372,7 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
       authenticate: (request) => auth.provider.authenticate(request),
       getSyncServer,
       regionId,
+      idempotencyStore: services.infra.stores.atomicKv,
       logError: (message, error) => logger.error(message, { error })
     }
   });

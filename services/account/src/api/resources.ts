@@ -110,22 +110,32 @@ export function recordSchema(contract: InterfaceResourceContract): JsonSchema {
   };
 }
 
-/** JSON Schema of a create or update body. */
+/**
+ * JSON Schema of a create or update body. `resourceTypes` lists the
+ * `resource` values an app-scoped create may use; it makes `resource` required.
+ */
 export function writeSchema(
   contract: InterfaceResourceContract,
-  operation: 'create' | 'update'
+  operation: 'create' | 'update',
+  resourceTypes?: readonly string[] | null
 ): JsonSchema {
   const names = contract[operation] || [];
   const fields = names.map((name) => resolveApiField(contract.resource, name));
+  const constrained = operation === 'create' && resourceTypes && names.includes('resource');
+  const required = fields.filter((field) => field.required || (constrained && field.name === 'resource'))
+    .map((field) => field.name);
   return {
     title: `${resourceTitle(contract.resource)}${operation === 'create' ? 'Create' : 'Update'}`,
     type: 'object',
     additionalProperties: false,
     ...(operation === 'update' ? { minProperties: 1 } : {}),
-    ...(operation === 'create'
-      ? { required: fields.filter((field) => field.required).map((field) => field.name) }
-      : {}),
-    properties: Object.fromEntries(fields.map((field) => [field.name, fieldSchema(field)]))
+    ...(operation === 'create' ? { required } : {}),
+    properties: Object.fromEntries(fields.map((field) => [
+      field.name,
+      constrained && field.name === 'resource'
+        ? { ...fieldSchema(field), type: 'string', enum: [...resourceTypes] }
+        : fieldSchema(field)
+    ]))
   };
 }
 

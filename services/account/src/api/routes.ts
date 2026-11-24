@@ -11,7 +11,8 @@ export interface RegisterInterfaceApiRoutesInput {
 
 /**
  * Serves each app's versioned REST API under `/v1/<app>`. A path no route
- * matches gets a 404 problem, or a 405 when another method serves it.
+ * matches gets a 404 problem, or a 405 when another method serves it, and
+ * a path that does not decode gets a 400 problem.
  */
 export function registerInterfaceApiRoutes(input: RegisterInterfaceApiRoutesInput): void {
   const routers = new Map<string, Router>(
@@ -20,6 +21,9 @@ export function registerInterfaceApiRoutes(input: RegisterInterfaceApiRoutesInpu
   const handle = (request: Request, appName: string): Promise<Response> | Response => {
     const router = routers.get(appName);
     const path = new URL(request.url).pathname;
+    if (!isDecodablePath(path)) {
+      return new ApiProblem(400, 'invalid_path', 'The path holds an invalid percent-encoded sequence.').toResponse();
+    }
     if (router?.match(request.method, path)) return router.handle(request);
     const methods = router
       ? ['GET', 'POST', 'PATCH'].filter((method) => router.match(method, path))
@@ -33,4 +37,14 @@ export function registerInterfaceApiRoutes(input: RegisterInterfaceApiRoutesInpu
   };
   input.app.all('/v1/:app', (c) => handle(c.req.raw, c.req.param('app')));
   input.app.all('/v1/:app/*', (c) => handle(c.req.raw, c.req.param('app')));
+}
+
+/** Whether every path segment percent-decodes, as route matching needs. */
+function isDecodablePath(path: string): boolean {
+  try {
+    for (const segment of path.split('/')) decodeURIComponent(segment);
+    return true;
+  } catch {
+    return false;
+  }
 }

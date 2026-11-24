@@ -1,6 +1,7 @@
 import { createRouter, type Route, type RouteContext, type Router } from '@superfunctions/http';
 import { DatafnExecutorError, type DatafnExecutor } from '@datafn/server';
 import { AuthFnError, type AuthFnSession } from 'authfn';
+import type { ConditionalKVStoreAdapter } from '@superfunctions/db';
 import { nucleumDatafnSchema } from '@nucleum/schema/datafn';
 import {
   interfaceContract,
@@ -23,6 +24,7 @@ import {
   resourceTitle,
   validateWriteBody,
   writeSchema,
+  type ApiField,
   type JsonSchema
 } from './resources.js';
 
@@ -31,6 +33,12 @@ export interface InterfaceApiServices {
   authenticate(request: Request): Promise<AuthFnSession | null> | AuthFnSession | null;
   getSyncServer(): Promise<SyncServer>;
   regionId?: string;
+  /**
+   * Remembers which body each `Idempotency-Key` was first sent with, so the
+   * same key with another body is refused. Without it a reused key with
+   * another body still never replays: creates are refused and updates apply.
+   */
+  idempotencyStore?: ConditionalKVStoreAdapter;
   /** Records failures the API answers with a 500. */
   logError?(message: string, error: unknown): void;
 }
@@ -41,6 +49,9 @@ type Row = Record<string, unknown>;
 interface Caller {
   executor: DatafnExecutor<SyncContext>;
   context: SyncContext;
+  /** The account the token belongs to. */
+  actorId: string;
+  services: InterfaceApiServices;
 }
 
 interface QueryResult {
@@ -51,7 +62,7 @@ interface QueryResult {
 interface MutationResult {
   ok: boolean;
   affectedIds?: string[];
-  errors?: { code?: string; message?: string }[];
+  errors?: { code?: string; message?: string; path?: string }[];
   deduped?: boolean;
 }
 
@@ -68,6 +79,7 @@ const DEFAULT_SEARCH_LIMIT = 20;
 const MAX_SEARCH_LIMIT = 50;
 const MAX_BODY_BYTES = 65_536;
 const IDEMPOTENCY_KEY = /^[\x21-\x7e]{1,255}$/;
+const IDEMPOTENCY_TTL_SECONDS = 86_400;
 
 /**
  * Builds one app's versioned REST router: list, get, create and update for
@@ -145,7 +157,7 @@ function resourceRoutes(
         summary: `Get one ${contract.resource}`,
         description: `Requires ${scope('read')}.`,
         tags,
-        responses: { 200: { description: 'The record.', schema: record }, ...errorResponses(401, 403, 404, 429) }
+        responses: { 200: { description: 'The record.', schema: record }, ...errorResponses(400, 401, 403, 404, 429) }
       }
     }
   ];
@@ -161,8 +173,15 @@ function resourceRoutes(
         description: `Requires ${scope('write')}. ${idempotencyNote}`,
         tags,
         headers: idempotencyHeader,
-        body: writeSchema(contract, 'create'),
-        responses: { 201: { description: 'The created record.', schema: record }, ...errorResponses(400, 401, 403, 422, 429) }
+        body: writeSchema(contract, 'create', sharedFieldConstraint(app, contract)),
+        responses: {
+          201: {
+            description: 'The created record.',
+            schema: record,
+            headers: { Location: locationHeader, 'Idempotent-Replayed': replayedHeader }
+          },
+          ...errorResponses(400, 401, 403, 405, 409, 413, 422, 429)
+        }
       }
     });
   }
@@ -179,7 +198,10 @@ function resourceRoutes(
         tags,
         headers: idempotencyHeader,
         body: writeSchema(contract, 'update'),
-        responses: { 200: { description: 'The updated record.', schema: record }, ...errorResponses(400, 401, 403, 404, 422, 429) }
+        responses: {
+          200: { description: 'The updated record.', schema: record, headers: { 'Idempotent-Replayed': replayedHeader } },
+          ...errorResponses(400, 401, 403, 404, 405, 413, 422, 429)
+        }
       }
     });
   }
@@ -187,7 +209,17 @@ function resourceRoutes(
 }
 
 const idempotencyNote =
-  'Repeating the request with the same `Idempotency-Key` returns the first result without writing again.';
+  'Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the ' +
+  'record\'s current state and `Idempotent-Replayed: true`. A key belongs to the token\'s account, this method ' +
+  'and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.';
+
+const locationHeader = { type: 'string', description: 'Path of the created record.' };
+
+const replayedHeader = {
+  type: 'string',
+  enum: ['true'],
+  description: 'Present when the response replays an earlier request with the same Idempotency-Key.'
+};
 
 const idempotencyHeader = {
   'Idempotency-Key': {
@@ -224,20 +256,31 @@ function listParameters(
 }
 
 const ERROR_DESCRIPTIONS: Record<number, string> = {
-  400: '400 invalid parameter, cursor or header',
-  401: '401 missing, invalid, expired or revoked token',
+  400: '400 invalid parameter, cursor, path or header',
+  401: '401 missing, invalid, expired or revoked token (with WWW-Authenticate)',
   403: '403 token lacks the scope or may not reach the record',
   404: '404 no visible record with that id',
-  422: '422 invalid body',
+  405: '405 method not served for this path (with Allow)',
+  409: '409 the record an Idempotency-Key created is no longer visible',
+  413: '413 body larger than 64 KiB',
+  422: '422 invalid body, or an Idempotency-Key reused with another body',
   429: '429 rate limited'
 };
 
-/** One `4XX` problem response listing the statuses an operation answers with. */
+/**
+ * The `4XX` and `5XX` problem responses, listing the client statuses an
+ * operation answers with. The service sends them as application/problem+json.
+ */
 function errorResponses(...statuses: number[]): Record<string, { description: string; schema: JsonSchema }> {
+  const schema = problemSchema as unknown as JsonSchema;
   return {
     '4XX': {
-      description: `Problem details: ${statuses.map((status) => ERROR_DESCRIPTIONS[status]).join('; ')}.`,
-      schema: problemSchema as unknown as JsonSchema
+      description: `Problem details (application/problem+json): ${statuses.map((status) => ERROR_DESCRIPTIONS[status]).join('; ')}.`,
+      schema
+    },
+    '5XX': {
+      description: 'Problem details (application/problem+json): 500 internal error; 503 service unavailable.',
+      schema
     }
   };
 }
@@ -367,7 +410,9 @@ async function resolveCaller(
   const server = await services.getSyncServer();
   return {
     executor: server.executor,
-    context: { request: tokenRequest, session: narrowed, publicLink: null, regionId: services.regionId }
+    context: { request: tokenRequest, session: narrowed, publicLink: null, regionId: services.regionId },
+    actorId: session.actorId,
+    services
   };
 }
 
@@ -412,22 +457,102 @@ async function listRecords(
   if (!contract.sorts.includes(sort.replace(/^-/, ''))) {
     throw parameterProblem('sort', `sort must be one of ${contract.sorts.join(', ')}, optionally prefixed with -.`);
   }
-  const query: Row = {
-    resource: contract.resource,
-    version: 1,
-    filters,
-    sort: [sort, 'id']
-  };
-  if (paged) {
-    query.limit = parseLimit(params.get('limit'), DEFAULT_LIMIT, MAX_LIMIT);
-    const cursor = params.get('cursor');
-    if (cursor !== null) query.cursor = { after: decodeCursor(cursor, sort) };
+  if (!paged) {
+    const result = await run<QueryResult>(() => caller.executor.query({
+      resource: contract.resource,
+      version: 1,
+      filters,
+      sort: [sort, 'id']
+    }, caller.context), 'read', caller.services);
+    return Response.json({ data: result.data.map((row) => project(contract, row)), nextCursor: null });
   }
-  const result = await run<QueryResult>(() => caller.executor.query(query, caller.context), 'read');
+  const limit = parseLimit(params.get('limit'), DEFAULT_LIMIT, MAX_LIMIT);
+  const raw = params.get('cursor');
+  // One row past the page shows whether another follows; DataFn reads at
+  // most MAX_LIMIT rows a query, so a full-size page probes for it instead.
+  const rows = await keysetPage(contract, caller, filters, sort, raw === null ? null : decodeCursor(raw, sort),
+    Math.min(limit + 1, MAX_LIMIT));
+  const page = rows.slice(0, limit);
+  const last = page.at(-1);
+  const after = last ? { sort, value: sortValue(last, sort), id: String(last.id) } : null;
+  const more = rows.length > limit || (after !== null && rows.length === MAX_LIMIT &&
+    (await keysetPage(contract, caller, filters, sort, after, 1)).length > 0);
   return Response.json({
-    data: result.data.map((row) => project(contract, row)),
-    nextCursor: paged && result.nextCursor ? encodeCursor(sort, result.nextCursor) : null
+    data: page.map((row) => project(contract, row)),
+    nextCursor: more && after ? encodeCursor(after) : null
   });
+}
+
+interface Cursor {
+  sort: string;
+  /** The last row's sort field value; null once the page reached rows without one. */
+  value: string | number | boolean | null;
+  id: string;
+}
+
+function sortValue(row: Row, sort: string): Cursor['value'] {
+  const value = row[sort.replace(/^-/, '')];
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? value : null;
+}
+
+/**
+ * Reads up to `want` rows after the cursor: rows with a value for the sort
+ * field first, in sort order with `id` breaking ties, then rows without one
+ * by `id`. Each segment is a filtered query the database orders and limits,
+ * so a page never depends on where an adapter sorts nulls or on DataFn
+ * comparing values outside the database.
+ */
+async function keysetPage(
+  contract: InterfaceResourceContract,
+  caller: Caller,
+  filters: Row,
+  sort: string,
+  cursor: Cursor | null,
+  want: number
+): Promise<Row[]> {
+  const field = sort.replace(/^-/, '');
+  const segments: { where: Record<string, Row>; sort: string[] }[] = [];
+  if (cursor === null) {
+    segments.push({ where: { [field]: { is_not_null: true } }, sort: [sort, 'id'] });
+  } else if (cursor.value !== null) {
+    segments.push({ where: { [field]: { eq: cursor.value }, id: { gt: cursor.id } }, sort: ['id'] });
+    segments.push({
+      where: { [field]: { [sort.startsWith('-') ? 'lt' : 'gt']: cursor.value, is_not_null: true } },
+      sort: [sort, 'id']
+    });
+  }
+  if (field !== 'id') {
+    segments.push({
+      where: { [field]: { is_null: true }, ...(cursor?.value === null ? { id: { gt: cursor.id } } : {}) },
+      sort: ['id']
+    });
+  }
+  const rows: Row[] = [];
+  for (const segment of segments) {
+    if (rows.length >= want) break;
+    const result = await run<QueryResult>(() => caller.executor.query({
+      resource: contract.resource,
+      version: 1,
+      filters: withConditions(filters, segment.where),
+      sort: segment.sort,
+      limit: want - rows.length
+    }, caller.context), 'read', caller.services);
+    rows.push(...result.data);
+  }
+  return rows;
+}
+
+/** Adds operator conditions to filters, keeping a filter already on the same field. */
+function withConditions(filters: Row, conditions: Record<string, Row>): Row {
+  const merged: Row = { ...filters };
+  for (const [name, ops] of Object.entries(conditions)) {
+    const existing = merged[name];
+    const base = typeof existing === 'object' && existing !== null && !Array.isArray(existing)
+      ? existing as Row
+      : existing === undefined ? {} : { eq: existing };
+    merged[name] = { ...base, ...ops };
+  }
+  return merged;
 }
 
 async function getRecord(
@@ -448,7 +573,7 @@ async function getRecord(
     version: 1,
     filters,
     ...(paged ? { limit: 1 } : {})
-  }, caller.context), 'read');
+  }, caller.context), 'read', caller.services);
   const row = result.data.find((entry) => entry.id === id);
   if (!row) throw notFound;
   return project(contract, row);
@@ -462,28 +587,37 @@ async function createRecord(
   request: Request,
   collectionPath: string
 ): Promise<Response> {
-  const record = validateWriteBody(contract, 'create', await readBody(ctx));
+  const body = validateWriteBody(contract, 'create', await readBody(ctx));
   const visible = sharedFieldConstraint(app, contract);
-  if (visible && !visible.includes(String(record.resource))) {
+  if (visible && !visible.includes(String(body.resource))) {
     throw validationProblem([{ pointer: '/resource', detail: `resource must be one of ${visible.join(', ')}.` }]);
   }
+  const keyed = await idempotency(app, request, caller, body);
+  // A keyed create derives its id from the key, so a retry that misses
+  // DataFn's replay record (overlapping or interrupted) meets the first row.
+  const id = `${resourceIdPrefix(contract.resource)}:${keyed.enabled ? digestUuid(keyed.key) : crypto.randomUUID()}`;
+  const record = { ...body };
   applyDerivedFields(contract, record);
-  const id = `${resourceIdPrefix(contract.resource)}:${crypto.randomUUID()}`;
-  const result = await mutate(caller, {
+  const result = await keyed.run(() => caller.executor.mutate({
     resource: contract.resource,
     version: 1,
     operation: 'insert',
     id,
     record,
-    ...(await idempotency(app, request))
-  });
-  const createdId = result.affectedIds?.[0] ?? id;
-  const created = await getRecord(app, contract, caller, createdId);
+    ...keyed.mutation
+  }, caller.context));
+  let replayed = result.ok && result.deduped === true;
+  if (!result.ok) {
+    if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
+    await matchKeyedRecord(app, contract, caller, id, body);
+    replayed = true;
+  }
+  const created = await getRecord(app, contract, caller, id);
   return Response.json(created, {
     status: 201,
     headers: {
-      location: `${collectionPath}/${encodeURIComponent(createdId)}`,
-      ...(result.deduped ? { 'idempotent-replayed': 'true' } : {})
+      location: `${collectionPath}/${encodeURIComponent(id)}`,
+      ...(replayed ? { 'idempotent-replayed': 'true' } : {})
     }
   });
 }
@@ -495,21 +629,52 @@ async function updateRecord(
   ctx: RouteContext,
   request: Request
 ): Promise<Response> {
-  const record = validateWriteBody(contract, 'update', await readBody(ctx));
+  const body = validateWriteBody(contract, 'update', await readBody(ctx));
   const id = ctx.params.id;
   await getRecord(app, contract, caller, id);
+  const keyed = await idempotency(app, request, caller, body);
+  const record = { ...body };
   applyDerivedFields(contract, record);
-  const result = await mutate(caller, {
+  const result = await keyed.run(() => caller.executor.mutate({
     resource: contract.resource,
     version: 1,
     operation: 'merge',
     id,
     record,
-    ...(await idempotency(app, request))
-  });
+    ...keyed.mutation
+  }, caller.context));
+  if (!result.ok) throw mutationProblem(result, caller);
   return Response.json(await getRecord(app, contract, caller, id), {
     headers: result.deduped ? { 'idempotent-replayed': 'true' } : {}
   });
+}
+
+/**
+ * A keyed create whose id already exists replays only when the stored record
+ * still holds every field of this body; otherwise the key was used for
+ * another body.
+ */
+async function matchKeyedRecord(
+  app: InterfaceApp,
+  contract: InterfaceResourceContract,
+  caller: Caller,
+  id: string,
+  body: Row
+): Promise<void> {
+  let stored: Row;
+  try {
+    stored = await getRecord(app, contract, caller, id);
+  } catch (error) {
+    if (error instanceof ApiProblem && error.status === 404) throw idempotencyConflict();
+    throw error;
+  }
+  const matches = Object.entries(body).every(([name, value]) =>
+    canonicalJson(stored[name] ?? null) === canonicalJson(value));
+  if (!matches) throw idempotencyKeyReused();
+}
+
+function isIdConflict(result: MutationResult): boolean {
+  return result.errors?.some((error) => error.code === 'CONFLICT' && (error.path === undefined || error.path === 'id')) === true;
 }
 
 /** A write of a completion rule's `checked` field also sets its `completedAt`. */
@@ -542,7 +707,7 @@ async function search(
     query: text,
     resources: resource ? [resource] : searchable,
     limit
-  }, caller.context), 'read');
+  }, caller.context), 'read', caller.services);
   const data = result.results
     .filter((hit) => searchable.includes(hit.resource))
     .map((hit) => ({
@@ -560,7 +725,22 @@ async function search(
  * which app-scoped tokens may not make, while unselected rows carry its id.
  */
 function project(contract: InterfaceResourceContract, row: Row): Row {
-  return Object.fromEntries(contract.fields.filter((name) => row[name] !== undefined).map((name) => [name, row[name]]));
+  return Object.fromEntries(contract.fields.filter((name) => row[name] !== undefined)
+    .map((name) => [name, serializeField(resolveApiField(contract.resource, name), row[name])]));
+}
+
+/**
+ * Serializes numbers as JSON numbers. PostgreSQL `numeric` columns reach
+ * DataFn as strings and `bigint` ones may arrive as bigints.
+ */
+export function serializeField(field: ApiField, value: unknown): unknown {
+  if (field.kind !== 'number' && field.kind !== 'integer') return value;
+  if (typeof value === 'bigint') return Number(value);
+  if (typeof value === 'string' && value.trim() !== '') {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : value;
+  }
+  return value;
 }
 
 function resourceIdPrefix(resource: string): string {
@@ -578,30 +758,30 @@ function parseLimit(raw: string | null, fallback: number, max: number): number {
   return limit;
 }
 
-function encodeCursor(sort: string, after: Row): string {
-  const bytes = new TextEncoder().encode(JSON.stringify({ sort, after }));
+function encodeCursor(cursor: Cursor): string {
+  const bytes = new TextEncoder().encode(JSON.stringify(cursor));
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /** Decodes a cursor, which must come from a page with the same sort. */
-function decodeCursor(cursor: string, sort: string): Row {
+function decodeCursor(raw: string, sort: string): Cursor {
   const invalid = parameterProblem('cursor', 'cursor is not a nextCursor of this list with this sort.');
   let decoded: unknown;
   try {
-    if (!/^[\w-]+$/.test(cursor)) throw invalid;
-    const binary = atob(cursor.replace(/-/g, '+').replace(/_/g, '/'));
+    if (!/^[\w-]+$/.test(raw)) throw invalid;
+    const binary = atob(raw.replace(/-/g, '+').replace(/_/g, '/'));
     decoded = JSON.parse(new TextDecoder().decode(Uint8Array.from(binary, (char) => char.charCodeAt(0))));
   } catch {
     throw invalid;
   }
-  const keys = new Set([sort.replace(/^-/, ''), 'id']);
-  const after = (decoded as { after?: unknown } | null)?.after;
-  if ((decoded as { sort?: unknown } | null)?.sort !== sort || typeof after !== 'object' || after === null ||
-    Array.isArray(after) || !Object.entries(after).every(([key, value]) =>
-      keys.has(key) && (value === null || ['string', 'number', 'boolean'].includes(typeof value)))) {
+  const cursor = decoded as Partial<Cursor> | null;
+  if (typeof cursor !== 'object' || cursor === null || Array.isArray(cursor) || cursor.sort !== sort ||
+    typeof cursor.id !== 'string' || cursor.id.length === 0 ||
+    !(cursor.value === null || ['string', 'number', 'boolean'].includes(typeof cursor.value)) ||
+    Object.keys(cursor).some((key) => !['sort', 'value', 'id'].includes(key))) {
     throw invalid;
   }
-  return after as Row;
+  return { sort, value: cursor.value, id: cursor.id } as Cursor;
 }
 
 async function readBody(ctx: RouteContext): Promise<unknown> {
@@ -615,39 +795,120 @@ async function readBody(ctx: RouteContext): Promise<unknown> {
   }
 }
 
+interface KeyedWrite {
+  enabled: boolean;
+  /** Digest of the caller, app, method, path and key; empty without a key. */
+  key: string;
+  /** DataFn's replay identity: the scoped key and the body. */
+  mutation: Row;
+  /** Runs the write, and frees the key again if the write does not succeed. */
+  run(write: () => Promise<unknown>): Promise<MutationResult>;
+}
+
 /**
- * Binds an `Idempotency-Key` to this app, method and path as the DataFn
- * mutation id, so DataFn replays the first result of a repeated write.
+ * Scopes an `Idempotency-Key` to the token's account, this app, method and
+ * path, and binds it to the body. DataFn replays a repeated write by its
+ * mutation id, which covers both, so another account or another body never
+ * replays this write. The idempotency store refuses the key with another body.
  */
-async function idempotency(app: InterfaceApp, request: Request): Promise<Row> {
-  const key = request.headers.get('idempotency-key');
-  if (key === null) return {};
-  if (!IDEMPOTENCY_KEY.test(key)) {
+async function idempotency(
+  app: InterfaceApp,
+  request: Request,
+  caller: Caller,
+  body: Row
+): Promise<KeyedWrite> {
+  const value = request.headers.get('idempotency-key');
+  if (value === null) {
+    return { enabled: false, key: '', mutation: {}, run: (write) => runWrite(write, caller) };
+  }
+  if (!IDEMPOTENCY_KEY.test(value)) {
     throw parameterProblem('Idempotency-Key', 'Idempotency-Key must be 1 to 255 visible ASCII characters.');
   }
-  const scope = `${request.method} ${new URL(request.url).pathname}\n${key}`;
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(scope));
+  const key = await sha256Hex(JSON.stringify([caller.actorId, app, request.method, new URL(request.url).pathname, value]));
+  const fingerprint = await sha256Hex(canonicalJson(body));
+  const store = caller.services.idempotencyStore;
+  const claim = `v1-idempotency:${key}`;
+  let claimed = false;
+  if (store) {
+    const result = await store.setIfAbsent({ key: claim, value: fingerprint, ttlSeconds: IDEMPOTENCY_TTL_SECONDS });
+    if (!result.inserted && result.existing !== undefined && result.existing !== fingerprint) {
+      throw idempotencyKeyReused();
+    }
+    claimed = result.inserted;
+  }
+  const release = async () => {
+    if (!claimed || !store) return;
+    await store.delete(claim).catch((error: unknown) =>
+      caller.services.logError?.('v1 idempotency release failed', error));
+  };
   return {
-    clientId: `v1-${app}`,
-    mutationId: Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+    enabled: true,
+    key,
+    mutation: { clientId: `v1-${app}`, mutationId: await sha256Hex(`${key}\n${fingerprint}`) },
+    run: async (write) => {
+      let result: MutationResult | undefined;
+      try {
+        result = await runWrite(write, caller);
+        return result;
+      } finally {
+        if (!result?.ok) await release();
+      }
+    }
   };
 }
 
-async function mutate(caller: Caller, mutation: Row): Promise<MutationResult> {
-  const result = await run<MutationResult>(() => caller.executor.mutate(mutation, caller.context), 'write');
-  if (!result.ok) {
-    const error = result.errors?.[0];
-    throw datafnProblem(undefined, error?.code, error?.message, 'write');
-  }
-  return result;
+async function runWrite(write: () => Promise<unknown>, caller: Caller): Promise<MutationResult> {
+  return run(write as () => Promise<MutationResult>, 'write', caller.services);
 }
 
-async function run<T>(operation: () => Promise<T>, access: Access): Promise<T> {
+function idempotencyKeyReused(): ApiProblem {
+  return new ApiProblem(422, 'idempotency_key_reused', 'This Idempotency-Key was already used with another body.');
+}
+
+function idempotencyConflict(): ApiProblem {
+  return new ApiProblem(409, 'idempotency_conflict',
+    'The record this Idempotency-Key created is no longer visible to this token.');
+}
+
+/** A UUID (RFC 9562 version 8) taken from a hex digest. */
+function digestUuid(digest: string): string {
+  const hex = digest.slice(0, 32).split('');
+  hex[12] = '8';
+  hex[16] = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
+  const text = hex.join('');
+  return `${text.slice(0, 8)}-${text.slice(8, 12)}-${text.slice(12, 16)}-${text.slice(16, 20)}-${text.slice(20, 32)}`;
+}
+
+async function sha256Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+/** JSON with object keys sorted, so equal values serialize alike. */
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value !== null && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((name) =>
+      `${JSON.stringify(name)}:${canonicalJson((value as Row)[name])}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+function mutationProblem(result: MutationResult, caller: Caller): ApiProblem {
+  const error = result.errors?.[0];
+  return datafnProblem(undefined, error?.code, error?.message, 'write', caller.services);
+}
+
+async function run<T>(
+  operation: () => Promise<T>,
+  access: Access,
+  services: InterfaceApiServices | undefined
+): Promise<T> {
   try {
     return await operation();
   } catch (error) {
     if (error instanceof DatafnExecutorError) {
-      throw datafnProblem(error.status, error.code, error.message, access);
+      throw datafnProblem(error.status, error.code, error.message, access, services);
     }
     throw error;
   }
@@ -658,7 +919,8 @@ function datafnProblem(
   status: number | undefined,
   code: string | undefined,
   message: string | undefined,
-  access: Access
+  access: Access,
+  services: InterfaceApiServices | undefined
 ): ApiProblem {
   if (status === 404 || code === 'NOT_FOUND') {
     return new ApiProblem(404, 'not_found', 'No record with that id is visible to this token.');
@@ -677,6 +939,7 @@ function datafnProblem(
       ? validationProblem([{ pointer: '', detail: message ?? 'The write is invalid.' }])
       : new ApiProblem(400, 'invalid_request', message ?? 'The request is invalid.');
   }
+  services?.logError?.('v1 API DataFn request failed', { status, code, message });
   return new ApiProblem(500, 'internal', 'The request could not be completed.');
 }
 

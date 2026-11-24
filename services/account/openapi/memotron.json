@@ -231,7 +231,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "List collections",
@@ -240,7 +294,7 @@
         ]
       },
       "post": {
-        "description": "Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "description": "Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
         "operationId": "createCollection",
         "parameters": [
           {
@@ -271,6 +325,18 @@
                     "type": "string"
                   },
                   "resource": {
+                    "enum": [
+                      "accessLog",
+                      "capture",
+                      "node",
+                      "vector",
+                      "collection",
+                      "linkTag",
+                      "property",
+                      "view",
+                      "space",
+                      "file"
+                    ],
                     "type": "string"
                   },
                   "type": {
@@ -345,7 +411,24 @@
                 }
               }
             },
-            "description": "The created record."
+            "description": "The created record.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "schema": {
+                  "description": "Present when the response replays an earlier request with the same Idempotency-Key.",
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "description": "Path of the created record.",
+                  "type": "string"
+                }
+              }
+            }
           },
           "4XX": {
             "content": {
@@ -399,7 +482,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Create a collection",
@@ -527,7 +664,61 @@
                 }
               }
             },
-            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Get one collection",
@@ -536,7 +727,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "description": "Sets only the fields in the body. Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
         "operationId": "updateCollection",
         "parameters": [
           {
@@ -634,7 +825,18 @@
                 }
               }
             },
-            "description": "The updated record."
+            "description": "The updated record.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "schema": {
+                  "description": "Present when the response replays an earlier request with the same Idempotency-Key.",
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
           },
           "4XX": {
             "content": {
@@ -688,7 +890,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Update a collection",
@@ -888,7 +1144,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "List files",
@@ -1019,7 +1329,61 @@
                 }
               }
             },
-            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Get one file",
@@ -1182,7 +1546,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "List link-tags",
@@ -1298,7 +1716,61 @@
                 }
               }
             },
-            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Get one linkTag",
@@ -1532,7 +2004,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "List nodes",
@@ -1541,7 +2067,7 @@
         ]
       },
       "post": {
-        "description": "Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "description": "Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
         "operationId": "createNode",
         "parameters": [
           {
@@ -1653,7 +2179,24 @@
                 }
               }
             },
-            "description": "The created record."
+            "description": "The created record.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "schema": {
+                  "description": "Present when the response replays an earlier request with the same Idempotency-Key.",
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "description": "Path of the created record.",
+                  "type": "string"
+                }
+              }
+            }
           },
           "4XX": {
             "content": {
@@ -1707,7 +2250,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Create a node",
@@ -1845,7 +2442,61 @@
                 }
               }
             },
-            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Get one node",
@@ -1854,7 +2505,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "description": "Sets only the fields in the body. Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
         "operationId": "updateNode",
         "parameters": [
           {
@@ -1972,7 +2623,18 @@
                 }
               }
             },
-            "description": "The updated record."
+            "description": "The updated record.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "schema": {
+                  "description": "Present when the response replays an earlier request with the same Idempotency-Key.",
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
           },
           "4XX": {
             "content": {
@@ -2026,7 +2688,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Update a node",
@@ -2259,7 +2975,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "List properties",
@@ -2268,7 +3038,7 @@
         ]
       },
       "post": {
-        "description": "Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "description": "Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
         "operationId": "createProperty",
         "parameters": [
           {
@@ -2311,13 +3081,27 @@
                     "type": "string"
                   },
                   "resource": {
+                    "enum": [
+                      "accessLog",
+                      "capture",
+                      "node",
+                      "vector",
+                      "collection",
+                      "linkTag",
+                      "property",
+                      "view",
+                      "space",
+                      "file"
+                    ],
                     "type": "string"
                   },
                   "type": {
                     "type": "string"
                   }
                 },
-                "required": [],
+                "required": [
+                  "resource"
+                ],
                 "title": "PropertyCreate",
                 "type": "object"
               }
@@ -2382,7 +3166,24 @@
                 }
               }
             },
-            "description": "The created record."
+            "description": "The created record.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "schema": {
+                  "description": "Present when the response replays an earlier request with the same Idempotency-Key.",
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "description": "Path of the created record.",
+                  "type": "string"
+                }
+              }
+            }
           },
           "4XX": {
             "content": {
@@ -2436,7 +3237,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Create a property",
@@ -2570,7 +3425,61 @@
                 }
               }
             },
-            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Get one property",
@@ -2579,7 +3488,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "description": "Sets only the fields in the body. Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
         "operationId": "updateProperty",
         "parameters": [
           {
@@ -2692,7 +3601,18 @@
                 }
               }
             },
-            "description": "The updated record."
+            "description": "The updated record.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "schema": {
+                  "description": "Present when the response replays an earlier request with the same Idempotency-Key.",
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
           },
           "4XX": {
             "content": {
@@ -2746,7 +3666,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Update a property",
@@ -2895,7 +3869,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Search records",
@@ -3084,7 +4112,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "List spaces",
@@ -3093,7 +4175,7 @@
         ]
       },
       "post": {
-        "description": "Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "description": "Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
         "operationId": "createSpace",
         "parameters": [
           {
@@ -3177,7 +4259,24 @@
                 }
               }
             },
-            "description": "The created record."
+            "description": "The created record.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "schema": {
+                  "description": "Present when the response replays an earlier request with the same Idempotency-Key.",
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "schema": {
+                  "description": "Path of the created record.",
+                  "type": "string"
+                }
+              }
+            }
           },
           "4XX": {
             "content": {
@@ -3231,7 +4330,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 422 invalid body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Create a space",
@@ -3353,7 +4506,61 @@
                 }
               }
             },
-            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Get one space",
@@ -3362,7 +4569,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` returns the first result without writing again.",
+        "description": "Sets only the fields in the body. Requires memotron:write (or nucleum). Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
         "operationId": "updateSpace",
         "parameters": [
           {
@@ -3454,7 +4661,18 @@
                 }
               }
             },
-            "description": "The updated record."
+            "description": "The updated record.",
+            "headers": {
+              "Idempotent-Replayed": {
+                "schema": {
+                  "description": "Present when the response replays an earlier request with the same Idempotency-Key.",
+                  "enum": [
+                    "true"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
           },
           "4XX": {
             "content": {
@@ -3508,7 +4726,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 422 invalid body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Update a space",
@@ -3677,7 +4949,61 @@
                 }
               }
             },
-            "description": "Problem details: 400 invalid parameter, cursor or header; 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "List views",
@@ -3799,7 +5125,61 @@
                 }
               }
             },
-            "description": "Problem details: 401 missing, invalid, expired or revoked token; 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+          },
+          "5XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "RFC 9457 problem details, served as application/problem+json. `code` is stable; `errors` lists invalid body members.",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errors": {
+                      "items": {
+                        "properties": {
+                          "detail": {
+                            "type": "string"
+                          },
+                          "pointer": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "pointer",
+                          "detail"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "status": {
+                      "type": "integer"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "title",
+                    "status",
+                    "detail",
+                    "code"
+                  ],
+                  "title": "Problem",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Problem details (application/problem+json): 500 internal error; 503 service unavailable."
           }
         },
         "summary": "Get one view",
