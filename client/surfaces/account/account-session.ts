@@ -31,6 +31,13 @@ import {
 import { resolveAccountBaseUrl } from "@nucleum/client/runtime/account/network";
 import { clearCachedDatafnE2eeState } from "@nucleum/datafn/datafnE2ee.store";
 import { determineIfOffline } from "@nucleum/client/runtime/connectivity";
+import {
+  abandonSessionResolution,
+  beginSessionResolution,
+  reopenSessionLifetime,
+  startUploadReplayForSession,
+  stopUploadReplayForSession
+} from "@nucleum/surfaces/account/account-upload-replay";
 
 async function postToEmbed(data: any = null) {
   if (!data) {
@@ -147,16 +154,21 @@ async function signOut(params?: {
   isPreventRedirect?: boolean;
 }) {
   try {
-    await destroyNucleumDatafn();
-  } catch (error) {
-    logger.error({ at: "account.signOut.destroyDatafn", error });
+    await stopUploadReplayForSession();
+    try {
+      await destroyNucleumDatafn();
+    } catch (error) {
+      logger.error({ at: "account.signOut.destroyDatafn", error });
+    }
+    await clearCachedDatafnE2eeState();
+    account.update(() => ({
+      sessionType: UserSessionType.UNDETERMINED,
+      dataMode: UserDataMode.NONE
+    }));
+    await signout(params, "signOut account.store");
+  } finally {
+    reopenSessionLifetime();
   }
-  await clearCachedDatafnE2eeState();
-  account.update(() => ({
-    sessionType: UserSessionType.UNDETERMINED,
-    dataMode: UserDataMode.NONE
-  }));
-  await signout(params, "signOut account.store");
   if (!params?.isPreventRedirect) goto("/account/login");
 }
 
@@ -436,10 +448,16 @@ async function bootstrap(region: string) {
 }
 
 async function checkIfSessionExpired() {
-  const resolution = await resolveAuthSession();
-  return !["authenticated", "offline-only", "cached-cloud"].includes(
-    resolution.status
-  );
+  const ticket = beginSessionResolution();
+  try {
+    const resolution = await resolveAuthSession({ signal: ticket.signal });
+    startUploadReplayForSession(resolution, ticket);
+    return !["authenticated", "offline-only", "cached-cloud"].includes(
+      resolution.status
+    );
+  } finally {
+    abandonSessionResolution(ticket);
+  }
 }
 
 /** Coordinates account persistence, authentication, and application lifecycle work. */
