@@ -185,6 +185,8 @@ const {
 } = await import("./filefn-client");
 const {
   isQueuedFileFailed,
+  listQueuedFiles,
+  markQueuedFileStale,
   replayFileQueue,
   retryFailedQueuedFile,
   withQueueLock,
@@ -3423,6 +3425,413 @@ describe("files captured offline or by a local-only user", () => {
       opfs.read(LOCAL_QUEUE, `queued_${record.fileId}`, "uploaded")
     ).toBeDefined();
     expect(sdk.deletes).toEqual([]);
+  });
+
+  it("publishes the record that took over a raced publish's file before removing the outdated record, keeping its receipt when the pass stops in between", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    const entry = `queued_${record.fileId}`;
+    // Another tab deletes the guest record while this tab saves it.
+    fileCalls.beforeMutate = async (args) => {
+      const [first] = Array.isArray(args) ? args : [args];
+      if ((first as { id?: string })?.id !== record.id) return;
+      fileCalls.beforeMutate = null;
+      return async (result) => {
+        const id = [namespace, record.id].map(encodeURIComponent);
+        localStorage.setItem(
+          `${LOCAL_QUEUE}-pending:${id.join(":")}`,
+          "delete:t"
+        );
+        await writeLocalEntryFile(record.fileId, "deleted");
+        return result;
+      };
+    };
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(await readAnyRecord(record.id)).toBeDefined();
+
+    const gate = deferred<void>();
+    const otherTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    const next = "00000000-0000-4000-8000-000000000004";
+    await datafn.file.mutate({
+      operation: "insert",
+      id: next,
+      record: { id: next, name: "copy.png", fileId: record.fileId }
+    } as never);
+    gate.resolve();
+    await otherTab;
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.id).toBe(next);
+
+    // Passes stop at the outdated record's delete, after the new save.
+    const calls: string[] = [];
+    let isStopping = true;
+    fileCalls.beforeMutate = async (args) => {
+      const list = [args].flat() as { operation?: string; id?: string }[];
+      for (const { operation, id } of list)
+        if (id === record.id || id === next) calls.push(`${operation} ${id}`);
+      if (isStopping && list[0]?.id === record.id)
+        throw new Error("The pass stopped");
+    };
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(calls.slice(0, 2)).toEqual([
+      `insert ${next}`,
+      `delete ${record.id}`
+    ]);
+    expect(await readAnyRecord(record.id)).toBeDefined();
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+    const saved = new TextDecoder().decode(
+      opfs.read(LOCAL_QUEUE, entry, "saved")
+    );
+    expect(saved).toContain(`sent ${record.id} `);
+
+    isStopping = false;
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect((await readAnyRecord(next))?.fileId).toBe(record.fileId);
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+    expect(sdk.deletes).toEqual([]);
+  });
+
+  it("never inserts again a first save that landed when its journal write after the save fails and the account then deletes the record", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    // Its journal cannot be written from the insert on, until the account
+    // deletes the record.
+    let isSaved = false;
+    hookEntryFiles({
+      create(name) {
+        if (name === "saved" && isSaved)
+          throw new DOMException("The disk is full", "QuotaExceededError");
+      }
+    });
+    fileCalls.beforeMutate = async (args) => {
+      const [first] = Array.isArray(args) ? args : [args];
+      const { id, operation } = (first ?? {}) as Record<string, unknown>;
+      if (id !== record.id || operation !== "insert") return;
+      fileCalls.beforeMutate = null;
+      isSaved = true;
+    };
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(isSaved).toBe(true);
+    expect(await readAnyRecord(record.id)).toBeDefined();
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    isSaved = false;
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+  });
+
+  it("keeps an account record trashed to a state a stopped publish predicted when the guest record is then deleted", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    const entry = `queued_${record.fileId}`;
+    await vi.waitFor(() =>
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined()
+    );
+    // The page reloaded before the uploaded mark landed; the guest trashes
+    // the record, and its next publish stops before its save, as another
+    // tab fences a guest change.
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await (await queue.getDirectoryHandle(entry)).removeEntry("uploaded");
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "trash", id: record.id } as never);
+    await settleLocalFileRecords();
+    expect(readLocalCopy(record.fileId)?.isTrashed).toBe(true);
+    let isFenced = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "saved" || isFenced) return;
+        isFenced = true;
+        await writeLocalEntryFile(record.fileId, "stale", "changed");
+      }
+    });
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(isFenced).toBe(true);
+    expect((await readAnyRecord(record.id))?.trashedAt ?? null).toBeNull();
+
+    // The account trashes the record itself, then the guest deletes it.
+    await datafn.file.mutate({ operation: "trash", id: record.id } as never);
+    const gate = deferred<void>();
+    const otherTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    gate.resolve();
+    await otherTab;
+    await settleTasks();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
+  it("marks nothing uploaded when a publish saved nothing because its copy was held, although the hold is gone by the end of that publish", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    const entry = `queued_${record.fileId}`;
+    // Another tab records a guest change as the publish journals its save,
+    // and its sign-out clears it before that change's fence lands.
+    const key = `${LOCAL_QUEUE}-pending:${[namespace, record.id]
+      .map(encodeURIComponent)
+      .join(":")}`;
+    let isRecorded = false;
+    let checks = 0;
+    hookEntryFiles({
+      create(name) {
+        if (name !== "saved" || isRecorded) return;
+        isRecorded = true;
+        localStorage.setItem(key, "change:t");
+      }
+    });
+    failEntryLookup("uploaded", () => {
+      if (isRecorded && ++checks === 2) localStorage.removeItem(key);
+      return false;
+    });
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(isRecorded).toBe(true);
+    // Nothing holds it now: a replay publishes it before it is uploaded.
+    await replayLocalQueue();
+    await settleTasks();
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined();
+    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+  });
+
+  it("releases a capture held by a change only this tab's memory holds once a pass verifies a copy after that change's fence, while the clock stands still", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const entry = `queued_${record.fileId}`;
+    const clock = vi.spyOn(Date, "now").mockReturnValue(Date.now());
+    // After the pass of a rename read its pending changes, a second rename
+    // lands, only in this tab's memory (its pending entry cannot be stored),
+    // and is fenced before the pass reads the record; its own pass cannot
+    // take the queue's lock.
+    const setItem = Storage.prototype.setItem;
+    let isRefused = false;
+    fileCalls.beforeQuery = async (args) => {
+      const { filters } = args as { filters?: { id?: string } };
+      if (filters?.id !== record.id) return;
+      fileCalls.beforeQuery = null;
+      failQueueLockOnce();
+      vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+        this: Storage,
+        key: string,
+        value: string
+      ) {
+        if (isRefused || !key.includes("-pending:"))
+          return setItem.call(this, key, value);
+        isRefused = true;
+        throw new DOMException("The storage is full", "QuotaExceededError");
+      });
+      await datafn.file.mutate({
+        operation: "merge",
+        id: record.id,
+        record: { id: record.id, name: "second.png" }
+      } as never);
+      while (!opfs.list(LOCAL_QUEUE, entry).some((n) => n.startsWith("stale.")))
+        await new Promise<void>((resolve) => setImmediate(resolve));
+    };
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "first.png" }
+    } as never);
+    await settleTasks();
+    clock.mockRestore();
+    expect(isRefused).toBe(true);
+    expect(readLocalCopy(record.fileId)?.name).toBe("second.png");
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("second.png")
+    );
+  });
+
+  it("publishes a capture whose change an earlier build recorded once the pass that copies that change verifies the copy", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    const namespace = String(readLocalCopy(record.fileId)?.namespace);
+    // An earlier build's tab renames the record: its pending entry and stale
+    // mark name no generation.
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "earlier.png" },
+      silent: true
+    } as never);
+    await changeInOtherTab(namespace, record.id, record.fileId);
+
+    await openData();
+    await settleTasks();
+    expect(readLocalCopy(record.fileId)?.name).toBe("earlier.png");
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+
+    await vi.waitFor(async () =>
+      expect((await readAnyRecord(record.id))?.name).toBe("earlier.png")
+    );
+  });
+
+  it("holds nothing of a verified copy whose clear stops between removing its stale mark and its generation mark", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    // The clear of the rename's pass stops after it removed one of the
+    // rename's stale mark and its generation mark, before the other.
+    const stop = deferred<void>();
+    let isStopped = false;
+    let removed = 0;
+    const getDirectory = navigator.storage.getDirectory;
+    const wrap = (dir: FileSystemDirectoryHandle): FileSystemDirectoryHandle =>
+      new Proxy(dir, {
+        get(target, key) {
+          if (key === "getDirectoryHandle")
+            return async (name: string, options?: { create?: boolean }) =>
+              wrap(await target.getDirectoryHandle(name, options));
+          if (key !== "removeEntry") return Reflect.get(target, key);
+          return async (name: string) => {
+            if (name.split(".")[0] === "stale" && ++removed === 2) {
+              isStopped = true;
+              await stop.promise;
+            }
+            return target.removeEntry(name);
+          };
+        }
+      });
+    navigator.storage.getDirectory = async () => wrap(await getDirectory());
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "receipt.png" }
+    } as never);
+    await vi.waitFor(() => expect(isStopped).toBe(true));
+
+    const [listed] = await listQueuedFiles(LOCAL_QUEUE, true);
+    stop.resolve();
+    await settleTasks();
+    expect(listed?.stale).toBeUndefined();
+    expect(listed?.isDeleted).toBe(false);
+  });
+
+  it("keeps a capture held by another tab's fence that wrote its generation mark and not its stale mark", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await datafn.file.mutate({
+      operation: "merge",
+      id: record.id,
+      record: { id: record.id, name: "other.png" },
+      silent: true
+    } as never);
+    failEntryFile("stale", true, 1);
+    await expect(
+      markQueuedFileStale(
+        LOCAL_QUEUE,
+        record.fileId,
+        false,
+        `${Date.now() + 60_000}-other-tab`
+      )
+    ).rejects.toThrow();
+
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect(sdk.started).toEqual([]);
+    expect(await readAnyRecord(record.id)).toBeUndefined();
+  });
+
+  it("waits on no timer while a pass over the local files holds the queue's lock", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const first = await capturePhoto();
+    await capturePhoto();
+    await settleLocalFileRecords();
+    const locks = webLocks as LockManager;
+    const request = locks.request.bind(locks) as (
+      ...args: unknown[]
+    ) => Promise<unknown>;
+    let isLocked = false;
+    vi.spyOn(locks, "request").mockImplementation(((...args: unknown[]) => {
+      const run = args.at(-1) as LockGrantedCallback;
+      if (!String(args[0]).endsWith(`:${LOCAL_QUEUE}`)) return request(...args);
+      return request(args[0], args[1], async (lock: Lock) => {
+        isLocked = true;
+        try {
+          return await run(lock);
+        } finally {
+          isLocked = false;
+        }
+      });
+    }) as never);
+    const timeout = globalThis.setTimeout;
+    let lockedTimers = 0;
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      ...args: Parameters<typeof setTimeout>
+    ) => {
+      if (isLocked && args[1] === 1) lockedTimers++;
+      return timeout(...args);
+    }) as never);
+
+    await datafn.file.mutate({
+      operation: "merge",
+      id: first.id,
+      record: { id: first.id, name: "receipt.png" }
+    } as never);
+    await openData();
+    await settleTasks();
+
+    expect(readLocalCopy(first.fileId)?.name).toBe("receipt.png");
+    expect(lockedTimers).toBe(0);
   });
 
   it("decides nothing on a runtime that replaced the one the publisher was created with, even in the same namespace", async () => {
