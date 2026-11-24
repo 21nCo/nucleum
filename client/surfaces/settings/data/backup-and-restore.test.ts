@@ -8913,3 +8913,91 @@ describe("who may bind, protect or reclaim a restored queued file", () => {
     expect(sdk.deleted).toEqual([]);
   });
 });
+
+describe("backup and restore of a local-only user's files", () => {
+  const localAccount: UserAccount = {
+    dataMode: UserDataMode.LOCAL,
+    sessionType: UserSessionType.RETURNING
+  };
+  /**
+   * Decodes record bytes as a backup restores them: JSON carries a record's
+   * bytes as an object of its byte values, as for a record that kept them.
+   */
+  const decode = (bytes: unknown) =>
+    new TextDecoder().decode(
+      Uint8Array.from(Object.values(bytes as Record<string, number>))
+    );
+
+  it("restores a local-only user's capture, whose bytes the device's local queue holds, with its original and thumbnail on a cleared browser", async () => {
+    await bootData(localAccount);
+    const record = await capturePhoto();
+    expect(opfs.list("nucleum-file-queue-local")).toEqual([
+      `queued_${record.fileId}`
+    ]);
+    expect((await savedRecord(record.id))?.data).toBeUndefined();
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    const restored = await savedRecord(record.id);
+    expect(restored?.fileId).toBeUndefined();
+    expect(decode(restored?.data)).toBe("photo bytes");
+    expect(decode(restored?.thumbnailData)).toBe("thumb bytes");
+    expect(sdk.started).toEqual([]);
+  });
+
+  it("restores a local-only user's capture an account already received, whose bytes the device still holds, with its original and thumbnail", async () => {
+    await bootData(localAccount);
+    const record = await capturePhoto();
+    // The first cloud sign-in uploaded the file and its thumbnail; the
+    // device's local queue keeps them, marked uploaded.
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle("nucleum-file-queue-local");
+    const entry = await queue.getDirectoryHandle(`queued_${record.fileId}`);
+    for (const [mark, text] of [
+      ["uploaded", "v1"],
+      ["sent-thumbnail", ""]
+    ]) {
+      const writable = await (
+        await entry.getFileHandle(mark, { create: true })
+      ).createWritable();
+      await writable.write(text);
+      await writable.close();
+    }
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    const restored = await savedRecord(record.id);
+    expect(restored?.fileId).toBeUndefined();
+    expect(decode(restored?.data)).toBe("photo bytes");
+    expect(decode(restored?.thumbnailData)).toBe("thumb bytes");
+  });
+
+  it("restores a local-only user's empty capture as an empty file, not as a record whose file resolves nowhere", async () => {
+    await bootData(localAccount);
+    const [record] = (await fileUpload.uploadFileV2(
+      "text/plain",
+      "empty.txt",
+      new Blob([], { type: "text/plain" })
+    )) as { id: string; fileId: string }[];
+    expect(opfs.list("nucleum-file-queue-local")).toEqual([
+      `queued_${record.fileId}`
+    ]);
+    const backup = await backupFile();
+
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    const restored = await savedRecord(record.id);
+    expect(restored).toBeDefined();
+    expect(restored?.fileId).toBeUndefined();
+    expect(decode(restored?.data)).toBe("");
+    expect(restored?.size).toBe(0);
+  });
+});
