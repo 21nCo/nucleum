@@ -8,6 +8,8 @@
   import { fileStore } from "@nucleum/shared-state/files/file.store";
   import FileView from "@21n/ui/compositions/files/FileView.svelte";
   import { cn } from "@21n/ui/environment/presentation";
+  import FileUploadFailedIndicator from "@nucleum/features/memory/node/content/FileUploadFailedIndicator.svelte";
+  import { watchFileUploadFailure } from "@nucleum/shared-state/files/file-url";
 
   let {
     isGridItem = true,
@@ -46,6 +48,36 @@
   const style = $derived(`${sizeProperty}: 100%;
 object-fit: scale-down;
 cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
+  /**
+   * A file whose upload FileFn rejected for good shows "Upload failed" over
+   * its media. The grid sizes and counts its items by their elements (the
+   * bound `ref`, and each column's children), so the media and the indicator
+   * share one element the grid sizes as the item, and the indicator is laid
+   * over it out of flow: a failed item adds no grid child and nothing the
+   * grid's resize loop has to shrink. Only media FileView renders (an image
+   * or a video, the kind its record ID is named after from its content type)
+   * gets that element; a PDF shows the indicator inside its own element, and
+   * a file the grid shows nothing for (audio) shows nothing.
+   */
+  let isUploadFailed = $state(false);
+  const isPdf = $derived(!!file?.type.startsWith("application/pdf"));
+  const isRenderedMedia = $derived(/^(image|video)\//.test(_file?.type ?? ""));
+  const failedItemClassList = $derived(
+    `${isDraggable ? "cursor-move" : ""} relative box-border inline-block`
+  );
+  const failedMediaClassList = "box-border block border-[2.5px] border-transparent";
+  const failedMediaStyle = $derived(`${sizeProperty == "width" ? "width: 100%;" : ""}height: 100%;
+object-fit: scale-down;
+cursor: pointer;`);
+
+  $effect(() => {
+    isUploadFailed = false;
+    const fileId = _file?.fileId;
+    if (!fileId) return;
+    return watchFileUploadFailure(fileId, (isFailed) => {
+      isUploadFailed = isFailed;
+    });
+  });
   let isDragOver = $state(false);
   let highlightBorder = $state("left");
   const dragId = $derived(id);
@@ -213,7 +245,27 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
   }
 </script>
 
-{#if _file}
+{#if _file && isUploadFailed && isRenderedMedia}
+  <div class={failedItemClassList} {style} bind:this={ref}>
+    <FileView
+      file={_file}
+      class={failedMediaClassList}
+      style={failedMediaStyle}
+      {isDraggable}
+      {onLoad}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragOver={onDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    />
+    <FileUploadFailedIndicator
+      fileId={_file.fileId}
+      class="absolute inset-x-1 bottom-1 flex-wrap"
+    />
+  </div>
+{:else if _file}
   <FileView
     file={_file}
     class={classList}
@@ -243,9 +295,11 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
     Column: {item.position.columns.columnNo + 1}
   </div>
 {/if}
-{#if file?.type.startsWith("application/pdf")}
+{#if isPdf && file}
   <div
-    class="{classList} min-w-[100px] h-full overflow-hidden"
+    class={cn(classList, "min-w-[100px] h-full overflow-hidden", {
+      relative: isUploadFailed
+    })}
     {style}
     draggable={isDraggable}
     use:draggable
@@ -257,5 +311,11 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
       height="110%"
       style="pointer-events: none;"
     />
+    {#if isUploadFailed}
+      <FileUploadFailedIndicator
+        fileId={file.fileId}
+        class="absolute inset-x-1 bottom-1 flex-wrap"
+      />
+    {/if}
   </div>
 {/if}

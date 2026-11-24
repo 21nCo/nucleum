@@ -1,5 +1,7 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { parse as parseHtml } from 'parse5';
 
 export function readConfig(serviceRoot) {
   return JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
@@ -163,7 +165,7 @@ export function renderWranglerConfig(serviceRoot, repoRoot, config, environment,
   return outputPath;
 }
 
-export function writeCloudflareAssetHeaders(repoRoot, config, productId) {
+export function writeCloudflareAssetHeaders(repoRoot, config, productId, environment) {
   const product = config.products[productId];
   if (!product) {
     throw new Error(`Unknown frontend product: ${productId}`);
@@ -172,7 +174,9 @@ export function writeCloudflareAssetHeaders(repoRoot, config, productId) {
   const buildDir = path.join(repoRoot, product.appPath, 'build');
   const headersPath = path.join(buildDir, '_headers');
   const existing = fs.existsSync(headersPath) ? fs.readFileSync(headersPath, 'utf8') : '';
-  const next = upsertManagedHeadersBlock(existing, managedCacheHeadersBlock());
+  const withCache = upsertManagedHeadersBlock(existing, managedCacheHeadersBlock(), CACHE_HEADERS_MARKERS);
+  const securityBlock = managedSecurityHeadersBlock(productSecurityHeaders(config, buildDir, environment));
+  const next = upsertManagedHeadersBlock(withCache, securityBlock, SECURITY_HEADERS_MARKERS);
   fs.writeFileSync(headersPath, next);
   return headersPath;
 }
@@ -215,16 +219,152 @@ function managedCacheHeadersBlock() {
   ].join('\n');
 }
 
-function upsertManagedHeadersBlock(existing, block) {
+const CACHE_HEADERS_MARKERS = {
+  start: '# BEGIN 21N_FRONTEND_CACHE_HEADERS',
+  end: '# END 21N_FRONTEND_CACHE_HEADERS'
+};
+
+const SECURITY_HEADERS_MARKERS = {
+  start: '# BEGIN 21N_FRONTEND_SECURITY_HEADERS',
+  end: '# END 21N_FRONTEND_SECURITY_HEADERS'
+};
+
+/**
+ * Origins allowed to frame the web apps: the apps themselves, every product
+ * domain and its subdomains (Memotron share pages embed the app), and the zone
+ * of the environment being deployed. Another environment's zone is never
+ * added, so a live build can't be framed from dev or preview hosts.
+ */
+export function frameAncestorSources(config, environment) {
+  const domains = new Set(Object.values(config.products ?? {}).map((product) => product.domain));
+  const zoneName = environment ? config.environments?.[environment]?.hosts?.zoneName : undefined;
+  if (zoneName) domains.add(zoneName);
+  return ["'self'", ...[...domains].sort((left, right) => left.localeCompare(right)).flatMap((domain) => [`https://${domain}`, `https://*.${domain}`])];
+}
+
+const JAVASCRIPT_TYPES = new Set([
+  '',
+  'module',
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript'
+]);
+
+function* scriptElements(node) {
+  if (node.nodeName === 'script') yield node;
+  for (const child of node.childNodes ?? []) yield* scriptElements(child);
+  if (node.content) yield* scriptElements(node.content);
+}
+
+/**
+ * Collects sha256 CSP sources for every inline script in the built HTML files.
+ * The HTML is parsed with parse5, so comments, entities, newline normalisation
+ * and script end tags are read the way the browser reads them.
+ */
+export function collectInlineScriptHashes(buildDir) {
+  const hashes = new Set();
+  for (const file of listHtmlFiles(buildDir)) {
+    const document = parseHtml(fs.readFileSync(file, 'utf8'));
+    for (const script of scriptElements(document)) {
+      const attributes = new Map(script.attrs.map((attribute) => [attribute.name, attribute.value]));
+      if (attributes.has('src')) continue;
+      const type = (attributes.get('type') ?? '').trim().toLowerCase();
+      if (!JAVASCRIPT_TYPES.has(type)) continue;
+      const text = script.childNodes.map((child) => child.value ?? '').join('');
+      const digest = crypto.createHash('sha256').update(text, 'utf8').digest('base64');
+      hashes.add(`'sha256-${digest}'`);
+    }
+  }
+  return [...hashes].sort((left, right) => left.localeCompare(right));
+}
+
+function listHtmlFiles(directory) {
+  if (!fs.existsSync(directory)) return [];
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return listHtmlFiles(entryPath);
+    return entry.name.endsWith('.html') ? [entryPath] : [];
+  });
+}
+
+/**
+ * Security headers for every static asset response. The enforced policy covers
+ * framing, `<base>` and plugin content (limited to the app, blob: URLs and
+ * https: sources, because PDF previews embed files from presigned storage and
+ * legacy S3 URLs on many hosts; `data:` is not allowed); the script policy runs report-only until the
+ * reported violations are reviewed, because third-party embeds and analytics
+ * load scripts the policy has not been verified against yet.
+ */
+export function securityHeaders({ frameAncestors, inlineScriptHashes }) {
+  const enforced = [
+    "object-src 'self' blob: https:",
+    "base-uri 'self'",
+    `frame-ancestors ${frameAncestors.join(' ')}`
+  ].join('; ');
+  const reportOnly = [
+    "default-src 'self'",
+    ["script-src 'self'", ...inlineScriptHashes, "'wasm-unsafe-eval'", 'https:'].join(' '),
+    "script-src-attr 'none'",
+    "style-src 'self' 'unsafe-inline' https:",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https:",
+    "media-src 'self' data: blob: https:",
+    "connect-src 'self' data: blob: https: wss:",
+    "frame-src 'self' blob: https:",
+    "worker-src 'self' blob:",
+    "object-src 'self' blob: https:",
+    "base-uri 'self'",
+    "form-action 'self' https:"
+  ].join('; ');
+  return {
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Strict-Transport-Security': 'max-age=31536000',
+    'Content-Security-Policy': enforced,
+    'Content-Security-Policy-Report-Only': reportOnly
+  };
+}
+
+/** Security headers for a product's static build output deployed to `environment`. */
+export function productSecurityHeaders(config, buildDir, environment) {
+  return securityHeaders({
+    frameAncestors: frameAncestorSources(config, environment),
+    inlineScriptHashes: collectInlineScriptHashes(buildDir)
+  });
+}
+
+function managedSecurityHeadersBlock(headers) {
+  return [
+    SECURITY_HEADERS_MARKERS.start,
+    '/*',
+    ...Object.entries(headers).map(([name, value]) => `  ${name}: ${value}`),
+    SECURITY_HEADERS_MARKERS.end
+  ].join('\n');
+}
+
+/** Replaces the managed block between the markers, or appends it when missing. */
+export function upsertManagedHeadersBlock(existing, block, markers = CACHE_HEADERS_MARKERS) {
   const normalizedBlock = block.trim();
-  const start = '# BEGIN 21N_FRONTEND_CACHE_HEADERS';
-  const end = '# END 21N_FRONTEND_CACHE_HEADERS';
+  const { start, end } = markers;
   const pattern = new RegExp(`${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`, 'm');
   const trimmedExisting = existing.trim();
   const withTrailingNewline = (value) => value.replace(/\s*$/, '\n');
 
   if (pattern.test(existing)) {
-    return withTrailingNewline(existing.replace(pattern, normalizedBlock));
+    return withTrailingNewline(existing.replace(pattern, () => normalizedBlock));
   }
 
   if (!trimmedExisting) {
