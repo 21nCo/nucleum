@@ -3,7 +3,7 @@ client/shared-state/files/file-queue.ts
 client/shared-state/files/device-file-queue.ts
   h_a39f9495f9ec1d 114-118,121-122,126,132,137,151,162,165-166,171-175,177,180-182,184-198,233,298,323,352,367,372-373,376-377
 client/shared-state/files/file-upload.queue.test.ts
-  s_1adeda9a15235b::t_512570033a1afd 1040,1079-1300
+  s_1adeda9a15235b::t_512570033a1afd 1040,1079-1300,1079-1101,1103-1300
 ---
 {
   "schema_version": "authorship/3.0.0",
