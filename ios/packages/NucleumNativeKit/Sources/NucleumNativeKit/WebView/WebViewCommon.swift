@@ -185,3 +185,206 @@ class WebViewModel: ObservableObject {
   var reloadEvent = PassthroughSubject<Bool, Never>()
   var valuePublisher = PassthroughSubject<String, Never>()
 }
+
+// MARK: - NativeTrust (begin)
+/// Decides which origins, navigations and account URLs the native shell trusts.
+/// Pure functions over explicit inputs so they can be checked without a WebView.
+enum NativeTrust {
+  /// True when `url` is exactly one of the configured account authorities
+  /// (scheme, host and port), so tokens only go to the app's own account service.
+  static func isTrustedAccountURL(_ url: URL, allowedAccountOrigins: [URL]) -> Bool {
+    guard url.scheme?.lowercased() == "https", url.user == nil, url.password == nil else {
+      return false
+    }
+    return allowedAccountOrigins.contains { sameOrigin($0, url) }
+  }
+
+  /// True when a frame's origin is one the app itself is served from.
+  static func isTrustedFrameOrigin(
+    scheme: String, host: String, port: Int, trustedOrigins: [URL]
+  ) -> Bool {
+    let scheme = scheme.lowercased()
+    let host = host.lowercased()
+    return trustedOrigins.contains { origin in
+      origin.scheme?.lowercased() == scheme
+        && (origin.host?.lowercased() ?? "") == host
+        && effectivePort(origin.port, scheme: scheme)
+          == effectivePort(port == 0 ? nil : port, scheme: scheme)
+    }
+  }
+
+  /// Accepts a bridge message only from the main frame of an app origin.
+  static func acceptsBridgeMessage(
+    isMainFrame: Bool, scheme: String, host: String, port: Int, trustedOrigins: [URL]
+  ) -> Bool {
+    isMainFrame
+      && isTrustedFrameOrigin(scheme: scheme, host: host, port: port, trustedOrigins: trustedOrigins)
+  }
+
+  enum NavigationDecision: Equatable {
+    case allow
+    case openExternally
+    case cancel
+  }
+
+  /// Decides a WebView navigation. Subframes (embeds) are unchanged. A
+  /// new-window request from a subframe is discarded, as WebKit did before.
+  /// Main-frame navigations stay in the WebView only for the app's origins,
+  /// its account hosts and in-page schemes. OAuth provider pages keep loading in
+  /// the WebView when the app itself navigates there (its existing embedded
+  /// sign-in flows), but an embedded frame cannot send the app to them. Other
+  /// web, mail and phone links from the main frame open in the system browser;
+  /// an embedded frame cannot open them, and anything else is cancelled.
+  static func navigationDecision(
+    for url: URL,
+    targetIsMainFrame: Bool?,
+    sourceIsMainFrame: Bool,
+    trustedOrigins: [URL],
+    appScheme: String,
+    isFormPost: Bool = false,
+    sourceHost: String? = nil,
+    sourceIsAppOrigin: Bool = true,
+    isTrustedAccountURL: (URL) -> Bool
+  ) -> NavigationDecision {
+    switch targetIsMainFrame {
+    case .some(false):
+      return .allow
+    case .none where !sourceIsMainFrame:
+      return .cancel
+    default:
+      break
+    }
+    let scheme = url.scheme?.lowercased() ?? ""
+    if scheme == "about" || scheme == "blob" {
+      return sourceIsMainFrame && sourceIsAppOrigin ? .allow : .cancel
+    }
+    if trustedOrigins.contains(where: { sameOrigin($0, url) }) { return .allow }
+    if scheme == "https" && isTrustedAccountURL(url) { return .allow }
+    if isOAuthProviderURL(url) { return sourceIsMainFrame ? .allow : .cancel }
+    if scheme == appScheme.lowercased() {
+      return sourceIsMainFrame && sourceIsAppOrigin ? .allow : .cancel
+    }
+    if isFormPost && scheme == "https" && sourceIsMainFrame
+      && sourceHost?.lowercased() == "appleid.apple.com"
+      && isAppleSignInCallback(url)
+    {
+      return .allow
+    }
+    if scheme == "http" || scheme == "https" || scheme == "mailto" || scheme == "tel" {
+      return sourceIsMainFrame ? .openExternally : .cancel
+    }
+    return .cancel
+  }
+
+  /// API hosts of the apps' sign-in service that receive Apple's form_post callback.
+  static let appleCallbackHosts: Set<String> = [
+    "api.nucleus.website", "api.memotron.app", "api.memotron.xyz", "api.21n.dev",
+  ]
+
+  /// Apple's form_post to `/oauth/apple` on a sign-in API host. (Account hosts
+  /// are already allowed by the account check.)
+  static func isAppleSignInCallback(_ url: URL) -> Bool {
+    let host = url.host?.lowercased() ?? ""
+    return appleCallbackHosts.contains(host) && (url.port == nil || url.port == 443)
+      && url.path == "/oauth/apple"
+  }
+
+  /// Authorization pages of the sign-in providers the account service uses.
+  /// GitHub sends a signed-out user from `/login/oauth/authorize` to `/login`,
+  /// posts the credentials to `/session` and runs 2FA and device checks under
+  /// `/sessions/`, so those stay in the WebView with the authorization pages.
+  static func isOAuthProviderURL(_ url: URL) -> Bool {
+    guard url.scheme?.lowercased() == "https", let host = url.host?.lowercased() else {
+      return false
+    }
+    switch host {
+    case "accounts.google.com", "appleid.apple.com":
+      return true
+    case "github.com":
+      let path = url.path
+      return path == "/login" || path == "/session" || path.hasPrefix("/login/")
+        || path.hasPrefix("/sessions/")
+    default:
+      return false
+    }
+  }
+
+  /// The URL-scheme hosts that carry sign-in results: `oauthsignin` and the
+  /// older `oauthsignarchived`, on the app's own scheme.
+  static func signInDeepLinkKind(_ url: URL, appScheme: String) -> String? {
+    guard url.scheme?.lowercased() == appScheme.lowercased() else { return nil }
+    let host = url.host?.lowercased()
+    return host == "oauthsignin" || host == "oauthsignarchived" ? host : nil
+  }
+
+  static func sameOrigin(_ left: URL, _ right: URL) -> Bool {
+    let scheme = left.scheme?.lowercased() ?? ""
+    return scheme == (right.scheme?.lowercased() ?? "")
+      && (left.host?.lowercased() ?? "") == (right.host?.lowercased() ?? "")
+      && effectivePort(left.port, scheme: scheme) == effectivePort(right.port, scheme: scheme)
+  }
+
+  private static func effectivePort(_ port: Int?, scheme: String) -> Int? {
+    if let port { return port }
+    switch scheme {
+    case "https": return 443
+    case "http": return 80
+    default: return nil
+    }
+  }
+}
+// MARK: - NativeTrust (end)
+
+extension NativeTrust {
+  /// Region ids the account service is deployed to.
+  static let accountRegionIds = ["insouth", "useast", "euwest"]
+
+  /// Origins the app's own web layer is served from.
+  static func appTrustedOrigins(loadedURL: URL?) -> [URL] {
+    var origins: [URL] = []
+    if let bundled = URL(string: "\(customProtocol)://localhost") { origins.append(bundled) }
+    if let web = URL(string: LocalConfig.webOrigin) { origins.append(web) }
+    if let loadedURL, loadedURL.scheme?.lowercased() != customProtocol { origins.append(loadedURL) }
+    return origins
+  }
+
+  /// The configured account authority for every deployed region in this build's environment.
+  static func appAccountOrigins() -> [URL] {
+    (accountRegionIds + [LocalConfig.defaultRegion]).compactMap {
+      URL(string: LocalConfig.accountUrl(for: $0))
+    }
+  }
+
+  /// Account URLs the native side may send the session token or a sign-in credential to.
+  static func isAppAccountURL(_ url: URL) -> Bool {
+    isTrustedAccountURL(url, allowedAccountOrigins: appAccountOrigins())
+  }
+
+  /// Applies `navigationDecision` to a WebKit navigation action for this app.
+  static func appNavigationDecision(
+    for navigationAction: WKNavigationAction, loadedURL: URL?
+  ) -> (NavigationDecision, URL?) {
+    guard let url = navigationAction.request.url else { return (.allow, nil) }
+    let sourceFrame = navigationAction.sourceFrame as WKFrameInfo?
+    let trustedOrigins = appTrustedOrigins(loadedURL: loadedURL)
+    let decision = navigationDecision(
+      for: url,
+      targetIsMainFrame: navigationAction.targetFrame?.isMainFrame,
+      sourceIsMainFrame: sourceFrame?.isMainFrame ?? false,
+      trustedOrigins: trustedOrigins,
+      appScheme: LocalConfig.urlScheme,
+      isFormPost: navigationAction.request.httpMethod?.uppercased() == "POST",
+      sourceHost: sourceFrame?.securityOrigin.host,
+      sourceIsAppOrigin: sourceFrame.map {
+        isTrustedFrameOrigin(
+          scheme: $0.securityOrigin.protocol,
+          host: $0.securityOrigin.host,
+          port: $0.securityOrigin.port,
+          trustedOrigins: trustedOrigins
+        )
+      } ?? false,
+      isTrustedAccountURL: isAppAccountURL
+    )
+    return (decision, url)
+  }
+}

@@ -1,0 +1,98 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  collectInlineScriptHashes,
+  frameAncestorSources,
+  readConfig,
+  writeCloudflareAssetHeaders
+} from "../../../services/frontend/scripts/frontend-config.mjs";
+
+const serviceRoot = path.resolve(__dirname, "../../../services/frontend");
+const config = readConfig(serviceRoot);
+const tempRoots: string[] = [];
+
+function makeRepo(indexHtml: string, existingHeaders?: string) {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "nucleum-headers-test-"));
+  tempRoots.push(repoRoot);
+  const buildDir = path.join(repoRoot, config.products.nucleum.appPath, "build");
+  fs.mkdirSync(buildDir, { recursive: true });
+  fs.writeFileSync(path.join(buildDir, "index.html"), indexHtml);
+  if (existingHeaders !== undefined)
+    fs.writeFileSync(path.join(buildDir, "_headers"), existingHeaders);
+  return { repoRoot, buildDir };
+}
+
+function sha256(value: string) {
+  return `'sha256-${crypto.createHash("sha256").update(value, "utf8").digest("base64")}'`;
+}
+
+afterEach(() => {
+  for (const root of tempRoots.splice(0)) fs.rmSync(root, { recursive: true, force: true });
+});
+
+describe("frontend security headers", () => {
+  const bootstrap = "\n  __sveltekit_x = { base: '', tag: '</script-widget>' };\n";
+  const html = `<!doctype html><html><head><script type="module">${bootstrap}</script ><script src="/_app/a.js"></script><script type="application/json">{"a":1}</script></head><body></body></html>`;
+
+  it("hashes script text the way the HTML parser reads it", () => {
+    const crlf = "\r\n  window.a = 1;\r\n";
+    const nbsp = "\n  window.b = '</script\u00a0>';\n";
+    const dataSrc = "\n  window.c = 3;\n";
+    const comment = "\n  window.d = 4;\n";
+    const ecma = "\n  window.e = 5;\n";
+    const { buildDir } = makeRepo(
+      `<html><head><script>${crlf}</script><script data-x="a>b" type="">${nbsp}</script\n><script data-src="/x.js">${dataSrc}</script><script src=/y.js></script><!-- <script type="module"> --><script type="text&#47;javascript">${comment}</script><script type="application/ecmascript">${ecma}</script><script type="text/plain">x</script></head></html>`
+    );
+    expect(collectInlineScriptHashes(buildDir).sort()).toEqual(
+      [sha256("\n  window.a = 1;\n"), sha256(nbsp), sha256(dataSrc), sha256(comment), sha256(ecma)].sort()
+    );
+  });
+
+  it("hashes executable inline scripts only", () => {
+    const { buildDir } = makeRepo(html);
+    expect(collectInlineScriptHashes(buildDir)).toEqual([sha256(bootstrap)]);
+  });
+
+  it("writes enforced and report-only policies next to the cache block, idempotently", () => {
+    const { repoRoot, buildDir } = makeRepo(html, "/custom\n  X-Test: 1\n");
+    const headersPath = writeCloudflareAssetHeaders(repoRoot, config, "nucleum");
+    const first = fs.readFileSync(headersPath, "utf8");
+    writeCloudflareAssetHeaders(repoRoot, config, "nucleum");
+    expect(fs.readFileSync(path.join(buildDir, "_headers"), "utf8")).toBe(first);
+
+    expect(first).toContain("/custom\n  X-Test: 1");
+    expect(first).toContain("# BEGIN 21N_FRONTEND_CACHE_HEADERS");
+    expect(first).toContain("  X-Content-Type-Options: nosniff");
+    expect(first).toContain("  Referrer-Policy: strict-origin-when-cross-origin");
+    expect(first).toContain("  Strict-Transport-Security: max-age=31536000");
+
+    const enforced = first.match(/^  Content-Security-Policy: (.*)$/m)?.[1] ?? "";
+    expect(enforced).toContain("object-src 'self' blob: https:");
+    expect(enforced).not.toMatch(/object-src[^;]*data:/);
+    expect(enforced).toContain("base-uri 'self'");
+    expect(enforced).toMatch(/frame-ancestors 'self' .*https:\/\/\*\.memotron\.app/);
+    expect(enforced).not.toContain("script-src");
+
+    const reportOnly =
+      first.match(/^  Content-Security-Policy-Report-Only: (.*)$/m)?.[1] ?? "";
+    expect(reportOnly).toContain(`script-src 'self' ${sha256(bootstrap)}`);
+    expect(reportOnly).toContain("script-src-attr 'none'");
+    expect(reportOnly).not.toMatch(/script-src[^;]*'unsafe-inline'/);
+  });
+
+  it("allows framing only by product domains and the deployed environment's zone", () => {
+    const dev = frameAncestorSources(config, "dev");
+    expect(dev[0]).toBe("'self'");
+    expect(dev).toContain("https://*.nucleum.app");
+    expect(dev).toContain("https://*.21n.dev");
+    expect(dev).not.toContain("*");
+    expect(dev.every((source: string) => source === "'self'" || source.startsWith("https://"))).toBe(true);
+
+    const live = frameAncestorSources(config, "live");
+    expect(live).toContain("https://*.nucleum.app");
+    expect(live.some((source: string) => source.includes("21n.dev"))).toBe(false);
+  });
+});
