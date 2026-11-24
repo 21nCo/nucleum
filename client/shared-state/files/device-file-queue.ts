@@ -175,7 +175,8 @@ export function createLocalFilePublisher(
         await entry.mark("uploaded", uploaded.versionId);
         if (await readFileRecord(namespace, { fileId: uploaded.fileId }))
           return;
-        const pend = () => recordFileFnPendingDelete(uploader, uploaded.fileId);
+        const pend = () =>
+          recordFileFnPendingDelete(uploader, uploaded.fileId, true);
         if (isAppOffline() || !isReady()) return pend();
         return uploader.client.deleteFile(uploaded.fileId).catch(pend);
       }
@@ -542,8 +543,9 @@ async function settleOrphanedLocalFiles(
       }
       const isPended = async () =>
         (await isOrphan().catch(() => false)) &&
-        recordFileFnPendingDelete(uploader, fileId).then(() => true);
-      if (isAppOffline()) await recordFileFnPendingDelete(uploader, fileId);
+        recordFileFnPendingDelete(uploader, fileId, true).then(() => true);
+      if (isAppOffline())
+        await recordFileFnPendingDelete(uploader, fileId, true);
       else if (!(await client.deleteFile(fileId).then(() => true, isPended)))
         return true;
     }

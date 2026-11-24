@@ -9000,4 +9000,109 @@ describe("backup and restore of a local-only user's files", () => {
     expect(decode(restored?.data)).toBe("");
     expect(restored?.size).toBe(0);
   });
+
+  const LOCAL_QUEUE = "nucleum-file-queue-local";
+  const HELD_FILES = [
+    "record.json",
+    "claim.json",
+    "committed",
+    "stale",
+    "orphaned",
+    "deleted",
+    "discarded"
+  ];
+
+  /** Writes a file of a local file's entry, as the device's local queue does. */
+  async function writeLocalFile(fileId: string, name: string, text = "") {
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    const entry = await queue.getDirectoryHandle(`queued_${fileId}`);
+    const writable = await (
+      await entry.getFileHandle(name, { create: true })
+    ).createWritable();
+    await writable.write(text);
+    await writable.close();
+  }
+
+  /** Reads the record copy, claim and marks of a local file's entry. */
+  function readHeldState(fileId: string) {
+    return HELD_FILES.map((name) => {
+      const bytes = opfs.read(LOCAL_QUEUE, `queued_${fileId}`, name);
+      return [name, bytes && new TextDecoder().decode(bytes)];
+    });
+  }
+
+  /**
+   * Captures a photo as a guest whose namespace a sign-out then retires: it
+   * cleared the device's DataFn ID, so a new guest namespace opens.
+   */
+  async function captureInRetiredGuest() {
+    await bootData(localAccount);
+    const record = await capturePhoto();
+    device = newDevice();
+    await bootData(localAccount);
+    expect(await savedRecord(record.id)).toBeUndefined();
+    return record;
+  }
+
+  it("carries the held captures no guest record references, also a retired guest namespace's, and restores them still held", async () => {
+    const retired = await captureInRetiredGuest();
+    await writeLocalFile(retired.fileId, "stale", "changed");
+    const claimed = await capturePhoto();
+    const claim = { userId: "user-a", baseUrl: "https://files.example.test" };
+    await writeLocalFile(claimed.fileId, "claim.json", JSON.stringify(claim));
+    // The guest record of the claimed, not uploaded capture was deleted.
+    await deleteRecord(claimed.id);
+    await writeLocalFile(claimed.fileId, "orphaned");
+    // A guest record deleted before its change marked its capture.
+    const unfenced = await capturePhoto();
+    await deleteRecord(unfenced.id);
+    const held = [retired, claimed].map(({ fileId }) => readHeldState(fileId));
+    expect(held[0][0][1]).toContain(retired.id);
+    expect(held[1][1][1]).toBe(JSON.stringify(claim));
+
+    const backup = await backupFile();
+    expect(
+      [retired, claimed].map(({ fileId }) => readHeldState(fileId))
+    ).toEqual(held);
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    expect(opfs.list(LOCAL_QUEUE).sort()).toEqual(
+      [retired, claimed, unfenced]
+        .map(({ fileId }) => `queued_${fileId}`)
+        .sort()
+    );
+    expect(
+      opfs.read(LOCAL_QUEUE, `queued_${unfenced.fileId}`, "deleted")
+    ).toBeDefined();
+    expect(
+      [retired, claimed].map(({ fileId }) => readHeldState(fileId))
+    ).toEqual(held);
+    expect(await readQueuedBytes(claimed.fileId, "full")).toBe("photo bytes");
+    expect(await readQueuedBytes(retired.fileId, "thumbnail")).toBe(
+      "thumb bytes"
+    );
+    expect(await savedRecord(claimed.id)).toBeUndefined();
+    expect(sdk.started).toEqual([]);
+  });
+
+  it("backs up a guest's captures while a local file of another guest namespace cannot be read, but not while one of its own cannot", async () => {
+    const other = await captureInRetiredGuest();
+    await writeLocalFile(other.fileId, "metadata.json", "{");
+    const record = await capturePhoto();
+
+    const backup = await backupFile();
+    await writeLocalFile(record.fileId, "metadata.json", "{");
+    await expect(createBackupBlob()).rejects.toThrow();
+    await clearBrowser();
+    await bootData(localAccount);
+    await restoreBackup(backup, { triggerCloneUp: () => false });
+
+    const restored = await savedRecord(record.id);
+    expect(restored?.fileId).toBeUndefined();
+    expect(decode(restored?.data)).toBe("photo bytes");
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
 });

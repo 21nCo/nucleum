@@ -477,7 +477,7 @@ describe("a failed file of the local queue another account claimed", () => {
     );
     expect(
       await tab.isQueuedFileFailed([tab.LOCAL_FILE_QUEUE_DIR], FILE_ID)
-    ).toBe(false);
+    ).toBe(true);
     expect(await tab.retryFailedQueuedFile(userADirs, FILE_ID, OWNER_A)).toBe(
       false
     );
@@ -495,6 +495,20 @@ describe("a failed file of the local queue another account claimed", () => {
     expect(await tab.isQueuedFileFailed(userBDirs, FILE_ID, OWNER_B)).toBe(
       false
     );
+  });
+
+  it("shows a claimed local file whose first upload was rejected for good to the guest, whose retry uploads it again", async () => {
+    installDevice();
+    const tab = await openTab();
+    const fileFn = await rejectClaimedPhoto(tab);
+    const guestDirs = tab.resolveFileQueueDirsOf(null);
+
+    expect(await tab.isQueuedFileFailed(guestDirs, FILE_ID, null)).toBe(true);
+    expect(await tab.retryFailedQueuedFile(guestDirs, FILE_ID, null)).toBe(
+      true
+    );
+    await vi.waitFor(() => expect(fileFn.uploads).toHaveLength(2));
+    expect(await tab.isQueuedFileFailed(guestDirs, FILE_ID, null)).toBe(false);
   });
 
   it("keeps an unclaimed failed file failed and retryable for any account", async () => {

@@ -3229,6 +3229,90 @@ describe("files captured offline or by a local-only user", () => {
     ).toEqual(claim);
   });
 
+  it.each(["", "{"])(
+    "never uploads, publishes or deletes a claimed local file for any account while its claim.json reads %j",
+    async (text) => {
+      const record = await captureThenSignOutDuringUpload();
+      await writeLocalEntryFile(record.fileId, "claim.json", text);
+
+      for (const userId of ["user-b", "user-a"]) {
+        await signInToCloud(userId);
+        await replayLocalQueue();
+        await settleTasks();
+        expect(sdk.started).toHaveLength(1);
+        expect(await savedRecord(record.id)).toBeUndefined();
+      }
+      await signOutToLocal();
+      await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+      await settleLocalFileRecords();
+      await signInToCloud("user-a");
+      await replayLocalQueue();
+      await settleTasks();
+
+      expect(sdk.started).toHaveLength(1);
+      expect(sdk.deletes).toEqual([]);
+      expect(opfs.list(LOCAL_QUEUE)).toEqual([`queued_${record.fileId}`]);
+      const claim = opfs.read(
+        LOCAL_QUEUE,
+        `queued_${record.fileId}`,
+        "claim.json"
+      );
+      expect(claim && new TextDecoder().decode(claim)).toBe(text);
+    }
+  );
+
+  it("sends an orphaned capture's recorded delete only while no record of the claiming account references its file, and drops one a record references", async () => {
+    const referenced = await captureThenSignOutDuringUpload();
+    const claim = opfs.read(
+      LOCAL_QUEUE,
+      `queued_${referenced.fileId}`,
+      "claim.json"
+    );
+    const unreferenced = await capturePhoto();
+    await settleLocalFileRecords();
+    await writeLocalEntryFile(
+      unreferenced.fileId,
+      "claim.json",
+      new TextDecoder().decode(claim)
+    );
+    for (const { id } of [referenced, unreferenced])
+      await datafn.file.mutate({ operation: "delete", id } as never);
+    await settleLocalFileRecords();
+    // The settles find the app offline and record the deletes.
+    hookEntryFiles({
+      create: (name) => {
+        if (name !== "discarded") return;
+        context.update((value) => ({ ...value, isInOfflineMode: true }));
+      }
+    });
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+    expect(sdk.deletes).toEqual([]);
+
+    // Another device published a record of one file; a record without a
+    // file references neither.
+    const published = { name: "photo.png", type: "image/png" };
+    for (const [id, fileId] of [
+      ["published", referenced.fileId],
+      ["fileless", undefined]
+    ])
+      await datafn.file.mutate({
+        operation: "insert",
+        id,
+        record: { ...published, ...(fileId && { fileId }) }
+      } as never);
+    context.update((value) => ({ ...value, isInOfflineMode: false }));
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deletes).toEqual([unreferenced.fileId]));
+
+    await datafn.file.mutate({ operation: "delete", id: "published" } as never);
+    goOnline();
+    await settleTasks();
+    expect(sdk.deletes).toEqual([unreferenced.fileId]);
+  });
+
   it("keeps a capture from an earlier guest namespace and publishes it at the first cloud sign-in", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();

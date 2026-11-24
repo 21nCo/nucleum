@@ -6,6 +6,7 @@ import {
   LOCAL_FILE_QUEUE_DIR,
   renewRestoredFiles,
   resolveAccountFileQueueDir,
+  restoreLocalQueuedFiles,
   settleRestoredFiles,
   stageRestoredFiles,
   toRecordsView,
@@ -55,17 +56,18 @@ type QueuedFileIndex = Omit<QueuedFileCopy, "data" | "thumbnail"> & {
 };
 
 /**
- * The index of the account upload queue a backup carries: the account the
- * files are captured under, the files, and the length of the base64 string.
+ * The index of the upload queue a backup carries: the account the files are
+ * captured under (null for a guest backup's held local files, see
+ * withLocalFileBytes), the files, and the length of the base64 string.
  */
 type FileQueueIndex = {
   version: number;
-  userId: string;
+  userId: string | null;
   size: number;
   files: QueuedFileIndex[];
 };
 
-type QueuedFilesBackup = { userId: string; files: QueuedFileCopy[] };
+type QueuedFilesBackup = { userId: string | null; files: QueuedFileCopy[] };
 
 /** Returns the account whose records DataFn holds, or null for the guest. */
 function resolveNamespaceUserId(): string | null {
@@ -82,7 +84,9 @@ function resolveNamespaceUserId(): string | null {
  * file the records reference between the two (see exportQueuedFiles). A
  * queued file that cannot be read rejects, as does a backup during which
  * DataFn switched to another account's records, even one switched back,
- * so a backup never carries one account's records with another's files.
+ * so a backup never carries one account's records with another's files. A
+ * guest backup leaves out a local file of another guest namespace that
+ * cannot be read and that none of its records references.
  */
 export async function createBackupBlob(): Promise<Blob> {
   const namespace = datafn.currentNamespace();
@@ -99,7 +103,15 @@ export async function createBackupBlob(): Promise<Blob> {
         )
       : namespace?.startsWith("guest:")
         ? withLocalFileBytes(
-            await exportQueuedFiles(LOCAL_FILE_QUEUE_DIR, exportRecords, true)
+            await exportQueuedFiles(
+              LOCAL_FILE_QUEUE_DIR,
+              exportRecords,
+              true,
+              (fileId, { namespace: owner }, records) =>
+                owner !== namespace &&
+                !listFileRecords(records).some((r) => r.fileId === fileId)
+            ),
+            namespace
           )
         : { records: await exportRecords(), files: [] };
   } finally {
@@ -110,29 +122,54 @@ export async function createBackupBlob(): Promise<Blob> {
     throw new Error("The account changed while the backup was made");
   }
   const records = stringify(data, { isPreventReplacer: true });
-  const parts =
-    userId && files.length
-      ? toBackupParts(records, { userId, files })
-      : [records];
+  const parts = files.length
+    ? toBackupParts(records, { userId, files })
+    : [records];
   return new Blob(parts, { type: "application/json" });
 }
 
-function withLocalFileBytes(exported: {
-  records: Record<string, unknown>;
-  files: QueuedFileCopy[];
-}) {
+function listFileRecords(records: Record<string, unknown>) {
+  const resources = records.resources as Record<string, unknown> | undefined;
+  const found = Array.isArray(resources?.file) ? resources.file : [];
+  return found as Record<string, unknown>[];
+}
+
+/**
+ * Puts the bytes of each local file a guest record references into that
+ * record, and keeps every other local file that has not reached its account
+ * (no uploaded mark: one claimed, whose guest record was deleted, or one of
+ * a guest namespace that never starts again) as a held file of the backup,
+ * with its record copy and marks, restored still held (see
+ * restoreLocalQueuedFiles). One of the backed-up namespace `namespace`
+ * whose record is gone is marked deleted, if no mark tells that yet (its
+ * guest change may not be copied yet), so it never publishes its copy.
+ */
+function withLocalFileBytes(
+  exported: { records: Record<string, unknown>; files: QueuedFileCopy[] },
+  namespace: string
+) {
   const copies = new Map(exported.files.map((copy) => [copy.fileId, copy]));
-  const resources = exported.records.resources as Record<string, unknown>;
-  const records = Array.isArray(resources?.file) ? resources.file : [];
-  for (const record of records as Record<string, unknown>[]) {
+  const inlined = new Set<string>();
+  for (const record of listFileRecords(exported.records)) {
     const copy = copies.get(record.fileId as string);
     if (!copy) continue;
+    inlined.add(copy.fileId);
     delete record.fileId;
     record.data = copy.data;
     record.size = copy.data.length;
     if (copy.thumbnail) record.thumbnailData = copy.thumbnail.data;
   }
-  return { records: exported.records, files: [] };
+  const files = exported.files.filter(
+    ({ fileId, marks = [] }) =>
+      !inlined.has(fileId) && !marks.some(({ name }) => name === "uploaded")
+  );
+  for (const copy of files) {
+    const marks = (copy.marks ??= []);
+    const isGone = !marks.some((m) => ["deleted", "orphaned"].includes(m.name));
+    if (copy.record?.namespace === namespace && isGone)
+      marks.push({ name: "deleted", text: "" });
+  }
+  return { records: exported.records, files };
 }
 
 /**
@@ -159,7 +196,9 @@ function withLocalFileBytes(exported: {
  * written, or the account changes before the records are imported (rolling
  * back the files it wrote that no other restore holds and no account
  * adopted; see unstageRestoredFiles); and when the records could not all be
- * imported, keeping the files. `triggerCloneUp` decides, right before the
+ * imported, keeping the files. A guest backup's held local files are
+ * written back first, still held, and kept (see restoreLocalQueuedFiles).
+ * `triggerCloneUp` decides, right before the
  * records are imported into the account checked unchanged, whether DataFn
  * clones them up.
  */
@@ -201,10 +240,14 @@ async function restoreInRuntime(
   const userId = resolveNamespaceUserId();
   const runtime = get(datafnRuntime);
   const view = toRecordsView(runtime);
-  const { records, fileQueue } = await readBackup(file);
-  if (fileQueue?.files.length && !isFileQueueSupported()) {
+  const { records, fileQueue: read } = await readBackup(file);
+  if (read?.files.length && !isFileQueueSupported()) {
     throw new Error("This device cannot keep the backup's pending files");
   }
+  if (read?.userId === null) await restoreLocalQueuedFiles(read.files);
+  const fileQueue = read?.userId
+    ? { userId: read.userId, files: read.files }
+    : undefined;
   const authority = fileQueue?.files.length
     ? await resolveRecordsAuthority(userId, runtime?.remoteUrl)
     : undefined;
@@ -440,8 +483,8 @@ function readIndex(text: string): FileQueueIndex {
     (range[1] - range[0]) % 4 === 0;
   if (
     index?.version !== FILE_QUEUE_VERSION ||
-    typeof index.userId !== "string" ||
-    !index.userId ||
+    (index.userId !== null &&
+      (typeof index.userId !== "string" || !index.userId)) ||
     !Number.isSafeInteger(size) ||
     !Array.isArray(index.files) ||
     !index.files.every(
