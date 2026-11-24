@@ -82,6 +82,11 @@ const IDEMPOTENCY_KEY = /^[\x21-\x7e]{1,255}$/;
 const IDEMPOTENCY_TTL_SECONDS = 86_400;
 /** How long a key stays claimed by a write that never finishes (a lost process). */
 const IDEMPOTENCY_PENDING_SECONDS = 60;
+/**
+ * DataFn query metadata that keeps archived records, and records under an
+ * archived ancestor, in a read. Trashed records stay hidden.
+ */
+const INCLUDE_INACTIVE = { includeArchived: true, includeAncestorInactive: true } as const;
 
 /**
  * Builds one app's versioned REST router: list, get, create and update for
@@ -129,7 +134,8 @@ function resourceRoutes(
         summary: `List ${tags[0]}`,
         description: `${contract.description} Requires ${scope('read')}. ` + (paged
           ? 'Pages are ordered by `sort` and continue with `cursor`.'
-          : 'Rows are filtered to this app after the query runs, so the list is not paged.'),
+          : 'Rows are filtered to this app after the query runs, so the list is not paged.') +
+          inactiveListNote(contract),
         tags,
         query: listParameters(app, contract, paged),
         responses: {
@@ -210,6 +216,32 @@ function resourceRoutes(
   return routes;
 }
 
+/** How a list treats archived records, for resources that can be archived. */
+function inactiveListNote(contract: InterfaceResourceContract): string {
+  if (!contract.filters.includes('isArchived')) return '';
+  const under = inheritsInactive(contract.resource) ? ' and records under an archived parent' : '';
+  return ` Archived records${under} are left out unless \`isArchived=true\` is given, which lists them.`;
+}
+
+/** Whether a resource's records turn inactive with an archived ancestor. */
+function inheritsInactive(resource: string): boolean {
+  const relations = nucleumDatafnSchema.relations as readonly RelationDeclaration[] | undefined;
+  return (relations ?? []).some((relation) => relation.inheritsInactive === true &&
+    endpoints(relation.type === 'many-one' ? relation.from : relation.to).includes(resource));
+}
+
+interface RelationDeclaration {
+  from: string | readonly string[];
+  to: string | readonly string[];
+  type: string;
+  fkField?: string;
+  inheritsInactive?: boolean;
+}
+
+function endpoints(endpoint: string | readonly string[]): readonly string[] {
+  return typeof endpoint === 'string' ? [endpoint] : endpoint;
+}
+
 const idempotencyNote =
   'Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the ' +
   'record\'s current state and `Idempotent-Replayed: true`. A key belongs to the token\'s account, this operation ' +
@@ -268,7 +300,7 @@ const ERROR_DESCRIPTIONS: Record<number, string> = {
   405: '405 method not served for this path (with Allow)',
   409: '409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After)',
   413: '413 body larger than 64 KiB',
-  422: '422 invalid body, or an Idempotency-Key reused with another body',
+  422: '422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body',
   429: '429 rate limited'
 };
 
@@ -468,12 +500,16 @@ async function listRecords(
   if (!contract.sorts.includes(sort.replace(/^-/, ''))) {
     throw parameterProblem('sort', `sort must be one of ${contract.sorts.join(', ')}, optionally prefixed with -.`);
   }
+  // DataFn leaves archived records out of every read unless asked; a list
+  // filtered on isArchived=true asks for exactly those.
+  const metadata = filters.isArchived === true ? INCLUDE_INACTIVE : undefined;
   if (!paged) {
     const result = await run<QueryResult>(() => caller.executor.query({
       resource: contract.resource,
       version: 1,
       filters,
-      sort: [sort, 'id']
+      sort: [sort, 'id'],
+      ...(metadata ? { metadata } : {})
     }, caller.context), 'read', caller.services);
     return Response.json({ data: result.data.map((row) => project(contract, row)), nextCursor: null });
   }
@@ -488,12 +524,12 @@ async function listRecords(
   }
   // One row past the page shows whether another follows; DataFn reads at
   // most MAX_LIMIT rows a query, so a full-size page probes for it instead.
-  const rows = await keysetPage(contract, caller, filters, sort, cursor, Math.min(limit + 1, MAX_LIMIT));
+  const rows = await keysetPage(contract, caller, { filters, metadata }, sort, cursor, Math.min(limit + 1, MAX_LIMIT));
   const page = rows.slice(0, limit);
   const last = page.at(-1);
   const after = last ? { sort, value: sortValue(last, sortField), id: String(last.id) } : null;
   const more = rows.length > limit || (after !== null && rows.length === MAX_LIMIT &&
-    (await keysetPage(contract, caller, filters, sort, after, 1)).length > 0);
+    (await keysetPage(contract, caller, { filters, metadata }, sort, after, 1)).length > 0);
   return Response.json({
     data: page.map((row) => project(contract, row)),
     nextCursor: more && after ? encodeCursor(after) : null
@@ -517,7 +553,10 @@ function cursorValue(field: ApiField, value: unknown): Cursor['value'] | undefin
   if (value === null) return null;
   if (field.kind === 'number' || field.kind === 'integer') {
     const number = serializeField(field, value);
-    return typeof number === 'number' && Number.isFinite(number) ? number : undefined;
+    if (typeof number !== 'number') return undefined;
+    // Integer fields are bigint columns, which compare only with whole numbers.
+    const valid = field.kind === 'integer' ? Number.isSafeInteger(number) : Number.isFinite(number);
+    return valid ? number : undefined;
   }
   if (field.kind === 'string') return typeof value === 'string' ? value : undefined;
   if (field.kind === 'boolean') return typeof value === 'boolean' ? value : undefined;
@@ -538,7 +577,7 @@ function isOperatorSet(value: unknown): value is Row {
 async function keysetPage(
   contract: InterfaceResourceContract,
   caller: Caller,
-  filters: Row,
+  { filters, metadata }: { filters: Row; metadata?: Row },
   sort: string,
   cursor: Cursor | null,
   want: number
@@ -574,7 +613,8 @@ async function keysetPage(
       version: 1,
       filters: segmentFilters,
       sort: segment.sort,
-      limit: want
+      limit: want,
+      ...(metadata ? { metadata } : {})
     }, caller.context), 'read', caller.services);
     for (const row of result.data) {
       const id = String(row.id);
@@ -605,28 +645,96 @@ function withConditions(filters: Row, conditions: Record<string, Row>): Row | nu
   return merged;
 }
 
+/**
+ * Reads one record by id, whether or not it or an ancestor is archived (a
+ * write's readback and replay must find what it wrote). Trashed records and
+ * records this app's token may not see read as missing.
+ */
 async function getRecord(
   app: InterfaceApp,
   contract: InterfaceResourceContract,
   caller: Caller,
   id: string
 ): Promise<Row> {
-  const prefix = resourceIdPrefix(contract.resource);
-  const notFound = new ApiProblem(404, 'not_found', `No ${contract.resource} ${id} is visible to this token.`);
-  if (!id.startsWith(`${prefix}:`)) throw notFound;
+  const row = await findRecord(app, contract.resource, caller, id);
+  if (!row) throw new ApiProblem(404, 'not_found', `No ${contract.resource} ${id} is visible to this token.`);
+  return project(contract, row);
+}
+
+async function findRecord(app: InterfaceApp, resource: string, caller: Caller, id: string): Promise<Row | null> {
+  if (!id.startsWith(`${resourceIdPrefix(resource)}:`)) return null;
   const filters: Row = { id: { eq: id } };
-  const visible = sharedFieldConstraint(app, contract);
-  if (visible) filters.resource = { in: visible };
-  const paged = resolveInterfaceSharedFilter(app, contract.resource as InterfaceExposedResource)?.paged !== false;
+  const shared = resolveInterfaceSharedFilter(app, resource as InterfaceExposedResource);
+  const visible = resolveInterfaceVisibleTypes(app);
+  if (shared?.kind === 'field' && visible !== 'all') filters.resource = { in: [...visible] };
   const result = await run<QueryResult>(() => caller.executor.query({
-    resource: contract.resource,
+    resource,
     version: 1,
     filters,
-    ...(paged ? { limit: 1 } : {})
+    metadata: INCLUDE_INACTIVE,
+    ...(shared?.paged !== false ? { limit: 1 } : {})
   }, caller.context), 'read', caller.services);
-  const row = result.data.find((entry) => entry.id === id);
-  if (!row) throw notFound;
-  return project(contract, row);
+  return result.data.find((entry) => entry.id === id) ?? null;
+}
+
+/** The resource a many-one reference field names, such as a task's `objectiveId`. */
+function referenceTarget(resource: string, name: string): string | null {
+  const relations = nucleumDatafnSchema.relations as readonly RelationDeclaration[] | undefined;
+  const relation = (relations ?? []).find((entry) => entry.type === 'many-one' && entry.fkField === name &&
+    typeof entry.from === 'string' && entry.from === resource && typeof entry.to === 'string');
+  return relation ? relation.to as string : null;
+}
+
+/**
+ * Refuses a write whose reference fields name a record that does not exist
+ * or that this token cannot see: storage without foreign keys would keep a
+ * dangling reference and PostgreSQL would fail the write.
+ */
+async function checkReferences(
+  app: InterfaceApp,
+  contract: InterfaceResourceContract,
+  caller: Caller,
+  body: Row
+): Promise<void> {
+  const errors: { pointer: string; detail: string }[] = [];
+  for (const [name, value] of Object.entries(body)) {
+    const target = typeof value === 'string' ? referenceTarget(contract.resource, name) : null;
+    if (!target) continue;
+    let found: Row | null;
+    try {
+      found = await findRecord(app, target, caller, value as string);
+    } catch (error) {
+      if (!(error instanceof ApiProblem) || (error.status !== 403 && error.status !== 404)) throw error;
+      found = null;
+    }
+    if (!found) errors.push({ pointer: `/${name}`, detail: `${name} names no ${target} visible to this token.` });
+  }
+  if (errors.length > 0) throw validationProblem(errors);
+}
+
+/**
+ * Runs a write's mutation after checking its references. When the mutation
+ * fails for another reason than an id conflict, its references are checked
+ * again, so a referenced record removed meanwhile (a database foreign-key
+ * failure) answers 422 rather than 500.
+ */
+async function mutateChecked(
+  app: InterfaceApp,
+  contract: InterfaceResourceContract,
+  caller: Caller,
+  body: Row,
+  payload: Row
+): Promise<MutationResult> {
+  await checkReferences(app, contract, caller, body);
+  let result: MutationResult;
+  try {
+    result = await mutate(caller, payload);
+  } catch (error) {
+    if (error instanceof ApiProblem && error.status >= 500) await checkReferences(app, contract, caller, body);
+    throw error;
+  }
+  if (!result.ok && !isIdConflict(result)) await checkReferences(app, contract, caller, body);
+  return result;
 }
 
 async function createRecord(
@@ -661,7 +769,7 @@ async function createRecord(
   return keyed.write(async (committed) => {
     const record = { ...body };
     applyDerivedFields(contract, record);
-    const result = await mutate(caller, {
+    const result = await mutateChecked(app, contract, caller, body, {
       resource: contract.resource,
       version: 1,
       operation: 'insert',
@@ -701,7 +809,7 @@ async function updateRecord(
   return keyed.write(async (committed) => {
     const record = { ...body };
     applyDerivedFields(contract, record);
-    const result = await mutate(caller, {
+    const result = await mutateChecked(app, contract, caller, body, {
       resource: contract.resource,
       version: 1,
       operation: 'merge',

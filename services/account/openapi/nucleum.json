@@ -8,7 +8,7 @@
   "paths": {
     "/v1/nucleum/collections": {
       "get": {
-        "description": "Collections and types of the app's records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Collections and types of the app's records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listCollections",
         "parameters": [
           {
@@ -458,7 +458,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -866,7 +866,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -931,7 +931,7 @@
     },
     "/v1/nucleum/events": {
       "get": {
-        "description": "Calendar events. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Calendar events. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listEvents",
         "parameters": [
           {
@@ -1351,7 +1351,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -1744,7 +1744,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -1809,7 +1809,7 @@
     },
     "/v1/nucleum/files": {
       "get": {
-        "description": "File records; uploads go through the files API. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "File records; uploads go through the files API. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listFiles",
         "parameters": [
           {
@@ -2248,7 +2248,7 @@
     },
     "/v1/nucleum/link-tags": {
       "get": {
-        "description": "Tags applied to links between records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Tags applied to links between records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listLinkTags",
         "parameters": [
           {
@@ -2655,7 +2655,7 @@
     },
     "/v1/nucleum/nodes": {
       "get": {
-        "description": "Notes, links and other memory nodes. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Notes, links and other memory nodes. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records and records under an archived parent are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listNodes",
         "parameters": [
           {
@@ -3124,7 +3124,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -3562,7 +3562,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -3627,7 +3627,7 @@
     },
     "/v1/nucleum/objectives": {
       "get": {
-        "description": "Goals, projects and routines with optional parents. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Goals, projects and routines with optional parents. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records and records under an archived parent are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listObjectives",
         "parameters": [
           {
@@ -4177,7 +4177,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -4667,7 +4667,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -4732,7 +4732,7 @@
     },
     "/v1/nucleum/properties": {
       "get": {
-        "description": "Properties defined for the app's records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Properties defined for the app's records. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listProperties",
         "parameters": [
           {
@@ -5190,7 +5190,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -5619,7 +5619,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -6853,7 +6853,7 @@
     },
     "/v1/nucleum/spaces": {
       "get": {
-        "description": "Spaces that group items from the app. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Spaces that group items from the app. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listSpaces",
         "parameters": [
           {
@@ -7249,7 +7249,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -7645,7 +7645,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -7710,7 +7710,7 @@
     },
     "/v1/nucleum/tasks": {
       "get": {
-        "description": "Dated tasks, optionally under an objective. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Dated tasks, optionally under an objective. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records and records under an archived parent are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listTasks",
         "parameters": [
           {
@@ -8163,7 +8163,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -8592,7 +8592,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -8657,7 +8657,7 @@
     },
     "/v1/nucleum/views": {
       "get": {
-        "description": "Saved collection views. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`.",
+        "description": "Saved collection views. Requires nucleum:read. Pages are ordered by `sort` and continue with `cursor`. Archived records are left out unless `isArchived=true` is given, which lists them.",
         "operationId": "listViews",
         "parameters": [
           {

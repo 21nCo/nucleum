@@ -134,8 +134,29 @@ test.describe("settings - personal access token on the v1 API @settings @auth", 
       expect(refused.contentType).toContain("application/problem+json");
       expect(refused.body).toMatchObject({ status: 401, code: "unauthenticated" });
 
+      // The section also shows no rows when its list fails to load, so the
+      // token counts as gone only once the reloaded list arrived intact.
+      const reloadedList = page.waitForResponse(
+        (response) =>
+          response.request().method() === "GET" &&
+          new URL(response.url()).pathname.endsWith("/auth/api-keys"),
+        { timeout: 60_000 }
+      );
       await page.reload();
       section = await openAccessTokens(page);
+      const listed = await reloadedList;
+      expect(listed.status()).toBe(200);
+      const listedBody = (await listed.json()) as {
+        data?: { keys?: Array<Record<string, unknown>> };
+      };
+      const keys = listedBody.data?.keys;
+      expect(Array.isArray(keys), "the reloaded token list loaded").toBe(true);
+      // The list may still carry the key marked revoked; the section hides it.
+      const listedKey = keys?.find((key) => key.keyId === keyId || key.id === keyId);
+      expect(listedKey === undefined || Boolean(listedKey.revokedAt)).toBe(true);
+      // The create button shows only while the list has no load error.
+      await expect(section.getByTestId("access-token-retry")).toHaveCount(0);
+      await expect(section.getByTestId("access-token-create")).toBeVisible();
       await expect(tokenRow(section, name)).toHaveCount(0);
     } finally {
       if (!revoked && accountBaseUrl && keyId) {

@@ -245,6 +245,62 @@ describe('v1 routes on PostgreSQL-like storage', () => {
     expect((await numeric.json() as { data: Row[] }).data.map((row) => row.id)).toEqual(['task:a']);
   });
 
+  it('refuses a cursor that is not a whole number on an integer sort before querying', async () => {
+    const rows = ['task:a', 'task:b', 'task:c'].map((id, index) => ({ ...task(id, '900'), createdAt: 1000 + index }));
+    const { services, queries } = createPostgresLikeServices(rows);
+    for (const value of [1.5, 1e30, '1.5']) {
+      const response = await send(services, `/v1/pointron/tasks?sort=createdAt&cursor=${handCursor({ sort: 'createdAt', value, id: 'task:a' })}`);
+      expect(response.status, String(value)).toBe(400);
+      expect(response.headers.get('content-type')).toContain('application/problem+json');
+      expect(await response.json()).toMatchObject({ code: 'invalid_parameter', parameter: 'cursor' });
+    }
+    expect(queries).toHaveLength(0);
+    const whole = await send(services, `/v1/pointron/tasks?sort=createdAt&cursor=${handCursor({ sort: 'createdAt', value: 1000, id: 'task:a' })}`);
+    expect(whole.status).toBe(200);
+    expect((await whole.json() as { data: Row[] }).data.map((row) => row.id)).toEqual(['task:b', 'task:c']);
+  });
+
+  it.each([
+    { name: 'a failed result', fail: () => ({ ok: false, errors: [{ code: 'INTERNAL', message: 'Failed query', path: '$' }] }) },
+    { name: 'a thrown internal error', fail: () => { throw new DatafnExecutorError({ code: 'INTERNAL', message: 'Internal error' }, 500); } }
+  ])('answers 422 when the referenced record is removed while the write runs ($name)', async ({ fail }) => {
+    const rows: Row[] = [{ resource: 'objective', id: 'objective:g', label: 'Goal' }];
+    const base = createPostgresLikeServices(rows);
+    const executor = (await base.services.getSyncServer()).executor as unknown as Record<string, unknown>;
+    let removed = true;
+    const services: InterfaceApiServices = {
+      ...base.services,
+      getSyncServer: async () => ({
+        executor: {
+          ...executor,
+          // The objective goes away after the reference check, so the
+          // database refuses the write with a foreign-key failure.
+          mutate: async () => {
+            if (removed) rows.splice(rows.findIndex((row) => row.id === 'objective:g'), 1);
+            return fail();
+          }
+        }
+      }) as unknown as SyncServer
+    };
+    const response = await send(services, '/v1/pointron/tasks', {
+      method: 'POST',
+      body: JSON.stringify({ label: 'Late', dateUnix: 900, objectiveId: 'objective:g' })
+    });
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({
+      code: 'validation_failed',
+      errors: [expect.objectContaining({ pointer: '/objectiveId' })]
+    });
+    // A failure while the reference still exists stays an internal error.
+    rows.push({ resource: 'objective', id: 'objective:g', label: 'Goal' });
+    removed = false;
+    const other = await send(services, '/v1/pointron/tasks', {
+      method: 'POST',
+      body: JSON.stringify({ label: 'Late', dateUnix: 900, objectiveId: 'objective:g' })
+    });
+    expect(other.status).toBe(500);
+  });
+
   it.each([
     { method: 'PATCH', path: '/v1/pointron/tasks/task:a', operation: 'merge', status: 200, body: { label: 'Renamed' }, other: { label: 'Other' } },
     { method: 'POST', path: '/v1/pointron/tasks', operation: 'insert', status: 201,

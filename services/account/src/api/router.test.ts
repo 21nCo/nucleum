@@ -581,3 +581,75 @@ describe('v1 browser access', () => {
       .toEqual(expect.arrayContaining(['location', 'idempotent-replayed', 'www-authenticate', 'allow', 'retry-after']));
   });
 });
+
+describe('v1 archived records and references', () => {
+  beforeAll(async () => {
+    const seeded = await call('/datafn/mutation', actors.cookie, {
+      body: [
+        insert('node', 'node:archived', { label: 'Archived note', contentType: 'SIMPLE_TEXT', isArchived: true }),
+        insert('objective', 'objective:archived', { label: 'Archived goal', type: 'goal', status: 'active', isArchived: true })
+      ]
+    });
+    expect(seeded.status).toBe(200);
+  });
+
+  it('lists archived records only for isArchived=true and reads and updates them by id', async () => {
+    expect(await ids(await call('/v1/memotron/nodes?isArchived=true', actors.memotronRead))).toEqual(['node:archived']);
+    expect(await ids(await call('/v1/memotron/nodes?limit=100', actors.memotronRead))).not.toContain('node:archived');
+    expect(await json(await call('/v1/memotron/nodes/node:archived', actors.memotronRead), 200))
+      .toMatchObject({ id: 'node:archived', isArchived: true });
+    expect(await json(await call('/v1/memotron/nodes/node:archived', actors.memotronWrite, {
+      method: 'PATCH',
+      body: { label: 'Archived note, renamed' }
+    }), 200)).toMatchObject({ id: 'node:archived', label: 'Archived note, renamed', isArchived: true });
+  });
+
+  it('answers a write under an archived parent with the record it wrote', async () => {
+    const created = await json(await call('/v1/pointron/tasks', actors.pointronWrite, {
+      body: { label: 'Under an archived goal', dateUnix: 1_700_000_000_000, objectiveId: 'objective:archived' }
+    }), 201);
+    expect(created).toMatchObject({ label: 'Under an archived goal', dateUnix: 1_700_000_000_000, objectiveId: 'objective:archived' });
+    const moved = await json(await call('/v1/pointron/tasks', actors.pointronWrite, {
+      body: { label: 'Moved under an archived goal', dateUnix: 1_700_000_000_000 }
+    }), 201);
+    expect(await json(await call(`/v1/pointron/tasks/${String(moved.id)}`, actors.pointronWrite, {
+      method: 'PATCH',
+      body: { objectiveId: 'objective:archived' }
+    }), 200)).toMatchObject({ id: moved.id, objectiveId: 'objective:archived' });
+    const replayed = await call('/v1/pointron/tasks', { ...actors.pointronWrite, 'idempotency-key': 'archived-parent-1' }, {
+      body: { label: 'Keyed under an archived goal', dateUnix: 1_700_000_000_000, objectiveId: 'objective:archived' }
+    });
+    expect(replayed.status).toBe(201);
+    const again = await call('/v1/pointron/tasks', { ...actors.pointronWrite, 'idempotency-key': 'archived-parent-1' }, {
+      body: { label: 'Keyed under an archived goal', dateUnix: 1_700_000_000_000, objectiveId: 'objective:archived' }
+    });
+    expect(again.status).toBe(201);
+    expect(again.headers.get('idempotent-replayed')).toBe('true');
+  });
+
+  it('refuses a reference to a record that does not exist without writing', async () => {
+    const missing = await problem(await call('/v1/pointron/tasks', actors.pointronWrite, {
+      body: { label: 'Dangling task', dateUnix: 1_700_000_000_000, objectiveId: 'objective:does-not-exist' }
+    }), 422, 'validation_failed');
+    expect(missing.errors).toEqual([expect.objectContaining({ pointer: '/objectiveId' })]);
+    const tasks = await json(await call('/v1/pointron/tasks?limit=100', actors.pointronWrite), 200);
+    expect((tasks.data as Body[]).map((row) => row.label)).not.toContain('Dangling task');
+
+    await problem(await call('/v1/pointron/tasks/task:t1', actors.pointronWrite, {
+      method: 'PATCH',
+      body: { label: 'Dangling rename', objectiveId: 'objective:does-not-exist' }
+    }), 422, 'validation_failed');
+    expect(await json(await call('/v1/pointron/tasks/task:t1', actors.pointronWrite), 200))
+      .toMatchObject({ label: 'Alpha task' });
+
+    await problem(await call('/v1/nucleum/collections', actors.nucleumWrite, {
+      body: { label: 'Extends nothing', type: 'list', resource: 'node', typeToExtend: 'collection:missing' }
+    }), 422, 'validation_failed');
+    expect(await json(await call('/v1/nucleum/collections', actors.nucleumWrite, {
+      body: { label: 'Extends notes', type: 'list', resource: 'node', typeToExtend: 'collection:notes' }
+    }), 201)).toMatchObject({ typeToExtend: 'collection:notes' });
+    expect(await json(await call('/v1/pointron/tasks', actors.pointronWrite, {
+      body: { label: 'Under a goal', dateUnix: 1_700_000_000_000, objectiveId: 'objective:o1' }
+    }), 201)).toMatchObject({ objectiveId: 'objective:o1' });
+  });
+});
