@@ -246,7 +246,11 @@ export function createLocalFilePublisher(
       const states = both.flatMap((a) =>
         both.flatMap((b) => both.map((c) => toState(a, b, c)))
       );
-      const sent = states.map((state) => `${SENT} ${id} ${state}`);
+      // Not the account's record as it is: an earlier publish confirmed it,
+      // or holds its receipt.
+      const sent = states
+        .filter((state) => state !== stateOf(held))
+        .map((state) => `${SENT} ${id} ${state}`);
       const known = [...(kept ?? []), ...states, ...sent];
       if (held) known.push(ok);
       await entry.mark("saved", known.join("\n"));

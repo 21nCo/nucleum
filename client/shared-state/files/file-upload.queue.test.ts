@@ -3267,6 +3267,54 @@ describe("files captured offline or by a local-only user", () => {
     expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
   });
 
+  it("keeps a published record whose capture lost its uploaded mark when its next publish stops before its save and the guest record is then deleted", async () => {
+    await bootData(localAccount);
+    uninstall = installDeviceFileQueue();
+    const record = await capturePhoto();
+    await settleLocalFileRecords();
+    await signInToCloud("user-a");
+    const entry = `queued_${record.fileId}`;
+    await vi.waitFor(() =>
+      expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeDefined()
+    );
+    // The page reloaded before the uploaded mark landed; the next publish
+    // stops before its save, as another tab fences a guest change.
+    const root = await opfs.getDirectory();
+    const queue = await root.getDirectoryHandle(LOCAL_QUEUE);
+    await (await queue.getDirectoryHandle(entry)).removeEntry("uploaded");
+    let isFenced = false;
+    hookEntryFiles({
+      async create(name) {
+        if (name !== "saved" || isFenced) return;
+        isFenced = true;
+        await writeLocalEntryFile(record.fileId, "stale", "changed");
+      }
+    });
+    await replayLocalQueue();
+    await settleTasks();
+    expect(isFenced).toBe(true);
+    expect(opfs.read(LOCAL_QUEUE, entry, "uploaded")).toBeUndefined();
+
+    const gate = deferred<void>();
+    const otherTab = withQueueLock(
+      LOCAL_QUEUE,
+      new AbortController().signal,
+      () => gate.promise
+    );
+    await signOutToLocal();
+    await datafn.file.mutate({ operation: "delete", id: record.id } as never);
+    gate.resolve();
+    await otherTab;
+    await settleTasks();
+    await signInToCloud("user-a");
+    await replayLocalQueue();
+    await settleTasks();
+
+    expect((await readAnyRecord(record.id))?.fileId).toBe(record.fileId);
+    expect(sdk.deletes).toEqual([]);
+    expect(opfs.list(LOCAL_QUEUE)).toEqual([]);
+  });
+
   it("removes the record a partial first save left when another tab deletes the guest record during that save", async () => {
     await bootData(localAccount);
     uninstall = installDeviceFileQueue();
