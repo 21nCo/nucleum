@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { escapeHtmlAttribute } from "@nucleum/features/memory/node/content/web/social/embed-html";
   import { onMount } from "svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import SocialPostLoadingInfo from "@nucleum/features/memory/node/content/web/social/SocialPostLoadingInfo.svelte";
@@ -54,7 +55,7 @@
       const linkedInWindow = window as LinkedInWindow;
       if (element && linkedInWindow.IN) {
         element.innerHTML = `
-          <script type="IN/Share" data-url="${postUrl}">
+          <script type="IN/Share" data-url="${escapeHtmlAttribute(postUrl)}">
           <\/script>
         `;
 
