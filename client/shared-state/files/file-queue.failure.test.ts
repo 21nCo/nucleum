@@ -511,6 +511,37 @@ describe("a failed file of the local queue another account claimed", () => {
     expect(await tab.isQueuedFileFailed(guestDirs, FILE_ID, null)).toBe(false);
   });
 
+  it("keeps a claimed local file the guest retried failed, after its claimant's replay ended, until the claimant's next replay uploads it", async () => {
+    installDevice();
+    const tab = await openTab();
+    const dir = tab.LOCAL_FILE_QUEUE_DIR;
+    await tab.enqueueFile(dir, {
+      fileId: FILE_ID,
+      fileName: "photo.png",
+      contentType: "image/png",
+      blob: new Blob(["photo bytes"], { type: "image/png" }),
+      claim: OWNER_B
+    });
+    await tab.markQueuedFileCommitted(dir, FILE_ID);
+    const rejected = createClient([rejection(400)]);
+    const claimant = new AbortController();
+    await tab.replayFileQueue(dir, rejected.client, claimant.signal);
+    claimant.abort();
+    const guestDirs = tab.resolveFileQueueDirsOf(null);
+
+    expect(await tab.retryFailedQueuedFile(guestDirs, FILE_ID, null)).toBe(
+      true
+    );
+    await vi.advanceTimersByTimeAsync(REPLAY_RETRY_WINDOW_MS);
+    expect(rejected.uploads).toHaveLength(1);
+    expect(await tab.isQueuedFileFailed(guestDirs, FILE_ID, null)).toBe(true);
+
+    const next = createClient(["ok"]);
+    await tab.replayFileQueue(dir, next.client, new AbortController().signal);
+    expect(next.uploads).toHaveLength(1);
+    expect(await tab.isQueuedFileFailed(guestDirs, FILE_ID, null)).toBe(false);
+  });
+
   it("keeps an unclaimed failed file failed and retryable for any account", async () => {
     installDevice();
     const tab = await openTab();

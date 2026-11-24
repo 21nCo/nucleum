@@ -48,7 +48,13 @@ const sdk = vi.hoisted(() => ({
   /** Holds every upload's completion until it settles, when set. */
   hold: null as Promise<void> | null,
   /** Runs, when set, as an upload's delete is sent. */
-  onDelete: null as (() => Promise<void>) | null
+  onDelete: null as (() => Promise<void>) | null,
+  /**
+   * Runs, when set, before a delete is sent, with the client's fetch, which
+   * it may dispatch the request through (a refused dispatch rejects it).
+   */
+  beforeDelete: null as
+    ((fileId: string, dispatch: typeof fetch) => Promise<void>) | null
 }));
 vi.mock("@filefn/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@filefn/client")>();
@@ -74,6 +80,7 @@ vi.mock("@filefn/client", async (importOriginal) => {
           } as ReturnType<FileFnClient["uploadFile"]>;
         },
         deleteFile: async (fileId) => {
+          await sdk.beforeDelete?.(fileId, config.fetch ?? fetch);
           sdk.deletes.push(fileId);
           await sdk.onDelete?.();
         },
@@ -3382,6 +3389,89 @@ describe("files captured offline or by a local-only user", () => {
     expect(pullsSinceReplaced[1]).toBeGreaterThan(0);
   });
 
+  /** Has each delete's request dispatched through its client's fetch. */
+  function dispatchDeletes(before: (fileId: string) => Promise<void>) {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null));
+    sdk.beforeDelete = async (fileId, dispatch) => {
+      await before(fileId);
+      await dispatch(`https://files.example.test/files/${fileId}`, {
+        method: "DELETE"
+      });
+    };
+  }
+
+  it("sends no checked delete whose file a record references once it was found unreferenced, and keeps it until a drain finds the reference", async () => {
+    await recordCheckedDeletes(["file_referenced", "file_unreferenced"]);
+    const attempts: string[] = [];
+    dispatchDeletes(async (fileId) => {
+      attempts.push(fileId);
+      if (fileId !== "file_referenced") return;
+      // A record of the file arrives with a pull while the delete is sent.
+      await insertReference(fileId);
+      await datafn.sync.pullNow();
+    });
+
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deletes).toEqual(["file_unreferenced"]));
+    goOnline();
+    await settleTasks();
+    sdk.beforeDelete = null;
+    expect(attempts.filter((id) => id === "file_referenced")).toHaveLength(1);
+    expect(sdk.deletes).toEqual(["file_unreferenced"]);
+  });
+
+  it("sends no checked delete once its DataFn runtime was replaced after its check, and sends it on a later drain that checks it again", async () => {
+    await recordCheckedDeletes(["file_unreferenced"]);
+    const store = await vi.importActual<
+      typeof import("@nucleum/datafn/datafn.store")
+    >("@nucleum/datafn/datafn.store");
+    let refused = 0;
+    dispatchDeletes(async () => {
+      if (refused++) return;
+      store.datafnRuntime.update((runtime) => runtime && { ...runtime });
+    });
+
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deletes).toEqual(["file_unreferenced"]));
+    sdk.beforeDelete = null;
+    expect(refused).toBe(2);
+  });
+
+  it("records a checked delete without device file storage where a build that sends every delete unchecked never reads it", async () => {
+    vi.spyOn(navigator.storage, "getDirectory").mockImplementation(async () => {
+      const root = await opfs.getDirectory();
+      return {
+        ...root,
+        getDirectoryHandle: (name: string, options?: object) =>
+          name.startsWith("filefn-pending-deletes")
+            ? Promise.reject(new DOMException("Denied", "NotAllowedError"))
+            : root.getDirectoryHandle(name, options)
+      } as FileSystemDirectoryHandle;
+    });
+    await bootData(localAccount);
+    await signInToCloud("user-a");
+    await settleTasks();
+    const uploader = (await captureFileQueueUploader())!;
+    await recordFileFnPendingDelete(uploader, "file_checked", true);
+    await recordFileFnPendingDelete(uploader, "file_checked");
+    await recordFileFnPendingDelete(uploader, "file_legacy");
+    const keys = Object.keys(localStorage);
+    expect(keys.filter((key) => key.includes("file_checked"))).toHaveLength(1);
+    const legacy = keys.filter((key) =>
+      key.startsWith("filefn-pending-deletes")
+    );
+    expect(legacy.map((key) => key.split(":").pop())).toEqual(["file_legacy"]);
+    await insertReference("file_checked");
+
+    goOnline();
+    await vi.waitFor(() => expect(sdk.deletes).toEqual(["file_legacy"]));
+    await settleTasks();
+    expect(sdk.deletes).toEqual(["file_legacy"]);
+    expect(
+      Object.keys(localStorage).filter((key) => key.includes("deletes"))
+    ).toEqual([]);
+  });
+
   it("keeps a delete recorded checked checked when this session also holds it unchecked", async () => {
     vi.spyOn(navigator.storage, "getDirectory").mockImplementation(async () => {
       const root = await opfs.getDirectory();
@@ -3404,7 +3494,7 @@ describe("files captured offline or by a local-only user", () => {
       key,
       value
     ) {
-      if (key.includes("file_referenced") && value === "1")
+      if (key.startsWith("filefn-pending-") && key.includes("file_referenced"))
         throw new DOMException("Full", "QuotaExceededError");
       setItem.call(this, key, value);
     });
