@@ -14,6 +14,13 @@
   import { logger } from "@nucleum/client/runtime/logging/logger";
   import { EmbedDataMessage } from "@nucleum/client/runtime/embed/embedMessage.enum";
   import { postDataToParent } from "@nucleum/client/runtime/embed/embed.utils";
+  import { clientStorage } from "@nucleum/persistence/client-storage";
+  import { ClientStorageKey } from "@nucleum/persistence/persistence.type";
+  import {
+    beginSocialHandoff,
+    cancelSocialHandoff,
+    isCurrentSocialHandoffChallenge
+  } from "@nucleum/client/runtime/account/social-handoff";
   let {
     providers,
     isExpanded = false,
@@ -75,6 +82,7 @@
     try {
       if ($context.isEmbed) {
         if (provider === "apple" && $context.os === OperatingSystem.IOS) {
+          cancelSocialHandoff();
           postDataToParent(EmbedDataMessage.AUTHFN_NATIVE_APPLE_SIGN_IN, {
             accountUrl: resolveAccountBaseUrl(region ?? "insouth"),
             returnTo: resolveReturnTo(),
@@ -83,13 +91,24 @@
           return;
         }
 
+        const chosenRegion = region;
+        const startRegion =
+          chosenRegion ??
+          (await clientStorage.get(ClientStorageKey.REGION)) ??
+          "insouth";
+        const handoffMode = resolveHandoffMode();
+        const handoffChallenge =
+          handoffMode === "session-token"
+            ? await beginSocialHandoff({ regionId: startRegion })
+            : undefined;
         const response = await (
-          await authClient({ region })
+          await authClient({ region: startRegion, isIsolated: true })
         ).startSocialSignIn({
           provider: provider as "apple" | "google" | "github",
           returnTo: resolveReturnTo(),
           callbackMode: "redirect",
-          handoffMode: resolveHandoffMode()
+          handoffMode,
+          ...(handoffChallenge ? { handoffChallenge } : {})
         });
         if (response.ok) {
           logger.info({
@@ -98,6 +117,10 @@
             isEmbed: true,
             redirectTo: response.data.redirectTo
           });
+          if (handoffChallenge && !isCurrentSocialHandoffChallenge(handoffChallenge)) {
+            logger.info({ at: "OAuthOptions.startSocialSignIn.superseded", provider });
+            return;
+          }
           navigation.openLink(response.data.redirectTo, true);
         } else {
           logger.error({
