@@ -53,6 +53,7 @@ import FileView from "@21n/ui/compositions/files/FileView.svelte";
 import { configureElementFileHost } from "@21n/ui/hosts/file-host";
 import { configureElementSearchHost } from "@21n/ui/hosts/search-host";
 import { fileStore } from "@nucleum/shared-state/files/file.store";
+import { installDeviceFileQueue } from "@nucleum/shared-state/files/device-file-queue";
 import {
   configureElementAssetPath,
   configureElementHaptic,
@@ -67,6 +68,7 @@ import context from "@nucleum/client/runtime/context.store";
 let mountedOwners = 0;
 let disposePlatform: (() => void) | undefined;
 let disposeSingleKeys: (() => void) | undefined;
+let disposeDeviceFileQueue: (() => void) | undefined;
 
 /** Installs application-lifetime bindings and shares one platform subscription across mounted roots. */
 export function installApplicationHosts() {
@@ -189,6 +191,7 @@ export function installApplicationHosts() {
     disposeSingleKeys = singleKeyShortcutsEnabled.subscribe(() =>
       notifyElementShortcutsChanged()
     );
+    disposeDeviceFileQueue = installDeviceFileQueue();
   }
   mountedOwners++;
   let released = false;
@@ -201,6 +204,8 @@ export function installApplicationHosts() {
       disposePlatform = undefined;
       disposeSingleKeys?.();
       disposeSingleKeys = undefined;
+      disposeDeviceFileQueue?.();
+      disposeDeviceFileQueue = undefined;
     }
   };
 }
