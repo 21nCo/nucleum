@@ -448,17 +448,17 @@ describe("files a signed-in cloud account captures offline", () => {
     expect(opfs.list(ACCOUNT_QUEUE)).toEqual([]);
   });
 
-  it("keeps a local-only user's capture on its record", async () => {
+  it("keeps a local-only user's capture in the device's local queue without uploading it", async () => {
     await bootData(localAccount);
 
     const record = await capturePhoto();
 
     const saved = await savedRecord(record.id);
-    expect(saved?.fileId).toBeUndefined();
-    expect(new TextDecoder().decode(saved?.data as Uint8Array)).toBe(
-      "photo bytes"
-    );
-    expect(opfs.list("nucleum-file-queue-local")).toEqual([]);
+    expect(saved?.fileId).toBe(record.fileId);
+    expect(saved?.data ?? null).toBeNull();
+    expect(opfs.list("nucleum-file-queue-local")).toEqual([
+      `queued_${record.fileId}`
+    ]);
     expect(sdk.baseUrls).toEqual([]);
   });
 
