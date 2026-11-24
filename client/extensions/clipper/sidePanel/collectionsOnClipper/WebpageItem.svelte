@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toExternalHttpUrl } from "@21n/shared-utils/url.utils";
   import Icon from "@21n/ui/elements/Icon.svelte";
   import { NodeType } from "@nucleum/schema/legacy/node-type.enum";
   import { Size } from "@21n/ui/elements/size.enum";
@@ -41,11 +42,12 @@
     }
   )}
   onclick={(e) => {
-    if (!item.url) return;
+    const url = toExternalHttpUrl(item.url);
+    if (!url) return;
     if (e.metaKey || e.ctrlKey) {
-      window.open(item.url, "_blank");
+      window.open(url, "_blank", "noopener");
     } else {
-      chrome.tabs.update({ url: item.url });
+      chrome.tabs.update({ url });
     }
   }}
 >

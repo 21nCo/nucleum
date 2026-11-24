@@ -2,6 +2,7 @@
   import { navigation } from "@nucleum/shell/navigation/navigation";
 
   import MediaContentResolver from "@nucleum/features/memory/node/content/MediaContentResolver.svelte";
+  import FileUploadFailedIndicator from "@nucleum/features/memory/node/content/FileUploadFailedIndicator.svelte";
   import {
     mediaNodeTypeList,
     type INode,
@@ -107,6 +108,12 @@
     _mediaBlock?.contentType &&
       !titleNotRequiredTypes.includes(_mediaBlock?.contentType)
   );
+
+  /** The FileFn file of the embedded node, whose failed upload it shows. */
+  const mediaUploadFileId = $derived.by(() => {
+    const file = _mediaBlockFile ?? _mediaBlock?.file;
+    return typeof file === "object" && file ? (file as IFile).fileId : undefined;
+  });
 
   const isShowPreview = $derived(
     _mediaBlock?.contentType &&
@@ -366,7 +373,10 @@
             "h-auto max-h-[20rem]":
               !isResizable &&
               ![NodeType.TWEET].includes(_mediaBlock?.contentType),
-            "overflow-auto": _mediaBlock?.contentType === NodeType.GIST
+            "overflow-auto": [NodeType.GIST, NodeType.MASTODON_POST].includes(
+              _mediaBlock?.contentType
+            ),
+            "items-start": _mediaBlock?.contentType === NodeType.MASTODON_POST
           })}
         >
           <MediaContentResolver
@@ -525,6 +535,9 @@
         {/if}
       {/if}
     </button>
+    {#if !isShowPreview}
+      <FileUploadFailedIndicator fileId={mediaUploadFileId} class="mt-1 w-fit" />
+    {/if}
   {/key}
 {:else if body?.url && isYoutubeEmbedSubType(body?.subType)}
   <YoutubeVideoPreview url={body.url} />
