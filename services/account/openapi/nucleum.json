@@ -219,7 +219,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -282,7 +282,7 @@
         ]
       },
       "post": {
-        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "createCollection",
         "parameters": [
           {
@@ -458,7 +458,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -640,7 +640,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -703,7 +703,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "updateCollection",
         "parameters": [
           {
@@ -866,7 +866,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -1129,7 +1129,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -1192,7 +1192,7 @@
         ]
       },
       "post": {
-        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "createEvent",
         "parameters": [
           {
@@ -1351,7 +1351,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -1525,7 +1525,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -1588,7 +1588,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "updateEvent",
         "parameters": [
           {
@@ -1744,7 +1744,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -1998,7 +1998,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -2183,7 +2183,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -2420,7 +2420,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -2590,7 +2590,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -2878,7 +2878,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -2941,7 +2941,7 @@
         ]
       },
       "post": {
-        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "createNode",
         "parameters": [
           {
@@ -3124,7 +3124,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -3316,7 +3316,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -3379,7 +3379,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "updateNode",
         "parameters": [
           {
@@ -3562,7 +3562,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -3891,7 +3891,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -3954,7 +3954,7 @@
         ]
       },
       "post": {
-        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "createObjective",
         "parameters": [
           {
@@ -4177,7 +4177,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -4387,7 +4387,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -4450,7 +4450,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "updateObjective",
         "parameters": [
           {
@@ -4667,7 +4667,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -4942,7 +4942,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -5005,7 +5005,7 @@
         ]
       },
       "post": {
-        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "createProperty",
         "parameters": [
           {
@@ -5190,7 +5190,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -5378,7 +5378,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -5441,7 +5441,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "updateProperty",
         "parameters": [
           {
@@ -5619,7 +5619,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -5838,7 +5838,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -6131,7 +6131,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -6328,7 +6328,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -6600,7 +6600,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -6788,7 +6788,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -7031,7 +7031,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -7094,7 +7094,7 @@
         ]
       },
       "post": {
-        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "createSpace",
         "parameters": [
           {
@@ -7249,7 +7249,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -7425,7 +7425,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -7488,7 +7488,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "updateSpace",
         "parameters": [
           {
@@ -7645,7 +7645,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -7922,7 +7922,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -7985,7 +7985,7 @@
         ]
       },
       "post": {
-        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "createTask",
         "parameters": [
           {
@@ -8163,7 +8163,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible; 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -8351,7 +8351,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -8414,7 +8414,7 @@
         ]
       },
       "patch": {
-        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this method and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.",
+        "description": "Sets only the fields in the body. Requires nucleum:write. Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the record's current state and `Idempotent-Replayed: true`. A key belongs to the token's account, this operation and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and `Retry-After`.",
         "operationId": "updateTask",
         "parameters": [
           {
@@ -8592,7 +8592,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 405 method not served for this path (with Allow); 409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After); 413 body larger than 64 KiB; 422 invalid body, or an Idempotency-Key reused with another body; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -8835,7 +8835,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 429 rate limited."
           },
           "5XX": {
             "content": {
@@ -9011,7 +9011,7 @@
                 }
               }
             },
-            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
+            "description": "Problem details (application/problem+json): 400 invalid parameter, cursor, path or header; 401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate); 403 token lacks the scope or may not reach the record; 404 no visible record with that id; 429 rate limited."
           },
           "5XX": {
             "content": {

@@ -333,7 +333,8 @@ export function registerCoreRoutes(app: Hono, services: AccountServices): void {
           "location",
           "idempotent-replayed",
           "www-authenticate",
-          "allow"
+          "allow",
+          "retry-after"
         ],
         credentials: true,
         maxAge: 600

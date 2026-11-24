@@ -80,6 +80,8 @@ const MAX_SEARCH_LIMIT = 50;
 const MAX_BODY_BYTES = 65_536;
 const IDEMPOTENCY_KEY = /^[\x21-\x7e]{1,255}$/;
 const IDEMPOTENCY_TTL_SECONDS = 86_400;
+/** How long a key stays claimed by a write that never finishes (a lost process). */
+const IDEMPOTENCY_PENDING_SECONDS = 60;
 
 /**
  * Builds one app's versioned REST router: list, get, create and update for
@@ -200,7 +202,7 @@ function resourceRoutes(
         body: writeSchema(contract, 'update'),
         responses: {
           200: { description: 'The updated record.', schema: record, headers: { 'Idempotent-Replayed': replayedHeader } },
-          ...errorResponses(400, 401, 403, 404, 405, 413, 422, 429)
+          ...errorResponses(400, 401, 403, 404, 405, 409, 413, 422, 429)
         }
       }
     });
@@ -210,8 +212,11 @@ function resourceRoutes(
 
 const idempotencyNote =
   'Repeating the request with the same `Idempotency-Key` and body does not write again: it answers with the ' +
-  'record\'s current state and `Idempotent-Replayed: true`. A key belongs to the token\'s account, this method ' +
-  'and path; sending it again with another body gets a 422 problem with code `idempotency_key_reused`.';
+  'record\'s current state and `Idempotent-Replayed: true`. A key belongs to the token\'s account, this operation ' +
+  'and the record it targets, and is remembered for 24 hours (a create key keeps naming the record it created). ' +
+  'Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent ' +
+  'again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and ' +
+  '`Retry-After`.';
 
 const locationHeader = { type: 'string', description: 'Path of the created record.' };
 
@@ -257,11 +262,11 @@ function listParameters(
 
 const ERROR_DESCRIPTIONS: Record<number, string> = {
   400: '400 invalid parameter, cursor, path or header',
-  401: '401 missing, invalid, expired or revoked token (with WWW-Authenticate)',
+  401: '401 missing, invalid, expired or revoked personal access token, or a session token (with WWW-Authenticate)',
   403: '403 token lacks the scope or may not reach the record',
   404: '404 no visible record with that id',
   405: '405 method not served for this path (with Allow)',
-  409: '409 the record an Idempotency-Key created is no longer visible',
+  409: '409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After)',
   413: '413 body larger than 64 KiB',
   422: '422 invalid body, or an Idempotency-Key reused with another body',
   429: '429 rate limited'
@@ -367,8 +372,9 @@ function grantCovers(grant: AppGrant, app: InterfaceApp): boolean {
 
 /**
  * Authenticates the bearer token alone (cookies are dropped, so a browser
- * session never authorizes a call), checks it holds this app's scope for the
- * access, and narrows it to this app's scopes for DataFn.
+ * session never authorizes a call), accepts only a personal access token,
+ * checks it holds this app's scope for the access, and narrows it to this
+ * app's scopes for DataFn.
  */
 async function resolveCaller(
   app: InterfaceApp,
@@ -397,6 +403,11 @@ async function resolveCaller(
   }
   if (!session || session.actorType !== 'user') {
     throw new ApiProblem(401, 'unauthenticated', 'The token is not valid.', {}, challenge);
+  }
+  // Only a personal access token (a user's API key) may call; an interactive
+  // session token carries every scope and is meant for the apps themselves.
+  if (session.type !== 'api-key') {
+    throw new ApiProblem(401, 'unauthenticated', 'Send a personal access token, not a session token.', {}, challenge);
   }
   const grants = resolveAppScopeAccess(session);
   const scopes = interfaceContract[app].scopes;
@@ -592,33 +603,36 @@ async function createRecord(
   if (visible && !visible.includes(String(body.resource))) {
     throw validationProblem([{ pointer: '/resource', detail: `resource must be one of ${visible.join(', ')}.` }]);
   }
-  const keyed = await idempotency(app, request, caller, body);
+  const keyed = await idempotency(app, request, caller, body, ['create', contract.resource]);
   // A keyed create derives its id from the key, so a retry that misses
   // DataFn's replay record (overlapping or interrupted) meets the first row.
-  const id = `${resourceIdPrefix(contract.resource)}:${keyed.enabled ? digestUuid(keyed.key) : crypto.randomUUID()}`;
-  const record = { ...body };
-  applyDerivedFields(contract, record);
-  const result = await keyed.run(() => caller.executor.mutate({
-    resource: contract.resource,
-    version: 1,
-    operation: 'insert',
-    id,
-    record,
-    ...keyed.mutation
-  }, caller.context));
-  let replayed = result.ok && result.deduped === true;
-  if (!result.ok) {
-    if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
-    await matchKeyedRecord(app, contract, caller, id, body);
-    replayed = true;
-  }
-  const created = await getRecord(app, contract, caller, id);
-  return Response.json(created, {
+  const id = keyed.enabled
+    ? keyedId(contract.resource, keyed.key)
+    : `${resourceIdPrefix(contract.resource)}:${crypto.randomUUID()}`;
+  const respond = (record: Row, replayed: boolean) => Response.json(record, {
     status: 201,
     headers: {
       location: `${collectionPath}/${encodeURIComponent(id)}`,
       ...(replayed ? { 'idempotent-replayed': 'true' } : {})
     }
+  });
+  if (keyed.state === 'done') return respond(await keyedRecord(app, contract, caller, id), true);
+  // A create still in progress under this key needs no wait: its id is
+  // taken, so this insert either replays it or fails the body match.
+  return keyed.write(async () => {
+    const record = { ...body };
+    applyDerivedFields(contract, record);
+    const result = await mutate(caller, {
+      resource: contract.resource,
+      version: 1,
+      operation: 'insert',
+      id,
+      record,
+      ...keyed.mutation
+    });
+    if (result.ok) return respond(await getRecord(app, contract, caller, id), result.deduped === true);
+    if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
+    return respond(await matchKeyedRecord(app, contract, caller, id, body), true);
   });
 }
 
@@ -632,21 +646,43 @@ async function updateRecord(
   const body = validateWriteBody(contract, 'update', await readBody(ctx));
   const id = ctx.params.id;
   await getRecord(app, contract, caller, id);
-  const keyed = await idempotency(app, request, caller, body);
-  const record = { ...body };
-  applyDerivedFields(contract, record);
-  const result = await keyed.run(() => caller.executor.mutate({
-    resource: contract.resource,
-    version: 1,
-    operation: 'merge',
-    id,
-    record,
-    ...keyed.mutation
-  }, caller.context));
-  if (!result.ok) throw mutationProblem(result, caller);
-  return Response.json(await getRecord(app, contract, caller, id), {
-    headers: result.deduped ? { 'idempotent-replayed': 'true' } : {}
+  const keyed = await idempotency(app, request, caller, body, ['update', contract.resource, id]);
+  const respond = async (replayed: boolean) => Response.json(await getRecord(app, contract, caller, id), {
+    headers: replayed ? { 'idempotent-replayed': 'true' } : {}
   });
+  if (keyed.state === 'done') return respond(true);
+  // Two overlapping updates would each derive fields such as a completion
+  // time, so the later one waits for the first instead of writing.
+  if (keyed.state === 'in_progress') throw idempotencyInProgress();
+  return keyed.write(async () => {
+    const record = { ...body };
+    applyDerivedFields(contract, record);
+    const result = await mutate(caller, {
+      resource: contract.resource,
+      version: 1,
+      operation: 'merge',
+      id,
+      record,
+      ...keyed.mutation
+    });
+    if (!result.ok) throw mutationProblem(result, caller);
+    return respond(result.deduped === true);
+  });
+}
+
+/** Reads the record a finished keyed create wrote. */
+async function keyedRecord(
+  app: InterfaceApp,
+  contract: InterfaceResourceContract,
+  caller: Caller,
+  id: string
+): Promise<Row> {
+  try {
+    return await getRecord(app, contract, caller, id);
+  } catch (error) {
+    if (error instanceof ApiProblem && error.status === 404) throw idempotencyConflict();
+    throw error;
+  }
 }
 
 /**
@@ -660,21 +696,35 @@ async function matchKeyedRecord(
   caller: Caller,
   id: string,
   body: Row
-): Promise<void> {
-  let stored: Row;
-  try {
-    stored = await getRecord(app, contract, caller, id);
-  } catch (error) {
-    if (error instanceof ApiProblem && error.status === 404) throw idempotencyConflict();
-    throw error;
-  }
+): Promise<Row> {
+  const stored = await keyedRecord(app, contract, caller, id);
   const matches = Object.entries(body).every(([name, value]) =>
-    canonicalJson(stored[name] ?? null) === canonicalJson(value));
+    canonicalJson(stored[name] ?? null) === canonicalJson(serializeField(resolveApiField(contract.resource, name), value)));
   if (!matches) throw idempotencyKeyReused();
+  return stored;
 }
 
 function isIdConflict(result: MutationResult): boolean {
   return result.errors?.some((error) => error.code === 'CONFLICT' && (error.path === undefined || error.path === 'id')) === true;
+}
+
+/**
+ * Runs one mutation. DataFn answers a single mutation's conflict by throwing
+ * a 409 executor error whose details name the path; that comes back as a
+ * failed result like the one a batch reports, other failures as problems.
+ */
+async function mutate(caller: Caller, payload: Row): Promise<MutationResult> {
+  return run(async () => {
+    try {
+      return await caller.executor.mutate(payload as never, caller.context) as MutationResult;
+    } catch (error) {
+      if (error instanceof DatafnExecutorError && error.code === 'CONFLICT') {
+        const path = (error.details as { path?: unknown } | undefined)?.path;
+        return { ok: false, errors: [{ code: 'CONFLICT', message: error.message, path: typeof path === 'string' ? path : undefined }] };
+      }
+      throw error;
+    }
+  }, 'write', caller.services);
 }
 
 /** A write of a completion rule's `checked` field also sets its `completedAt`. */
@@ -795,70 +845,122 @@ async function readBody(ctx: RouteContext): Promise<unknown> {
   }
 }
 
+type KeyState = 'new' | 'in_progress' | 'done';
+
 interface KeyedWrite {
   enabled: boolean;
-  /** Digest of the caller, app, method, path and key; empty without a key. */
+  /** Digest of the caller, app, operation, target and key; empty without a key. */
   key: string;
   /** DataFn's replay identity: the scoped key and the body. */
   mutation: Row;
-  /** Runs the write, and frees the key again if the write does not succeed. */
-  run(write: () => Promise<unknown>): Promise<MutationResult>;
+  /**
+   * `done` when a request with this key and body already wrote, and
+   * `in_progress` while one is still writing; `new` otherwise.
+   */
+  state: KeyState;
+  /** Runs the write, then records the key as done, or frees it if the write fails. */
+  write(perform: () => Promise<Response>): Promise<Response>;
+}
+
+interface KeyClaim {
+  fingerprint: string;
+  state: 'pending' | 'done';
 }
 
 /**
- * Scopes an `Idempotency-Key` to the token's account, this app, method and
- * path, and binds it to the body. DataFn replays a repeated write by its
- * mutation id, which covers both, so another account or another body never
- * replays this write. The idempotency store refuses the key with another body.
+ * Scopes an `Idempotency-Key` to the token's account, this app, the matched
+ * operation and its target (the decoded record id, not the raw path), and
+ * binds it to the body. DataFn replays a repeated write by its mutation id,
+ * which covers both, so another account or another body never replays this
+ * write. The idempotency store refuses the key with another body, answers a
+ * finished key without writing again, and shows a key still being written.
  */
 async function idempotency(
   app: InterfaceApp,
   request: Request,
   caller: Caller,
-  body: Row
+  body: Row,
+  target: string[]
 ): Promise<KeyedWrite> {
   const value = request.headers.get('idempotency-key');
   if (value === null) {
-    return { enabled: false, key: '', mutation: {}, run: (write) => runWrite(write, caller) };
+    return { enabled: false, key: '', mutation: {}, state: 'new', write: (perform) => perform() };
   }
   if (!IDEMPOTENCY_KEY.test(value)) {
     throw parameterProblem('Idempotency-Key', 'Idempotency-Key must be 1 to 255 visible ASCII characters.');
   }
-  const key = await sha256Hex(JSON.stringify([caller.actorId, app, request.method, new URL(request.url).pathname, value]));
+  const key = await scopedKey(caller.actorId, app, target, value);
   const fingerprint = await sha256Hex(canonicalJson(body));
+  const mutation = { clientId: `v1-${app}`, mutationId: await sha256Hex(`${key}\n${fingerprint}`) };
   const store = caller.services.idempotencyStore;
-  const claim = `v1-idempotency:${key}`;
-  let claimed = false;
-  if (store) {
-    const result = await store.setIfAbsent({ key: claim, value: fingerprint, ttlSeconds: IDEMPOTENCY_TTL_SECONDS });
-    if (!result.inserted && result.existing !== undefined && result.existing !== fingerprint) {
-      throw idempotencyKeyReused();
-    }
-    claimed = result.inserted;
+  if (!store) {
+    return { enabled: true, key, mutation, state: 'new', write: (perform) => perform() };
   }
-  const release = async () => {
-    if (!claimed || !store) return;
-    await store.delete(claim).catch((error: unknown) =>
-      caller.services.logError?.('v1 idempotency release failed', error));
-  };
+  const claim = `v1-idempotency:${key}`;
+  const encode = (state: KeyClaim['state']) => JSON.stringify({ fingerprint, state } satisfies KeyClaim);
+  const result = await store.setIfAbsent({ key: claim, value: encode('pending'), ttlSeconds: IDEMPOTENCY_PENDING_SECONDS });
+  let state: KeyState = 'new';
+  if (!result.inserted) {
+    const existing = parseClaim(result.existing);
+    if (existing && existing.fingerprint !== fingerprint) throw idempotencyKeyReused();
+    state = existing?.state === 'done' ? 'done' : 'in_progress';
+  }
+  const logFailure = (error: unknown) => caller.services.logError?.('v1 idempotency key update failed', error);
   return {
     enabled: true,
     key,
-    mutation: { clientId: `v1-${app}`, mutationId: await sha256Hex(`${key}\n${fingerprint}`) },
-    run: async (write) => {
-      let result: MutationResult | undefined;
+    mutation,
+    state,
+    write: async (perform) => {
+      let response: Response;
       try {
-        result = await runWrite(write, caller);
-        return result;
-      } finally {
-        if (!result?.ok) await release();
+        response = await perform();
+      } catch (error) {
+        // Only the request that claimed the key frees it for a retry.
+        if (result.inserted) await store.delete(claim).catch(logFailure);
+        throw error;
       }
+      await store.set({ key: claim, value: encode('done'), ttlSeconds: IDEMPOTENCY_TTL_SECONDS }).catch(logFailure);
+      return response;
     }
   };
 }
 
-async function runWrite(write: () => Promise<unknown>, caller: Caller): Promise<MutationResult> {
-  return run(write as () => Promise<MutationResult>, 'write', caller.services);
+/** The digest naming one `Idempotency-Key` of one account, app, operation and target. */
+async function scopedKey(actorId: string, app: InterfaceApp, target: string[], value: string): Promise<string> {
+  return sha256Hex(JSON.stringify([actorId, app, ...target, value]));
+}
+
+function keyedId(resource: string, key: string): string {
+  return `${resourceIdPrefix(resource)}:${digestUuid(key)}`;
+}
+
+/** The id every create with this account's `Idempotency-Key` writes. */
+export async function keyedCreateId(
+  actorId: string,
+  app: InterfaceApp,
+  resource: string,
+  value: string
+): Promise<string> {
+  return keyedId(resource, await scopedKey(actorId, app, ['create', resource], value));
+}
+
+function parseClaim(value: string | undefined): KeyClaim | null {
+  if (value === undefined) return null;
+  try {
+    const claim = JSON.parse(value) as Partial<KeyClaim>;
+    if (typeof claim.fingerprint === 'string' && (claim.state === 'pending' || claim.state === 'done')) {
+      return claim as KeyClaim;
+    }
+  } catch {
+    // An unreadable claim is treated as one still being written.
+  }
+  return null;
+}
+
+function idempotencyInProgress(): ApiProblem {
+  return new ApiProblem(409, 'idempotency_in_progress',
+    'A request with this Idempotency-Key is still being processed; retry shortly.', {}, { 'retry-after': '1' });
 }
 
 function idempotencyKeyReused(): ApiProblem {

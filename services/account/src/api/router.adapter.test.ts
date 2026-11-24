@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { DatafnExecutorError } from '@datafn/server';
+import { createMemoryRuntimeStores } from '@superfunctions/db/adapters/memory';
 import type { AuthFnSession } from 'authfn';
 import type { SyncServer } from '../datafn/server.js';
 import { createInterfaceApiRouter, type InterfaceApiServices } from './router.js';
@@ -7,8 +8,9 @@ import { createInterfaceApiRouter, type InterfaceApiServices } from './router.js
 /**
  * Routes against an executor that behaves like DataFn on PostgreSQL: numeric
  * columns come back as strings, ascending sorts put nulls last and descending
- * ones first, strings compare by code point, and no replay record survives a
- * write (as after an interruption between the insert and saving it).
+ * ones first, strings compare by code point, a single mutation's conflict is
+ * thrown as a 409 executor error, and no replay record survives a write (as
+ * after an interruption between the insert and saving it).
  */
 
 type Row = Record<string, unknown>;
@@ -61,6 +63,9 @@ function sortRows(rows: Row[], sort: string[]): Row[] {
 
 function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApiServices> = {}) {
   const queries: Row[] = [];
+  const mutations: Row[] = [];
+  /** Holds each mutation until the returned promise resolves, when set. */
+  let gate: (() => Promise<void>) | null = null;
   const executor = {
     async query(payload: Row) {
       queries.push(payload);
@@ -74,10 +79,13 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
       return { data: (limit === undefined ? sorted : sorted.slice(0, limit)).map(({ resource: _, ...row }) => row) };
     },
     async mutate(payload: Row) {
+      mutations.push(payload);
+      if (gate) await gate();
       const existing = rows.find((row) => row.resource === payload.resource && row.id === payload.id);
       if (payload.operation === 'insert') {
         if (existing) {
-          return { ok: false, errors: [{ code: 'CONFLICT', message: 'exists', path: 'id' }] };
+          // As DataFn's executor does for one mutation's CONFLICT envelope.
+          throw new DatafnExecutorError({ code: 'CONFLICT', message: 'Record already exists', details: { path: 'id' } }, 409);
         }
         rows.push({ resource: payload.resource, id: payload.id, ...(payload.record as Row) });
       } else if (existing) {
@@ -89,13 +97,19 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
       return { results: [] };
     }
   };
-  const session = { actorId: 'user-1', actorType: 'user', scopes: ['pointron:read', 'pointron:write'] };
+  const session = {
+    type: 'api-key',
+    credential: { type: 'api-key', id: 'key-1' },
+    actorId: 'user-1',
+    actorType: 'user',
+    scopes: ['pointron:read', 'pointron:write']
+  };
   const services: InterfaceApiServices = {
     authenticate: () => session as unknown as AuthFnSession,
     getSyncServer: async () => ({ executor }) as unknown as SyncServer,
     ...overrides
   };
-  return { services, queries };
+  return { services, queries, mutations, hold: (next: (() => Promise<void>) | null) => { gate = next; } };
 }
 
 async function send(services: InterfaceApiServices, path: string, init: RequestInit = {}): Promise<Response> {
@@ -176,6 +190,56 @@ describe('v1 routes on PostgreSQL-like storage', () => {
     expect(other.status).toBe(422);
     expect((await other.json() as Row).code).toBe('idempotency_key_reused');
     expect(rows.filter((row) => row.resource === 'task')).toHaveLength(1);
+  });
+
+  it('updates once for overlapping requests with one Idempotency-Key and replays the finished one', async () => {
+    const rows = [task('task:a', null)];
+    const { services, mutations, hold } = createPostgresLikeServices(rows, {
+      idempotencyStore: createMemoryRuntimeStores().atomicKv
+    });
+    let release!: () => void;
+    const reached = new Promise<void>((resolve) => {
+      hold(() => {
+        resolve();
+        return new Promise<void>((done) => { release = done; });
+      });
+    });
+    const patch = { method: 'PATCH', headers: { 'idempotency-key': 'check-once' }, body: JSON.stringify({ isChecked: true }) };
+    const first = send(services, '/v1/pointron/tasks/task:a', patch);
+    await reached;
+    const overlapping = await send(services, '/v1/pointron/tasks/task:a', patch);
+    expect(overlapping.status).toBe(409);
+    expect(overlapping.headers.get('retry-after')).toBe('1');
+    expect((await overlapping.json() as Row).code).toBe('idempotency_in_progress');
+    release();
+    const done = await first;
+    expect(done.status).toBe(200);
+    const written = await done.json() as Row;
+    expect(written.completedAtUnix).toEqual(expect.any(Number));
+    hold(null);
+    const retry = await send(services, '/v1/pointron/tasks/task%3Aa/', patch);
+    expect(retry.status).toBe(200);
+    expect(retry.headers.get('idempotent-replayed')).toBe('true');
+    expect(await retry.json()).toEqual(written);
+    expect(mutations.filter((mutation) => mutation.operation === 'merge')).toHaveLength(1);
+  });
+
+  it('frees an update key whose write fails so the retry writes', async () => {
+    const { services, mutations, hold } = createPostgresLikeServices([task('task:a', null)], {
+      idempotencyStore: createMemoryRuntimeStores().atomicKv,
+      logError: () => undefined
+    });
+    hold(async () => {
+      hold(null);
+      throw new DatafnExecutorError({ code: 'INTERNAL', message: 'database unavailable' }, 500);
+    });
+    const patch = { method: 'PATCH', headers: { 'idempotency-key': 'retry-after-failure' }, body: JSON.stringify({ label: 'Renamed' }) };
+    expect((await send(services, '/v1/pointron/tasks/task:a', patch)).status).toBe(500);
+    const retry = await send(services, '/v1/pointron/tasks/task:a', patch);
+    expect(retry.status).toBe(200);
+    expect(retry.headers.get('idempotent-replayed')).toBeNull();
+    expect(await retry.json()).toMatchObject({ label: 'Renamed' });
+    expect(mutations).toHaveLength(2);
   });
 
   it('logs a DataFn failure it answers with a 500', async () => {

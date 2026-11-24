@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { interfaceApps, interfaceContract, interfaceResources } from '@nucleum/schema/interfaces';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
-import { createInterfaceApiRouter } from './router.js';
+import { createInterfaceApiRouter, keyedCreateId } from './router.js';
 import { resourceSegment } from './resources.js';
 
 const base = 'http://127.0.0.1:8787';
@@ -62,14 +62,19 @@ function generateCredential(): string {
 }
 
 async function signUp(email = 'v1-api@example.test'): Promise<Headers> {
+  return (await signUpActor(email)).cookie;
+}
+
+async function signUpActor(email: string): Promise<{ cookie: Headers; actorId: string }> {
   const response = await call('/auth/sign-up/password', { origin: base }, {
     body: { email, password: generateCredential(), sessionMode: 'hybrid' }
   });
   expect(response.status).toBe(200);
+  const actorId = String(((await response.clone().json()) as { data: { session: { actorId: string } } }).data.session.actorId);
   const cookies = response.headers.getSetCookie().map((cookie) => cookie.split(';')[0]);
   const csrf = cookies.find((cookie) => cookie.startsWith('nucleus.csrf='))?.split('=')[1];
   expect(csrf).toBeTruthy();
-  return { cookie: cookies.join('; '), 'x-authfn-csrf': csrf ?? '', origin: base };
+  return { cookie: { cookie: cookies.join('; '), 'x-authfn-csrf': csrf ?? '', origin: base }, actorId };
 }
 
 async function createKey(cookie: Headers, scopes: string[]): Promise<{ headers: Headers; keyId: string }> {
@@ -147,6 +152,23 @@ describe('v1 authentication and scopes', () => {
       await problem(response, 401, 'unauthenticated');
       expect(response.headers.get('www-authenticate')).toContain('Bearer realm="memotron"');
     }
+  });
+
+  it('refuses an interactive session token sent as a Bearer token', async () => {
+    const response = await call('/auth/sign-up/password', { origin: base }, {
+      body: { email: 'v1-api-bearer@example.test', password: generateCredential(), sessionMode: 'bearer' }
+    });
+    expect(response.status).toBe(200);
+    const token = String(((await response.json()) as { data: { token: string } }).data.token);
+    const bearer = { authorization: `Bearer ${token}` };
+    await json(await call('/datafn/status', bearer), 200);
+    for (const path of ['/v1/nucleum/nodes', '/v1/memotron/nodes', '/v1/pointron/tasks']) {
+      const refused = await call(path, bearer);
+      await problem(refused, 401, 'unauthenticated');
+      expect(refused.headers.get('www-authenticate')).toContain('Bearer realm=');
+    }
+    await problem(await call('/v1/nucleum/nodes', bearer, { body: { label: 'Session write', contentType: 'SIMPLE_TEXT' } }),
+      401, 'unauthenticated');
   });
 
   it('serves each app only to tokens holding its scope or nucleum', async () => {
@@ -404,6 +426,68 @@ describe('v1 writes', () => {
     expect((list.data as Body[]).filter((row) => row.label === 'Overlapping')).toHaveLength(1);
   });
 
+  it('replays a keyed create whose record exists but whose replay record was lost', async () => {
+    const { cookie, actorId } = await signUpActor('v1-api-lost-replay@example.test');
+    const writer = (await createKey(cookie, ['memotron:read', 'memotron:write'])).headers;
+    const value = `lost-${randomUUID()}`;
+    const id = await keyedCreateId(actorId, 'memotron', 'node', value);
+    const body = { label: 'Committed before the answer', contentType: 'SIMPLE_TEXT' };
+    // The insert committed, but neither DataFn's replay record nor the key claim survived.
+    const seeded = await call('/datafn/mutation', cookie, { body: [insert('node', id, body)] });
+    expect(seeded.status).toBe(200);
+    const retry = await call('/v1/memotron/nodes', { ...writer, 'idempotency-key': value }, { body });
+    expect(await json(retry, 201)).toMatchObject({ id, ...body });
+    expect(retry.headers.get('idempotent-replayed')).toBe('true');
+    expect(await ids(await call('/v1/memotron/nodes?limit=100', writer))).toEqual([id]);
+    await problem(await call('/v1/memotron/nodes', { ...writer, 'idempotency-key': value }, {
+      body: { label: 'Another body', contentType: 'SIMPLE_TEXT' }
+    }), 422, 'idempotency_key_reused');
+    expect(await ids(await call('/v1/memotron/nodes?limit=100', writer))).toEqual([id]);
+  });
+
+  it('gives one identity to a key sent on another spelling of the same path', async () => {
+    const key = { ...actors.memotronWrite, 'idempotency-key': `alias-${randomUUID()}` };
+    const body = { label: 'Aliased create', contentType: 'SIMPLE_TEXT' };
+    const created = await json(await call('/v1/memotron/nodes', key, { body }), 201);
+    const slashed = await call('/v1/memotron/nodes/', key, { body });
+    expect(await json(slashed, 201)).toEqual(created);
+    expect(slashed.headers.get('idempotent-replayed')).toBe('true');
+    const list = await json(await call('/v1/memotron/nodes?limit=100', actors.memotronRead), 200);
+    expect((list.data as Body[]).filter((row) => row.label === 'Aliased create')).toHaveLength(1);
+
+    const update = { ...actors.memotronWrite, 'idempotency-key': `alias-update-${randomUUID()}` };
+    const id = String(created.id);
+    await json(await call(`/v1/memotron/nodes/${id}`, update, { method: 'PATCH', body: { notes: 'Aliased' } }), 200);
+    const encoded = await call(`/v1/memotron/nodes/${encodeURIComponent(id)}/`, update, {
+      method: 'PATCH', body: { notes: 'Aliased' }
+    });
+    await json(encoded, 200);
+    expect(encoded.headers.get('idempotent-replayed')).toBe('true');
+    await problem(await call(`/v1/memotron/nodes/${encodeURIComponent(id)}`, update, {
+      method: 'PATCH', body: { notes: 'Other' }
+    }), 422, 'idempotency_key_reused');
+    expect(await json(await call(`/v1/memotron/nodes/${id}`, actors.memotronRead), 200)).toMatchObject({ notes: 'Aliased' });
+  });
+
+  it('completes a task once for overlapping updates with one Idempotency-Key', async () => {
+    const created = await json(await call('/v1/pointron/tasks', actors.pointronWrite, { body: { label: 'Check once', dateUnix: 1_700_000_000_000 } }), 201);
+    const path = `/v1/pointron/tasks/${created.id}`;
+    const headers = { ...actors.pointronWrite, 'idempotency-key': `check-${randomUUID()}` };
+    const responses = await Promise.all([0, 1].map(() => call(path, headers, { method: 'PATCH', body: { isChecked: true } })));
+    const answered: Body[] = [];
+    for (const response of responses) {
+      if (response.status === 409) await problem(response, 409, 'idempotency_in_progress');
+      else answered.push(await json(response, 200));
+    }
+    expect(answered.length).toBeGreaterThan(0);
+    const stored = await json(await call(path, actors.pointronWrite), 200);
+    expect(stored.completedAtUnix).toEqual(expect.any(Number));
+    for (const body of answered) expect(body.completedAtUnix).toBe(stored.completedAtUnix);
+    const retry = await call(path, headers, { method: 'PATCH', body: { isChecked: true } });
+    expect(await json(retry, 200)).toEqual(stored);
+    expect(retry.headers.get('idempotent-replayed')).toBe('true');
+  });
+
   it('answers a path that does not percent-decode with a problem', async () => {
     for (const method of ['GET', 'PATCH', 'DELETE']) {
       const response = await call('/v1/memotron/nodes/node%E0%A4%A', actors.memotronWrite, {
@@ -494,6 +578,6 @@ describe('v1 browser access', () => {
     const response = await browser.app.fetch(new Request(`${base}/v1/memotron/nodes`, { headers: { origin } }));
     expect(response.status).toBe(401);
     expect(response.headers.get('access-control-expose-headers')?.split(','))
-      .toEqual(expect.arrayContaining(['location', 'idempotent-replayed', 'www-authenticate', 'allow']));
+      .toEqual(expect.arrayContaining(['location', 'idempotent-replayed', 'www-authenticate', 'allow', 'retry-after']));
   });
 });
