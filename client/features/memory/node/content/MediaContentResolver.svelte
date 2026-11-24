@@ -13,6 +13,7 @@
   import { formatBytes } from "@21n/shared-utils/text.utils";
   import { resolveFileIcon } from "@nucleum/features/memory/node/node.utils";
   import { logger } from "@nucleum/client/runtime/logging/logger";
+  import FileUploadFailedIndicator from "@nucleum/features/memory/node/content/FileUploadFailedIndicator.svelte";
   let {
     node,
     accessPoint = ResourceAccessPoint.SELF,
@@ -150,4 +151,5 @@
       {onConfigUpdate}
     />
   {/if}
+  <FileUploadFailedIndicator fileId={_file?.fileId} class="mt-2 w-fit" />
 {/await}
