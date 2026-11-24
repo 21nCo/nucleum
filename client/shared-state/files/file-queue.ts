@@ -39,7 +39,6 @@ const UPLOADED_FILE = "uploaded";
 const COMMITTED_FILE = "committed";
 const CLAIM_FILE = "claim.json";
 const STALE_FILE = "stale";
-const SAVED_FILE = "saved";
 /** Marks a local file whose record was deleted; only its record's copy clears it. */
 const DELETED_FILE = "deleted";
 const CHANGED_MARK = "changed";
@@ -144,7 +143,7 @@ export type QueuedFileClaim = { userId: string; baseUrl: string };
  * upload; a pass stops while it is false, keeping the files for a later one.
  * `owner` claims each local file before its upload. A file whose record
  * copy `isHeld` (a change to its record not yet copied) neither uploads nor
- * publishes. A publish's result, if any, says whether its copy was current.
+ * publishes. A publish that resolves false saved nothing.
  */
 export type QueuedFilePublisher = {
   owner: QueuedFileClaim;
@@ -270,10 +269,9 @@ export type QueuedFileEntry = {
   isUploaded: boolean;
   /** Stale mark: "changed", or "" (an earlier build's, unknown). */
   stale?: string;
-  saved?: string;
-  /** The record copy it was listed with. */
-  record?: QueuedFileRecord;
   isDeleted: boolean;
+  /** The change generations of its marks (see readHoldMarks). */
+  generations: string[];
   isOrphaned: boolean;
   claim?: QueuedFileClaim;
 };
@@ -463,36 +461,55 @@ export async function markQueuedFileCommitted(
   await writeEntryFile(dir, toEntryName(fileId), COMMITTED_FILE, "");
 }
 
+/** The most change generations a record copy keeps covering. */
+const COVERED_LIMIT = 100;
+
 /**
  * Replaces the copy of a local file's record with the record as it is now,
- * which its upload publishes, and (unless `isClearing` is false, for a copy
- * not verified yet or one a newer change holds) clears its orphaned, deleted,
- * stale, then covered generation marks; resolves the generations left.
+ * which its upload publishes, clears its orphaned mark, then its stale and
+ * deleted marks but those of a generation it does not cover (see clearMarks),
+ * and resolves the generations of the marks left. It covers those of the
+ * copy it replaces, if of the same record (they changed it before), and, once
+ * a locked reread verified it, the change generations `covered` lists.
  */
 export async function writeQueuedFileRecord(
   dir: string,
   fileId: string,
   record: QueuedFileRecord,
-  isClearing = true
+  covered?: string[]
 ) {
   const entryName = toEntryName(fileId);
-  await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(record));
+  const was = await readQueuedRecord(dir, entryName);
+  const kept = was?.id === record.id ? toCovered(was) : [];
+  const all = [...new Set([...kept, ...(covered ?? [])])];
+  const copy = { ...record, covered: all.slice(-COVERED_LIMIT) };
+  await writeEntryFile(dir, entryName, RECORD_FILE, JSON.stringify(copy));
   const entry = await getEntryDir(dir, entryName, true);
-  if (isClearing) {
-    for (const mark of [ORPHANED_FILE, DELETED_FILE, STALE_FILE])
-      await removeMark(entry, mark);
-    await removeGenerationMarks(entry, record);
-  }
-  return (await readNames(entry)).flatMap((n) => toMarkGeneration(n) ?? []);
+  await removeMark(entry, ORPHANED_FILE);
+  await clearMarks(entry, [DELETED_FILE, STALE_FILE], copy.covered);
+  const names = await readNames(entry);
+  return names.flatMap((name) => toMarkGeneration(name) ?? []);
 }
 
-/** Rewrites a local file's publish journal (see QueuedFilePublisher). */
-export async function writeQueuedFileSaved(
-  dir: string,
-  fileId: string,
-  text: string
+/**
+ * Clears a local file's plain marks of `kinds`, then the generation marks of
+ * those kinds `covered` covers that it listed before them. A fence writes its
+ * plain mark before its generation's (see markQueuedFileStale), so one it
+ * writes after this keeps that generation's mark beside it, which holds it
+ * unless covered (see toHold); an interruption leaves only covered marks.
+ */
+async function clearMarks(
+  entry: FileSystemDirectoryHandle | null,
+  kinds: string[],
+  covered: string[]
 ) {
-  await writeEntryFile(dir, toEntryName(fileId), SAVED_FILE, text);
+  const names = await readNames(entry);
+  for (const kind of kinds) await removeMark(entry, kind);
+  for (const name of names) {
+    const generation = toMarkGeneration(name) ?? "";
+    if (kinds.includes(name.split(".")[0]) && covered.includes(generation))
+      await removeMark(entry, name);
+  }
 }
 
 async function removeMark(
@@ -504,76 +521,85 @@ async function removeMark(
   });
 }
 
-/** Marks a local file orphaned, clearing the stale marks `covered` covers. */
+/**
+ * Marks a local file orphaned: it does not publish until its copy is
+ * rewritten. Clears its stale marks but those of a change generation not in
+ * `covered` (one its record's lookups may not have seen; see clearMarks).
+ */
 export async function markQueuedFileOrphaned(
   dir: string,
   fileId: string,
-  covered: Partial<QueuedFileRecord> = {}
+  covered: string[]
 ) {
   const name = toEntryName(fileId);
   await writeEntryFile(dir, name, ORPHANED_FILE, "");
-  const entry = await getEntryDir(dir, name, true);
-  await removeGenerationMarks(entry, { ...covered, id: "" });
-  await removeMark(entry, STALE_FILE);
+  await clearMarks(await getEntryDir(dir, name, true), [STALE_FILE], covered);
 }
 
+/** A new change generation: `<ms>-<uuid>` (its time is never compared). */
 export function toChangeGeneration() {
   return `${Date.now()}-${crypto.randomUUID()}`;
 }
 
-/** A generation as toChangeGeneration writes it: `<ms>-<uuid>`. */
 const GENERATION = /^\d+-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i;
 
+/** The generation of a stale or deleted mark (`<mark>.<generation>`). */
 function toMarkGeneration(name: string) {
   const [mark, generation = ""] = name.split(/\.(.*)/);
   const isMark = [STALE_FILE, DELETED_FILE].includes(mark);
   return isMark && GENERATION.test(generation) ? generation : undefined;
 }
 
-/** Whether a record copy (see reconcileLocalFile) covers a generation. */
-export function isSupersededBy(record: QueuedFileRecord, generation = "") {
-  const read = Array.isArray(record.read) ? record.read : [];
-  const at = Number.parseInt(generation);
-  return read.includes(generation) || at <= Number(record.verifiedAt);
+/** The change generations a record copy covers (see writeQueuedFileRecord). */
+export function toCovered(record: unknown): string[] {
+  const covered = Object(record).covered;
+  return Array.isArray(covered)
+    ? covered.filter((token) => typeof token === "string")
+    : [];
 }
 
-async function removeGenerationMarks(
-  entry: FileSystemDirectoryHandle | null,
-  record: QueuedFileRecord
-) {
-  for (const name of await readNames(entry)) {
-    const generation = toMarkGeneration(name);
-    if (generation && isSupersededBy(record, generation))
-      await removeMark(entry, name);
-  }
+/**
+ * Whether a local file's marks hold it stale or deleted: a local file's one
+ * hold rule (its listing, its publish, its backup's restore). Marks of a kind
+ * hold while one is of a change generation its record copy does not cover;
+ * with none of a generation, while its plain mark (an earlier build's, or a
+ * fence's whose generation is not written yet) is set.
+ */
+function toHold(names: string[], record: unknown) {
+  const covered = toCovered(record);
+  const holds = (kind: string) => {
+    const generations = names.flatMap((name) =>
+      name.startsWith(`${kind}.`) ? (toMarkGeneration(name) ?? []) : []
+    );
+    if (!generations.length) return names.includes(kind);
+    return generations.some((generation) => !covered.includes(generation));
+  };
+  return { isStale: holds(STALE_FILE), isDeleted: holds(DELETED_FILE) };
 }
 
-/** Whether a stale or deleted mark holds: an uncovered generation's, or set. */
-function holdsMark(names: string[], mark: string, record?: QueuedFileRecord) {
-  const marks = names.filter(
-    (name) => name.startsWith(`${mark}.`) && toMarkGeneration(name)
-  );
-  if (!marks.length) return names.includes(mark);
-  return marks.some(
-    (name) => !record || !isSupersededBy(record, toMarkGeneration(name))
-  );
-}
-
-/** Reads a local file's stale mark and deleted mark, while each holds. */
+/** Reads a local file's hold (see toHold) and its marks' generations. */
 async function readHoldMarks(
   dir: string,
   entryName: string,
   record: QueuedFileRecord | undefined,
   isStrict = false
 ) {
-  const names = await readNames(await getEntryDir(dir, entryName, isStrict));
-  const read = async (mark: string) => {
-    if (!holdsMark(names, mark, record)) return undefined;
-    const text = await readEntryText(dir, entryName, mark, isStrict);
-    return text ?? CHANGED_MARK;
+  const names = await readNames(
+    await getEntryDir(dir, entryName, isStrict)
+  ).catch((error: unknown) => {
+    if (isStrict) throw error;
+    return [] as string[];
+  });
+  const { isStale, isDeleted } = toHold(names, record);
+  const text = names.includes(STALE_FILE)
+    ? await readEntryText(dir, entryName, STALE_FILE, isStrict)
+    : undefined;
+  const generations = names.flatMap((name) => toMarkGeneration(name) ?? []);
+  return {
+    stale: isStale ? (text ?? CHANGED_MARK) : undefined,
+    isDeleted,
+    generations
   };
-  const isDeleted = (await read(DELETED_FILE)) !== undefined;
-  return { stale: await read(STALE_FILE), isDeleted };
 }
 
 /** Marks a local file discarded (or not); resolves whether it already was. */
@@ -590,43 +616,40 @@ export async function markQueuedFileDiscarded(
   return was !== undefined;
 }
 
-/** Lets a stale local file whose mark says its record changed publish its copy. */
+/** Lets a stale local file whose marks say its record changed publish its copy. */
 export async function clearQueuedFileStale(dir: string, fileId: string) {
   const name = toEntryName(fileId);
   const text = await readEntryText(dir, name, STALE_FILE, true);
   if ((text ?? CHANGED_MARK) !== CHANGED_MARK) return;
   const entry = await getEntryDir(dir, name, true);
-  await removeGenerationMarks(entry, { id: "", verifiedAt: Infinity });
-  await removeMark(entry, STALE_FILE);
+  for (const mark of await readNames(entry))
+    if (
+      mark === STALE_FILE ||
+      (mark.startsWith(`${STALE_FILE}.`) && toMarkGeneration(mark))
+    )
+      await removeMark(entry, mark);
 }
 
 /**
  * Marks a local file's record copy stale, when its record changed but could
- * not be read again: the file does not upload until the copy is replaced.
- * A deleted record (`isDeleted`) gets its own mark, which no other writer
- * replaces; a stale mark is never replaced, so an earlier build's ("") keeps
- * telling nothing. A mark of the `generation` it fences goes first; one a
- * verified copy covers then goes, unless an uncovered generation holds.
+ * not be read again: the file does not upload until a copy that covers the
+ * change `generation` (see toHold) replaces it. A deleted record
+ * (`isDeleted`) gets its own mark. Writes the plain mark, then that of the
+ * generation, and removes none; a stale mark is never replaced, so an
+ * earlier build's ("") keeps telling nothing. Resolves the generation.
  */
 export async function markQueuedFileStale(
   dir: string,
   fileId: string,
   isDeleted = false,
   generation = toChangeGeneration()
-): Promise<void> {
+) {
   const name = toEntryName(fileId);
   const mark = isDeleted ? DELETED_FILE : STALE_FILE;
+  if (isDeleted || (await readEntryText(dir, name, mark, true)) === undefined)
+    await writeEntryFile(dir, name, mark, isDeleted ? "" : CHANGED_MARK);
   await writeEntryFile(dir, name, `${mark}.${generation}`, "");
-  if (!isDeleted && (await readEntryText(dir, name, mark, true)) !== undefined)
-    return;
-  await writeEntryFile(dir, name, mark, isDeleted ? "" : CHANGED_MARK);
-  const record = await readQueuedRecord(dir, name, true).catch(() => null);
-  if (!record || !isSupersededBy(record, generation)) return;
-  const entry = await getEntryDir(dir, name, true).catch(() => null);
-  const names = await readNames(entry).catch(() => null);
-  const others = names?.filter((n) => n !== mark);
-  if (others && !holdsMark(others, mark, record))
-    await removeMark(entry, mark).catch(() => undefined);
+  return generation;
 }
 
 /** Lists the files of a queue whose staging finished. */
@@ -647,8 +670,6 @@ export async function listQueuedFiles(dir: string, isStrict = false) {
       isCommitted: await hasEntryFile(dir, entryName, COMMITTED_FILE),
       isUploaded: await hasEntryFile(dir, entryName, UPLOADED_FILE),
       ...(await readHoldMarks(dir, entryName, record, isStrict)),
-      record,
-      saved: await readEntryText(dir, entryName, SAVED_FILE, isStrict),
       isOrphaned: await hasEntryFile(dir, entryName, ORPHANED_FILE),
       claim: await readClaim(dir, entryName, isStrict)
     });
@@ -1297,14 +1318,16 @@ export async function exportQueuedFiles<T>(
  */
 export function isRestorableLocalCopy(copy: QueuedFileCopy) {
   const { record, marks = [], claim } = copy;
-  const names = marks.map((m) => m.name);
   return (
     typeof record?.id === "string" &&
     typeof record.namespace === "string" &&
     marks.every((m) => isLocalMark(m.name) && typeof m.text === "string") &&
     (claim === undefined
       ? copy.isCommitted === true &&
-        !holdsMark(names, DELETED_FILE, Object(record))
+        !toHold(
+          marks.map((m) => m.name),
+          record
+        ).isDeleted
       : isClaim(Object(claim)) && isReadClaim(Object(claim)))
   );
 }
@@ -1364,12 +1387,7 @@ export async function restoreLocalQueuedFiles(
             await write(name, thumbnail.data.slice().buffer as ArrayBuffer);
           }
           if (copy.isCommitted) await write(COMMITTED_FILE, "");
-          // Only a verified reread on this device releases its holds.
-          const unverified = { verifiedAt: undefined, read: undefined };
-          await write(
-            RECORD_FILE,
-            JSON.stringify({ ...copy.record, ...unverified })
-          );
+          await write(RECORD_FILE, JSON.stringify(copy.record));
         } finally {
           await bumpRevisionAfter(dir);
         }
@@ -3966,8 +3984,8 @@ async function publishEntry(
   const saved = (await readEntryText(dir, entryName, "saved", true)) ?? "";
   const copy = { ...record, fileId: uploaded.fileId };
   const entry = { isCurrent, saved: saved.split("\n"), mark };
-  const isCurrentThen = await publisher.publish(copy, uploaded, entry);
-  if (!(isCurrentThen ?? (await isCurrent()))) return;
+  if ((await publisher.publish(copy, uploaded, entry)) === false) return;
+  if (!(await isCurrent())) return;
   await writeEntryFile(dir, entryName, UPLOADED_FILE, uploaded.versionId);
 }
 
