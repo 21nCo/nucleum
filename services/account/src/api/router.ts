@@ -202,7 +202,7 @@ function resourceRoutes(
       meta: {
         operationId: `update${name}`,
         summary: `Update a ${contract.resource}`,
-        description: `Sets only the fields in the body. Requires ${scope('write')}. ${idempotencyNote}`,
+        description: `Sets only the fields in the body. Requires ${scope('write')}. ${updateRaceNote} ${idempotencyNote}`,
         tags,
         headers: idempotencyHeader,
         body: writeSchema(contract, 'update'),
@@ -250,6 +250,12 @@ const idempotencyNote =
   'Sending it again with another body gets a 422 problem with code `idempotency_key_reused`; an update sent ' +
   'again while the first is still being processed gets a 409 problem with code `idempotency_in_progress` and ' +
   '`Retry-After`.';
+
+const updateRaceNote =
+  'The update applies only while the record still exists, is not trashed and is visible to this token: if it is ' +
+  'deleted, trashed or hidden before the write lands, the request gets a 404 problem and nothing changes. If a ' +
+  'reference field the body leaves out changes before the write lands, the request gets a 409 problem with code ' +
+  '`conflict` and nothing changes.';
 
 const locationHeader = { type: 'string', description: 'Path of the created record.' };
 
@@ -299,7 +305,7 @@ const ERROR_DESCRIPTIONS: Record<number, string> = {
   403: '403 token lacks the scope or may not reach the record',
   404: '404 no visible record with that id',
   405: '405 method not served for this path (with Allow)',
-  409: '409 the record an Idempotency-Key created is no longer visible, or a request with that key is still in progress (with Retry-After)',
+  409: '409 the record an Idempotency-Key created is no longer visible, a request with that key is still in progress (with Retry-After), or the record changed while an update ran',
   413: '413 body larger than 64 KiB',
   422: '422 invalid body, a reference to a record that does not exist or is not visible, or an Idempotency-Key reused with another body',
   429: '429 rate limited'
@@ -658,24 +664,78 @@ async function getRecord(
   id: string
 ): Promise<Row> {
   const row = await findRecord(app, contract.resource, caller, id);
-  if (!row) throw new ApiProblem(404, 'not_found', `No ${contract.resource} ${id} is visible to this token.`);
+  if (!row) throw notVisible(contract, id);
   return project(contract, row);
 }
 
 async function findRecord(app: InterfaceApp, resource: string, caller: Caller, id: string): Promise<Row | null> {
   if (!id.startsWith(`${resourceIdPrefix(resource)}:`)) return null;
+  const result = await run<QueryResult>(() => caller.executor.query(recordQuery(app, resource, id), caller.context),
+    'read', caller.services);
+  return result.data.find((entry) => entry.id === id) ?? null;
+}
+
+/** The DataFn query reading one record by id the way `findRecord` does. */
+function recordQuery(app: InterfaceApp, resource: string, id: string): Row {
   const filters: Row = { id: { eq: id } };
   const shared = resolveInterfaceSharedFilter(app, resource as InterfaceExposedResource);
   const visible = resolveInterfaceVisibleTypes(app);
   if (shared?.kind === 'field' && visible !== 'all') filters.resource = { in: [...visible] };
-  const result = await run<QueryResult>(() => caller.executor.query({
+  return {
     resource,
     version: 1,
     filters,
     metadata: INCLUDE_INACTIVE,
     ...(shared?.paged !== false ? { limit: 1 } : {})
-  }, caller.context), 'read', caller.services);
-  return result.data.find((entry) => entry.id === id) ?? null;
+  };
+}
+
+/**
+ * The condition DataFn checks on the stored row inside an update's write: the
+ * row must still exist (DataFn fails a guard on a missing row), must not be
+ * trashed, and must still hold a type this app may see. A delete, trash or
+ * change of type that lands after the existence check fails the guard, so
+ * the merge neither recreates nor changes the row. The reference fields the
+ * body leaves alone must still hold the values read before, because DataFn's
+ * readback omits them and the answer takes them from that read.
+ */
+function updateGuard(app: InterfaceApp, contract: InterfaceResourceContract, before: Row, body: Row): Row {
+  const resource = contract.resource;
+  const guard: Row = {};
+  if (hasCapability(resource, 'trash')) guard.trashedAt = { is_null: true };
+  const shared = resolveInterfaceSharedFilter(app, resource as InterfaceExposedResource);
+  const visible = resolveInterfaceVisibleTypes(app);
+  if (shared?.kind === 'field' && visible !== 'all') guard.resource = { in: [...visible] };
+  for (const name of referenceFields(contract)) {
+    if (name in body) continue;
+    guard[name] = before[name] === undefined || before[name] === null ? { is_null: true } : { eq: before[name] };
+  }
+  return guard;
+}
+
+/** The contract's many-one reference fields, which DataFn leaves out of a transact read. */
+function referenceFields(contract: InterfaceResourceContract): string[] {
+  return contract.fields.filter((name) => referenceTarget(contract.resource, name) !== null);
+}
+
+/**
+ * A record read back in a write's transact call, with the reference fields
+ * DataFn leaves out of that read taken from the write and the earlier read.
+ */
+function withReferences(contract: InterfaceResourceContract, row: Row, written: Row, before: Row = {}): Row {
+  const complete = { ...row };
+  for (const name of referenceFields(contract)) {
+    const value = name in written ? written[name] : before[name];
+    if (value !== undefined) complete[name] = value;
+  }
+  return complete;
+}
+
+function hasCapability(resource: string, capability: string): boolean {
+  const schema = nucleumDatafnSchema as { capabilities?: readonly unknown[] };
+  const declared = nucleumDatafnSchema.resources.find((entry) => entry.name === resource) as
+    { capabilities?: readonly unknown[] } | undefined;
+  return [...(schema.capabilities ?? []), ...(declared?.capabilities ?? [])].includes(capability);
 }
 
 /** The resource a many-one reference field names, such as a task's `objectiveId`. */
@@ -715,9 +775,9 @@ async function checkReferences(
 
 /**
  * Runs a write's mutation after checking its references. When the mutation
- * fails for another reason than an id conflict, its references are checked
- * again, so a referenced record removed meanwhile (a database foreign-key
- * failure) answers 422 rather than 500.
+ * fails for another reason than an id conflict or a failed update guard, its
+ * references are checked again, so a referenced record removed meanwhile (a
+ * database foreign-key failure) answers 422 rather than 500.
  */
 async function mutateChecked(
   app: InterfaceApp,
@@ -725,17 +785,20 @@ async function mutateChecked(
   caller: Caller,
   body: Row,
   payload: Row
-): Promise<MutationResult> {
+): Promise<Written> {
   await checkReferences(app, contract, caller, body);
-  let result: MutationResult;
+  let written: Written;
   try {
-    result = await mutate(caller, payload);
+    written = await mutate(app, caller, payload);
   } catch (error) {
     if (error instanceof ApiProblem && error.status >= 500) await checkReferences(app, contract, caller, body);
     throw error;
   }
-  if (!result.ok && !isIdConflict(result)) await checkReferences(app, contract, caller, body);
-  return result;
+  const { result } = written;
+  if (!result.ok && !isIdConflict(result) && !isGuardFailure(result)) {
+    await checkReferences(app, contract, caller, body);
+  }
+  return written;
 }
 
 async function createRecord(
@@ -770,7 +833,7 @@ async function createRecord(
   return keyed.write(async (committed) => {
     const record = { ...body };
     applyDerivedFields(contract, record);
-    const result = await mutateChecked(app, contract, caller, body, {
+    const { result, row } = await mutateChecked(app, contract, caller, body, {
       resource: contract.resource,
       version: 1,
       operation: 'insert',
@@ -780,7 +843,9 @@ async function createRecord(
     });
     if (result.ok) {
       await committed();
-      return respond(await getRecord(app, contract, caller, id), result.deduped === true);
+      // A replayed create whose record is gone meanwhile has nothing to answer with.
+      if (!row && result.deduped === true) throw idempotencyConflict();
+      return respond(project(contract, withReferences(contract, row ?? { ...record, id }, record)), result.deduped === true);
     }
     if (!keyed.enabled || !isIdConflict(result)) throw mutationProblem(result, caller);
     const stored = await matchKeyedRecord(app, contract, caller, id, body);
@@ -798,29 +863,52 @@ async function updateRecord(
 ): Promise<Response> {
   const body = validateWriteBody(contract, 'update', await readBody(ctx));
   const id = ctx.params.id;
-  await getRecord(app, contract, caller, id);
+  const before = await getRecord(app, contract, caller, id);
   const keyed = await idempotency(app, request, caller, body, ['update', contract.resource, id]);
-  const respond = async (replayed: boolean) => Response.json(await getRecord(app, contract, caller, id), {
+  const respond = (record: Row, replayed: boolean) => Response.json(record, {
     headers: replayed ? { 'idempotent-replayed': 'true' } : {}
   });
-  if (keyed.state === 'done') return respond(true);
+  if (keyed.state === 'done') return respond(await getRecord(app, contract, caller, id), true);
   // Two overlapping updates would each derive fields such as a completion
   // time, so the later one waits for the first instead of writing.
   if (keyed.state === 'in_progress') throw idempotencyInProgress();
   return keyed.write(async (committed) => {
     const record = { ...body };
     applyDerivedFields(contract, record);
-    const result = await mutateChecked(app, contract, caller, body, {
-      resource: contract.resource,
-      version: 1,
-      operation: 'merge',
-      id,
-      record,
-      ...keyed.mutation
-    });
-    if (!result.ok) throw mutationProblem(result, caller);
+    let written: Written;
+    try {
+      written = await mutateChecked(app, contract, caller, body, {
+        resource: contract.resource,
+        version: 1,
+        operation: 'merge',
+        id,
+        record,
+        // DataFn checks this on the stored row inside the write, so an update
+        // never recreates or changes a row deleted, trashed or hidden since
+        // the existence check above.
+        if: updateGuard(app, contract, before, body),
+        ...keyed.mutation
+      });
+    } catch (error) {
+      // App-scope authorization in the same DataFn call refuses a record whose
+      // type left this app's view after the existence check: that is a record
+      // this token no longer sees.
+      if (error instanceof ApiProblem && error.status === 403 &&
+        !await findRecord(app, contract.resource, caller, id)) throw notVisible(contract, id);
+      throw error;
+    }
+    const { result, row } = written;
+    if (!result.ok) {
+      if (!isGuardFailure(result)) throw mutationProblem(result, caller);
+      // Nothing was written. A record gone or hidden answers 404; one whose
+      // unchanged reference moved meanwhile answers 409 so the caller retries.
+      if (!await findRecord(app, contract.resource, caller, id)) throw notVisible(contract, id);
+      throw new ApiProblem(409, 'conflict', `The ${contract.resource} changed while this update ran; retry it.`);
+    }
     await committed();
-    return respond(result.deduped === true);
+    if (!row && result.deduped === true) throw notVisible(contract, id);
+    return respond(project(contract, withReferences(contract, row ?? { ...before, ...record }, record, before)),
+      result.deduped === true);
   });
 }
 
@@ -862,23 +950,65 @@ function isIdConflict(result: MutationResult): boolean {
   return result.errors?.some((error) => error.code === 'CONFLICT' && (error.path === undefined || error.path === 'id')) === true;
 }
 
+/** DataFn reports an update guard the stored row no longer meets as a conflict on `if`. */
+function isGuardFailure(result: MutationResult): boolean {
+  return result.errors?.some((error) => error.code === 'CONFLICT' && error.path === 'if') === true;
+}
+
+function notVisible(contract: InterfaceResourceContract, id: string): ApiProblem {
+  return new ApiProblem(404, 'not_found', `No ${contract.resource} ${id} is visible to this token.`);
+}
+
+/** A write's outcome and the record it stored, read back in the same DataFn call. */
+interface Written {
+  result: MutationResult;
+  /** Null when the write failed or the stored record does not read back for this token. */
+  row: Row | null;
+}
+
+interface TransactResult {
+  ok?: boolean;
+  results?: unknown[];
+}
+
 /**
- * Runs one mutation. DataFn answers a single mutation's conflict by throwing
- * a 409 executor error whose details name the path; that comes back as a
- * failed result like the one a batch reports, other failures as problems.
+ * Runs one mutation and reads its record back in a single atomic DataFn
+ * transact call. Its one rate-limit and authorization check runs before
+ * anything is stored, so a stored write never meets a refused readback, and
+ * the record answered is the one the write committed (with the timestamps
+ * DataFn set). A failed mutation rolls the call back and comes back as a
+ * failed result; other failures come back as problems.
  */
-async function mutate(caller: Caller, payload: Row): Promise<MutationResult> {
-  return run(async () => {
+async function mutate(app: InterfaceApp, caller: Caller, payload: Row): Promise<Written> {
+  const id = payload.id as string;
+  const response = await run(async () => {
     try {
-      return await caller.executor.mutate(payload as never, caller.context) as MutationResult;
+      return await caller.executor.transact({
+        steps: [{ mutation: payload }, { query: recordQuery(app, payload.resource as string, id) }]
+      }, caller.context) as TransactResult;
     } catch (error) {
       if (error instanceof DatafnExecutorError && error.code === 'CONFLICT') {
         const path = (error.details as { path?: unknown } | undefined)?.path;
-        return { ok: false, errors: [{ code: 'CONFLICT', message: error.message, path: typeof path === 'string' ? path : undefined }] };
+        const failed: MutationResult = {
+          ok: false,
+          errors: [{ code: 'CONFLICT', message: error.message, path: typeof path === 'string' ? path : undefined }]
+        };
+        return { ok: false, results: [failed] } satisfies TransactResult;
       }
       throw error;
     }
   }, 'write', caller.services);
+  const [step, read] = Array.isArray(response.results) ? response.results : [];
+  const result = isMutationResult(step)
+    ? step
+    : { ok: false, errors: [{ code: 'INTERNAL', message: 'DataFn returned no mutation result.' }] };
+  if (!result.ok) return { result, row: null };
+  const rows = (read as Partial<QueryResult> | undefined)?.data;
+  return { result, row: Array.isArray(rows) ? rows.find((entry) => entry.id === id) ?? null : null };
+}
+
+function isMutationResult(value: unknown): value is MutationResult {
+  return typeof value === 'object' && value !== null && typeof (value as MutationResult).ok === 'boolean';
 }
 
 /** A write of a completion rule's `checked` field also sets its `completedAt`. */

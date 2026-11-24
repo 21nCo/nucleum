@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { interfaceApps, interfaceContract, interfaceResources } from '@nucleum/schema/interfaces';
+import { DatafnExecutorError } from '@datafn/server';
+import { interfaceApps, interfaceContract, interfaceResources, type InterfaceApp } from '@nucleum/schema/interfaces';
+import type { SyncContext, SyncServer } from '../datafn/server.js';
 import { createAccountTestHarness, type AccountTestHarness } from '../testing/harness.js';
 import { createInterfaceApiRouter, keyedCreateId } from './router.js';
 import { resourceSegment } from './resources.js';
@@ -678,5 +680,145 @@ describe('v1 archived records and references', () => {
     expect(await json(await call('/v1/pointron/tasks', actors.pointronWrite, {
       body: { label: 'Under a goal', dateUnix: 1_700_000_000_000, objectiveId: 'objective:o1' }
     }), 201)).toMatchObject({ objectiveId: 'objective:o1' });
+  });
+});
+
+describe('v1 writes on the real DataFn executor', () => {
+  type Executor = SyncServer['executor'];
+
+  /**
+   * A router over the harness's DataFn executor. `beforeWrite` runs once just
+   * before the write's DataFn call (after the router's own checks), so a
+   * change it makes lands between them; `afterWrite` runs once after it.
+   */
+  function routerAround(
+    app: InterfaceApp,
+    hooks: { beforeWrite?: () => Promise<void>; failQueriesAfterWrite?: boolean }
+  ) {
+    let beforeWrite = hooks.beforeWrite ?? null;
+    let written = false;
+    const router = createInterfaceApiRouter(app, {
+      authenticate: (request) => harness.services.auth.provider.authenticate(request),
+      getSyncServer: async () => {
+        const executor = (await harness.services.getSyncServer()).executor;
+        const wrapped: Executor = {
+          schema: executor.schema,
+          query: async (payload, context) => {
+            if (written && hooks.failQueriesAfterWrite) {
+              throw new DatafnExecutorError({ code: 'RATE_LIMITED', message: 'Too many requests' }, 429);
+            }
+            return executor.query(payload, context);
+          },
+          mutate: async <TResult>(payload: unknown, context?: SyncContext) => {
+            const result = await executor.mutate<TResult>(payload, context);
+            written = true;
+            return result;
+          },
+          search: (payload, context) => executor.search(payload, context),
+          transact: async <TResult>(payload: unknown, context?: SyncContext) => {
+            const run = beforeWrite;
+            beforeWrite = null;
+            await run?.();
+            const result = await executor.transact<TResult>(payload, context);
+            written = true;
+            return result;
+          }
+        };
+        return { executor: wrapped } as unknown as SyncServer;
+      }
+    });
+    return (path: string, headers: Headers, init: { method?: string; body?: unknown } = {}) =>
+      router.handle(new Request(`${base}${path}`, {
+        method: init.method ?? (init.body === undefined ? 'GET' : 'POST'),
+        headers: { 'content-type': 'application/json', ...headers },
+        body: init.body === undefined ? undefined : JSON.stringify(init.body)
+      }));
+  }
+
+  async function seed(...mutations: Body[]): Promise<void> {
+    const response = await call('/datafn/mutation', actors.cookie, { body: mutations });
+    expect(response.status, await response.clone().text()).toBe(200);
+  }
+
+  /** The stored row, trashed or not, as the account's own session reads it. */
+  async function stored(resource: string, id: string): Promise<Body | undefined> {
+    const body = await json(await call('/datafn/query', actors.cookie, {
+      body: { resource, version: 1, filters: { id: { eq: id } }, metadata: { includeTrashed: true, includeArchived: true, includeAncestorInactive: true } }
+    }), 200) as { result: { data: Body[] } };
+    return body.result.data.find((row) => row.id === id);
+  }
+
+  it.each([
+    { change: 'trashed', operation: 'trash' },
+    { change: 'deleted', operation: 'delete' }
+  ])('answers 404 and leaves storage alone when the task is $change before the update lands', async ({ change, operation }) => {
+    const id = `task:race-${change}`;
+    await seed(insert('task', id, { label: 'Before the race', dateUnix: 1_700_000_000_000 }));
+    let raced: Body | undefined;
+    const send = routerAround('pointron', {
+      beforeWrite: async () => {
+        await seed(mutation('task', operation, id, {}));
+        raced = await stored('task', id);
+      }
+    });
+    await problem(await send(`/v1/pointron/tasks/${id}`, actors.pointronWrite, {
+      method: 'PATCH', body: { label: 'Renamed in the race' }
+    }), 404, 'not_found');
+    const after = await stored('task', id);
+    // A merge would have recreated the deleted row or renamed the trashed one.
+    expect(after).toEqual(raced);
+    if (operation === 'delete') {
+      expect(after).toBeUndefined();
+    } else {
+      expect(after).toMatchObject({ label: 'Before the race', trashedAt: expect.any(Number) });
+    }
+  });
+
+  it('answers 404 when a shared record stops being visible to the app before the update lands', async () => {
+    const id = 'collection:race-type';
+    await seed(insert('collection', id, { label: 'Notes in a race', type: 'list', resource: 'node' }));
+    const send = routerAround('memotron', {
+      beforeWrite: () => seed(mutation('collection', 'merge', id, { record: { resource: 'objective' } }))
+    });
+    await problem(await send(`/v1/memotron/collections/${id}`, actors.memotronWrite, {
+      method: 'PATCH', body: { label: 'Renamed in the race' }
+    }), 404, 'not_found');
+    expect(await stored('collection', id)).toMatchObject({ label: 'Notes in a race', resource: 'objective' });
+  });
+
+  it('answers 409 and leaves storage alone when a reference the body leaves out moves before the update lands', async () => {
+    const id = 'task:race-reference';
+    await seed(insert('task', id, { label: 'Before the race', dateUnix: 1_700_000_000_000, objectiveId: 'objective:o1' }));
+    const send = routerAround('pointron', {
+      beforeWrite: () => seed(mutation('task', 'merge', id, { record: { objectiveId: 'objective:archived' } }))
+    });
+    await problem(await send(`/v1/pointron/tasks/${id}`, actors.pointronWrite, {
+      method: 'PATCH', body: { label: 'Renamed in the race' }
+    }), 409, 'conflict');
+    expect(await stored('task', id)).toMatchObject({ label: 'Before the race' });
+    // Without a race the same update applies and answers the reference it kept.
+    const settled = await json(await call(`/v1/pointron/tasks/${id}`, actors.pointronWrite, {
+      method: 'PATCH', body: { label: 'Renamed after the race' }
+    }), 200);
+    expect(settled).toMatchObject({ label: 'Renamed after the race', objectiveId: 'objective:archived' });
+  });
+
+  it('answers a stored create and update with the committed record when every later read is refused', async () => {
+    const send = routerAround('pointron', { failQueriesAfterWrite: true });
+    const created = await send('/v1/pointron/tasks', actors.pointronWrite, {
+      body: { label: 'Committed', dateUnix: 1_700_000_000_000, objectiveId: 'objective:o1' }
+    });
+    const record = await json(created, 201);
+    expect(created.headers.get('location')).toBe(`/v1/pointron/tasks/${encodeURIComponent(String(record.id))}`);
+    expect(record).toEqual(await json(await call(`/v1/pointron/tasks/${String(record.id)}`, actors.pointronWrite), 200));
+    expect(record).toMatchObject({ label: 'Committed', objectiveId: 'objective:o1', createdAt: expect.any(Number) });
+
+    const update = routerAround('pointron', { failQueriesAfterWrite: true });
+    // The router's existence check runs before the write; only reads after it are refused.
+    const updated = await json(await update(`/v1/pointron/tasks/${String(record.id)}`, actors.pointronWrite, {
+      method: 'PATCH', body: { isChecked: true }
+    }), 200);
+    expect(updated).toEqual(await json(await call(`/v1/pointron/tasks/${String(record.id)}`, actors.pointronWrite), 200));
+    expect(updated).toMatchObject({ isChecked: true, completedAtUnix: expect.any(Number), objectiveId: 'objective:o1' });
   });
 });

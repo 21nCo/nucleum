@@ -10,7 +10,10 @@ import { createInterfaceApiRouter, type InterfaceApiServices } from './router.js
  * columns come back as strings, ascending sorts put nulls last and descending
  * ones first, strings compare by code point, a single mutation's conflict is
  * thrown as a 409 executor error, and no replay record survives a write (as
- * after an interruption between the insert and saving it).
+ * after an interruption between the insert and saving it). A transact call
+ * runs its mutation (checking an update's `if` guard on the stored row, and
+ * failing a merge on a missing row as DataFn's strict adapters do) and reads
+ * the record back in the same call, outside the separately counted queries.
  */
 
 type Row = Record<string, unknown>;
@@ -68,33 +71,63 @@ function createPostgresLikeServices(rows: Row[], overrides: Partial<InterfaceApi
   let gate: (() => Promise<void>) | null = null;
   /** Runs before each query, when set; it may change rows or throw. */
   let beforeQuery: ((count: number) => void) | null = null;
+  /** A query's rows; DataFn's query path, unlike a transact read, hides trashed rows. */
+  const select = (payload: Row, hideTrashed: boolean) => {
+    const filters = (payload.filters ?? {}) as Row;
+    const selected = rows.filter((row) => row.resource === payload.resource &&
+      !(hideTrashed && row.trashedAt != null && (payload.metadata as Row | undefined)?.includeTrashed !== true) &&
+      Object.entries(filters).every(([field, condition]) => matches(field, row[field], condition)));
+    const sorted = sortRows(selected, (payload.sort as string[] | undefined) ?? ['id']);
+    const limit = payload.limit as number | undefined;
+    if (limit !== undefined && limit > 100) throw new DatafnExecutorError({ code: 'DFQL_INVALID', message: 'limit' }, 400);
+    return { data: (limit === undefined ? sorted : sorted.slice(0, limit)).map(({ resource: _, ...row }) => row) };
+  };
+  const write = async (payload: Row) => {
+    mutations.push(payload);
+    if (gate) await gate();
+    const existing = rows.find((row) => row.resource === payload.resource && row.id === payload.id);
+    if (payload.operation === 'insert') {
+      if (existing) {
+        // As DataFn's executor does for one mutation's CONFLICT envelope.
+        throw new DatafnExecutorError({ code: 'CONFLICT', message: 'Record already exists', details: { path: 'id' } }, 409);
+      }
+      rows.push({ resource: payload.resource, id: payload.id, ...(payload.record as Row) });
+      return { ok: true, affectedIds: [payload.id], deduped: false };
+    }
+    const guard = payload.if as Row | undefined;
+    // DataFn fails a guard on a missing row, or one the condition does not match.
+    if (guard && (!existing || !Object.entries(guard).every(([field, condition]) => matches(field, existing[field], condition)))) {
+      return { ok: false, affectedIds: [], errors: [{ code: 'CONFLICT', message: 'Guard condition not met', path: 'if' }], deduped: false };
+    }
+    if (!existing) {
+      return { ok: false, affectedIds: [], errors: [{ code: 'NOT_FOUND', message: `Record not found: ${String(payload.id)}`, path: 'id' }], deduped: false };
+    }
+    Object.assign(existing, payload.record);
+    return { ok: true, affectedIds: [payload.id], deduped: false };
+  };
   const executor = {
     async query(payload: Row) {
       queries.push(payload);
       beforeQuery?.(queries.length);
       if ('cursor' in payload) throw new Error('the router must not rely on DataFn cursors');
-      const filters = (payload.filters ?? {}) as Row;
-      const selected = rows.filter((row) => row.resource === payload.resource &&
-        Object.entries(filters).every(([field, condition]) => matches(field, row[field], condition)));
-      const sorted = sortRows(selected, (payload.sort as string[] | undefined) ?? ['id']);
-      const limit = payload.limit as number | undefined;
-      if (limit !== undefined && limit > 100) throw new DatafnExecutorError({ code: 'DFQL_INVALID', message: 'limit' }, 400);
-      return { data: (limit === undefined ? sorted : sorted.slice(0, limit)).map(({ resource: _, ...row }) => row) };
+      return select(payload, true);
     },
     async mutate(payload: Row) {
-      mutations.push(payload);
-      if (gate) await gate();
-      const existing = rows.find((row) => row.resource === payload.resource && row.id === payload.id);
-      if (payload.operation === 'insert') {
-        if (existing) {
-          // As DataFn's executor does for one mutation's CONFLICT envelope.
-          throw new DatafnExecutorError({ code: 'CONFLICT', message: 'Record already exists', details: { path: 'id' } }, 409);
-        }
-        rows.push({ resource: payload.resource, id: payload.id, ...(payload.record as Row) });
-      } else if (existing) {
-        Object.assign(existing, payload.record);
+      return write(payload);
+    },
+    async transact(payload: { steps: { mutation?: Row; query?: Row }[] }) {
+      const [step, read] = payload.steps;
+      if (!step?.mutation || !read?.query) throw new Error('the router writes one mutation and reads it back');
+      let result: Row;
+      try {
+        result = await write(step.mutation);
+      } catch (error) {
+        // In a transact call a step's conflict comes back as a failed step.
+        if (!(error instanceof DatafnExecutorError) || error.code !== 'CONFLICT') throw error;
+        result = { ok: false, errors: [{ code: 'CONFLICT', message: error.message, path: 'id' }] };
       }
-      return { ok: true, affectedIds: [payload.id], deduped: false };
+      if (result.ok !== true) return { ok: false, results: [result] };
+      return { ok: true, results: [result, select(read.query, false)] };
     },
     async search() {
       return { results: [] };
@@ -275,9 +308,9 @@ describe('v1 routes on PostgreSQL-like storage', () => {
           ...executor,
           // The objective goes away after the reference check, so the
           // database refuses the write with a foreign-key failure.
-          mutate: async () => {
+          transact: async () => {
             if (removed) rows.splice(rows.findIndex((row) => row.id === 'objective:g'), 1);
-            return fail();
+            return { ok: false, results: [fail()] };
           }
         }
       }) as unknown as SyncServer
@@ -305,30 +338,61 @@ describe('v1 routes on PostgreSQL-like storage', () => {
     { method: 'PATCH', path: '/v1/pointron/tasks/task:a', operation: 'merge', status: 200, body: { label: 'Renamed' }, other: { label: 'Other' } },
     { method: 'POST', path: '/v1/pointron/tasks', operation: 'insert', status: 201,
       body: { label: 'Created', dateUnix: 1_700_000_000_000 }, other: { label: 'Other', dateUnix: 1_700_000_000_000 } }
-  ])('keeps a $method key bound to its body after the write commits and its readback fails', async (write) => {
+  ])('answers a stored $method with the committed record when every later read fails, and keeps its key bound', async (write) => {
     const { services, mutations, hold, onQuery } = createPostgresLikeServices([task('task:a', null)], {
       idempotencyStore: createMemoryRuntimeStores().atomicKv,
       logError: () => undefined
     });
     hold(async () => {
       hold(null);
-      // The mutation commits; the next read (the readback) fails once.
+      // From the write on, every separate read is refused, as by an exhausted query quota.
       onQuery(() => {
-        onQuery(null);
-        throw new DatafnExecutorError({ code: 'INTERNAL', message: 'database unavailable' }, 500);
+        throw new DatafnExecutorError({ code: 'RATE_LIMITED', message: 'Too many requests' }, 429);
       });
     });
-    const headers = { 'idempotency-key': 'readback-fails' };
+    const headers = { 'idempotency-key': 'later-reads-fail' };
     const first = await send(services, write.path, { method: write.method, headers, body: JSON.stringify(write.body) });
-    expect(first.status).toBe(500);
+    const record = await first.json() as Row;
+    expect(first.status, JSON.stringify(record)).toBe(write.status);
+    expect(first.headers.get('idempotent-replayed')).toBeNull();
+    expect(record).toMatchObject(write.body);
+    if (write.method === 'POST') {
+      expect(first.headers.get('location')).toBe(`/v1/pointron/tasks/${encodeURIComponent(String(record.id))}`);
+    }
+    onQuery(null);
+    expect(await (await send(services, `/v1/pointron/tasks/${String(record.id)}`)).json()).toEqual(record);
     const other = await send(services, write.path, { method: write.method, headers, body: JSON.stringify(write.other) });
     expect(other.status).toBe(422);
     expect(await other.json()).toMatchObject({ code: 'idempotency_key_reused' });
     const retry = await send(services, write.path, { method: write.method, headers, body: JSON.stringify(write.body) });
     expect(retry.status).toBe(write.status);
     expect(retry.headers.get('idempotent-replayed')).toBe('true');
-    expect(await retry.json()).toMatchObject(write.body);
+    expect(await retry.json()).toEqual(record);
     expect(mutations.filter((mutation) => mutation.operation === write.operation)).toHaveLength(1);
+  });
+
+  it.each([
+    { change: 'deleted', apply: (rows: Row[]) => rows.splice(rows.findIndex((row) => row.id === 'task:a'), 1) },
+    { change: 'trashed', apply: (rows: Row[]) => { rows[0].trashedAt = 1_700_000_000_000; } }
+  ])('answers 404 and changes nothing when the task is $change between the visibility check and the merge', async ({ change, apply }) => {
+    const rows = [task('task:a', null)];
+    const { services, mutations, hold } = createPostgresLikeServices(rows, {
+      idempotencyStore: createMemoryRuntimeStores().atomicKv
+    });
+    hold(async () => {
+      hold(null);
+      apply(rows);
+    });
+    const headers = { 'idempotency-key': `lost-race-${change}` };
+    const response = await send(services, '/v1/pointron/tasks/task:a', {
+      method: 'PATCH', headers, body: JSON.stringify({ label: 'Renamed' })
+    });
+    expect(response.status).toBe(404);
+    expect(response.headers.get('content-type')).toContain('application/problem+json');
+    expect(await response.json()).toMatchObject({ code: 'not_found' });
+    expect(mutations).toEqual([expect.objectContaining({ operation: 'merge', if: expect.objectContaining({ trashedAt: { is_null: true } }) })]);
+    expect(rows.filter((row) => row.label === 'Renamed')).toEqual([]);
+    expect(rows).toHaveLength(change === 'deleted' ? 0 : 1);
   });
 
   it('replays a keyed create whose replay record was lost and refuses the key with another body', async () => {
